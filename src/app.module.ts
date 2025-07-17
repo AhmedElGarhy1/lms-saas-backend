@@ -11,6 +11,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Reflector } from '@nestjs/core';
+import { AccessControlModule } from './access-control/access-control.module';
 
 @Module({
   imports: [
@@ -28,8 +29,8 @@ import { Reflector } from '@nestjs/core';
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          ttl: 60000,
-          limit: 10,
+          ttl: process.env.NODE_ENV === 'test' ? 1 : 60000,
+          limit: process.env.NODE_ENV === 'test' ? 1000 : 10,
         },
       ],
     }),
@@ -38,6 +39,7 @@ import { Reflector } from '@nestjs/core';
     UsersModule,
     RolesModule,
     CentersModule,
+    AccessControlModule,
   ],
   providers: [
     {

@@ -20,7 +20,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { MailerService } from '../shared/mailer.service';
+import { MailerService } from '../shared/mail/mailer.service';
 import { randomBytes } from 'crypto';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
@@ -117,7 +117,7 @@ export class AuthService {
       this.logger.warn(`Login failed: Invalid password (${email})`);
       throw new UnauthorizedException('Invalid credentials');
     }
-    // 2FA check
+    // 2FA check (after password is validated)
     if (user.twoFactorEnabled ?? false) {
       if (!code) {
         throw new UnauthorizedException('2FA code required');

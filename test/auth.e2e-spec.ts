@@ -2,8 +2,9 @@ import { Test as NestTest } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { MailerService } from '../src/shared/mailer.service';
+import { MailerService } from '../src/shared/mail/mailer.service';
 import { PrismaClient } from '@prisma/client';
+import * as speakeasy from 'speakeasy';
 
 interface EmailVerificationResult {
   token: string;
@@ -158,5 +159,66 @@ describe('AuthController (e2e)', () => {
       .post('/auth/reset-password')
       .send({ token: 'invalidtoken', newPassword: 'NewPass123!' });
     expect(res.status).toBe(400);
+  });
+
+  // Add stubs for 2FA and lockout E2E tests
+  it('/auth/login (POST) - account lockout', async () => {
+    // Simulate 5 failed logins to trigger lockout
+    for (let i = 0; i < 5; i++) {
+      await server
+        .post('/auth/login')
+        .send({ email: testEmail, password: 'wrongpass' });
+    }
+    const res = await server
+      .post('/auth/login')
+      .send({ email: testEmail, password: 'wrongpass' });
+    expect(res.status).toBe(401);
+    expect(res.body.message).toContain('locked');
+  });
+  // 2FA E2E test stub (implement when endpoint is available)
+  it('/auth/login (POST) - 2FA required', async () => {
+    // 1. Sign up and verify user
+    const email = `2fa${Date.now()}@example.com`;
+    const password = 'Test2FA123!';
+    const fullName = '2FA User';
+    await server.post('/auth/signup').send({ email, password, fullName });
+    // Get verification token
+    const prisma = new PrismaClient();
+    const verification = await prisma.emailVerification.findFirst({
+      where: { user: { email } },
+      orderBy: { createdAt: 'desc' },
+    });
+    await server
+      .post('/auth/verify-email')
+      .send({ token: verification?.token });
+    // 2. Login to get JWT
+    const loginRes = await server.post('/auth/login').send({ email, password });
+    const jwt = loginRes.body.accessToken;
+    // 3. Setup 2FA
+    const setupRes = await server
+      .post('/auth/2fa/setup')
+      .set('Authorization', `Bearer ${jwt}`)
+      .send({ password });
+    const secret = setupRes.body.secret;
+    // 4. Generate TOTP code
+    const code = speakeasy.totp({ secret, encoding: 'base32' });
+    // 5. Enable 2FA
+    await server
+      .post('/auth/2fa/enable')
+      .set('Authorization', `Bearer ${jwt}`)
+      .send({ code });
+    // 6. Try login without code (should fail with 2FA required)
+    const resNoCode = await server
+      .post('/auth/login')
+      .send({ email, password });
+    expect(resNoCode.status).toBe(401);
+    expect(resNoCode.body.message).toContain('2FA code required');
+    // 7. Try login with correct code (should succeed)
+    const resWithCode = await server
+      .post('/auth/login')
+      .send({ email, password, code });
+    expect(resWithCode.status).toBe(201);
+    expect(resWithCode.body.accessToken).toBeDefined();
+    await prisma.$disconnect();
   });
 });

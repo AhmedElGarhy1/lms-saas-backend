@@ -30,11 +30,13 @@ model User {
   lockoutUntil        DateTime?
   twoFactorSecret     String?
   twoFactorEnabled    Boolean @default(false)
+  inviteTokens      InviteToken[]
+  userPermissions   UserPermission[]
 }
 
 model Center {
   id        String   @id @default(uuid())
-  name      String
+  name      String   @unique
   ownerId   String?
   owner     User?    @relation("UserCentersOwned", fields: [ownerId], references: [id])
   users     UserOnCenter[]
@@ -53,6 +55,7 @@ model Permission {
   id   String @id @default(uuid())
   name String @unique
   roles Role[]
+  userPermissions UserPermission[]
 }
 
 model UserOnCenter {
@@ -64,6 +67,7 @@ model UserOnCenter {
   center    Center   @relation(fields: [centerId], references: [id])
   role      Role     @relation(fields: [roleId], references: [id])
   createdAt DateTime @default(now())
+  @@unique([userId, centerId, roleId])
 }
 
 model RefreshToken {
@@ -92,5 +96,25 @@ model PasswordResetToken {
   expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model InviteToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model UserPermission {
+  id          String   @id @default(uuid())
+  userId      String
+  permissionId String
+  centerId    String?
+  teacherId   String?
+  user        User     @relation(fields: [userId], references: [id])
+  permission  Permission @relation(fields: [permissionId], references: [id])
+  createdAt   DateTime @default(now())
 }
  
