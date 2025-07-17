@@ -19,6 +19,10 @@ import { MailerService } from './mailer.service';
             user: config.get<string>('EMAIL_USER')!,
             pass: config.get<string>('EMAIL_PASS')!,
           },
+          tls: {
+            rejectUnauthorized: false,
+          },
+          preview: config.get('NODE_ENV') !== 'test' ? true : false,
         },
         defaults: {
           from: `"LMS SaaS" <${config.get<string>('EMAIL_USER')!}>`,

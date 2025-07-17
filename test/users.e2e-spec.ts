@@ -2,4 +2,151 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { PrismaService } from '../src/shared/prisma.service'; // Helper to create a user and get a JWTasync function createAndLoginUser(  app: INestApplication,  prisma: PrismaService,) {  const email = `user${Date.now()}@example.com`;  const password = 'Test1234!';  const fullName = 'Test User';  await request(app.getHttpServer())    .post('/auth/signup')    .send({ email, password, fullName });  // Verify email in DB  const verification = await prisma.emailVerification.findFirst({    where: { user: { email } },    orderBy: { createdAt: 'desc' },  });  await request(app.getHttpServer())    .post('/auth/verify-email')    .send({ token: verification?.token });  // Login  const res = await request(app.getHttpServer())    .post('/auth/login')    .send({ email, password });  return {    email,    password,    fullName,    accessToken: res.body.accessToken,    userId: res.body.userId,  };}describe('Users E2E', () => {  let app: INestApplication;  let prisma: PrismaService;  let accessToken: string;  let userId: string;  beforeAll(async () => {    const moduleFixture: TestingModule = await Test.createTestingModule({      imports: [AppModule],    }).compile();    app = moduleFixture.createNestApplication();    app.useGlobalPipes(new ValidationPipe({ whitelist: true }));    await app.init();    prisma = app.get(PrismaService);    const user = await createAndLoginUser(app, prisma);    accessToken = user.accessToken;    userId = user.userId;  });  afterAll(async () => {    await app.close();  });  it('/users/me (GET) - get profile', async () => {    const res = await request(app.getHttpServer())      .get('/users/me')      .set('Authorization', `Bearer ${accessToken}`);    expect(res.status).toBe(200);    expect(res.body.email).toBeDefined();    expect(res.body.id).toBeDefined();  });  it('/users/me (PUT) - update profile', async () => {    const res = await request(app.getHttpServer())      .put('/users/me')      .set('Authorization', `Bearer ${accessToken}`)      .send({ fullName: 'Updated Name' });    expect(res.status).toBe(200);    expect(res.body.name).toBe('Updated Name');  });  it('/users/me/password (PATCH) - change password', async () => {    const res = await request(app.getHttpServer())      .patch('/users/me/password')      .set('Authorization', `Bearer ${accessToken}`)      .send({ oldPassword: 'Test1234!', newPassword: 'NewPass123!' });    expect(res.status).toBe(200);    expect(res.body.message).toContain('Password changed');  });  it('/users/:id/assign-center (POST) - assign to center', async () => {    // Create a center and role first    const center = await prisma.center.create({      data: { name: 'Test Center' },    });    const role = await prisma.role.create({      data: { name: `role${Date.now()}` },    });    const res = await request(app.getHttpServer())      .post(`/users/${userId}/assign-center`)      .set('Authorization', `Bearer ${accessToken}`)      .send({ centerId: center.id, roleId: role.id });    expect(res.status).toBe(201);    expect(res.body.message).toContain('assigned');  });  it('/users/invite (POST) - invite user by email', async () => {    const res = await request(app.getHttpServer())      .post('/users/invite')      .set('Authorization', `Bearer ${accessToken}`)      .send({ email: `invite${Date.now()}@example.com`, fullName: 'Invitee' });    expect(res.status).toBe(201);    expect(res.body.message).toContain('invited');  });});
+import { PrismaService } from '../src/shared/prisma.service';
+
+// Helper to create a user and get a JWT
+async function createAndLoginUser(
+  app: INestApplication,
+  prisma: PrismaService,
+) {
+  const email = `user${Date.now()}@example.com`;
+  const password = 'Test1234!';
+  const fullName = 'Test User';
+  await request(app.getHttpServer())
+    .post('/auth/signup')
+    .send({ email, password, fullName });
+  // Verify email in DB
+  const verification = await prisma.emailVerification.findFirst({
+    where: { user: { email } },
+    orderBy: { createdAt: 'desc' },
+  });
+  await request(app.getHttpServer())
+    .post('/auth/verify-email')
+    .send({ token: verification?.token });
+  // Login
+  const res = await request(app.getHttpServer())
+    .post('/auth/login')
+    .send({ email, password });
+  return {
+    email,
+    password,
+    fullName,
+    accessToken: res.body.accessToken,
+    userId: res.body.userId,
+  };
+}
+
+jest.setTimeout(20000);
+
+describe('Users E2E', () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+  let accessToken: string;
+  let userId: string;
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+    app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+    await app.init();
+    prisma = app.get(PrismaService);
+    const user = await createAndLoginUser(app, prisma);
+    accessToken = user.accessToken;
+    userId = user.userId;
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('/users/me (GET) - get profile', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/users/me')
+      .set('Authorization', `Bearer ${accessToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.email).toBeDefined();
+    expect(res.body.id).toBeDefined();
+  });
+
+  it('/users/me (GET) - unauthorized', async () => {
+    const res = await request(app.getHttpServer()).get('/users/me');
+    expect(res.status).toBe(401);
+  });
+
+  it('/users/me (PUT) - update profile', async () => {
+    const res = await request(app.getHttpServer())
+      .put('/users/me')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ fullName: 'Updated Name' });
+    expect(res.status).toBe(200);
+    expect(res.body.name).toBe('Updated Name');
+  });
+
+  it('/users/me (PUT) - invalid data', async () => {
+    const res = await request(app.getHttpServer())
+      .put('/users/me')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ fullName: 123 });
+    expect(res.status).toBe(400);
+  });
+
+  it('/users/me/password (PATCH) - change password', async () => {
+    const res = await request(app.getHttpServer())
+      .patch('/users/me/password')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ oldPassword: 'Test1234!', newPassword: 'NewPass123!' });
+    expect(res.status).toBe(200);
+    expect(res.body.message).toContain('Password changed');
+  });
+
+  it('/users/me/password (PATCH) - wrong old password', async () => {
+    const res = await request(app.getHttpServer())
+      .patch('/users/me/password')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ oldPassword: 'WrongPass!', newPassword: 'AnotherPass123!' });
+    expect(res.status).toBe(403);
+  });
+
+  it('/users/me/password (PATCH) - weak new password', async () => {
+    const res = await request(app.getHttpServer())
+      .patch('/users/me/password')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ oldPassword: 'NewPass123!', newPassword: '123' });
+    expect(res.status).toBe(400);
+  });
+
+  it('/users/invite (POST) - invite user by email', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/users/invite')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ email: `invite${Date.now()}@example.com`, fullName: 'Invitee' });
+    expect(res.status).toBe(201);
+    expect(res.body.message).toContain('invited');
+  });
+
+  it('/users/invite (POST) - invite with existing email', async () => {
+    const email = `user${Date.now()}@example.com`;
+    // First invite should succeed
+    const firstRes = await request(app.getHttpServer())
+      .post('/users/invite')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ email, fullName: 'Test User' });
+    expect(firstRes.status).toBe(201);
+    // Second invite should fail (duplicate)
+    const secondRes = await request(app.getHttpServer())
+      .post('/users/invite')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ email, fullName: 'Test User' });
+    expect([400, 409]).toContain(secondRes.status);
+  });
+
+  it('/users/invite (POST) - invalid email', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/users/invite')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ email: 'not-an-email', fullName: 'Invitee' });
+    expect(res.status).toBe(400);
+  });
+});

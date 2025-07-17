@@ -10,7 +10,6 @@ import { PrismaService } from '../shared/prisma.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { AssignCenterDto } from './dto/assign-center.dto';
 import { InviteUserDto } from './dto/invite-user.dto';
 import * as bcrypt from 'bcrypt';
 
@@ -43,9 +42,14 @@ export class UsersService {
       this.logger.warn(`User not found: ${userId}`);
       throw new NotFoundException('User not found');
     }
+    // Map fullName to name for the User model
+    const updateData: { name?: string } = {};
+    if (dto.fullName !== undefined) {
+      updateData.name = dto.fullName;
+    }
     const updated = await this.prisma.user.update({
       where: { id: userId },
-      data: { ...dto },
+      data: updateData,
     });
     this.logger.log(`Updated profile for user ${userId}`);
     const { password: __, ...restUpdated } = updated;
@@ -71,32 +75,6 @@ export class UsersService {
     });
     this.logger.log(`Changed password for user ${userId}`);
     return { message: 'Password changed successfully' };
-  }
-
-  async assignToCenter(userId: string, dto: AssignCenterDto) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      this.logger.warn(`User not found: ${userId}`);
-      throw new NotFoundException('User not found');
-    }
-    // Find if UserOnCenter exists
-    const userOnCenter = await this.prisma.userOnCenter.findFirst({
-      where: { userId, centerId: dto.centerId },
-    });
-    if (userOnCenter) {
-      await this.prisma.userOnCenter.update({
-        where: { id: userOnCenter.id },
-        data: { roleId: dto.roleId },
-      });
-    } else {
-      await this.prisma.userOnCenter.create({
-        data: { userId, centerId: dto.centerId, roleId: dto.roleId },
-      });
-    }
-    this.logger.log(
-      `Assigned user ${userId} to center ${dto.centerId} with role ${dto.roleId}`,
-    );
-    return { message: 'User assigned to center' };
   }
 
   async inviteUser(dto: InviteUserDto) {

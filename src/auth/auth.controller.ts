@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -12,16 +12,17 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthService } from './auth.service';
-import { AuthGuard } from './auth.guard';
 import { TwoFASetupDto, TwoFAVerifyDto } from './dto/2fa.dto';
 import { CurrentUser } from '../shared/decorators/current-user.decorator';
 import { User } from '@prisma/client';
+import { Public } from '../shared/decorators/public.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('signup')
   @ApiOperation({ summary: 'Sign up a new user' })
   @ApiResponse({ status: 201, description: 'Signup successful' })
@@ -29,6 +30,7 @@ export class AuthController {
     return this.authService.signup(dto);
   }
 
+  @Public()
   @Post('login')
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({ status: 200, description: 'Login successful' })
@@ -36,6 +38,7 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  @Public()
   @Post('refresh-token')
   @ApiOperation({ summary: 'Refresh JWT token' })
   @ApiResponse({ status: 200, description: 'Tokens refreshed' })
@@ -43,6 +46,7 @@ export class AuthController {
     return this.authService.refreshToken(dto);
   }
 
+  @Public()
   @Post('verify-email')
   @ApiOperation({ summary: 'Verify email' })
   @ApiResponse({ status: 200, description: 'Email verified' })
@@ -50,6 +54,7 @@ export class AuthController {
     return this.authService.verifyEmail(dto);
   }
 
+  @Public()
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request password reset' })
   @ApiResponse({ status: 200, description: 'Reset link sent' })
@@ -57,6 +62,7 @@ export class AuthController {
     return this.authService.forgotPassword(dto);
   }
 
+  @Public()
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password' })
   @ApiResponse({ status: 200, description: 'Password reset successful' })
@@ -66,7 +72,6 @@ export class AuthController {
 
   @Post('logout')
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({ status: 200, description: 'Logout successful' })
   async logout(@CurrentUser() user: User) {
@@ -75,7 +80,6 @@ export class AuthController {
 
   @Post('2fa/setup')
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Setup 2FA (returns QR code)' })
   @ApiResponse({ status: 200, description: '2FA QR code and secret' })
   async setup2FA(@CurrentUser() user: User, @Body() dto: TwoFASetupDto) {
@@ -85,7 +89,6 @@ export class AuthController {
 
   @Post('2fa/enable')
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Enable 2FA (verify code)' })
   @ApiResponse({ status: 200, description: '2FA enabled' })
   async enable2FA(@CurrentUser() user: User, @Body() dto: TwoFAVerifyDto) {
@@ -94,7 +97,6 @@ export class AuthController {
 
   @Post('2fa/disable')
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Disable 2FA (verify code)' })
   @ApiResponse({ status: 200, description: '2FA disabled' })
   async disable2FA(@CurrentUser() user: User, @Body() dto: TwoFAVerifyDto) {

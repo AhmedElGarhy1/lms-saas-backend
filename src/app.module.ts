@@ -9,6 +9,8 @@ import { RolesModule } from './roles/roles.module';
 import { CentersModule } from './centers/centers.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { Reflector } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -38,6 +40,11 @@ import { APP_GUARD } from '@nestjs/core';
     CentersModule,
   ],
   providers: [
+    {
+      provide: APP_GUARD,
+      useFactory: (reflector: Reflector) => new JwtAuthGuard(reflector),
+      inject: [Reflector],
+    },
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
