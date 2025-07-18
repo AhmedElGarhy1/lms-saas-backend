@@ -5,8 +5,10 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import { PrismaService } from '../../shared/prisma.service';
+import { RoleScope } from '../dto/create-role.dto';
+import { Role, RolePermission, Permission } from '@prisma/client';
+import { PERMISSIONS_KEY } from 'src/access-control/decorators/permissions.decorator';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -28,35 +30,41 @@ export class PermissionsGuard implements CanActivate {
     if (!user) {
       throw new ForbiddenException('User not authenticated');
     }
-    // Extract scope from request (centerId or teacherId)
-    const { centerId, teacherId } = request.body || {};
-    if (!centerId && !teacherId) {
-      throw new ForbiddenException('Scope (centerId or teacherId) is required');
-    }
-    if (centerId && teacherId) {
-      throw new ForbiddenException(
-        'Only one scope allowed (centerId or teacherId)',
-      );
-    }
+    // Extract context (scopeType, scopeId) from request (body, params, or headers)
+    const scopeType =
+      request.body?.scopeType ||
+      request.params?.scopeType ||
+      request.headers['x-scope-type'] ||
+      RoleScope.GLOBAL;
+    const scopeId =
+      request.body?.scopeId ||
+      request.params?.scopeId ||
+      request.headers['x-scope-id'] ||
+      null;
     // 1. Check per-user permission overrides
-    const userPermWhere: any = { userId: user.id };
-    if (centerId) userPermWhere.centerId = centerId;
-    if (teacherId) userPermWhere.teacherId = teacherId;
     const userPerms = await this.prisma.userPermission.findMany({
-      where: userPermWhere,
+      where: { userId: user.id, scopeType, scopeId },
       include: { permission: true },
     });
-    const userPermNames = userPerms.map((up) => up.permission.name);
+    const userPermNames = userPerms.map((up) => up.permission.action);
     if (requiredPermissions.every((perm) => userPermNames.includes(perm))) {
       return true;
     }
     // 2. Check role-based permissions
-    const userRoles = await this.prisma.userOnCenter.findMany({
-      where: userPermWhere,
-      include: { role: { include: { permissions: true } } },
+    const userRoles = await this.prisma.userRole.findMany({
+      where: { userId: user.id, scopeType, scopeId },
+      include: {
+        role: {
+          include: { rolePermissions: { include: { permission: true } } },
+        },
+      },
     });
     const rolePermNames = userRoles.flatMap((ur) =>
-      ur.role.permissions.map((p) => p.name),
+      (
+        ur.role.rolePermissions as (RolePermission & {
+          permission: Permission;
+        })[]
+      ).map((rp) => rp.permission.action),
     );
     if (requiredPermissions.every((perm) => rolePermNames.includes(perm))) {
       return true;

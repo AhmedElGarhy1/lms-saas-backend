@@ -4,6 +4,8 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiBody,
+  ApiParam,
 } from '@nestjs/swagger';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
@@ -13,9 +15,105 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthService } from './auth.service';
 import { TwoFASetupDto, TwoFAVerifyDto } from './dto/2fa.dto';
-import { CurrentUser } from '../shared/decorators/current-user.decorator';
+import { GetUser } from '../shared/decorators/get-user.decorator';
 import { User } from '@prisma/client';
 import { Public } from '../shared/decorators/public.decorator';
+import { ApiProperty } from '@nestjs/swagger';
+
+class SignupExample {
+  @ApiProperty({
+    description: 'User email',
+    example: 'test@example.com',
+  })
+  email: string;
+
+  @ApiProperty({
+    description: 'User password',
+    example: 'password123',
+  })
+  password: string;
+
+  @ApiProperty({
+    description: 'User first name',
+    example: 'John',
+  })
+  firstName: string;
+
+  @ApiProperty({
+    description: 'User last name',
+    example: 'Doe',
+  })
+  lastName: string;
+}
+
+class LoginExample {
+  @ApiProperty({
+    description: 'User email',
+    example: 'test@example.com',
+  })
+  email: string;
+
+  @ApiProperty({
+    description: 'User password',
+    example: 'password123',
+  })
+  password: string;
+}
+
+class RefreshTokenExample {
+  @ApiProperty({
+    description: 'Refresh token',
+    example:
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZXhwIjoxNzI4NzI4MDAwLCJpYXQiOjE3Mjg3MjQwMDB9.1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+  })
+  refreshToken: string;
+}
+
+class VerifyEmailExample {
+  @ApiProperty({
+    description: 'Verification code',
+    example: '123456',
+  })
+  code: string;
+}
+
+class ForgotPasswordExample {
+  @ApiProperty({
+    description: 'User email',
+    example: 'test@example.com',
+  })
+  email: string;
+}
+
+class ResetPasswordExample {
+  @ApiProperty({
+    description: 'New password',
+    example: 'newpassword123',
+  })
+  password: string;
+
+  @ApiProperty({
+    description: 'Confirm new password',
+    example: 'newpassword123',
+  })
+  confirmPassword: string;
+}
+
+class TwoFASetupExample {
+  @ApiProperty({
+    description: 'User password',
+    example: 'password123',
+  })
+  password: string;
+}
+
+class TwoFAVerifyExample {
+  @ApiProperty({
+    description: 'Verification code',
+    example: '123456',
+  })
+  code: string;
+}
 
 @ApiTags('auth')
 @Controller('auth')
@@ -25,7 +123,19 @@ export class AuthController {
   @Public()
   @Post('signup')
   @ApiOperation({ summary: 'Sign up a new user' })
-  @ApiResponse({ status: 201, description: 'Signup successful' })
+  @ApiResponse({
+    status: 201,
+    description: 'Signup successful',
+    schema: { example: SignupExample },
+  })
+  @ApiBody({
+    type: SignupDto,
+    examples: {
+      user: {
+        value: SignupExample,
+      },
+    },
+  })
   async signup(@Body() dto: SignupDto) {
     return this.authService.signup(dto);
   }
@@ -33,7 +143,19 @@ export class AuthController {
   @Public()
   @Post('login')
   @ApiOperation({ summary: 'Login user' })
-  @ApiResponse({ status: 200, description: 'Login successful' })
+  @ApiResponse({
+    status: 200,
+    description: 'Login successful',
+    schema: { example: LoginExample },
+  })
+  @ApiBody({
+    type: LoginDto,
+    examples: {
+      user: {
+        value: LoginExample,
+      },
+    },
+  })
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
@@ -41,7 +163,19 @@ export class AuthController {
   @Public()
   @Post('refresh-token')
   @ApiOperation({ summary: 'Refresh JWT token' })
-  @ApiResponse({ status: 200, description: 'Tokens refreshed' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tokens refreshed',
+    schema: { example: RefreshTokenExample },
+  })
+  @ApiBody({
+    type: RefreshTokenDto,
+    examples: {
+      user: {
+        value: RefreshTokenExample,
+      },
+    },
+  })
   async refreshToken(@Body() dto: RefreshTokenDto) {
     return this.authService.refreshToken(dto);
   }
@@ -49,7 +183,19 @@ export class AuthController {
   @Public()
   @Post('verify-email')
   @ApiOperation({ summary: 'Verify email' })
-  @ApiResponse({ status: 200, description: 'Email verified' })
+  @ApiResponse({
+    status: 200,
+    description: 'Email verified',
+    schema: { example: VerifyEmailExample },
+  })
+  @ApiBody({
+    type: VerifyEmailDto,
+    examples: {
+      user: {
+        value: VerifyEmailExample,
+      },
+    },
+  })
   async verifyEmail(@Body() dto: VerifyEmailDto) {
     return this.authService.verifyEmail(dto);
   }
@@ -57,7 +203,19 @@ export class AuthController {
   @Public()
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request password reset' })
-  @ApiResponse({ status: 200, description: 'Reset link sent' })
+  @ApiResponse({
+    status: 200,
+    description: 'Reset link sent',
+    schema: { example: ForgotPasswordExample },
+  })
+  @ApiBody({
+    type: ForgotPasswordDto,
+    examples: {
+      user: {
+        value: ForgotPasswordExample,
+      },
+    },
+  })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
   }
@@ -65,7 +223,19 @@ export class AuthController {
   @Public()
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password' })
-  @ApiResponse({ status: 200, description: 'Password reset successful' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset successful',
+    schema: { example: ResetPasswordExample },
+  })
+  @ApiBody({
+    type: ResetPasswordDto,
+    examples: {
+      user: {
+        value: ResetPasswordExample,
+      },
+    },
+  })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
   }
@@ -74,15 +244,27 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({ status: 200, description: 'Logout successful' })
-  async logout(@CurrentUser() user: User) {
+  async logout(@GetUser() user: User) {
     return this.authService.logout(user.id);
   }
 
   @Post('2fa/setup')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Setup 2FA (returns QR code)' })
-  @ApiResponse({ status: 200, description: '2FA QR code and secret' })
-  async setup2FA(@CurrentUser() user: User, @Body() dto: TwoFASetupDto) {
+  @ApiResponse({
+    status: 200,
+    description: '2FA QR code and secret',
+    schema: { example: TwoFASetupExample },
+  })
+  @ApiBody({
+    type: TwoFASetupDto,
+    examples: {
+      user: {
+        value: TwoFASetupExample,
+      },
+    },
+  })
+  async setup2FA(@GetUser() user: User, @Body() dto: TwoFASetupDto) {
     await this.authService.verifyPassword(user.id, dto.password);
     return this.authService.setup2FA(user.id);
   }
@@ -90,16 +272,40 @@ export class AuthController {
   @Post('2fa/enable')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Enable 2FA (verify code)' })
-  @ApiResponse({ status: 200, description: '2FA enabled' })
-  async enable2FA(@CurrentUser() user: User, @Body() dto: TwoFAVerifyDto) {
+  @ApiResponse({
+    status: 200,
+    description: '2FA enabled',
+    schema: { example: TwoFAVerifyExample },
+  })
+  @ApiBody({
+    type: TwoFAVerifyDto,
+    examples: {
+      user: {
+        value: TwoFAVerifyExample,
+      },
+    },
+  })
+  async enable2FA(@GetUser() user: User, @Body() dto: TwoFAVerifyDto) {
     return this.authService.enable2FA(user.id, dto.code);
   }
 
   @Post('2fa/disable')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Disable 2FA (verify code)' })
-  @ApiResponse({ status: 200, description: '2FA disabled' })
-  async disable2FA(@CurrentUser() user: User, @Body() dto: TwoFAVerifyDto) {
+  @ApiResponse({
+    status: 200,
+    description: '2FA disabled',
+    schema: { example: TwoFAVerifyExample },
+  })
+  @ApiBody({
+    type: TwoFAVerifyDto,
+    examples: {
+      user: {
+        value: TwoFAVerifyExample,
+      },
+    },
+  })
+  async disable2FA(@GetUser() user: User, @Body() dto: TwoFAVerifyDto) {
     return this.authService.disable2FA(user.id, dto.code);
   }
 }

@@ -4,8 +4,8 @@ import { PrismaService } from './prisma.service';
 import { MailModule } from './mail/mail.module';
 
 @Module({
-  imports: [ConfigModule, MailModule],
+  imports: [ConfigModule, MailModule, SharedModule],
   providers: [PrismaService],
-  exports: [PrismaService, MailModule, ConfigModule],
+  exports: [PrismaService, MailModule, ConfigModule, SharedModule],
 })
 export class SharedModule {}

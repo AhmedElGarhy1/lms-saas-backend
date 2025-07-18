@@ -70,7 +70,6 @@ describe('AccessControl (e2e)', () => {
     await prisma.refreshToken.deleteMany({ where: { userId } });
     await prisma.passwordResetToken.deleteMany({ where: { userId } });
     await prisma.emailVerification.deleteMany({ where: { userId } });
-    await prisma.inviteToken.deleteMany({ where: { userId } });
     // Only delete test-created roles (not seeded ones)
     const seededRoles = ['Admin', 'Owner', 'Teacher', 'Assistant', 'User'];
     const role = await prisma.role.findUnique({ where: { id: roleId } });
@@ -84,8 +83,6 @@ describe('AccessControl (e2e)', () => {
       'user:invite',
       'user:change-password',
       'center:manage',
-      'lesson:create',
-      'lesson:grade',
       'role:manage',
     ];
     const perm = await prisma.permission.findUnique({
@@ -153,30 +150,44 @@ describe('AccessControl (e2e)', () => {
   });
 
   it('assigns a role to a user in a teacher scope', async () => {
-    // There is no teacherId field on UserOnCenter, so just test the endpoint
+    // Create a real teacher user
+    const teacher = await prisma.user.create({
+      data: {
+        email: `teacher${uniqueSuffix}@ex.com`,
+        password: await bcrypt.hash('Test1234!', 10),
+        name: 'Teacher User',
+        isActive: true,
+      },
+    });
     const teacherRole = await prisma.role.findUnique({
       where: { name: 'Teacher' },
     });
     if (!teacherRole)
       throw new Error("Seeded role 'Teacher' not found. Run the seed script.");
-    const teacherId = userId; // reuse user for simplicity
+    // Assign teacherRole to userId in teacher scope
     const res = await server
       .post('/access-control/assign-role')
       .set('Authorization', `Bearer ${accessToken}`)
       .send({
-        userId: teacherId,
+        userId,
         roleId: teacherRole.id,
-        teacherId: 'teacher-scope-1',
+        teacherId: teacher.id,
       });
     expect(res.status).toBe(201);
     expect(res.body.message).toContain('Role assigned');
-    // No cleanup needed: UserOnCenter does not support teacherId
+    // Cleanup: remove the teacher user and teacherUser assignment
+    await prisma.teacherUser.deleteMany({
+      where: { userId, roleId: teacherRole.id, teacherId: teacher.id },
+    });
+    await prisma.user.delete({ where: { id: teacher.id } });
   });
 
   it('errors on duplicate role assignment', async () => {
     const teacherRole = await prisma.role.findUnique({
       where: { name: 'Teacher' },
     });
+    if (!teacherRole)
+      throw new Error("Seeded role 'Teacher' not found. Run the seed script.");
     await prisma.userOnCenter.upsert({
       where: {
         userId_centerId_roleId: { userId, centerId, roleId: teacherRole.id },
@@ -205,6 +216,8 @@ describe('AccessControl (e2e)', () => {
     const teacherRole = await prisma.role.findUnique({
       where: { name: 'Teacher' },
     });
+    if (!teacherRole)
+      throw new Error("Seeded role 'Teacher' not found. Run the seed script.");
     const res = await server
       .post('/access-control/assign-role')
       .set('Authorization', `Bearer ${accessToken}`)
@@ -214,25 +227,21 @@ describe('AccessControl (e2e)', () => {
   });
 
   it('assigns a permission to a user in a teacher scope', async () => {
-    const perm = await prisma.permission.findUnique({
-      where: { name: 'lesson:create' },
-    });
+    const perm = await prisma.permission.findFirst();
     if (!perm)
-      throw new Error(
-        "Seeded permission 'lesson:create' not found. Run the seed script.",
-      );
+      throw new Error('No seeded permissions found. Run the seed script.');
     const res = await server
       .post('/access-control/assign-permission')
       .set('Authorization', `Bearer ${accessToken}`)
-      .send({ userId, permissionId: perm.id, teacherId: 'teacher-scope-1' });
+      .send({ userId, permissionId: perm.id, teacherId: userId });
     expect(res.status).toBe(201);
     expect(res.body.message).toContain('Permission assigned');
   });
 
   it('errors on duplicate permission assignment', async () => {
-    const perm = await prisma.permission.findUnique({
-      where: { name: 'lesson:create' },
-    });
+    const perm = await prisma.permission.findFirst();
+    if (!perm)
+      throw new Error('No seeded permissions found. Run the seed script.');
     await prisma.userPermission.create({
       data: { userId, permissionId: perm.id, centerId },
     });
@@ -254,9 +263,9 @@ describe('AccessControl (e2e)', () => {
   });
 
   it('errors on missing userId/roleId in permission assignment', async () => {
-    const perm = await prisma.permission.findUnique({
-      where: { name: 'lesson:create' },
-    });
+    const perm = await prisma.permission.findFirst();
+    if (!perm)
+      throw new Error('No seeded permissions found. Run the seed script.');
     const res = await server
       .post('/access-control/assign-permission')
       .set('Authorization', `Bearer ${accessToken}`)

@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { PrismaService } from '../../shared/prisma.service';
+import { RoleScope } from '../dto/create-role.dto';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -28,22 +29,20 @@ export class RolesGuard implements CanActivate {
     if (!user) {
       throw new ForbiddenException('User not authenticated');
     }
-    // Extract scope from request (centerId or teacherId)
-    const { centerId, teacherId } = request.body || {};
-    if (!centerId && !teacherId) {
-      throw new ForbiddenException('Scope (centerId or teacherId) is required');
-    }
-    if (centerId && teacherId) {
-      throw new ForbiddenException(
-        'Only one scope allowed (centerId or teacherId)',
-      );
-    }
+    // Extract context (scopeType, scopeId) from request (body, params, or headers)
+    const scopeType =
+      request.body?.scopeType ||
+      request.params?.scopeType ||
+      request.headers['x-scope-type'] ||
+      RoleScope.GLOBAL;
+    const scopeId =
+      request.body?.scopeId ||
+      request.params?.scopeId ||
+      request.headers['x-scope-id'] ||
+      null;
     // Query user roles in the given scope
-    const where: any = { userId: user.id };
-    if (centerId) where.centerId = centerId;
-    if (teacherId) where.teacherId = teacherId;
-    const userRoles = await this.prisma.userOnCenter.findMany({
-      where,
+    const userRoles = await this.prisma.userRole.findMany({
+      where: { userId: user.id, scopeType, scopeId },
       include: { role: true },
     });
     const hasRole = userRoles.some((ur) =>

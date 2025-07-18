@@ -1,128 +1,162 @@
 import { PrismaClient } from '@prisma/client';
+import { RoleScope } from '../src/access-control/dto/create-role.dto';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Define permissions (add more as you add features)
+  // 1. Create permissions
   const permissions = [
     'user:view',
     'user:update',
-    'user:invite',
-    'user:change-password',
     'center:manage',
-    'lesson:create',
-    'lesson:grade',
-    'role:manage',
-    // Add new permissions here as you add features
+    'payment:view',
+    'student:view',
+    'support:handle',
+    // Schedules module permissions
+    'schedules:create',
+    'schedules:read',
+    'schedules:update',
+    'schedules:delete',
   ];
   const permissionRecords = await Promise.all(
-    permissions.map((name) =>
+    permissions.map((action) =>
       prisma.permission.upsert({
-        where: { name },
+        where: { action },
         update: {},
-        create: { name },
+        create: { action },
       }),
     ),
   );
 
-  // Define roles
-  const roles = ['Admin', 'Owner', 'Teacher', 'Assistant', 'User'];
-  const roleRecords = await Promise.all(
-    roles.map((name) =>
+  // 2. Create global roles
+  const globalRoles = [
+    { name: 'Admin', isPublic: false },
+    { name: 'SupportAgent', isPublic: false },
+    { name: 'Teacher', isPublic: true },
+  ];
+  const globalRoleRecords = await Promise.all(
+    globalRoles.map((role) =>
       prisma.role.upsert({
-        where: { name },
+        where: { name: role.name },
         update: {},
-        create: { name },
+        create: {
+          name: role.name,
+          scope: RoleScope.GLOBAL,
+          isPublic: role.isPublic,
+        },
       }),
     ),
   );
 
-  // Map permissions to roles
-  // Update this mapping as you add new permissions/features
-  const rolePermissions: Record<string, string[]> = {
-    Admin: permissions, // Admin gets all permissions
-    Owner: [
-      'user:view',
-      'user:update',
-      'user:invite',
-      'center:manage',
-      'lesson:create',
-      'lesson:grade',
-      'role:manage',
-    ],
-    Teacher: ['user:view', 'lesson:create', 'lesson:grade'],
-    Assistant: [
-      'user:view',
-      'lesson:create', // Assistant can't grade lessons
-    ],
-    User: ['user:view', 'user:update', 'user:change-password'],
-  };
-
-  // Assign permissions to roles
-  for (const roleName of roles) {
-    const role = roleRecords.find((r) => r.name === roleName);
-    if (!role) continue;
-    const perms = rolePermissions[roleName] || [];
-    await prisma.role.update({
-      where: { id: role.id },
-      data: {
-        permissions: {
-          set: permissionRecords
-            .filter((p) => perms.includes(p.name))
-            .map((p) => ({ id: p.id })),
-        },
-      },
-    });
-  }
-
-  // Create a default center for admin assignment
-  const center = await prisma.center.upsert({
-    where: { name: 'Default Center' },
-    update: {},
-    create: { name: 'Default Center' },
-  });
-
-  // Create default admin user
-  const adminEmail = 'admin@example.com';
-  const adminPassword = await bcrypt.hash('Admin1234!', 10);
+  // 3. Create a center
+  const adminPassword = await bcrypt.hash('admin1234', 10);
   const adminUser = await prisma.user.upsert({
-    where: { email: adminEmail },
+    where: { email: 'admin@lms.com' },
     update: {},
     create: {
-      email: adminEmail,
+      email: 'admin@lms.com',
       password: adminPassword,
       name: 'Admin User',
       isActive: true,
     },
   });
-
-  // Assign Admin role to admin user in Default Center
-  const adminRole = roleRecords.find((r) => r.name === 'Admin');
-  await prisma.userOnCenter.upsert({
-    where: {
-      userId_centerId_roleId: {
-        userId: adminUser.id,
-        centerId: center.id,
-        roleId: adminRole!.id,
-      },
-    },
+  const center = await prisma.center.upsert({
+    where: { id: 'default-center-id' }, // Use a static id for the default center
     update: {},
     create: {
-      userId: adminUser.id,
-      centerId: center.id,
-      roleId: adminRole!.id,
+      id: 'default-center-id',
+      name: 'Default Center',
+      owner: { connect: { id: adminUser.id } },
     },
   });
 
-  // Set admin as the owner of the center
-  await prisma.center.update({
-    where: { id: center.id },
-    data: { ownerId: adminUser.id },
+  // 4. Create internal (center) roles
+  const centerRoles = [
+    { name: 'Accountant', isPublic: false },
+    { name: 'Teacher', isPublic: true },
+    { name: 'Assistant', isPublic: true },
+  ];
+  const centerRoleRecords = await Promise.all(
+    centerRoles.map((role) =>
+      prisma.role.upsert({
+        where: { name: `${role.name}_${center.id}` },
+        update: {},
+        create: {
+          name: `${role.name}_${center.id}`,
+          scope: RoleScope.CENTER,
+          centerId: center.id,
+          isPublic: role.isPublic,
+        },
+      }),
+    ),
+  );
+
+  // 5. Create a default admin user
+  // This block is now redundant as adminUser is created above
+  // const adminPassword = await bcrypt.hash('admin1234', 10);
+  // const adminUser = await prisma.user.upsert({
+  //   where: { email: 'admin@lms.com' },
+  //   update: {},
+  //   create: {
+  //     email: 'admin@lms.com',
+  //     password: adminPassword,
+  //     name: 'Admin User',
+  //     isActive: true,
+  //   },
+  // });
+
+  // 6. Assign global Admin role to admin user
+  await prisma.userRole.create({
+    data: {
+      userId: adminUser.id,
+      roleId: globalRoleRecords.find((r) => r.name === 'Admin')!.id,
+      scopeType: RoleScope.GLOBAL,
+      scopeId: null,
+    },
+  });
+
+  // 7. Assign center Accountant role to admin user
+  await prisma.userRole.create({
+    data: {
+      userId: adminUser.id,
+      roleId: centerRoleRecords.find((r) => r.name.startsWith('Accountant'))!
+        .id,
+      scopeType: RoleScope.CENTER,
+      scopeId: center.id,
+    },
+  });
+
+  // 8. Assign permissions to roles (example: Admin gets all, Accountant gets payment:view, student:view)
+  const adminRoleId = globalRoleRecords.find((r) => r.name === 'Admin')!.id;
+  for (const perm of permissionRecords) {
+    await prisma.rolePermission.create({
+      data: { roleId: adminRoleId, permissionId: perm.id },
+    });
+  }
+  const accountantRoleId = centerRoleRecords.find((r) =>
+    r.name.startsWith('Accountant'),
+  )!.id;
+  for (const permName of ['payment:view', 'student:view']) {
+    const perm = permissionRecords.find((p) => p.action === permName)!;
+    await prisma.rolePermission.create({
+      data: { roleId: accountantRoleId, permissionId: perm.id },
+    });
+  }
+
+  // 9. Example: assign a user-specific override
+  await prisma.userPermission.create({
+    data: {
+      userId: adminUser.id,
+      permissionId: permissionRecords.find(
+        (p) => p.action === 'support:handle',
+      )!.id,
+      scopeType: RoleScope.CENTER,
+      scopeId: center.id,
+    },
   });
 
   console.log('Seed complete!');
-  // TODO: When adding new features/endpoints, update permissions and rolePermissions above
 }
 
 main()

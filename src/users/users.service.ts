@@ -10,10 +10,10 @@ import { PrismaService } from '../shared/prisma.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { InviteUserDto } from './dto/invite-user.dto';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { MailerService } from '../shared/mail/mailer.service';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -80,70 +80,44 @@ export class UsersService {
     return { message: 'Password changed successfully' };
   }
 
-  async inviteUser(dto: InviteUserDto) {
-    let user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
-    if (user) {
-      this.logger.warn(`User already exists: ${dto.email}`);
-      throw new BadRequestException('User already exists');
+  async createUser(dto: CreateUserDto) {
+    let password = dto.password;
+    if (!password) {
+      password = Math.random().toString(36).slice(-8) + Date.now();
     }
-    user = await this.prisma.user.create({
+    const hash = await bcrypt.hash(password, 10);
+    const user = await this.prisma.user.create({
       data: {
         email: dto.email,
         name: dto.fullName,
-        isActive: false,
-        password: '',
+        password: hash,
+        isActive: true,
+      },
+      include: {
+        centers: true,
+        userPermissions: true,
+        teacherUsers: true,
       },
     });
-    // Generate invitation token
-    const token = randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
-    await this.prisma.inviteToken.create({
-      data: {
-        userId: user.id,
-        token,
-        expiresAt,
-      },
-    });
-    // Send invitation email
-    const inviteUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/accept-invite?token=${token}`;
-    await this.mailer.sendMail(
-      dto.email,
-      'You are invited to join LMS SaaS',
-      `<p>Hello ${dto.fullName},</p><p>You have been invited to join LMS SaaS. Please accept your invitation by clicking <a href="${inviteUrl}">here</a>. This link will expire in 24 hours.</p>`,
-    );
-    this.logger.log(`Invited user by email: ${dto.email}`);
-    return { message: 'User invited', userId: user.id };
+    this.logger.log(`Created user ${user.email} (${user.id})`);
+    const { password: _, ...rest } = user;
+    void _;
+    return rest;
   }
 
-  async acceptInvite(token: string, password: string, fullName?: string) {
-    const invite = await this.prisma.inviteToken.findUnique({
-      where: { token },
-      include: { user: true },
-    });
-    if (!invite) {
-      throw new BadRequestException('Invalid or expired invite token');
-    }
-    if (invite.expiresAt < new Date()) {
-      throw new BadRequestException('Invite token has expired');
-    }
-    if (invite.user.isActive) {
-      throw new BadRequestException('User is already active');
-    }
-    const hash = await bcrypt.hash(password, 10);
-    await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: invite.userId },
-        data: {
-          password: hash,
-          isActive: true,
-          name: fullName ?? invite.user.name,
+  async listUsers() {
+    const users = await this.prisma.user.findMany({
+      include: {
+        centers: {
+          include: { center: true, role: true },
         },
-      });
-      await tx.inviteToken.delete({ where: { token } });
+        userPermissions: true,
+        teacherUsers: {
+          include: { role: true, teacher: true },
+        },
+      },
     });
-    this.logger.log(`Invite accepted for user: ${invite.user.email}`);
-    return { message: 'Invite accepted. You can now log in.' };
+    this.logger.log('Listed all users');
+    return users.map(({ password, ...rest }) => rest);
   }
 }
