@@ -1,12 +1,12 @@
 import {
   Controller,
-  Post,
   Get,
-  Put,
+  Post,
+  Patch,
   Delete,
   Param,
   Body,
-  Query,
+  Logger,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -14,20 +14,19 @@ import {
 import { SchedulesService } from './schedules.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
-import { QuerySessionsDto } from './dto/query-sessions.dto';
 import { SessionResponseDto } from './dto/session-response.dto';
 import {
   ApiTags,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
-  ApiQuery,
   ApiParam,
 } from '@nestjs/swagger';
 import { GetUser } from '../shared/decorators/get-user.decorator';
 import { CurrentUser as CurrentUserType } from '../shared/types/current-user.type';
 import { PermissionsGuard } from '../shared/guards/permissions.guard';
 import { Permissions } from '../access-control/decorators/permissions.decorator';
+import { Paginate, PaginateQuery } from 'nestjs-paginate';
 
 @ApiTags('schedules')
 @ApiBearerAuth()
@@ -61,29 +60,13 @@ export class SchedulesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List class sessions (filterable)' })
-  @ApiQuery({ name: 'teacherId', required: false, type: String })
-  @ApiQuery({ name: 'centerId', required: false, type: String })
-  @ApiQuery({ name: 'groupId', required: false, type: String })
-  @ApiQuery({ name: 'subjectId', required: false, type: String })
-  @ApiQuery({ name: 'dateFrom', required: false, type: String })
-  @ApiQuery({ name: 'dateTo', required: false, type: String })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiResponse({
-    status: 200,
-    schema: { example: { sessions: [], total: 0, page: 1, limit: 10 } },
-  })
-  @UseGuards(PermissionsGuard)
-  @Permissions('schedules:read')
-  async list(
-    @Query() query: QuerySessionsDto,
-    @GetUser() user: CurrentUserType,
-  ) {
-    return this.schedulesService.listSessions(query, user);
+  @ApiOperation({ summary: 'List all class sessions' })
+  @ApiResponse({ status: 200, description: 'List of class sessions' })
+  async listSessions(@Paginate() query: PaginateQuery) {
+    return this.schedulesService.listSessions(query);
   }
 
-  @Put(':id')
+  @Patch(':id')
   @ApiOperation({ summary: 'Update class session by ID' })
   @ApiParam({ name: 'id', description: 'Session ID' })
   @ApiResponse({ status: 200, type: SessionResponseDto })

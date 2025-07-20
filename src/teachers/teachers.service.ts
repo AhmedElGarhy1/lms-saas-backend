@@ -3,19 +3,20 @@ import {
   NotFoundException,
   ConflictException,
   ForbiddenException,
+  BadRequestException,
+  Inject,
+  LoggerService,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
 import {
   CreateTeacherDto,
   UpdateTeacherDto,
   TeacherResponseDto,
-  TeacherListResponseDto,
 } from './dto/teacher.dto';
 import { Logger } from 'winston';
-import { Inject } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { User } from '@prisma/client';
 import { CurrentUser } from '../shared/types/current-user.type';
+import { PaginateQuery } from 'nestjs-paginate';
 
 @Injectable()
 export class TeachersService {
@@ -240,63 +241,53 @@ export class TeachersService {
   }
 
   async getAllTeachers(
-    page: number = 1,
-    limit: number = 10,
+    query: PaginateQuery,
     currentUser: CurrentUser,
-  ): Promise<TeacherListResponseDto> {
-    try {
-      // Only admins and center owners can list all teachers
-      if (!(await this.isAdminOrCenterOwner(currentUser))) {
-        throw new ForbiddenException('Access denied');
-      }
-
-      const skip = (page - 1) * limit;
-      const numericLimit = Number(limit);
-
-      const [teachers, total] = await Promise.all([
-        this.prisma.teacher.findMany({
-          skip,
-          take: numericLimit,
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        }),
-        this.prisma.teacher.count(),
-      ]);
-
-      this.logger.info('Teachers list retrieved', {
-        requestedBy: currentUser.id,
-        page,
-        limit: numericLimit,
-        total,
-        action: 'GET_ALL_TEACHERS',
-      });
-
-      return {
-        teachers: teachers.map((teacher) => this.mapToResponseDto(teacher)),
-        total,
-        page: Number(page),
-        limit: numericLimit,
+  ): Promise<any> {
+    if (!(await this.isAdminOrCenterOwner(currentUser))) {
+      throw new ForbiddenException('Access denied');
+    }
+    const where: any = {};
+    if (
+      query.filter &&
+      typeof query.filter === 'object' &&
+      'name' in query.filter
+    ) {
+      where.user = {
+        name: { contains: query.filter.name as string, mode: 'insensitive' },
       };
-    } catch (error) {
-      this.logger.error('Failed to get all teachers', {
-        error: error.message,
-        requestedBy: currentUser.id,
+    }
+    const orderBy = query.sortBy?.length
+      ? { [query.sortBy[0][0]]: query.sortBy[0][1] as 'asc' | 'desc' }
+      : { createdAt: 'desc' as const };
+
+    // Manual pagination
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const [teachers, total] = await Promise.all([
+      this.prisma.teacher.findMany({
+        where,
+        include: {
+          user: true,
+        },
+        orderBy,
+        skip,
+        take: limit,
+      }),
+      this.prisma.teacher.count({ where }),
+    ]);
+
+    return {
+      data: teachers,
+      meta: {
+        total,
         page,
         limit,
-        action: 'GET_ALL_TEACHERS',
-      });
-      throw error;
-    }
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async incrementProfileViews(

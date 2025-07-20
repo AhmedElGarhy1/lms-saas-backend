@@ -29,6 +29,7 @@ export class RolesGuard implements CanActivate {
     if (!user) {
       throw new ForbiddenException('User not authenticated');
     }
+
     // Extract context (scopeType, scopeId) from request (body, params, or headers)
     const scopeType =
       request.body?.scopeType ||
@@ -40,14 +41,17 @@ export class RolesGuard implements CanActivate {
       request.params?.scopeId ||
       request.headers['x-scope-id'] ||
       null;
+
     // Query user roles in the given scope
     const userRoles = await this.prisma.userRole.findMany({
       where: { userId: user.id, scopeType, scopeId },
       include: { role: true },
     });
+
     const hasRole = userRoles.some((ur) =>
       requiredRoles.includes(ur.role.name),
     );
+
     if (!hasRole) {
       throw new ForbiddenException('Insufficient role');
     }

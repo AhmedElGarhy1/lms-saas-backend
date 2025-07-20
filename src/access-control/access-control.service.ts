@@ -23,7 +23,7 @@ export class AccessControlService {
       data: {
         name: dto.name,
         scope: RoleScope.GLOBAL,
-        isPublic: dto.isPublic ?? false,
+        isAdmin: dto.isAdmin ?? false,
         metadata: dto.metadata,
       },
     });
@@ -41,7 +41,7 @@ export class AccessControlService {
         name: dto.name,
         scope: RoleScope.CENTER,
         centerId: dto.centerId,
-        isPublic: dto.isPublic ?? false,
+        isAdmin: dto.isAdmin ?? false,
         metadata: dto.metadata,
       },
     });
@@ -50,7 +50,10 @@ export class AccessControlService {
   // Create a permission
   async createPermission(dto: CreatePermissionDto) {
     return this.prisma.permission.create({
-      data: { action: dto.action },
+      data: {
+        action: dto.action,
+        isAdmin: dto.isAdmin ?? false,
+      },
     });
   }
 
@@ -151,5 +154,79 @@ export class AccessControlService {
     const userPermActions = userPerms.map((up) => up.permission.action);
     // 5. Combine and dedupe
     return Array.from(new Set([...userPermActions, ...rolePerms]));
+  }
+
+  // Get all permissions
+  async getAllPermissions() {
+    return this.prisma.permission.findMany({
+      orderBy: { action: 'asc' },
+    });
+  }
+
+  // Get global roles
+  async getGlobalRoles() {
+    return this.prisma.role.findMany({
+      where: { scope: RoleScope.GLOBAL },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  // Get internal (center) roles by centerId
+  async getInternalRoles(centerId: string) {
+    return this.prisma.role.findMany({
+      where: {
+        scope: RoleScope.CENTER,
+        centerId: centerId,
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  // Get all roles (global + internal for a specific center)
+  async getAllRoles(centerId?: string) {
+    const whereClause: any = {};
+
+    if (centerId) {
+      whereClause.OR = [
+        { scope: RoleScope.GLOBAL },
+        { scope: RoleScope.CENTER, centerId: centerId },
+      ];
+    } else {
+      whereClause.scope = RoleScope.GLOBAL;
+    }
+
+    return this.prisma.role.findMany({
+      where: whereClause,
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  // Get admin roles (global + internal for a specific center)
+  async getAdminRoles(centerId?: string) {
+    const whereClause: any = {
+      isAdmin: true,
+    };
+
+    if (centerId) {
+      whereClause.OR = [
+        { scope: RoleScope.GLOBAL },
+        { scope: RoleScope.CENTER, centerId: centerId },
+      ];
+    } else {
+      whereClause.scope = RoleScope.GLOBAL;
+    }
+
+    return this.prisma.role.findMany({
+      where: whereClause,
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  // Get admin permissions
+  async getAdminPermissions() {
+    return this.prisma.permission.findMany({
+      where: { isAdmin: true },
+      orderBy: { action: 'asc' },
+    });
   }
 }

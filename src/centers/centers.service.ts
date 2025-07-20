@@ -1,6 +1,5 @@
 import {
   Injectable,
-  Logger,
   NotFoundException,
   BadRequestException,
   Inject,
@@ -12,6 +11,7 @@ import { UpdateCenterDto } from './dto/update-center.dto';
 import { AddMemberDto } from './dto/add-member.dto';
 import { ChangeMemberRoleDto } from './dto/change-member-role.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { PaginateQuery } from 'nestjs-paginate';
 
 @Injectable()
 export class CentersService {
@@ -72,13 +72,56 @@ export class CentersService {
     return center;
   }
 
-  async listCentersForUser(userId: string) {
-    const centers = await this.prisma.userOnCenter.findMany({
+  async listCentersForUser(userId: string, query: PaginateQuery): Promise<any> {
+    // Find all centers for the user
+    const userCenters = await this.prisma.userOnCenter.findMany({
       where: { userId },
       include: { center: true },
     });
-    this.logger.log(`Listed centers for user ${userId}`);
-    return centers.map((uoc) => uoc.center).filter((c) => !c.deletedAt);
+    const centerIds = userCenters.map((uoc) => uoc.centerId);
+
+    // Build where clause
+    const where: any = { id: { in: centerIds }, deletedAt: null };
+    if (
+      query.filter &&
+      typeof query.filter === 'object' &&
+      'name' in query.filter
+    ) {
+      where.name = {
+        contains: query.filter.name as string,
+        mode: 'insensitive',
+      };
+    }
+
+    // Build orderBy clause
+    const orderBy = query.sortBy?.length
+      ? { [query.sortBy[0][0]]: query.sortBy[0][1] as 'asc' | 'desc' }
+      : { name: 'asc' as const };
+
+    // Manual pagination
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const [centers, total] = await Promise.all([
+      this.prisma.center.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+      }),
+      this.prisma.center.count({ where }),
+    ]);
+
+    return {
+      data: centers,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   // Member management

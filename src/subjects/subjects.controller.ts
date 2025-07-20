@@ -1,13 +1,12 @@
 import {
   Controller,
-  Logger,
-  Post,
   Get,
+  Post,
   Patch,
   Delete,
   Param,
   Body,
-  Query,
+  Logger,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -16,16 +15,18 @@ import {
   ApiResponse,
   ApiBody,
   ApiParam,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { SubjectsService } from './subjects.service';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
-import { AssignTeacherDto } from './dto/assign-teacher.dto';
+import { SubjectDto } from './dto/subject.dto';
+import { GetUser } from '../shared/decorators/get-user.decorator';
+import { CurrentUser as CurrentUserType } from '../shared/types/current-user.type';
 import { Roles } from '../access-control/decorators/roles.decorator';
 import { RolesGuard } from '../access-control/guards/roles.guard';
 import { ContextGuard } from '../access-control/guards/context.guard';
-import { SubjectDto } from './dto/subject.dto';
+import { Paginate, PaginateQuery } from 'nestjs-paginate';
+import { AssignTeacherDto } from '../shared/dto/assign-teacher.dto';
 
 // Apply ContextGuard globally to ensure scopeType/scopeId are set
 @UseGuards(ContextGuard)
@@ -85,27 +86,14 @@ export class SubjectsController {
   @Roles('Admin', 'Owner', 'Teacher', 'Support')
   @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'List subjects (with optional filtering)' })
-  @ApiQuery({
-    name: 'centerId',
-    required: false,
-    description: 'Center ID to filter by',
-  })
-  @ApiQuery({
-    name: 'gradeLevelId',
-    required: false,
-    description: 'Grade level ID to filter by',
-  })
   @ApiResponse({
     status: 200,
     description: 'List of subjects',
     type: SubjectDto,
     isArray: true,
   })
-  async listSubjects(
-    @Query('centerId') centerId?: string,
-    @Query('gradeLevelId') gradeLevelId?: string,
-  ) {
-    return this.subjectsService.listSubjects(centerId, gradeLevelId);
+  async listSubjects(@Paginate() query: PaginateQuery) {
+    return this.subjectsService.listSubjects(query);
   }
 
   // Assignment management - Only Owners/Admins/Teachers can assign teachers

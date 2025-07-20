@@ -1,86 +1,50 @@
+import { IsEmail, IsString, IsOptional, IsEnum, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsUUID,
-  IsNumber,
-  IsInt,
-  Min,
-  Max,
-  IsNotEmpty,
-} from 'class-validator';
 import { StudentGrade } from '@prisma/client';
 
 export class CreateStudentDto {
-  @ApiProperty({
-    type: String,
-    format: 'uuid',
-    description: 'User ID for the student',
-  })
-  @IsUUID()
-  userId: string;
+  @ApiProperty({ description: 'Student email address' })
+  @IsEmail()
+  email: string;
 
-  @ApiProperty({
-    type: String,
-    format: 'uuid',
-    required: false,
-    description: 'Teacher ID if student belongs to a freelance teacher',
-  })
-  @IsUUID()
-  @IsOptional()
-  teacherId?: string;
+  @ApiProperty({ description: 'Student full name' })
+  @IsString()
+  name: string;
 
-  @ApiProperty({
-    type: String,
-    format: 'uuid',
-    required: false,
-    description: 'Center ID if student belongs to a center',
-  })
-  @IsUUID()
-  @IsOptional()
-  centerId?: string;
+  @ApiProperty({ description: 'Student password' })
+  @IsString()
+  password: string;
 
-  @ApiProperty({ enum: StudentGrade, description: 'Student grade (enum)' })
+  @ApiProperty({ description: 'Student grade level', enum: StudentGrade })
   @IsEnum(StudentGrade)
   grade: StudentGrade;
 
-  @ApiPropertyOptional({
-    description:
-      'Academic level or curriculum (e.g. IGCSE, American, National)',
-  })
-  @IsString()
+  @ApiPropertyOptional({ description: 'Student level within grade' })
   @IsOptional()
+  @IsString()
   level?: string;
 
-  @ApiPropertyOptional({
-    type: String,
-    format: 'uuid',
-    description: 'Guardian ID if linked',
-  })
-  @IsUUID()
+  @ApiPropertyOptional({ description: 'Guardian ID' })
   @IsOptional()
+  @IsUUID()
   guardianId?: string;
 
-  @ApiPropertyOptional({ description: 'Performance score (float)' })
-  @IsNumber()
+  @ApiPropertyOptional({ description: 'Teacher ID (for freelance teachers)' })
+  @IsOptional()
+  @IsUUID()
+  teacherId?: string;
+
+  @ApiPropertyOptional({ description: 'Center ID to add student to' })
+  @IsOptional()
+  @IsString()
+  centerId?: string;
+
+  @ApiPropertyOptional({ description: 'Student performance score' })
   @IsOptional()
   performanceScore?: number;
 
-  @ApiPropertyOptional({ description: 'Total sessions attended', default: 0 })
-  @IsInt()
-  @Min(0)
+  @ApiPropertyOptional({ description: 'Additional notes about the student' })
   @IsOptional()
-  totalSessionsAttended?: number;
-
-  @ApiPropertyOptional({ description: 'Total payments (float)', default: 0 })
-  @IsNumber()
-  @Min(0)
-  @IsOptional()
-  totalPayments?: number;
-
-  @ApiPropertyOptional({ description: 'Notes about the student' })
   @IsString()
-  @IsOptional()
   notes?: string;
 }

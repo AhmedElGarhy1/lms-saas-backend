@@ -27,7 +27,6 @@ export class RefreshTokenStrategy extends PassportStrategy(
 ) {
   constructor(config: ConfigService) {
     super({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       jwtFromRequest: ExtractJwt.fromBodyField('refreshToken'),
       ignoreExpiration: false,
       secretOrKey: config.getOrThrow<string>('JWT_SECRET'),

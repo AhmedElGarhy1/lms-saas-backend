@@ -1,13 +1,12 @@
 import {
   Controller,
-  Logger,
-  Post,
   Get,
+  Post,
   Patch,
   Delete,
   Param,
   Body,
-  Query,
+  Logger,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -16,17 +15,19 @@ import {
   ApiResponse,
   ApiBody,
   ApiParam,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { GroupsService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
-import { AssignStudentDto } from './dto/assign-student.dto';
-import { AssignTeacherDto } from './dto/assign-teacher.dto';
+import { GroupDto } from './dto/group.dto';
+import { GetUser } from '../shared/decorators/get-user.decorator';
+import { CurrentUser as CurrentUserType } from '../shared/types/current-user.type';
 import { Roles } from '../access-control/decorators/roles.decorator';
 import { RolesGuard } from '../access-control/guards/roles.guard';
 import { ContextGuard } from '../access-control/guards/context.guard';
-import { GroupDto } from './dto/group.dto';
+import { Paginate, PaginateQuery } from 'nestjs-paginate';
+import { AssignStudentDto } from '../shared/dto/assign-student.dto';
+import { AssignTeacherDto } from '../shared/dto/assign-teacher.dto';
 
 // Apply ContextGuard globally to ensure scopeType/scopeId are set
 @UseGuards(ContextGuard)
@@ -86,27 +87,14 @@ export class GroupsController {
   @Roles('Admin', 'Owner', 'Teacher', 'Support')
   @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'List groups (with optional filtering)' })
-  @ApiQuery({
-    name: 'centerId',
-    required: false,
-    description: 'Center ID to filter by',
-  })
-  @ApiQuery({
-    name: 'gradeLevelId',
-    required: false,
-    description: 'Grade level ID to filter by',
-  })
   @ApiResponse({
     status: 200,
     description: 'List of groups',
     type: GroupDto,
     isArray: true,
   })
-  async listGroups(
-    @Query('centerId') centerId?: string,
-    @Query('gradeLevelId') gradeLevelId?: string,
-  ) {
-    return this.groupsService.listGroups(centerId, gradeLevelId);
+  async listGroups(@Paginate() query: PaginateQuery) {
+    return this.groupsService.listGroups(query);
   }
 
   // Assignment management - Only Owners/Admins/Teachers can assign students

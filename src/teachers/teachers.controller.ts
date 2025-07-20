@@ -2,37 +2,35 @@ import {
   Controller,
   Get,
   Post,
-  Put,
+  Patch,
   Delete,
-  Body,
   Param,
-  Query,
+  Body,
+  Logger,
   UseGuards,
-  HttpStatus,
+  Put,
   HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiParam,
-  ApiQuery,
-  ApiBearerAuth,
   ApiBody,
+  ApiParam,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { TeachersService } from './teachers.service';
-import {
-  CreateTeacherDto,
-  UpdateTeacherDto,
-  TeacherResponseDto,
-  TeacherListResponseDto,
-  IncrementProfileViewsDto,
-} from './dto/teacher.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { PermissionsGuard } from '../shared/guards/permissions.guard';
+import { CreateTeacherDto } from './dto/teacher.dto';
+import { UpdateTeacherDto } from './dto/teacher.dto';
+import { TeacherResponseDto } from './dto/teacher.dto';
+import { TeacherListResponseDto } from './dto/teacher.dto';
 import { GetUser } from '../shared/decorators/get-user.decorator';
 import { CurrentUser as CurrentUserType } from '../shared/types/current-user.type';
+import { PermissionsGuard } from '../access-control/guards/permissions.guard';
 import { Permissions } from '../access-control/decorators/permissions.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Paginate, PaginateQuery } from 'nestjs-paginate';
 
 @ApiTags('Teachers')
 @ApiBearerAuth()
@@ -181,25 +179,12 @@ export class TeachersController {
     );
   }
 
+  @Permissions('teachers:read')
   @Get()
   @ApiOperation({
     summary: 'Get all teachers',
     description:
       'Retrieves a paginated list of all teachers. Only admins and center owners can access this endpoint.',
-  })
-  @ApiQuery({
-    name: 'page',
-    description: 'Page number',
-    required: false,
-    type: Number,
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: 'Number of items per page',
-    required: false,
-    type: Number,
-    example: 10,
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -210,13 +195,11 @@ export class TeachersController {
     status: HttpStatus.FORBIDDEN,
     description: 'Access denied',
   })
-  @Permissions('teachers:read')
   async getAllTeachers(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Paginate() query: PaginateQuery,
     @GetUser() currentUser: CurrentUserType,
   ): Promise<TeacherListResponseDto> {
-    return this.teachersService.getAllTeachers(page, limit, currentUser);
+    return this.teachersService.getAllTeachers(query, currentUser);
   }
 
   @Post(':id/views')

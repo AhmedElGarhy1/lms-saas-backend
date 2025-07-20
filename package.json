@@ -17,7 +17,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "create-super-admin": "ts-node scripts/create-super-admin.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.846.0",
@@ -38,6 +39,7 @@
     "helmet": "^8.1.0",
     "ioredis": "^5.6.1",
     "nest-winston": "^1.10.2",
+    "nestjs-paginate": "^12.5.1",
     "nodemailer": "^6.10.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

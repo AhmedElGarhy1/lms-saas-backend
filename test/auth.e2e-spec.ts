@@ -42,7 +42,6 @@ describe('AuthController (e2e)', () => {
   });
 
   it('/auth/signup (POST) - success', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const res: request.Response = await server
       .post('/auth/signup')
       .send({ email: testEmail, password: testPassword, fullName: testName });

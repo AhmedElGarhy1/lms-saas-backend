@@ -12,69 +12,18 @@ import { GetUser } from '../shared/decorators/get-user.decorator';
 import { CurrentUser as CurrentUserType } from '../shared/types/current-user.type';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { Public } from '../shared/decorators/public.decorator';
 import { RolesGuard } from '../access-control/guards/roles.guard';
 import { Roles } from '../access-control/decorators/roles.decorator';
 import { PermissionsGuard } from '../access-control/guards/permissions.guard';
 import { Permissions } from '../access-control/decorators/permissions.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
-import { ApiBody, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { ApiProperty } from '@nestjs/swagger';
-
-class UpdateProfileExample {
-  @ApiProperty({
-    description: 'The new username for the user.',
-    example: 'newusername',
-  })
-  username: string;
-
-  @ApiProperty({
-    description: 'The new email for the user.',
-    example: 'newemail@example.com',
-  })
-  email: string;
-}
-
-class ChangePasswordExample {
-  @ApiProperty({
-    description: 'The current password of the user.',
-    example: 'oldpassword',
-  })
-  currentPassword: string;
-
-  @ApiProperty({
-    description: 'The new password for the user.',
-    example: 'newpassword',
-  })
-  newPassword: string;
-}
-
-class CreateUserExample {
-  @ApiProperty({
-    description: 'The username for the new user.',
-    example: 'newadmin',
-  })
-  username: string;
-
-  @ApiProperty({
-    description: 'The email for the new user.',
-    example: 'admin@example.com',
-  })
-  email: string;
-
-  @ApiProperty({
-    description: 'The password for the new user.',
-    example: 'adminpassword',
-  })
-  password: string;
-}
+import { ApiBody, ApiResponse } from '@nestjs/swagger';
+import { Paginate, PaginateQuery } from 'nestjs-paginate';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @UseGuards(RolesGuard)
-  @Roles('User')
   @Get('me')
   @ApiResponse({
     status: 200,
@@ -214,7 +163,7 @@ export class UsersController {
       },
     },
   })
-  listUsers() {
-    return this.usersService.listUsers();
+  listUsers(@Paginate() query: PaginateQuery) {
+    return this.usersService.listUsers(query);
   }
 }

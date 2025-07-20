@@ -11,14 +11,13 @@ import { SharedModule } from '../shared/shared.module';
 @Module({
   imports: [
     SharedModule,
-    ConfigModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.get('JWT_SECRET'),
-        signOptions: { expiresIn: '15m' },
+        signOptions: { expiresIn: '1d' },
       }),
     }),
   ],

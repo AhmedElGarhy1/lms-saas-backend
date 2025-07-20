@@ -63,14 +63,13 @@ model Center {
   gradeLevels GradeLevel[]
   groups      Group[]
   subjects    Subject[]
-  students    Student[]
   classSessions ClassSession[]
 }
 
 model Role {
   id              String           @id @default(uuid())
   name            String           @unique
-  isPublic        Boolean          @default(false)
+  isAdmin         Boolean          @default(false)
   metadata        Json?
   rolePermissions RolePermission[]
   userRoles       UserRole[]
@@ -84,6 +83,7 @@ model Role {
 model Permission {
   id              String           @id @default(uuid())
   action          String           @unique
+  isAdmin         Boolean          @default(false)
   rolePermissions RolePermission[]
   userPermissions UserPermission[]
 }
@@ -277,7 +277,6 @@ model Student {
   id                     String   @id @default(uuid())
   userId                 String   @unique
   teacherId              String? // FK if student belongs to a freelance teacher
-  centerId               String? // FK if student belongs to a center
   grade                  StudentGrade
   level                  String?
   guardianId             String?
@@ -291,7 +290,6 @@ model Student {
   // Relations
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   teacher     Teacher?  @relation(fields: [teacherId], references: [id])
-  center      Center?   @relation(fields: [centerId], references: [id])
   guardian    Guardian? @relation(fields: [guardianId], references: [id])
   groups      Group[]   @relation("StudentGroups")
   // payments   Payment[] // Uncomment if Payment model exists

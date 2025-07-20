@@ -1,17 +1,17 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
+  BadRequestException,
   Inject,
   LoggerService,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
-import { QuerySessionsDto } from './dto/query-sessions.dto';
-import { SessionResponseDto } from './dto/session-response.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { PaginateQuery, paginate } from 'nestjs-paginate';
 import { CurrentUser } from '../shared/types/current-user.type';
+import { SessionResponseDto } from './dto/session-response.dto';
 
 function toSessionResponseDto(session: any): SessionResponseDto {
   return {
@@ -72,7 +72,7 @@ export class SchedulesService {
     });
     if (!session) throw new NotFoundException('Session not found');
     if (!(await this.canManageSession(currentUser, session)))
-      throw new ForbiddenException('Access denied');
+      throw new BadRequestException('Access denied');
     const updated = await this.prisma.classSession.update({
       where: { id },
       data: { ...dto },
@@ -88,7 +88,7 @@ export class SchedulesService {
     });
     if (!session) throw new NotFoundException('Session not found');
     if (!(await this.canManageSession(currentUser, session)))
-      throw new ForbiddenException('Access denied');
+      throw new BadRequestException('Access denied');
     await this.prisma.classSession.delete({ where: { id } });
     this.logger.log(`Session deleted: ${id} by user ${currentUser.id}`);
   }
@@ -107,52 +107,88 @@ export class SchedulesService {
     return toSessionResponseDto(session);
   }
 
-  async listSessions(
-    query: QuerySessionsDto,
-    currentUser: CurrentUser,
-  ): Promise<{
-    sessions: SessionResponseDto[];
-    total: number;
-    page: number;
-    limit: number;
-  }> {
-    const {
-      teacherId,
-      centerId,
-      groupId,
-      subjectId,
-      dateFrom,
-      dateTo,
-      page = 1,
-      limit = 10,
-    } = query;
+  async listSessions(query: PaginateQuery): Promise<any> {
     const where: any = {};
-    if (teacherId) where.teacherId = teacherId;
-    if (centerId) where.centerId = centerId;
-    if (groupId) where.groupId = groupId;
-    if (subjectId) where.subjectId = subjectId;
-    if (dateFrom || dateTo) {
-      where.AND = [];
-      if (dateFrom) where.AND.push({ startTime: { gte: new Date(dateFrom) } });
-      if (dateTo) where.AND.push({ endTime: { lte: new Date(dateTo) } });
+    if (
+      query.filter &&
+      typeof query.filter === 'object' &&
+      'teacherId' in query.filter
+    ) {
+      where.teacherId = query.filter.teacherId as string;
     }
-    // RBAC: Only authorized users or students in group can view
-    // ...
+    if (
+      query.filter &&
+      typeof query.filter === 'object' &&
+      'centerId' in query.filter
+    ) {
+      where.centerId = query.filter.centerId as string;
+    }
+    if (
+      query.filter &&
+      typeof query.filter === 'object' &&
+      'groupId' in query.filter
+    ) {
+      where.groupId = query.filter.groupId as string;
+    }
+    if (
+      query.filter &&
+      typeof query.filter === 'object' &&
+      'subjectId' in query.filter
+    ) {
+      where.subjectId = query.filter.subjectId as string;
+    }
+    if (
+      query.filter &&
+      typeof query.filter === 'object' &&
+      'dateFrom' in query.filter
+    ) {
+      where.AND = where.AND || [];
+      where.AND.push({
+        startTime: { gte: new Date(query.filter.dateFrom as string) },
+      });
+    }
+    if (
+      query.filter &&
+      typeof query.filter === 'object' &&
+      'dateTo' in query.filter
+    ) {
+      where.AND = where.AND || [];
+      where.AND.push({
+        endTime: { lte: new Date(query.filter.dateTo as string) },
+      });
+    }
+    const orderBy = query.sortBy?.length
+      ? { [query.sortBy[0][0]]: query.sortBy[0][1] as 'asc' | 'desc' }
+      : { startTime: 'asc' as const };
+
+    // Manual pagination
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+
     const [sessions, total] = await Promise.all([
       this.prisma.classSession.findMany({
         where,
-        skip: (page - 1) * limit,
+        include: {
+          teacher: true,
+          group: true,
+          subject: true,
+        },
+        orderBy,
+        skip,
         take: limit,
-        include: { teacher: true, center: true, group: true, subject: true },
       }),
       this.prisma.classSession.count({ where }),
     ]);
-    this.logger.log(`Sessions listed by user ${currentUser.id}`);
+
     return {
-      sessions: sessions.map(toSessionResponseDto),
-      total,
-      page,
-      limit,
+      data: sessions,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 }

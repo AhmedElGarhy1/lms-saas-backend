@@ -1,15 +1,16 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsOptional,
+  IsInt,
   IsUUID,
   IsDateString,
+  Min,
+  Max,
   IsBoolean,
-  Validate,
-  ValidateIf,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ValidateStartBeforeEnd } from './validate-start-before-end';
+import { Validate } from 'class-validator';
 
 export class CreateSessionDto {
   @ApiProperty({ description: 'Session title' })

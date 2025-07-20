@@ -1,27 +1,34 @@
 import {
-  Body,
   Controller,
+  Get,
   Post,
   Patch,
-  Get,
-  Query,
+  Delete,
+  Param,
+  Body,
+  Logger,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
-  ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiBody,
+  ApiParam,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
+import { CreateAttendanceDto } from './dto/create-attendance.dto';
+import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
-import { EditAttendanceDto } from './dto/edit-attendance.dto';
-import { QueryAttendanceDto } from './dto/query-attendance.dto';
-import { AttendanceResponseDto } from './dto/attendance-response.dto';
 import { GetUser } from '../shared/decorators/get-user.decorator';
 import { CurrentUser } from '../shared/types/current-user.type';
-import { PermissionsGuard } from '../shared/guards/permissions.guard';
+import { PermissionsGuard } from '../access-control/guards/permissions.guard';
+import { Permissions } from '../access-control/decorators/permissions.decorator';
+import { Paginate, PaginateQuery } from 'nestjs-paginate';
+import { AttendanceResponseDto } from './dto/attendance-response.dto';
+import { EditAttendanceDto } from './dto/edit-attendance.dto';
 
 @ApiTags('Attendance')
 @ApiBearerAuth()
@@ -105,32 +112,16 @@ export class AttendanceController {
     return this.attendanceService.edit(dto, user.id);
   }
 
-  @Get('fetch')
-  @ApiOperation({ summary: 'Fetch attendance records' })
+  @Get()
+  @ApiOperation({ summary: 'List attendance records (filterable)' })
   @ApiResponse({
     status: 200,
-    description: 'Attendance records',
-    schema: {
-      example: [
-        {
-          id: 'attendance-uuid',
-          sessionId: 'session-uuid',
-          studentId: 'student-uuid',
-          status: 'PRESENT',
-          note: 'On time',
-          markedById: 'user-uuid',
-          createdAt: '2024-07-18T10:00:00.000Z',
-          updatedAt: '2024-07-18T10:00:00.000Z',
-        },
-      ],
-    },
+    schema: { example: { attendance: [], total: 0, page: 1, limit: 10 } },
   })
-  @ApiResponse({ status: 404, description: 'No attendance records found.' })
-  @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  async fetch(
-    @Query() query: QueryAttendanceDto,
-  ): Promise<AttendanceResponseDto[]> {
-    return this.attendanceService.fetch(query);
+  @UseGuards(PermissionsGuard)
+  @Permissions('attendance:read')
+  async list(@Paginate() query: PaginateQuery, @GetUser() user: CurrentUser) {
+    return this.attendanceService.listAttendance(query, user);
   }
 
   @Get('report')
@@ -150,7 +141,7 @@ export class AttendanceController {
     description: 'No attendance data found for report.',
   })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  async report(@Query() query: QueryAttendanceDto) {
+  async report(@Query() query: any) {
     return this.attendanceService.report(query);
   }
 }

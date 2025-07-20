@@ -1,4 +1,4 @@
-import { IsString } from 'class-validator';
+import { IsString, IsOptional, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePermissionDto {
@@ -8,4 +8,13 @@ export class CreatePermissionDto {
   })
   @IsString()
   action: string;
+
+  @ApiProperty({
+    description: 'Is this an admin permission?',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isAdmin?: boolean;
 }

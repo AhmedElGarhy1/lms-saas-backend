@@ -324,7 +324,11 @@ export class AuthService {
   }
 
   private async generateTokens(userId: string, email: string) {
-    const payload = { sub: userId, email };
+    const payload = {
+      sub: userId,
+      email,
+    };
+
     const accessToken = await this.jwtService.signAsync(payload, {
       expiresIn: '15m',
     });

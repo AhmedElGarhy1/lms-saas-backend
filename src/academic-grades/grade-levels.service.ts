@@ -1,8 +1,6 @@
 import {
   Injectable,
-  Logger,
   NotFoundException,
-  BadRequestException,
   Inject,
   LoggerService,
 } from '@nestjs/common';
@@ -10,9 +8,10 @@ import { PrismaService } from '../shared/prisma.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { CreateGradeLevelDto } from './dto/create-grade-level.dto';
 import { UpdateGradeLevelDto } from './dto/update-grade-level.dto';
-import { AssignStudentDto } from './dto/assign-student.dto';
+import { AssignStudentDto } from '../shared/dto/assign-student.dto';
 import { AssignGroupDto } from './dto/assign-group.dto';
 import { AssignSubjectDto } from './dto/assign-subject.dto';
+import { PaginateQuery } from 'nestjs-paginate';
 
 @Injectable()
 export class GradeLevelsService {
@@ -70,14 +69,53 @@ export class GradeLevelsService {
     return gradeLevel;
   }
 
-  async listGradeLevels(centerId?: string) {
-    const where = centerId ? { centerId } : { centerId: null };
-    const gradeLevels = await this.prisma.gradeLevel.findMany({
-      where,
-      orderBy: { level: 'asc' },
-    });
-    this.logger.log(`Listed grade levels for center ${centerId || 'global'}`);
-    return gradeLevels;
+  async listGradeLevels(query: PaginateQuery): Promise<any> {
+    const where: any = {};
+    if (
+      query.filter &&
+      typeof query.filter === 'object' &&
+      'centerId' in query.filter
+    ) {
+      where.centerId = query.filter.centerId as string;
+    }
+    if (
+      query.filter &&
+      typeof query.filter === 'object' &&
+      'name' in query.filter
+    ) {
+      where.name = {
+        contains: query.filter.name as string,
+        mode: 'insensitive',
+      };
+    }
+    const orderBy = query.sortBy?.length
+      ? { [query.sortBy[0][0]]: query.sortBy[0][1] as 'asc' | 'desc' }
+      : { level: 'asc' as const };
+
+    // Manual pagination
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const [gradeLevels, total] = await Promise.all([
+      this.prisma.gradeLevel.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+      }),
+      this.prisma.gradeLevel.count({ where }),
+    ]);
+
+    return {
+      data: gradeLevels,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   // Assignment management

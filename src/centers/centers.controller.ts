@@ -28,6 +28,7 @@ import { Roles } from '../access-control/decorators/roles.decorator';
 import { RolesGuard } from '../access-control/guards/roles.guard';
 import { ContextGuard } from '../access-control/guards/context.guard';
 import { MemberDto } from './dto/member.dto';
+import { Paginate, PaginateQuery } from 'nestjs-paginate';
 
 // Apply ContextGuard globally to ensure scopeType/scopeId are set
 @UseGuards(ContextGuard)
@@ -91,9 +92,12 @@ export class CentersController {
   @Get()
   @ApiOperation({ summary: 'List centers for current user' })
   @ApiResponse({ status: 200, description: 'List of centers' })
-  async listCentersForUser(@GetUser() user: CurrentUserType) {
+  async listCentersForUser(
+    @Paginate() query: PaginateQuery,
+    @GetUser() user: CurrentUserType,
+  ) {
     if (!user?.id) throw new BadRequestException('Missing user context');
-    return this.centersService.listCentersForUser(user.id);
+    return this.centersService.listCentersForUser(user.id, query);
   }
 
   // Member management

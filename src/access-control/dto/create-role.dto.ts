@@ -37,10 +37,10 @@ export class CreateRoleDto {
   metadata?: Record<string, any>;
 
   @ApiProperty({
-    description: 'Is this role public?',
+    description: 'Is this an admin role?',
     example: false,
     required: false,
   })
   @IsOptional()
-  isPublic?: boolean;
+  isAdmin?: boolean;
 }

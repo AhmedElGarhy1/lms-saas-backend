@@ -1,15 +1,13 @@
 import {
   Controller,
-  Logger,
-  Post,
   Get,
+  Post,
   Patch,
   Delete,
   Param,
   Body,
-  Query,
+  Logger,
   UseGuards,
-  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,12 +15,11 @@ import {
   ApiResponse,
   ApiBody,
   ApiParam,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { GradeLevelsService } from './grade-levels.service';
 import { CreateGradeLevelDto } from './dto/create-grade-level.dto';
 import { UpdateGradeLevelDto } from './dto/update-grade-level.dto';
-import { AssignStudentDto } from './dto/assign-student.dto';
+import { AssignStudentDto } from '../shared/dto/assign-student.dto';
 import { AssignGroupDto } from './dto/assign-group.dto';
 import { AssignSubjectDto } from './dto/assign-subject.dto';
 import { GetUser } from '../shared/decorators/get-user.decorator';
@@ -30,6 +27,7 @@ import { Roles } from '../access-control/decorators/roles.decorator';
 import { RolesGuard } from '../access-control/guards/roles.guard';
 import { ContextGuard } from '../access-control/guards/context.guard';
 import { GradeLevelDto } from './dto/grade-level.dto';
+import { Paginate, PaginateQuery } from 'nestjs-paginate';
 
 // Apply ContextGuard globally to ensure scopeType/scopeId are set
 @UseGuards(ContextGuard)
@@ -92,19 +90,14 @@ export class GradeLevelsController {
   @Roles('Admin', 'Owner', 'Teacher', 'Support')
   @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'List grade levels (global or by center)' })
-  @ApiQuery({
-    name: 'centerId',
-    required: false,
-    description: 'Center ID to filter by',
-  })
   @ApiResponse({
     status: 200,
     description: 'List of grade levels',
     type: GradeLevelDto,
     isArray: true,
   })
-  async listGradeLevels(@Query('centerId') centerId?: string) {
-    return this.gradeLevelsService.listGradeLevels(centerId);
+  async listGradeLevels(@Paginate() query: PaginateQuery) {
+    return this.gradeLevelsService.listGradeLevels(query);
   }
 
   // Assignment management - Only Owners/Admins/Teachers can assign students

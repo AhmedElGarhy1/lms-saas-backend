@@ -5,7 +5,6 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiBody,
-  ApiParam,
 } from '@nestjs/swagger';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';

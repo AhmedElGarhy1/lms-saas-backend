@@ -1,17 +1,17 @@
 import {
   Injectable,
-  Logger,
   NotFoundException,
   BadRequestException,
   Inject,
   LoggerService,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
-import { AssignStudentDto } from './dto/assign-student.dto';
-import { AssignTeacherDto } from './dto/assign-teacher.dto';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { AssignStudentDto } from '../shared/dto/assign-student.dto';
+import { AssignTeacherDto } from '../shared/dto/assign-teacher.dto';
+import { PaginateQuery } from 'nestjs-paginate';
 
 @Injectable()
 export class GroupsService {
@@ -68,19 +68,60 @@ export class GroupsService {
     return group;
   }
 
-  async listGroups(centerId?: string, gradeLevelId?: string) {
+  async listGroups(query: PaginateQuery): Promise<any> {
     const where: any = {};
-    if (centerId) where.centerId = centerId;
-    if (gradeLevelId) where.gradeLevelId = gradeLevelId;
+    if (
+      query.filter &&
+      typeof query.filter === 'object' &&
+      'centerId' in query.filter
+    ) {
+      where.centerId = query.filter.centerId as string;
+    }
+    if (
+      query.filter &&
+      typeof query.filter === 'object' &&
+      'gradeLevelId' in query.filter
+    ) {
+      where.gradeLevelId = query.filter.gradeLevelId as string;
+    }
+    if (
+      query.filter &&
+      typeof query.filter === 'object' &&
+      'name' in query.filter
+    ) {
+      where.name = {
+        contains: query.filter.name as string,
+        mode: 'insensitive',
+      };
+    }
+    const orderBy = query.sortBy?.length
+      ? { [query.sortBy[0][0]]: query.sortBy[0][1] as 'asc' | 'desc' }
+      : { name: 'asc' as const };
 
-    const groups = await this.prisma.group.findMany({
-      where,
-      orderBy: { name: 'asc' },
-    });
-    this.logger.log(
-      `Listed groups for center ${centerId || 'all'} and grade ${gradeLevelId || 'all'}`,
-    );
-    return groups;
+    // Manual pagination
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const [groups, total] = await Promise.all([
+      this.prisma.group.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+      }),
+      this.prisma.group.count({ where }),
+    ]);
+
+    return {
+      data: groups,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   // Assignment management

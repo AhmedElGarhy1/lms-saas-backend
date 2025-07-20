@@ -2,7 +2,6 @@ import {
   Injectable,
   Inject,
   LoggerService,
-  BadRequestException,
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
@@ -11,9 +10,8 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
-import { MailerService } from '../shared/mail/mailer.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { PaginateQuery } from 'nestjs-paginate';
 
 @Injectable()
 export class UsersService {
@@ -21,7 +19,6 @@ export class UsersService {
     private readonly prisma: PrismaService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
-    private readonly mailer: MailerService,
   ) {}
 
   async getProfile(userId: string) {
@@ -105,19 +102,54 @@ export class UsersService {
     return rest;
   }
 
-  async listUsers() {
-    const users = await this.prisma.user.findMany({
-      include: {
-        centers: {
-          include: { center: true, role: true },
+  async listUsers(query: PaginateQuery): Promise<any> {
+    const where: any = {};
+    if (
+      query.filter &&
+      typeof query.filter === 'object' &&
+      'name' in query.filter
+    ) {
+      where.name = {
+        contains: query.filter.name as string,
+        mode: 'insensitive',
+      };
+    }
+    const orderBy = query.sortBy?.length
+      ? { [query.sortBy[0][0]]: query.sortBy[0][1] as 'asc' | 'desc' }
+      : { createdAt: 'desc' as const };
+
+    // Manual pagination
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        include: {
+          centers: {
+            include: { center: true, role: true },
+          },
+          userPermissions: true,
+          teacherUsers: {
+            include: { role: true, teacher: true },
+          },
         },
-        userPermissions: true,
-        teacherUsers: {
-          include: { role: true, teacher: true },
-        },
+        orderBy,
+        skip,
+        take: limit,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      data: users,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-    });
-    this.logger.log('Listed all users');
-    return users.map(({ password, ...rest }) => rest);
+    };
   }
 }

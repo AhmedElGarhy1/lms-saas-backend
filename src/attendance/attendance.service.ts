@@ -1,148 +1,214 @@
 import {
   Injectable,
-  Logger,
-  ForbiddenException,
-  BadRequestException,
   NotFoundException,
+  Inject,
+  LoggerService,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
+import { UpdateAttendanceDto } from './dto/update-attendance.dto';
+import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { PaginateQuery } from 'nestjs-paginate';
 import {
-  BulkMarkAttendanceDto,
-  AttendanceStatus,
-} from './dto/bulk-mark-attendance.dto';
-import { EditAttendanceDto } from './dto/edit-attendance.dto';
-import { QueryAttendanceDto } from './dto/query-attendance.dto';
-import { AttendanceResponseDto } from './dto/attendance-response.dto';
+  BasePaginationService,
+  PaginationResult,
+} from '../shared/services/base-pagination.service';
 
 @Injectable()
-export class AttendanceService {
-  private readonly logger = new Logger(AttendanceService.name);
-  constructor(private readonly prisma: PrismaService) {}
+export class AttendanceService extends BasePaginationService {
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
+  ) {
+    super();
+  }
 
-  private toResponseDto(record: any): AttendanceResponseDto {
+  private toResponseDto(record: any): any {
     return {
       id: record.id,
       sessionId: record.sessionId,
       studentId: record.studentId,
       status: record.status,
       note: record.note,
-      markedById: record.markedById,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };
   }
 
-  /**
-   * Bulk mark attendance for a session.
-   * Prevents duplicate entries for the same session/student.
-   */
   async bulkMark(dto: BulkMarkAttendanceDto, userId: string) {
+    const { sessionId, attendances } = dto;
+
+    // Validate session exists
+    const session = await this.prisma.classSession.findUnique({
+      where: { id: sessionId },
+    });
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    // Create attendance records
+    const createdAttendances = await this.prisma.attendance.createMany({
+      data: attendances.map((attendance) => ({
+        sessionId,
+        studentId: attendance.studentId,
+        status: attendance.status,
+        note: attendance.note,
+        markedById: userId,
+      })),
+      skipDuplicates: true,
+    });
+
     this.logger.log(
-      `User ${userId} bulk marking attendance for session ${dto.sessionId}`,
+      `Bulk attendance marked for session ${sessionId} by user ${userId}`,
     );
-    const existing = await this.prisma.attendance.findMany({
-      where: {
-        sessionId: dto.sessionId,
-        studentId: { in: dto.attendances.map((a) => a.studentId) },
-      },
-    });
-    if (existing.length > 0) {
-      this.logger.warn(
-        `Duplicate attendance detected for session ${dto.sessionId}: ${existing.map((e) => e.studentId).join(', ')}`,
-      );
-      throw new BadRequestException(
-        'Some students already have attendance marked for this session.',
-      );
-    }
-    try {
-      const created = await this.prisma.attendance.createMany({
-        data: dto.attendances.map((a) => ({
-          sessionId: dto.sessionId,
-          studentId: a.studentId,
-          status: a.status,
-          note: a.note,
-          markedById: userId,
-        })),
-      });
-      this.logger.log(
-        `Attendance marked for ${created.count} students in session ${dto.sessionId}`,
-      );
-      return { count: created.count };
-    } catch (error) {
-      this.logger.error(`Failed to bulk mark attendance: ${error.message}`);
-      throw new BadRequestException('Failed to mark attendance.');
-    }
+
+    return {
+      message: 'Attendance marked successfully',
+      count: createdAttendances.count,
+    };
   }
 
-  /**
-   * Edit an attendance record (status/note).
-   */
-  async edit(dto: EditAttendanceDto, userId: string) {
-    this.logger.log(`User ${userId} editing attendance ${dto.id}`);
-    let attendance;
-    try {
-      attendance = await this.prisma.attendance.update({
-        where: { id: dto.id },
-        data: {
-          status: dto.status,
-          note: dto.note,
-          markedById: userId,
-        },
-      });
-    } catch (error) {
-      this.logger.warn(
-        `Edit failed for attendance ${dto.id}: ${error.message}`,
-      );
-      if (error.code === 'P2025') {
-        throw new NotFoundException('Attendance record not found.');
-      }
-      throw new BadRequestException('Failed to update attendance.');
+  async edit(dto: UpdateAttendanceDto, userId: string) {
+    const { id, status, note } = dto;
+
+    const attendance = await this.prisma.attendance.findUnique({
+      where: { id },
+    });
+
+    if (!attendance) {
+      throw new NotFoundException('Attendance record not found');
     }
-    return this.toResponseDto(attendance);
+
+    const updatedAttendance = await this.prisma.attendance.update({
+      where: { id },
+      data: {
+        status,
+        note,
+      },
+    });
+
+    this.logger.log(`Attendance ${id} updated by user ${userId}`);
+
+    return this.toResponseDto(updatedAttendance);
   }
 
-  /**
-   * Fetch attendance records with filters.
-   */
-  async fetch(query: QueryAttendanceDto) {
-    const records = await this.prisma.attendance.findMany({
-      where: {
-        sessionId: query.sessionId,
-        studentId: query.studentId,
-        status: query.status,
-        createdAt:
-          query.dateFrom || query.dateTo
-            ? {
-                gte: query.dateFrom ? new Date(query.dateFrom) : undefined,
-                lte: query.dateTo ? new Date(query.dateTo) : undefined,
-              }
-            : undefined,
-      },
-      orderBy: { createdAt: 'desc' },
+  async fetch(query: PaginateQuery): Promise<PaginationResult<any>> {
+    return this.executePaginatedQuery(query, {
+      model: this.prisma.attendance,
+      include: { student: true, session: true },
+      exactFields: ['sessionId', 'studentId'],
+      enumFields: [{ field: 'status', targetField: 'status' }],
+      searchFields: [{ field: 'note', targetField: 'note' }],
+      dateRangeField: 'createdAt',
     });
-    if (!records.length) {
-      this.logger.warn('No attendance records found for query.');
-      throw new NotFoundException('No attendance records found.');
-    }
-    return records.map(this.toResponseDto);
   }
 
   /**
    * Generate attendance report/analytics.
    */
-  async report(query: QueryAttendanceDto) {
+  async report(query: PaginateQuery) {
     const groupBy = await this.prisma.attendance.groupBy({
       by: ['status'],
       where: {
-        sessionId: query.sessionId,
-        studentId: query.studentId,
+        sessionId:
+          query.filter &&
+          typeof query.filter === 'object' &&
+          'sessionId' in query.filter
+            ? (query.filter.sessionId as string)
+            : undefined,
+        studentId:
+          query.filter &&
+          typeof query.filter === 'object' &&
+          'studentId' in query.filter
+            ? (query.filter.studentId as string)
+            : undefined,
       },
       _count: { status: true },
     });
-    if (!groupBy.length) {
-      this.logger.warn('No attendance data found for report.');
-      throw new NotFoundException('No attendance data found for report.');
-    }
-    return groupBy;
+
+    // Use custom conditions for date filtering on 'date' field instead of 'createdAt'
+    const customConditions = (query: PaginateQuery) => {
+      const where: any = {};
+
+      if (
+        query.filter &&
+        typeof query.filter === 'object' &&
+        'dateFrom' in query.filter
+      ) {
+        const dateFromRaw = query.filter.dateFrom;
+        const dateFrom = Array.isArray(dateFromRaw)
+          ? dateFromRaw[0]
+          : dateFromRaw;
+        if (typeof dateFrom === 'string' && dateFrom.length > 0) {
+          where.AND = where.AND || [];
+          where.AND.push({ date: { gte: new Date(dateFrom) } });
+        }
+      }
+
+      if (
+        query.filter &&
+        typeof query.filter === 'object' &&
+        'dateTo' in query.filter
+      ) {
+        const dateToRaw = query.filter.dateTo;
+        const dateTo = Array.isArray(dateToRaw) ? dateToRaw[0] : dateToRaw;
+        if (typeof dateTo === 'string' && dateTo.length > 0) {
+          where.AND = where.AND || [];
+          where.AND.push({ date: { lte: new Date(dateTo) } });
+        }
+      }
+
+      return Object.keys(where).length > 0 ? where : undefined;
+    };
+
+    return this.executePaginatedQuery(query, {
+      model: this.prisma.attendance,
+      include: { student: true, session: true },
+      exactFields: ['sessionId', 'studentId'],
+      customConditions,
+    });
+  }
+
+  async listAttendance(
+    query: PaginateQuery,
+    currentUser: any,
+  ): Promise<PaginationResult<any>> {
+    // Use custom conditions for date filtering on 'date' field
+    const customConditions = (query: PaginateQuery) => {
+      const where: any = {};
+
+      if (query.filter?.dateFrom || query.filter?.dateTo) {
+        where.AND = [];
+        if (query.filter?.dateFrom) {
+          const dateFromRaw = query.filter.dateFrom;
+          const dateFrom = Array.isArray(dateFromRaw)
+            ? dateFromRaw[0]
+            : dateFromRaw;
+          if (typeof dateFrom === 'string' && dateFrom.length > 0) {
+            where.AND.push({ date: { gte: new Date(dateFrom) } });
+          }
+        }
+        if (query.filter?.dateTo) {
+          const dateToRaw = query.filter.dateTo;
+          const dateTo = Array.isArray(dateToRaw) ? dateToRaw[0] : dateToRaw;
+          if (typeof dateTo === 'string' && dateTo.length > 0) {
+            where.AND.push({ date: { lte: new Date(dateTo) } });
+          }
+        }
+      }
+
+      return Object.keys(where).length > 0 ? where : undefined;
+    };
+
+    return this.executePaginatedQueryWithTransaction(query, {
+      prisma: this.prisma,
+      model: this.prisma.attendance,
+      include: { student: true, session: true },
+      exactFields: ['sessionId', 'studentId'],
+      enumFields: [{ field: 'status', targetField: 'status' }],
+      searchFields: [{ field: 'note', targetField: 'note' }],
+      customConditions,
+    });
   }
 }
