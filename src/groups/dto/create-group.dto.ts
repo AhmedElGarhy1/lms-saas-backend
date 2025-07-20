@@ -1,18 +1,23 @@
-import { IsString, IsOptional, IsInt } from 'class-validator';
+import { z } from 'zod';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateGroupDto {
+export const CreateGroupRequestSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+  centerId: z.string().min(1),
+  gradeLevelId: z.string().optional(),
+  maxStudents: z.number().optional(),
+});
+export type CreateGroupRequest = z.infer<typeof CreateGroupRequestSchema>;
+
+export class CreateGroupRequestDto {
   @ApiProperty({ example: 'Class 6A', description: 'Name of the group' })
-  @IsString()
   name: string;
 
   @ApiProperty({ example: 'Primary 6 Section A', required: false })
-  @IsOptional()
-  @IsString()
   description?: string;
 
   @ApiProperty({ example: 'center-uuid', description: 'Center ID' })
-  @IsString()
   centerId: string;
 
   @ApiProperty({
@@ -20,8 +25,6 @@ export class CreateGroupDto {
     required: false,
     description: 'Grade level ID',
   })
-  @IsOptional()
-  @IsString()
   gradeLevelId?: string;
 
   @ApiProperty({
@@ -29,7 +32,5 @@ export class CreateGroupDto {
     required: false,
     description: 'Maximum number of students',
   })
-  @IsOptional()
-  @IsInt()
   maxStudents?: number;
 }

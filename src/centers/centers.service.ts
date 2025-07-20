@@ -6,10 +6,9 @@ import {
   LoggerService,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
-import { CreateCenterDto } from './dto/create-center.dto';
-import { UpdateCenterDto } from './dto/update-center.dto';
-import { AddMemberDto } from './dto/add-member.dto';
-import { ChangeMemberRoleDto } from './dto/change-member-role.dto';
+import { CreateCenterRequest } from './dto/create-center.dto';
+import { UpdateCenterRequest } from './dto/update-center.dto';
+import { AddMemberRequest } from './dto/add-member.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { PaginateQuery } from 'nestjs-paginate';
 import {
@@ -27,7 +26,7 @@ export class CentersService {
   ) {}
 
   // Center management
-  async createCenter(dto: CreateCenterDto & { ownerId: string }) {
+  async createCenter(dto: CreateCenterRequest & { ownerId: string }) {
     // Create center and basic roles in a transaction
     const result = await this.prisma.$transaction(async (tx) => {
       // 1. Create the center
@@ -196,7 +195,7 @@ export class CentersService {
     return result.center;
   }
 
-  async updateCenter(centerId: string, dto: UpdateCenterDto) {
+  async updateCenter(centerId: string, dto: UpdateCenterRequest) {
     const center = await this.prisma.center.findUnique({
       where: { id: centerId },
     });
@@ -287,7 +286,10 @@ export class CentersService {
   }
 
   // Member management
-  async addMember(centerId: string, dto: AddMemberDto & { createdBy: string }) {
+  async addMember(
+    centerId: string,
+    dto: AddMemberRequest & { createdBy: string },
+  ) {
     const center = await this.prisma.center.findUnique({
       where: { id: centerId },
     });
@@ -558,18 +560,14 @@ export class CentersService {
     return { success: true };
   }
 
-  async changeMemberRole(
-    centerId: string,
-    userId: string,
-    dto: ChangeMemberRoleDto,
-  ) {
+  async changeMemberRole(centerId: string, userId: string, newRole: string) {
     const member = await this.prisma.userOnCenter.findFirst({
       where: { centerId, userId },
     });
     if (!member) throw new NotFoundException('Member not found');
 
     const role = await this.prisma.role.findFirst({
-      where: { name: dto.role, scope: 'CENTER', centerId },
+      where: { name: newRole, scope: 'CENTER', centerId },
     });
     if (!role) throw new NotFoundException('Role not found for this center');
 
@@ -582,7 +580,7 @@ export class CentersService {
       });
 
       // Handle additional records based on the new role
-      if (dto.role === 'Teacher') {
+      if (newRole === 'Teacher') {
         // Check if teacher record already exists
         const existingTeacher = await tx.teacherUser.findFirst({
           where: {
@@ -601,7 +599,7 @@ export class CentersService {
             },
           });
         }
-      } else if (dto.role === 'Student') {
+      } else if (newRole === 'Student') {
         // Check if student record exists
         let studentRecord = await tx.student.findFirst({
           where: { userId },
@@ -616,7 +614,7 @@ export class CentersService {
             },
           });
         }
-      } else if (dto.role === 'Owner') {
+      } else if (newRole === 'Owner') {
         // Remove teacher/student records if they exist (Owner is not a teacher or student)
         await tx.teacherUser.deleteMany({
           where: { teacherId: userId },
@@ -627,7 +625,7 @@ export class CentersService {
     });
 
     this.logger.log(
-      `Changed role for user ${userId} in center ${centerId} to ${dto.role}`,
+      `Changed role for user ${userId} in center ${centerId} to ${newRole}`,
     );
     return result;
   }

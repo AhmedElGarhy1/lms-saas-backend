@@ -27,7 +27,10 @@ describe('AccessControl (e2e)', () => {
     server = request(app.getHttpServer());
     // Create test center, role, permission, user with unique names
     const center = await prisma.center.create({
-      data: { name: `Test Center ${uniqueSuffix}` },
+      data: {
+        name: `Test Center ${uniqueSuffix}`,
+        owner: { connect: { id: userId } },
+      },
     });
     centerId = center.id;
     // Fetch seeded 'Admin' role
@@ -55,7 +58,7 @@ describe('AccessControl (e2e)', () => {
     await prisma.userOnCenter.upsert({
       where: { userId_centerId_roleId: { userId, centerId, roleId } },
       update: {},
-      create: { userId, roleId, centerId },
+      create: { userId, roleId, centerId, createdBy: userId },
     });
     // Log in the test user to get JWT (after assignments)
     const loginRes = await server
@@ -101,7 +104,7 @@ describe('AccessControl (e2e)', () => {
     // Use a new role for this test to avoid duplicate assignment
     const uniqueRoleName = `TestRole${Date.now()}`;
     const newRole = await prisma.role.create({
-      data: { name: uniqueRoleName },
+      data: { name: uniqueRoleName, scope: 'CENTER' },
     });
     const res = await server
       .post('/access-control/assign-role')
@@ -140,7 +143,13 @@ describe('AccessControl (e2e)', () => {
 
   it('removes a permission from a user in a center', async () => {
     await prisma.userPermission.create({
-      data: { userId, permissionId, centerId },
+      data: {
+        userId,
+        permissionId,
+        centerId,
+        scopeType: 'CENTER',
+        scopeId: centerId,
+      },
     });
     const res = await server
       .delete('/access-control/remove-permission')
@@ -243,7 +252,13 @@ describe('AccessControl (e2e)', () => {
     if (!perm)
       throw new Error('No seeded permissions found. Run the seed script.');
     await prisma.userPermission.create({
-      data: { userId, permissionId: perm.id, centerId },
+      data: {
+        userId,
+        permissionId: perm.id,
+        centerId,
+        scopeType: 'CENTER',
+        scopeId: centerId,
+      },
     });
     const res = await server
       .post('/access-control/assign-permission')

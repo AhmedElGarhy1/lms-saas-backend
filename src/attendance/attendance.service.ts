@@ -24,7 +24,15 @@ export class AttendanceService extends BasePaginationService {
     super();
   }
 
-  private toResponseDto(record: any): any {
+  private toResponseDto(record: {
+    id: string;
+    sessionId: string;
+    studentId: string;
+    status: string;
+    note?: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): any {
     return {
       id: record.id,
       sessionId: record.sessionId,
@@ -34,6 +42,12 @@ export class AttendanceService extends BasePaginationService {
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };
+  }
+
+  async createAttendance(dto: any) {
+    // Implement creation logic here (example):
+    const created = await this.prisma.attendance.create({ data: dto });
+    return this.toResponseDto(created);
   }
 
   async bulkMark(dto: BulkMarkAttendanceDto, userId: string) {
@@ -90,6 +104,24 @@ export class AttendanceService extends BasePaginationService {
 
     this.logger.log(`Attendance ${id} updated by user ${userId}`);
 
+    return this.toResponseDto(updatedAttendance);
+  }
+
+  async updateAttendance(id: string, dto: UpdateAttendanceDto) {
+    const attendance = await this.prisma.attendance.findUnique({
+      where: { id },
+    });
+    if (!attendance) {
+      throw new NotFoundException('Attendance record not found');
+    }
+    const updatedAttendance = await this.prisma.attendance.update({
+      where: { id },
+      data: {
+        status: dto.status,
+        note: dto.note,
+      },
+    });
+    this.logger.log(`Attendance ${id} updated`);
     return this.toResponseDto(updatedAttendance);
   }
 
@@ -174,9 +206,17 @@ export class AttendanceService extends BasePaginationService {
     query: PaginateQuery,
     currentUser: any,
   ): Promise<PaginationResult<any>> {
-    // Use custom conditions for date filtering on 'date' field
+    // Get all centerIds this user can access
+    const centerAccesses = await this.prisma.centerAccess.findMany({
+      where: { userId: currentUser.id },
+      select: { centerId: true },
+    });
+    const accessibleCenterIds = centerAccesses.map((a) => a.centerId);
+    // Use custom conditions for date filtering and center access
     const customConditions = (query: PaginateQuery) => {
-      const where: any = {};
+      const where: any = {
+        session: { centerId: { in: accessibleCenterIds } },
+      };
 
       if (query.filter?.dateFrom || query.filter?.dateTo) {
         where.AND = [];

@@ -4,15 +4,21 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
-import { CreateStudentDto } from './dto/create-student.dto';
-import { UpdateStudentDto } from './dto/update-student.dto';
 import { AddStudentToCenterDto } from './dto/add-student-to-center.dto';
+import { StudentGrade } from '@prisma/client';
 
 @Injectable()
 export class StudentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createStudent(dto: CreateStudentDto) {
+  async createStudent(dto: {
+    [key: string]: any;
+    grade: StudentGrade;
+    level: string;
+    guardianId: string;
+    teacherId: string;
+    userId: string;
+  }) {
     const {
       email,
       name,
@@ -48,22 +54,14 @@ export class StudentsService {
     }
 
     // Create or update student record
-    const student = await this.prisma.student.upsert({
-      where: { userId },
-      update: {
-        grade,
-        level,
-        guardianId,
-        teacherId,
-        ...studentData,
-      },
-      create: {
-        userId,
-        grade,
-        level,
-        guardianId,
-        teacherId,
-        ...studentData,
+    const student = await this.prisma.student.create({
+      data: {
+        ...dto,
+        grade: dto.grade,
+        level: dto.level,
+        guardianId: dto.guardianId,
+        teacherId: dto.teacherId,
+        userId: dto.userId,
       },
     });
 
@@ -111,7 +109,7 @@ export class StudentsService {
         userId,
         centerId,
         roleId: studentRole.id,
-        createdBy: dto?.createdBy || 'system',
+        createdBy: userId,
         metadata: dto?.metadata || {},
       },
     });
@@ -172,7 +170,13 @@ export class StudentsService {
     const students = await this.prisma.student.findMany({
       where: {
         userId: { in: accessibleStudentUserIds },
-        centerId: { in: accessibleCenterIds },
+        user: {
+          centers: {
+            some: {
+              centerId: { in: accessibleCenterIds },
+            },
+          },
+        },
       },
       include: {
         user: {
@@ -272,29 +276,27 @@ export class StudentsService {
     return student.user.centers;
   }
 
-  async updateStudent(studentId: string, dto: UpdateStudentDto) {
-    const student = await this.prisma.student.findUnique({
-      where: { id: studentId },
-    });
-
-    if (!student) {
-      throw new NotFoundException('Student not found');
-    }
-
-    return this.prisma.student.update({
-      where: { id: studentId },
-      data: dto,
-      include: {
-        user: true,
-        teacher: {
-          include: {
-            user: true,
-          },
-        },
-        guardian: true,
-        groups: true,
+  async updateStudent(
+    id: string,
+    dto: {
+      [key: string]: any;
+      grade: StudentGrade;
+      level: string;
+      guardianId: string;
+      teacherId: string;
+    },
+  ) {
+    const student = await this.prisma.student.update({
+      where: { id },
+      data: {
+        ...dto,
+        grade: dto.grade,
+        level: dto.level,
+        guardianId: dto.guardianId,
+        teacherId: dto.teacherId,
       },
     });
+    return student;
   }
 
   async removeStudentFromCenter(userId: string, centerId: string) {

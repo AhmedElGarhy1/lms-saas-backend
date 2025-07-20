@@ -7,9 +7,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { CreateSubjectDto } from './dto/create-subject.dto';
-import { UpdateSubjectDto } from './dto/update-subject.dto';
-import { AssignTeacherDto } from '../shared/dto/assign-teacher.dto';
 import { PaginateQuery } from 'nestjs-paginate';
 
 @Injectable()
@@ -21,7 +18,7 @@ export class SubjectsService {
   ) {}
 
   // Subject management
-  async createSubject(dto: CreateSubjectDto) {
+  async createSubject(dto: any) {
     const subject = await this.prisma.subject.create({
       data: {
         name: dto.name,
@@ -36,7 +33,7 @@ export class SubjectsService {
     return subject;
   }
 
-  async updateSubject(subjectId: string, dto: UpdateSubjectDto) {
+  async updateSubject(subjectId: string, dto: any) {
     const subject = await this.prisma.subject.findUnique({
       where: { id: subjectId },
     });
@@ -68,8 +65,17 @@ export class SubjectsService {
     return subject;
   }
 
-  async listSubjects(query: PaginateQuery): Promise<any> {
-    const where: any = {};
+  async listSubjects(
+    query: PaginateQuery,
+    currentUserId: string,
+  ): Promise<any> {
+    // Get all centerIds this user can access
+    const centerAccesses = await this.prisma.centerAccess.findMany({
+      where: { userId: currentUserId },
+      select: { centerId: true },
+    });
+    const accessibleCenterIds = centerAccesses.map((a) => a.centerId);
+    const where: any = { centerId: { in: accessibleCenterIds } };
     if (
       query.filter &&
       typeof query.filter === 'object' &&
@@ -125,30 +131,28 @@ export class SubjectsService {
   }
 
   // Assignment management
-  async assignTeacher(subjectId: string, dto: AssignTeacherDto) {
+  async assignTeacher(subjectId: string, teacherId: string) {
     const subject = await this.prisma.subject.findUnique({
       where: { id: subjectId },
     });
     if (!subject) throw new NotFoundException('Subject not found');
     const teacher = await this.prisma.user.findUnique({
-      where: { id: dto.teacherId },
+      where: { id: teacherId },
     });
     if (!teacher) throw new NotFoundException('Teacher not found');
 
     // Check if teacher is already assigned to the subject
     const existingTeacher = await this.prisma.subject.findFirst({
-      where: { id: subjectId, teachers: { some: { id: dto.teacherId } } },
+      where: { id: subjectId, teachers: { some: { id: teacherId } } },
     });
     if (existingTeacher)
       throw new BadRequestException('Teacher already assigned to subject');
 
     await this.prisma.subject.update({
       where: { id: subjectId },
-      data: { teachers: { connect: { id: dto.teacherId } } },
+      data: { teachers: { connect: { id: teacherId } } },
     });
-    this.logger.log(
-      `Assigned teacher ${dto.teacherId} to subject ${subjectId}`,
-    );
+    this.logger.log(`Assigned teacher ${teacherId} to subject ${subjectId}`);
     return { success: true };
   }
 

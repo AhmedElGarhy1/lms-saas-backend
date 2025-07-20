@@ -6,19 +6,31 @@ import {
   Patch,
   Post,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { GetUser } from '../shared/decorators/get-user.decorator';
 import { CurrentUser as CurrentUserType } from '../shared/types/current-user.type';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { RolesGuard } from '../access-control/guards/roles.guard';
-import { Roles } from '../access-control/decorators/roles.decorator';
 import { PermissionsGuard } from '../access-control/guards/permissions.guard';
 import { Permissions } from '../access-control/decorators/permissions.decorator';
-import { CreateUserDto } from './dto/create-user.dto';
 import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
+import {
+  CreateUserRequestSchema,
+  CreateUserRequest,
+  CreateUserRequestDto,
+} from './dto/create-user.dto';
+import {
+  UpdateProfileRequestSchema,
+  UpdateProfileRequest,
+  UpdateProfileRequestDto,
+} from './dto/update-profile.dto';
+import {
+  ChangePasswordRequestSchema,
+  ChangePasswordRequest,
+  ChangePasswordRequestDto,
+} from './dto/change-password.dto';
+import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
 
 @Controller('users')
 export class UsersController {
@@ -42,109 +54,40 @@ export class UsersController {
     return this.usersService.getProfile(user.id);
   }
 
-  @UseGuards(RolesGuard, PermissionsGuard)
-  @Roles('User')
+  @UseGuards(PermissionsGuard)
   @Permissions('user:update')
-  @Put('me')
-  @ApiBody({
-    type: UpdateProfileDto,
-    examples: {
-      user: {
-        value: {
-          username: 'newusername',
-          email: 'newemail@example.com',
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Updates the current user profile.',
-    schema: {
-      example: {
-        id: '1234567890abcdef12345678',
-        username: 'newusername',
-        email: 'newemail@example.com',
-        createdAt: '2023-10-27T10:00:00.000Z',
-        updatedAt: '2023-10-27T10:00:00.000Z',
-      },
-    },
-  })
+  @Put('profile')
+  @ApiBody({ type: UpdateProfileRequestDto })
+  @ApiResponse({ status: 200, description: 'Updates user profile.' })
   updateProfile(
+    @Body(new ZodValidationPipe(UpdateProfileRequestSchema))
+    dto: UpdateProfileRequest,
     @GetUser() user: CurrentUserType,
-    @Body() dto: UpdateProfileDto,
   ) {
     return this.usersService.updateProfile(user.id, dto);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('User')
   @Patch('me/password')
-  @ApiBody({
-    type: ChangePasswordDto,
-    examples: {
-      user: {
-        value: {
-          currentPassword: 'oldpassword',
-          newPassword: 'newpassword',
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Changes the current user password.',
-    schema: {
-      example: {
-        id: '1234567890abcdef12345678',
-        username: 'testuser',
-        email: 'test@example.com',
-        createdAt: '2023-10-27T10:00:00.000Z',
-        updatedAt: '2023-10-27T10:00:00.000Z',
-      },
-    },
-  })
+  @ApiBody({ type: ChangePasswordRequestDto })
+  @ApiResponse({ status: 200, description: 'Changes user password.' })
   changePassword(
+    @Body(new ZodValidationPipe(ChangePasswordRequestSchema))
+    dto: ChangePasswordRequest,
     @GetUser() user: CurrentUserType,
-    @Body() dto: ChangePasswordDto,
   ) {
     return this.usersService.changePassword(user.id, dto);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('Admin')
   @Post()
-  @ApiBody({
-    type: CreateUserDto,
-    examples: {
-      user: {
-        value: {
-          username: 'newadmin',
-          email: 'admin@example.com',
-          password: 'adminpassword',
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Creates a new user.',
-    schema: {
-      example: {
-        id: '1234567890abcdef12345679',
-        username: 'newadmin',
-        email: 'admin@example.com',
-        createdAt: '2023-10-27T10:00:00.000Z',
-        updatedAt: '2023-10-27T10:00:00.000Z',
-      },
-    },
-  })
-  createUser(@Body() dto: CreateUserDto) {
+  @ApiBody({ type: CreateUserRequestDto })
+  @ApiResponse({ status: 201, description: 'Creates a new user.' })
+  createUser(
+    @Body(new ZodValidationPipe(CreateUserRequestSchema))
+    dto: CreateUserRequest,
+  ) {
     return this.usersService.createUser(dto);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('Admin')
   @Get()
   @ApiResponse({
     status: 200,

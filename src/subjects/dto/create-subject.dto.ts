@@ -1,21 +1,27 @@
-import { IsString, IsOptional, IsInt } from 'class-validator';
+import { z } from 'zod';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateSubjectDto {
+export const CreateSubjectRequestSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+  centerId: z.string().min(1),
+  gradeLevelId: z.string().optional(),
+  credits: z.number().optional(),
+  duration: z.number().optional(),
+});
+export type CreateSubjectRequest = z.infer<typeof CreateSubjectRequestSchema>;
+
+export class CreateSubjectRequestDto {
   @ApiProperty({ example: 'Mathematics', description: 'Name of the subject' })
-  @IsString()
   name: string;
 
   @ApiProperty({
     example: 'Advanced mathematics for primary students',
     required: false,
   })
-  @IsOptional()
-  @IsString()
   description?: string;
 
   @ApiProperty({ example: 'center-uuid', description: 'Center ID' })
-  @IsString()
   centerId: string;
 
   @ApiProperty({
@@ -23,8 +29,6 @@ export class CreateSubjectDto {
     required: false,
     description: 'Grade level ID',
   })
-  @IsOptional()
-  @IsString()
   gradeLevelId?: string;
 
   @ApiProperty({
@@ -32,8 +36,6 @@ export class CreateSubjectDto {
     required: false,
     description: 'Number of credits',
   })
-  @IsOptional()
-  @IsInt()
   credits?: number;
 
   @ApiProperty({
@@ -41,7 +43,5 @@ export class CreateSubjectDto {
     required: false,
     description: 'Duration in minutes',
   })
-  @IsOptional()
-  @IsInt()
   duration?: number;
 }

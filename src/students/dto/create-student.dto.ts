@@ -1,50 +1,49 @@
-import { IsEmail, IsString, IsOptional, IsEnum, IsUUID } from 'class-validator';
+import { z } from 'zod';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { StudentGrade } from '@prisma/client';
 
-export class CreateStudentDto {
+export const CreateStudentRequestSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1),
+  password: z.string().min(6),
+  grade: z.nativeEnum(StudentGrade),
+  level: z.string().optional(),
+  guardianId: z.string().uuid().optional(),
+  teacherId: z.string().uuid().optional(),
+  centerId: z.string().optional(),
+  performanceScore: z.number().optional(),
+  notes: z.string().optional(),
+});
+export type CreateStudentRequest = z.infer<typeof CreateStudentRequestSchema>;
+
+export class CreateStudentRequestDto {
   @ApiProperty({ description: 'Student email address' })
-  @IsEmail()
   email: string;
 
   @ApiProperty({ description: 'Student full name' })
-  @IsString()
   name: string;
 
   @ApiProperty({ description: 'Student password' })
-  @IsString()
   password: string;
 
   @ApiProperty({ description: 'Student grade level', enum: StudentGrade })
-  @IsEnum(StudentGrade)
   grade: StudentGrade;
 
   @ApiPropertyOptional({ description: 'Student level within grade' })
-  @IsOptional()
-  @IsString()
   level?: string;
 
   @ApiPropertyOptional({ description: 'Guardian ID' })
-  @IsOptional()
-  @IsUUID()
   guardianId?: string;
 
   @ApiPropertyOptional({ description: 'Teacher ID (for freelance teachers)' })
-  @IsOptional()
-  @IsUUID()
   teacherId?: string;
 
   @ApiPropertyOptional({ description: 'Center ID to add student to' })
-  @IsOptional()
-  @IsString()
   centerId?: string;
 
   @ApiPropertyOptional({ description: 'Student performance score' })
-  @IsOptional()
   performanceScore?: number;
 
   @ApiPropertyOptional({ description: 'Additional notes about the student' })
-  @IsOptional()
-  @IsString()
   notes?: string;
 }

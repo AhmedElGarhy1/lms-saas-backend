@@ -1,7 +1,18 @@
+import { z } from 'zod';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, Min } from 'class-validator';
 
-export class GradeLevelDto {
+export const GradeLevelResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  level: z.number(),
+  centerId: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type GradeLevelResponse = z.infer<typeof GradeLevelResponseSchema>;
+
+export class GradeLevelResponseDto {
   @ApiProperty({ example: 'grade-uuid', description: 'Grade level ID' })
   id: string;
 

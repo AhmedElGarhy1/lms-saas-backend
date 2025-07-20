@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../shared/prisma.service';
-import { SignupDto } from './dto/signup.dto';
-import { LoginDto } from './dto/login.dto';
+import { SignupRequest } from './dto/signup.dto';
+import { LoginRequest } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import * as bcryptImport from 'bcrypt';
 const bcrypt = bcryptImport as unknown as {
@@ -17,9 +17,9 @@ const bcrypt = bcryptImport as unknown as {
 };
 import { User as PrismaUser } from '@prisma/client';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { VerifyEmailDto } from './dto/verify-email.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyEmailRequest } from './dto/verify-email.dto';
+import { ForgotPasswordRequest } from './dto/forgot-password.dto';
+import { ResetPasswordRequest } from './dto/reset-password.dto';
 import { MailerService } from '../shared/mail/mailer.service';
 import { randomBytes } from 'crypto';
 import * as speakeasy from 'speakeasy';
@@ -35,7 +35,7 @@ export class AuthService {
     private readonly mailer: MailerService,
   ) {}
 
-  async signup(dto: SignupDto) {
+  async signup(dto: SignupRequest) {
     const { email, password, fullName } = dto;
     const existing: PrismaUser | null = await this.prisma.user.findUnique({
       where: { email },
@@ -79,7 +79,7 @@ export class AuthService {
     };
   }
 
-  async login(dto: LoginDto & { code?: string }) {
+  async login(dto: LoginRequest & { code?: string }) {
     const { email, password, code } = dto;
     const user: PrismaUser | null = await this.prisma.user.findUnique({
       where: { email },
@@ -175,7 +175,7 @@ export class AuthService {
     return { message: 'Logged out' };
   }
 
-  async verifyEmail(dto: VerifyEmailDto) {
+  async verifyEmail(dto: VerifyEmailRequest) {
     const { token } = dto;
     const verification = await this.prisma.emailVerification.findUnique({
       where: { token },
@@ -195,7 +195,7 @@ export class AuthService {
     return { message: 'Email verified successfully' };
   }
 
-  async forgotPassword(dto: ForgotPasswordDto) {
+  async forgotPassword(dto: ForgotPasswordRequest) {
     const { email } = dto;
     const user: PrismaUser | null = await this.prisma.user.findUnique({
       where: { email },
@@ -225,7 +225,7 @@ export class AuthService {
     return { message: 'If this email exists, a reset link has been sent.' };
   }
 
-  async resetPassword(dto: ResetPasswordDto) {
+  async resetPassword(dto: ResetPasswordRequest) {
     const { token, newPassword } = dto;
     const reset = await this.prisma.passwordResetToken.findUnique({
       where: { token },

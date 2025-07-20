@@ -1,6 +1,20 @@
+import { z } from 'zod';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class GroupDto {
+export const GroupResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  centerId: z.string(),
+  gradeLevelId: z.string(),
+  maxStudents: z.number(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type GroupResponse = z.infer<typeof GroupResponseSchema>;
+
+export class GroupResponseDto {
   @ApiProperty({ example: 'group-uuid', description: 'Group ID' })
   id: string;
 

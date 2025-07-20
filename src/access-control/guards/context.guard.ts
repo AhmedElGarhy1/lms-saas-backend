@@ -1,5 +1,5 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { RoleScope } from '../dto/create-role.dto';
+import { RoleScope } from '../constants/rolescope';
 
 @Injectable()
 export class ContextGuard implements CanActivate {

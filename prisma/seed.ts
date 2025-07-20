@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { RoleScope } from '../src/access-control/dto/create-role.dto';
+import { RoleScope } from '../src/access-control/constants/rolescope';
 import {
   ALL_USER_PERMISSIONS,
   ALL_ADMIN_PERMISSIONS,

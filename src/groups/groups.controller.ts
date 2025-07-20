@@ -8,6 +8,7 @@ import {
   Body,
   Logger,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,17 +18,31 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { GroupsService } from './groups.service';
-import { CreateGroupDto } from './dto/create-group.dto';
-import { UpdateGroupDto } from './dto/update-group.dto';
-import { GroupDto } from './dto/group.dto';
+import {
+  CreateGroupRequestSchema,
+  CreateGroupRequestDto,
+  CreateGroupRequest,
+} from './dto/create-group.dto';
+import {
+  UpdateGroupRequestSchema,
+  UpdateGroupRequestDto,
+  UpdateGroupRequest,
+} from './dto/update-group.dto';
 import { GetUser } from '../shared/decorators/get-user.decorator';
 import { CurrentUser as CurrentUserType } from '../shared/types/current-user.type';
-import { Roles } from '../access-control/decorators/roles.decorator';
-import { RolesGuard } from '../access-control/guards/roles.guard';
 import { ContextGuard } from '../access-control/guards/context.guard';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
-import { AssignStudentDto } from '../shared/dto/assign-student.dto';
-import { AssignTeacherDto } from '../shared/dto/assign-teacher.dto';
+import {
+  AssignStudentRequestSchema,
+  AssignStudentRequestDto,
+  AssignStudentRequest,
+} from './dto/assign-student.dto';
+import {
+  AssignTeacherRequestSchema,
+  AssignTeacherRequestDto,
+  AssignTeacherRequest,
+} from './dto/assign-teacher.dto';
+import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
 
 // Apply ContextGuard globally to ensure scopeType/scopeId are set
 @UseGuards(ContextGuard)
@@ -39,31 +54,32 @@ export class GroupsController {
 
   // Only Owners/Admins/Teachers can create groups
   @Post()
-  @Roles('Admin', 'Owner', 'Teacher')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Create a new group' })
-  @ApiBody({ type: CreateGroupDto })
+  @ApiBody({ type: CreateGroupRequestDto })
   @ApiResponse({ status: 201, description: 'Group created' })
-  async createGroup(@Body() dto: CreateGroupDto) {
+  async createGroup(
+    @Body(new ZodValidationPipe(CreateGroupRequestSchema))
+    dto: CreateGroupRequest,
+  ) {
     return this.groupsService.createGroup(dto);
   }
 
   // Only Owners/Admins/Teachers can update groups
   @Patch(':id')
-  @Roles('Admin', 'Owner', 'Teacher')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Update a group' })
   @ApiParam({ name: 'id', description: 'Group ID' })
-  @ApiBody({ type: UpdateGroupDto })
+  @ApiBody({ type: UpdateGroupRequestDto })
   @ApiResponse({ status: 200, description: 'Group updated' })
-  async updateGroup(@Param('id') id: string, @Body() dto: UpdateGroupDto) {
+  async updateGroup(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(UpdateGroupRequestSchema))
+    dto: UpdateGroupRequest,
+  ) {
     return this.groupsService.updateGroup(id, dto);
   }
 
   // Only Owners/Admins can delete groups
   @Delete(':id')
-  @Roles('Admin', 'Owner')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Delete a group' })
   @ApiParam({ name: 'id', description: 'Group ID' })
   @ApiResponse({ status: 200, description: 'Group deleted' })
@@ -73,8 +89,6 @@ export class GroupsController {
 
   // Any member can view a group
   @Get(':id')
-  @Roles('Admin', 'Owner', 'Teacher', 'Support')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Get group by ID' })
   @ApiParam({ name: 'id', description: 'Group ID' })
   @ApiResponse({ status: 200, description: 'Group found' })
@@ -84,14 +98,10 @@ export class GroupsController {
 
   // Any member can list groups
   @Get()
-  @Roles('Admin', 'Owner', 'Teacher', 'Support')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'List groups (with optional filtering)' })
   @ApiResponse({
     status: 200,
     description: 'List of groups',
-    type: GroupDto,
-    isArray: true,
   })
   async listGroups(
     @Paginate() query: PaginateQuery,
@@ -101,23 +111,20 @@ export class GroupsController {
   }
 
   // Assignment management - Only Owners/Admins/Teachers can assign students
-  @Post(':groupId/students')
-  @Roles('Admin', 'Owner', 'Teacher')
-  @UseGuards(RolesGuard)
+  @Post(':id/assign-student')
   @ApiOperation({ summary: 'Assign a student to a group' })
-  @ApiParam({ name: 'groupId', description: 'Group ID' })
-  @ApiBody({ type: AssignStudentDto })
-  @ApiResponse({ status: 201, description: 'Student assigned' })
+  @ApiParam({ name: 'id', description: 'Group ID' })
+  @ApiBody({ type: AssignStudentRequestDto })
+  @ApiResponse({ status: 200, description: 'Student assigned' })
   async assignStudent(
-    @Param('groupId') groupId: string,
-    @Body() dto: AssignStudentDto,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(AssignStudentRequestSchema))
+    dto: AssignStudentRequest,
   ) {
-    return this.groupsService.assignStudent(groupId, dto);
+    return this.groupsService.assignStudent(id, dto.studentId);
   }
 
   @Delete(':groupId/students/:studentId')
-  @Roles('Admin', 'Owner', 'Teacher')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Unassign a student from a group' })
   @ApiParam({ name: 'groupId', description: 'Group ID' })
   @ApiParam({ name: 'studentId', description: 'Student ID' })
@@ -130,23 +137,20 @@ export class GroupsController {
   }
 
   // Assignment management - Only Owners/Admins/Teachers can assign teachers
-  @Post(':groupId/teachers')
-  @Roles('Admin', 'Owner', 'Teacher')
-  @UseGuards(RolesGuard)
+  @Post(':id/assign-teacher')
   @ApiOperation({ summary: 'Assign a teacher to a group' })
-  @ApiParam({ name: 'groupId', description: 'Group ID' })
-  @ApiBody({ type: AssignTeacherDto })
-  @ApiResponse({ status: 201, description: 'Teacher assigned' })
+  @ApiParam({ name: 'id', description: 'Group ID' })
+  @ApiBody({ type: AssignTeacherRequestDto })
+  @ApiResponse({ status: 200, description: 'Teacher assigned' })
   async assignTeacher(
-    @Param('groupId') groupId: string,
-    @Body() dto: AssignTeacherDto,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(AssignTeacherRequestSchema))
+    dto: AssignTeacherRequest,
   ) {
-    return this.groupsService.assignTeacher(groupId, dto);
+    return this.groupsService.assignTeacher(id, dto.teacherId);
   }
 
   @Delete(':groupId/teachers/:teacherId')
-  @Roles('Admin', 'Owner', 'Teacher')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Unassign a teacher from a group' })
   @ApiParam({ name: 'groupId', description: 'Group ID' })
   @ApiParam({ name: 'teacherId', description: 'Teacher ID' })
@@ -160,8 +164,6 @@ export class GroupsController {
 
   // List assignments - Any member can view
   @Get(':groupId/students')
-  @Roles('Admin', 'Owner', 'Teacher', 'Support')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'List students in a group' })
   @ApiParam({ name: 'groupId', description: 'Group ID' })
   @ApiResponse({ status: 200, description: 'List of students' })
@@ -170,8 +172,6 @@ export class GroupsController {
   }
 
   @Get(':groupId/teachers')
-  @Roles('Admin', 'Owner', 'Teacher', 'Support')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'List teachers in a group' })
   @ApiParam({ name: 'groupId', description: 'Group ID' })
   @ApiResponse({ status: 200, description: 'List of teachers' })

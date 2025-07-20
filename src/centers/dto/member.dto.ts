@@ -1,6 +1,18 @@
+import { z } from 'zod';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class MemberDto {
+export const MemberResponseSchema = z.object({
+  userId: z.string(),
+  centerId: z.string(),
+  role: z.string(),
+  createdBy: z.string(),
+  createdAt: z.string(),
+  user: z.any().optional(),
+  roleObj: z.any().optional(),
+});
+export type MemberResponse = z.infer<typeof MemberResponseSchema>;
+
+export class MemberResponseDto {
   @ApiProperty({ example: 'user-uuid', description: 'User ID' })
   userId: string;
 

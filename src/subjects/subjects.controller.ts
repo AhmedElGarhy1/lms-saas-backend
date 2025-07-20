@@ -8,6 +8,7 @@ import {
   Body,
   Logger,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,16 +18,27 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { SubjectsService } from './subjects.service';
-import { CreateSubjectDto } from './dto/create-subject.dto';
-import { UpdateSubjectDto } from './dto/update-subject.dto';
-import { SubjectDto } from './dto/subject.dto';
+import {
+  CreateSubjectRequestSchema,
+  CreateSubjectRequestDto,
+  CreateSubjectRequest,
+} from './dto/create-subject.dto';
+import {
+  UpdateSubjectRequestSchema,
+  UpdateSubjectRequestDto,
+  UpdateSubjectRequest,
+} from './dto/update-subject.dto';
+import {
+  AssignTeacherRequestSchema,
+  AssignTeacherRequestDto,
+  AssignTeacherRequest,
+} from './dto/assign-teacher.dto';
 import { GetUser } from '../shared/decorators/get-user.decorator';
 import { CurrentUser as CurrentUserType } from '../shared/types/current-user.type';
-import { Roles } from '../access-control/decorators/roles.decorator';
-import { RolesGuard } from '../access-control/guards/roles.guard';
 import { ContextGuard } from '../access-control/guards/context.guard';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
-import { AssignTeacherDto } from '../shared/dto/assign-teacher.dto';
+import { SubjectResponseDto } from './dto/subject.dto';
+import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
 
 // Apply ContextGuard globally to ensure scopeType/scopeId are set
 @UseGuards(ContextGuard)
@@ -38,31 +50,32 @@ export class SubjectsController {
 
   // Only Owners/Admins/Teachers can create subjects
   @Post()
-  @Roles('Admin', 'Owner', 'Teacher')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Create a new subject' })
-  @ApiBody({ type: CreateSubjectDto })
+  @ApiBody({ type: CreateSubjectRequestDto })
   @ApiResponse({ status: 201, description: 'Subject created' })
-  async createSubject(@Body() dto: CreateSubjectDto) {
+  async createSubject(
+    @Body(new ZodValidationPipe(CreateSubjectRequestSchema))
+    dto: CreateSubjectRequest,
+  ) {
     return this.subjectsService.createSubject(dto);
   }
 
   // Only Owners/Admins/Teachers can update subjects
   @Patch(':id')
-  @Roles('Admin', 'Owner', 'Teacher')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Update a subject' })
   @ApiParam({ name: 'id', description: 'Subject ID' })
-  @ApiBody({ type: UpdateSubjectDto })
+  @ApiBody({ type: UpdateSubjectRequestDto })
   @ApiResponse({ status: 200, description: 'Subject updated' })
-  async updateSubject(@Param('id') id: string, @Body() dto: UpdateSubjectDto) {
+  async updateSubject(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(UpdateSubjectRequestSchema))
+    dto: UpdateSubjectRequest,
+  ) {
     return this.subjectsService.updateSubject(id, dto);
   }
 
   // Only Owners/Admins can delete subjects
   @Delete(':id')
-  @Roles('Admin', 'Owner')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Delete a subject' })
   @ApiParam({ name: 'id', description: 'Subject ID' })
   @ApiResponse({ status: 200, description: 'Subject deleted' })
@@ -72,8 +85,6 @@ export class SubjectsController {
 
   // Any member can view a subject
   @Get(':id')
-  @Roles('Admin', 'Owner', 'Teacher', 'Support')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Get subject by ID' })
   @ApiParam({ name: 'id', description: 'Subject ID' })
   @ApiResponse({ status: 200, description: 'Subject found' })
@@ -83,37 +94,35 @@ export class SubjectsController {
 
   // Any member can list subjects
   @Get()
-  @Roles('Admin', 'Owner', 'Teacher', 'Support')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'List subjects (with optional filtering)' })
   @ApiResponse({
     status: 200,
     description: 'List of subjects',
-    type: SubjectDto,
+    type: SubjectResponseDto,
     isArray: true,
   })
-  async listSubjects(@Paginate() query: PaginateQuery) {
-    return this.subjectsService.listSubjects(query);
+  async listSubjects(
+    @Paginate() query: PaginateQuery,
+    @GetUser() user: CurrentUserType,
+  ) {
+    return this.subjectsService.listSubjects(query, user.id);
   }
 
   // Assignment management - Only Owners/Admins/Teachers can assign teachers
-  @Post(':subjectId/teachers')
-  @Roles('Admin', 'Owner', 'Teacher')
-  @UseGuards(RolesGuard)
+  @Post(':id/assign-teacher')
   @ApiOperation({ summary: 'Assign a teacher to a subject' })
-  @ApiParam({ name: 'subjectId', description: 'Subject ID' })
-  @ApiBody({ type: AssignTeacherDto })
-  @ApiResponse({ status: 201, description: 'Teacher assigned' })
+  @ApiParam({ name: 'id', description: 'Subject ID' })
+  @ApiBody({ type: AssignTeacherRequestDto })
+  @ApiResponse({ status: 200, description: 'Teacher assigned' })
   async assignTeacher(
-    @Param('subjectId') subjectId: string,
-    @Body() dto: AssignTeacherDto,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(AssignTeacherRequestSchema))
+    dto: AssignTeacherRequest,
   ) {
-    return this.subjectsService.assignTeacher(subjectId, dto);
+    return this.subjectsService.assignTeacher(id, dto.teacherId);
   }
 
   @Delete(':subjectId/teachers/:teacherId')
-  @Roles('Admin', 'Owner', 'Teacher')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Unassign a teacher from a subject' })
   @ApiParam({ name: 'subjectId', description: 'Subject ID' })
   @ApiParam({ name: 'teacherId', description: 'Teacher ID' })
@@ -127,8 +136,6 @@ export class SubjectsController {
 
   // List assignments - Any member can view
   @Get(':subjectId/teachers')
-  @Roles('Admin', 'Owner', 'Teacher', 'Support')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'List teachers for a subject' })
   @ApiParam({ name: 'subjectId', description: 'Subject ID' })
   @ApiResponse({ status: 200, description: 'List of teachers' })

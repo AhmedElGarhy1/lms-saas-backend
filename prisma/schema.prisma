@@ -361,6 +361,8 @@ model UserAccess {
   user         User     @relation("AccessGranter", fields: [userId], references: [id])
   targetUser   User     @relation("AccessTarget", fields: [targetUserId], references: [id])
   role         Role?    @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, targetUserId])
 }
 
 model CenterAccess {
@@ -371,4 +373,6 @@ model CenterAccess {
 
   user      User     @relation(fields: [userId], references: [id])
   center    Center   @relation(fields: [centerId], references: [id])
+
+  @@unique([userId, centerId])
 }

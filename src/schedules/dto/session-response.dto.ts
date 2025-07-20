@@ -1,4 +1,27 @@
+import { z } from 'zod';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export const SessionResponseSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  teacherId: z.string(),
+  centerId: z.string().optional(),
+  groupId: z.string().optional(),
+  subjectId: z.string().optional(),
+  grade: z.string().optional(),
+  startTime: z.string(),
+  endTime: z.string(),
+  recurrenceRule: z.string().optional(),
+  isCancelled: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  teacher: z.any().optional(),
+  center: z.any().optional(),
+  group: z.any().optional(),
+  subject: z.any().optional(),
+});
+export type SessionResponse = z.infer<typeof SessionResponseSchema>;
 
 export class SessionResponseDto {
   @ApiProperty()

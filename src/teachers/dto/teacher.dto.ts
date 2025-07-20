@@ -1,21 +1,19 @@
+import { z } from 'zod';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsInt, Min, Max, IsUUID } from 'class-validator';
 
-export class CreateTeacherDto {
-  @ApiProperty({
-    description: 'User ID of the teacher',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
-  @IsUUID()
-  userId: string;
+export const UpdateTeacherRequestSchema = z.object({
+  biography: z.string().optional(),
+  experienceYears: z.number().min(0).max(50).optional(),
+  specialization: z.string().optional(),
+});
+export type UpdateTeacherRequest = z.infer<typeof UpdateTeacherRequestSchema>;
 
+export class UpdateTeacherRequestDto {
   @ApiPropertyOptional({
     description: 'Teacher biography',
     example:
       'Experienced mathematics teacher with 10+ years of teaching experience in advanced calculus and algebra.',
   })
-  @IsOptional()
-  @IsString()
   biography?: string;
 
   @ApiPropertyOptional({
@@ -24,49 +22,12 @@ export class CreateTeacherDto {
     minimum: 0,
     maximum: 50,
   })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Max(50)
   experienceYears?: number;
 
   @ApiPropertyOptional({
     description: 'Teacher specialization or subject area',
     example: 'Mathematics, Advanced Calculus, Linear Algebra',
   })
-  @IsOptional()
-  @IsString()
-  specialization?: string;
-}
-
-export class UpdateTeacherDto {
-  @ApiPropertyOptional({
-    description: 'Teacher biography',
-    example:
-      'Experienced mathematics teacher with 10+ years of teaching experience in advanced calculus and algebra.',
-  })
-  @IsOptional()
-  @IsString()
-  biography?: string;
-
-  @ApiPropertyOptional({
-    description: 'Years of teaching experience',
-    example: 10,
-    minimum: 0,
-    maximum: 50,
-  })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Max(50)
-  experienceYears?: number;
-
-  @ApiPropertyOptional({
-    description: 'Teacher specialization or subject area',
-    example: 'Mathematics, Advanced Calculus, Linear Algebra',
-  })
-  @IsOptional()
-  @IsString()
   specialization?: string;
 }
 
@@ -186,6 +147,5 @@ export class IncrementProfileViewsDto {
     description: 'Teacher profile ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsUUID()
   id: string;
 }

@@ -1,20 +1,28 @@
+import { z } from 'zod';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID, IsEnum, IsOptional, IsString } from 'class-validator';
 import { AttendanceStatus } from './query-attendance.dto';
 
-export class CreateAttendanceDto {
+export const CreateAttendanceRequestSchema = z.object({
+  sessionId: z.string().uuid(),
+  studentId: z.string().uuid(),
+  status: z.nativeEnum(AttendanceStatus),
+  note: z.string().optional(),
+});
+export type CreateAttendanceRequest = z.infer<
+  typeof CreateAttendanceRequestSchema
+>;
+
+export class CreateAttendanceRequestDto {
   @ApiProperty({
     description: 'Session ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsUUID()
   sessionId: string;
 
   @ApiProperty({
     description: 'Student ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsUUID()
   studentId: string;
 
   @ApiProperty({
@@ -22,7 +30,6 @@ export class CreateAttendanceDto {
     enum: AttendanceStatus,
     example: AttendanceStatus.PRESENT,
   })
-  @IsEnum(AttendanceStatus)
   status: AttendanceStatus;
 
   @ApiProperty({
@@ -30,7 +37,5 @@ export class CreateAttendanceDto {
     required: false,
     example: 'Student arrived 5 minutes late',
   })
-  @IsOptional()
-  @IsString()
   note?: string;
 }

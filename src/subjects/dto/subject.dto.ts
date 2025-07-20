@@ -1,6 +1,21 @@
+import { z } from 'zod';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class SubjectDto {
+export const SubjectResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  centerId: z.string(),
+  gradeLevelId: z.string(),
+  credits: z.number(),
+  duration: z.number(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type SubjectResponse = z.infer<typeof SubjectResponseSchema>;
+
+export class SubjectResponseDto {
   @ApiProperty({ example: 'subject-uuid', description: 'Subject ID' })
   id: string;
 

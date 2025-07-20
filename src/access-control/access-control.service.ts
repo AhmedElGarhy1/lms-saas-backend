@@ -4,18 +4,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
-import { CreateRoleDto, RoleScope } from './dto/create-role.dto';
-import { CreatePermissionDto } from './dto/create-permission.dto';
-import { AssignRoleDto } from './dto/assign-role.dto';
-import { AssignPermissionDto } from './dto/assign-permission.dto';
-import { Role, Permission } from '@prisma/client';
+import { CreatePermissionRequest } from './dto/create-permission.dto';
+import { RoleScope } from './constants/rolescope';
 
 @Injectable()
 export class AccessControlService {
   constructor(private readonly prisma: PrismaService) {}
 
   // Create a global role
-  async createGlobalRole(dto: CreateRoleDto) {
+  async createGlobalRole(dto: any) {
     if (dto.scope !== RoleScope.GLOBAL) {
       throw new BadRequestException('Scope must be GLOBAL for this endpoint');
     }
@@ -30,7 +27,7 @@ export class AccessControlService {
   }
 
   // Create an internal (center) role
-  async createInternalRole(dto: CreateRoleDto) {
+  async createInternalRole(dto: any) {
     if (dto.scope !== RoleScope.CENTER || !dto.centerId) {
       throw new BadRequestException(
         'Scope must be CENTER and centerId is required',
@@ -48,7 +45,7 @@ export class AccessControlService {
   }
 
   // Create a permission
-  async createPermission(dto: CreatePermissionDto) {
+  async createPermission(dto: CreatePermissionRequest) {
     return this.prisma.permission.create({
       data: {
         action: dto.action,
@@ -59,7 +56,12 @@ export class AccessControlService {
   }
 
   // Assign a role to a user (context-aware)
-  async assignRole(dto: AssignRoleDto) {
+  async assignRole(dto: {
+    userId: string;
+    roleId: string;
+    scopeType: RoleScope;
+    scopeId: string | null;
+  }) {
     if (dto.scopeType === RoleScope.CENTER && !dto.scopeId) {
       throw new BadRequestException(
         'scopeId (centerId) is required for CENTER scope',
@@ -81,7 +83,12 @@ export class AccessControlService {
   }
 
   // Assign a permission override to a user (context-aware)
-  async assignUserPermission(dto: AssignPermissionDto) {
+  async assignUserPermission(dto: {
+    userId: string;
+    permissionId: string;
+    scopeType: RoleScope;
+    scopeId: string | null;
+  }) {
     if (!dto.userId) throw new BadRequestException('userId is required');
     if (!dto.permissionId)
       throw new BadRequestException('permissionId is required');

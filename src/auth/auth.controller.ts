@@ -6,18 +6,41 @@ import {
   ApiBearerAuth,
   ApiBody,
 } from '@nestjs/swagger';
-import { SignupDto } from './dto/signup.dto';
-import { LoginDto } from './dto/login.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { VerifyEmailDto } from './dto/verify-email.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthService } from './auth.service';
-import { TwoFASetupDto, TwoFAVerifyDto } from './dto/2fa.dto';
 import { GetUser } from '../shared/decorators/get-user.decorator';
 import { User } from '@prisma/client';
 import { Public } from '../shared/decorators/public.decorator';
+import { SignupRequestSchema, SignupRequest } from './dto/signup.dto';
+import { LoginRequestSchema, LoginRequest } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import {
+  VerifyEmailRequestSchema,
+  VerifyEmailRequest,
+} from './dto/verify-email.dto';
+import {
+  ForgotPasswordRequestSchema,
+  ForgotPasswordRequest,
+} from './dto/forgot-password.dto';
+import {
+  ResetPasswordRequestSchema,
+  ResetPasswordRequest,
+} from './dto/reset-password.dto';
+import {
+  TwoFASetupRequestSchema,
+  TwoFASetupRequest,
+  TwoFAVerifyRequestSchema,
+  TwoFAVerifyRequest,
+} from './dto/2fa.dto';
+import { BadRequestException } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
+import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
+import { SignupRequestDto } from './dto/signup.dto';
+import { LoginRequestDto } from './dto/login.dto';
+import { VerifyEmailRequestDto } from './dto/verify-email.dto';
+import { ForgotPasswordRequestDto } from './dto/forgot-password.dto';
+import { ResetPasswordRequestDto } from './dto/reset-password.dto';
+import { TwoFASetupDto } from './dto/2fa.dto';
+import { TwoFAVerifyDto } from './dto/2fa.dto';
 
 class SignupExample {
   @ApiProperty({
@@ -127,15 +150,10 @@ export class AuthController {
     description: 'Signup successful',
     schema: { example: SignupExample },
   })
-  @ApiBody({
-    type: SignupDto,
-    examples: {
-      user: {
-        value: SignupExample,
-      },
-    },
-  })
-  async signup(@Body() dto: SignupDto) {
+  @ApiBody({ type: SignupRequestDto })
+  async signup(
+    @Body(new ZodValidationPipe(SignupRequestSchema)) dto: SignupRequest,
+  ) {
     return this.authService.signup(dto);
   }
 
@@ -147,15 +165,10 @@ export class AuthController {
     description: 'Login successful',
     schema: { example: LoginExample },
   })
-  @ApiBody({
-    type: LoginDto,
-    examples: {
-      user: {
-        value: LoginExample,
-      },
-    },
-  })
-  async login(@Body() dto: LoginDto) {
+  @ApiBody({ type: LoginRequestDto })
+  async login(
+    @Body(new ZodValidationPipe(LoginRequestSchema)) dto: LoginRequest,
+  ) {
     return this.authService.login(dto);
   }
 
@@ -167,14 +180,7 @@ export class AuthController {
     description: 'Tokens refreshed',
     schema: { example: RefreshTokenExample },
   })
-  @ApiBody({
-    type: RefreshTokenDto,
-    examples: {
-      user: {
-        value: RefreshTokenExample,
-      },
-    },
-  })
+  @ApiBody({ type: RefreshTokenDto })
   async refreshToken(@Body() dto: RefreshTokenDto) {
     return this.authService.refreshToken(dto);
   }
@@ -187,15 +193,11 @@ export class AuthController {
     description: 'Email verified',
     schema: { example: VerifyEmailExample },
   })
-  @ApiBody({
-    type: VerifyEmailDto,
-    examples: {
-      user: {
-        value: VerifyEmailExample,
-      },
-    },
-  })
-  async verifyEmail(@Body() dto: VerifyEmailDto) {
+  @ApiBody({ type: VerifyEmailRequestDto })
+  async verifyEmail(
+    @Body(new ZodValidationPipe(VerifyEmailRequestSchema))
+    dto: VerifyEmailRequest,
+  ) {
     return this.authService.verifyEmail(dto);
   }
 
@@ -207,15 +209,11 @@ export class AuthController {
     description: 'Reset link sent',
     schema: { example: ForgotPasswordExample },
   })
-  @ApiBody({
-    type: ForgotPasswordDto,
-    examples: {
-      user: {
-        value: ForgotPasswordExample,
-      },
-    },
-  })
-  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+  @ApiBody({ type: ForgotPasswordRequestDto })
+  async forgotPassword(
+    @Body(new ZodValidationPipe(ForgotPasswordRequestSchema))
+    dto: ForgotPasswordRequest,
+  ) {
     return this.authService.forgotPassword(dto);
   }
 
@@ -227,15 +225,11 @@ export class AuthController {
     description: 'Password reset successful',
     schema: { example: ResetPasswordExample },
   })
-  @ApiBody({
-    type: ResetPasswordDto,
-    examples: {
-      user: {
-        value: ResetPasswordExample,
-      },
-    },
-  })
-  async resetPassword(@Body() dto: ResetPasswordDto) {
+  @ApiBody({ type: ResetPasswordRequestDto })
+  async resetPassword(
+    @Body(new ZodValidationPipe(ResetPasswordRequestSchema))
+    dto: ResetPasswordRequest,
+  ) {
     return this.authService.resetPassword(dto);
   }
 
@@ -255,17 +249,12 @@ export class AuthController {
     description: '2FA QR code and secret',
     schema: { example: TwoFASetupExample },
   })
-  @ApiBody({
-    type: TwoFASetupDto,
-    examples: {
-      user: {
-        value: TwoFASetupExample,
-      },
-    },
-  })
-  async setup2FA(@GetUser() user: User, @Body() dto: TwoFASetupDto) {
-    await this.authService.verifyPassword(user.id, dto.password);
-    return this.authService.setup2FA(user.id);
+  @ApiBody({ type: TwoFASetupDto })
+  async setup2FA(
+    @Body(new ZodValidationPipe(TwoFASetupRequestSchema))
+    dto: TwoFASetupRequest,
+  ) {
+    return this.authService.setup2FA(dto.password);
   }
 
   @Post('2fa/enable')
@@ -284,7 +273,7 @@ export class AuthController {
       },
     },
   })
-  async enable2FA(@GetUser() user: User, @Body() dto: TwoFAVerifyDto) {
+  async enable2FA(@GetUser() user: User, @Body() dto: TwoFAVerifyRequest) {
     return this.authService.enable2FA(user.id, dto.code);
   }
 
@@ -304,7 +293,7 @@ export class AuthController {
       },
     },
   })
-  async disable2FA(@GetUser() user: User, @Body() dto: TwoFAVerifyDto) {
+  async disable2FA(@GetUser() user: User, @Body() dto: TwoFAVerifyRequest) {
     return this.authService.disable2FA(user.id, dto.code);
   }
 }

@@ -1,9 +1,15 @@
-import { IsString, IsUUID, IsOptional } from 'class-validator';
+import { z } from 'zod';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class AddMemberDto {
+export const AddMemberRequestSchema = z.object({
+  userId: z.string().min(1),
+  role: z.string().optional(),
+  roleId: z.string().uuid().optional(),
+});
+export type AddMemberRequest = z.infer<typeof AddMemberRequestSchema>;
+
+export class AddMemberRequestDto {
   @ApiProperty({ example: 'user-uuid', description: 'ID of the user to add' })
-  @IsString()
   userId: string;
 
   @ApiProperty({
@@ -12,8 +18,6 @@ export class AddMemberDto {
       'Role name to assign to the user (e.g., Teacher, Student, Owner)',
     required: false,
   })
-  @IsOptional()
-  @IsString()
   role?: string;
 
   @ApiProperty({
@@ -21,7 +25,5 @@ export class AddMemberDto {
     description: 'Role ID to assign to the user (alternative to role name)',
     required: false,
   })
-  @IsOptional()
-  @IsUUID('4')
   roleId?: string;
 }

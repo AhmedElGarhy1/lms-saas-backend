@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -15,16 +16,28 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
+  ApiBody,
 } from '@nestjs/swagger';
 import { StudentsService } from './students.service';
-import { CreateStudentDto } from './dto/create-student.dto';
-import { UpdateStudentDto } from './dto/update-student.dto';
+import {
+  CreateStudentRequestSchema,
+  CreateStudentRequestDto,
+  CreateStudentRequest,
+} from './dto/create-student.dto';
+import {
+  UpdateStudentRequestSchema,
+  UpdateStudentRequestDto,
+  UpdateStudentRequest,
+} from './dto/update-student.dto';
 import { AddStudentToCenterDto } from './dto/add-student-to-center.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../access-control/guards/permissions.guard';
 import { Permissions } from '../access-control/decorators/permissions.decorator';
 import { PERMISSIONS } from '../access-control/constants/permissions';
 import { GetUser } from '../shared/decorators/get-user.decorator';
+import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
+import { Prisma, StudentGrade } from '@prisma/client';
+// import { CurrentUserType } from '../auth/types/current-user.type';
 
 @ApiTags('students')
 @Controller('students')
@@ -35,9 +48,24 @@ export class StudentsController {
   @Post()
   @Permissions(PERMISSIONS.STUDENT.CREATE.action)
   @ApiOperation({ summary: 'Create a new student' })
-  @ApiResponse({ status: 201, description: 'Student created successfully' })
-  create(@Body() createStudentDto: CreateStudentDto) {
-    return this.studentsService.createStudent(createStudentDto);
+  @ApiBody({ type: CreateStudentRequestDto })
+  @ApiResponse({ status: 201, description: 'Student created' })
+  async createStudent(
+    @Body(new ZodValidationPipe(CreateStudentRequestSchema))
+    dto: CreateStudentRequest,
+    @GetUser() user: any,
+  ) {
+    if (!dto.guardianId || !dto.teacherId) {
+      throw new BadRequestException('guardianId and teacherId are required');
+    }
+    return this.studentsService.createStudent({
+      ...dto,
+      grade: dto.grade as StudentGrade,
+      level: dto.level as string,
+      guardianId: dto.guardianId,
+      teacherId: dto.teacherId,
+      userId: user.id,
+    });
   }
 
   @Get()
@@ -49,7 +77,7 @@ export class StudentsController {
     description: 'Filter by center ID',
   })
   @ApiResponse({ status: 200, description: 'List of students' })
-  findAll(@GetUser() user, @Query('centerId') centerId?: string) {
+  findAll(@GetUser() user: any, @Query('centerId') centerId?: string) {
     if (centerId) {
       return this.studentsService.getStudentsByCenter(centerId);
     }
@@ -133,11 +161,24 @@ export class StudentsController {
 
   @Patch(':id')
   @Permissions(PERMISSIONS.STUDENT.UPDATE.action)
-  @ApiOperation({ summary: 'Update student information' })
-  @ApiParam({ name: 'id', description: 'Student ID' })
-  @ApiResponse({ status: 200, description: 'Student updated successfully' })
-  update(@Param('id') id: string, @Body() updateStudentDto: UpdateStudentDto) {
-    return this.studentsService.updateStudent(id, updateStudentDto);
+  @ApiOperation({ summary: 'Update a student' })
+  @ApiBody({ type: UpdateStudentRequestDto })
+  @ApiResponse({ status: 200, description: 'Student updated' })
+  async updateStudent(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(UpdateStudentRequestSchema))
+    dto: UpdateStudentRequest,
+  ) {
+    if (!dto.guardianId || !dto.teacherId) {
+      throw new BadRequestException('guardianId and teacherId are required');
+    }
+    return this.studentsService.updateStudent(id, {
+      ...dto,
+      grade: dto.grade as StudentGrade,
+      level: dto.level as string,
+      guardianId: dto.guardianId,
+      teacherId: dto.teacherId,
+    });
   }
 
   @Delete(':id')

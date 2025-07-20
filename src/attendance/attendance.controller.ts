@@ -9,6 +9,7 @@ import {
   Logger,
   UseGuards,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,7 +20,10 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
-import { CreateAttendanceDto } from './dto/create-attendance.dto';
+import {
+  CreateAttendanceRequestSchema,
+  CreateAttendanceRequestDto,
+} from './dto/create-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
 import { GetUser } from '../shared/decorators/get-user.decorator';
@@ -29,6 +33,7 @@ import { Permissions } from '../access-control/decorators/permissions.decorator'
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
 import { AttendanceResponseDto } from './dto/attendance-response.dto';
 import { EditAttendanceDto } from './dto/edit-attendance.dto';
+import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
 
 @ApiTags('Attendance')
 @ApiBearerAuth()
@@ -72,6 +77,17 @@ export class AttendanceController {
     return this.attendanceService.bulkMark(dto, user.id);
   }
 
+  @Post()
+  @ApiOperation({ summary: 'Create a new attendance record' })
+  @ApiBody({ type: CreateAttendanceRequestDto })
+  @ApiResponse({ status: 201, description: 'Attendance created' })
+  async createAttendance(
+    @Body(new ZodValidationPipe(CreateAttendanceRequestSchema))
+    dto: CreateAttendanceRequestDto,
+  ) {
+    return this.attendanceService.createAttendance(dto);
+  }
+
   @Patch('edit')
   @ApiOperation({ summary: 'Edit an attendance record' })
   @ApiBody({
@@ -110,6 +126,17 @@ export class AttendanceController {
     @GetUser() user: CurrentUser,
   ): Promise<AttendanceResponseDto> {
     return this.attendanceService.edit(dto, user.id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update an attendance record' })
+  @ApiBody({ type: UpdateAttendanceDto })
+  @ApiResponse({ status: 200, description: 'Attendance updated' })
+  async updateAttendance(
+    @Param('id') id: string,
+    @Body() dto: UpdateAttendanceDto,
+  ) {
+    return this.attendanceService.updateAttendance(id, dto);
   }
 
   @Get()

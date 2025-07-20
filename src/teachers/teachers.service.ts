@@ -8,11 +8,7 @@ import {
   LoggerService,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
-import {
-  CreateTeacherDto,
-  UpdateTeacherDto,
-  TeacherResponseDto,
-} from './dto/teacher.dto';
+import { UpdateTeacherRequest, TeacherResponseDto } from './dto/teacher.dto';
 import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { CurrentUser } from '../shared/types/current-user.type';
@@ -26,7 +22,7 @@ export class TeachersService {
   ) {}
 
   async createTeacher(
-    createTeacherDto: CreateTeacherDto,
+    createTeacherDto: any, // This type will need to be updated based on the actual DTO
     currentUser: CurrentUser,
   ): Promise<TeacherResponseDto> {
     try {
@@ -173,7 +169,7 @@ export class TeachersService {
 
   async updateTeacher(
     id: string,
-    updateTeacherDto: UpdateTeacherDto,
+    updateTeacherDto: UpdateTeacherRequest,
     currentUser: CurrentUser,
   ): Promise<TeacherResponseDto> {
     try {

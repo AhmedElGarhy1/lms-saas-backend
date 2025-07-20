@@ -10,10 +10,17 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { SchedulesService } from './schedules.service';
-import { CreateSessionDto } from './dto/create-session.dto';
-import { UpdateSessionDto } from './dto/update-session.dto';
+import {
+  CreateSessionRequestSchema,
+  CreateSessionRequestDto,
+} from './dto/create-session.dto';
+import {
+  UpdateSessionRequestSchema,
+  UpdateSessionRequestDto,
+} from './dto/update-session.dto';
 import { SessionResponseDto } from './dto/session-response.dto';
 import {
   ApiTags,
@@ -21,12 +28,14 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { GetUser } from '../shared/decorators/get-user.decorator';
 import { CurrentUser as CurrentUserType } from '../shared/types/current-user.type';
 import { PermissionsGuard } from '../shared/guards/permissions.guard';
 import { Permissions } from '../access-control/decorators/permissions.decorator';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
+import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
 
 @ApiTags('schedules')
 @ApiBearerAuth()
@@ -36,13 +45,13 @@ export class SchedulesController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new class session' })
-  @ApiResponse({ status: 201, type: SessionResponseDto })
-  @UseGuards(PermissionsGuard)
-  @Permissions('schedules:create')
-  async create(
-    @Body() dto: CreateSessionDto,
+  @ApiBody({ type: CreateSessionRequestDto })
+  @ApiResponse({ status: 201, description: 'Session created' })
+  async createSession(
+    @Body(new ZodValidationPipe(CreateSessionRequestSchema))
+    dto: CreateSessionRequestDto,
     @GetUser() user: CurrentUserType,
-  ): Promise<SessionResponseDto> {
+  ) {
     return this.schedulesService.createSession(dto, user);
   }
 
@@ -67,16 +76,15 @@ export class SchedulesController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update class session by ID' })
-  @ApiParam({ name: 'id', description: 'Session ID' })
-  @ApiResponse({ status: 200, type: SessionResponseDto })
-  @UseGuards(PermissionsGuard)
-  @Permissions('schedules:update')
-  async update(
+  @ApiOperation({ summary: 'Update a class session' })
+  @ApiBody({ type: UpdateSessionRequestDto })
+  @ApiResponse({ status: 200, description: 'Session updated' })
+  async updateSession(
     @Param('id') id: string,
-    @Body() dto: UpdateSessionDto,
+    @Body(new ZodValidationPipe(UpdateSessionRequestSchema))
+    dto: UpdateSessionRequestDto,
     @GetUser() user: CurrentUserType,
-  ): Promise<SessionResponseDto> {
+  ) {
     return this.schedulesService.updateSession(id, dto, user);
   }
 

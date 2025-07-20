@@ -5,7 +5,6 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { SharedModule } from './shared/shared.module';
 import { UsersModule } from './users/users.module';
-import { RolesModule } from './roles/roles.module';
 import { CentersModule } from './centers/centers.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -44,7 +43,6 @@ import { AttendanceModule } from './attendance/attendance.module';
     SharedModule,
     AuthModule,
     UsersModule,
-    RolesModule,
     CentersModule,
     AccessControlModule,
     GradeLevelsModule,

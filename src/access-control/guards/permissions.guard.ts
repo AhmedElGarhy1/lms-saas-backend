@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../../shared/prisma.service';
-import { RoleScope } from '../dto/create-role.dto';
+import { RoleScope } from '../constants/rolescope';
 import { Role, Permission } from '@prisma/client';
 import { PERMISSIONS_KEY } from 'src/access-control/decorators/permissions.decorator';
 

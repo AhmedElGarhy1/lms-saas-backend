@@ -8,6 +8,7 @@ import {
   Param,
   Body,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,18 +18,27 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { CentersService } from './centers.service';
-import { CreateCenterDto } from './dto/create-center.dto';
-import { UpdateCenterDto } from './dto/update-center.dto';
-import { AddMemberDto } from './dto/add-member.dto';
-import { ChangeMemberRoleDto } from './dto/change-member-role.dto';
+import {
+  CreateCenterRequestSchema,
+  CreateCenterRequestDto,
+} from './dto/create-center.dto';
+import {
+  UpdateCenterRequestSchema,
+  UpdateCenterRequestDto,
+} from './dto/update-center.dto';
+import {
+  AddMemberRequestSchema,
+  AddMemberRequestDto,
+} from './dto/add-member.dto';
 import { GetUser } from '../shared/decorators/get-user.decorator';
 import { CurrentUser as CurrentUserType } from '../shared/types/current-user.type';
-import { UseGuards } from '@nestjs/common';
-import { Roles } from '../access-control/decorators/roles.decorator';
-import { RolesGuard } from '../access-control/guards/roles.guard';
 import { ContextGuard } from '../access-control/guards/context.guard';
-import { MemberDto } from './dto/member.dto';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
+import {
+  ChangeMemberRoleRequestSchema,
+  ChangeMemberRoleRequestDto,
+} from './dto/change-member-role.dto';
+import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
 
 // Apply ContextGuard globally to ensure scopeType/scopeId are set
 @UseGuards(ContextGuard)
@@ -41,13 +51,12 @@ export class CentersController {
 
   // Only Admins/Owners can create a center
   @Post()
-  @Roles('Admin', 'Owner')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Create a new center' })
-  @ApiBody({ type: CreateCenterDto })
+  @ApiBody({ type: CreateCenterRequestDto })
   @ApiResponse({ status: 201, description: 'Center created' })
   async createCenter(
-    @Body() dto: CreateCenterDto,
+    @Body(new ZodValidationPipe(CreateCenterRequestSchema))
+    dto: CreateCenterRequestDto,
     @GetUser() user: CurrentUserType,
   ) {
     if (!user?.id) throw new BadRequestException('Missing user context');
@@ -56,8 +65,6 @@ export class CentersController {
 
   // Only members (any role) can view a center
   @Get(':id')
-  @Roles('Admin', 'Owner', 'Teacher', 'Support')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Get center by ID' })
   @ApiParam({ name: 'id', description: 'Center ID' })
   @ApiResponse({ status: 200, description: 'Center found' })
@@ -67,20 +74,20 @@ export class CentersController {
 
   // Only Admins/Owners can update a center
   @Patch(':id')
-  @Roles('Admin', 'Owner')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Update a center' })
   @ApiParam({ name: 'id', description: 'Center ID' })
-  @ApiBody({ type: UpdateCenterDto })
+  @ApiBody({ type: UpdateCenterRequestDto })
   @ApiResponse({ status: 200, description: 'Center updated' })
-  async updateCenter(@Param('id') id: string, @Body() dto: UpdateCenterDto) {
+  async updateCenter(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(UpdateCenterRequestSchema))
+    dto: UpdateCenterRequestDto,
+  ) {
     return this.centersService.updateCenter(id, dto);
   }
 
   // Only Owners can delete a center (soft delete)
   @Delete(':id')
-  @Roles('Owner')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Soft delete a center' })
   @ApiParam({ name: 'id', description: 'Center ID' })
   @ApiResponse({ status: 200, description: 'Center soft deleted' })
@@ -103,18 +110,16 @@ export class CentersController {
   // Member management
   // Only Admins/Owners can add a member
   @Post(':centerId/members')
-  @Roles('Admin', 'Owner')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Add a member to a center' })
   @ApiParam({ name: 'centerId', description: 'Center ID' })
-  @ApiBody({ type: AddMemberDto })
+  @ApiBody({ type: AddMemberRequestDto })
   @ApiResponse({ status: 201, description: 'Member added' })
   async addMember(
     @Param('centerId') centerId: string,
-    @Body() dto: AddMemberDto,
+    @Body(new ZodValidationPipe(AddMemberRequestSchema))
+    dto: AddMemberRequestDto,
     @GetUser() user: CurrentUserType,
   ) {
-    if (!user?.id) throw new BadRequestException('Missing user context');
     return this.centersService.addMember(centerId, {
       ...dto,
       createdBy: user.id,
@@ -123,8 +128,6 @@ export class CentersController {
 
   // Only Admins/Owners can remove a member
   @Delete(':centerId/members/:userId')
-  @Roles('Admin', 'Owner')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Remove a member from a center' })
   @ApiParam({ name: 'centerId', description: 'Center ID' })
   @ApiParam({ name: 'userId', description: 'User ID' })
@@ -138,32 +141,27 @@ export class CentersController {
 
   // Only Admins/Owners can change a member's role
   @Patch(':centerId/members/:userId/role')
-  @Roles('Admin', 'Owner')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: "Change a member's role in a center" })
   @ApiParam({ name: 'centerId', description: 'Center ID' })
   @ApiParam({ name: 'userId', description: 'User ID' })
-  @ApiBody({ type: ChangeMemberRoleDto })
+  @ApiBody({ type: ChangeMemberRoleRequestDto })
   @ApiResponse({ status: 200, description: 'Member role changed' })
   async changeMemberRole(
     @Param('centerId') centerId: string,
     @Param('userId') userId: string,
-    @Body() dto: ChangeMemberRoleDto,
+    @Body(new ZodValidationPipe(ChangeMemberRoleRequestSchema))
+    dto: ChangeMemberRoleRequestDto,
   ) {
-    return this.centersService.changeMemberRole(centerId, userId, dto);
+    return this.centersService.changeMemberRole(centerId, userId, dto.role);
   }
 
   // Any member can list members
   @Get(':centerId/members')
-  @Roles('Admin', 'Owner', 'Teacher', 'Support')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'List members of a center' })
   @ApiParam({ name: 'centerId', description: 'Center ID' })
   @ApiResponse({
     status: 200,
     description: 'List of members',
-    type: MemberDto,
-    isArray: true,
   })
   async listMembers(@Param('centerId') centerId: string) {
     return this.centersService.listMembers(centerId);
@@ -171,16 +169,12 @@ export class CentersController {
 
   // Any member can filter members by role
   @Get(':centerId/members/role/:role')
-  @Roles('Admin', 'Owner', 'Teacher', 'Support')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Filter members by role in a center' })
   @ApiParam({ name: 'centerId', description: 'Center ID' })
   @ApiParam({ name: 'role', description: 'Role name' })
   @ApiResponse({
     status: 200,
     description: 'List of members with given role',
-    type: MemberDto,
-    isArray: true,
   })
   async filterMembersByRole(
     @Param('centerId') centerId: string,
@@ -191,8 +185,6 @@ export class CentersController {
 
   // Get default roles for a center
   @Get(':centerId/roles/default')
-  @Roles('Admin', 'Owner', 'Teacher', 'Support')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Get default roles for a center' })
   @ApiParam({ name: 'centerId', description: 'Center ID' })
   @ApiResponse({
@@ -205,8 +197,6 @@ export class CentersController {
 
   // Assign a user as a teacher (creates teacher record)
   @Post(':centerId/members/:userId/assign-teacher')
-  @Roles('Admin', 'Owner')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Assign a user as a teacher in the center' })
   @ApiParam({ name: 'centerId', description: 'Center ID' })
   @ApiParam({ name: 'userId', description: 'User ID' })
@@ -225,8 +215,6 @@ export class CentersController {
 
   // Assign a user as a student (creates student record)
   @Post(':centerId/members/:userId/assign-student')
-  @Roles('Admin', 'Owner', 'Teacher')
-  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Assign a user as a student in the center' })
   @ApiParam({ name: 'centerId', description: 'Center ID' })
   @ApiParam({ name: 'userId', description: 'User ID' })
@@ -252,8 +240,6 @@ export class CentersController {
   @ApiResponse({
     status: 200,
     description: 'List of accessible members',
-    type: MemberDto,
-    isArray: true,
   })
   async listAccessibleMembers(
     @Param('centerId') centerId: string,

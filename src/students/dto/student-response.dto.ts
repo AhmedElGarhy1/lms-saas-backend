@@ -1,5 +1,28 @@
+import { z } from 'zod';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { StudentGrade } from '@prisma/client';
+
+export const StudentResponseSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  teacherId: z.string().optional(),
+  centerId: z.string().optional(),
+  grade: z.nativeEnum(StudentGrade),
+  level: z.string().optional(),
+  guardianId: z.string().optional(),
+  performanceScore: z.number().optional(),
+  totalSessionsAttended: z.number(),
+  totalPayments: z.number(),
+  notes: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  user: z.any().optional(),
+  teacher: z.any().optional(),
+  center: z.any().optional(),
+  guardian: z.any().optional(),
+  groups: z.array(z.any()).optional(),
+});
+export type StudentResponse = z.infer<typeof StudentResponseSchema>;
 
 export class StudentResponseDto {
   @ApiProperty()

@@ -1,22 +1,23 @@
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { z } from 'zod';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UpdateCenterDto {
+export const UpdateCenterRequestSchema = z.object({
+  name: z.string().optional(),
+  description: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+export type UpdateCenterRequest = z.infer<typeof UpdateCenterRequestSchema>;
+
+export class UpdateCenterRequestDto {
   @ApiProperty({ example: 'Springfield High', required: false })
-  @IsOptional()
-  @IsString()
   name?: string;
 
   @ApiProperty({
     example: 'A public high school in Springfield',
     required: false,
   })
-  @IsOptional()
-  @IsString()
   description?: string;
 
   @ApiProperty({ example: true, required: false })
-  @IsOptional()
-  @IsBoolean()
   isActive?: boolean;
 }

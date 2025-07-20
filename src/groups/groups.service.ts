@@ -6,11 +6,7 @@ import {
   LoggerService,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
-import { CreateGroupDto } from './dto/create-group.dto';
-import { UpdateGroupDto } from './dto/update-group.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { AssignStudentDto } from '../shared/dto/assign-student.dto';
-import { AssignTeacherDto } from '../shared/dto/assign-teacher.dto';
 import { PaginateQuery } from 'nestjs-paginate';
 
 @Injectable()
@@ -22,7 +18,7 @@ export class GroupsService {
   ) {}
 
   // Group management
-  async createGroup(dto: CreateGroupDto) {
+  async createGroup(dto: any) {
     const group = await this.prisma.group.create({
       data: {
         name: dto.name,
@@ -36,7 +32,7 @@ export class GroupsService {
     return group;
   }
 
-  async updateGroup(groupId: string, dto: UpdateGroupDto) {
+  async updateGroup(groupId: string, dto: any) {
     const group = await this.prisma.group.findUnique({
       where: { id: groupId },
     });
@@ -131,19 +127,19 @@ export class GroupsService {
   }
 
   // Assignment management
-  async assignStudent(groupId: string, dto: AssignStudentDto) {
+  async assignStudent(groupId: string, studentId: string) {
     const group = await this.prisma.group.findUnique({
       where: { id: groupId },
     });
     if (!group) throw new NotFoundException('Group not found');
     const student = await this.prisma.user.findUnique({
-      where: { id: dto.studentId },
+      where: { id: studentId },
     });
     if (!student) throw new NotFoundException('Student not found');
 
     // Check if student is already in the group
     const existingStudent = await this.prisma.group.findFirst({
-      where: { id: groupId, students: { some: { id: dto.studentId } } },
+      where: { id: groupId, students: { some: { id: studentId } } },
     });
     if (existingStudent)
       throw new BadRequestException('Student already in group');
@@ -163,9 +159,9 @@ export class GroupsService {
 
     await this.prisma.group.update({
       where: { id: groupId },
-      data: { students: { connect: { id: dto.studentId } } },
+      data: { students: { connect: { id: studentId } } },
     });
-    this.logger.log(`Assigned student ${dto.studentId} to group ${groupId}`);
+    this.logger.log(`Assigned student ${studentId} to group ${groupId}`);
     return { success: true };
   }
 
@@ -182,28 +178,28 @@ export class GroupsService {
     return { success: true };
   }
 
-  async assignTeacher(groupId: string, dto: AssignTeacherDto) {
+  async assignTeacher(groupId: string, teacherId: string) {
     const group = await this.prisma.group.findUnique({
       where: { id: groupId },
     });
     if (!group) throw new NotFoundException('Group not found');
     const teacher = await this.prisma.user.findUnique({
-      where: { id: dto.teacherId },
+      where: { id: teacherId },
     });
     if (!teacher) throw new NotFoundException('Teacher not found');
 
     // Check if teacher is already assigned to the group
     const existingTeacher = await this.prisma.group.findFirst({
-      where: { id: groupId, teachers: { some: { id: dto.teacherId } } },
+      where: { id: groupId, teachers: { some: { id: teacherId } } },
     });
     if (existingTeacher)
       throw new BadRequestException('Teacher already assigned to group');
 
     await this.prisma.group.update({
       where: { id: groupId },
-      data: { teachers: { connect: { id: dto.teacherId } } },
+      data: { teachers: { connect: { id: teacherId } } },
     });
-    this.logger.log(`Assigned teacher ${dto.teacherId} to group ${groupId}`);
+    this.logger.log(`Assigned teacher ${teacherId} to group ${groupId}`);
     return { success: true };
   }
 

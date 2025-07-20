@@ -11,6 +11,7 @@ import {
   Put,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,8 +22,6 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { TeachersService } from './teachers.service';
-import { CreateTeacherDto } from './dto/teacher.dto';
-import { UpdateTeacherDto } from './dto/teacher.dto';
 import { TeacherResponseDto } from './dto/teacher.dto';
 import { TeacherListResponseDto } from './dto/teacher.dto';
 import { GetUser } from '../shared/decorators/get-user.decorator';
@@ -31,6 +30,11 @@ import { PermissionsGuard } from '../access-control/guards/permissions.guard';
 import { Permissions } from '../access-control/decorators/permissions.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
+import {
+  UpdateTeacherRequestDto,
+  UpdateTeacherRequestSchema,
+} from './dto/teacher.dto';
+import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
 
 @ApiTags('Teachers')
 @ApiBearerAuth()
@@ -40,38 +44,15 @@ export class TeachersController {
   constructor(private readonly teachersService: TeachersService) {}
 
   @Post()
-  @ApiOperation({
-    summary: 'Create a new teacher profile',
-    description:
-      'Creates a new teacher profile for an existing user. Only admins and center owners can create teacher profiles.',
-  })
-  @ApiBody({
-    type: CreateTeacherDto,
-    description: 'Teacher profile data',
-  })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'Teacher profile created successfully',
-    type: TeacherResponseDto,
-  })
-  @ApiResponse({
-    status: HttpStatus.CONFLICT,
-    description: 'Teacher profile already exists for this user',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'User not found',
-  })
-  @ApiResponse({
-    status: HttpStatus.FORBIDDEN,
-    description: 'Access denied',
-  })
-  @Permissions('teachers:create')
+  @ApiOperation({ summary: 'Create a new teacher profile' })
+  @ApiBody({ type: UpdateTeacherRequestDto })
+  @ApiResponse({ status: 201, description: 'Teacher created' })
   async createTeacher(
-    @Body() createTeacherDto: CreateTeacherDto,
-    @GetUser() currentUser: CurrentUserType,
-  ): Promise<TeacherResponseDto> {
-    return this.teachersService.createTeacher(createTeacherDto, currentUser);
+    @Body(new ZodValidationPipe(UpdateTeacherRequestSchema))
+    dto: UpdateTeacherRequestDto,
+    @GetUser() user: CurrentUserType,
+  ) {
+    return this.teachersService.createTeacher(dto, user);
   }
 
   @Get(':id')
@@ -138,45 +119,17 @@ export class TeachersController {
     return this.teachersService.getTeacherByUserId(userId, currentUser);
   }
 
-  @Put(':id')
-  @ApiOperation({
-    summary: 'Update teacher profile',
-    description:
-      'Updates a teacher profile. Users can only update their own profile unless they are admins or center owners.',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'Teacher profile ID',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
-  @ApiBody({
-    type: UpdateTeacherDto,
-    description: 'Updated teacher profile data',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Teacher profile updated successfully',
-    type: TeacherResponseDto,
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Teacher not found',
-  })
-  @ApiResponse({
-    status: HttpStatus.FORBIDDEN,
-    description: 'Access denied',
-  })
-  @Permissions('teachers:update')
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update a teacher profile' })
+  @ApiBody({ type: UpdateTeacherRequestDto })
+  @ApiResponse({ status: 200, description: 'Teacher updated' })
   async updateTeacher(
     @Param('id') id: string,
-    @Body() updateTeacherDto: UpdateTeacherDto,
-    @GetUser() currentUser: CurrentUserType,
-  ): Promise<TeacherResponseDto> {
-    return this.teachersService.updateTeacher(
-      id,
-      updateTeacherDto,
-      currentUser,
-    );
+    @Body(new ZodValidationPipe(UpdateTeacherRequestSchema))
+    dto: UpdateTeacherRequestDto,
+    @GetUser() user: CurrentUserType,
+  ) {
+    return this.teachersService.updateTeacher(id, dto, user);
   }
 
   @Permissions('teachers:read')

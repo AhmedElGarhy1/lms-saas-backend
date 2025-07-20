@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { RoleScope } from './create-role.dto';
+import { RoleScope } from '../constants/rolescope';
 
 export class AssignPermissionDto {
   @ApiProperty({ description: 'Permission ID', example: 'perm123' })

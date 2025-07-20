@@ -6,8 +6,8 @@ import {
   LoggerService,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
-import { CreateSessionDto } from './dto/create-session.dto';
-import { UpdateSessionDto } from './dto/update-session.dto';
+import { CreateSessionRequest } from './dto/create-session.dto';
+import { UpdateSessionRequest } from './dto/update-session.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { PaginateQuery, paginate } from 'nestjs-paginate';
 import { CurrentUser } from '../shared/types/current-user.type';
@@ -49,7 +49,7 @@ export class SchedulesService {
   }
 
   async createSession(
-    dto: CreateSessionDto,
+    dto: CreateSessionRequest,
     currentUser: CurrentUser,
   ): Promise<SessionResponseDto> {
     // RBAC: Only authorized users can create
@@ -64,7 +64,7 @@ export class SchedulesService {
 
   async updateSession(
     id: string,
-    dto: UpdateSessionDto,
+    dto: UpdateSessionRequest,
     currentUser: CurrentUser,
   ): Promise<SessionResponseDto> {
     const session = await this.prisma.classSession.findUnique({

@@ -7,11 +7,11 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import * as bcrypt from 'bcrypt';
-import { CreateUserDto } from './dto/create-user.dto';
 import { PaginateQuery } from 'nestjs-paginate';
+import { CreateUserRequest } from './dto/create-user.dto';
+import { UpdateProfileRequest } from './dto/update-profile.dto';
+import { ChangePasswordRequest } from './dto/change-password.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -36,7 +36,7 @@ export class UsersService {
     return rest;
   }
 
-  async updateProfile(userId: string, dto: UpdateProfileDto) {
+  async updateProfile(userId: string, dto: UpdateProfileRequest) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       this.logger.warn(`User not found: ${userId}`);
@@ -57,7 +57,7 @@ export class UsersService {
     return restUpdated;
   }
 
-  async changePassword(userId: string, dto: ChangePasswordDto) {
+  async changePassword(userId: string, dto: ChangePasswordRequest) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       this.logger.warn(`User not found: ${userId}`);
@@ -77,7 +77,7 @@ export class UsersService {
     return { message: 'Password changed successfully' };
   }
 
-  async createUser(dto: CreateUserDto) {
+  async createUser(dto: CreateUserRequest) {
     let password = dto.password;
     if (!password) {
       password = Math.random().toString(36).slice(-8) + Date.now();

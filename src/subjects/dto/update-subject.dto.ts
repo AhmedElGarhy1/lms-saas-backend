@@ -1,37 +1,35 @@
-import { IsString, IsOptional, IsInt, IsBoolean } from 'class-validator';
+import { z } from 'zod';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UpdateSubjectDto {
+export const UpdateSubjectRequestSchema = z.object({
+  name: z.string().optional(),
+  description: z.string().optional(),
+  gradeLevelId: z.string().optional(),
+  credits: z.number().optional(),
+  duration: z.number().optional(),
+  isActive: z.boolean().optional(),
+});
+export type UpdateSubjectRequest = z.infer<typeof UpdateSubjectRequestSchema>;
+
+export class UpdateSubjectRequestDto {
   @ApiProperty({ example: 'Mathematics', required: false })
-  @IsOptional()
-  @IsString()
   name?: string;
 
   @ApiProperty({
     example: 'Advanced mathematics for primary students',
     required: false,
   })
-  @IsOptional()
-  @IsString()
   description?: string;
 
   @ApiProperty({ example: 'grade-uuid', required: false })
-  @IsOptional()
-  @IsString()
   gradeLevelId?: string;
 
   @ApiProperty({ example: 4, required: false })
-  @IsOptional()
-  @IsInt()
   credits?: number;
 
   @ApiProperty({ example: 60, required: false })
-  @IsOptional()
-  @IsInt()
   duration?: number;
 
   @ApiProperty({ example: true, required: false })
-  @IsOptional()
-  @IsBoolean()
   isActive?: boolean;
 }

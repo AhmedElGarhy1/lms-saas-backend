@@ -1,29 +1,28 @@
-import { IsString, IsOptional, IsInt, IsBoolean } from 'class-validator';
+import { z } from 'zod';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UpdateGroupDto {
+export const UpdateGroupRequestSchema = z.object({
+  name: z.string().optional(),
+  description: z.string().optional(),
+  gradeLevelId: z.string().optional(),
+  maxStudents: z.number().optional(),
+  isActive: z.boolean().optional(),
+});
+export type UpdateGroupRequest = z.infer<typeof UpdateGroupRequestSchema>;
+
+export class UpdateGroupRequestDto {
   @ApiProperty({ example: 'Class 6A', required: false })
-  @IsOptional()
-  @IsString()
   name?: string;
 
   @ApiProperty({ example: 'Primary 6 Section A', required: false })
-  @IsOptional()
-  @IsString()
   description?: string;
 
   @ApiProperty({ example: 'grade-uuid', required: false })
-  @IsOptional()
-  @IsString()
   gradeLevelId?: string;
 
   @ApiProperty({ example: 30, required: false })
-  @IsOptional()
-  @IsInt()
   maxStudents?: number;
 
   @ApiProperty({ example: true, required: false })
-  @IsOptional()
-  @IsBoolean()
   isActive?: boolean;
 }

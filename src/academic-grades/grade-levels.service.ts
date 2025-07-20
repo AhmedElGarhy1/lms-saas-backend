@@ -6,10 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { CreateGradeLevelDto } from './dto/create-grade-level.dto';
-import { UpdateGradeLevelDto } from './dto/update-grade-level.dto';
-import { AssignStudentDto } from '../shared/dto/assign-student.dto';
-import { AssignGroupDto } from './dto/assign-group.dto';
+import { CreateGradeLevelRequest } from './dto/create-grade-level.dto';
 import { AssignSubjectDto } from './dto/assign-subject.dto';
 import { PaginateQuery } from 'nestjs-paginate';
 
@@ -22,7 +19,7 @@ export class GradeLevelsService {
   ) {}
 
   // Grade level management
-  async createGradeLevel(dto: CreateGradeLevelDto) {
+  async createGradeLevel(dto: CreateGradeLevelRequest) {
     const gradeLevel = await this.prisma.gradeLevel.create({
       data: {
         name: dto.name,
@@ -37,7 +34,7 @@ export class GradeLevelsService {
     return gradeLevel;
   }
 
-  async updateGradeLevel(gradeLevelId: string, dto: UpdateGradeLevelDto) {
+  async updateGradeLevel(gradeLevelId: string, dto: CreateGradeLevelRequest) {
     const gradeLevel = await this.prisma.gradeLevel.findUnique({
       where: { id: gradeLevelId },
     });
@@ -119,21 +116,21 @@ export class GradeLevelsService {
   }
 
   // Assignment management
-  async assignStudent(gradeLevelId: string, dto: AssignStudentDto) {
+  async assignStudent(gradeLevelId: string, studentId: string) {
     const gradeLevel = await this.prisma.gradeLevel.findUnique({
       where: { id: gradeLevelId },
     });
     if (!gradeLevel) throw new NotFoundException('Grade level not found');
     const student = await this.prisma.user.findUnique({
-      where: { id: dto.studentId },
+      where: { id: studentId },
     });
     if (!student) throw new NotFoundException('Student not found');
     await this.prisma.gradeLevel.update({
       where: { id: gradeLevelId },
-      data: { students: { connect: { id: dto.studentId } } },
+      data: { students: { connect: { id: studentId } } },
     });
     this.logger.log(
-      `Assigned student ${dto.studentId} to grade level ${gradeLevelId}`,
+      `Assigned student ${studentId} to grade level ${gradeLevelId}`,
     );
     return { success: true };
   }
@@ -153,22 +150,20 @@ export class GradeLevelsService {
     return { success: true };
   }
 
-  async assignGroup(gradeLevelId: string, dto: AssignGroupDto) {
+  async assignGroup(gradeLevelId: string, groupId: string) {
     const gradeLevel = await this.prisma.gradeLevel.findUnique({
       where: { id: gradeLevelId },
     });
     if (!gradeLevel) throw new NotFoundException('Grade level not found');
     const group = await this.prisma.group.findUnique({
-      where: { id: dto.groupId },
+      where: { id: groupId },
     });
     if (!group) throw new NotFoundException('Group not found');
     await this.prisma.group.update({
-      where: { id: dto.groupId },
+      where: { id: groupId },
       data: { gradeLevelId },
     });
-    this.logger.log(
-      `Assigned group ${dto.groupId} to grade level ${gradeLevelId}`,
-    );
+    this.logger.log(`Assigned group ${groupId} to grade level ${gradeLevelId}`);
     return { success: true };
   }
 

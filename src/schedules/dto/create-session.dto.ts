@@ -1,29 +1,29 @@
-import {
-  IsString,
-  IsOptional,
-  IsInt,
-  IsUUID,
-  IsDateString,
-  Min,
-  Max,
-  IsBoolean,
-} from 'class-validator';
+import { z } from 'zod';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ValidateStartBeforeEnd } from './validate-start-before-end';
-import { Validate } from 'class-validator';
 
-export class CreateSessionDto {
+export const CreateSessionRequestSchema = z.object({
+  title: z.string(),
+  description: z.string().optional(),
+  teacherId: z.string().uuid(),
+  centerId: z.string().uuid().optional(),
+  groupId: z.string().uuid().optional(),
+  subjectId: z.string().uuid().optional(),
+  grade: z.string().optional(),
+  startTime: z.string(),
+  endTime: z.string(),
+  recurrenceRule: z.string().optional(),
+  isCancelled: z.boolean().optional(),
+});
+export type CreateSessionRequest = z.infer<typeof CreateSessionRequestSchema>;
+
+export class CreateSessionRequestDto {
   @ApiProperty({ description: 'Session title' })
-  @IsString()
   title: string;
 
   @ApiPropertyOptional({ description: 'Session description' })
-  @IsString()
-  @IsOptional()
   description?: string;
 
   @ApiProperty({ description: 'Teacher ID', type: String, format: 'uuid' })
-  @IsUUID()
   teacherId: string;
 
   @ApiPropertyOptional({
@@ -31,8 +31,6 @@ export class CreateSessionDto {
     type: String,
     format: 'uuid',
   })
-  @IsUUID()
-  @IsOptional()
   centerId?: string;
 
   @ApiPropertyOptional({
@@ -40,8 +38,6 @@ export class CreateSessionDto {
     type: String,
     format: 'uuid',
   })
-  @IsUUID()
-  @IsOptional()
   groupId?: string;
 
   @ApiPropertyOptional({
@@ -49,13 +45,9 @@ export class CreateSessionDto {
     type: String,
     format: 'uuid',
   })
-  @IsUUID()
-  @IsOptional()
   subjectId?: string;
 
   @ApiPropertyOptional({ description: 'Grade (if no group)' })
-  @IsString()
-  @IsOptional()
   grade?: string;
 
   @ApiProperty({
@@ -63,7 +55,6 @@ export class CreateSessionDto {
     type: String,
     format: 'date-time',
   })
-  @IsDateString()
   startTime: string;
 
   @ApiProperty({
@@ -71,21 +62,13 @@ export class CreateSessionDto {
     type: String,
     format: 'date-time',
   })
-  @IsDateString()
   endTime: string;
 
   @ApiPropertyOptional({
     description: 'Recurrence rule (e.g., weekly, iCal RRULE)',
   })
-  @IsString()
-  @IsOptional()
   recurrenceRule?: string;
 
   @ApiPropertyOptional({ description: 'Is session cancelled', default: false })
-  @IsBoolean()
-  @IsOptional()
-  isCancelled?: boolean = false;
-
-  @Validate(ValidateStartBeforeEnd)
-  validateTimes?: boolean;
+  isCancelled?: boolean;
 }

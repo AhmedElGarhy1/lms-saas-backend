@@ -29,7 +29,10 @@ describe('Users E2E', () => {
     server = request(app.getHttpServer());
     // Create test center, role, user with unique names
     const center = await prisma.center.create({
-      data: { name: `UsersTestCenter${uniqueSuffix}` },
+      data: {
+        name: `UsersTestCenter${uniqueSuffix}`,
+        owner: { connect: { id: userId } },
+      },
     });
     centerId = center.id;
     // Fetch seeded 'User' role
@@ -48,7 +51,9 @@ describe('Users E2E', () => {
     });
     userId = user.id;
     // Assign 'User' role for most tests
-    await prisma.userOnCenter.create({ data: { userId, roleId, centerId } });
+    await prisma.userOnCenter.create({
+      data: { userId, roleId, centerId, createdBy: userId },
+    });
     // For invite tests, also assign 'Admin' role
     const adminRole = await prisma.role.findUnique({
       where: { name: 'Admin' },
@@ -56,7 +61,7 @@ describe('Users E2E', () => {
     if (!adminRole)
       throw new Error("Seeded role 'Admin' not found. Run the seed script.");
     await prisma.userOnCenter.create({
-      data: { userId, roleId: adminRole.id, centerId },
+      data: { userId, roleId: adminRole.id, centerId, createdBy: userId },
     });
     // Log in to get JWT
     const loginRes = await server
