@@ -244,10 +244,22 @@ export class TeachersService {
     query: PaginateQuery,
     currentUser: CurrentUser,
   ): Promise<any> {
-    if (!(await this.isAdminOrCenterOwner(currentUser))) {
-      throw new ForbiddenException('Access denied');
-    }
-    const where: any = {};
+    // Get all userIds this user can access (for teachers)
+    const accesses = await this.prisma.userAccess.findMany({
+      where: { userId: currentUser.id },
+      select: { targetUserId: true },
+    });
+    const accessibleTeacherUserIds = accesses.map((a) => a.targetUserId);
+    // Get all centerIds this user can access
+    const centerAccesses = await this.prisma.centerAccess.findMany({
+      where: { userId: currentUser.id },
+      select: { centerId: true },
+    });
+    const accessibleCenterIds = centerAccesses.map((a) => a.centerId);
+    const where: any = {
+      userId: { in: accessibleTeacherUserIds },
+      centerId: { in: accessibleCenterIds },
+    };
     if (
       query.filter &&
       typeof query.filter === 'object' &&

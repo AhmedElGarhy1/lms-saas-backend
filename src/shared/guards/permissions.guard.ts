@@ -54,14 +54,16 @@ export class PermissionsGuard implements CanActivate {
     const userRoles = await this.prisma.userRole.findMany({
       where: { userId: user.id, scopeType, scopeId },
       include: {
-        role: {
-          include: { rolePermissions: { include: { permission: true } } },
-        },
+        role: true,
       },
     });
-    const rolePermNames = userRoles.flatMap((ur) =>
-      (ur.role.rolePermissions || []).map((rp) => rp.permission.action),
-    );
+
+    // Extract permissions from JSON field in roles (now just strings)
+    const rolePermNames = userRoles.flatMap((ur) => {
+      const rolePermissions = (ur.role.permissions as string[]) || [];
+      return rolePermissions;
+    });
+
     if (requiredPermissions.every((perm) => rolePermNames.includes(perm))) {
       return true;
     }

@@ -10,6 +10,13 @@ export class CreatePermissionDto {
   action: string;
 
   @ApiProperty({
+    description: 'Human-readable permission name',
+    example: 'View Users',
+  })
+  @IsString()
+  name: string;
+
+  @ApiProperty({
     description: 'Is this an admin permission?',
     example: false,
     required: false,

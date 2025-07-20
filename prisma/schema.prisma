@@ -47,6 +47,11 @@ model User {
   students             Student[]
   guardians            Guardian[]
   attendance          Attendance[]
+  type                String?  // "Teacher" | "Student" | null
+  // Add relations for UserAccess
+  accessGranted       UserAccess[] @relation("AccessGranter")
+  accessReceived      UserAccess[] @relation("AccessTarget")
+  centerAccesses      CenterAccess[]
 }
 
 model Center {
@@ -64,6 +69,7 @@ model Center {
   groups      Group[]
   subjects    Subject[]
   classSessions ClassSession[]
+  centerAccesses CenterAccess[]
 }
 
 model Role {
@@ -71,20 +77,22 @@ model Role {
   name            String           @unique
   isAdmin         Boolean          @default(false)
   metadata        Json?
-  rolePermissions RolePermission[]
+  permissions     Json?            // Array of permission objects
   userRoles       UserRole[]
   // Add missing relations for legacy models
   users           UserOnCenter[]
   teacherUsers    TeacherUser[]
   scope           RoleScope // 'GLOBAL' | 'CENTER'
   centerId        String?   // only set if scope = 'CENTER'
+  // Add relation for UserAccess
+  userAccesses    UserAccess[]
 }
 
 model Permission {
   id              String           @id @default(uuid())
+  name            String           // Human-readable name
   action          String           @unique
   isAdmin         Boolean          @default(false)
-  rolePermissions RolePermission[]
   userPermissions UserPermission[]
 }
 
@@ -140,17 +148,6 @@ model UserRole {
   createdAt DateTime @default(now())
 
   @@unique([userId, roleId, scopeType, scopeId])
-}
-
-model RolePermission {
-  id           String     @id @default(uuid())
-  roleId       String
-  permissionId String
-  role         Role       @relation(fields: [roleId], references: [id])
-  permission   Permission @relation(fields: [permissionId], references: [id])
-  createdAt    DateTime   @default(now())
-
-  @@unique([roleId, permissionId])
 }
 
 model UserPermission {
@@ -351,4 +348,27 @@ model Attendance {
   @@unique([sessionId, studentId])
   @@index([studentId])
   @@index([sessionId])
+}
+
+model UserAccess {
+  id           String   @id @default(cuid())
+  userId       String   // The user who gets access
+  targetUserId String   // The user they can access (teacher, student, etc.)
+  roleId       String?  // The role under which this access is granted (optional)
+  centerId     String?  // For center-scoped access (optional)
+  createdAt    DateTime @default(now())
+
+  user         User     @relation("AccessGranter", fields: [userId], references: [id])
+  targetUser   User     @relation("AccessTarget", fields: [targetUserId], references: [id])
+  role         Role?    @relation(fields: [roleId], references: [id])
+}
+
+model CenterAccess {
+  id        String   @id @default(cuid())
+  userId    String
+  centerId  String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  center    Center   @relation(fields: [centerId], references: [id])
 }

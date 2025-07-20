@@ -155,8 +155,25 @@ export class StudentsService {
     return student;
   }
 
-  async getAllStudents() {
+  async getAllStudents(currentUser: { id: string }) {
+    // Get all userIds this user can access (for students)
+    const accesses = await this.prisma.userAccess.findMany({
+      where: { userId: currentUser.id },
+      select: { targetUserId: true },
+    });
+    const accessibleStudentUserIds = accesses.map((a) => a.targetUserId);
+    // Get all centerIds this user can access
+    const centerAccesses = await this.prisma.centerAccess.findMany({
+      where: { userId: currentUser.id },
+      select: { centerId: true },
+    });
+    const accessibleCenterIds = centerAccesses.map((a) => a.centerId);
+    // Filter by both user and center access
     const students = await this.prisma.student.findMany({
+      where: {
+        userId: { in: accessibleStudentUserIds },
+        centerId: { in: accessibleCenterIds },
+      },
       include: {
         user: {
           include: {
@@ -182,7 +199,6 @@ export class StudentsService {
         },
       },
     });
-
     return students;
   }
 

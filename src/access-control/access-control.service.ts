@@ -8,7 +8,7 @@ import { CreateRoleDto, RoleScope } from './dto/create-role.dto';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { AssignRoleDto } from './dto/assign-role.dto';
 import { AssignPermissionDto } from './dto/assign-permission.dto';
-import { Role, RolePermission, Permission } from '@prisma/client';
+import { Role, Permission } from '@prisma/client';
 
 @Injectable()
 export class AccessControlService {
@@ -52,6 +52,7 @@ export class AccessControlService {
     return this.prisma.permission.create({
       data: {
         action: dto.action,
+        name: dto.name,
         isAdmin: dto.isAdmin ?? false,
       },
     });
@@ -105,17 +106,43 @@ export class AccessControlService {
     });
   }
 
-  // Assign a permission to a role
-  async assignPermissionToRole(dto: AssignPermissionDto) {
-    if (!dto.roleId) throw new BadRequestException('roleId is required');
-    if (!dto.permissionId)
-      throw new BadRequestException('permissionId is required');
-    return this.prisma.rolePermission.create({
-      data: {
-        roleId: dto.roleId,
-        permissionId: dto.permissionId,
-      },
+  // Bulk update role permissions (replace all permissions)
+  async updateRolePermissions(roleId: string, permissionIds: string[]) {
+    if (!roleId) throw new BadRequestException('roleId is required');
+
+    // Get the role
+    const role = await this.prisma.role.findUnique({
+      where: { id: roleId },
     });
+    if (!role) throw new NotFoundException('Role not found');
+
+    // Get all permissions to validate
+    const permissions = await this.prisma.permission.findMany({
+      where: { id: { in: permissionIds } },
+    });
+
+    if (permissions.length !== permissionIds.length) {
+      throw new BadRequestException('Some permission IDs are invalid');
+    }
+
+    // Extract permission actions
+    const permissionActions = permissions.map((p) => p.action);
+
+    // Update role with new permissions
+    return this.prisma.role.update({
+      where: { id: roleId },
+      data: { permissions: permissionActions },
+    });
+  }
+
+  // Get role permissions
+  async getRolePermissions(roleId: string) {
+    const role = await this.prisma.role.findUnique({
+      where: { id: roleId },
+    });
+    if (!role) throw new NotFoundException('Role not found');
+
+    return role.permissions || [];
   }
 
   // Get user roles (with scopes)
@@ -133,25 +160,24 @@ export class AccessControlService {
       where: { userId },
       include: { permission: true },
     });
+
     // 2. Get all roles for user
     const userRoles = await this.prisma.userRole.findMany({
       where: { userId },
       include: {
-        role: {
-          include: { rolePermissions: { include: { permission: true } } },
-        },
+        role: true,
       },
     });
-    // 3. Collect all permissions from roles
-    const rolePerms = userRoles.flatMap((ur) =>
-      (
-        ur.role.rolePermissions as (RolePermission & {
-          permission: Permission;
-        })[]
-      ).map((rp) => rp.permission.action),
-    );
+
+    // 3. Collect all permissions from roles (using JSON field)
+    const rolePerms = userRoles.flatMap((ur) => {
+      const rolePermissions = (ur.role.permissions as string[]) || [];
+      return rolePermissions;
+    });
+
     // 4. Collect all direct user permission overrides
     const userPermActions = userPerms.map((up) => up.permission.action);
+
     // 5. Combine and dedupe
     return Array.from(new Set([...userPermActions, ...rolePerms]));
   }
@@ -227,6 +253,54 @@ export class AccessControlService {
     return this.prisma.permission.findMany({
       where: { isAdmin: true },
       orderBy: { action: 'asc' },
+    });
+  }
+
+  // Grant CenterAccess to a user
+  async grantCenterAccess(userId: string, centerId: string) {
+    return this.prisma.centerAccess.upsert({
+      where: { userId_centerId: { userId, centerId } },
+      update: {},
+      create: { userId, centerId },
+    });
+  }
+
+  // Revoke CenterAccess from a user
+  async revokeCenterAccess(userId: string, centerId: string) {
+    return this.prisma.centerAccess.deleteMany({
+      where: { userId, centerId },
+    });
+  }
+
+  // List all centers a user has access to
+  async listCenterAccesses(userId: string) {
+    return this.prisma.centerAccess.findMany({
+      where: { userId },
+      include: { center: true },
+    });
+  }
+
+  // Grant UserAccess to a user (to another user)
+  async grantUserAccess(userId: string, targetUserId: string) {
+    return this.prisma.userAccess.upsert({
+      where: { userId_targetUserId: { userId, targetUserId } },
+      update: {},
+      create: { userId, targetUserId },
+    });
+  }
+
+  // Revoke UserAccess from a user (to another user)
+  async revokeUserAccess(userId: string, targetUserId: string) {
+    return this.prisma.userAccess.deleteMany({
+      where: { userId, targetUserId },
+    });
+  }
+
+  // List all users a user has access to
+  async listUserAccesses(userId: string) {
+    return this.prisma.userAccess.findMany({
+      where: { userId },
+      include: { targetUser: true },
     });
   }
 }

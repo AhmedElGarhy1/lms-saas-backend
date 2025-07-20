@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Param } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, Put } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -11,6 +11,7 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { AssignRoleDto } from './dto/assign-role.dto';
 import { AssignPermissionDto } from './dto/assign-permission.dto';
+import { UpdateRolePermissionsDto } from './dto/update-role-permissions.dto';
 
 @ApiTags('access-control')
 @Controller('access-control')
@@ -60,12 +61,32 @@ export class AccessControlController {
     return this.acService.assignUserPermission(dto);
   }
 
-  @Post('assign-permission-to-role')
-  @ApiOperation({ summary: 'Assign a permission to a role' })
-  @ApiBody({ type: AssignPermissionDto })
-  @ApiResponse({ status: 201, description: 'Permission assigned to role' })
-  assignPermissionToRole(@Body() dto: AssignPermissionDto) {
-    return this.acService.assignPermissionToRole(dto);
+  @Put('role/:roleId/permissions')
+  @ApiOperation({
+    summary: 'Update role permissions (bulk)',
+    description:
+      'Replace all permissions for a role with the provided permission IDs',
+  })
+  @ApiParam({ name: 'roleId', description: 'Role ID' })
+  @ApiBody({ type: UpdateRolePermissionsDto })
+  @ApiResponse({ status: 200, description: 'Role permissions updated' })
+  updateRolePermissions(
+    @Param('roleId') roleId: string,
+    @Body() dto: UpdateRolePermissionsDto,
+  ) {
+    return this.acService.updateRolePermissions(roleId, dto.permissionIds);
+  }
+
+  @Get('role/:roleId/permissions')
+  @ApiOperation({
+    summary: 'Get role permissions',
+    description:
+      'Get all permissions assigned to a specific role (from JSON field)',
+  })
+  @ApiParam({ name: 'roleId', description: 'Role ID' })
+  @ApiResponse({ status: 200, description: 'Role permissions' })
+  getRolePermissions(@Param('roleId') roleId: string) {
+    return this.acService.getRolePermissions(roleId);
   }
 
   @Get('user/:userId/roles')
@@ -149,5 +170,69 @@ export class AccessControlController {
   @ApiResponse({ status: 200, description: 'List of admin permissions' })
   getAdminPermissions() {
     return this.acService.getAdminPermissions();
+  }
+
+  // CenterAccess management
+  @Post('center-access/grant')
+  @ApiOperation({ summary: 'Grant CenterAccess to a user' })
+  @ApiBody({
+    schema: {
+      properties: { userId: { type: 'string' }, centerId: { type: 'string' } },
+    },
+  })
+  grantCenterAccess(@Body() body: { userId: string; centerId: string }) {
+    return this.acService.grantCenterAccess(body.userId, body.centerId);
+  }
+
+  @Post('center-access/revoke')
+  @ApiOperation({ summary: 'Revoke CenterAccess from a user' })
+  @ApiBody({
+    schema: {
+      properties: { userId: { type: 'string' }, centerId: { type: 'string' } },
+    },
+  })
+  revokeCenterAccess(@Body() body: { userId: string; centerId: string }) {
+    return this.acService.revokeCenterAccess(body.userId, body.centerId);
+  }
+
+  @Get('center-access/:userId')
+  @ApiOperation({ summary: 'List all centers a user has access to' })
+  listCenterAccesses(@Param('userId') userId: string) {
+    return this.acService.listCenterAccesses(userId);
+  }
+
+  // UserAccess management
+  @Post('user-access/grant')
+  @ApiOperation({ summary: 'Grant UserAccess to a user (to another user)' })
+  @ApiBody({
+    schema: {
+      properties: {
+        userId: { type: 'string' },
+        targetUserId: { type: 'string' },
+      },
+    },
+  })
+  grantUserAccess(@Body() body: { userId: string; targetUserId: string }) {
+    return this.acService.grantUserAccess(body.userId, body.targetUserId);
+  }
+
+  @Post('user-access/revoke')
+  @ApiOperation({ summary: 'Revoke UserAccess from a user (to another user)' })
+  @ApiBody({
+    schema: {
+      properties: {
+        userId: { type: 'string' },
+        targetUserId: { type: 'string' },
+      },
+    },
+  })
+  revokeUserAccess(@Body() body: { userId: string; targetUserId: string }) {
+    return this.acService.revokeUserAccess(body.userId, body.targetUserId);
+  }
+
+  @Get('user-access/:userId')
+  @ApiOperation({ summary: 'List all users a user has access to' })
+  listUserAccesses(@Param('userId') userId: string) {
+    return this.acService.listUserAccesses(userId);
   }
 }

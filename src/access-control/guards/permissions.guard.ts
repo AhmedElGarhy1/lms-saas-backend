@@ -7,7 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../../shared/prisma.service';
 import { RoleScope } from '../dto/create-role.dto';
-import { Role, RolePermission, Permission } from '@prisma/client';
+import { Role, Permission } from '@prisma/client';
 import { PERMISSIONS_KEY } from 'src/access-control/decorators/permissions.decorator';
 
 @Injectable()
@@ -54,18 +54,15 @@ export class PermissionsGuard implements CanActivate {
     const userRoles = await this.prisma.userRole.findMany({
       where: { userId: user.id, scopeType, scopeId },
       include: {
-        role: {
-          include: { rolePermissions: { include: { permission: true } } },
-        },
+        role: true,
       },
     });
-    const rolePermNames = userRoles.flatMap((ur) =>
-      (
-        ur.role.rolePermissions as (RolePermission & {
-          permission: Permission;
-        })[]
-      ).map((rp) => rp.permission.action),
-    );
+
+    // Extract permissions from JSON field in roles (now just strings)
+    const rolePermNames = userRoles.flatMap((ur) => {
+      const rolePermissions = (ur.role.permissions as string[]) || [];
+      return rolePermissions;
+    });
     if (requiredPermissions.every((perm) => rolePermNames.includes(perm))) {
       return true;
     }

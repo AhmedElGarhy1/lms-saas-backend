@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateCenterDto {
@@ -21,4 +21,14 @@ export class CreateCenterDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean = true;
+
+  @ApiProperty({
+    example: 'uuid-of-role',
+    description:
+      'Role ID for the center owner (optional, defaults to Owner role)',
+    required: false,
+  })
+  @IsOptional()
+  @IsUUID('4')
+  roleId?: string;
 }

@@ -166,4 +166,40 @@ export class UsersController {
   listUsers(@Paginate() query: PaginateQuery) {
     return this.usersService.listUsers(query);
   }
+
+  /**
+   * Get users the current user has access to (any type)
+   */
+  @Get('accessible')
+  @ApiResponse({
+    status: 200,
+    description: 'Users the current user can access.',
+  })
+  getAccessibleUsers(@GetUser() user: CurrentUserType) {
+    return this.usersService.getAccessibleUsers(user.id);
+  }
+
+  /**
+   * Get teachers the current user has access to
+   */
+  @Get('accessible/teachers')
+  @ApiResponse({
+    status: 200,
+    description: 'Teachers the current user can access.',
+  })
+  getAccessibleTeachers(@GetUser() user: CurrentUserType) {
+    return this.usersService.getAccessibleUsers(user.id, 'Teacher');
+  }
+
+  /**
+   * Get students the current user has access to
+   */
+  @Get('accessible/students')
+  @ApiResponse({
+    status: 200,
+    description: 'Students the current user can access.',
+  })
+  getAccessibleStudents(@GetUser() user: CurrentUserType) {
+    return this.usersService.getAccessibleUsers(user.id, 'Student');
+  }
 }

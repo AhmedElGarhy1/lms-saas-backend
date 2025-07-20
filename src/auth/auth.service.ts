@@ -330,10 +330,10 @@ export class AuthService {
     };
 
     const accessToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '15m',
+      expiresIn: '1d',
     });
     const refreshToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '7d',
+      expiresIn: '30d',
     });
     // Store refresh token with expiry
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);

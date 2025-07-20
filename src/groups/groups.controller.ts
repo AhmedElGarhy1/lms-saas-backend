@@ -93,8 +93,11 @@ export class GroupsController {
     type: GroupDto,
     isArray: true,
   })
-  async listGroups(@Paginate() query: PaginateQuery) {
-    return this.groupsService.listGroups(query);
+  async listGroups(
+    @Paginate() query: PaginateQuery,
+    @GetUser() user: CurrentUserType,
+  ) {
+    return this.groupsService.listGroups(query, user.id);
   }
 
   // Assignment management - Only Owners/Admins/Teachers can assign students

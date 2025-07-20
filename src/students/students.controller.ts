@@ -24,6 +24,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../access-control/guards/permissions.guard';
 import { Permissions } from '../access-control/decorators/permissions.decorator';
 import { PERMISSIONS } from '../access-control/constants/permissions';
+import { GetUser } from '../shared/decorators/get-user.decorator';
 
 @ApiTags('students')
 @Controller('students')
@@ -32,7 +33,7 @@ export class StudentsController {
   constructor(private readonly studentsService: StudentsService) {}
 
   @Post()
-  @Permissions(PERMISSIONS.STUDENT.CREATE)
+  @Permissions(PERMISSIONS.STUDENT.CREATE.action)
   @ApiOperation({ summary: 'Create a new student' })
   @ApiResponse({ status: 201, description: 'Student created successfully' })
   create(@Body() createStudentDto: CreateStudentDto) {
@@ -40,7 +41,7 @@ export class StudentsController {
   }
 
   @Get()
-  @Permissions(PERMISSIONS.STUDENT.VIEW)
+  @Permissions(PERMISSIONS.STUDENT.VIEW.action)
   @ApiOperation({ summary: 'Get all students' })
   @ApiQuery({
     name: 'centerId',
@@ -48,16 +49,15 @@ export class StudentsController {
     description: 'Filter by center ID',
   })
   @ApiResponse({ status: 200, description: 'List of students' })
-  findAll(@Query('centerId') centerId?: string) {
+  findAll(@GetUser() user, @Query('centerId') centerId?: string) {
     if (centerId) {
       return this.studentsService.getStudentsByCenter(centerId);
     }
-    // TODO: Implement getAllStudents method for when no centerId is provided
-    return this.studentsService.getAllStudents();
+    return this.studentsService.getAllStudents(user);
   }
 
   @Get(':id')
-  @Permissions(PERMISSIONS.STUDENT.VIEW)
+  @Permissions(PERMISSIONS.STUDENT.VIEW.action)
   @ApiOperation({ summary: 'Get student by ID' })
   @ApiParam({ name: 'id', description: 'Student ID' })
   @ApiResponse({ status: 200, description: 'Student details' })
@@ -66,7 +66,7 @@ export class StudentsController {
   }
 
   @Get(':id/centers')
-  @Permissions(PERMISSIONS.STUDENT.VIEW)
+  @Permissions(PERMISSIONS.STUDENT.VIEW.action)
   @ApiOperation({ summary: 'Get all centers where student is enrolled' })
   @ApiParam({ name: 'id', description: 'Student ID' })
   @ApiResponse({ status: 200, description: 'List of centers' })
@@ -75,7 +75,7 @@ export class StudentsController {
   }
 
   @Get(':id/stats')
-  @Permissions(PERMISSIONS.STUDENT.VIEW)
+  @Permissions(PERMISSIONS.STUDENT.VIEW.action)
   @ApiOperation({ summary: 'Get student statistics' })
   @ApiParam({ name: 'id', description: 'Student ID' })
   @ApiQuery({
@@ -92,7 +92,7 @@ export class StudentsController {
   }
 
   @Post(':id/centers/:centerId')
-  @Permissions(PERMISSIONS.STUDENT.ASSIGN_GROUP)
+  @Permissions(PERMISSIONS.STUDENT.ASSIGN_GROUP.action)
   @ApiOperation({ summary: 'Add student to a center' })
   @ApiParam({ name: 'id', description: 'Student ID' })
   @ApiParam({ name: 'centerId', description: 'Center ID' })
@@ -113,7 +113,7 @@ export class StudentsController {
   }
 
   @Delete(':id/centers/:centerId')
-  @Permissions(PERMISSIONS.STUDENT.DELETE)
+  @Permissions(PERMISSIONS.STUDENT.DELETE.action)
   @ApiOperation({ summary: 'Remove student from a center' })
   @ApiParam({ name: 'id', description: 'Student ID' })
   @ApiParam({ name: 'centerId', description: 'Center ID' })
@@ -132,7 +132,7 @@ export class StudentsController {
   }
 
   @Patch(':id')
-  @Permissions(PERMISSIONS.STUDENT.UPDATE)
+  @Permissions(PERMISSIONS.STUDENT.UPDATE.action)
   @ApiOperation({ summary: 'Update student information' })
   @ApiParam({ name: 'id', description: 'Student ID' })
   @ApiResponse({ status: 200, description: 'Student updated successfully' })
@@ -141,7 +141,7 @@ export class StudentsController {
   }
 
   @Delete(':id')
-  @Permissions(PERMISSIONS.STUDENT.DELETE)
+  @Permissions(PERMISSIONS.STUDENT.DELETE.action)
   @ApiOperation({ summary: 'Delete a student' })
   @ApiParam({ name: 'id', description: 'Student ID' })
   @ApiResponse({ status: 200, description: 'Student deleted successfully' })

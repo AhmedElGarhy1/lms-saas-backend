@@ -68,8 +68,14 @@ export class GroupsService {
     return group;
   }
 
-  async listGroups(query: PaginateQuery): Promise<any> {
-    const where: any = {};
+  async listGroups(query: PaginateQuery, currentUserId: string): Promise<any> {
+    // Get all centerIds this user can access
+    const centerAccesses = await this.prisma.centerAccess.findMany({
+      where: { userId: currentUserId },
+      select: { centerId: true },
+    });
+    const accessibleCenterIds = centerAccesses.map((a) => a.centerId);
+    const where: any = { centerId: { in: accessibleCenterIds } };
     if (
       query.filter &&
       typeof query.filter === 'object' &&

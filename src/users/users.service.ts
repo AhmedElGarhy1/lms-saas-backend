@@ -152,4 +152,22 @@ export class UsersService {
       },
     };
   }
+
+  /**
+   * Returns users the current user has access to, optionally filtered by type (e.g., 'Teacher', 'Student').
+   */
+  async getAccessibleUsers(
+    currentUserId: string,
+    type?: 'Teacher' | 'Student',
+  ): Promise<any[]> {
+    // Find all targetUserIds this user can access
+    const accesses = await this.prisma.userAccess.findMany({
+      where: { userId: currentUserId },
+      include: { targetUser: true },
+    });
+    // Optionally filter by type
+    return accesses
+      .filter((a) => (type ? a.targetUser.type === type : true))
+      .map((a) => a.targetUser);
+  }
 }

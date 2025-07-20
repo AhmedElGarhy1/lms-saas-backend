@@ -188,4 +188,78 @@ export class CentersController {
   ) {
     return this.centersService.filterMembersByRole(centerId, role);
   }
+
+  // Get default roles for a center
+  @Get(':centerId/roles/default')
+  @Roles('Admin', 'Owner', 'Teacher', 'Support')
+  @UseGuards(RolesGuard)
+  @ApiOperation({ summary: 'Get default roles for a center' })
+  @ApiParam({ name: 'centerId', description: 'Center ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Default roles for the center',
+  })
+  async getDefaultRoles(@Param('centerId') centerId: string) {
+    return this.centersService.getDefaultRoles(centerId);
+  }
+
+  // Assign a user as a teacher (creates teacher record)
+  @Post(':centerId/members/:userId/assign-teacher')
+  @Roles('Admin', 'Owner')
+  @UseGuards(RolesGuard)
+  @ApiOperation({ summary: 'Assign a user as a teacher in the center' })
+  @ApiParam({ name: 'centerId', description: 'Center ID' })
+  @ApiParam({ name: 'userId', description: 'User ID' })
+  @ApiResponse({
+    status: 201,
+    description: 'User assigned as teacher',
+  })
+  async assignAsTeacher(
+    @Param('centerId') centerId: string,
+    @Param('userId') userId: string,
+    @GetUser() user: CurrentUserType,
+  ) {
+    if (!user?.id) throw new BadRequestException('Missing user context');
+    return this.centersService.assignAsTeacher(centerId, userId, user.id);
+  }
+
+  // Assign a user as a student (creates student record)
+  @Post(':centerId/members/:userId/assign-student')
+  @Roles('Admin', 'Owner', 'Teacher')
+  @UseGuards(RolesGuard)
+  @ApiOperation({ summary: 'Assign a user as a student in the center' })
+  @ApiParam({ name: 'centerId', description: 'Center ID' })
+  @ApiParam({ name: 'userId', description: 'User ID' })
+  @ApiResponse({
+    status: 201,
+    description: 'User assigned as student',
+  })
+  async assignAsStudent(
+    @Param('centerId') centerId: string,
+    @Param('userId') userId: string,
+    @GetUser() user: CurrentUserType,
+  ) {
+    if (!user?.id) throw new BadRequestException('Missing user context');
+    return this.centersService.assignAsStudent(centerId, userId, user.id);
+  }
+
+  // List accessible members for current user in a center
+  @Get(':centerId/members/accessible')
+  @ApiOperation({
+    summary: 'List members of a center the current user can access',
+  })
+  @ApiParam({ name: 'centerId', description: 'Center ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of accessible members',
+    type: MemberDto,
+    isArray: true,
+  })
+  async listAccessibleMembers(
+    @Param('centerId') centerId: string,
+    @GetUser() user: CurrentUserType,
+  ) {
+    if (!user?.id) throw new BadRequestException('Missing user context');
+    return this.centersService.listAccessibleMembers(centerId, user.id);
+  }
 }
