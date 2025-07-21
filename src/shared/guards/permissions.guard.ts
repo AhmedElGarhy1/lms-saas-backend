@@ -30,20 +30,10 @@ export class PermissionsGuard implements CanActivate {
     if (!user) {
       throw new ForbiddenException('User not authenticated');
     }
-    // Extract context (scopeType, scopeId) from request (body, params, or headers)
-    const scopeType =
-      request.body?.scopeType ||
-      request.params?.scopeType ||
-      request.headers['x-scope-type'] ||
-      'GLOBAL';
-    const scopeId =
-      request.body?.scopeId ||
-      request.params?.scopeId ||
-      request.headers['x-scope-id'] ||
-      null;
+
     // 1. Check per-user permission overrides
     const userPerms = await this.prisma.userPermission.findMany({
-      where: { userId: user.id, scopeType, scopeId },
+      where: { userId: user.id, scopeType: user.scope, scopeId: user.centerId },
       include: { permission: true },
     });
     const userPermNames = userPerms.map((up) => up.permission.action);
@@ -52,7 +42,7 @@ export class PermissionsGuard implements CanActivate {
     }
     // 2. Check role-based permissions
     const userRoles = await this.prisma.userRole.findMany({
-      where: { userId: user.id, scopeType, scopeId },
+      where: { userId: user.id, scopeType: user.scope, scopeId: user.centerId },
       include: {
         role: true,
       },

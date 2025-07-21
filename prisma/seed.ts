@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { RoleScope } from '../src/access-control/constants/rolescope';
+import { RoleScopeEnum } from '../src/access-control/constants/role-scope.enum';
 import {
   ALL_USER_PERMISSIONS,
   ALL_ADMIN_PERMISSIONS,
@@ -47,7 +47,7 @@ async function main() {
         update: {},
         create: {
           name: role.name,
-          scope: RoleScope.GLOBAL,
+          scope: RoleScopeEnum.GLOBAL,
           isAdmin: role.isAdmin,
         },
       }),
@@ -97,7 +97,7 @@ async function main() {
         update: {},
         create: {
           name: role.name,
-          scope: RoleScope.CENTER,
+          scope: RoleScopeEnum.CENTER,
           centerId: center.id,
           isAdmin: role.isAdmin,
           metadata: {
@@ -116,7 +116,7 @@ async function main() {
     where: {
       userId: adminUser.id,
       roleId: globalRoleRecords.find((r) => r.name === 'Admin')!.id,
-      scopeType: RoleScope.GLOBAL,
+      scopeType: RoleScopeEnum.GLOBAL,
     },
   });
 
@@ -125,7 +125,7 @@ async function main() {
       data: {
         userId: adminUser.id,
         roleId: globalRoleRecords.find((r) => r.name === 'Admin')!.id,
-        scopeType: RoleScope.GLOBAL,
+        scopeType: RoleScopeEnum.GLOBAL,
         scopeId: null,
       },
     });
@@ -136,7 +136,7 @@ async function main() {
     where: {
       userId: adminUser.id,
       roleId: centerRoleRecords.find((r) => r.name === 'Owner')!.id,
-      scopeType: RoleScope.CENTER,
+      scopeType: RoleScopeEnum.CENTER,
       scopeId: center.id,
     },
   });
@@ -146,7 +146,7 @@ async function main() {
       data: {
         userId: adminUser.id,
         roleId: centerRoleRecords.find((r) => r.name === 'Owner')!.id,
-        scopeType: RoleScope.CENTER,
+        scopeType: RoleScopeEnum.CENTER,
         scopeId: center.id,
       },
     });

@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Get, Param } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Get,
+  Param,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -13,8 +21,12 @@ import {
 } from './dto/create-permission.dto';
 import { AssignPermissionDto } from './dto/assign-permission.dto';
 import { BadRequestException } from '@nestjs/common';
-import { RoleScope } from './constants/rolescope';
+import { RoleScopeEnum } from './constants/role-scope.enum';
 import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
+import { Request } from 'express';
+import { PermissionsGuard } from '../shared/guards/permissions.guard';
+import { GetUser } from 'src/shared/decorators/get-user.decorator';
+import { CurrentUser } from 'src/shared/types/current-user.type';
 
 @ApiTags('access-control')
 @Controller('access-control')
@@ -43,7 +55,7 @@ export class AccessControlController {
     return this.acService.assignUserPermission({
       userId: dto.userId,
       permissionId: dto.permissionId,
-      scopeType: dto.scopeType ?? RoleScope.GLOBAL,
+      scopeType: dto.scopeType ?? RoleScopeEnum.GLOBAL,
       scopeId: dto.scopeId ?? null,
     });
   }
@@ -65,6 +77,27 @@ export class AccessControlController {
   @ApiResponse({ status: 200, description: 'List of all permissions' })
   getAllPermissions() {
     return this.acService.getAllPermissions();
+  }
+
+  @UseGuards(PermissionsGuard)
+  @Get('roles')
+  @ApiOperation({
+    summary: 'Get available roles for the current scope (global or center)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of roles for the current scope',
+  })
+  async getRolesForScope(@GetUser() user: CurrentUser) {
+    if (user.scope === RoleScopeEnum.CENTER) {
+      if (!user.centerId)
+        throw new BadRequestException(
+          'x-scope-id header is required for CENTER scope',
+        );
+      return this.acService.getInternalRoles(user.centerId);
+    } else {
+      return this.acService.getGlobalRoles();
+    }
   }
 
   // CenterAccess management

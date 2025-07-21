@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { RoleScope } from '../constants/rolescope';
+import { RoleScopeEnum } from '../constants/role-scope.enum';
 
 export class AssignPermissionDto {
   @ApiProperty({ description: 'Permission ID', example: 'perm123' })
@@ -28,13 +28,13 @@ export class AssignPermissionDto {
 
   @ApiProperty({
     description: 'Scope type (GLOBAL or CENTER)',
-    enum: RoleScope,
-    example: RoleScope.GLOBAL,
+    enum: RoleScopeEnum,
+    example: RoleScopeEnum.GLOBAL,
     required: false,
   })
-  @IsEnum(RoleScope)
+  @IsEnum(RoleScopeEnum)
   @IsOptional()
-  scopeType?: RoleScope;
+  scopeType?: RoleScopeEnum;
 
   @ApiProperty({
     description: 'Scope ID (centerId if CENTER, null if GLOBAL)',

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../../shared/prisma.service';
-import { RoleScope } from '../constants/rolescope';
+import { RoleScopeEnum } from '../constants/role-scope.enum';
 import { Role, Permission } from '@prisma/client';
 import { PERMISSIONS_KEY } from 'src/access-control/decorators/permissions.decorator';
 
@@ -35,7 +35,7 @@ export class PermissionsGuard implements CanActivate {
       request.body?.scopeType ||
       request.params?.scopeType ||
       request.headers['x-scope-type'] ||
-      RoleScope.GLOBAL;
+      RoleScopeEnum.GLOBAL;
     const scopeId =
       request.body?.scopeId ||
       request.params?.scopeId ||

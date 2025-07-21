@@ -13,6 +13,7 @@ import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { CurrentUser } from '../shared/types/current-user.type';
 import { PaginateQuery } from 'nestjs-paginate';
+import { RoleScopeEnum } from 'src/access-control/constants/role-scope.enum';
 
 @Injectable()
 export class TeachersService {
@@ -416,7 +417,7 @@ export class TeachersService {
     const globalAdminRole = await this.prisma.userRole.findFirst({
       where: {
         userId: user.id,
-        scopeType: 'GLOBAL',
+        scopeType: RoleScopeEnum.GLOBAL,
         role: {
           name: 'admin',
         },

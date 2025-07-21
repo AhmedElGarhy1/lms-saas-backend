@@ -1,5 +1,5 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { RoleScope } from '../constants/rolescope';
+import { RoleScopeEnum } from '../constants/role-scope.enum';
 
 @Injectable()
 export class ContextGuard implements CanActivate {
@@ -9,7 +9,7 @@ export class ContextGuard implements CanActivate {
       request.body?.scopeType ||
       request.params?.scopeType ||
       request.headers['x-scope-type'] ||
-      RoleScope.GLOBAL;
+      RoleScopeEnum.GLOBAL;
     request.scopeId =
       request.body?.scopeId ||
       request.params?.scopeId ||

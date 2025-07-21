@@ -1,4 +1,4 @@
-export enum RoleScope {
+export enum RoleScopeEnum {
   GLOBAL = 'GLOBAL',
   CENTER = 'CENTER',
 }

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
 import { CreatePermissionRequest } from './dto/create-permission.dto';
-import { RoleScope } from './constants/rolescope';
+import { RoleScopeEnum } from './constants/role-scope.enum';
 
 @Injectable()
 export class AccessControlService {
@@ -13,13 +13,13 @@ export class AccessControlService {
 
   // Create a global role
   async createGlobalRole(dto: any) {
-    if (dto.scope !== RoleScope.GLOBAL) {
+    if (dto.scope !== RoleScopeEnum.GLOBAL) {
       throw new BadRequestException('Scope must be GLOBAL for this endpoint');
     }
     return this.prisma.role.create({
       data: {
         name: dto.name,
-        scope: RoleScope.GLOBAL,
+        scope: RoleScopeEnum.GLOBAL,
         isAdmin: dto.isAdmin ?? false,
         metadata: dto.metadata,
       },
@@ -28,7 +28,7 @@ export class AccessControlService {
 
   // Create an internal (center) role
   async createInternalRole(dto: any) {
-    if (dto.scope !== RoleScope.CENTER || !dto.centerId) {
+    if (dto.scope !== RoleScopeEnum.CENTER || !dto.centerId) {
       throw new BadRequestException(
         'Scope must be CENTER and centerId is required',
       );
@@ -36,7 +36,7 @@ export class AccessControlService {
     return this.prisma.role.create({
       data: {
         name: dto.name,
-        scope: RoleScope.CENTER,
+        scope: RoleScopeEnum.CENTER,
         centerId: dto.centerId,
         isAdmin: dto.isAdmin ?? false,
         metadata: dto.metadata,
@@ -59,15 +59,15 @@ export class AccessControlService {
   async assignRole(dto: {
     userId: string;
     roleId: string;
-    scopeType: RoleScope;
+    scopeType: RoleScopeEnum;
     scopeId: string | null;
   }) {
-    if (dto.scopeType === RoleScope.CENTER && !dto.scopeId) {
+    if (dto.scopeType === RoleScopeEnum.CENTER && !dto.scopeId) {
       throw new BadRequestException(
         'scopeId (centerId) is required for CENTER scope',
       );
     }
-    if (dto.scopeType === RoleScope.GLOBAL && dto.scopeId) {
+    if (dto.scopeType === RoleScopeEnum.GLOBAL && dto.scopeId) {
       throw new BadRequestException(
         'scopeId must be null/empty for GLOBAL scope',
       );
@@ -77,7 +77,7 @@ export class AccessControlService {
         userId: dto.userId,
         roleId: dto.roleId,
         scopeType: dto.scopeType,
-        scopeId: dto.scopeType === RoleScope.CENTER ? dto.scopeId : null,
+        scopeId: dto.scopeType === RoleScopeEnum.CENTER ? dto.scopeId : null,
       },
     });
   }
@@ -86,19 +86,19 @@ export class AccessControlService {
   async assignUserPermission(dto: {
     userId: string;
     permissionId: string;
-    scopeType: RoleScope;
+    scopeType: RoleScopeEnum;
     scopeId: string | null;
   }) {
     if (!dto.userId) throw new BadRequestException('userId is required');
     if (!dto.permissionId)
       throw new BadRequestException('permissionId is required');
     if (!dto.scopeType) throw new BadRequestException('scopeType is required');
-    if (dto.scopeType === RoleScope.CENTER && !dto.scopeId) {
+    if (dto.scopeType === RoleScopeEnum.CENTER && !dto.scopeId) {
       throw new BadRequestException(
         'scopeId (centerId) is required for CENTER scope',
       );
     }
-    if (dto.scopeType === RoleScope.GLOBAL && dto.scopeId) {
+    if (dto.scopeType === RoleScopeEnum.GLOBAL && dto.scopeId) {
       throw new BadRequestException(
         'scopeId must be null/empty for GLOBAL scope',
       );
@@ -108,7 +108,7 @@ export class AccessControlService {
         userId: dto.userId,
         permissionId: dto.permissionId,
         scopeType: dto.scopeType,
-        scopeId: dto.scopeType === RoleScope.CENTER ? dto.scopeId : null,
+        scopeId: dto.scopeType === RoleScopeEnum.CENTER ? dto.scopeId : null,
       },
     });
   }
@@ -199,7 +199,7 @@ export class AccessControlService {
   // Get global roles
   async getGlobalRoles() {
     return this.prisma.role.findMany({
-      where: { scope: RoleScope.GLOBAL },
+      where: { scope: RoleScopeEnum.GLOBAL },
       orderBy: { name: 'asc' },
     });
   }
@@ -208,7 +208,7 @@ export class AccessControlService {
   async getInternalRoles(centerId: string) {
     return this.prisma.role.findMany({
       where: {
-        scope: RoleScope.CENTER,
+        scope: RoleScopeEnum.CENTER,
         centerId: centerId,
       },
       orderBy: { name: 'asc' },
@@ -221,11 +221,11 @@ export class AccessControlService {
 
     if (centerId) {
       whereClause.OR = [
-        { scope: RoleScope.GLOBAL },
-        { scope: RoleScope.CENTER, centerId: centerId },
+        { scope: RoleScopeEnum.GLOBAL },
+        { scope: RoleScopeEnum.CENTER, centerId: centerId },
       ];
     } else {
-      whereClause.scope = RoleScope.GLOBAL;
+      whereClause.scope = RoleScopeEnum.GLOBAL;
     }
 
     return this.prisma.role.findMany({
@@ -242,11 +242,11 @@ export class AccessControlService {
 
     if (centerId) {
       whereClause.OR = [
-        { scope: RoleScope.GLOBAL },
-        { scope: RoleScope.CENTER, centerId: centerId },
+        { scope: RoleScopeEnum.GLOBAL },
+        { scope: RoleScopeEnum.CENTER, centerId: centerId },
       ];
     } else {
-      whereClause.scope = RoleScope.GLOBAL;
+      whereClause.scope = RoleScopeEnum.GLOBAL;
     }
 
     return this.prisma.role.findMany({

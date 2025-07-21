@@ -12,6 +12,7 @@ import { CreateUserRequest } from './dto/create-user.dto';
 import { UpdateProfileRequest } from './dto/update-profile.dto';
 import { ChangePasswordRequest } from './dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
+import { RoleScopeEnum } from 'src/access-control/constants/role-scope.enum';
 
 @Injectable()
 export class UsersService {
@@ -21,19 +22,93 @@ export class UsersService {
     private readonly logger: LoggerService,
   ) {}
 
-  async getProfile(userId: string) {
+  async getProfile(
+    userId: string,
+    scopeType: RoleScopeEnum = RoleScopeEnum.GLOBAL,
+    scopeId?: string,
+  ) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: { centers: true },
+      include: {
+        centers: {
+          include: {
+            center: true,
+            role: true,
+          },
+        },
+        userPermissions: {
+          where: {
+            scopeType,
+            scopeId: scopeType === RoleScopeEnum.CENTER ? scopeId : null,
+          },
+          include: { permission: true },
+        },
+        userRoles: {
+          where: {
+            scopeType,
+            scopeId: scopeType === RoleScopeEnum.CENTER ? scopeId : null,
+          },
+          include: { role: true },
+        },
+      },
     });
     if (!user) {
       this.logger.warn(`User not found: ${userId}`);
       throw new NotFoundException('User not found');
     }
     this.logger.log(`Fetched profile for user ${userId}`);
-    const { password: _, ...rest } = user;
+    const { password: _, userPermissions, userRoles, centers, ...rest } = user;
     void _;
-    return rest;
+    // Aggregate permissions (reuse logic from getUserPermissions)
+    const direct = userPermissions.map((up) => up.permission.action);
+    const rolePerms = userRoles.flatMap((ur) => {
+      if (!ur.role.permissions) return [];
+      let perms: any[] = [];
+      if (Array.isArray(ur.role.permissions)) {
+        perms = ur.role.permissions;
+      } else if (typeof ur.role.permissions === 'string') {
+        try {
+          perms = JSON.parse(ur.role.permissions);
+        } catch {
+          perms = [];
+        }
+      }
+      return perms.map((p: any) => p.action || p);
+    });
+    const allPermissions = Array.from(new Set([...direct, ...rolePerms]));
+    // Format centers: group by centerId, collect all roles for that center
+    const centersMap: Record<string, { center: any; roles: any[] }> = {};
+    for (const c of centers) {
+      if (!centersMap[c.centerId]) {
+        centersMap[c.centerId] = { center: c.center, roles: [] };
+      }
+      if (c.role) {
+        // Only include role id, name, scope, centerId
+        centersMap[c.centerId].roles.push({
+          id: c.role.id,
+          name: c.role.name,
+          scope: c.role.scope,
+          centerId: c.role.centerId,
+        });
+      }
+    }
+    const centersArr = Object.values(centersMap).map((c) => ({
+      center: c.center,
+      roles: c.roles,
+    }));
+    // Format roles: only roles for the current scope, no permissions
+    const rolesArr = userRoles.map((ur) => ({
+      id: ur.role.id,
+      name: ur.role.name,
+      scope: ur.role.scope,
+      centerId: ur.role.centerId,
+    }));
+    return {
+      ...rest,
+      centers: centersArr,
+      roles: rolesArr,
+      permissions: allPermissions,
+    };
   }
 
   async updateProfile(userId: string, dto: UpdateProfileRequest) {
@@ -169,5 +244,56 @@ export class UsersService {
     return accesses
       .filter((a) => (type ? a.targetUser.type === type : true))
       .map((a) => a.targetUser);
+  }
+
+  async getUserPermissions(
+    userId: string,
+    scopeType: RoleScopeEnum = RoleScopeEnum.GLOBAL,
+    scopeId?: string,
+  ) {
+    // 1. Direct user permissions in this scope
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        userPermissions: {
+          where: {
+            scopeType,
+            scopeId: scopeType === RoleScopeEnum.CENTER ? scopeId : null,
+          },
+          include: { permission: true },
+        },
+        userRoles: {
+          where: {
+            scopeType,
+            scopeId: scopeType === 'CENTER' ? scopeId : null,
+          },
+          include: { role: true },
+        },
+      },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    // 2. Aggregate direct permissions
+    const direct = user.userPermissions.map((up) => up.permission.action);
+
+    // 3. Aggregate all permissions from all roles in this scope
+    const rolePerms = user.userRoles.flatMap((ur) => {
+      if (!ur.role.permissions) return [];
+      let perms: any[] = [];
+      if (Array.isArray(ur.role.permissions)) {
+        perms = ur.role.permissions;
+      } else if (typeof ur.role.permissions === 'string') {
+        try {
+          perms = JSON.parse(ur.role.permissions);
+        } catch {
+          perms = [];
+        }
+      }
+      return perms.map((p: any) => p.action || p);
+    });
+
+    // 4. Combine and deduplicate
+    const all = Array.from(new Set([...direct, ...rolePerms]));
+    return all;
   }
 }

@@ -7,6 +7,8 @@ import {
   Post,
   UseGuards,
   BadRequestException,
+  Query,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { GetUser } from '../shared/decorators/get-user.decorator';
@@ -31,6 +33,8 @@ import {
   ChangePasswordRequestDto,
 } from './dto/change-password.dto';
 import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
+import { Request } from 'express';
+import { RoleScopeEnum } from 'src/access-control/constants/role-scope.enum';
 
 @Controller('users')
 export class UsersController {
@@ -39,19 +43,22 @@ export class UsersController {
   @Get('me')
   @ApiResponse({
     status: 200,
-    description: 'Returns the current user profile.',
+    description:
+      'Returns the current user profile, permissions, and roles for the current scope.',
     schema: {
       example: {
         id: '1234567890abcdef12345678',
         username: 'testuser',
         email: 'test@example.com',
+        permissions: ['attendance:read', 'user:update'],
+        roles: [{ id: 'role1', name: 'Admin' }],
         createdAt: '2023-10-27T10:00:00.000Z',
         updatedAt: '2023-10-27T10:00:00.000Z',
       },
     },
   })
-  getProfile(@GetUser() user: CurrentUserType) {
-    return this.usersService.getProfile(user.id);
+  getProfile(@GetUser() user: CurrentUserType, @Req() req: Request) {
+    return this.usersService.getProfile(user.id, user.scope, user.centerId);
   }
 
   @UseGuards(PermissionsGuard)
@@ -144,5 +151,18 @@ export class UsersController {
   })
   getAccessibleStudents(@GetUser() user: CurrentUserType) {
     return this.usersService.getAccessibleUsers(user.id, 'Student');
+  }
+
+  @Get('me/permissions')
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the current user permissions.',
+  })
+  getUserPermissions(@GetUser() user: CurrentUserType) {
+    return this.usersService.getUserPermissions(
+      user.id,
+      user.scope,
+      user.centerId,
+    );
   }
 }
