@@ -18,6 +18,28 @@ enum RoleScope {
   CENTER
 }
 
+enum ProfileType {
+  TEACHER
+  STUDENT
+  GUARDIAN
+  BASE_USER
+}
+
+enum StudentGrade {
+  PRIMARY_1
+  PRIMARY_2
+  PRIMARY_3
+  PRIMARY_4
+  PRIMARY_5
+  PRIMARY_6
+  SECONDARY_1
+  SECONDARY_2
+  SECONDARY_3
+  SECONDARY_4
+  SECONDARY_5
+  OTHER
+}
+
 model User {
   id                  String               @id @default(uuid())
   email               String               @unique
@@ -36,22 +58,106 @@ model User {
   twoFactorSecret     String?
   twoFactorEnabled    Boolean              @default(false)
   userPermissions     UserPermission[]
-  teacherUsers        TeacherUser[]        @relation("TeacherAsUser")
-  asTeacher           TeacherUser[]        @relation("TeacherAsTeacher")
-  teacherProfile      Teacher?
   userRoles           UserRole[]
-  gradeLevels         GradeLevel[]         @relation("StudentGradeLevels")
-  groupsAsStudent     Group[]              @relation("GroupStudents")
-  groupsAsTeacher     Group[]              @relation("GroupTeachers")
-  subjectsAsTeacher   Subject[]            @relation("SubjectTeachers")
-  students             Student[]
-  guardians            Guardian[]
-  attendance          Attendance[]
-  type                String?  // "Teacher" | "Student" | null
+  // Profile relation (one-to-one)
+  profile             Profile?
   // Add relations for UserAccess
   accessGranted       UserAccess[] @relation("AccessGranter")
   accessReceived      UserAccess[] @relation("AccessTarget")
-  centerAccesses      CenterAccess[]
+}
+
+// Polymorphic Profile table that references specific profile types
+model Profile {
+  id                  String       @id @default(uuid())
+  userId              String       @unique
+  type                ProfileType  @default(BASE_USER)
+  
+  // Common profile fields
+  phone               String?
+  address             String?
+  dateOfBirth         DateTime?
+  gender              String?
+  avatar              String?
+  
+  // Polymorphic relations - only one will be set based on type
+  teacherId           String?      @unique
+  studentId           String?      @unique
+  guardianId          String?      @unique
+  baseUserId          String?      @unique
+  
+  // Metadata
+  metadata            Json?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  
+  // Relations
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teacher             Teacher?     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student             Student?     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian            Guardian?    @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  baseUser            BaseUser?    @relation(fields: [baseUserId], references: [id], onDelete: Cascade)
+}
+
+// Base User Profile (minimal profile for basic users)
+model BaseUser {
+  id                  String       @id @default(uuid())
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  
+  // Relations
+  profile             Profile?
+}
+
+// Teacher Profile
+model Teacher {
+  id                  String       @id @default(uuid())
+  biography           String?
+  experienceYears     Int?
+  specialization      String?
+  profileViews        Int          @default(0)
+  rating              Float        @default(0)
+  studentsCount       Int?
+  centersCount        Int?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  
+  // Relations
+  profile             Profile?
+  classSessions       ClassSession[]
+  groups              Group[]      @relation("GroupTeachers")
+  subjects            Subject[]    @relation("SubjectTeachers")
+}
+
+// Student Profile
+model Student {
+  id                     String       @id @default(uuid())
+  grade                  StudentGrade
+  level                  String?
+  performanceScore       Float?
+  totalSessionsAttended  Int          @default(0)
+  totalPayments          Float        @default(0)
+  notes                  String?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+  
+  // Relations
+  profile                Profile?
+  groups                 Group[]      @relation("StudentGroups")
+  attendance             Attendance[]
+  gradeLevel             GradeLevel?  @relation(fields: [gradeLevelId], references: [id])
+  gradeLevelId           String?
+}
+
+// Guardian Profile
+model Guardian {
+  id                  String       @id @default(uuid())
+  emergencyContact    String?
+  relationship        String?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  
+  // Relations
+  profile             Profile?
 }
 
 model Center {
@@ -69,7 +175,6 @@ model Center {
   groups      Group[]
   subjects    Subject[]
   classSessions ClassSession[]
-  centerAccesses CenterAccess[]
 }
 
 model Role {
@@ -81,11 +186,8 @@ model Role {
   userRoles       UserRole[]
   // Add missing relations for legacy models
   users           UserOnCenter[]
-  teacherUsers    TeacherUser[]
   scope           RoleScope // 'GLOBAL' | 'CENTER'
   centerId        String?   // only set if scope = 'CENTER'
-  // Add relation for UserAccess
-  userAccesses    UserAccess[]
 }
 
 model Permission {
@@ -102,11 +204,13 @@ model UserOnCenter {
   centerId  String
   roleId    String
   createdBy String
+  isActive  Boolean  @default(true) // Center-specific activation status
   metadata  Json?
   user      User     @relation(fields: [userId], references: [id])
   center    Center   @relation(fields: [centerId], references: [id])
   role      Role     @relation(fields: [roleId], references: [id])
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model RefreshToken {
@@ -121,20 +225,23 @@ model RefreshToken {
 model EmailVerification {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model PasswordResetToken {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   token     String   @unique
   expiresAt DateTime
-  used      Boolean  @default(false)
   createdAt DateTime @default(now())
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model UserRole {
@@ -151,29 +258,16 @@ model UserRole {
 }
 
 model UserPermission {
-  id           String     @id @default(uuid())
-  userId       String
-  permissionId String
-  scopeType    RoleScope // optional override
-  scopeId      String?   // e.g. centerId
-  user         User       @relation(fields: [userId], references: [id])
-  permission   Permission @relation(fields: [permissionId], references: [id])
-  createdAt    DateTime   @default(now())
+  id            String   @id @default(uuid())
+  userId        String
+  permissionId  String
+  scopeType     RoleScope  // 'CENTER' | 'GLOBAL'
+  scopeId       String?     // centerId if CENTER, null if GLOBAL
+  user          User     @relation(fields: [userId], references: [id])
+  permission    Permission @relation(fields: [permissionId], references: [id])
+  createdAt     DateTime @default(now())
 
   @@unique([userId, permissionId, scopeType, scopeId])
-}
-
-model TeacherUser {
-  id        String   @id @default(uuid())
-  teacherId String
-  userId    String
-  roleId    String
-  teacher   User     @relation("TeacherAsTeacher", fields: [teacherId], references: [id])
-  user      User     @relation("TeacherAsUser", fields: [userId], references: [id])
-  role      Role     @relation(fields: [roleId], references: [id])
-  createdAt DateTime @default(now())
-
-  @@unique([teacherId, userId, roleId])
 }
 
 model GradeLevel {
@@ -185,12 +279,11 @@ model GradeLevel {
   center      Center?  @relation(fields: [centerId], references: [id])
   groups      Group[]
   subjects    Subject[]
-  students    User[]   @relation("StudentGradeLevels")
+  students    Student[] // Students with STUDENT profile type
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
-// Add placeholder models if not present
 model Group {
   id          String   @id @default(cuid())
   name        String
@@ -201,11 +294,10 @@ model Group {
   gradeLevelId String?
   maxStudents Int?
   isActive    Boolean  @default(true)
-  students    User[]   @relation("GroupStudents")
-  teachers    User[]   @relation("GroupTeachers")
+  teachers    Teacher[] @relation("GroupTeachers")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  studentMembers Student[] @relation("StudentGroups")
+  students    Student[] @relation("StudentGroups")
   classSessions  ClassSession[]
 }
 
@@ -220,77 +312,10 @@ model Subject {
   credits     Int?
   duration    Int? // in minutes
   isActive    Boolean  @default(true)
-  teachers    User[]   @relation("SubjectTeachers")
+  teachers    Teacher[] @relation("SubjectTeachers")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   classSessions ClassSession[]
-}
-
-model Teacher {
-  id              String   @id @default(uuid())
-  userId          String   @unique
-  biography       String?
-  experienceYears Int?
-  specialization  String?
-  profileViews    Int      @default(0)
-  rating          Float    @default(0)
-  studentsCount   Int?
-  centersCount    Int?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  // Relations
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  students        Student[]
-  classSessions   ClassSession[]
-}
-
-enum StudentGrade {
-  PRIMARY_1
-  PRIMARY_2
-  PRIMARY_3
-  PRIMARY_4
-  PRIMARY_5
-  PRIMARY_6
-  SECONDARY_1
-  SECONDARY_2
-  SECONDARY_3
-  SECONDARY_4
-  SECONDARY_5
-  OTHER
-}
-
-model Guardian {
-  id        String   @id @default(uuid())
-  name      String
-  phone     String?
-  email     String?
-  students  Student[]
-  userId    String?
-  user      User?     @relation(fields: [userId], references: [id])
-}
-
-model Student {
-  id                     String   @id @default(uuid())
-  userId                 String   @unique
-  teacherId              String? // FK if student belongs to a freelance teacher
-  grade                  StudentGrade
-  level                  String?
-  guardianId             String?
-  performanceScore       Float?
-  totalSessionsAttended  Int      @default(0)
-  totalPayments          Float    @default(0)
-  notes                  String?
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-
-  // Relations
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  teacher     Teacher?  @relation(fields: [teacherId], references: [id])
-  guardian    Guardian? @relation(fields: [guardianId], references: [id])
-  groups      Group[]   @relation("StudentGroups")
-  // payments   Payment[] // Uncomment if Payment model exists
-  attendance  Attendance[]
 }
 
 model ClassSession {
@@ -341,38 +366,19 @@ model Attendance {
   updatedAt  DateTime         @updatedAt
 
   // Relations
-  session    ClassSession     @relation(fields: [sessionId], references: [id])
-  student    Student         @relation(fields: [studentId], references: [id])
-  markedBy   User            @relation(fields: [markedById], references: [id])
-
-  @@unique([sessionId, studentId])
-  @@index([studentId])
-  @@index([sessionId])
+  session    ClassSession @relation(fields: [sessionId], references: [id])
+  student    Student      @relation(fields: [studentId], references: [id])
 }
 
 model UserAccess {
-  id           String   @id @default(cuid())
-  userId       String   // The user who gets access
-  targetUserId String   // The user they can access (teacher, student, etc.)
-  roleId       String?  // The role under which this access is granted (optional)
-  centerId     String?  // For center-scoped access (optional)
+  id           String   @id @default(uuid())
+  userId       String   // User granting access
+  targetUserId String   // User receiving access
   createdAt    DateTime @default(now())
 
-  user         User     @relation("AccessGranter", fields: [userId], references: [id])
-  targetUser   User     @relation("AccessTarget", fields: [targetUserId], references: [id])
-  role         Role?    @relation(fields: [roleId], references: [id])
+  // Relations
+  granter      User     @relation("AccessGranter", fields: [userId], references: [id])
+  target       User     @relation("AccessTarget", fields: [targetUserId], references: [id])
 
   @@unique([userId, targetUserId])
-}
-
-model CenterAccess {
-  id        String   @id @default(cuid())
-  userId    String
-  centerId  String
-  createdAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id])
-  center    Center   @relation(fields: [centerId], references: [id])
-
-  @@unique([userId, centerId])
 }

@@ -30,6 +30,7 @@ export class PermissionsGuard implements CanActivate {
     if (!user) {
       throw new ForbiddenException('User not authenticated');
     }
+
     // Extract context (scopeType, scopeId) from request (body, params, or headers)
     const scopeType =
       request.body?.scopeType ||
@@ -41,6 +42,7 @@ export class PermissionsGuard implements CanActivate {
       request.params?.scopeId ||
       request.headers['x-scope-id'] ||
       null;
+
     // 1. Check per-user permission overrides
     const userPerms = await this.prisma.userPermission.findMany({
       where: { userId: user.id, scopeType, scopeId },

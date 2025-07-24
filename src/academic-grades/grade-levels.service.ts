@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { CreateGradeLevelRequest } from './dto/create-grade-level.dto';
-import { AssignSubjectDto } from './dto/assign-subject.dto';
+import { CreateGradeLevelRequestDto } from './dto/create-grade-level.dto';
+import { AssignSubjectRequestDto } from './dto/assign-subject.dto';
 import { PaginateQuery } from 'nestjs-paginate';
 
 @Injectable()
@@ -19,7 +19,7 @@ export class GradeLevelsService {
   ) {}
 
   // Grade level management
-  async createGradeLevel(dto: CreateGradeLevelRequest) {
+  async createGradeLevel(dto: CreateGradeLevelRequestDto) {
     const gradeLevel = await this.prisma.gradeLevel.create({
       data: {
         name: dto.name,
@@ -34,7 +34,10 @@ export class GradeLevelsService {
     return gradeLevel;
   }
 
-  async updateGradeLevel(gradeLevelId: string, dto: CreateGradeLevelRequest) {
+  async updateGradeLevel(
+    gradeLevelId: string,
+    dto: CreateGradeLevelRequestDto,
+  ) {
     const gradeLevel = await this.prisma.gradeLevel.findUnique({
       where: { id: gradeLevelId },
     });
@@ -182,7 +185,7 @@ export class GradeLevelsService {
     return { success: true };
   }
 
-  async assignSubject(gradeLevelId: string, dto: AssignSubjectDto) {
+  async assignSubject(gradeLevelId: string, dto: AssignSubjectRequestDto) {
     const gradeLevel = await this.prisma.gradeLevel.findUnique({
       where: { id: gradeLevelId },
     });

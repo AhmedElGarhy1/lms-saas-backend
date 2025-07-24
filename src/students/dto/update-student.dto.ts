@@ -1,36 +1,21 @@
 import { z } from 'zod';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { createZodDto } from 'nestjs-zod';
 import { StudentGrade } from '@prisma/client';
 
 export const UpdateStudentRequestSchema = z.object({
-  grade: z.nativeEnum(StudentGrade).optional(),
-  level: z.string().optional(),
-  guardianId: z.string().uuid().optional(),
-  teacherId: z.string().uuid().optional(),
-  performanceScore: z.number().optional(),
-  notes: z.string().optional(),
+  grade: z.nativeEnum(StudentGrade).optional().describe('Student grade level'),
+  level: z.string().optional().describe('Student level'),
+  performanceScore: z
+    .number()
+    .min(0)
+    .max(100)
+    .optional()
+    .describe('Performance score (0-100)'),
+  notes: z.string().optional().describe('Additional notes about the student'),
+  guardianId: z.string().optional().describe('Guardian ID'),
+  teacherId: z.string().optional().describe('Teacher ID'),
 });
-export type UpdateStudentRequest = z.infer<typeof UpdateStudentRequestSchema>;
 
-export class UpdateStudentRequestDto {
-  @ApiPropertyOptional({
-    description: 'Student grade level',
-    enum: StudentGrade,
-  })
-  grade?: StudentGrade;
-
-  @ApiPropertyOptional({ description: 'Student level within grade' })
-  level?: string;
-
-  @ApiPropertyOptional({ description: 'Guardian ID' })
-  guardianId?: string;
-
-  @ApiPropertyOptional({ description: 'Teacher ID (for freelance teachers)' })
-  teacherId?: string;
-
-  @ApiPropertyOptional({ description: 'Student performance score' })
-  performanceScore?: number;
-
-  @ApiPropertyOptional({ description: 'Additional notes about the student' })
-  notes?: string;
-}
+export class UpdateStudentRequestDto extends createZodDto(
+  UpdateStudentRequestSchema,
+) {}

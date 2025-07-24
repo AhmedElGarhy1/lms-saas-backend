@@ -54,6 +54,15 @@ export const PERMISSIONS = {
     },
   },
 
+  // Guardian Management
+  GUARDIAN: {
+    VIEW: { action: 'guardian:view', name: 'View Guardians' },
+    CREATE: { action: 'guardian:create', name: 'Create Guardians' },
+    UPDATE: { action: 'guardian:update', name: 'Update Guardians' },
+    DELETE: { action: 'guardian:delete', name: 'Delete Guardians' },
+    ASSIGN: { action: 'guardian:assign', name: 'Assign Guardians to Students' },
+  },
+
   // Schedule Management
   SCHEDULE: {
     VIEW: { action: 'schedule:view', name: 'View Schedules' },

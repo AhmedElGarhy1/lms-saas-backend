@@ -2,13 +2,14 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
   Inject,
   LoggerService,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
-import { CreateCenterRequest } from './dto/create-center.dto';
-import { UpdateCenterRequest } from './dto/update-center.dto';
-import { AddMemberRequest } from './dto/add-member.dto';
+import { CreateCenterRequestDto } from './dto/create-center.dto';
+import { UpdateCenterRequestDto } from './dto/update-center.dto';
+import { AddMemberRequestDto } from './dto/add-member.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { PaginateQuery } from 'nestjs-paginate';
 import {
@@ -16,6 +17,7 @@ import {
   TEACHER_PERMISSIONS,
   STUDENT_PERMISSIONS,
 } from '../access-control/constants/permissions';
+import { ProfileType } from '@prisma/client';
 
 @Injectable()
 export class CentersService {
@@ -26,7 +28,7 @@ export class CentersService {
   ) {}
 
   // Center management
-  async createCenter(dto: CreateCenterRequest & { ownerId: string }) {
+  async createCenter(dto: CreateCenterRequestDto & { ownerId: string }) {
     // Create center and basic roles in a transaction
     const result = await this.prisma.$transaction(async (tx) => {
       // 1. Create the center
@@ -153,25 +155,57 @@ export class CentersService {
       });
 
       if (assignedRole?.name === 'Teacher') {
-        // Create teacher record
-        await tx.teacherUser.create({
-          data: {
-            teacherId: dto.ownerId,
+        // Check if user already has a teacher profile
+        const existingTeacherProfile = await tx.profile.findFirst({
+          where: {
             userId: dto.ownerId,
-            roleId: assignedRoleId,
+            type: 'TEACHER',
           },
         });
-      } else if (assignedRole?.name === 'Student') {
-        // Create or update student record
-        let studentRecord = await tx.student.findFirst({
-          where: { userId: dto.ownerId },
-        });
 
-        if (!studentRecord) {
-          studentRecord = await tx.student.create({
+        if (!existingTeacherProfile) {
+          // Create teacher record first
+          const teacherRecord = await tx.teacher.create({
+            data: {
+              profileViews: 0,
+              rating: 0,
+              studentsCount: 0,
+              centersCount: 0,
+            },
+          });
+
+          // Create profile record linking to teacher
+          await tx.profile.create({
             data: {
               userId: dto.ownerId,
+              type: 'TEACHER',
+              teacherId: teacherRecord.id,
+            },
+          });
+        }
+      } else if (assignedRole?.name === 'Student') {
+        // Check if user already has a student profile
+        const existingStudentProfile = await tx.profile.findFirst({
+          where: {
+            userId: dto.ownerId,
+            type: 'STUDENT',
+          },
+        });
+
+        if (!existingStudentProfile) {
+          // Create student record first
+          const studentRecord = await tx.student.create({
+            data: {
               grade: 'OTHER',
+            },
+          });
+
+          // Create profile record linking to student
+          await tx.profile.create({
+            data: {
+              userId: dto.ownerId,
+              type: 'STUDENT',
+              studentId: studentRecord.id,
             },
           });
         }
@@ -195,7 +229,7 @@ export class CentersService {
     return result.center;
   }
 
-  async updateCenter(centerId: string, dto: UpdateCenterRequest) {
+  async updateCenter(centerId: string, dto: UpdateCenterRequestDto) {
     const center = await this.prisma.center.findUnique({
       where: { id: centerId },
     });
@@ -234,12 +268,12 @@ export class CentersService {
   }
 
   async listCentersForUser(userId: string, query: PaginateQuery): Promise<any> {
-    // Find all centers the user has CenterAccess to
-    const accesses = await this.prisma.centerAccess.findMany({
+    // Find all centers the user is a member of via UserOnCenter
+    const userOnCenters = await this.prisma.userOnCenter.findMany({
       where: { userId },
       select: { centerId: true },
     });
-    const centerIds = accesses.map((a) => a.centerId);
+    const centerIds = userOnCenters.map((a) => a.centerId);
 
     // Build where clause
     const where: any = { id: { in: centerIds }, deletedAt: null };
@@ -288,7 +322,7 @@ export class CentersService {
   // Member management
   async addMember(
     centerId: string,
-    dto: AddMemberRequest & { createdBy: string },
+    dto: AddMemberRequestDto & { createdBy: string },
   ) {
     const center = await this.prisma.center.findUnique({
       where: { id: centerId },
@@ -340,35 +374,52 @@ export class CentersService {
       // Handle additional records based on the role
       if (role.name === 'Teacher') {
         // Check if teacher record already exists
-        const existingTeacher = await tx.teacherUser.findFirst({
+        const existingTeacher = await tx.teacher.findFirst({
           where: {
-            teacherId: dto.userId,
-            roleId: role.id,
+            profile: {
+              userId: dto.userId,
+            },
           },
         });
 
         if (!existingTeacher) {
-          // Create teacher record
-          await tx.teacherUser.create({
+          // Create teacher record with profile
+          await tx.teacher.create({
             data: {
-              teacherId: dto.userId,
-              userId: dto.userId,
-              roleId: role.id,
+              profileViews: 0,
+              rating: 0,
+              studentsCount: 0,
+              centersCount: 0,
+              profile: {
+                create: {
+                  userId: dto.userId,
+                  type: ProfileType.TEACHER,
+                },
+              },
             },
           });
         }
       } else if (role.name === 'Student') {
         // Check if student record exists
         let studentRecord = await tx.student.findFirst({
-          where: { userId: dto.userId },
+          where: {
+            profile: {
+              userId: dto.userId,
+            },
+          },
         });
 
         if (!studentRecord) {
-          // Create student record
+          // Create student record with profile
           studentRecord = await tx.student.create({
             data: {
-              userId: dto.userId,
               grade: 'OTHER',
+              profile: {
+                create: {
+                  userId: dto.userId,
+                  type: ProfileType.STUDENT,
+                },
+              },
             },
           });
         }
@@ -439,19 +490,22 @@ export class CentersService {
       throw new NotFoundException('Teacher role not found for this center');
     }
 
-    // Check if user is already a teacher
-    const existingTeacher = await this.prisma.teacherUser.findFirst({
+    // Check if user already has a teacher profile
+    const existingTeacherProfile = await this.prisma.profile.findFirst({
       where: {
-        teacherId: userId,
-        roleId: teacherRole.id,
+        userId,
+        type: 'TEACHER',
+      },
+      include: {
+        teacher: true,
       },
     });
 
-    if (existingTeacher) {
-      throw new BadRequestException('User is already a teacher in this center');
+    if (existingTeacherProfile) {
+      throw new BadRequestException('User already has a teacher profile');
     }
 
-    // Create teacher record and assign role
+    // Create teacher profile and assign role
     const result = await this.prisma.$transaction(async (tx) => {
       // Add user to center with teacher role
       const userOnCenter = await tx.userOnCenter.create({
@@ -463,16 +517,26 @@ export class CentersService {
         },
       });
 
-      // Create teacher record
-      const teacherRecord = await tx.teacherUser.create({
+      // Create teacher record first
+      const teacherRecord = await tx.teacher.create({
         data: {
-          teacherId: userId,
-          userId,
-          roleId: teacherRole.id,
+          profileViews: 0,
+          rating: 0,
+          studentsCount: 0,
+          centersCount: 0,
         },
       });
 
-      return { userOnCenter, teacherRecord };
+      // Create profile record linking to teacher
+      const profileRecord = await tx.profile.create({
+        data: {
+          userId,
+          type: 'TEACHER',
+          teacherId: teacherRecord.id,
+        },
+      });
+
+      return { userOnCenter, teacherRecord, profileRecord };
     });
 
     this.logger.log(
@@ -489,14 +553,18 @@ export class CentersService {
       throw new NotFoundException('Student role not found for this center');
     }
 
-    // Check if user is already a student in this center
-    const existingStudent = await this.prisma.student.findFirst({
+    // Check if user already has a student profile
+    const existingStudentProfile = await this.prisma.profile.findFirst({
       where: {
         userId,
+        type: 'STUDENT',
+      },
+      include: {
+        student: true,
       },
     });
 
-    if (existingStudent) {
+    if (existingStudentProfile) {
       // Check if user is already assigned to this center
       const existingCenterAssignment = await this.prisma.userOnCenter.findFirst(
         {
@@ -514,7 +582,7 @@ export class CentersService {
       }
     }
 
-    // Create student record and assign role
+    // Create student profile and assign role
     const result = await this.prisma.$transaction(async (tx) => {
       // Add user to center with student role
       const userOnCenter = await tx.userOnCenter.create({
@@ -528,14 +596,27 @@ export class CentersService {
 
       // Create or update student record
       let studentRecord = await tx.student.findFirst({
-        where: { userId },
+        where: {
+          profile: {
+            userId,
+          },
+        },
       });
 
       if (!studentRecord) {
+        // Create student record first
         studentRecord = await tx.student.create({
           data: {
-            userId,
             grade: 'OTHER',
+          },
+        });
+
+        // Create profile record linking to student
+        await tx.profile.create({
+          data: {
+            userId,
+            type: 'STUDENT',
+            studentId: studentRecord.id,
           },
         });
       }
@@ -581,43 +662,69 @@ export class CentersService {
 
       // Handle additional records based on the new role
       if (newRole === 'Teacher') {
-        // Check if teacher record already exists
-        const existingTeacher = await tx.teacherUser.findFirst({
+        // Check if teacher profile already exists
+        const existingTeacherProfile = await tx.profile.findFirst({
           where: {
-            teacherId: userId,
-            roleId: role.id,
+            userId,
+            type: 'TEACHER',
           },
         });
 
-        if (!existingTeacher) {
-          // Create teacher record
-          await tx.teacherUser.create({
+        if (!existingTeacherProfile) {
+          // Create teacher record first
+          const teacherRecord = await tx.teacher.create({
             data: {
-              teacherId: userId,
+              profileViews: 0,
+              rating: 0,
+              studentsCount: 0,
+              centersCount: 0,
+            },
+          });
+
+          // Create profile record linking to teacher
+          await tx.profile.create({
+            data: {
               userId,
-              roleId: role.id,
+              type: 'TEACHER',
+              teacherId: teacherRecord.id,
             },
           });
         }
       } else if (newRole === 'Student') {
-        // Check if student record exists
-        let studentRecord = await tx.student.findFirst({
-          where: { userId },
+        // Check if student profile exists
+        const existingStudentProfile = await tx.profile.findFirst({
+          where: {
+            userId,
+            type: 'STUDENT',
+          },
         });
 
-        if (!studentRecord) {
-          // Create student record
-          studentRecord = await tx.student.create({
+        if (!existingStudentProfile) {
+          // Create student record first
+          const studentRecord = await tx.student.create({
+            data: {
+              grade: 'OTHER',
+            },
+          });
+
+          // Create profile record linking to student
+          await tx.profile.create({
             data: {
               userId,
-              grade: 'OTHER',
+              type: 'STUDENT',
+              studentId: studentRecord.id,
             },
           });
         }
       } else if (newRole === 'Owner') {
-        // Remove teacher/student records if they exist (Owner is not a teacher or student)
-        await tx.teacherUser.deleteMany({
-          where: { teacherId: userId },
+        // Remove teacher/student profiles if they exist (Owner is not a teacher or student)
+        await tx.profile.deleteMany({
+          where: {
+            userId,
+            type: {
+              in: ['TEACHER', 'STUDENT'],
+            },
+          },
         });
       }
 
@@ -673,5 +780,33 @@ export class CentersService {
         role: true,
       },
     });
+  }
+
+  /**
+   * Validate if a user has active access to a center
+   * @param userId - The user ID to validate
+   * @param centerId - The center ID to check access for
+   * @returns true if user has active access, throws ForbiddenException otherwise
+   */
+  async validateCenterAccess(
+    userId: string,
+    centerId: string,
+  ): Promise<boolean> {
+    const userOnCenter = await this.prisma.userOnCenter.findFirst({
+      where: {
+        userId,
+        centerId,
+      },
+    });
+
+    if (!userOnCenter) {
+      throw new ForbiddenException('User is not a member of this center');
+    }
+
+    if (!userOnCenter.isActive) {
+      throw new ForbiddenException('User is deactivated in this center');
+    }
+
+    return true;
   }
 }

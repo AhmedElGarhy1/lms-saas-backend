@@ -1,41 +1,16 @@
 import { z } from 'zod';
-import { ApiProperty } from '@nestjs/swagger';
-import { AttendanceStatus } from './query-attendance.dto';
+import { createZodDto } from 'nestjs-zod';
 
 export const CreateAttendanceRequestSchema = z.object({
-  sessionId: z.string().uuid(),
-  studentId: z.string().uuid(),
-  status: z.nativeEnum(AttendanceStatus),
-  note: z.string().optional(),
+  sessionId: z.string().min(1, 'Session ID is required'),
+  studentId: z.string().min(1, 'Student ID is required'),
+  status: z
+    .enum(['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'])
+    .describe('Attendance status'),
+  note: z.string().optional().describe('Additional notes about attendance'),
+  markedBy: z.string().min(1, 'User ID who marked the attendance').optional(),
 });
-export type CreateAttendanceRequest = z.infer<
-  typeof CreateAttendanceRequestSchema
->;
 
-export class CreateAttendanceRequestDto {
-  @ApiProperty({
-    description: 'Session ID',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
-  sessionId: string;
-
-  @ApiProperty({
-    description: 'Student ID',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
-  studentId: string;
-
-  @ApiProperty({
-    description: 'Attendance status',
-    enum: AttendanceStatus,
-    example: AttendanceStatus.PRESENT,
-  })
-  status: AttendanceStatus;
-
-  @ApiProperty({
-    description: 'Optional note about attendance',
-    required: false,
-    example: 'Student arrived 5 minutes late',
-  })
-  note?: string;
-}
+export class CreateAttendanceRequestDto extends createZodDto(
+  CreateAttendanceRequestSchema,
+) {}

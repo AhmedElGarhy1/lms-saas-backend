@@ -35,6 +35,7 @@ import {
   UpdateTeacherRequestSchema,
 } from './dto/teacher.dto';
 import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
+import { PaginationDocs } from '../shared/decorators/pagination-docs.decorator';
 
 @ApiTags('Teachers')
 @ApiBearerAuth()
@@ -134,6 +135,15 @@ export class TeachersController {
 
   @Permissions('teachers:read')
   @Get()
+  @PaginationDocs({
+    searchFields: ['name'],
+    customFilters: [
+      {
+        name: 'centerId',
+        description: 'Filter teachers by center ID',
+      },
+    ],
+  })
   @ApiOperation({
     summary: 'Get all teachers',
     description:

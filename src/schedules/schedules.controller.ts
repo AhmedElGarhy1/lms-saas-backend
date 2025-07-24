@@ -36,6 +36,7 @@ import { PermissionsGuard } from '../shared/guards/permissions.guard';
 import { Permissions } from '../access-control/decorators/permissions.decorator';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
 import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
+import { PaginationDocs } from '../shared/decorators/pagination-docs.decorator';
 
 @ApiTags('schedules')
 @ApiBearerAuth()
@@ -69,8 +70,16 @@ export class SchedulesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all class sessions' })
-  @ApiResponse({ status: 200, description: 'List of class sessions' })
+  @PaginationDocs({
+    searchFields: ['title', 'description'],
+    exactFields: ['centerId', 'subjectId', 'teacherId'],
+    dateRangeFields: ['startTime', 'endTime'],
+  })
+  @ApiOperation({ summary: 'List sessions' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of sessions',
+  })
   async listSessions(@Paginate() query: PaginateQuery) {
     return this.schedulesService.listSessions(query);
   }

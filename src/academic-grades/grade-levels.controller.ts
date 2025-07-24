@@ -23,10 +23,11 @@ import {
   CreateGradeLevelRequestDto,
 } from './dto/create-grade-level.dto';
 import { GradeLevelResponseDto } from './dto/grade-level.dto';
-import { AssignSubjectDto } from './dto/assign-subject.dto';
+import { AssignSubjectRequestDto } from './dto/assign-subject.dto';
 import { ContextGuard } from '../access-control/guards/context.guard';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
 import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
+import { PaginationDocs } from '../shared/decorators/pagination-docs.decorator';
 
 // Apply ContextGuard globally to ensure scopeType/scopeId are set
 @UseGuards(ContextGuard)
@@ -81,12 +82,14 @@ export class GradeLevelsController {
 
   // Any member can list grade levels
   @Get()
-  @ApiOperation({ summary: 'List grade levels (global or by center)' })
+  @PaginationDocs({
+    searchFields: ['name'],
+    exactFields: ['centerId'],
+  })
+  @ApiOperation({ summary: 'List grade levels' })
   @ApiResponse({
     status: 200,
     description: 'List of grade levels',
-    type: GradeLevelResponseDto,
-    isArray: true,
   })
   async listGradeLevels(@Paginate() query: PaginateQuery) {
     return this.gradeLevelsService.listGradeLevels(query);
@@ -96,11 +99,11 @@ export class GradeLevelsController {
   @Post(':gradeLevelId/subjects')
   @ApiOperation({ summary: 'Assign a subject to a grade level' })
   @ApiParam({ name: 'gradeLevelId', description: 'Grade level ID' })
-  @ApiBody({ type: AssignSubjectDto })
+  @ApiBody({ type: AssignSubjectRequestDto })
   @ApiResponse({ status: 201, description: 'Subject assigned' })
   async assignSubject(
     @Param('gradeLevelId') gradeLevelId: string,
-    @Body() dto: AssignSubjectDto,
+    @Body() dto: AssignSubjectRequestDto,
   ) {
     return this.gradeLevelsService.assignSubject(gradeLevelId, dto);
   }

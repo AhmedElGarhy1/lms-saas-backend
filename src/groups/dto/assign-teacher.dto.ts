@@ -1,12 +1,10 @@
 import { z } from 'zod';
-import { ApiProperty } from '@nestjs/swagger';
+import { createZodDto } from 'nestjs-zod';
 
 export const AssignTeacherRequestSchema = z.object({
-  teacherId: z.string().min(1),
+  teacherId: z.string().min(1, 'Teacher ID is required'),
 });
-export type AssignTeacherRequest = z.infer<typeof AssignTeacherRequestSchema>;
 
-export class AssignTeacherRequestDto {
-  @ApiProperty({ description: 'Teacher ID', example: 'teacher-uuid' })
-  teacherId: string;
-}
+export class AssignTeacherRequestDto extends createZodDto(
+  AssignTeacherRequestSchema,
+) {}

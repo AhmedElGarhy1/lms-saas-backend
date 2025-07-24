@@ -1,34 +1,21 @@
 import { z } from 'zod';
-import { ApiProperty } from '@nestjs/swagger';
+import { createZodDto } from 'nestjs-zod';
 
 export const CreateGradeLevelRequestSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional(),
-  level: z.number().optional(),
-  centerId: z.string().optional(),
+  name: z.string().min(2, 'Grade level name must be at least 2 characters'),
+  description: z.string().optional().describe('Grade level description'),
+  centerId: z.string().min(1, 'Center ID is required'),
+  order: z
+    .number()
+    .min(1)
+    .optional()
+    .describe('Display order for the grade level'),
+  isActive: z
+    .boolean()
+    .default(true)
+    .describe('Whether the grade level is active'),
 });
-export type CreateGradeLevelRequest = z.infer<
-  typeof CreateGradeLevelRequestSchema
->;
 
-export class CreateGradeLevelRequestDto {
-  @ApiProperty({ example: 'Primary 6', description: 'Name of the grade level' })
-  name: string;
-
-  @ApiProperty({ example: 'Final year of primary school', required: false })
-  description?: string;
-
-  @ApiProperty({
-    example: 6,
-    required: false,
-    description: 'Numeric rank for sorting',
-  })
-  level?: number;
-
-  @ApiProperty({
-    example: 'center-uuid',
-    required: false,
-    description: 'Center ID if grade is center-specific',
-  })
-  centerId?: string;
-}
+export class CreateGradeLevelRequestDto extends createZodDto(
+  CreateGradeLevelRequestSchema,
+) {}

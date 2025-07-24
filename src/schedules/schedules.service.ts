@@ -6,8 +6,8 @@ import {
   LoggerService,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
-import { CreateSessionRequest } from './dto/create-session.dto';
-import { UpdateSessionRequest } from './dto/update-session.dto';
+import { CreateSessionRequestDto } from './dto/create-session.dto';
+import { UpdateSessionRequestDto } from './dto/update-session.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { PaginateQuery, paginate } from 'nestjs-paginate';
 import { CurrentUser } from '../shared/types/current-user.type';
@@ -49,22 +49,26 @@ export class SchedulesService {
   }
 
   async createSession(
-    dto: CreateSessionRequest,
+    dto: CreateSessionRequestDto,
     currentUser: CurrentUser,
   ): Promise<SessionResponseDto> {
-    // RBAC: Only authorized users can create
-    // ...
     const session = await this.prisma.classSession.create({
-      data: { ...dto },
-      include: { teacher: true, center: true, group: true, subject: true },
+      data: {
+        title: dto.title,
+        startTime: dto.startTime,
+        endTime: dto.endTime,
+        teacher: { connect: { id: dto.teacherId } },
+        subject: { connect: { id: dto.subjectId } },
+        group: { connect: { id: dto.groupId } },
+        center: { connect: { id: dto.centerId } },
+      },
     });
-    this.logger.log(`Session created: ${session.id} by user ${currentUser.id}`);
-    return toSessionResponseDto(session);
+    return session as any;
   }
 
   async updateSession(
     id: string,
-    dto: UpdateSessionRequest,
+    dto: UpdateSessionRequestDto,
     currentUser: CurrentUser,
   ): Promise<SessionResponseDto> {
     const session = await this.prisma.classSession.findUnique({

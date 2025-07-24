@@ -1,29 +1,16 @@
 import { z } from 'zod';
-import { ApiProperty } from '@nestjs/swagger';
+import { createZodDto } from 'nestjs-zod';
 
 export const AddMemberRequestSchema = z.object({
-  userId: z.string().min(1),
-  role: z.string().optional(),
-  roleId: z.string().uuid().optional(),
+  userId: z.string().min(1, 'User ID is required'),
+  roleName: z
+    .string()
+    .min(1, 'Role name is required')
+    .describe('Role name (Owner, Teacher, Student)'),
+  metadata: z
+    .record(z.string(), z.any())
+    .optional()
+    .describe('Additional metadata for the member'),
 });
-export type AddMemberRequest = z.infer<typeof AddMemberRequestSchema>;
 
-export class AddMemberRequestDto {
-  @ApiProperty({ example: 'user-uuid', description: 'ID of the user to add' })
-  userId: string;
-
-  @ApiProperty({
-    example: 'Teacher',
-    description:
-      'Role name to assign to the user (e.g., Teacher, Student, Owner)',
-    required: false,
-  })
-  role?: string;
-
-  @ApiProperty({
-    example: 'role-uuid',
-    description: 'Role ID to assign to the user (alternative to role name)',
-    required: false,
-  })
-  roleId?: string;
-}
+export class AddMemberRequestDto extends createZodDto(AddMemberRequestSchema) {}

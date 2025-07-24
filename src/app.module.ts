@@ -11,6 +11,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Reflector } from '@nestjs/core';
 import { AccessControlModule } from './access-control/access-control.module';
+import { ContextGuard } from './access-control/guards/context.guard';
+import { PermissionsGuard } from './access-control/guards/permissions.guard';
 import { GradeLevelsModule } from './academic-grades/grade-levels.module';
 import { GroupsModule } from './groups/groups.module';
 import { SubjectsModule } from './subjects/subjects.module';
@@ -18,6 +20,7 @@ import { TeachersModule } from './teachers/teachers.module';
 import { StudentsModule } from './students/students.module';
 import { SchedulesModule } from './schedules/schedules.module';
 import { AttendanceModule } from './attendance/attendance.module';
+import { GuardiansModule } from './guardians/guardians.module';
 
 @Module({
   imports: [
@@ -52,6 +55,7 @@ import { AttendanceModule } from './attendance/attendance.module';
     StudentsModule,
     SchedulesModule,
     AttendanceModule,
+    GuardiansModule,
   ],
   providers: [
     {
@@ -62,6 +66,14 @@ import { AttendanceModule } from './attendance/attendance.module';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ContextGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
     },
   ],
 })

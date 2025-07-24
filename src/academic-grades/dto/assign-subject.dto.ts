@@ -1,11 +1,10 @@
-import { IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { z } from 'zod';
+import { createZodDto } from 'nestjs-zod';
 
-export class AssignSubjectDto {
-  @ApiProperty({
-    example: 'subject-uuid',
-    description: 'ID of the subject to assign',
-  })
-  @IsString()
-  subjectId: string;
-}
+export const AssignSubjectRequestSchema = z.object({
+  subjectId: z.string().min(1, 'Subject ID is required'),
+});
+
+export class AssignSubjectRequestDto extends createZodDto(
+  AssignSubjectRequestSchema,
+) {}

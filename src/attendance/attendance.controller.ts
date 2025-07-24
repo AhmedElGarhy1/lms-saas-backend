@@ -24,16 +24,17 @@ import {
   CreateAttendanceRequestSchema,
   CreateAttendanceRequestDto,
 } from './dto/create-attendance.dto';
-import { UpdateAttendanceDto } from './dto/update-attendance.dto';
-import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
+import { UpdateAttendanceRequestDto } from './dto/update-attendance.dto';
+import { BulkMarkAttendanceRequestDto } from './dto/bulk-mark-attendance.dto';
 import { GetUser } from '../shared/decorators/get-user.decorator';
 import { CurrentUser } from '../shared/types/current-user.type';
 import { PermissionsGuard } from '../access-control/guards/permissions.guard';
 import { Permissions } from '../access-control/decorators/permissions.decorator';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
 import { AttendanceResponseDto } from './dto/attendance-response.dto';
-import { EditAttendanceDto } from './dto/edit-attendance.dto';
+import { EditAttendanceRequestDto } from './dto/edit-attendance.dto';
 import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
+import { PaginationDocs } from '../shared/decorators/pagination-docs.decorator';
 
 @ApiTags('Attendance')
 @ApiBearerAuth()
@@ -45,7 +46,7 @@ export class AttendanceController {
   @Post('bulk-mark')
   @ApiOperation({ summary: 'Bulk mark attendance for a session' })
   @ApiBody({
-    type: BulkMarkAttendanceDto,
+    type: BulkMarkAttendanceRequestDto,
     examples: {
       default: {
         value: {
@@ -71,7 +72,7 @@ export class AttendanceController {
   })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   async bulkMark(
-    @Body() dto: BulkMarkAttendanceDto,
+    @Body() dto: BulkMarkAttendanceRequestDto,
     @GetUser() user: CurrentUser,
   ) {
     return this.attendanceService.bulkMark(dto, user.id);
@@ -91,7 +92,7 @@ export class AttendanceController {
   @Patch('edit')
   @ApiOperation({ summary: 'Edit an attendance record' })
   @ApiBody({
-    type: EditAttendanceDto,
+    type: EditAttendanceRequestDto,
     examples: {
       default: {
         value: {
@@ -122,7 +123,7 @@ export class AttendanceController {
   @ApiResponse({ status: 404, description: 'Attendance record not found.' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   async edit(
-    @Body() dto: EditAttendanceDto,
+    @Body() dto: EditAttendanceRequestDto,
     @GetUser() user: CurrentUser,
   ): Promise<AttendanceResponseDto> {
     return this.attendanceService.edit(dto, user.id);
@@ -130,20 +131,26 @@ export class AttendanceController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update an attendance record' })
-  @ApiBody({ type: UpdateAttendanceDto })
+  @ApiBody({ type: UpdateAttendanceRequestDto })
   @ApiResponse({ status: 200, description: 'Attendance updated' })
   async updateAttendance(
     @Param('id') id: string,
-    @Body() dto: UpdateAttendanceDto,
+    @Body() dto: UpdateAttendanceRequestDto,
   ) {
     return this.attendanceService.updateAttendance(id, dto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'List attendance records (filterable)' })
+  @PaginationDocs({
+    searchFields: ['note'],
+    exactFields: ['sessionId', 'studentId'],
+    enumFields: ['status'],
+    dateRangeFields: ['createdAt'],
+  })
+  @ApiOperation({ summary: 'List attendance records' })
   @ApiResponse({
     status: 200,
-    schema: { example: { attendance: [], total: 0, page: 1, limit: 10 } },
+    description: 'List of attendance records',
   })
   @UseGuards(PermissionsGuard)
   @Permissions('attendance:read')

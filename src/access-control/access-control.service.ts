@@ -4,7 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
-import { CreatePermissionRequest } from './dto/create-permission.dto';
+import { CreatePermissionRequestDto } from './dto/create-permission.dto';
+import { CreateRoleRequestDto } from './dto/create-role.dto';
+import { UpdateRoleRequestDto } from './dto/update-role.dto';
 import { RoleScopeEnum } from './constants/role-scope.enum';
 
 @Injectable()
@@ -45,7 +47,7 @@ export class AccessControlService {
   }
 
   // Create a permission
-  async createPermission(dto: CreatePermissionRequest) {
+  async createPermission(dto: CreatePermissionRequestDto) {
     return this.prisma.permission.create({
       data: {
         action: dto.action,
@@ -160,17 +162,60 @@ export class AccessControlService {
     });
   }
 
+  // Get user roles filtered by current scope
+  async getUserRolesForScope(
+    userId: string,
+    scope: RoleScopeEnum,
+    centerId?: string,
+  ) {
+    const whereClause: any = { userId };
+
+    if (scope === RoleScopeEnum.CENTER) {
+      if (!centerId) {
+        throw new BadRequestException('centerId is required for CENTER scope');
+      }
+      whereClause.OR = [{ scopeType: RoleScopeEnum.CENTER, scopeId: centerId }];
+    } else {
+      // For GLOBAL scope, show all roles
+      whereClause.OR = [
+        { scopeType: RoleScopeEnum.GLOBAL },
+        { scopeType: RoleScopeEnum.CENTER },
+      ];
+    }
+
+    return this.prisma.userRole.findMany({
+      where: whereClause,
+      include: { role: true },
+    });
+  }
+
   // Get user permissions (resolved + overrides)
-  async getUserPermissions(userId: string) {
+  async getUserPermissions(userId: string, centerId?: string) {
     // 1. Get all direct user permission overrides
+    const userPermsWhere: any = { userId };
+    if (centerId) {
+      userPermsWhere.OR = [
+        { scopeType: RoleScopeEnum.GLOBAL },
+        { scopeType: RoleScopeEnum.CENTER, scopeId: centerId },
+      ];
+    }
+
     const userPerms = await this.prisma.userPermission.findMany({
-      where: { userId },
+      where: userPermsWhere,
       include: { permission: true },
     });
 
     // 2. Get all roles for user
+    const userRolesWhere: any = { userId };
+    if (centerId) {
+      userRolesWhere.OR = [
+        { scopeType: RoleScopeEnum.GLOBAL },
+        { scopeType: RoleScopeEnum.CENTER, scopeId: centerId },
+      ];
+    }
+
     const userRoles = await this.prisma.userRole.findMany({
-      where: { userId },
+      where: userRolesWhere,
       include: {
         role: true,
       },
@@ -196,28 +241,174 @@ export class AccessControlService {
     });
   }
 
-  // Get global roles
+  // Get global roles (excluding Teacher and Student roles)
   async getGlobalRoles() {
     return this.prisma.role.findMany({
-      where: { scope: RoleScopeEnum.GLOBAL },
-      orderBy: { name: 'asc' },
-    });
-  }
-
-  // Get internal (center) roles by centerId
-  async getInternalRoles(centerId: string) {
-    return this.prisma.role.findMany({
       where: {
-        scope: RoleScopeEnum.CENTER,
-        centerId: centerId,
+        scope: RoleScopeEnum.GLOBAL,
+        name: {
+          notIn: ['Teacher', 'Student'],
+        },
       },
       orderBy: { name: 'asc' },
     });
   }
 
-  // Get all roles (global + internal for a specific center)
+  // Get internal (center) roles by centerId (excluding Teacher and Student roles)
+  async getInternalRoles(centerId: string) {
+    return this.prisma.role.findMany({
+      where: {
+        scope: RoleScopeEnum.CENTER,
+        centerId: centerId,
+        name: {
+          notIn: ['Teacher', 'Student'],
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  // Create a new role
+  async createRole(dto: CreateRoleRequestDto) {
+    // Validate centerId for CENTER scope
+    if (dto.scope === 'CENTER' && !dto.centerId) {
+      throw new BadRequestException('centerId is required for CENTER scope');
+    }
+
+    // Check if role name already exists for this scope
+    const existingRole = await this.prisma.role.findFirst({
+      where: {
+        name: dto.name,
+        scope: dto.scope,
+        centerId: dto.scope === 'CENTER' ? dto.centerId : null,
+      },
+    });
+
+    if (existingRole) {
+      throw new BadRequestException(
+        `Role with name "${dto.name}" already exists for this scope`,
+      );
+    }
+
+    // Create the role
+    const role = await this.prisma.role.create({
+      data: {
+        name: dto.name,
+        isAdmin: dto.isAdmin || false,
+        scope: dto.scope,
+        centerId: dto.scope === 'CENTER' ? dto.centerId : null,
+        permissions: dto.permissions || [],
+        metadata: dto.metadata || {},
+      },
+    });
+
+    return role;
+  }
+
+  // Update an existing role
+  async updateRole(roleId: string, dto: UpdateRoleRequestDto) {
+    // Check if role exists
+    const existingRole = await this.prisma.role.findUnique({
+      where: { id: roleId },
+    });
+
+    if (!existingRole) {
+      throw new NotFoundException('Role not found');
+    }
+
+    // Check if new name conflicts with existing role (if name is being updated)
+    if (dto.name && dto.name !== existingRole.name) {
+      const conflictingRole = await this.prisma.role.findFirst({
+        where: {
+          name: dto.name,
+          scope: existingRole.scope,
+          centerId: existingRole.centerId,
+          id: { not: roleId },
+        },
+      });
+
+      if (conflictingRole) {
+        throw new BadRequestException(
+          `Role with name "${dto.name}" already exists for this scope`,
+        );
+      }
+    }
+
+    // Update the role
+    const updatedRole = await this.prisma.role.update({
+      where: { id: roleId },
+      data: {
+        ...(dto.name && { name: dto.name }),
+        ...(dto.isAdmin !== undefined && { isAdmin: dto.isAdmin }),
+        ...(dto.permissions && { permissions: dto.permissions }),
+        ...(dto.metadata && { metadata: dto.metadata }),
+      },
+    });
+
+    return updatedRole;
+  }
+
+  // Delete a role
+  async deleteRole(roleId: string) {
+    // Check if role exists
+    const existingRole = await this.prisma.role.findUnique({
+      where: { id: roleId },
+    });
+
+    if (!existingRole) {
+      throw new NotFoundException('Role not found');
+    }
+
+    // Check if role is assigned to any users in UserRole table
+    const userRoles = await this.prisma.userRole.findMany({
+      where: { roleId },
+    });
+
+    if (userRoles.length > 0) {
+      throw new BadRequestException(
+        'Cannot delete role that is assigned to users. Remove role assignments first.',
+      );
+    }
+
+    // Check if role is assigned to any users in UserOnCenter table
+    const userOnCenterRoles = await this.prisma.userOnCenter.findMany({
+      where: { roleId },
+    });
+
+    if (userOnCenterRoles.length > 0) {
+      throw new BadRequestException(
+        'Cannot delete role that is assigned to users in centers. Remove center role assignments first.',
+      );
+    }
+
+    // Delete the role
+    await this.prisma.role.delete({
+      where: { id: roleId },
+    });
+
+    return { message: 'Role deleted successfully' };
+  }
+
+  // Get a specific role by ID
+  async getRoleById(roleId: string) {
+    const role = await this.prisma.role.findUnique({
+      where: { id: roleId },
+    });
+
+    if (!role) {
+      throw new NotFoundException('Role not found');
+    }
+
+    return role;
+  }
+
+  // Get all roles (global + internal for a specific center, excluding Teacher and Student roles)
   async getAllRoles(centerId?: string) {
-    const whereClause: any = {};
+    const whereClause: any = {
+      name: {
+        notIn: ['Teacher', 'Student'],
+      },
+    };
 
     if (centerId) {
       whereClause.OR = [
@@ -263,30 +454,6 @@ export class AccessControlService {
     });
   }
 
-  // Grant CenterAccess to a user
-  async grantCenterAccess(userId: string, centerId: string) {
-    return this.prisma.centerAccess.upsert({
-      where: { userId_centerId: { userId, centerId } },
-      update: {},
-      create: { userId, centerId },
-    });
-  }
-
-  // Revoke CenterAccess from a user
-  async revokeCenterAccess(userId: string, centerId: string) {
-    return this.prisma.centerAccess.deleteMany({
-      where: { userId, centerId },
-    });
-  }
-
-  // List all centers a user has access to
-  async listCenterAccesses(userId: string) {
-    return this.prisma.centerAccess.findMany({
-      where: { userId },
-      include: { center: true },
-    });
-  }
-
   // Grant UserAccess to a user (to another user)
   async grantUserAccess(userId: string, targetUserId: string) {
     return this.prisma.userAccess.upsert({
@@ -307,7 +474,7 @@ export class AccessControlService {
   async listUserAccesses(userId: string) {
     return this.prisma.userAccess.findMany({
       where: { userId },
-      include: { targetUser: true },
+      include: { target: true },
     });
   }
 }

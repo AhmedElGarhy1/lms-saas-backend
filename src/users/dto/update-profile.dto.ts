@@ -1,16 +1,18 @@
 import { z } from 'zod';
-import { ApiProperty } from '@nestjs/swagger';
+import { createZodDto } from 'nestjs-zod';
 
 export const UpdateProfileRequestSchema = z.object({
-  fullName: z.string().optional(),
+  name: z.string().min(2, 'Name must be at least 2 characters').optional(),
+  phone: z.string().optional().describe('Phone number'),
+  address: z.string().optional().describe('Address'),
+  dateOfBirth: z.string().datetime().optional().describe('Date of birth'),
+  gender: z.string().optional().describe('Gender'),
+  avatar: z.string().url().optional().describe('Avatar URL'),
 });
-export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>;
 
-export class UpdateProfileRequestDto {
-  @ApiProperty({
-    description: 'Full name of the user',
-    example: 'Jane Doe',
-    required: false,
-  })
-  fullName?: string;
-}
+export class UpdateProfileRequestDto extends createZodDto(
+  UpdateProfileRequestSchema,
+) {}
+
+// Alias for backward compatibility
+export class UpdateProfileDto extends UpdateProfileRequestDto {}

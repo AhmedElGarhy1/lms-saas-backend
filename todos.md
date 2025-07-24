@@ -1,27 +1,13 @@
-# LMS Backend TODOs
+# TODOs
 
-[ ] add loclization i18n
+## Completed ✅
 
-<!-- [ ] create git submodule for sharing between frontend and backend (same permissions, types like request/response schema, some functioality, or whatever can be shared) -->
+- [x] use nestjs-zod along with zod to create dtos for swagger body for all modules
+- [x] create request and response DTOs using nestjs-zod for all modules
 
-[ ] ! in admin there is create admin
-[ ] grades should be egyption grads and seed them for in the begining and each center can update or change them using api
-[ ] use shared entity with common logic, and make entity for each module/table with some data access logic
+## Pending
 
-Admin
-
-- manage admins
-- manage his own centers
-- manage global roles (for global roles and global users (admins))
-
-Center
-
-- Manage students
-- Manage teachers
-- manage schedules
-- manage grad levels
-- manage grups
-- manage attendance
-- manage subjests
-- manage users (stuff and assistant and other non-teacher non-students)
-- manage roles (roles inside centers)
+- [ ] fix remaining import issues in controllers and services to use new DTO names
+- [ ] add missing aliases for backward compatibility if needed
+- [ ] test all endpoints with new DTOs
+- [ ] update documentation to reflect new DTO structure

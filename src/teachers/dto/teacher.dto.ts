@@ -1,118 +1,100 @@
 import { z } from 'zod';
+import { createZodDto } from 'nestjs-zod';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+// Request DTOs using nestjs-zod
 export const UpdateTeacherRequestSchema = z.object({
-  biography: z.string().optional(),
-  experienceYears: z.number().min(0).max(50).optional(),
-  specialization: z.string().optional(),
+  biography: z.string().optional().describe('Teacher biography'),
+  experienceYears: z
+    .number()
+    .min(0)
+    .max(50)
+    .optional()
+    .describe('Years of teaching experience (0-50)'),
+  specialization: z
+    .string()
+    .optional()
+    .describe('Teacher specialization or subject area'),
 });
-export type UpdateTeacherRequest = z.infer<typeof UpdateTeacherRequestSchema>;
 
-export class UpdateTeacherRequestDto {
-  @ApiPropertyOptional({
-    description: 'Teacher biography',
-    example:
-      'Experienced mathematics teacher with 10+ years of teaching experience in advanced calculus and algebra.',
-  })
-  biography?: string;
+export const CreateTeacherRequestSchema = z.object({
+  userId: z.string().min(1, 'User ID is required'),
+  biography: z.string().optional().describe('Teacher biography'),
+  experienceYears: z
+    .number()
+    .min(0)
+    .max(50)
+    .optional()
+    .describe('Years of teaching experience (0-50)'),
+  specialization: z
+    .string()
+    .optional()
+    .describe('Teacher specialization or subject area'),
+});
 
-  @ApiPropertyOptional({
-    description: 'Years of teaching experience',
-    example: 10,
-    minimum: 0,
-    maximum: 50,
-  })
-  experienceYears?: number;
+export class UpdateTeacherRequestDto extends createZodDto(
+  UpdateTeacherRequestSchema,
+) {}
+export class CreateTeacherRequestDto extends createZodDto(
+  CreateTeacherRequestSchema,
+) {}
 
-  @ApiPropertyOptional({
-    description: 'Teacher specialization or subject area',
-    example: 'Mathematics, Advanced Calculus, Linear Algebra',
-  })
-  specialization?: string;
-}
-
+// Response DTOs (keeping as ApiProperty for output documentation)
 export class TeacherResponseDto {
   @ApiProperty({
-    description: 'Teacher profile ID',
+    description: 'User ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
   id: string;
 
   @ApiProperty({
-    description: 'User ID of the teacher',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'User email',
+    example: 'john.doe@example.com',
   })
-  userId: string;
-
-  @ApiPropertyOptional({
-    description: 'Teacher biography',
-    example:
-      'Experienced mathematics teacher with 10+ years of teaching experience in advanced calculus and algebra.',
-  })
-  biography?: string;
-
-  @ApiPropertyOptional({
-    description: 'Years of teaching experience',
-    example: 10,
-  })
-  experienceYears?: number;
-
-  @ApiPropertyOptional({
-    description: 'Teacher specialization or subject area',
-    example: 'Mathematics, Advanced Calculus, Linear Algebra',
-  })
-  specialization?: string;
+  email: string;
 
   @ApiProperty({
-    description: 'Number of profile views',
-    example: 150,
+    description: 'User name',
+    example: 'John Doe',
   })
-  profileViews: number;
+  name: string;
 
   @ApiProperty({
-    description: 'Teacher rating (0-5)',
-    example: 4.5,
-    minimum: 0,
-    maximum: 5,
+    description: 'User active status',
+    example: true,
   })
-  rating: number;
-
-  @ApiPropertyOptional({
-    description: 'Number of students taught',
-    example: 45,
-  })
-  studentsCount?: number;
-
-  @ApiPropertyOptional({
-    description: 'Number of centers the teacher works at',
-    example: 2,
-  })
-  centersCount?: number;
+  isActive: boolean;
 
   @ApiProperty({
-    description: 'Creation timestamp',
+    description: 'User creation timestamp',
     example: '2024-01-15T10:30:00Z',
   })
   createdAt: Date;
 
   @ApiProperty({
-    description: 'Last update timestamp',
+    description: 'User last update timestamp',
     example: '2024-01-15T10:30:00Z',
   })
   updatedAt: Date;
 
   @ApiPropertyOptional({
-    description: 'User information',
-    example: {
-      id: '123e4567-e89b-12d3-a456-426614174000',
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-    },
+    description: 'User profile information',
   })
-  user?: {
+  profile?: {
     id: string;
-    name: string;
-    email: string;
+    type: string;
+    teacher?: {
+      id: string;
+      biography?: string;
+      experienceYears?: number;
+      specialization?: string;
+      profileViews: number;
+      rating: number;
+      studentsCount?: number;
+      centersCount?: number;
+      createdAt: Date;
+      updatedAt: Date;
+    };
   };
 }
 

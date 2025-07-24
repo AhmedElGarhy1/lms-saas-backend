@@ -5,8 +5,8 @@ import {
   LoggerService,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/prisma.service';
-import { UpdateAttendanceDto } from './dto/update-attendance.dto';
-import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
+import { UpdateAttendanceRequestDto } from './dto/update-attendance.dto';
+import { BulkMarkAttendanceRequestDto } from './dto/bulk-mark-attendance.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { PaginateQuery } from 'nestjs-paginate';
 import {
@@ -50,7 +50,7 @@ export class AttendanceService extends BasePaginationService {
     return this.toResponseDto(created);
   }
 
-  async bulkMark(dto: BulkMarkAttendanceDto, userId: string) {
+  async bulkMark(dto: BulkMarkAttendanceRequestDto, userId: string) {
     const { sessionId, attendances } = dto;
 
     // Validate session exists
@@ -63,7 +63,7 @@ export class AttendanceService extends BasePaginationService {
 
     // Create attendance records
     const createdAttendances = await this.prisma.attendance.createMany({
-      data: attendances.map((attendance) => ({
+      data: attendances.map((attendance: any) => ({
         sessionId,
         studentId: attendance.studentId,
         status: attendance.status,
@@ -83,7 +83,7 @@ export class AttendanceService extends BasePaginationService {
     };
   }
 
-  async edit(dto: UpdateAttendanceDto, userId: string) {
+  async edit(dto: UpdateAttendanceRequestDto, userId: string) {
     const { id, status, note } = dto;
 
     const attendance = await this.prisma.attendance.findUnique({
@@ -107,7 +107,7 @@ export class AttendanceService extends BasePaginationService {
     return this.toResponseDto(updatedAttendance);
   }
 
-  async updateAttendance(id: string, dto: UpdateAttendanceDto) {
+  async updateAttendance(id: string, dto: UpdateAttendanceRequestDto) {
     const attendance = await this.prisma.attendance.findUnique({
       where: { id },
     });
@@ -206,12 +206,12 @@ export class AttendanceService extends BasePaginationService {
     query: PaginateQuery,
     currentUser: any,
   ): Promise<PaginationResult<any>> {
-    // Get all centerIds this user can access
-    const centerAccesses = await this.prisma.centerAccess.findMany({
+    // Get all centerIds this user is a member of
+    const userOnCenters = await this.prisma.userOnCenter.findMany({
       where: { userId: currentUser.id },
       select: { centerId: true },
     });
-    const accessibleCenterIds = centerAccesses.map((a) => a.centerId);
+    const accessibleCenterIds = userOnCenters.map((a) => a.centerId);
     // Use custom conditions for date filtering and center access
     const customConditions = (query: PaginateQuery) => {
       const where: any = {

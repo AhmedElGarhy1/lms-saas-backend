@@ -1,25 +1,24 @@
 import { z } from 'zod';
-import { ApiProperty } from '@nestjs/swagger';
+import { createZodDto } from 'nestjs-zod';
 
 export const TwoFASetupRequestSchema = z.object({
-  password: z.string().min(6),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
-export type TwoFASetupRequest = z.infer<typeof TwoFASetupRequestSchema>;
-
-export class TwoFASetupDto {
-  @ApiProperty({
-    description: 'User password for 2FA setup',
-    example: 'password123',
-  })
-  password: string;
-}
 
 export const TwoFAVerifyRequestSchema = z.object({
-  code: z.string().min(1),
+  code: z.string().min(1, '2FA code is required'),
 });
-export type TwoFAVerifyRequest = z.infer<typeof TwoFAVerifyRequestSchema>;
 
-export class TwoFAVerifyDto {
-  @ApiProperty({ description: '2FA code', example: '123456' })
-  code: string;
-}
+export const TwoFactorRequestSchema = TwoFAVerifyRequestSchema.extend({
+  tempToken: z.string().min(1, 'Temporary token is required'),
+});
+
+export class TwoFASetupRequestDto extends createZodDto(
+  TwoFASetupRequestSchema,
+) {}
+export class TwoFAVerifyRequestDto extends createZodDto(
+  TwoFAVerifyRequestSchema,
+) {}
+
+// Add the missing export for TwoFactorRequest
+export type TwoFactorRequest = z.infer<typeof TwoFactorRequestSchema>;

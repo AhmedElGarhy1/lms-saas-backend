@@ -1,12 +1,10 @@
 import { z } from 'zod';
-import { ApiProperty } from '@nestjs/swagger';
+import { createZodDto } from 'nestjs-zod';
 
 export const VerifyEmailRequestSchema = z.object({
-  token: z.string().min(1),
+  token: z.string().min(1, 'Verification token is required'),
 });
-export type VerifyEmailRequest = z.infer<typeof VerifyEmailRequestSchema>;
 
-export class VerifyEmailRequestDto {
-  @ApiProperty({ description: 'Verification token', example: 'token123' })
-  token: string;
-}
+export class VerifyEmailRequestDto extends createZodDto(
+  VerifyEmailRequestSchema,
+) {}

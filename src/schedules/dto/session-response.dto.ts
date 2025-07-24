@@ -1,80 +1,97 @@
 import { z } from 'zod';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { createZodDto } from 'nestjs-zod';
 
+// Session Response Schema
 export const SessionResponseSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string().optional(),
-  teacherId: z.string(),
-  centerId: z.string().optional(),
-  groupId: z.string().optional(),
-  subjectId: z.string().optional(),
-  grade: z.string().optional(),
-  startTime: z.string(),
-  endTime: z.string(),
-  recurrenceRule: z.string().optional(),
-  isCancelled: z.boolean(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  teacher: z.any().optional(),
-  center: z.any().optional(),
-  group: z.any().optional(),
-  subject: z.any().optional(),
+  id: z.string().describe('Session ID'),
+  title: z.string().describe('Session title'),
+  description: z.string().optional().describe('Session description'),
+  startTime: z.date().describe('Session start time'),
+  endTime: z.date().describe('Session end time'),
+  centerId: z.string().describe('Center ID'),
+  subjectId: z.string().optional().describe('Subject ID'),
+  teacherId: z.string().describe('Teacher ID'),
+  groupId: z.string().optional().describe('Group ID'),
+  maxStudents: z.number().optional().describe('Maximum number of students'),
+  location: z.string().optional().describe('Session location'),
+  isRecurring: z.boolean().describe('Whether this is a recurring session'),
+  recurrencePattern: z.string().optional().describe('Recurrence pattern'),
+  isCancelled: z.boolean().describe('Whether the session is cancelled'),
+  createdAt: z.date().describe('Session creation timestamp'),
+  updatedAt: z.date().describe('Session last update timestamp'),
+  teacher: z
+    .object({
+      id: z.string().describe('Teacher ID'),
+      name: z.string().describe('Teacher name'),
+      email: z.string().email().describe('Teacher email'),
+    })
+    .optional()
+    .describe('Teacher information'),
+  subject: z
+    .object({
+      id: z.string().describe('Subject ID'),
+      name: z.string().describe('Subject name'),
+      code: z.string().describe('Subject code'),
+    })
+    .optional()
+    .describe('Subject information'),
+  group: z
+    .object({
+      id: z.string().describe('Group ID'),
+      name: z.string().describe('Group name'),
+    })
+    .optional()
+    .describe('Group information'),
+  center: z
+    .object({
+      id: z.string().describe('Center ID'),
+      name: z.string().describe('Center name'),
+    })
+    .optional()
+    .describe('Center information'),
 });
-export type SessionResponse = z.infer<typeof SessionResponseSchema>;
 
-export class SessionResponseDto {
-  @ApiProperty()
-  id: string;
+// Session List Response Schema
+export const SessionListResponseSchema = z.object({
+  sessions: z.array(SessionResponseSchema).describe('List of sessions'),
+  total: z.number().describe('Total number of sessions'),
+  page: z.number().describe('Current page number'),
+  limit: z.number().describe('Number of items per page'),
+  totalPages: z.number().describe('Total number of pages'),
+});
 
-  @ApiProperty()
-  title: string;
+// Create Session Response Schema
+export const CreateSessionResponseSchema = z.object({
+  message: z.string().describe('Success message'),
+  session: SessionResponseSchema.describe('Created session information'),
+});
 
-  @ApiPropertyOptional()
-  description?: string;
+// Update Session Response Schema
+export const UpdateSessionResponseSchema = z.object({
+  message: z.string().describe('Success message'),
+  session: SessionResponseSchema.describe('Updated session information'),
+});
 
-  @ApiProperty()
-  teacherId: string;
+// Session Stats Response Schema
+export const SessionStatsResponseSchema = z.object({
+  totalSessions: z.number().describe('Total number of sessions'),
+  upcomingSessions: z.number().describe('Number of upcoming sessions'),
+  completedSessions: z.number().describe('Number of completed sessions'),
+  cancelledSessions: z.number().describe('Number of cancelled sessions'),
+  averageAttendance: z.number().describe('Average attendance rate'),
+});
 
-  @ApiPropertyOptional()
-  centerId?: string;
-
-  @ApiPropertyOptional()
-  groupId?: string;
-
-  @ApiPropertyOptional()
-  subjectId?: string;
-
-  @ApiPropertyOptional()
-  grade?: string;
-
-  @ApiProperty()
-  startTime: string;
-
-  @ApiProperty()
-  endTime: string;
-
-  @ApiPropertyOptional()
-  recurrenceRule?: string;
-
-  @ApiProperty()
-  isCancelled: boolean;
-
-  @ApiProperty()
-  createdAt: string;
-
-  @ApiProperty()
-  updatedAt: string;
-
-  @ApiPropertyOptional({ type: Object })
-  teacher?: any;
-
-  @ApiPropertyOptional({ type: Object })
-  center?: any;
-
-  @ApiPropertyOptional({ type: Object })
-  group?: any;
-
-  @ApiPropertyOptional({ type: Object })
-  subject?: any;
-}
+// Create DTOs using nestjs-zod
+export class SessionResponseDto extends createZodDto(SessionResponseSchema) {}
+export class SessionListResponseDto extends createZodDto(
+  SessionListResponseSchema,
+) {}
+export class CreateSessionResponseDto extends createZodDto(
+  CreateSessionResponseSchema,
+) {}
+export class UpdateSessionResponseDto extends createZodDto(
+  UpdateSessionResponseSchema,
+) {}
+export class SessionStatsResponseDto extends createZodDto(
+  SessionStatsResponseSchema,
+) {}

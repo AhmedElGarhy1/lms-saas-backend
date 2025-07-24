@@ -4,13 +4,9 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import * as fs from 'fs';
-import { ContextGuard } from './access-control/guards/context.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
-  // Register ContextGuard globally
-  app.useGlobalGuards(new ContextGuard());
 
   // Use Helmet for secure HTTP headers
   app.use(helmet());
@@ -63,7 +59,7 @@ async function bootstrap() {
     })
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup('docs', app, document);
 
   // Save as JSON in the same directory as this script
   fs.writeFileSync(

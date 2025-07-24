@@ -1,74 +1,37 @@
 import { z } from 'zod';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { createZodDto } from 'nestjs-zod';
 
 export const CreateSessionRequestSchema = z.object({
-  title: z.string(),
-  description: z.string().optional(),
-  teacherId: z.string().uuid(),
-  centerId: z.string().uuid().optional(),
-  groupId: z.string().uuid().optional(),
-  subjectId: z.string().uuid().optional(),
-  grade: z.string().optional(),
-  startTime: z.string(),
-  endTime: z.string(),
-  recurrenceRule: z.string().optional(),
-  isCancelled: z.boolean().optional(),
+  title: z.string().min(2, 'Session title must be at least 2 characters'),
+  description: z.string().optional().describe('Session description'),
+  startTime: z
+    .string()
+    .datetime()
+    .describe('Session start time (ISO datetime)'),
+  endTime: z.string().datetime().describe('Session end time (ISO datetime)'),
+  centerId: z.string().min(1, 'Center ID is required'),
+  subjectId: z.string().min(1, 'Subject ID is required'),
+  teacherId: z.string().min(1, 'Teacher ID is required'),
+  groupId: z
+    .string()
+    .optional()
+    .describe('Group ID (optional for individual sessions)'),
+  maxStudents: z
+    .number()
+    .min(1)
+    .optional()
+    .describe('Maximum number of students'),
+  location: z.string().optional().describe('Session location'),
+  isRecurring: z
+    .boolean()
+    .default(false)
+    .describe('Whether this is a recurring session'),
+  recurrencePattern: z
+    .string()
+    .optional()
+    .describe('Recurrence pattern (daily, weekly, monthly)'),
 });
-export type CreateSessionRequest = z.infer<typeof CreateSessionRequestSchema>;
 
-export class CreateSessionRequestDto {
-  @ApiProperty({ description: 'Session title' })
-  title: string;
-
-  @ApiPropertyOptional({ description: 'Session description' })
-  description?: string;
-
-  @ApiProperty({ description: 'Teacher ID', type: String, format: 'uuid' })
-  teacherId: string;
-
-  @ApiPropertyOptional({
-    description: 'Center ID',
-    type: String,
-    format: 'uuid',
-  })
-  centerId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Group ID',
-    type: String,
-    format: 'uuid',
-  })
-  groupId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Subject ID',
-    type: String,
-    format: 'uuid',
-  })
-  subjectId?: string;
-
-  @ApiPropertyOptional({ description: 'Grade (if no group)' })
-  grade?: string;
-
-  @ApiProperty({
-    description: 'Session start time',
-    type: String,
-    format: 'date-time',
-  })
-  startTime: string;
-
-  @ApiProperty({
-    description: 'Session end time',
-    type: String,
-    format: 'date-time',
-  })
-  endTime: string;
-
-  @ApiPropertyOptional({
-    description: 'Recurrence rule (e.g., weekly, iCal RRULE)',
-  })
-  recurrenceRule?: string;
-
-  @ApiPropertyOptional({ description: 'Is session cancelled', default: false })
-  isCancelled?: boolean;
-}
+export class CreateSessionRequestDto extends createZodDto(
+  CreateSessionRequestSchema,
+) {}

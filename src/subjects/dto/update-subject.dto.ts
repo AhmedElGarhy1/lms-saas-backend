@@ -1,35 +1,25 @@
 import { z } from 'zod';
-import { ApiProperty } from '@nestjs/swagger';
+import { createZodDto } from 'nestjs-zod';
 
 export const UpdateSubjectRequestSchema = z.object({
-  name: z.string().optional(),
-  description: z.string().optional(),
-  gradeLevelId: z.string().optional(),
-  credits: z.number().optional(),
-  duration: z.number().optional(),
-  isActive: z.boolean().optional(),
+  name: z
+    .string()
+    .min(2, 'Subject name must be at least 2 characters')
+    .optional(),
+  description: z.string().optional().describe('Subject description'),
+  code: z
+    .string()
+    .min(1, 'Subject code is required')
+    .optional()
+    .describe('Subject code (e.g., MATH101)'),
+  credits: z
+    .number()
+    .min(1)
+    .optional()
+    .describe('Number of credits for the subject'),
+  isActive: z.boolean().optional().describe('Whether the subject is active'),
 });
-export type UpdateSubjectRequest = z.infer<typeof UpdateSubjectRequestSchema>;
 
-export class UpdateSubjectRequestDto {
-  @ApiProperty({ example: 'Mathematics', required: false })
-  name?: string;
-
-  @ApiProperty({
-    example: 'Advanced mathematics for primary students',
-    required: false,
-  })
-  description?: string;
-
-  @ApiProperty({ example: 'grade-uuid', required: false })
-  gradeLevelId?: string;
-
-  @ApiProperty({ example: 4, required: false })
-  credits?: number;
-
-  @ApiProperty({ example: 60, required: false })
-  duration?: number;
-
-  @ApiProperty({ example: true, required: false })
-  isActive?: boolean;
-}
+export class UpdateSubjectRequestDto extends createZodDto(
+  UpdateSubjectRequestSchema,
+) {}

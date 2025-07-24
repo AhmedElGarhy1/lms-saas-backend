@@ -1,16 +1,11 @@
 import { z } from 'zod';
-import { ApiProperty } from '@nestjs/swagger';
+import { createZodDto } from 'nestjs-zod';
 
 export const ResetPasswordRequestSchema = z.object({
-  token: z.string().min(1),
-  newPassword: z.string().min(6),
+  token: z.string().min(1, 'Reset token is required'),
+  newPassword: z.string().min(6, 'Password must be at least 6 characters'),
 });
-export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>;
 
-export class ResetPasswordRequestDto {
-  @ApiProperty({ description: 'Reset token', example: 'token123' })
-  token: string;
-
-  @ApiProperty({ description: 'New password', example: 'newpassword123' })
-  newPassword: string;
-}
+export class ResetPasswordRequestDto extends createZodDto(
+  ResetPasswordRequestSchema,
+) {}

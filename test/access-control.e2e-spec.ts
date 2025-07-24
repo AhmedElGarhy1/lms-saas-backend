@@ -184,9 +184,9 @@ describe('AccessControl (e2e)', () => {
       });
     expect(res.status).toBe(201);
     expect(res.body.message).toContain('Role assigned');
-    // Cleanup: remove the teacher user and teacherUser assignment
-    await prisma.teacherUser.deleteMany({
-      where: { userId, roleId: teacherRole.id, teacherId: teacher.id },
+    // Cleanup: remove the teacher user and teacher assignment
+    await prisma.teacher.deleteMany({
+      where: { userId: user.id },
     });
     await prisma.user.delete({ where: { id: teacher.id } });
   });
@@ -287,6 +287,109 @@ describe('AccessControl (e2e)', () => {
       .send({ permissionId: perm.id, centerId });
     expect(res.status).toBe(400);
     expect(res.body.message).toContain('userId or roleId is required');
+  });
+
+  describe('Role deletion', () => {
+    it('prevents deletion of role assigned to users in UserRole table', async () => {
+      // Create a test role
+      const testRole = await prisma.role.create({
+        data: {
+          name: `TestRoleForDeletion${uniqueSuffix}`,
+          scope: 'GLOBAL',
+        },
+      });
+
+      // Assign role to user in UserRole table
+      await prisma.userRole.create({
+        data: {
+          userId,
+          roleId: testRole.id,
+          scopeType: 'GLOBAL',
+        },
+      });
+
+      // Try to delete the role
+      const res = await server
+        .delete(`/access-control/roles/${testRole.id}`)
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain(
+        'Cannot delete role that is assigned to users',
+      );
+
+      // Cleanup
+      await prisma.userRole.deleteMany({ where: { roleId: testRole.id } });
+      await prisma.role.delete({ where: { id: testRole.id } });
+    });
+
+    it('prevents deletion of role assigned to users in UserOnCenter table', async () => {
+      // Create a test role
+      const testRole = await prisma.role.create({
+        data: {
+          name: `TestRoleForCenterDeletion${uniqueSuffix}`,
+          scope: 'CENTER',
+          centerId,
+        },
+      });
+
+      // Assign role to user in UserOnCenter table
+      await prisma.userOnCenter.create({
+        data: {
+          userId,
+          roleId: testRole.id,
+          centerId,
+          createdBy: userId,
+        },
+      });
+
+      // Try to delete the role
+      const res = await server
+        .delete(`/access-control/roles/${testRole.id}`)
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain(
+        'Cannot delete role that is assigned to users in centers',
+      );
+
+      // Cleanup
+      await prisma.userOnCenter.deleteMany({ where: { roleId: testRole.id } });
+      await prisma.role.delete({ where: { id: testRole.id } });
+    });
+
+    it('allows deletion of role not assigned to any users', async () => {
+      // Create a test role
+      const testRole = await prisma.role.create({
+        data: {
+          name: `TestRoleForSuccessfulDeletion${uniqueSuffix}`,
+          scope: 'GLOBAL',
+        },
+      });
+
+      // Try to delete the role
+      const res = await server
+        .delete(`/access-control/roles/${testRole.id}`)
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toContain('Role deleted successfully');
+
+      // Verify role is actually deleted
+      const deletedRole = await prisma.role.findUnique({
+        where: { id: testRole.id },
+      });
+      expect(deletedRole).toBeNull();
+    });
+
+    it('returns 404 for non-existent role', async () => {
+      const res = await server
+        .delete('/access-control/roles/non-existent-role-id')
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(res.status).toBe(404);
+      expect(res.body.message).toContain('Role not found');
+    });
   });
 
   // Add more tests for guard-protected endpoints, ownership logic, and ambiguous scope as needed

@@ -39,9 +39,12 @@ import {
   ChangeMemberRoleRequestDto,
 } from './dto/change-member-role.dto';
 import { ZodValidationPipe } from '../shared/utils/zod-validation.pipe';
+import { PermissionsGuard } from '../access-control/guards/permissions.guard';
+import { Permissions } from '../access-control/decorators/permissions.decorator';
+import { PaginationDocs } from '../shared/decorators/pagination-docs.decorator';
 
 // Apply ContextGuard globally to ensure scopeType/scopeId are set
-@UseGuards(ContextGuard)
+@UseGuards(ContextGuard, PermissionsGuard)
 @ApiTags('Centers')
 @Controller('centers')
 export class CentersController {
@@ -50,6 +53,7 @@ export class CentersController {
   constructor(private readonly centersService: CentersService) {}
 
   // Only Admins/Owners can create a center
+  @Permissions('center:create')
   @Post()
   @ApiOperation({ summary: 'Create a new center' })
   @ApiBody({ type: CreateCenterRequestDto })
@@ -64,6 +68,7 @@ export class CentersController {
   }
 
   // Only members (any role) can view a center
+  @Permissions('center:view')
   @Get(':id')
   @ApiOperation({ summary: 'Get center by ID' })
   @ApiParam({ name: 'id', description: 'Center ID' })
@@ -73,6 +78,7 @@ export class CentersController {
   }
 
   // Only Admins/Owners can update a center
+  @Permissions('center:update')
   @Patch(':id')
   @ApiOperation({ summary: 'Update a center' })
   @ApiParam({ name: 'id', description: 'Center ID' })
@@ -87,6 +93,7 @@ export class CentersController {
   }
 
   // Only Owners can delete a center (soft delete)
+  @Permissions('center:delete')
   @Delete(':id')
   @ApiOperation({ summary: 'Soft delete a center' })
   @ApiParam({ name: 'id', description: 'Center ID' })
@@ -96,14 +103,20 @@ export class CentersController {
   }
 
   // List centers for current user (no role restriction, handled in service)
+  @Permissions('center:view')
   @Get()
-  @ApiOperation({ summary: 'List centers for current user' })
-  @ApiResponse({ status: 200, description: 'List of centers' })
-  async listCentersForUser(
+  @PaginationDocs({
+    searchFields: ['name'],
+  })
+  @ApiOperation({ summary: 'List centers for the current user' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of centers',
+  })
+  async listCenters(
     @Paginate() query: PaginateQuery,
     @GetUser() user: CurrentUserType,
   ) {
-    if (!user?.id) throw new BadRequestException('Missing user context');
     return this.centersService.listCentersForUser(user.id, query);
   }
 

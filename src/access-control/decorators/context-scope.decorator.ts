@@ -7,7 +7,7 @@ interface ScopeRequest {
 
 export const ContextScope = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest() as Partial<ScopeRequest>;
+    const request = ctx.switchToHttp().getRequest();
     return {
       scopeType:
         typeof request.scopeType === 'string' ? request.scopeType : undefined,

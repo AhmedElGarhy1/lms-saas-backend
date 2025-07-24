@@ -1,32 +1,18 @@
 import { z } from 'zod';
-import { ApiProperty } from '@nestjs/swagger';
+import { createZodDto } from 'nestjs-zod';
 
 export const CreatePermissionRequestSchema = z.object({
-  action: z.string().min(1),
-  name: z.string().min(1),
-  isAdmin: z.boolean().optional(),
+  action: z.string().min(2, 'Permission action must be at least 2 characters'),
+  resource: z
+    .string()
+    .min(2, 'Permission resource must be at least 2 characters'),
+  description: z.string().optional().describe('Permission description'),
+  isActive: z
+    .boolean()
+    .default(true)
+    .describe('Whether the permission is active'),
 });
-export type CreatePermissionRequest = z.infer<
-  typeof CreatePermissionRequestSchema
->;
 
-export class CreatePermissionRequestDto {
-  @ApiProperty({
-    description: 'Permission action (e.g., user:view, center:manage)',
-    example: 'user:view',
-  })
-  action: string;
-
-  @ApiProperty({
-    description: 'Human-readable permission name',
-    example: 'View Users',
-  })
-  name: string;
-
-  @ApiProperty({
-    description: 'Is this an admin permission?',
-    example: false,
-    required: false,
-  })
-  isAdmin?: boolean;
-}
+export class CreatePermissionRequestDto extends createZodDto(
+  CreatePermissionRequestSchema,
+) {}

@@ -1,32 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, Length } from 'class-validator';
+import { z } from 'zod';
+import { createZodDto } from 'nestjs-zod';
 
-export enum AttendanceStatus {
-  PRESENT = 'PRESENT',
-  ABSENT = 'ABSENT',
-  LATE = 'LATE',
-  EXCUSED = 'EXCUSED',
-}
+export const EditAttendanceRequestSchema = z.object({
+  sessionId: z.string().min(1, 'Session ID is required'),
+  studentId: z.string().min(1, 'Student ID is required'),
+  status: z
+    .enum(['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'])
+    .describe('Attendance status'),
+  note: z.string().optional().describe('Additional notes about attendance'),
+});
 
-export class EditAttendanceDto {
-  @ApiProperty({
-    example: 'attendance-uuid',
-    description: 'Attendance record ID',
-  })
-  @IsString()
-  id: string;
-
-  @ApiProperty({
-    enum: AttendanceStatus,
-    example: AttendanceStatus.PRESENT,
-    description: 'Attendance status',
-  })
-  @IsEnum(AttendanceStatus)
-  status: AttendanceStatus;
-
-  @ApiProperty({ example: 'Updated note', required: false, maxLength: 255 })
-  @IsOptional()
-  @IsString()
-  @Length(0, 255)
-  note?: string;
-}
+export class EditAttendanceRequestDto extends createZodDto(
+  EditAttendanceRequestSchema,
+) {}
