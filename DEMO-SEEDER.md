@@ -156,7 +156,7 @@ POST /auth/login
 PATCH /users/{userId}/activate
 {
   "isActive": false,
-  "scopeType": "GLOBAL"
+  "scopeType": "ADMIN"
 }
 ```
 
@@ -206,7 +206,7 @@ POST /auth/login
 GET /centers/{centerId}/members
 Headers:
   x-scope-type: CENTER
-  x-scope-id: {centerId}
+  x-center-id: {centerId}
 Authorization: Bearer {center-deactivated-user-token}
 
 # Result: 403 Forbidden - "User is deactivated in this center"
@@ -215,7 +215,7 @@ Authorization: Bearer {center-deactivated-user-token}
 GET /centers/{centerId}/members
 Headers:
   x-scope-type: CENTER
-  x-scope-id: {centerId}
+  x-center-id: {centerId}
 Authorization: Bearer {center-deactivated-user-token}
 
 # Result: 200 OK - Access granted
@@ -294,7 +294,6 @@ The application uses a comprehensive global guard system configured in `app.modu
 1. JwtAuthGuard - JWT token validation
 2. ThrottlerGuard - Rate limiting protection
 3. ContextGuard - Context setting + center access validation
-4. PermissionsGuard - Permission checking
 ```
 
 **Automatic Center Access Validation:**

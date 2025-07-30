@@ -32,31 +32,103 @@ async function bootstrap() {
   // Swagger setup
   const config = new DocumentBuilder()
     .setTitle('LMS SaaS API')
-    .setDescription('API documentation for the LMS SaaS platform.')
-    .setVersion('1.0')
-    .addBearerAuth()
+    .setDescription(
+      `
+# LMS SaaS Platform API Documentation
+
+This API provides comprehensive functionality for managing a Learning Management System (LMS) SaaS platform.
+
+## Features
+
+- **User Management**: Create, update, and manage users with different roles
+- **Role-Based Access Control**: Comprehensive permission system with role hierarchy
+- **Center Management**: Multi-tenant center management with access control
+- **Soft Delete**: All entities support soft delete for data integrity
+- **Pagination**: All list endpoints support pagination, search, and filtering
+- **Authentication**: JWT-based authentication with refresh tokens
+- **Two-Factor Authentication**: Enhanced security with 2FA support
+
+## Authentication
+
+All endpoints require authentication using Bearer tokens. Include the token in the Authorization header:
+
+\`\`\`
+Authorization: Bearer <your-jwt-token>
+\`\`\`
+
+## Scope Management
+
+The API supports multi-scope access control:
+
+- **ADMIN Scope**: System-wide access for administrators
+- **CENTER Scope**: Center-specific access for center administrators
+
+Use the following headers to specify scope:
+
+- \`x-scope-type\`: ADMIN or CENTER
+- \`x-center-id\`: Center UUID (required for CENTER scope)
+
+## Pagination
+
+List endpoints support pagination with the following query parameters:
+
+- \`page\`: Page number (default: 1)
+- \`limit\`: Items per page (default: 10, max: 100)
+- \`search\`: Search term across searchable fields
+- \`sortBy\`: Sort field (e.g., "name:ASC", "createdAt:DESC")
+- \`filter\`: Exact field filtering (e.g., "isActive:true")
+
+## Error Handling
+
+The API uses standard HTTP status codes:
+
+- \`200\`: Success
+- \`201\`: Created
+- \`400\`: Bad Request
+- \`401\`: Unauthorized
+- \`403\`: Forbidden
+- \`404\`: Not Found
+- \`500\`: Internal Server Error
+
+## Rate Limiting
+
+API requests are rate-limited to prevent abuse. Limits are applied per IP address.
+    `,
+    )
+    .setVersion('1.0.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Enter your JWT token',
+      },
+      'JWT-auth',
+    )
     .addGlobalParameters({
       in: 'header',
       required: false,
       name: 'x-scope-type',
       schema: {
         type: 'string',
-        enum: ['GLOBAL', 'CENTER'],
-        default: 'GLOBAL',
-        example: 'GLOBAL',
+        enum: ['ADMIN', 'CENTER'],
+        default: 'ADMIN',
+        example: 'ADMIN',
       },
-      description: 'Scope type (GLOBAL or CENTER)',
+      description: 'Scope type (ADMIN or CENTER)',
     })
     .addGlobalParameters({
       in: 'header',
       required: false,
-      name: 'x-scope-id',
+      name: 'x-center-id',
       schema: {
         type: 'string',
-        example: 'center-uuid',
+        example: '550e8400-e29b-41d4-a716-446655440000',
       },
-      description: 'Scope ID (center UUID, required if x-scope-type is CENTER)',
+      description: 'Center ID (required if x-scope-type is CENTER)',
     })
+    .addServer('http://localhost:3000', 'Development server')
+    .addServer('https://api.lms-saas.com', 'Production server')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);

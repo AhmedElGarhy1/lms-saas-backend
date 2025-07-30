@@ -1,17 +1,23 @@
 import { Global, Module } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
-import { PaginationUtils } from './utils/pagination.utils';
-import { MailModule } from './mail/mail.module';
 import { ConfigModule } from '@nestjs/config';
+import { LoggerService } from './services/logger.service';
+import { MailerService } from './services/mailer.service';
+import { DatabaseService } from './database.service';
+import { HealthController } from './controllers/health.controller';
+import { ActivityLogModule } from './modules/activity-log/activity-log.module';
+import { HealthService } from './services/health.service';
 
 @Global()
 @Module({
-  imports: [ConfigModule, MailModule],
-  providers: [PrismaService, PaginationUtils],
+  imports: [ConfigModule, ActivityLogModule],
+  controllers: [HealthController],
+  providers: [LoggerService, MailerService, DatabaseService, HealthService],
   exports: [
-    PrismaService,
-    PaginationUtils,
-    MailModule, // Export the entire MailModule to make MailerService available
+    LoggerService,
+    MailerService,
+    DatabaseService,
+    ActivityLogModule,
+    ConfigModule,
   ],
 })
 export class SharedModule {}

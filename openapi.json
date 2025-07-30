@@ -11,19 +11,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -55,9 +52,7 @@
           }
         },
         "summary": "Sign up a new user",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/login": {
@@ -70,19 +65,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -114,9 +106,7 @@
           }
         },
         "summary": "Login user",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/refresh-token": {
@@ -129,19 +119,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -173,9 +160,7 @@
           }
         },
         "summary": "Refresh JWT token",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/verify-email": {
@@ -188,19 +173,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -232,9 +214,7 @@
           }
         },
         "summary": "Verify email",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/forgot-password": {
@@ -247,19 +227,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -291,9 +268,7 @@
           }
         },
         "summary": "Request password reset",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/reset-password": {
@@ -306,19 +281,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -350,9 +322,7 @@
           }
         },
         "summary": "Reset password",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/logout": {
@@ -365,19 +335,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -396,9 +363,7 @@
           }
         ],
         "summary": "Logout user",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/2fa/setup": {
@@ -411,19 +376,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -460,9 +422,7 @@
           }
         ],
         "summary": "Setup 2FA (returns QR code)",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/2fa/enable": {
@@ -475,19 +435,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -524,9 +481,7 @@
           }
         ],
         "summary": "Enable 2FA (verify code)",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/2fa/disable": {
@@ -539,19 +494,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -588,9 +540,7 @@
           }
         ],
         "summary": "Disable 2FA (verify code)",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/users/me": {
@@ -603,19 +553,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -641,9 +588,7 @@
             }
           }
         },
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       },
       "put": {
         "operationId": "UsersController_updateProfile",
@@ -654,19 +599,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -710,9 +652,7 @@
             }
           }
         },
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       }
     },
     "/users/me/password": {
@@ -725,19 +665,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -781,9 +718,7 @@
             }
           }
         },
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       }
     },
     "/users": {
@@ -796,19 +731,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -853,9 +785,7 @@
             }
           }
         },
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       },
       "get": {
         "operationId": "UsersController_listUsers",
@@ -898,10 +828,7 @@
             "schema": {
               "example": "asc",
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -920,19 +847,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -977,9 +901,7 @@
             }
           }
         },
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       }
     },
     "/centers": {
@@ -992,19 +914,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1028,9 +947,7 @@
           }
         },
         "summary": "Create a new center",
-        "tags": [
-          "Centers"
-        ]
+        "tags": ["Centers"]
       },
       "get": {
         "operationId": "CentersController_listCentersForUser",
@@ -1073,10 +990,7 @@
             "schema": {
               "example": "asc",
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -1095,19 +1009,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1121,9 +1032,7 @@
           }
         },
         "summary": "List centers for current user",
-        "tags": [
-          "Centers"
-        ]
+        "tags": ["Centers"]
       }
     },
     "/centers/{id}": {
@@ -1145,19 +1054,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1171,9 +1077,7 @@
           }
         },
         "summary": "Get center by ID",
-        "tags": [
-          "Centers"
-        ]
+        "tags": ["Centers"]
       },
       "patch": {
         "operationId": "CentersController_updateCenter",
@@ -1193,19 +1097,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1229,9 +1130,7 @@
           }
         },
         "summary": "Update a center",
-        "tags": [
-          "Centers"
-        ]
+        "tags": ["Centers"]
       },
       "delete": {
         "operationId": "CentersController_softDeleteCenter",
@@ -1251,19 +1150,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1277,9 +1173,7 @@
           }
         },
         "summary": "Soft delete a center",
-        "tags": [
-          "Centers"
-        ]
+        "tags": ["Centers"]
       }
     },
     "/centers/{centerId}/members": {
@@ -1301,19 +1195,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1337,9 +1228,7 @@
           }
         },
         "summary": "Add a member to a center",
-        "tags": [
-          "Centers"
-        ]
+        "tags": ["Centers"]
       },
       "get": {
         "operationId": "CentersController_listMembers",
@@ -1359,19 +1248,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1395,9 +1281,7 @@
           }
         },
         "summary": "List members of a center",
-        "tags": [
-          "Centers"
-        ]
+        "tags": ["Centers"]
       }
     },
     "/centers/{centerId}/members/{userId}": {
@@ -1428,19 +1312,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1454,9 +1335,7 @@
           }
         },
         "summary": "Remove a member from a center",
-        "tags": [
-          "Centers"
-        ]
+        "tags": ["Centers"]
       }
     },
     "/centers/{centerId}/members/{userId}/role": {
@@ -1487,19 +1366,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1523,9 +1399,7 @@
           }
         },
         "summary": "Change a member's role in a center",
-        "tags": [
-          "Centers"
-        ]
+        "tags": ["Centers"]
       }
     },
     "/centers/{centerId}/members/role/{role}": {
@@ -1556,19 +1430,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1592,9 +1463,7 @@
           }
         },
         "summary": "Filter members by role in a center",
-        "tags": [
-          "Centers"
-        ]
+        "tags": ["Centers"]
       }
     },
     "/access-control/roles/global": {
@@ -1607,19 +1476,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1643,9 +1509,7 @@
           }
         },
         "summary": "Create a global role",
-        "tags": [
-          "access-control"
-        ]
+        "tags": ["access-control"]
       }
     },
     "/access-control/roles/internal": {
@@ -1658,19 +1522,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1694,9 +1555,7 @@
           }
         },
         "summary": "Create an internal (center) role",
-        "tags": [
-          "access-control"
-        ]
+        "tags": ["access-control"]
       }
     },
     "/access-control/permissions": {
@@ -1709,19 +1568,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1745,9 +1601,7 @@
           }
         },
         "summary": "Create a permission",
-        "tags": [
-          "access-control"
-        ]
+        "tags": ["access-control"]
       }
     },
     "/access-control/assign-role": {
@@ -1760,19 +1614,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1796,9 +1647,7 @@
           }
         },
         "summary": "Assign a role to a user (context-aware)",
-        "tags": [
-          "access-control"
-        ]
+        "tags": ["access-control"]
       }
     },
     "/access-control/assign-permission": {
@@ -1811,19 +1660,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1847,9 +1693,7 @@
           }
         },
         "summary": "Assign a permission override to a user (context-aware)",
-        "tags": [
-          "access-control"
-        ]
+        "tags": ["access-control"]
       }
     },
     "/access-control/assign-permission-to-role": {
@@ -1862,19 +1706,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1898,9 +1739,7 @@
           }
         },
         "summary": "Assign a permission to a role",
-        "tags": [
-          "access-control"
-        ]
+        "tags": ["access-control"]
       }
     },
     "/access-control/user/{userId}/roles": {
@@ -1921,19 +1760,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1947,9 +1783,7 @@
           }
         },
         "summary": "Get user roles with scopes",
-        "tags": [
-          "access-control"
-        ]
+        "tags": ["access-control"]
       }
     },
     "/access-control/user/{userId}/permissions": {
@@ -1970,19 +1804,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -1996,9 +1827,7 @@
           }
         },
         "summary": "Get user permissions (resolved + overrides)",
-        "tags": [
-          "access-control"
-        ]
+        "tags": ["access-control"]
       }
     },
     "/grade-levels": {
@@ -2011,19 +1840,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2047,9 +1873,7 @@
           }
         },
         "summary": "Create a new grade level",
-        "tags": [
-          "Grade Levels"
-        ]
+        "tags": ["Grade Levels"]
       },
       "get": {
         "operationId": "GradeLevelsController_listGradeLevels",
@@ -2092,10 +1916,7 @@
             "schema": {
               "example": "asc",
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -2123,19 +1944,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2159,9 +1977,7 @@
           }
         },
         "summary": "List grade levels (global or by center)",
-        "tags": [
-          "Grade Levels"
-        ]
+        "tags": ["Grade Levels"]
       }
     },
     "/grade-levels/{id}": {
@@ -2183,19 +1999,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2219,9 +2032,7 @@
           }
         },
         "summary": "Update a grade level",
-        "tags": [
-          "Grade Levels"
-        ]
+        "tags": ["Grade Levels"]
       },
       "delete": {
         "operationId": "GradeLevelsController_deleteGradeLevel",
@@ -2241,19 +2052,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2267,9 +2075,7 @@
           }
         },
         "summary": "Delete a grade level",
-        "tags": [
-          "Grade Levels"
-        ]
+        "tags": ["Grade Levels"]
       },
       "get": {
         "operationId": "GradeLevelsController_getGradeLevelById",
@@ -2289,19 +2095,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2315,9 +2118,7 @@
           }
         },
         "summary": "Get grade level by ID",
-        "tags": [
-          "Grade Levels"
-        ]
+        "tags": ["Grade Levels"]
       }
     },
     "/grade-levels/{gradeLevelId}/students": {
@@ -2339,19 +2140,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2375,9 +2173,7 @@
           }
         },
         "summary": "Assign a student to a grade level",
-        "tags": [
-          "Grade Levels"
-        ]
+        "tags": ["Grade Levels"]
       },
       "get": {
         "operationId": "GradeLevelsController_listStudents",
@@ -2397,19 +2193,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2423,9 +2216,7 @@
           }
         },
         "summary": "List students in a grade level",
-        "tags": [
-          "Grade Levels"
-        ]
+        "tags": ["Grade Levels"]
       }
     },
     "/grade-levels/{gradeLevelId}/students/{studentId}": {
@@ -2456,19 +2247,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2482,9 +2270,7 @@
           }
         },
         "summary": "Unassign a student from a grade level",
-        "tags": [
-          "Grade Levels"
-        ]
+        "tags": ["Grade Levels"]
       }
     },
     "/grade-levels/{gradeLevelId}/groups": {
@@ -2506,19 +2292,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2542,9 +2325,7 @@
           }
         },
         "summary": "Assign a group to a grade level",
-        "tags": [
-          "Grade Levels"
-        ]
+        "tags": ["Grade Levels"]
       },
       "get": {
         "operationId": "GradeLevelsController_listGroups",
@@ -2564,19 +2345,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2590,9 +2368,7 @@
           }
         },
         "summary": "List groups in a grade level",
-        "tags": [
-          "Grade Levels"
-        ]
+        "tags": ["Grade Levels"]
       }
     },
     "/grade-levels/{gradeLevelId}/groups/{groupId}": {
@@ -2623,19 +2399,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2649,9 +2422,7 @@
           }
         },
         "summary": "Unassign a group from a grade level",
-        "tags": [
-          "Grade Levels"
-        ]
+        "tags": ["Grade Levels"]
       }
     },
     "/grade-levels/{gradeLevelId}/subjects": {
@@ -2673,19 +2444,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2709,9 +2477,7 @@
           }
         },
         "summary": "Assign a subject to a grade level",
-        "tags": [
-          "Grade Levels"
-        ]
+        "tags": ["Grade Levels"]
       },
       "get": {
         "operationId": "GradeLevelsController_listSubjects",
@@ -2731,19 +2497,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2757,9 +2520,7 @@
           }
         },
         "summary": "List subjects in a grade level",
-        "tags": [
-          "Grade Levels"
-        ]
+        "tags": ["Grade Levels"]
       }
     },
     "/grade-levels/{gradeLevelId}/subjects/{subjectId}": {
@@ -2790,19 +2551,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2816,9 +2574,7 @@
           }
         },
         "summary": "Unassign a subject from a grade level",
-        "tags": [
-          "Grade Levels"
-        ]
+        "tags": ["Grade Levels"]
       }
     },
     "/groups": {
@@ -2831,19 +2587,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2867,9 +2620,7 @@
           }
         },
         "summary": "Create a new group",
-        "tags": [
-          "Groups"
-        ]
+        "tags": ["Groups"]
       },
       "get": {
         "operationId": "GroupsController_listGroups",
@@ -2912,10 +2663,7 @@
             "schema": {
               "example": "asc",
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -2952,19 +2700,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -2988,9 +2733,7 @@
           }
         },
         "summary": "List groups (with optional filtering)",
-        "tags": [
-          "Groups"
-        ]
+        "tags": ["Groups"]
       }
     },
     "/groups/{id}": {
@@ -3012,19 +2755,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3048,9 +2788,7 @@
           }
         },
         "summary": "Update a group",
-        "tags": [
-          "Groups"
-        ]
+        "tags": ["Groups"]
       },
       "delete": {
         "operationId": "GroupsController_deleteGroup",
@@ -3070,19 +2808,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3096,9 +2831,7 @@
           }
         },
         "summary": "Delete a group",
-        "tags": [
-          "Groups"
-        ]
+        "tags": ["Groups"]
       },
       "get": {
         "operationId": "GroupsController_getGroupById",
@@ -3118,19 +2851,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3144,9 +2874,7 @@
           }
         },
         "summary": "Get group by ID",
-        "tags": [
-          "Groups"
-        ]
+        "tags": ["Groups"]
       }
     },
     "/groups/{groupId}/students": {
@@ -3168,19 +2896,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3204,9 +2929,7 @@
           }
         },
         "summary": "Assign a student to a group",
-        "tags": [
-          "Groups"
-        ]
+        "tags": ["Groups"]
       },
       "get": {
         "operationId": "GroupsController_listStudents",
@@ -3226,19 +2949,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3252,9 +2972,7 @@
           }
         },
         "summary": "List students in a group",
-        "tags": [
-          "Groups"
-        ]
+        "tags": ["Groups"]
       }
     },
     "/groups/{groupId}/students/{studentId}": {
@@ -3285,19 +3003,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3311,9 +3026,7 @@
           }
         },
         "summary": "Unassign a student from a group",
-        "tags": [
-          "Groups"
-        ]
+        "tags": ["Groups"]
       }
     },
     "/groups/{groupId}/teachers": {
@@ -3335,19 +3048,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3371,9 +3081,7 @@
           }
         },
         "summary": "Assign a teacher to a group",
-        "tags": [
-          "Groups"
-        ]
+        "tags": ["Groups"]
       },
       "get": {
         "operationId": "GroupsController_listTeachers",
@@ -3393,19 +3101,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3419,9 +3124,7 @@
           }
         },
         "summary": "List teachers in a group",
-        "tags": [
-          "Groups"
-        ]
+        "tags": ["Groups"]
       }
     },
     "/groups/{groupId}/teachers/{teacherId}": {
@@ -3452,19 +3155,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3478,9 +3178,7 @@
           }
         },
         "summary": "Unassign a teacher from a group",
-        "tags": [
-          "Groups"
-        ]
+        "tags": ["Groups"]
       }
     },
     "/subjects": {
@@ -3493,19 +3191,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3529,9 +3224,7 @@
           }
         },
         "summary": "Create a new subject",
-        "tags": [
-          "Subjects"
-        ]
+        "tags": ["Subjects"]
       },
       "get": {
         "operationId": "SubjectsController_listSubjects",
@@ -3574,10 +3267,7 @@
             "schema": {
               "example": "asc",
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -3614,19 +3304,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3650,9 +3337,7 @@
           }
         },
         "summary": "List subjects (with optional filtering)",
-        "tags": [
-          "Subjects"
-        ]
+        "tags": ["Subjects"]
       }
     },
     "/subjects/{id}": {
@@ -3674,19 +3359,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3710,9 +3392,7 @@
           }
         },
         "summary": "Update a subject",
-        "tags": [
-          "Subjects"
-        ]
+        "tags": ["Subjects"]
       },
       "delete": {
         "operationId": "SubjectsController_deleteSubject",
@@ -3732,19 +3412,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3758,9 +3435,7 @@
           }
         },
         "summary": "Delete a subject",
-        "tags": [
-          "Subjects"
-        ]
+        "tags": ["Subjects"]
       },
       "get": {
         "operationId": "SubjectsController_getSubjectById",
@@ -3780,19 +3455,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3806,9 +3478,7 @@
           }
         },
         "summary": "Get subject by ID",
-        "tags": [
-          "Subjects"
-        ]
+        "tags": ["Subjects"]
       }
     },
     "/subjects/{subjectId}/teachers": {
@@ -3830,19 +3500,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3866,9 +3533,7 @@
           }
         },
         "summary": "Assign a teacher to a subject",
-        "tags": [
-          "Subjects"
-        ]
+        "tags": ["Subjects"]
       },
       "get": {
         "operationId": "SubjectsController_listTeachers",
@@ -3888,19 +3553,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3914,9 +3576,7 @@
           }
         },
         "summary": "List teachers for a subject",
-        "tags": [
-          "Subjects"
-        ]
+        "tags": ["Subjects"]
       }
     },
     "/subjects/{subjectId}/teachers/{teacherId}": {
@@ -3947,19 +3607,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -3973,9 +3630,7 @@
           }
         },
         "summary": "Unassign a teacher from a subject",
-        "tags": [
-          "Subjects"
-        ]
+        "tags": ["Subjects"]
       }
     },
     "/teachers": {
@@ -3989,19 +3644,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -4047,9 +3699,7 @@
           }
         ],
         "summary": "Create a new teacher profile",
-        "tags": [
-          "Teachers"
-        ]
+        "tags": ["Teachers"]
       },
       "get": {
         "description": "Retrieves a paginated list of all teachers. Only admins and center owners can access this endpoint.",
@@ -4095,10 +3745,7 @@
             "schema": {
               "example": "asc",
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -4117,19 +3764,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -4158,9 +3802,7 @@
           }
         ],
         "summary": "Get all teachers",
-        "tags": [
-          "Teachers"
-        ]
+        "tags": ["Teachers"]
       }
     },
     "/teachers/{id}": {
@@ -4184,19 +3826,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -4228,9 +3867,7 @@
           }
         ],
         "summary": "Get teacher profile by ID",
-        "tags": [
-          "Teachers"
-        ]
+        "tags": ["Teachers"]
       },
       "put": {
         "description": "Updates a teacher profile. Users can only update their own profile unless they are admins or center owners.",
@@ -4252,19 +3889,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -4307,9 +3941,7 @@
           }
         ],
         "summary": "Update teacher profile",
-        "tags": [
-          "Teachers"
-        ]
+        "tags": ["Teachers"]
       },
       "delete": {
         "description": "Deletes a teacher profile. Only admins and center owners can delete teacher profiles.",
@@ -4331,19 +3963,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -4368,9 +3997,7 @@
           }
         ],
         "summary": "Delete teacher profile",
-        "tags": [
-          "Teachers"
-        ]
+        "tags": ["Teachers"]
       }
     },
     "/teachers/user/{userId}": {
@@ -4394,19 +4021,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -4438,9 +4062,7 @@
           }
         ],
         "summary": "Get teacher profile by user ID",
-        "tags": [
-          "Teachers"
-        ]
+        "tags": ["Teachers"]
       }
     },
     "/teachers/{id}/views": {
@@ -4464,19 +4086,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -4505,9 +4124,7 @@
           }
         ],
         "summary": "Increment teacher profile views",
-        "tags": [
-          "Teachers"
-        ]
+        "tags": ["Teachers"]
       }
     },
     "/students": {
@@ -4520,19 +4137,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -4568,9 +4182,7 @@
           }
         ],
         "summary": "Create a new student",
-        "tags": [
-          "students"
-        ]
+        "tags": ["students"]
       },
       "get": {
         "operationId": "StudentsController_list",
@@ -4656,10 +4268,7 @@
             "schema": {
               "example": "asc",
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -4678,19 +4287,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -4721,9 +4327,7 @@
           }
         ],
         "summary": "List students (by center, teacher, or all)",
-        "tags": [
-          "students"
-        ]
+        "tags": ["students"]
       }
     },
     "/students/{id}": {
@@ -4745,19 +4349,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -4783,9 +4384,7 @@
           }
         ],
         "summary": "Get student by ID",
-        "tags": [
-          "students"
-        ]
+        "tags": ["students"]
       },
       "put": {
         "operationId": "StudentsController_update",
@@ -4805,19 +4404,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -4853,9 +4449,7 @@
           }
         ],
         "summary": "Update student by ID",
-        "tags": [
-          "students"
-        ]
+        "tags": ["students"]
       },
       "delete": {
         "operationId": "StudentsController_delete",
@@ -4875,19 +4469,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -4906,9 +4497,7 @@
           }
         ],
         "summary": "Delete student by ID",
-        "tags": [
-          "students"
-        ]
+        "tags": ["students"]
       }
     },
     "/schedules": {
@@ -4921,19 +4510,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -4969,9 +4555,7 @@
           }
         ],
         "summary": "Create a new class session",
-        "tags": [
-          "schedules"
-        ]
+        "tags": ["schedules"]
       },
       "get": {
         "operationId": "SchedulesController_list",
@@ -5074,10 +4658,7 @@
             "schema": {
               "example": "asc",
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -5096,19 +4677,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -5139,9 +4717,7 @@
           }
         ],
         "summary": "List class sessions (filterable)",
-        "tags": [
-          "schedules"
-        ]
+        "tags": ["schedules"]
       }
     },
     "/schedules/{id}": {
@@ -5163,19 +4739,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -5201,9 +4774,7 @@
           }
         ],
         "summary": "Get class session by ID",
-        "tags": [
-          "schedules"
-        ]
+        "tags": ["schedules"]
       },
       "put": {
         "operationId": "SchedulesController_update",
@@ -5223,19 +4794,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -5271,9 +4839,7 @@
           }
         ],
         "summary": "Update class session by ID",
-        "tags": [
-          "schedules"
-        ]
+        "tags": ["schedules"]
       },
       "delete": {
         "operationId": "SchedulesController_delete",
@@ -5293,19 +4859,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -5324,9 +4887,7 @@
           }
         ],
         "summary": "Delete class session by ID",
-        "tags": [
-          "schedules"
-        ]
+        "tags": ["schedules"]
       }
     },
     "/attendance/bulk-mark": {
@@ -5339,19 +4900,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -5414,9 +4972,7 @@
           }
         ],
         "summary": "Bulk mark attendance for a session",
-        "tags": [
-          "Attendance"
-        ]
+        "tags": ["Attendance"]
       }
     },
     "/attendance/edit": {
@@ -5429,19 +4985,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -5504,9 +5057,7 @@
           }
         ],
         "summary": "Edit an attendance record",
-        "tags": [
-          "Attendance"
-        ]
+        "tags": ["Attendance"]
       }
     },
     "/attendance/fetch": {
@@ -5561,12 +5112,7 @@
             "schema": {
               "example": "PRESENT",
               "type": "string",
-              "enum": [
-                "PRESENT",
-                "ABSENT",
-                "LATE",
-                "EXCUSED"
-              ]
+              "enum": ["PRESENT", "ABSENT", "LATE", "EXCUSED"]
             }
           },
           {
@@ -5607,10 +5153,7 @@
             "schema": {
               "example": "asc",
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -5629,19 +5172,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -5684,9 +5224,7 @@
           }
         ],
         "summary": "Fetch attendance records",
-        "tags": [
-          "Attendance"
-        ]
+        "tags": ["Attendance"]
       }
     },
     "/attendance/report": {
@@ -5741,12 +5279,7 @@
             "schema": {
               "example": "PRESENT",
               "type": "string",
-              "enum": [
-                "PRESENT",
-                "ABSENT",
-                "LATE",
-                "EXCUSED"
-              ]
+              "enum": ["PRESENT", "ABSENT", "LATE", "EXCUSED"]
             }
           },
           {
@@ -5787,10 +5320,7 @@
             "schema": {
               "example": "asc",
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -5808,19 +5338,16 @@
             "name": "x-scope-type",
             "schema": {
               "type": "string",
-              "enum": [
-                "GLOBAL",
-                "CENTER"
-              ],
-              "default": "GLOBAL",
-              "example": "GLOBAL"
+              "enum": ["ADMIN", "CENTER"],
+              "default": "ADMIN",
+              "example": "ADMIN"
             },
-            "description": "Scope type (GLOBAL or CENTER)"
+            "description": "Scope type (ADMIN or CENTER)"
           },
           {
             "in": "header",
             "required": false,
-            "name": "x-scope-id",
+            "name": "x-center-id",
             "schema": {
               "type": "string",
               "example": "center-uuid"
@@ -5865,9 +5392,7 @@
           }
         ],
         "summary": "Attendance report/analytics",
-        "tags": [
-          "Attendance"
-        ]
+        "tags": ["Attendance"]
       }
     }
   },
@@ -5907,11 +5432,7 @@
             "example": "John Doe"
           }
         },
-        "required": [
-          "email",
-          "password",
-          "fullName"
-        ]
+        "required": ["email", "password", "fullName"]
       },
       "LoginDto": {
         "type": "object",
@@ -5932,10 +5453,7 @@
             "example": "123456"
           }
         },
-        "required": [
-          "email",
-          "password"
-        ]
+        "required": ["email", "password"]
       },
       "RefreshTokenDto": {
         "type": "object",
@@ -5962,9 +5480,7 @@
             "example": "password123"
           }
         },
-        "required": [
-          "password"
-        ]
+        "required": ["password"]
       },
       "TwoFAVerifyDto": {
         "type": "object",
@@ -5975,9 +5491,7 @@
             "example": "123456"
           }
         },
-        "required": [
-          "code"
-        ]
+        "required": ["code"]
       },
       "UpdateProfileDto": {
         "type": "object",
@@ -6003,10 +5517,7 @@
             "example": "newpassword123"
           }
         },
-        "required": [
-          "oldPassword",
-          "newPassword"
-        ]
+        "required": ["oldPassword", "newPassword"]
       },
       "CreateUserDto": {
         "type": "object",
@@ -6027,10 +5538,7 @@
             "example": "password123"
           }
         },
-        "required": [
-          "email",
-          "fullName"
-        ]
+        "required": ["email", "fullName"]
       },
       "CreateCenterDto": {
         "type": "object",
@@ -6050,9 +5558,7 @@
             "default": true
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "UpdateCenterDto": {
         "type": "object",
@@ -6085,10 +5591,7 @@
             "description": "Role to assign to the user"
           }
         },
-        "required": [
-          "userId",
-          "role"
-        ]
+        "required": ["userId", "role"]
       },
       "ChangeMemberRoleDto": {
         "type": "object",
@@ -6099,9 +5602,7 @@
             "description": "New role to assign to the user"
           }
         },
-        "required": [
-          "role"
-        ]
+        "required": ["role"]
       },
       "MemberDto": {
         "type": "object",
@@ -6150,13 +5651,7 @@
             }
           }
         },
-        "required": [
-          "userId",
-          "centerId",
-          "role",
-          "createdBy",
-          "createdAt"
-        ]
+        "required": ["userId", "centerId", "role", "createdBy", "createdAt"]
       },
       "CreateRoleDto": {
         "type": "object",
@@ -6168,12 +5663,9 @@
           },
           "scope": {
             "type": "string",
-            "description": "Role scope (GLOBAL or CENTER)",
-            "enum": [
-              "GLOBAL",
-              "CENTER"
-            ],
-            "example": "GLOBAL"
+            "description": "Role scope (ADMIN or CENTER)",
+            "enum": ["ADMIN", "CENTER"],
+            "example": "ADMIN"
           },
           "centerId": {
             "type": "string",
@@ -6191,10 +5683,7 @@
             "example": false
           }
         },
-        "required": [
-          "name",
-          "scope"
-        ]
+        "required": ["name", "scope"]
       },
       "CreatePermissionDto": {
         "type": "object",
@@ -6205,9 +5694,7 @@
             "example": "user:view"
           }
         },
-        "required": [
-          "action"
-        ]
+        "required": ["action"]
       },
       "AssignRoleDto": {
         "type": "object",
@@ -6224,24 +5711,17 @@
           },
           "scopeType": {
             "type": "string",
-            "description": "Scope type (GLOBAL or CENTER)",
-            "enum": [
-              "GLOBAL",
-              "CENTER"
-            ],
-            "example": "GLOBAL"
+            "description": "Scope type (ADMIN or CENTER)",
+            "enum": ["ADMIN", "CENTER"],
+            "example": "ADMIN"
           },
-          "scopeId": {
+          "centerId": {
             "type": "string",
-            "description": "Scope ID (centerId if CENTER, null if GLOBAL)",
+            "description": "Scope ID (centerId if CENTER, null if ADMIN)",
             "example": "center123"
           }
         },
-        "required": [
-          "userId",
-          "roleId",
-          "scopeType"
-        ]
+        "required": ["userId", "roleId", "scopeType"]
       },
       "AssignPermissionDto": {
         "type": "object",
@@ -6263,22 +5743,17 @@
           },
           "scopeType": {
             "type": "string",
-            "description": "Scope type (GLOBAL or CENTER)",
-            "enum": [
-              "GLOBAL",
-              "CENTER"
-            ],
-            "example": "GLOBAL"
+            "description": "Scope type (ADMIN or CENTER)",
+            "enum": ["ADMIN", "CENTER"],
+            "example": "ADMIN"
           },
-          "scopeId": {
+          "centerId": {
             "type": "string",
-            "description": "Scope ID (centerId if CENTER, null if GLOBAL)",
+            "description": "Scope ID (centerId if CENTER, null if ADMIN)",
             "example": "center123"
           }
         },
-        "required": [
-          "permissionId"
-        ]
+        "required": ["permissionId"]
       },
       "CreateGradeLevelDto": {
         "type": "object",
@@ -6303,9 +5778,7 @@
             "description": "Center ID if grade is center-specific"
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "UpdateGradeLevelDto": {
         "type": "object",
@@ -6386,9 +5859,7 @@
             "description": "ID of the student to assign"
           }
         },
-        "required": [
-          "studentId"
-        ]
+        "required": ["studentId"]
       },
       "AssignGroupDto": {
         "type": "object",
@@ -6399,9 +5870,7 @@
             "description": "ID of the group to assign"
           }
         },
-        "required": [
-          "groupId"
-        ]
+        "required": ["groupId"]
       },
       "AssignSubjectDto": {
         "type": "object",
@@ -6412,9 +5881,7 @@
             "description": "ID of the subject to assign"
           }
         },
-        "required": [
-          "subjectId"
-        ]
+        "required": ["subjectId"]
       },
       "CreateGroupDto": {
         "type": "object",
@@ -6444,10 +5911,7 @@
             "description": "Maximum number of students"
           }
         },
-        "required": [
-          "name",
-          "centerId"
-        ]
+        "required": ["name", "centerId"]
       },
       "UpdateGroupDto": {
         "type": "object",
@@ -6544,9 +6008,7 @@
             "description": "ID of the teacher to assign"
           }
         },
-        "required": [
-          "teacherId"
-        ]
+        "required": ["teacherId"]
       },
       "CreateSubjectDto": {
         "type": "object",
@@ -6581,10 +6043,7 @@
             "description": "Duration in minutes"
           }
         },
-        "required": [
-          "name",
-          "centerId"
-        ]
+        "required": ["name", "centerId"]
       },
       "UpdateSubjectDto": {
         "type": "object",
@@ -6708,9 +6167,7 @@
             "example": "Mathematics, Advanced Calculus, Linear Algebra"
           }
         },
-        "required": [
-          "userId"
-        ]
+        "required": ["userId"]
       },
       "TeacherResponseDto": {
         "type": "object",
@@ -6841,12 +6298,7 @@
             "example": 10
           }
         },
-        "required": [
-          "teachers",
-          "total",
-          "page",
-          "limit"
-        ]
+        "required": ["teachers", "total", "page", "limit"]
       },
       "CreateStudentDto": {
         "type": "object",
@@ -6912,10 +6364,7 @@
             "description": "Notes about the student"
           }
         },
-        "required": [
-          "userId",
-          "grade"
-        ]
+        "required": ["userId", "grade"]
       },
       "StudentResponseDto": {
         "type": "object",
@@ -7119,12 +6568,7 @@
             "default": false
           }
         },
-        "required": [
-          "title",
-          "teacherId",
-          "startTime",
-          "endTime"
-        ]
+        "required": ["title", "teacherId", "startTime", "endTime"]
       },
       "SessionResponseDto": {
         "type": "object",
@@ -7261,12 +6705,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "PRESENT",
-              "ABSENT",
-              "LATE",
-              "EXCUSED"
-            ],
+            "enum": ["PRESENT", "ABSENT", "LATE", "EXCUSED"],
             "example": "PRESENT",
             "description": "Attendance status"
           },
@@ -7276,10 +6715,7 @@
             "maxLength": 255
           }
         },
-        "required": [
-          "studentId",
-          "status"
-        ]
+        "required": ["studentId", "status"]
       },
       "BulkMarkAttendanceDto": {
         "type": "object",
@@ -7302,11 +6738,7 @@
             "description": "User marking attendance"
           }
         },
-        "required": [
-          "sessionId",
-          "attendances",
-          "markedById"
-        ]
+        "required": ["sessionId", "attendances", "markedById"]
       },
       "EditAttendanceDto": {
         "type": "object",
@@ -7318,12 +6750,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "PRESENT",
-              "ABSENT",
-              "LATE",
-              "EXCUSED"
-            ],
+            "enum": ["PRESENT", "ABSENT", "LATE", "EXCUSED"],
             "example": "PRESENT",
             "description": "Attendance status"
           },
@@ -7333,10 +6760,7 @@
             "maxLength": 255
           }
         },
-        "required": [
-          "id",
-          "status"
-        ]
+        "required": ["id", "status"]
       }
     }
   }

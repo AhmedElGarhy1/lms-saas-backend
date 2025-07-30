@@ -1,30 +1,38 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
-import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from './auth/auth.module';
-import { SharedModule } from './shared/shared.module';
-import { UsersModule } from './users/users.module';
-import { CentersModule } from './centers/centers.module';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { APP_INTERCEPTOR, APP_FILTER, APP_PIPE, APP_GUARD } from '@nestjs/core';
 import { Reflector } from '@nestjs/core';
-import { AccessControlModule } from './access-control/access-control.module';
-import { ContextGuard } from './access-control/guards/context.guard';
-import { PermissionsGuard } from './access-control/guards/permissions.guard';
-import { GradeLevelsModule } from './academic-grades/grade-levels.module';
-import { GroupsModule } from './groups/groups.module';
-import { SubjectsModule } from './subjects/subjects.module';
-import { TeachersModule } from './teachers/teachers.module';
-import { StudentsModule } from './students/students.module';
-import { SchedulesModule } from './schedules/schedules.module';
-import { AttendanceModule } from './attendance/attendance.module';
-import { GuardiansModule } from './guardians/guardians.module';
+
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { AuthModule } from '@/modules/auth/auth.module';
+import { UserModule } from '@/modules/user/user.module';
+import { CentersModule } from '@/modules/centers/centers.module';
+import { AccessControlModule } from '@/modules/access-control/access-control.module';
+import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
+import { SharedModule } from '@/shared/shared.module';
+import { ErrorInterceptor } from '@/common/interceptors/error.interceptor';
+import { PerformanceInterceptor } from '@/common/interceptors/performance.interceptor';
+import { ResponseTransformInterceptor } from '@/common/interceptors/response-transform.interceptor';
+import { ScopeInterceptor } from '@/common/interceptors/scope.interceptor';
+import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
+import { CustomValidationPipe } from '@/common/pipes/validation.pipe';
+import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
+import { ContextGuard } from '@/common/guards/context.guard';
+import { PermissionsGuard } from '@/common/guards/permissions.guard';
+import { ContextValidationService } from '@/common/services/context-validation.service';
+import { typeOrmConfig } from '@/shared/config/database.config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
     WinstonModule.forRoot({
       transports: [
         new winston.transports.Console({
@@ -35,6 +43,7 @@ import { GuardiansModule } from './guardians/guardians.module';
         }),
       ],
     }),
+    TypeOrmModule.forRoot(typeOrmConfig),
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -45,19 +54,39 @@ import { GuardiansModule } from './guardians/guardians.module';
     }),
     SharedModule,
     AuthModule,
-    UsersModule,
-    CentersModule,
+    UserModule,
     AccessControlModule,
-    GradeLevelsModule,
-    GroupsModule,
-    SubjectsModule,
-    TeachersModule,
-    StudentsModule,
-    SchedulesModule,
-    AttendanceModule,
-    GuardiansModule,
+    CentersModule,
+    ActivityLogModule,
   ],
+  controllers: [AppController],
   providers: [
+    AppService,
+    ContextValidationService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ErrorInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: PerformanceInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseTransformInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ScopeInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
+    {
+      provide: APP_PIPE,
+      useClass: CustomValidationPipe,
+    },
     {
       provide: APP_GUARD,
       useFactory: (reflector: Reflector) => new JwtAuthGuard(reflector),
@@ -69,11 +98,16 @@ import { GuardiansModule } from './guardians/guardians.module';
     },
     {
       provide: APP_GUARD,
-      useClass: ContextGuard,
+      useFactory: (
+        contextValidationService: ContextValidationService,
+        reflector: Reflector,
+      ) => new ContextGuard(contextValidationService, reflector),
+      inject: [ContextValidationService, Reflector],
     },
     {
       provide: APP_GUARD,
-      useClass: PermissionsGuard,
+      useFactory: (reflector: Reflector) => new PermissionsGuard(reflector),
+      inject: [Reflector],
     },
   ],
 })

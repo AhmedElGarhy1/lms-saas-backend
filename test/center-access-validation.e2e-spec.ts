@@ -59,7 +59,7 @@ describe('Center Access Validation (e2e)', () => {
         .get(`/centers/${testCenterId}/members`)
         .set('Authorization', `Bearer ${adminToken}`)
         .set('x-scope-type', 'CENTER')
-        .set('x-scope-id', testCenterId);
+        .set('x-center-id', testCenterId);
 
       expect(response.status).toBe(200);
     });
@@ -83,7 +83,7 @@ describe('Center Access Validation (e2e)', () => {
           .get(`/centers/${userOnCenter.centerId}/members`)
           .set('Authorization', `Bearer ${centerDeactivatedUserToken}`)
           .set('x-scope-type', 'CENTER')
-          .set('x-scope-id', userOnCenter.centerId);
+          .set('x-center-id', userOnCenter.centerId);
 
         expect(response.status).toBe(403);
         expect(response.body.message).toBe(
@@ -111,7 +111,7 @@ describe('Center Access Validation (e2e)', () => {
           .get(`/centers/${userOnCenter.centerId}/members`)
           .set('Authorization', `Bearer ${centerDeactivatedUserToken}`)
           .set('x-scope-type', 'CENTER')
-          .set('x-scope-id', userOnCenter.centerId);
+          .set('x-center-id', userOnCenter.centerId);
 
         expect(response.status).toBe(200);
       }

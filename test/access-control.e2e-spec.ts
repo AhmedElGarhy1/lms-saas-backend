@@ -148,7 +148,7 @@ describe('AccessControl (e2e)', () => {
         permissionId,
         centerId,
         scopeType: 'CENTER',
-        scopeId: centerId,
+        centerId: centerId,
       },
     });
     const res = await server
@@ -257,7 +257,7 @@ describe('AccessControl (e2e)', () => {
         permissionId: perm.id,
         centerId,
         scopeType: 'CENTER',
-        scopeId: centerId,
+        centerId: centerId,
       },
     });
     const res = await server
@@ -295,7 +295,7 @@ describe('AccessControl (e2e)', () => {
       const testRole = await prisma.role.create({
         data: {
           name: `TestRoleForDeletion${uniqueSuffix}`,
-          scope: 'GLOBAL',
+          scope: 'ADMIN',
         },
       });
 
@@ -304,7 +304,7 @@ describe('AccessControl (e2e)', () => {
         data: {
           userId,
           roleId: testRole.id,
-          scopeType: 'GLOBAL',
+          scopeType: 'ADMIN',
         },
       });
 
@@ -363,7 +363,7 @@ describe('AccessControl (e2e)', () => {
       const testRole = await prisma.role.create({
         data: {
           name: `TestRoleForSuccessfulDeletion${uniqueSuffix}`,
-          scope: 'GLOBAL',
+          scope: 'ADMIN',
         },
       });
 
