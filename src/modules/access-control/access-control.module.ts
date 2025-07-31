@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccessControlController } from './controllers/access-control.controller';
-import { RolesController } from './controllers/roles/roles.controller';
+import { RolesController } from './controllers/roles.controller';
 import { AccessControlService } from './services/access-control.service';
 import { PermissionService } from './services/permission.service';
 import { PermissionCacheService } from './services/permission-cache.service';
@@ -22,7 +22,6 @@ import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { UserOnCenter } from './entities/user-on-center.entity';
 import { DatabaseModule } from '@/shared/modules/database/database.module';
 import { RoleEventEmitter } from '@/common/events/role.events';
-import { LoggerService } from '@/shared/services/logger.service';
 
 @Global()
 @Module({
@@ -51,7 +50,6 @@ import { LoggerService } from '@/shared/services/logger.service';
     UserOnCenterRepository,
     RolesRepository,
     UserRoleRepository,
-    LoggerService,
     {
       provide: RoleEventEmitter,
       useClass: RoleEventEmitter,

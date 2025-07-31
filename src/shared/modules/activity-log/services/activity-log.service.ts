@@ -48,23 +48,41 @@ export class ActivityLogService {
         userAgent: dto.userAgent,
       });
 
-      this.logger.info(
-        `Activity logged: ${dto.type} - ${dto.action}`,
-        undefined,
-        {
+      try {
+        this.logger.info(
+          `Activity logged: ${dto.type} - ${dto.action}`,
+          undefined,
+          {
+            activityId: activityLog.id,
+            actorId: dto.actorId,
+            centerId: dto.centerId,
+            scope: dto.scope,
+          },
+        );
+      } catch (loggerError) {
+        // Fallback to console if logger fails
+        console.log(`Activity logged: ${dto.type} - ${dto.action}`, {
           activityId: activityLog.id,
           actorId: dto.actorId,
           centerId: dto.centerId,
           scope: dto.scope,
-        },
-      );
+        });
+      }
 
       return activityLog;
     } catch (error) {
-      this.logger.error('Failed to create activity log', undefined, {
-        error: error.message,
-        dto,
-      } as any);
+      try {
+        this.logger.error('Failed to create activity log', undefined, {
+          error: error.message,
+          dto,
+        } as any);
+      } catch (loggerError) {
+        // Fallback to console if logger fails
+        console.error('Failed to create activity log', {
+          error: error.message,
+          dto,
+        });
+      }
       throw error;
     }
   }
@@ -193,6 +211,11 @@ export class ActivityLogService {
 
   async getActivityLogById(id: string): Promise<ActivityLog | null> {
     return this.activityLogRepository.findOne(id);
+  }
+
+  async clearAllLogs(): Promise<void> {
+    await this.activityLogRepository.bulkDelete({});
+    console.log('All activity logs cleared');
   }
 
   private getActivityDescription(type: ActivityType, action: string): string {

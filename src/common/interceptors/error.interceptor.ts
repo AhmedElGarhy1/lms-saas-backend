@@ -142,65 +142,6 @@ export class ErrorInterceptor implements NestInterceptor {
           return throwError(() => httpError);
         }
 
-        // Handle validation errors
-        if (error.name === 'ValidationError') {
-          const details: ErrorDetail[] = error.errors.map((err: any) => ({
-            field: err.property,
-            value: err.value,
-            message: Object.values(err.constraints || {}).join(', '),
-            code: 'VALIDATION_ERROR',
-            suggestion: this.getValidationSuggestion(
-              err.property,
-              err.constraints,
-            ),
-          }));
-
-          const httpError = new HttpException(
-            {
-              statusCode: HttpStatus.BAD_REQUEST,
-              message: 'Validation failed',
-              error: 'Bad Request',
-              timestamp: new Date().toISOString(),
-              path: url,
-              method,
-              userMessage: 'Please check your input and try again.',
-              actionRequired: 'Fix the highlighted errors below.',
-              retryable: true,
-              details,
-            } as EnhancedErrorResponse,
-            HttpStatus.BAD_REQUEST,
-          );
-          return throwError(() => httpError);
-        }
-
-        // Handle Zod validation errors
-        if (error.name === 'ZodError') {
-          const details: ErrorDetail[] = error.errors.map((err: any) => ({
-            field: err.path.join('.'),
-            value: err.received,
-            message: err.message,
-            code: 'ZOD_VALIDATION_ERROR',
-            suggestion: this.getZodValidationSuggestion(err.code, err.path),
-          }));
-
-          const httpError = new HttpException(
-            {
-              statusCode: HttpStatus.BAD_REQUEST,
-              message: 'Validation failed',
-              error: 'Bad Request',
-              timestamp: new Date().toISOString(),
-              path: url,
-              method,
-              userMessage: 'Please check your input and try again.',
-              actionRequired: 'Fix the highlighted errors below.',
-              retryable: true,
-              details,
-            } as EnhancedErrorResponse,
-            HttpStatus.BAD_REQUEST,
-          );
-          return throwError(() => httpError);
-        }
-
         // Handle TypeORM errors
         if (error.name === 'QueryFailedError') {
           const details: ErrorDetail[] = [
@@ -294,33 +235,5 @@ export class ErrorInterceptor implements NestInterceptor {
         return throwError(() => httpError);
       }),
     );
-  }
-
-  private getValidationSuggestion(field: string, constraints: any): string {
-    if (constraints.isEmail) return 'Please enter a valid email address';
-    if (constraints.minLength)
-      return `Must be at least ${constraints.minLength} characters`;
-    if (constraints.maxLength)
-      return `Must be no more than ${constraints.maxLength} characters`;
-    if (constraints.isNotEmpty) return 'This field is required';
-    if (constraints.isUrl) return 'Please enter a valid URL';
-    return 'Please check this field';
-  }
-
-  private getZodValidationSuggestion(code: string, path: string[]): string {
-    const field = path[path.length - 1];
-
-    switch (code) {
-      case 'invalid_string':
-        return `Please enter a valid ${field}`;
-      case 'too_small':
-        return `Please enter a longer ${field}`;
-      case 'too_big':
-        return `Please enter a shorter ${field}`;
-      case 'invalid_type':
-        return `Please enter a valid ${field}`;
-      default:
-        return `Please check the ${field} field`;
-    }
   }
 }

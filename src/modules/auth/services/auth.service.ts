@@ -21,7 +21,7 @@ import { ForgotPasswordRequestDto } from '../dto/forgot-password.dto';
 import { ResetPasswordRequestDto } from '../dto/reset-password.dto';
 import { VerifyEmailRequestDto } from '../dto/verify-email.dto';
 import { TwoFactorRequest } from '../dto/2fa.dto';
-import { RefreshTokenRequest } from '../dto/refresh-token.dto';
+import { RefreshTokenRequestDto } from '../dto/refresh-token.dto';
 import { LoggerService } from '../../../shared/services/logger.service';
 import { User } from '../../user/entities/user.entity';
 
@@ -60,6 +60,14 @@ export class AuthService {
     if (!user) {
       this.logger.warn(`Failed login attempt for email: ${dto.email}`);
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.id || user.id.trim() === '') {
+      this.logger.error(
+        `User object missing or invalid ID for email: ${dto.email}`,
+        'AuthService',
+      );
+      throw new UnauthorizedException('User data is invalid');
     }
 
     if (!user.isActive) {
@@ -102,6 +110,10 @@ export class AuthService {
     const tokens = this.generateTokens(user);
 
     // Create refresh token
+    this.logger.log(
+      `Creating refresh token for user: ${user.email} (ID: ${user.id})`,
+      'AuthService',
+    );
     await this.refreshTokenService.createRefreshToken({
       userId: user.id,
       deviceInfo: {
@@ -128,12 +140,12 @@ export class AuthService {
     };
   }
 
-  async verifyTwoFactor(dto: TwoFactorRequest) {
-    const payload = this.jwtService.verify(dto.tempToken);
-    const user = await this.userService.findUserById(payload.sub);
+  async verify2FA(dto: TwoFactorRequest) {
+    // Find user by email
+    const user = await this.userService.findUserByEmail(dto.email);
 
     if (!user) {
-      throw new UnauthorizedException('Invalid temporary token');
+      throw new UnauthorizedException('User not found');
     }
 
     if (!user.twoFactorEnabled) {
@@ -248,14 +260,12 @@ export class AuthService {
   }
 
   async resetPassword(dto: ResetPasswordRequestDto) {
-    await this.passwordResetService.resetPassword(dto.token, dto.password);
-
-    return {
-      message: 'Password reset successfully',
-    };
+    // Use newPassword from the DTO
+    await this.passwordResetService.resetPassword(dto.token, dto.newPassword);
+    return { success: true, message: 'Password reset successfully' };
   }
 
-  async refreshToken(dto: RefreshTokenRequest) {
+  async refreshToken(dto: RefreshTokenRequestDto) {
     const { accessToken, newRefreshToken } =
       await this.refreshTokenService.refreshAccessToken(dto.refreshToken);
 
@@ -399,11 +409,11 @@ export class AuthService {
 
     return {
       accessToken,
-      refreshToken: this.generateRefreshToken(),
+      refreshToken: this.generateRefreshToken(user.id),
     };
   }
 
-  private generateRefreshToken(): string {
+  private generateRefreshToken(userId: string): string {
     const refreshToken = crypto.randomBytes(64).toString('hex');
     const refreshTokenExpiresAt = new Date(
       Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
@@ -411,7 +421,7 @@ export class AuthService {
 
     // Store refresh token - userId will be set when the token is actually used
     this.refreshTokenService.createRefreshToken({
-      userId: '', // Placeholder, will be updated after login
+      userId,
       token: refreshToken,
       expiresAt: refreshTokenExpiresAt,
     });

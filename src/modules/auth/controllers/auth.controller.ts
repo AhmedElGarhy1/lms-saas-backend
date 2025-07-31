@@ -11,7 +11,7 @@ import {
   TwoFAVerifyRequestDto,
   TwoFactorRequest,
 } from '../dto/2fa.dto';
-import { Public } from '../../../common/decorators/public.decorator';
+import { Public } from '@/common/decorators/public.decorator';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import {
@@ -25,8 +25,8 @@ import {
   VerifyEmailResponseDto,
   LogoutResponseDto,
 } from '../dto/auth-response.dto';
-import { GetUser } from '../../../common/decorators/get-user.decorator';
-import { CurrentUser } from '../../../common/types/current-user.type';
+import { GetUser } from '@/common/decorators/get-user.decorator';
+import { CurrentUser } from '@/common/types/current-user.type';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -119,7 +119,7 @@ export class AuthController {
   })
   @ApiBody({ type: TwoFASetupRequestDto })
   async setup2FA(@Body() dto: TwoFASetupRequestDto) {
-    return this.authService.setupTwoFactor(dto.userId);
+    return this.authService.setupTwoFactor(dto.email);
   }
 
   @Post('verify-2fa')
@@ -132,7 +132,7 @@ export class AuthController {
   })
   @ApiBody({ type: TwoFAVerifyRequestDto })
   async verify2FA(@Body() dto: TwoFactorRequest) {
-    return this.authService.verifyTwoFactor(dto);
+    return this.authService.verify2FA(dto);
   }
 
   @Post('logout')

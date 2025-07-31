@@ -123,7 +123,6 @@ export class UserService {
       throw new BadRequestException('Current password is incorrect');
     }
 
-    // Hash new password (validation is handled by Zod)
     const hashedPassword = await bcrypt.hash(dto.newPassword, 12);
 
     // Update password
@@ -133,125 +132,26 @@ export class UserService {
     return { message: 'Password changed successfully' };
   }
 
-  async createUser(dto: CreateUserRequestDto, createdBy?: string) {
-    const startTime = Date.now();
+  async createUser(dto: CreateUserRequestDto): Promise<User> {
+    this.logger.info(`Creating user: ${dto.email}`);
 
-    try {
-      // Check if user already exists
-      const existingUser = await this.userRepository.findByEmail(dto.email);
-      if (existingUser) {
-        throw new UserAlreadyExistsException(dto.email);
-      }
+    // Hash password
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-      // Hash password (validation is handled by Zod)
-      const hashedPassword = await bcrypt.hash(dto.password, 12);
+    // Create user
+    const savedUser = await this.userRepository.create({
+      email: dto.email.toLowerCase(),
+      password: hashedPassword,
+      name: dto.name,
+      isActive: dto.isActive ?? true,
+    });
 
-      // Create user
-      const userData = {
-        ...dto,
-        password: hashedPassword,
-        isActive: dto.isActive ?? true,
-      };
+    // Create profile
+    await this.profileService.createUserProfile(savedUser.id, {});
 
-      const createdUser = await this.userRepository.create(userData);
+    this.logger.info(`User created: ${savedUser.email}`);
 
-      // Create profile automatically
-      await this.profileService.createUserProfile(createdUser.id, {});
-
-      // Assign user to center if specified
-      if (dto.centerId) {
-        try {
-          await this.accessControlService.addUserToCenter({
-            userId: createdUser.id,
-            centerId: dto.centerId,
-          });
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
-          this.logger.error(
-            `Failed to assign user to center: ${errorMessage}`,
-            undefined,
-            'UserService',
-            {
-              userId: createdUser.id,
-              centerId: dto.centerId,
-              error: errorMessage,
-            },
-          );
-          // Don't throw here - user was created successfully
-        }
-      }
-
-      // Assign role if specified
-      if (dto.roleId) {
-        try {
-          await this.rolesService.assignRole({
-            userId: createdUser.id,
-            roleId: dto.roleId,
-            scopeType: dto.centerId ? ScopeEnum.CENTER : ScopeEnum.ADMIN,
-            centerId: dto.centerId,
-          });
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
-          this.logger.error(
-            `Failed to assign role to user: ${errorMessage}`,
-            undefined,
-            'UserService',
-            {
-              userId: createdUser.id,
-              roleId: dto.roleId,
-              error: errorMessage,
-            },
-          );
-          // Don't throw here - user was created successfully
-        }
-      }
-
-      // Emit user created event
-      this.userEventEmitter.emitUserCreated({
-        userId: createdUser.id,
-        userEmail: createdUser.email,
-        userName: createdUser.name,
-        createdBy: createdBy || 'system',
-        centerId: dto.centerId,
-        roleId: dto.roleId,
-      });
-
-      const duration = Date.now() - startTime;
-      this.logger.log(
-        `User created successfully: ${createdUser.id}`,
-        'UserService',
-        {
-          userId: createdUser.id,
-          email: createdUser.email,
-          createdBy,
-          centerId: dto.centerId,
-          roleId: dto.roleId,
-          duration,
-        },
-      );
-
-      // Return user without password
-      const { password: _unused, ...userWithoutPassword } = createdUser;
-      return userWithoutPassword;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      const duration = Date.now() - startTime;
-      this.logger.error(
-        `Failed to create user: ${errorMessage}`,
-        undefined,
-        'UserService',
-        {
-          email: dto.email,
-          createdBy,
-          duration,
-          error: errorMessage,
-        },
-      );
-      throw error;
-    }
+    return savedUser;
   }
 
   async listUsers(options: ListUsersOptions) {

@@ -1,10 +1,6 @@
-import { z } from 'zod';
-import { createZodDto } from 'nestjs-zod';
+import { IsEmail } from 'class-validator';
 
-export const ForgotPasswordRequestSchema = z.object({
-  email: z.string().email('Invalid email format'),
-});
-
-export class ForgotPasswordRequestDto extends createZodDto(
-  ForgotPasswordRequestSchema,
-) {}
+export class ForgotPasswordRequestDto {
+  @IsEmail({}, { message: 'Invalid email format' })
+  email: string;
+}

@@ -15,6 +15,7 @@ import { CentersModule } from '@/modules/centers/centers.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { SharedModule } from '@/shared/shared.module';
+import { SeederModule } from '@/database/seeder.module';
 import { ErrorInterceptor } from '@/common/interceptors/error.interceptor';
 import { PerformanceInterceptor } from '@/common/interceptors/performance.interceptor';
 import { ResponseTransformInterceptor } from '@/common/interceptors/response-transform.interceptor';
@@ -58,6 +59,7 @@ import { typeOrmConfig } from '@/shared/config/database.config';
     AccessControlModule,
     CentersModule,
     ActivityLogModule,
+    SeederModule,
   ],
   controllers: [AppController],
   providers: [

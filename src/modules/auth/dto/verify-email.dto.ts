@@ -1,10 +1,9 @@
-import { z } from 'zod';
-import { createZodDto } from 'nestjs-zod';
+import { IsEmail, IsString } from 'class-validator';
 
-export const VerifyEmailRequestSchema = z.object({
-  token: z.string().min(1, 'Verification token is required'),
-});
+export class VerifyEmailRequestDto {
+  @IsEmail({}, { message: 'Invalid email format' })
+  email: string;
 
-export class VerifyEmailRequestDto extends createZodDto(
-  VerifyEmailRequestSchema,
-) {}
+  @IsString()
+  token: string;
+}

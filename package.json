@@ -22,7 +22,8 @@
     "db:migrate:generate": "typeorm migration:generate",
     "db:migrate:revert": "typeorm migration:revert",
     "db:seed": "ts-node src/infrastructure/database/seeds/seed.ts",
-    "demo:seed": "ts-node src/infrastructure/database/seeds/demo-seeder.ts"
+    "demo:seed": "ts-node src/infrastructure/database/seeds/demo-seeder.ts",
+    "seed": "ts-node -r tsconfig-paths/register src/database/seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.846.0",
@@ -44,7 +45,6 @@
     "ioredis": "^5.6.1",
     "nest-winston": "^1.10.2",
     "nestjs-paginate": "^12.5.1",
-    "nestjs-zod": "^4.3.1",
     "nodemailer": "^6.10.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -55,8 +55,7 @@
     "speakeasy": "^2.0.0",
     "swagger-ui-express": "^5.0.1",
     "typeorm": "^0.3.25",
-    "winston": "^3.17.0",
-    "zod": "^4.0.5"
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

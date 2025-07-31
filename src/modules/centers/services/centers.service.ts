@@ -34,28 +34,16 @@ export class CentersService {
   ): Promise<Center> {
     this.logger.info(`Creating center '${dto.name}' by user: ${userId}`);
 
-    // Create the center (permission check should be in controller)
-    const center = this.centersRepository.create({
+    // Create the center
+    const savedCenter = await this.centersRepository.create({
       ...dto,
       createdBy: userId,
       currentEnrollment: 0,
     });
 
-    const createdCenter = await center;
+    this.logger.info(`Center created: ${savedCenter.id}`);
 
-    // Emit center created event with admin information
-    this.centerEventEmitter.emitCenterCreated({
-      centerId: createdCenter.id,
-      centerName: createdCenter.name,
-      createdBy: userId,
-      adminInfo: dto.adminInfo,
-    });
-
-    this.logger.info(
-      `Center '${createdCenter.name}' created successfully with ID: ${createdCenter.id}`,
-    );
-
-    return createdCenter;
+    return savedCenter;
   }
 
   async listCenters(
@@ -206,41 +194,29 @@ export class CentersService {
       `Assigning user ${dto.userId} to center ${dto.centerId} by user: ${assignedBy}`,
     );
 
-    const center = await this.centersRepository.findCenterById(dto.centerId);
-    if (!center) {
-      throw new NotFoundException(`Center with ID '${dto.centerId}' not found`);
-    }
-    // Permission check should be in controller
+    // Check if user is already assigned to this center
+    const existingAssignment = await this.accessControlService.getUserCenters(
+      dto.userId,
+    );
 
-    const existingAssignment =
-      await this.accessControlService.checkCenterAccess(
-        dto.userId,
-        dto.centerId,
-      );
-    if (existingAssignment) {
+    if (
+      existingAssignment &&
+      existingAssignment.some((c) => c.id === dto.centerId)
+    ) {
       throw new BadRequestException(
         `User '${dto.userId}' is already assigned to center '${dto.centerId}'`,
       );
     }
 
-    // Create user-center assignment
+    // Assign user to center
     await this.accessControlService.addUserToCenter({
       userId: dto.userId,
       centerId: dto.centerId,
     });
 
-    // Assign role if specified
-    if (dto.roleId) {
-      await this.rolesService.assignRole({
-        userId: dto.userId,
-        roleId: dto.roleId,
-        scopeType: ScopeEnum.CENTER,
-        centerId: dto.centerId,
-      });
-    }
-
-    // Increment enrollment
-    await this.centersRepository.incrementEnrollment(dto.centerId);
+    this.logger.info(
+      `User ${dto.userId} successfully assigned to center ${dto.centerId}`,
+    );
   }
 
   async removeUserFromCenter(
@@ -284,28 +260,30 @@ export class CentersService {
 
   async assignAdminToCenter(dto: CenterAdminAssignmentDto): Promise<void> {
     this.logger.info(
-      `Assigning admin ${dto.adminId} to center ${dto.centerId} by user: ${dto.grantedBy}`,
+      `Assigning admin ${dto.adminUserId} to center ${dto.centerId}`,
     );
 
-    const center = await this.centersRepository.findCenterById(dto.centerId);
-    if (!center) {
-      throw new NotFoundException(`Center with ID '${dto.centerId}' not found`);
-    }
-    // Permission check should be in controller
+    // Check if admin already has access to this center
+    const existingAccess = await this.accessControlService.getAdminCenterAccess(
+      dto.adminUserId,
+    );
 
-    const existingAssignment =
-      await this.accessControlService.getAdminCenterAccess(dto.adminId);
-    if (existingAssignment) {
+    if (existingAccess) {
       throw new BadRequestException(
-        `Admin '${dto.adminId}' is already assigned to center '${dto.centerId}'`,
+        `Admin '${dto.adminUserId}' is already assigned to center '${dto.centerId}'`,
       );
     }
 
+    // Assign admin to center
     await this.accessControlService.grantAdminCenterAccess({
-      adminId: dto.adminId,
+      adminId: dto.adminUserId,
       centerId: dto.centerId,
-      grantedBy: dto.grantedBy,
+      grantedBy: 'system', // Default value since not provided in DTO
     });
+
+    this.logger.info(
+      `Admin ${dto.adminUserId} successfully assigned to center ${dto.centerId}`,
+    );
   }
 
   async removeAdminFromCenter(

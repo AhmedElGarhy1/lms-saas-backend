@@ -1,99 +1,87 @@
-import { z } from 'zod';
-import { createZodDto } from 'nestjs-zod';
+import { ApiProperty } from '@nestjs/swagger';
 
-// Login Response Schema
-export const LoginResponseSchema = z.object({
-  accessToken: z.string().describe('JWT access token'),
-  refreshToken: z.string().describe('JWT refresh token'),
-  user: z
-    .object({
-      id: z.string().describe('User ID'),
-      email: z.string().email().describe('User email'),
-      name: z.string().describe('User name'),
-      isActive: z.boolean().describe('User active status'),
-      isEmailVerified: z.boolean().describe('Email verification status'),
-      twoFactorEnabled: z.boolean().describe('2FA enabled status'),
-      createdAt: z.date().describe('User creation timestamp'),
-      updatedAt: z.date().describe('User last update timestamp'),
-    })
-    .describe('User information'),
-});
+export class LoginResponseDto {
+  @ApiProperty({ description: 'JWT access token' })
+  accessToken: string;
 
-// Signup Response Schema
-export const SignupResponseSchema = z.object({
-  message: z.string().describe('Success message'),
-  user: z
-    .object({
-      id: z.string().describe('User ID'),
-      email: z.string().email().describe('User email'),
-      name: z.string().describe('User name'),
-      isActive: z.boolean().describe('User active status'),
-      isEmailVerified: z.boolean().describe('Email verification status'),
-      createdAt: z.date().describe('User creation timestamp'),
-      updatedAt: z.date().describe('User last update timestamp'),
-    })
-    .describe('User information'),
-});
+  @ApiProperty({ description: 'JWT refresh token' })
+  refreshToken: string;
 
-// Refresh Token Response Schema
-export const RefreshTokenResponseSchema = z.object({
-  accessToken: z.string().describe('New JWT access token'),
-  refreshToken: z.string().describe('New JWT refresh token'),
-});
+  @ApiProperty({ description: 'User information' })
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    isActive: boolean;
+  };
+}
 
-// 2FA Setup Response Schema
-export const TwoFASetupResponseSchema = z.object({
-  qrCode: z.string().describe('QR code data URL for 2FA setup'),
-  secret: z.string().describe('2FA secret key'),
-  message: z.string().describe('Setup instructions'),
-});
+export class SignupResponseDto {
+  @ApiProperty({ description: 'User ID' })
+  id: string;
 
-// 2FA Verify Response Schema
-export const TwoFAVerifyResponseSchema = z.object({
-  message: z.string().describe('Verification result message'),
-  enabled: z.boolean().describe('Whether 2FA is now enabled'),
-});
+  @ApiProperty({ description: 'User email' })
+  email: string;
 
-// Forgot Password Response Schema
-export const ForgotPasswordResponseSchema = z.object({
-  message: z.string().describe('Success message'),
-});
+  @ApiProperty({ description: 'User name' })
+  name: string;
 
-// Reset Password Response Schema
-export const ResetPasswordResponseSchema = z.object({
-  message: z.string().describe('Success message'),
-});
+  @ApiProperty({ description: 'Whether email verification is required' })
+  requiresEmailVerification: boolean;
+}
 
-// Verify Email Response Schema
-export const VerifyEmailResponseSchema = z.object({
-  message: z.string().describe('Verification result message'),
-  verified: z.boolean().describe('Whether email is now verified'),
-});
+export class RefreshTokenResponseDto {
+  @ApiProperty({ description: 'New JWT access token' })
+  accessToken: string;
 
-// Logout Response Schema
-export const LogoutResponseSchema = z.object({
-  message: z.string().describe('Logout success message'),
-});
+  @ApiProperty({ description: 'New JWT refresh token' })
+  refreshToken: string;
+}
 
-// Create DTOs using nestjs-zod
-export class LoginResponseDto extends createZodDto(LoginResponseSchema) {}
-export class SignupResponseDto extends createZodDto(SignupResponseSchema) {}
-export class RefreshTokenResponseDto extends createZodDto(
-  RefreshTokenResponseSchema,
-) {}
-export class TwoFASetupResponseDto extends createZodDto(
-  TwoFASetupResponseSchema,
-) {}
-export class TwoFAVerifyResponseDto extends createZodDto(
-  TwoFAVerifyResponseSchema,
-) {}
-export class ForgotPasswordResponseDto extends createZodDto(
-  ForgotPasswordResponseSchema,
-) {}
-export class ResetPasswordResponseDto extends createZodDto(
-  ResetPasswordResponseSchema,
-) {}
-export class VerifyEmailResponseDto extends createZodDto(
-  VerifyEmailResponseSchema,
-) {}
-export class LogoutResponseDto extends createZodDto(LogoutResponseSchema) {}
+export class TwoFASetupResponseDto {
+  @ApiProperty({ description: 'QR code for 2FA setup' })
+  qrCode: string;
+
+  @ApiProperty({ description: 'Secret key for 2FA' })
+  secret: string;
+}
+
+export class TwoFAVerifyResponseDto {
+  @ApiProperty({ description: 'Whether 2FA verification was successful' })
+  success: boolean;
+
+  @ApiProperty({ description: 'JWT access token' })
+  accessToken?: string;
+}
+
+export class ForgotPasswordResponseDto {
+  @ApiProperty({ description: 'Whether password reset email was sent' })
+  success: boolean;
+
+  @ApiProperty({ description: 'Message about the password reset process' })
+  message: string;
+}
+
+export class ResetPasswordResponseDto {
+  @ApiProperty({ description: 'Whether password was reset successfully' })
+  success: boolean;
+
+  @ApiProperty({ description: 'Message about the password reset' })
+  message: string;
+}
+
+export class VerifyEmailResponseDto {
+  @ApiProperty({ description: 'Whether email verification was successful' })
+  success: boolean;
+
+  @ApiProperty({ description: 'Message about the email verification' })
+  message: string;
+}
+
+export class LogoutResponseDto {
+  @ApiProperty({ description: 'Whether logout was successful' })
+  success: boolean;
+
+  @ApiProperty({ description: 'Message about the logout' })
+  message: string;
+}

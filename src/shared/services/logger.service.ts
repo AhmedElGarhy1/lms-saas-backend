@@ -10,11 +10,11 @@ export class LoggerService {
   ) {}
 
   log(message: string, context?: string, meta?: any) {
-    this.logger.info(message, { context, ...meta });
+    this.logger.log(message, { context, ...meta });
   }
 
   info(message: string, context?: string, meta?: any) {
-    this.logger.info(message, { context, ...meta });
+    this.logger.log(message, { context, ...meta });
   }
 
   error(message: string, trace?: string, context?: string, meta?: any) {

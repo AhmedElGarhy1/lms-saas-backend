@@ -18,17 +18,10 @@ import {
   ApiBody,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { RolesService } from '../../services/roles.service';
-import { PermissionService } from '../../services/permission.service';
-import {
-  CreateRoleRequestDto,
-  CreateRoleRequestSchema,
-} from '../../dto/create-role.dto';
-import {
-  UpdateRoleRequestDto,
-  UpdateRoleRequestSchema,
-} from '../../dto/update-role.dto';
-import { ZodValidationPipe } from '@/common/utils/zod-validation.pipe';
+import { RolesService } from '../services/roles.service';
+import { PermissionService } from '../services/permission.service';
+import { CreateRoleRequestDto } from '../dto/create-role.dto';
+import { UpdateRoleRequestDto } from '../dto/update-role.dto';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
 import { PaginationDocs } from '@/common/decorators/pagination-docs.decorator';
 import { Permissions } from '@/common/decorators/permissions.decorator';
@@ -46,14 +39,14 @@ export class RolesController {
   ) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new role' })
-  @ApiBody({ type: CreateRoleRequestDto })
-  @ApiResponse({ status: 201, description: 'Role created successfully' })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.CREATE.action)
-  async createRole(
-    @Body(new ZodValidationPipe(CreateRoleRequestSchema))
-    dto: CreateRoleRequestDto,
-  ) {
+  @ApiOperation({ summary: 'Create a new role' })
+  @ApiResponse({
+    status: 201,
+    description: 'Role created successfully',
+  })
+  @ApiBody({ type: CreateRoleRequestDto })
+  async createRole(@Body() dto: CreateRoleRequestDto) {
     return this.rolesService.createRole(dto);
   }
 
@@ -88,15 +81,14 @@ export class RolesController {
   }
 
   @Put(':roleId')
+  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.UPDATE.action)
   @ApiOperation({ summary: 'Update a role' })
   @ApiParam({ name: 'roleId', type: String })
   @ApiBody({ type: UpdateRoleRequestDto })
   @ApiResponse({ status: 200, description: 'Role updated successfully' })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.UPDATE.action)
   async updateRole(
     @Param('roleId') roleId: string,
-    @Body(new ZodValidationPipe(UpdateRoleRequestSchema))
-    dto: UpdateRoleRequestDto,
+    @Body() dto: UpdateRoleRequestDto,
   ) {
     return this.rolesService.updateRole(roleId, dto);
   }

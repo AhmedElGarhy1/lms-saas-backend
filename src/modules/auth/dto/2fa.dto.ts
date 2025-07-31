@@ -1,23 +1,22 @@
-import { z } from 'zod';
-import { createZodDto } from 'nestjs-zod';
+import { IsString, IsOptional, IsEmail, MinLength } from 'class-validator';
 
-export const TwoFASetupRequestSchema = z.object({
-  userId: z.string().min(1, 'User ID is required'),
-});
+export class TwoFASetupRequestDto {
+  @IsEmail({}, { message: 'Invalid email format' })
+  email: string;
+}
 
-export const TwoFAVerifyRequestSchema = z.object({
-  code: z.string().min(1, '2FA code is required'),
-  tempToken: z.string().min(1, 'Temporary token is required'),
-});
+export class TwoFAVerifyRequestDto {
+  @IsEmail({}, { message: 'Invalid email format' })
+  email: string;
 
-export const TwoFactorRequestSchema = TwoFAVerifyRequestSchema;
+  @IsString()
+  code: string;
+}
 
-export class TwoFASetupRequestDto extends createZodDto(
-  TwoFASetupRequestSchema,
-) {}
-export class TwoFAVerifyRequestDto extends createZodDto(
-  TwoFAVerifyRequestSchema,
-) {}
+export class TwoFactorRequest {
+  @IsEmail({}, { message: 'Invalid email format' })
+  email: string;
 
-// Add the missing export for TwoFactorRequest
-export type TwoFactorRequest = z.infer<typeof TwoFactorRequestSchema>;
+  @IsString()
+  code: string;
+}

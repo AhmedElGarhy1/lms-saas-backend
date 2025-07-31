@@ -1,11 +1,13 @@
-import { z } from 'zod';
-import { createZodDto } from 'nestjs-zod';
+import { IsString, MinLength, IsEmail } from 'class-validator';
 
-export const ResetPasswordRequestSchema = z.object({
-  token: z.string().min(1, 'Reset token is required'),
-  newPassword: z.string().min(6, 'Password must be at least 6 characters'),
-});
+export class ResetPasswordRequestDto {
+  @IsEmail({}, { message: 'Invalid email format' })
+  email: string;
 
-export class ResetPasswordRequestDto extends createZodDto(
-  ResetPasswordRequestSchema,
-) {}
+  @IsString()
+  @MinLength(6, { message: 'Password must be at least 6 characters' })
+  newPassword: string;
+
+  @IsString()
+  token: string;
+}
