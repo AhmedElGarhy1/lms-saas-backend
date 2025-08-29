@@ -22,11 +22,12 @@ import { RolesService } from '../services/roles.service';
 import { PermissionService } from '../services/permission.service';
 import { CreateRoleRequestDto } from '../dto/create-role.dto';
 import { UpdateRoleRequestDto } from '../dto/update-role.dto';
-import { Paginate, PaginateQuery } from 'nestjs-paginate';
-import { PaginationDocs } from '@/common/decorators/pagination-docs.decorator';
-import { Permissions } from '@/common/decorators/permissions.decorator';
-import { GetUser } from '@/common/decorators/get-user.decorator';
-import { CurrentUser as CurrentUserType } from '@/common/types/current-user.type';
+import { Paginate } from '@/shared/common/decorators/pagination.decorator';
+import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
+import { PaginationDocs } from '@/shared/common/decorators/pagination-docs.decorator';
+import { Permissions } from '@/shared/common/decorators/permissions.decorator';
+import { GetUser } from '@/shared/common/decorators/get-user.decorator';
+import { CurrentUser as CurrentUserType } from '@/shared/common/types/current-user.type';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 
 @ApiTags('Roles')
@@ -64,10 +65,13 @@ export class RolesController {
   @ApiResponse({ status: 200, description: 'Roles retrieved successfully' })
   @PaginationDocs({
     searchFields: ['name', 'description'],
-    exactFields: ['type', 'isActive'],
+    filterFields: ['type', 'isActive'],
   })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
-  async getRoles(@Paginate() query: PaginateQuery) {
+  async getRoles(
+    @Paginate() query: PaginationQuery,
+    @GetUser() user: CurrentUserType,
+  ) {
     return this.rolesService.paginateRoles(query);
   }
 
@@ -125,7 +129,6 @@ export class RolesController {
     return this.rolesService.assignRole({
       userId: body.userId,
       roleId,
-      scopeType: body.centerId ? 'CENTER' : 'ADMIN',
       centerId: body.centerId,
     });
   }
@@ -244,6 +247,55 @@ export class RolesController {
       // Center scope - return user permissions (isAdmin: false)
       const allPermissions = await this.permissionService.getAllPermissions();
       return allPermissions.filter((p) => !p.isAdmin);
+    }
+  }
+
+  @Get('contextual')
+  @ApiOperation({
+    summary: 'Get roles in current context (center/global)',
+    description:
+      'Returns roles based on user scope - Center users get center-specific roles, Global users get all roles',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Contextual roles retrieved successfully',
+  })
+  @ApiQuery({
+    name: 'centerId',
+    required: false,
+    description: 'Center ID for filtering center-specific roles',
+  })
+  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
+  async getContextualRoles(
+    @GetUser() user: CurrentUserType,
+    @Query('centerId') centerId?: string,
+  ) {
+    const isGlobalScope = user.scope === 'ADMIN';
+    const targetCenterId = centerId || user.centerId;
+
+    if (isGlobalScope) {
+      // Global scope - return all roles
+      return this.rolesService.paginateRoles({} as any);
+    } else {
+      // Center scope - return center-specific roles
+      if (targetCenterId) {
+        // Get roles that are applicable to this center
+        const allRoles = await this.rolesService.paginateRoles({} as any);
+        return {
+          ...allRoles,
+          items: allRoles.items.filter((role: any) => {
+            // Filter roles that are applicable to center context
+            return role.type === 'CENTER_ADMIN' || role.type === 'USER';
+          }),
+        };
+      } else {
+        // No center context - return user roles only
+        const allRoles = await this.rolesService.paginateRoles({} as any);
+        return {
+          ...allRoles,
+          items: allRoles.items.filter((role: any) => role.type === 'USER'),
+        };
+      }
     }
   }
 }

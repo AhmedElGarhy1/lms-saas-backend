@@ -55,8 +55,9 @@ export class AuthService {
   }
 
   async login(dto: LoginRequestDto) {
+    console.log(dto);
     const user = await this.validateUser(dto.email, dto.password);
-
+    console.log(user);
     if (!user) {
       this.logger.warn(`Failed login attempt for email: ${dto.email}`);
       throw new UnauthorizedException('Invalid credentials');

@@ -1,15 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ActivityLog } from '../entities/activity-log.entity';
-import { BaseRepository } from '../../../../common/repositories/base.repository';
-import { PaginateQuery, Paginated } from 'nestjs-paginate';
+import { ActivityLog, ActivityType } from '../entities/activity-log.entity';
+import { BaseRepository } from '@/shared/common/repositories/base.repository';
+import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
+import { Pagination } from 'nestjs-typeorm-paginate';
 import { LoggerService } from '../../../../shared/services/logger.service';
-import {
-  ActivityType,
-  ActivityLevel,
-  ActivityScope,
-} from '../entities/activity-log.entity';
 
 @Injectable()
 export class ActivityLogRepository extends BaseRepository<ActivityLog> {
@@ -23,132 +19,133 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
 
   // Single consolidated pagination method with filter options
   async paginateWithFilters(
-    query: PaginateQuery,
+    query: PaginationQuery,
     filters?: {
       centerId?: string;
       actorId?: string;
       type?: ActivityType;
-      level?: ActivityLevel;
+      level?: string; // Assuming level is a string for now, as ActivityLevel was removed
     },
-  ): Promise<Paginated<ActivityLog>> {
-    const options = {
-      searchableColumns: [
-        'action',
-        'details',
-        'actor.name',
-        'actor.email',
-        'center.name',
-      ],
-      sortableColumns: ['createdAt', 'updatedAt', 'action', 'level'],
-      filterableColumns: ['centerId', 'actorId', 'type', 'level'],
-      defaultSortBy: ['createdAt', 'DESC'] as [string, 'ASC' | 'DESC'],
-      relations: ['actor', 'center'],
-      defaultLimit: 10,
-      maxLimit: 100,
-    };
+  ): Promise<Pagination<ActivityLog>> {
+    // Create queryBuilder with relations
+    const queryBuilder = this.activityLogRepository
+      .createQueryBuilder('activityLog')
+      .leftJoinAndSelect('activityLog.actor', 'actor')
+      .leftJoinAndSelect('activityLog.center', 'center');
 
     // Apply filters if provided
     if (filters) {
-      const filterQuery = { ...query };
+      const filterOptions = {
+        page: query.page,
+        limit: query.limit,
+        search: query.search,
+        filter: { ...query.filter },
+        sortBy: query.sortBy,
+        searchableColumns: ['action', 'description'],
+        sortableColumns: ['createdAt', 'updatedAt'],
+        defaultSortBy: ['createdAt', 'DESC'] as [string, 'ASC' | 'DESC'],
+      };
+
       if (filters.centerId) {
-        filterQuery.filter = {
-          ...filterQuery.filter,
-          centerId: filters.centerId,
-        };
+        filterOptions.filter.centerId = filters.centerId;
       }
       if (filters.actorId) {
-        filterQuery.filter = {
-          ...filterQuery.filter,
-          actorId: filters.actorId,
-        };
+        filterOptions.filter.actorId = filters.actorId;
       }
       if (filters.type) {
-        filterQuery.filter = {
-          ...filterQuery.filter,
-          type: filters.type,
-        };
+        filterOptions.filter.type = filters.type;
       }
       if (filters.level) {
-        filterQuery.filter = {
-          ...filterQuery.filter,
-          level: filters.level,
-        };
+        filterOptions.filter.level = filters.level;
       }
 
-      return super.paginate(filterQuery, options);
+      return super.paginate(filterOptions, queryBuilder);
     }
 
-    return super.paginate(query, options);
+    return super.paginate(
+      {
+        page: query.page,
+        limit: query.limit,
+        search: query.search,
+        filter: query.filter,
+        sortBy: query.sortBy,
+        searchableColumns: ['action', 'description'],
+        sortableColumns: ['createdAt', 'updatedAt'],
+        defaultSortBy: ['createdAt', 'DESC'] as [string, 'ASC' | 'DESC'],
+        route: '/activity-logs',
+      },
+      queryBuilder,
+    );
   }
 
   // Convenience methods that use the consolidated paginate method
   async paginateByCenterId(
-    query: PaginateQuery,
+    query: PaginationQuery,
     centerId: string,
-  ): Promise<Paginated<ActivityLog>> {
+  ): Promise<Pagination<ActivityLog>> {
     return this.paginateWithFilters(query, { centerId });
   }
 
   async paginateByActorId(
-    query: PaginateQuery,
+    query: PaginationQuery,
     actorId: string,
-  ): Promise<Paginated<ActivityLog>> {
+  ): Promise<Pagination<ActivityLog>> {
     return this.paginateWithFilters(query, { actorId });
   }
 
   async paginateByType(
-    query: PaginateQuery,
+    query: PaginationQuery,
     type: ActivityType,
-  ): Promise<Paginated<ActivityLog>> {
+  ): Promise<Pagination<ActivityLog>> {
     return this.paginateWithFilters(query, { type });
   }
 
   async paginateByLevel(
-    query: PaginateQuery,
-    level: ActivityLevel,
-  ): Promise<Paginated<ActivityLog>> {
+    query: PaginationQuery,
+    level: string, // Assuming level is a string for now, as ActivityLevel was removed
+  ): Promise<Pagination<ActivityLog>> {
     return this.paginateWithFilters(query, { level });
   }
 
   async findActivityLogsByCenter(
     centerId: string,
-    query: PaginateQuery,
-  ): Promise<Paginated<ActivityLog>> {
+    query: PaginationQuery,
+  ): Promise<Pagination<ActivityLog>> {
     return this.paginateByCenterId(query, centerId);
   }
 
   async findActivityLogsByUser(
     userId: string,
-    query: PaginateQuery,
-  ): Promise<Paginated<ActivityLog>> {
+    query: PaginationQuery,
+  ): Promise<Pagination<ActivityLog>> {
     return this.paginateByActorId(query, userId);
   }
 
   async findGlobalActivityLogs(
-    query: PaginateQuery,
-  ): Promise<Paginated<ActivityLog>> {
+    query: PaginationQuery,
+  ): Promise<Pagination<ActivityLog>> {
     return this.paginateWithFilters(query);
   }
 
   async findActivityLogsByType(
     type: ActivityType,
-    query: PaginateQuery,
-  ): Promise<Paginated<ActivityLog>> {
+    query: PaginationQuery,
+  ): Promise<Pagination<ActivityLog>> {
     return this.paginateByType(query, type);
   }
 
   async findActivityLogsByLevel(
-    level: ActivityLevel,
-    query: PaginateQuery,
-  ): Promise<Paginated<ActivityLog>> {
+    level: string, // Assuming level is a string for now, as ActivityLevel was removed
+    query: PaginationQuery,
+  ): Promise<Pagination<ActivityLog>> {
     return this.paginateByLevel(query, level);
   }
 
   async getActivityStats(centerId?: string): Promise<{
     total: number;
     byType: Record<ActivityType, number>;
-    byLevel: Record<ActivityLevel, number>;
-    byScope: Record<ActivityScope, number>;
+    byLevel: Record<string, number>; // Assuming level is a string for now, as ActivityLevel was removed
+    byScope: Record<string, number>; // Assuming scope is a string for now, as ActivityScope was removed
     recentActivity: number;
   }> {
     const whereClause = centerId ? { centerId } : {};
@@ -203,11 +200,11 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
       ),
       byLevel: byLevel.reduce(
         (acc, item) => ({ ...acc, [item.level]: parseInt(item.count) }),
-        {} as Record<ActivityLevel, number>,
+        {} as Record<string, number>,
       ),
       byScope: byScope.reduce(
         (acc, item) => ({ ...acc, [item.scope]: parseInt(item.count) }),
-        {} as Record<ActivityScope, number>,
+        {} as Record<string, number>,
       ),
       recentActivity,
     };

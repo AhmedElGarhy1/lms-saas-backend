@@ -6,23 +6,19 @@ import {
   IsArray,
   IsEnum,
 } from 'class-validator';
-import { RoleTypeEnum } from '../constants/role-type.enum';
+import { RoleType } from '@/shared/common/enums/role-type.enum';
 
 export class CreateRoleRequestDto {
   @IsString()
   @MinLength(2, { message: 'Name must be at least 2 characters' })
   name: string;
 
-  @IsEnum(RoleTypeEnum, { message: 'Invalid role type' })
-  type: RoleTypeEnum;
+  @IsEnum(RoleType, { message: 'Invalid role type' })
+  type: RoleType;
 
   @IsOptional()
   @IsString()
   description?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  isAdmin?: boolean;
 
   @IsOptional()
   @IsString()

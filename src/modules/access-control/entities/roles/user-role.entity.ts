@@ -1,43 +1,29 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { User } from '../../../user/entities/user.entity';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
+import { User } from '@/modules/user/entities/user.entity';
 import { Role } from './role.entity';
+import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('user_roles')
-export class UserRole {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @Column()
+@Index(['userId', 'roleId'])
+@Index(['centerId'])
+export class UserRole extends BaseEntity {
+  @Column({ type: 'uuid' })
   userId: string;
 
-  @Column()
+  @Column({ type: 'uuid' })
   roleId: string;
 
-  @Column({ type: 'varchar', nullable: true })
-  centerId: string | null;
+  @Column({ type: 'uuid', nullable: true })
+  centerId: string;
 
-  @Column({ default: true })
-  isActive: boolean;
+  @Column({ type: 'timestamp', nullable: true })
+  expiresAt: Date;
 
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @ManyToOne(() => User, (user) => user.userRoles)
+  @ManyToOne(() => User, (user) => user.userRoles, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => Role, (role) => role.userRoles)
+  @ManyToOne(() => Role, (role) => role.userRoles, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'roleId' })
   role: Role;
 }

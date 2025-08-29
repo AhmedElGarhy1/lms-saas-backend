@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PermissionRepository } from '../repositories/permission.repository';
 import { PermissionCacheService } from './permission-cache.service';
 import { Permission } from '../entities/permission.entity';
-import { ScopeEnum } from '@/common/constants/role-scope.enum';
+import { ScopeEnum } from '@/shared/common/constants/role-scope.enum';
 import { LoggerService } from '@/shared/services/logger.service';
-import { PaginateQuery, Paginated } from 'nestjs-paginate';
+import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
+import { Pagination } from 'nestjs-typeorm-paginate';
 import { UserRoleRepository } from '../repositories/user-role.repository';
 
 @Injectable()
@@ -254,9 +255,9 @@ export class PermissionService {
    * Paginate permissions
    */
   async paginatePermissions(
-    query: PaginateQuery,
+    query: PaginationQuery,
     filter?: 'all' | 'admin-only',
-  ): Promise<Paginated<Permission>> {
+  ): Promise<Pagination<Permission>> {
     return this.permissionRepository.paginatePermissions(query, filter);
   }
 

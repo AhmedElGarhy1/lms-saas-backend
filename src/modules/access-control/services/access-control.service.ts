@@ -6,14 +6,15 @@ import {
 } from '@nestjs/common';
 import { AccessControlRepository } from '../repositories/access-control.repository';
 import { PermissionService } from './permission.service';
-import { PaginateQuery } from 'nestjs-paginate';
+import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { AdminCenterAccess } from '../entities/admin/admin-center-access.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { ScopeEnum } from '@/common/constants/role-scope.enum';
+import { ScopeEnum } from '@/shared/common/constants/role-scope.enum';
 import { UserOnCenter } from '../entities/user-on-center.entity';
-import { Center } from '../entities/center.entity';
+import { Center } from '../../centers/entities/center.entity';
 import { User } from '@/modules/user/entities/user.entity';
 import { LoggerService } from '@/shared/services/logger.service';
+import { AccessControlHelperService } from './access-control-helper.service';
 
 @Injectable()
 export class AccessControlService {
@@ -21,6 +22,7 @@ export class AccessControlService {
 
   constructor(
     private readonly accessControlRepository: AccessControlRepository,
+    private readonly accessControlHelperService: AccessControlHelperService,
     private readonly permissionService: PermissionService,
   ) {}
 
@@ -30,7 +32,10 @@ export class AccessControlService {
 
   async getUserPermissions(userId: string, centerId?: string) {
     // Use PermissionService which handles caching and DB fetching
-    const result = await this.permissionService.getUserPermissions(userId, centerId);
+    const result = await this.permissionService.getUserPermissions(
+      userId,
+      centerId,
+    );
     return result.permissions; // Return just the permissions array
   }
 
@@ -81,7 +86,19 @@ export class AccessControlService {
     userId: string;
     targetUserId: string;
     centerId?: string;
+    granterUserId: string;
   }): Promise<void> {
+    // Check if access already exists
+    const canAccess = await this.accessControlHelperService.canAccessUser(
+      body.granterUserId,
+      body.targetUserId,
+      body.centerId,
+    );
+
+    if (canAccess) {
+      throw new ForbiddenException('User already has access');
+    }
+
     await this.accessControlRepository.grantUserAccess(body);
   }
 
@@ -89,7 +106,19 @@ export class AccessControlService {
     userId: string;
     targetUserId: string;
     centerId?: string;
+    granterUserId: string;
   }): Promise<void> {
+    // Check if access exists before revoking
+    const canAccess = await this.accessControlHelperService.canAccessUser(
+      body.granterUserId,
+      body.targetUserId,
+      body.centerId,
+    );
+
+    if (!canAccess) {
+      throw new ForbiddenException('User does not have access');
+    }
+
     await this.accessControlRepository.revokeUserAccess(body);
   }
 
@@ -226,12 +255,17 @@ export class AccessControlService {
     return this.permissionService.getAllPermissions();
   }
 
-  async getAdminPermissions(query?: PaginateQuery) {
+  async getAdminPermissions(query?: PaginationQuery) {
+    return this.permissionService.getAdminPermissions();
+  }
+
+  // Public method to access permission service for admin permissions
+  async getAdminPermissionsPublic() {
     return this.permissionService.getAdminPermissions();
   }
 
   async paginatePermissions(
-    query: PaginateQuery,
+    query: PaginationQuery,
     filter?: 'all' | 'admin-only',
   ) {
     return this.permissionService.paginatePermissions(query, filter);

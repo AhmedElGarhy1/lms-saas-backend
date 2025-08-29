@@ -9,7 +9,7 @@ import { UserRepository } from './repositories/user.repository';
 import { User, Profile, UserAccess } from './entities';
 
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
-import { UserEventEmitter } from '@/common/events/user.events';
+import { UserEventEmitter } from '@/shared/common/events/user.events';
 
 @Module({
   imports: [

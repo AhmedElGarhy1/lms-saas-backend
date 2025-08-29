@@ -7,7 +7,7 @@ import {
   DeleteDateColumn,
   OneToMany,
 } from 'typeorm';
-import { Center } from './center.entity';
+import { Center } from '../../centers/entities/center.entity';
 
 @Entity('permissions')
 export class Permission {

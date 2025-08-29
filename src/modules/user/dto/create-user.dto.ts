@@ -4,7 +4,33 @@ import {
   MinLength,
   IsOptional,
   IsBoolean,
+  IsArray,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class UserProfileDto {
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  dateOfBirth?: string;
+}
+
+export class UserRoleDto {
+  @IsString()
+  roleId: string;
+
+  @IsOptional()
+  @IsString()
+  centerId?: string;
+}
 
 export class CreateUserRequestDto {
   @IsString()
@@ -25,4 +51,15 @@ export class CreateUserRequestDto {
   @IsOptional()
   @IsString()
   centerId?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserProfileDto)
+  profile?: UserProfileDto;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UserRoleDto)
+  roles?: UserRoleDto[];
 }

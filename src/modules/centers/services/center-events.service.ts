@@ -1,12 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CenterEventEmitter, UserEventEmitter } from '@/common/events';
-import { UserService } from '@/modules/user/services/user.service';
 import { RolesService } from '@/modules/access-control/services/roles.service';
-import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
-import { CreateUserRequestDto } from '@/modules/user/dto/create-user.dto';
-import { RoleTypeEnum } from '@/modules/access-control/constants/role-type.enum';
+import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { Center } from '../entities/center.entity';
 
 @Injectable()
@@ -24,9 +20,8 @@ export class CenterEventsService {
     // Create default admin role for the center
     await this.rolesService.createRole({
       name: `Center Admin`,
-      type: RoleTypeEnum.CENTER_ADMIN,
+      type: RoleType.CENTER_ADMIN,
       description: `Default admin role for center: ${center.name}`,
-      isAdmin: true,
       isActive: true,
     });
 

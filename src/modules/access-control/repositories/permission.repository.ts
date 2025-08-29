@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PaginateQuery, Paginated } from 'nestjs-paginate';
-import { BaseRepository } from '../../../common/repositories/base.repository';
+import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
+import { Pagination } from 'nestjs-typeorm-paginate';
+import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { Permission } from '../entities/permission.entity';
 import { LoggerService } from '../../../shared/services/logger.service';
-import { paginate } from 'nestjs-paginate';
+import { PERMISSION_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
+import { PaginationUtils } from '@/shared/common/utils/pagination.utils';
 
 @Injectable()
 export class PermissionRepository extends BaseRepository<Permission> {
@@ -40,42 +42,38 @@ export class PermissionRepository extends BaseRepository<Permission> {
 
   // Single consolidated pagination method with filter parameter
   async paginatePermissions(
-    query: PaginateQuery,
+    query: PaginationQuery,
     filter?: 'all' | 'admin-only',
-  ): Promise<Paginated<Permission>> {
-    const options = {
-      searchableColumns: ['action', 'description'],
-      sortableColumns: ['action', 'isAdmin', 'createdAt', 'updatedAt'],
-      filterableColumns: ['isAdmin'],
-      defaultSortBy: ['createdAt', 'DESC'] as [string, 'ASC' | 'DESC'],
-      defaultLimit: 10,
-      maxLimit: 100,
-    };
-
+  ): Promise<Pagination<Permission>> {
     if (filter === 'admin-only') {
-      const queryBuilder = this.permissionRepository
-        .createQueryBuilder('permission')
-        .where('permission.isAdmin = :isAdmin', { isAdmin: true });
-
-      return await paginate(query, queryBuilder, {
-        sortableColumns: ['action', 'isAdmin', 'createdAt', 'updatedAt'],
+      return this.paginate({
+        page: query.page,
+        limit: query.limit,
+        search: query.search,
+        filter: { ...query.filter, isAdmin: true },
+        sortBy: query.sortBy,
         searchableColumns: ['action', 'description'],
-        filterableColumns: {
-          isAdmin: true,
-        },
-        defaultSortBy: [['createdAt', 'DESC']],
-        defaultLimit: 10,
-        maxLimit: 100,
+        sortableColumns: ['createdAt', 'updatedAt', 'action', 'description'],
+        defaultSortBy: ['createdAt', 'DESC'],
       });
     }
 
-    return this.paginate(query, options);
+    return this.paginate({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      filter: query.filter,
+      sortBy: query.sortBy,
+      searchableColumns: PERMISSION_PAGINATION_COLUMNS.searchableColumns,
+      sortableColumns: PERMISSION_PAGINATION_COLUMNS.sortableColumns,
+      defaultSortBy: PERMISSION_PAGINATION_COLUMNS.defaultSortBy,
+    });
   }
 
   // Convenience method for admin permissions
   async paginateAdminPermissions(options: {
-    query: PaginateQuery;
-  }): Promise<Paginated<Permission>> {
+    query: PaginationQuery;
+  }): Promise<Pagination<Permission>> {
     return this.paginatePermissions(options.query, 'admin-only');
   }
 }

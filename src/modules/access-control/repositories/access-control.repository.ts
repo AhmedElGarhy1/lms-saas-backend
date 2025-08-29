@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PaginateQuery, Paginated } from 'nestjs-paginate';
+import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
+import { Pagination } from 'nestjs-typeorm-paginate';
 import { Permission } from '../entities/permission.entity';
 import { UserAccess } from '../../user/entities/user-access.entity';
 import { AdminCenterAccess } from '../entities/admin/admin-center-access.entity';
@@ -22,21 +23,21 @@ export class AccessControlRepository {
 
   // Simple delegation methods - no complex consolidation needed
   async paginatePermissions(options: {
-    query: PaginateQuery;
-  }): Promise<Paginated<Permission>> {
+    query: PaginationQuery;
+  }): Promise<Pagination<Permission>> {
     return this.permissionRepo.paginatePermissions(options.query);
   }
 
   async paginateAdminPermissions(options: {
-    query: PaginateQuery;
-  }): Promise<Paginated<Permission>> {
+    query: PaginationQuery;
+  }): Promise<Pagination<Permission>> {
     return this.permissionRepo.paginateAdminPermissions(options);
   }
 
   async paginateUserCenters(options: {
-    query: PaginateQuery;
+    query: PaginationQuery;
     userId: string;
-  }): Promise<Paginated<UserOnCenter>> {
+  }): Promise<Pagination<UserOnCenter>> {
     return this.userOnCenterRepo.paginateUserCenters(options);
   }
 
@@ -93,6 +94,7 @@ export class AccessControlRepository {
     userId: string;
     targetUserId: string;
     centerId?: string;
+    granterUserId: string;
   }): Promise<void> {
     return this.userAccessRepo.grantUserAccess(body);
   }
@@ -101,6 +103,7 @@ export class AccessControlRepository {
     userId: string;
     targetUserId: string;
     centerId?: string;
+    granterUserId: string;
   }): Promise<void> {
     return this.userAccessRepo.revokeUserAccess(body);
   }

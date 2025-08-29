@@ -1,10 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../entities/user.entity';
-import { BaseRepository } from '../../../common/repositories/base.repository';
+import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { LoggerService } from '../../../shared/services/logger.service';
-import { PaginateQuery, Paginated } from 'nestjs-paginate';
+import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
+import { Pagination } from 'nestjs-typeorm-paginate';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { RoleType } from '@/shared/common/enums/role-type.enum';
+import { Role } from '@/modules/access-control/entities';
+import { UserListQuery } from '../services/user.service';
+import { USER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
+import { PaginationUtils } from '@/shared/common/utils/pagination.utils';
+import { UserFilterDto } from '../dto/user-filter.dto';
 
 @Injectable()
 export class UserRepository extends BaseRepository<User> {
@@ -12,6 +20,7 @@ export class UserRepository extends BaseRepository<User> {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     protected readonly logger: LoggerService,
+    private readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super(userRepository, logger);
   }
@@ -62,35 +71,23 @@ export class UserRepository extends BaseRepository<User> {
     }
   }
 
-  // Consolidated method to find user with flexible relations
-  async findUserWithRelations(
-    userId: string,
-    relations: string[] = [],
-  ): Promise<User | null> {
+  // Convenience methods with proper, safe queries
+  async findUserForProfile(userId: string): Promise<User | null> {
     try {
-      const queryBuilder = this.userRepository.createQueryBuilder('user');
-
-      // Add relations dynamically
-      relations.forEach((relation) => {
-        queryBuilder.leftJoinAndSelect(`user.${relation}`, relation);
+      return await this.userRepository.findOne({
+        where: { id: userId },
+        relations: [
+          'profile',
+          'centers',
+          'centers.center',
+          'userRoles',
+          'userRoles.role',
+        ],
       });
-
-      return await queryBuilder.where('user.id = :userId', { userId }).getOne();
     } catch (error) {
-      this.logger.error(`Error finding user with relations ${userId}:`, error);
+      this.logger.error(`Error finding user for profile ${userId}:`, error);
       throw error;
     }
-  }
-
-  // Convenience methods using the consolidated method
-  async findUserForProfile(userId: string): Promise<User | null> {
-    return this.findUserWithRelations(userId, [
-      'profile',
-      'centers',
-      'centers.center',
-      'userRoles',
-      'userRoles.role',
-    ]);
   }
 
   async findUserBasic(userId: string): Promise<User | null> {
@@ -106,58 +103,247 @@ export class UserRepository extends BaseRepository<User> {
   }
 
   async findUserWithProfile(userId: string): Promise<User | null> {
-    return this.findUserWithRelations(userId, ['profile']);
+    try {
+      return await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['profile'],
+      });
+    } catch (error) {
+      this.logger.error(`Error finding user with profile ${userId}:`, error);
+      throw error;
+    }
   }
 
   async findUserWithPermissions(userId: string): Promise<User | null> {
-    return this.findUserWithRelations(userId, ['userRoles', 'userRoles.role']);
+    try {
+      return await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['userRoles', 'userRoles.role'],
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error finding user with permissions ${userId}:`,
+        error,
+      );
+      throw error;
+    }
   }
 
   async findUserWithCenters(userId: string): Promise<User | null> {
-    return this.findUserWithRelations(userId, [
-      'centers',
-      'centers.center',
-      'centers.role',
-    ]);
+    try {
+      return await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['centers', 'centers.center', 'centers.role'],
+      });
+    } catch (error) {
+      this.logger.error(`Error finding user with centers ${userId}:`, error);
+      throw error;
+    }
   }
 
-  // Updated pagination method using BaseRepository paginate
-  async paginateUsers(
-    query: PaginateQuery,
-    options?: {
-      includeCenters?: boolean;
-      includePermissions?: boolean;
-      includeUserAccess?: boolean;
-      includeAccess?: boolean;
-      where?: Record<string, any>;
-    },
-  ): Promise<Paginated<User>> {
-    const relations: string[] = ['profile'];
+  /**
+   * Paginate users in a specific center using JOINs for better performance
+   * @param query - Pagination query
+   * @param centerId - Center ID to filter users
+   * @param userId - User ID to filter users
+   * @param options - Options for pagination
+   * @param options.isActive - Whether to filter active users
+   * @param options.targetUserId - User ID to filter users
+   * @returns Paginated users in the specified center
+   */
+  async paginateUsersInCenter(
+    params: UserListQuery,
+    roleType: RoleType,
+  ): Promise<Pagination<User>> {
+    const { query, userId, targetUserId, centerId } = params;
 
-    if (options?.includeCenters) {
-      relations.push('centers', 'centers.center');
+    // Create query builder with proper JOINs
+    const queryBuilder = this.userRepository.createQueryBuilder('user');
+
+    if (roleType === RoleType.USER) {
+      // join with user access
+      queryBuilder
+        .leftJoin('user.accessGranter', 'accessGranter')
+        .andWhere('accessGranter.centerId = :centerId', { centerId });
     }
 
-    if (options?.includeUserAccess) {
-      relations.push('userAccess');
+    // Add JOINs for relations
+    queryBuilder
+      .leftJoinAndSelect('user.profile', 'profile')
+      .leftJoinAndSelect('user.userRoles', 'userRoles')
+      .leftJoinAndSelect('userRoles.role', 'role');
+
+    // Filter by center
+    if (centerId) {
+      queryBuilder.leftJoin('user.centers', 'centers');
+      queryBuilder.andWhere('centers.centerId = :centerId', { centerId });
     }
 
-    if (options?.includeAccess) {
-      relations.push('grantedAccess');
+    // Filter by target user (exclude)
+    if (targetUserId) {
+      queryBuilder.andWhere('user.id != :targetUserId', { targetUserId });
     }
 
-    const paginateOptions = {
-      searchableColumns: ['name', 'email'],
-      sortableColumns: ['name', 'email', 'isActive', 'createdAt', 'updatedAt'],
-      filterableColumns: ['isActive'],
-      defaultSortBy: ['createdAt', 'DESC'] as [string, 'ASC' | 'DESC'],
-      relations,
-      defaultLimit: 10,
-      maxLimit: 100,
+    // Apply filters with field mapping
+    if (query.filter) {
+      this.applyFilters(
+        queryBuilder,
+        query.filter,
+        UserFilterDto.getFieldMapping(),
+      );
+    }
+
+    // Use the base repository paginate method with custom query builder
+    const result = await this.paginate(
+      {
+        page: query.page,
+        limit: query.limit,
+        search: query.search,
+        sortBy: query.sortBy,
+        searchableColumns: USER_PAGINATION_COLUMNS.searchableColumns,
+        sortableColumns: USER_PAGINATION_COLUMNS.sortableColumns,
+        defaultSortBy: USER_PAGINATION_COLUMNS.defaultSortBy,
+        route: '/users',
+      },
+      queryBuilder,
+    );
+
+    // Apply access control filtering
+    const userRole =
+      await this.accessControlHelperService.getUserHighestRole(userId);
+
+    let filteredItems = result.items;
+
+    if (userRole?.role?.type === RoleType.USER) {
+      // Filter results based on access control
+      filteredItems = filteredItems.filter((user) => {
+        return user.userRoles?.some(
+          (userRole) =>
+            userRole.role?.type === RoleType.CENTER_ADMIN ||
+            userRole.role?.type === RoleType.USER,
+        );
+      });
+    }
+
+    // Apply accessibility check if targetUserId is provided
+    if (targetUserId) {
+      const usersIds = filteredItems.map((user) => user.id);
+      const accessibleUsersIds =
+        await this.accessControlHelperService.getAccessibleUsersIdsByIds(
+          targetUserId,
+          usersIds,
+        );
+
+      filteredItems = filteredItems.map((user) => ({
+        ...user,
+        isAccessible: accessibleUsersIds.some(
+          (accessibleUserId) => accessibleUserId === user.id,
+        ),
+      }));
+    }
+
+    // Transform the data to have roles array
+    const transformedData = this.transformUserRoles(filteredItems);
+
+    return {
+      ...result,
+      items: transformedData,
     };
+  }
 
-    // Use BaseRepository paginate method
-    return this.paginate(query, paginateOptions);
+  /**
+   * Paginate admins using JOINs for better performance
+   * @param query - Pagination query
+   * @param userId - User ID to filter users
+   * @param options - Options for pagination
+   * @param options.isActive - Whether to filter active users
+   * @param options.targetUserId - User ID to filter users
+   * @returns Paginated admins
+   */
+  async paginateAdmins(
+    params: Omit<UserListQuery, 'centerId'>,
+    currentUserRole: RoleType,
+  ): Promise<Pagination<User>> {
+    const { query, userId, targetUserId } = params;
+    const queryBuilder = this.userRepository.createQueryBuilder('user');
+
+    if (targetUserId) {
+      queryBuilder.andWhere('user.id != :targetUserId', { targetUserId });
+    }
+
+    // Add JOINs for relations
+    queryBuilder
+      .leftJoinAndSelect('user.profile', 'profile')
+      .leftJoinAndSelect('user.userRoles', 'userRoles')
+      .leftJoinAndSelect('userRoles.role', 'role')
+      .andWhere('role.type IN (:...roleTypes)', {
+        roleTypes: ['SUPER_ADMIN', 'ADMIN'],
+      });
+
+    // Apply filters with field mapping (after JOINs and basic WHERE)
+    if (query.filter) {
+      this.applyFilters(
+        queryBuilder,
+        query.filter,
+        UserFilterDto.getFieldMapping(),
+      );
+    }
+
+    // Add access control filtering for non-SUPER_ADMIN users
+    if (currentUserRole !== RoleType.SUPER_ADMIN) {
+      queryBuilder
+        .leftJoin('user.accessTarget', 'accessTarget')
+        .andWhere('accessTarget.granterUserId = :userId', { userId });
+    }
+
+    // Use the base repository paginate method
+    const result = await this.paginate(
+      {
+        page: query.page,
+        limit: query.limit,
+        search: query.search,
+        sortBy: query.sortBy,
+        searchableColumns: USER_PAGINATION_COLUMNS.searchableColumns,
+        sortableColumns: USER_PAGINATION_COLUMNS.sortableColumns,
+        defaultSortBy: USER_PAGINATION_COLUMNS.defaultSortBy,
+        route: '/users',
+      },
+      queryBuilder,
+    );
+
+    let filteredItems = result.items;
+
+    if (targetUserId) {
+      const targetUserHighestRole =
+        await this.accessControlHelperService.getUserHighestRole(targetUserId);
+
+      if (targetUserHighestRole?.role?.type === RoleType.SUPER_ADMIN) {
+        filteredItems = result.items.map((user) => ({
+          ...user,
+          isAccessible: true,
+        }));
+      } else {
+        const usersIds = result.items.map((user) => user.id);
+        const accessibleUsersIds =
+          await this.accessControlHelperService.getAccessibleUsersIdsByIds(
+            targetUserId,
+            usersIds,
+          );
+
+        filteredItems = filteredItems.map((user) => ({
+          ...user,
+          isAccessible: accessibleUsersIds.includes(user.id),
+        }));
+      }
+    }
+
+    // Transform the data to have roles array
+    const transformedData = this.transformUserRoles(filteredItems);
+
+    return {
+      ...result,
+      items: transformedData,
+    };
   }
 
   async updateUserTwoFactor(
@@ -225,7 +411,7 @@ export class UserRepository extends BaseRepository<User> {
             isActive: true,
           },
         },
-        relations: ['profile', 'centers', 'centers.center'],
+        relations: ['profile', 'centers', 'centers.center', 'userRoles.role'],
       });
     } catch (error) {
       this.logger.error(
@@ -240,7 +426,7 @@ export class UserRepository extends BaseRepository<User> {
     try {
       return await this.userRepository.find({
         where: { isActive: true },
-        relations: ['profile'],
+        relations: ['profile', 'userRoles.role'],
       });
     } catch (error) {
       this.logger.error('Error finding active users:', error);
@@ -257,7 +443,7 @@ export class UserRepository extends BaseRepository<User> {
             isActive: false,
           },
         },
-        relations: ['profile', 'centers', 'centers.center'],
+        relations: ['profile', 'centers', 'centers.center', 'userRoles.role'],
       });
     } catch (error) {
       this.logger.error(
@@ -272,11 +458,30 @@ export class UserRepository extends BaseRepository<User> {
     try {
       return await this.userRepository.find({
         where: { isActive: false },
-        relations: ['profile'],
+        relations: ['profile', 'userRoles.role'],
       });
     } catch (error) {
       this.logger.error('Error finding inactive users:', error);
       throw error;
     }
+  }
+
+  /**
+   * Transform user data to have roles array instead of userRoles
+   */
+  private transformUserRoles(users: User[]): (User & { roles: Role[] })[] {
+    return users.map((user: User) => {
+      const _users = {
+        ...user,
+        roles:
+          user.userRoles?.map((userRole: any) => ({
+            ...userRole.role,
+            centerId: userRole.centerId,
+            isActive: userRole.isActive,
+          })) || [],
+      };
+      delete (_users as any).userRoles;
+      return _users;
+    });
   }
 }

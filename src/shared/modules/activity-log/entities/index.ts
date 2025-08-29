@@ -1,6 +1,2 @@
-export {
-  ActivityLog,
-  ActivityType,
-  ActivityLevel,
-  ActivityScope,
-} from './activity-log.entity';
+export { ActivityLog } from './activity-log.entity';
+export { ActivityType } from './activity-log.entity';

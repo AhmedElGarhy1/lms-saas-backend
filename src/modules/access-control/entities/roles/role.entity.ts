@@ -1,54 +1,32 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  DeleteDateColumn,
-  OneToMany,
-  OneToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, Column, OneToMany, Index } from 'typeorm';
 import { UserRole } from './user-role.entity';
-import { Center } from '../center.entity';
-import { RoleTypeEnum } from '../../constants/role-type.enum';
+import { BaseEntity } from '@/shared/common/entities/base.entity';
+import { RoleType } from '@/shared/common/enums/role-type.enum';
 
 @Entity('roles')
-export class Role {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @Column()
+@Index(['name'])
+@Index(['type'])
+export class Role extends BaseEntity {
+  @Column({ type: 'varchar', length: 100, unique: true })
   name: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   description: string;
 
   @Column({
     type: 'enum',
-    enum: RoleTypeEnum,
+    enum: RoleType,
+    default: RoleType.USER,
   })
-  type: RoleTypeEnum;
+  type: RoleType;
 
-  @OneToOne(() => Center, (center) => center.id, { nullable: true })
-  @JoinColumn()
-  centerId: string | null;
-
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   permissions: string[];
 
-  @Column({ default: false })
-  isAdmin: boolean;
+  @Column({ type: 'int', default: 0 })
+  priority: number;
 
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt: Date | null;
-
+  // Relations
   @OneToMany(() => UserRole, (userRole) => userRole.role)
   userRoles: UserRole[];
 }

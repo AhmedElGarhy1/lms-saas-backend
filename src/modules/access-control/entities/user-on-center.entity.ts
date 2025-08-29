@@ -8,7 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
-import { Center } from './center.entity';
+import { Center } from '../../centers/entities/center.entity';
 
 @Entity('user_on_centers')
 export class UserOnCenter {
@@ -34,7 +34,7 @@ export class UserOnCenter {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => Center, (center) => center.userOnCenters)
+  @ManyToOne(() => Center, (center) => center.userCenters)
   @JoinColumn({ name: 'centerId' })
   center: Center;
 }

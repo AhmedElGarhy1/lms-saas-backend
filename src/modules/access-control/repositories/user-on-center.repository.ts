@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PaginateQuery, Paginated } from 'nestjs-paginate';
-import { BaseRepository } from '../../../common/repositories/base.repository';
+import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
+import { Pagination } from 'nestjs-typeorm-paginate';
+import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { UserOnCenter } from '../entities/user-on-center.entity';
 import { LoggerService } from '../../../shared/services/logger.service';
-import { paginate } from 'nestjs-paginate';
 
 @Injectable()
 export class UserOnCenterRepository extends BaseRepository<UserOnCenter> {
@@ -81,25 +81,28 @@ export class UserOnCenterRepository extends BaseRepository<UserOnCenter> {
   }
 
   async paginateUserCenters(options: {
-    query: PaginateQuery;
+    query: PaginationQuery;
     userId: string;
-  }): Promise<Paginated<UserOnCenter>> {
+  }): Promise<Pagination<UserOnCenter>> {
     const { query, userId } = options;
 
     const queryBuilder = this.userOnCenterRepository
       .createQueryBuilder('userOnCenter')
-      .leftJoinAndSelect('userOnCenter.center', 'center')
-      .where('userOnCenter.userId = :userId', { userId });
+      .leftJoinAndSelect('userOnCenter.center', 'center');
 
-    return await paginate(query, queryBuilder, {
-      sortableColumns: ['createdAt', 'updatedAt'],
-      searchableColumns: ['center.name', 'center.description'],
-      filterableColumns: {
-        'center.isActive': true,
+    return this.paginate(
+      {
+        page: query.page,
+        limit: query.limit,
+        search: query.search,
+        filter: { ...query.filter, userId },
+        sortBy: query.sortBy,
+        searchableColumns: ['center.name', 'center.description'],
+        sortableColumns: ['createdAt', 'updatedAt'],
+        defaultSortBy: ['createdAt', 'DESC'],
+        route: '/user-centers',
       },
-      defaultSortBy: [['createdAt', 'DESC']],
-      defaultLimit: 10,
-      maxLimit: 100,
-    });
+      queryBuilder,
+    );
   }
 }

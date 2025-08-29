@@ -1,49 +1,27 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  DeleteDateColumn,
-  OneToMany,
-  OneToOne,
-  JoinColumn,
-} from 'typeorm';
-import { Profile } from './profile.entity';
-import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
+import { Entity, Column, OneToMany, OneToOne, JoinColumn } from 'typeorm';
+import { Exclude } from 'class-transformer';
+import { AdminCenterAccess } from '@/modules/access-control/entities/admin/admin-center-access.entity';
+import { Center } from '@/modules/centers/entities/center.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
-import { UserAccess } from './user-access.entity';
-import { AdminCenterAccess } from '@/modules/access-control/entities/admin/admin-center-access.entity';
-import { Center } from '@/modules/access-control/entities/center.entity';
+import { Profile } from '@/modules/user/entities/profile.entity';
+import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
+import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
+import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 
 @Entity('users')
-export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class User extends BaseEntity {
   @Column({ unique: true })
   email: string;
 
   @Column()
+  @Exclude()
   password: string;
 
   @Column()
   name: string;
-
-  @Column({ default: true })
-  isActive: boolean;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt: Date;
 
   @Column({ default: 0 })
   failedLoginAttempts: number;
@@ -52,6 +30,7 @@ export class User {
   lockoutUntil: Date;
 
   @Column({ nullable: true })
+  @Exclude()
   twoFactorSecret: string;
 
   @Column({ default: false })
@@ -64,8 +43,8 @@ export class User {
   @OneToMany(() => AdminCenterAccess, (access) => access.granter)
   adminCenterAccessGranted: AdminCenterAccess[];
 
-  @OneToMany(() => Center, (center) => center.owner)
-  centersOwned: Center[];
+  @OneToMany(() => Center, (center) => center.creator)
+  centersCreated: Center[];
 
   @OneToMany(() => EmailVerification, (verification) => verification.user)
   emailVerifications: EmailVerification[];

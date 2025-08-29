@@ -1,17 +1,15 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  DeleteDateColumn,
-  OneToMany,
   ManyToOne,
   JoinColumn,
+  OneToMany,
   Index,
 } from 'typeorm';
-import { User } from '../../user/entities/user.entity';
-import { UserOnCenter } from '../../access-control/entities/user-on-center.entity';
+import { User } from '@/modules/user/entities/user.entity';
+import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
+import { BaseEntity } from '@/shared/common/entities/base.entity';
+import { UserAccess } from '@/modules/user/entities/user-access.entity';
 
 export enum CenterStatus {
   ACTIVE = 'ACTIVE',
@@ -22,10 +20,7 @@ export enum CenterStatus {
 @Entity('centers')
 @Index(['name'])
 @Index(['status'])
-export class Center {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class Center extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true })
   name: string;
 
@@ -72,31 +67,22 @@ export class Center {
   @Column({ type: 'jsonb', nullable: true })
   settings: Record<string, any>;
 
-  @Column({ type: 'uuid', nullable: true })
-  createdBy: string;
-
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'createdBy' })
   creator: User;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt: Date;
 
   // Relations
   @OneToMany(() => UserOnCenter, (userOnCenter) => userOnCenter.center)
   userCenters: UserOnCenter[];
 
+  @OneToMany(() => UserAccess, (userAccess) => userAccess.center)
+  userAccess: UserAccess[];
+
   // Note: AdminCenterAccess doesn't have a direct center relation
   // It's managed through the access-control service
 
   // Virtual properties for convenience
-  get isActive(): boolean {
+  get isCenterActive(): boolean {
     return this.status === CenterStatus.ACTIVE;
   }
 }

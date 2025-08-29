@@ -4,7 +4,7 @@ import { User } from '@/modules/user/entities/user.entity';
 import { Profile } from '@/modules/user/entities/profile.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { AdminCenterAccess } from '@/modules/access-control/entities/admin/admin-center-access.entity';
-import { Center } from '@/modules/access-control/entities/center.entity';
+import { Center } from '@/modules/centers/entities/center.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
 import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
 import { Role } from '@/modules/access-control/entities/roles/role.entity';
@@ -41,7 +41,7 @@ export const getDatabaseConfig = (
   // synchronize: configService.get('NODE_ENV') === 'development',
   // logging: configService.get('NODE_ENV') === 'development',
   synchronize: true,
-  logging: true,
+  // logging: true,
 });
 
 // Export for direct use

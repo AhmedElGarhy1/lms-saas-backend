@@ -11,12 +11,16 @@ import {
   CenterUserAssignmentDto,
   CenterAdminAssignmentDto,
 } from '../dto/center-response.dto';
-import { PaginateQuery, Paginated } from 'nestjs-paginate';
+import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
+import { Pagination } from 'nestjs-typeorm-paginate';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { RolesService } from '@/modules/access-control/services/roles.service';
-import { ScopeEnum } from '@/common/constants/role-scope.enum';
-import { CenterEventEmitter } from '../../../common/events/center.events';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { ScopeEnum } from '@/shared/common/constants/role-scope.enum';
+import { RoleType } from '@/shared/common/enums/role-type.enum';
+import { CenterEventEmitter } from '@/shared/common/events/center.events';
 import { LoggerService } from '@/shared/services/logger.service';
+import { UserService } from '@/modules/user/services/user.service';
 
 @Injectable()
 export class CentersService {
@@ -24,8 +28,10 @@ export class CentersService {
     private readonly centersRepository: CentersRepository,
     private readonly accessControlService: AccessControlService,
     private readonly rolesService: RolesService,
+    private readonly accessControlHelperService: AccessControlHelperService,
     private readonly centerEventEmitter: CenterEventEmitter,
     private readonly logger: LoggerService,
+    private readonly userService: UserService,
   ) {}
 
   async createCenter(
@@ -47,34 +53,41 @@ export class CentersService {
   }
 
   async listCenters(
-    query: PaginateQuery,
+    query: PaginationQuery,
     userId: string,
-  ): Promise<Paginated<Center>> {
+  ): Promise<Pagination<Center>> {
     this.logger.info(`Listing centers for user: ${userId}`);
 
-    // Get centers that the current user has admin access to (for management)
+    // Get centers that the current user has admin access to
     const adminCenterIds =
       await this.accessControlService.getAdminCenterIds(userId);
+    this.logger.info(`Admin center IDs: ${adminCenterIds.join(', ')}`);
 
-    // If user has no admin access to any centers, return empty result
-    if (adminCenterIds.length === 0) {
+    // Get centers that the current user has user access to
+    const userCenters = await this.accessControlService.getUserCenters(userId);
+    this.logger.info(`User centers: ${JSON.stringify(userCenters)}`);
+    const userCenterIds = userCenters.map((center) => center.centerId);
+    this.logger.info(`User center IDs: ${userCenterIds.join(', ')}`);
+
+    // Combine both admin and user center IDs
+    const allCenterIds = [...new Set([...adminCenterIds, ...userCenterIds])];
+    this.logger.info(`All center IDs: ${allCenterIds.join(', ')}`);
+
+    // If user has no access to any centers, return empty result
+    if (allCenterIds.length === 0) {
+      this.logger.info(`No centers found for user: ${userId}`);
       return {
-        data: [],
+        items: [],
         meta: {
+          itemCount: 0,
           itemsPerPage: 0,
           totalItems: 0,
           currentPage: 1,
           totalPages: 0,
-          sortBy: [],
-          searchBy: [],
-          search: '',
-          select: [],
-          filter: {},
         },
         links: {
           first: '',
           previous: '',
-          current: '',
           next: '',
           last: '',
         },
@@ -83,8 +96,8 @@ export class CentersService {
 
     // Apply center access filter to the query
     const filter: { [column: string]: string | string[] } = { ...query.filter };
-    if (adminCenterIds.length > 0) {
-      filter.id = adminCenterIds.join(',');
+    if (allCenterIds.length > 0) {
+      filter.id = allCenterIds.join(',');
     }
 
     const filteredQuery = {
@@ -92,22 +105,28 @@ export class CentersService {
       filter,
     };
 
+    this.logger.info(`Filtered query: ${JSON.stringify(filteredQuery)}`);
+
     // Use the repository's pagination method
     const result = await this.centersRepository.paginateCenters(filteredQuery);
 
     this.logger.info(
-      `Retrieved ${result.data.length} centers for user: ${userId}`,
+      `Retrieved ${result.items.length} centers for user: ${userId}`,
     );
+
     return result;
   }
 
   async getCenterById(centerId: string, userId: string): Promise<Center> {
     const center = await this.centersRepository.findCenterById(centerId);
     if (!center) {
-      throw new NotFoundException(`Center with ID '${centerId}' not found`);
+      throw new NotFoundException(`Center with ID ${centerId} not found`);
     }
-    // Permission check should be in controller
     return center;
+  }
+
+  async findCenterByName(centerName: string): Promise<Center | null> {
+    return this.centersRepository.findCenterByName(centerName);
   }
 
   async updateCenter(
@@ -235,7 +254,7 @@ export class CentersService {
     // Permission check should be in controller
 
     const existingAssignment =
-      await this.accessControlService.checkCenterAccess(userId, centerId);
+      await this.accessControlHelperService.canAccessCenter(userId, centerId);
     if (!existingAssignment) {
       throw new BadRequestException(
         `User '${userId}' is not assigned to center '${centerId}'`,
@@ -252,10 +271,18 @@ export class CentersService {
     await this.centersRepository.decrementEnrollment(centerId);
   }
 
-  async getCenterUsers(centerId: string, userId: string): Promise<any[]> {
-    // Permission check should be in controller
-    // TODO: Implement proper user retrieval with pagination
-    return [];
+  async getCenterUsers(
+    centerId: string,
+    userId: string,
+    query: PaginationQuery,
+  ): Promise<any> {
+    const result = await this.userService.listUsers({
+      query,
+      userId,
+      centerId,
+    });
+
+    return result;
   }
 
   async assignAdminToCenter(dto: CenterAdminAssignmentDto): Promise<void> {
@@ -339,5 +366,24 @@ export class CentersService {
       );
       throw error;
     }
+  }
+
+  // Seeder methods
+  async clearAllCenters(): Promise<void> {
+    this.logger.info('Clearing all centers for seeding...');
+    await this.centersRepository.clearAllCenters();
+  }
+
+  async createCenterForSeeder(centerData: any): Promise<Center> {
+    this.logger.info(`Creating center '${centerData.name}' for seeding`);
+
+    // Create the center without user validation for seeding
+    const savedCenter = await this.centersRepository.create({
+      ...centerData,
+      currentEnrollment: 0,
+    });
+
+    this.logger.info(`Center created for seeding: ${savedCenter.id}`);
+    return savedCenter;
   }
 }

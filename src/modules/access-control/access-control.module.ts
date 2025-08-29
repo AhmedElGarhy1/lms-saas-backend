@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccessControlController } from './controllers/access-control.controller';
 import { RolesController } from './controllers/roles.controller';
 import { AccessControlService } from './services/access-control.service';
+import { AccessControlHelperService } from './services/access-control-helper.service';
 import { PermissionService } from './services/permission.service';
 import { PermissionCacheService } from './services/permission-cache.service';
 import { RolesService } from './services/roles.service';
@@ -13,7 +14,7 @@ import { AdminCenterAccessRepository } from './repositories/admin-center-access.
 import { UserOnCenterRepository } from './repositories/user-on-center.repository';
 import { RolesRepository } from './repositories/roles.repository';
 import { UserRoleRepository } from './repositories/user-role.repository';
-import { Center } from './entities/center.entity';
+import { Center } from '../centers/entities/center.entity';
 import { Permission } from './entities/permission.entity';
 import { Role } from './entities/roles/role.entity';
 import { UserRole } from './entities/roles/user-role.entity';
@@ -21,7 +22,7 @@ import { AdminCenterAccess } from './entities/admin/admin-center-access.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { UserOnCenter } from './entities/user-on-center.entity';
 import { DatabaseModule } from '@/shared/modules/database/database.module';
-import { RoleEventEmitter } from '@/common/events/role.events';
+import { RoleEventEmitter } from '@/shared/common/events/role.events';
 
 @Global()
 @Module({
@@ -40,6 +41,7 @@ import { RoleEventEmitter } from '@/common/events/role.events';
   controllers: [AccessControlController, RolesController],
   providers: [
     AccessControlService,
+    AccessControlHelperService,
     PermissionService,
     PermissionCacheService,
     RolesService,
@@ -57,6 +59,7 @@ import { RoleEventEmitter } from '@/common/events/role.events';
   ],
   exports: [
     AccessControlService,
+    AccessControlHelperService,
     PermissionService,
     PermissionCacheService,
     RolesService,

@@ -16,13 +16,15 @@ import {
   ApiBody,
   ApiParam,
 } from '@nestjs/swagger';
-import { Paginate, PaginateQuery } from 'nestjs-paginate';
+import { Paginate } from '@/shared/common/decorators/pagination.decorator';
+import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
+import { PaginationDocs } from '@/shared/common/decorators/pagination-docs.decorator';
 
 import { CentersService } from '../services/centers.service';
-import { GetUser } from '../../../common/decorators/get-user.decorator';
-import { CurrentUser as CurrentUserType } from '../../../common/types/current-user.type';
-import { PaginationDocs } from '../../../common/decorators/pagination-docs.decorator';
-import { Permissions } from '../../../common/decorators/permissions.decorator';
+import { GetUser } from '@/shared/common/decorators/get-user.decorator';
+import { CurrentUser as CurrentUserType } from '@/shared/common/types/current-user.type';
+
+import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { CreateCenterRequestDto } from '../dto/create-center.dto';
 import { UpdateCenterRequestDto } from '../dto/update-center.dto';
 import {
@@ -72,11 +74,11 @@ export class CentersController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @PaginationDocs({
     searchFields: ['name', 'description', 'city', 'state', 'country'],
-    exactFields: ['status'],
+    filterFields: ['status'],
   })
   @Permissions(PERMISSIONS.CENTER.VIEW.action)
   listCenters(
-    @Paginate() query: PaginateQuery,
+    @Paginate() query: PaginationQuery,
     @GetUser() user: CurrentUserType,
   ) {
     return this.centersService.listCenters(query, user.id);
@@ -96,6 +98,60 @@ export class CentersController {
   @Permissions(PERMISSIONS.CENTER.VIEW.action)
   getCenterById(@Param('id') id: string, @GetUser() user: CurrentUserType) {
     return this.centersService.getCenterById(id, user.id);
+  }
+
+  @Get(':centerId/users')
+  @ApiOperation({
+    summary: 'Get users for a specific center with their roles',
+    description:
+      'Retrieve users who have access to the specified center, including their roles (admin/user) for that center. Only returns users that the current user has permission to access.',
+  })
+  @ApiParam({ name: 'centerId', description: 'Center ID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Center users retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              email: { type: 'string' },
+              centerRole: { type: 'string', enum: ['admin', 'user'] },
+              roleTypes: { type: 'array', items: { type: 'string' } },
+            },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            totalItems: { type: 'number' },
+            itemsPerPage: { type: 'number' },
+            totalPages: { type: 'number' },
+            currentPage: { type: 'number' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Access denied to this center' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @PaginationDocs({
+    searchFields: ['name', 'email'],
+    filterFields: ['centerRole'],
+  })
+  @Permissions(PERMISSIONS.USER.READ.action)
+  getCenterUsers(
+    @Param('centerId') centerId: string,
+    @Paginate() query: PaginationQuery,
+    @GetUser() user: CurrentUserType,
+  ) {
+    return this.centersService.getCenterUsers(centerId, user.id, query);
   }
 
   @Patch(':id')

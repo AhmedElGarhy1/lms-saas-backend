@@ -11,7 +11,7 @@ import {
   TwoFAVerifyRequestDto,
   TwoFactorRequest,
 } from '../dto/2fa.dto';
-import { Public } from '@/common/decorators/public.decorator';
+import { Public } from '@/shared/common/decorators/public.decorator';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import {
@@ -25,8 +25,8 @@ import {
   VerifyEmailResponseDto,
   LogoutResponseDto,
 } from '../dto/auth-response.dto';
-import { GetUser } from '@/common/decorators/get-user.decorator';
-import { CurrentUser } from '@/common/types/current-user.type';
+import { GetUser } from '@/shared/common/decorators/get-user.decorator';
+import { CurrentUser } from '@/shared/common/types/current-user.type';
 
 @ApiTags('Auth')
 @Controller('auth')

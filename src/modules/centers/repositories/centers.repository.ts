@@ -2,10 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, Not, IsNull } from 'typeorm';
 import { Center, CenterStatus } from '../entities/center.entity';
-import { BaseRepository } from '../../../common/repositories/base.repository';
-import { PaginateQuery } from 'nestjs-paginate';
-import { Paginated } from 'nestjs-paginate';
+import { BaseRepository } from '@/shared/common/repositories/base.repository';
+import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
+import { Pagination } from 'nestjs-typeorm-paginate';
 import { LoggerService } from '../../../shared/services/logger.service';
+import { CENTER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
+import { PaginationUtils } from '@/shared/common/utils/pagination.utils';
 
 @Injectable()
 export class CentersRepository extends BaseRepository<Center> {
@@ -18,20 +20,17 @@ export class CentersRepository extends BaseRepository<Center> {
     super(centerRepository, logger);
   }
 
-  async paginateCenters(query: PaginateQuery): Promise<Paginated<Center>> {
-    return this.paginate(query, {
-      searchableColumns: ['name', 'description', 'city', 'state', 'country'],
-      sortableColumns: [
-        'name',
-        'status',
-        'currentEnrollment',
-        'createdAt',
-        'updatedAt',
-      ],
-      filterableColumns: ['status'],
-      defaultSortBy: ['createdAt', 'DESC'] as [keyof Center, 'ASC' | 'DESC'],
+  async paginateCenters(query: PaginationQuery): Promise<Pagination<Center>> {
+    return this.paginate({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      filter: query.filter,
+      sortBy: query.sortBy,
+      searchableColumns: CENTER_PAGINATION_COLUMNS.searchableColumns,
+      sortableColumns: CENTER_PAGINATION_COLUMNS.sortableColumns,
+      defaultSortBy: CENTER_PAGINATION_COLUMNS.defaultSortBy,
       defaultLimit: 20,
-      maxLimit: 100,
     });
   }
 
@@ -229,5 +228,10 @@ export class CentersRepository extends BaseRepository<Center> {
     await this.centerRepository.update(centerId, {
       status: isActive ? CenterStatus.ACTIVE : CenterStatus.INACTIVE,
     });
+  }
+
+  // Seeder method
+  async clearAllCenters(): Promise<void> {
+    await this.centerRepository.createQueryBuilder().delete().execute();
   }
 }

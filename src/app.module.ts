@@ -1,31 +1,41 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from '@/modules/user/entities/user.entity';
+import { Profile } from '@/modules/user/entities/profile.entity';
+import { Center } from '@/modules/centers/entities/center.entity';
+import { Role } from '@/modules/access-control/entities/roles/role.entity';
+import { Permission } from '@/modules/access-control/entities/permission.entity';
+import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
+import { UserAccess } from '@/modules/user/entities/user-access.entity';
+import { AdminCenterAccess } from '@/modules/access-control/entities/admin/admin-center-access.entity';
+import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
+import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
+import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
+import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import { APP_INTERCEPTOR, APP_FILTER, APP_PIPE, APP_GUARD } from '@nestjs/core';
 import { Reflector } from '@nestjs/core';
-
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { UserModule } from '@/modules/user/user.module';
 import { CentersModule } from '@/modules/centers/centers.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { SharedModule } from '@/shared/shared.module';
-import { SeederModule } from '@/database/seeder.module';
-import { ErrorInterceptor } from '@/common/interceptors/error.interceptor';
-import { PerformanceInterceptor } from '@/common/interceptors/performance.interceptor';
-import { ResponseTransformInterceptor } from '@/common/interceptors/response-transform.interceptor';
-import { ScopeInterceptor } from '@/common/interceptors/scope.interceptor';
-import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
-import { CustomValidationPipe } from '@/common/pipes/validation.pipe';
+import { DatabaseSeeder } from '@/database/seeder';
+
+import { ErrorInterceptor } from '@/shared/common/interceptors/error.interceptor';
+import { PerformanceInterceptor } from '@/shared/common/interceptors/performance.interceptor';
+import { ResponseTransformInterceptor } from '@/shared/common/interceptors/response-transform.interceptor';
+import { ScopeInterceptor } from '@/shared/common/interceptors/scope.interceptor';
+import { HttpExceptionFilter } from '@/shared/common/filters/http-exception.filter';
+import { CustomValidationPipe } from '@/shared/common/pipes/validation.pipe';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
-import { ContextGuard } from '@/common/guards/context.guard';
-import { PermissionsGuard } from '@/common/guards/permissions.guard';
-import { ContextValidationService } from '@/common/services/context-validation.service';
+import { ContextGuard } from '@/shared/common/guards/context.guard';
+import { PermissionsGuard } from '@/shared/common/guards/permissions.guard';
+import { ContextValidationService } from '@/shared/common/services/context-validation.service';
 import { typeOrmConfig } from '@/shared/config/database.config';
 
 @Module({
@@ -45,11 +55,25 @@ import { typeOrmConfig } from '@/shared/config/database.config';
       ],
     }),
     TypeOrmModule.forRoot(typeOrmConfig),
+    TypeOrmModule.forFeature([
+      User,
+      Profile,
+      Center,
+      Role,
+      Permission,
+      UserRole,
+      UserAccess,
+      AdminCenterAccess,
+      UserOnCenter,
+      RefreshToken,
+      EmailVerification,
+      PasswordResetToken,
+    ]),
     ThrottlerModule.forRoot({
       throttlers: [
         {
           ttl: process.env.NODE_ENV === 'test' ? 1 : 60000,
-          limit: process.env.NODE_ENV === 'test' ? 1000 : 10,
+          limit: process.env.NODE_ENV === 'test' ? 1000 : 100000, // Temporarily increased for testing
         },
       ],
     }),
@@ -59,11 +83,10 @@ import { typeOrmConfig } from '@/shared/config/database.config';
     AccessControlModule,
     CentersModule,
     ActivityLogModule,
-    SeederModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [
-    AppService,
+    DatabaseSeeder,
     ContextValidationService,
     {
       provide: APP_INTERCEPTOR,
@@ -96,15 +119,15 @@ import { typeOrmConfig } from '@/shared/config/database.config';
     },
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
-    {
-      provide: APP_GUARD,
       useFactory: (
         contextValidationService: ContextValidationService,
         reflector: Reflector,
       ) => new ContextGuard(contextValidationService, reflector),
       inject: [ContextValidationService, Reflector],
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
     {
       provide: APP_GUARD,

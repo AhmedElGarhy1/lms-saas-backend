@@ -3,13 +3,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
 import { Profile } from '@/modules/user/entities/profile.entity';
-import { Center } from '@/modules/access-control/entities/center.entity';
+import { Center, CenterStatus } from '@/modules/centers/entities/center.entity';
 import { Role } from '@/modules/access-control/entities/roles/role.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
+import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
 import { AdminCenterAccess } from '@/modules/access-control/entities/admin/admin-center-access.entity';
-import { RoleTypeEnum } from '@/modules/access-control/constants/role-type.enum';
+import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
+import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
+import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
+import { RoleType } from '@/shared/common/enums/role-type.enum';
 import {
   PERMISSIONS,
   ALL_PERMISSIONS,
@@ -17,10 +21,8 @@ import {
   USER_PERMISSIONS,
 } from '@/modules/access-control/constants/permissions';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import {
-  ActivityType,
-  ActivityScope,
-} from '@/shared/modules/activity-log/entities/activity-log.entity';
+import { CentersService } from '@/modules/centers/services/centers.service';
+import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -32,8 +34,6 @@ export class DatabaseSeeder {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Profile)
     private readonly profileRepository: Repository<Profile>,
-    @InjectRepository(Center)
-    private readonly centerRepository: Repository<Center>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(Permission)
@@ -42,9 +42,18 @@ export class DatabaseSeeder {
     private readonly userRoleRepository: Repository<UserRole>,
     @InjectRepository(UserAccess)
     private readonly userAccessRepository: Repository<UserAccess>,
+    @InjectRepository(UserOnCenter)
+    private readonly userOnCenterRepository: Repository<UserOnCenter>,
     @InjectRepository(AdminCenterAccess)
     private readonly adminCenterAccessRepository: Repository<AdminCenterAccess>,
+    @InjectRepository(RefreshToken)
+    private readonly refreshTokenRepository: Repository<RefreshToken>,
+    @InjectRepository(EmailVerification)
+    private readonly emailVerificationRepository: Repository<EmailVerification>,
+    @InjectRepository(PasswordResetToken)
+    private readonly passwordResetTokenRepository: Repository<PasswordResetToken>,
     private readonly activityLogService: ActivityLogService,
+    private readonly centersService: CentersService,
   ) {}
 
   async seed(): Promise<void> {
@@ -88,6 +97,7 @@ export class DatabaseSeeder {
     // Use query builder to clear all data in proper order
     await this.userRoleRepository.createQueryBuilder().delete().execute();
     await this.userAccessRepository.createQueryBuilder().delete().execute();
+    await this.userOnCenterRepository.createQueryBuilder().delete().execute();
     await this.adminCenterAccessRepository
       .createQueryBuilder()
       .delete()
@@ -95,8 +105,20 @@ export class DatabaseSeeder {
     await this.permissionRepository.createQueryBuilder().delete().execute();
     await this.roleRepository.createQueryBuilder().delete().execute();
     await this.profileRepository.createQueryBuilder().delete().execute();
+
+    // Clear auth-related tokens before users
+    await this.refreshTokenRepository.createQueryBuilder().delete().execute();
+    await this.emailVerificationRepository
+      .createQueryBuilder()
+      .delete()
+      .execute();
+    await this.passwordResetTokenRepository
+      .createQueryBuilder()
+      .delete()
+      .execute();
+
     // Delete centers before users (since centers reference users as owners)
-    await this.centerRepository.createQueryBuilder().delete().execute();
+    await this.centersService.clearAllCenters();
     await this.userRepository.createQueryBuilder().delete().execute();
 
     this.logger.log('Existing data cleared successfully');
@@ -124,23 +146,20 @@ export class DatabaseSeeder {
       // Global roles
       {
         name: 'Super Administrator',
-        type: RoleTypeEnum.SUPER_ADMIN,
+        type: RoleType.SUPER_ADMIN,
         description: 'System owner with no constraints - sees everything',
-        isAdmin: true,
         permissions: [],
       },
       {
         name: 'Global Administrator',
-        type: RoleTypeEnum.ADMIN,
+        type: RoleType.ADMIN,
         description: 'System administrator with full constraints',
-        isAdmin: true,
         permissions: [],
       },
       {
         name: 'Global User',
-        type: RoleTypeEnum.USER,
+        type: RoleType.USER,
         description: 'Regular user with full constraints',
-        isAdmin: false,
         permissions: [],
       },
     ];
@@ -160,33 +179,42 @@ export class DatabaseSeeder {
       {
         name: 'Bright Future Academy',
         description: 'Premier educational institution in Cairo',
-        ownerId: centerOwners[0].id,
-        isActive: true,
+        createdBy: centerOwners[0].id,
+        status: CenterStatus.ACTIVE,
+        city: 'Cairo',
+        country: 'Egypt',
       },
       {
         name: 'Knowledge Hub Center',
         description: 'Innovative learning center in Alexandria',
-        ownerId: centerOwners[1].id,
-        isActive: true,
+        createdBy: centerOwners[1].id,
+        status: CenterStatus.ACTIVE,
+        city: 'Alexandria',
+        country: 'Egypt',
       },
       {
         name: 'Elite Education Institute',
         description: 'Excellence in education in Giza',
-        ownerId: centerOwners[2].id,
-        isActive: true,
+        createdBy: centerOwners[2].id,
+        status: CenterStatus.ACTIVE,
+        city: 'Giza',
+        country: 'Egypt',
       },
       {
         name: 'Community Learning Center',
         description: 'Community-focused education in Luxor',
-        ownerId: centerOwners[3].id,
-        isActive: true,
+        createdBy: centerOwners[3].id,
+        status: CenterStatus.ACTIVE,
+        city: 'Luxor',
+        country: 'Egypt',
       },
     ];
 
-    const centerEntities = centers.map((center) =>
-      this.centerRepository.create(center),
+    const savedCenters = await Promise.all(
+      centers.map((center) =>
+        this.centersService.createCenterForSeeder(center),
+      ),
     );
-    const savedCenters = await this.centerRepository.save(centerEntities);
     this.logger.log(`Created ${savedCenters.length} centers`);
 
     return savedCenters;
@@ -401,41 +429,23 @@ export class DatabaseSeeder {
 
     // Get roles
     const superAdminRole = await this.roleRepository.findOne({
-      where: { type: RoleTypeEnum.SUPER_ADMIN },
+      where: { type: RoleType.SUPER_ADMIN },
     });
     const adminRole = await this.roleRepository.findOne({
-      where: { type: RoleTypeEnum.ADMIN },
+      where: { type: RoleType.ADMIN },
     });
     const userRole = await this.roleRepository.findOne({
-      where: { type: RoleTypeEnum.USER },
+      where: { type: RoleType.USER },
     });
 
-    if (!superAdminRole || !adminRole || !userRole) {
-      throw new Error('Required roles not found');
-    }
+    // Get center-specific roles
+    const centerRoles = await this.roleRepository.find({
+      where: { type: RoleType.CENTER_ADMIN },
+    });
 
-    // Get permissions
-    const allPermissions = await this.permissionRepository.find();
-    const adminPermissions = allPermissions.filter((p) => p.isAdmin);
-    const userPermissions = allPermissions.filter((p) => !p.isAdmin);
-
-    // Create center-specific roles
-    const centerRoles = [];
-    for (const center of centers) {
-      const centerAdminRole = this.roleRepository.create({
-        name: `${center.name} Administrator`,
-        type: RoleTypeEnum.CENTER_ADMIN,
-        description: `Center administrator for ${center.name}`,
-        isAdmin: true,
-        centerId: center.id,
-        permissions: [],
-      });
-      centerRoles.push(await this.roleRepository.save(centerAdminRole));
-    }
-
-    // Assign global roles
-    const adminUser = users.find((u) => u.email === 'admin@lms.com');
+    // Get users
     const superAdminUser = users.find((u) => u.email === 'superadmin@lms.com');
+    const adminUser = users.find((u) => u.email === 'admin@lms.com');
     const regularUser = users.find((u) => u.email === 'regular@lms.com');
 
     if (adminUser && adminRole) {
@@ -445,6 +455,17 @@ export class DatabaseSeeder {
           roleId: adminRole.id,
         }),
       );
+
+      // Grant admin access to all centers
+      for (const center of centers) {
+        await this.adminCenterAccessRepository.save(
+          this.adminCenterAccessRepository.create({
+            adminUserId: adminUser.id,
+            centerId: center.id,
+            granterUserId: superAdminUser?.id || adminUser.id,
+          }),
+        );
+      }
     }
 
     if (superAdminUser && superAdminRole) {
@@ -463,6 +484,25 @@ export class DatabaseSeeder {
           roleId: userRole.id,
         }),
       );
+
+      // Add regular user to the first center
+      if (centers.length > 0) {
+        await this.userOnCenterRepository.save(
+          this.userOnCenterRepository.create({
+            userId: regularUser.id,
+            centerId: centers[0].id,
+          }),
+        );
+
+        // Grant user access to center
+        await this.userAccessRepository.save(
+          this.userAccessRepository.create({
+            targetUserId: regularUser.id,
+            granterUserId: superAdminUser?.id || adminUser?.id,
+            centerId: centers[0].id, // Add centerId for the first center
+          }),
+        );
+      }
     }
 
     // Assign center-specific roles
@@ -477,19 +517,24 @@ export class DatabaseSeeder {
     for (let i = 0; i < centerOwners.length && i < centers.length; i++) {
       const owner = centerOwners[i];
       const center = centers[i];
-      const centerRole = centerRoles[i];
+      // Use adminRole instead of centerRoles[i] since CENTER_ADMIN roles don't exist
+      const centerRole = adminRole;
 
-      await this.userRoleRepository.save(
-        this.userRoleRepository.create({
-          userId: owner.id,
-          roleId: centerRole.id,
-        }),
-      );
+      if (centerRole) {
+        // Add null check
+        await this.userRoleRepository.save(
+          this.userRoleRepository.create({
+            userId: owner.id,
+            roleId: centerRole.id,
+          }),
+        );
+      }
 
       // Grant admin center access
       await this.adminCenterAccessRepository.save(
         this.adminCenterAccessRepository.create({
           adminUserId: owner.id,
+          centerId: center.id,
           granterUserId: superAdminUser?.id || adminUser?.id,
         }),
       );
@@ -503,7 +548,7 @@ export class DatabaseSeeder {
       await this.userRoleRepository.save(
         this.userRoleRepository.create({
           userId: teacher.id,
-          roleId: userRole.id,
+          roleId: userRole?.id,
         }),
       );
 
@@ -512,6 +557,15 @@ export class DatabaseSeeder {
         this.userAccessRepository.create({
           targetUserId: teacher.id,
           granterUserId: centerOwners[i]?.id || superAdminUser?.id,
+          centerId: center.id, // Add centerId for the current center
+        }),
+      );
+
+      // Add user to center
+      await this.userOnCenterRepository.save(
+        this.userOnCenterRepository.create({
+          userId: teacher.id,
+          centerId: center.id,
         }),
       );
     }
@@ -524,7 +578,7 @@ export class DatabaseSeeder {
       await this.userRoleRepository.save(
         this.userRoleRepository.create({
           userId: student.id,
-          roleId: userRole.id,
+          roleId: userRole?.id,
         }),
       );
 
@@ -533,6 +587,15 @@ export class DatabaseSeeder {
         this.userAccessRepository.create({
           targetUserId: student.id,
           granterUserId: centerOwners[i]?.id || superAdminUser?.id,
+          centerId: center.id, // Add centerId for the current center
+        }),
+      );
+
+      // Add user to center
+      await this.userOnCenterRepository.save(
+        this.userOnCenterRepository.create({
+          userId: student.id,
+          centerId: center.id,
         }),
       );
     }
@@ -545,7 +608,7 @@ export class DatabaseSeeder {
       await this.userRoleRepository.save(
         this.userRoleRepository.create({
           userId: manager.id,
-          roleId: userRole.id,
+          roleId: userRole?.id,
         }),
       );
 
@@ -554,6 +617,15 @@ export class DatabaseSeeder {
         this.userAccessRepository.create({
           targetUserId: manager.id,
           granterUserId: centerOwners[i]?.id || superAdminUser?.id,
+          centerId: center.id, // Add centerId for the current center
+        }),
+      );
+
+      // Add user to center
+      await this.userOnCenterRepository.save(
+        this.userOnCenterRepository.create({
+          userId: manager.id,
+          centerId: center.id,
         }),
       );
     }
@@ -568,7 +640,7 @@ export class DatabaseSeeder {
         await this.userRoleRepository.save(
           this.userRoleRepository.create({
             userId: centerDeactivatedUser.id,
-            roleId: userRole.id,
+            roleId: userRole?.id,
           }),
         );
 
@@ -576,6 +648,7 @@ export class DatabaseSeeder {
           this.userAccessRepository.create({
             targetUserId: centerDeactivatedUser.id,
             granterUserId: superAdminUser?.id,
+            centerId: centers[1].id, // Add centerId for the second center
           }),
         );
       }

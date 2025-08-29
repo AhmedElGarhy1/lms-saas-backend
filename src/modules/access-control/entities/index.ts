@@ -1,4 +1,3 @@
-export { Center } from './center.entity';
 export { Permission } from './permission.entity';
 export { UserOnCenter } from './user-on-center.entity';
 export { Role } from './roles/role.entity';

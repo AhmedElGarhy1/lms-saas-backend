@@ -17,68 +17,79 @@ import {
   ApiQuery,
   ApiBody,
 } from '@nestjs/swagger';
-import { Paginate, PaginateQuery } from 'nestjs-paginate';
-import { Permissions } from '../../../common/decorators/permissions.decorator';
-import { GetUser } from '../../../common/decorators/get-user.decorator';
-import { CurrentUser as CurrentUserType } from '../../../common/types/current-user.type';
+import { PaginateWithFilters } from '@/shared/common/decorators/paginate-with-filters.decorator';
+import { UserFilterDto } from '../dto/user-filter.dto';
+import {
+  ApiPagination,
+  CommonFilters,
+} from '@/shared/common/decorators/api-pagination.decorator';
+import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
+import { Permissions } from '@/shared/common/decorators/permissions.decorator';
+import { GetUser } from '@/shared/common/decorators/get-user.decorator';
+import { CurrentUser as CurrentUserType } from '@/shared/common/types/current-user.type';
 import { UserService } from '../services/user.service';
-import { AccessControlService } from '@/modules/access-control/services/access-control.service';
-import { ScopeEnum } from '@/common/constants/role-scope.enum';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { CreateUserRequestDto } from '../dto/create-user.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
 import { ActivateUserRequestDto } from '../dto/activate-user.dto';
 
+import { USER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
+
 @ApiTags('Users')
 @Controller('users')
 export class UserController {
-  constructor(
-    private readonly userService: UserService,
-    private readonly accessControlService: AccessControlService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List users with pagination and filtering' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'search', required: false, type: String })
-  @ApiQuery({ name: 'sortBy', required: false, type: String })
-  @ApiQuery({ name: 'filter.isActive', required: false, type: Boolean })
-  @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
+  @ApiOperation({
+    summary: 'List users with pagination and filtering',
+    description:
+      'Get paginated list of users with filtering by status, role, and other criteria',
+  })
+  @ApiPagination()
+  @CommonFilters.user()
+  @ApiResponse({
+    status: 200,
+    description: 'Users retrieved successfully (filtered by access control)',
+  })
   @Permissions(PERMISSIONS.USER.READ.action)
   async listUsers(
-    @Paginate() query: PaginateQuery,
+    @PaginateWithFilters({
+      maxPage: 1000,
+      maxLimit: 50,
+      minLimit: 1,
+      allowedSortFields: USER_PAGINATION_COLUMNS.sortableColumns,
+      allowedSearchFields: USER_PAGINATION_COLUMNS.searchableColumns,
+      filterDto: UserFilterDto, // Use the filter DTO
+    })
+    query: PaginationQuery,
     @GetUser() currentUser: CurrentUserType,
-    @Query('includeCenters') includeCenters?: boolean,
-    @Query('includePermissions') includePermissions?: boolean,
-    @Query('includeAccess') includeAccess?: boolean,
-    @Query('includeUserAccess') includeUserAccess?: boolean,
+    @Query('targetUserId') targetUserId?: string,
   ) {
+    const centerId = query.filter?.centerId as string;
     return this.userService.listUsers({
       query,
-      currentUserId: currentUser.id,
-      includeCenters,
-      includePermissions,
-      includeAccess,
-      includeUserAccess,
+      userId: currentUser.id,
+      targetUserId,
+      centerId,
     });
   }
 
-  @Get('accessible')
-  @ApiOperation({ summary: 'Get users accessible to current user' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @Get('profile')
+  @ApiOperation({
+    summary: 'Get current user profile with comprehensive information',
+  })
   @ApiResponse({
     status: 200,
-    description: 'Accessible users retrieved successfully',
+    description: 'User profile retrieved successfully',
   })
-  @Permissions(PERMISSIONS.USER.READ.action)
-  async getAccessibleUsers(
-    @Paginate() query: PaginateQuery,
-    @GetUser() currentUser: CurrentUserType,
-  ) {
-    return this.userService.getAccessibleUsers(query, currentUser.id);
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getCurrentUserProfile(@GetUser() currentUser: CurrentUserType) {
+    return this.userService.getCurrentUserProfile(
+      currentUser.id,
+      currentUser.centerId,
+    );
   }
 
   @Get(':id')
@@ -111,9 +122,9 @@ export class UserController {
   @Permissions(PERMISSIONS.USER.CREATE.action)
   async createUser(
     @Body() dto: CreateUserRequestDto,
-    @GetUser() _currentUser: CurrentUserType,
+    @GetUser() currentUser: CurrentUserType,
   ) {
-    return this.userService.createUser(dto);
+    return this.userService.createUser(dto, currentUser.id);
   }
 
   @Put(':id/profile')
@@ -126,7 +137,6 @@ export class UserController {
   async updateProfile(
     @Param('id') userId: string,
     @Body() dto: UpdateProfileDto,
-    @GetUser() _currentUser: CurrentUserType,
   ) {
     return this.userService.updateProfile(userId, dto);
   }
@@ -142,7 +152,6 @@ export class UserController {
   async changePassword(
     @Param('id') userId: string,
     @Body() dto: ChangePasswordRequestDto,
-    @GetUser() _currentUser: CurrentUserType,
   ) {
     return this.userService.changePassword(userId, dto);
   }
@@ -168,64 +177,6 @@ export class UserController {
 
     await this.userService.activateUser(userId, activationData, currentUser.id);
     return { id: userId, message: 'User activated successfully' };
-  }
-
-  @Get(':id/permissions')
-  @ApiOperation({ summary: 'Get user permissions' })
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @ApiQuery({ name: 'centerId', required: false, type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'User permissions retrieved successfully',
-  })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  @Permissions(PERMISSIONS.USER.READ.action)
-  async getUserPermissions(
-    @Param('id') userId: string,
-    @Query('centerId') centerId?: string,
-    @GetUser() currentUser?: CurrentUserType,
-  ) {
-    // Check if current user can access the target user's permissions
-    if (currentUser && currentUser.id !== userId) {
-      await this.accessControlService.canAccessUserThrowError(
-        currentUser.id,
-        userId,
-      );
-    }
-
-    // Get context-aware permissions from roles
-    const context = centerId ? { centerId } : { scope: ScopeEnum.ADMIN };
-    const permissions =
-      await this.accessControlService.getUserPermissionsFromRoles(
-        userId,
-        context,
-      );
-
-    // Get user centers separately
-    const userCenters = await this.accessControlService.getUserCenters(userId);
-    const centerIds = userCenters.map((center) => center.centerId || center.id);
-
-    return {
-      permissions,
-      roles: [], // Roles would need to be fetched separately
-      centers: centerIds,
-    };
-  }
-
-  @Get(':id/activation-status')
-  @ApiOperation({ summary: 'Get user activation status' })
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'User activation status retrieved successfully',
-  })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  @Permissions(PERMISSIONS.USER.READ.action)
-  async getUserActivationStatus(
-    @Param('id') userId: string,
-    @GetUser() _currentUser: CurrentUserType,
-  ) {
-    return this.userService.getUserActivationStatus(userId);
   }
 
   @Delete(':id')
@@ -254,5 +205,69 @@ export class UserController {
   ) {
     await this.userService.restoreUser(userId, currentUser.id);
     return { message: 'User restored successfully' };
+  }
+
+  // ===== FINE-GRAINED ACCESS ENDPOINTS =====
+  @Get(':id/centers')
+  @ApiOperation({ summary: 'Get centers that a user is part of' })
+  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'User centers retrieved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @Permissions(PERMISSIONS.USER.READ.action)
+  async getUserCenters(
+    @Param('id') userId: string,
+    @GetUser() currentUser: CurrentUserType,
+  ) {
+    // First check if current user can access the target user
+    await this.userService.getProfile(userId, undefined, currentUser.id);
+
+    // Get user centers from access control service
+    const userService = this.userService as any; // Access the accessControlService
+    const centers =
+      await userService.accessControlService.getUserCenters(userId);
+
+    return {
+      userId,
+      centers: centers.map((center: any) => ({
+        centerId: center.centerId,
+        centerName: center.center?.name || 'Unknown Center',
+        isActive: center.isActive,
+        joinedAt: center.createdAt,
+      })),
+    };
+  }
+
+  @Get(':id/access')
+  @ApiOperation({ summary: 'Get users that this user can access/manage' })
+  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'User access list retrieved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @Permissions(PERMISSIONS.USER.READ.action)
+  async getUserAccess(
+    @Param('id') userId: string,
+    @GetUser() currentUser: CurrentUserType,
+  ) {
+    // First check if current user can access the target user
+    await this.userService.getProfile(userId, undefined, currentUser.id);
+
+    // Get user access list from access control service
+    const userService = this.userService as any; // Access the accessControlService
+    const accessList =
+      await userService.accessControlService.listUserAccesses(userId);
+
+    return {
+      userId,
+      accessList: accessList.map((access: any) => ({
+        targetUserId: access.targetUserId,
+        grantedAt: access.createdAt,
+        centerId: access.centerId,
+      })),
+    };
   }
 }

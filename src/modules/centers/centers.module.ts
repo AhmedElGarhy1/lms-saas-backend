@@ -9,11 +9,12 @@ import { CentersRepository } from './repositories/centers.repository';
 
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
-import { CenterEventEmitter } from '@/common/events/center.events';
+import { CenterEventEmitter } from '@/shared/common/events/center.events';
 import {
   CenterEventEmitter as CenterEventEmitterOld,
   UserEventEmitter,
-} from '@/common/events';
+} from '@/shared/common/events';
+import { UserModule } from '@/modules/user/user.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import {
     TypeOrmModule.forFeature([Center]),
     ActivityLogModule,
     AccessControlModule,
+    UserModule,
   ],
   controllers: [CentersController],
   providers: [

@@ -6,7 +6,7 @@ import {
   IsArray,
   IsEnum,
 } from 'class-validator';
-import { RoleTypeEnum } from '../constants/role-type.enum';
+import { RoleType } from '../../../shared/common/enums/role-type.enum';
 
 export class UpdateRoleRequestDto {
   @IsOptional()
@@ -15,8 +15,8 @@ export class UpdateRoleRequestDto {
   name?: string;
 
   @IsOptional()
-  @IsEnum(RoleTypeEnum, { message: 'Invalid role type' })
-  type?: RoleTypeEnum;
+  @IsEnum(RoleType, { message: 'Invalid role type' })
+  type?: RoleType;
 
   @IsOptional()
   @IsString()

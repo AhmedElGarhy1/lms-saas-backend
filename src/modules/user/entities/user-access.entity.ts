@@ -6,10 +6,13 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from './user.entity';
+import { Center } from '@/modules/centers/entities/center.entity';
 
 @Entity('user_access')
+@Index(['granterUserId', 'targetUserId', 'centerId'], { unique: true })
 export class UserAccess {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -20,8 +23,8 @@ export class UserAccess {
   @Column()
   granterUserId: string;
 
-  @Column({ default: true })
-  isActive: boolean;
+  @Column({ nullable: true })
+  centerId: string;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -36,4 +39,8 @@ export class UserAccess {
   @ManyToOne(() => User, (user) => user.accessGranter)
   @JoinColumn({ name: 'granterUserId' })
   granter: User;
+
+  @ManyToOne(() => Center, (center) => center.userAccess, { nullable: true })
+  @JoinColumn({ name: 'centerId' })
+  center?: Center;
 }

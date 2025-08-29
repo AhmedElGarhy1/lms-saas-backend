@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { UserRole } from '../entities/roles/user-role.entity';
 import { LoggerService } from '@/shared/services/logger.service';
-import { ScopeEnum } from '@/common/constants/role-scope.enum';
+import { ScopeEnum } from '@/shared/common/constants/role-scope.enum';
 
 @Injectable()
 export class UserRoleRepository extends BaseRepository<UserRole> {

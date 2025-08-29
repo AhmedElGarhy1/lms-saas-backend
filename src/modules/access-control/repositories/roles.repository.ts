@@ -4,9 +4,9 @@ import { Repository, FindOptionsWhere } from 'typeorm';
 import { Role } from '../entities/roles/role.entity';
 import { UserRole } from '../entities/roles/user-role.entity';
 import { User } from '../../user/entities/user.entity';
-import { BaseRepository } from '../../../common/repositories/base.repository';
+import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { LoggerService } from '../../../shared/services/logger.service';
-import { RoleTypeEnum } from '../constants/role-type.enum';
+import { RoleType } from '@/shared/common/enums/role-type.enum';
 
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> {
@@ -23,11 +23,10 @@ export class RolesRepository extends BaseRepository<Role> {
   // Role management methods
   async createRole(data: {
     name: string;
-    type: RoleTypeEnum;
+    type: RoleType;
     description?: string;
     permissions?: string[];
     isActive?: boolean;
-    isAdmin?: boolean;
   }): Promise<Role> {
     const role = this.roleRepository.create(data);
     return await this.roleRepository.save(role);
@@ -58,7 +57,7 @@ export class RolesRepository extends BaseRepository<Role> {
     await this.roleRepository.delete(roleId);
   }
 
-  async getRolesByType(type: RoleTypeEnum): Promise<Role[]> {
+  async getRolesByType(type: RoleType): Promise<Role[]> {
     return await this.roleRepository.find({ where: { type } });
   }
 
@@ -66,7 +65,6 @@ export class RolesRepository extends BaseRepository<Role> {
   async assignRole(data: {
     userId: string;
     roleId: string;
-    scopeType: string;
     centerId?: string;
   }): Promise<UserRole> {
     const userRole = this.userRoleRepository.create(data);
@@ -102,19 +100,30 @@ export class RolesRepository extends BaseRepository<Role> {
     scope: string,
     centerId?: string,
   ): Promise<UserRole[]> {
-    const where: any = {
-      userId,
-      scopeType: scope,
-    };
+    const queryBuilder = this.userRoleRepository
+      .createQueryBuilder('userRole')
+      .leftJoinAndSelect('userRole.role', 'role')
+      .leftJoinAndSelect('userRole.user', 'user')
+      .where('userRole.userId = :userId', { userId });
 
-    if (centerId) {
-      where.centerId = centerId;
+    // Filter by scope based on role type and centerId
+    if (scope === 'CENTER') {
+      // For center scope, we need centerId and role should be center-specific
+      if (centerId) {
+        queryBuilder.andWhere('userRole.centerId = :centerId', { centerId });
+      }
+      queryBuilder.andWhere('role.type IN (:...centerRoleTypes)', {
+        centerRoleTypes: ['CENTER_ADMIN'],
+      });
+    } else if (scope === 'ADMIN') {
+      // For admin scope, we want global roles (no centerId or null centerId)
+      queryBuilder.andWhere('userRole.centerId IS NULL');
+      queryBuilder.andWhere('role.type IN (:...adminRoleTypes)', {
+        adminRoleTypes: ['SUPER_ADMIN', 'ADMIN', 'USER'],
+      });
     }
 
-    return await this.userRoleRepository.find({
-      where,
-      relations: ['role', 'user'],
-    });
+    return await queryBuilder.getMany();
   }
 
   async getUsersByRoleType(type: string, centerId?: string): Promise<User[]> {

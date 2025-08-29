@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BaseRepository } from '../../../common/repositories/base.repository';
+import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { UserAccess } from '../../user/entities/user-access.entity';
 import { LoggerService } from '../../../shared/services/logger.service';
 
@@ -28,11 +28,13 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
     userId: string;
     targetUserId: string;
     centerId?: string;
+    granterUserId: string;
   }): Promise<void> {
     await this.userAccessRepository.save({
-      granterUserId: body.userId,
+      granterUserId: body.granterUserId,
       targetUserId: body.targetUserId,
-      centerId: body.centerId,
+      ...(body.centerId && { centerId: body.centerId }),
+      createdBy: body.userId,
     });
   }
 
@@ -40,9 +42,10 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
     userId: string;
     targetUserId: string;
     centerId?: string;
+    granterUserId: string;
   }): Promise<void> {
     await this.userAccessRepository.delete({
-      granterUserId: body.userId,
+      granterUserId: body.granterUserId,
       targetUserId: body.targetUserId,
       ...(body.centerId && { centerId: body.centerId }),
     });

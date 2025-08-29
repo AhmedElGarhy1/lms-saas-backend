@@ -8,6 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from '../../../user/entities/user.entity';
+import { Center } from '../../../centers/entities/center.entity';
 
 @Entity('admin_center_access')
 export class AdminCenterAccess {
@@ -16,6 +17,9 @@ export class AdminCenterAccess {
 
   @Column()
   adminUserId: string;
+
+  @Column()
+  centerId: string;
 
   @Column()
   granterUserId: string;
@@ -36,4 +40,8 @@ export class AdminCenterAccess {
   @ManyToOne(() => User, (user) => user.adminCenterAccessGranted)
   @JoinColumn({ name: 'granterUserId' })
   granter: User;
+
+  @ManyToOne(() => Center)
+  @JoinColumn({ name: 'centerId' })
+  center: Center;
 }

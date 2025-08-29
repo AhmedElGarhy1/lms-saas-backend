@@ -1,35 +1,37 @@
 import { Injectable } from '@nestjs/common';
-import { PaginateQuery, Paginated } from 'nestjs-paginate';
+import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
+import { Pagination } from 'nestjs-typeorm-paginate';
 import { RolesRepository } from '../repositories/roles.repository';
 import { Role } from '../entities/roles/role.entity';
-import { RoleTypeEnum } from '../constants/role-type.enum';
+import { RoleType } from '@/shared/common/enums/role-type.enum';
 
 @Injectable()
 export class RolesService {
   constructor(private readonly rolesRepository: RolesRepository) {}
 
-  async paginateRoles(query: PaginateQuery): Promise<Paginated<Role>> {
-    return this.rolesRepository.paginate(query, {
+  async paginateRoles(query: PaginationQuery): Promise<Pagination<Role>> {
+    return this.rolesRepository.paginate({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      filter: query.filter,
+      sortBy: query.sortBy,
       searchableColumns: ['name', 'description'],
       sortableColumns: ['name', 'description', 'createdAt'],
-      filterableColumns: ['name', 'description', 'type'],
       defaultSortBy: ['name', 'ASC'],
-      defaultLimit: 10,
-      maxLimit: 100,
     });
   }
 
-  async getRolesByType(type: RoleTypeEnum) {
+  async getRolesByType(type: RoleType) {
     return this.rolesRepository.getRolesByType(type);
   }
 
   async createRole(data: {
     name: string;
-    type: RoleTypeEnum;
+    type: RoleType;
     description?: string;
     permissions?: string[];
     isActive?: boolean;
-    isAdmin?: boolean;
   }) {
     return this.rolesRepository.createRole(data);
   }
@@ -53,7 +55,6 @@ export class RolesService {
   async assignRole(data: {
     userId: string;
     roleId: string;
-    scopeType: string;
     centerId?: string;
   }) {
     return this.rolesRepository.assignRole(data);
@@ -73,6 +74,14 @@ export class RolesService {
 
   async getUserRolesForScope(userId: string, scope: string, centerId?: string) {
     return this.rolesRepository.getUserRolesForScope(userId, scope, centerId);
+  }
+
+  async getUserRolesForCenter(userId: string, centerId: string) {
+    return this.rolesRepository.getUserRolesForScope(
+      userId,
+      'CENTER',
+      centerId,
+    );
   }
 
   async getUsersByRoleType(type: string, centerId?: string) {
@@ -122,7 +131,7 @@ export class RolesService {
       centerId,
     );
     const centerAdminRoles = userRoles.filter(
-      (ur) => ur.role.type === 'CENTER_ADMIN',
+      (ur) => ur.role.type === RoleType.CENTER_ADMIN,
     );
     return centerAdminRoles.map((ur) => ur.userId);
   }
