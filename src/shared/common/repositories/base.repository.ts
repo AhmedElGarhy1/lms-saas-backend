@@ -608,8 +608,34 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       condition: string;
       params: Record<string, any>;
     }[] = [];
+
+    // Handle date range filtering first
+    if (filters.dateFrom || filters.dateTo) {
+      const dateField =
+        fieldMapping.dateFrom || fieldMapping.dateTo || 'user.createdAt';
+
+      if (filters.dateFrom) {
+        conditions.push({
+          condition: `${dateField} >= :dateFrom`,
+          params: { dateFrom: filters.dateFrom },
+        });
+      }
+
+      if (filters.dateTo) {
+        conditions.push({
+          condition: `${dateField} <= :dateTo`,
+          params: { dateTo: filters.dateTo },
+        });
+      }
+    }
+
     Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
+      if (
+        value !== undefined &&
+        value !== null &&
+        key !== 'dateFrom' &&
+        key !== 'dateTo'
+      ) {
         // Use field mapping or default to the key name
         const dbField = fieldMapping[key] || key;
 

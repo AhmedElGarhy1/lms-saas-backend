@@ -24,6 +24,14 @@ export class UserFilterDto {
   @IsString()
   createdAt?: string;
 
+  @IsOptional()
+  @IsString()
+  dateFrom?: string;
+
+  @IsOptional()
+  @IsString()
+  dateTo?: string;
+
   // Field mapping for database queries
   static readonly FIELD_MAPPING = {
     isActive: 'user.isActive',

@@ -32,6 +32,17 @@ export class UserRoleDto {
   centerId?: string;
 }
 
+export class CenterAccessDto {
+  @IsOptional()
+  @IsString()
+  centerId?: string; // Can be null for global roles
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UserRoleDto)
+  roles: UserRoleDto[];
+}
+
 export class CreateUserRequestDto {
   @IsString()
   @MinLength(2, { message: 'Name must be at least 2 characters' })
@@ -49,10 +60,6 @@ export class CreateUserRequestDto {
   isActive?: boolean;
 
   @IsOptional()
-  @IsString()
-  centerId?: string;
-
-  @IsOptional()
   @ValidateNested()
   @Type(() => UserProfileDto)
   profile?: UserProfileDto;
@@ -60,6 +67,6 @@ export class CreateUserRequestDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => UserRoleDto)
-  roles?: UserRoleDto[];
+  @Type(() => CenterAccessDto)
+  centerAccess?: CenterAccessDto[]; // Center access with roles (centerId can be null for global roles)
 }

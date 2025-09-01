@@ -58,63 +58,66 @@ export class CentersService {
   ): Promise<Pagination<Center>> {
     this.logger.info(`Listing centers for user: ${userId}`);
 
-    // Get centers that the current user has admin access to
-    const adminCenterIds =
-      await this.accessControlService.getAdminCenterIds(userId);
-    this.logger.info(`Admin center IDs: ${adminCenterIds.join(', ')}`);
+    return await this.centersRepository.paginateCenters(query);
 
-    // Get centers that the current user has user access to
-    const userCenters = await this.accessControlService.getUserCenters(userId);
-    this.logger.info(`User centers: ${JSON.stringify(userCenters)}`);
-    const userCenterIds = userCenters.map((center) => center.centerId);
-    this.logger.info(`User center IDs: ${userCenterIds.join(', ')}`);
+    // Get centers that
+    // //  the current user has admin access to
+    // const adminCenterIds =
+    //   await this.accessControlService.getAdminCenterIds(userId);
+    // this.logger.info(`Admin center IDs: ${adminCenterIds.join(', ')}`);
 
-    // Combine both admin and user center IDs
-    const allCenterIds = [...new Set([...adminCenterIds, ...userCenterIds])];
-    this.logger.info(`All center IDs: ${allCenterIds.join(', ')}`);
+    // // Get centers that the current user has user access to
+    // const userCenters = await this.accessControlService.getUserCenters(userId);
+    // this.logger.info(`User centers: ${JSON.stringify(userCenters)}`);
+    // const userCenterIds = userCenters.map((center) => center.centerId);
+    // this.logger.info(`User center IDs: ${userCenterIds.join(', ')}`);
 
-    // If user has no access to any centers, return empty result
-    if (allCenterIds.length === 0) {
-      this.logger.info(`No centers found for user: ${userId}`);
-      return {
-        items: [],
-        meta: {
-          itemCount: 0,
-          itemsPerPage: 0,
-          totalItems: 0,
-          currentPage: 1,
-          totalPages: 0,
-        },
-        links: {
-          first: '',
-          previous: '',
-          next: '',
-          last: '',
-        },
-      };
-    }
+    // // Combine both admin and user center IDs
+    // const allCenterIds = [...new Set([...adminCenterIds, ...userCenterIds])];
+    // this.logger.info(`All center IDs: ${allCenterIds.join(', ')}`);
 
-    // Apply center access filter to the query
-    const filter: { [column: string]: string | string[] } = { ...query.filter };
-    if (allCenterIds.length > 0) {
-      filter.id = allCenterIds.join(',');
-    }
+    // // If user has no access to any centers, return empty result
+    // if (allCenterIds.length === 0) {
+    //   this.logger.info(`No centers found for user: ${userId}`);
+    //   return {
+    //     items: [],
+    //     meta: {
+    //       itemCount: 0,
+    //       itemsPerPage: 0,
+    //       totalItems: 0,
+    //       currentPage: 1,
+    //       totalPages: 0,
+    //     },
+    //     links: {
+    //       first: '',
+    //       previous: '',
+    //       next: '',
+    //       last: '',
+    //     },
+    //   };
+    // }
 
-    const filteredQuery = {
-      ...query,
-      filter,
-    };
+    // // Apply center access filter to the query
+    // const filter: { [column: string]: string | string[] } = { ...query.filter };
+    // if (allCenterIds.length > 0) {
+    //   filter.id = allCenterIds.join(',');
+    // }
 
-    this.logger.info(`Filtered query: ${JSON.stringify(filteredQuery)}`);
+    // const filteredQuery = {
+    //   ...query,
+    //   filter,
+    // };
 
-    // Use the repository's pagination method
-    const result = await this.centersRepository.paginateCenters(filteredQuery);
+    // this.logger.info(`Filtered query: ${JSON.stringify(filteredQuery)}`);
 
-    this.logger.info(
-      `Retrieved ${result.items.length} centers for user: ${userId}`,
-    );
+    // // Use the repository's pagination method
+    // const result = await this.centersRepository.paginateCenters(filteredQuery);
 
-    return result;
+    // this.logger.info(
+    //   `Retrieved ${result.items.length} centers for user: ${userId}`,
+    // );
+
+    // return result;
   }
 
   async getCenterById(centerId: string, userId: string): Promise<Center> {

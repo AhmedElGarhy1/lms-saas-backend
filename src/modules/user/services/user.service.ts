@@ -164,37 +164,66 @@ export class UserService {
       await this.profileService.createUserProfile(savedUser.id, {});
     }
 
-    // Assign roles if provided
-    if (dto.roles && dto.roles.length > 0) {
-      for (const roleData of dto.roles) {
-        await this.rolesService.assignRole({
-          userId: savedUser.id,
-          roleId: roleData.roleId,
-          centerId: roleData.centerId,
-        });
-      }
-    }
-
-    // Create user access for the creator if currentUserId is provided
-    if (currentUserId && currentUserId !== savedUser.id && dto.centerId) {
-      try {
-        await this.accessControlService.grantUserAccess({
-          userId: currentUserId,
-          granterUserId: currentUserId,
-          targetUserId: savedUser.id,
-          centerId: dto.centerId,
-        });
-        this.logger.info(
-          `User access granted from ${currentUserId} to ${savedUser.id}`,
-        );
-      } catch (error) {
-        this.logger.warn(`Failed to grant user access: ${error.message}`);
-      }
-    }
+    // Handle center access and role assignments
+    await this.handleUserCenterAccess(savedUser.id, dto, currentUserId);
 
     this.logger.info(`User created: ${savedUser.email}`);
 
     return savedUser;
+  }
+
+  /**
+   * Handle center access and role assignments for a user
+   */
+  private async handleUserCenterAccess(
+    userId: string,
+    dto: CreateUserRequestDto,
+    currentUserId?: string,
+  ): Promise<void> {
+    // Handle center access with roles
+    if (dto.centerAccess && dto.centerAccess.length > 0) {
+      for (const centerAccess of dto.centerAccess) {
+        // If centerId is provided, create user-center relationship
+        if (centerAccess.centerId) {
+          await this.accessControlService.addUserToCenter({
+            userId,
+            centerId: centerAccess.centerId,
+          });
+        }
+
+        // Assign roles (can be global roles if centerId is null)
+        for (const roleData of centerAccess.roles) {
+          await this.rolesService.assignRole({
+            userId,
+            roleId: roleData.roleId,
+            centerId: centerAccess.centerId || undefined,
+          });
+        }
+
+        // Grant access to the creator if currentUserId is provided and centerId exists
+        if (
+          currentUserId &&
+          currentUserId !== userId &&
+          centerAccess.centerId
+        ) {
+          try {
+            await this.accessControlService.grantUserAccess({
+              userId: currentUserId,
+              granterUserId: currentUserId,
+              targetUserId: userId,
+              centerId: centerAccess.centerId,
+            });
+            this.logger.info(
+              `User access granted from ${currentUserId} to ${userId} for center ${centerAccess.centerId}`,
+            );
+          } catch (error) {
+            this.logger.warn(
+              `Failed to grant user access for center ${centerAccess.centerId}: ${error.message}`,
+            );
+          }
+        }
+      }
+    }
   }
 
   async listUsers(params: UserListQuery) {
