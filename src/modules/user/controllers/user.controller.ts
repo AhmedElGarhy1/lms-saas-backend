@@ -110,6 +110,26 @@ export class UserController {
     return this.userService.getProfile(userId, centerId, currentUser?.id);
   }
 
+  @Get(':id/with-relations')
+  @ApiOperation({
+    summary: 'Get user by ID with all relations populated',
+    description:
+      'Get user with populated centers, center details, and roles inside centers for edit/preview',
+  })
+  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'User with relations retrieved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @Permissions(PERMISSIONS.USER.READ.action)
+  async getUserByIdWithRelations(
+    @Param('id') userId: string,
+    @GetUser() currentUser?: CurrentUserType,
+  ) {
+    return this.userService.getUserByIdWithRelations(userId, currentUser?.id);
+  }
+
   @Post()
   @ApiOperation({ summary: 'Create a new user' })
   @ApiBody({ type: CreateUserRequestDto })
@@ -177,6 +197,40 @@ export class UserController {
 
     await this.userService.activateUser(userId, activationData, currentUser.id);
     return { id: userId, message: 'User activated successfully' };
+  }
+
+  @Patch(':id/status')
+  @Permissions(PERMISSIONS.USER.UPDATE.action)
+  @ApiOperation({ summary: 'Toggle user active status' })
+  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        isActive: { type: 'boolean' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User status updated successfully',
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async toggleUserStatus(
+    @Param('id') userId: string,
+    @Body() body: { isActive: boolean },
+    @GetUser() currentUser: CurrentUserType,
+  ) {
+    await this.userService.activateUser(
+      userId,
+      { isActive: body.isActive },
+      currentUser.id,
+    );
+    return {
+      id: userId,
+      message: `User ${body.isActive ? 'activated' : 'deactivated'} successfully`,
+      isActive: body.isActive,
+    };
   }
 
   @Delete(':id')

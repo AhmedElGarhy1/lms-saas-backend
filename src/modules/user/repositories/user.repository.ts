@@ -142,6 +142,87 @@ export class UserRepository extends BaseRepository<User> {
   }
 
   /**
+   * Find user by ID with all relations populated for edit/preview
+   * Includes centers with center details and roles inside centers
+   */
+  async findUserByIdWithRelations(userId: string): Promise<User | null> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: [
+          'profile',
+          'centers',
+          'centers.center',
+          'userRoles',
+          'userRoles.role',
+        ],
+      });
+
+      if (!user) {
+        return null;
+      }
+
+      // Transform the data to embed userRoles within centers
+      if (user.centers && (user as any).userRoles) {
+        // Group userRoles by centerId
+        const rolesByCenter = new Map<string, any[]>();
+        const globalRoles: any[] = [];
+
+        (user as any).userRoles.forEach((userRole: any) => {
+          if (userRole.centerId) {
+            // Role assigned to a specific center
+            if (!rolesByCenter.has(userRole.centerId)) {
+              rolesByCenter.set(userRole.centerId, []);
+            }
+            rolesByCenter.get(userRole.centerId)!.push(userRole);
+          } else {
+            // Global role (not tied to any center)
+            globalRoles.push(userRole);
+          }
+        });
+
+        // Embed roles within each center
+        user.centers = user.centers.map((center) => ({
+          ...center,
+          roles: rolesByCenter.get(center.centerId) || [],
+        }));
+
+        // Add global roles as a special "center"
+        if (globalRoles.length > 0) {
+          user.centers.push({
+            id: 'global',
+            centerId: 'global',
+            userId: user.id,
+            isActive: true,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+            center: {
+              id: 'global',
+              name: 'Global Roles',
+              description: 'Roles not tied to any specific center',
+              status: 'ACTIVE',
+            } as any,
+            roles: globalRoles,
+          } as any);
+        }
+      }
+
+      // Remove the top-level userRoles since they're now embedded in centers
+      if ('userRoles' in user) {
+        delete (user as any).userRoles;
+      }
+
+      return user;
+    } catch (error) {
+      this.logger.error(
+        `Error finding user by ID with relations ${userId}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Paginate users in a specific center using JOINs for better performance
    * @param query - Pagination query
    * @param centerId - Center ID to filter users

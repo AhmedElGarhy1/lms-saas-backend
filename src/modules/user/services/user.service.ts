@@ -84,6 +84,35 @@ export class UserService {
     return user;
   }
 
+  /**
+   * Get user by ID with all relations populated for edit/preview
+   * Includes centers with center details and roles inside centers
+   */
+  async getUserByIdWithRelations(userId: string, currentUserId?: string) {
+    // First check if the user exists
+    const user = await this.userRepository.findUserByIdWithRelations(userId);
+
+    if (!user) {
+      throw new ResourceNotFoundException('User not found');
+    }
+
+    // Then check if current user can access the target user
+    if (currentUserId && currentUserId !== userId) {
+      try {
+        await this.accessControlHelperService.validateUserAccess(
+          currentUserId,
+          userId,
+        );
+      } catch {
+        throw new InsufficientPermissionsException(
+          'Access denied to this user',
+        );
+      }
+    }
+
+    return user;
+  }
+
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     const user = await this.userRepository.findUserForProfile(userId);
     if (!user) {
