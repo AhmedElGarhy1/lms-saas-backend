@@ -32,7 +32,6 @@ import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { CreateUserRequestDto } from '../dto/create-user.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
-import { ActivateUserRequestDto } from '../dto/activate-user.dto';
 
 import { USER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 
@@ -161,6 +160,69 @@ export class UserController {
     return this.userService.updateProfile(userId, dto);
   }
 
+  @Put(':id')
+  @ApiOperation({ summary: 'Update user information' })
+  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        email: { type: 'string' },
+        isActive: { type: 'boolean' },
+        centerAccess: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              centerId: { type: 'string', nullable: true },
+              roleIds: { type: 'array', items: { type: 'string' } },
+            },
+          },
+        },
+        profile: {
+          type: 'object',
+          properties: {
+            phone: { type: 'string' },
+            address: { type: 'string' },
+            dateOfBirth: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'User updated successfully' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @Permissions(PERMISSIONS.USER.UPDATE.action)
+  async updateUser(
+    @Param('id') userId: string,
+    @Body()
+    body: {
+      name?: string;
+      email?: string;
+      isActive?: boolean;
+      centerAccess?: Array<{
+        centerId: string | null;
+        roleIds: string[];
+      }>;
+      profile?: {
+        phone?: string;
+        address?: string;
+        dateOfBirth?: string;
+      };
+    },
+    @GetUser() currentUser: CurrentUserType,
+  ) {
+    // Only pass basic user fields to the service method
+    const basicUserData = {
+      name: body.name,
+      email: body.email,
+      isActive: body.isActive,
+    };
+
+    return this.userService.updateUser(userId, basicUserData, currentUser.id);
+  }
+
   @Patch(':id/password')
   @ApiOperation({ summary: 'Change user password' })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
@@ -174,29 +236,6 @@ export class UserController {
     @Body() dto: ChangePasswordRequestDto,
   ) {
     return this.userService.changePassword(userId, dto);
-  }
-
-  @Post(':id/activate')
-  @Permissions(PERMISSIONS.USER.ACTIVATE.action)
-  @ApiOperation({ summary: 'Activate or deactivate a user' })
-  @ApiParam({ name: 'id', type: String })
-  @ApiBody({ type: ActivateUserRequestDto })
-  @ApiResponse({
-    status: 200,
-    description: 'User activation status updated successfully',
-  })
-  async activateUser(
-    @Param('id') userId: string,
-    @Body() dto: ActivateUserRequestDto,
-    @GetUser() currentUser: CurrentUserType,
-  ) {
-    // Convert the DTO to the expected format
-    const activationData = {
-      isActive: true, // Default to active
-    };
-
-    await this.userService.activateUser(userId, activationData, currentUser.id);
-    return { id: userId, message: 'User activated successfully' };
   }
 
   @Patch(':id/status')
@@ -259,69 +298,5 @@ export class UserController {
   ) {
     await this.userService.restoreUser(userId, currentUser.id);
     return { message: 'User restored successfully' };
-  }
-
-  // ===== FINE-GRAINED ACCESS ENDPOINTS =====
-  @Get(':id/centers')
-  @ApiOperation({ summary: 'Get centers that a user is part of' })
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'User centers retrieved successfully',
-  })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  @Permissions(PERMISSIONS.USER.READ.action)
-  async getUserCenters(
-    @Param('id') userId: string,
-    @GetUser() currentUser: CurrentUserType,
-  ) {
-    // First check if current user can access the target user
-    await this.userService.getProfile(userId, undefined, currentUser.id);
-
-    // Get user centers from access control service
-    const userService = this.userService as any; // Access the accessControlService
-    const centers =
-      await userService.accessControlService.getUserCenters(userId);
-
-    return {
-      userId,
-      centers: centers.map((center: any) => ({
-        centerId: center.centerId,
-        centerName: center.center?.name || 'Unknown Center',
-        isActive: center.isActive,
-        joinedAt: center.createdAt,
-      })),
-    };
-  }
-
-  @Get(':id/access')
-  @ApiOperation({ summary: 'Get users that this user can access/manage' })
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'User access list retrieved successfully',
-  })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  @Permissions(PERMISSIONS.USER.READ.action)
-  async getUserAccess(
-    @Param('id') userId: string,
-    @GetUser() currentUser: CurrentUserType,
-  ) {
-    // First check if current user can access the target user
-    await this.userService.getProfile(userId, undefined, currentUser.id);
-
-    // Get user access list from access control service
-    const userService = this.userService as any; // Access the accessControlService
-    const accessList =
-      await userService.accessControlService.listUserAccesses(userId);
-
-    return {
-      userId,
-      accessList: accessList.map((access: any) => ({
-        targetUserId: access.targetUserId,
-        grantedAt: access.createdAt,
-        centerId: access.centerId,
-      })),
-    };
   }
 }

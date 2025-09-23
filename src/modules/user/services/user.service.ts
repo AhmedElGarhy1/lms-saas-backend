@@ -667,4 +667,51 @@ export class UserService {
       throw error;
     }
   }
+
+  /**
+   * Update basic user information (name, email, isActive)
+   * This method updates fields directly on the user entity
+   */
+  async updateUser(
+    userId: string,
+    updateData: {
+      name?: string;
+      email?: string;
+      isActive?: boolean;
+    },
+    currentUserId?: string,
+  ): Promise<User> {
+    this.logger.info(
+      `Updating user ${userId} with data:`,
+      'UserService',
+      updateData,
+    );
+
+    // Validate user access
+    if (currentUserId) {
+      await this.accessControlHelperService.validateUserAccess(
+        currentUserId,
+        userId,
+      );
+    }
+
+    // Prepare update data (only include fields that are provided)
+    const userUpdateData: Partial<User> = {};
+    if (updateData.name !== undefined) userUpdateData.name = updateData.name;
+    if (updateData.email !== undefined) userUpdateData.email = updateData.email;
+    if (updateData.isActive !== undefined)
+      userUpdateData.isActive = updateData.isActive;
+
+    // Update user using repository
+    await this.userRepository.update(userId, userUpdateData);
+
+    // Return updated user
+    const updatedUser = await this.userRepository.findUserBasic(userId);
+    if (!updatedUser) {
+      throw new ResourceNotFoundException('User not found after update');
+    }
+
+    this.logger.info(`User ${userId} updated successfully`);
+    return updatedUser;
+  }
 }
