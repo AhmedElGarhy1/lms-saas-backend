@@ -166,7 +166,7 @@ export class RolesRepository extends BaseRepository<Role> {
     });
   }
 
-  async findById(roleId: string): Promise<Role | null> {
+  async findWithRelations(roleId: string): Promise<Role | null> {
     return await this.roleRepository.findOne({ where: { id: roleId } });
   }
 

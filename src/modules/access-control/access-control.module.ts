@@ -10,7 +10,6 @@ import { RolesService } from './services/roles.service';
 import { AccessControlRepository } from './repositories/access-control.repository';
 import { PermissionRepository } from './repositories/permission.repository';
 import { UserAccessRepository } from './repositories/user-access.repository';
-import { AdminCenterAccessRepository } from './repositories/admin-center-access.repository';
 import { UserOnCenterRepository } from './repositories/user-on-center.repository';
 import { RolesRepository } from './repositories/roles.repository';
 import { UserRoleRepository } from './repositories/user-role.repository';
@@ -18,7 +17,6 @@ import { Center } from '../centers/entities/center.entity';
 import { Permission } from './entities/permission.entity';
 import { Role } from './entities/roles/role.entity';
 import { UserRole } from './entities/roles/user-role.entity';
-import { AdminCenterAccess } from './entities/admin/admin-center-access.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { UserOnCenter } from './entities/user-on-center.entity';
 import { DatabaseModule } from '@/shared/modules/database/database.module';
@@ -33,7 +31,6 @@ import { RoleEventEmitter } from '@/shared/common/events/role.events';
       Permission,
       Role,
       UserRole,
-      AdminCenterAccess,
       UserAccess,
       UserOnCenter,
     ]),
@@ -48,7 +45,6 @@ import { RoleEventEmitter } from '@/shared/common/events/role.events';
     AccessControlRepository,
     PermissionRepository,
     UserAccessRepository,
-    AdminCenterAccessRepository,
     UserOnCenterRepository,
     RolesRepository,
     UserRoleRepository,
@@ -68,7 +64,6 @@ import { RoleEventEmitter } from '@/shared/common/events/role.events';
     AccessControlRepository,
     PermissionRepository,
     UserAccessRepository,
-    AdminCenterAccessRepository,
     UserOnCenterRepository,
     UserRoleRepository,
   ],

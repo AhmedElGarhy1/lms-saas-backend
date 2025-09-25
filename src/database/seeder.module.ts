@@ -8,7 +8,6 @@ import { Role } from '@/modules/access-control/entities/roles/role.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { AdminCenterAccess } from '@/modules/access-control/entities/admin/admin-center-access.entity';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { CentersModule } from '@/modules/centers/centers.module';
 
@@ -22,7 +21,6 @@ import { CentersModule } from '@/modules/centers/centers.module';
       Permission,
       UserRole,
       UserAccess,
-      AdminCenterAccess,
     ]),
     ActivityLogModule,
     CentersModule,

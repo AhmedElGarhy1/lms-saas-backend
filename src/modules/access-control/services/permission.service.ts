@@ -22,7 +22,7 @@ export class PermissionService {
    */
   async getAllPermissions(): Promise<Permission[]> {
     try {
-      return await this.permissionRepository.findAll();
+      return await this.permissionRepository.findMany();
     } catch (error) {
       this.logger.error('Failed to fetch all permissions from database', error);
       throw error;
@@ -85,10 +85,11 @@ export class PermissionService {
         );
       } else if (context?.scope === ScopeEnum.ADMIN) {
         // Get admin roles
-        userRoles = await this.userRoleRepository.findUserRolesByScope(
-          userId,
-          ScopeEnum.ADMIN,
-        );
+        // userRoles = await this.userRoleRepository.findUserRolesByScope(
+        //   userId,
+        //   ScopeEnum.ADMIN,
+        // );
+        userRoles = await this.userRoleRepository.findUserRolesByUserId(userId);
       } else {
         // Get all user roles
         userRoles = await this.userRoleRepository.findUserRolesByUserId(userId);
@@ -289,7 +290,7 @@ export class PermissionService {
    */
   async getPermissionById(permissionId: string): Promise<Permission | null> {
     try {
-      return await this.permissionRepository.findById(permissionId);
+      return await this.permissionRepository.findWithRelations(permissionId);
     } catch (error) {
       this.logger.error(
         `Failed to fetch permission by ID: ${permissionId}`,
@@ -304,7 +305,7 @@ export class PermissionService {
    */
   async getPermissionByAction(action: string): Promise<Permission | null> {
     try {
-      const permissions = await this.permissionRepository.findWithOptions({
+      const permissions = await this.permissionRepository.findMany({
         where: { action },
       });
       return permissions.length > 0 ? permissions[0] : null;

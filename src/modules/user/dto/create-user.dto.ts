@@ -23,24 +23,14 @@ export class UserProfileDto {
   dateOfBirth?: string;
 }
 
-export class UserRoleDto {
-  @IsString()
-  roleId: string;
-
-  @IsOptional()
-  @IsString()
-  centerId?: string;
-}
-
 export class CenterAccessDto {
   @IsOptional()
   @IsString()
   centerId?: string; // Can be null for global roles
 
   @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => UserRoleDto)
-  roles: UserRoleDto[];
+  @IsString({ each: true })
+  roleIds: string[];
 }
 
 export class CreateUserRequestDto {
@@ -59,10 +49,9 @@ export class CreateUserRequestDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @IsOptional()
   @ValidateNested()
   @Type(() => UserProfileDto)
-  profile?: UserProfileDto;
+  profile: UserProfileDto;
 
   @IsOptional()
   @IsArray()

@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { User } from '@/modules/user/entities/user.entity';
 import { Profile } from '@/modules/user/entities/profile.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { AdminCenterAccess } from '@/modules/access-control/entities/admin/admin-center-access.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
 import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
@@ -27,7 +26,6 @@ export const getDatabaseConfig = (
     User,
     Profile,
     UserAccess,
-    AdminCenterAccess,
     Center,
     Permission,
     UserOnCenter,

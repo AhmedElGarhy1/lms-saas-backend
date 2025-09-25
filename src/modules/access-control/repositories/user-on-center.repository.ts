@@ -6,6 +6,7 @@ import { Pagination } from 'nestjs-typeorm-paginate';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { UserOnCenter } from '../entities/user-on-center.entity';
 import { LoggerService } from '../../../shared/services/logger.service';
+import { Center } from '@/modules/centers/entities/center.entity';
 
 @Injectable()
 export class UserOnCenterRepository extends BaseRepository<UserOnCenter> {
@@ -43,13 +44,11 @@ export class UserOnCenterRepository extends BaseRepository<UserOnCenter> {
     });
   }
 
-  async getCenterUsers(centerId: string): Promise<Array<{ userId: string }>> {
-    const userOnCenters = await this.userOnCenterRepository.find({
+  async getCenterUsers(centerId: string): Promise<UserOnCenter[]> {
+    return this.userOnCenterRepository.find({
       where: { centerId },
       select: ['userId'],
     });
-
-    return userOnCenters.map((uoc) => ({ userId: uoc.userId }));
   }
 
   async hasCenterAccess(userId: string, centerId: string): Promise<boolean> {

@@ -30,13 +30,13 @@ export class Profile {
   type: ProfileType;
 
   @Column({ nullable: true })
-  phone: string;
+  phone?: string;
 
   @Column({ nullable: true })
-  address: string;
+  address?: string;
 
   @Column({ nullable: true })
-  dateOfBirth: Date;
+  dateOfBirth?: Date;
 
   @CreateDateColumn()
   createdAt: Date;

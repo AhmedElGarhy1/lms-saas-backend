@@ -3,11 +3,9 @@ import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { Permission } from '../entities/permission.entity';
 import { UserAccess } from '../../user/entities/user-access.entity';
-import { AdminCenterAccess } from '../entities/admin/admin-center-access.entity';
 import { UserOnCenter } from '../entities/user-on-center.entity';
 import { PermissionRepository } from './permission.repository';
 import { UserAccessRepository } from './user-access.repository';
-import { AdminCenterAccessRepository } from './admin-center-access.repository';
 import { UserOnCenterRepository } from './user-on-center.repository';
 import { LoggerService } from '../../../shared/services/logger.service';
 
@@ -17,7 +15,6 @@ export class AccessControlRepository {
     private readonly logger: LoggerService,
     private readonly permissionRepo: PermissionRepository,
     private readonly userAccessRepo: UserAccessRepository,
-    private readonly adminCenterAccessRepo: AdminCenterAccessRepository,
     private readonly userOnCenterRepo: UserOnCenterRepository,
   ) {}
 
@@ -112,26 +109,6 @@ export class AccessControlRepository {
     return this.userAccessRepo.listUserAccesses(userId);
   }
 
-  // Admin Center Access methods - delegate to AdminCenterAccessRepository
-  async grantAdminCenterAccess(body: {
-    adminId: string;
-    centerId: string;
-    grantedBy: string;
-  }): Promise<void> {
-    return this.adminCenterAccessRepo.grantAdminCenterAccess(body);
-  }
-
-  async revokeAdminCenterAccess(body: {
-    adminId: string;
-    centerId: string;
-  }): Promise<void> {
-    return this.adminCenterAccessRepo.revokeAdminCenterAccess(body);
-  }
-
-  async getAdminCenterAccess(adminId: string): Promise<AdminCenterAccess[]> {
-    return this.adminCenterAccessRepo.getAdminCenterAccess(adminId);
-  }
-
   // Center Access methods - delegate to UserOnCenterRepository
   async findCenterAccess(
     userId: string,
@@ -163,7 +140,7 @@ export class AccessControlRepository {
     );
   }
 
-  async getUserCenters(userId: string): Promise<UserOnCenter[]> {
+  async getUserCenters(userId: string) {
     return this.userOnCenterRepo.getUserCenters(userId);
   }
 
@@ -231,24 +208,6 @@ export class AccessControlRepository {
     if (hasDirectAccess) {
       return true;
     }
-
-    // Check if user has admin center access
-    const adminAccess = await this.adminCenterAccessRepo.findAdminCenterAccess(
-      userId,
-      centerId,
-    );
-    if (adminAccess) {
-      return true;
-    }
-
-    // Check if user has admin permissions
-    // This method is no longer needed as permissions are role-based
-    // Keeping it for now to avoid breaking existing calls, but it will be removed later
-    // const userPermissions = await this.getUserPermissions(userId);
-
-    // const hasAdminPermission = userPermissions.some(
-    //   (userPermission) => userPermission.permission.isAdmin,
-    // );
 
     return false; // No longer applicable
   }

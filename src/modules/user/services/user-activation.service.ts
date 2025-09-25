@@ -62,7 +62,7 @@ export class UserActivationService {
   }
 
   async getUserActivationStatus(userId: string): Promise<ActivationStatus> {
-    const user = await this.userRepository.findUserWithCenters(userId);
+    const user = await this.userRepository.findOne(userId);
 
     if (!user) {
       throw new NotFoundException('User not found');

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import {
   ResourceNotFoundException,
   InsufficientPermissionsException,
@@ -20,6 +20,7 @@ import { User } from '../entities/user.entity';
 import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
 import { ScopeEnum } from '@/shared/common/constants/role-scope.enum';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
+import { CentersService } from '@/modules/centers/services/centers.service';
 
 export interface UserListQuery {
   query: PaginationQuery;
@@ -38,11 +39,26 @@ export class UserService {
     private readonly profileService: ProfileService,
     private readonly userEventEmitter: UserEventEmitter,
     private readonly logger: LoggerService,
+    private readonly centersService: CentersService,
   ) {}
 
   async getProfile(userId: string, centerId?: string, currentUserId?: string) {
     // First check if the user exists
-    const user = await this.userRepository.findUserWithCenters(userId);
+    const user = await this.userRepository.findWithRelations(userId);
+
+    // Then check if current user can access the target user
+    if (currentUserId && currentUserId !== userId) {
+      try {
+        await this.accessControlHelperService.validateUserAccess(
+          currentUserId,
+          userId,
+        );
+      } catch {
+        throw new InsufficientPermissionsException(
+          'Access denied to this user',
+        );
+      }
+    }
 
     if (!user) {
       throw new ResourceNotFoundException('User not found');
@@ -84,37 +100,8 @@ export class UserService {
     return user;
   }
 
-  /**
-   * Get user by ID with all relations populated for edit/preview
-   * Includes centers with center details and roles inside centers
-   */
-  async getUserByIdWithRelations(userId: string, currentUserId?: string) {
-    // First check if the user exists
-    const user = await this.userRepository.findUserByIdWithRelations(userId);
-
-    if (!user) {
-      throw new ResourceNotFoundException('User not found');
-    }
-
-    // Then check if current user can access the target user
-    if (currentUserId && currentUserId !== userId) {
-      try {
-        await this.accessControlHelperService.validateUserAccess(
-          currentUserId,
-          userId,
-        );
-      } catch {
-        throw new InsufficientPermissionsException(
-          'Access denied to this user',
-        );
-      }
-    }
-
-    return user;
-  }
-
   async updateProfile(userId: string, dto: UpdateProfileDto) {
-    const user = await this.userRepository.findUserForProfile(userId);
+    const user = await this.userRepository.findWithRelations(userId);
     if (!user) {
       this.logger.warn(`User not found: ${userId}`);
       throw new ResourceNotFoundException('User not found');
@@ -135,7 +122,7 @@ export class UserService {
     await this.profileService.updateProfile(user.profile.id, profileUpdateData);
 
     // Return updated user
-    const updated = await this.userRepository.findUserWithProfile(userId);
+    const updated = await this.userRepository.findWithRelations(userId);
     return updated;
   }
 
@@ -163,11 +150,13 @@ export class UserService {
     return { message: 'Password changed successfully' };
   }
 
-  async createUser(
-    dto: CreateUserRequestDto,
-    currentUserId?: string,
-  ): Promise<User> {
+  async createUser(dto: CreateUserRequestDto): Promise<User> {
     this.logger.info(`Creating user: ${dto.email}`);
+    // TODO: before creattion check if user already exists
+    const existingUser = await this.userRepository.findByEmail(dto.email);
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -181,20 +170,15 @@ export class UserService {
     });
 
     // Create profile with provided details or default
-    if (dto.profile) {
-      await this.profileService.createUserProfile(savedUser.id, {
-        phone: dto.profile.phone,
-        address: dto.profile.address,
-        dateOfBirth: dto.profile.dateOfBirth
-          ? new Date(dto.profile.dateOfBirth)
-          : undefined,
-      });
-    } else {
-      await this.profileService.createUserProfile(savedUser.id, {});
-    }
-
-    // Handle center access and role assignments
-    await this.handleUserCenterAccess(savedUser.id, dto, currentUserId);
+    const profile = await this.profileService.createUserProfile(savedUser.id, {
+      phone: dto.profile.phone,
+      address: dto.profile.address,
+      dateOfBirth: dto.profile.dateOfBirth
+        ? new Date(dto.profile.dateOfBirth)
+        : undefined,
+    });
+    savedUser.profileId = profile.id;
+    await this.userRepository.update(savedUser.id, savedUser);
 
     this.logger.info(`User created: ${savedUser.email}`);
 
@@ -204,12 +188,14 @@ export class UserService {
   /**
    * Handle center access and role assignments for a user
    */
-  private async handleUserCenterAccess(
+  async handleUserCenterAccess(
     userId: string,
     dto: CreateUserRequestDto,
-    currentUserId?: string,
+    currentUserId: string,
   ): Promise<void> {
-    // Handle center access with roles
+    const currentUserRole =
+      await this.accessControlHelperService.getUserHighestRole(currentUserId);
+    const currentUserRoleType = currentUserRole?.role?.type;
     if (dto.centerAccess && dto.centerAccess.length > 0) {
       for (const centerAccess of dto.centerAccess) {
         // If centerId is provided, create user-center relationship
@@ -221,19 +207,19 @@ export class UserService {
         }
 
         // Assign roles (can be global roles if centerId is null)
-        for (const roleData of centerAccess.roles) {
+        for (const roleId of centerAccess.roleIds) {
           await this.rolesService.assignRole({
             userId,
-            roleId: roleData.roleId,
+            roleId: roleId,
             centerId: centerAccess.centerId || undefined,
           });
         }
 
         // Grant access to the creator if currentUserId is provided and centerId exists
         if (
-          currentUserId &&
           currentUserId !== userId &&
-          centerAccess.centerId
+          ((currentUserRoleType === RoleType.ADMIN && !centerAccess.centerId) ||
+            currentUserRoleType === RoleType.USER)
         ) {
           try {
             await this.accessControlService.grantUserAccess({
@@ -276,39 +262,22 @@ export class UserService {
         userId,
         centerId,
       );
-
-      const result = await this.userRepository.paginateUsersInCenter(
-        params,
-        userRole?.role?.type ?? RoleType.USER,
-      );
-
-      // Always remove sensitive data
-      const sanitizedData = result.items.map((user: User) => {
-        const { password, twoFactorSecret, ...userData } = user;
-        return userData;
-      });
-
-      return {
-        ...result,
-        items: sanitizedData,
-      };
-    } else {
-      const result = await this.userRepository.paginateAdmins(
-        params,
-        userRole?.role?.type,
-      );
-
-      // Always remove sensitive data
-      const sanitizedData = result.items.map((user: User) => {
-        const { password, twoFactorSecret, ...userData } = user;
-        return userData;
-      });
-
-      return {
-        ...result,
-        items: sanitizedData,
-      };
     }
+    const result = await this.userRepository.paginateUsers(
+      params,
+      userRole?.role?.type ?? RoleType.USER,
+    );
+
+    // Always remove sensitive data
+    const sanitizedData = result.items.map((user: User) => {
+      const { password, twoFactorSecret, ...userData } = user;
+      return userData;
+    });
+
+    return {
+      ...result,
+      items: sanitizedData,
+    };
   }
 
   async deleteUser(userId: string, currentUserId: string): Promise<void> {
@@ -367,7 +336,7 @@ export class UserService {
     // await this.rolesService.removeAllUserRoles(userId);
 
     // 2. Delete user access grants (UserAccess - where user is granter)
-    await this.accessControlService.revokeUserAccess({
+    await this.accessControlService.revokeUserAccessValidate({
       userId: userId,
       granterUserId: userId,
       targetUserId: userId,
@@ -375,7 +344,7 @@ export class UserService {
 
     // 3. Delete user center memberships (UserOnCenter)
     const userCentersResult =
-      await this.accessControlService.getUserCenters(userId);
+      await this.accessControlHelperService.getUserCenters(userId);
     const userCenters = userCentersResult.map((center: UserOnCenter) => ({
       centerId: center.centerId || center.id,
     }));
@@ -437,16 +406,13 @@ export class UserService {
   }
 
   // Auth-related methods
-  async findUserWithAuthRelations(email: string): Promise<User | null> {
-    return this.userRepository.findUserWithAuthRelations(email);
-  }
 
   async findUserByEmail(email: string): Promise<User | null> {
     return this.userRepository.findByEmail(email);
   }
 
   async findUserById(id: string): Promise<User | null> {
-    return this.userRepository.findOne(id);
+    return this.userRepository.findWithRelations(id);
   }
 
   async updateFailedLoginAttempts(
@@ -486,35 +452,15 @@ export class UserService {
   async getCurrentUserProfile(userId: string, centerId?: string) {
     try {
       // Get user with profile
-      const user = await this.userRepository.findUserWithProfile(userId);
+      const user = await this.userRepository.findWithRelations(userId);
       if (!user) {
         throw new ResourceNotFoundException('User not found');
       }
 
       this.logger.log(`Found user: ${user.id} - ${user.name}`);
 
-      // Get all centers the user has access to (both UserOnCenter and AdminCenterAccess)
-      let userCenters;
-      try {
-        userCenters = await this.accessControlService.getUserCenters(userId);
-        this.logger.log(`User centers: ${userCenters.length}`);
-      } catch (error) {
-        this.logger.error(`Error getting user centers for ${userId}:`, error);
-        throw error;
-      }
-
-      let adminCenterAccess;
-      try {
-        adminCenterAccess =
-          await this.accessControlService.getAdminCenterAccess(userId);
-        this.logger.log(`Admin center access: ${adminCenterAccess.length}`);
-      } catch (error) {
-        this.logger.error(
-          `Error getting admin center access for ${userId}:`,
-          error,
-        );
-        throw error;
-      }
+      const userCenters =
+        await this.accessControlHelperService.getUserCenters(userId);
 
       // Combine and deduplicate centers
       const allCenters = [
@@ -523,12 +469,6 @@ export class UserService {
           name: uc.center?.name || 'Unknown Center',
           accessType: 'user' as const,
           isActive: uc.isActive,
-        })),
-        ...adminCenterAccess.map((aca) => ({
-          id: aca.centerId,
-          name: aca.center?.name || 'Unknown Center',
-          accessType: 'admin' as const,
-          isActive: true,
         })),
       ];
       const uniqueCenters = allCenters.filter(
@@ -706,7 +646,7 @@ export class UserService {
     await this.userRepository.update(userId, userUpdateData);
 
     // Return updated user
-    const updatedUser = await this.userRepository.findUserBasic(userId);
+    const updatedUser = await this.userRepository.findWithRelations(userId);
     if (!updatedUser) {
       throw new ResourceNotFoundException('User not found after update');
     }

@@ -1,64 +1,38 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { UserRole } from '../entities/roles/user-role.entity';
-import { AdminCenterAccess } from '../entities/admin/admin-center-access.entity';
 import { UserOnCenter } from '../entities/user-on-center.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
+import { RoleType } from '@/shared/common/enums/role-type.enum';
+import { UserOnCenterRepository } from '../repositories/user-on-center.repository';
+import { UserRoleRepository } from '../repositories/user-role.repository';
+import { UserAccessRepository } from '../repositories/user-access.repository';
 
 @Injectable()
 export class AccessControlHelperService {
   constructor(
-    @InjectRepository(UserRole)
-    private userRoleRepository: Repository<UserRole>,
-    @InjectRepository(AdminCenterAccess)
-    private adminCenterAccessRepository: Repository<AdminCenterAccess>,
-    @InjectRepository(UserOnCenter)
-    private userOnCenterRepository: Repository<UserOnCenter>,
-    @InjectRepository(UserAccess)
-    private userAccessRepository: Repository<UserAccess>,
+    private userRoleRepository: UserRoleRepository,
+    private userOnCenterRepository: UserOnCenterRepository,
+    private userAccessRepository: UserAccessRepository,
   ) {}
 
-  async getUserCenters(userId: string): Promise<string[]> {
-    const userCenters = await this.userOnCenterRepository.find({
-      where: { userId },
-      select: ['centerId'],
-    });
-    return userCenters.map((uc) => uc.centerId);
+  async getUserCenters(userId: string) {
+    return this.userOnCenterRepository.getUserCenters(userId);
   }
 
-  async getAdminCenters(userId: string): Promise<string[]> {
-    const adminCenters = await this.adminCenterAccessRepository.find({
-      where: { adminUserId: userId },
-      select: ['centerId'],
-    });
-    return adminCenters.map((aca) => aca.centerId);
-  }
-
+  /**
+   * Get user roles for a user, global roles and center roles
+   * @param userId - The user id
+   * @param centerId - The center id
+   * @returns The user roles
+   */
   async getUserRoles(userId: string, centerId?: string): Promise<UserRole[]> {
-    const where: any = { userId };
-    if (centerId) {
-      where.centerId = centerId;
-    }
-
-    return this.userRoleRepository.find({
-      where,
-      relations: ['role'],
-    });
+    return this.userRoleRepository.getUserRoles(userId, centerId);
   }
 
   async hasCenterAccess(userId: string, centerId: string): Promise<boolean> {
-    const userCenter = await this.userOnCenterRepository.findOne({
-      where: { userId, centerId },
-    });
-    return !!userCenter;
-  }
-
-  async hasAdminAccess(userId: string, centerId: string): Promise<boolean> {
-    const adminAccess = await this.adminCenterAccessRepository.findOne({
-      where: { adminUserId: userId, centerId },
-    });
-    return !!adminAccess;
+    return this.userOnCenterRepository.hasCenterAccess(userId, centerId);
   }
 
   async canAccessUser(
@@ -70,13 +44,36 @@ export class AccessControlHelperService {
       return true;
     }
 
-    const userAccess = await this.userAccessRepository.findOne({
-      where: {
-        granterUserId,
-        targetUserId,
-        ...(centerId && { centerId }),
-      },
-    });
+    // check roleType for granterUserId
+    const granterUserHighestRole = await this.getUserHighestRole(
+      granterUserId,
+      centerId,
+    );
+    const granterUserRoleType = granterUserHighestRole?.role?.type;
+    if (
+      granterUserRoleType === RoleType.SUPER_ADMIN ||
+      granterUserRoleType === RoleType.CENTER_ADMIN
+    ) {
+      return true;
+    }
+
+    // if admin and have access to center so he have access to users
+    if (granterUserRoleType === RoleType.ADMIN) {
+      if (centerId) {
+        const adminHasCenterAccess = await this.hasCenterAccess(
+          granterUserId,
+          centerId,
+        );
+        return adminHasCenterAccess;
+      }
+    }
+
+    const userAccess = await this.userAccessRepository.findUserAccess(
+      granterUserId,
+      targetUserId,
+      centerId,
+    );
+
     return !!userAccess;
   }
 
@@ -99,21 +96,44 @@ export class AccessControlHelperService {
     return Array.from(permissions);
   }
 
-  async getUserHighestRole(userId: string): Promise<UserRole | null> {
-    const userRoles = await this.getUserRoles(userId);
-    if (userRoles.length === 0) {
-      return null;
+  async getUserHighestRole(
+    userId: string,
+    centerId?: string,
+  ): Promise<UserRole | null> {
+    const userRoles = await this.getUserRoles(userId, centerId);
+    //  superadmin -> centerAdmin -> admin -> user
+    const superAdminRole = userRoles.find(
+      (role) => role.role?.type === RoleType.SUPER_ADMIN,
+    );
+    if (superAdminRole) {
+      return superAdminRole;
     }
-
-    // Return the first role for now - you can implement more sophisticated logic
-    return userRoles[0];
+    const centerAdminRole = userRoles.find(
+      (role) => role.role?.type === RoleType.CENTER_ADMIN,
+    );
+    if (centerAdminRole) {
+      return centerAdminRole;
+    }
+    const adminRole = userRoles.find(
+      (role) => role.role?.type === RoleType.ADMIN,
+    );
+    if (adminRole) {
+      return adminRole;
+    }
+    const userRole = userRoles.find(
+      (role) => role.role?.type === RoleType.USER,
+    );
+    if (userRole) {
+      return userRole;
+    }
+    return null;
   }
 
   async getAccessibleUsersIdsByIds(
     userId: string,
     targetUserIds: string[],
   ): Promise<string[]> {
-    const userAccesses = await this.userAccessRepository.find({
+    const userAccesses = await this.userAccessRepository.findMany({
       where: {
         granterUserId: userId,
         targetUserId: In(targetUserIds),

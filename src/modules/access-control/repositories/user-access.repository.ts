@@ -15,11 +15,16 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
     super(userAccessRepository, logger);
   }
 
-  async findUserAccess(granterUserId: string, targetUserId: string) {
+  async findUserAccess(
+    granterUserId: string,
+    targetUserId: string,
+    centerId?: string,
+  ) {
     return this.userAccessRepository.findOne({
       where: {
         granterUserId,
         targetUserId,
+        ...(centerId && { centerId }),
       },
     });
   }

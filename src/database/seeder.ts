@@ -2,24 +2,18 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
-import { Profile } from '@/modules/user/entities/profile.entity';
+import { Profile, ProfileType } from '@/modules/user/entities/profile.entity';
 import { Center, CenterStatus } from '@/modules/centers/entities/center.entity';
 import { Role } from '@/modules/access-control/entities/roles/role.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
-import { AdminCenterAccess } from '@/modules/access-control/entities/admin/admin-center-access.entity';
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
-import {
-  PERMISSIONS,
-  ALL_PERMISSIONS,
-  ADMIN_PERMISSIONS,
-  USER_PERMISSIONS,
-} from '@/modules/access-control/constants/permissions';
+import { ALL_PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { CentersService } from '@/modules/centers/services/centers.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
@@ -31,7 +25,7 @@ export class DatabaseSeeder {
 
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly userTypeOrmRepository: Repository<User>,
     @InjectRepository(Profile)
     private readonly profileRepository: Repository<Profile>,
     @InjectRepository(Role)
@@ -44,8 +38,6 @@ export class DatabaseSeeder {
     private readonly userAccessRepository: Repository<UserAccess>,
     @InjectRepository(UserOnCenter)
     private readonly userOnCenterRepository: Repository<UserOnCenter>,
-    @InjectRepository(AdminCenterAccess)
-    private readonly adminCenterAccessRepository: Repository<AdminCenterAccess>,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     @InjectRepository(EmailVerification)
@@ -69,7 +61,7 @@ export class DatabaseSeeder {
       // Create roles
       await this.createRoles();
 
-      // Create users first (needed for center owners)
+      // Create users with profiles (needed for center owners)
       const users = await this.createUsers();
 
       // Create centers (with valid owner IDs)
@@ -91,35 +83,38 @@ export class DatabaseSeeder {
   private async clearData(): Promise<void> {
     this.logger.log('Clearing existing data...');
 
-    // Clear in reverse dependency order to avoid foreign key constraint issues
-    await this.activityLogService.clearAllLogs();
+    // Use a transaction to handle circular foreign key constraints
+    await this.userTypeOrmRepository.manager.transaction(
+      async (transactionalEntityManager) => {
+        // Temporarily disable foreign key constraints
+        await transactionalEntityManager.query(
+          'SET session_replication_role = replica',
+        );
 
-    // Use query builder to clear all data in proper order
-    await this.userRoleRepository.createQueryBuilder().delete().execute();
-    await this.userAccessRepository.createQueryBuilder().delete().execute();
-    await this.userOnCenterRepository.createQueryBuilder().delete().execute();
-    await this.adminCenterAccessRepository
-      .createQueryBuilder()
-      .delete()
-      .execute();
-    await this.permissionRepository.createQueryBuilder().delete().execute();
-    await this.roleRepository.createQueryBuilder().delete().execute();
-    await this.profileRepository.createQueryBuilder().delete().execute();
+        // Clear all data using raw SQL to ensure all operations are within the transaction
+        await transactionalEntityManager.query('DELETE FROM activity_logs');
+        await transactionalEntityManager.query('DELETE FROM user_roles');
+        await transactionalEntityManager.query('DELETE FROM user_access');
+        await transactionalEntityManager.query('DELETE FROM user_on_centers');
+        await transactionalEntityManager.query('DELETE FROM permissions');
+        await transactionalEntityManager.query('DELETE FROM roles');
+        await transactionalEntityManager.query('DELETE FROM refresh_tokens');
+        await transactionalEntityManager.query(
+          'DELETE FROM email_verifications',
+        );
+        await transactionalEntityManager.query(
+          'DELETE FROM password_reset_tokens',
+        );
+        await transactionalEntityManager.query('DELETE FROM centers');
+        await transactionalEntityManager.query('DELETE FROM users');
+        await transactionalEntityManager.query('DELETE FROM profiles');
 
-    // Clear auth-related tokens before users
-    await this.refreshTokenRepository.createQueryBuilder().delete().execute();
-    await this.emailVerificationRepository
-      .createQueryBuilder()
-      .delete()
-      .execute();
-    await this.passwordResetTokenRepository
-      .createQueryBuilder()
-      .delete()
-      .execute();
-
-    // Delete centers before users (since centers reference users as owners)
-    await this.centersService.clearAllCenters();
-    await this.userRepository.createQueryBuilder().delete().execute();
+        // Re-enable foreign key constraints
+        await transactionalEntityManager.query(
+          'SET session_replication_role = DEFAULT',
+        );
+      },
+    );
 
     this.logger.log('Existing data cleared successfully');
   }
@@ -221,11 +216,11 @@ export class DatabaseSeeder {
   }
 
   private async createUsers(): Promise<User[]> {
-    this.logger.log('Creating users...');
+    this.logger.log('Creating users and profiles...');
 
     const hashedPassword = await bcrypt.hash('password123', 10);
 
-    const users = [
+    const userData = [
       // Global Admins
       {
         email: 'admin@lms.com',
@@ -414,9 +409,122 @@ export class DatabaseSeeder {
       },
     ];
 
-    const userEntities = users.map((user) => this.userRepository.create(user));
-    const savedUsers = await this.userRepository.save(userEntities);
-    this.logger.log(`Created ${savedUsers.length} users`);
+    // Create users and profiles one by one to handle the circular dependency
+    const savedUsers: User[] = [];
+
+    for (const userDataItem of userData) {
+      // Determine profile type based on user email/role
+      let profileType = ProfileType.BASE_USER;
+      let phone: string | undefined;
+      let address: string | undefined;
+      let dateOfBirth: Date | undefined;
+
+      // Set profile type and additional data based on user type
+      if (
+        userDataItem.email.includes('admin@lms.com') ||
+        userDataItem.email.includes('superadmin@lms.com')
+      ) {
+        profileType = ProfileType.ADMIN;
+        phone = '+1-555-0100';
+        address = 'System Headquarters, Admin Building';
+      } else if (userDataItem.email.includes('owner')) {
+        profileType = ProfileType.ADMIN; // Center owners are admins
+        phone = '+1-555-0200';
+        address = 'Center Management Office';
+      } else if (userDataItem.email.includes('teacher')) {
+        profileType = ProfileType.TEACHER;
+        phone = '+1-555-0300';
+        address = 'Faculty Building, Room 101';
+        // Set a reasonable birth date for teachers (25-65 years old)
+        const age = 25 + Math.floor(Math.random() * 40);
+        dateOfBirth = new Date();
+        dateOfBirth.setFullYear(dateOfBirth.getFullYear() - age);
+      } else if (userDataItem.email.includes('student')) {
+        profileType = ProfileType.STUDENT;
+        phone = '+1-555-0400';
+        address = 'Student Dormitory, Room 201';
+        // Set a reasonable birth date for students (16-25 years old)
+        const age = 16 + Math.floor(Math.random() * 9);
+        dateOfBirth = new Date();
+        dateOfBirth.setFullYear(dateOfBirth.getFullYear() - age);
+      } else if (userDataItem.email.includes('guardian')) {
+        profileType = ProfileType.GUARDIAN;
+        phone = '+1-555-0500';
+        address = 'Family Residence';
+        // Set a reasonable birth date for guardians (30-60 years old)
+        const age = 30 + Math.floor(Math.random() * 30);
+        dateOfBirth = new Date();
+        dateOfBirth.setFullYear(dateOfBirth.getFullYear() - age);
+      } else {
+        // Default for regular users
+        phone = '+1-555-0600';
+        address = 'User Residence';
+        // Set a reasonable birth date for regular users (18-50 years old)
+        const age = 18 + Math.floor(Math.random() * 32);
+        dateOfBirth = new Date();
+        dateOfBirth.setFullYear(dateOfBirth.getFullYear() - age);
+      }
+
+      // Use raw SQL to handle the circular dependency by temporarily disabling constraints
+      const savedUser = await this.userTypeOrmRepository.manager.transaction(
+        async (transactionalEntityManager) => {
+          // Generate UUIDs for both user and profile
+          const userResult = await transactionalEntityManager.query(
+            'SELECT gen_random_uuid() as id',
+          );
+          const profileResult = await transactionalEntityManager.query(
+            'SELECT gen_random_uuid() as id',
+          );
+
+          const userUuid = userResult[0].id;
+          const profileUuid = profileResult[0].id;
+
+          // Temporarily disable foreign key constraints
+          await transactionalEntityManager.query(
+            'SET session_replication_role = replica',
+          );
+
+          // Insert user first with the correct profile ID
+          await transactionalEntityManager.query(
+            `INSERT INTO users (id, email, password, name, "isActive", "profileId", "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+            [
+              userUuid,
+              userDataItem.email,
+              userDataItem.password,
+              userDataItem.name,
+              userDataItem.isActive,
+              profileUuid,
+            ],
+          );
+
+          // Insert profile with the correct user ID
+          await transactionalEntityManager.query(
+            `INSERT INTO profiles (id, "userId", type, phone, address, "dateOfBirth", "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+            [profileUuid, userUuid, profileType, phone, address, dateOfBirth],
+          );
+
+          // Re-enable foreign key constraints
+          await transactionalEntityManager.query(
+            'SET session_replication_role = DEFAULT',
+          );
+
+          // Return the user object
+          const user = await transactionalEntityManager.findOne(User, {
+            where: { id: userUuid },
+          });
+          if (!user) {
+            throw new Error(`Failed to create user with ID: ${userUuid}`);
+          }
+          return user;
+        },
+      );
+
+      savedUsers.push(savedUser);
+    }
+
+    this.logger.log(`Created ${savedUsers.length} users with profiles`);
 
     return savedUsers;
   }
@@ -458,11 +566,10 @@ export class DatabaseSeeder {
 
       // Grant admin access to all centers
       for (const center of centers) {
-        await this.adminCenterAccessRepository.save(
-          this.adminCenterAccessRepository.create({
-            adminUserId: adminUser.id,
+        await this.userOnCenterRepository.save(
+          this.userOnCenterRepository.create({
+            userId: adminUser.id,
             centerId: center.id,
-            granterUserId: superAdminUser?.id || adminUser.id,
           }),
         );
       }
@@ -531,11 +638,10 @@ export class DatabaseSeeder {
       }
 
       // Grant admin center access
-      await this.adminCenterAccessRepository.save(
-        this.adminCenterAccessRepository.create({
-          adminUserId: owner.id,
+      await this.userOnCenterRepository.save(
+        this.userOnCenterRepository.create({
+          userId: owner.id,
           centerId: center.id,
-          granterUserId: superAdminUser?.id || adminUser?.id,
         }),
       );
     }

@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { UserRole } from '../entities/roles/user-role.entity';
 import { LoggerService } from '@/shared/services/logger.service';
-import { ScopeEnum } from '@/shared/common/constants/role-scope.enum';
 
 @Injectable()
 export class UserRoleRepository extends BaseRepository<UserRole> {
@@ -14,6 +13,26 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
     protected readonly logger: LoggerService,
   ) {
     super(userRoleRepository, logger);
+  }
+
+  async getUserRoles(userId: string, centerId?: string): Promise<UserRole[]> {
+    return this.userRoleRepository.find({
+      where: [
+        {
+          userId,
+          centerId: IsNull(),
+          isActive: true,
+        },
+        centerId
+          ? {
+              userId,
+              centerId,
+              isActive: true,
+            }
+          : {},
+      ],
+      relations: ['role'],
+    });
   }
 
   async findUserRolesByUserId(userId: string): Promise<UserRole[]> {
@@ -29,16 +48,6 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
   ): Promise<UserRole[]> {
     return this.userRoleRepository.find({
       where: { userId, centerId, isActive: true },
-      relations: ['role'],
-    });
-  }
-
-  async findUserRolesByScope(
-    userId: string,
-    scope: ScopeEnum,
-  ): Promise<UserRole[]> {
-    return this.userRoleRepository.find({
-      where: { userId, isActive: true },
       relations: ['role'],
     });
   }

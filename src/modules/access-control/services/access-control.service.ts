@@ -1,19 +1,9 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
 import { AccessControlRepository } from '../repositories/access-control.repository';
 import { PermissionService } from './permission.service';
 import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
-import { AdminCenterAccess } from '../entities/admin/admin-center-access.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { ScopeEnum } from '@/shared/common/constants/role-scope.enum';
-import { UserOnCenter } from '../entities/user-on-center.entity';
-import { Center } from '../../centers/entities/center.entity';
-import { User } from '@/modules/user/entities/user.entity';
-import { LoggerService } from '@/shared/services/logger.service';
 import { AccessControlHelperService } from './access-control-helper.service';
 
 @Injectable()
@@ -88,6 +78,47 @@ export class AccessControlService {
     centerId?: string;
     granterUserId: string;
   }): Promise<void> {
+    await this.accessControlRepository.grantUserAccess(body);
+  }
+
+  async revokeUserAccess(body: {
+    userId: string;
+    targetUserId: string;
+    centerId?: string;
+    granterUserId: string;
+  }): Promise<void> {
+    await this.accessControlRepository.revokeUserAccess(body);
+  }
+
+  async grantUserAccessValidate(body: {
+    userId: string;
+    targetUserId: string;
+    centerId?: string;
+    granterUserId: string;
+  }): Promise<void> {
+    // Check user already have access
+    const IHaveAccessToGranterUser =
+      await this.accessControlHelperService.canAccessUser(
+        body.userId,
+        body.granterUserId,
+        body.centerId,
+      );
+
+    if (!IHaveAccessToGranterUser) {
+      throw new ForbiddenException('You do not have access to granter user');
+    }
+
+    const IHaveAccessToTargetUser =
+      await this.accessControlHelperService.canAccessUser(
+        body.userId,
+        body.targetUserId,
+        body.centerId,
+      );
+
+    if (!IHaveAccessToTargetUser) {
+      throw new ForbiddenException('You do not have access to target user');
+    }
+
     // Check if access already exists
     const canAccess = await this.accessControlHelperService.canAccessUser(
       body.granterUserId,
@@ -99,16 +130,39 @@ export class AccessControlService {
       throw new ForbiddenException('User already has access');
     }
 
-    await this.accessControlRepository.grantUserAccess(body);
+    await this.grantUserAccess(body);
   }
 
-  async revokeUserAccess(body: {
+  async revokeUserAccessValidate(body: {
     userId: string;
     targetUserId: string;
     centerId?: string;
     granterUserId: string;
   }): Promise<void> {
-    // Check if access exists before revoking
+    // Check user already have access
+    const IHaveAccessToGranterUser =
+      await this.accessControlHelperService.canAccessUser(
+        body.userId,
+        body.granterUserId,
+        body.centerId,
+      );
+
+    if (!IHaveAccessToGranterUser) {
+      throw new ForbiddenException('You do not have access to granter user');
+    }
+
+    const IHaveAccessToTargetUser =
+      await this.accessControlHelperService.canAccessUser(
+        body.userId,
+        body.targetUserId,
+        body.centerId,
+      );
+
+    if (!IHaveAccessToTargetUser) {
+      throw new ForbiddenException('You do not have access to target user');
+    }
+
+    // Check if access exists
     const canAccess = await this.accessControlHelperService.canAccessUser(
       body.granterUserId,
       body.targetUserId,
@@ -119,7 +173,7 @@ export class AccessControlService {
       throw new ForbiddenException('User does not have access');
     }
 
-    await this.accessControlRepository.revokeUserAccess(body);
+    await this.revokeUserAccess(body);
   }
 
   async grantCenterAccess(
@@ -132,21 +186,6 @@ export class AccessControlService {
 
   async revokeCenterAccess(userId: string, centerId: string): Promise<void> {
     await this.accessControlRepository.revokeCenterAccess(userId, centerId);
-  }
-
-  async grantAdminCenterAccess(body: {
-    adminId: string;
-    centerId: string;
-    grantedBy: string;
-  }): Promise<void> {
-    await this.accessControlRepository.grantAdminCenterAccess(body);
-  }
-
-  async revokeAdminCenterAccess(body: {
-    adminId: string;
-    centerId: string;
-  }): Promise<void> {
-    await this.accessControlRepository.revokeAdminCenterAccess(body);
   }
 
   async updateUserCenterActivation(
@@ -178,22 +217,6 @@ export class AccessControlService {
     centerId: string;
   }): Promise<void> {
     await this.revokeCenterAccess(data.userId, data.centerId);
-  }
-
-  async getAdminCenterAccess(adminId: string): Promise<AdminCenterAccess[]> {
-    return this.accessControlRepository.getAdminCenterAccess(adminId);
-  }
-
-  async getAdminCenterIds(adminId: string): Promise<string[]> {
-    const adminAccess =
-      await this.accessControlRepository.getAdminCenterAccess(adminId);
-    // Since AdminCenterAccess doesn't have centerId, we need to get it from a different source
-    // For now, return empty array as this needs to be implemented properly
-    return [];
-  }
-
-  async getUserCenters(userId: string): Promise<any[]> {
-    return this.accessControlRepository.getUserCenters(userId);
   }
 
   async listUserAccesses(userId: string): Promise<UserAccess[]> {

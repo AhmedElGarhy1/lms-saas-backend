@@ -109,26 +109,6 @@ export class UserController {
     return this.userService.getProfile(userId, centerId, currentUser?.id);
   }
 
-  @Get(':id/with-relations')
-  @ApiOperation({
-    summary: 'Get user by ID with all relations populated',
-    description:
-      'Get user with populated centers, center details, and roles inside centers for edit/preview',
-  })
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'User with relations retrieved successfully',
-  })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  @Permissions(PERMISSIONS.USER.READ.action)
-  async getUserByIdWithRelations(
-    @Param('id') userId: string,
-    @GetUser() currentUser?: CurrentUserType,
-  ) {
-    return this.userService.getUserByIdWithRelations(userId, currentUser?.id);
-  }
-
   @Post()
   @ApiOperation({ summary: 'Create a new user' })
   @ApiBody({ type: CreateUserRequestDto })
@@ -143,7 +123,9 @@ export class UserController {
     @Body() dto: CreateUserRequestDto,
     @GetUser() currentUser: CurrentUserType,
   ) {
-    return this.userService.createUser(dto, currentUser.id);
+    const user = await this.userService.createUser(dto);
+    await this.userService.handleUserCenterAccess(user.id, dto, currentUser.id);
+    return user;
   }
 
   @Put(':id/profile')

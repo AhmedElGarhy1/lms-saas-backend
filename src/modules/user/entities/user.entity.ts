@@ -1,6 +1,5 @@
 import { Entity, Column, OneToMany, OneToOne, JoinColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { AdminCenterAccess } from '@/modules/access-control/entities/admin/admin-center-access.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
@@ -36,13 +35,10 @@ export class User extends BaseEntity {
   @Column({ default: false })
   twoFactorEnabled: boolean;
 
+  @Column({ nullable: true })
+  profileId?: string;
+
   // Relations
-  @OneToMany(() => AdminCenterAccess, (access) => access.admin)
-  adminCenterAccessReceived: AdminCenterAccess[];
-
-  @OneToMany(() => AdminCenterAccess, (access) => access.granter)
-  adminCenterAccessGranted: AdminCenterAccess[];
-
   @OneToMany(() => Center, (center) => center.creator)
   centersCreated: Center[];
 
@@ -53,8 +49,8 @@ export class User extends BaseEntity {
   passwordResetTokens: PasswordResetToken[];
 
   @OneToOne(() => Profile, (profile) => profile.user, { cascade: true })
-  @JoinColumn()
-  profile: Profile;
+  @JoinColumn({ name: 'profileId' })
+  profile?: Profile;
 
   @OneToMany(() => RefreshToken, (token) => token.user)
   refreshTokens: RefreshToken[];

@@ -40,7 +40,7 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
-    const user = await this.userService.findUserWithAuthRelations(email);
+    const user = await this.userService.findUserByEmail(email);
 
     if (!user) {
       return null;
@@ -204,6 +204,12 @@ export class AuthService {
       email: dto.email,
       password: dto.password,
       name: dto.name,
+      // TODO: add profile correctly
+      profile: {
+        phone: '',
+        address: '',
+        dateOfBirth: '',
+      },
     });
 
     // Send email verification

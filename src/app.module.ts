@@ -3,12 +3,10 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '@/modules/user/entities/user.entity';
 import { Profile } from '@/modules/user/entities/profile.entity';
-import { Center } from '@/modules/centers/entities/center.entity';
 import { Role } from '@/modules/access-control/entities/roles/role.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { AdminCenterAccess } from '@/modules/access-control/entities/admin/admin-center-access.entity';
 import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
@@ -36,7 +34,7 @@ import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { ContextGuard } from '@/shared/common/guards/context.guard';
 import { PermissionsGuard } from '@/shared/common/guards/permissions.guard';
 import { ContextValidationService } from '@/shared/common/services/context-validation.service';
-import { typeOrmConfig } from '@/shared/config/database.config';
+import { DatabaseModule } from './shared/modules/database/database.module';
 
 @Module({
   imports: [
@@ -54,21 +52,7 @@ import { typeOrmConfig } from '@/shared/config/database.config';
         }),
       ],
     }),
-    TypeOrmModule.forRoot(typeOrmConfig),
-    TypeOrmModule.forFeature([
-      User,
-      Profile,
-      Center,
-      Role,
-      Permission,
-      UserRole,
-      UserAccess,
-      AdminCenterAccess,
-      UserOnCenter,
-      RefreshToken,
-      EmailVerification,
-      PasswordResetToken,
-    ]),
+    DatabaseModule,
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -83,6 +67,18 @@ import { typeOrmConfig } from '@/shared/config/database.config';
     AccessControlModule,
     CentersModule,
     ActivityLogModule,
+    TypeOrmModule.forFeature([
+      User,
+      Profile,
+      Role,
+      Permission,
+      UserRole,
+      UserAccess,
+      UserOnCenter,
+      RefreshToken,
+      EmailVerification,
+      PasswordResetToken,
+    ]),
   ],
   controllers: [],
   providers: [

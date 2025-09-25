@@ -49,133 +49,6 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   ) {}
 
   /**
-   * Enhanced find method with advanced query building
-   */
-  async findWithOptions(options: QueryOptions<T>): Promise<T[]> {
-    const queryBuilder = this.repository.createQueryBuilder('entity');
-
-    // Apply select
-    if (options.select && options.select.length > 0) {
-      queryBuilder.select(
-        options.select.map((field) => `entity.${String(field)}`),
-      );
-    }
-
-    // Apply relations
-    if (options.relations && options.relations.length > 0) {
-      options.relations.forEach((relation) => {
-        queryBuilder.leftJoinAndSelect(`entity.${relation}`, relation);
-      });
-    }
-
-    // Apply where conditions
-    if (options.where) {
-      this.applyWhereConditions(queryBuilder, options.where);
-    }
-
-    // Apply ordering
-    if (options.order) {
-      Object.entries(options.order).forEach(([field, direction]) => {
-        queryBuilder.addOrderBy(`entity.${field}`, direction);
-      });
-    }
-
-    // Apply pagination
-    if (options.skip !== undefined) {
-      queryBuilder.skip(options.skip);
-    }
-    if (options.take !== undefined) {
-      queryBuilder.take(options.take);
-    }
-
-    // Apply caching
-    if (options.cache) {
-      const cacheTime =
-        typeof options.cache === 'number' ? options.cache : 60000; // 1 minute default
-      queryBuilder.cache(`query_${Date.now()}`, cacheTime);
-    }
-
-    // Apply locking
-    if (options.lock) {
-      queryBuilder.setLock(options.lock);
-    }
-
-    const startTime = Date.now();
-    const result = await queryBuilder.getMany();
-    const duration = Date.now() - startTime;
-
-    this.logger.debug('Enhanced query executed', undefined, {
-      entity: this.repository.metadata.name,
-      duration,
-      resultCount: result.length,
-      options: JSON.stringify(options),
-    });
-
-    return result;
-  }
-
-  /**
-   * Enhanced findOne method with advanced query building
-   */
-  async findOneWithOptions(options: QueryOptions<T>): Promise<T | null> {
-    const startTime = Date.now();
-    const queryBuilder = this.repository.createQueryBuilder('entity');
-
-    // Apply select
-    if (options.select && options.select.length > 0) {
-      queryBuilder.select(
-        options.select.map((field) => `entity.${String(field)}`),
-      );
-    }
-
-    // Apply relations
-    if (options.relations && options.relations.length > 0) {
-      options.relations.forEach((relation) => {
-        queryBuilder.leftJoinAndSelect(`entity.${relation}`, relation);
-      });
-    }
-
-    // Apply where conditions
-    if (options.where) {
-      this.applyWhereConditions(queryBuilder, options.where);
-    }
-
-    // Apply ordering
-    if (options.order) {
-      Object.entries(options.order).forEach(([field, direction]) => {
-        queryBuilder.addOrderBy(`entity.${field}`, direction);
-      });
-    }
-
-    // Apply pagination (for findOne, we only need take: 1)
-    queryBuilder.take(1);
-
-    // Apply caching
-    if (options.cache) {
-      const cacheTime =
-        typeof options.cache === 'number' ? options.cache : 60000; // 1 minute default
-      queryBuilder.cache(`query_${Date.now()}`, cacheTime);
-    }
-
-    // Apply locking
-    if (options.lock) {
-      queryBuilder.setLock(options.lock);
-    }
-
-    const result = await queryBuilder.getOne();
-    const duration = Date.now() - startTime;
-
-    this.logger.debug('Enhanced findOne query executed', undefined, {
-      entity: this.repository.metadata.name,
-      duration,
-      found: !!result,
-      options: JSON.stringify(options),
-    });
-
-    return result;
-  }
-
-  /**
    * Bulk insert with progress tracking and error handling
    */
   async bulkInsert(
@@ -568,17 +441,13 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     return this.repository.find(options);
   }
 
-  async findById(id: string): Promise<T | null> {
+  async findWithRelations(id: string): Promise<T | null> {
     return this.repository.findOne({ where: { id } as any });
-  }
-
-  async findAll(): Promise<T[]> {
-    return this.repository.find();
   }
 
   async update(id: string, data: Partial<T>): Promise<T | null> {
     await this.repository.update(id, data);
-    return this.findById(id);
+    return this.findWithRelations(id);
   }
 
   async delete(id: string): Promise<void> {

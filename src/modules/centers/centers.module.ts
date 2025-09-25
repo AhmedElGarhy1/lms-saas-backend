@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WinstonModule } from 'nest-winston';
 import { CentersController } from './controllers/centers.controller';
@@ -22,7 +22,7 @@ import { UserModule } from '@/modules/user/user.module';
     TypeOrmModule.forFeature([Center]),
     ActivityLogModule,
     AccessControlModule,
-    UserModule,
+    forwardRef(() => UserModule),
   ],
   controllers: [CentersController],
   providers: [

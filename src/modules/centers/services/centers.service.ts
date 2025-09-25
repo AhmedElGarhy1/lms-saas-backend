@@ -7,31 +7,22 @@ import { CentersRepository } from '../repositories/centers.repository';
 import { Center, CenterStatus } from '../entities/center.entity';
 import { CreateCenterRequestDto } from '../dto/create-center.dto';
 import { UpdateCenterRequestDto } from '../dto/update-center.dto';
-import {
-  CenterUserAssignmentDto,
-  CenterAdminAssignmentDto,
-} from '../dto/center-response.dto';
+import { CenterUserAssignmentDto } from '../dto/center-response.dto';
 import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
-import { RolesService } from '@/modules/access-control/services/roles.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { ScopeEnum } from '@/shared/common/constants/role-scope.enum';
-import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { CenterEventEmitter } from '@/shared/common/events/center.events';
 import { LoggerService } from '@/shared/services/logger.service';
-import { UserService } from '@/modules/user/services/user.service';
 
 @Injectable()
 export class CentersService {
   constructor(
     private readonly centersRepository: CentersRepository,
     private readonly accessControlService: AccessControlService,
-    private readonly rolesService: RolesService,
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly centerEventEmitter: CenterEventEmitter,
     private readonly logger: LoggerService,
-    private readonly userService: UserService,
   ) {}
 
   async createCenter(
@@ -120,7 +111,7 @@ export class CentersService {
     // return result;
   }
 
-  async getCenterById(centerId: string, userId: string): Promise<Center> {
+  async getCenterById(centerId: string): Promise<Center> {
     const center = await this.centersRepository.findCenterById(centerId);
     if (!center) {
       throw new NotFoundException(`Center with ID ${centerId} not found`);
@@ -217,9 +208,8 @@ export class CentersService {
     );
 
     // Check if user is already assigned to this center
-    const existingAssignment = await this.accessControlService.getUserCenters(
-      dto.userId,
-    );
+    const existingAssignment =
+      await this.accessControlHelperService.getUserCenters(dto.userId);
 
     if (
       existingAssignment &&
@@ -272,83 +262,6 @@ export class CentersService {
 
     // Decrement enrollment
     await this.centersRepository.decrementEnrollment(centerId);
-  }
-
-  async getCenterUsers(
-    centerId: string,
-    userId: string,
-    query: PaginationQuery,
-  ): Promise<any> {
-    const result = await this.userService.listUsers({
-      query,
-      userId,
-      centerId,
-    });
-
-    return result;
-  }
-
-  async assignAdminToCenter(dto: CenterAdminAssignmentDto): Promise<void> {
-    this.logger.info(
-      `Assigning admin ${dto.adminUserId} to center ${dto.centerId}`,
-    );
-
-    // Check if admin already has access to this center
-    const existingAccess = await this.accessControlService.getAdminCenterAccess(
-      dto.adminUserId,
-    );
-
-    if (existingAccess) {
-      throw new BadRequestException(
-        `Admin '${dto.adminUserId}' is already assigned to center '${dto.centerId}'`,
-      );
-    }
-
-    // Assign admin to center
-    await this.accessControlService.grantAdminCenterAccess({
-      adminId: dto.adminUserId,
-      centerId: dto.centerId,
-      grantedBy: 'system', // Default value since not provided in DTO
-    });
-
-    this.logger.info(
-      `Admin ${dto.adminUserId} successfully assigned to center ${dto.centerId}`,
-    );
-  }
-
-  async removeAdminFromCenter(
-    adminId: string,
-    centerId: string,
-    removedBy: string,
-  ): Promise<void> {
-    this.logger.info(
-      `Removing admin ${adminId} from center ${centerId} by user: ${removedBy}`,
-    );
-
-    const center = await this.centersRepository.findCenterById(centerId);
-    if (!center) {
-      throw new NotFoundException(`Center with ID '${centerId}' not found`);
-    }
-    // Permission check should be in controller
-
-    const existingAssignment =
-      await this.accessControlService.getAdminCenterAccess(adminId);
-    if (!existingAssignment) {
-      throw new BadRequestException(
-        `Admin '${adminId}' is not assigned to center '${centerId}'`,
-      );
-    }
-
-    await this.accessControlService.revokeAdminCenterAccess({
-      adminId: adminId,
-      centerId: centerId,
-    });
-  }
-
-  async getCenterAdmins(centerId: string, userId: string): Promise<any[]> {
-    // This method would return center admins
-    // Implementation depends on your specific requirements
-    return [];
   }
 
   async updateCenterActivation(

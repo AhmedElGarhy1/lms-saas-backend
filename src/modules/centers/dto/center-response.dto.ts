@@ -94,17 +94,3 @@ export class CenterUserAssignmentDto {
   @ApiProperty({ description: 'Assignment message' })
   message: string;
 }
-
-export class CenterAdminAssignmentDto {
-  @ApiProperty({ description: 'Admin user ID' })
-  adminUserId: string;
-
-  @ApiProperty({ description: 'Center ID' })
-  centerId: string;
-
-  @ApiProperty({ description: 'Assignment success' })
-  success: boolean;
-
-  @ApiProperty({ description: 'Assignment message' })
-  message: string;
-}

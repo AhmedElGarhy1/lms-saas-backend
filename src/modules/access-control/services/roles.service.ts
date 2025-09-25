@@ -101,7 +101,7 @@ export class RolesService {
   }
 
   async findById(roleId: string) {
-    return this.rolesRepository.findById(roleId);
+    return this.rolesRepository.findWithRelations(roleId);
   }
 
   async userHasRoleType(userId: string, type: string, centerId?: string) {

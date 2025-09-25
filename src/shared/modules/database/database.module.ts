@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseService } from '../../database.service';
-import { getDatabaseConfig } from '../../config/database.config';
+import { getDatabaseConfig, typeOrmConfig } from '../../config/database.config';
 
 export const DATABASE_INJECTION_TOKEN = 'DatabaseService';
 
@@ -14,6 +14,7 @@ export const DATABASE_INJECTION_TOKEN = 'DatabaseService';
         getDatabaseConfig(configService),
       inject: [ConfigService],
     }),
+    TypeOrmModule.forRoot(typeOrmConfig),
   ],
   providers: [
     {
