@@ -30,8 +30,16 @@ import { CurrentUser as CurrentUserType } from '@/shared/common/types/current-us
 import { UserService } from '../services/user.service';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { CreateUserRequestDto } from '../dto/create-user.dto';
-import { UpdateProfileDto } from '../dto/update-profile.dto';
+import { UpdateUserRequestDto } from '../dto/update-user.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
+import {
+  ToggleUserStatusRequestDto,
+  ToggleUserStatusResponseDto,
+} from '../dto/toggle-user-status.dto';
+import {
+  DeleteUserResponseDto,
+  RestoreUserResponseDto,
+} from '../dto/delete-user.dto';
 
 import { USER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 
@@ -64,14 +72,19 @@ export class UserController {
     })
     query: PaginationQuery,
     @GetUser() currentUser: CurrentUserType,
-    @Query('targetUserId') targetUserId?: string,
   ) {
     const centerId = query.filter?.centerId as string;
+    const targetCenterId = query.filter?.targetCenterId as string;
+    const targetUserId = query.filter?.targetUserId as string;
+    delete query.filter?.targetCenterId;
+    delete query.filter?.targetUserId;
+
     return this.userService.listUsers({
       query,
       userId: currentUser.id,
       targetUserId,
       centerId,
+      targetCenterId,
     });
   }
 
@@ -85,10 +98,10 @@ export class UserController {
   })
   @ApiResponse({ status: 404, description: 'User not found' })
   async getCurrentUserProfile(@GetUser() currentUser: CurrentUserType) {
-    return this.userService.getCurrentUserProfile(
-      currentUser.id,
-      currentUser.centerId,
-    );
+    return this.userService.getCurrentUserProfile({
+      userId: currentUser.id,
+      centerId: currentUser.centerId,
+    });
   }
 
   @Get(':id')
@@ -106,7 +119,11 @@ export class UserController {
     @Query('centerId') centerId?: string,
     @GetUser() currentUser?: CurrentUserType,
   ) {
-    return this.userService.getProfile(userId, centerId, currentUser?.id);
+    return this.userService.getProfile({
+      userId,
+      centerId,
+      currentUserId: currentUser?.id,
+    });
   }
 
   @Post()
@@ -128,81 +145,19 @@ export class UserController {
     return user;
   }
 
-  @Put(':id/profile')
-  @ApiOperation({ summary: 'Update user profile' })
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @ApiBody({ type: UpdateProfileDto })
-  @ApiResponse({ status: 200, description: 'Profile updated successfully' })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  @Permissions(PERMISSIONS.USER.UPDATE.action)
-  async updateProfile(
-    @Param('id') userId: string,
-    @Body() dto: UpdateProfileDto,
-  ) {
-    return this.userService.updateProfile(userId, dto);
-  }
-
   @Put(':id')
   @ApiOperation({ summary: 'Update user information' })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        email: { type: 'string' },
-        isActive: { type: 'boolean' },
-        centerAccess: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              centerId: { type: 'string', nullable: true },
-              roleIds: { type: 'array', items: { type: 'string' } },
-            },
-          },
-        },
-        profile: {
-          type: 'object',
-          properties: {
-            phone: { type: 'string' },
-            address: { type: 'string' },
-            dateOfBirth: { type: 'string' },
-          },
-        },
-      },
-    },
-  })
+  @ApiBody({ type: UpdateUserRequestDto })
   @ApiResponse({ status: 200, description: 'User updated successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
   @Permissions(PERMISSIONS.USER.UPDATE.action)
   async updateUser(
     @Param('id') userId: string,
-    @Body()
-    body: {
-      name?: string;
-      email?: string;
-      isActive?: boolean;
-      centerAccess?: Array<{
-        centerId: string | null;
-        roleIds: string[];
-      }>;
-      profile?: {
-        phone?: string;
-        address?: string;
-        dateOfBirth?: string;
-      };
-    },
+    @Body() dto: UpdateUserRequestDto,
     @GetUser() currentUser: CurrentUserType,
   ) {
-    // Only pass basic user fields to the service method
-    const basicUserData = {
-      name: body.name,
-      email: body.email,
-      isActive: body.isActive,
-    };
-
-    return this.userService.updateUser(userId, basicUserData, currentUser.id);
+    return this.userService.updateUser(userId, dto, currentUser.id);
   }
 
   @Patch(':id/password')
@@ -217,53 +172,51 @@ export class UserController {
     @Param('id') userId: string,
     @Body() dto: ChangePasswordRequestDto,
   ) {
-    return this.userService.changePassword(userId, dto);
+    return this.userService.changePassword({ userId, dto });
   }
 
   @Patch(':id/status')
   @Permissions(PERMISSIONS.USER.UPDATE.action)
   @ApiOperation({ summary: 'Toggle user active status' })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        isActive: { type: 'boolean' },
-      },
-    },
-  })
+  @ApiBody({ type: ToggleUserStatusRequestDto })
   @ApiResponse({
     status: 200,
     description: 'User status updated successfully',
+    type: ToggleUserStatusResponseDto,
   })
   @ApiResponse({ status: 404, description: 'User not found' })
   async toggleUserStatus(
     @Param('id') userId: string,
-    @Body() body: { isActive: boolean },
+    @Body() dto: ToggleUserStatusRequestDto,
     @GetUser() currentUser: CurrentUserType,
-  ) {
+  ): Promise<ToggleUserStatusResponseDto> {
     await this.userService.activateUser(
       userId,
-      { isActive: body.isActive },
+      { isActive: dto.isActive },
       currentUser.id,
     );
     return {
       id: userId,
-      message: `User ${body.isActive ? 'activated' : 'deactivated'} successfully`,
-      isActive: body.isActive,
+      message: `User ${dto.isActive ? 'activated' : 'deactivated'} successfully`,
+      isActive: dto.isActive,
     };
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a user' })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @ApiResponse({ status: 200, description: 'User deleted successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'User deleted successfully',
+    type: DeleteUserResponseDto,
+  })
   @ApiResponse({ status: 404, description: 'User not found' })
   @Permissions(PERMISSIONS.USER.DELETE.action)
   async deleteUser(
     @Param('id') userId: string,
     @GetUser() currentUser: CurrentUserType,
-  ) {
+  ): Promise<DeleteUserResponseDto> {
     await this.userService.deleteUser(userId, currentUser.id);
     return { message: 'User deleted successfully' };
   }
@@ -271,13 +224,17 @@ export class UserController {
   @Patch(':id/restore')
   @ApiOperation({ summary: 'Restore a deleted user' })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @ApiResponse({ status: 200, description: 'User restored successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'User restored successfully',
+    type: RestoreUserResponseDto,
+  })
   @ApiResponse({ status: 404, description: 'User not found' })
   @Permissions(PERMISSIONS.USER.RESTORE.action)
   async restoreUser(
     @Param('id') userId: string,
     @GetUser() currentUser: CurrentUserType,
-  ) {
+  ): Promise<RestoreUserResponseDto> {
     await this.userService.restoreUser(userId, currentUser.id);
     return { message: 'User restored successfully' };
   }

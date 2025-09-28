@@ -10,13 +10,11 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
+import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('user_access')
 @Index(['granterUserId', 'targetUserId', 'centerId'], { unique: true })
-export class UserAccess {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class UserAccess extends BaseEntity {
   @Column()
   targetUserId: string;
 
@@ -25,12 +23,6 @@ export class UserAccess {
 
   @Column({ nullable: true })
   centerId: string;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 
   @ManyToOne(() => User, (user) => user.accessTarget)
   @JoinColumn({ name: 'targetUserId' })

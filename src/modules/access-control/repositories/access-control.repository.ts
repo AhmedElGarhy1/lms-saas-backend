@@ -31,30 +31,6 @@ export class AccessControlRepository {
     return this.permissionRepo.paginateAdminPermissions(options);
   }
 
-  async paginateUserCenters(options: {
-    query: PaginationQuery;
-    userId: string;
-  }): Promise<Pagination<UserOnCenter>> {
-    return this.userOnCenterRepo.paginateUserCenters(options);
-  }
-
-  // Permission methods - delegate to PermissionRepository
-  async createPermission(data: {
-    action: string;
-    description?: string;
-    isAdmin?: boolean;
-  }): Promise<Permission> {
-    return this.permissionRepo.createPermission(data);
-  }
-
-  async findPermissionByAction(action: string): Promise<Permission | null> {
-    return this.permissionRepo.findPermissionByAction(action);
-  }
-
-  async getAdminPermissions(): Promise<Permission[]> {
-    return this.permissionRepo.getAdminPermissions();
-  }
-
   // User Permission methods - delegate to UserPermissionRepository
   async assignUserPermission(data: {
     userId: string;
@@ -120,12 +96,20 @@ export class AccessControlRepository {
   async grantCenterAccess(
     userId: string,
     centerId: string,
+    grantedBy: string,
   ): Promise<UserOnCenter> {
-    return this.userOnCenterRepo.grantCenterAccess(userId, centerId);
+    return this.userOnCenterRepo.grantCenterAccess({
+      userId,
+      centerId,
+      grantedBy,
+    });
   }
 
   async revokeCenterAccess(userId: string, centerId: string): Promise<void> {
-    return this.userOnCenterRepo.revokeCenterAccess(userId, centerId);
+    return this.userOnCenterRepo.revokeCenterAccess({
+      userId,
+      centerId,
+    });
   }
 
   async updateUserCenterActivation(
@@ -142,10 +126,6 @@ export class AccessControlRepository {
 
   async getUserCenters(userId: string) {
     return this.userOnCenterRepo.getUserCenters(userId);
-  }
-
-  async hasCenterAccess(userId: string, centerId: string): Promise<boolean> {
-    return this.userOnCenterRepo.hasCenterAccess(userId, centerId);
   }
 
   async getCenterUsers(centerId: string): Promise<Array<{ userId: string }>> {
@@ -199,16 +179,6 @@ export class AccessControlRepository {
     // return userRoles.some(
     //   (userRole) => userRole.permission.action === roleType,
     // );
-    return false; // No longer applicable
-  }
-
-  async checkCenterAccess(userId: string, centerId: string): Promise<boolean> {
-    // Check if user has direct center access
-    const hasDirectAccess = await this.hasCenterAccess(userId, centerId);
-    if (hasDirectAccess) {
-      return true;
-    }
-
     return false; // No longer applicable
   }
 }

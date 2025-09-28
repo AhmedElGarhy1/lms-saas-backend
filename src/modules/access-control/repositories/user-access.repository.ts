@@ -35,12 +35,13 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
     centerId?: string;
     granterUserId: string;
   }): Promise<void> {
-    await this.userAccessRepository.save({
+    const userAccess = this.userAccessRepository.create({
       granterUserId: body.granterUserId,
       targetUserId: body.targetUserId,
       ...(body.centerId && { centerId: body.centerId }),
-      createdBy: body.userId,
+      createdBy: body.granterUserId,
     });
+    await this.userAccessRepository.save(userAccess);
   }
 
   async revokeUserAccess(body: {
@@ -59,14 +60,6 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
   async listUserAccesses(userId: string): Promise<UserAccess[]> {
     return this.userAccessRepository.find({
       where: { granterUserId: userId },
-    });
-  }
-
-  async findUserAccessesByTargetUserId(
-    targetUserId: string,
-  ): Promise<UserAccess[]> {
-    return this.userAccessRepository.find({
-      where: { targetUserId },
     });
   }
 }

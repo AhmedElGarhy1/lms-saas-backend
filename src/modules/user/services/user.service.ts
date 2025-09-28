@@ -14,20 +14,33 @@ import { ProfileService } from './profile.service';
 import { UserEventEmitter } from '@/shared/common/events/user.events';
 import { LoggerService } from '@/shared/services/logger.service';
 import { CreateUserRequestDto } from '../dto/create-user.dto';
+import { UpdateUserRequestDto } from '../dto/update-user.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
+import {
+  UserListQuery,
+  CreateUserParams,
+  UpdateUserParams,
+  ChangePasswordParams,
+  ToggleUserStatusParams,
+  DeleteUserParams,
+  RestoreUserParams,
+  GetProfileParams,
+  GetCurrentUserProfileParams,
+  HandleUserCenterAccessParams,
+  ActivateUserParams,
+  UserServiceResponse,
+  UserListResponse,
+  UserStatsResponse,
+  CurrentUserProfileResponse,
+} from '../interfaces/user-service.interface';
 import { User } from '../entities/user.entity';
 import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
 import { ScopeEnum } from '@/shared/common/constants/role-scope.enum';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { CentersService } from '@/modules/centers/services/centers.service';
 
-export interface UserListQuery {
-  query: PaginationQuery;
-  userId: string;
-  centerId?: string;
-  targetUserId?: string; // used for accessible users
-}
+// UserListQuery interface moved to user-service.interface.ts
 
 @Injectable()
 export class UserService {
@@ -42,17 +55,19 @@ export class UserService {
     private readonly centersService: CentersService,
   ) {}
 
-  async getProfile(userId: string, centerId?: string, currentUserId?: string) {
+  async getProfile(params: GetProfileParams): Promise<User> {
+    const { userId, centerId, currentUserId } = params;
     // First check if the user exists
     const user = await this.userRepository.findWithRelations(userId);
 
     // Then check if current user can access the target user
     if (currentUserId && currentUserId !== userId) {
       try {
-        await this.accessControlHelperService.validateUserAccess(
-          currentUserId,
-          userId,
-        );
+        await this.accessControlHelperService.canUserAccess({
+          granterUserId: currentUserId,
+          targetUserId: userId,
+          centerId,
+        });
       } catch {
         throw new InsufficientPermissionsException(
           'Access denied to this user',
@@ -67,10 +82,11 @@ export class UserService {
     // Then check if current user can access the target user
     if (currentUserId && currentUserId !== userId) {
       try {
-        await this.accessControlHelperService.validateUserAccess(
-          currentUserId,
-          userId,
-        );
+        await this.accessControlHelperService.canUserAccess({
+          granterUserId: currentUserId,
+          targetUserId: userId,
+          centerId,
+        });
       } catch {
         throw new InsufficientPermissionsException(
           'Access denied to this user',
@@ -80,12 +96,12 @@ export class UserService {
 
     // Filter centers based on access if centerId is provided
     if (centerId) {
-      try {
-        await this.accessControlHelperService.validateCenterAccess(
-          currentUserId || userId,
+      const centerAccess =
+        await this.accessControlHelperService.findCenterAccess({
+          userId: currentUserId || userId,
           centerId,
-        );
-      } catch {
+        });
+      if (!centerAccess) {
         throw new InsufficientPermissionsException(
           'Access denied to this center',
         );
@@ -126,7 +142,10 @@ export class UserService {
     return updated;
   }
 
-  async changePassword(userId: string, dto: ChangePasswordRequestDto) {
+  async changePassword(
+    params: ChangePasswordParams,
+  ): Promise<UserServiceResponse> {
+    const { userId, dto } = params;
     const user = await this.userRepository.findOne(userId);
     if (!user) {
       throw new ResourceNotFoundException('User not found');
@@ -147,7 +166,7 @@ export class UserService {
     await this.userRepository.update(userId, { password: hashedPassword });
 
     this.logger.log(`Password changed for user: ${userId}`);
-    return { message: 'Password changed successfully' };
+    return { message: 'Password changed successfully', success: true };
   }
 
   async createUser(dto: CreateUserRequestDto): Promise<User> {
@@ -200,10 +219,11 @@ export class UserService {
       for (const centerAccess of dto.centerAccess) {
         // If centerId is provided, create user-center relationship
         if (centerAccess.centerId) {
-          await this.accessControlService.addUserToCenter({
+          await this.accessControlService.grantCenterAccessValidate(
             userId,
-            centerId: centerAccess.centerId,
-          });
+            centerAccess.centerId,
+            currentUserId,
+          );
         }
 
         // Assign roles (can be global roles if centerId is null)
@@ -258,11 +278,12 @@ export class UserService {
     }
 
     if (centerId) {
-      await this.accessControlHelperService.validateCenterAccess(
+      await this.accessControlHelperService.validateCenterAccess({
         userId,
         centerId,
-      );
+      });
     }
+
     const result = await this.userRepository.paginateUsers(
       params,
       userRole?.role?.type ?? RoleType.USER,
@@ -290,10 +311,11 @@ export class UserService {
     // Then check if current user can delete the target user
     if (currentUserId !== userId) {
       try {
-        await this.accessControlHelperService.validateUserAccess(
-          currentUserId,
-          userId,
-        );
+        await this.accessControlHelperService.canUserAccess({
+          granterUserId: currentUserId,
+          targetUserId: userId,
+          centerId: undefined,
+        });
       } catch {
         throw new InsufficientPermissionsException(
           'Access denied to this user',
@@ -302,7 +324,7 @@ export class UserService {
     }
 
     // Delete user with cascade
-    await this.deleteUserWithCascade(userId);
+    await this.deleteUserWithCascade(currentUserId, userId);
 
     this.logger.log(`User deleted: ${userId} by ${currentUserId}`);
   }
@@ -316,10 +338,11 @@ export class UserService {
 
     // Then check if current user can restore the target user
     try {
-      await this.accessControlHelperService.validateUserAccess(
-        currentUserId,
-        userId,
-      );
+      await this.accessControlHelperService.canUserAccess({
+        granterUserId: currentUserId,
+        targetUserId: userId,
+        centerId: undefined,
+      });
     } catch {
       throw new InsufficientPermissionsException('Access denied to this user');
     }
@@ -330,7 +353,10 @@ export class UserService {
     this.logger.log(`User restored: ${userId} by ${currentUserId}`);
   }
 
-  private async deleteUserWithCascade(userId: string): Promise<void> {
+  private async deleteUserWithCascade(
+    currentUserId: string,
+    userId: string,
+  ): Promise<void> {
     // 1. Delete user roles - this would need to be implemented in RolesService
     // For now, we'll skip this step as it requires getting all user roles first
     // await this.rolesService.removeAllUserRoles(userId);
@@ -350,10 +376,11 @@ export class UserService {
     }));
 
     for (const userCenter of userCenters) {
-      await this.accessControlService.removeUserFromCenter({
+      await this.accessControlService.revokeCenterAccess(
+        currentUserId,
         userId,
-        centerId: userCenter.centerId,
-      });
+        userCenter.centerId,
+      );
     }
 
     // 4. Delete user profile
@@ -379,10 +406,11 @@ export class UserService {
 
     // Then check if current user can activate/deactivate the target user
     try {
-      await this.accessControlHelperService.validateUserAccess(
-        currentUserId,
-        userId,
-      );
+      await this.accessControlHelperService.canUserAccess({
+        granterUserId: currentUserId,
+        targetUserId: userId,
+        centerId: undefined,
+      });
     } catch {
       throw new InsufficientPermissionsException('Access denied to this user');
     }
@@ -449,7 +477,10 @@ export class UserService {
     await this.userRepository.update(userId, updateData);
   }
 
-  async getCurrentUserProfile(userId: string, centerId?: string) {
+  async getCurrentUserProfile(
+    params: GetCurrentUserProfileParams,
+  ): Promise<CurrentUserProfileResponse> {
+    const { userId, centerId } = params;
     try {
       // Get user with profile
       const user = await this.userRepository.findWithRelations(userId);
@@ -593,8 +624,22 @@ export class UserService {
       this.logger.log(`Returning profile for user: ${userId}`);
 
       return {
-        ...user,
-        ...user.profile,
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        isActive: user.isActive,
+        twoFactorEnabled: user.twoFactorEnabled,
+        failedLoginAttempts: user.failedLoginAttempts,
+        lockoutUntil: user.lockoutUntil,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        profile: user.profile
+          ? {
+              phone: user.profile.phone,
+              address: user.profile.address,
+              dateOfBirth: user.profile.dateOfBirth,
+            }
+          : undefined,
         centers: centersWithContext,
         context,
         isAdmin: isGlobalAdmin,
@@ -629,10 +674,11 @@ export class UserService {
 
     // Validate user access
     if (currentUserId) {
-      await this.accessControlHelperService.validateUserAccess(
-        currentUserId,
-        userId,
-      );
+      await this.accessControlHelperService.canUserAccess({
+        granterUserId: currentUserId,
+        targetUserId: userId,
+        centerId: undefined,
+      });
     }
 
     // Prepare update data (only include fields that are provided)

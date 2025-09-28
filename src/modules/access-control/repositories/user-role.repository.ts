@@ -84,4 +84,19 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
       centerId: data.centerId,
     });
   }
+
+  async userHasRoleType(
+    userId: string,
+    roleType: string,
+    centerId?: string,
+  ): Promise<boolean> {
+    const queryBuilder = this.userRoleRepository.createQueryBuilder('userRole');
+    queryBuilder.leftJoinAndSelect('userRole.role', 'role');
+    queryBuilder.where('userRole.userId = :userId', { userId });
+    queryBuilder.andWhere('role.type = :roleType', { roleType });
+    if (centerId) {
+      queryBuilder.andWhere('userRole.centerId = :centerId', { centerId });
+    }
+    return (await queryBuilder.getCount()) > 0;
+  }
 }

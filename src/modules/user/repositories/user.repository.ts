@@ -9,7 +9,7 @@ import { Pagination } from 'nestjs-typeorm-paginate';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { Role } from '@/modules/access-control/entities';
-import { UserListQuery } from '../services/user.service';
+import { UserListQuery } from '../interfaces/user-service.interface';
 import { USER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 import { PaginationUtils } from '@/shared/common/utils/pagination.utils';
 import { UserFilterDto } from '../dto/user-filter.dto';
@@ -69,7 +69,7 @@ export class UserRepository extends BaseRepository<User> {
     params: UserListQuery,
     roleType: RoleType,
   ): Promise<Pagination<User>> {
-    const { query, userId, targetUserId, centerId } = params;
+    const { query, userId, targetUserId, centerId, targetCenterId } = params;
 
     // Create query builder with proper JOINs
     const queryBuilder = this.userRepository.createQueryBuilder('user');
@@ -134,13 +134,9 @@ export class UserRepository extends BaseRepository<User> {
       queryBuilder,
     );
 
-    // Apply access control filtering
-    const userRole =
-      await this.accessControlHelperService.getUserHighestRole(userId);
-
     let filteredItems = result.items;
 
-    if (userRole?.role?.type === RoleType.USER) {
+    if (roleType === RoleType.USER) {
       // Filter results based on access control
       filteredItems = filteredItems.filter((user) => {
         return user.userRoles?.some(
@@ -152,17 +148,34 @@ export class UserRepository extends BaseRepository<User> {
     }
 
     // Apply accessibility check if targetUserId is provided
+    const usersIds = filteredItems.map((user) => user.id);
     if (targetUserId) {
-      const usersIds = filteredItems.map((user) => user.id);
       const accessibleUsersIds =
         await this.accessControlHelperService.getAccessibleUsersIdsByIds(
           targetUserId,
+          usersIds,
+          centerId,
+        );
+
+      filteredItems = filteredItems.map((user) => ({
+        ...user,
+        isUserAccessible: accessibleUsersIds.some(
+          (accessibleUserId) => accessibleUserId === user.id,
+        ),
+      }));
+    }
+
+    // apply center accessibility field
+    if (targetCenterId) {
+      const accessibleUsersIds =
+        await this.accessControlHelperService.getAccessibleUsersIdsByCenterId(
+          targetCenterId,
           usersIds,
         );
 
       filteredItems = filteredItems.map((user) => ({
         ...user,
-        isAccessible: accessibleUsersIds.some(
+        isCenterAccessible: accessibleUsersIds.some(
           (accessibleUserId) => accessibleUserId === user.id,
         ),
       }));
@@ -176,101 +189,6 @@ export class UserRepository extends BaseRepository<User> {
       items: transformedData,
     };
   }
-
-  // /**
-  //  * Paginate admins using JOINs for better performance
-  //  * @param query - Pagination query
-  //  * @param userId - User ID to filter users
-  //  * @param options - Options for pagination
-  //  * @param options.isActive - Whether to filter active users
-  //  * @param options.targetUserId - User ID to filter users
-  //  * @returns Paginated admins
-  //  */
-  // async paginateAdmins(
-  //   params: Omit<UserListQuery, 'centerId'>,
-  //   currentUserRole: RoleType,
-  // ): Promise<Pagination<User>> {
-  //   const { query, userId, targetUserId } = params;
-  //   const queryBuilder = this.userRepository.createQueryBuilder('user');
-
-  //   if (targetUserId) {
-  //     queryBuilder.andWhere('user.id != :targetUserId', { targetUserId });
-  //   }
-
-  //   // Add JOINs for relations
-  //   queryBuilder
-  //     .leftJoinAndSelect('user.profile', 'profile')
-  //     .leftJoinAndSelect('user.userRoles', 'userRoles')
-  //     .leftJoinAndSelect('userRoles.role', 'role')
-  //     .andWhere('role.type IN (:...roleTypes)', {
-  //       roleTypes: ['SUPER_ADMIN', 'ADMIN'],
-  //     });
-
-  //   // Apply filters with field mapping (after JOINs and basic WHERE)
-  //   if (query.filter) {
-  //     this.applyFilters(
-  //       queryBuilder,
-  //       query.filter,
-  //       UserFilterDto.getFieldMapping(),
-  //     );
-  //   }
-
-  //   // Add access control filtering for non-SUPER_ADMIN users
-  //   if (currentUserRole !== RoleType.SUPER_ADMIN) {
-  //     queryBuilder
-  //       .leftJoin('user.accessTarget', 'accessTarget')
-  //       .andWhere('accessTarget.granterUserId = :userId', { userId });
-  //   }
-
-  //   // Use the base repository paginate method
-  //   const result = await this.paginate(
-  //     {
-  //       page: query.page,
-  //       limit: query.limit,
-  //       search: query.search,
-  //       sortBy: query.sortBy,
-  //       searchableColumns: USER_PAGINATION_COLUMNS.searchableColumns,
-  //       sortableColumns: USER_PAGINATION_COLUMNS.sortableColumns,
-  //       defaultSortBy: USER_PAGINATION_COLUMNS.defaultSortBy,
-  //       route: '/users',
-  //     },
-  //     queryBuilder,
-  //   );
-
-  //   let filteredItems = result.items;
-
-  //   if (targetUserId) {
-  //     const targetUserHighestRole =
-  //       await this.accessControlHelperService.getUserHighestRole(targetUserId);
-
-  //     if (targetUserHighestRole?.role?.type === RoleType.SUPER_ADMIN) {
-  //       filteredItems = result.items.map((user) => ({
-  //         ...user,
-  //         isAccessible: true,
-  //       }));
-  //     } else {
-  //       const usersIds = result.items.map((user) => user.id);
-  //       const accessibleUsersIds =
-  //         await this.accessControlHelperService.getAccessibleUsersIdsByIds(
-  //           targetUserId,
-  //           usersIds,
-  //         );
-
-  //       filteredItems = filteredItems.map((user) => ({
-  //         ...user,
-  //         isAccessible: accessibleUsersIds.includes(user.id),
-  //       }));
-  //     }
-  //   }
-
-  //   // Transform the data to have roles array
-  //   const transformedData = this.transformUserRoles(filteredItems);
-
-  //   return {
-  //     ...result,
-  //     items: transformedData,
-  //   };
-  // }
 
   async updateUserTwoFactor(
     userId: string,

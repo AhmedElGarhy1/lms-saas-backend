@@ -2,20 +2,24 @@ import { Injectable } from '@nestjs/common';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { ScopeEnum } from '../constants/role-scope.enum';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 
 @Injectable()
 export class ContextValidationService {
-  constructor(private readonly accessControlService: AccessControlService) {}
+  constructor(
+    private readonly accessControlHelperService: AccessControlHelperService,
+  ) {}
 
   async validateAdminScope(userId: string): Promise<boolean> {
-    const hasAdminRole = await this.accessControlService.userHasRoleType(
+    const hasAdminRole = await this.accessControlHelperService.userHasRoleType(
       userId,
       RoleType.ADMIN,
     );
-    const hasSuperAdminRole = await this.accessControlService.userHasRoleType(
-      userId,
-      RoleType.SUPER_ADMIN,
-    );
+    const hasSuperAdminRole =
+      await this.accessControlHelperService.userHasRoleType(
+        userId,
+        RoleType.SUPER_ADMIN,
+      );
 
     if (hasAdminRole || hasSuperAdminRole) {
       return true;
@@ -35,14 +39,15 @@ export class ContextValidationService {
     }
 
     // Check if user has ADMIN or SUPER_ADMIN role (they can access any center)
-    const hasAdminRole = await this.accessControlService.userHasRoleType(
+    const hasAdminRole = await this.accessControlHelperService.userHasRoleType(
       userId,
       RoleType.ADMIN,
     );
-    const hasSuperAdminRole = await this.accessControlService.userHasRoleType(
-      userId,
-      RoleType.SUPER_ADMIN,
-    );
+    const hasSuperAdminRole =
+      await this.accessControlHelperService.userHasRoleType(
+        userId,
+        RoleType.SUPER_ADMIN,
+      );
 
     if (hasSuperAdminRole) {
       return true; // SuperAdmin can access any center
@@ -54,14 +59,10 @@ export class ContextValidationService {
     }
 
     // For regular users, check UserOnCenter membership
-    const hasCenterAccess = await this.accessControlService.checkCenterAccess(
+    await this.accessControlHelperService.validateCenterAccess({
       userId,
       centerId,
-    );
-
-    if (!hasCenterAccess) {
-      throw new Error('User is not a member of this center');
-    }
+    });
 
     return true;
   }

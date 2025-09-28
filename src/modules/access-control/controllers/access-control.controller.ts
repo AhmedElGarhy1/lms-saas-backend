@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Body,
-  Param,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -30,8 +22,6 @@ import { UserAccessDto } from '../dto/user-access.dto';
 import { AddUserToCenterRequestDto } from '../dto/add-user-to-center.dto';
 import { UserIdParamDto } from '../dto/user-id-param.dto';
 import { UserCenterParamsDto } from '../dto/user-center-params.dto';
-import { UserTargetUserParamsDto } from '../dto/user-target-user-params.dto';
-import { CenterIdQueryDto } from '../dto/center-id-query.dto';
 
 @Controller('access-control')
 @ApiTags('Access Control')
@@ -79,34 +69,37 @@ export class AccessControlController {
   }
 
   // ===== USER-CENTER RELATIONSHIPS =====
-  @Post('users/:userId/centers')
+  @Post('centers/access')
   @ApiOperation({ summary: 'Add user to center' })
-  @ApiParam({ name: 'userId', type: String })
-  @ApiBody({ type: AddUserToCenterRequestDto })
+  @ApiBody({ type: UserCenterParamsDto })
   @ApiResponse({ status: 201, description: 'User added to center' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.CENTER_ACCESS.ADD_USER.action)
   async addUserToCenter(
-    @Param() params: UserIdParamDto,
     @Body() dto: AddUserToCenterRequestDto,
+    @GetUser() user: CurrentUser,
   ) {
-    return this.accessControlService.addUserToCenter({
-      userId: params.userId,
-      centerId: dto.centerId,
-    });
+    return this.accessControlService.grantCenterAccessValidate(
+      dto.userId,
+      dto.centerId,
+      user.id,
+    );
   }
 
-  @Delete('users/:userId/centers/:centerId')
+  @Delete('/centers/access')
   @ApiOperation({ summary: 'Remove user from center' })
-  @ApiParam({ name: 'userId', type: String })
-  @ApiParam({ name: 'centerId', type: String })
+  @ApiBody({ type: UserCenterParamsDto })
   @ApiResponse({ status: 200, description: 'User removed from center' })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.CENTER_ACCESS.REMOVE_USER.action)
-  async removeUserFromCenter(@Param() params: UserCenterParamsDto) {
-    return this.accessControlService.removeUserFromCenter({
-      userId: params.userId,
-      centerId: params.centerId,
-    });
+  async removeUserFromCenter(
+    @Body() dto: UserCenterParamsDto,
+    @GetUser() user: CurrentUser,
+  ) {
+    return this.accessControlService.revokeCenterAccess(
+      user.id,
+      dto.userId,
+      dto.centerId,
+    );
   }
 
   // ===== USER-USER ACCESS RELATIONSHIPS =====

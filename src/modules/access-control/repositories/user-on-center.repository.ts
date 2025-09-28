@@ -18,19 +18,31 @@ export class UserOnCenterRepository extends BaseRepository<UserOnCenter> {
     super(userOnCenterRepository, logger);
   }
 
-  async grantCenterAccess(
-    userId: string,
-    centerId: string,
-  ): Promise<UserOnCenter> {
+  async grantCenterAccess({
+    userId,
+    centerId,
+    grantedBy,
+  }: {
+    userId: string;
+    centerId: string;
+    grantedBy: string;
+  }): Promise<UserOnCenter> {
     const userOnCenter = this.userOnCenterRepository.create({
       userId,
       centerId,
+      createdBy: grantedBy,
     });
 
     return this.userOnCenterRepository.save(userOnCenter);
   }
 
-  async revokeCenterAccess(userId: string, centerId: string): Promise<void> {
+  async revokeCenterAccess({
+    userId,
+    centerId,
+  }: {
+    userId: string;
+    centerId: string;
+  }): Promise<void> {
     await this.userOnCenterRepository.delete({
       userId,
       centerId,
@@ -49,14 +61,6 @@ export class UserOnCenterRepository extends BaseRepository<UserOnCenter> {
       where: { centerId },
       select: ['userId'],
     });
-  }
-
-  async hasCenterAccess(userId: string, centerId: string): Promise<boolean> {
-    const userOnCenter = await this.userOnCenterRepository.findOne({
-      where: { userId, centerId },
-    });
-
-    return !!userOnCenter;
   }
 
   async findCenterAccess(

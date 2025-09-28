@@ -11,28 +11,14 @@ import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.e
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 
-export enum CenterStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  SUSPENDED = 'SUSPENDED',
-}
-
 @Entity('centers')
 @Index(['name'])
-@Index(['status'])
 export class Center extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true })
   name: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
-
-  @Column({
-    type: 'enum',
-    enum: CenterStatus,
-    default: CenterStatus.ACTIVE,
-  })
-  status: CenterStatus;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   address: string;
@@ -77,12 +63,4 @@ export class Center extends BaseEntity {
 
   @OneToMany(() => UserAccess, (userAccess) => userAccess.center)
   userAccess: UserAccess[];
-
-  // Note: AdminCenterAccess doesn't have a direct center relation
-  // It's managed through the access-control service
-
-  // Virtual properties for convenience
-  get isCenterActive(): boolean {
-    return this.status === CenterStatus.ACTIVE;
-  }
 }

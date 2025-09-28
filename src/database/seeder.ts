@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
 import { Profile, ProfileType } from '@/modules/user/entities/profile.entity';
-import { Center, CenterStatus } from '@/modules/centers/entities/center.entity';
+import { Center } from '@/modules/centers/entities/center.entity';
 import { Role } from '@/modules/access-control/entities/roles/role.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
@@ -175,7 +175,7 @@ export class DatabaseSeeder {
         name: 'Bright Future Academy',
         description: 'Premier educational institution in Cairo',
         createdBy: centerOwners[0].id,
-        status: CenterStatus.ACTIVE,
+        isActive: true,
         city: 'Cairo',
         country: 'Egypt',
       },
@@ -183,7 +183,7 @@ export class DatabaseSeeder {
         name: 'Knowledge Hub Center',
         description: 'Innovative learning center in Alexandria',
         createdBy: centerOwners[1].id,
-        status: CenterStatus.ACTIVE,
+        isActive: true,
         city: 'Alexandria',
         country: 'Egypt',
       },
@@ -191,7 +191,7 @@ export class DatabaseSeeder {
         name: 'Elite Education Institute',
         description: 'Excellence in education in Giza',
         createdBy: centerOwners[2].id,
-        status: CenterStatus.ACTIVE,
+        isActive: true,
         city: 'Giza',
         country: 'Egypt',
       },
@@ -199,7 +199,7 @@ export class DatabaseSeeder {
         name: 'Community Learning Center',
         description: 'Community-focused education in Luxor',
         createdBy: centerOwners[3].id,
-        status: CenterStatus.ACTIVE,
+        isActive: true,
         city: 'Luxor',
         country: 'Egypt',
       },

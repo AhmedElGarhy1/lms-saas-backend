@@ -31,7 +31,6 @@ import {
   CenterResponseDto,
   CenterListResponseDto,
 } from '../dto/center-response.dto';
-import { CenterStatus } from '../entities/center.entity';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 
 @Controller('centers')
@@ -152,28 +151,5 @@ export class CentersController {
   ) {
     await this.centersService.restoreCenter(id, user.id);
     return { message: 'Center restored successfully' };
-  }
-
-  @Get('statuses')
-  @ApiOperation({ summary: 'Get all center statuses' })
-  @ApiResponse({
-    status: 200,
-    description: 'Center statuses retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        statuses: {
-          type: 'array',
-          items: {
-            type: 'string',
-            enum: Object.values(CenterStatus),
-          },
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getCenterStatuses() {
-    return { statuses: Object.values(CenterStatus) };
   }
 }
