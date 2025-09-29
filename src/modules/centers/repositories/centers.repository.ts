@@ -36,12 +36,9 @@ export class CentersRepository extends BaseRepository<Center> {
     const queryBuilder = this.centerRepository.createQueryBuilder('center');
 
     // this isn't allowd for user or center admin
-    if (
-      userRoleType === RoleType.USER ||
-      userRoleType === RoleType.CENTER_ADMIN
-    ) {
-      throw new BadRequestException('Access denied to this user');
-    } else if (userRoleType === RoleType.ADMIN) {
+    if (userRoleType === RoleType.SUPER_ADMIN) {
+      // no access control
+    } else {
       queryBuilder.leftJoin('center.userCenters', 'userCenters');
       queryBuilder.andWhere('userCenters.userId = :userId', {
         userId: userId,

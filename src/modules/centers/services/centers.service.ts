@@ -86,12 +86,15 @@ export class CentersService {
     this.logger.info(`Center created: ${savedCenter.id}`);
 
     // Create a center-specific "Center Admin" role
-    const centerAdminRole = await this.rolesService.createRole({
-      name: 'Center Admin',
-      type: RoleType.CENTER_ADMIN,
-      description: `Center Admin role for ${savedCenter.name}`,
-      isActive: true,
-    });
+    const centerAdminRole = await this.rolesService.createRole(
+      {
+        name: 'Center Admin',
+        type: RoleType.CENTER_ADMIN,
+        description: `Center Admin role for ${savedCenter.name}`,
+        centerId: savedCenter.id,
+      },
+      userId,
+    );
 
     this.logger.info(
       `Center Admin role created: ${centerAdminRole.id} for center: ${savedCenter.id}`,
@@ -147,10 +150,32 @@ export class CentersService {
     return savedCenter;
   }
 
-  async listCenters(params: ListCentersParams): Promise<Pagination<Center>> {
-    this.logger.info(`Listing centers for user: ${params.userId}`);
+  async listCenters(
+    query: PaginationQuery,
+    userId: string,
+  ): Promise<Pagination<Center>> {
+    this.logger.info(`Listing centers for user: ${userId}`);
+    const targetUserId = query.filter?.targetUserId as string;
+    const _userId: string = query.filter?.userId as string;
+    delete query.filter?.targetUserId;
+    delete query.filter?.userId;
 
-    return await this.centersRepository.paginateCenters(params);
+    if (_userId) {
+      await this.accessControlHelperService.validateUserAccess({
+        granterUserId: userId,
+        targetUserId: _userId,
+      });
+    }
+
+    console.log('userId', userId);
+    console.log('_userId', _userId);
+    console.log('_userId ?? userId', _userId ?? userId);
+
+    return await this.centersRepository.paginateCenters({
+      query,
+      userId: _userId ?? userId,
+      targetUserId,
+    });
   }
 
   async getCenterById(centerId: string): Promise<Center> {

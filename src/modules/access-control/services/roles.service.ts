@@ -1,71 +1,129 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { RolesRepository } from '../repositories/roles.repository';
 import { Role } from '../entities/roles/role.entity';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
+import { AccessControlHelperService } from './access-control-helper.service';
+import { UpdateRoleRequestDto } from '../dto/update-role.dto';
+import { CreateRoleRequestDto } from '../dto/create-role.dto';
+import { AssignRoleDto } from '../dto/assign-role.dto';
 
 @Injectable()
 export class RolesService {
-  constructor(private readonly rolesRepository: RolesRepository) {}
+  constructor(
+    private readonly rolesRepository: RolesRepository,
+    private readonly accessControlerHelperService: AccessControlHelperService,
+  ) {}
 
-  async paginateRoles(query: PaginationQuery): Promise<Pagination<Role>> {
-    return this.rolesRepository.paginate({
-      page: query.page,
-      limit: query.limit,
-      search: query.search,
-      filter: query.filter,
-      sortBy: query.sortBy,
-      searchableColumns: ['name', 'description'],
-      sortableColumns: ['name', 'description', 'createdAt'],
-      defaultSortBy: ['name', 'ASC'],
+  async paginateRoles(
+    query: PaginationQuery,
+    userId: string,
+  ): Promise<Pagination<Role>> {
+    const centerId = query.filter?.centerId as string | undefined;
+    const targetUserId = query.filter?.targetUserId as string | undefined;
+    delete query.filter?.targetUserId;
+
+    await this.accessControlerHelperService.validateAdminAndCenterAccess({
+      userId,
+      centerId,
     });
+
+    return this.rolesRepository.paginateRoles(query, centerId, targetUserId);
   }
 
   async getRolesByType(type: RoleType) {
     return this.rolesRepository.getRolesByType(type);
   }
 
-  async createRole(data: {
-    name: string;
-    type: RoleType;
-    description?: string;
-    permissions?: string[];
-    isActive?: boolean;
-  }) {
+  async createRole(data: CreateRoleRequestDto, userId: string) {
+    await this.accessControlerHelperService.validateAdminAndCenterAccess({
+      userId,
+      centerId: data.centerId,
+    });
+
     return this.rolesRepository.createRole(data);
   }
 
-  async updateRole(
-    roleId: string,
-    data: {
-      name?: string;
-      description?: string;
-      permissions?: string[];
-      isActive?: boolean;
-    },
-  ) {
+  async updateRole(roleId: string, data: UpdateRoleRequestDto, userId: string) {
+    await this.accessControlerHelperService.validateAdminAndCenterAccess({
+      userId,
+      centerId: data.centerId,
+    });
     return this.rolesRepository.updateRole(roleId, data);
   }
 
-  async deleteRole(roleId: string) {
+  async deleteRole(roleId: string, userId: string) {
+    const role = await this.rolesRepository.findOne(roleId);
+    if (!role) {
+      throw new NotFoundException('Role not found');
+    }
+    await this.accessControlerHelperService.validateAdminAndCenterAccess({
+      userId: userId,
+      centerId: role.centerId,
+    });
     return this.rolesRepository.deleteRole(roleId);
   }
 
-  async assignRole(data: {
-    userId: string;
-    roleId: string;
-    centerId?: string;
-  }) {
+  async assignRoleValidate(data: AssignRoleDto, createdBy: string) {
+    await this.accessControlerHelperService.validateAdminAndCenterAccess({
+      userId: createdBy,
+      centerId: data.centerId,
+    });
+    if (data.centerId) {
+      await this.accessControlerHelperService.validateCenterAccess({
+        userId: data.userId,
+        centerId: data.centerId,
+      });
+    }
+    await this.accessControlerHelperService.validateUserAccess({
+      granterUserId: createdBy,
+      targetUserId: data.userId,
+      centerId: data.centerId,
+    });
+    // TODO: make it more efficient
+    const userRoles = await this.rolesRepository.getUserRoles(data.userId);
+    if (userRoles.some((ur) => ur.roleId === data.roleId)) {
+      throw new BadRequestException('User already assigned to the role');
+    }
+    return this.assignRole(data);
+  }
+
+  async assignRole(data: AssignRoleDto) {
     return this.rolesRepository.assignRole(data);
   }
 
-  async removeUserRole(data: {
-    userId: string;
-    roleId: string;
-    centerId?: string;
-  }) {
+  async removeUserRole(data: AssignRoleDto) {
     return this.rolesRepository.removeUserRole(data);
+  }
+
+  async removeUserRoleValidate(data: AssignRoleDto, createdBy: string) {
+    await this.accessControlerHelperService.validateAdminAndCenterAccess({
+      userId: createdBy,
+      centerId: data.centerId,
+    });
+    if (data.centerId) {
+      await this.accessControlerHelperService.validateCenterAccess({
+        userId: data.userId,
+        centerId: data.centerId,
+      });
+    }
+    await this.accessControlerHelperService.validateUserAccess({
+      granterUserId: createdBy,
+      targetUserId: data.userId,
+      centerId: data.centerId,
+    });
+    // TODO: make it more efficient
+    const userRoles = await this.rolesRepository.getUserRoles(data.userId);
+    if (!userRoles.some((ur) => ur.roleId === data.roleId)) {
+      throw new BadRequestException('User not assigned to the role');
+    }
+    return this.removeUserRole(data);
   }
 
   async getUserRoles(userId: string) {

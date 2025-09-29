@@ -29,6 +29,7 @@ import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { CurrentUser as CurrentUserType } from '@/shared/common/types/current-user.type';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
+import { AssignRoleDto } from '../dto/assign-role.dto';
 
 @ApiTags('Roles')
 @Controller('roles')
@@ -59,8 +60,11 @@ export class RolesController {
     description: 'Role created successfully',
   })
   @ApiBody({ type: CreateRoleRequestDto })
-  async createRole(@Body() dto: CreateRoleRequestDto) {
-    return this.rolesService.createRole(dto);
+  async createRole(
+    @Body() dto: CreateRoleRequestDto,
+    @GetUser() user: CurrentUserType,
+  ) {
+    return this.rolesService.createRole(dto, user.id);
   }
 
   @Get()
@@ -84,7 +88,31 @@ export class RolesController {
     @Paginate() query: PaginationQuery,
     @GetUser() user: CurrentUserType,
   ) {
-    return this.rolesService.paginateRoles(query);
+    return this.rolesService.paginateRoles(query, user.id);
+  }
+
+  @Post('assign')
+  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.ASSIGN.action)
+  @ApiOperation({ summary: 'Assign a role to a user' })
+  @ApiBody({ type: AssignRoleDto })
+  @ApiResponse({ status: 201, description: 'Role assigned successfully' })
+  async assignRole(
+    @Body() dto: AssignRoleDto,
+    @GetUser() user: CurrentUserType,
+  ) {
+    return this.rolesService.assignRoleValidate(dto, user.id);
+  }
+
+  @Delete('assign')
+  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.REMOVE.action)
+  @ApiOperation({ summary: 'Remove a role from a user' })
+  @ApiBody({ type: AssignRoleDto })
+  @ApiResponse({ status: 201, description: 'Role removed successfully' })
+  async removeRole(
+    @Body() dto: AssignRoleDto,
+    @GetUser() user: CurrentUserType,
+  ) {
+    return this.rolesService.removeUserRoleValidate(dto, user.id);
   }
 
   @Get(':roleId')
@@ -105,8 +133,9 @@ export class RolesController {
   async updateRole(
     @Param('roleId') roleId: string,
     @Body() dto: UpdateRoleRequestDto,
+    @GetUser() user: CurrentUserType,
   ) {
-    return this.rolesService.updateRole(roleId, dto);
+    return this.rolesService.updateRole(roleId, dto, user.id);
   }
 
   @Delete(':roleId')
@@ -114,7 +143,12 @@ export class RolesController {
   @ApiParam({ name: 'roleId', type: String })
   @ApiResponse({ status: 200, description: 'Role deleted successfully' })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.DELETE.action)
-  async deleteRole(@Param('roleId') roleId: string) {
-    return this.rolesService.deleteRole(roleId);
+  async deleteRole(
+    @Param('roleId') roleId: string,
+    @GetUser() user: CurrentUserType,
+  ) {
+    console.log('roleId', roleId);
+    console.log('user', user);
+    return this.rolesService.deleteRole(roleId, user.id);
   }
 }

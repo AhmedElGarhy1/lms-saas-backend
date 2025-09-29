@@ -18,12 +18,15 @@ export class CenterEventsService {
     this.logger.log(`Center created: ${center.id}`);
 
     // Create default admin role for the center
-    await this.rolesService.createRole({
-      name: `Center Admin`,
-      type: RoleType.CENTER_ADMIN,
-      description: `Default admin role for center: ${center.name}`,
-      isActive: true,
-    });
+    await this.rolesService.createRole(
+      {
+        name: `Center Admin`,
+        type: RoleType.CENTER_ADMIN,
+        description: `Default admin role for center: ${center.name}`,
+        centerId: center.id,
+      },
+      center.createdBy,
+    );
 
     // Log the activity
     await this.activityLogService.logCenterActivity(

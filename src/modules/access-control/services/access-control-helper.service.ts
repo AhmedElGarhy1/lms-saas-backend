@@ -18,6 +18,53 @@ export class AccessControlHelperService {
     private userAccessRepository: UserAccessRepository,
   ) {}
 
+  /**
+   * Validate if the user has admin or super admin access or center access
+   * @param userId - The user id
+   * @param centerId - The center id
+   * @returns void
+   */
+  async validateAdminAndCenterAccess({
+    userId,
+    centerId,
+  }: {
+    userId: string;
+    centerId?: string;
+  }) {
+    const heighesUsertRole = await this.getUserHighestRole(userId, centerId);
+    const heightestRole = heighesUsertRole?.role?.type;
+    if (heightestRole === RoleType.SUPER_ADMIN) {
+      return;
+    }
+    if (centerId) {
+      await this.validateCenterAccess({
+        userId,
+        centerId,
+      });
+      return;
+    }
+    if (heightestRole !== RoleType.ADMIN) {
+      throw new ForbiddenException('You do not have access');
+    }
+  }
+
+  /**
+   * Validate if the user has admin or super admin access
+   * @param userId - The user id
+   * @returns void
+   */
+  async validateAdminAccess({ userId }: { userId: string }) {
+    const heighesUsertRole = await this.getUserHighestRole(userId);
+    const heightestRole = heighesUsertRole?.role?.type;
+    if (
+      ![RoleType.SUPER_ADMIN, RoleType.ADMIN].includes(
+        heightestRole as RoleType,
+      )
+    ) {
+      throw new ForbiddenException('You do not have access');
+    }
+  }
+
   async userHasRoleType(userId: string, roleType: string, centerId?: string) {
     return this.userRoleRepository.userHasRoleType(userId, roleType, centerId);
   }
@@ -87,6 +134,8 @@ export class AccessControlHelperService {
     if (userRole) {
       return userRole;
     }
+    // throw error
+    // throw new ForbiddenException('there is no role for this user');
     return null;
   }
 
@@ -160,6 +209,13 @@ export class AccessControlHelperService {
     return result.filter((result) => result !== null);
   }
 
+  async getAccessibleRolesIdsForUser(
+    userId: string,
+    centerId?: string,
+  ): Promise<string[]> {
+    const userRoles = await this.getUserRoles(userId, centerId);
+    return userRoles.map((userRole) => userRole.roleId);
+  }
   // user access methods
   async findUserAccess(data: UserAccessParams): Promise<UserAccess | null> {
     const { granterUserId, targetUserId, centerId } = data;
@@ -197,7 +253,10 @@ export class AccessControlHelperService {
           centerId,
         });
         return canAccessCenter;
-      } else return false;
+      } else {
+        //TODO: access users within accessable centers
+        return false;
+      }
     } else {
       const userAccess = await this.findUserAccess({
         granterUserId,

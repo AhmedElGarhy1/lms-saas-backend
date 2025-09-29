@@ -101,10 +101,7 @@ export class UserRepository extends BaseRepository<User> {
     }
 
     // Add JOINs for relations
-    queryBuilder
-      .leftJoinAndSelect('user.profile', 'profile')
-      .leftJoinAndSelect('user.userRoles', 'userRoles')
-      .leftJoinAndSelect('userRoles.role', 'role');
+    queryBuilder.leftJoinAndSelect('user.profile', 'profile');
 
     // Filter by target user (exclude)
     if (targetUserId) {
@@ -135,17 +132,6 @@ export class UserRepository extends BaseRepository<User> {
     );
 
     let filteredItems = result.items;
-
-    if (roleType === RoleType.USER) {
-      // Filter results based on access control
-      filteredItems = filteredItems.filter((user) => {
-        return user.userRoles?.some(
-          (userRole) =>
-            userRole.role?.type === RoleType.CENTER_ADMIN ||
-            userRole.role?.type === RoleType.USER,
-        );
-      });
-    }
 
     // Apply accessibility check if targetUserId is provided
     const usersIds = filteredItems.map((user) => user.id);
@@ -181,12 +167,9 @@ export class UserRepository extends BaseRepository<User> {
       }));
     }
 
-    // Transform the data to have roles array
-    const transformedData = this.transformUserRoles(filteredItems);
-
     return {
       ...result,
-      items: transformedData,
+      items: filteredItems,
     };
   }
 
@@ -308,25 +291,6 @@ export class UserRepository extends BaseRepository<User> {
       this.logger.error('Error finding inactive users:', error);
       throw error;
     }
-  }
-
-  /**
-   * Transform user data to have roles array instead of userRoles
-   */
-  private transformUserRoles(users: User[]): (User & { roles: Role[] })[] {
-    return users.map((user: User) => {
-      const _users = {
-        ...user,
-        roles:
-          user.userRoles?.map((userRole: any) => ({
-            ...userRole.role,
-            centerId: userRole.centerId,
-            isActive: userRole.isActive,
-          })) || [],
-      };
-      delete (_users as any).userRoles;
-      return _users;
-    });
   }
 
   async clearAllUsers(): Promise<void> {

@@ -1,17 +1,17 @@
-import { IsString, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsUUID } from 'class-validator';
 
-export class UserTargetUserParamsDto {
+export class AssignRoleDto {
   @ApiProperty({ description: 'User ID' })
-  @IsString()
+  @IsUUID()
   userId: string;
 
-  @ApiProperty({ description: 'Target user ID' })
-  @IsString()
-  targetUserId: string;
+  @ApiProperty({ description: 'Role ID' })
+  @IsUUID()
+  roleId: string;
 
   @ApiProperty({ description: 'Center ID', required: false })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   centerId?: string;
 }
