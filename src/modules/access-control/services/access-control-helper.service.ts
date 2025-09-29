@@ -90,25 +90,45 @@ export class AccessControlHelperService {
     return null;
   }
 
-  async getAccessibleUsersIdsByIds(
+  async getAccessibleUsersIdsForUser(
     userId: string,
     targetUserIds: string[],
     centerId?: string,
   ): Promise<string[]> {
-    const result = await Promise.all(
-      targetUserIds.map(async (targetUserId) => {
-        const canAccess = await this.canUserAccess({
-          granterUserId: userId,
-          targetUserId,
+    const userRole = await this.getUserHighestRole(userId, centerId);
+    const roleType = userRole?.role?.type;
+    if (roleType === RoleType.SUPER_ADMIN) {
+      return targetUserIds;
+    } else if (roleType === RoleType.CENTER_ADMIN) {
+      if (centerId) {
+        const canAccessCenter = await this.canCenterAccess({
+          userId,
           centerId,
         });
-        return canAccess ? targetUserId : null;
-      }),
-    );
-    return result.filter((result) => result !== null);
+        return canAccessCenter ? targetUserIds : [];
+      } else return [];
+    } else if (roleType === RoleType.ADMIN) {
+      if (centerId) {
+        const canAccessCenter = await this.canCenterAccess({
+          userId,
+          centerId,
+        });
+        return canAccessCenter ? targetUserIds : [];
+      }
+    }
+
+    const userAccesses = await this.userAccessRepository.findMany({
+      where: {
+        granterUserId: userId,
+        targetUserId: In(targetUserIds),
+        ...(centerId && { centerId }),
+      },
+    });
+    return userAccesses.map((access) => access.targetUserId);
   }
 
-  async getAccessibleUsersIdsByCenterId(
+  // TODO: try to optimize this method
+  async getAccessibleUsersIdsForCenter(
     centerId: string,
     targetUserIds: string[],
   ): Promise<string[]> {
@@ -119,6 +139,22 @@ export class AccessControlHelperService {
           centerId,
         });
         return canAccess ? targetUserId : null;
+      }),
+    );
+    return result.filter((result) => result !== null);
+  }
+
+  async getAccessibleCentersIdsForUser(
+    userId: string,
+    targetCenterIds: string[],
+  ): Promise<string[]> {
+    const result = await Promise.all(
+      targetCenterIds.map(async (targetCenterId) => {
+        const canAccess = await this.canCenterAccess({
+          userId,
+          centerId: targetCenterId,
+        });
+        return canAccess ? targetCenterId : null;
       }),
     );
     return result.filter((result) => result !== null);

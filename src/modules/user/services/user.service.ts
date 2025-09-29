@@ -1,4 +1,9 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import {
   ResourceNotFoundException,
   InsufficientPermissionsException,
@@ -11,7 +16,6 @@ import { AccessControlService } from '@/modules/access-control/services/access-c
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ProfileService } from './profile.service';
-import { UserEventEmitter } from '@/shared/common/events/user.events';
 import { LoggerService } from '@/shared/services/logger.service';
 import { CreateUserRequestDto } from '../dto/create-user.dto';
 import { UpdateUserRequestDto } from '../dto/update-user.dto';
@@ -50,9 +54,7 @@ export class UserService {
     private readonly rolesService: RolesService,
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly profileService: ProfileService,
-    private readonly userEventEmitter: UserEventEmitter,
     private readonly logger: LoggerService,
-    private readonly centersService: CentersService,
   ) {}
 
   async getProfile(params: GetProfileParams): Promise<User> {
@@ -376,7 +378,7 @@ export class UserService {
     }));
 
     for (const userCenter of userCenters) {
-      await this.accessControlService.revokeCenterAccess(
+      await this.accessControlService.revokeCenterAccessValidate(
         currentUserId,
         userId,
         userCenter.centerId,
@@ -417,16 +419,6 @@ export class UserService {
 
     // Update global activation status
     await this.userRepository.update(userId, { isActive: dto.isActive });
-
-    // Update center-specific activation if centerId is provided
-    if (dto.centerId) {
-      // Update center-specific user activation status
-      await this.accessControlService.updateUserCenterActivation(
-        userId,
-        dto.centerId,
-        dto.isActive,
-      );
-    }
 
     this.logger.log(
       `User activation status updated: ${userId} to ${dto.isActive} by ${currentUserId}`,
@@ -582,8 +574,8 @@ export class UserService {
 
       let permissions;
       try {
-        permissions =
-          await this.accessControlHelperService.getUserPermissions(userId);
+        permissions = [] as string[];
+
         context.permissions = permissions;
       } catch (error) {
         this.logger.error(

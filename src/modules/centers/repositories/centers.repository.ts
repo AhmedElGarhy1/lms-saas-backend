@@ -9,6 +9,7 @@ import { LoggerService } from '../../../shared/services/logger.service';
 import { CENTER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { ListCentersParams } from '../services/centers.service';
 
 @Injectable()
 export class CentersRepository extends BaseRepository<Center> {
@@ -26,9 +27,9 @@ export class CentersRepository extends BaseRepository<Center> {
   }
 
   async paginateCenters(
-    query: PaginationQuery,
-    userId: string,
+    params: ListCentersParams,
   ): Promise<Pagination<Center>> {
+    const { query, userId, targetUserId } = params;
     const userRole =
       await this.accessControlHelperService.getUserHighestRole(userId);
     const userRoleType = userRole?.role?.type;
@@ -47,17 +48,39 @@ export class CentersRepository extends BaseRepository<Center> {
       });
     }
 
-    return this.paginate({
-      page: query.page,
-      limit: query.limit,
-      search: query.search,
-      filter: query.filter,
-      sortBy: query.sortBy,
-      searchableColumns: CENTER_PAGINATION_COLUMNS.searchableColumns,
-      sortableColumns: CENTER_PAGINATION_COLUMNS.sortableColumns,
-      defaultSortBy: CENTER_PAGINATION_COLUMNS.defaultSortBy,
-      defaultLimit: 20,
-    });
+    const result = await this.paginate(
+      {
+        page: query.page,
+        limit: query.limit,
+        search: query.search,
+        filter: query.filter,
+        sortBy: query.sortBy,
+        searchableColumns: CENTER_PAGINATION_COLUMNS.searchableColumns,
+        sortableColumns: CENTER_PAGINATION_COLUMNS.sortableColumns,
+        defaultSortBy: CENTER_PAGINATION_COLUMNS.defaultSortBy,
+        defaultLimit: 20,
+      },
+      queryBuilder,
+    );
+
+    let filteredItems = result.items;
+
+    if (targetUserId) {
+      const accessibleCentersIds =
+        await this.accessControlHelperService.getAccessibleCentersIdsForUser(
+          targetUserId,
+          result.items.map((center) => center.id),
+        );
+      filteredItems = filteredItems.map((center) => ({
+        ...center,
+        isCenterAccessible: accessibleCentersIds.includes(center.id),
+      }));
+    }
+
+    return {
+      ...result,
+      items: filteredItems,
+    };
   }
 
   async updateCenter(

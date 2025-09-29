@@ -10,6 +10,7 @@ import { User } from '@/modules/user/entities/user.entity';
 import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
+import { Role } from '@/modules/access-control/entities/roles/role.entity';
 
 @Entity('centers')
 @Index(['name'])
@@ -44,14 +45,8 @@ export class Center extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   website: string;
 
-  @Column({ type: 'int', default: 0 })
-  currentEnrollment: number;
-
   @Column({ type: 'varchar', length: 255, nullable: true })
   logo: string;
-
-  @Column({ type: 'jsonb', nullable: true })
-  settings: Record<string, any>;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'createdBy' })
@@ -63,4 +58,7 @@ export class Center extends BaseEntity {
 
   @OneToMany(() => UserAccess, (userAccess) => userAccess.center)
   userAccess: UserAccess[];
+
+  @OneToMany(() => Role, (role) => role.center)
+  roles: Role[];
 }

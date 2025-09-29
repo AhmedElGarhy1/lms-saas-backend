@@ -80,7 +80,13 @@ export class CentersController {
     @Paginate() query: PaginationQuery,
     @GetUser() user: CurrentUserType,
   ) {
-    return this.centersService.listCenters(query, user.id);
+    const targetUserId = query.filter?.targetUserId as string;
+    delete query.filter?.targetUserId;
+    return this.centersService.listCenters({
+      query,
+      userId: user.id,
+      targetUserId,
+    });
   }
 
   @Get(':id')

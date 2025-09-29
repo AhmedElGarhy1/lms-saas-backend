@@ -2,26 +2,68 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { CentersRepository } from '../repositories/centers.repository';
 import { Center } from '../entities/center.entity';
-import { CreateCenterRequestDto } from '../dto/create-center.dto';
+import {
+  CreateCenterRequestDto,
+  CreateCenterUserDto,
+} from '../dto/create-center.dto';
 import { UpdateCenterRequestDto } from '../dto/update-center.dto';
-import { CenterUserAssignmentDto } from '../dto/center-response.dto';
 import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { Pagination } from 'nestjs-typeorm-paginate';
-import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { LoggerService } from '@/shared/services/logger.service';
+import { UserService } from '@/modules/user/services/user.service';
+import { RolesService } from '@/modules/access-control/services/roles.service';
+import { RoleType } from '@/shared/common/enums/role-type.enum';
+import { CreateUserRequestDto } from '@/modules/user/dto/create-user.dto';
+
+export interface ListCentersParams {
+  query: PaginationQuery;
+  userId: string;
+  targetUserId: string;
+}
+
+export interface SeederCenterData {
+  name: string;
+  description?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  logo?: string;
+}
 
 @Injectable()
 export class CentersService {
   constructor(
     private readonly centersRepository: CentersRepository,
-    private readonly accessControlService: AccessControlService,
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly accessControlService: AccessControlService,
     private readonly logger: LoggerService,
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
+    private readonly rolesService: RolesService,
   ) {}
+
+  /**
+   * Private helper method to find center by ID with proper error handling
+   */
+  private async findCenterById(centerId: string): Promise<Center> {
+    const center = await this.centersRepository.findOne(centerId);
+    if (!center) {
+      throw new NotFoundException(`Center with ID '${centerId}' not found`);
+    }
+    return center;
+  }
 
   async createCenter(
     dto: CreateCenterRequestDto,
@@ -29,32 +71,90 @@ export class CentersService {
   ): Promise<Center> {
     this.logger.info(`Creating center '${dto.name}' by user: ${userId}`);
 
-    // Create the center
+    // Create the center first
     const savedCenter = await this.centersRepository.create({
-      ...dto,
+      name: dto.name,
+      description: dto.description,
+      address: dto.address,
+      phone: dto.phone,
+      email: dto.email,
+      website: dto.website,
+      isActive: dto.isActive,
       createdBy: userId,
     });
 
     this.logger.info(`Center created: ${savedCenter.id}`);
 
+    // Create a center-specific "Center Admin" role
+    const centerAdminRole = await this.rolesService.createRole({
+      name: 'Center Admin',
+      type: RoleType.CENTER_ADMIN,
+      description: `Center Admin role for ${savedCenter.name}`,
+      isActive: true,
+    });
+
+    this.logger.info(
+      `Center Admin role created: ${centerAdminRole.id} for center: ${savedCenter.id}`,
+    );
+
+    // Create the center admin user
+    const user = dto.user as CreateCenterUserDto;
+    const userDto: CreateUserRequestDto = {
+      name: user.name,
+      email: user.email,
+      password: user.password,
+      isActive: user.isActive ?? true,
+      profile: user.profile,
+      centerAccess: [
+        {
+          centerId: savedCenter.id,
+          roleIds: [centerAdminRole.id], // Use the newly created center admin role
+        },
+      ],
+    };
+
+    // Create the user
+    const createdUser = await this.userService.createUser(userDto);
+
+    // Handle center access and role assignment for the created user
+    await this.userService.handleUserCenterAccess(
+      createdUser.id,
+      userDto,
+      userId,
+    );
+
+    // Give the creator access to the center they created
+    await this.accessControlService.grantCenterAccess(
+      userId,
+      savedCenter.id,
+      userId, // Creator grants access to themselves
+    );
+
+    // Assign CENTER_ADMIN role to the creator for the center they created
+    await this.rolesService.assignRole({
+      userId: userId,
+      roleId: centerAdminRole.id,
+      centerId: savedCenter.id,
+    });
+
+    this.logger.info(
+      `Center admin user created: ${createdUser.id} for center: ${savedCenter.id}`,
+    );
+    this.logger.info(
+      `Creator ${userId} granted CENTER_ADMIN access to center: ${savedCenter.id}`,
+    );
+
     return savedCenter;
   }
 
-  async listCenters(
-    query: PaginationQuery,
-    userId: string,
-  ): Promise<Pagination<Center>> {
-    this.logger.info(`Listing centers for user: ${userId}`);
+  async listCenters(params: ListCentersParams): Promise<Pagination<Center>> {
+    this.logger.info(`Listing centers for user: ${params.userId}`);
 
-    return await this.centersRepository.paginateCenters(query, userId);
+    return await this.centersRepository.paginateCenters(params);
   }
 
   async getCenterById(centerId: string): Promise<Center> {
-    const center = await this.centersRepository.findOne(centerId);
-    if (!center) {
-      throw new NotFoundException(`Center with ID ${centerId} not found`);
-    }
-    return center;
+    return this.findCenterById(centerId);
   }
 
   async updateCenter(
@@ -64,10 +164,7 @@ export class CentersService {
   ): Promise<Center> {
     this.logger.info(`Updating center: ${centerId} by user: ${userId}`);
 
-    const center = await this.centersRepository.findOne(centerId);
-    if (!center) {
-      throw new NotFoundException(`Center with ID '${centerId}' not found`);
-    }
+    const center = await this.findCenterById(centerId);
 
     if (dto.name && dto.name !== center.name) {
       const existingCenter = await this.centersRepository.findByName(dto.name);
@@ -92,15 +189,11 @@ export class CentersService {
   async deleteCenter(centerId: string, userId: string): Promise<void> {
     this.logger.info(`Deleting center: ${centerId} by user: ${userId}`);
 
-    const center = await this.centersRepository.findOne(centerId);
-    if (!center) {
-      throw new NotFoundException(`Center with ID '${centerId}' not found`);
-    }
+    const center = await this.findCenterById(centerId);
     // Permission check should be in controller
 
-    const centerWithUsers = await this.centersRepository.findOne(centerId);
-    // TODO: later
-    if (centerWithUsers?.userCenters?.length ?? 0 > 0) {
+    // TODO: Check if center has active users before deletion
+    if (center.userCenters?.length ?? 0 > 0) {
       throw new BadRequestException('Cannot delete center with active users');
     }
 
@@ -110,10 +203,7 @@ export class CentersService {
   async restoreCenter(centerId: string, userId: string): Promise<Center> {
     this.logger.info(`Restoring center: ${centerId} by user: ${userId}`);
 
-    const center = await this.centersRepository.findOne(centerId);
-    if (!center) {
-      throw new NotFoundException(`Center with ID '${centerId}' not found`);
-    }
+    const center = await this.findCenterById(centerId);
 
     if (center.isActive) {
       throw new BadRequestException('Center is already active');
@@ -121,12 +211,7 @@ export class CentersService {
     // Permission check should be in controller
 
     await this.centersRepository.restore(centerId);
-    const restoredCenter = await this.centersRepository.findOne(centerId);
-    if (!restoredCenter) {
-      throw new NotFoundException(`Center with ID '${centerId}' not found`);
-    }
-
-    return restoredCenter;
+    return this.findCenterById(centerId);
   }
 
   async updateCenterActivation(
@@ -155,14 +240,11 @@ export class CentersService {
     await this.centersRepository.clearAllCenters();
   }
 
-  async createCenterForSeeder(centerData: any): Promise<Center> {
+  async createCenterForSeeder(centerData: SeederCenterData): Promise<Center> {
     this.logger.info(`Creating center '${centerData.name}' for seeding`);
 
     // Create the center without user validation for seeding
-    const savedCenter = await this.centersRepository.create({
-      ...centerData,
-      currentEnrollment: 0,
-    });
+    const savedCenter = await this.centersRepository.create(centerData);
 
     this.logger.info(`Center created for seeding: ${savedCenter.id}`);
     return savedCenter;

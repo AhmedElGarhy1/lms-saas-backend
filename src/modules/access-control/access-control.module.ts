@@ -5,9 +5,7 @@ import { RolesController } from './controllers/roles.controller';
 import { AccessControlService } from './services/access-control.service';
 import { AccessControlHelperService } from './services/access-control-helper.service';
 import { PermissionService } from './services/permission.service';
-import { PermissionCacheService } from './services/permission-cache.service';
 import { RolesService } from './services/roles.service';
-import { AccessControlRepository } from './repositories/access-control.repository';
 import { PermissionRepository } from './repositories/permission.repository';
 import { UserAccessRepository } from './repositories/user-access.repository';
 import { UserOnCenterRepository } from './repositories/user-on-center.repository';
@@ -20,7 +18,6 @@ import { UserRole } from './entities/roles/user-role.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { UserOnCenter } from './entities/user-on-center.entity';
 import { DatabaseModule } from '@/shared/modules/database/database.module';
-import { RoleEventEmitter } from '@/shared/common/events/role.events';
 
 @Global()
 @Module({
@@ -40,28 +37,19 @@ import { RoleEventEmitter } from '@/shared/common/events/role.events';
     AccessControlService,
     AccessControlHelperService,
     PermissionService,
-    PermissionCacheService,
     RolesService,
-    AccessControlRepository,
     PermissionRepository,
     UserAccessRepository,
     UserOnCenterRepository,
     RolesRepository,
     UserRoleRepository,
-    {
-      provide: RoleEventEmitter,
-      useClass: RoleEventEmitter,
-    },
   ],
   exports: [
     AccessControlService,
     AccessControlHelperService,
     PermissionService,
-    PermissionCacheService,
     RolesService,
     RolesRepository,
-    RoleEventEmitter,
-    AccessControlRepository,
     PermissionRepository,
     UserAccessRepository,
     UserOnCenterRepository,

@@ -39,6 +39,18 @@ export class RolesController {
     private readonly permissionService: PermissionService,
   ) {}
 
+  @Get('permissions')
+  @ApiOperation({ summary: 'Get permissions' })
+  @ApiParam({ name: 'type', type: String })
+  @ApiResponse({ status: 200, description: 'Permissions details' })
+  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
+  async getPermissions(
+    @Param('type') type: 'admin' | 'user' | 'all' = 'all',
+    @GetUser() user: CurrentUserType,
+  ) {
+    return this.permissionService.getPermissions(type, user.id);
+  }
+
   @Post()
   @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.CREATE.action)
   @ApiOperation({ summary: 'Create a new role' })
@@ -104,198 +116,5 @@ export class RolesController {
   @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.DELETE.action)
   async deleteRole(@Param('roleId') roleId: string) {
     return this.rolesService.deleteRole(roleId);
-  }
-
-  // User-Role assignments
-  @Post(':roleId/users')
-  @ApiOperation({ summary: 'Assign role to user' })
-  @ApiParam({ name: 'roleId', type: String })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        userId: { type: 'string' },
-        centerId: { type: 'string', nullable: true },
-      },
-      required: ['userId'],
-    },
-  })
-  @ApiResponse({ status: 201, description: 'Role assigned to user' })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.ASSIGN.action)
-  async assignRoleToUser(
-    @Param('roleId') roleId: string,
-    @Body() body: { userId: string; centerId?: string },
-  ) {
-    return this.rolesService.assignRole({
-      userId: body.userId,
-      roleId,
-      centerId: body.centerId,
-    });
-  }
-
-  @Delete(':roleId/users/:userId')
-  @ApiOperation({ summary: 'Remove role from user' })
-  @ApiParam({ name: 'roleId', type: String })
-  @ApiParam({ name: 'userId', type: String })
-  @ApiQuery({
-    name: 'centerId',
-    required: false,
-    description: 'Center ID if applicable',
-  })
-  @ApiResponse({ status: 200, description: 'Role removed from user' })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.REMOVE.action)
-  async removeRoleFromUser(
-    @Param('roleId') roleId: string,
-    @Param('userId') userId: string,
-    @Query('centerId') centerId?: string,
-  ) {
-    return this.rolesService.removeUserRole({ userId, roleId, centerId });
-  }
-
-  @Get('users/:userId')
-  @ApiOperation({ summary: 'Get user roles' })
-  @ApiParam({ name: 'userId', type: String })
-  @ApiQuery({ name: 'scope', required: false, description: 'Filter by scope' })
-  @ApiQuery({
-    name: 'centerId',
-    required: false,
-    description: 'Center ID for filtering',
-  })
-  @ApiResponse({ status: 200, description: 'User roles' })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
-  async getUserRoles(
-    @Param('userId') userId: string,
-    @Query('scope') scope?: string,
-    @Query('centerId') centerId?: string,
-  ) {
-    if (scope) {
-      return this.rolesService.getUserRolesForScope(userId, scope, centerId);
-    }
-    return this.rolesService.getUserRoles(userId);
-  }
-
-  @Get('type/:type/users')
-  @ApiOperation({ summary: 'Get users by role type' })
-  @ApiParam({ name: 'type', type: String })
-  @ApiQuery({
-    name: 'centerId',
-    required: false,
-    description: 'Center ID for filtering',
-  })
-  @ApiResponse({ status: 200, description: 'Users with role type' })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
-  async getUsersByRoleType(
-    @Param('type') type: string,
-    @Query('centerId') centerId?: string,
-  ) {
-    return this.rolesService.getUsersByRoleType(type, centerId);
-  }
-
-  @Put(':roleId/permissions')
-  @ApiOperation({ summary: 'Update role permissions' })
-  @ApiParam({ name: 'roleId', type: String })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        permissionIds: {
-          type: 'array',
-          items: { type: 'string' },
-        },
-      },
-      required: ['permissionIds'],
-    },
-  })
-  @ApiResponse({ status: 200, description: 'Role permissions updated' })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.UPDATE.action)
-  async updateRolePermissions(
-    @Param('roleId') roleId: string,
-    @Body() body: { permissionIds: string[] },
-  ) {
-    return this.rolesService.updateRolePermissions(roleId, body.permissionIds);
-  }
-
-  @Get(':roleId/permissions')
-  @ApiOperation({ summary: 'Get role permissions' })
-  @ApiParam({ name: 'roleId', type: String })
-  @ApiResponse({ status: 200, description: 'Role permissions' })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
-  async getRolePermissions(@Param('roleId') roleId: string) {
-    return this.rolesService.getRolePermissions(roleId);
-  }
-
-  @Get('permissions')
-  @ApiOperation({
-    summary: 'Get permissions based on user context',
-    description:
-      'Returns permissions based on user scope - Center users get isAdmin: false, Global users get isAdmin: true',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Permissions retrieved successfully',
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.PERMISSIONS.VIEW.action)
-  async getPermissions(@GetUser() user: CurrentUserType) {
-    // Determine if user should get admin or user permissions based on their scope
-    const isGlobalScope = user.scope === 'ADMIN';
-
-    if (isGlobalScope) {
-      // Global scope - return admin permissions (isAdmin: true)
-      return this.permissionService.getAdminPermissions();
-    } else {
-      // Center scope - return user permissions (isAdmin: false)
-      const allPermissions = await this.permissionService.getAllPermissions();
-      return allPermissions.filter((p) => !p.isAdmin);
-    }
-  }
-
-  @Get('contextual')
-  @ApiOperation({
-    summary: 'Get roles in current context (center/global)',
-    description:
-      'Returns roles based on user scope - Center users get center-specific roles, Global users get all roles',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Contextual roles retrieved successfully',
-  })
-  @ApiQuery({
-    name: 'centerId',
-    required: false,
-    description: 'Center ID for filtering center-specific roles',
-  })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
-  async getContextualRoles(
-    @GetUser() user: CurrentUserType,
-    @Query('centerId') centerId?: string,
-  ) {
-    const isGlobalScope = user.scope === 'ADMIN';
-    const targetCenterId = centerId || user.centerId;
-
-    if (isGlobalScope) {
-      // Global scope - return all roles
-      return this.rolesService.paginateRoles({} as any);
-    } else {
-      // Center scope - return center-specific roles
-      if (targetCenterId) {
-        // Get roles that are applicable to this center
-        const allRoles = await this.rolesService.paginateRoles({} as any);
-        return {
-          ...allRoles,
-          items: allRoles.items.filter((role: any) => {
-            // Filter roles that are applicable to center context
-            return role.type === 'CENTER_ADMIN' || role.type === 'USER';
-          }),
-        };
-      } else {
-        // No center context - return user roles only
-        const allRoles = await this.rolesService.paginateRoles({} as any);
-        return {
-          ...allRoles,
-          items: allRoles.items.filter((role: any) => role.type === 'USER'),
-        };
-      }
-    }
   }
 }

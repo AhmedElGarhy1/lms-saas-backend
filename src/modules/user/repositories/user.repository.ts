@@ -151,7 +151,7 @@ export class UserRepository extends BaseRepository<User> {
     const usersIds = filteredItems.map((user) => user.id);
     if (targetUserId) {
       const accessibleUsersIds =
-        await this.accessControlHelperService.getAccessibleUsersIdsByIds(
+        await this.accessControlHelperService.getAccessibleUsersIdsForUser(
           targetUserId,
           usersIds,
           centerId,
@@ -168,7 +168,7 @@ export class UserRepository extends BaseRepository<User> {
     // apply center accessibility field
     if (targetCenterId) {
       const accessibleUsersIds =
-        await this.accessControlHelperService.getAccessibleUsersIdsByCenterId(
+        await this.accessControlHelperService.getAccessibleUsersIdsForCenter(
           targetCenterId,
           usersIds,
         );

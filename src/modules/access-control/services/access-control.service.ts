@@ -1,37 +1,23 @@
 import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
-import { AccessControlRepository } from '../repositories/access-control.repository';
 import { PermissionService } from './permission.service';
 import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { ScopeEnum } from '@/shared/common/constants/role-scope.enum';
 import { AccessControlHelperService } from './access-control-helper.service';
+import { RoleType } from '@/shared/common/enums/role-type.enum';
+import { UserAccessRepository } from '../repositories/user-access.repository';
+import { UserOnCenterRepository } from '../repositories/user-on-center.repository';
 
 @Injectable()
 export class AccessControlService {
   private readonly logger = new Logger(AccessControlService.name);
 
   constructor(
-    private readonly accessControlRepository: AccessControlRepository,
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly permissionService: PermissionService,
+    private readonly userAccessRepository: UserAccessRepository,
+    private readonly userOnCenterRepository: UserOnCenterRepository,
   ) {}
-
-  async getUserPermissions(userId: string, centerId?: string) {
-    // Use PermissionService which handles caching and DB fetching
-    const result = await this.permissionService.getUserPermissions(
-      userId,
-      centerId,
-    );
-    return result.permissions; // Return just the permissions array
-  }
-
-  async getUserPermissionsFromRoles(
-    userId: string,
-    context?: { centerId?: string; scope?: ScopeEnum },
-  ) {
-    // Use PermissionService which handles context-aware permissions from roles
-    return this.permissionService.getUserPermissionsFromRoles(userId, context);
-  }
 
   async grantUserAccess(body: {
     userId: string;
@@ -39,7 +25,7 @@ export class AccessControlService {
     centerId?: string;
     granterUserId: string;
   }): Promise<void> {
-    await this.accessControlRepository.grantUserAccess(body);
+    await this.userAccessRepository.grantUserAccess(body);
   }
 
   async revokeUserAccess(body: {
@@ -48,7 +34,7 @@ export class AccessControlService {
     centerId?: string;
     granterUserId: string;
   }): Promise<void> {
-    await this.accessControlRepository.revokeUserAccess(body);
+    await this.userAccessRepository.revokeUserAccess(body);
   }
 
   async grantUserAccessValidate(body: {
@@ -78,6 +64,19 @@ export class AccessControlService {
 
     if (!IHaveAccessToTargetUser) {
       throw new ForbiddenException('You do not have access to target user');
+    }
+
+    // check if target user have height role
+    const granterUserHighestRole =
+      await this.accessControlHelperService.getUserHighestRole(
+        body.granterUserId,
+        body.centerId,
+      );
+    const granterUserRoleType = granterUserHighestRole?.role?.type;
+    if (granterUserRoleType === RoleType.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        'Granter user is a super admin and can access any user',
+      );
     }
 
     if (body.centerId) {
@@ -156,6 +155,28 @@ export class AccessControlService {
     await this.revokeUserAccess(body);
   }
 
+  async grantCenterAccess(
+    userId: string,
+    centerId: string,
+    grantedBy: string,
+  ): Promise<void> {
+    const userHighestRole =
+      await this.accessControlHelperService.getUserHighestRole(
+        userId,
+        centerId,
+      );
+    const userRoleType = userHighestRole?.role?.type;
+    if (userRoleType === RoleType.SUPER_ADMIN) {
+      return;
+    }
+
+    await this.userOnCenterRepository.grantCenterAccess({
+      userId,
+      centerId,
+      grantedBy,
+    });
+  }
+
   async grantCenterAccessValidate(
     userId: string,
     centerId: string,
@@ -191,14 +212,17 @@ export class AccessControlService {
       throw new ForbiddenException('User already has access to center');
     }
 
-    await this.accessControlRepository.grantCenterAccess(
-      userId,
-      centerId,
-      grantedBy,
-    );
+    await this.grantCenterAccess(userId, centerId, grantedBy);
   }
 
-  async revokeCenterAccess(
+  async revokeCenterAccess(userId: string, centerId: string): Promise<void> {
+    await this.userOnCenterRepository.revokeCenterAccess({
+      userId,
+      centerId,
+    });
+  }
+
+  async revokeCenterAccessValidate(
     currentUserId: string,
     userId: string,
     centerId: string,
@@ -231,92 +255,14 @@ export class AccessControlService {
       throw new ForbiddenException('User does not have access to center');
     }
 
-    await this.accessControlRepository.revokeCenterAccess(userId, centerId);
-  }
-
-  async updateUserCenterActivation(
-    userId: string,
-    centerId: string,
-    isActive: boolean,
-  ): Promise<void> {
-    await this.accessControlRepository.updateUserCenterActivation(
-      userId,
-      centerId,
-      isActive,
-    );
+    await this.revokeCenterAccess(userId, centerId);
   }
 
   // Additional methods needed by other services
 
   async getAccessibleUserIds(userId: string): Promise<string[]> {
     const userAccesses =
-      await this.accessControlRepository.listUserAccesses(userId);
+      await this.userAccessRepository.listUserAccesses(userId);
     return userAccesses.map((access: UserAccess) => access.targetUserId);
-  }
-
-  async getCenterUserIds(centerId: string): Promise<string[]> {
-    const centerUsers =
-      await this.accessControlRepository.getCenterUsers(centerId);
-    return centerUsers.map((user: { userId: string }) => user.userId);
-  }
-
-  // Permission-related methods using PermissionService
-  async userHasPermission(
-    userId: string,
-    permissionAction: string,
-    centerId?: string,
-  ): Promise<boolean> {
-    return this.permissionService.userHasPermission(
-      userId,
-      permissionAction,
-      centerId,
-    );
-  }
-
-  async assignUserPermission(data: {
-    userId: string;
-    permissionId: string;
-    centerId?: string;
-  }) {
-    return this.permissionService.assignUserPermission(data);
-  }
-
-  async removeUserPermission(data: {
-    userId: string;
-    permissionId: string;
-    centerId?: string;
-  }) {
-    return this.permissionService.removeUserPermission(data);
-  }
-
-  async getAllPermissions() {
-    return this.permissionService.getAllPermissions();
-  }
-
-  // Public method to access permission service for admin permissions
-  async getAdminPermissionsPublic() {
-    return this.permissionService.getAdminPermissions();
-  }
-
-  async paginatePermissions(
-    query: PaginationQuery,
-    filter?: 'all' | 'admin-only',
-  ) {
-    return this.permissionService.paginatePermissions(query, filter);
-  }
-
-  async needsPermissionCheck(
-    userId: string,
-    centerId?: string,
-  ): Promise<boolean> {
-    // This method should determine if a user needs permission checking
-    // For now, return true for all users
-    return true;
-  }
-
-  async getUserRoles(userId: string): Promise<any[]> {
-    // This method should return user roles
-    // For now, return empty array until we implement the full role system
-    return [];
   }
 }

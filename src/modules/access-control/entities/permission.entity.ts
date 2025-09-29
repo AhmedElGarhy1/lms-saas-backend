@@ -15,6 +15,9 @@ export class Permission {
   id: string;
 
   @Column()
+  name: string;
+
+  @Column()
   action: string;
 
   @Column({ nullable: true })

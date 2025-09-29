@@ -92,13 +92,6 @@ export const PERMISSIONS = {
         isAdmin: false,
       },
     },
-    PERMISSIONS: {
-      VIEW: {
-        action: 'access-control:permissions:view',
-        name: 'View Permissions',
-        isAdmin: false,
-      },
-    },
     USER_ACCESS: {
       GRANT: {
         action: 'access-control:user-access:grant',
@@ -110,46 +103,21 @@ export const PERMISSIONS = {
         name: 'Revoke User Access',
         isAdmin: false,
       },
-      CHECK: {
-        action: 'access-control:user-access:check',
-        name: 'Check User Access',
-        isAdmin: false,
-      },
-      CHECK_PERMISSIONS: {
-        action: 'access-control:user-access:check-permissions',
-        name: 'Check User Permissions',
-        isAdmin: false,
-      },
     },
     CENTER_ACCESS: {
-      ADD_USER: {
-        action: 'access-control:center-access:add-user',
+      GRANT: {
+        action: 'access-control:center-access:grant',
         name: 'Add User to Center',
         isAdmin: false,
       },
-      REMOVE_USER: {
-        action: 'access-control:center-access:remove-user',
+      REVOKE: {
+        action: 'access-control:center-access:revoke',
         name: 'Remove User from Center',
-        isAdmin: false,
-      },
-      GRANT_ADMIN: {
-        action: 'access-control:center-access:grant-admin',
-        name: 'Grant Admin Center Access',
-        isAdmin: false,
-      },
-      REVOKE_ADMIN: {
-        action: 'access-control:center-access:revoke-admin',
-        name: 'Revoke Admin Center Access',
-        isAdmin: false,
-      },
-      CHECK: {
-        action: 'access-control:center-access:check',
-        name: 'Check Center Access',
         isAdmin: false,
       },
     },
   },
-};
+} as const;
 
 // Type for permission objects
 export type PermissionObject = {
@@ -157,10 +125,6 @@ export type PermissionObject = {
   name: string;
   isAdmin: boolean;
 };
-
-// Type for all permission action values
-export type PermissionAction =
-  (typeof PERMISSIONS)[keyof typeof PERMISSIONS][keyof (typeof PERMISSIONS)[keyof typeof PERMISSIONS]]['action'];
 
 // Helper function to extract all permission objects from the const structure
 function extractPermissionObjects(
@@ -196,20 +160,6 @@ export const ADMIN_PERMISSIONS = ALL_PERMISSIONS.filter(
 export const USER_PERMISSIONS = ALL_PERMISSIONS.filter(
   (permission) => !permission.isAdmin,
 );
-
-// Helper functions
-export const getPermissionsByType = (
-  type: 'admin' | 'user',
-): PermissionObject[] => {
-  switch (type) {
-    case 'admin':
-      return ADMIN_PERMISSIONS;
-    case 'user':
-      return USER_PERMISSIONS;
-    default:
-      return [];
-  }
-};
 
 export const isAdminPermission = (permission: string): boolean => {
   return ADMIN_PERMISSIONS.some((p) => p.action === permission);

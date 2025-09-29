@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WinstonModule } from 'nest-winston';
 import { UserController } from './controllers/user.controller';
@@ -9,7 +9,6 @@ import { UserRepository } from './repositories/user.repository';
 import { User, Profile, UserAccess } from './entities';
 
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
-import { UserEventEmitter } from '@/shared/common/events/user.events';
 import { CentersModule } from '@/modules/centers/centers.module';
 
 @Module({
@@ -17,7 +16,7 @@ import { CentersModule } from '@/modules/centers/centers.module';
     WinstonModule,
     TypeOrmModule.forFeature([User, Profile, UserAccess]),
     AccessControlModule,
-    CentersModule,
+    forwardRef(() => CentersModule),
   ],
   controllers: [UserController],
   providers: [
@@ -25,10 +24,6 @@ import { CentersModule } from '@/modules/centers/centers.module';
     UserActivationService,
     ProfileService,
     UserRepository,
-    {
-      provide: UserEventEmitter,
-      useClass: UserEventEmitter,
-    },
   ],
   exports: [UserService, UserActivationService, ProfileService, UserRepository],
 })

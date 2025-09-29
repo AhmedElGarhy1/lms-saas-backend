@@ -9,11 +9,6 @@ import { CentersRepository } from './repositories/centers.repository';
 
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
-import { CenterEventEmitter } from '@/shared/common/events/center.events';
-import {
-  CenterEventEmitter as CenterEventEmitterOld,
-  UserEventEmitter,
-} from '@/shared/common/events';
 import { UserModule } from '@/modules/user/user.module';
 
 @Module({
@@ -25,23 +20,7 @@ import { UserModule } from '@/modules/user/user.module';
     forwardRef(() => UserModule),
   ],
   controllers: [CentersController],
-  providers: [
-    CentersService,
-    CenterEventsService,
-    CentersRepository,
-    {
-      provide: CenterEventEmitter,
-      useClass: CenterEventEmitter,
-    },
-    {
-      provide: CenterEventEmitterOld,
-      useClass: CenterEventEmitterOld,
-    },
-    {
-      provide: UserEventEmitter,
-      useClass: UserEventEmitter,
-    },
-  ],
+  providers: [CentersService, CenterEventsService, CentersRepository],
   exports: [CentersService, CenterEventsService],
 })
 export class CentersModule {}

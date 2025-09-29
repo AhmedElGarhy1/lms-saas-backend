@@ -39,16 +39,6 @@ export class UserActivationService {
     // Update global activation status
     await this.userRepository.update(userId, { isActive: dto.isActive });
 
-    // Update center-specific activation if centerId is provided
-    if (dto.centerId) {
-      // Update center-specific user activation status
-      await this.accessControlService.updateUserCenterActivation(
-        userId,
-        dto.centerId,
-        dto.isActive,
-      );
-    }
-
     this.logger.log(
       `User activation status updated: ${userId} to ${dto.isActive} by ${currentUserId}`,
       'UserActivationService',
