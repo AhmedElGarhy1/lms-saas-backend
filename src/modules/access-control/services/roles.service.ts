@@ -126,20 +126,8 @@ export class RolesService {
     return this.removeUserRole(data);
   }
 
-  async getUserRoles(userId: string) {
-    return this.rolesRepository.getUserRoles(userId);
-  }
-
-  async getUserRolesForScope(userId: string, scope: string, centerId?: string) {
-    return this.rolesRepository.getUserRolesForScope(userId, scope, centerId);
-  }
-
-  async getUserRolesForCenter(userId: string, centerId: string) {
-    return this.rolesRepository.getUserRolesForScope(
-      userId,
-      'CENTER',
-      centerId,
-    );
+  async getUserRoles(userId: string, centerId?: string) {
+    return this.rolesRepository.getUserRoles(userId, centerId);
   }
 
   async getUsersByRoleType(type: string, centerId?: string) {
@@ -180,17 +168,5 @@ export class RolesService {
 
   async getUserCountByRoleId(roleId: string) {
     return this.rolesRepository.getUserCountByRoleId(roleId);
-  }
-
-  async findCenterAdmins(centerId: string): Promise<string[]> {
-    const userRoles = await this.rolesRepository.getUserRolesForScope(
-      '',
-      'CENTER',
-      centerId,
-    );
-    const centerAdminRoles = userRoles.filter(
-      (ur) => ur.role.type === RoleType.CENTER_ADMIN,
-    );
-    return centerAdminRoles.map((ur) => ur.userId);
   }
 }

@@ -5,14 +5,15 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ContextValidationService } from '../services/context-validation.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { IRequest } from '../interfaces/request.interface';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 
 @Injectable()
 export class ContextGuard implements CanActivate {
   constructor(
-    private readonly contextValidationService: ContextValidationService,
     private readonly reflector: Reflector,
+    private readonly accessControlHelperService: AccessControlHelperService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -26,23 +27,20 @@ export class ContextGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
+    const request: IRequest = context.switchToHttp().getRequest();
     const user = request.user;
 
     if (!user) {
       throw new ForbiddenException('User not authenticated');
     }
+    const centerId = request.get('x-center-id');
 
-    try {
-      // Validate context using the service
-      await this.contextValidationService.validateContext(
-        user.id,
-        request.scopeType,
-        request.centerId,
-      );
-      return true;
-    } catch (error) {
-      throw new ForbiddenException(error.message);
-    }
+    await this.accessControlHelperService.validateAdminAndCenterAccess({
+      userId: user.id,
+      centerId,
+    });
+    user.centerId = centerId;
+
+    return true;
   }
 }

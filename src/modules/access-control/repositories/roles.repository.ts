@@ -136,42 +136,11 @@ export class RolesRepository extends BaseRepository<Role> {
     await this.userRoleRepository.delete(where);
   }
 
-  async getUserRoles(userId: string): Promise<UserRole[]> {
+  async getUserRoles(userId: string, centerId?: string): Promise<UserRole[]> {
     return await this.userRoleRepository.find({
-      where: { userId },
+      where: { userId, centerId },
       relations: ['role', 'user'],
     });
-  }
-
-  async getUserRolesForScope(
-    userId: string,
-    scope: string,
-    centerId?: string,
-  ): Promise<UserRole[]> {
-    const queryBuilder = this.userRoleRepository
-      .createQueryBuilder('userRole')
-      .leftJoinAndSelect('userRole.role', 'role')
-      .leftJoinAndSelect('userRole.user', 'user')
-      .where('userRole.userId = :userId', { userId });
-
-    // Filter by scope based on role type and centerId
-    if (scope === 'CENTER') {
-      // For center scope, we need centerId and role should be center-specific
-      if (centerId) {
-        queryBuilder.andWhere('userRole.centerId = :centerId', { centerId });
-      }
-      queryBuilder.andWhere('role.type IN (:...centerRoleTypes)', {
-        centerRoleTypes: ['CENTER_ADMIN'],
-      });
-    } else if (scope === 'ADMIN') {
-      // For admin scope, we want global roles (no centerId or null centerId)
-      queryBuilder.andWhere('userRole.centerId IS NULL');
-      queryBuilder.andWhere('role.type IN (:...adminRoleTypes)', {
-        adminRoleTypes: ['SUPER_ADMIN', 'ADMIN', 'USER'],
-      });
-    }
-
-    return await queryBuilder.getMany();
   }
 
   async getUsersByRoleType(type: string, centerId?: string): Promise<User[]> {

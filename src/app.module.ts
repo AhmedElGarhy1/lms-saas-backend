@@ -27,14 +27,13 @@ import { DatabaseSeeder } from '@/database/seeder';
 import { ErrorInterceptor } from '@/shared/common/interceptors/error.interceptor';
 import { PerformanceInterceptor } from '@/shared/common/interceptors/performance.interceptor';
 import { ResponseTransformInterceptor } from '@/shared/common/interceptors/response-transform.interceptor';
-import { ScopeInterceptor } from '@/shared/common/interceptors/scope.interceptor';
 import { HttpExceptionFilter } from '@/shared/common/filters/http-exception.filter';
 import { CustomValidationPipe } from '@/shared/common/pipes/validation.pipe';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { ContextGuard } from '@/shared/common/guards/context.guard';
 import { PermissionsGuard } from '@/shared/common/guards/permissions.guard';
-import { ContextValidationService } from '@/shared/common/services/context-validation.service';
 import { DatabaseModule } from './shared/modules/database/database.module';
+import { AccessControlHelperService } from './modules/access-control/services/access-control-helper.service';
 
 @Module({
   imports: [
@@ -83,7 +82,6 @@ import { DatabaseModule } from './shared/modules/database/database.module';
   controllers: [],
   providers: [
     DatabaseSeeder,
-    ContextValidationService,
     {
       provide: APP_INTERCEPTOR,
       useClass: ErrorInterceptor,
@@ -95,10 +93,6 @@ import { DatabaseModule } from './shared/modules/database/database.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseTransformInterceptor,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: ScopeInterceptor,
     },
     {
       provide: APP_FILTER,
@@ -116,10 +110,10 @@ import { DatabaseModule } from './shared/modules/database/database.module';
     {
       provide: APP_GUARD,
       useFactory: (
-        contextValidationService: ContextValidationService,
         reflector: Reflector,
-      ) => new ContextGuard(contextValidationService, reflector),
-      inject: [ContextValidationService, Reflector],
+        accessControlHelperService: AccessControlHelperService,
+      ) => new ContextGuard(reflector, accessControlHelperService),
+      inject: [Reflector, AccessControlHelperService],
     },
     {
       provide: APP_GUARD,

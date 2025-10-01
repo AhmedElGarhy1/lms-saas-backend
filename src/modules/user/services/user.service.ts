@@ -40,9 +40,7 @@ import {
 } from '../interfaces/user-service.interface';
 import { User } from '../entities/user.entity';
 import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
-import { ScopeEnum } from '@/shared/common/constants/role-scope.enum';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
-import { CentersService } from '@/modules/centers/services/centers.service';
 
 // UserListQuery interface moved to user-service.interface.ts
 
@@ -514,11 +512,7 @@ export class UserService {
 
         let centerRoles;
         try {
-          centerRoles = await this.rolesService.getUserRolesForScope(
-            userId,
-            'CENTER',
-            centerId,
-          );
+          centerRoles = await this.rolesService.getUserRoles(userId, centerId);
         } catch (error) {
           this.logger.error(
             `Error getting center roles for ${userId} in center ${centerId}:`,
@@ -548,10 +542,7 @@ export class UserService {
         // ADMIN scope - get global context
         let globalRoles;
         try {
-          globalRoles = await this.rolesService.getUserRolesForScope(
-            userId,
-            ScopeEnum.ADMIN,
-          );
+          globalRoles = await this.rolesService.getUserRoles(userId);
         } catch (error) {
           this.logger.error(`Error getting global roles for ${userId}:`, error);
           throw error;
@@ -588,10 +579,7 @@ export class UserService {
       // Determine if user is global admin
       let globalRoles;
       try {
-        globalRoles = await this.rolesService.getUserRolesForScope(
-          userId,
-          ScopeEnum.ADMIN,
-        );
+        globalRoles = await this.rolesService.getUserRoles(userId);
       } catch (error) {
         this.logger.error(
           `Error getting global roles for admin check for ${userId}:`,

@@ -1,10 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PermissionRepository } from '../repositories/permission.repository';
 import { Permission } from '../entities/permission.entity';
-import { ScopeEnum } from '@/shared/common/constants/role-scope.enum';
 import { LoggerService } from '@/shared/services/logger.service';
-import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
-import { Pagination } from 'nestjs-typeorm-paginate';
 import { UserRoleRepository } from '../repositories/user-role.repository';
 import { FindOptionsWhere } from 'typeorm';
 import { AccessControlHelperService } from './access-control-helper.service';

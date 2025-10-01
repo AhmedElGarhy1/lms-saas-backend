@@ -1,8 +1,6 @@
 import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
 import { PermissionService } from './permission.service';
-import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { ScopeEnum } from '@/shared/common/constants/role-scope.enum';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { UserAccessRepository } from '../repositories/user-access.repository';

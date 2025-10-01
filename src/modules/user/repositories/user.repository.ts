@@ -38,21 +38,12 @@ export class UserRepository extends BaseRepository<User> {
 
   // Convenience methods with proper, safe queries
   async findWithRelations(userId: string): Promise<User | null> {
-    try {
-      return await this.userRepository.findOne({
-        where: { id: userId },
-        relations: [
-          'profile',
-          'centers',
-          'centers.center',
-          'userRoles',
-          'userRoles.role',
-        ],
-      });
-    } catch (error) {
-      this.logger.error(`Error finding user for profile ${userId}:`, error);
-      throw error;
-    }
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['profile', 'userRoles', 'userRoles.role'],
+    });
+
+    return user;
   }
 
   /**

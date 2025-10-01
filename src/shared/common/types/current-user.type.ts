@@ -1,13 +1,6 @@
-import { ScopeEnum } from '@/shared/common/constants/role-scope.enum';
+import { User } from '@/modules/user/entities';
 
-export interface CurrentUser {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  isActive: boolean;
-  isEmailVerified: boolean;
-  scope: ScopeEnum;
+export interface CurrentUser extends User {
   centerId?: string;
   permissions: string[];
 }

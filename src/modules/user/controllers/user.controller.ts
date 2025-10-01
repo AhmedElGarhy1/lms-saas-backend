@@ -79,11 +79,13 @@ export class UserController {
     delete query.filter?.targetCenterId;
     delete query.filter?.targetUserId;
 
+    const contextCenterId = currentUser.centerId;
+
     return this.userService.listUsers({
       query,
       userId: currentUser.id,
       targetUserId,
-      centerId,
+      centerId: centerId ?? contextCenterId,
       targetCenterId,
     });
   }
