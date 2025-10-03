@@ -4,11 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
 import { Profile, ProfileType } from '@/modules/user/entities/profile.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
-import { Role } from '@/modules/access-control/entities/roles/role.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
-import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
-import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
@@ -22,6 +18,10 @@ import {
   createRandomRoles,
 } from './factories/role-definitions';
 import { faker } from '@faker-js/faker';
+import { UserAccess } from '@/modules/user/entities/user-access.entity';
+import { UserCenter } from '@/modules/access-control/entities/user-center.entity';
+import { Role } from '@/modules/access-control/entities/roles/role.entity';
+import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 
 // Helper function to generate phone numbers that fit within 20 character limit
 const generateShortPhone = (): string => {
@@ -35,7 +35,7 @@ export class DatabaseSeeder {
 
   constructor(
     @InjectRepository(User)
-    private readonly userTypeOrmRepository: Repository<User>,
+    private readonly userRepository: Repository<User>,
     @InjectRepository(Profile)
     private readonly profileRepository: Repository<Profile>,
     @InjectRepository(Role)
@@ -46,8 +46,8 @@ export class DatabaseSeeder {
     private readonly userRoleRepository: Repository<UserRole>,
     @InjectRepository(UserAccess)
     private readonly userAccessRepository: Repository<UserAccess>,
-    @InjectRepository(UserOnCenter)
-    private readonly userOnCenterRepository: Repository<UserOnCenter>,
+    @InjectRepository(UserCenter)
+    private readonly userOnCenterRepository: Repository<UserCenter>,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     @InjectRepository(EmailVerification)
@@ -65,23 +65,26 @@ export class DatabaseSeeder {
       // Clear existing data
       await this.clearData();
 
+      // Create system user first (needed for createdBy field)
+      const systemUser = await this.createSystemUser();
+
       // Create permissions
       await this.createPermissions();
 
       // Create users with profiles (needed for center owners)
-      const users = await this.createUsers();
+      const users = await this.createUsers(systemUser.id);
 
       // Create centers (with valid owner IDs)
-      const centers = await this.createCenters(users);
+      const centers = await this.createCenters(users, systemUser.id);
 
       // Create roles (after centers are created for center-specific roles)
-      await this.createRoles(centers);
+      await this.createRoles(centers, systemUser.id);
 
       // Assign roles and permissions
-      await this.assignRolesAndPermissions(users, centers);
+      await this.assignRolesAndPermissions(users, centers, systemUser.id);
 
       // Create activity logs
-      await this.createActivityLogs(users, centers);
+      await this.createActivityLogs(users, centers, systemUser.id);
 
       this.logger.log('Database seeding completed successfully!');
     } catch (error) {
@@ -90,11 +93,77 @@ export class DatabaseSeeder {
     }
   }
 
+  private async createSystemUser(): Promise<User> {
+    this.logger.log('Creating system user...');
+
+    const hashedPassword = await bcrypt.hash('system123', 10);
+
+    // Create system user using raw SQL to avoid circular dependencies
+    const systemUser = await this.userRepository.manager.transaction(
+      async (transactionalEntityManager) => {
+        // Generate UUIDs for both user and profile
+        const userResult = await transactionalEntityManager.query(
+          'SELECT gen_random_uuid() as id',
+        );
+        const profileResult = await transactionalEntityManager.query(
+          'SELECT gen_random_uuid() as id',
+        );
+
+        const userUuid = userResult[0].id;
+        const profileUuid = profileResult[0].id;
+
+        // Temporarily disable foreign key constraints
+        await transactionalEntityManager.query(
+          'SET session_replication_role = replica',
+        );
+
+        // Insert user first with the correct profile ID
+        await transactionalEntityManager.query(
+          `INSERT INTO users (id, email, password, name, "isActive", "profileId", "createdBy", "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
+          [
+            userUuid,
+            'system@lms.com',
+            hashedPassword,
+            'System User',
+            true,
+            profileUuid,
+            userUuid, // createdBy is self for system user
+          ],
+        );
+
+        // Insert profile with the correct user ID
+        await transactionalEntityManager.query(
+          `INSERT INTO profiles (id, "userId", type, phone, address, "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
+          [profileUuid, userUuid, ProfileType.ADMIN, '+1-555-0000', 'System'],
+        );
+
+        // Re-enable foreign key constraints
+        await transactionalEntityManager.query(
+          'SET session_replication_role = DEFAULT',
+        );
+
+        // Return the user object
+        const user = await transactionalEntityManager.findOne(User, {
+          where: { id: userUuid },
+        });
+        if (!user) {
+          throw new Error(`Failed to create system user with ID: ${userUuid}`);
+        }
+        return user;
+      },
+    );
+
+    this.logger.log('System user created successfully');
+    return systemUser;
+  }
+
   private async clearData(): Promise<void> {
     this.logger.log('Clearing existing data...');
 
     // Use a transaction to handle circular foreign key constraints
-    await this.userTypeOrmRepository.manager.transaction(
+    await this.userRepository.manager.transaction(
       async (transactionalEntityManager) => {
         // Temporarily disable foreign key constraints
         await transactionalEntityManager.query(
@@ -105,7 +174,7 @@ export class DatabaseSeeder {
         await transactionalEntityManager.query('DELETE FROM activity_logs');
         await transactionalEntityManager.query('DELETE FROM user_roles');
         await transactionalEntityManager.query('DELETE FROM user_access');
-        await transactionalEntityManager.query('DELETE FROM user_on_centers');
+        await transactionalEntityManager.query('DELETE FROM user_access');
         await transactionalEntityManager.query('DELETE FROM permissions');
         await transactionalEntityManager.query('DELETE FROM roles');
         await transactionalEntityManager.query('DELETE FROM refresh_tokens');
@@ -145,7 +214,10 @@ export class DatabaseSeeder {
     this.logger.log(`Created ${permissionEntities.length} permissions`);
   }
 
-  private async createRoles(centers: Center[]): Promise<void> {
+  private async createRoles(
+    centers: Center[],
+    createdBy: string,
+  ): Promise<void> {
     this.logger.log('Creating roles...');
 
     // Get center IDs and names for center-specific roles
@@ -160,7 +232,10 @@ export class DatabaseSeeder {
     const allRoleDefinitions = [...roleDefinitions, ...randomRoles];
 
     const roleEntities = allRoleDefinitions.map((role) =>
-      this.roleRepository.create(role),
+      this.roleRepository.create({
+        ...role,
+        createdBy,
+      }),
     );
     await this.roleRepository.save(roleEntities);
 
@@ -174,7 +249,10 @@ export class DatabaseSeeder {
     this.logger.log(`- ${randomRoles.length} random roles for variety`);
   }
 
-  private async createCenters(users: User[]): Promise<Center[]> {
+  private async createCenters(
+    users: User[],
+    createdBy: string,
+  ): Promise<Center[]> {
     this.logger.log('Creating centers...');
 
     // Get center owner users (skip the first 2 which are global admins)
@@ -241,7 +319,7 @@ export class DatabaseSeeder {
     return savedCenters;
   }
 
-  private async createUsers(): Promise<User[]> {
+  private async createUsers(createdBy: string): Promise<User[]> {
     this.logger.log('Creating users and profiles...');
 
     const hashedPassword = await bcrypt.hash('password123', 10);
@@ -492,7 +570,7 @@ export class DatabaseSeeder {
       }
 
       // Use raw SQL to handle the circular dependency by temporarily disabling constraints
-      const savedUser = await this.userTypeOrmRepository.manager.transaction(
+      const savedUser = await this.userRepository.manager.transaction(
         async (transactionalEntityManager) => {
           // Generate UUIDs for both user and profile
           const userResult = await transactionalEntityManager.query(
@@ -512,8 +590,8 @@ export class DatabaseSeeder {
 
           // Insert user first with the correct profile ID
           await transactionalEntityManager.query(
-            `INSERT INTO users (id, email, password, name, "isActive", "profileId", "createdAt", "updatedAt") 
-           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+            `INSERT INTO users (id, email, password, name, "isActive", "profileId", "createdBy", "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
             [
               userUuid,
               userDataItem.email,
@@ -521,6 +599,7 @@ export class DatabaseSeeder {
               userDataItem.name,
               userDataItem.isActive,
               profileUuid,
+              createdBy,
             ],
           );
 
@@ -558,6 +637,7 @@ export class DatabaseSeeder {
   private async assignRolesAndPermissions(
     users: User[],
     centers: Center[],
+    createdBy: string,
   ): Promise<void> {
     this.logger.log('Assigning roles and permissions...');
 
@@ -600,6 +680,7 @@ export class DatabaseSeeder {
         this.userRoleRepository.create({
           userId: superAdminUser.id,
           roleId: superAdminRole.id,
+          createdBy,
         }),
       );
       this.logger.log(
@@ -612,6 +693,7 @@ export class DatabaseSeeder {
         this.userRoleRepository.create({
           userId: adminUser.id,
           roleId: systemAdminRole.id,
+          createdBy,
         }),
       );
       this.logger.log(
@@ -626,6 +708,7 @@ export class DatabaseSeeder {
           this.userOnCenterRepository.create({
             userId: superAdminUser.id,
             centerId: center.id,
+            createdBy,
           }),
         );
       }
@@ -634,6 +717,7 @@ export class DatabaseSeeder {
           this.userOnCenterRepository.create({
             userId: adminUser.id,
             centerId: center.id,
+            createdBy,
           }),
         );
       }
@@ -659,6 +743,7 @@ export class DatabaseSeeder {
             userId: owner.id,
             roleId: centerRoles.centerAdmin.id,
             centerId: center.id,
+            createdBy,
           }),
         );
 
@@ -667,6 +752,7 @@ export class DatabaseSeeder {
           this.userOnCenterRepository.create({
             userId: owner.id,
             centerId: center.id,
+            createdBy,
           }),
         );
 
@@ -688,6 +774,7 @@ export class DatabaseSeeder {
             userId: teacher.id,
             roleId: centerRoles.teacher.id,
             centerId: center.id,
+            createdBy,
           }),
         );
 
@@ -696,6 +783,7 @@ export class DatabaseSeeder {
           this.userOnCenterRepository.create({
             userId: teacher.id,
             centerId: center.id,
+            createdBy,
           }),
         );
 
@@ -717,6 +805,7 @@ export class DatabaseSeeder {
             userId: student.id,
             roleId: centerRoles.student.id,
             centerId: center.id,
+            createdBy,
           }),
         );
 
@@ -725,6 +814,7 @@ export class DatabaseSeeder {
           this.userOnCenterRepository.create({
             userId: student.id,
             centerId: center.id,
+            createdBy,
           }),
         );
 
@@ -746,6 +836,7 @@ export class DatabaseSeeder {
             userId: manager.id,
             roleId: centerRoles.centerManager.id,
             centerId: center.id,
+            createdBy,
           }),
         );
 
@@ -754,6 +845,7 @@ export class DatabaseSeeder {
           this.userOnCenterRepository.create({
             userId: manager.id,
             centerId: center.id,
+            createdBy,
           }),
         );
 
@@ -777,6 +869,7 @@ export class DatabaseSeeder {
             userId: centerDeactivatedUser.id,
             roleId: centerRoles.staff.id,
             centerId: center.id,
+            createdBy,
           }),
         );
 
@@ -785,6 +878,7 @@ export class DatabaseSeeder {
           this.userOnCenterRepository.create({
             userId: centerDeactivatedUser.id,
             centerId: center.id,
+            createdBy,
           }),
         );
 
@@ -800,6 +894,7 @@ export class DatabaseSeeder {
   private async createActivityLogs(
     users: User[],
     centers: Center[],
+    createdBy: string,
   ): Promise<void> {
     this.logger.log('Creating activity logs...');
 
@@ -818,7 +913,7 @@ export class DatabaseSeeder {
       await this.activityLogService.logCenterActivity(
         ActivityType.CENTER_CREATED,
         'Center created during seeding',
-        superAdmin.id,
+        createdBy,
         center.id,
         undefined,
         {
@@ -834,7 +929,7 @@ export class DatabaseSeeder {
       await this.activityLogService.logUserActivity(
         ActivityType.USER_CREATED,
         'User created during seeding',
-        superAdmin.id,
+        createdBy,
         user.id,
         {
           userEmail: user.email,

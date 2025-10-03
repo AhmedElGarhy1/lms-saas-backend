@@ -17,6 +17,7 @@ import {
   ApiQuery,
   ApiBody,
 } from '@nestjs/swagger';
+import { SerializeOptions } from '@nestjs/common';
 import { PaginateWithFilters } from '@/shared/common/decorators/paginate-with-filters.decorator';
 import { UserFilterDto } from '../dto/user-filter.dto';
 import {
@@ -32,6 +33,7 @@ import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { CreateUserRequestDto } from '../dto/create-user.dto';
 import { UpdateUserRequestDto } from '../dto/update-user.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
+import { UserResponseDto } from '../dto/user-response.dto';
 import {
   ToggleUserStatusRequestDto,
   ToggleUserStatusResponseDto,
@@ -59,7 +61,9 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: 'Users retrieved successfully (filtered by access control)',
+    type: [UserResponseDto],
   })
+  @SerializeOptions({ type: UserResponseDto })
   @Permissions(PERMISSIONS.USER.READ.action)
   async listUsers(
     @PaginateWithFilters({

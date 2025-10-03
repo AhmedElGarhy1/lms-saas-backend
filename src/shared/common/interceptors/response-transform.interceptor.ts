@@ -7,6 +7,7 @@ import {
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Request } from 'express';
+import { ClassSerializerInterceptor } from '@nestjs/common';
 
 interface RequestWithUser extends Request {
   user?: {
@@ -36,7 +37,7 @@ export class ResponseTransformInterceptor implements NestInterceptor {
         // Transform the response
         const transformedResponse: TransformedResponse = {
           success: true,
-          data,
+          data, // This data is already serialized by ClassSerializerInterceptor
           timestamp: new Date().toISOString(),
           path: url,
           method,

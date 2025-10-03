@@ -6,7 +6,7 @@ import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token
 import { Profile } from '@/modules/user/entities/profile.entity';
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
+import { UserCenter } from '@/modules/access-control/entities/user-center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 
@@ -38,6 +38,9 @@ export class User extends BaseEntity {
   @Column({ nullable: true })
   profileId?: string;
 
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
+
   // Relations
   @OneToMany(() => Center, (center) => center.creator)
   centersCreated: Center[];
@@ -61,8 +64,8 @@ export class User extends BaseEntity {
   @OneToMany(() => UserAccess, (access) => access.granter)
   accessGranter: UserAccess[];
 
-  @OneToMany(() => UserOnCenter, (userCenter) => userCenter.user)
-  centers: UserOnCenter[];
+  @OneToMany(() => UserCenter, (userCenter) => userCenter.user)
+  centerAccess: UserCenter[];
 
   @OneToMany(() => UserRole, (userRole) => userRole.user)
   userRoles: UserRole[];

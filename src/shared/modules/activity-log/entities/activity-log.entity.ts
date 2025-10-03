@@ -1,7 +1,14 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Index,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+} from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
-import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 export enum ActivityType {
   USER_LOGIN = 'USER_LOGIN',
@@ -26,7 +33,10 @@ export enum ActivityType {
 @Index(['actorId'])
 @Index(['centerId'])
 @Index(['createdAt'])
-export class ActivityLog extends BaseEntity {
+export class ActivityLog {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
   @Column({
     type: 'enum',
     enum: ActivityType,
@@ -58,4 +68,7 @@ export class ActivityLog extends BaseEntity {
   @ManyToOne(() => Center, { nullable: true })
   @JoinColumn({ name: 'centerId' })
   center: Center;
+
+  @CreateDateColumn()
+  createdAt: Date;
 }

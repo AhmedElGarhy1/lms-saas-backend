@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { IRequest } from '../interfaces/request.interface';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { RequestContext } from '../context/request.context';
 
 @Injectable()
 export class ContextGuard implements CanActivate {
@@ -33,13 +34,22 @@ export class ContextGuard implements CanActivate {
     if (!user) {
       throw new ForbiddenException('User not authenticated');
     }
-    const centerId = request.get('x-center-id');
+    const centerId = (request.get('x-center-id') ??
+      request?.centerId ??
+      request?.body?.centerId ??
+      request?.query?.centerId) as string;
 
     await this.accessControlHelperService.validateAdminAndCenterAccess({
       userId: user.id,
       centerId,
     });
     user.centerId = centerId;
+
+    // Set the userId (and maybe centerId) in the request context
+    RequestContext.set({
+      userId: user.id,
+      centerId: user.centerId,
+    });
 
     return true;
   }

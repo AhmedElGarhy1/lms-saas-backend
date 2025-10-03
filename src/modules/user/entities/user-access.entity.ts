@@ -32,7 +32,9 @@ export class UserAccess extends BaseEntity {
   @JoinColumn({ name: 'granterUserId' })
   granter: User;
 
-  @ManyToOne(() => Center, (center) => center.userAccess, { nullable: true })
+  @ManyToOne(() => Center, (center) => center.userAccess, {
+    nullable: true,
+  })
   @JoinColumn({ name: 'centerId' })
   center?: Center;
 }

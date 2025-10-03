@@ -13,32 +13,33 @@ import { AccessControlHelperService } from './access-control-helper.service';
 import { UpdateRoleRequestDto } from '../dto/update-role.dto';
 import { CreateRoleRequestDto } from '../dto/create-role.dto';
 import { AssignRoleDto } from '../dto/assign-role.dto';
+import { UserRoleRepository } from '../repositories/user-role.repository';
+import { RoleResponseDto } from '../dto/role-response.dto';
 
 @Injectable()
 export class RolesService {
   constructor(
     private readonly rolesRepository: RolesRepository,
     private readonly accessControlerHelperService: AccessControlHelperService,
+    private readonly userRoleRepository: UserRoleRepository,
   ) {}
 
   async paginateRoles(
     query: PaginationQuery,
     userId: string,
-  ): Promise<Pagination<Role>> {
-    const centerId = query.filter?.centerId as string | undefined;
+    centerId?: string,
+  ) {
+    const filterCenterId = query.filter?.centerId as string | undefined;
     const targetUserId = query.filter?.targetUserId as string | undefined;
     delete query.filter?.targetUserId;
+    const _centerId = filterCenterId ?? centerId;
 
     await this.accessControlerHelperService.validateAdminAndCenterAccess({
       userId,
-      centerId,
+      centerId: _centerId,
     });
 
-    return this.rolesRepository.paginateRoles(query, centerId, targetUserId);
-  }
-
-  async getRolesByType(type: RoleType) {
-    return this.rolesRepository.getRolesByType(type);
+    return this.rolesRepository.paginateRoles(query, _centerId, targetUserId);
   }
 
   async createRole(data: CreateRoleRequestDto, userId: string) {
@@ -47,7 +48,7 @@ export class RolesService {
       centerId: data.centerId,
     });
 
-    return this.rolesRepository.createRole(data);
+    return this.rolesRepository.create(data);
   }
 
   async updateRole(roleId: string, data: UpdateRoleRequestDto, userId: string) {
@@ -55,7 +56,7 @@ export class RolesService {
       userId,
       centerId: data.centerId,
     });
-    return this.rolesRepository.updateRole(roleId, data);
+    return this.rolesRepository.update(roleId, data);
   }
 
   async deleteRole(roleId: string, userId: string) {
@@ -67,7 +68,7 @@ export class RolesService {
       userId: userId,
       centerId: role.centerId,
     });
-    return this.rolesRepository.deleteRole(roleId);
+    return this.rolesRepository.softRemove(roleId);
   }
 
   async assignRoleValidate(data: AssignRoleDto, createdBy: string) {
@@ -86,20 +87,15 @@ export class RolesService {
       targetUserId: data.userId,
       centerId: data.centerId,
     });
-    // TODO: make it more efficient
-    const userRoles = await this.rolesRepository.getUserRoles(data.userId);
-    if (userRoles.some((ur) => ur.roleId === data.roleId)) {
-      throw new BadRequestException('User already assigned to the role');
-    }
     return this.assignRole(data);
   }
 
   async assignRole(data: AssignRoleDto) {
-    return this.rolesRepository.assignRole(data);
+    return this.userRoleRepository.assignUserRole(data);
   }
 
   async removeUserRole(data: AssignRoleDto) {
-    return this.rolesRepository.removeUserRole(data);
+    return this.userRoleRepository.removeUserRole(data);
   }
 
   async removeUserRoleValidate(data: AssignRoleDto, createdBy: string) {
@@ -118,55 +114,19 @@ export class RolesService {
       targetUserId: data.userId,
       centerId: data.centerId,
     });
-    // TODO: make it more efficient
-    const userRoles = await this.rolesRepository.getUserRoles(data.userId);
-    if (!userRoles.some((ur) => ur.roleId === data.roleId)) {
-      throw new BadRequestException('User not assigned to the role');
-    }
+
     return this.removeUserRole(data);
   }
 
-  async getUserRoles(userId: string, centerId?: string) {
-    return this.rolesRepository.getUserRoles(userId, centerId);
-  }
-
-  async getUsersByRoleType(type: string, centerId?: string) {
-    return this.rolesRepository.getUsersByRoleType(type, centerId);
-  }
-
-  async findUserRolesByType(
-    userId: string,
-    roleType: string,
-    centerId?: string,
-  ) {
-    return this.rolesRepository.findUserRolesByType(userId, roleType, centerId);
-  }
-
-  async findUserRolesByRoleId(roleId: string) {
-    return this.rolesRepository.findUserRolesByRoleId(roleId);
-  }
-
   async findById(roleId: string) {
-    return this.rolesRepository.findWithRelations(roleId);
+    return this.rolesRepository.findOne(roleId);
+  }
+
+  async findUserRole(userId: string, centerId?: string) {
+    return this.userRoleRepository.getUserRole(userId, centerId);
   }
 
   async userHasRoleType(userId: string, type: string, centerId?: string) {
-    return this.rolesRepository.userHasRoleType(userId, type, centerId);
-  }
-
-  async updateRolePermissions(roleId: string, permissionIds: string[]) {
-    return this.rolesRepository.updateRolePermissions(roleId, permissionIds);
-  }
-
-  async getRolePermissions(roleId: string) {
-    return this.rolesRepository.getRolePermissions(roleId);
-  }
-
-  async findUserRolesByRoleIds(roleIds: string[], centerId?: string) {
-    return this.rolesRepository.findUserRolesByRoleIds(roleIds, centerId);
-  }
-
-  async getUserCountByRoleId(roleId: string) {
-    return this.rolesRepository.getUserCountByRoleId(roleId);
+    return this.userRoleRepository.userHasRoleType(userId, type, centerId);
   }
 }

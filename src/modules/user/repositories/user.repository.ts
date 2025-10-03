@@ -1,18 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { In, IsNull, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../entities/user.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { LoggerService } from '../../../shared/services/logger.service';
-import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
-import { Role } from '@/modules/access-control/entities';
 import { UserListQuery } from '../interfaces/user-service.interface';
 import { USER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
-import { PaginationUtils } from '@/shared/common/utils/pagination.utils';
 import { UserFilterDto } from '../dto/user-filter.dto';
+import { UserResponseDto } from '../dto/user-response.dto';
 
 @Injectable()
 export class UserRepository extends BaseRepository<User> {
@@ -58,18 +56,24 @@ export class UserRepository extends BaseRepository<User> {
    */
   async paginateUsers(
     params: UserListQuery,
-    roleType: RoleType,
-  ): Promise<Pagination<User>> {
+  ): Promise<Pagination<UserResponseDto>> {
     const { query, userId, targetUserId, centerId, targetCenterId } = params;
+    const userRole = await this.accessControlHelperService.getUserRole(userId);
+    const roleType = userRole?.role?.type;
 
     // Create query builder with proper JOINs
-    const queryBuilder = this.userRepository.createQueryBuilder('user');
+    const queryBuilder = this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.profile', 'profile')
+      .leftJoinAndSelect('user.userRoles', 'userRoles')
+      .leftJoinAndSelect('userRoles.role', 'role');
 
     if (centerId) {
       queryBuilder
-        .leftJoin('user.centers', 'centers')
-        .andWhere('centers.centerId = :centerId', {
-          centerId: centerId ?? null,
+        .andWhere('userRoles.centerId = :centerId', { centerId })
+        .leftJoin('user.centerAccess', 'centerAccess')
+        .andWhere('centerAccess.centerId = :centerId', {
+          centerId,
         });
       // if user must apply access control otherwise they will see all users in the center
       if (roleType === RoleType.USER) {
@@ -79,6 +83,7 @@ export class UserRepository extends BaseRepository<User> {
           .andWhere('accessTarget.granterUserId = :userId', { userId });
       }
     } else {
+      queryBuilder.andWhere('userRoles.centerId IS NULL');
       if (roleType == RoleType.SUPER_ADMIN) {
         // no access control
       } else if (roleType === RoleType.ADMIN) {
@@ -90,9 +95,6 @@ export class UserRepository extends BaseRepository<User> {
         throw new BadRequestException('Access denied to this user');
       }
     }
-
-    // Add JOINs for relations
-    queryBuilder.leftJoinAndSelect('user.profile', 'profile');
 
     // Filter by target user (exclude)
     if (targetUserId) {
@@ -122,10 +124,11 @@ export class UserRepository extends BaseRepository<User> {
       queryBuilder,
     );
 
-    let filteredItems = result.items;
+    let filteredItems: UserResponseDto[] = result.items;
 
     // Apply accessibility check if targetUserId is provided
-    const usersIds = filteredItems.map((user) => user.id);
+    const usersIds = result.items.map((user) => user.id);
+
     if (targetUserId) {
       const accessibleUsersIds =
         await this.accessControlHelperService.getAccessibleUsersIdsForUser(
@@ -133,30 +136,35 @@ export class UserRepository extends BaseRepository<User> {
           usersIds,
           centerId,
         );
-
-      filteredItems = filteredItems.map((user) => ({
-        ...user,
-        isUserAccessible: accessibleUsersIds.some(
-          (accessibleUserId) => accessibleUserId === user.id,
-        ),
-      }));
+      filteredItems = filteredItems.map((user) =>
+        Object.assign(user, {
+          isUserAccessible: accessibleUsersIds.includes(user.id),
+        }),
+      );
     }
 
     // apply center accessibility field
     if (targetCenterId) {
-      const accessibleUsersIds =
+      const accessibleCenterUsersIds =
         await this.accessControlHelperService.getAccessibleUsersIdsForCenter(
           targetCenterId,
           usersIds,
         );
-
-      filteredItems = filteredItems.map((user) => ({
-        ...user,
-        isCenterAccessible: accessibleUsersIds.some(
-          (accessibleUserId) => accessibleUserId === user.id,
-        ),
-      }));
+      filteredItems = filteredItems.map((user) =>
+        Object.assign(user, {
+          isCenterAccessible: accessibleCenterUsersIds.includes(user.id),
+        }),
+      );
     }
+
+    // apply role field and remove userRoles
+    filteredItems = filteredItems.map((user) => {
+      const userDto = Object.assign(user, {
+        role: (user as any).userRoles?.[0]?.role,
+      });
+      delete (userDto as any).userRoles;
+      return userDto;
+    });
 
     return {
       ...result,
@@ -189,7 +197,9 @@ export class UserRepository extends BaseRepository<User> {
     lockoutUntil?: Date,
   ): Promise<void> {
     try {
-      const updateData: any = { failedLoginAttempts: failedAttempts };
+      const updateData: Partial<User> = {
+        failedLoginAttempts: failedAttempts,
+      };
       if (lockoutUntil) {
         updateData.lockoutUntil = lockoutUntil;
       }
@@ -215,71 +225,6 @@ export class UserRepository extends BaseRepository<User> {
         `Error resetting failed login attempts ${userId}:`,
         error,
       );
-      throw error;
-    }
-  }
-
-  // Methods for user activation service
-  async findActiveUsersInCenter(centerId: string): Promise<User[]> {
-    try {
-      return await this.userRepository.find({
-        where: {
-          centers: {
-            centerId,
-            isActive: true,
-          },
-        },
-        relations: ['profile', 'centers', 'centers.center', 'userRoles.role'],
-      });
-    } catch (error) {
-      this.logger.error(
-        `Error finding active users in center ${centerId}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  async findActiveUsers(): Promise<User[]> {
-    try {
-      return await this.userRepository.find({
-        where: { isActive: true },
-        relations: ['profile', 'userRoles.role'],
-      });
-    } catch (error) {
-      this.logger.error('Error finding active users:', error);
-      throw error;
-    }
-  }
-
-  async findInactiveUsersInCenter(centerId: string): Promise<User[]> {
-    try {
-      return await this.userRepository.find({
-        where: {
-          centers: {
-            centerId,
-            isActive: false,
-          },
-        },
-        relations: ['profile', 'centers', 'centers.center', 'userRoles.role'],
-      });
-    } catch (error) {
-      this.logger.error(
-        `Error finding inactive users in center ${centerId}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  async findInactiveUsers(): Promise<User[]> {
-    try {
-      return await this.userRepository.find({
-        where: { isActive: false },
-        relations: ['profile', 'userRoles.role'],
-      });
-    } catch (error) {
-      this.logger.error('Error finding inactive users:', error);
       throw error;
     }
   }

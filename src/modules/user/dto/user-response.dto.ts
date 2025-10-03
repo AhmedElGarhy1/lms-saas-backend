@@ -1,106 +1,91 @@
+import { RoleResponseDto } from '@/modules/access-control/dto/role-response.dto';
 import { ApiProperty } from '@nestjs/swagger';
+import { Expose, Type, Exclude } from 'class-transformer';
 
-export class UserProfileResponseDto {
+export class UserResponseDto {
   @ApiProperty({ description: 'User ID' })
+  @Expose()
   id: string;
 
   @ApiProperty({ description: 'User email' })
+  @Expose()
   email: string;
 
   @ApiProperty({ description: 'User name' })
+  @Expose()
   name: string;
 
-  @ApiProperty({ description: 'Whether user is active' })
+  @ApiProperty({ description: 'Number of failed login attempts' })
+  @Expose()
+  failedLoginAttempts: number;
+
+  @ApiProperty({ description: 'Lockout until date', required: false })
+  @Expose()
+  @Type(() => Date)
+  lockoutUntil?: Date;
+
+  @ApiProperty({
+    description: 'Two-factor authentication secret',
+    required: false,
+  })
+  @Expose()
+  twoFactorSecret?: string;
+
+  @ApiProperty({ description: 'Whether two-factor authentication is enabled' })
+  @Expose()
+  twoFactorEnabled: boolean;
+
+  @ApiProperty({ description: 'Profile ID', required: false })
+  @Expose()
+  profileId?: string;
+
+  @ApiProperty({ description: 'Whether the user is active' })
+  @Expose()
   isActive: boolean;
 
-  @ApiProperty({ description: 'Whether email is verified' })
-  isEmailVerified: boolean;
+  @ApiProperty({
+    description: 'Whether the user is accessible to the target user',
+  })
+  @Expose()
+  isUserAccessible?: boolean;
 
-  @ApiProperty({ description: 'User profile information' })
-  profile?: {
-    phone?: string;
-    address?: string;
-    dateOfBirth?: Date;
-  };
+  @ApiProperty({ description: 'Whether the user has center access' })
+  @Expose()
+  isCenterAccessible?: boolean;
 
-  @ApiProperty({ description: 'User roles' })
-  roles?: Array<{
-    id: string;
-    name: string;
-    type: string;
-  }>;
-
-  @ApiProperty({ description: 'User permissions' })
-  permissions?: string[];
-
-  @ApiProperty({ description: 'User creation date' })
+  @ApiProperty({ description: 'Creation date' })
+  @Expose()
+  @Type(() => Date)
   createdAt: Date;
 
-  @ApiProperty({ description: 'User last update date' })
+  @ApiProperty({ description: 'Last update date' })
+  @Expose()
+  @Type(() => Date)
   updatedAt: Date;
-}
 
-export class UserListResponseDto {
-  @ApiProperty({ description: 'List of users' })
-  data: UserProfileResponseDto[];
+  @ApiProperty({ description: 'Created by user ID' })
+  @Expose()
+  createdBy: string;
 
-  @ApiProperty({ description: 'Pagination metadata' })
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
+  @ApiProperty({ description: 'Updated by user ID', required: false })
+  @Expose()
+  updatedBy?: string;
 
-export class UserStatsResponseDto {
-  @ApiProperty({ description: 'Total number of users' })
-  totalUsers: number;
+  @ApiProperty({ description: 'Deleted by user ID', required: false })
+  @Expose()
+  deletedBy?: string;
 
-  @ApiProperty({ description: 'Number of active users' })
-  activeUsers: number;
+  @ApiProperty({ description: 'Deletion date', required: false })
+  @Expose()
+  @Type(() => Date)
+  deletedAt?: Date;
 
-  @ApiProperty({ description: 'Number of inactive users' })
-  inactiveUsers: number;
+  @ApiProperty({ description: 'User role' })
+  @Expose()
+  @Type(() => RoleResponseDto)
+  role?: RoleResponseDto;
 
-  @ApiProperty({ description: 'Number of verified users' })
-  verifiedUsers: number;
-
-  @ApiProperty({ description: 'Number of unverified users' })
-  unverifiedUsers: number;
-}
-
-export class CreateUserResponseDto {
-  @ApiProperty({ description: 'User ID' })
-  id: string;
-
-  @ApiProperty({ description: 'User email' })
-  email: string;
-
-  @ApiProperty({ description: 'User name' })
-  name: string;
-
-  @ApiProperty({ description: 'Success message' })
-  message: string;
-}
-
-export class UpdateProfileResponseDto {
-  @ApiProperty({ description: 'User ID' })
-  id: string;
-
-  @ApiProperty({ description: 'Success message' })
-  message: string;
-}
-
-export class ChangePasswordResponseDto {
-  @ApiProperty({ description: 'Success message' })
-  message: string;
-}
-
-export class ActivateUserResponseDto {
-  @ApiProperty({ description: 'User ID' })
-  id: string;
-
-  @ApiProperty({ description: 'Success message' })
-  message: string;
+  // Exclude userRoles from response - we only want the single role
+  @Exclude()
+  userRoles?: any[];
 }

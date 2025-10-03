@@ -92,7 +92,7 @@ src/
 - **Center**: An institution that can host multiple users and teachers.
 - **Role**: Defines a set of permissions (e.g., Admin, Owner, Teacher, Assistant, User).
 - **Permission**: Fine-grained actions (e.g., user:view, user:update, center:manage).
-- **UserOnCenter**: Assigns a user a role in a specific center.
+- **UserCenter**: Assigns a user a role in a specific center.
 - **TeacherUser**: Assigns a user a role in the context of a specific teacher.
 - **UserPermission**: Per-user permission overrides, optionally scoped by center or teacher.
 
@@ -162,10 +162,10 @@ src/
 ## 🗄️ Database Schema (TypeORM)
 
 - **User**: Core user model, with relations to centers, roles, permissions, 2FA, etc.
-- **Center**: Represents an institution; users are assigned via `UserOnCenter`.
+- **Center**: Represents an institution; users are assigned via `UserCenter`.
 - **Role**: Named roles (Admin, Owner, Teacher, etc.), mapped to permissions.
 - **Permission**: Named permissions (user:view, center:manage, etc.).
-- **UserOnCenter**: Assigns a user a role in a center.
+- **UserCenter**: Assigns a user a role in a center.
 - **TeacherUser**: Assigns a user a role in the context of a specific teacher.
 - **UserPermission**: Per-user permission overrides, optionally scoped.
 - **RefreshToken, EmailVerification, PasswordResetToken**: For authentication flows.

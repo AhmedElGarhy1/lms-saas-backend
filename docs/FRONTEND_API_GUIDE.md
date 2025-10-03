@@ -578,7 +578,7 @@ const ERROR_CODES = {
 
 #### For Users (`/me` endpoint)
 
-- **Regular Users**: Centers from `UserOnCenter` (centers they belong to)
+- **Regular Users**: Centers from `UserCenter` (centers they belong to)
 - **Center Admins**: Centers they belong to + centers they admin
 - **Global Admins**: All centers (global access)
 
@@ -782,7 +782,7 @@ interface User {
   profile?: Profile;
   userRoles: UserRole[];
   userPermissions: UserPermission[];
-  centers: UserOnCenter[];
+  centers: UserCenter[];
   createdAt: Date;
   updatedAt: Date;
 }

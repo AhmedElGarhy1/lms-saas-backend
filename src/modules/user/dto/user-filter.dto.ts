@@ -36,7 +36,7 @@ export class UserFilterDto {
   static readonly FIELD_MAPPING = {
     isActive: 'user.isActive',
     roleId: 'userRoles.roleId',
-    centerId: 'centers.centerId',
+    centerId: 'centerAccess.centerId',
     createdAt: 'user.createdAt',
   } as const;
 

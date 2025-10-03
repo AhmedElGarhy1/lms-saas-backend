@@ -4,15 +4,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { UserOnCenter } from '../entities/user-on-center.entity';
+import { UserCenter } from '../entities/user-center.entity';
 import { LoggerService } from '../../../shared/services/logger.service';
-import { Center } from '@/modules/centers/entities/center.entity';
 
 @Injectable()
-export class UserOnCenterRepository extends BaseRepository<UserOnCenter> {
+export class UserOnCenterRepository extends BaseRepository<UserCenter> {
   constructor(
-    @InjectRepository(UserOnCenter)
-    private readonly userOnCenterRepository: Repository<UserOnCenter>,
+    @InjectRepository(UserCenter)
+    private readonly userOnCenterRepository: Repository<UserCenter>,
     protected readonly logger: LoggerService,
   ) {
     super(userOnCenterRepository, logger);
@@ -26,7 +25,7 @@ export class UserOnCenterRepository extends BaseRepository<UserOnCenter> {
     userId: string;
     centerId: string;
     grantedBy: string;
-  }): Promise<UserOnCenter> {
+  }): Promise<UserCenter> {
     const userOnCenter = this.userOnCenterRepository.create({
       userId,
       centerId,
@@ -49,14 +48,14 @@ export class UserOnCenterRepository extends BaseRepository<UserOnCenter> {
     });
   }
 
-  async getUserCenters(userId: string): Promise<UserOnCenter[]> {
+  async getUserCenters(userId: string): Promise<UserCenter[]> {
     return this.userOnCenterRepository.find({
       where: { userId },
       relations: ['center'],
     });
   }
 
-  async getCenterUsers(centerId: string): Promise<UserOnCenter[]> {
+  async getCenterUsers(centerId: string): Promise<UserCenter[]> {
     return this.userOnCenterRepository.find({
       where: { centerId },
       select: ['userId'],
@@ -66,27 +65,16 @@ export class UserOnCenterRepository extends BaseRepository<UserOnCenter> {
   async findCenterAccess(
     userId: string,
     centerId: string,
-  ): Promise<UserOnCenter | null> {
+  ): Promise<UserCenter | null> {
     return this.userOnCenterRepository.findOne({
       where: { userId, centerId },
     });
   }
 
-  async updateUserCenterActivation(
-    userId: string,
-    centerId: string,
-    isActive: boolean,
-  ): Promise<void> {
-    await this.userOnCenterRepository.update(
-      { userId, centerId },
-      { isActive },
-    );
-  }
-
   async paginateUserCenters(options: {
     query: PaginationQuery;
     userId: string;
-  }): Promise<Pagination<UserOnCenter>> {
+  }): Promise<Pagination<UserCenter>> {
     const { query, userId } = options;
 
     const queryBuilder = this.userOnCenterRepository

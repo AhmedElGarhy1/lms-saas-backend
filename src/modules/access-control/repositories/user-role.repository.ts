@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { IsNull, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
@@ -21,13 +21,11 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
         {
           userId,
           centerId: IsNull(),
-          isActive: true,
         },
         centerId
           ? {
               userId,
               centerId,
-              isActive: true,
             }
           : {},
       ],
@@ -35,26 +33,29 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
     });
   }
 
-  async findUserRolesByUserId(userId: string): Promise<UserRole[]> {
-    return this.userRoleRepository.find({
-      where: { userId, isActive: true },
+  async getUserRole(
+    userId: string,
+    centerId?: string,
+  ): Promise<UserRole | null> {
+    return this.userRoleRepository.findOne({
+      where: {
+        userId,
+        centerId: centerId || IsNull(),
+      },
       relations: ['role'],
     });
   }
 
-  async findUserRolesForCenter(
-    userId: string,
-    centerId: string,
-  ): Promise<UserRole[]> {
+  async findUserRoles(userId: string, centerId?: string): Promise<UserRole[]> {
     return this.userRoleRepository.find({
-      where: { userId, centerId, isActive: true },
+      where: { userId, centerId: centerId || IsNull() },
       relations: ['role'],
     });
   }
 
   async findUserRolesByRoleId(roleId: string): Promise<UserRole[]> {
     return this.userRoleRepository.find({
-      where: { roleId, isActive: true },
+      where: { roleId },
       relations: ['role', 'user'],
     });
   }
@@ -64,6 +65,11 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
     roleId: string;
     centerId?: string;
   }): Promise<UserRole> {
+    const existingUserRole = await this.getUserRole(data.userId, data.centerId);
+    if (existingUserRole) {
+      throw new BadRequestException('User already has a role in this scope');
+    }
+
     const userRole = this.userRoleRepository.create({
       userId: data.userId,
       roleId: data.roleId,
@@ -78,6 +84,10 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
     roleId: string;
     centerId?: string;
   }): Promise<void> {
+    const existingUserRole = await this.getUserRole(data.userId, data.centerId);
+    if (!existingUserRole) {
+      throw new BadRequestException('User does not have a role in this scope');
+    }
     await this.userRoleRepository.delete({
       userId: data.userId,
       roleId: data.roleId,
@@ -96,6 +106,8 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
     queryBuilder.andWhere('role.type = :roleType', { roleType });
     if (centerId) {
       queryBuilder.andWhere('userRole.centerId = :centerId', { centerId });
+    } else {
+      queryBuilder.andWhere('userRole.centerId IS NULL');
     }
     return (await queryBuilder.getCount()) > 0;
   }

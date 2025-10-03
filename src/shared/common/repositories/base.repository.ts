@@ -430,7 +430,8 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   }
 
   async create(data: Partial<T>): Promise<T> {
-    return this.repository.save(data as any);
+    const entity = this.repository.create(data as unknown as T);
+    return this.repository.save(entity);
   }
 
   async findOne(id: string): Promise<T | null> {
@@ -446,16 +447,23 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   }
 
   async update(id: string, data: Partial<T>): Promise<T | null> {
-    await this.repository.update(id, data);
-    return this.findWithRelations(id);
+    const entity = await this.repository.findOne({ where: { id } as any });
+    if (!entity) return null;
+
+    Object.assign(entity, data); // merge updates
+
+    return this.repository.save(entity);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.repository.delete(id);
-  }
+  // async delete(id: string): Promise<void> {
+  //   await this.repository.delete(id);
+  // }
 
-  async softDelete(id: string): Promise<void> {
-    await this.repository.softDelete(id);
+  async softRemove(id: string): Promise<void> {
+    const entity = await this.repository.findOne({ where: { id } as any });
+    if (!entity) return;
+
+    await this.repository.softRemove(entity);
   }
 
   async restore(id: string): Promise<void> {

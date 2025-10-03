@@ -1,6 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { ActivityLog, ActivityType } from '../entities/activity-log.entity';
 import { CreateActivityLogDto } from '../dto/create-activity-log.dto';
 import { ActivityLogRepository } from '../repositories/activity-log.repository';
@@ -9,11 +7,7 @@ import { ActivityLogRepository } from '../repositories/activity-log.repository';
 export class ActivityLogService {
   private readonly logger = new Logger(ActivityLogService.name);
 
-  constructor(
-    @InjectRepository(ActivityLog)
-    private readonly activityLogRepository: Repository<ActivityLog>,
-    private readonly customActivityLogRepository: ActivityLogRepository,
-  ) {}
+  constructor(private readonly activityLogRepository: ActivityLogRepository) {}
 
   async createActivityLog(dto: CreateActivityLogDto): Promise<ActivityLog> {
     try {
@@ -107,7 +101,7 @@ export class ActivityLogService {
   }
 
   async clearAllLogs(): Promise<void> {
-    await this.activityLogRepository.createQueryBuilder().delete().execute();
-    console.log('All activity logs cleared');
+    // await this.activityLogRepository.();
+    // console.log('All activity logs cleared');
   }
 }

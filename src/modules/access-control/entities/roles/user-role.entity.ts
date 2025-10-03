@@ -4,7 +4,7 @@ import { Role } from './role.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('user_roles')
-@Index(['userId', 'roleId'])
+@Index(['userId', 'centerId'], { unique: true })
 @Index(['centerId'])
 export class UserRole extends BaseEntity {
   @Column({ type: 'uuid' })
@@ -16,14 +16,13 @@ export class UserRole extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   centerId: string;
 
-  @Column({ type: 'timestamp', nullable: true })
-  expiresAt: Date;
-
-  @ManyToOne(() => User, (user) => user.userRoles, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.userRoles, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => Role, (role) => role.userRoles, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Role, (role) => role.userRoles)
   @JoinColumn({ name: 'roleId' })
   role: Role;
 }

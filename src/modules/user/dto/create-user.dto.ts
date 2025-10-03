@@ -39,13 +39,12 @@ export class CenterAccessDto {
   centerId?: string; // Can be null for global roles
 
   @ApiProperty({
-    description: 'Array of role IDs for this center',
-    type: [String],
+    description: 'Role ID for this center',
+    required: false,
   })
-  @IsArray()
-  @IsString({ each: true })
-  @IsNotEmpty({ each: true })
-  roleIds: string[];
+  @IsOptional()
+  @IsString()
+  roleId?: string;
 }
 
 export class CreateUserRequestDto {

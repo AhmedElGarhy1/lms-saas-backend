@@ -10,6 +10,7 @@ import { CENTER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ListCentersParams } from '../services/centers.service';
+import { CenterResponseDto } from '../dto/center-response.dto';
 
 @Injectable()
 export class CentersRepository extends BaseRepository<Center> {
@@ -28,10 +29,9 @@ export class CentersRepository extends BaseRepository<Center> {
 
   async paginateCenters(
     params: ListCentersParams,
-  ): Promise<Pagination<Center>> {
+  ): Promise<Pagination<CenterResponseDto>> {
     const { query, userId, targetUserId } = params;
-    const userRole =
-      await this.accessControlHelperService.getUserHighestRole(userId);
+    const userRole = await this.accessControlHelperService.getUserRole(userId);
     const userRoleType = userRole?.role?.type;
     const queryBuilder = this.centerRepository.createQueryBuilder('center');
 
@@ -60,7 +60,7 @@ export class CentersRepository extends BaseRepository<Center> {
       queryBuilder,
     );
 
-    let filteredItems = result.items;
+    let filteredItems: CenterResponseDto[] = result.items;
 
     if (targetUserId) {
       const accessibleCentersIds =
@@ -68,10 +68,17 @@ export class CentersRepository extends BaseRepository<Center> {
           targetUserId,
           result.items.map((center) => center.id),
         );
-      filteredItems = filteredItems.map((center) => ({
-        ...center,
-        isCenterAccessible: accessibleCentersIds.includes(center.id),
-      }));
+      filteredItems = filteredItems.map((center) =>
+        Object.assign(center, {
+          isCenterAccessible: accessibleCentersIds.includes(center.id),
+        }),
+      );
+    } else {
+      filteredItems = filteredItems.map((center) =>
+        Object.assign(center, {
+          isCenterAccessible: false,
+        }),
+      );
     }
 
     return {

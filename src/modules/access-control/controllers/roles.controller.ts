@@ -6,8 +6,6 @@ import {
   Delete,
   Body,
   Param,
-  Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -30,6 +28,8 @@ import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { CurrentUser as CurrentUserType } from '@/shared/common/types/current-user.type';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { AssignRoleDto } from '../dto/assign-role.dto';
+import { RoleResponseDto } from '../dto/role-response.dto';
+import { SerializeOptions } from '@nestjs/common';
 
 @ApiTags('Roles')
 @Controller('roles')
@@ -78,7 +78,12 @@ export class RolesController {
     required: false,
     description: 'Sort order (ASC/DESC)',
   })
-  @ApiResponse({ status: 200, description: 'Roles retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Roles retrieved successfully',
+    type: [RoleResponseDto],
+  })
+  @SerializeOptions({ type: RoleResponseDto })
   @PaginationDocs({
     searchFields: ['name', 'description'],
     filterFields: ['type', 'isActive'],
@@ -88,7 +93,7 @@ export class RolesController {
     @Paginate() query: PaginationQuery,
     @GetUser() user: CurrentUserType,
   ) {
-    return this.rolesService.paginateRoles(query, user.id);
+    return this.rolesService.paginateRoles(query, user.id, user.centerId);
   }
 
   @Post('assign')

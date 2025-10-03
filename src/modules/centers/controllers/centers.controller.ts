@@ -6,7 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,6 +15,7 @@ import {
   ApiBody,
   ApiParam,
 } from '@nestjs/swagger';
+import { SerializeOptions } from '@nestjs/common';
 import { Paginate } from '@/shared/common/decorators/pagination.decorator';
 import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { PaginationDocs } from '@/shared/common/decorators/pagination-docs.decorator';
@@ -27,10 +27,7 @@ import { CurrentUser as CurrentUserType } from '@/shared/common/types/current-us
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { CreateCenterRequestDto } from '../dto/create-center.dto';
 import { UpdateCenterRequestDto } from '../dto/update-center.dto';
-import {
-  CenterResponseDto,
-  CenterListResponseDto,
-} from '../dto/center-response.dto';
+import { CenterResponseDto } from '../dto/center-response.dto';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 
 @Controller('centers')
@@ -67,8 +64,9 @@ export class CentersController {
   @ApiResponse({
     status: 200,
     description: 'Centers retrieved successfully',
-    type: CenterListResponseDto,
+    type: [CenterResponseDto],
   })
+  @SerializeOptions({ type: CenterResponseDto })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @PaginationDocs({
@@ -76,6 +74,7 @@ export class CentersController {
     filterFields: ['status'],
   })
   @Permissions(PERMISSIONS.CENTER.VIEW.action)
+  @SerializeOptions({ type: CenterResponseDto })
   listCenters(
     @Paginate() query: PaginationQuery,
     @GetUser() user: CurrentUserType,
@@ -96,7 +95,7 @@ export class CentersController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @Permissions(PERMISSIONS.CENTER.VIEW.action)
   getCenterById(@Param('id') id: string) {
-    return this.centersService.getCenterById(id);
+    return this.centersService.findCenterById(id);
   }
 
   @Patch(':id')

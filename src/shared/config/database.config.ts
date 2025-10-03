@@ -5,7 +5,7 @@ import { Profile } from '@/modules/user/entities/profile.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
-import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
+import { UserCenter } from '@/modules/access-control/entities/user-center.entity';
 import { Role } from '@/modules/access-control/entities/roles/role.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
@@ -22,20 +22,7 @@ export const getDatabaseConfig = (
   username: configService.get('DB_USERNAME') || 'postgres',
   password: configService.get('DB_PASSWORD') || 'root',
   database: configService.get('DB_NAME') || 'lms',
-  entities: [
-    User,
-    Profile,
-    UserAccess,
-    Center,
-    Permission,
-    UserOnCenter,
-    Role,
-    UserRole,
-    RefreshToken,
-    EmailVerification,
-    PasswordResetToken,
-    ActivityLog,
-  ],
+  autoLoadEntities: true,
   // synchronize: configService.get('NODE_ENV') === 'development',
   // logging: configService.get('NODE_ENV') === 'development',
   synchronize: true,

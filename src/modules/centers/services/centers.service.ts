@@ -18,6 +18,7 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { UserService } from '@/modules/user/services/user.service';
+import { CenterResponseDto } from '../dto/center-response.dto';
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { CreateUserRequestDto } from '@/modules/user/dto/create-user.dto';
@@ -54,15 +55,8 @@ export class CentersService {
     private readonly rolesService: RolesService,
   ) {}
 
-  /**
-   * Private helper method to find center by ID with proper error handling
-   */
-  private async findCenterById(centerId: string): Promise<Center> {
-    const center = await this.centersRepository.findOne(centerId);
-    if (!center) {
-      throw new NotFoundException(`Center with ID '${centerId}' not found`);
-    }
-    return center;
+  async findCenterById(centerId: string): Promise<Center | null> {
+    return this.centersRepository.findOne(centerId);
   }
 
   async createCenter(
@@ -111,7 +105,7 @@ export class CentersService {
       centerAccess: [
         {
           centerId: savedCenter.id,
-          roleIds: [centerAdminRole.id], // Use the newly created center admin role
+          roleId: centerAdminRole.id, // Use the newly created center admin role
         },
       ],
     };
@@ -150,10 +144,7 @@ export class CentersService {
     return savedCenter;
   }
 
-  async listCenters(
-    query: PaginationQuery,
-    userId: string,
-  ): Promise<Pagination<Center>> {
+  async listCenters(query: PaginationQuery, userId: string) {
     this.logger.info(`Listing centers for user: ${userId}`);
     const targetUserId = query.filter?.targetUserId as string;
     const _userId: string = query.filter?.userId as string;
@@ -178,10 +169,6 @@ export class CentersService {
     });
   }
 
-  async getCenterById(centerId: string): Promise<Center> {
-    return this.findCenterById(centerId);
-  }
-
   async updateCenter(
     centerId: string,
     dto: UpdateCenterRequestDto,
@@ -190,6 +177,9 @@ export class CentersService {
     this.logger.info(`Updating center: ${centerId} by user: ${userId}`);
 
     const center = await this.findCenterById(centerId);
+    if (!center) {
+      throw new NotFoundException(`Center with ID '${centerId}' not found`);
+    }
 
     if (dto.name && dto.name !== center.name) {
       const existingCenter = await this.centersRepository.findByName(dto.name);
@@ -218,25 +208,24 @@ export class CentersService {
     // Permission check should be in controller
 
     // TODO: Check if center has active users before deletion
-    if (center.userCenters?.length ?? 0 > 0) {
+    if (center?.userCenters?.length ?? 0 > 0) {
       throw new BadRequestException('Cannot delete center with active users');
     }
 
-    await this.centersRepository.softDelete(centerId);
+    await this.centersRepository.softRemove(centerId);
   }
 
   async restoreCenter(centerId: string, userId: string): Promise<Center> {
     this.logger.info(`Restoring center: ${centerId} by user: ${userId}`);
 
     const center = await this.findCenterById(centerId);
-
-    if (center.isActive) {
-      throw new BadRequestException('Center is already active');
+    if (!center) {
+      throw new NotFoundException(`Center with ID '${centerId}' not found`);
     }
-    // Permission check should be in controller
 
     await this.centersRepository.restore(centerId);
-    return this.findCenterById(centerId);
+    const restoredCenter = await this.findCenterById(centerId);
+    return restoredCenter!;
   }
 
   async updateCenterActivation(

@@ -26,7 +26,7 @@ export class PermissionService {
     const where: FindOptionsWhere<Permission> = {};
 
     const userHighestRole =
-      await this.accessControlHelperService.getUserHighestRole(userId);
+      await this.accessControlHelperService.getUserRole(userId);
 
     const roleType = userHighestRole?.role?.type;
 

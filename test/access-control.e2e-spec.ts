@@ -323,7 +323,7 @@ describe('AccessControl (e2e)', () => {
       await prisma.role.delete({ where: { id: testRole.id } });
     });
 
-    it('prevents deletion of role assigned to users in UserOnCenter table', async () => {
+    it('prevents deletion of role assigned to users in UserCenter table', async () => {
       // Create a test role
       const testRole = await prisma.role.create({
         data: {
@@ -333,7 +333,7 @@ describe('AccessControl (e2e)', () => {
         },
       });
 
-      // Assign role to user in UserOnCenter table
+      // Assign role to user in UserCenter table
       await prisma.userOnCenter.create({
         data: {
           userId,

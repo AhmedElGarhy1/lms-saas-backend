@@ -15,15 +15,7 @@ export { ToggleUserStatusRequestDto } from './toggle-user-status.dto';
 export { UserFilterDto } from './user-filter.dto';
 
 // Response DTOs
-export {
-  UserProfileResponseDto,
-  UserListResponseDto,
-  UserStatsResponseDto,
-  CreateUserResponseDto,
-  UpdateProfileResponseDto,
-  ChangePasswordResponseDto,
-  ActivateUserResponseDto,
-} from './user-response.dto';
+export { UserResponseDto } from './user-response.dto';
 export { ToggleUserStatusResponseDto } from './toggle-user-status.dto';
 export {
   DeleteUserResponseDto,

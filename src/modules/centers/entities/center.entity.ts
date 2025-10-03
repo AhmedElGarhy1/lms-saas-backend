@@ -1,13 +1,6 @@
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  OneToMany,
-  Index,
-} from 'typeorm';
-import { User } from '@/modules/user/entities/user.entity';
-import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
+import { Entity, Column, OneToMany, Index } from 'typeorm';
+
+import { UserCenter } from '@/modules/access-control/entities/user-center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { Role } from '@/modules/access-control/entities/roles/role.entity';
@@ -48,13 +41,12 @@ export class Center extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   logo: string;
 
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'createdBy' })
-  creator: User;
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
 
   // Relations
-  @OneToMany(() => UserOnCenter, (userOnCenter) => userOnCenter.center)
-  userCenters: UserOnCenter[];
+  @OneToMany(() => UserCenter, (userOnCenter) => userOnCenter.center)
+  userCenters: UserCenter[];
 
   @OneToMany(() => UserAccess, (userAccess) => userAccess.center)
   userAccess: UserAccess[];

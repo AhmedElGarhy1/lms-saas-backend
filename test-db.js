@@ -17,11 +17,11 @@ async function testDatabase() {
     const result = await client.query('SELECT COUNT(*) FROM users');
     console.log('Users count:', result.rows[0].count);
 
-    // Test UserOnCenter table
+    // Test UserCenter table
     const userCentersResult = await client.query(
       'SELECT COUNT(*) FROM user_on_centers',
     );
-    console.log('UserOnCenter count:', userCentersResult.rows[0].count);
+    console.log('UserCenter count:', userCentersResult.rows[0].count);
 
     // Test AdminCenterAccess table
     const adminAccessResult = await client.query(
@@ -39,12 +39,12 @@ async function testDatabase() {
     // Check regular user's center access
     const regularUserId = userResult.rows[0].id;
 
-    // Check UserOnCenter for regular user
+    // Check UserCenter for regular user
     const regularUserCenters = await client.query(
       'SELECT * FROM user_on_centers WHERE "userId" = $1',
       [regularUserId],
     );
-    console.log('Regular UserOnCenter records:', regularUserCenters.rows);
+    console.log('Regular UserCenter records:', regularUserCenters.rows);
 
     // Test the getUserRolesForScope query (ADMIN scope) - this is the problematic query
     console.log('\n--- Testing getUserRolesForScope Query ---');
@@ -113,7 +113,7 @@ async function testDatabase() {
     );
     console.log('Regular user roles:', regularUserRoles.rows);
 
-    // Test UserOnCenter with joins (fixed column names)
+    // Test UserCenter with joins (fixed column names)
     const userCentersWithJoins = await client.query(
       `
       SELECT uoc.id, uoc."userId", uoc."centerId", u.name as userName, c.name as centerName
@@ -125,7 +125,7 @@ async function testDatabase() {
     `,
       [regularUserId],
     );
-    console.log('UserOnCenter with joins:', userCentersWithJoins.rows);
+    console.log('UserCenter with joins:', userCentersWithJoins.rows);
   } catch (error) {
     console.error('Database error:', error);
   } finally {

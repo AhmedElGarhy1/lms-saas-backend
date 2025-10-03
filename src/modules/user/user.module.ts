@@ -3,11 +3,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { WinstonModule } from 'nest-winston';
 import { UserController } from './controllers/user.controller';
 import { UserService } from './services/user.service';
-import { UserActivationService } from './services/user-activation.service';
 import { ProfileService } from './services/profile.service';
 import { UserRepository } from './repositories/user.repository';
 import { User, Profile, UserAccess } from './entities';
-
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { CentersModule } from '@/modules/centers/centers.module';
 
@@ -19,12 +17,7 @@ import { CentersModule } from '@/modules/centers/centers.module';
     forwardRef(() => CentersModule),
   ],
   controllers: [UserController],
-  providers: [
-    UserService,
-    UserActivationService,
-    ProfileService,
-    UserRepository,
-  ],
-  exports: [UserService, UserActivationService, ProfileService, UserRepository],
+  providers: [UserService, ProfileService, UserRepository],
+  exports: [UserService, ProfileService, UserRepository],
 })
 export class UserModule {}

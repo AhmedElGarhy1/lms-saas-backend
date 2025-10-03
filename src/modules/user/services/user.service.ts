@@ -18,29 +18,24 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { ProfileService } from './profile.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { CreateUserRequestDto } from '../dto/create-user.dto';
+import { UserResponseDto } from '../dto/user-response.dto';
 import { UpdateUserRequestDto } from '../dto/update-user.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
 import {
   UserListQuery,
-  CreateUserParams,
-  UpdateUserParams,
-  ChangePasswordParams,
-  ToggleUserStatusParams,
-  DeleteUserParams,
-  RestoreUserParams,
   GetProfileParams,
+  ChangePasswordParams,
   GetCurrentUserProfileParams,
-  HandleUserCenterAccessParams,
-  ActivateUserParams,
   UserServiceResponse,
-  UserListResponse,
-  UserStatsResponse,
   CurrentUserProfileResponse,
 } from '../interfaces/user-service.interface';
 import { User } from '../entities/user.entity';
-import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
+import { UserCenter } from '@/modules/access-control/entities/user-center.entity';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
+import { CentersService } from '@/modules/centers/services/centers.service';
+import { UserRole } from '@/modules/access-control/entities';
+import { Pagination } from 'nestjs-typeorm-paginate';
 
 // UserListQuery interface moved to user-service.interface.ts
 
@@ -53,6 +48,7 @@ export class UserService {
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly profileService: ProfileService,
     private readonly logger: LoggerService,
+    private readonly centersService: CentersService,
   ) {}
 
   async getProfile(params: GetProfileParams): Promise<User> {
@@ -108,7 +104,7 @@ export class UserService {
       }
 
       // Filter to only show the specific center
-      user.centers = user.centers.filter(
+      user.centerAccess = user.centerAccess.filter(
         (center) => center.centerId === centerId,
       );
     }
@@ -213,7 +209,7 @@ export class UserService {
     currentUserId: string,
   ): Promise<void> {
     const currentUserRole =
-      await this.accessControlHelperService.getUserHighestRole(currentUserId);
+      await this.accessControlHelperService.getUserRole(currentUserId);
     const currentUserRoleType = currentUserRole?.role?.type;
     if (dto.centerAccess && dto.centerAccess.length > 0) {
       for (const centerAccess of dto.centerAccess) {
@@ -226,11 +222,11 @@ export class UserService {
           );
         }
 
-        // Assign roles (can be global roles if centerId is null)
-        for (const roleId of centerAccess.roleIds) {
+        // Assign role (can be global role if centerId is null)
+        if (centerAccess.roleId) {
           await this.rolesService.assignRole({
             userId,
-            roleId: roleId,
+            roleId: centerAccess.roleId,
             centerId: centerAccess.centerId || undefined,
           });
         }
@@ -263,42 +259,14 @@ export class UserService {
 
   async listUsers(params: UserListQuery) {
     const { userId, centerId } = params;
-    const userRole =
-      await this.accessControlHelperService.getUserHighestRole(userId);
-
-    if (!userRole) {
-      throw new InsufficientPermissionsException('Access denied to this user');
-    }
-
-    if (
-      ![RoleType.SUPER_ADMIN, RoleType.ADMIN].includes(userRole.role?.type) &&
-      !centerId
-    ) {
-      throw new InsufficientPermissionsException('Access denied to this user');
-    }
-
-    if (centerId) {
-      await this.accessControlHelperService.validateCenterAccess({
-        userId,
-        centerId,
-      });
-    }
-
-    const result = await this.userRepository.paginateUsers(
-      params,
-      userRole?.role?.type ?? RoleType.USER,
-    );
-
-    // Always remove sensitive data
-    const sanitizedData = result.items.map((user: User) => {
-      const { password, twoFactorSecret, ...userData } = user;
-      return userData;
+    await this.accessControlHelperService.validateAdminAndCenterAccess({
+      userId,
+      centerId,
     });
 
-    return {
-      ...result,
-      items: sanitizedData,
-    };
+    const result = await this.userRepository.paginateUsers(params);
+
+    return result;
   }
 
   async deleteUser(userId: string, currentUserId: string): Promise<void> {
@@ -368,10 +336,10 @@ export class UserService {
       targetUserId: userId,
     });
 
-    // 3. Delete user center memberships (UserOnCenter)
+    // 3. Delete user center memberships (UserCenter)
     const userCentersResult =
       await this.accessControlHelperService.getUserCenters(userId);
-    const userCenters = userCentersResult.map((center: UserOnCenter) => ({
+    const userCenters = userCentersResult.map((center: UserCenter) => ({
       centerId: center.centerId || center.id,
     }));
 
@@ -390,7 +358,7 @@ export class UserService {
     }
 
     // 5. Soft delete the user
-    await this.userRepository.softDelete(userId);
+    await this.userRepository.softRemove(userId);
   }
 
   async activateUser(
@@ -473,157 +441,39 @@ export class UserService {
     const { userId, centerId } = params;
     try {
       // Get user with profile
-      const user = await this.userRepository.findWithRelations(userId);
+      const user = await this.userRepository.findOne(userId);
       if (!user) {
         throw new ResourceNotFoundException('User not found');
       }
 
       this.logger.log(`Found user: ${user.id} - ${user.name}`);
 
-      const userCenters =
-        await this.accessControlHelperService.getUserCenters(userId);
-
-      // Combine and deduplicate centers
-      const allCenters = [
-        ...userCenters.map((uc) => ({
-          id: uc.centerId,
-          name: uc.center?.name || 'Unknown Center',
-          accessType: 'user' as const,
-          isActive: uc.isActive,
-        })),
-      ];
-      const uniqueCenters = allCenters.filter(
-        (center, index, self) =>
-          index === self.findIndex((c) => c.id === center.id),
-      );
-
-      this.logger.log(`Unique centers: ${uniqueCenters.length}`);
-
       // Determine context based on centerId
-      let context: any;
+      const returnData: CurrentUserProfileResponse = {
+        ...user,
+        context: { role: null as unknown as UserRole },
+        isAdmin: false,
+      };
+
+      const userGlobalRole = await this.rolesService.findUserRole(userId);
+      returnData.isAdmin = !!userGlobalRole;
+
       if (centerId) {
-        // CENTER scope - get center-specific context
-        const center = uniqueCenters.find((c) => c.id === centerId);
-        if (!center) {
-          throw new ResourceNotFoundException(
-            'Center not found or access denied',
+        const center = await this.centersService.findCenterById(centerId);
+        if (center) {
+          returnData.context.center = center;
+          const contextRoles = await this.rolesService.findUserRole(
+            userId,
+            centerId,
           );
+          returnData.context.role = contextRoles as UserRole;
         }
-
-        let centerRoles;
-        try {
-          centerRoles = await this.rolesService.getUserRoles(userId, centerId);
-        } catch (error) {
-          this.logger.error(
-            `Error getting center roles for ${userId} in center ${centerId}:`,
-            error,
-          );
-          throw error;
-        }
-        // Get permissions using the helper service
-
-        const isAdminInCenter = centerRoles.some(
-          (role) => role.role?.type === RoleType.CENTER_ADMIN,
-        );
-
-        context = {
-          center: {
-            id: center.id,
-            name: center.name,
-          },
-          roles: centerRoles.map((role) => ({
-            id: role.role?.id,
-            name: role.role?.name,
-            type: role.role?.type,
-          })),
-          isAdmin: isAdminInCenter,
-        };
-      } else {
-        // ADMIN scope - get global context
-        let globalRoles;
-        try {
-          globalRoles = await this.rolesService.getUserRoles(userId);
-        } catch (error) {
-          this.logger.error(`Error getting global roles for ${userId}:`, error);
-          throw error;
-        }
-
-        const isCenterAdmin = globalRoles.some(
-          (role) => role.role?.type === RoleType.CENTER_ADMIN,
-        );
-
-        context = {
-          center: null,
-          roles: globalRoles.map((role) => ({
-            id: role.role?.id,
-            name: role.role?.name,
-            type: role.role?.type,
-          })),
-          isAdmin: isCenterAdmin,
-        };
       }
-
-      let permissions;
-      try {
-        permissions = [] as string[];
-
-        context.permissions = permissions;
-      } catch (error) {
-        this.logger.error(
-          `Error getting user permissions for ${userId}:`,
-          error,
-        );
-        throw error;
-      }
-
-      // Determine if user is global admin
-      let globalRoles;
-      try {
-        globalRoles = await this.rolesService.getUserRoles(userId);
-      } catch (error) {
-        this.logger.error(
-          `Error getting global roles for admin check for ${userId}:`,
-          error,
-        );
-        throw error;
-      }
-      const isGlobalAdmin = globalRoles.some(
-        (role) =>
-          role.role?.type === RoleType.SUPER_ADMIN ||
-          role.role?.type === RoleType.ADMIN,
-      );
-
-      // Build centers list (simplified without context)
-      const centersWithContext = uniqueCenters.map((center) => ({
-        id: center.id,
-        name: center.name,
-        accessType: center.accessType,
-        isActive: center.isActive,
-      }));
+      returnData.context.role = returnData.context.role ?? userGlobalRole;
 
       this.logger.log(`Returning profile for user: ${userId}`);
 
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        isActive: user.isActive,
-        twoFactorEnabled: user.twoFactorEnabled,
-        failedLoginAttempts: user.failedLoginAttempts,
-        lockoutUntil: user.lockoutUntil,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-        profile: user.profile
-          ? {
-              phone: user.profile.phone,
-              address: user.profile.address,
-              dateOfBirth: user.profile.dateOfBirth,
-            }
-          : undefined,
-        centers: centersWithContext,
-        context,
-        isAdmin: isGlobalAdmin,
-      };
+      return returnData;
     } catch (error) {
       this.logger.error(
         `Error in getCurrentUserProfile for user ${userId}:`,

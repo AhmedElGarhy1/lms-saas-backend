@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '@/modules/user/entities/user.entity';
@@ -7,7 +7,7 @@ import { Role } from '@/modules/access-control/entities/roles/role.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { UserOnCenter } from '@/modules/access-control/entities/user-on-center.entity';
+import { UserCenter } from '@/modules/access-control/entities/user-center.entity';
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
@@ -22,7 +22,7 @@ import { CentersModule } from '@/modules/centers/centers.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { SharedModule } from '@/shared/shared.module';
-import { DatabaseSeeder } from '@/database/seeder';
+import { SeederModule } from '@/database/seeder.module';
 
 import { ErrorInterceptor } from '@/shared/common/interceptors/error.interceptor';
 import { PerformanceInterceptor } from '@/shared/common/interceptors/performance.interceptor';
@@ -32,8 +32,10 @@ import { CustomValidationPipe } from '@/shared/common/pipes/validation.pipe';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { ContextGuard } from '@/shared/common/guards/context.guard';
 import { PermissionsGuard } from '@/shared/common/guards/permissions.guard';
+import { ClassSerializerInterceptor } from '@nestjs/common';
 import { DatabaseModule } from './shared/modules/database/database.module';
 import { AccessControlHelperService } from './modules/access-control/services/access-control-helper.service';
+import { ContextMiddleware } from './shared/common/middleware/context.middleware';
 
 @Module({
   imports: [
@@ -66,22 +68,10 @@ import { AccessControlHelperService } from './modules/access-control/services/ac
     AccessControlModule,
     CentersModule,
     ActivityLogModule,
-    TypeOrmModule.forFeature([
-      User,
-      Profile,
-      Role,
-      Permission,
-      UserRole,
-      UserAccess,
-      UserOnCenter,
-      RefreshToken,
-      EmailVerification,
-      PasswordResetToken,
-    ]),
+    SeederModule,
   ],
   controllers: [],
   providers: [
-    DatabaseSeeder,
     {
       provide: APP_INTERCEPTOR,
       useClass: ErrorInterceptor,
@@ -89,6 +79,10 @@ import { AccessControlHelperService } from './modules/access-control/services/ac
     {
       provide: APP_INTERCEPTOR,
       useClass: PerformanceInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ClassSerializerInterceptor,
     },
     {
       provide: APP_INTERCEPTOR,
@@ -126,4 +120,8 @@ import { AccessControlHelperService } from './modules/access-control/services/ac
     },
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(ContextMiddleware).forRoutes('*');
+  }
+}

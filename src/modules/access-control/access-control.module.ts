@@ -16,20 +16,18 @@ import { Permission } from './entities/permission.entity';
 import { Role } from './entities/roles/role.entity';
 import { UserRole } from './entities/roles/user-role.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { UserOnCenter } from './entities/user-on-center.entity';
-import { DatabaseModule } from '@/shared/modules/database/database.module';
+import { UserCenter } from './entities/user-center.entity';
 
 @Global()
 @Module({
   imports: [
-    DatabaseModule,
     TypeOrmModule.forFeature([
       Center,
       Permission,
       Role,
       UserRole,
       UserAccess,
-      UserOnCenter,
+      UserCenter,
     ]),
   ],
   controllers: [AccessControlController, RolesController],

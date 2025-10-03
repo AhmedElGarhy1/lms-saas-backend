@@ -1,96 +1,85 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Expose, Type } from 'class-transformer';
 
 export class CenterResponseDto {
   @ApiProperty({ description: 'Center ID' })
+  @Expose()
   id: string;
 
   @ApiProperty({ description: 'Center name' })
+  @Expose()
   name: string;
 
-  @ApiProperty({ description: 'Center description' })
+  @ApiProperty({ description: 'Center description', required: false })
+  @Expose()
   description?: string;
 
   @ApiProperty({ description: 'Center address' })
-  address?: string;
+  @Expose()
+  address: string;
+
+  @ApiProperty({ description: 'Center city' })
+  @Expose()
+  city: string;
+
+  @ApiProperty({ description: 'Center state' })
+  @Expose()
+  state: string;
+
+  @ApiProperty({ description: 'Center postal code' })
+  @Expose()
+  postalCode: string;
+
+  @ApiProperty({ description: 'Center country' })
+  @Expose()
+  country: string;
 
   @ApiProperty({ description: 'Center phone number' })
-  phone?: string;
+  @Expose()
+  phone: string;
 
   @ApiProperty({ description: 'Center email' })
-  email?: string;
+  @Expose()
+  email: string;
 
-  @ApiProperty({ description: 'Center website' })
+  @ApiProperty({ description: 'Center website', required: false })
+  @Expose()
   website?: string;
 
-  @ApiProperty({ description: 'Whether center is active' })
+  @ApiProperty({ description: 'Whether the center is active' })
+  @Expose()
   isActive: boolean;
 
-  @ApiProperty({ description: 'Center owner ID' })
-  ownerId: string;
+  @ApiProperty({
+    description: 'Whether the center is accessible to the target user',
+  })
+  @Expose()
+  isCenterAccessible?: boolean;
 
-  @ApiProperty({ description: 'Center creation date' })
+  @ApiProperty({ description: 'Creation date' })
+  @Expose()
+  @Type(() => Date)
   createdAt: Date;
 
-  @ApiProperty({ description: 'Center last update date' })
+  @ApiProperty({ description: 'Last update date' })
+  @Expose()
+  @Type(() => Date)
   updatedAt: Date;
-}
 
-export class CenterListResponseDto {
-  @ApiProperty({ description: 'List of centers' })
-  data: CenterResponseDto[];
+  @ApiProperty({ description: 'Created by user ID' })
+  @Expose()
+  createdBy: string;
 
-  @ApiProperty({ description: 'Pagination metadata' })
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
+  @ApiProperty({ description: 'Updated by user ID', required: false })
+  @Expose()
+  updatedBy?: string;
 
-export class CenterStatsResponseDto {
-  @ApiProperty({ description: 'Total number of centers' })
-  totalCenters: number;
+  @ApiProperty({ description: 'Deleted by user ID', required: false })
+  @Expose()
+  deletedBy?: string;
 
-  @ApiProperty({ description: 'Number of active centers' })
-  activeCenters: number;
-
-  @ApiProperty({ description: 'Number of inactive centers' })
-  inactiveCenters: number;
-}
-
-export class CreateCenterResponseDto {
-  @ApiProperty({ description: 'Center ID' })
-  id: string;
-
-  @ApiProperty({ description: 'Center name' })
-  name: string;
-
-  @ApiProperty({ description: 'Success message' })
-  message: string;
-}
-
-export class UpdateCenterResponseDto {
-  @ApiProperty({ description: 'Center ID' })
-  id: string;
-
-  @ApiProperty({ description: 'Center name' })
-  name: string;
-
-  @ApiProperty({ description: 'Success message' })
-  message: string;
-}
-
-export class CenterUserAssignmentDto {
-  @ApiProperty({ description: 'User ID' })
-  userId: string;
-
-  @ApiProperty({ description: 'Center ID' })
-  centerId: string;
-
-  @ApiProperty({ description: 'Assignment success' })
-  success: boolean;
-
-  @ApiProperty({ description: 'Assignment message' })
-  message: string;
+  @ApiProperty({ description: 'Deletion date', required: false })
+  @Expose()
+  @Type(() => Date)
+  deletedAt?: Date;
 }

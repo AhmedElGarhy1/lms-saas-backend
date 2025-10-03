@@ -66,7 +66,7 @@ export class AccessControlService {
 
     // check if target user have height role
     const granterUserHighestRole =
-      await this.accessControlHelperService.getUserHighestRole(
+      await this.accessControlHelperService.getUserRole(
         body.granterUserId,
         body.centerId,
       );
@@ -158,11 +158,10 @@ export class AccessControlService {
     centerId: string,
     grantedBy: string,
   ): Promise<void> {
-    const userHighestRole =
-      await this.accessControlHelperService.getUserHighestRole(
-        userId,
-        centerId,
-      );
+    const userHighestRole = await this.accessControlHelperService.getUserRole(
+      userId,
+      centerId,
+    );
     const userRoleType = userHighestRole?.role?.type;
     if (userRoleType === RoleType.SUPER_ADMIN) {
       return;
