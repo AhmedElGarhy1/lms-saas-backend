@@ -53,6 +53,10 @@ export class UserResponseDto {
   @Expose()
   isCenterAccessible?: boolean;
 
+  @ApiProperty({ description: 'Whether the user has role access' })
+  @Expose()
+  isRoleAccessible?: boolean;
+
   @ApiProperty({ description: 'Creation date' })
   @Expose()
   @Type(() => Date)

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
@@ -50,11 +50,15 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
     centerId?: string;
     granterUserId: string;
   }): Promise<void> {
-    await this.userAccessRepository.delete({
-      granterUserId: body.granterUserId,
-      targetUserId: body.targetUserId,
-      ...(body.centerId && { centerId: body.centerId }),
+    const userAccess = await this.userAccessRepository.findOne({
+      where: {
+        granterUserId: body.granterUserId,
+        targetUserId: body.targetUserId,
+        ...(body.centerId && { centerId: body.centerId }),
+      },
     });
+    if (!userAccess) throw new NotFoundException('User access not found');
+    await this.userAccessRepository.remove(userAccess);
   }
 
   async listUserAccesses(userId: string): Promise<UserAccess[]> {

@@ -25,7 +25,7 @@ import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { PaginationDocs } from '@/shared/common/decorators/pagination-docs.decorator';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
-import { CurrentUser as CurrentUserType } from '@/shared/common/types/current-user.type';
+import { ActorUser as CurrentUserType } from '@/shared/common/types/actor-user.type';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { AssignRoleDto } from '../dto/assign-role.dto';
 import { RoleResponseDto } from '../dto/role-response.dto';

@@ -1,9 +1,5 @@
 // Request DTOs
-export {
-  CreateUserRequestDto,
-  UserProfileDto,
-  CenterAccessDto,
-} from './create-user.dto';
+export { CreateUserRequestDto, UserProfileDto } from './create-user.dto';
 export { UpdateUserRequestDto } from './update-user.dto';
 export {
   UpdateProfileRequestDto,
@@ -12,7 +8,7 @@ export {
 export { ChangePasswordRequestDto } from './change-password.dto';
 export { ActivateUserRequestDto } from './activate-user.dto';
 export { ToggleUserStatusRequestDto } from './toggle-user-status.dto';
-export { UserFilterDto } from './user-filter.dto';
+export { PaginateUsersDto as UserFilterDto } from './paginate-users.dto';
 
 // Response DTOs
 export { UserResponseDto } from './user-response.dto';

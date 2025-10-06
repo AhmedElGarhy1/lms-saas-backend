@@ -1,7 +1,7 @@
 import { Request } from 'express';
-import { CurrentUser } from '../types/current-user.type';
+import { ActorUser } from '../types/actor-user.type';
 
 export interface IRequest extends Request {
   centerId?: string;
-  user: CurrentUser;
+  user: ActorUser;
 }

@@ -1,6 +1,6 @@
 import { User } from '@/modules/user/entities';
 
-export interface CurrentUser extends User {
+export type ActorUser = User & {
   centerId?: string;
   permissions: string[];
-}
+};

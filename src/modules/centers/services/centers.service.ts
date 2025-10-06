@@ -12,7 +12,6 @@ import {
   CreateCenterUserDto,
 } from '../dto/create-center.dto';
 import { UpdateCenterRequestDto } from '../dto/update-center.dto';
-import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
@@ -22,12 +21,7 @@ import { CenterResponseDto } from '../dto/center-response.dto';
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { CreateUserRequestDto } from '@/modules/user/dto/create-user.dto';
-
-export interface ListCentersParams {
-  query: PaginationQuery;
-  userId: string;
-  targetUserId: string;
-}
+import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 
 export interface SeederCenterData {
   name: string;
@@ -102,32 +96,24 @@ export class CentersService {
       password: user.password,
       isActive: user.isActive ?? true,
       profile: user.profile,
-      centerAccess: [
-        {
-          centerId: savedCenter.id,
-          roleId: centerAdminRole.id, // Use the newly created center admin role
-        },
-      ],
+      userRole: {
+        centerId: savedCenter.id,
+        roleId: centerAdminRole.id, // Use the newly created center admin role
+      },
     };
 
     // Create the user
     const createdUser = await this.userService.createUser(userDto);
 
-    // Handle center access and role assignment for the created user
-    await this.userService.handleUserCenterAccess(
+    // Handle role assignment for the created user
+    await this.userService.handleUserRoleAssignment(
       createdUser.id,
       userDto,
       userId,
     );
 
-    // Give the creator access to the center they created
-    await this.accessControlService.grantCenterAccess(
-      userId,
-      savedCenter.id,
-      userId, // Creator grants access to themselves
-    );
-
     // Assign CENTER_ADMIN role to the creator for the center they created
+    // (assigning role with centerId automatically grants center access)
     await this.rolesService.assignRole({
       userId: userId,
       roleId: centerAdminRole.id,
@@ -144,29 +130,8 @@ export class CentersService {
     return savedCenter;
   }
 
-  async listCenters(query: PaginationQuery, userId: string) {
-    this.logger.info(`Listing centers for user: ${userId}`);
-    const targetUserId = query.filter?.targetUserId as string;
-    const _userId: string = query.filter?.userId as string;
-    delete query.filter?.targetUserId;
-    delete query.filter?.userId;
-
-    if (_userId) {
-      await this.accessControlHelperService.validateUserAccess({
-        granterUserId: userId,
-        targetUserId: _userId,
-      });
-    }
-
-    console.log('userId', userId);
-    console.log('_userId', _userId);
-    console.log('_userId ?? userId', _userId ?? userId);
-
-    return await this.centersRepository.paginateCenters({
-      query,
-      userId: _userId ?? userId,
-      targetUserId,
-    });
+  async listCenters(query: PaginateCentersDto, actorId: string) {
+    return await this.centersRepository.paginateCenters(query, actorId);
   }
 
   async updateCenter(
@@ -208,9 +173,6 @@ export class CentersService {
     // Permission check should be in controller
 
     // TODO: Check if center has active users before deletion
-    if (center?.userCenters?.length ?? 0 > 0) {
-      throw new BadRequestException('Cannot delete center with active users');
-    }
 
     await this.centersRepository.softRemove(centerId);
   }

@@ -15,14 +15,12 @@ import {
   ApiBody,
   ApiParam,
 } from '@nestjs/swagger';
-import { SerializeOptions } from '@nestjs/common';
-import { Paginate } from '@/shared/common/decorators/pagination.decorator';
-import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
-import { PaginationDocs } from '@/shared/common/decorators/pagination-docs.decorator';
+import { SerializeOptions, Query } from '@nestjs/common';
+import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 
 import { CentersService } from '../services/centers.service';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
-import { CurrentUser as CurrentUserType } from '@/shared/common/types/current-user.type';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { CreateCenterRequestDto } from '../dto/create-center.dto';
@@ -50,9 +48,9 @@ export class CentersController {
   @Permissions(PERMISSIONS.CENTER.CREATE.action)
   createCenter(
     @Body() dto: CreateCenterRequestDto,
-    @GetUser() user: CurrentUserType,
+    @GetUser() actor: ActorUser,
   ) {
-    return this.centersService.createCenter(dto, user.id);
+    return this.centersService.createCenter(dto, actor.id);
   }
 
   @Get()
@@ -66,20 +64,12 @@ export class CentersController {
     description: 'Centers retrieved successfully',
     type: [CenterResponseDto],
   })
-  @SerializeOptions({ type: CenterResponseDto })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  @PaginationDocs({
-    searchFields: ['name', 'description', 'city', 'state', 'country'],
-    filterFields: ['status'],
-  })
   @Permissions(PERMISSIONS.CENTER.VIEW.action)
   @SerializeOptions({ type: CenterResponseDto })
-  listCenters(
-    @Paginate() query: PaginationQuery,
-    @GetUser() user: CurrentUserType,
-  ) {
-    return this.centersService.listCenters(query, user.id);
+  listCenters(@Query() query: PaginateCentersDto, @GetUser() actor: ActorUser) {
+    return this.centersService.listCenters(query, actor.id);
   }
 
   @Get(':id')
@@ -115,9 +105,9 @@ export class CentersController {
   updateCenter(
     @Param('id') id: string,
     @Body() dto: UpdateCenterRequestDto,
-    @GetUser() user: CurrentUserType,
+    @GetUser() actor: ActorUser,
   ) {
-    return this.centersService.updateCenter(id, dto, user.id);
+    return this.centersService.updateCenter(id, dto, actor.id);
   }
 
   @Delete(':id')
@@ -128,11 +118,8 @@ export class CentersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @Permissions(PERMISSIONS.CENTER.DELETE.action)
-  async deleteCenter(
-    @Param('id') id: string,
-    @GetUser() user: CurrentUserType,
-  ) {
-    await this.centersService.deleteCenter(id, user.id);
+  async deleteCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
+    await this.centersService.deleteCenter(id, actor.id);
     return { message: 'Center deleted successfully' };
   }
 
@@ -144,11 +131,8 @@ export class CentersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @Permissions(PERMISSIONS.CENTER.RESTORE.action)
-  async restoreCenter(
-    @Param('id') id: string,
-    @GetUser() user: CurrentUserType,
-  ) {
-    await this.centersService.restoreCenter(id, user.id);
+  async restoreCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
+    await this.centersService.restoreCenter(id, actor.id);
     return { message: 'Center restored successfully' };
   }
 }

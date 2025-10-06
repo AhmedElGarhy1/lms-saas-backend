@@ -4,10 +4,10 @@ import { Repository } from 'typeorm';
 import { Role } from '../entities/roles/role.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { LoggerService } from '../../../shared/services/logger.service';
-import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { AccessControlHelperService } from '../services/access-control-helper.service';
 import { RoleResponseDto } from '../dto/role-response.dto';
+import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> {
@@ -22,28 +22,34 @@ export class RolesRepository extends BaseRepository<Role> {
   }
 
   async paginateRoles(
-    query: PaginationQuery,
+    query: PaginateRolesDto,
     centerId?: string,
     targetUserId?: string,
   ): Promise<Pagination<RoleResponseDto>> {
     const queryBuilder = this.roleRepository.createQueryBuilder('role');
+
+    // Apply center filter
     if (centerId) {
       queryBuilder.where('role.centerId = :centerId', { centerId });
     } else {
       queryBuilder.where('role.centerId IS NULL');
     }
 
+    // Apply custom filters from query
+    if (query.centerId) {
+      queryBuilder.andWhere('role.centerId = :queryCenterId', {
+        queryCenterId: query.centerId,
+      });
+    }
+
     const result = await this.paginate(
+      query,
       {
-        page: query.page,
-        limit: query.limit,
-        search: query.search,
-        filter: query.filter,
-        sortBy: query.sortBy,
         searchableColumns: ['name', 'description'],
         sortableColumns: ['name', 'description', 'createdAt'],
         defaultSortBy: ['name', 'ASC'],
       },
+      '/roles',
       queryBuilder,
     );
     let filteredItems: RoleResponseDto[] = result.items;

@@ -4,7 +4,6 @@ import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { UserAccessRepository } from '../repositories/user-access.repository';
-import { UserOnCenterRepository } from '../repositories/user-on-center.repository';
 
 @Injectable()
 export class AccessControlService {
@@ -14,7 +13,6 @@ export class AccessControlService {
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly permissionService: PermissionService,
     private readonly userAccessRepository: UserAccessRepository,
-    private readonly userOnCenterRepository: UserOnCenterRepository,
   ) {}
 
   async grantUserAccess(body: {
@@ -151,108 +149,6 @@ export class AccessControlService {
     }
 
     await this.revokeUserAccess(body);
-  }
-
-  async grantCenterAccess(
-    userId: string,
-    centerId: string,
-    grantedBy: string,
-  ): Promise<void> {
-    const userHighestRole = await this.accessControlHelperService.getUserRole(
-      userId,
-      centerId,
-    );
-    const userRoleType = userHighestRole?.role?.type;
-    if (userRoleType === RoleType.SUPER_ADMIN) {
-      return;
-    }
-
-    await this.userOnCenterRepository.grantCenterAccess({
-      userId,
-      centerId,
-      grantedBy,
-    });
-  }
-
-  async grantCenterAccessValidate(
-    userId: string,
-    centerId: string,
-    grantedBy: string,
-  ): Promise<void> {
-    const IHaveAccessToCenter =
-      await this.accessControlHelperService.canCenterAccess({
-        centerId,
-        userId: grantedBy,
-      });
-
-    if (!IHaveAccessToCenter) {
-      throw new ForbiddenException('You do not have access to center');
-    }
-
-    const IHaveAccessToUser =
-      await this.accessControlHelperService.canUserAccess({
-        granterUserId: grantedBy,
-        targetUserId: userId,
-        centerId,
-      });
-
-    if (!IHaveAccessToUser) {
-      throw new ForbiddenException('You do not have access to user');
-    }
-
-    const userHasAccessToCenter =
-      await this.accessControlHelperService.canCenterAccess({
-        userId,
-        centerId,
-      });
-    if (userHasAccessToCenter) {
-      throw new ForbiddenException('User already has access to center');
-    }
-
-    await this.grantCenterAccess(userId, centerId, grantedBy);
-  }
-
-  async revokeCenterAccess(userId: string, centerId: string): Promise<void> {
-    await this.userOnCenterRepository.revokeCenterAccess({
-      userId,
-      centerId,
-    });
-  }
-
-  async revokeCenterAccessValidate(
-    currentUserId: string,
-    userId: string,
-    centerId: string,
-  ): Promise<void> {
-    const IHaveAccessToCenter =
-      await this.accessControlHelperService.canCenterAccess({
-        userId,
-        centerId,
-      });
-    if (!IHaveAccessToCenter) {
-      throw new ForbiddenException('You do not have access to center');
-    }
-
-    const IHaveAccessToUser =
-      await this.accessControlHelperService.canUserAccess({
-        granterUserId: currentUserId,
-        targetUserId: userId,
-        centerId,
-      });
-    if (!IHaveAccessToUser) {
-      throw new ForbiddenException('You do not have access to user');
-    }
-
-    const userHasAccessToCenter =
-      await this.accessControlHelperService.canCenterAccess({
-        userId,
-        centerId,
-      });
-    if (!userHasAccessToCenter) {
-      throw new ForbiddenException('User does not have access to center');
-    }
-
-    await this.revokeCenterAccess(userId, centerId);
   }
 
   // Additional methods needed by other services

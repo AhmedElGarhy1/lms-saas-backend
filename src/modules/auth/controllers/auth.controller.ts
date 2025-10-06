@@ -26,7 +26,7 @@ import {
   LogoutResponseDto,
 } from '../dto/auth-response.dto';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
-import { CurrentUser } from '@/shared/common/types/current-user.type';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -142,7 +142,7 @@ export class AuthController {
     description: 'Logout successful',
     type: LogoutResponseDto,
   })
-  async logout(@GetUser() user: CurrentUser) {
+  async logout(@GetUser() user: ActorUser) {
     return this.authService.logout(user.id);
   }
 }

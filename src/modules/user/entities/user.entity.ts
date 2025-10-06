@@ -6,7 +6,6 @@ import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token
 import { Profile } from '@/modules/user/entities/profile.entity';
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { UserCenter } from '@/modules/access-control/entities/user-center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 
@@ -63,9 +62,6 @@ export class User extends BaseEntity {
 
   @OneToMany(() => UserAccess, (access) => access.granter)
   accessGranter: UserAccess[];
-
-  @OneToMany(() => UserCenter, (userCenter) => userCenter.user)
-  centerAccess: UserCenter[];
 
   @OneToMany(() => UserRole, (userRole) => userRole.user)
   userRoles: UserRole[];

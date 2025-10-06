@@ -2,6 +2,7 @@ import { Repository, SelectQueryBuilder, ObjectLiteral } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Pagination, paginate } from 'nestjs-typeorm-paginate';
 import { LoggerService } from '@/shared/services/logger.service';
+import { BasePaginationDto } from '../dto/base-pagination.dto';
 
 export interface QueryOptions<T> {
   select?: (keyof T)[];
@@ -325,106 +326,50 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     }
   }
 
-  // Single pagination method with flexible options
+  // Single pagination method that handles everything
   async paginate(
-    options: Partial<PaginateOptions<T>> = {},
-    queryBuilder?: SelectQueryBuilder<T>,
+    query: BasePaginationDto,
+    columns: {
+      searchableColumns: string[];
+      sortableColumns: string[];
+      defaultSortBy: [string, 'ASC' | 'DESC'];
+    },
+    route: string,
+    queryBuilder: SelectQueryBuilder<T>,
   ): Promise<Pagination<T>> {
-    const {
-      page = 1,
-      limit = 10,
-      searchableColumns = [],
-      sortableColumns = [],
-      filterableColumns = [],
-      defaultSortBy = ['createdAt', 'DESC'],
-      defaultLimit = 10,
-      maxLimit = 100,
-      search,
-      filter,
-      sortBy,
-      route = '/api',
-    } = options;
-
-    // Use provided queryBuilder or create a new one
-    const qb = queryBuilder || this.repository.createQueryBuilder('entity');
-
     // Get the main alias from the query builder
-    const mainAlias = qb.alias;
+    const mainAlias = queryBuilder.alias;
+
+    // Apply global date filters automatically
+    this.applyDateFilters(queryBuilder, query, 'createdAt', mainAlias);
 
     // Apply search
-    if (search && searchableColumns.length > 0) {
-      const searchConditions = searchableColumns.map((column) => {
+    if (query.search && columns.searchableColumns.length > 0) {
+      const searchConditions = columns.searchableColumns.map((column) => {
         return `${mainAlias}.${column} ILIKE :search`;
       });
-      qb.andWhere(`(${searchConditions.join(' OR ')})`, {
-        search: `%${search}%`,
+      queryBuilder.andWhere(`(${searchConditions.join(' OR ')})`, {
+        search: `%${query.search}%`,
       });
     }
 
-    // Apply filters
-    if (filter) {
-      Object.entries(filter).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          // Handle date range filtering
-          if (key === 'dateFrom' && value) {
-            qb.andWhere(`${mainAlias}.createdAt >= :dateFrom`, {
-              dateFrom: value,
-            });
-          } else if (key === 'dateTo' && value) {
-            qb.andWhere(`${mainAlias}.createdAt <= :dateTo`, {
-              dateTo: value,
-            });
-          } else if (typeof value === 'object' && value !== null) {
-            // Handle complex filters like { $ne: value }
-            if ('$ne' in value) {
-              qb.andWhere(`${mainAlias}.${key} != :${key}_ne`, {
-                [`${key}_ne`]: value.$ne,
-              });
-            } else if ('$like' in value) {
-              qb.andWhere(`${mainAlias}.${key} LIKE :${key}_like`, {
-                [`${key}_like`]: value.$like,
-              });
-            } else if ('$in' in value) {
-              qb.andWhere(`${mainAlias}.${key} IN (:...${key}_in)`, {
-                [`${key}_in`]: value.$in,
-              });
-            } else if ('$gt' in value) {
-              qb.andWhere(`${mainAlias}.${key} > :${key}_gt`, {
-                [`${key}_gt`]: value.$gt,
-              });
-            } else if ('$gte' in value) {
-              qb.andWhere(`${mainAlias}.${key} >= :${key}_gte`, {
-                [`${key}_gte`]: value.$gte,
-              });
-            } else if ('$lt' in value) {
-              qb.andWhere(`${mainAlias}.${key} < :${key}_lt`, {
-                [`${key}_lt`]: value.$lt,
-              });
-            } else if ('$lte' in value) {
-              qb.andWhere(`${mainAlias}.${key} <= :${key}_lte`, {
-                [`${key}_lte`]: value.$lte,
-              });
-            }
-          } else {
-            // Simple equality filter
-            qb.andWhere(`${mainAlias}.${key} = :${key}`, { [key]: value });
-          }
-        }
+    // Apply sorting - clear any existing orderBy first
+    queryBuilder.orderBy({});
+
+    if (query.sortBy && query.sortBy.length > 0) {
+      query.sortBy.forEach(([column, direction]) => {
+        queryBuilder.addOrderBy(`${mainAlias}.${column}`, direction);
       });
+    } else if (columns.defaultSortBy) {
+      queryBuilder.addOrderBy(
+        `${mainAlias}.${columns.defaultSortBy[0]}`,
+        columns.defaultSortBy[1],
+      );
     }
 
-    // Apply sorting
-    if (sortBy && sortBy.length > 0) {
-      sortBy.forEach(([column, direction]) => {
-        qb.addOrderBy(`${mainAlias}.${column}`, direction);
-      });
-    } else if (defaultSortBy) {
-      qb.addOrderBy(`${mainAlias}.${defaultSortBy[0]}`, defaultSortBy[1]);
-    }
-
-    return await paginate(qb, {
-      page,
-      limit: Math.min(limit, maxLimit),
+    return await paginate(queryBuilder, {
+      page: query.page || 1,
+      limit: Math.min(query.limit || 10, 100),
       route,
     });
   }
@@ -471,115 +416,31 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   }
 
   /**
-   * Apply filters to query builder with field mapping
-   * @param queryBuilder - The query builder to apply filters to
-   * @param filters - The filters object
-   * @param fieldMapping - Mapping from frontend field names to database field names
+   * Apply global date filters to any query builder
+   * This method can be used by all repositories for consistent date filtering
+   *
+   * @example
+   * ```typescript
+   * // In any repository:
+   * this.applyDateFilters(queryBuilder, query, 'createdAt', 'entity');
+   * ```
    */
-  protected applyFilters(
-    queryBuilder: SelectQueryBuilder<T>,
-    filters: Record<string, any>,
-    fieldMapping: Record<string, string> = {},
+  protected applyDateFilters<T extends BasePaginationDto>(
+    queryBuilder: SelectQueryBuilder<any>,
+    paginationDto: T,
+    dateField: string = 'createdAt',
+    alias: string = 'entity',
   ): void {
-    const conditions: {
-      condition: string;
-      params: Record<string, any>;
-    }[] = [];
-
-    // Handle date range filtering first
-    if (filters.dateFrom || filters.dateTo) {
-      const dateField =
-        fieldMapping.dateFrom || fieldMapping.dateTo || 'user.createdAt';
-
-      if (filters.dateFrom) {
-        conditions.push({
-          condition: `${dateField} >= :dateFrom`,
-          params: { dateFrom: filters.dateFrom },
-        });
-      }
-
-      if (filters.dateTo) {
-        conditions.push({
-          condition: `${dateField} <= :dateTo`,
-          params: { dateTo: filters.dateTo },
-        });
-      }
+    if (paginationDto.dateFrom) {
+      queryBuilder.andWhere(`${alias}.${dateField} >= :dateFrom`, {
+        dateFrom: paginationDto.dateFrom,
+      });
     }
 
-    Object.entries(filters).forEach(([key, value]) => {
-      if (
-        value !== undefined &&
-        value !== null &&
-        key !== 'dateFrom' &&
-        key !== 'dateTo'
-      ) {
-        // Use field mapping or default to the key name
-        const dbField = fieldMapping[key] || key;
-
-        // Create a safe parameter name (replace dots with underscores)
-        const paramName = key.replace(/[^a-zA-Z0-9_]/g, '_');
-
-        // Handle different filter types
-        if (typeof value === 'object' && value !== null) {
-          if ('$ne' in value) {
-            conditions.push({
-              condition: `${dbField} != :${paramName}_ne`,
-              params: {
-                [`${paramName}_ne`]: value.$ne,
-              },
-            });
-          } else if ('$like' in value) {
-            conditions.push({
-              condition: `${dbField} LIKE :${paramName}_like`,
-              params: {
-                [`${paramName}_like`]: value.$like,
-              },
-            });
-          } else if ('$in' in value) {
-            conditions.push({
-              condition: `${dbField} IN (:...${paramName}_in)`,
-              params: {
-                [`${paramName}_in`]: value.$in,
-              },
-            });
-          } else if ('$gte' in value) {
-            conditions.push({
-              condition: `${dbField} >= :${paramName}_gte`,
-              params: {
-                [`${paramName}_gte`]: value.$gte,
-              },
-            });
-          } else if ('$lte' in value) {
-            conditions.push({
-              condition: `${dbField} <= :${paramName}_lte`,
-              params: {
-                [`${paramName}_lte`]: value.$lte,
-              },
-            });
-          }
-        } else {
-          // Simple equality filter
-          // Convert string boolean values to actual booleans
-          let processedValue = value;
-          if (typeof value === 'string') {
-            if (value.toLowerCase() === 'true') {
-              processedValue = true;
-            } else if (value.toLowerCase() === 'false') {
-              processedValue = false;
-            }
-          }
-
-          conditions.push({
-            condition: `${dbField} = :${paramName}`,
-            params: {
-              [paramName]: processedValue,
-            },
-          });
-        }
-      }
-    });
-    conditions.forEach((condition) => {
-      queryBuilder.andWhere(condition.condition, condition.params);
-    });
+    if (paginationDto.dateTo) {
+      queryBuilder.andWhere(`${alias}.${dateField} <= :dateTo`, {
+        dateTo: paginationDto.dateTo,
+      });
+    }
   }
 }

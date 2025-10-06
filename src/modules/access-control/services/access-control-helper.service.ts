@@ -1,20 +1,19 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { In } from 'typeorm';
 import { UserRole } from '../entities/roles/user-role.entity';
-import { UserCenter } from '../entities/user-center.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
-import { UserOnCenterRepository } from '../repositories/user-on-center.repository';
 import { UserRoleRepository } from '../repositories/user-role.repository';
 import { UserAccessRepository } from '../repositories/user-access.repository';
 import { UserAccessParams } from '../interfaces/user-access.params';
 import { CenterAccessParams } from '../interfaces/center-access.params';
+import { Role } from '../entities';
+import { Center } from '@/modules/centers/entities/center.entity';
 
 @Injectable()
 export class AccessControlHelperService {
   constructor(
     private userRoleRepository: UserRoleRepository,
-    private userOnCenterRepository: UserOnCenterRepository,
     private userAccessRepository: UserAccessRepository,
   ) {}
 
@@ -31,7 +30,8 @@ export class AccessControlHelperService {
     userId: string;
     centerId?: string;
   }) {
-    const heighesUsertRole = await this.getUserRole(userId, centerId);
+    const heighesUsertRole =
+      await this.userRoleRepository.getUserRoleWithFallback(userId, centerId);
     const heightestRole = heighesUsertRole?.role?.type;
     if (heightestRole === RoleType.SUPER_ADMIN) {
       return;
@@ -42,10 +42,13 @@ export class AccessControlHelperService {
         centerId,
       });
       return;
+    } else {
+      if (heightestRole !== RoleType.ADMIN) {
+        throw new ForbiddenException('You do not have global access');
+      }
     }
-    if (heightestRole !== RoleType.ADMIN) {
-      throw new ForbiddenException('You do not have access');
-    }
+
+    // now it doesn't allow access to any user that doesn't have SUPER_ADMIN role or have center access
   }
 
   /**
@@ -70,7 +73,21 @@ export class AccessControlHelperService {
   }
 
   async getUserCenters(userId: string) {
-    return this.userOnCenterRepository.getUserCenters(userId);
+    // Get centers from user's roles (centerId in userRoles = center access)
+    const userRoles = await this.userRoleRepository.findMany({
+      where: { userId },
+      relations: ['role', 'role.center'],
+    });
+    const _userRoles = userRoles as (UserRole & {
+      role?: Role & { center?: Center };
+    })[];
+
+    // Extract unique center IDs from roles
+    const centerIds = _userRoles
+      .map((userRole) => userRole?.role?.center?.id)
+      .filter((centerId) => centerId !== null);
+
+    return centerIds;
   }
 
   async getUserRole(userId: string, centerId?: string) {
@@ -131,6 +148,30 @@ export class AccessControlHelperService {
     return result.filter((result) => result !== null);
   }
 
+  async getAccessibleUsersIdsForRole(
+    roleId: string,
+    targetUserIds: string[],
+    centerId?: string,
+  ): Promise<string[]> {
+    const result = await this.userRoleRepository.findMany({
+      where: [
+        {
+          roleId,
+          ...(centerId ? { centerId } : {}),
+          userId: In(targetUserIds),
+        },
+        {
+          roleId,
+          ...(centerId ? { centerId } : {}),
+          role: {
+            type: RoleType.SUPER_ADMIN,
+          },
+        },
+      ],
+    });
+    return result.map((result) => result.userId);
+  }
+
   async getAccessibleCentersIdsForUser(
     userId: string,
     targetCenterIds: string[],
@@ -173,10 +214,11 @@ export class AccessControlHelperService {
       return true;
     }
     // check roleType for granterUserId
-    const granterUserHighestRole = await this.getUserRole(
-      granterUserId,
-      centerId,
-    );
+    const granterUserHighestRole =
+      await this.userRoleRepository.getUserRoleWithFallback(
+        granterUserId,
+        centerId,
+      );
     const roleType = granterUserHighestRole?.role?.type;
     if (roleType === RoleType.SUPER_ADMIN) return true;
     else if (roleType === RoleType.CENTER_ADMIN) {
@@ -217,20 +259,22 @@ export class AccessControlHelperService {
 
   // center access methods
 
-  async findCenterAccess(data: CenterAccessParams): Promise<UserCenter | null> {
-    const { userId, centerId } = data;
-    return this.userOnCenterRepository.findCenterAccess(userId, centerId);
-  }
-
   async canCenterAccess(data: CenterAccessParams): Promise<boolean> {
     const { userId, centerId } = data;
-    const userRole = await this.getUserRole(userId, centerId);
+    const userRole = await this.userRoleRepository.getUserRoleWithFallback(
+      userId,
+      centerId,
+    );
     const roleType = userRole?.role?.type;
+
+    // Super admin has access to all centers
     if (roleType === RoleType.SUPER_ADMIN) {
       return true;
     }
-    const centerAccess = await this.findCenterAccess(data);
-    return !!centerAccess;
+
+    // If user has a role in this center, they have access to it
+    // (centerId in userRoles = center access)
+    return !!userRole;
   }
 
   async validateCenterAccess(data: CenterAccessParams): Promise<void> {

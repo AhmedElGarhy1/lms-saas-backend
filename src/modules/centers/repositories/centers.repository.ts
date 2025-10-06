@@ -3,14 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Center } from '../entities/center.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { LoggerService } from '../../../shared/services/logger.service';
 import { CENTER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { ListCentersParams } from '../services/centers.service';
 import { CenterResponseDto } from '../dto/center-response.dto';
+import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 
 @Injectable()
 export class CentersRepository extends BaseRepository<Center> {
@@ -28,58 +27,67 @@ export class CentersRepository extends BaseRepository<Center> {
   }
 
   async paginateCenters(
-    params: ListCentersParams,
+    params: PaginateCentersDto,
+    actorId: string,
   ): Promise<Pagination<CenterResponseDto>> {
-    const { query, userId, targetUserId } = params;
-    const userRole = await this.accessControlHelperService.getUserRole(userId);
-    const userRoleType = userRole?.role?.type;
+    const actorRole =
+      await this.accessControlHelperService.getUserRole(actorId);
+    const actorRoleType = actorRole?.role?.type;
     const queryBuilder = this.centerRepository.createQueryBuilder('center');
 
-    // this isn't allowd for user or center admin
-    if (userRoleType === RoleType.SUPER_ADMIN) {
+    // Apply access control
+    if (actorRoleType === RoleType.SUPER_ADMIN) {
       // no access control
     } else {
-      queryBuilder.leftJoin('center.userCenters', 'userCenters');
-      queryBuilder.andWhere('userCenters.userId = :userId', {
-        userId: userId,
+      // TODO: make the condition using userRole
+      queryBuilder.leftJoin('center.userRoles', 'userRoles');
+      queryBuilder.andWhere('userRoles.userId = :actorId', {
+        actorId,
+      });
+    }
+    // subquery to to get accessible centers for params.userId
+    if (params.userId) {
+      queryBuilder.andWhere(
+        'center.id IN (SELECT "centerId" FROM user_roles WHERE "userId" = :userId)',
+        {
+          userId: params.userId,
+        },
+      );
+    }
+
+    if (params.isActive !== undefined) {
+      queryBuilder.andWhere('center.isActive = :isActive', {
+        isActive: params.isActive,
       });
     }
 
     const result = await this.paginate(
-      {
-        page: query.page,
-        limit: query.limit,
-        search: query.search,
-        filter: query.filter,
-        sortBy: query.sortBy,
-        searchableColumns: CENTER_PAGINATION_COLUMNS.searchableColumns,
-        sortableColumns: CENTER_PAGINATION_COLUMNS.sortableColumns,
-        defaultSortBy: CENTER_PAGINATION_COLUMNS.defaultSortBy,
-        defaultLimit: 20,
-      },
+      params,
+      CENTER_PAGINATION_COLUMNS,
+      '/centers',
       queryBuilder,
     );
 
     let filteredItems: CenterResponseDto[] = result.items;
 
-    if (targetUserId) {
-      const accessibleCentersIds =
-        await this.accessControlHelperService.getAccessibleCentersIdsForUser(
-          targetUserId,
-          result.items.map((center) => center.id),
-        );
-      filteredItems = filteredItems.map((center) =>
-        Object.assign(center, {
-          isCenterAccessible: accessibleCentersIds.includes(center.id),
-        }),
-      );
-    } else {
-      filteredItems = filteredItems.map((center) =>
-        Object.assign(center, {
-          isCenterAccessible: false,
-        }),
-      );
-    }
+    // if (params.userId) {
+    //   const accessibleCentersIds =
+    //     await this.accessControlHelperService.getAccessibleCentersIdsForUser(
+    //       params.userId,
+    //       result.items.map((center) => center.id),
+    //     );
+    //   filteredItems = filteredItems.map((center) =>
+    //     Object.assign(center, {
+    //       isCenterAccessible: accessibleCentersIds.includes(center.id),
+    //     }),
+    //   );
+    // } else {
+    //   filteredItems = filteredItems.map((center) =>
+    //     Object.assign(center, {
+    //       isCenterAccessible: false,
+    //     }),
+    //   );
+    // }
 
     return {
       ...result,

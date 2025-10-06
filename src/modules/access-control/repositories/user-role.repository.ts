@@ -33,6 +33,19 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
     });
   }
 
+  async getUserRoleWithFallback(
+    userId: string,
+    centerId?: string,
+  ): Promise<UserRole | null> {
+    if (centerId) {
+      const userRole = await this.getUserRole(userId, centerId);
+      if (userRole) {
+        return userRole;
+      }
+    }
+    return this.getUserRole(userId, undefined);
+  }
+
   async getUserRole(
     userId: string,
     centerId?: string,
@@ -66,8 +79,11 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
     centerId?: string;
   }): Promise<UserRole> {
     const existingUserRole = await this.getUserRole(data.userId, data.centerId);
+    // if (existingUserRole) {
+    //   throw new BadRequestException('User already has a role in this scope');
+    // }
     if (existingUserRole) {
-      throw new BadRequestException('User already has a role in this scope');
+      await this.removeUserRole(existingUserRole);
     }
 
     const userRole = this.userRoleRepository.create({
@@ -88,11 +104,7 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
     if (!existingUserRole) {
       throw new BadRequestException('User does not have a role in this scope');
     }
-    await this.userRoleRepository.delete({
-      userId: data.userId,
-      roleId: data.roleId,
-      centerId: data.centerId,
-    });
+    await this.softRemove(existingUserRole.id);
   }
 
   async userHasRoleType(

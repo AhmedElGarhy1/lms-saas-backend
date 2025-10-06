@@ -76,12 +76,7 @@ export class RolesService {
       userId: createdBy,
       centerId: data.centerId,
     });
-    if (data.centerId) {
-      await this.accessControlerHelperService.validateCenterAccess({
-        userId: data.userId,
-        centerId: data.centerId,
-      });
-    }
+
     await this.accessControlerHelperService.validateUserAccess({
       granterUserId: createdBy,
       targetUserId: data.userId,
@@ -103,12 +98,7 @@ export class RolesService {
       userId: createdBy,
       centerId: data.centerId,
     });
-    if (data.centerId) {
-      await this.accessControlerHelperService.validateCenterAccess({
-        userId: data.userId,
-        centerId: data.centerId,
-      });
-    }
+
     await this.accessControlerHelperService.validateUserAccess({
       granterUserId: createdBy,
       targetUserId: data.userId,

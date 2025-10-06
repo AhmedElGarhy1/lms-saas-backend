@@ -28,7 +28,15 @@ export class UserProfileDto {
   dateOfBirth?: string;
 }
 
-export class CenterAccessDto {
+export class UserRoleDto {
+  @ApiProperty({
+    description: 'Role ID for the user',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  roleId?: string;
+
   @ApiProperty({
     description: 'Center ID (null for global roles)',
     required: false,
@@ -37,14 +45,6 @@ export class CenterAccessDto {
   @IsOptional()
   @IsString()
   centerId?: string; // Can be null for global roles
-
-  @ApiProperty({
-    description: 'Role ID for this center',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  roleId?: string;
 }
 
 export class CreateUserRequestDto {
@@ -83,14 +83,12 @@ export class CreateUserRequestDto {
   profile: UserProfileDto;
 
   @ApiProperty({
-    description:
-      'Center access with roles (centerId can be null for global roles)',
+    description: 'User role assignment (one role per scope)',
     required: false,
-    type: [CenterAccessDto],
+    type: UserRoleDto,
   })
   @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CenterAccessDto)
-  centerAccess?: CenterAccessDto[];
+  @ValidateNested()
+  @Type(() => UserRoleDto)
+  userRole?: UserRoleDto;
 }

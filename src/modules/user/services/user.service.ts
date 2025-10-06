@@ -1,27 +1,19 @@
-import {
-  ConflictException,
-  Injectable,
-  Inject,
-  forwardRef,
-} from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import {
   ResourceNotFoundException,
   InsufficientPermissionsException,
   ValidationFailedException,
 } from '@/shared/common/exceptions/custom.exceptions';
-import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import * as bcrypt from 'bcrypt';
 import { UserRepository } from '../repositories/user.repository';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { UserRoleRepository } from '@/modules/access-control/repositories/user-role.repository';
 import { ProfileService } from './profile.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { CreateUserRequestDto } from '../dto/create-user.dto';
-import { UserResponseDto } from '../dto/user-response.dto';
-import { UpdateUserRequestDto } from '../dto/update-user.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
-import { ChangePasswordRequestDto } from '../dto/change-password.dto';
 import {
   UserListQuery,
   GetProfileParams,
@@ -31,11 +23,11 @@ import {
   CurrentUserProfileResponse,
 } from '../interfaces/user-service.interface';
 import { User } from '../entities/user.entity';
-import { UserCenter } from '@/modules/access-control/entities/user-center.entity';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { CentersService } from '@/modules/centers/services/centers.service';
 import { UserRole } from '@/modules/access-control/entities';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { PaginateUsersDto } from '../dto/paginate-users.dto';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 // UserListQuery interface moved to user-service.interface.ts
 
@@ -46,6 +38,7 @@ export class UserService {
     private readonly accessControlService: AccessControlService,
     private readonly rolesService: RolesService,
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly userRoleRepository: UserRoleRepository,
     private readonly profileService: ProfileService,
     private readonly logger: LoggerService,
     private readonly centersService: CentersService,
@@ -90,23 +83,18 @@ export class UserService {
       }
     }
 
-    // Filter centers based on access if centerId is provided
+    // Check center access if centerId is provided
     if (centerId) {
-      const centerAccess =
-        await this.accessControlHelperService.findCenterAccess({
+      const hasCenterAccess =
+        await this.accessControlHelperService.canCenterAccess({
           userId: currentUserId || userId,
           centerId,
         });
-      if (!centerAccess) {
+      if (!hasCenterAccess) {
         throw new InsufficientPermissionsException(
           'Access denied to this center',
         );
       }
-
-      // Filter to only show the specific center
-      user.centerAccess = user.centerAccess.filter(
-        (center) => center.centerId === centerId,
-      );
     }
 
     return user;
@@ -201,9 +189,9 @@ export class UserService {
   }
 
   /**
-   * Handle center access and role assignments for a user
+   * Handle user role assignment (one role per scope)
    */
-  async handleUserCenterAccess(
+  async handleUserRoleAssignment(
     userId: string,
     dto: CreateUserRequestDto,
     currentUserId: string,
@@ -211,60 +199,53 @@ export class UserService {
     const currentUserRole =
       await this.accessControlHelperService.getUserRole(currentUserId);
     const currentUserRoleType = currentUserRole?.role?.type;
-    if (dto.centerAccess && dto.centerAccess.length > 0) {
-      for (const centerAccess of dto.centerAccess) {
-        // If centerId is provided, create user-center relationship
-        if (centerAccess.centerId) {
-          await this.accessControlService.grantCenterAccessValidate(
-            userId,
-            centerAccess.centerId,
-            currentUserId,
-          );
-        }
 
-        // Assign role (can be global role if centerId is null)
-        if (centerAccess.roleId) {
-          await this.rolesService.assignRole({
-            userId,
-            roleId: centerAccess.roleId,
-            centerId: centerAccess.centerId || undefined,
+    // Assign single role (centerId in role = center access)
+    if (dto.userRole?.roleId) {
+      await this.rolesService.assignRole({
+        userId,
+        roleId: dto.userRole.roleId,
+        centerId: dto.userRole.centerId || undefined,
+      });
+
+      // Grant access to the creator if currentUserId is provided and centerId exists
+      if (
+        currentUserId !== userId &&
+        ((currentUserRoleType === RoleType.ADMIN && !dto.userRole.centerId) ||
+          currentUserRoleType === RoleType.USER)
+      ) {
+        try {
+          await this.accessControlService.grantUserAccess({
+            userId: currentUserId,
+            granterUserId: currentUserId,
+            targetUserId: userId,
+            centerId: dto.userRole.centerId,
           });
-        }
-
-        // Grant access to the creator if currentUserId is provided and centerId exists
-        if (
-          currentUserId !== userId &&
-          ((currentUserRoleType === RoleType.ADMIN && !centerAccess.centerId) ||
-            currentUserRoleType === RoleType.USER)
-        ) {
-          try {
-            await this.accessControlService.grantUserAccess({
-              userId: currentUserId,
-              granterUserId: currentUserId,
-              targetUserId: userId,
-              centerId: centerAccess.centerId,
-            });
-            this.logger.info(
-              `User access granted from ${currentUserId} to ${userId} for center ${centerAccess.centerId}`,
-            );
-          } catch (error) {
-            this.logger.warn(
-              `Failed to grant user access for center ${centerAccess.centerId}: ${error.message}`,
-            );
-          }
+          this.logger.info(
+            `User access granted from ${currentUserId} to ${userId} for center ${dto.userRole.centerId}`,
+          );
+        } catch (error) {
+          this.logger.warn(
+            `Failed to grant user access for center ${dto.userRole.centerId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          );
         }
       }
     }
   }
 
-  async listUsers(params: UserListQuery) {
-    const { userId, centerId } = params;
+  async listUsers(params: PaginateUsersDto, actorUser: ActorUser) {
+    const { centerId } = params;
     await this.accessControlHelperService.validateAdminAndCenterAccess({
-      userId,
+      userId: actorUser.id,
       centerId,
     });
 
-    const result = await this.userRepository.paginateUsers(params);
+    params.centerId = params.centerId ?? actorUser.centerId;
+
+    const result = await this.userRepository.paginateUsers(
+      params,
+      actorUser.id,
+    );
 
     return result;
   }
@@ -292,7 +273,7 @@ export class UserService {
     }
 
     // Delete user with cascade
-    await this.deleteUserWithCascade(currentUserId, userId);
+    await this.deleteUserWithCascade();
 
     this.logger.log(`User deleted: ${userId} by ${currentUserId}`);
   }
@@ -321,44 +302,26 @@ export class UserService {
     this.logger.log(`User restored: ${userId} by ${currentUserId}`);
   }
 
-  private async deleteUserWithCascade(
-    currentUserId: string,
-    userId: string,
-  ): Promise<void> {
-    // 1. Delete user roles - this would need to be implemented in RolesService
-    // For now, we'll skip this step as it requires getting all user roles first
-    // await this.rolesService.removeAllUserRoles(userId);
-
-    // 2. Delete user access grants (UserAccess - where user is granter)
-    await this.accessControlService.revokeUserAccessValidate({
-      userId: userId,
-      granterUserId: userId,
-      targetUserId: userId,
-    });
-
-    // 3. Delete user center memberships (UserCenter)
-    const userCentersResult =
-      await this.accessControlHelperService.getUserCenters(userId);
-    const userCenters = userCentersResult.map((center: UserCenter) => ({
-      centerId: center.centerId || center.id,
-    }));
-
-    for (const userCenter of userCenters) {
-      await this.accessControlService.revokeCenterAccessValidate(
-        currentUserId,
-        userId,
-        userCenter.centerId,
-      );
-    }
-
-    // 4. Delete user profile
-    const profile = await this.profileService.findProfileByUserId(userId);
-    if (profile) {
-      await this.profileService.deleteUserProfile(userId);
-    }
-
-    // 5. Soft delete the user
-    await this.userRepository.softRemove(userId);
+  private async deleteUserWithCascade(): Promise<void> {
+    // // 1. Delete user roles - this would need to be implemented in RolesService
+    // // For now, we'll skip this step as it requires getting all user roles first
+    // // await this.rolesService.removeAllUserRoles(userId);
+    // // 2. Delete user access grants (UserAccess - where user is granter)
+    // await this.accessControlService.revokeUserAccessValidate({
+    //   userId: userId,
+    //   granterUserId: userId,
+    //   targetUserId: userId,
+    // });
+    // // 3. Delete user roles (which automatically removes center access)
+    // // Roles will be automatically removed through cascade deletion or we can remove them explicitly
+    // await this.userRoleRepository.removeUserRole(userId);
+    // // 4. Delete user profile
+    // const profile = await this.profileService.findProfileByUserId(userId);
+    // if (profile) {
+    //   await this.profileService.deleteUserProfile(userId);
+    // }
+    // // 5. Soft delete the user
+    // await this.userRepository.softRemove(userId);
   }
 
   async activateUser(

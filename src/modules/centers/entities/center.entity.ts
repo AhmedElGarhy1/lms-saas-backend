@@ -1,9 +1,9 @@
 import { Entity, Column, OneToMany, Index } from 'typeorm';
 
-import { UserCenter } from '@/modules/access-control/entities/user-center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { Role } from '@/modules/access-control/entities/roles/role.entity';
+import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 
 @Entity('centers')
 @Index(['name'])
@@ -45,12 +45,13 @@ export class Center extends BaseEntity {
   isActive: boolean;
 
   // Relations
-  @OneToMany(() => UserCenter, (userOnCenter) => userOnCenter.center)
-  userCenters: UserCenter[];
 
   @OneToMany(() => UserAccess, (userAccess) => userAccess.center)
   userAccess: UserAccess[];
 
   @OneToMany(() => Role, (role) => role.center)
   roles: Role[];
+
+  @OneToMany(() => UserRole, (userRole) => userRole.center)
+  userRoles: UserRole[];
 }

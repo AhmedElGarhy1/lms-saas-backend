@@ -104,18 +104,6 @@ export const PERMISSIONS = {
         isAdmin: false,
       },
     },
-    CENTER_ACCESS: {
-      GRANT: {
-        action: 'access-control:center-access:grant',
-        name: 'Add User to Center',
-        isAdmin: false,
-      },
-      REVOKE: {
-        action: 'access-control:center-access:revoke',
-        name: 'Remove User from Center',
-        isAdmin: false,
-      },
-    },
   },
 } as const;
 

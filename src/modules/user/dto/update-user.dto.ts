@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserProfileDto, CenterAccessDto } from './create-user.dto';
+import { UserProfileDto, UserRoleDto } from './create-user.dto';
 
 export class UpdateUserRequestDto {
   @ApiProperty({ description: 'User name', required: false })
@@ -33,14 +33,12 @@ export class UpdateUserRequestDto {
   profile?: UserProfileDto;
 
   @ApiProperty({
-    description:
-      'Center access with roles (centerId can be null for global roles)',
+    description: 'User role assignment (one role per scope)',
     required: false,
-    type: [CenterAccessDto],
+    type: UserRoleDto,
   })
   @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CenterAccessDto)
-  centerAccess?: CenterAccessDto[];
+  @ValidateNested()
+  @Type(() => UserRoleDto)
+  userRole?: UserRoleDto;
 }

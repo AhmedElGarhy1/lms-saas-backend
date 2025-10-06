@@ -18,16 +18,13 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { SerializeOptions } from '@nestjs/common';
-import { PaginateWithFilters } from '@/shared/common/decorators/paginate-with-filters.decorator';
-import { UserFilterDto } from '../dto/user-filter.dto';
-import {
-  ApiPagination,
-  CommonFilters,
-} from '@/shared/common/decorators/api-pagination.decorator';
-import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
+import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
-import { CurrentUser as CurrentUserType } from '@/shared/common/types/current-user.type';
+import {
+  ActorUser,
+  ActorUser as actorUserType,
+} from '@/shared/common/types/actor-user.type';
 import { UserService } from '../services/user.service';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { CreateUserRequestDto } from '../dto/create-user.dto';
@@ -42,13 +39,63 @@ import {
   DeleteUserResponseDto,
   RestoreUserResponseDto,
 } from '../dto/delete-user.dto';
-
-import { USER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
+import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
+import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 
 @ApiTags('Users')
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly accessControlService: AccessControlService,
+  ) {}
+
+  // ===== USER-USER ACCESS RELATIONSHIPS =====
+  @Post('access')
+  @ApiOperation({ summary: 'Grant user access to another user' })
+  @ApiBody({ type: UserAccessDto })
+  @ApiResponse({ status: 201, description: 'User access granted' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({
+    status: 403,
+    description: 'Access denied: Insufficient permissions',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Cannot grant access to SUPER_ADMIN or CENTER_ADMIN users',
+  })
+  @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.GRANT.action)
+  grantUserAccess(@Body() dto: UserAccessDto, @GetUser() user: ActorUser) {
+    return this.accessControlService.grantUserAccessValidate({
+      userId: user.id,
+      granterUserId: dto.granterUserId,
+      targetUserId: dto.targetUserId,
+      centerId: dto.centerId,
+    });
+  }
+
+  @Delete('access')
+  @ApiOperation({ summary: 'Revoke user access to another user' })
+  @ApiBody({ type: UserAccessDto })
+  @ApiResponse({ status: 200, description: 'User access revoked' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({
+    status: 403,
+    description: 'Access denied: Insufficient permissions',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Cannot revoke access from SUPER_ADMIN or CENTER_ADMIN users',
+  })
+  @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.REVOKE.action)
+  revokeUserAccess(@Body() dto: UserAccessDto, @GetUser() user: ActorUser) {
+    return this.accessControlService.revokeUserAccessValidate({
+      userId: user.id,
+      granterUserId: dto.granterUserId,
+      targetUserId: dto.targetUserId,
+      centerId: dto.centerId,
+    });
+  }
 
   @Get()
   @ApiOperation({
@@ -56,8 +103,6 @@ export class UserController {
     description:
       'Get paginated list of users with filtering by status, role, and other criteria',
   })
-  @ApiPagination()
-  @CommonFilters.user()
   @ApiResponse({
     status: 200,
     description: 'Users retrieved successfully (filtered by access control)',
@@ -66,32 +111,10 @@ export class UserController {
   @SerializeOptions({ type: UserResponseDto })
   @Permissions(PERMISSIONS.USER.READ.action)
   async listUsers(
-    @PaginateWithFilters({
-      maxPage: 1000,
-      maxLimit: 50,
-      minLimit: 1,
-      allowedSortFields: USER_PAGINATION_COLUMNS.sortableColumns,
-      allowedSearchFields: USER_PAGINATION_COLUMNS.searchableColumns,
-      filterDto: UserFilterDto, // Use the filter DTO
-    })
-    query: PaginationQuery,
-    @GetUser() currentUser: CurrentUserType,
+    @Query() query: PaginateUsersDto,
+    @GetUser() actorUser: ActorUser,
   ) {
-    const centerId = query.filter?.centerId as string;
-    const targetCenterId = query.filter?.targetCenterId as string;
-    const targetUserId = query.filter?.targetUserId as string;
-    delete query.filter?.targetCenterId;
-    delete query.filter?.targetUserId;
-
-    const contextCenterId = currentUser.centerId;
-
-    return this.userService.listUsers({
-      query,
-      userId: currentUser.id,
-      targetUserId,
-      centerId: centerId ?? contextCenterId,
-      targetCenterId,
-    });
+    return this.userService.listUsers(query, actorUser);
   }
 
   @Get('profile')
@@ -103,10 +126,10 @@ export class UserController {
     description: 'User profile retrieved successfully',
   })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async getCurrentUserProfile(@GetUser() currentUser: CurrentUserType) {
+  async getActorUserProfile(@GetUser() actorUser: actorUserType) {
     return this.userService.getCurrentUserProfile({
-      userId: currentUser.id,
-      centerId: currentUser.centerId,
+      userId: actorUser.id,
+      centerId: actorUser.centerId,
     });
   }
 
@@ -123,12 +146,12 @@ export class UserController {
   async getUserProfile(
     @Param('id') userId: string,
     @Query('centerId') centerId?: string,
-    @GetUser() currentUser?: CurrentUserType,
+    @GetUser() actorUser?: actorUserType,
   ) {
     return this.userService.getProfile({
       userId,
       centerId,
-      currentUserId: currentUser?.id,
+      currentUserId: actorUser?.id,
     });
   }
 
@@ -144,10 +167,10 @@ export class UserController {
   @Permissions(PERMISSIONS.USER.CREATE.action)
   async createUser(
     @Body() dto: CreateUserRequestDto,
-    @GetUser() currentUser: CurrentUserType,
+    @GetUser() actorUser: actorUserType,
   ) {
     const user = await this.userService.createUser(dto);
-    await this.userService.handleUserCenterAccess(user.id, dto, currentUser.id);
+    await this.userService.handleUserRoleAssignment(user.id, dto, actorUser.id);
     return user;
   }
 
@@ -161,9 +184,9 @@ export class UserController {
   async updateUser(
     @Param('id') userId: string,
     @Body() dto: UpdateUserRequestDto,
-    @GetUser() currentUser: CurrentUserType,
+    @GetUser() actorUser: actorUserType,
   ) {
-    return this.userService.updateUser(userId, dto, currentUser.id);
+    return this.userService.updateUser(userId, dto, actorUser.id);
   }
 
   @Patch(':id/password')
@@ -195,12 +218,12 @@ export class UserController {
   async toggleUserStatus(
     @Param('id') userId: string,
     @Body() dto: ToggleUserStatusRequestDto,
-    @GetUser() currentUser: CurrentUserType,
+    @GetUser() actorUser: actorUserType,
   ): Promise<ToggleUserStatusResponseDto> {
     await this.userService.activateUser(
       userId,
       { isActive: dto.isActive },
-      currentUser.id,
+      actorUser.id,
     );
     return {
       id: userId,
@@ -221,9 +244,9 @@ export class UserController {
   @Permissions(PERMISSIONS.USER.DELETE.action)
   async deleteUser(
     @Param('id') userId: string,
-    @GetUser() currentUser: CurrentUserType,
+    @GetUser() actorUser: actorUserType,
   ): Promise<DeleteUserResponseDto> {
-    await this.userService.deleteUser(userId, currentUser.id);
+    await this.userService.deleteUser(userId, actorUser.id);
     return { message: 'User deleted successfully' };
   }
 
@@ -239,9 +262,9 @@ export class UserController {
   @Permissions(PERMISSIONS.USER.RESTORE.action)
   async restoreUser(
     @Param('id') userId: string,
-    @GetUser() currentUser: CurrentUserType,
+    @GetUser() actorUser: actorUserType,
   ): Promise<RestoreUserResponseDto> {
-    await this.userService.restoreUser(userId, currentUser.id);
+    await this.userService.restoreUser(userId, actorUser.id);
     return { message: 'User restored successfully' };
   }
 }

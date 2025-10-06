@@ -1,13 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { Permission } from '../entities/permission.entity';
 import { LoggerService } from '../../../shared/services/logger.service';
 import { PERMISSION_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
-import { PaginationUtils } from '@/shared/common/utils/pagination.utils';
+import { PaginatePermissionsDto } from '../dto/paginate-permissions.dto';
 
 @Injectable()
 export class PermissionRepository extends BaseRepository<Permission> {
@@ -40,40 +39,33 @@ export class PermissionRepository extends BaseRepository<Permission> {
     return this.permissionRepository.find({ where: { isAdmin: true } });
   }
 
-  // Single consolidated pagination method with filter parameter
+  // Single consolidated pagination method
   async paginatePermissions(
-    query: PaginationQuery,
-    filter?: 'all' | 'admin-only',
+    query: PaginatePermissionsDto,
   ): Promise<Pagination<Permission>> {
-    if (filter === 'admin-only') {
-      return this.paginate({
-        page: query.page,
-        limit: query.limit,
-        search: query.search,
-        filter: { ...query.filter, isAdmin: true },
-        sortBy: query.sortBy,
-        searchableColumns: ['action', 'description'],
-        sortableColumns: ['createdAt', 'updatedAt', 'action', 'description'],
-        defaultSortBy: ['createdAt', 'DESC'],
+    const queryBuilder =
+      this.permissionRepository.createQueryBuilder('permission');
+
+    // Apply custom filters
+    if (query.isAdmin !== undefined) {
+      queryBuilder.andWhere('permission.isAdmin = :isAdmin', {
+        isAdmin: query.isAdmin,
       });
     }
 
-    return this.paginate({
-      page: query.page,
-      limit: query.limit,
-      search: query.search,
-      filter: query.filter,
-      sortBy: query.sortBy,
-      searchableColumns: PERMISSION_PAGINATION_COLUMNS.searchableColumns,
-      sortableColumns: PERMISSION_PAGINATION_COLUMNS.sortableColumns,
-      defaultSortBy: PERMISSION_PAGINATION_COLUMNS.defaultSortBy,
-    });
+    return this.paginate(
+      query,
+      PERMISSION_PAGINATION_COLUMNS,
+      '/permissions',
+      queryBuilder,
+    );
   }
 
   // Convenience method for admin permissions
-  async paginateAdminPermissions(options: {
-    query: PaginationQuery;
-  }): Promise<Pagination<Permission>> {
-    return this.paginatePermissions(options.query, 'admin-only');
+  async paginateAdminPermissions(
+    query: PaginatePermissionsDto,
+  ): Promise<Pagination<Permission>> {
+    const adminQuery = { ...query, isAdmin: true };
+    return this.paginatePermissions(adminQuery);
   }
 }

@@ -12,7 +12,6 @@ import { Role } from '@/modules/access-control/entities/roles/role.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { UserCenter } from '@/modules/access-control/entities/user-center.entity';
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
@@ -31,7 +30,6 @@ import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token
       Permission,
       UserRole,
       UserAccess,
-      UserCenter,
       RefreshToken,
       EmailVerification,
       PasswordResetToken,

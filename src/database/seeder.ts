@@ -19,7 +19,6 @@ import {
 } from './factories/role-definitions';
 import { faker } from '@faker-js/faker';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { UserCenter } from '@/modules/access-control/entities/user-center.entity';
 import { Role } from '@/modules/access-control/entities/roles/role.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 
@@ -46,8 +45,6 @@ export class DatabaseSeeder {
     private readonly userRoleRepository: Repository<UserRole>,
     @InjectRepository(UserAccess)
     private readonly userAccessRepository: Repository<UserAccess>,
-    @InjectRepository(UserCenter)
-    private readonly userOnCenterRepository: Repository<UserCenter>,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     @InjectRepository(EmailVerification)
@@ -701,27 +698,8 @@ export class DatabaseSeeder {
       );
     }
 
-    // Grant global admins access to all centers
-    for (const center of centers) {
-      if (superAdminUser) {
-        await this.userOnCenterRepository.save(
-          this.userOnCenterRepository.create({
-            userId: superAdminUser.id,
-            centerId: center.id,
-            createdBy,
-          }),
-        );
-      }
-      if (adminUser) {
-        await this.userOnCenterRepository.save(
-          this.userOnCenterRepository.create({
-            userId: adminUser.id,
-            centerId: center.id,
-            createdBy,
-          }),
-        );
-      }
-    }
+    // Note: Center access is now managed through roles (centerId in userRoles)
+    // Global admins (SUPER_ADMIN, ADMIN) have access to all centers by default
 
     // Assign center-specific roles
     const centerOwners = users.filter((u) => u.email.includes('owner'));
@@ -747,14 +725,7 @@ export class DatabaseSeeder {
           }),
         );
 
-        // Grant center access
-        await this.userOnCenterRepository.save(
-          this.userOnCenterRepository.create({
-            userId: owner.id,
-            centerId: center.id,
-            createdBy,
-          }),
-        );
+        // Center access is automatically granted through role assignment
 
         this.logger.log(
           `Assigned Center Administrator role to ${owner.email} for center ${center.name}`,
@@ -778,14 +749,7 @@ export class DatabaseSeeder {
           }),
         );
 
-        // Grant center access
-        await this.userOnCenterRepository.save(
-          this.userOnCenterRepository.create({
-            userId: teacher.id,
-            centerId: center.id,
-            createdBy,
-          }),
-        );
+        // Center access is automatically granted through role assignment
 
         this.logger.log(
           `Assigned Teacher role to ${teacher.email} for center ${center.name}`,
@@ -809,14 +773,7 @@ export class DatabaseSeeder {
           }),
         );
 
-        // Grant center access
-        await this.userOnCenterRepository.save(
-          this.userOnCenterRepository.create({
-            userId: student.id,
-            centerId: center.id,
-            createdBy,
-          }),
-        );
+        // Center access is automatically granted through role assignment
 
         this.logger.log(
           `Assigned Student role to ${student.email} for center ${center.name}`,
@@ -840,14 +797,7 @@ export class DatabaseSeeder {
           }),
         );
 
-        // Grant center access
-        await this.userOnCenterRepository.save(
-          this.userOnCenterRepository.create({
-            userId: manager.id,
-            centerId: center.id,
-            createdBy,
-          }),
-        );
+        // Center access is automatically granted through role assignment
 
         this.logger.log(
           `Assigned Center Manager role to ${manager.email} for center ${center.name}`,
@@ -873,14 +823,7 @@ export class DatabaseSeeder {
           }),
         );
 
-        // Grant center access
-        await this.userOnCenterRepository.save(
-          this.userOnCenterRepository.create({
-            userId: centerDeactivatedUser.id,
-            centerId: center.id,
-            createdBy,
-          }),
-        );
+        // Center access is automatically granted through role assignment
 
         this.logger.log(
           `Assigned Staff role to ${centerDeactivatedUser.email} for center ${center.name}`,

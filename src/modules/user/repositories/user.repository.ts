@@ -7,10 +7,13 @@ import { LoggerService } from '../../../shared/services/logger.service';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
-import { UserListQuery } from '../interfaces/user-service.interface';
 import { USER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
-import { UserFilterDto } from '../dto/user-filter.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
+import {
+  AccessibleUsersEnum,
+  PaginateUsersDto,
+} from '../dto/paginate-users.dto';
+import { RoleResponseDto } from '@/modules/access-control/dto/role-response.dto';
 
 @Injectable()
 export class UserRepository extends BaseRepository<User> {
@@ -55,72 +58,99 @@ export class UserRepository extends BaseRepository<User> {
    * @returns Paginated users in the specified center
    */
   async paginateUsers(
-    params: UserListQuery,
+    params: PaginateUsersDto,
+    actorId: string,
   ): Promise<Pagination<UserResponseDto>> {
-    const { query, userId, targetUserId, centerId, targetCenterId } = params;
-    const userRole = await this.accessControlHelperService.getUserRole(userId);
+    const { centerId } = params;
+    const userRole = await this.accessControlHelperService.getUserRole(actorId);
     const roleType = userRole?.role?.type;
 
     // Create query builder with proper JOINs
     const queryBuilder = this.userRepository
       .createQueryBuilder('user')
-      .leftJoinAndSelect('user.profile', 'profile')
-      .leftJoinAndSelect('user.userRoles', 'userRoles')
-      .leftJoinAndSelect('userRoles.role', 'role');
+      .leftJoinAndSelect('user.profile', 'profile');
 
     if (centerId) {
-      queryBuilder
-        .andWhere('userRoles.centerId = :centerId', { centerId })
-        .leftJoin('user.centerAccess', 'centerAccess')
-        .andWhere('centerAccess.centerId = :centerId', {
-          centerId,
-        });
+      // Filter users who have roles in this center (centerId in userRoles = center access)
+      if (
+        !params.roleAccess ||
+        params.roleAccess === AccessibleUsersEnum.INCLUDE
+      ) {
+        queryBuilder
+          .leftJoinAndSelect(
+            'user.userRoles',
+            'userRoles',
+            'userRoles.centerId = :centerId',
+            { centerId },
+          )
+          .leftJoinAndSelect('userRoles.role', 'role')
+          .andWhere('role.centerId = :centerId', { centerId });
+      }
+
       // if user must apply access control otherwise they will see all users in the center
       if (roleType === RoleType.USER) {
         queryBuilder
           .leftJoin('user.accessTarget', 'accessTarget')
           .andWhere('accessTarget.centerId = :centerId', { centerId })
-          .andWhere('accessTarget.granterUserId = :userId', { userId });
+          .andWhere('accessTarget.granterUserId = :actorId', {
+            actorId: actorId,
+          });
       }
     } else {
-      queryBuilder.andWhere('userRoles.centerId IS NULL');
+      //  Filter users who have global roles (centerId IS NULL in userRoles)
+      if (params.roleAccess === AccessibleUsersEnum.INCLUDE) {
+        queryBuilder.andWhere('userRoles.centerId IS NULL');
+      }
       if (roleType == RoleType.SUPER_ADMIN) {
         // no access control
       } else if (roleType === RoleType.ADMIN) {
         queryBuilder
-          .leftJoin('user.accessTarget', 'accessTarget')
-          .andWhere('accessTarget.centerId IS NULL')
-          .andWhere('accessTarget.granterUserId = :userId', { userId });
+          .leftJoin('user.accessTarget', 'actorAccess')
+          .andWhere('actorAccess.centerId IS NULL')
+          .andWhere('actorAccess.granterUserId = :actorId', {
+            actorId: actorId,
+          });
       } else {
         throw new BadRequestException('Access denied to this user');
       }
     }
 
-    // Filter by target user (exclude)
-    if (targetUserId) {
-      queryBuilder.andWhere('user.id != :targetUserId', { targetUserId });
+    if (params.userId) {
+      if (params.userAccess === AccessibleUsersEnum.INCLUDE) {
+        queryBuilder.andWhere(
+          `EXISTS (
+            SELECT 1 FROM "user_access" AS ua
+            WHERE ua."targetUserId" = "user"."id"
+            AND ua."granterUserId" = :targetUserId
+            ${centerId ? 'AND ua."centerId" = :centerId' : ''}
+          )`,
+          {
+            targetUserId: params.userId,
+            centerId,
+          },
+        );
+      }
     }
 
-    // Apply filters with field mapping
-    if (query.filter) {
-      this.applyFilters(
-        queryBuilder,
-        query.filter,
-        UserFilterDto.getFieldMapping(),
-      );
+    if (params.roleId) {
+      if (params.roleAccess === AccessibleUsersEnum.INCLUDE) {
+        queryBuilder.andWhere('userRoles.roleId = :roleId', {
+          roleId: params.roleId,
+        });
+      }
     }
-    // Use the base repository paginate method with custom query builder
+
+    // Apply filters directly
+    if (params.isActive !== undefined) {
+      queryBuilder.andWhere('user.isActive = :isActive', {
+        isActive: params.isActive,
+      });
+    }
+
     const result = await this.paginate(
-      {
-        page: query.page,
-        limit: query.limit,
-        search: query.search,
-        sortBy: query.sortBy,
-        searchableColumns: USER_PAGINATION_COLUMNS.searchableColumns,
-        sortableColumns: USER_PAGINATION_COLUMNS.sortableColumns,
-        defaultSortBy: USER_PAGINATION_COLUMNS.defaultSortBy,
-        route: '/users',
-      },
+      params,
+      USER_PAGINATION_COLUMNS,
+      '/users',
       queryBuilder,
     );
 
@@ -129,40 +159,81 @@ export class UserRepository extends BaseRepository<User> {
     // Apply accessibility check if targetUserId is provided
     const usersIds = result.items.map((user) => user.id);
 
-    if (targetUserId) {
-      const accessibleUsersIds =
-        await this.accessControlHelperService.getAccessibleUsersIdsForUser(
-          targetUserId,
-          usersIds,
-          centerId,
+    if (params.userId && params.userAccess) {
+      if (params.userAccess === AccessibleUsersEnum.ALL) {
+        const accessibleUsersIds =
+          await this.accessControlHelperService.getAccessibleUsersIdsForUser(
+            params.userId,
+            usersIds,
+            centerId,
+          );
+        console.log('accessibleUsersIds', accessibleUsersIds);
+        filteredItems = filteredItems.map((user) =>
+          Object.assign(user, {
+            isUserAccessible: accessibleUsersIds.includes(user.id),
+          }),
         );
-      filteredItems = filteredItems.map((user) =>
-        Object.assign(user, {
-          isUserAccessible: accessibleUsersIds.includes(user.id),
-        }),
-      );
+      } else if (params.userAccess === AccessibleUsersEnum.INCLUDE) {
+        filteredItems = filteredItems.map((user) =>
+          Object.assign(user, {
+            isUserAccessible: true,
+          }),
+        );
+      }
     }
 
     // apply center accessibility field
-    if (targetCenterId) {
-      const accessibleCenterUsersIds =
-        await this.accessControlHelperService.getAccessibleUsersIdsForCenter(
-          targetCenterId,
-          usersIds,
+    if (centerId && params.centerAccess) {
+      if (params.centerAccess === AccessibleUsersEnum.ALL) {
+        const accessibleCenterUsersIds =
+          await this.accessControlHelperService.getAccessibleUsersIdsForCenter(
+            centerId,
+            usersIds,
+          );
+        filteredItems = filteredItems.map((user) =>
+          Object.assign(user, {
+            isCenterAccessible: accessibleCenterUsersIds.includes(user.id),
+          }),
         );
-      filteredItems = filteredItems.map((user) =>
-        Object.assign(user, {
-          isCenterAccessible: accessibleCenterUsersIds.includes(user.id),
-        }),
-      );
+      } else if (params.centerAccess === AccessibleUsersEnum.INCLUDE) {
+        filteredItems = filteredItems.map((user) =>
+          Object.assign(user, {
+            isCenterAccessible: true,
+          }),
+        );
+      }
+    }
+
+    if (params.roleId) {
+      if (params.roleAccess === AccessibleUsersEnum.ALL) {
+        const accessibleUsersIds =
+          await this.accessControlHelperService.getAccessibleUsersIdsForRole(
+            params.roleId,
+            usersIds,
+            centerId,
+          );
+        filteredItems = filteredItems.map((user) =>
+          Object.assign(user, {
+            isRoleAccessible: accessibleUsersIds.includes(user.id),
+          }),
+        );
+      } else if (params.roleAccess === AccessibleUsersEnum.INCLUDE) {
+        filteredItems = filteredItems.map((user) =>
+          Object.assign(user, {
+            isRoleAccessible: true,
+          }),
+        );
+      }
     }
 
     // apply role field and remove userRoles
+    // TODO: fix this later
     filteredItems = filteredItems.map((user) => {
       const userDto = Object.assign(user, {
-        role: (user as any).userRoles?.[0]?.role,
+        role: (user as any).userRoles?.[0]?.role as RoleResponseDto,
       });
       delete (userDto as any).userRoles;
+
       return userDto;
     });
 

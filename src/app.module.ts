@@ -1,16 +1,5 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '@/modules/user/entities/user.entity';
-import { Profile } from '@/modules/user/entities/profile.entity';
-import { Role } from '@/modules/access-control/entities/roles/role.entity';
-import { Permission } from '@/modules/access-control/entities/permission.entity';
-import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
-import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { UserCenter } from '@/modules/access-control/entities/user-center.entity';
-import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
-import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
-import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
@@ -23,7 +12,6 @@ import { AccessControlModule } from '@/modules/access-control/access-control.mod
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { SharedModule } from '@/shared/shared.module';
 import { SeederModule } from '@/database/seeder.module';
-
 import { ErrorInterceptor } from '@/shared/common/interceptors/error.interceptor';
 import { PerformanceInterceptor } from '@/shared/common/interceptors/performance.interceptor';
 import { ResponseTransformInterceptor } from '@/shared/common/interceptors/response-transform.interceptor';
