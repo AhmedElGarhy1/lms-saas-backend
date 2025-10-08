@@ -4,6 +4,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { UserRole } from '../entities/roles/user-role.entity';
 import { LoggerService } from '@/shared/services/logger.service';
+import { RoleType } from '@/shared/common/enums/role-type.enum';
+import { DefaultRoles } from '../constants/roles';
 
 @Injectable()
 export class UserRoleRepository extends BaseRepository<UserRole> {
@@ -57,6 +59,51 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
       },
       relations: ['role'],
     });
+  }
+
+  async hasAdminRole(userId: string): Promise<boolean> {
+    const userRole = await this.userRoleRepository.findOne({
+      where: {
+        userId,
+        centerId: IsNull(),
+        role: {
+          type: RoleType.ADMIN,
+        },
+      },
+    });
+    return !!userRole;
+  }
+
+  async hasUserRole(userId: string): Promise<boolean> {
+    const userRole = await this.userRoleRepository.findOne({
+      where: { userId, role: { type: RoleType.CENTER } },
+    });
+    return !!userRole;
+  }
+
+  async isSuperAdmin(userId: string): Promise<boolean> {
+    const userRole = await this.userRoleRepository.findOne({
+      where: {
+        userId,
+        role: {
+          name: DefaultRoles.SUPER_ADMIN,
+        },
+      },
+    });
+    return !!userRole;
+  }
+
+  async isCenterOwner(userId: string, centerId: string): Promise<boolean> {
+    const userRole = await this.userRoleRepository.findOne({
+      where: {
+        userId,
+        centerId,
+        role: {
+          name: 'Owner',
+        },
+      },
+    });
+    return !!userRole;
   }
 
   async findUserRoles(userId: string, centerId?: string): Promise<UserRole[]> {

@@ -21,7 +21,7 @@ export class CenterEventsService {
     await this.rolesService.createRole(
       {
         name: `Center Admin`,
-        type: RoleType.CENTER_ADMIN,
+        type: RoleType.CENTER,
         description: `Default admin role for center: ${center.name}`,
         centerId: center.id,
       },

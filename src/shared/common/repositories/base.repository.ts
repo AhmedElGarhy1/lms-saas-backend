@@ -1,5 +1,5 @@
 import { Repository, SelectQueryBuilder, ObjectLiteral } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Pagination, paginate } from 'nestjs-typeorm-paginate';
 import { LoggerService } from '@/shared/services/logger.service';
 import { BasePaginationDto } from '../dto/base-pagination.dto';
@@ -406,9 +406,16 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
 
   async softRemove(id: string): Promise<void> {
     const entity = await this.repository.findOne({ where: { id } as any });
-    if (!entity) return;
+    if (!entity) throw new NotFoundException('Entity not found');
 
     await this.repository.softRemove(entity);
+  }
+
+  async remove(id: string): Promise<void> {
+    const entity = await this.repository.findOne({ where: { id } as any });
+    if (!entity) throw new NotFoundException('Entity not found');
+
+    await this.repository.remove(entity);
   }
 
   async restore(id: string): Promise<void> {

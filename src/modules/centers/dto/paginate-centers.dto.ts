@@ -1,6 +1,7 @@
-import { IsOptional, IsString, IsUUID, IsBoolean } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, IsEnum } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
+import { AccessibleUsersEnum } from '@/modules/user/dto/paginate-users.dto';
 
 export class PaginateCentersDto extends BasePaginationDto {
   @ApiPropertyOptional({
@@ -27,11 +28,12 @@ export class PaginateCentersDto extends BasePaginationDto {
   @IsString()
   userId?: string;
 
-  // @ApiPropertyOptional({
-  //   description: 'Filter by center accessible status',
-  //   type: Boolean,
-  // })
-  // @IsOptional()
-  // @IsBoolean()
-  // centerIdAccess?: boolean;
+  @ApiPropertyOptional({
+    description: 'Filter by center access',
+    enum: AccessibleUsersEnum,
+    example: AccessibleUsersEnum.INCLUDE,
+  })
+  @IsOptional()
+  @IsEnum(AccessibleUsersEnum)
+  centerAccess?: AccessibleUsersEnum;
 }

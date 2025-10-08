@@ -1,20 +1,10 @@
-import {
-  IsOptional,
-  IsBoolean,
-  IsString,
-  IsUUID,
-  IsEnum,
-} from 'class-validator';
+import { IsOptional, IsBoolean, IsString, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
+import { AccessibleUsersEnum } from './paginate-users.dto';
 
-export enum AccessibleUsersEnum {
-  INCLUDE = 'include',
-  ALL = 'all',
-}
-
-export class PaginateUsersDto extends BasePaginationDto {
+export class PaginateAdminsDto extends BasePaginationDto {
   @ApiPropertyOptional({
     description: 'User ID for access control (internal use)',
     type: String,
@@ -62,29 +52,10 @@ export class PaginateUsersDto extends BasePaginationDto {
   centerId?: string;
 
   @ApiPropertyOptional({
-    description: 'Return only accessible users',
-    enum: AccessibleUsersEnum,
-    example: AccessibleUsersEnum.INCLUDE,
+    description: 'Filter by user access',
+    type: String,
   })
   @IsOptional()
-  @IsEnum(AccessibleUsersEnum)
+  @IsString()
   userAccess?: AccessibleUsersEnum;
-
-  // @ApiPropertyOptional({
-  //   description: 'Return only accessible centers',
-  //   enum: AccessibleUsersEnum,
-  //   example: AccessibleUsersEnum.INCLUDE,
-  // })
-  // @IsOptional()
-  // @IsEnum(AccessibleUsersEnum)
-  // centerAccess?: AccessibleUsersEnum;
-
-  // @ApiPropertyOptional({
-  //   description: 'Return only accessible roles',
-  //   enum: AccessibleUsersEnum,
-  //   example: AccessibleUsersEnum.INCLUDE,
-  // })
-  // @IsOptional()
-  // @IsEnum(AccessibleUsersEnum)
-  // roleAccess?: AccessibleUsersEnum;
 }

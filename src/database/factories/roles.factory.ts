@@ -11,7 +11,7 @@ export const createRandomCenterRole = (centerId: string): Partial<Role> => {
   return {
     name: faker.lorem.word(),
     description: faker.lorem.sentence(),
-    type: faker.helpers.arrayElement([RoleType.CENTER_ADMIN, RoleType.USER]),
+    type: RoleType.CENTER,
     permissions: permissions!,
     centerId,
   };

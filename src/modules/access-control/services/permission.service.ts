@@ -31,13 +31,13 @@ export class PermissionService {
     const roleType = userHighestRole?.role?.type;
 
     if (type === 'admin') {
-      if (roleType === RoleType.ADMIN || roleType === RoleType.SUPER_ADMIN) {
+      if (roleType === RoleType.ADMIN || roleType === RoleType.SYSTEM) {
         where.isAdmin = true;
       } else throw new ForbiddenException("You can't view admin permissions");
     } else if (type === 'user') {
       where.isAdmin = false;
     } else if (type === 'all') {
-      if (roleType !== RoleType.SUPER_ADMIN && roleType !== RoleType.ADMIN) {
+      if (roleType !== RoleType.SYSTEM && roleType !== RoleType.ADMIN) {
         where.isAdmin = false;
       }
     }

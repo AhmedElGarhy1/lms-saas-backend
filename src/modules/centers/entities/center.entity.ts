@@ -4,6 +4,7 @@ import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { Role } from '@/modules/access-control/entities/roles/role.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
+import { GlobalAccess } from '@/modules/access-control/entities/global-access.entity';
 
 @Entity('centers')
 @Index(['name'])
@@ -54,4 +55,7 @@ export class Center extends BaseEntity {
 
   @OneToMany(() => UserRole, (userRole) => userRole.center)
   userRoles: UserRole[];
+
+  @OneToMany(() => GlobalAccess, (globalAccess) => globalAccess.center)
+  globalAccess: GlobalAccess[];
 }

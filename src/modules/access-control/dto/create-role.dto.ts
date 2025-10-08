@@ -14,7 +14,8 @@ export class CreateRoleRequestDto {
   name: string;
 
   @IsEnum(RoleType, { message: 'Invalid role type' })
-  type: RoleType;
+  @IsOptional()
+  type?: RoleType;
 
   @IsOptional()
   @IsString()

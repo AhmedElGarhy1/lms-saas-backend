@@ -1,59 +1,54 @@
-// Maintain backward compatibility with RoleTypeEnum
+// New role type hierarchy
 export enum RoleType {
-  SUPER_ADMIN = 'SUPER_ADMIN',
+  // System roles - for system-wide users like Parent, Student, Teacher
+  SYSTEM = 'SYSTEM',
+
+  // Admin roles - for administrative users like SuperAdmin, TechnicalSupport, RegionalManager
   ADMIN = 'ADMIN',
-  CENTER_ADMIN = 'CENTER_ADMIN',
-  USER = 'USER',
+
+  // User roles - for center-specific users like Assistant, Worker, AssistantManager, CenterOwner
+  CENTER = 'CENTER',
 }
 
 export const ROLE_HIERARCHY = {
-  [RoleType.SUPER_ADMIN]: 4, // Highest level - No constraints
-  [RoleType.ADMIN]: 3, // Constrained by SuperAdmin
-  [RoleType.CENTER_ADMIN]: 2, // No constraints within center
-  [RoleType.USER]: 1, // Lowest level - Fully constrained
+  [RoleType.SYSTEM]: 3, // System-wide access
+  [RoleType.ADMIN]: 2, // Admin access with center permissions
+  [RoleType.CENTER]: 1, // Center-specific access
 };
 
 export const ROLE_DESCRIPTIONS = {
-  [RoleType.SUPER_ADMIN]:
-    'Super Administrator - No constraints, sees everything',
+  [RoleType.SYSTEM]:
+    'System User - System-wide access (Parent, Student, Teacher)',
   [RoleType.ADMIN]:
-    'Administrator - Constrained by SuperAdmin (permissions + AdminCenterAccess + UserAccess)',
-  [RoleType.CENTER_ADMIN]:
-    'Center Administrator - No constraints within center, sees everything',
-  [RoleType.USER]: 'User - Fully constrained (permissions + UserAccess)',
+    'Administrator - Admin access with center permissions (SuperAdmin, TechnicalSupport, RegionalManager)',
+  [RoleType.CENTER]:
+    'Center User - Center-specific access (Assistant, Worker, AssistantManager, CenterOwner)',
 };
 
 export const ROLE_SCOPES = {
-  [RoleType.SUPER_ADMIN]: 'ADMIN',
-  [RoleType.ADMIN]: 'ADMIN',
-  [RoleType.CENTER_ADMIN]: 'CENTER',
-  [RoleType.USER]: 'CENTER',
+  [RoleType.SYSTEM]: 'SYSTEM', // System-wide scope
+  [RoleType.ADMIN]: 'ADMIN', // Admin scope with center access
+  [RoleType.CENTER]: 'CENTER', // Center-specific scope
 };
 
-// New: Role constraint types
+// Role constraint types
 export const ROLE_CONSTRAINTS = {
-  [RoleType.SUPER_ADMIN]: {
+  [RoleType.SYSTEM]: {
     needsPermissions: false,
     needsAdminCenterAccess: false,
     needsUserAccess: false,
-    description: 'No constraints - sees everything',
+    description: 'System-wide access - no constraints',
   },
   [RoleType.ADMIN]: {
     needsPermissions: true,
-    needsAdminCenterAccess: true,
+    needsAdminCenterAccess: true, // NEW: Admins need admin access to centers
     needsUserAccess: true,
-    description: 'Constrained by SuperAdmin',
+    description: 'Admin access with center permissions',
   },
-  [RoleType.CENTER_ADMIN]: {
-    needsPermissions: false, // Within their center
-    needsAdminCenterAccess: false,
-    needsUserAccess: false,
-    description: 'No constraints within center',
-  },
-  [RoleType.USER]: {
+  [RoleType.CENTER]: {
     needsPermissions: true,
     needsAdminCenterAccess: false,
     needsUserAccess: true,
-    description: 'Fully constrained',
+    description: 'Center-specific access - fully constrained',
   },
 };

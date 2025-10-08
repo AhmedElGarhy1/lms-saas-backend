@@ -8,6 +8,7 @@ import { Pagination } from 'nestjs-typeorm-paginate';
 import { AccessControlHelperService } from '../services/access-control-helper.service';
 import { RoleResponseDto } from '../dto/role-response.dto';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
+import { RoleType } from '@/shared/common/enums/role-type.enum';
 
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> {
@@ -32,14 +33,9 @@ export class RolesRepository extends BaseRepository<Role> {
     if (centerId) {
       queryBuilder.where('role.centerId = :centerId', { centerId });
     } else {
-      queryBuilder.where('role.centerId IS NULL');
-    }
-
-    // Apply custom filters from query
-    if (query.centerId) {
-      queryBuilder.andWhere('role.centerId = :queryCenterId', {
-        queryCenterId: query.centerId,
-      });
+      queryBuilder
+        .where('role.centerId IS NULL')
+        .andWhere('role.type != :roleType', { roleType: RoleType.CENTER });
     }
 
     const result = await this.paginate(

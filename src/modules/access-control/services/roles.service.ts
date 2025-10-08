@@ -47,6 +47,11 @@ export class RolesService {
       userId,
       centerId: data.centerId,
     });
+    if (data.centerId) {
+      data.type = RoleType.CENTER;
+    } else {
+      data.type = data.type ?? RoleType.ADMIN;
+    }
 
     return this.rolesRepository.create(data);
   }

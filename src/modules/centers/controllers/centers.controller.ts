@@ -27,12 +27,63 @@ import { CreateCenterRequestDto } from '../dto/create-center.dto';
 import { UpdateCenterRequestDto } from '../dto/update-center.dto';
 import { CenterResponseDto } from '../dto/center-response.dto';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
+import { Scope, ScopeType } from '@/shared/common/decorators';
+import { AccessControlService } from '@/modules/access-control/services/access-control.service';
+import { GrantGlobalAccessDto } from '@/modules/access-control/dto/grant-global-access.dto';
+import { RevokeGlobalAccessDto } from '@/modules/access-control/dto/revoke-global-access.dto';
 
 @Controller('centers')
 @ApiTags('Centers')
 @ApiBearerAuth()
 export class CentersController {
-  constructor(private readonly centersService: CentersService) {}
+  constructor(
+    private readonly centersService: CentersService,
+    private readonly accessControlService: AccessControlService,
+  ) {}
+
+  @Post('access')
+  @ApiOperation({ summary: 'Grant global access to a user for this center' })
+  @ApiParam({ name: 'id', description: 'Center ID', type: String })
+  @ApiBody({ type: GrantGlobalAccessDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Global access granted successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Center not found' })
+  @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.GRANT.action)
+  @Scope(ScopeType.ADMIN)
+  async grantGlobalAccess(
+    @Body() dto: GrantGlobalAccessDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    return this.accessControlService.grantGlobalAccess(dto, actor.id);
+  }
+
+  @Delete('access')
+  @ApiOperation({ summary: 'Revoke global access from a user for this center' })
+  @ApiParam({ name: 'id', description: 'Center ID', type: String })
+  @ApiBody({ type: RevokeGlobalAccessDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Global access revoked successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Center not found' })
+  @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.REVOKE.action)
+  @Scope(ScopeType.ADMIN)
+  async revokeGlobalAccess(
+    @Body() dto: RevokeGlobalAccessDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    // Override centerId from URL parameter
+
+    return this.accessControlService.revokeGlobalAccess(dto, actor.id);
+  }
 
   @Post()
   @ApiOperation({ summary: 'Create a new center' })
@@ -66,10 +117,10 @@ export class CentersController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  @Permissions(PERMISSIONS.CENTER.VIEW.action)
   @SerializeOptions({ type: CenterResponseDto })
+  @Scope(ScopeType.ADMIN)
   listCenters(@Query() query: PaginateCentersDto, @GetUser() actor: ActorUser) {
-    return this.centersService.listCenters(query, actor.id);
+    return this.centersService.paginateCenters(query, actor.id);
   }
 
   @Get(':id')

@@ -77,7 +77,7 @@ export class CentersService {
     const centerAdminRole = await this.rolesService.createRole(
       {
         name: 'Center Admin',
-        type: RoleType.CENTER_ADMIN,
+        type: RoleType.CENTER,
         description: `Center Admin role for ${savedCenter.name}`,
         centerId: savedCenter.id,
       },
@@ -130,7 +130,7 @@ export class CentersService {
     return savedCenter;
   }
 
-  async listCenters(query: PaginateCentersDto, actorId: string) {
+  async paginateCenters(query: PaginateCentersDto, actorId: string) {
     return await this.centersRepository.paginateCenters(query, actorId);
   }
 

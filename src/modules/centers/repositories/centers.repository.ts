@@ -10,6 +10,7 @@ import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { CenterResponseDto } from '../dto/center-response.dto';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
+import { AccessibleUsersEnum } from '@/modules/user/dto/paginate-users.dto';
 
 @Injectable()
 export class CentersRepository extends BaseRepository<Center> {
@@ -30,34 +31,60 @@ export class CentersRepository extends BaseRepository<Center> {
     params: PaginateCentersDto,
     actorId: string,
   ): Promise<Pagination<CenterResponseDto>> {
-    const actorRole =
-      await this.accessControlHelperService.getUserRole(actorId);
-    const actorRoleType = actorRole?.role?.type;
+    const { userId, isActive, centerAccess } = params;
     const queryBuilder = this.centerRepository.createQueryBuilder('center');
 
+    const isSuperAdmin =
+      await this.accessControlHelperService.isSuperAdmin(actorId);
+    const isAdmin = await this.accessControlHelperService.hasAdminRole(actorId);
+
     // Apply access control
-    if (actorRoleType === RoleType.SUPER_ADMIN) {
+    if (isSuperAdmin) {
       // no access control
+    } else if (isAdmin) {
+      queryBuilder
+        .leftJoin('center.globalAccess', 'globalAccess')
+        .andWhere('globalAccess.userId = :actorId', {
+          actorId,
+        });
     } else {
-      // TODO: make the condition using userRole
       queryBuilder.leftJoin('center.userRoles', 'userRoles');
       queryBuilder.andWhere('userRoles.userId = :actorId', {
         actorId,
       });
     }
     // subquery to to get accessible centers for params.userId
-    if (params.userId) {
-      queryBuilder.andWhere(
-        'center.id IN (SELECT "centerId" FROM user_roles WHERE "userId" = :userId)',
-        {
-          userId: params.userId,
-        },
-      );
+    if (
+      userId &&
+      (!centerAccess || centerAccess === AccessibleUsersEnum.INCLUDE)
+    ) {
+      const isTargetUserSuperAdmin =
+        await this.accessControlHelperService.isSuperAdmin(userId);
+      const isTargetUserAdmin =
+        await this.accessControlHelperService.hasAdminRole(userId);
+
+      if (isTargetUserSuperAdmin) {
+        // nothing
+      } else if (isTargetUserAdmin) {
+        queryBuilder.andWhere(
+          'center.id IN (SELECT "centerId" FROM global_access WHERE "userId" = :userId)',
+          {
+            userId: userId,
+          },
+        );
+      } else {
+        queryBuilder.andWhere(
+          'center.id IN (SELECT "centerId" FROM user_roles WHERE "userId" = :userId)',
+          {
+            userId: userId,
+          },
+        );
+      }
     }
 
-    if (params.isActive !== undefined) {
+    if (isActive !== undefined) {
       queryBuilder.andWhere('center.isActive = :isActive', {
-        isActive: params.isActive,
+        isActive: isActive,
       });
     }
 
@@ -70,24 +97,26 @@ export class CentersRepository extends BaseRepository<Center> {
 
     let filteredItems: CenterResponseDto[] = result.items;
 
-    // if (params.userId) {
-    //   const accessibleCentersIds =
-    //     await this.accessControlHelperService.getAccessibleCentersIdsForUser(
-    //       params.userId,
-    //       result.items.map((center) => center.id),
-    //     );
-    //   filteredItems = filteredItems.map((center) =>
-    //     Object.assign(center, {
-    //       isCenterAccessible: accessibleCentersIds.includes(center.id),
-    //     }),
-    //   );
-    // } else {
-    //   filteredItems = filteredItems.map((center) =>
-    //     Object.assign(center, {
-    //       isCenterAccessible: false,
-    //     }),
-    //   );
-    // }
+    if (userId) {
+      if (centerAccess === AccessibleUsersEnum.ALL) {
+        const accessibleCentersIds =
+          await this.accessControlHelperService.getAccessibleCentersIdsForUser(
+            userId,
+            result.items.map((center) => center.id),
+          );
+        filteredItems = filteredItems.map((center) =>
+          Object.assign(center, {
+            isCenterAccessible: accessibleCentersIds.includes(center.id),
+          }),
+        );
+      } else if (centerAccess === AccessibleUsersEnum.INCLUDE) {
+        filteredItems = filteredItems.map((center) =>
+          Object.assign(center, {
+            isCenterAccessible: true,
+          }),
+        );
+      }
+    }
 
     return {
       ...result,

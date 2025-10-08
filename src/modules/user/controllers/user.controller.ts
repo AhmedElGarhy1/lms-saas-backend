@@ -41,6 +41,8 @@ import {
 } from '../dto/delete-user.dto';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
+import { Scope, ScopeType } from '@/shared/common/decorators';
+import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -114,7 +116,28 @@ export class UserController {
     @Query() query: PaginateUsersDto,
     @GetUser() actorUser: ActorUser,
   ) {
-    return this.userService.listUsers(query, actorUser);
+    return this.userService.paginateUsers(query, actorUser);
+  }
+
+  @Get('admin')
+  @ApiOperation({
+    summary: 'List users with pagination and filtering',
+    description:
+      'Get paginated list of users with filtering by status, role, and other criteria',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Users retrieved successfully (filtered by access control)',
+    type: [UserResponseDto],
+  })
+  @SerializeOptions({ type: UserResponseDto })
+  @Permissions(PERMISSIONS.USER.READ.action)
+  @Scope(ScopeType.ADMIN)
+  async paginateAdmins(
+    @Query() query: PaginateAdminsDto,
+    @GetUser() actorUser: ActorUser,
+  ) {
+    return this.userService.paginateAdmins(query, actorUser);
   }
 
   @Get('profile')

@@ -14,11 +14,21 @@ import { Permission } from './entities/permission.entity';
 import { Role } from './entities/roles/role.entity';
 import { UserRole } from './entities/roles/user-role.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
+import { GlobalAccess } from './entities/global-access.entity';
+import { UserRoleSubscriber } from './subscriber/user-role.subscriber';
+import { GlobalAccessRepository } from './repositories/global-access.repository';
 
 @Global()
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Center, Permission, Role, UserRole, UserAccess]),
+    TypeOrmModule.forFeature([
+      Center,
+      Permission,
+      Role,
+      UserRole,
+      UserAccess,
+      GlobalAccess,
+    ]),
   ],
   controllers: [RolesController],
   providers: [
@@ -30,16 +40,9 @@ import { UserAccess } from '@/modules/user/entities/user-access.entity';
     UserAccessRepository,
     RolesRepository,
     UserRoleRepository,
+    GlobalAccessRepository,
+    UserRoleSubscriber,
   ],
-  exports: [
-    AccessControlService,
-    AccessControlHelperService,
-    PermissionService,
-    RolesService,
-    RolesRepository,
-    PermissionRepository,
-    UserAccessRepository,
-    UserRoleRepository,
-  ],
+  exports: [AccessControlService, AccessControlHelperService, RolesService],
 })
 export class AccessControlModule {}

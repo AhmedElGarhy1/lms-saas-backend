@@ -28,6 +28,7 @@ import { CentersService } from '@/modules/centers/services/centers.service';
 import { UserRole } from '@/modules/access-control/entities';
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
 
 // UserListQuery interface moved to user-service.interface.ts
 
@@ -38,7 +39,6 @@ export class UserService {
     private readonly accessControlService: AccessControlService,
     private readonly rolesService: RolesService,
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly userRoleRepository: UserRoleRepository,
     private readonly profileService: ProfileService,
     private readonly logger: LoggerService,
     private readonly centersService: CentersService,
@@ -212,7 +212,7 @@ export class UserService {
       if (
         currentUserId !== userId &&
         ((currentUserRoleType === RoleType.ADMIN && !dto.userRole.centerId) ||
-          currentUserRoleType === RoleType.USER)
+          currentUserRoleType === RoleType.CENTER)
       ) {
         try {
           await this.accessControlService.grantUserAccess({
@@ -233,7 +233,7 @@ export class UserService {
     }
   }
 
-  async listUsers(params: PaginateUsersDto, actorUser: ActorUser) {
+  async paginateUsers(params: PaginateUsersDto, actorUser: ActorUser) {
     const { centerId } = params;
     await this.accessControlHelperService.validateAdminAndCenterAccess({
       userId: actorUser.id,
@@ -248,6 +248,10 @@ export class UserService {
     );
 
     return result;
+  }
+
+  async paginateAdmins(params: PaginateAdminsDto, actorUser: ActorUser) {
+    return this.userRepository.paginateAdmins(params, actorUser.id);
   }
 
   async deleteUser(userId: string, currentUserId: string): Promise<void> {
@@ -418,8 +422,9 @@ export class UserService {
         isAdmin: false,
       };
 
-      const userGlobalRole = await this.rolesService.findUserRole(userId);
-      returnData.isAdmin = !!userGlobalRole;
+      const hasAdminRole =
+        await this.accessControlHelperService.hasAdminRole(userId);
+      returnData.isAdmin = hasAdminRole;
 
       if (centerId) {
         const center = await this.centersService.findCenterById(centerId);
@@ -432,7 +437,11 @@ export class UserService {
           returnData.context.role = contextRoles as UserRole;
         }
       }
-      returnData.context.role = returnData.context.role ?? userGlobalRole;
+      if (!returnData.context.role) {
+        const userGlobalRole =
+          await this.accessControlHelperService.getUserRole(userId);
+        returnData.context.role = userGlobalRole as UserRole;
+      }
 
       this.logger.log(`Returning profile for user: ${userId}`);
 

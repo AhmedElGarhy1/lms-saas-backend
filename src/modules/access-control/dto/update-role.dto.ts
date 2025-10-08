@@ -23,10 +23,6 @@ export class UpdateRoleRequestDto {
   description?: string;
 
   @IsOptional()
-  @IsBoolean()
-  isAdmin?: boolean;
-
-  @IsOptional()
   @IsString()
   centerId?: string;
 

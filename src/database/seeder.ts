@@ -17,10 +17,13 @@ import {
   getAllRoleDefinitions,
   createRandomRoles,
 } from './factories/role-definitions';
+import { CenterFactory } from './factories/center.factory';
 import { faker } from '@faker-js/faker';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
+import { GlobalAccess } from '@/modules/access-control/entities/global-access.entity';
 import { Role } from '@/modules/access-control/entities/roles/role.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
+import { DefaultRoles } from '@/modules/access-control/constants/roles';
 
 // Helper function to generate phone numbers that fit within 20 character limit
 const generateShortPhone = (): string => {
@@ -45,6 +48,8 @@ export class DatabaseSeeder {
     private readonly userRoleRepository: Repository<UserRole>,
     @InjectRepository(UserAccess)
     private readonly userAccessRepository: Repository<UserAccess>,
+    @InjectRepository(GlobalAccess)
+    private readonly globalAccessRepository: Repository<GlobalAccess>,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     @InjectRepository(EmailVerification)
@@ -55,12 +60,26 @@ export class DatabaseSeeder {
     private readonly centersService: CentersService,
   ) {}
 
+  private async synchronizeDatabase(): Promise<void> {
+    this.logger.log('Synchronizing database schema...');
+
+    try {
+      // Get the data source and synchronize the schema
+      const dataSource = this.userRepository.manager.connection;
+      await dataSource.synchronize();
+      this.logger.log('Database schema synchronized successfully');
+    } catch (error) {
+      this.logger.error('Error synchronizing database schema:', error);
+      throw error;
+    }
+  }
+
   async seed(): Promise<void> {
     this.logger.log('Starting database seeding...');
 
     try {
-      // Clear existing data
-      await this.clearData();
+      // Reset database completely for clean seeding
+      await this.resetDatabase();
 
       // Create system user first (needed for createdBy field)
       const systemUser = await this.createSystemUser();
@@ -80,6 +99,9 @@ export class DatabaseSeeder {
       // Assign roles and permissions
       await this.assignRolesAndPermissions(users, centers, systemUser.id);
 
+      // Create global access for admin users
+      await this.createGlobalAccess(users, centers, systemUser.id);
+
       // Create activity logs
       await this.createActivityLogs(users, centers, systemUser.id);
 
@@ -93,10 +115,20 @@ export class DatabaseSeeder {
   private async createSystemUser(): Promise<User> {
     this.logger.log('Creating system user...');
 
+    // Check if system user already exists
+    let systemUser = await this.userRepository.findOne({
+      where: { email: 'system@lms.com' },
+    });
+
+    if (systemUser) {
+      this.logger.log('System user already exists, using existing user');
+      return systemUser;
+    }
+
     const hashedPassword = await bcrypt.hash('system123', 10);
 
     // Create system user using raw SQL to avoid circular dependencies
-    const systemUser = await this.userRepository.manager.transaction(
+    systemUser = await this.userRepository.manager.transaction(
       async (transactionalEntityManager) => {
         // Generate UUIDs for both user and profile
         const userResult = await transactionalEntityManager.query(
@@ -159,40 +191,84 @@ export class DatabaseSeeder {
   private async clearData(): Promise<void> {
     this.logger.log('Clearing existing data...');
 
-    // Use a transaction to handle circular foreign key constraints
-    await this.userRepository.manager.transaction(
-      async (transactionalEntityManager) => {
-        // Temporarily disable foreign key constraints
-        await transactionalEntityManager.query(
-          'SET session_replication_role = replica',
-        );
+    try {
+      // Use CASCADE to handle foreign key constraints properly
+      const tablesToClear = [
+        'activity_logs',
+        'user_roles',
+        'user_access',
+        'global_access',
+        'profiles',
+        'users',
+        'permissions',
+        'roles',
+        'refresh_tokens',
+        'email_verifications',
+        'password_reset_tokens',
+        'centers',
+      ];
 
-        // Clear all data using raw SQL to ensure all operations are within the transaction
-        await transactionalEntityManager.query('DELETE FROM activity_logs');
-        await transactionalEntityManager.query('DELETE FROM user_roles');
-        await transactionalEntityManager.query('DELETE FROM user_access');
-        await transactionalEntityManager.query('DELETE FROM user_access');
-        await transactionalEntityManager.query('DELETE FROM permissions');
-        await transactionalEntityManager.query('DELETE FROM roles');
-        await transactionalEntityManager.query('DELETE FROM refresh_tokens');
-        await transactionalEntityManager.query(
-          'DELETE FROM email_verifications',
-        );
-        await transactionalEntityManager.query(
-          'DELETE FROM password_reset_tokens',
-        );
-        await transactionalEntityManager.query('DELETE FROM centers');
-        await transactionalEntityManager.query('DELETE FROM users');
-        await transactionalEntityManager.query('DELETE FROM profiles');
+      // Clear tables in reverse dependency order with CASCADE
+      for (const table of tablesToClear) {
+        try {
+          // Check if table exists first
+          const tableExists = await this.userRepository.manager.query(
+            `SELECT EXISTS (
+              SELECT FROM information_schema.tables 
+              WHERE table_schema = 'public' 
+              AND table_name = '${table}'
+            )`,
+          );
 
-        // Re-enable foreign key constraints
-        await transactionalEntityManager.query(
-          'SET session_replication_role = DEFAULT',
-        );
-      },
-    );
+          if (tableExists[0].exists) {
+            // Use TRUNCATE with CASCADE to handle foreign keys
+            await this.userRepository.manager.query(
+              `TRUNCATE TABLE ${table} CASCADE`,
+            );
+            this.logger.log(`Cleared table: ${table}`);
+          } else {
+            this.logger.warn(
+              `Table ${table} doesn't exist, skipping clear operation`,
+            );
+          }
+        } catch (error) {
+          this.logger.warn(`Error clearing table ${table}:`, error.message);
+          // Try DELETE as fallback
+          try {
+            await this.userRepository.manager.query(`DELETE FROM ${table}`);
+            this.logger.log(`Cleared table: ${table} (using DELETE)`);
+          } catch (deleteError) {
+            this.logger.warn(
+              `Could not clear table ${table}:`,
+              deleteError.message,
+            );
+          }
+        }
+      }
 
-    this.logger.log('Existing data cleared successfully');
+      this.logger.log('Existing data cleared successfully');
+    } catch (error) {
+      this.logger.error('Error during data clearing:', error);
+      // Continue with seeding even if clearing fails
+      this.logger.warn('Continuing with seeding despite clearing errors...');
+    }
+  }
+
+  private async resetDatabase(): Promise<void> {
+    this.logger.log('Resetting database...');
+
+    try {
+      const dataSource = this.userRepository.manager.connection;
+
+      // Drop all tables and recreate them
+      await dataSource.dropDatabase();
+      await dataSource.synchronize();
+
+      this.logger.log('Database reset successfully');
+    } catch (error) {
+      this.logger.error('Error resetting database:', error);
+      throw error;
+    }
   }
 
   private async createPermissions(): Promise<void> {
@@ -221,8 +297,8 @@ export class DatabaseSeeder {
     const centerIds = centers.map((center) => center.id);
     const centerNames = centers.map((center) => center.name);
 
-    // Get all role definitions (global + center-specific)
-    const roleDefinitions = getAllRoleDefinitions(centerIds, centerNames);
+    // Get all role definitions (SYSTEM + ADMIN + CENTER-specific)
+    const roleDefinitions = getAllRoleDefinitions(centerIds);
 
     // Add some random roles for variety
     const randomRoles = createRandomRoles(centerIds, 5);
@@ -236,13 +312,15 @@ export class DatabaseSeeder {
     );
     await this.roleRepository.save(roleEntities);
 
+    // Log role creation summary
+    const systemRoles = roleEntities.filter((r) => r.type === 'SYSTEM').length;
+    const adminRoles = roleEntities.filter((r) => r.type === 'ADMIN').length;
+    const centerRoles = roleEntities.filter((r) => r.type === 'CENTER').length;
+
     this.logger.log(`Created ${roleEntities.length} roles:`);
-    this.logger.log(
-      `- ${roleDefinitions.filter((r) => !r.centerId).length} global roles`,
-    );
-    this.logger.log(
-      `- ${roleDefinitions.filter((r) => r.centerId).length} center-specific roles`,
-    );
+    this.logger.log(`- ${systemRoles} SYSTEM roles (global scope)`);
+    this.logger.log(`- ${adminRoles} ADMIN roles (global scope)`);
+    this.logger.log(`- ${centerRoles} CENTER roles (center-specific)`);
     this.logger.log(`- ${randomRoles.length} random roles for variety`);
   }
 
@@ -252,59 +330,25 @@ export class DatabaseSeeder {
   ): Promise<Center[]> {
     this.logger.log('Creating centers...');
 
-    // Get center owner users (skip the first 2 which are global admins)
-    const centerOwners = users.slice(2, 6); // 4 center owners
-
-    const centers = [
-      {
-        name: 'Bright Future Academy',
-        description: 'Premier educational institution in Cairo',
-        createdBy: centerOwners[0].id,
-        isActive: true,
-        city: 'Cairo',
-        country: 'Egypt',
-        address: faker.location.streetAddress().substring(0, 255),
+    // Create 50 centers using the factory
+    const centers = CenterFactory.createMixedCenters(50).map(
+      (center, index) => ({
+        ...center,
+        name: center.name || `Center ${index + 1}`,
+        description: center.description || `Educational center ${index + 1}`,
+        createdBy: createdBy, // Use system user as creator
+        address:
+          center.address?.substring(0, 255) ||
+          faker.location.streetAddress().substring(0, 255),
         phone: generateShortPhone(),
-        email: faker.internet.email().substring(0, 255),
-        website: faker.internet.url().substring(0, 255),
-      },
-      {
-        name: 'Knowledge Hub Center',
-        description: 'Innovative learning center in Alexandria',
-        createdBy: centerOwners[1].id,
-        isActive: true,
-        city: 'Alexandria',
-        country: 'Egypt',
-        address: faker.location.streetAddress().substring(0, 255),
-        phone: generateShortPhone(),
-        email: faker.internet.email().substring(0, 255),
-        website: faker.internet.url().substring(0, 255),
-      },
-      {
-        name: 'Elite Education Institute',
-        description: 'Excellence in education in Giza',
-        createdBy: centerOwners[2].id,
-        isActive: true,
-        city: 'Giza',
-        country: 'Egypt',
-        address: faker.location.streetAddress().substring(0, 255),
-        phone: generateShortPhone(),
-        email: faker.internet.email().substring(0, 255),
-        website: faker.internet.url().substring(0, 255),
-      },
-      {
-        name: 'Community Learning Center',
-        description: 'Community-focused education in Luxor',
-        createdBy: centerOwners[3].id,
-        isActive: true,
-        city: 'Luxor',
-        country: 'Egypt',
-        address: faker.location.streetAddress().substring(0, 255),
-        phone: generateShortPhone(),
-        email: faker.internet.email().substring(0, 255),
-        website: faker.internet.url().substring(0, 255),
-      },
-    ];
+        email:
+          center.email?.substring(0, 255) ||
+          faker.internet.email().substring(0, 255),
+        website:
+          center.website?.substring(0, 255) ||
+          faker.internet.url().substring(0, 255),
+      }),
+    );
 
     const savedCenters = await Promise.all(
       centers.map((center) =>
@@ -321,243 +365,109 @@ export class DatabaseSeeder {
 
     const hashedPassword = await bcrypt.hash('password123', 10);
 
-    const userData = [
-      // Global Admins
+    // Create system users first
+    const systemUsers = [
       {
         email: 'admin@lms.com',
         password: hashedPassword,
         name: 'System Administrator',
         isActive: true,
         isEmailVerified: true,
+        userType: 'ADMIN',
       },
       {
         email: 'superadmin@lms.com',
         password: hashedPassword,
-        name: 'Super Administrator',
+        name: DefaultRoles.SUPER_ADMIN,
         isActive: true,
         isEmailVerified: true,
+        userType: 'ADMIN',
       },
+    ];
 
-      // Center Owners
-      {
-        email: 'owner1@brightfuture.com',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'owner2@knowledgehub.com',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'owner3@elite.edu',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'owner4@community.edu',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
+    // Create ADMIN users (100 admin users)
+    const adminUsers = Array.from({ length: 100 }, (_, index) => ({
+      email: `admin${index + 1}@lms.com`,
+      password: hashedPassword,
+      name: faker.person.fullName(),
+      isActive: faker.datatype.boolean({ probability: 0.9 }),
+      isEmailVerified: true,
+      userType: 'ADMIN',
+    }));
 
-      // Teachers
-      {
-        email: 'teacher1@brightfuture.com',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'teacher2@brightfuture.com',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'teacher3@knowledgehub.com',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'teacher4@knowledgehub.com',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'teacher5@elite.edu',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'teacher6@community.edu',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
+    // Create center owners (50 owners for 50 centers)
+    const centerOwners = Array.from({ length: 50 }, (_, index) => ({
+      email: `owner${index + 1}@center${index + 1}.com`,
+      password: hashedPassword,
+      name: faker.person.fullName(),
+      isActive: true,
+      isEmailVerified: true,
+      userType: 'CENTER',
+      centerIndex: index, // Each owner gets their own center
+    }));
 
-      // Students
-      {
-        email: 'student1@brightfuture.com',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'student2@brightfuture.com',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'student3@knowledgehub.com',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'student4@knowledgehub.com',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'student5@elite.edu',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'student6@community.edu',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
+    // Create CENTER users (500 center users distributed across centers)
+    const centerUsers = Array.from({ length: 500 }, (_, index) => ({
+      email: `centeruser${index + 1}@lms.com`,
+      password: hashedPassword,
+      name: faker.person.fullName(),
+      isActive: faker.datatype.boolean({ probability: 0.85 }),
+      isEmailVerified: true,
+      userType: 'CENTER',
+      // Assign to a random center (will be handled in role assignment)
+      centerIndex: Math.floor(Math.random() * 50), // 50 centers
+    }));
 
-      // Managers/Assistants
-      {
-        email: 'manager1@brightfuture.com',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'manager2@knowledgehub.com',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'assistant1@elite.edu',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'assistant2@community.edu',
-        password: hashedPassword,
-        name: faker.person.fullName(),
-        isActive: true,
-        isEmailVerified: true,
-      },
+    // Create some deactivated users for testing (50 users)
+    const deactivatedUsers = Array.from({ length: 50 }, (_, index) => ({
+      email: `deactivated${index + 1}@lms.com`,
+      password: hashedPassword,
+      name: faker.person.fullName(),
+      isActive: false,
+      isEmailVerified: true,
+      userType: 'CENTER',
+      centerIndex: Math.floor(Math.random() * 50),
+    }));
 
-      // Test Users
-      {
-        email: 'deactivated@lms.com',
-        password: hashedPassword,
-        name: 'Deactivated User',
-        isActive: false,
-        isEmailVerified: true,
-      },
-      {
-        email: 'center-deactivated@lms.com',
-        password: hashedPassword,
-        name: 'Center Deactivated User',
-        isActive: true,
-        isEmailVerified: true,
-      },
-      {
-        email: 'regular@lms.com',
-        password: hashedPassword,
-        name: 'Regular User',
-        isActive: true,
-        isEmailVerified: true,
-      },
+    // Combine all users
+    const userData = [
+      ...systemUsers,
+      ...adminUsers,
+      ...centerOwners,
+      ...centerUsers,
+      ...deactivatedUsers,
     ];
 
     // Create users and profiles one by one to handle the circular dependency
     const savedUsers: User[] = [];
 
     for (const userDataItem of userData) {
-      // Determine profile type based on user email/role
+      // Determine profile type based on user type
       let profileType = ProfileType.BASE_USER;
       let phone: string | undefined;
       let address: string | undefined;
       let dateOfBirth: Date | undefined;
 
       // Set profile type and additional data based on user type
-      if (
-        userDataItem.email.includes('admin@lms.com') ||
-        userDataItem.email.includes('superadmin@lms.com')
-      ) {
+      if (userDataItem.userType === 'ADMIN') {
         profileType = ProfileType.ADMIN;
         phone = '+1-555-0100';
         address = 'System Headquarters, Admin Building';
-      } else if (userDataItem.email.includes('owner')) {
-        profileType = ProfileType.ADMIN; // Center owners are admins
+        // Set a reasonable birth date for admins (25-55 years old)
+        const age = 25 + Math.floor(Math.random() * 30);
+        dateOfBirth = new Date();
+        dateOfBirth.setFullYear(dateOfBirth.getFullYear() - age);
+      } else if (userDataItem.userType === 'CENTER') {
+        profileType = ProfileType.BASE_USER; // Center users are base users
         phone = '+1-555-0200';
-        address = 'Center Management Office';
-      } else if (userDataItem.email.includes('teacher')) {
-        profileType = ProfileType.TEACHER;
-        phone = '+1-555-0300';
-        address = 'Faculty Building, Room 101';
-        // Set a reasonable birth date for teachers (25-65 years old)
-        const age = 25 + Math.floor(Math.random() * 40);
-        dateOfBirth = new Date();
-        dateOfBirth.setFullYear(dateOfBirth.getFullYear() - age);
-      } else if (userDataItem.email.includes('student')) {
-        profileType = ProfileType.STUDENT;
-        phone = '+1-555-0400';
-        address = 'Student Dormitory, Room 201';
-        // Set a reasonable birth date for students (16-25 years old)
-        const age = 16 + Math.floor(Math.random() * 9);
-        dateOfBirth = new Date();
-        dateOfBirth.setFullYear(dateOfBirth.getFullYear() - age);
-      } else if (userDataItem.email.includes('guardian')) {
-        profileType = ProfileType.GUARDIAN;
-        phone = '+1-555-0500';
-        address = 'Family Residence';
-        // Set a reasonable birth date for guardians (30-60 years old)
-        const age = 30 + Math.floor(Math.random() * 30);
+        address = 'Center Office';
+        // Set a reasonable birth date for center users (22-50 years old)
+        const age = 22 + Math.floor(Math.random() * 28);
         dateOfBirth = new Date();
         dateOfBirth.setFullYear(dateOfBirth.getFullYear() - age);
       } else {
         // Default for regular users
+        profileType = ProfileType.BASE_USER;
         phone = '+1-555-0600';
         address = 'User Residence';
         // Set a reasonable birth date for regular users (18-50 years old)
@@ -641,12 +551,21 @@ export class DatabaseSeeder {
     // Get all roles
     const allRoles = await this.roleRepository.find();
 
-    // Get global roles
+    // Get global ADMIN roles
     const superAdminRole = allRoles.find(
       (r) => r.name === 'Super Administrator' && !r.centerId,
     );
-    const systemAdminRole = allRoles.find(
-      (r) => r.name === 'System Administrator' && !r.centerId,
+    const countryManagerRole = allRoles.find(
+      (r) => r.name === 'Country Manager' && !r.centerId,
+    );
+    const technicalSupportRole = allRoles.find(
+      (r) => r.name === 'Technical Support' && !r.centerId,
+    );
+    const languageCentersManagerRole = allRoles.find(
+      (r) => r.name === 'Language Centers Manager' && !r.centerId,
+    );
+    const academicCentersManagerRole = allRoles.find(
+      (r) => r.name === 'Academic Centers Manager' && !r.centerId,
     );
 
     // Get center-specific roles for each center
@@ -654,24 +573,32 @@ export class DatabaseSeeder {
     for (const center of centers) {
       const centerRoles = allRoles.filter((r) => r.centerId === center.id);
       centerRolesMap.set(center.id, {
-        centerAdmin: centerRoles.find((r) =>
-          r.name.includes('Center Administrator'),
-        ),
-        centerManager: centerRoles.find((r) =>
-          r.name.includes('Center Manager'),
-        ),
-        teacher: centerRoles.find((r) => r.name.includes('Teacher')),
-        student: centerRoles.find((r) => r.name.includes('Student')),
-        parent: centerRoles.find((r) => r.name.includes('Parent')),
-        staff: centerRoles.find((r) => r.name.includes('Staff')),
+        owner: centerRoles.find((r) => r.name === 'Owner'),
+        manager: centerRoles.find((r) => r.name === 'Manager'),
+        assistant: centerRoles.find((r) => r.name === 'Assistant'),
+        accountant: centerRoles.find((r) => r.name === 'Accountant'),
+        cleaner: centerRoles.find((r) => r.name === 'Cleaner'),
+        receptionist: centerRoles.find((r) => r.name === 'Receptionist'),
+        securityGuard: centerRoles.find((r) => r.name === 'Security Guard'),
       });
     }
 
-    // Get users
+    // Get users by type
     const superAdminUser = users.find((u) => u.email === 'superadmin@lms.com');
-    const adminUser = users.find((u) => u.email === 'admin@lms.com');
+    const systemAdminUser = users.find((u) => u.email === 'admin@lms.com');
+    const adminUsers = users.filter(
+      (u) =>
+        u.email.includes('admin') &&
+        u.email !== 'admin@lms.com' &&
+        u.email !== 'superadmin@lms.com',
+    );
+    const centerOwners = users.filter((u) => u.email.includes('owner'));
+    const centerUsers = users.filter((u) => u.email.includes('centeruser'));
+    const deactivatedUsers = users.filter((u) =>
+      u.email.includes('deactivated'),
+    );
 
-    // Assign global roles
+    // Assign global ADMIN roles
     if (superAdminUser && superAdminRole) {
       await this.userRoleRepository.save(
         this.userRoleRepository.create({
@@ -685,153 +612,175 @@ export class DatabaseSeeder {
       );
     }
 
-    if (adminUser && systemAdminRole) {
+    if (systemAdminUser && countryManagerRole) {
       await this.userRoleRepository.save(
         this.userRoleRepository.create({
-          userId: adminUser.id,
-          roleId: systemAdminRole.id,
+          userId: systemAdminUser.id,
+          roleId: countryManagerRole.id,
           createdBy,
         }),
       );
       this.logger.log(
-        `Assigned System Administrator role to ${adminUser.email}`,
+        `Assigned Country Manager role to ${systemAdminUser.email}`,
       );
     }
 
-    // Note: Center access is now managed through roles (centerId in userRoles)
-    // Global admins (SUPER_ADMIN, ADMIN) have access to all centers by default
+    // Assign ADMIN roles to admin users
+    const adminRoles = [
+      technicalSupportRole,
+      languageCentersManagerRole,
+      academicCentersManagerRole,
+    ].filter(Boolean);
+    for (let i = 0; i < adminUsers.length; i++) {
+      const adminUser = adminUsers[i];
+      const role = adminRoles[i % adminRoles.length]; // Cycle through available admin roles
 
-    // Assign center-specific roles
-    const centerOwners = users.filter((u) => u.email.includes('owner'));
-    const teachers = users.filter((u) => u.email.includes('teacher'));
-    const students = users.filter((u) => u.email.includes('student'));
-    const managers = users.filter(
-      (u) => u.email.includes('manager') || u.email.includes('assistant'),
-    );
+      if (role) {
+        await this.userRoleRepository.save(
+          this.userRoleRepository.create({
+            userId: adminUser.id,
+            roleId: role.id,
+            createdBy,
+          }),
+        );
+        this.logger.log(`Assigned ${role.name} role to ${adminUser.email}`);
+      }
+    }
 
-    // Assign center owners to their centers
+    // Assign CENTER roles to center owners
     for (let i = 0; i < centerOwners.length && i < centers.length; i++) {
       const owner = centerOwners[i];
       const center = centers[i];
       const centerRoles = centerRolesMap.get(center.id);
 
-      if (centerRoles?.centerAdmin) {
+      if (centerRoles?.owner) {
         await this.userRoleRepository.save(
           this.userRoleRepository.create({
             userId: owner.id,
-            roleId: centerRoles.centerAdmin.id,
+            roleId: centerRoles.owner.id,
             centerId: center.id,
             createdBy,
           }),
         );
-
-        // Center access is automatically granted through role assignment
-
         this.logger.log(
-          `Assigned Center Administrator role to ${owner.email} for center ${center.name}`,
+          `Assigned Owner role to ${owner.email} for center ${center.name}`,
         );
       }
     }
 
-    // Assign teachers to centers
-    for (let i = 0; i < teachers.length && i < centers.length; i++) {
-      const teacher = teachers[i];
-      const center = centers[i];
+    // Assign CENTER roles to center users
+    const centerRoleTypes = [
+      'manager',
+      'assistant',
+      'accountant',
+      'cleaner',
+      'receptionist',
+      'securityGuard',
+    ];
+
+    for (let i = 0; i < centerUsers.length; i++) {
+      const centerUser = centerUsers[i];
+      const centerIndex = (centerUser as any).centerIndex || i % centers.length;
+      const center = centers[centerIndex];
       const centerRoles = centerRolesMap.get(center.id);
 
-      if (centerRoles?.teacher) {
-        await this.userRoleRepository.save(
-          this.userRoleRepository.create({
-            userId: teacher.id,
-            roleId: centerRoles.teacher.id,
-            centerId: center.id,
-            createdBy,
-          }),
-        );
+      if (centerRoles) {
+        // Cycle through different center role types
+        const roleType = centerRoleTypes[i % centerRoleTypes.length];
+        const role = centerRoles[roleType];
 
-        // Center access is automatically granted through role assignment
-
-        this.logger.log(
-          `Assigned Teacher role to ${teacher.email} for center ${center.name}`,
-        );
+        if (role) {
+          await this.userRoleRepository.save(
+            this.userRoleRepository.create({
+              userId: centerUser.id,
+              roleId: role.id,
+              centerId: center.id,
+              createdBy,
+            }),
+          );
+          this.logger.log(
+            `Assigned ${role.name} role to ${centerUser.email} for center ${center.name}`,
+          );
+        }
       }
     }
 
-    // Assign students to centers
-    for (let i = 0; i < students.length && i < centers.length; i++) {
-      const student = students[i];
-      const center = centers[i];
+    // Assign CENTER roles to deactivated users (for testing)
+    for (let i = 0; i < deactivatedUsers.length; i++) {
+      const deactivatedUser = deactivatedUsers[i];
+      const centerIndex =
+        (deactivatedUser as any).centerIndex || i % centers.length;
+      const center = centers[centerIndex];
       const centerRoles = centerRolesMap.get(center.id);
 
-      if (centerRoles?.student) {
-        await this.userRoleRepository.save(
-          this.userRoleRepository.create({
-            userId: student.id,
-            roleId: centerRoles.student.id,
-            centerId: center.id,
-            createdBy,
-          }),
-        );
+      if (centerRoles) {
+        // Assign cleaner role to deactivated users
+        const role = centerRoles.cleaner;
 
-        // Center access is automatically granted through role assignment
-
-        this.logger.log(
-          `Assigned Student role to ${student.email} for center ${center.name}`,
-        );
-      }
-    }
-
-    // Assign managers to centers
-    for (let i = 0; i < managers.length && i < centers.length; i++) {
-      const manager = managers[i];
-      const center = centers[i];
-      const centerRoles = centerRolesMap.get(center.id);
-
-      if (centerRoles?.centerManager) {
-        await this.userRoleRepository.save(
-          this.userRoleRepository.create({
-            userId: manager.id,
-            roleId: centerRoles.centerManager.id,
-            centerId: center.id,
-            createdBy,
-          }),
-        );
-
-        // Center access is automatically granted through role assignment
-
-        this.logger.log(
-          `Assigned Center Manager role to ${manager.email} for center ${center.name}`,
-        );
-      }
-    }
-
-    // Special case: center-deactivated user (deactivated in first center only)
-    const centerDeactivatedUser = users.find(
-      (u) => u.email === 'center-deactivated@lms.com',
-    );
-    if (centerDeactivatedUser && centers.length > 1) {
-      const center = centers[1]; // Second center (active)
-      const centerRoles = centerRolesMap.get(center.id);
-
-      if (centerRoles?.staff) {
-        await this.userRoleRepository.save(
-          this.userRoleRepository.create({
-            userId: centerDeactivatedUser.id,
-            roleId: centerRoles.staff.id,
-            centerId: center.id,
-            createdBy,
-          }),
-        );
-
-        // Center access is automatically granted through role assignment
-
-        this.logger.log(
-          `Assigned Staff role to ${centerDeactivatedUser.email} for center ${center.name}`,
-        );
+        if (role) {
+          await this.userRoleRepository.save(
+            this.userRoleRepository.create({
+              userId: deactivatedUser.id,
+              roleId: role.id,
+              centerId: center.id,
+              createdBy,
+            }),
+          );
+          this.logger.log(
+            `Assigned ${role.name} role to ${deactivatedUser.email} for center ${center.name}`,
+          );
+        }
       }
     }
 
     this.logger.log('Roles and permissions assigned successfully');
+  }
+
+  private async createGlobalAccess(
+    users: User[],
+    centers: Center[],
+    createdBy: string,
+  ): Promise<void> {
+    this.logger.log('Creating global access records...');
+
+    // Get admin users (users with ADMIN role type)
+    const adminUsers = users.filter((user) => {
+      // This would need to be checked against their actual roles
+      // For now, we'll use email patterns to identify admin users
+      return (
+        user.email.includes('admin') ||
+        user.email.includes('manager') ||
+        user.email.includes('support')
+      );
+    });
+
+    // Get all centers
+    const centerIds = centers.map((center) => center.id);
+
+    // Create global access for admin users to all centers
+    for (const adminUser of adminUsers) {
+      for (const centerId of centerIds) {
+        // Check if global access already exists
+        const existingAccess = await this.globalAccessRepository.findOne({
+          where: { userId: adminUser.id, centerId },
+        });
+
+        if (!existingAccess) {
+          const globalAccess = this.globalAccessRepository.create({
+            userId: adminUser.id,
+            centerId,
+            createdBy,
+          });
+
+          await this.globalAccessRepository.save(globalAccess);
+          this.logger.log(
+            `Created global access for ${adminUser.email} to center ${centerId}`,
+          );
+        }
+      }
+    }
+
+    this.logger.log('Global access records created successfully');
   }
 
   private async createActivityLogs(
