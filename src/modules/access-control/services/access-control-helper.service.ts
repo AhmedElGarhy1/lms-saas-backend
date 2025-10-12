@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { In } from 'typeorm';
 import { UserRole } from '../entities/roles/user-role.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
@@ -8,14 +8,15 @@ import { UserAccessParams } from '../interfaces/user-access.params';
 import { CenterAccessParams } from '../interfaces/center-access.params';
 import { Role } from '../entities/roles/role.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
-import { GlobalAccessRepository } from '../repositories/global-access.repository';
+import { CenterAccessRepository } from '../repositories/center-access.repository';
 
 @Injectable()
 export class AccessControlHelperService {
   constructor(
+    @Inject(UserRoleRepository)
     private userRoleRepository: UserRoleRepository,
     private userAccessRepository: UserAccessRepository,
-    private globalAccessRepository: GlobalAccessRepository,
+    private centerAccessRepository: CenterAccessRepository,
   ) {}
 
   /**
@@ -59,10 +60,6 @@ export class AccessControlHelperService {
       return;
     }
     throw new ForbiddenException('You do not have access to admin');
-  }
-
-  async userHasRoleType(userId: string, roleType: string, centerId?: string) {
-    return this.userRoleRepository.userHasRoleType(userId, roleType, centerId);
   }
 
   async getUserCenters(userId: string) {
@@ -109,12 +106,14 @@ export class AccessControlHelperService {
   async getAccessibleUsersIdsForCenter(
     centerId: string,
     targetUserIds: string[],
+    global: boolean,
   ): Promise<string[]> {
     return Promise.all(
       targetUserIds.map(async (targetUserId) => {
         const canAccess = await this.canCenterAccess({
           userId: targetUserId,
           centerId,
+          global,
         });
         return canAccess ? targetUserId : null;
       }),
@@ -180,25 +179,12 @@ export class AccessControlHelperService {
     if (granterUserId === targetUserId) {
       return true;
     }
-    const isSuperAdmin = await this.isSuperAdmin(granterUserId);
-    if (isSuperAdmin) {
+    const bypassUserAccess = await this.bypassUserAccess(
+      granterUserId,
+      centerId,
+    );
+    if (bypassUserAccess) {
       return true;
-    }
-    if (centerId) {
-      const isCenterOwner = await this.isCenterOwner(granterUserId, centerId);
-      if (isCenterOwner) {
-        return true;
-      }
-      const globalAccess = await this.globalAccessRepository.findGlobalAccess(
-        granterUserId,
-        centerId,
-      );
-      if (globalAccess) {
-        const haveAdminRole = await this.hasAdminRole(granterUserId);
-        if (haveAdminRole) {
-          return true;
-        }
-      }
     }
     const userAccess = await this.findUserAccess({
       granterUserId,
@@ -218,25 +204,18 @@ export class AccessControlHelperService {
   // center access methods
 
   async canCenterAccess(data: CenterAccessParams): Promise<boolean> {
-    const { userId, centerId } = data;
+    const { userId, centerId, global } = data;
     const isSuperAdmin = await this.isSuperAdmin(userId);
     if (isSuperAdmin) {
       return true;
     }
 
-    const globalAccess = await this.globalAccessRepository.findGlobalAccess(
+    const centerAccess = await this.centerAccessRepository.findCenterAccess(
       userId,
       centerId,
+      global,
     );
-    if (globalAccess) {
-      return true;
-    }
-
-    const haveCenterRole = await this.userRoleRepository.getUserRole(
-      userId,
-      centerId,
-    );
-    return !!haveCenterRole;
+    return !!centerAccess;
   }
 
   async validateCenterAccess(data: CenterAccessParams): Promise<void> {
@@ -260,5 +239,30 @@ export class AccessControlHelperService {
 
   async hasUserRole(userId: string) {
     return this.userRoleRepository.hasUserRole(userId);
+  }
+
+  async bypassUserAccess(userId: string, centerId?: string): Promise<boolean> {
+    const isSuperAdmin = await this.isSuperAdmin(userId);
+    if (isSuperAdmin) {
+      return true;
+    }
+    if (centerId) {
+      const isCenterOwner = await this.isCenterOwner(userId, centerId);
+      if (isCenterOwner) {
+        return true;
+      }
+      const centerAccess = await this.centerAccessRepository.findCenterAccess(
+        userId,
+        centerId,
+        true,
+      );
+      if (centerAccess) {
+        const haveAdminRole = await this.hasAdminRole(userId);
+        if (haveAdminRole) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

@@ -3,6 +3,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Profile, ProfileType } from '../entities/profile.entity';
 import { LoggerService } from 'src/shared/services/logger.service';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
 export class ProfileService {
@@ -13,11 +14,18 @@ export class ProfileService {
   ) {}
 
   // Base user profile CRUD methods
-  async updateProfile(
-    profileId: string,
+  async updateUserProfile(
+    userId: string,
     profileData: Partial<Profile>,
   ): Promise<void> {
-    await this.profileRepository.update(profileId, profileData);
+    const profile = await this.profileRepository.findOne({
+      where: { userId },
+    });
+    if (!profile) {
+      throw new ResourceNotFoundException('Profile not found');
+    }
+
+    await this.profileRepository.update(profile.id, profileData);
   }
 
   async findProfileByUserId(userId: string): Promise<Profile | null> {

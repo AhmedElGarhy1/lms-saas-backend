@@ -4,6 +4,7 @@ import { ActivityLogService } from '@/shared/modules/activity-log/services/activ
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { Center } from '../entities/center.entity';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @Injectable()
 export class CenterEventsService {
@@ -25,7 +26,7 @@ export class CenterEventsService {
         description: `Default admin role for center: ${center.name}`,
         centerId: center.id,
       },
-      center.createdBy,
+      { id: center.createdBy } as ActorUser,
     );
 
     // Log the activity

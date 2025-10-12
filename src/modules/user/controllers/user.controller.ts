@@ -27,8 +27,7 @@ import {
 } from '@/shared/common/types/actor-user.type';
 import { UserService } from '../services/user.service';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { CreateUserRequestDto } from '../dto/create-user.dto';
-import { UpdateUserRequestDto } from '../dto/update-user.dto';
+import { CreateUserDto, CreateUserWithRoleDto } from '../dto/create-user.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import {
@@ -43,6 +42,7 @@ import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { Scope, ScopeType } from '@/shared/common/decorators';
 import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -67,13 +67,8 @@ export class UserController {
     description: 'Cannot grant access to SUPER_ADMIN or CENTER_ADMIN users',
   })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.GRANT.action)
-  grantUserAccess(@Body() dto: UserAccessDto, @GetUser() user: ActorUser) {
-    return this.accessControlService.grantUserAccessValidate({
-      userId: user.id,
-      granterUserId: dto.granterUserId,
-      targetUserId: dto.targetUserId,
-      centerId: dto.centerId,
-    });
+  grantUserAccess(@Body() dto: UserAccessDto, @GetUser() actor: ActorUser) {
+    return this.accessControlService.grantUserAccessValidate(dto, actor);
   }
 
   @Delete('access')
@@ -90,13 +85,8 @@ export class UserController {
     description: 'Cannot revoke access from SUPER_ADMIN or CENTER_ADMIN users',
   })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.REVOKE.action)
-  revokeUserAccess(@Body() dto: UserAccessDto, @GetUser() user: ActorUser) {
-    return this.accessControlService.revokeUserAccessValidate({
-      userId: user.id,
-      granterUserId: dto.granterUserId,
-      targetUserId: dto.targetUserId,
-      centerId: dto.centerId,
-    });
+  revokeUserAccess(@Body() dto: UserAccessDto, @GetUser() actor: ActorUser) {
+    return this.accessControlService.revokeUserAccessValidate(dto, actor);
   }
 
   @Get()
@@ -166,21 +156,22 @@ export class UserController {
   })
   @ApiResponse({ status: 404, description: 'User not found' })
   @Permissions(PERMISSIONS.USER.READ.action)
-  async getUserProfile(
+  async findOne(
     @Param('id') userId: string,
     @Query('centerId') centerId?: string,
     @GetUser() actorUser?: actorUserType,
   ) {
+    // TODO: implement later
     return this.userService.getProfile({
       userId,
-      centerId,
+      centerId: actorUser?.centerId || centerId,
       currentUserId: actorUser?.id,
     });
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a new user' })
-  @ApiBody({ type: CreateUserRequestDto })
+  @ApiBody({ type: CreateUserWithRoleDto })
   @ApiResponse({
     status: 201,
     description: 'User created successfully',
@@ -189,27 +180,25 @@ export class UserController {
   @ApiResponse({ status: 409, description: 'User already exists' })
   @Permissions(PERMISSIONS.USER.CREATE.action)
   async createUser(
-    @Body() dto: CreateUserRequestDto,
+    @Body() dto: CreateUserWithRoleDto,
     @GetUser() actorUser: actorUserType,
   ) {
-    const user = await this.userService.createUser(dto);
-    await this.userService.handleUserRoleAssignment(user.id, dto, actorUser.id);
-    return user;
+    return this.userService.createUserWithRole(dto, actorUser);
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Update user information' })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @ApiBody({ type: UpdateUserRequestDto })
+  @ApiBody({ type: UpdateUserDto })
   @ApiResponse({ status: 200, description: 'User updated successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
   @Permissions(PERMISSIONS.USER.UPDATE.action)
   async updateUser(
     @Param('id') userId: string,
-    @Body() dto: UpdateUserRequestDto,
+    @Body() dto: UpdateUserDto,
     @GetUser() actorUser: actorUserType,
   ) {
-    return this.userService.updateUser(userId, dto, actorUser.id);
+    return this.userService.updateUser(userId, dto, actorUser);
   }
 
   @Patch(':id/password')
@@ -223,8 +212,13 @@ export class UserController {
   async changePassword(
     @Param('id') userId: string,
     @Body() dto: ChangePasswordRequestDto,
+    @GetUser() actorUser: actorUserType,
   ) {
-    return this.userService.changePassword({ userId, dto });
+    return this.userService.changePassword({
+      userId,
+      dto,
+      centerId: actorUser.centerId,
+    });
   }
 
   @Patch(':id/status')
@@ -243,11 +237,7 @@ export class UserController {
     @Body() dto: ToggleUserStatusRequestDto,
     @GetUser() actorUser: actorUserType,
   ): Promise<ToggleUserStatusResponseDto> {
-    await this.userService.activateUser(
-      userId,
-      { isActive: dto.isActive },
-      actorUser.id,
-    );
+    await this.userService.activateUser(userId, dto.isActive, actorUser);
     return {
       id: userId,
       message: `User ${dto.isActive ? 'activated' : 'deactivated'} successfully`,
@@ -269,7 +259,7 @@ export class UserController {
     @Param('id') userId: string,
     @GetUser() actorUser: actorUserType,
   ): Promise<DeleteUserResponseDto> {
-    await this.userService.deleteUser(userId, actorUser.id);
+    await this.userService.deleteUser(userId, actorUser);
     return { message: 'User deleted successfully' };
   }
 
@@ -287,7 +277,7 @@ export class UserController {
     @Param('id') userId: string,
     @GetUser() actorUser: actorUserType,
   ): Promise<RestoreUserResponseDto> {
-    await this.userService.restoreUser(userId, actorUser.id);
+    await this.userService.restoreUser(userId, actorUser);
     return { message: 'User restored successfully' };
   }
 }

@@ -2,11 +2,11 @@ import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
 import { PermissionService } from './permission.service';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { AccessControlHelperService } from './access-control-helper.service';
-import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { UserAccessRepository } from '../repositories/user-access.repository';
-import { GlobalAccessRepository } from '../repositories/global-access.repository';
-import { GrantGlobalAccessDto } from '../dto/grant-global-access.dto';
-import { RevokeGlobalAccessDto } from '../dto/revoke-global-access.dto';
+import { CenterAccessRepository } from '../repositories/center-access.repository';
+import { CenterAccessDto } from '../dto/center-access.dto';
+import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @Injectable()
 export class AccessControlService {
@@ -16,39 +16,29 @@ export class AccessControlService {
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly permissionService: PermissionService,
     private readonly userAccessRepository: UserAccessRepository,
-    private readonly globalAccessRepository: GlobalAccessRepository,
+    private readonly centerAccessRepository: CenterAccessRepository,
   ) {}
 
-  async grantUserAccess(body: {
-    userId: string;
-    targetUserId: string;
-    centerId?: string;
-    granterUserId: string;
-  }): Promise<void> {
+  async grantUserAccess(body: UserAccessDto): Promise<void> {
     await this.userAccessRepository.grantUserAccess(body);
   }
 
-  async revokeUserAccess(body: {
-    userId: string;
-    targetUserId: string;
-    centerId?: string;
-    granterUserId: string;
-  }): Promise<void> {
+  async revokeUserAccess(body: UserAccessDto): Promise<void> {
     await this.userAccessRepository.revokeUserAccess(body);
   }
 
-  async grantUserAccessValidate(body: {
-    userId: string;
-    targetUserId: string;
-    centerId?: string;
-    granterUserId: string;
-  }): Promise<void> {
+  async grantUserAccessValidate(
+    body: UserAccessDto,
+    actor: ActorUser,
+  ): Promise<void> {
+    const centerId = body.centerId ?? actor.centerId;
+    body.centerId = centerId;
     // Check user already have access
     const IHaveAccessToGranterUser =
       await this.accessControlHelperService.canUserAccess({
-        granterUserId: body.userId,
+        granterUserId: actor.id,
         targetUserId: body.granterUserId,
-        centerId: body.centerId,
+        centerId,
       });
 
     if (!IHaveAccessToGranterUser) {
@@ -57,9 +47,9 @@ export class AccessControlService {
 
     const IHaveAccessToTargetUser =
       await this.accessControlHelperService.canUserAccess({
-        granterUserId: body.userId,
+        granterUserId: actor.id,
         targetUserId: body.targetUserId,
-        centerId: body.centerId,
+        centerId,
       });
 
     if (!IHaveAccessToTargetUser) {
@@ -67,23 +57,12 @@ export class AccessControlService {
     }
 
     // check if target user have height role
-    const granterUserHighestRole =
-      await this.accessControlHelperService.getUserRole(
-        body.granterUserId,
-        body.centerId,
-      );
-    const granterUserRoleType = granterUserHighestRole?.role?.type;
-    if (granterUserRoleType === RoleType.SYSTEM) {
+    const isGranterSuperAdmin =
+      await this.accessControlHelperService.isSuperAdmin(body.granterUserId);
+    if (isGranterSuperAdmin) {
       throw new ForbiddenException(
         'Granter user is a super admin and can access any user',
       );
-    }
-
-    if (body.centerId) {
-      await this.accessControlHelperService.validateCenterAccess({
-        userId: body.userId,
-        centerId: body.centerId,
-      });
     }
 
     // Check if access already exists
@@ -100,18 +79,18 @@ export class AccessControlService {
     await this.grantUserAccess(body);
   }
 
-  async revokeUserAccessValidate(body: {
-    userId: string;
-    targetUserId: string;
-    centerId?: string;
-    granterUserId: string;
-  }): Promise<void> {
+  async revokeUserAccessValidate(
+    body: UserAccessDto,
+    actor: ActorUser,
+  ): Promise<void> {
+    const centerId = body.centerId ?? actor.centerId;
+    body.centerId = centerId;
     // Check user already have access
     const IHaveAccessToGranterUser =
       await this.accessControlHelperService.canUserAccess({
-        granterUserId: body.userId,
+        granterUserId: actor.id,
         targetUserId: body.granterUserId,
-        centerId: body.centerId,
+        centerId,
       });
 
     if (!IHaveAccessToGranterUser) {
@@ -120,33 +99,17 @@ export class AccessControlService {
 
     const IHaveAccessToTargetUser =
       await this.accessControlHelperService.canUserAccess({
-        granterUserId: body.userId,
+        granterUserId: actor.id,
         targetUserId: body.targetUserId,
-        centerId: body.centerId,
+        centerId,
       });
 
     if (!IHaveAccessToTargetUser) {
       throw new ForbiddenException('You do not have access to target user');
     }
 
-    if (body.centerId) {
-      const IHaveAccessToCenter =
-        await this.accessControlHelperService.canCenterAccess({
-          userId: body.userId,
-          centerId: body.centerId,
-        });
-
-      if (!IHaveAccessToCenter) {
-        throw new ForbiddenException('You do not have access to center');
-      }
-    }
-
     // Check if access exists
-    const canAccess = await this.accessControlHelperService.canUserAccess({
-      granterUserId: body.granterUserId,
-      targetUserId: body.targetUserId,
-      centerId: body.centerId,
-    });
+    const canAccess = await this.accessControlHelperService.canUserAccess(body);
 
     if (!canAccess) {
       throw new ForbiddenException('User does not have access');
@@ -155,47 +118,34 @@ export class AccessControlService {
     await this.revokeUserAccess(body);
   }
 
-  // Global Access Management Methods
+  // Center Access Management Methods
 
-  async grantGlobalAccess(dto: GrantGlobalAccessDto, actorId: string) {
+  async grantCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
     // Validate that the granter has permission to grant access
     await this.accessControlHelperService.validateUserAccess({
-      granterUserId: actorId,
+      granterUserId: actor.id,
       targetUserId: dto.userId,
       centerId: dto.centerId,
     });
-
-    // Check if user has admin role
-    const hasAdminRole = await this.accessControlHelperService.hasAdminRole(
-      dto.userId,
-    );
-    if (!hasAdminRole) {
-      throw new ForbiddenException(
-        'Only users with admin roles can be granted global access',
-      );
-    }
-
-    return this.globalAccessRepository.grantGlobalAccess(
+    return this.centerAccessRepository.grantCenterAccess(
       dto.userId,
       dto.centerId,
+      dto.global,
     );
   }
 
-  async revokeGlobalAccess(dto: RevokeGlobalAccessDto, granterUserId: string) {
-    this.logger.log(
-      `Revoking global access: User ${dto.userId} from Center ${dto.centerId} by ${granterUserId}`,
-    );
-
+  async revokeCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
     // Validate that the granter has permission to revoke access
     await this.accessControlHelperService.validateUserAccess({
-      granterUserId,
+      granterUserId: actor.id,
       targetUserId: dto.userId,
       centerId: dto.centerId,
     });
 
-    return this.globalAccessRepository.revokeGlobalAccess(
+    return this.centerAccessRepository.revokeCenterAccess(
       dto.userId,
       dto.centerId,
+      dto.global,
     );
   }
 

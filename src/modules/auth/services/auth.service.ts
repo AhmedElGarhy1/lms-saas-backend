@@ -24,6 +24,7 @@ import { TwoFactorRequest } from '../dto/2fa.dto';
 import { RefreshTokenRequestDto } from '../dto/refresh-token.dto';
 import { LoggerService } from '../../../shared/services/logger.service';
 import { User } from '../../user/entities/user.entity';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @Injectable()
 export class AuthService {
@@ -193,46 +194,42 @@ export class AuthService {
   }
 
   async signup(dto: SignupRequestDto) {
-    // Check if user already exists
-    const existingUser = await this.userService.findUserByEmail(dto.email);
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
-    }
-
-    // Create user
-    const user = await this.userService.createUser({
-      email: dto.email,
-      password: dto.password,
-      name: dto.name,
-      // TODO: add profile correctly
-      profile: {
-        phone: '',
-        address: '',
-        dateOfBirth: '',
-      },
-    });
-
-    // Send email verification
-    await this.emailVerificationService.sendVerificationEmail(
-      user.id,
-      user.email,
-    );
-
-    this.logger.log(`User signed up: ${user.email}`, 'AuthService', {
-      userId: user.id,
-      email: user.email,
-    });
-
-    return {
-      message:
-        'User created successfully. Please check your email to verify your account.',
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        isActive: user.isActive,
-      },
-    };
+    // // Check if user already exists
+    // const existingUser = await this.userService.findUserByEmail(dto.email);
+    // if (existingUser) {
+    //   throw new ConflictException('User with this email already exists');
+    // }
+    // // Create user
+    // const user = await this.userService.createUser({
+    //   email: dto.email,
+    //   password: dto.password,
+    //   name: dto.name,
+    //   // TODO: add profile correctly
+    //   profile: {
+    //     phone: '',
+    //     address: '',
+    //     dateOfBirth: '',
+    //   },
+    // });
+    // // Send email verification
+    // await this.emailVerificationService.sendVerificationEmail(
+    //   user.id,
+    //   user.email,
+    // );
+    // this.logger.log(`User signed up: ${user.email}`, 'AuthService', {
+    //   userId: user.id,
+    //   email: user.email,
+    // });
+    // return {
+    //   message:
+    //     'User created successfully. Please check your email to verify your account.',
+    //   user: {
+    //     id: user.id,
+    //     email: user.email,
+    //     name: user.name,
+    //     isActive: user.isActive,
+    //   },
+    // };
   }
 
   async verifyEmail(dto: VerifyEmailRequestDto) {
@@ -391,12 +388,12 @@ export class AuthService {
     return { message: 'Two-factor authentication disabled successfully' };
   }
 
-  async logout(userId: string) {
+  async logout(actor: ActorUser) {
     // Invalidate refresh tokens for the user
-    await this.refreshTokenService.deleteAllRefreshTokensForUser(userId);
+    await this.refreshTokenService.deleteAllRefreshTokensForUser(actor.id);
 
-    this.logger.log(`User ${userId} logged out`, 'AuthService', {
-      userId,
+    this.logger.log(`User ${actor.id} logged out`, 'AuthService', {
+      userId: actor.id,
     });
 
     return { message: 'Logged out successfully' };

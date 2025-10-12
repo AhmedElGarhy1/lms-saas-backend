@@ -15,6 +15,8 @@ import { CreateRoleRequestDto } from '../dto/create-role.dto';
 import { AssignRoleDto } from '../dto/assign-role.dto';
 import { UserRoleRepository } from '../repositories/user-role.repository';
 import { RoleResponseDto } from '../dto/role-response.dto';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 
 @Injectable()
 export class RolesService {
@@ -24,30 +26,17 @@ export class RolesService {
     private readonly userRoleRepository: UserRoleRepository,
   ) {}
 
-  async paginateRoles(
-    query: PaginationQuery,
-    userId: string,
-    centerId?: string,
-  ) {
-    const filterCenterId = query.filter?.centerId as string | undefined;
-    const targetUserId = query.filter?.targetUserId as string | undefined;
-    delete query.filter?.targetUserId;
-    const _centerId = filterCenterId ?? centerId;
+  async paginateRoles(query: PaginateRolesDto, actor: ActorUser) {
+    const centerId = query.centerId ?? actor.centerId;
+    query.centerId = centerId;
 
-    await this.accessControlerHelperService.validateAdminAndCenterAccess({
-      userId,
-      centerId: _centerId,
-    });
-
-    return this.rolesRepository.paginateRoles(query, _centerId, targetUserId);
+    return this.rolesRepository.paginateRoles(query, actor.id);
   }
 
-  async createRole(data: CreateRoleRequestDto, userId: string) {
-    await this.accessControlerHelperService.validateAdminAndCenterAccess({
-      userId,
-      centerId: data.centerId,
-    });
-    if (data.centerId) {
+  async createRole(data: CreateRoleRequestDto, actor: ActorUser) {
+    const centerId = data.centerId ?? actor.centerId;
+    data.centerId = centerId;
+    if (centerId) {
       data.type = RoleType.CENTER;
     } else {
       data.type = data.type ?? RoleType.ADMIN;
@@ -56,37 +45,45 @@ export class RolesService {
     return this.rolesRepository.create(data);
   }
 
-  async updateRole(roleId: string, data: UpdateRoleRequestDto, userId: string) {
-    await this.accessControlerHelperService.validateAdminAndCenterAccess({
-      userId,
-      centerId: data.centerId,
-    });
+  async updateRole(
+    roleId: string,
+    data: UpdateRoleRequestDto,
+    actor: ActorUser,
+  ) {
+    const role = await this.rolesRepository.findOne(roleId);
+    console.log(role, role?.centerId, actor.centerId);
+    if (!role?.isSameScope(actor.centerId)) {
+      throw new ForbiddenException(
+        'You are not authorized to update this role',
+      );
+    }
+
     return this.rolesRepository.update(roleId, data);
   }
 
-  async deleteRole(roleId: string, userId: string) {
+  async deleteRole(roleId: string, actor: ActorUser) {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
       throw new NotFoundException('Role not found');
     }
-    await this.accessControlerHelperService.validateAdminAndCenterAccess({
-      userId: userId,
-      centerId: role.centerId,
-    });
+    if (!role?.isSameScope(actor.centerId)) {
+      throw new ForbiddenException(
+        'You are not authorized to delete this role',
+      );
+    }
+
     return this.rolesRepository.softRemove(roleId);
   }
 
-  async assignRoleValidate(data: AssignRoleDto, createdBy: string) {
-    await this.accessControlerHelperService.validateAdminAndCenterAccess({
-      userId: createdBy,
-      centerId: data.centerId,
+  async assignRoleValidate(data: AssignRoleDto, actor: ActorUser) {
+    const centerId = data.centerId ?? actor.centerId;
+    data.centerId = centerId;
+    await this.accessControlerHelperService.validateUserAccess({
+      granterUserId: actor.id,
+      targetUserId: data.userId,
+      centerId,
     });
 
-    await this.accessControlerHelperService.validateUserAccess({
-      granterUserId: createdBy,
-      targetUserId: data.userId,
-      centerId: data.centerId,
-    });
     return this.assignRole(data);
   }
 
@@ -98,14 +95,9 @@ export class RolesService {
     return this.userRoleRepository.removeUserRole(data);
   }
 
-  async removeUserRoleValidate(data: AssignRoleDto, createdBy: string) {
-    await this.accessControlerHelperService.validateAdminAndCenterAccess({
-      userId: createdBy,
-      centerId: data.centerId,
-    });
-
+  async removeUserRoleValidate(data: AssignRoleDto, actor: ActorUser) {
     await this.accessControlerHelperService.validateUserAccess({
-      granterUserId: createdBy,
+      granterUserId: actor.id,
       targetUserId: data.userId,
       centerId: data.centerId,
     });
@@ -119,9 +111,5 @@ export class RolesService {
 
   async findUserRole(userId: string, centerId?: string) {
     return this.userRoleRepository.getUserRole(userId, centerId);
-  }
-
-  async userHasRoleType(userId: string, type: string, centerId?: string) {
-    return this.userRoleRepository.userHasRoleType(userId, type, centerId);
   }
 }

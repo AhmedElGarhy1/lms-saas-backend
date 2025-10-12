@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Role } from '../entities/roles/role.entity';
@@ -9,13 +9,13 @@ import { AccessControlHelperService } from '../services/access-control-helper.se
 import { RoleResponseDto } from '../dto/role-response.dto';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> {
   constructor(
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
-
     protected readonly logger: LoggerService,
     private readonly accessControlHelperService: AccessControlHelperService,
   ) {
@@ -24,9 +24,9 @@ export class RolesRepository extends BaseRepository<Role> {
 
   async paginateRoles(
     query: PaginateRolesDto,
-    centerId?: string,
-    targetUserId?: string,
+    actorId: string,
   ): Promise<Pagination<RoleResponseDto>> {
+    const { centerId, userId } = query;
     const queryBuilder = this.roleRepository.createQueryBuilder('role');
 
     // Apply center filter
@@ -36,6 +36,9 @@ export class RolesRepository extends BaseRepository<Role> {
       queryBuilder
         .where('role.centerId IS NULL')
         .andWhere('role.type != :roleType', { roleType: RoleType.CENTER });
+    }
+    if (query.type) {
+      queryBuilder.where('role.type = :type', { type: query.type });
     }
 
     const result = await this.paginate(
@@ -50,21 +53,15 @@ export class RolesRepository extends BaseRepository<Role> {
     );
     let filteredItems: RoleResponseDto[] = result.items;
 
-    if (targetUserId) {
+    if (userId) {
       const accessibleRolesIds =
         await this.accessControlHelperService.getAccessibleRolesIdsForUser(
-          targetUserId,
+          userId,
           centerId,
         );
       filteredItems = filteredItems.map((role) =>
         Object.assign(role, {
-          isRoleAccessible: accessibleRolesIds.includes(role.id),
-        }),
-      );
-    } else {
-      filteredItems = filteredItems.map((role) =>
-        Object.assign(role, {
-          isRoleAccessible: false,
+          isUserAccessible: accessibleRolesIds.includes(role.id),
         }),
       );
     }

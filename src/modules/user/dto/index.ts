@@ -1,6 +1,8 @@
 // Request DTOs
-export { CreateUserRequestDto, UserProfileDto } from './create-user.dto';
-export { UpdateUserRequestDto } from './update-user.dto';
+export {
+  CreateUserWithRoleDto as CreateUserRequestDto,
+  UserProfileDto,
+} from './create-user.dto';
 export {
   UpdateProfileRequestDto,
   UpdateProfileDto,

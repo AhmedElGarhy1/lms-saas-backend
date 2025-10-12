@@ -69,4 +69,8 @@ export class Role extends BaseEntity {
     }
     // TODO: validate permissions
   }
+
+  isSameScope(centerId?: string) {
+    return !!this.centerId === !!centerId;
+  }
 }

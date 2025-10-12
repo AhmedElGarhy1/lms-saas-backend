@@ -16,11 +16,6 @@ export class CenterFactory {
     return {
       name,
       description: faker.lorem.paragraph(),
-      address: faker.location.streetAddress(),
-      city: faker.location.city(),
-      state: faker.location.state(),
-      country: faker.location.country(),
-      postalCode: faker.location.zipCode(),
       phone: faker.phone.number(),
       email: faker.internet.email(),
       website: faker.internet.url(),

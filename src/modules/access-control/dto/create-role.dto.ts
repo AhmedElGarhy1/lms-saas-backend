@@ -5,8 +5,11 @@ import {
   IsBoolean,
   IsArray,
   IsEnum,
+  IsUUID,
 } from 'class-validator';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
+import { Exists } from '@/shared/common/decorators/exists.decorator';
+import { Center } from '@/modules/centers/entities/center.entity';
 
 export class CreateRoleRequestDto {
   @IsString()
@@ -22,7 +25,8 @@ export class CreateRoleRequestDto {
   description?: string;
 
   @IsOptional()
-  @IsString()
+  @IsUUID()
+  @Exists(Center)
   centerId?: string;
 
   @IsOptional()

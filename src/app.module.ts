@@ -25,9 +25,16 @@ import { DatabaseModule } from './shared/modules/database/database.module';
 import { AccessControlHelperService } from './modules/access-control/services/access-control-helper.service';
 import { ContextMiddleware } from './shared/common/middleware/context.middleware';
 import { ScopeGuard } from './shared/common/guards';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ExistsConstraint } from './shared/common/validators/exists.constraint';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot({
+      wildcard: true,
+      delimiter: '.',
+      maxListeners: 10,
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -61,6 +68,7 @@ import { ScopeGuard } from './shared/common/guards';
   ],
   controllers: [],
   providers: [
+    ExistsConstraint,
     {
       provide: APP_INTERCEPTOR,
       useClass: ErrorInterceptor,

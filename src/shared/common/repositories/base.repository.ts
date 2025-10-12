@@ -1,4 +1,9 @@
-import { Repository, SelectQueryBuilder, ObjectLiteral } from 'typeorm';
+import {
+  Repository,
+  SelectQueryBuilder,
+  ObjectLiteral,
+  DeepPartial,
+} from 'typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Pagination, paginate } from 'nestjs-typeorm-paginate';
 import { LoggerService } from '@/shared/services/logger.service';
@@ -391,18 +396,15 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     return this.repository.findOne({ where: { id } as any });
   }
 
-  async update(id: string, data: Partial<T>): Promise<T | null> {
+  async update(id: string, data: DeepPartial<T>): Promise<T | null> {
     const entity = await this.repository.findOne({ where: { id } as any });
     if (!entity) return null;
 
-    Object.assign(entity, data); // merge updates
+    console.log('entity', entity);
+    this.repository.merge(entity, data);
 
     return this.repository.save(entity);
   }
-
-  // async delete(id: string): Promise<void> {
-  //   await this.repository.delete(id);
-  // }
 
   async softRemove(id: string): Promise<void> {
     const entity = await this.repository.findOne({ where: { id } as any });

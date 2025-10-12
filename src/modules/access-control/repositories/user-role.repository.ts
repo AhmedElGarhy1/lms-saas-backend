@@ -1,17 +1,25 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { IsNull, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { UserRole } from '../entities/roles/user-role.entity';
+import { Role } from '../entities/roles/role.entity';
 import { LoggerService } from '@/shared/services/logger.service';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { DefaultRoles } from '../constants/roles';
+import { AssignRoleDto } from '../dto/assign-role.dto';
 
 @Injectable()
 export class UserRoleRepository extends BaseRepository<UserRole> {
   constructor(
     @InjectRepository(UserRole)
     private readonly userRoleRepository: Repository<UserRole>,
+    @InjectRepository(Role)
+    private readonly roleRepository: Repository<Role>,
     protected readonly logger: LoggerService,
   ) {
     super(userRoleRepository, logger);
@@ -120,17 +128,19 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
     });
   }
 
-  async assignUserRole(data: {
-    userId: string;
-    roleId: string;
-    centerId?: string;
-  }): Promise<UserRole> {
+  async assignUserRole(data: AssignRoleDto): Promise<UserRole> {
     const existingUserRole = await this.getUserRole(data.userId, data.centerId);
-    // if (existingUserRole) {
-    //   throw new BadRequestException('User already has a role in this scope');
-    // }
+
     if (existingUserRole) {
-      await this.removeUserRole(existingUserRole);
+      await this.removeUserRole(existingUserRole, true);
+    }
+
+    const role = await this.roleRepository.findOneBy({ id: data.roleId });
+
+    if (!role?.isSameScope(data.centerId)) {
+      throw new ForbiddenException(
+        'You are not authorized to assign this role',
+      );
     }
 
     const userRole = this.userRoleRepository.create({
@@ -142,32 +152,25 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
     return this.userRoleRepository.save(userRole);
   }
 
-  async removeUserRole(data: {
-    userId: string;
-    roleId: string;
-    centerId?: string;
-  }): Promise<void> {
+  async removeUserRole(
+    data: AssignRoleDto,
+    isReAssign: boolean = false,
+  ): Promise<void> {
     const existingUserRole = await this.getUserRole(data.userId, data.centerId);
     if (!existingUserRole) {
       throw new BadRequestException('User does not have a role in this scope');
     }
-    await this.softRemove(existingUserRole.id);
-  }
 
-  async userHasRoleType(
-    userId: string,
-    roleType: string,
-    centerId?: string,
-  ): Promise<boolean> {
-    const queryBuilder = this.userRoleRepository.createQueryBuilder('userRole');
-    queryBuilder.leftJoinAndSelect('userRole.role', 'role');
-    queryBuilder.where('userRole.userId = :userId', { userId });
-    queryBuilder.andWhere('role.type = :roleType', { roleType });
-    if (centerId) {
-      queryBuilder.andWhere('userRole.centerId = :centerId', { centerId });
-    } else {
-      queryBuilder.andWhere('userRole.centerId IS NULL');
+    if (!existingUserRole.role.isSameScope(data.centerId)) {
+      throw new ForbiddenException(
+        'You are not authorized to remove this role',
+      );
     }
-    return (await queryBuilder.getCount()) > 0;
+    if (!isReAssign) {
+      if (existingUserRole.role.type !== RoleType.CENTER) {
+        throw new ForbiddenException(`User must have global role`);
+      }
+    }
+    await this.remove(existingUserRole.id);
   }
 }

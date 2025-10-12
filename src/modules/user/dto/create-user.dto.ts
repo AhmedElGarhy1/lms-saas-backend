@@ -7,9 +7,13 @@ import {
   IsArray,
   ValidateNested,
   IsNotEmpty,
+  IsUUID,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { Exists } from '@/shared/common/decorators/exists.decorator';
+import { Role } from '@/modules/access-control/entities/roles/role.entity';
+import { Center } from '@/modules/centers/entities/center.entity';
 
 export class UserProfileDto {
   @ApiProperty({ description: 'User phone number', required: false })
@@ -28,26 +32,7 @@ export class UserProfileDto {
   dateOfBirth?: string;
 }
 
-export class UserRoleDto {
-  @ApiProperty({
-    description: 'Role ID for the user',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  roleId?: string;
-
-  @ApiProperty({
-    description: 'Center ID (null for global roles)',
-    required: false,
-    nullable: true,
-  })
-  @IsOptional()
-  @IsString()
-  centerId?: string; // Can be null for global roles
-}
-
-export class CreateUserRequestDto {
+export class CreateUserDto {
   @ApiProperty({ description: 'User full name' })
   @IsString()
   @IsNotEmpty()
@@ -81,14 +66,23 @@ export class CreateUserRequestDto {
   @ValidateNested()
   @Type(() => UserProfileDto)
   profile: UserProfileDto;
+}
+
+export class CreateUserWithRoleDto extends CreateUserDto {
+  @ApiProperty({
+    description: 'Role ID for the user',
+  })
+  @IsUUID()
+  @Exists(Role)
+  roleId: string;
 
   @ApiProperty({
-    description: 'User role assignment (one role per scope)',
+    description: 'Center ID (null for global roles)',
+    nullable: true,
     required: false,
-    type: UserRoleDto,
   })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => UserRoleDto)
-  userRole?: UserRoleDto;
+  @IsUUID()
+  @Exists(Center)
+  centerId?: string; // Can be null for global roles
 }

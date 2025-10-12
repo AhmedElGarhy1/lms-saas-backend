@@ -1,10 +1,7 @@
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
-import { CreateUserRequestDto } from '../dto/create-user.dto';
-import { UpdateUserRequestDto } from '../dto/update-user.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
-import { User } from '../entities/user.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
-import { UserRole } from '@/modules/access-control/entities';
+import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 
 export interface UserListQuery {
   query: PaginateUsersDto;
@@ -15,6 +12,7 @@ export interface UserListQuery {
 export interface ChangePasswordParams {
   userId: string;
   dto: ChangePasswordRequestDto;
+  centerId?: string;
 }
 
 export interface GetProfileParams {

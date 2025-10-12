@@ -8,6 +8,9 @@ import {
 import { Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
+import { Exists } from '@/shared/common/decorators/exists.decorator';
+import { Role } from '@/modules/access-control/entities/roles/role.entity';
+import { Center } from '@/modules/centers/entities/center.entity';
 
 export enum AccessibleUsersEnum {
   INCLUDE = 'include',
@@ -50,6 +53,7 @@ export class PaginateUsersDto extends BasePaginationDto {
   @IsOptional()
   @IsString()
   @IsUUID(4, { message: 'Role ID must be a valid UUID' })
+  @Exists(Role)
   roleId?: string;
 
   @ApiPropertyOptional({
@@ -59,6 +63,7 @@ export class PaginateUsersDto extends BasePaginationDto {
   @IsOptional()
   @IsString()
   @IsUUID(4, { message: 'Center ID must be a valid UUID' })
+  @Exists(Center)
   centerId?: string;
 
   @ApiPropertyOptional({
@@ -70,21 +75,42 @@ export class PaginateUsersDto extends BasePaginationDto {
   @IsEnum(AccessibleUsersEnum)
   userAccess?: AccessibleUsersEnum;
 
-  // @ApiPropertyOptional({
-  //   description: 'Return only accessible centers',
-  //   enum: AccessibleUsersEnum,
-  //   example: AccessibleUsersEnum.INCLUDE,
-  // })
-  // @IsOptional()
-  // @IsEnum(AccessibleUsersEnum)
-  // centerAccess?: AccessibleUsersEnum;
+  @ApiPropertyOptional({
+    description: 'Return only accessible centers',
+    enum: AccessibleUsersEnum,
+    example: AccessibleUsersEnum.INCLUDE,
+  })
+  @IsOptional()
+  @IsEnum(AccessibleUsersEnum)
+  centerAccess?: AccessibleUsersEnum;
 
-  // @ApiPropertyOptional({
-  //   description: 'Return only accessible roles',
-  //   enum: AccessibleUsersEnum,
-  //   example: AccessibleUsersEnum.INCLUDE,
-  // })
-  // @IsOptional()
-  // @IsEnum(AccessibleUsersEnum)
-  // roleAccess?: AccessibleUsersEnum;
+  @ApiPropertyOptional({
+    description: 'Return only accessible roles',
+    enum: AccessibleUsersEnum,
+    example: AccessibleUsersEnum.INCLUDE,
+  })
+  @IsOptional()
+  @IsEnum(AccessibleUsersEnum)
+  roleAccess?: AccessibleUsersEnum;
+
+  @ApiPropertyOptional({
+    description: 'Display role in case of centerId provided',
+    type: Boolean,
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      const lowerValue = value.toLowerCase();
+      if (lowerValue === 'true') return true;
+      if (lowerValue === 'false') return false;
+      return undefined; // Invalid string value
+    }
+    if (typeof value === 'boolean') {
+      return value; // Already a boolean
+    }
+    return undefined; // Not a string or boolean
+  })
+  displayRole?: boolean;
 }

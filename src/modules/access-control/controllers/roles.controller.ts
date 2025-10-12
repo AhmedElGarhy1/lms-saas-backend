@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,11 +26,12 @@ import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { PaginationDocs } from '@/shared/common/decorators/pagination-docs.decorator';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
-import { ActorUser as CurrentUserType } from '@/shared/common/types/actor-user.type';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { AssignRoleDto } from '../dto/assign-role.dto';
 import { RoleResponseDto } from '../dto/role-response.dto';
 import { SerializeOptions } from '@nestjs/common';
+import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 
 @ApiTags('Roles')
 @Controller('roles')
@@ -47,9 +49,9 @@ export class RolesController {
   @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
   async getPermissions(
     @Param('type') type: 'admin' | 'user' | 'all' = 'all',
-    @GetUser() user: CurrentUserType,
+    @GetUser() user: ActorUser,
   ) {
-    return this.permissionService.getPermissions(type, user.id);
+    return this.permissionService.getPermissions(type, user);
   }
 
   @Post()
@@ -62,9 +64,9 @@ export class RolesController {
   @ApiBody({ type: CreateRoleRequestDto })
   async createRole(
     @Body() dto: CreateRoleRequestDto,
-    @GetUser() user: CurrentUserType,
+    @GetUser() actor: ActorUser,
   ) {
-    return this.rolesService.createRole(dto, user.id);
+    return this.rolesService.createRole(dto, actor);
   }
 
   @Get()
@@ -90,10 +92,10 @@ export class RolesController {
   })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
   async getRoles(
-    @Paginate() query: PaginationQuery,
-    @GetUser() user: CurrentUserType,
+    @Query() query: PaginateRolesDto,
+    @GetUser() actor: ActorUser,
   ) {
-    return this.rolesService.paginateRoles(query, user.id, user.centerId);
+    return this.rolesService.paginateRoles(query, actor);
   }
 
   @Post('assign')
@@ -101,11 +103,8 @@ export class RolesController {
   @ApiOperation({ summary: 'Assign a role to a user' })
   @ApiBody({ type: AssignRoleDto })
   @ApiResponse({ status: 201, description: 'Role assigned successfully' })
-  async assignRole(
-    @Body() dto: AssignRoleDto,
-    @GetUser() user: CurrentUserType,
-  ) {
-    return this.rolesService.assignRoleValidate(dto, user.id);
+  async assignRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
+    return this.rolesService.assignRoleValidate(dto, user);
   }
 
   @Delete('assign')
@@ -113,11 +112,8 @@ export class RolesController {
   @ApiOperation({ summary: 'Remove a role from a user' })
   @ApiBody({ type: AssignRoleDto })
   @ApiResponse({ status: 201, description: 'Role removed successfully' })
-  async removeRole(
-    @Body() dto: AssignRoleDto,
-    @GetUser() user: CurrentUserType,
-  ) {
-    return this.rolesService.removeUserRoleValidate(dto, user.id);
+  async removeRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
+    return this.rolesService.removeUserRoleValidate(dto, user);
   }
 
   @Get(':roleId')
@@ -125,7 +121,10 @@ export class RolesController {
   @ApiParam({ name: 'roleId', type: String })
   @ApiResponse({ status: 200, description: 'Role details' })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
-  async getRoleById(@Param('roleId') roleId: string) {
+  async getRoleById(
+    @Param('roleId') roleId: string,
+    @GetUser() user: ActorUser,
+  ) {
     return this.rolesService.findById(roleId);
   }
 
@@ -138,9 +137,9 @@ export class RolesController {
   async updateRole(
     @Param('roleId') roleId: string,
     @Body() dto: UpdateRoleRequestDto,
-    @GetUser() user: CurrentUserType,
+    @GetUser() user: ActorUser,
   ) {
-    return this.rolesService.updateRole(roleId, dto, user.id);
+    return this.rolesService.updateRole(roleId, dto, user);
   }
 
   @Delete(':roleId')
@@ -150,10 +149,10 @@ export class RolesController {
   @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.DELETE.action)
   async deleteRole(
     @Param('roleId') roleId: string,
-    @GetUser() user: CurrentUserType,
+    @GetUser() user: ActorUser,
   ) {
     console.log('roleId', roleId);
     console.log('user', user);
-    return this.rolesService.deleteRole(roleId, user.id);
+    return this.rolesService.deleteRole(roleId, user);
   }
 }

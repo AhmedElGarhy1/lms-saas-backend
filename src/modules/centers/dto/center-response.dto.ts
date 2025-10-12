@@ -14,25 +14,9 @@ export class CenterResponseDto {
   @Expose()
   description?: string;
 
-  @ApiProperty({ description: 'Center address' })
-  @Expose()
-  address: string;
-
   @ApiProperty({ description: 'Center city' })
   @Expose()
-  city: string;
-
-  @ApiProperty({ description: 'Center state' })
-  @Expose()
-  state: string;
-
-  @ApiProperty({ description: 'Center postal code' })
-  @Expose()
-  postalCode: string;
-
-  @ApiProperty({ description: 'Center country' })
-  @Expose()
-  country: string;
+  logo: string;
 
   @ApiProperty({ description: 'Center phone number' })
   @Expose()

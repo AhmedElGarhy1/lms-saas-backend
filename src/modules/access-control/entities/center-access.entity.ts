@@ -3,24 +3,28 @@ import { User } from '@/modules/user/entities/user.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 
-@Entity('global_access')
-@Index(['userId', 'centerId'], { unique: true })
+@Entity('center_access')
+@Index(['userId', 'centerId', 'global'], { unique: true })
 @Index(['centerId'])
-export class GlobalAccess extends BaseEntity {
+@Index(['global'])
+export class CenterAccess extends BaseEntity {
   @Column({ type: 'uuid' })
   userId: string;
 
   @Column({ type: 'uuid' })
   centerId: string;
 
+  @Column({ type: 'boolean', default: false })
+  global: boolean;
+
   // Relations
-  @ManyToOne(() => User, (user) => user.globalAccess, {
+  @ManyToOne(() => User, (user) => user.centerAccess, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => Center, (center) => center.globalAccess, {
+  @ManyToOne(() => Center, (center) => center.centerAccess, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'centerId' })

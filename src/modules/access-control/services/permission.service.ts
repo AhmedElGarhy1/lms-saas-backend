@@ -6,6 +6,7 @@ import { UserRoleRepository } from '../repositories/user-role.repository';
 import { FindOptionsWhere } from 'typeorm';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @Injectable()
 export class PermissionService {
@@ -21,12 +22,13 @@ export class PermissionService {
    */
   async getPermissions(
     type: 'admin' | 'user' | 'all' = 'all',
-    userId: string,
+    actor: ActorUser,
   ): Promise<Permission[]> {
     const where: FindOptionsWhere<Permission> = {};
 
-    const userHighestRole =
-      await this.accessControlHelperService.getUserRole(userId);
+    const userHighestRole = await this.accessControlHelperService.getUserRole(
+      actor.id,
+    );
 
     const roleType = userHighestRole?.role?.type;
 

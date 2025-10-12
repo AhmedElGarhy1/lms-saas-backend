@@ -1,71 +1,48 @@
 import {
   IsString,
-  IsOptional,
-  MinLength,
   IsEmail,
   IsUrl,
   IsBoolean,
-  IsNotEmpty,
   ValidateNested,
+  IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { UserProfileDto } from '@/modules/user/dto/create-user.dto';
+import { CreateUserDto } from '@/modules/user/dto/create-user.dto';
+import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateCenterUserDto {
+export class CreateCenterDto {
+  @ApiProperty({ description: 'Center name' })
   @IsString()
-  @IsNotEmpty()
-  @MinLength(2, { message: 'User name must be at least 2 characters' })
   name: string;
 
-  @IsEmail({}, { message: 'Invalid user email format' })
-  @IsNotEmpty()
-  email: string;
-
+  @ApiProperty({ description: 'Center description' })
   @IsString()
-  @IsNotEmpty()
-  @MinLength(6, { message: 'User password must be at least 6 characters' })
-  password: string;
-
   @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
-
-  @ValidateNested()
-  @Type(() => UserProfileDto)
-  profile: UserProfileDto;
-}
-
-export class CreateCenterRequestDto {
-  @IsString()
-  @MinLength(2, { message: 'Name must be at least 2 characters' })
-  name: string;
-
-  @IsOptional()
-  @IsString()
   description?: string;
 
-  @IsOptional()
+  @ApiProperty({ description: 'Center phone' })
   @IsString()
-  address?: string;
-
   @IsOptional()
-  @IsString()
   phone?: string;
 
+  @ApiProperty({ description: 'Center email' })
+  @IsEmail()
   @IsOptional()
-  @IsEmail({}, { message: 'Invalid email format' })
   email?: string;
 
+  @ApiProperty({ description: 'Center website' })
+  @IsUrl()
   @IsOptional()
-  @IsUrl({}, { message: 'Invalid website URL' })
   website?: string;
 
-  @IsOptional()
+  @ApiProperty({ description: 'Whether the center is active' })
   @IsBoolean()
+  @IsOptional()
   isActive?: boolean;
 
   // User object for center admin
+  @ApiProperty({ type: CreateUserDto })
   @ValidateNested()
-  @Type(() => CreateCenterUserDto)
-  user: CreateCenterUserDto;
+  @Type(() => CreateUserDto)
+  user: CreateUserDto;
 }

@@ -1,6 +1,5 @@
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { Role } from '../entities/roles/role.entity';
-import { USER_PERMISSIONS } from './permissions';
 
 export enum DefaultRoles {
   SUPER_ADMIN = 'Super Administrator',
@@ -10,12 +9,10 @@ export enum DefaultRoles {
   PARENT = 'Parent',
 }
 
-export const createDefaultCenterAdminRole = (
-  centerId: string,
-): Partial<Role> => ({
-  name: 'Center Admin',
+export const createOwnerRoleData = (centerId: string) => ({
+  name: DefaultRoles.OWNER,
   type: RoleType.CENTER,
-  description: 'Center Admin role',
-  permissions: USER_PERMISSIONS.map((permission) => permission.action),
+  description: 'Center Owner role',
+  permissions: [],
   centerId: centerId,
 });

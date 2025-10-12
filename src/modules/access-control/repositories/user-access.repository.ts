@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { UserAccess } from '../../user/entities/user-access.entity';
 import { LoggerService } from '../../../shared/services/logger.service';
+import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 
 @Injectable()
 export class UserAccessRepository extends BaseRepository<UserAccess> {
@@ -29,12 +30,7 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
     });
   }
 
-  async grantUserAccess(body: {
-    userId: string;
-    targetUserId: string;
-    centerId?: string;
-    granterUserId: string;
-  }): Promise<void> {
+  async grantUserAccess(body: UserAccessDto): Promise<void> {
     const userAccess = this.userAccessRepository.create({
       granterUserId: body.granterUserId,
       targetUserId: body.targetUserId,
@@ -44,12 +40,7 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
     await this.userAccessRepository.save(userAccess);
   }
 
-  async revokeUserAccess(body: {
-    userId: string;
-    targetUserId: string;
-    centerId?: string;
-    granterUserId: string;
-  }): Promise<void> {
+  async revokeUserAccess(body: UserAccessDto): Promise<void> {
     const userAccess = await this.userAccessRepository.findOne({
       where: {
         granterUserId: body.granterUserId,

@@ -23,6 +23,7 @@ export const SYSTEM_ROLES: Partial<Role>[] = [
     description: 'Parent with access to student information across all centers',
     permissions: [PERMISSIONS.USER.READ.action, PERMISSIONS.CENTER.VIEW.action],
     centerId: undefined,
+    readOnly: true,
   },
   {
     name: 'Student',
@@ -31,6 +32,7 @@ export const SYSTEM_ROLES: Partial<Role>[] = [
       'Student with basic access to center resources across all centers',
     permissions: [PERMISSIONS.USER.READ.action, PERMISSIONS.CENTER.VIEW.action],
     centerId: undefined,
+    readOnly: true,
   },
   {
     name: 'Teacher',
@@ -43,6 +45,7 @@ export const SYSTEM_ROLES: Partial<Role>[] = [
       PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action,
     ],
     centerId: undefined,
+    readOnly: true,
   },
 ];
 
@@ -54,6 +57,7 @@ export const ADMIN_ROLES: Partial<Role>[] = [
     description: 'Ultimate system administrator with full access to everything',
     permissions: ['*'], // All permissions
     centerId: undefined,
+    readOnly: true,
   },
   {
     name: 'Country Manager',
@@ -127,6 +131,7 @@ export const CENTER_ROLES: Partial<Role>[] = [
     type: RoleType.CENTER,
     description: 'Ultimate center owner with full access within the center',
     permissions: ['*'], // Ultimate access - all permissions
+    readOnly: true,
     // centerId will be set when creating roles for specific centers
   },
   {

@@ -20,7 +20,7 @@ import {
 import { CenterFactory } from './factories/center.factory';
 import { faker } from '@faker-js/faker';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { GlobalAccess } from '@/modules/access-control/entities/global-access.entity';
+import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
 import { Role } from '@/modules/access-control/entities/roles/role.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
 import { DefaultRoles } from '@/modules/access-control/constants/roles';
@@ -48,8 +48,8 @@ export class DatabaseSeeder {
     private readonly userRoleRepository: Repository<UserRole>,
     @InjectRepository(UserAccess)
     private readonly userAccessRepository: Repository<UserAccess>,
-    @InjectRepository(GlobalAccess)
-    private readonly globalAccessRepository: Repository<GlobalAccess>,
+    @InjectRepository(CenterAccess)
+    private readonly centerAccessRepository: Repository<CenterAccess>,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     @InjectRepository(EmailVerification)
@@ -99,8 +99,8 @@ export class DatabaseSeeder {
       // Assign roles and permissions
       await this.assignRolesAndPermissions(users, centers, systemUser.id);
 
-      // Create global access for admin users
-      await this.createGlobalAccess(users, centers, systemUser.id);
+      // Create center access for admin users
+      await this.createCenterAccess(users, centers, systemUser.id);
 
       // Create activity logs
       await this.createActivityLogs(users, centers, systemUser.id);
@@ -197,7 +197,7 @@ export class DatabaseSeeder {
         'activity_logs',
         'user_roles',
         'user_access',
-        'global_access',
+        'center_access',
         'profiles',
         'users',
         'permissions',
@@ -295,7 +295,6 @@ export class DatabaseSeeder {
 
     // Get center IDs and names for center-specific roles
     const centerIds = centers.map((center) => center.id);
-    const centerNames = centers.map((center) => center.name);
 
     // Get all role definitions (SYSTEM + ADMIN + CENTER-specific)
     const roleDefinitions = getAllRoleDefinitions(centerIds);
@@ -337,9 +336,6 @@ export class DatabaseSeeder {
         name: center.name || `Center ${index + 1}`,
         description: center.description || `Educational center ${index + 1}`,
         createdBy: createdBy, // Use system user as creator
-        address:
-          center.address?.substring(0, 255) ||
-          faker.location.streetAddress().substring(0, 255),
         phone: generateShortPhone(),
         email:
           center.email?.substring(0, 255) ||
@@ -736,12 +732,12 @@ export class DatabaseSeeder {
     this.logger.log('Roles and permissions assigned successfully');
   }
 
-  private async createGlobalAccess(
+  private async createCenterAccess(
     users: User[],
     centers: Center[],
     createdBy: string,
   ): Promise<void> {
-    this.logger.log('Creating global access records...');
+    this.logger.log('Creating center access records...');
 
     // Get admin users (users with ADMIN role type)
     const adminUsers = users.filter((user) => {
@@ -760,27 +756,66 @@ export class DatabaseSeeder {
     // Create global access for admin users to all centers
     for (const adminUser of adminUsers) {
       for (const centerId of centerIds) {
-        // Check if global access already exists
-        const existingAccess = await this.globalAccessRepository.findOne({
-          where: { userId: adminUser.id, centerId },
+        // Check if center access already exists
+        const existingAccess = await this.centerAccessRepository.findOne({
+          where: { userId: adminUser.id, centerId, global: true },
         });
 
         if (!existingAccess) {
-          const globalAccess = this.globalAccessRepository.create({
+          const centerAccess = this.centerAccessRepository.create({
             userId: adminUser.id,
             centerId,
+            global: true, // Admin users get global access
             createdBy,
           });
 
-          await this.globalAccessRepository.save(globalAccess);
+          await this.centerAccessRepository.save(centerAccess);
           this.logger.log(
-            `Created global access for ${adminUser.email} to center ${centerId}`,
+            `Created global center access for ${adminUser.email} to center ${centerId}`,
           );
         }
       }
     }
 
-    this.logger.log('Global access records created successfully');
+    // Create local access for center users (non-admin users)
+    const centerUsers = users.filter((user) => {
+      return !(
+        user.email.includes('admin') ||
+        user.email.includes('manager') ||
+        user.email.includes('support')
+      );
+    });
+
+    // Assign center users to random centers with local access
+    for (const centerUser of centerUsers) {
+      // Randomly assign to 1-3 centers
+      const numCenters = Math.floor(Math.random() * 3) + 1;
+      const shuffledCenters = [...centerIds].sort(() => 0.5 - Math.random());
+      const assignedCenters = shuffledCenters.slice(0, numCenters);
+
+      for (const centerId of assignedCenters) {
+        // Check if center access already exists
+        const existingAccess = await this.centerAccessRepository.findOne({
+          where: { userId: centerUser.id, centerId, global: false },
+        });
+
+        if (!existingAccess) {
+          const centerAccess = this.centerAccessRepository.create({
+            userId: centerUser.id,
+            centerId,
+            global: false, // Center users get local access
+            createdBy,
+          });
+
+          await this.centerAccessRepository.save(centerAccess);
+          this.logger.log(
+            `Created local center access for ${centerUser.email} to center ${centerId}`,
+          );
+        }
+      }
+    }
+
+    this.logger.log('Center access records created successfully');
   }
 
   private async createActivityLogs(

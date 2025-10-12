@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Put,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,14 +24,13 @@ import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
-import { CreateCenterRequestDto } from '../dto/create-center.dto';
+import { CreateCenterDto } from '../dto/create-center.dto';
 import { UpdateCenterRequestDto } from '../dto/update-center.dto';
 import { CenterResponseDto } from '../dto/center-response.dto';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { Scope, ScopeType } from '@/shared/common/decorators';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
-import { GrantGlobalAccessDto } from '@/modules/access-control/dto/grant-global-access.dto';
-import { RevokeGlobalAccessDto } from '@/modules/access-control/dto/revoke-global-access.dto';
+import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
 
 @Controller('centers')
 @ApiTags('Centers')
@@ -42,12 +42,12 @@ export class CentersController {
   ) {}
 
   @Post('access')
-  @ApiOperation({ summary: 'Grant global access to a user for this center' })
+  @ApiOperation({ summary: 'Grant center access to a user for this center' })
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
-  @ApiBody({ type: GrantGlobalAccessDto })
+  @ApiBody({ type: CenterAccessDto })
   @ApiResponse({
     status: 201,
-    description: 'Global access granted successfully',
+    description: 'Center access granted successfully',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -55,20 +55,20 @@ export class CentersController {
   @ApiResponse({ status: 404, description: 'Center not found' })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.GRANT.action)
   @Scope(ScopeType.ADMIN)
-  async grantGlobalAccess(
-    @Body() dto: GrantGlobalAccessDto,
+  async grantCenterAccess(
+    @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    return this.accessControlService.grantGlobalAccess(dto, actor.id);
+    return this.accessControlService.grantCenterAccess(dto, actor);
   }
 
   @Delete('access')
-  @ApiOperation({ summary: 'Revoke global access from a user for this center' })
+  @ApiOperation({ summary: 'Revoke center access from a user for this center' })
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
-  @ApiBody({ type: RevokeGlobalAccessDto })
+  @ApiBody({ type: CenterAccessDto })
   @ApiResponse({
     status: 200,
-    description: 'Global access revoked successfully',
+    description: 'Center access revoked successfully',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -76,18 +76,16 @@ export class CentersController {
   @ApiResponse({ status: 404, description: 'Center not found' })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.REVOKE.action)
   @Scope(ScopeType.ADMIN)
-  async revokeGlobalAccess(
-    @Body() dto: RevokeGlobalAccessDto,
+  async revokeCenterAccess(
+    @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    // Override centerId from URL parameter
-
-    return this.accessControlService.revokeGlobalAccess(dto, actor.id);
+    return this.accessControlService.revokeCenterAccess(dto, actor);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a new center' })
-  @ApiBody({ type: CreateCenterRequestDto })
+  @ApiBody({ type: CreateCenterDto })
   @ApiResponse({
     status: 201,
     description: 'Center created successfully',
@@ -97,11 +95,8 @@ export class CentersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @Permissions(PERMISSIONS.CENTER.CREATE.action)
-  createCenter(
-    @Body() dto: CreateCenterRequestDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    return this.centersService.createCenter(dto, actor.id);
+  createCenter(@Body() dto: CreateCenterDto, @GetUser() actor: ActorUser) {
+    return this.centersService.createCenter(dto, actor);
   }
 
   @Get()
@@ -139,7 +134,7 @@ export class CentersController {
     return this.centersService.findCenterById(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   @ApiOperation({ summary: 'Update center' })
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @ApiBody({ type: UpdateCenterRequestDto })

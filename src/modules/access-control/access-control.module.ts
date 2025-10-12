@@ -14,9 +14,9 @@ import { Permission } from './entities/permission.entity';
 import { Role } from './entities/roles/role.entity';
 import { UserRole } from './entities/roles/user-role.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { GlobalAccess } from './entities/global-access.entity';
+import { CenterAccess } from './entities/center-access.entity';
 import { UserRoleSubscriber } from './subscriber/user-role.subscriber';
-import { GlobalAccessRepository } from './repositories/global-access.repository';
+import { CenterAccessRepository } from './repositories/center-access.repository';
 
 @Global()
 @Module({
@@ -27,7 +27,7 @@ import { GlobalAccessRepository } from './repositories/global-access.repository'
       Role,
       UserRole,
       UserAccess,
-      GlobalAccess,
+      CenterAccess,
     ]),
   ],
   controllers: [RolesController],
@@ -40,7 +40,7 @@ import { GlobalAccessRepository } from './repositories/global-access.repository'
     UserAccessRepository,
     RolesRepository,
     UserRoleRepository,
-    GlobalAccessRepository,
+    CenterAccessRepository,
     UserRoleSubscriber,
   ],
   exports: [AccessControlService, AccessControlHelperService, RolesService],

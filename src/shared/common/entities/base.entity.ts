@@ -55,14 +55,18 @@ export abstract class BaseEntity {
     console.log('ctx?.userId', ctx?.userId);
     if (ctx.userId) {
       this.createdBy = ctx.userId;
+      this.createdAt = new Date();
     }
   }
 
   @BeforeUpdate()
   protected setUpdatedBy() {
     const ctx = RequestContext.get();
+    console.log('ctx?.userId', ctx?.userId);
+    console.log('this.updatedBy', this.updatedBy);
     if (ctx.userId) {
       this.updatedBy = ctx.userId;
+      this.updatedAt = new Date();
     }
   }
 
@@ -71,6 +75,7 @@ export abstract class BaseEntity {
     const ctx = RequestContext.get();
     if (ctx.userId) {
       this.deletedBy = ctx.userId;
+      this.deletedAt = new Date();
     }
   }
 }

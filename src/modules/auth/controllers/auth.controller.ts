@@ -143,6 +143,6 @@ export class AuthController {
     type: LogoutResponseDto,
   })
   async logout(@GetUser() user: ActorUser) {
-    return this.authService.logout(user.id);
+    return this.authService.logout(user);
   }
 }

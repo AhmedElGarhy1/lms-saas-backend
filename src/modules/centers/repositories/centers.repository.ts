@@ -43,8 +43,8 @@ export class CentersRepository extends BaseRepository<Center> {
       // no access control
     } else if (isAdmin) {
       queryBuilder
-        .leftJoin('center.globalAccess', 'globalAccess')
-        .andWhere('globalAccess.userId = :actorId', {
+        .leftJoin('center.centerAccess', 'centerAccess')
+        .andWhere('centerAccess.userId = :actorId', {
           actorId,
         });
     } else {
@@ -60,21 +60,12 @@ export class CentersRepository extends BaseRepository<Center> {
     ) {
       const isTargetUserSuperAdmin =
         await this.accessControlHelperService.isSuperAdmin(userId);
-      const isTargetUserAdmin =
-        await this.accessControlHelperService.hasAdminRole(userId);
 
       if (isTargetUserSuperAdmin) {
         // nothing
-      } else if (isTargetUserAdmin) {
-        queryBuilder.andWhere(
-          'center.id IN (SELECT "centerId" FROM global_access WHERE "userId" = :userId)',
-          {
-            userId: userId,
-          },
-        );
       } else {
         queryBuilder.andWhere(
-          'center.id IN (SELECT "centerId" FROM user_roles WHERE "userId" = :userId)',
+          'center.id IN (SELECT "centerId" FROM center_access WHERE "userId" = :userId)',
           {
             userId: userId,
           },
@@ -97,25 +88,12 @@ export class CentersRepository extends BaseRepository<Center> {
 
     let filteredItems: CenterResponseDto[] = result.items;
 
-    if (userId) {
-      if (centerAccess === AccessibleUsersEnum.ALL) {
-        const accessibleCentersIds =
-          await this.accessControlHelperService.getAccessibleCentersIdsForUser(
-            userId,
-            result.items.map((center) => center.id),
-          );
-        filteredItems = filteredItems.map((center) =>
-          Object.assign(center, {
-            isCenterAccessible: accessibleCentersIds.includes(center.id),
-          }),
-        );
-      } else if (centerAccess === AccessibleUsersEnum.INCLUDE) {
-        filteredItems = filteredItems.map((center) =>
-          Object.assign(center, {
-            isCenterAccessible: true,
-          }),
-        );
-      }
+    if (userId && centerAccess) {
+      filteredItems = await this.applyCenterAccess(
+        filteredItems,
+        userId,
+        centerAccess,
+      );
     }
 
     return {
@@ -142,5 +120,33 @@ export class CentersRepository extends BaseRepository<Center> {
   // Seeder method
   async clearAllCenters(): Promise<void> {
     await this.centerRepository.createQueryBuilder().delete().execute();
+  }
+
+  private async applyCenterAccess(
+    centers: CenterResponseDto[],
+    userId: string,
+    centerAccess: AccessibleUsersEnum,
+  ): Promise<CenterResponseDto[]> {
+    let filteredItems: CenterResponseDto[] = centers;
+    const centerIds = centers.map((center) => center.id);
+    if (centerAccess === AccessibleUsersEnum.ALL) {
+      const accessibleCentersIds =
+        await this.accessControlHelperService.getAccessibleCentersIdsForUser(
+          userId,
+          centerIds,
+        );
+      filteredItems = filteredItems.map((center) =>
+        Object.assign(center, {
+          isCenterAccessible: accessibleCentersIds.includes(center.id),
+        }),
+      );
+    } else {
+      filteredItems = filteredItems.map((center) =>
+        Object.assign(center, {
+          isCenterAccessible: true,
+        }),
+      );
+    }
+    return filteredItems;
   }
 }

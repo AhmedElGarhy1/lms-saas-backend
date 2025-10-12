@@ -8,7 +8,7 @@ import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
-import { GlobalAccess } from '@/modules/access-control/entities/global-access.entity';
+import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
 import { Role } from '@/modules/access-control/entities/roles/role.entity';
 
 @Entity('users')
@@ -68,6 +68,6 @@ export class User extends BaseEntity {
   @OneToMany(() => UserRole, (userRole) => userRole.user)
   userRoles: UserRole[];
 
-  @OneToMany(() => GlobalAccess, (globalAccess) => globalAccess.user)
-  globalAccess: GlobalAccess[];
+  @OneToMany(() => CenterAccess, (centerAccess) => centerAccess.user)
+  centerAccess: CenterAccess[];
 }

@@ -11,7 +11,9 @@ export const getDatabaseConfig = (
   password: configService.get('DB_PASSWORD') || 'root',
   database: configService.get('DB_NAME') || 'lms',
   autoLoadEntities: true,
-  synchronize: configService.get('NODE_ENV') === 'development' || configService.get('NODE_ENV') === 'test',
+  synchronize:
+    configService.get('NODE_ENV') === 'development' ||
+    configService.get('NODE_ENV') === 'test',
   logging: configService.get('NODE_ENV') === 'development',
 });
 
