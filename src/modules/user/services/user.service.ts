@@ -235,10 +235,12 @@ export class UserService {
       throw new ResourceNotFoundException('User not found');
     }
 
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserId: actor.id,
-      targetUserId: userId,
-    });
+    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+      actor.id,
+    );
+    if (!isSuperAdmin) {
+      throw new InsufficientPermissionsException('Access denied to this user');
+    }
 
     // Restore user
     await this.userRepository.restore(userId);

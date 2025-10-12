@@ -56,11 +56,7 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
     });
   }
 
-  async revokeCenterAccess(
-    userId: string,
-    centerId: string,
-    global?: boolean,
-  ): Promise<boolean> {
+  async revokeCenterAccess(userId: string, centerId: string, global?: boolean) {
     const whereCondition: any = { userId, centerId };
     if (global !== undefined) {
       whereCondition.global = global;
@@ -75,9 +71,7 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
       throw new NotFoundException('Access not found');
     }
 
-    const result = await this.centerAccessRepository.delete(whereCondition);
-
-    return (result.affected ?? 0) > 0;
+    return this.centerAccessRepository.remove(existingAccess);
   }
 
   async getUserCenterAccess(userId: string): Promise<CenterAccess[]> {
