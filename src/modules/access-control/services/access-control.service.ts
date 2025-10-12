@@ -1,4 +1,5 @@
-import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 import { PermissionService } from './permission.service';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { AccessControlHelperService } from './access-control-helper.service';
@@ -42,7 +43,9 @@ export class AccessControlService {
       });
 
     if (!IHaveAccessToGranterUser) {
-      throw new ForbiddenException('You do not have access to granter user');
+      throw new InsufficientPermissionsException(
+        'You do not have access to granter user',
+      );
     }
 
     const IHaveAccessToTargetUser =
@@ -53,14 +56,16 @@ export class AccessControlService {
       });
 
     if (!IHaveAccessToTargetUser) {
-      throw new ForbiddenException('You do not have access to target user');
+      throw new InsufficientPermissionsException(
+        'You do not have access to target user',
+      );
     }
 
     // check if target user have height role
     const isGranterSuperAdmin =
       await this.accessControlHelperService.isSuperAdmin(body.granterUserId);
     if (isGranterSuperAdmin) {
-      throw new ForbiddenException(
+      throw new InsufficientPermissionsException(
         'Granter user is a super admin and can access any user',
       );
     }
@@ -73,7 +78,7 @@ export class AccessControlService {
     });
 
     if (canAccess) {
-      throw new ForbiddenException('User already has access');
+      throw new InsufficientPermissionsException('User already has access');
     }
 
     await this.grantUserAccess(body);
@@ -94,7 +99,9 @@ export class AccessControlService {
       });
 
     if (!IHaveAccessToGranterUser) {
-      throw new ForbiddenException('You do not have access to granter user');
+      throw new InsufficientPermissionsException(
+        'You do not have access to granter user',
+      );
     }
 
     const IHaveAccessToTargetUser =
@@ -105,14 +112,16 @@ export class AccessControlService {
       });
 
     if (!IHaveAccessToTargetUser) {
-      throw new ForbiddenException('You do not have access to target user');
+      throw new InsufficientPermissionsException(
+        'You do not have access to target user',
+      );
     }
 
     // Check if access exists
     const canAccess = await this.accessControlHelperService.canUserAccess(body);
 
     if (!canAccess) {
-      throw new ForbiddenException('User does not have access');
+      throw new InsufficientPermissionsException('User does not have access');
     }
 
     await this.revokeUserAccess(body);

@@ -1,4 +1,5 @@
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 import { In } from 'typeorm';
 import { UserRole } from '../entities/roles/user-role.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
@@ -59,7 +60,9 @@ export class AccessControlHelperService {
     if (haveAdminRole) {
       return;
     }
-    throw new ForbiddenException('You do not have access to admin');
+    throw new InsufficientPermissionsException(
+      'You do not have access to admin',
+    );
   }
 
   async getUserCenters(userId: string) {
@@ -197,7 +200,9 @@ export class AccessControlHelperService {
   async validateUserAccess(data: UserAccessParams): Promise<void> {
     const userAccess = await this.canUserAccess(data);
     if (!userAccess) {
-      throw new ForbiddenException('You do not have access to target user');
+      throw new InsufficientPermissionsException(
+        'You do not have access to target user',
+      );
     }
   }
 
@@ -221,7 +226,9 @@ export class AccessControlHelperService {
   async validateCenterAccess(data: CenterAccessParams): Promise<void> {
     const centerAccess = await this.canCenterAccess(data);
     if (!centerAccess) {
-      throw new ForbiddenException('You do not have access to center');
+      throw new InsufficientPermissionsException(
+        'You do not have access to center',
+      );
     }
   }
 

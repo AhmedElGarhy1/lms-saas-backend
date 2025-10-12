@@ -19,6 +19,7 @@ export interface EnhancedErrorResponse {
   actionRequired?: string;
   retryable?: boolean;
   details?: ErrorDetail[];
+  debug?: any;
 }
 
 export class ResourceNotFoundException extends HttpException {
@@ -171,6 +172,75 @@ export class UserAlreadyExistsException extends HttpException {
         ],
       } as EnhancedErrorResponse,
       HttpStatus.CONFLICT,
+    );
+  }
+}
+
+export class AuthenticationFailedException extends HttpException {
+  constructor(message: string = 'Authentication failed') {
+    super(
+      {
+        statusCode: HttpStatus.UNAUTHORIZED,
+        message,
+        error: 'Unauthorized',
+        timestamp: new Date().toISOString(),
+        userMessage: 'Invalid credentials provided',
+        actionRequired: 'Please check your credentials and try again',
+        retryable: true,
+      } as EnhancedErrorResponse,
+      HttpStatus.UNAUTHORIZED,
+    );
+  }
+}
+
+export class AccessDeniedException extends HttpException {
+  constructor(message: string = 'Access denied') {
+    super(
+      {
+        statusCode: HttpStatus.FORBIDDEN,
+        message,
+        error: 'Forbidden',
+        timestamp: new Date().toISOString(),
+        userMessage: 'You do not have permission to access this resource',
+        actionRequired: 'Please contact an administrator for access',
+        retryable: false,
+      } as EnhancedErrorResponse,
+      HttpStatus.FORBIDDEN,
+    );
+  }
+}
+
+export class BusinessLogicException extends HttpException {
+  constructor(message: string, userMessage?: string, actionRequired?: string) {
+    super(
+      {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message,
+        error: 'Bad Request',
+        timestamp: new Date().toISOString(),
+        userMessage: userMessage || 'The operation could not be completed',
+        actionRequired:
+          actionRequired || 'Please check your input and try again',
+        retryable: true,
+      } as EnhancedErrorResponse,
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}
+
+export class ServiceUnavailableException extends HttpException {
+  constructor(message: string = 'Service temporarily unavailable') {
+    super(
+      {
+        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+        message,
+        error: 'Service Unavailable',
+        timestamp: new Date().toISOString(),
+        userMessage: 'The service is temporarily unavailable',
+        actionRequired: 'Please try again later',
+        retryable: true,
+      } as EnhancedErrorResponse,
+      HttpStatus.SERVICE_UNAVAILABLE,
     );
   }
 }

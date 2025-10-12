@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsUUID } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { User } from '@/modules/user/entities/user.entity';

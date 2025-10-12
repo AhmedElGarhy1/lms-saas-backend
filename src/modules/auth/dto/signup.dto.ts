@@ -2,14 +2,14 @@ import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
 
 export class SignupRequestDto {
   @IsString()
-  @MinLength(2, { message: 'Name must be at least 2 characters' })
+  @MinLength(2)
   name: string;
 
-  @IsEmail({}, { message: 'Invalid email format' })
+  @IsEmail()
   email: string;
 
   @IsString()
-  @MinLength(6, { message: 'Password must be at least 6 characters' })
+  @MinLength(6)
   password: string;
 
   @IsOptional()

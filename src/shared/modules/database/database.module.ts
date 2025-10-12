@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseService } from '../../database.service';
 import { getDatabaseConfig, typeOrmConfig } from '../../config/database.config';
+import { ExistsConstraint } from '../../common/validators/exists.constraint';
 
 export const DATABASE_INJECTION_TOKEN = 'DatabaseService';
 
@@ -22,7 +23,8 @@ export const DATABASE_INJECTION_TOKEN = 'DatabaseService';
       useClass: DatabaseService,
     },
     DatabaseService,
+    ExistsConstraint,
   ],
-  exports: [DATABASE_INJECTION_TOKEN, DatabaseService],
+  exports: [DATABASE_INJECTION_TOKEN, DatabaseService, ExistsConstraint],
 })
 export class DatabaseModule {}

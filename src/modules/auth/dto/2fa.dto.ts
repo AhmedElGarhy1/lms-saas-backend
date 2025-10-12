@@ -1,15 +1,15 @@
-import { IsString, IsOptional, IsEmail, MinLength } from 'class-validator';
+import { IsString, IsEmail } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { User } from '@/modules/user/entities/user.entity';
 
 export class TwoFASetupRequestDto {
-  @IsEmail({}, { message: 'Invalid email format' })
+  @IsEmail()
   @Exists(User, 'email')
   email: string;
 }
 
 export class TwoFAVerifyRequestDto {
-  @IsEmail({}, { message: 'Invalid email format' })
+  @IsEmail()
   @Exists(User, 'email')
   email: string;
 
@@ -18,7 +18,7 @@ export class TwoFAVerifyRequestDto {
 }
 
 export class TwoFactorRequest {
-  @IsEmail({}, { message: 'Invalid email format' })
+  @IsEmail()
   @Exists(User, 'email')
   email: string;
 

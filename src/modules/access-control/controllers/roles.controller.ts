@@ -10,19 +10,22 @@ import {
 } from '@nestjs/common';
 import {
   ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiQuery,
   ApiBody,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import {
+  CreateApiResponses,
+  ReadApiResponses,
+  UpdateApiResponses,
+  DeleteApiResponses,
+} from '@/shared/common/decorators';
+import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { RolesService } from '../services/roles.service';
 import { PermissionService } from '../services/permission.service';
 import { CreateRoleRequestDto } from '../dto/create-role.dto';
 import { UpdateRoleRequestDto } from '../dto/update-role.dto';
-import { Paginate } from '@/shared/common/decorators/pagination.decorator';
-import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { PaginationDocs } from '@/shared/common/decorators/pagination-docs.decorator';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
@@ -43,34 +46,34 @@ export class RolesController {
   ) {}
 
   @Get('permissions')
-  @ApiOperation({ summary: 'Get permissions' })
+  @ReadApiResponses('Get permissions')
   @ApiParam({ name: 'type', type: String })
-  @ApiResponse({ status: 200, description: 'Permissions details' })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
   async getPermissions(
     @Param('type') type: 'admin' | 'user' | 'all' = 'all',
     @GetUser() user: ActorUser,
   ) {
-    return this.permissionService.getPermissions(type, user);
+    const result = await this.permissionService.getPermissions(type, user);
+    return ControllerResponse.success(
+      result,
+      'Permissions retrieved successfully',
+    );
   }
 
   @Post()
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.CREATE.action)
-  @ApiOperation({ summary: 'Create a new role' })
-  @ApiResponse({
-    status: 201,
-    description: 'Role created successfully',
-  })
+  @CreateApiResponses('Create a new role')
   @ApiBody({ type: CreateRoleRequestDto })
+  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.CREATE.action)
   async createRole(
     @Body() dto: CreateRoleRequestDto,
     @GetUser() actor: ActorUser,
   ) {
-    return this.rolesService.createRole(dto, actor);
+    const result = await this.rolesService.createRole(dto, actor);
+    return ControllerResponse.success(result, 'Role created successfully');
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get roles with pagination' })
+  @ReadApiResponses('Get roles with pagination')
   @ApiQuery({ name: 'page', required: false, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
   @ApiQuery({ name: 'search', required: false, description: 'Search term' })
@@ -79,11 +82,6 @@ export class RolesController {
     name: 'sortOrder',
     required: false,
     description: 'Sort order (ASC/DESC)',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Roles retrieved successfully',
-    type: [RoleResponseDto],
   })
   @SerializeOptions({ type: RoleResponseDto })
   @PaginationDocs({
@@ -99,60 +97,58 @@ export class RolesController {
   }
 
   @Post('assign')
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.ASSIGN.action)
-  @ApiOperation({ summary: 'Assign a role to a user' })
+  @CreateApiResponses('Assign a role to a user')
   @ApiBody({ type: AssignRoleDto })
-  @ApiResponse({ status: 201, description: 'Role assigned successfully' })
+  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.ASSIGN.action)
   async assignRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
-    return this.rolesService.assignRoleValidate(dto, user);
+    const result = await this.rolesService.assignRoleValidate(dto, user);
+    return ControllerResponse.success(result, 'Role assigned successfully');
   }
 
   @Delete('assign')
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.REMOVE.action)
-  @ApiOperation({ summary: 'Remove a role from a user' })
+  @DeleteApiResponses('Remove a role from a user')
   @ApiBody({ type: AssignRoleDto })
-  @ApiResponse({ status: 201, description: 'Role removed successfully' })
+  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.REMOVE.action)
   async removeRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
-    return this.rolesService.removeUserRoleValidate(dto, user);
+    const result = await this.rolesService.removeUserRoleValidate(dto, user);
+    return ControllerResponse.success(result, 'Role removed successfully');
   }
 
   @Get(':roleId')
-  @ApiOperation({ summary: 'Get role by ID' })
+  @ReadApiResponses('Get role by ID')
   @ApiParam({ name: 'roleId', type: String })
-  @ApiResponse({ status: 200, description: 'Role details' })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
   async getRoleById(
     @Param('roleId') roleId: string,
     @GetUser() user: ActorUser,
   ) {
-    return this.rolesService.findById(roleId);
+    const result = await this.rolesService.findById(roleId);
+    return ControllerResponse.success(result, 'Role retrieved successfully');
   }
 
   @Put(':roleId')
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.UPDATE.action)
-  @ApiOperation({ summary: 'Update a role' })
+  @UpdateApiResponses('Update a role')
   @ApiParam({ name: 'roleId', type: String })
   @ApiBody({ type: UpdateRoleRequestDto })
-  @ApiResponse({ status: 200, description: 'Role updated successfully' })
+  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.UPDATE.action)
   async updateRole(
     @Param('roleId') roleId: string,
     @Body() dto: UpdateRoleRequestDto,
     @GetUser() user: ActorUser,
   ) {
-    return this.rolesService.updateRole(roleId, dto, user);
+    const result = await this.rolesService.updateRole(roleId, dto, user);
+    return ControllerResponse.success(result, 'Role updated successfully');
   }
 
   @Delete(':roleId')
-  @ApiOperation({ summary: 'Delete a role' })
+  @DeleteApiResponses('Delete a role')
   @ApiParam({ name: 'roleId', type: String })
-  @ApiResponse({ status: 200, description: 'Role deleted successfully' })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.DELETE.action)
   async deleteRole(
     @Param('roleId') roleId: string,
     @GetUser() user: ActorUser,
   ) {
-    console.log('roleId', roleId);
-    console.log('user', user);
-    return this.rolesService.deleteRole(roleId, user);
+    const result = await this.rolesService.deleteRole(roleId, user);
+    return ControllerResponse.success(result, 'Role deleted successfully');
   }
 }

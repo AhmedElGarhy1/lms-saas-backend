@@ -7,12 +7,19 @@ import { DatabaseService } from './database.service';
 import { HealthController } from './controllers/health.controller';
 import { ActivityLogModule } from './modules/activity-log/activity-log.module';
 import { HealthService } from './services/health.service';
+import { TypeOrmExceptionFilter } from './common/filters/typeorm-exception.filter';
 
 @Global()
 @Module({
   imports: [ConfigModule, WinstonModule, ActivityLogModule],
   controllers: [HealthController],
-  providers: [LoggerService, MailerService, DatabaseService, HealthService],
+  providers: [
+    LoggerService,
+    MailerService,
+    DatabaseService,
+    HealthService,
+    TypeOrmExceptionFilter,
+  ],
   exports: [
     LoggerService,
     MailerService,

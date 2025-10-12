@@ -2,7 +2,6 @@ import {
   IsString,
   IsOptional,
   MinLength,
-  IsBoolean,
   IsArray,
   IsEnum,
   IsUUID,
@@ -14,11 +13,11 @@ import { Center } from '@/modules/centers/entities/center.entity';
 export class UpdateRoleRequestDto {
   @IsOptional()
   @IsString()
-  @MinLength(2, { message: 'Name must be at least 2 characters' })
+  @MinLength(2)
   name?: string;
 
   @IsOptional()
-  @IsEnum(RoleType, { message: 'Invalid role type' })
+  @IsEnum(RoleType)
   type?: RoleType;
 
   @IsOptional()

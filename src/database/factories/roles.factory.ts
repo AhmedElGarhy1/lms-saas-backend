@@ -12,7 +12,7 @@ export const createRandomCenterRole = (centerId: string): Partial<Role> => {
     name: faker.lorem.word(),
     description: faker.lorem.sentence(),
     type: RoleType.CENTER,
-    permissions: permissions!,
+    permissions: permissions,
     centerId,
   };
 };

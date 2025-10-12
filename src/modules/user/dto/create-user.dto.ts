@@ -4,7 +4,6 @@ import {
   MinLength,
   IsOptional,
   IsBoolean,
-  IsArray,
   ValidateNested,
   IsNotEmpty,
   IsUUID,
@@ -36,18 +35,18 @@ export class CreateUserDto {
   @ApiProperty({ description: 'User full name' })
   @IsString()
   @IsNotEmpty()
-  @MinLength(2, { message: 'Name must be at least 2 characters' })
+  @MinLength(2)
   name: string;
 
   @ApiProperty({ description: 'User email address' })
-  @IsEmail({}, { message: 'Invalid email format' })
+  @IsEmail()
   @IsNotEmpty()
   email: string;
 
   @ApiProperty({ description: 'User password' })
   @IsString()
   @IsNotEmpty()
-  @MinLength(6, { message: 'Password must be at least 6 characters' })
+  @MinLength(6)
   password: string;
 
   @ApiProperty({

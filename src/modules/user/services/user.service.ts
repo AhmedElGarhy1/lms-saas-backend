@@ -1,8 +1,9 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   ResourceNotFoundException,
   InsufficientPermissionsException,
   ValidationFailedException,
+  UserAlreadyExistsException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import * as bcrypt from 'bcrypt';
 import { UserRepository } from '../repositories/user.repository';
@@ -12,7 +13,6 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { ProfileService } from './profile.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { CreateUserDto, CreateUserWithRoleDto } from '../dto/create-user.dto';
-import { UpdateProfileDto } from '../dto/update-profile.dto';
 import {
   GetProfileParams,
   ChangePasswordParams,
@@ -26,10 +26,6 @@ import { UserRole } from '@/modules/access-control/entities';
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
-import { OnEvent } from '@nestjs/event-emitter';
-import { CenterEvents } from '@/modules/centers/events/center.events';
-import { CreateCenterEvent } from '@/modules/centers/interfaces/create-center-event.interface';
-import { createOwnerRoleData } from '@/modules/access-control/constants/roles';
 import { UpdateUserDto } from '../dto/update-user.dto';
 
 // UserListQuery interface moved to user-service.interface.ts
@@ -132,7 +128,7 @@ export class UserService {
   async createUser(dto: CreateUserDto, actor: ActorUser): Promise<User> {
     const existingUser = await this.userRepository.findByEmail(dto.email);
     if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+      throw new UserAlreadyExistsException(dto.email);
     }
 
     // Hash password
@@ -402,22 +398,5 @@ export class UserService {
       updateData as Partial<User>,
     );
     return user!;
-  }
-
-  @OnEvent(CenterEvents.CENTER_CREATED)
-  async handleCenterCreated(event: CreateCenterEvent) {
-    const { center, actor, userDto } = event;
-    const user = await this.createUser(userDto, actor);
-    const centerRoleData = createOwnerRoleData(center.id);
-    const centerRole = await this.rolesService.createRole(
-      centerRoleData,
-      actor,
-    );
-
-    await this.rolesService.assignRole({
-      userId: user.id,
-      roleId: centerRole.id,
-      centerId: center.id,
-    });
   }
 }

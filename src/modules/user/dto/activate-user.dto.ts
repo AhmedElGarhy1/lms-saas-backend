@@ -5,7 +5,7 @@ import { User } from '@/modules/user/entities/user.entity';
 
 export class ActivateUserRequestDto {
   @ApiProperty({ description: 'User email address' })
-  @IsEmail({}, { message: 'Invalid email format' })
+  @IsEmail()
   @IsNotEmpty()
   @Exists(User, 'email')
   email: string;

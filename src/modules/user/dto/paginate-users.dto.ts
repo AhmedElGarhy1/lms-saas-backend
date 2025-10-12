@@ -51,8 +51,7 @@ export class PaginateUsersDto extends BasePaginationDto {
     type: String,
   })
   @IsOptional()
-  @IsString()
-  @IsUUID(4, { message: 'Role ID must be a valid UUID' })
+  @IsUUID()
   @Exists(Role)
   roleId?: string;
 
@@ -61,8 +60,7 @@ export class PaginateUsersDto extends BasePaginationDto {
     type: String,
   })
   @IsOptional()
-  @IsString()
-  @IsUUID(4, { message: 'Center ID must be a valid UUID' })
+  @IsUUID()
   @Exists(Center)
   centerId?: string;
 

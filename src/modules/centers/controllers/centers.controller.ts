@@ -8,14 +8,14 @@ import {
   Delete,
   Put,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiBody,
-  ApiParam,
-} from '@nestjs/swagger';
+  CreateApiResponses,
+  ReadApiResponses,
+  UpdateApiResponses,
+  DeleteApiResponses,
+} from '@/shared/common/decorators/api-responses.decorator';
+import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { SerializeOptions, Query } from '@nestjs/common';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 
@@ -42,76 +42,59 @@ export class CentersController {
   ) {}
 
   @Post('access')
-  @ApiOperation({ summary: 'Grant center access to a user for this center' })
+  @CreateApiResponses('Grant center access to a user for this center')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @ApiBody({ type: CenterAccessDto })
-  @ApiResponse({
-    status: 201,
-    description: 'Center access granted successfully',
-  })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden' })
-  @ApiResponse({ status: 404, description: 'Center not found' })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.GRANT.action)
   @Scope(ScopeType.ADMIN)
   async grantCenterAccess(
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    return this.accessControlService.grantCenterAccess(dto, actor);
+    const result = await this.accessControlService.grantCenterAccess(
+      dto,
+      actor,
+    );
+    return ControllerResponse.success(
+      result,
+      'Center access granted successfully',
+    );
   }
 
   @Delete('access')
-  @ApiOperation({ summary: 'Revoke center access from a user for this center' })
+  @DeleteApiResponses('Revoke center access from a user for this center')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @ApiBody({ type: CenterAccessDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Center access revoked successfully',
-  })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden' })
-  @ApiResponse({ status: 404, description: 'Center not found' })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.REVOKE.action)
   @Scope(ScopeType.ADMIN)
   async revokeCenterAccess(
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    return this.accessControlService.revokeCenterAccess(dto, actor);
+    const result = await this.accessControlService.revokeCenterAccess(
+      dto,
+      actor,
+    );
+    return ControllerResponse.success(
+      result,
+      'Center access revoked successfully',
+    );
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create a new center' })
+  @CreateApiResponses('Create a new center')
   @ApiBody({ type: CreateCenterDto })
-  @ApiResponse({
-    status: 201,
-    description: 'Center created successfully',
-    type: CenterResponseDto,
-  })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden' })
   @Permissions(PERMISSIONS.CENTER.CREATE.action)
-  createCenter(@Body() dto: CreateCenterDto, @GetUser() actor: ActorUser) {
-    return this.centersService.createCenter(dto, actor);
+  async createCenter(
+    @Body() dto: CreateCenterDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.centersService.createCenter(dto, actor);
+    return ControllerResponse.success(result, 'Center created successfully');
   }
 
   @Get()
-  @ApiOperation({
-    summary: 'List centers with pagination, search, and filtering',
-    description:
-      'Retrieve a paginated list of centers with comprehensive search, sort, and filter capabilities. Supports searching by name, description, city, state, country. Filter by status. Sort by name, status, enrollment, creation date.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Centers retrieved successfully',
-    type: [CenterResponseDto],
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ReadApiResponses('List centers with pagination, search, and filtering')
   @SerializeOptions({ type: CenterResponseDto })
   @Scope(ScopeType.ADMIN)
   listCenters(@Query() query: PaginateCentersDto, @GetUser() actor: ActorUser) {
@@ -119,66 +102,43 @@ export class CentersController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get center by ID' })
+  @ReadApiResponses('Get center by ID')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'Center retrieved successfully',
-    type: CenterResponseDto,
-  })
-  @ApiResponse({ status: 404, description: 'Center not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden' })
   @Permissions(PERMISSIONS.CENTER.VIEW.action)
-  getCenterById(@Param('id') id: string) {
-    return this.centersService.findCenterById(id);
+  async getCenterById(@Param('id') id: string) {
+    const result = await this.centersService.findCenterById(id);
+    return ControllerResponse.success(result, 'Center retrieved successfully');
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Update center' })
+  @UpdateApiResponses('Update center')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @ApiBody({ type: UpdateCenterRequestDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Center updated successfully',
-    type: CenterResponseDto,
-  })
-  @ApiResponse({ status: 404, description: 'Center not found' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden' })
   @Permissions(PERMISSIONS.CENTER.UPDATE.action)
-  updateCenter(
+  async updateCenter(
     @Param('id') id: string,
     @Body() dto: UpdateCenterRequestDto,
     @GetUser() actor: ActorUser,
   ) {
-    return this.centersService.updateCenter(id, dto, actor.id);
+    const result = await this.centersService.updateCenter(id, dto, actor.id);
+    return ControllerResponse.success(result, 'Center updated successfully');
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete center (soft delete)' })
+  @DeleteApiResponses('Delete center (soft delete)')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
-  @ApiResponse({ status: 200, description: 'Center deleted successfully' })
-  @ApiResponse({ status: 404, description: 'Center not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden' })
   @Permissions(PERMISSIONS.CENTER.DELETE.action)
   async deleteCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
     await this.centersService.deleteCenter(id, actor.id);
-    return { message: 'Center deleted successfully' };
+    return ControllerResponse.message('Center deleted successfully');
   }
 
   @Patch(':id/restore')
-  @ApiOperation({ summary: 'Restore deleted center' })
+  @UpdateApiResponses('Restore deleted center')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
-  @ApiResponse({ status: 200, description: 'Center restored successfully' })
-  @ApiResponse({ status: 404, description: 'Center not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden' })
   @Permissions(PERMISSIONS.CENTER.RESTORE.action)
   async restoreCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
     await this.centersService.restoreCenter(id, actor.id);
-    return { message: 'Center restored successfully' };
+    return ControllerResponse.message('Center restored successfully');
   }
 }

@@ -64,7 +64,7 @@ export const Paginate = createParamDecorator(
     }
     // Handle legacy sortBy format
     else if (query.sortBy && typeof query.sortBy === 'string') {
-      const [field, order] = (query.sortBy as string).split(':');
+      const [field, order] = query.sortBy.split(':');
       if (field && (order === 'ASC' || order === 'DESC')) {
         sortBy.push([field, order]);
       }

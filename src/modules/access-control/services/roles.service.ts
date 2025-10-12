@@ -1,9 +1,8 @@
+import { Injectable } from '@nestjs/common';
 import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+  InsufficientPermissionsException,
+  ResourceNotFoundException,
+} from '@/shared/common/exceptions/custom.exceptions';
 import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { RolesRepository } from '../repositories/roles.repository';
@@ -53,7 +52,7 @@ export class RolesService {
     const role = await this.rolesRepository.findOne(roleId);
     console.log(role, role?.centerId, actor.centerId);
     if (!role?.isSameScope(actor.centerId)) {
-      throw new ForbiddenException(
+      throw new InsufficientPermissionsException(
         'You are not authorized to update this role',
       );
     }
@@ -64,10 +63,10 @@ export class RolesService {
   async deleteRole(roleId: string, actor: ActorUser) {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
-      throw new NotFoundException('Role not found');
+      throw new ResourceNotFoundException('Role not found');
     }
     if (!role?.isSameScope(actor.centerId)) {
-      throw new ForbiddenException(
+      throw new InsufficientPermissionsException(
         'You are not authorized to delete this role',
       );
     }

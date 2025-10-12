@@ -10,7 +10,7 @@ import {
 export class UpdateCenterRequestDto {
   @IsOptional()
   @IsString()
-  @MinLength(2, { message: 'Name must be at least 2 characters' })
+  @MinLength(2)
   name?: string;
 
   @IsOptional()
@@ -26,11 +26,11 @@ export class UpdateCenterRequestDto {
   phone?: string;
 
   @IsOptional()
-  @IsEmail({}, { message: 'Invalid email format' })
+  @IsEmail()
   email?: string;
 
   @IsOptional()
-  @IsUrl({}, { message: 'Invalid website URL' })
+  @IsUrl()
   website?: string;
 
   @IsOptional()

@@ -1,10 +1,9 @@
+import { Injectable } from '@nestjs/common';
 import {
-  Injectable,
-  UnauthorizedException,
-  BadRequestException,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+  AuthenticationFailedException,
+  ResourceNotFoundException,
+  BusinessLogicException,
+} from '@/shared/common/exceptions/custom.exceptions';
 import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '../../../shared/services/mailer.service';
 import { ConfigService } from '@nestjs/config';
@@ -61,7 +60,7 @@ export class AuthService {
     console.log(user);
     if (!user) {
       this.logger.warn(`Failed login attempt for email: ${dto.email}`);
-      throw new UnauthorizedException('Invalid credentials');
+      throw new AuthenticationFailedException('Invalid credentials');
     }
 
     if (!user.id || user.id.trim() === '') {
@@ -69,18 +68,26 @@ export class AuthService {
         `User object missing or invalid ID for email: ${dto.email}`,
         'AuthService',
       );
-      throw new UnauthorizedException('User data is invalid');
+      throw new AuthenticationFailedException('User data is invalid');
     }
 
     if (!user.isActive) {
       this.logger.warn(`Login attempt for inactive user: ${dto.email}`);
-      throw new UnauthorizedException('Account is deactivated');
+      throw new BusinessLogicException(
+        'Account is deactivated',
+        'Your account has been deactivated',
+        'Please contact an administrator to reactivate your account',
+      );
     }
 
     // Check if user is locked out
     if (user.lockoutUntil && user.lockoutUntil > new Date()) {
       this.logger.warn(`Login attempt for locked user: ${dto.email}`);
-      throw new UnauthorizedException('Account is temporarily locked');
+      throw new BusinessLogicException(
+        'Account is temporarily locked',
+        'Your account is temporarily locked due to multiple failed login attempts',
+        'Please try again later or contact support',
+      );
     }
 
     // Reset failed login attempts on successful login
@@ -147,11 +154,15 @@ export class AuthService {
     const user = await this.userService.findUserByEmail(dto.email);
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new ResourceNotFoundException('User not found');
     }
 
     if (!user.twoFactorEnabled) {
-      throw new BadRequestException('Two-factor authentication is not enabled');
+      throw new BusinessLogicException(
+        'Two-factor authentication is not enabled',
+        '2FA is not set up for this account',
+        'Please set up two-factor authentication first',
+      );
     }
 
     const isValid = this.twoFactorService.verifyToken(
@@ -160,7 +171,7 @@ export class AuthService {
     );
 
     if (!isValid) {
-      throw new UnauthorizedException('Invalid 2FA code');
+      throw new AuthenticationFailedException('Invalid 2FA code');
     }
 
     // Generate final tokens
@@ -283,11 +294,11 @@ export class AuthService {
     const user = await this.userService.findUserById(userId);
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new ResourceNotFoundException('User not found');
     }
 
     if (user.twoFactorEnabled) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         'Two-factor authentication is already enabled',
       );
     }
@@ -320,17 +331,17 @@ export class AuthService {
     const user = await this.userService.findUserById(userId);
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new ResourceNotFoundException('User not found');
     }
 
     if (user.twoFactorEnabled) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         'Two-factor authentication is already enabled',
       );
     }
 
     if (!user.twoFactorSecret) {
-      throw new BadRequestException('Please setup 2FA first');
+      throw new BusinessLogicException('Please setup 2FA first');
     }
 
     // Verify the 2FA code
@@ -339,7 +350,7 @@ export class AuthService {
       user.twoFactorSecret,
     );
     if (!isValid) {
-      throw new UnauthorizedException('Invalid 2FA verification code');
+      throw new AuthenticationFailedException('Invalid 2FA verification code');
     }
 
     // Enable 2FA
@@ -361,11 +372,13 @@ export class AuthService {
     const user = await this.userService.findUserById(userId);
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new ResourceNotFoundException('User not found');
     }
 
     if (!user.twoFactorEnabled) {
-      throw new BadRequestException('Two-factor authentication is not enabled');
+      throw new BusinessLogicException(
+        'Two-factor authentication is not enabled',
+      );
     }
 
     // Verify the 2FA code
@@ -374,7 +387,7 @@ export class AuthService {
       user.twoFactorSecret,
     );
     if (!isValid) {
-      throw new UnauthorizedException('Invalid 2FA verification code');
+      throw new AuthenticationFailedException('Invalid 2FA verification code');
     }
 
     // Disable 2FA

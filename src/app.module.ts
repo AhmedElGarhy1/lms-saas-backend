@@ -14,8 +14,9 @@ import { SharedModule } from '@/shared/shared.module';
 import { SeederModule } from '@/database/seeder.module';
 import { ErrorInterceptor } from '@/shared/common/interceptors/error.interceptor';
 import { PerformanceInterceptor } from '@/shared/common/interceptors/performance.interceptor';
-import { ResponseTransformInterceptor } from '@/shared/common/interceptors/response-transform.interceptor';
-import { HttpExceptionFilter } from '@/shared/common/filters/http-exception.filter';
+import { GlobalExceptionFilter } from '@/shared/common/filters/global-exception.filter';
+import { TypeOrmExceptionFilter } from '@/shared/common/filters/typeorm-exception.filter';
+import { ResponseInterceptor } from '@/shared/common/interceptors/response.interceptor';
 import { CustomValidationPipe } from '@/shared/common/pipes/validation.pipe';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { ContextGuard } from '@/shared/common/guards/context.guard';
@@ -26,7 +27,6 @@ import { AccessControlHelperService } from './modules/access-control/services/ac
 import { ContextMiddleware } from './shared/common/middleware/context.middleware';
 import { ScopeGuard } from './shared/common/guards';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { ExistsConstraint } from './shared/common/validators/exists.constraint';
 
 @Module({
   imports: [
@@ -68,7 +68,6 @@ import { ExistsConstraint } from './shared/common/validators/exists.constraint';
   ],
   controllers: [],
   providers: [
-    ExistsConstraint,
     {
       provide: APP_INTERCEPTOR,
       useClass: ErrorInterceptor,
@@ -83,11 +82,15 @@ import { ExistsConstraint } from './shared/common/validators/exists.constraint';
     },
     {
       provide: APP_INTERCEPTOR,
-      useClass: ResponseTransformInterceptor,
+      useClass: ResponseInterceptor,
     },
     {
       provide: APP_FILTER,
-      useClass: HttpExceptionFilter,
+      useClass: GlobalExceptionFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: TypeOrmExceptionFilter,
     },
     {
       provide: APP_PIPE,

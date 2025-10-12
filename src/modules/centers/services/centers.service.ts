@@ -1,10 +1,8 @@
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Inject,
-  forwardRef,
-} from '@nestjs/common';
+  ResourceNotFoundException,
+  BusinessLogicException,
+} from '@/shared/common/exceptions/custom.exceptions';
 import { CentersRepository } from '../repositories/centers.repository';
 import { Center } from '../entities/center.entity';
 import { CreateCenterDto } from '../dto/create-center.dto';
@@ -16,9 +14,7 @@ import { UserService } from '@/modules/user/services/user.service';
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { CenterEvents } from '../events/center.events';
-import { EventEmitter2 } from 'eventemitter2';
-import { CreateCenterEvent } from '../interfaces/create-center-event.interface';
+import { createOwnerRoleData } from '@/modules/access-control/constants/roles';
 
 export interface SeederCenterData {
   name: string;
@@ -40,7 +36,6 @@ export class CentersService {
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly rolesService: RolesService,
-    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async findCenterById(centerId: string): Promise<Center | null> {
@@ -49,7 +44,7 @@ export class CentersService {
 
   async createCenter(dto: CreateCenterDto, actor: ActorUser): Promise<Center> {
     // Create the center first
-    const savedCenter = await this.centersRepository.create({
+    const center = await this.centersRepository.create({
       name: dto.name,
       description: dto.description,
       phone: dto.phone,
@@ -58,13 +53,20 @@ export class CentersService {
       isActive: dto.isActive,
     });
 
-    this.eventEmitter.emit(CenterEvents.CENTER_CREATED, {
-      center: savedCenter,
-      userDto: dto.user,
+    const user = await this.userService.createUser(dto.user, actor);
+    const centerRoleData = createOwnerRoleData(center.id);
+    const centerRole = await this.rolesService.createRole(
+      centerRoleData,
       actor,
-    } as CreateCenterEvent);
+    );
 
-    return savedCenter;
+    await this.rolesService.assignRole({
+      userId: user.id,
+      roleId: centerRole.id,
+      centerId: center.id,
+    });
+
+    return center;
   }
 
   async paginateCenters(query: PaginateCentersDto, actorId: string) {
@@ -80,13 +82,15 @@ export class CentersService {
 
     const center = await this.findCenterById(centerId);
     if (!center) {
-      throw new NotFoundException(`Center with ID '${centerId}' not found`);
+      throw new ResourceNotFoundException(
+        `Center with ID '${centerId}' not found`,
+      );
     }
 
     if (dto.name && dto.name !== center.name) {
       const existingCenter = await this.centersRepository.findByName(dto.name);
       if (existingCenter) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `Center with name '${dto.name}' already exists`,
         );
       }
@@ -97,7 +101,9 @@ export class CentersService {
       dto,
     );
     if (!updatedCenter) {
-      throw new NotFoundException(`Center with ID '${centerId}' not found`);
+      throw new ResourceNotFoundException(
+        `Center with ID '${centerId}' not found`,
+      );
     }
 
     return updatedCenter;
@@ -119,7 +125,9 @@ export class CentersService {
 
     const center = await this.findCenterById(centerId);
     if (!center) {
-      throw new NotFoundException(`Center with ID '${centerId}' not found`);
+      throw new ResourceNotFoundException(
+        `Center with ID '${centerId}' not found`,
+      );
     }
 
     await this.centersRepository.restore(centerId);

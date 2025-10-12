@@ -1,4 +1,5 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 import { PermissionRepository } from '../repositories/permission.repository';
 import { Permission } from '../entities/permission.entity';
 import { LoggerService } from '@/shared/services/logger.service';
@@ -35,7 +36,10 @@ export class PermissionService {
     if (type === 'admin') {
       if (roleType === RoleType.ADMIN || roleType === RoleType.SYSTEM) {
         where.isAdmin = true;
-      } else throw new ForbiddenException("You can't view admin permissions");
+      } else
+        throw new InsufficientPermissionsException(
+          "You can't view admin permissions",
+        );
     } else if (type === 'user') {
       where.isAdmin = false;
     } else if (type === 'all') {

@@ -11,9 +11,9 @@ export class BasePaginationDto {
   })
   @IsOptional()
   @Type(() => Number)
-  @IsNumber({}, { message: 'Page must be a number' })
-  @Min(1, { message: 'Page must be at least 1' })
-  @Max(1000, { message: 'Page cannot exceed 1000' })
+  @IsNumber()
+  @Min(1)
+  @Max(1000)
   page?: number = 1;
 
   @ApiPropertyOptional({
@@ -24,9 +24,9 @@ export class BasePaginationDto {
   })
   @IsOptional()
   @Type(() => Number)
-  @IsNumber({}, { message: 'Limit must be a number' })
-  @Min(1, { message: 'Limit must be at least 1' })
-  @Max(50, { message: 'Limit cannot exceed 50' })
+  @IsNumber()
+  @Min(1)
+  @Max(50)
   limit?: number = 10;
 
   @ApiPropertyOptional({
@@ -34,7 +34,7 @@ export class BasePaginationDto {
     maxLength: 255,
   })
   @IsOptional()
-  @IsString({ message: 'Search must be a string' })
+  @IsString()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   search?: string;
 

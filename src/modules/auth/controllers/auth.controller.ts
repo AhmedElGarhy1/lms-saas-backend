@@ -13,18 +13,13 @@ import {
 } from '../dto/2fa.dto';
 import { Public } from '@/shared/common/decorators/public.decorator';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiBody } from '@nestjs/swagger';
 import {
-  LoginResponseDto,
-  SignupResponseDto,
-  RefreshTokenResponseDto,
-  TwoFASetupResponseDto,
-  TwoFAVerifyResponseDto,
-  ForgotPasswordResponseDto,
-  ResetPasswordResponseDto,
-  VerifyEmailResponseDto,
-  LogoutResponseDto,
-} from '../dto/auth-response.dto';
+  CreateApiResponses,
+  ReadApiResponses,
+  UpdateApiResponses,
+} from '@/shared/common/decorators/api-responses.decorator';
+import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 
@@ -37,112 +32,84 @@ export class AuthController {
   @Post('login')
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
-  @ApiOperation({ summary: 'User login' })
-  @ApiResponse({ status: 200, description: 'Login successful' })
-  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ReadApiResponses('User login')
   @ApiBody({ type: LoginRequestDto })
   async login(@Body() loginDto: LoginRequestDto) {
-    return this.authService.login(loginDto);
+    const result = await this.authService.login(loginDto);
+    return ControllerResponse.success(result, 'Login successful');
   }
 
   @Public()
   @Post('signup')
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 3, ttl: 300000 } }) // 3 attempts per 5 minutes
-  @ApiOperation({ summary: 'User registration' })
-  @ApiResponse({ status: 201, description: 'User registered successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @CreateApiResponses('User registration')
   @ApiBody({ type: SignupRequestDto })
   async signup(@Body() signupDto: SignupRequestDto) {
-    return this.authService.signup(signupDto);
+    const result = await this.authService.signup(signupDto);
+    return ControllerResponse.success(result, 'User registered successfully');
   }
 
   @Post('refresh')
   @Public()
-  @ApiOperation({ summary: 'Refresh access token' })
-  @ApiResponse({
-    status: 200,
-    description: 'Token refreshed successfully',
-    type: RefreshTokenResponseDto,
-  })
+  @ReadApiResponses('Refresh access token')
   @ApiBody({ type: RefreshTokenRequestDto })
   async refreshToken(@Body() dto: RefreshTokenRequestDto) {
-    return this.authService.refreshToken({ refreshToken: dto.refreshToken });
+    const result = await this.authService.refreshToken({
+      refreshToken: dto.refreshToken,
+    });
+    return ControllerResponse.success(result, 'Token refreshed successfully');
   }
 
   @Post('verify-email')
   @Public()
-  @ApiOperation({ summary: 'Verify email address' })
-  @ApiResponse({
-    status: 200,
-    description: 'Email verified successfully',
-    type: VerifyEmailResponseDto,
-  })
+  @UpdateApiResponses('Verify email address')
   @ApiBody({ type: VerifyEmailRequestDto })
   async verifyEmail(@Body() dto: VerifyEmailRequestDto) {
-    return this.authService.verifyEmail(dto);
+    const result = await this.authService.verifyEmail(dto);
+    return ControllerResponse.success(result, 'Email verified successfully');
   }
 
   @Post('forgot-password')
   @Public()
-  @ApiOperation({ summary: 'Request password reset' })
-  @ApiResponse({
-    status: 200,
-    description: 'Password reset email sent',
-    type: ForgotPasswordResponseDto,
-  })
+  @UpdateApiResponses('Request password reset')
   @ApiBody({ type: ForgotPasswordRequestDto })
   async forgotPassword(@Body() dto: ForgotPasswordRequestDto) {
-    return this.authService.forgotPassword(dto);
+    const result = await this.authService.forgotPassword(dto);
+    return ControllerResponse.success(result, 'Password reset email sent');
   }
 
   @Post('reset-password')
   @Public()
-  @ApiOperation({ summary: 'Reset password with token' })
-  @ApiResponse({
-    status: 200,
-    description: 'Password reset successfully',
-    type: ResetPasswordResponseDto,
-  })
+  @UpdateApiResponses('Reset password with token')
   @ApiBody({ type: ResetPasswordRequestDto })
   async resetPassword(@Body() dto: ResetPasswordRequestDto) {
-    return this.authService.resetPassword(dto);
+    const result = await this.authService.resetPassword(dto);
+    return ControllerResponse.success(result, 'Password reset successfully');
   }
 
   @Post('setup-2fa')
   @Public()
-  @ApiOperation({ summary: 'Setup two-factor authentication' })
-  @ApiResponse({
-    status: 200,
-    description: '2FA setup initiated',
-    type: TwoFASetupResponseDto,
-  })
+  @CreateApiResponses('Setup two-factor authentication')
   @ApiBody({ type: TwoFASetupRequestDto })
   async setup2FA(@Body() dto: TwoFASetupRequestDto) {
-    return this.authService.setupTwoFactor(dto.email);
+    const result = await this.authService.setupTwoFactor(dto.email);
+    return ControllerResponse.success(result, '2FA setup initiated');
   }
 
   @Post('verify-2fa')
   @Public()
-  @ApiOperation({ summary: 'Verify two-factor authentication code' })
-  @ApiResponse({
-    status: 200,
-    description: '2FA verification completed',
-    type: TwoFAVerifyResponseDto,
-  })
+  @UpdateApiResponses('Verify two-factor authentication code')
   @ApiBody({ type: TwoFAVerifyRequestDto })
   async verify2FA(@Body() dto: TwoFactorRequest) {
-    return this.authService.verify2FA(dto);
+    const result = await this.authService.verify2FA(dto);
+    return ControllerResponse.success(result, '2FA verification completed');
   }
 
   @Post('logout')
-  @ApiOperation({ summary: 'User logout' })
-  @ApiResponse({
-    status: 200,
-    description: 'Logout successful',
-    type: LogoutResponseDto,
-  })
+  @UpdateApiResponses('User logout')
   async logout(@GetUser() user: ActorUser) {
-    return this.authService.logout(user);
+    const result = await this.authService.logout(user);
+    return ControllerResponse.success(result, 'Logout successful');
   }
 }

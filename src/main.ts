@@ -1,27 +1,20 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import * as fs from 'fs';
+import { useContainer } from 'class-validator';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Configure class-validator to use NestJS container
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
+
   // Use Helmet for secure HTTP headers
   app.use(helmet());
 
-  // Use global validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
+  // Validation is handled by CustomValidationPipe in app.module.ts
 
   // Enable CORS using NestJS built-in method
   app.enableCors({

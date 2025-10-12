@@ -12,8 +12,7 @@ export class PaginateActivityLogsDto extends BasePaginationDto {
     type: String,
   })
   @IsOptional()
-  @IsString()
-  @IsUUID(4, { message: 'Center ID must be a valid UUID' })
+  @IsUUID()
   @Exists(Center)
   centerId?: string;
 
@@ -22,8 +21,7 @@ export class PaginateActivityLogsDto extends BasePaginationDto {
     type: String,
   })
   @IsOptional()
-  @IsString()
-  @IsUUID(4, { message: 'Actor ID must be a valid UUID' })
+  @IsUUID()
   @Exists(User)
   actorId?: string;
 
