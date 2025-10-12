@@ -4,6 +4,7 @@ import {
   Post,
   Put,
   Delete,
+  Patch,
   Body,
   Param,
   Query,
@@ -35,6 +36,8 @@ import { AssignRoleDto } from '../dto/assign-role.dto';
 import { RoleResponseDto } from '../dto/role-response.dto';
 import { SerializeOptions } from '@nestjs/common';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
+import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
+import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 
 @ApiTags('Roles')
 @Controller('roles')
@@ -43,6 +46,7 @@ export class RolesController {
   constructor(
     private readonly rolesService: RolesService,
     private readonly permissionService: PermissionService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   @Get('permissions')
@@ -69,6 +73,20 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.rolesService.createRole(dto, actor);
+
+    // Log role creation
+    await this.activityLogService.log(
+      ActivityType.ROLE_CREATED,
+      {
+        roleId: result.id,
+        roleName: result.name,
+        roleType: result.type,
+        permissions: dto.permissions,
+        createdBy: actor.id,
+      },
+      actor,
+    );
+
     return ControllerResponse.success(result, 'Role created successfully');
   }
 
@@ -137,6 +155,19 @@ export class RolesController {
     @GetUser() user: ActorUser,
   ) {
     const result = await this.rolesService.updateRole(roleId, dto, user);
+
+    // Log role update
+    await this.activityLogService.log(
+      ActivityType.ROLE_UPDATED,
+      {
+        roleId: roleId,
+        roleName: result?.name,
+        updatedFields: Object.keys(dto),
+        updatedBy: user.id,
+      },
+      user,
+    );
+
     return ControllerResponse.success(result, 'Role updated successfully');
   }
 
@@ -149,6 +180,40 @@ export class RolesController {
     @GetUser() user: ActorUser,
   ) {
     const result = await this.rolesService.deleteRole(roleId, user);
+
+    // Log role deletion
+    await this.activityLogService.log(
+      ActivityType.ROLE_DELETED,
+      {
+        roleId: roleId,
+        deletedBy: user.id,
+      },
+      user,
+    );
+
     return ControllerResponse.success(result, 'Role deleted successfully');
+  }
+
+  @Patch(':roleId/restore')
+  @UpdateApiResponses('Restore a deleted role')
+  @ApiParam({ name: 'roleId', type: String })
+  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.RESTORE.action)
+  async restoreRole(
+    @Param('roleId') roleId: string,
+    @GetUser() user: ActorUser,
+  ) {
+    await this.rolesService.restoreRole(roleId, user);
+
+    // Log role restoration
+    await this.activityLogService.log(
+      ActivityType.ROLE_RESTORED,
+      {
+        roleId: roleId,
+        restoredBy: user.id,
+      },
+      user,
+    );
+
+    return ControllerResponse.message('Role restored successfully');
   }
 }

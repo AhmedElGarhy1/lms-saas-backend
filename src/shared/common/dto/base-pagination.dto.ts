@@ -83,4 +83,13 @@ export class BasePaginationDto {
   @IsOptional()
   @IsString()
   dateTo?: string;
+
+  @ApiPropertyOptional({
+    description: 'return only deleted records',
+    type: Boolean,
+    default: false,
+  })
+  @IsOptional()
+  @Type(() => Boolean)
+  isDeleted?: boolean = false;
 }

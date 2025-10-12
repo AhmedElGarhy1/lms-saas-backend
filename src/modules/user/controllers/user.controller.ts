@@ -40,6 +40,8 @@ import { Scope, ScopeType } from '@/shared/common/decorators';
 import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
+import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 
 @ApiTags('Users')
 @Controller('users')
@@ -47,6 +49,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly accessControlService: AccessControlService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   // ===== USER-USER ACCESS RELATIONSHIPS =====
@@ -54,16 +57,54 @@ export class UserController {
   @CreateApiResponses('Grant user access to another user')
   @ApiBody({ type: UserAccessDto })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.GRANT.action)
-  grantUserAccess(@Body() dto: UserAccessDto, @GetUser() actor: ActorUser) {
-    return this.accessControlService.grantUserAccessValidate(dto, actor);
+  async grantUserAccess(
+    @Body() dto: UserAccessDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.accessControlService.grantUserAccessValidate(
+      dto,
+      actor,
+    );
+
+    // Log the activity
+    await this.activityLogService.log(
+      ActivityType.USER_ACCESS_GRANTED,
+      {
+        targetUserId: dto.targetUserId,
+        grantedBy: actor.id,
+        centerId: dto.centerId,
+      },
+      actor,
+    );
+
+    return result;
   }
 
   @Delete('access')
   @DeleteApiResponses('Revoke user access to another user')
   @ApiBody({ type: UserAccessDto })
   @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.REVOKE.action)
-  revokeUserAccess(@Body() dto: UserAccessDto, @GetUser() actor: ActorUser) {
-    return this.accessControlService.revokeUserAccessValidate(dto, actor);
+  async revokeUserAccess(
+    @Body() dto: UserAccessDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.accessControlService.revokeUserAccessValidate(
+      dto,
+      actor,
+    );
+
+    // Log the activity
+    await this.activityLogService.log(
+      ActivityType.USER_ACCESS_REVOKED,
+      {
+        targetUserId: dto.targetUserId,
+        revokedBy: actor.id,
+        centerId: dto.centerId,
+      },
+      actor,
+    );
+
+    return result;
   }
 
   @Get()
@@ -74,6 +115,7 @@ export class UserController {
     @Query() query: PaginateUsersDto,
     @GetUser() actorUser: ActorUser,
   ) {
+    console.log(query.isDeleted, query.isActive);
     return this.userService.paginateUsers(query, actorUser);
   }
 
@@ -125,6 +167,21 @@ export class UserController {
     @GetUser() actorUser: actorUserType,
   ) {
     const user = await this.userService.createUserWithRole(dto, actorUser);
+
+    // Log the activity
+    await this.activityLogService.log(
+      ActivityType.USER_CREATED,
+      {
+        targetUserId: user.id,
+        email: user.email,
+        name: user.name,
+        roleId: dto.roleId,
+        centerId: dto.centerId,
+        createdBy: actorUser.id,
+      },
+      actorUser,
+    );
+
     return ControllerResponse.success(user, 'User created successfully');
   }
 
@@ -139,6 +196,20 @@ export class UserController {
     @GetUser() actorUser: actorUserType,
   ) {
     const user = await this.userService.updateUser(userId, dto, actorUser);
+
+    // Log the activity
+    await this.activityLogService.log(
+      ActivityType.USER_UPDATED,
+      {
+        targetUserId: userId,
+        email: user.email,
+        name: user.name,
+        updatedFields: Object.keys(dto),
+        updatedBy: actorUser.id,
+      },
+      actorUser,
+    );
+
     return ControllerResponse.success(user, 'User updated successfully');
   }
 
@@ -157,6 +228,18 @@ export class UserController {
       dto,
       centerId: actorUser.centerId,
     });
+
+    // Log the activity
+    await this.activityLogService.log(
+      ActivityType.PASSWORD_CHANGED,
+      {
+        targetUserId: userId,
+        changedBy: actorUser.id,
+        isSelfChange: actorUser.id === userId,
+      },
+      actorUser,
+    );
+
     return ControllerResponse.message('Password changed successfully');
   }
 
@@ -171,6 +254,21 @@ export class UserController {
     @GetUser() actorUser: actorUserType,
   ): Promise<ToggleUserStatusResponseDto> {
     await this.userService.activateUser(userId, dto.isActive, actorUser);
+
+    // Log the activity
+    const activityType = dto.isActive
+      ? ActivityType.USER_ACTIVATED
+      : ActivityType.USER_DEACTIVATED;
+    await this.activityLogService.log(
+      activityType,
+      {
+        targetUserId: userId,
+        isActive: dto.isActive,
+        changedBy: actorUser.id,
+      },
+      actorUser,
+    );
+
     return {
       id: userId,
       message: `User ${dto.isActive ? 'activated' : 'deactivated'} successfully`,
@@ -187,6 +285,17 @@ export class UserController {
     @GetUser() actorUser: actorUserType,
   ) {
     await this.userService.deleteUser(userId, actorUser);
+
+    // Log the activity
+    await this.activityLogService.log(
+      ActivityType.USER_DELETED,
+      {
+        targetUserId: userId,
+        deletedBy: actorUser.id,
+      },
+      actorUser,
+    );
+
     return ControllerResponse.message('User deleted successfully');
   }
 
@@ -199,6 +308,17 @@ export class UserController {
     @GetUser() actorUser: actorUserType,
   ): Promise<RestoreUserResponseDto> {
     await this.userService.restoreUser(userId, actorUser);
+
+    // Log the activity
+    await this.activityLogService.log(
+      ActivityType.USER_RESTORED,
+      {
+        targetUserId: userId,
+        restoredBy: actorUser.id,
+      },
+      actorUser,
+    );
+
     return ControllerResponse.message('User restored successfully');
   }
 }

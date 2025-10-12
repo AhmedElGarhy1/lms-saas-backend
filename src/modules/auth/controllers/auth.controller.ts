@@ -22,11 +22,16 @@ import {
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
+import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly activityLogService: ActivityLogService,
+  ) {}
 
   @Public()
   @Post('login')
@@ -35,8 +40,28 @@ export class AuthController {
   @ReadApiResponses('User login')
   @ApiBody({ type: LoginRequestDto })
   async login(@Body() loginDto: LoginRequestDto) {
-    const result = await this.authService.login(loginDto);
-    return ControllerResponse.success(result, 'Login successful');
+    try {
+      const result = await this.authService.login(loginDto);
+
+      // Log successful login
+      await this.activityLogService.log(ActivityType.USER_LOGIN, {
+        email: loginDto.email,
+        userId: result.user?.id,
+        loginTime: new Date().toISOString(),
+        hasRefreshToken: !!result.refreshToken,
+      });
+
+      return ControllerResponse.success(result, 'Login successful');
+    } catch (error) {
+      // Log failed login attempt
+      await this.activityLogService.log(ActivityType.USER_LOGIN_FAILED, {
+        email: loginDto.email,
+        errorMessage: error.message,
+        attemptTime: new Date().toISOString(),
+      });
+
+      throw error;
+    }
   }
 
   @Public()
@@ -47,6 +72,14 @@ export class AuthController {
   @ApiBody({ type: SignupRequestDto })
   async signup(@Body() signupDto: SignupRequestDto) {
     const result = await this.authService.signup(signupDto);
+
+    // Log user signup
+    await this.activityLogService.log(ActivityType.USER_SIGNUP, {
+      email: signupDto.email,
+      name: signupDto.name,
+      signupTime: new Date().toISOString(),
+    });
+
     return ControllerResponse.success(result, 'User registered successfully');
   }
 
@@ -67,6 +100,13 @@ export class AuthController {
   @ApiBody({ type: VerifyEmailRequestDto })
   async verifyEmail(@Body() dto: VerifyEmailRequestDto) {
     const result = await this.authService.verifyEmail(dto);
+
+    // Log email verification
+    await this.activityLogService.log(ActivityType.EMAIL_VERIFIED, {
+      email: dto.email,
+      verificationTime: new Date().toISOString(),
+    });
+
     return ControllerResponse.success(result, 'Email verified successfully');
   }
 
@@ -76,6 +116,13 @@ export class AuthController {
   @ApiBody({ type: ForgotPasswordRequestDto })
   async forgotPassword(@Body() dto: ForgotPasswordRequestDto) {
     const result = await this.authService.forgotPassword(dto);
+
+    // Log password reset request
+    await this.activityLogService.log(ActivityType.PASSWORD_RESET_REQUESTED, {
+      email: dto.email,
+      requestTime: new Date().toISOString(),
+    });
+
     return ControllerResponse.success(result, 'Password reset email sent');
   }
 
@@ -85,6 +132,13 @@ export class AuthController {
   @ApiBody({ type: ResetPasswordRequestDto })
   async resetPassword(@Body() dto: ResetPasswordRequestDto) {
     const result = await this.authService.resetPassword(dto);
+
+    // Log password reset completion
+    await this.activityLogService.log(ActivityType.PASSWORD_RESET_COMPLETED, {
+      email: dto.email,
+      resetTime: new Date().toISOString(),
+    });
+
     return ControllerResponse.success(result, 'Password reset successfully');
   }
 
@@ -94,6 +148,13 @@ export class AuthController {
   @ApiBody({ type: TwoFASetupRequestDto })
   async setup2FA(@Body() dto: TwoFASetupRequestDto) {
     const result = await this.authService.setupTwoFactor(dto.email);
+
+    // Log 2FA setup initiation
+    await this.activityLogService.log(ActivityType.TWO_FA_SETUP_INITIATED, {
+      email: dto.email,
+      setupTime: new Date().toISOString(),
+    });
+
     return ControllerResponse.success(result, '2FA setup initiated');
   }
 
@@ -102,14 +163,47 @@ export class AuthController {
   @UpdateApiResponses('Verify two-factor authentication code')
   @ApiBody({ type: TwoFAVerifyRequestDto })
   async verify2FA(@Body() dto: TwoFactorRequest) {
-    const result = await this.authService.verify2FA(dto);
-    return ControllerResponse.success(result, '2FA verification completed');
+    try {
+      const result = await this.authService.verify2FA(dto);
+
+      // Log successful 2FA verification
+      await this.activityLogService.log(ActivityType.TWO_FA_ENABLED, {
+        email: dto.email,
+        verificationTime: new Date().toISOString(),
+      });
+
+      return ControllerResponse.success(result, '2FA verification completed');
+    } catch (error) {
+      // Log failed 2FA verification
+      await this.activityLogService.log(
+        ActivityType.TWO_FA_VERIFICATION_FAILED,
+        {
+          email: dto.email,
+          errorMessage: error.message,
+          attemptTime: new Date().toISOString(),
+        },
+      );
+
+      throw error;
+    }
   }
 
   @Post('logout')
   @UpdateApiResponses('User logout')
   async logout(@GetUser() user: ActorUser) {
     const result = await this.authService.logout(user);
+
+    // Log user logout
+    await this.activityLogService.log(
+      ActivityType.USER_LOGOUT,
+      {
+        email: user.email,
+        userId: user.id,
+        logoutTime: new Date().toISOString(),
+      },
+      user,
+    );
+
     return ControllerResponse.success(result, 'Logout successful');
   }
 }

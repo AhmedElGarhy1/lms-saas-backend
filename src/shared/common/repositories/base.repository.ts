@@ -345,6 +345,11 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     // Get the main alias from the query builder
     const mainAlias = queryBuilder.alias;
 
+    // Handle soft-deleted records
+    if (query.isDeleted) {
+      queryBuilder.withDeleted().andWhere(`${mainAlias}.deletedAt IS NOT NULL`);
+    }
+
     // Apply global date filters automatically
     this.applyDateFilters(queryBuilder, query, 'createdAt', mainAlias);
 

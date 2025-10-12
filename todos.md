@@ -7,7 +7,7 @@
 [x] validate before request operation create/update/delete that entity exist or not
 [x] backend standard validation,exceptions, messages
 [x] frontend api form handlers, sucess messages
-[ ] check delete, softDelete, restore
+[x] check delete, softDelete, restore
 [ ] activity logs in both backend and frontend
 [ ] permissions restrictions and role_permissions table
 [ ] import/export functioanlity

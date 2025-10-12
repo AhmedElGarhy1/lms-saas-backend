@@ -81,6 +81,11 @@ export const PERMISSIONS = {
         name: 'Delete Role',
         isAdmin: false,
       },
+      RESTORE: {
+        action: 'access-control:roles:restore',
+        name: 'Restore Role',
+        isAdmin: false,
+      },
       ASSIGN: {
         action: 'access-control:roles:assign',
         name: 'Assign Role',
