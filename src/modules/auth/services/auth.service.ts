@@ -24,6 +24,8 @@ import { RefreshTokenRequestDto } from '../dto/refresh-token.dto';
 import { LoggerService } from '../../../shared/services/logger.service';
 import { User } from '../../user/entities/user.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
+import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 
 @Injectable()
 export class AuthService {
@@ -37,17 +39,29 @@ export class AuthService {
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService,
     private readonly logger: LoggerService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.userService.findUserByEmail(email);
 
     if (!user) {
+      // Log failed login attempt - user not found
+      await this.activityLogService.log(ActivityType.USER_LOGIN_FAILED, {
+        email,
+        reason: 'User not found',
+      });
       return null;
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
+      // Log failed login attempt - invalid password
+      await this.activityLogService.log(ActivityType.USER_LOGIN_FAILED, {
+        email,
+        userId: user.id,
+        reason: 'Invalid password',
+      });
       return null;
     }
 

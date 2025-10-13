@@ -3,18 +3,10 @@ import {
   ALL_PERMISSIONS,
   ADMIN_PERMISSIONS,
   USER_PERMISSIONS,
-  isAdminPermission,
-  isUserPermission,
 } from './permissions';
 
 // Re-export permissions for backward compatibility
-export {
-  ALL_PERMISSIONS,
-  ADMIN_PERMISSIONS,
-  USER_PERMISSIONS,
-  isAdminPermission,
-  isUserPermission,
-};
+export { ALL_PERMISSIONS, ADMIN_PERMISSIONS, USER_PERMISSIONS };
 
 // Role type definitions
 export const ROLE_TYPES = {
@@ -31,5 +23,5 @@ export const ROLE_SCOPES = {
 } as const;
 
 export const getAllPermissionActions = (): string[] => {
-  return ALL_PERMISSIONS.map((p) => p.action);
+  return ALL_PERMISSIONS.map((p) => (p as any).action);
 };

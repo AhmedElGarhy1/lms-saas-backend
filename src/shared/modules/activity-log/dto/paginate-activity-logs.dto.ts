@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsUUID, IsEnum } from 'class-validator';
+import { IsOptional, IsUUID, IsEnum } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { ActivityType } from '../entities/activity-log.entity';
@@ -17,13 +17,13 @@ export class PaginateActivityLogsDto extends BasePaginationDto {
   centerId?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter by actor ID',
+    description: 'Filter by userId ID',
     type: String,
   })
   @IsOptional()
   @IsUUID()
   @Exists(User)
-  actorId?: string;
+  userId?: string;
 
   @ApiPropertyOptional({
     description: 'Filter by activity type',
@@ -32,12 +32,4 @@ export class PaginateActivityLogsDto extends BasePaginationDto {
   @IsOptional()
   @IsEnum(ActivityType)
   type?: ActivityType;
-
-  @ApiPropertyOptional({
-    description: 'Filter by activity level',
-    type: String,
-  })
-  @IsOptional()
-  @IsString()
-  level?: string;
 }

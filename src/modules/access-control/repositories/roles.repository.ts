@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Role } from '../entities/roles/role.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { LoggerService } from '../../../shared/services/logger.service';
@@ -9,17 +9,64 @@ import { AccessControlHelperService } from '../services/access-control-helper.se
 import { RoleResponseDto } from '../dto/role-response.dto';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
-import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { CreateRoleRequestDto } from '../dto/create-role.dto';
+import { RolePermissionRepository } from './role-permission.repository';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> {
   constructor(
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
+    private readonly rolePermissionRepository: RolePermissionRepository,
     protected readonly logger: LoggerService,
     private readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super(roleRepository, logger);
+  }
+
+  async createRole(data: CreateRoleRequestDto): Promise<Role> {
+    const { permissions, ...roleData } = data;
+    const role = await this.create(roleData);
+    await this.rolePermissionRepository.bulkInsert(
+      permissions.map((permission) => ({
+        permissionId: permission.id,
+        permissionScope: permission.scope,
+        userId: role.createdBy,
+        roleId: role.id,
+      })),
+    );
+    return role;
+  }
+
+  async updateRole(roleId: string, data: CreateRoleRequestDto): Promise<Role> {
+    const { permissions, ...roleData } = data;
+    const role = await this.update(roleId, roleData);
+    if (!role) {
+      throw new ResourceNotFoundException('Role was not found');
+    }
+    // sync permissions
+    const toAdd = permissions.filter(
+      (permission) =>
+        !role.permissions.some((p) => p.permissionId === permission.id),
+    );
+    const toRemove = role.permissions.filter(
+      (p) =>
+        !permissions.some((permission) => permission.id === p.permissionId),
+    );
+    await this.rolePermissionRepository.bulkInsert(
+      toAdd.map((permission) => ({
+        permissionId: permission.id,
+        permissionScope: permission.scope,
+        userId: role.createdBy,
+        roleId: role.id,
+      })),
+    );
+    await this.rolePermissionRepository.bulkDelete(
+      toRemove.map((permission) => permission.id),
+    );
+
+    return role;
   }
 
   async paginateRoles(

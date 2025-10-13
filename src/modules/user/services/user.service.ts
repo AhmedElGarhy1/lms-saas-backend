@@ -27,6 +27,8 @@ import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
+import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 
 // UserListQuery interface moved to user-service.interface.ts
 
@@ -40,6 +42,7 @@ export class UserService {
     private readonly profileService: ProfileService,
     private readonly logger: LoggerService,
     private readonly centersService: CentersService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   async getProfile(params: GetProfileParams): Promise<User> {
@@ -120,6 +123,13 @@ export class UserService {
 
     // Update password
     await this.userRepository.update(userId, { password: hashedPassword });
+
+    // Log password change activity
+    await this.activityLogService.log(ActivityType.PASSWORD_CHANGED, {
+      targetUserId: userId,
+      email: user.email,
+      isSelfChange: true, // This is a self-service password change
+    });
 
     this.logger.log(`Password changed for user: ${userId}`);
     return { message: 'Password changed successfully', success: true };

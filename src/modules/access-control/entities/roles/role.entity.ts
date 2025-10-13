@@ -13,6 +13,8 @@ import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { BadRequestException } from '@nestjs/common';
+import { RolePermissionDto } from '../../dto/role-permission.dto';
+import { RolePermission } from '../role-permission.entity';
 
 @Entity('roles')
 @Index(['name', 'centerId'], { unique: true })
@@ -31,9 +33,6 @@ export class Role extends BaseEntity {
   })
   type: RoleType;
 
-  @Column({ type: 'jsonb', nullable: true })
-  permissions: string[];
-
   @Column({ type: 'uuid', nullable: true })
   centerId?: string;
 
@@ -47,6 +46,9 @@ export class Role extends BaseEntity {
   @ManyToOne(() => Center, (center) => center.roles, { nullable: true })
   @JoinColumn({ name: 'centerId' })
   center?: Center;
+
+  @OneToMany(() => RolePermission, (rolePermission) => rolePermission.role)
+  permissions: RolePermission[];
 
   @BeforeInsert()
   @BeforeUpdate()
@@ -67,7 +69,6 @@ export class Role extends BaseEntity {
         'ADMIN and SYSTEM roles cannot be associated with a center',
       );
     }
-    // TODO: validate permissions
   }
 
   isSameScope(centerId?: string) {

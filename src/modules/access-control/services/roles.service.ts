@@ -9,11 +9,9 @@ import { RolesRepository } from '../repositories/roles.repository';
 import { Role } from '../entities/roles/role.entity';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { AccessControlHelperService } from './access-control-helper.service';
-import { UpdateRoleRequestDto } from '../dto/update-role.dto';
 import { CreateRoleRequestDto } from '../dto/create-role.dto';
 import { AssignRoleDto } from '../dto/assign-role.dto';
 import { UserRoleRepository } from '../repositories/user-role.repository';
-import { RoleResponseDto } from '../dto/role-response.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 
@@ -41,12 +39,12 @@ export class RolesService {
       data.type = data.type ?? RoleType.ADMIN;
     }
 
-    return this.rolesRepository.create(data);
+    return this.rolesRepository.createRole(data);
   }
 
   async updateRole(
     roleId: string,
-    data: UpdateRoleRequestDto,
+    data: CreateRoleRequestDto,
     actor: ActorUser,
   ) {
     const role = await this.rolesRepository.findOne(roleId);
@@ -57,7 +55,7 @@ export class RolesService {
       );
     }
 
-    return this.rolesRepository.update(roleId, data);
+    return this.rolesRepository.updateRole(roleId, data);
   }
 
   async deleteRole(roleId: string, actor: ActorUser) {

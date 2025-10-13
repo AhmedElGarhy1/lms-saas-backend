@@ -28,7 +28,6 @@ import { CreateCenterDto } from '../dto/create-center.dto';
 import { UpdateCenterRequestDto } from '../dto/update-center.dto';
 import { CenterResponseDto } from '../dto/center-response.dto';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { Scope, ScopeType } from '@/shared/common/decorators';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
@@ -48,8 +47,7 @@ export class CentersController {
   @CreateApiResponses('Grant center access to a user for this center')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @ApiBody({ type: CenterAccessDto })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.GRANT.action)
-  @Scope(ScopeType.ADMIN)
+  @Permissions(PERMISSIONS.CENTER.GRANT_ACCESS)
   async grantCenterAccess(
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
@@ -80,8 +78,7 @@ export class CentersController {
   @DeleteApiResponses('Revoke center access from a user for this center')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @ApiBody({ type: CenterAccessDto })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.REVOKE.action)
-  @Scope(ScopeType.ADMIN)
+  @Permissions(PERMISSIONS.CENTER.REVOKE_ACCESS)
   async revokeCenterAccess(
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
@@ -111,7 +108,7 @@ export class CentersController {
   @Post()
   @CreateApiResponses('Create a new center')
   @ApiBody({ type: CreateCenterDto })
-  @Permissions(PERMISSIONS.CENTER.CREATE.action)
+  @Permissions(PERMISSIONS.CENTER.CREATE)
   async createCenter(
     @Body() dto: CreateCenterDto,
     @GetUser() actor: ActorUser,
@@ -135,7 +132,6 @@ export class CentersController {
   @Get()
   @ReadApiResponses('List centers with pagination, search, and filtering')
   @SerializeOptions({ type: CenterResponseDto })
-  @Scope(ScopeType.ADMIN)
   listCenters(@Query() query: PaginateCentersDto, @GetUser() actor: ActorUser) {
     return this.centersService.paginateCenters(query, actor.id);
   }
@@ -143,7 +139,7 @@ export class CentersController {
   @Get(':id')
   @ReadApiResponses('Get center by ID')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
-  @Permissions(PERMISSIONS.CENTER.VIEW.action)
+  // TODO: param validation
   async getCenterById(@Param('id') id: string) {
     const result = await this.centersService.findCenterById(id);
     return ControllerResponse.success(result, 'Center retrieved successfully');
@@ -153,7 +149,7 @@ export class CentersController {
   @UpdateApiResponses('Update center')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @ApiBody({ type: UpdateCenterRequestDto })
-  @Permissions(PERMISSIONS.CENTER.UPDATE.action)
+  @Permissions(PERMISSIONS.CENTER.UPDATE)
   async updateCenter(
     @Param('id') id: string,
     @Body() dto: UpdateCenterRequestDto,
@@ -179,7 +175,7 @@ export class CentersController {
   @Delete(':id')
   @DeleteApiResponses('Delete center (soft delete)')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
-  @Permissions(PERMISSIONS.CENTER.DELETE.action)
+  @Permissions(PERMISSIONS.CENTER.DELETE)
   async deleteCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
     await this.centersService.deleteCenter(id, actor.id);
 
@@ -199,7 +195,7 @@ export class CentersController {
   @Patch(':id/restore')
   @UpdateApiResponses('Restore deleted center')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
-  @Permissions(PERMISSIONS.CENTER.RESTORE.action)
+  @Permissions(PERMISSIONS.CENTER.RESTORE)
   async restoreCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
     await this.centersService.restoreCenter(id, actor.id);
 

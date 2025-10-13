@@ -25,38 +25,27 @@ export class CenterEventsService {
         type: RoleType.CENTER,
         description: `Default admin role for center: ${center.name}`,
         centerId: center.id,
+        permissions: [], // TODO: Add default permissions for center admin role
       },
       { id: center.createdBy } as ActorUser,
     );
 
     // Log the activity
-    await this.activityLogService.logCenterActivity(
-      ActivityType.CENTER_CREATED,
-      'Center created',
-      center.createdBy,
-      center.id,
-      undefined,
-      {
-        centerName: center.name,
-        centerId: center.id,
-      },
-    );
+    await this.activityLogService.log(ActivityType.CENTER_CREATED, {
+      centerId: center.id,
+      centerName: center.name,
+      createdBy: center.createdBy,
+    });
   }
 
   async handleCenterUpdated(center: Center) {
     this.logger.log(`Center updated: ${center.id}`);
 
     // Log the activity - using createdBy since updatedBy doesn't exist
-    await this.activityLogService.logCenterActivity(
-      ActivityType.CENTER_UPDATED,
-      'Center updated',
-      center.createdBy, // Using createdBy since updatedBy doesn't exist in the entity
-      center.id,
-      undefined,
-      {
-        centerName: center.name,
-        centerId: center.id,
-      },
-    );
+    await this.activityLogService.log(ActivityType.CENTER_UPDATED, {
+      centerId: center.id,
+      centerName: center.name,
+      updatedBy: center.createdBy, // Using createdBy since updatedBy doesn't exist in the entity
+    });
   }
 }

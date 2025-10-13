@@ -26,7 +26,6 @@ import { ControllerResponse } from '@/shared/common/dto/controller-response.dto'
 import { RolesService } from '../services/roles.service';
 import { PermissionService } from '../services/permission.service';
 import { CreateRoleRequestDto } from '../dto/create-role.dto';
-import { UpdateRoleRequestDto } from '../dto/update-role.dto';
 import { PaginationDocs } from '@/shared/common/decorators/pagination-docs.decorator';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
@@ -52,7 +51,7 @@ export class RolesController {
   @Get('permissions')
   @ReadApiResponses('Get permissions')
   @ApiParam({ name: 'type', type: String })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
+  @Permissions(PERMISSIONS.ROLES.VIEW)
   async getPermissions(
     @Param('type') type: 'admin' | 'user' | 'all' = 'all',
     @GetUser() user: ActorUser,
@@ -67,7 +66,7 @@ export class RolesController {
   @Post()
   @CreateApiResponses('Create a new role')
   @ApiBody({ type: CreateRoleRequestDto })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.CREATE.action)
+  @Permissions(PERMISSIONS.ROLES.CREATE)
   async createRole(
     @Body() dto: CreateRoleRequestDto,
     @GetUser() actor: ActorUser,
@@ -106,7 +105,7 @@ export class RolesController {
     searchFields: ['name', 'description'],
     filterFields: ['type', 'isActive'],
   })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
+  @Permissions(PERMISSIONS.ROLES.VIEW)
   async getRoles(
     @Query() query: PaginateRolesDto,
     @GetUser() actor: ActorUser,
@@ -117,7 +116,7 @@ export class RolesController {
   @Post('assign')
   @CreateApiResponses('Assign a role to a user')
   @ApiBody({ type: AssignRoleDto })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.ASSIGN.action)
+  @Permissions(PERMISSIONS.ROLES.ASSIGN)
   async assignRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
     const result = await this.rolesService.assignRoleValidate(dto, user);
     return ControllerResponse.success(result, 'Role assigned successfully');
@@ -126,7 +125,7 @@ export class RolesController {
   @Delete('assign')
   @DeleteApiResponses('Remove a role from a user')
   @ApiBody({ type: AssignRoleDto })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.REMOVE.action)
+  @Permissions(PERMISSIONS.ROLES.REMOVE)
   async removeRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
     const result = await this.rolesService.removeUserRoleValidate(dto, user);
     return ControllerResponse.success(result, 'Role removed successfully');
@@ -135,7 +134,7 @@ export class RolesController {
   @Get(':roleId')
   @ReadApiResponses('Get role by ID')
   @ApiParam({ name: 'roleId', type: String })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.VIEW.action)
+  @Permissions(PERMISSIONS.ROLES.VIEW)
   async getRoleById(
     @Param('roleId') roleId: string,
     @GetUser() user: ActorUser,
@@ -147,11 +146,11 @@ export class RolesController {
   @Put(':roleId')
   @UpdateApiResponses('Update a role')
   @ApiParam({ name: 'roleId', type: String })
-  @ApiBody({ type: UpdateRoleRequestDto })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.UPDATE.action)
+  @ApiBody({ type: CreateRoleRequestDto })
+  @Permissions(PERMISSIONS.ROLES.UPDATE)
   async updateRole(
     @Param('roleId') roleId: string,
-    @Body() dto: UpdateRoleRequestDto,
+    @Body() dto: CreateRoleRequestDto,
     @GetUser() user: ActorUser,
   ) {
     const result = await this.rolesService.updateRole(roleId, dto, user);
@@ -174,7 +173,7 @@ export class RolesController {
   @Delete(':roleId')
   @DeleteApiResponses('Delete a role')
   @ApiParam({ name: 'roleId', type: String })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.DELETE.action)
+  @Permissions(PERMISSIONS.ROLES.DELETE)
   async deleteRole(
     @Param('roleId') roleId: string,
     @GetUser() user: ActorUser,
@@ -197,7 +196,7 @@ export class RolesController {
   @Patch(':roleId/restore')
   @UpdateApiResponses('Restore a deleted role')
   @ApiParam({ name: 'roleId', type: String })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.ROLES.RESTORE.action)
+  @Permissions(PERMISSIONS.ROLES.RESTORE)
   async restoreRole(
     @Param('roleId') roleId: string,
     @GetUser() user: ActorUser,

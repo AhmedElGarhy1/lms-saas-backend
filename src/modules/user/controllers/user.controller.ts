@@ -36,12 +36,12 @@ import {
 import { RestoreUserResponseDto } from '../dto/delete-user.dto';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
-import { Scope, ScopeType } from '@/shared/common/decorators';
 import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
+import { ScopeType } from '@/shared/common/decorators/scope.decorator';
 
 @ApiTags('Users')
 @Controller('users')
@@ -56,7 +56,7 @@ export class UserController {
   @Post('access')
   @CreateApiResponses('Grant user access to another user')
   @ApiBody({ type: UserAccessDto })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.GRANT.action)
+  @Permissions(PERMISSIONS.USER.GRANT_ACCESS)
   async grantUserAccess(
     @Body() dto: UserAccessDto,
     @GetUser() actor: ActorUser,
@@ -83,7 +83,7 @@ export class UserController {
   @Delete('access')
   @DeleteApiResponses('Revoke user access to another user')
   @ApiBody({ type: UserAccessDto })
-  @Permissions(PERMISSIONS.ACCESS_CONTROL.USER_ACCESS.REVOKE.action)
+  @Permissions(PERMISSIONS.USER.REVOKE_ACCESS)
   async revokeUserAccess(
     @Body() dto: UserAccessDto,
     @GetUser() actor: ActorUser,
@@ -110,7 +110,7 @@ export class UserController {
   @Get()
   @ReadApiResponses('List users with pagination and filtering')
   @SerializeOptions({ type: UserResponseDto })
-  @Permissions(PERMISSIONS.USER.READ.action)
+  @Permissions(PERMISSIONS.USER.READ)
   async listUsers(
     @Query() query: PaginateUsersDto,
     @GetUser() actorUser: ActorUser,
@@ -122,8 +122,7 @@ export class UserController {
   @Get('admin')
   @ReadApiResponses('List admin users with pagination and filtering')
   @SerializeOptions({ type: UserResponseDto })
-  @Permissions(PERMISSIONS.USER.READ.action)
-  @Scope(ScopeType.ADMIN)
+  @Permissions(PERMISSIONS.USER.READ, ScopeType.ADMIN)
   async paginateAdmins(
     @Query() query: PaginateAdminsDto,
     @GetUser() actorUser: ActorUser,
@@ -144,7 +143,7 @@ export class UserController {
   @ReadApiResponses('Get user profile by ID')
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiQuery({ name: 'centerId', required: false, type: String })
-  @Permissions(PERMISSIONS.USER.READ.action)
+  @Permissions(PERMISSIONS.USER.READ)
   async findOne(
     @Param('id') userId: string,
     @Query('centerId') centerId?: string,
@@ -161,7 +160,7 @@ export class UserController {
   @Post()
   @CreateApiResponses('Create a new user')
   @ApiBody({ type: CreateUserWithRoleDto })
-  @Permissions(PERMISSIONS.USER.CREATE.action)
+  @Permissions(PERMISSIONS.USER.CREATE)
   async createUser(
     @Body() dto: CreateUserWithRoleDto,
     @GetUser() actorUser: actorUserType,
@@ -189,7 +188,7 @@ export class UserController {
   @UpdateApiResponses('Update user information')
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiBody({ type: UpdateUserDto })
-  @Permissions(PERMISSIONS.USER.UPDATE.action)
+  @Permissions(PERMISSIONS.USER.UPDATE)
   async updateUser(
     @Param('id') userId: string,
     @Body() dto: UpdateUserDto,
@@ -217,7 +216,7 @@ export class UserController {
   @UpdateApiResponses('Change user password')
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiBody({ type: ChangePasswordRequestDto })
-  @Permissions(PERMISSIONS.USER.UPDATE.action)
+  @Permissions(PERMISSIONS.USER.UPDATE)
   async changePassword(
     @Param('id') userId: string,
     @Body() dto: ChangePasswordRequestDto,
@@ -247,7 +246,7 @@ export class UserController {
   @UpdateApiResponses('Toggle user active status')
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiBody({ type: ToggleUserStatusRequestDto })
-  @Permissions(PERMISSIONS.USER.UPDATE.action)
+  @Permissions(PERMISSIONS.USER.UPDATE)
   async toggleUserStatus(
     @Param('id') userId: string,
     @Body() dto: ToggleUserStatusRequestDto,
@@ -279,7 +278,7 @@ export class UserController {
   @Delete(':id')
   @DeleteApiResponses('Delete a user')
   @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @Permissions(PERMISSIONS.USER.DELETE.action)
+  @Permissions(PERMISSIONS.USER.DELETE)
   async deleteUser(
     @Param('id') userId: string,
     @GetUser() actorUser: actorUserType,
@@ -302,7 +301,7 @@ export class UserController {
   @Patch(':id/restore')
   @UpdateApiResponses('Restore a deleted user')
   @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @Permissions(PERMISSIONS.USER.RESTORE.action)
+  @Permissions(PERMISSIONS.USER.RESTORE)
   async restoreUser(
     @Param('id') userId: string,
     @GetUser() actorUser: actorUserType,

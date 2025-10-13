@@ -18,7 +18,7 @@ async function bootstrap() {
 
   // Enable CORS using NestJS built-in method
   app.enableCors({
-    origin: ['http://localhost:3001'], // TODO: Replace with your trusted frontend origins
+    origin: ['http://localhost:3001', 'https://lms-saas-khaki.vercel.app'],
     credentials: true,
   });
 

@@ -276,10 +276,11 @@ export class DatabaseSeeder {
 
     const permissionEntities = ALL_PERMISSIONS.map((permission) => {
       return this.permissionRepository.create({
-        name: permission.name,
-        action: permission.action,
-        description: permission.name,
-        isAdmin: permission.isAdmin,
+        name: (permission as any).name,
+        action: (permission as any).action,
+        description: (permission as any).name,
+        isAdmin: (permission as any).isAdmin,
+        scope: (permission as any).scope,
       });
     });
 
@@ -837,33 +838,23 @@ export class DatabaseSeeder {
 
     // Log center creation activities
     for (const center of centers) {
-      await this.activityLogService.logCenterActivity(
-        ActivityType.CENTER_CREATED,
-        'Center created during seeding',
+      await this.activityLogService.log(ActivityType.CENTER_CREATED, {
+        centerId: center.id,
+        centerName: center.name,
         createdBy,
-        center.id,
-        undefined,
-        {
-          centerName: center.name,
-          centerId: center.id,
-          seeder: true,
-        },
-      );
+        seeder: true,
+      });
     }
 
     // Log user creation activities
     for (const user of users) {
-      await this.activityLogService.logUserActivity(
-        ActivityType.USER_CREATED,
-        'User created during seeding',
+      await this.activityLogService.log(ActivityType.USER_CREATED, {
+        targetUserId: user.id,
+        userEmail: user.email,
+        userName: user.name,
         createdBy,
-        user.id,
-        {
-          userEmail: user.email,
-          userName: user.name,
-          seeder: true,
-        },
-      );
+        seeder: true,
+      });
     }
 
     this.logger.log('Activity logs created successfully');

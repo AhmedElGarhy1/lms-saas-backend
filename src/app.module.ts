@@ -25,7 +25,6 @@ import { ClassSerializerInterceptor } from '@nestjs/common';
 import { DatabaseModule } from './shared/modules/database/database.module';
 import { AccessControlHelperService } from './modules/access-control/services/access-control-helper.service';
 import { ContextMiddleware } from './shared/common/middleware/context.middleware';
-import { ScopeGuard } from './shared/common/guards';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
@@ -117,14 +116,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       provide: APP_GUARD,
       useFactory: (reflector: Reflector) => new PermissionsGuard(reflector),
       inject: [Reflector],
-    },
-    {
-      provide: APP_GUARD,
-      useFactory: (
-        reflector: Reflector,
-        accessControlHelperService: AccessControlHelperService,
-      ) => new ScopeGuard(reflector, accessControlHelperService),
-      inject: [Reflector, AccessControlHelperService],
     },
   ],
 })

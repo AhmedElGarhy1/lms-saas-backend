@@ -4,6 +4,8 @@ import { CreateActivityLogDto } from '../dto/create-activity-log.dto';
 import { ActivityLogRepository } from '../repositories/activity-log.repository';
 import { RequestContext } from '@/shared/common/context/request.context';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { PaginateActivityLogsDto } from '../dto/paginate-activity-logs.dto';
+import { Pagination } from 'nestjs-typeorm-paginate';
 
 @Injectable()
 export class ActivityLogService {
@@ -11,7 +13,9 @@ export class ActivityLogService {
 
   constructor(private readonly activityLogRepository: ActivityLogRepository) {}
 
-  async createActivityLog(dto: CreateActivityLogDto): Promise<ActivityLog> {
+  private async createActivityLog(
+    dto: CreateActivityLogDto,
+  ): Promise<ActivityLog> {
     try {
       // Get current request context for automatic actor and center ID assignment
       const requestContext = RequestContext.get();
@@ -22,177 +26,54 @@ export class ActivityLogService {
       const centerId =
         dto.centerId !== undefined ? dto.centerId : requestContext?.centerId;
 
-      // For IP address and user agent, we'll need to get them from the interceptor
-      // since the request context doesn't store the full request object
-      const ipAddress = dto.ipAddress;
-      const userAgent = dto.userAgent;
+      // Auto-assign IP address and user agent from context if not provided
+      const ipAddress = dto.ipAddress || requestContext?.ipAddress;
+      const userAgent = dto.userAgent || requestContext?.userAgent;
 
       const activityLog = await this.activityLogRepository.create({
         type: dto.type,
-        description: dto.description,
         metadata: dto.metadata,
-        actorId,
+        userId: actorId,
         centerId,
         ipAddress,
         userAgent,
       });
 
       try {
-        this.logger.log(`Activity logged: ${dto.type} - ${dto.description}`, {
+        this.logger.log(`Activity logged: ${dto.type}`, {
           activityId: activityLog.id,
           actorId,
           centerId,
+          requestId: requestContext?.requestId,
+          ipAddress,
         });
-      } catch (loggerError) {
+      } catch {
         // Fallback to console if logger fails
-        console.log(`Activity logged: ${dto.type} - ${dto.description}`, {
+        console.log(`Activity logged: ${dto.type}`, {
           activityId: activityLog.id,
           actorId,
           centerId,
+          requestId: requestContext?.requestId,
+          ipAddress,
         });
       }
 
       return activityLog;
-    } catch (error) {
+    } catch (error: unknown) {
       try {
         this.logger.error('Failed to create activity log', {
-          error: error.message,
+          error: error instanceof Error ? error.message : String(error),
           dto,
         });
-      } catch (loggerError) {
+      } catch {
         // Fallback to console if logger fails
         console.error('Failed to create activity log', {
-          error: error.message,
+          error: error instanceof Error ? error.message : String(error),
           dto,
         });
       }
       throw error;
     }
-  }
-
-  async logUserActivity(
-    type: ActivityType,
-    description: string,
-    actorId: string,
-    targetUserId?: string,
-    metadata?: Record<string, any>,
-  ): Promise<ActivityLog> {
-    return this.createActivityLog({
-      type,
-      description,
-      metadata,
-      actorId,
-    });
-  }
-
-  async logCenterActivity(
-    type: ActivityType,
-    description: string,
-    actorId: string,
-    centerId: string,
-    targetUserId?: string,
-    metadata?: Record<string, any>,
-  ): Promise<ActivityLog> {
-    return this.createActivityLog({
-      type,
-      description,
-      metadata,
-      actorId,
-      centerId,
-    });
-  }
-
-  async logGlobalActivity(
-    type: ActivityType,
-    description: string,
-    actorId: string,
-    metadata?: Record<string, any>,
-  ): Promise<ActivityLog> {
-    return this.createActivityLog({
-      type,
-      description,
-      metadata,
-      actorId,
-    });
-  }
-
-  /**
-   * Log activity with automatic actor and center ID assignment from current request context
-   */
-  async logActivity(
-    type: ActivityType,
-    description?: string,
-    metadata?: Record<string, any>,
-    overrideActorId?: string,
-    overrideCenterId?: string,
-  ): Promise<ActivityLog> {
-    return this.createActivityLog({
-      type,
-      description: description || '',
-      metadata,
-      actorId: overrideActorId,
-      centerId: overrideCenterId,
-    });
-  }
-
-  /**
-   * Log activity with ActorUser object (automatically extracts actorId and centerId)
-   */
-  async logActivityWithActor(
-    type: ActivityType,
-    actor: ActorUser,
-    description?: string,
-    metadata?: Record<string, any>,
-  ): Promise<ActivityLog> {
-    return this.createActivityLog({
-      type,
-      description: description || '',
-      metadata,
-      actorId: actor.id,
-      centerId: actor.centerId,
-    });
-  }
-
-  /**
-   * Log activity for a specific target user
-   */
-  async logActivityForTarget(
-    type: ActivityType,
-    description: string,
-    targetUserId: string,
-    metadata?: Record<string, any>,
-    overrideActorId?: string,
-    overrideCenterId?: string,
-  ): Promise<ActivityLog> {
-    const enhancedMetadata = {
-      ...metadata,
-      targetUserId,
-    };
-
-    return this.createActivityLog({
-      type,
-      description,
-      metadata: enhancedMetadata,
-      actorId: overrideActorId,
-      centerId: overrideCenterId,
-    });
-  }
-
-  /**
-   * Log system events (no actor required)
-   */
-  async logSystemEvent(
-    type: ActivityType,
-    description: string,
-    metadata?: Record<string, any>,
-  ): Promise<ActivityLog> {
-    return this.createActivityLog({
-      type,
-      description,
-      metadata,
-      actorId: null, // System events don't have an actor
-      centerId: null, // System events are global
-    });
   }
 
   /**
@@ -205,21 +86,47 @@ export class ActivityLogService {
   ): Promise<ActivityLog> {
     try {
       if (actor) {
-        return await this.logActivityWithActor(type, actor, '', metadata);
+        return await this.createActivityLog({
+          type,
+          metadata,
+          actorId: actor.id,
+          centerId: actor.centerId,
+        });
       } else {
-        return await this.logActivity(type, '', metadata);
+        return await this.createActivityLog({
+          type,
+          metadata,
+        });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Failed to log activity', {
         type,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
   }
 
-  async clearAllLogs(): Promise<void> {
-    // await this.activityLogRepository.();
-    // console.log('All activity logs cleared');
+  /**
+   * Get current request context information
+   */
+  getRequestContext() {
+    return RequestContext.get();
+  }
+
+  /**
+   * Get paginated activity logs with filtering
+   */
+  async getActivityLogs(
+    query: PaginateActivityLogsDto,
+  ): Promise<Pagination<ActivityLog>> {
+    const requestContext = RequestContext.get();
+    const actorId = requestContext?.userId;
+
+    if (!actorId) {
+      throw new Error('User must be authenticated to view activity logs');
+    }
+
+    return this.activityLogRepository.paginateActivityLogs(query, actorId);
   }
 }

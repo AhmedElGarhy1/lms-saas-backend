@@ -7,11 +7,15 @@
 [x] validate before request operation create/update/delete that entity exist or not
 [x] backend standard validation,exceptions, messages
 [x] frontend api form handlers, sucess messages
+[x] add backend integration form validation
 [x] check delete, softDelete, restore
+[ ] simplify frontend error handling
+[ ] fix AccessDialog interface and paginations
+[ ] fix module actions incompatibility
 [ ] activity logs in both backend and frontend
 [ ] permissions restrictions and role_permissions table
 [ ] import/export functioanlity
-[ ] add backend integration form validation
+[ ] builk operations
 [ ] add backend loclization and integration
 [ ] think about implementing branches (later not now)
 [ ] fix login as center user
@@ -19,3 +23,4 @@
 [ ] add transactions or unit of work
 [ ] how can I display users without any roles (for some reason this happened)
 [ ] view modals in all modules
+[ ] integrate twilio for some verifications

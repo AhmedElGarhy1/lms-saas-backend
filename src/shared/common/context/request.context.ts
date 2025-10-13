@@ -4,6 +4,9 @@ import { AsyncLocalStorage } from 'async_hooks';
 export interface IRequestContext {
   userId?: string;
   centerId?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  requestId?: string;
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<IRequestContext>();

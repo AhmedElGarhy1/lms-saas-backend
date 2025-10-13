@@ -19,11 +19,6 @@ export class RoleResponseDto {
   @Expose()
   type: RoleType;
 
-  @ApiProperty({ description: 'Role permissions', type: [String] })
-  @Expose()
-  @Transform(({ value }) => value || [])
-  permissions: string[];
-
   @ApiProperty({
     description: 'Center ID (null for global roles)',
     required: false,

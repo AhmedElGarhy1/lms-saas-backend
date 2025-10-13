@@ -92,16 +92,11 @@ export enum ActivityType {
   DATABASE_BACKUP_COMPLETED = 'DATABASE_BACKUP_COMPLETED',
   SYSTEM_MAINTENANCE_MODE = 'SYSTEM_MAINTENANCE_MODE',
   SYSTEM_ERROR = 'SYSTEM_ERROR',
-
-  // ===== LEGACY EVENTS (for backward compatibility) =====
-  ACCESS_GRANTED = 'ACCESS_GRANTED',
-  ACCESS_REVOKED = 'ACCESS_REVOKED',
-  SYSTEM_EVENT = 'SYSTEM_EVENT',
 }
 
 @Entity('activity_logs')
 @Index(['type'])
-@Index(['actorId'])
+@Index(['userId'])
 @Index(['centerId'])
 @Index(['createdAt'])
 export class ActivityLog {
@@ -114,14 +109,11 @@ export class ActivityLog {
   })
   type: ActivityType;
 
-  @Column({ type: 'text' })
-  description: string;
-
   @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, any>;
 
   @Column({ type: 'uuid', nullable: true })
-  actorId: string | null;
+  userId: string | null;
 
   @Column({ type: 'uuid', nullable: true })
   centerId: string | null;
@@ -133,8 +125,8 @@ export class ActivityLog {
   userAgent: string;
 
   @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'actorId' })
-  actor: User;
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
   @ManyToOne(() => Center, { nullable: true })
   @JoinColumn({ name: 'centerId' })
