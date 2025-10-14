@@ -34,5 +34,6 @@ export class CreateRoleRequestDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => RolePermissionDto)
+  @MinLength(1)
   permissions: RolePermissionDto[];
 }

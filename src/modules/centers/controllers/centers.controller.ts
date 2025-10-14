@@ -7,8 +7,17 @@ import {
   Param,
   Delete,
   Put,
+  Res,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiBody,
+  ApiParam,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
+import { Response } from 'express';
 import {
   CreateApiResponses,
   ReadApiResponses,
@@ -30,6 +39,10 @@ import { CenterResponseDto } from '../dto/center-response.dto';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
+import { ExportService } from '@/shared/common/services/export.service';
+import { CenterResponseExportMapper } from '@/shared/common/mappers/center-response-export.mapper';
+import { ExportCentersDto } from '../dto/export-centers.dto';
+import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 
@@ -41,6 +54,7 @@ export class CentersController {
     private readonly centersService: CentersService,
     private readonly accessControlService: AccessControlService,
     private readonly activityLogService: ActivityLogService,
+    private readonly exportService: ExportService,
   ) {}
 
   @Post('access')
@@ -210,5 +224,44 @@ export class CentersController {
     );
 
     return ControllerResponse.message('Center restored successfully');
+  }
+
+  // ===== EXPORT FUNCTIONALITY =====
+  @Get('export')
+  @ApiOperation({ summary: 'Export centers data' })
+  @ApiResponse({
+    status: 200,
+    description: 'Export file generated successfully',
+    type: ExportResponseDto,
+  })
+  // @Permissions(PERMISSIONS.CENTER.READ) // TODO: Add READ permission or use different permission
+  async exportCenters(
+    @Query() query: ExportCentersDto,
+    @Res() res: Response,
+    @GetUser() actor: ActorUser,
+  ): Promise<ExportResponseDto> {
+    const format = query.format || 'csv';
+
+    // Get data using the same pagination logic
+    const paginationResult = await this.centersService.paginateCenters(
+      query,
+      actor.id,
+    );
+    const centers = paginationResult.items;
+
+    // Create mapper
+    const mapper = new CenterResponseExportMapper();
+
+    // Generate base filename
+    const baseFilename = query.filename || 'centers';
+
+    // Use the simplified export method
+    return await this.exportService.exportData(
+      centers,
+      mapper,
+      format,
+      baseFilename,
+      res,
+    );
   }
 }

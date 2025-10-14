@@ -1,39 +1,39 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
   IsOptional,
-  MinLength,
   IsEmail,
   IsUrl,
   IsBoolean,
 } from 'class-validator';
 
 export class UpdateCenterRequestDto {
-  @IsOptional()
+  @ApiProperty({ description: 'Center name' })
   @IsString()
-  @MinLength(2)
-  name?: string;
+  name: string;
 
-  @IsOptional()
+  @ApiProperty({ description: 'Center description' })
   @IsString()
+  @IsOptional()
   description?: string;
 
-  @IsOptional()
+  @ApiProperty({ description: 'Center phone' })
   @IsString()
-  address?: string;
-
   @IsOptional()
-  @IsString()
   phone?: string;
 
-  @IsOptional()
+  @ApiProperty({ description: 'Center email' })
   @IsEmail()
+  @IsOptional()
   email?: string;
 
-  @IsOptional()
+  @ApiProperty({ description: 'Center website' })
   @IsUrl()
+  @IsOptional()
   website?: string;
 
-  @IsOptional()
+  @ApiProperty({ description: 'Whether the center is active' })
   @IsBoolean()
+  @IsOptional()
   isActive?: boolean;
 }

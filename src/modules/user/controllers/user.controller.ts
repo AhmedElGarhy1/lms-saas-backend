@@ -8,8 +8,17 @@ import {
   Put,
   Delete,
   Patch,
+  Res,
 } from '@nestjs/common';
-import { ApiTags, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiParam,
+  ApiQuery,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
+import { Response } from 'express';
 import {
   CreateApiResponses,
   ReadApiResponses,
@@ -28,6 +37,10 @@ import { UserService } from '../services/user.service';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { CreateUserWithRoleDto } from '../dto/create-user.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
+import { ExportService } from '@/shared/common/services/export.service';
+import { UserResponseExportMapper } from '@/shared/common/mappers/user-response-export.mapper';
+import { ExportUsersDto } from '../dto/export-users.dto';
+import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import {
   ToggleUserStatusRequestDto,
@@ -50,6 +63,7 @@ export class UserController {
     private readonly userService: UserService,
     private readonly accessControlService: AccessControlService,
     private readonly activityLogService: ActivityLogService,
+    private readonly exportService: ExportService,
   ) {}
 
   // ===== USER-USER ACCESS RELATIONSHIPS =====
@@ -319,5 +333,41 @@ export class UserController {
     );
 
     return ControllerResponse.message('User restored successfully');
+  }
+
+  // ===== EXPORT FUNCTIONALITY =====
+  @Get('export')
+  @ApiOperation({ summary: 'Export users data' })
+  @ApiResponse({
+    status: 200,
+    description: 'Export file generated successfully',
+    type: ExportResponseDto,
+  })
+  @Permissions(PERMISSIONS.USER.READ)
+  async exportUsers(
+    @Query() query: ExportUsersDto,
+    @Res() res: Response,
+    @GetUser() actor: ActorUser,
+  ): Promise<ExportResponseDto> {
+    const format = query.format || 'csv';
+
+    // Get data using the same pagination logic
+    const paginationResult = await this.userService.paginateUsers(query, actor);
+    const users = paginationResult.items;
+
+    // Create mapper
+    const mapper = new UserResponseExportMapper();
+
+    // Generate base filename
+    const baseFilename = query.filename || 'users';
+
+    // Use the simplified export method
+    return await this.exportService.exportData(
+      users,
+      mapper,
+      format,
+      baseFilename,
+      res,
+    );
   }
 }

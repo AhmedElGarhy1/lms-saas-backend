@@ -8,13 +8,16 @@ import {
   Body,
   Param,
   Query,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import {
   ApiTags,
   ApiParam,
-  ApiQuery,
   ApiBody,
   ApiBearerAuth,
+  ApiResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import {
   CreateApiResponses,
@@ -37,6 +40,10 @@ import { SerializeOptions } from '@nestjs/common';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
+import { ExportService } from '@/shared/common/services/export.service';
+import { RoleResponseExportMapper } from '@/shared/common/mappers/role-response-export.mapper';
+import { ExportRolesDto } from '../dto/export-roles.dto';
+import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 
 @ApiTags('Roles')
 @Controller('roles')
@@ -46,6 +53,7 @@ export class RolesController {
     private readonly rolesService: RolesService,
     private readonly permissionService: PermissionService,
     private readonly activityLogService: ActivityLogService,
+    private readonly exportService: ExportService,
   ) {}
 
   @Get('permissions')
@@ -125,10 +133,7 @@ export class RolesController {
   @ReadApiResponses('Get role by ID')
   @ApiParam({ name: 'roleId', type: String })
   @Permissions(PERMISSIONS.ROLES.VIEW)
-  async getRoleById(
-    @Param('roleId') roleId: string,
-    @GetUser() user: ActorUser,
-  ) {
+  async getRoleById(@Param('roleId') roleId: string) {
     const result = await this.rolesService.findById(roleId);
     return ControllerResponse.success(result, 'Role retrieved successfully');
   }
@@ -204,5 +209,44 @@ export class RolesController {
     );
 
     return ControllerResponse.message('Role restored successfully');
+  }
+
+  // ===== EXPORT FUNCTIONALITY =====
+  @Get('export')
+  @ApiOperation({ summary: 'Export roles data' })
+  @ApiResponse({
+    status: 200,
+    description: 'Export file generated successfully',
+    type: ExportResponseDto,
+  })
+  @Permissions(PERMISSIONS.ROLES.VIEW)
+  async exportRoles(
+    @Query() query: ExportRolesDto,
+    @Res() res: Response,
+    @GetUser() actor: ActorUser,
+  ): Promise<ExportResponseDto> {
+    const format = query.format || 'csv';
+
+    // Get data using the same pagination logic
+    const paginationResult = await this.rolesService.paginateRoles(
+      query,
+      actor,
+    );
+    const roles = paginationResult.items;
+
+    // Create mapper
+    const mapper = new RoleResponseExportMapper();
+
+    // Generate base filename
+    const baseFilename = query.filename || 'roles';
+
+    // Use the simplified export method
+    return await this.exportService.exportData(
+      roles,
+      mapper,
+      format,
+      baseFilename,
+      res,
+    );
   }
 }

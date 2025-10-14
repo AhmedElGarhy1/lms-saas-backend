@@ -4,6 +4,7 @@ import { WinstonModule } from 'nest-winston';
 import { LoggerService } from './services/logger.service';
 import { MailerService } from './services/mailer.service';
 import { DatabaseService } from './database.service';
+import { ExportService } from './common/services/export.service';
 import { HealthController } from './controllers/health.controller';
 import { ActivityLogModule } from './modules/activity-log/activity-log.module';
 import { HealthService } from './services/health.service';
@@ -17,6 +18,7 @@ import { TypeOrmExceptionFilter } from './common/filters/typeorm-exception.filte
     LoggerService,
     MailerService,
     DatabaseService,
+    ExportService,
     HealthService,
     TypeOrmExceptionFilter,
   ],
@@ -24,6 +26,7 @@ import { TypeOrmExceptionFilter } from './common/filters/typeorm-exception.filte
     LoggerService,
     MailerService,
     DatabaseService,
+    ExportService,
     ActivityLogModule,
     ConfigModule,
   ],
