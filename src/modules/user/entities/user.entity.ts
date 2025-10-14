@@ -1,15 +1,14 @@
 import { Entity, Column, OneToMany, OneToOne, JoinColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { Center } from '@/modules/centers/entities/center.entity';
+import { Center } from '@/modules/centers/entities';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
 import { Profile } from '@/modules/user/entities/profile.entity';
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
-import { UserAccess } from '@/modules/user/entities/user-access.entity';
+import { UserAccess } from '@/modules/user/entities';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
-import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
+import { UserRole } from '@/modules/access-control/entities/user-role.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
-import { Role } from '@/modules/access-control/entities/roles/role.entity';
 
 @Entity('users')
 export class User extends BaseEntity {

@@ -3,6 +3,7 @@ import {
   SelectQueryBuilder,
   ObjectLiteral,
   DeepPartial,
+  FindManyOptions,
 } from 'typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Pagination, paginate } from 'nestjs-typeorm-paginate';
@@ -67,21 +68,13 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const results: T[] = [];
 
     for (let i = 0; i < total; i += batchSize) {
-      const batch = entities.slice(i, i + batchSize);
-      const batchNumber = Math.floor(i / batchSize) + 1;
-
       try {
-        const batchResults = await this.repository.save(batch as T[]);
+        const batchResults = await Promise.all(
+          entities.slice(i, i + batchSize).map((e) => this.create(e)),
+        );
         results.push(...batchResults);
-        totalProcessed += batch.length;
 
-        this.logger.debug('Bulk insert batch completed', undefined, {
-          entity: this.repository.metadata.name,
-          batchNumber,
-          batchSize: batch.length,
-          totalProcessed,
-          total,
-        });
+        totalProcessed += batchResults.length;
 
         if (onProgress) {
           onProgress(totalProcessed, total);
@@ -93,8 +86,6 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
           undefined,
           {
             entity: this.repository.metadata.name,
-            batchNumber,
-            batchSize: batch.length,
             totalProcessed,
             total,
           },
@@ -393,7 +384,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     return this.repository.findOne({ where: { id } as any });
   }
 
-  async findMany(options?: any): Promise<T[]> {
+  async findMany(options?: FindManyOptions<T>): Promise<T[]> {
     return this.repository.find(options);
   }
 

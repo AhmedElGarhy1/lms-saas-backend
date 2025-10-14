@@ -8,9 +8,9 @@ import { AccessControlModule } from '@/modules/access-control/access-control.mod
 import { DatabaseModule } from '@/shared/modules/database/database.module';
 import { User } from '@/modules/user/entities/user.entity';
 import { Profile } from '@/modules/user/entities/profile.entity';
-import { Role } from '@/modules/access-control/entities/roles/role.entity';
+import { Role } from '@/modules/access-control/entities/role.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
-import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
+import { UserRole } from '@/modules/access-control/entities/user-role.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';

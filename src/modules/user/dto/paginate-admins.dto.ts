@@ -10,7 +10,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { AccessibleUsersEnum } from './paginate-users.dto';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { Role } from '@/modules/access-control/entities/roles/role.entity';
+import { Role } from '@/modules/access-control/entities/role.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 
 export class PaginateAdminsDto extends BasePaginationDto {

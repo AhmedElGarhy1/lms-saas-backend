@@ -2,8 +2,8 @@ import { Entity, Column, OneToMany, Index } from 'typeorm';
 
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserAccess } from '@/modules/user/entities/user-access.entity';
-import { Role } from '@/modules/access-control/entities/roles/role.entity';
-import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
+import { Role } from '@/modules/access-control/entities/role.entity';
+import { UserRole } from '@/modules/access-control/entities/user-role.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
 
 @Entity('centers')

@@ -1,14 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 import { In } from 'typeorm';
-import { UserRole } from '../entities/roles/user-role.entity';
-import { UserAccess } from '@/modules/user/entities/user-access.entity';
+import { UserRole, Role } from '../entities';
+import { UserAccess } from '@/modules/user/entities';
 import { UserRoleRepository } from '../repositories/user-role.repository';
 import { UserAccessRepository } from '../repositories/user-access.repository';
 import { UserAccessParams } from '../interfaces/user-access.params';
 import { CenterAccessParams } from '../interfaces/center-access.params';
-import { Role } from '../entities/roles/role.entity';
-import { Center } from '@/modules/centers/entities/center.entity';
+import { Center } from '@/modules/centers/entities';
 import { CenterAccessRepository } from '../repositories/center-access.repository';
 
 @Injectable()

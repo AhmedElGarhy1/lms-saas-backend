@@ -1,5 +1,5 @@
 import { RoleType } from '@/shared/common/enums/role-type.enum';
-import { Role } from '../entities/roles/role.entity';
+import { Role } from '../entities/role.entity';
 
 export enum DefaultRoles {
   SUPER_ADMIN = 'Super Administrator',

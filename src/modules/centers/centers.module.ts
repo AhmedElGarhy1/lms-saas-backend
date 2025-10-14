@@ -6,7 +6,6 @@ import { CentersService } from './services/centers.service';
 import { CenterEventsService } from './services/center-events.service';
 import { Center } from './entities/center.entity';
 import { CentersRepository } from './repositories/centers.repository';
-
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { UserModule } from '@/modules/user/user.module';

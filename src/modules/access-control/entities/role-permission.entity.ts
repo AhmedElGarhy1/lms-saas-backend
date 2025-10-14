@@ -9,7 +9,7 @@ import {
   Index,
 } from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
-import { Role } from './roles/role.entity';
+import { Role } from './role.entity';
 import { Permission } from './permission.entity';
 import { PermissionScope } from '@/modules/access-control/constants/permissions';
 

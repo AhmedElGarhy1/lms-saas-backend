@@ -9,11 +9,12 @@
 [x] frontend api form handlers, sucess messages
 [x] add backend integration form validation
 [x] check delete, softDelete, restore
-[ ] simplify frontend error handling
+[x] simplify frontend error handling
+[x] permissions restrictions and role_permissions table
+[ ] for forms display \* for requried fields (automatic)
 [ ] fix AccessDialog interface and paginations
 [ ] fix module actions incompatibility
 [ ] activity logs in both backend and frontend
-[ ] permissions restrictions and role_permissions table
 [ ] import/export functioanlity
 [ ] builk operations
 [ ] add backend loclization and integration

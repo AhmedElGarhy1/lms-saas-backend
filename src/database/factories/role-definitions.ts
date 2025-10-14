@@ -1,5 +1,5 @@
 import { RoleType } from '@/shared/common/enums/role-type.enum';
-import { Role } from '@/modules/access-control/entities/roles/role.entity';
+import { Role } from '@/modules/access-control/entities/role.entity';
 import {
   ALL_PERMISSIONS,
   PERMISSIONS,

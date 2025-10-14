@@ -1,7 +1,7 @@
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
-import { Center } from '@/modules/centers/entities/center.entity';
-import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
+import { Center } from '@/modules/centers/entities';
+import { UserRole } from '@/modules/access-control/entities';
 
 export interface UserListQuery {
   query: PaginateUsersDto;

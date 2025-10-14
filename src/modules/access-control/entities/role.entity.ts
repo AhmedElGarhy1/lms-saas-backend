@@ -13,8 +13,8 @@ import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { BadRequestException } from '@nestjs/common';
-import { RolePermissionDto } from '../../dto/role-permission.dto';
-import { RolePermission } from '../role-permission.entity';
+import { RolePermissionDto } from '../dto/role-permission.dto';
+import { RolePermission } from './role-permission.entity';
 
 @Entity('roles')
 @Index(['name', 'centerId'], { unique: true })
