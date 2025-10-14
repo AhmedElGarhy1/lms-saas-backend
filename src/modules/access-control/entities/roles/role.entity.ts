@@ -48,7 +48,7 @@ export class Role extends BaseEntity {
   center?: Center;
 
   @OneToMany(() => RolePermission, (rolePermission) => rolePermission.role)
-  permissions: RolePermission[];
+  rolePermissions: RolePermission[];
 
   @BeforeInsert()
   @BeforeUpdate()

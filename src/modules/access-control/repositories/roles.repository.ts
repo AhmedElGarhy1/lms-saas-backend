@@ -25,6 +25,17 @@ export class RolesRepository extends BaseRepository<Role> {
     super(roleRepository, logger);
   }
 
+  async findRolePermissions(roleId: string): Promise<Role> {
+    const role = await this.roleRepository.findOne({
+      where: { id: roleId },
+      relations: ['rolePermissions', 'rolePermissions.permission'],
+    });
+    if (!role) {
+      throw new ResourceNotFoundException('Role was not found');
+    }
+    return role;
+  }
+
   async createRole(data: CreateRoleRequestDto): Promise<Role> {
     const { permissions, ...roleData } = data;
     const role = await this.create(roleData);
@@ -48,9 +59,9 @@ export class RolesRepository extends BaseRepository<Role> {
     // sync permissions
     const toAdd = permissions.filter(
       (permission) =>
-        !role.permissions.some((p) => p.permissionId === permission.id),
+        !role.rolePermissions.some((p) => p.permissionId === permission.id),
     );
-    const toRemove = role.permissions.filter(
+    const toRemove = role.rolePermissions.filter(
       (p) =>
         !permissions.some((permission) => permission.id === p.permissionId),
     );

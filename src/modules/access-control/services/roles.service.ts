@@ -103,7 +103,7 @@ export class RolesService {
   }
 
   async findById(roleId: string) {
-    return this.rolesRepository.findOne(roleId);
+    return this.rolesRepository.findRolePermissions(roleId);
   }
 
   async findUserRole(userId: string, centerId?: string) {

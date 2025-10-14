@@ -16,6 +16,8 @@ import { CenterAccess } from '@/modules/access-control/entities/center-access.en
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
+import { Center } from '@/modules/centers/entities/center.entity';
+import { RolePermission } from '@/modules/access-control/entities';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token
       RefreshToken,
       EmailVerification,
       PasswordResetToken,
+      Center,
+      RolePermission,
     ]),
   ],
   providers: [DatabaseSeeder],

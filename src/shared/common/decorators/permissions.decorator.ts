@@ -1,16 +1,20 @@
 import { SetMetadata } from '@nestjs/common';
-import { ScopeType } from './scope.decorator';
-import { IPermission } from '@/modules/access-control/constants/permissions';
+import {
+  IPermission,
+  PermissionScope,
+} from '@/modules/access-control/constants/permissions';
 
 export interface PermissionsMetadata {
   permission: string;
-  scope: ScopeType;
+  scope: PermissionScope;
 }
 
 export const PERMISSIONS_KEY = 'permissions';
 export const Permissions = <
   T extends IPermission,
-  S extends T['scope'] extends 'BOTH' ? ScopeType : T['scope'] = T['scope'],
+  S extends T['scope'] extends 'BOTH'
+    ? PermissionScope
+    : T['scope'] = T['scope'],
 >(
   permission: T,
   scope?: S,

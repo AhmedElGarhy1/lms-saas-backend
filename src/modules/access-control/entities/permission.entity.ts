@@ -8,7 +8,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Center } from '../../centers/entities/center.entity';
-import { ScopeType } from '@/shared/common/decorators/scope.decorator';
+import { PermissionScope } from '@/modules/access-control/constants/permissions';
 
 @Entity('permissions')
 export class Permission {
@@ -29,10 +29,10 @@ export class Permission {
 
   @Column({
     type: 'enum',
-    enum: ScopeType,
-    default: ScopeType.CENTER,
+    enum: PermissionScope,
+    default: PermissionScope.CENTER,
   })
-  scope: ScopeType;
+  scope: PermissionScope;
 
   @CreateDateColumn()
   createdAt: Date;

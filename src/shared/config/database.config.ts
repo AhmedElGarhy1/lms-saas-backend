@@ -16,6 +16,7 @@ export const getDatabaseConfig = (
   //   configService.get('NODE_ENV') === 'test',
   synchronize: true,
   logging: configService.get('NODE_ENV') === 'development',
+  schema: 'public',
 });
 
 // Export for direct use

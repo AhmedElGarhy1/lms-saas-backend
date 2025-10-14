@@ -1,4 +1,8 @@
-import { ScopeType } from '@/shared/common/decorators/scope.decorator';
+export enum PermissionScope {
+  ADMIN = 'ADMIN',
+  CENTER = 'CENTER',
+  BOTH = 'BOTH',
+}
 
 // Permission constants for type safety and autocompletion
 
@@ -7,37 +11,37 @@ export const PERMISSIONS = {
     CREATE: {
       action: 'user:create',
       name: 'Create Users',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
     READ: {
       action: 'user:read',
       name: 'Read Users',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
     UPDATE: {
       action: 'user:update',
       name: 'Update Users',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
     DELETE: {
       action: 'user:delete',
       name: 'Delete Users',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
     RESTORE: {
       action: 'user:restore',
       name: 'Restore Users',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
     GRANT_ACCESS: {
       action: 'user:grant-user-access',
       name: 'Grant User Access',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
     REVOKE_ACCESS: {
       action: 'user:revoke-user-access',
       name: 'Revoke User Access',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
   },
 
@@ -46,7 +50,7 @@ export const PERMISSIONS = {
     CREATE: {
       action: 'center:create',
       name: 'Create Centers',
-      scope: ScopeType.ADMIN,
+      scope: PermissionScope.ADMIN,
     },
     // any one can view centers (it's part of his access)
     // VIEW: {
@@ -57,27 +61,27 @@ export const PERMISSIONS = {
     UPDATE: {
       action: 'center:update',
       name: 'Update Centers',
-      scope: ScopeType.ADMIN,
+      scope: PermissionScope.ADMIN,
     },
     DELETE: {
       action: 'center:delete',
       name: 'Delete Centers',
-      scope: ScopeType.ADMIN,
+      scope: PermissionScope.ADMIN,
     },
     RESTORE: {
       action: 'center:restore',
       name: 'Restore Centers',
-      scope: ScopeType.ADMIN,
+      scope: PermissionScope.ADMIN,
     },
     GRANT_ACCESS: {
       action: 'center:grant-access',
       name: 'Grant Center Access',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
     REVOKE_ACCESS: {
       action: 'center:revoke-access',
       name: 'Revoke Center Access',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
   },
 
@@ -86,37 +90,37 @@ export const PERMISSIONS = {
     VIEW: {
       action: 'roles:view',
       name: 'View Roles',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
     CREATE: {
       action: 'roles:create',
       name: 'Create Role',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
     UPDATE: {
       action: 'roles:update',
       name: 'Update Role',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
     DELETE: {
       action: 'roles:delete',
       name: 'Delete Role',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
     RESTORE: {
       action: 'roles:restore',
       name: 'Restore Role',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
     ASSIGN: {
       action: 'roles:assign',
       name: 'Assign Role',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
     REMOVE: {
       action: 'roles:remove',
       name: 'Remove Role',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
   },
 
@@ -125,12 +129,12 @@ export const PERMISSIONS = {
     VIEW: {
       action: 'activity-log:view',
       name: 'View Activity Logs',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
     EXPORT: {
       action: 'activity-log:export',
       name: 'Export Activity Logs',
-      scope: ScopeType.BOTH,
+      scope: PermissionScope.BOTH,
     },
   },
 
@@ -139,7 +143,7 @@ export const PERMISSIONS = {
     HEALTH_CHECK: {
       action: 'system:health-check',
       name: 'System Health Check',
-      scope: ScopeType.ADMIN,
+      scope: PermissionScope.ADMIN,
     },
   },
 } as const;
@@ -149,7 +153,7 @@ export type PermissionObject = PermissionsObject[keyof PermissionsObject];
 export interface IPermission {
   action: string;
   name: string;
-  scope: ScopeType;
+  scope: PermissionScope;
 }
 
 // Helper function to extract all permission objects from the const structure
@@ -178,12 +182,12 @@ export const ALL_PERMISSIONS = extractPermissionObjects(PERMISSIONS);
 
 // Admin permissions (scope: ADMIN)
 export const ADMIN_PERMISSIONS = ALL_PERMISSIONS.filter(
-  (permission) => permission.scope === ScopeType.ADMIN,
+  (permission) => permission.scope === PermissionScope.ADMIN,
 );
 
 // User permissions (scope: CENTER or BOTH)
 export const USER_PERMISSIONS = ALL_PERMISSIONS.filter(
   (permission) =>
-    permission.scope === ScopeType.CENTER ||
-    permission.scope === ScopeType.BOTH,
+    permission.scope === PermissionScope.CENTER ||
+    permission.scope === PermissionScope.BOTH,
 );

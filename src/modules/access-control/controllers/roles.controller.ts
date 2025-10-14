@@ -90,16 +90,6 @@ export class RolesController {
   }
 
   @Get()
-  @ReadApiResponses('Get roles with pagination')
-  @ApiQuery({ name: 'page', required: false, description: 'Page number' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
-  @ApiQuery({ name: 'search', required: false, description: 'Search term' })
-  @ApiQuery({ name: 'sortBy', required: false, description: 'Sort field' })
-  @ApiQuery({
-    name: 'sortOrder',
-    required: false,
-    description: 'Sort order (ASC/DESC)',
-  })
   @SerializeOptions({ type: RoleResponseDto })
   @PaginationDocs({
     searchFields: ['name', 'description'],

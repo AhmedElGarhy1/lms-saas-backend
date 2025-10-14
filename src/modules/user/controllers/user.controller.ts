@@ -41,7 +41,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
-import { ScopeType } from '@/shared/common/decorators/scope.decorator';
+import { PermissionScope } from '@/modules/access-control/constants/permissions';
 
 @ApiTags('Users')
 @Controller('users')
@@ -122,7 +122,7 @@ export class UserController {
   @Get('admin')
   @ReadApiResponses('List admin users with pagination and filtering')
   @SerializeOptions({ type: UserResponseDto })
-  @Permissions(PERMISSIONS.USER.READ, ScopeType.ADMIN)
+  @Permissions(PERMISSIONS.USER.READ, PermissionScope.ADMIN)
   async paginateAdmins(
     @Query() query: PaginateAdminsDto,
     @GetUser() actorUser: ActorUser,

@@ -23,7 +23,9 @@ import { UserAccess } from '@/modules/user/entities/user-access.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
 import { Role } from '@/modules/access-control/entities/roles/role.entity';
 import { UserRole } from '@/modules/access-control/entities/roles/user-role.entity';
+import { RolePermission } from '@/modules/access-control/entities/role-permission.entity';
 import { DefaultRoles } from '@/modules/access-control/constants/roles';
+import { PermissionScope } from '@/modules/access-control/constants/permissions';
 
 // Helper function to generate phone numbers that fit within 20 character limit
 const generateShortPhone = (): string => {
@@ -46,6 +48,8 @@ export class DatabaseSeeder {
     private readonly permissionRepository: Repository<Permission>,
     @InjectRepository(UserRole)
     private readonly userRoleRepository: Repository<UserRole>,
+    @InjectRepository(RolePermission)
+    private readonly rolePermissionRepository: Repository<RolePermission>,
     @InjectRepository(UserAccess)
     private readonly userAccessRepository: Repository<UserAccess>,
     @InjectRepository(CenterAccess)
@@ -99,8 +103,8 @@ export class DatabaseSeeder {
       // Assign roles and permissions
       await this.assignRolesAndPermissions(users, centers, systemUser.id);
 
-      // Create center access for admin users
-      await this.createCenterAccess(users, centers, systemUser.id);
+      // Create role permissions
+      await this.createRolePermissions(users, centers, systemUser.id);
 
       // Create activity logs
       await this.createActivityLogs(users, centers, systemUser.id);
@@ -331,7 +335,7 @@ export class DatabaseSeeder {
     this.logger.log('Creating centers...');
 
     // Create 50 centers using the factory
-    const centers = CenterFactory.createMixedCenters(50).map(
+    const centers = CenterFactory.createMixedCenters(10).map(
       (center, index) => ({
         ...center,
         name: center.name || `Center ${index + 1}`,
@@ -383,7 +387,7 @@ export class DatabaseSeeder {
     ];
 
     // Create ADMIN users (100 admin users)
-    const adminUsers = Array.from({ length: 100 }, (_, index) => ({
+    const adminUsers = Array.from({ length: 10 }, (_, index) => ({
       email: `admin${index + 1}@lms.com`,
       password: hashedPassword,
       name: faker.person.fullName(),
@@ -393,7 +397,7 @@ export class DatabaseSeeder {
     }));
 
     // Create center owners (50 owners for 50 centers)
-    const centerOwners = Array.from({ length: 50 }, (_, index) => ({
+    const centerOwners = Array.from({ length: 10 }, (_, index) => ({
       email: `owner${index + 1}@center${index + 1}.com`,
       password: hashedPassword,
       name: faker.person.fullName(),
@@ -404,7 +408,7 @@ export class DatabaseSeeder {
     }));
 
     // Create CENTER users (500 center users distributed across centers)
-    const centerUsers = Array.from({ length: 500 }, (_, index) => ({
+    const centerUsers = Array.from({ length: 100 }, (_, index) => ({
       email: `centeruser${index + 1}@lms.com`,
       password: hashedPassword,
       name: faker.person.fullName(),
@@ -416,7 +420,7 @@ export class DatabaseSeeder {
     }));
 
     // Create some deactivated users for testing (50 users)
-    const deactivatedUsers = Array.from({ length: 50 }, (_, index) => ({
+    const deactivatedUsers = Array.from({ length: 10 }, (_, index) => ({
       email: `deactivated${index + 1}@lms.com`,
       password: hashedPassword,
       name: faker.person.fullName(),
@@ -733,92 +737,6 @@ export class DatabaseSeeder {
     this.logger.log('Roles and permissions assigned successfully');
   }
 
-  private async createCenterAccess(
-    users: User[],
-    centers: Center[],
-    createdBy: string,
-  ): Promise<void> {
-    this.logger.log('Creating center access records...');
-
-    // Get admin users (users with ADMIN role type)
-    const adminUsers = users.filter((user) => {
-      // This would need to be checked against their actual roles
-      // For now, we'll use email patterns to identify admin users
-      return (
-        user.email.includes('admin') ||
-        user.email.includes('manager') ||
-        user.email.includes('support')
-      );
-    });
-
-    // Get all centers
-    const centerIds = centers.map((center) => center.id);
-
-    // Create global access for admin users to all centers
-    for (const adminUser of adminUsers) {
-      for (const centerId of centerIds) {
-        // Check if center access already exists
-        const existingAccess = await this.centerAccessRepository.findOne({
-          where: { userId: adminUser.id, centerId, global: true },
-        });
-
-        if (!existingAccess) {
-          const centerAccess = this.centerAccessRepository.create({
-            userId: adminUser.id,
-            centerId,
-            global: true, // Admin users get global access
-            createdBy,
-          });
-
-          await this.centerAccessRepository.save(centerAccess);
-          this.logger.log(
-            `Created global center access for ${adminUser.email} to center ${centerId}`,
-          );
-        }
-      }
-    }
-
-    // Create local access for center users (non-admin users)
-    const centerUsers = users.filter((user) => {
-      return !(
-        user.email.includes('admin') ||
-        user.email.includes('manager') ||
-        user.email.includes('support')
-      );
-    });
-
-    // Assign center users to random centers with local access
-    for (const centerUser of centerUsers) {
-      // Randomly assign to 1-3 centers
-      const numCenters = Math.floor(Math.random() * 3) + 1;
-      const shuffledCenters = [...centerIds].sort(() => 0.5 - Math.random());
-      const assignedCenters = shuffledCenters.slice(0, numCenters);
-
-      for (const centerId of assignedCenters) {
-        // Check if center access already exists
-        const existingAccess = await this.centerAccessRepository.findOne({
-          where: { userId: centerUser.id, centerId, global: false },
-        });
-
-        if (!existingAccess) {
-          const centerAccess = this.centerAccessRepository.create({
-            userId: centerUser.id,
-            centerId,
-            global: false, // Center users get local access
-            createdBy,
-          });
-
-          await this.centerAccessRepository.save(centerAccess);
-          this.logger.log(
-            `Created local center access for ${centerUser.email} to center ${centerId}`,
-          );
-        }
-      }
-    }
-
-    this.logger.log('Center access records created successfully');
-  }
-
   private async createActivityLogs(
     users: User[],
     centers: Center[],
@@ -858,5 +776,122 @@ export class DatabaseSeeder {
     }
 
     this.logger.log('Activity logs created successfully');
+  }
+
+  private async createRolePermissions(
+    users: User[],
+    centers: Center[],
+    createdBy: string,
+  ): Promise<void> {
+    this.logger.log('Creating role permissions...');
+
+    // Get all roles and permissions
+    const roles = await this.roleRepository.find();
+    const permissions = await this.permissionRepository.find();
+
+    if (roles.length === 0 || permissions.length === 0) {
+      this.logger.warn(
+        'No roles or permissions found, skipping role permissions creation',
+      );
+      return;
+    }
+
+    const rolePermissions = [];
+
+    // Get all user roles
+    const userRoles = await this.userRoleRepository.find({
+      relations: ['user', 'role'],
+    });
+
+    for (const userRole of userRoles) {
+      const user = userRole.user;
+      const role = userRole.role;
+
+      // Determine scope based on role type
+      let scope: PermissionScope;
+      if (role.type === 'ADMIN') {
+        scope = PermissionScope.ADMIN;
+      } else if (role.type === 'CENTER') {
+        scope = PermissionScope.CENTER;
+      } else {
+        scope = PermissionScope.BOTH;
+      }
+
+      // Assign permissions based on role type and scope
+      const rolePermissionsToAssign = this.getPermissionsForRole(
+        role,
+        permissions,
+        scope,
+      );
+
+      for (const permission of rolePermissionsToAssign) {
+        // Check if this role permission already exists
+        const existingRolePermission =
+          await this.rolePermissionRepository.findOne({
+            where: {
+              userId: user.id,
+              roleId: role.id,
+              permissionId: permission.id,
+            },
+          });
+
+        if (!existingRolePermission) {
+          rolePermissions.push({
+            userId: user.id,
+            roleId: role.id,
+            permissionId: permission.id,
+            permissionScope: scope,
+          });
+        }
+      }
+    }
+
+    // Create role permissions in batches
+    if (rolePermissions.length > 0) {
+      const batchSize = 100;
+      for (let i = 0; i < rolePermissions.length; i += batchSize) {
+        const batch = rolePermissions.slice(i, i + batchSize);
+        await this.rolePermissionRepository.save(batch);
+      }
+    }
+
+    this.logger.log(`Created ${rolePermissions.length} role permissions`);
+  }
+
+  private getPermissionsForRole(
+    role: Role,
+    permissions: Permission[],
+    scope: PermissionScope,
+  ): Permission[] {
+    // Filter permissions based on role type and scope
+    return permissions.filter((permission) => {
+      // Super Admin and Center Owner get all permissions
+      if (role.name === 'Super Administrator' || role.name === 'Center Owner') {
+        return true;
+      }
+
+      // Admin roles get admin and both scope permissions
+      if (role.type === 'ADMIN') {
+        return (
+          permission.scope === PermissionScope.ADMIN ||
+          permission.scope === PermissionScope.BOTH
+        );
+      }
+
+      // Center roles get center and both scope permissions
+      if (role.type === 'CENTER') {
+        return (
+          permission.scope === PermissionScope.CENTER ||
+          permission.scope === PermissionScope.BOTH
+        );
+      }
+
+      // System roles get both scope permissions
+      if (role.type === 'SYSTEM') {
+        return permission.scope === PermissionScope.BOTH;
+      }
+
+      return false;
+    });
   }
 }

@@ -1,6 +1,6 @@
 import { IsUUID, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { ScopeType } from '@/shared/common/decorators/scope.decorator';
+import { PermissionScope } from '@/modules/access-control/constants/permissions';
 import { Permission } from '../entities';
 import { Exists } from '@/shared/common/decorators';
 
@@ -15,9 +15,9 @@ export class RolePermissionDto {
 
   @ApiProperty({
     description: 'Permission scope',
-    enum: ScopeType,
-    example: ScopeType.CENTER,
+    enum: PermissionScope,
+    example: PermissionScope.CENTER,
   })
-  @IsEnum(ScopeType)
-  scope: ScopeType;
+  @IsEnum(PermissionScope)
+  scope: PermissionScope;
 }

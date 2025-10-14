@@ -11,7 +11,7 @@ import {
 import { User } from '@/modules/user/entities/user.entity';
 import { Role } from './roles/role.entity';
 import { Permission } from './permission.entity';
-import { ScopeType } from '@/shared/common/decorators/scope.decorator';
+import { PermissionScope } from '@/modules/access-control/constants/permissions';
 
 @Entity('role_permissions')
 @Index(['userId', 'roleId', 'permissionId'], { unique: true })
@@ -33,10 +33,10 @@ export class RolePermission {
 
   @Column({
     type: 'enum',
-    enum: ScopeType,
-    default: ScopeType.CENTER,
+    enum: PermissionScope,
+    default: PermissionScope.CENTER,
   })
-  permissionScope: ScopeType;
+  permissionScope: PermissionScope;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
@@ -56,3 +56,5 @@ export class RolePermission {
   @UpdateDateColumn()
   updatedAt: Date;
 }
+
+// TODO: validation for permissionScope and permission
