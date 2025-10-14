@@ -17,6 +17,7 @@ import {
   ValidationFailedException,
   ResourceAlreadyExistsException,
 } from '../exceptions/custom.exceptions';
+import { ErrorCode } from '../enums/error-codes.enum';
 
 @Injectable()
 @Catch(QueryFailedError, EntityNotFoundError)
@@ -82,7 +83,7 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
                 field: 'unknown',
                 value: '',
                 message: 'A required field is missing',
-                code: 'REQUIRED_FIELD_MISSING',
+                code: ErrorCode.REQUIRED_FIELD_MISSING,
                 suggestion: 'Please fill in all required fields',
               },
             ],

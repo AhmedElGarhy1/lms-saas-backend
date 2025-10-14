@@ -15,6 +15,7 @@ import {
   ErrorDetail,
   EnhancedErrorResponse,
 } from '../exceptions/custom.exceptions';
+import { ErrorCode } from '../enums/error-codes.enum';
 
 @Injectable()
 export class ErrorInterceptor implements NestInterceptor {
@@ -59,7 +60,7 @@ export class ErrorInterceptor implements NestInterceptor {
               field,
               value,
               message: `${field} is already taken`,
-              code: 'DUPLICATE_FIELD',
+              code: ErrorCode.DUPLICATE_FIELD,
               suggestion: `Choose a different ${field}`,
             },
           ];
@@ -89,7 +90,7 @@ export class ErrorInterceptor implements NestInterceptor {
               field: 'database',
               value: 'unknown',
               message: 'Referenced record does not exist',
-              code: 'FOREIGN_KEY_CONSTRAINT_VIOLATION',
+              code: ErrorCode.FOREIGN_KEY_CONSTRAINT_VIOLATION,
               suggestion: 'Check that all referenced records exist',
             },
           ];
@@ -119,7 +120,7 @@ export class ErrorInterceptor implements NestInterceptor {
               field: 'database',
               value: 'unknown',
               message: 'Database configuration error',
-              code: 'TABLE_NOT_FOUND',
+              code: ErrorCode.TABLE_NOT_FOUND,
               suggestion: 'Contact system administrator',
             },
           ];
@@ -149,7 +150,7 @@ export class ErrorInterceptor implements NestInterceptor {
               field: 'database',
               value: 'unknown',
               message: 'Database operation failed',
-              code: 'QUERY_FAILED',
+              code: ErrorCode.QUERY_FAILED,
               suggestion:
                 'Please try again or contact support if the problem persists',
             },
@@ -181,7 +182,7 @@ export class ErrorInterceptor implements NestInterceptor {
               field: 'id',
               value: 'unknown',
               message: 'Record not found',
-              code: 'ENTITY_NOT_FOUND',
+              code: ErrorCode.ENTITY_NOT_FOUND,
               suggestion: 'Check the ID or try refreshing the page',
             },
           ];
@@ -210,7 +211,7 @@ export class ErrorInterceptor implements NestInterceptor {
             field: 'system',
             value: 'unknown',
             message: 'An unexpected error occurred',
-            code: 'INTERNAL_ERROR',
+            code: ErrorCode.INTERNAL_ERROR,
             suggestion:
               'Please try again or contact support if the problem persists',
           },

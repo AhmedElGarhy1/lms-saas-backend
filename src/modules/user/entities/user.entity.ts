@@ -5,7 +5,7 @@ import { EmailVerification } from '@/modules/auth/entities/email-verification.en
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
 import { Profile } from '@/modules/user/entities/profile.entity';
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
-import { UserAccess } from '@/modules/user/entities';
+import { UserAccess } from '@/modules/access-control/entities';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserRole } from '@/modules/access-control/entities/user-role.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';

@@ -1,14 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
+import {
+  InsufficientPermissionsException,
+  AdminScopeAccessDeniedException,
+  CenterAccessDeniedException,
+} from '@/shared/common/exceptions/custom.exceptions';
 import { In } from 'typeorm';
 import { UserRole, Role } from '../entities';
-import { UserAccess } from '@/modules/user/entities';
-import { UserRoleRepository } from '../repositories/user-role.repository';
-import { UserAccessRepository } from '../repositories/user-access.repository';
+import { UserAccess } from '../entities';
+import { UserRoleRepository, UserAccessRepository } from '../repositories/';
 import { UserAccessParams } from '../interfaces/user-access.params';
 import { CenterAccessParams } from '../interfaces/center-access.params';
 import { Center } from '@/modules/centers/entities';
-import { CenterAccessRepository } from '../repositories/center-access.repository';
+import { CenterAccessRepository } from '../repositories';
 
 @Injectable()
 export class AccessControlHelperService {
@@ -59,8 +62,8 @@ export class AccessControlHelperService {
     if (haveAdminRole) {
       return;
     }
-    throw new InsufficientPermissionsException(
-      'You do not have access to admin',
+    throw new AdminScopeAccessDeniedException(
+      'You do not have access to admin scope. Please select a center to access center-specific resources.',
     );
   }
 
@@ -225,8 +228,8 @@ export class AccessControlHelperService {
   async validateCenterAccess(data: CenterAccessParams): Promise<void> {
     const centerAccess = await this.canCenterAccess(data);
     if (!centerAccess) {
-      throw new InsufficientPermissionsException(
-        'You do not have access to center',
+      throw new CenterAccessDeniedException(
+        'You do not have access to this center',
       );
     }
   }

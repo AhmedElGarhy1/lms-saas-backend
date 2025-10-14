@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { UserAccess } from '../../user/entities/user-access.entity';
+import { UserAccess } from '../entities/user-access.entity';
 import { LoggerService } from '../../../shared/services/logger.service';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 

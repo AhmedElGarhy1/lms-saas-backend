@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsString } from 'class-validator';
-import { BasePaginationDto } from './base-pagination.dto';
 
 export enum ExportFormat {
   CSV = 'csv',
@@ -8,7 +7,7 @@ export enum ExportFormat {
   JSON = 'json',
 }
 
-export class ExportQueryDto extends BasePaginationDto {
+export class ExportQueryDto {
   @ApiProperty({
     description: 'Export format',
     enum: ExportFormat,

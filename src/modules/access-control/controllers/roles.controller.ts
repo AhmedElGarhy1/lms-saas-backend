@@ -34,7 +34,6 @@ import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { AssignRoleDto } from '../dto/assign-role.dto';
 import { RoleResponseDto } from '../dto/role-response.dto';
 import { SerializeOptions } from '@nestjs/common';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
@@ -109,24 +108,6 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     return this.rolesService.paginateRoles(query, actor);
-  }
-
-  @Post('assign')
-  @CreateApiResponses('Assign a role to a user')
-  @ApiBody({ type: AssignRoleDto })
-  @Permissions(PERMISSIONS.ROLES.ASSIGN)
-  async assignRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
-    const result = await this.rolesService.assignRoleValidate(dto, user);
-    return ControllerResponse.success(result, 'Role assigned successfully');
-  }
-
-  @Delete('assign')
-  @DeleteApiResponses('Remove a role from a user')
-  @ApiBody({ type: AssignRoleDto })
-  @Permissions(PERMISSIONS.ROLES.REMOVE)
-  async removeRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
-    const result = await this.rolesService.removeUserRoleValidate(dto, user);
-    return ControllerResponse.success(result, 'Role removed successfully');
   }
 
   @Get(':roleId')

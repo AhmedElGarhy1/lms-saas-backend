@@ -19,7 +19,7 @@ import {
 } from './factories/role-definitions';
 import { CenterFactory } from './factories/center.factory';
 import { faker } from '@faker-js/faker';
-import { UserAccess } from '@/modules/user/entities/user-access.entity';
+import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { UserRole } from '@/modules/access-control/entities/user-role.entity';

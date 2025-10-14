@@ -9,6 +9,11 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { IRequest } from '../interfaces/request.interface';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { RequestContext } from '../context/request.context';
+import { NO_CONTEXT_KEY } from '../decorators/no-context';
+import {
+  CenterSelectionRequiredException,
+  AdminScopeAccessDeniedException,
+} from '../exceptions/custom.exceptions';
 
 @Injectable()
 export class ContextGuard implements CanActivate {
@@ -24,7 +29,12 @@ export class ContextGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    if (isPublic) {
+    const noContext = this.reflector.getAllAndOverride<boolean>(
+      NO_CONTEXT_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (isPublic || noContext) {
       return true;
     }
 
@@ -35,14 +45,34 @@ export class ContextGuard implements CanActivate {
       throw new ForbiddenException('User not authenticated');
     }
     const centerId = (request.get('x-center-id') ??
-      request?.centerId ??
-      request?.body?.centerId ??
-      request?.query?.centerId) as string;
+      request.centerId ??
+      (request.body as { centerId?: string })?.centerId ??
+      (request.query as { centerId?: string })?.centerId) as string;
 
-    await this.accessControlHelperService.validateAdminAndCenterAccess({
-      userId: user.id,
-      centerId,
-    });
+    console.log('centerId', centerId);
+    console.log('user', user);
+    if (centerId) {
+      await this.accessControlHelperService.validateCenterAccess({
+        userId: user.id,
+        centerId,
+      });
+    } else {
+      try {
+        await this.accessControlHelperService.validateAdminAccess({
+          userId: user.id,
+        });
+      } catch (error) {
+        // If it's an AdminScopeAccessDeniedException, convert it to CenterSelectionRequiredException
+        if (error instanceof AdminScopeAccessDeniedException) {
+          throw new CenterSelectionRequiredException(
+            'Admin user must select a center to access this resource. Please select a center from the available options.',
+          );
+        }
+        // Re-throw other exceptions as-is
+        throw error;
+      }
+    }
+
     user.centerId = centerId;
 
     // Set the userId (and maybe centerId) in the request context

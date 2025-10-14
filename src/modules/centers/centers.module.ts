@@ -1,9 +1,12 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WinstonModule } from 'nest-winston';
-import { CentersController } from './controllers/centers.controller';
+import {
+  CentersController,
+  CentersActionsController,
+  CentersAccessController,
+} from './controllers';
 import { CentersService } from './services/centers.service';
-import { CenterEventsService } from './services/center-events.service';
 import { Center } from './entities/center.entity';
 import { CentersRepository } from './repositories/centers.repository';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
@@ -18,8 +21,12 @@ import { UserModule } from '@/modules/user/user.module';
     AccessControlModule,
     forwardRef(() => UserModule),
   ],
-  controllers: [CentersController],
-  providers: [CentersService, CenterEventsService, CentersRepository],
-  exports: [CentersService, CenterEventsService],
+  controllers: [
+    CentersController,
+    CentersActionsController,
+    CentersAccessController,
+  ],
+  providers: [CentersService, CentersRepository],
+  exports: [CentersService],
 })
 export class CentersModule {}

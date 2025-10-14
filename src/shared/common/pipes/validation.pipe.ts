@@ -11,6 +11,7 @@ import {
   ErrorDetail,
   EnhancedErrorResponse,
 } from '../exceptions/custom.exceptions';
+import { ErrorCode } from '../enums/error-codes.enum';
 
 @Injectable()
 export class CustomValidationPipe implements PipeTransform<any> {
@@ -47,6 +48,7 @@ export class CustomValidationPipe implements PipeTransform<any> {
         statusCode: 400,
         message: 'Validation failed',
         error: 'Bad Request',
+        code: ErrorCode.VALIDATION_FAILED,
         timestamp: new Date().toISOString(),
         userMessage: 'Please check your input and try again.',
         actionRequired: 'Fix the highlighted errors below.',
@@ -80,7 +82,7 @@ export class CustomValidationPipe implements PipeTransform<any> {
           field: error.property,
           value: error.value,
           message: Object.values(error.constraints).join(', '),
-          code: 'VALIDATION_ERROR',
+          code: ErrorCode.VALIDATION_ERROR,
           suggestion: this.getValidationSuggestion(
             error.property,
             error.constraints,

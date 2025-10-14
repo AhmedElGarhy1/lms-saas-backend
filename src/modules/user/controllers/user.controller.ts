@@ -8,17 +8,8 @@ import {
   Put,
   Delete,
   Patch,
-  Res,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiParam,
-  ApiQuery,
-  ApiBody,
-  ApiOperation,
-  ApiResponse,
-} from '@nestjs/swagger';
-import { Response } from 'express';
+import { ApiTags, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import {
   CreateApiResponses,
   ReadApiResponses,
@@ -29,97 +20,32 @@ import { SerializeOptions } from '@nestjs/common';
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
-import {
-  ActorUser,
-  ActorUser as actorUserType,
-} from '@/shared/common/types/actor-user.type';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UserService } from '../services/user.service';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { CreateUserWithRoleDto } from '../dto/create-user.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
-import { ExportService } from '@/shared/common/services/export.service';
-import { UserResponseExportMapper } from '@/shared/common/mappers/user-response-export.mapper';
-import { ExportUsersDto } from '../dto/export-users.dto';
-import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import {
   ToggleUserStatusRequestDto,
   ToggleUserStatusResponseDto,
 } from '../dto/toggle-user-status.dto';
 import { RestoreUserResponseDto } from '../dto/delete-user.dto';
-import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
-import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { PermissionScope } from '@/modules/access-control/constants/permissions';
+import { NoContext } from '@/shared/common/decorators/no-context';
 
 @ApiTags('Users')
 @Controller('users')
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    private readonly accessControlService: AccessControlService,
     private readonly activityLogService: ActivityLogService,
-    private readonly exportService: ExportService,
   ) {}
-
-  // ===== USER-USER ACCESS RELATIONSHIPS =====
-  @Post('access')
-  @CreateApiResponses('Grant user access to another user')
-  @ApiBody({ type: UserAccessDto })
-  @Permissions(PERMISSIONS.USER.GRANT_ACCESS)
-  async grantUserAccess(
-    @Body() dto: UserAccessDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.accessControlService.grantUserAccessValidate(
-      dto,
-      actor,
-    );
-
-    // Log the activity
-    await this.activityLogService.log(
-      ActivityType.USER_ACCESS_GRANTED,
-      {
-        targetUserId: dto.targetUserId,
-        grantedBy: actor.id,
-        centerId: dto.centerId,
-      },
-      actor,
-    );
-
-    return result;
-  }
-
-  @Delete('access')
-  @DeleteApiResponses('Revoke user access to another user')
-  @ApiBody({ type: UserAccessDto })
-  @Permissions(PERMISSIONS.USER.REVOKE_ACCESS)
-  async revokeUserAccess(
-    @Body() dto: UserAccessDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.accessControlService.revokeUserAccessValidate(
-      dto,
-      actor,
-    );
-
-    // Log the activity
-    await this.activityLogService.log(
-      ActivityType.USER_ACCESS_REVOKED,
-      {
-        targetUserId: dto.targetUserId,
-        revokedBy: actor.id,
-        centerId: dto.centerId,
-      },
-      actor,
-    );
-
-    return result;
-  }
 
   @Get()
   @ReadApiResponses('List users with pagination and filtering')
@@ -146,7 +72,8 @@ export class UserController {
 
   @Get('profile')
   @ReadApiResponses('Get current user profile with comprehensive information')
-  async getActorUserProfile(@GetUser() actorUser: actorUserType) {
+  @NoContext()
+  async getActorUserProfile(@GetUser() actorUser: ActorUser) {
     return this.userService.getCurrentUserProfile({
       userId: actorUser.id,
       centerId: actorUser.centerId,
@@ -161,7 +88,7 @@ export class UserController {
   async findOne(
     @Param('id') userId: string,
     @Query('centerId') centerId?: string,
-    @GetUser() actorUser?: actorUserType,
+    @GetUser() actorUser?: ActorUser,
   ) {
     // TODO: implement later
     return this.userService.getProfile({
@@ -177,7 +104,7 @@ export class UserController {
   @Permissions(PERMISSIONS.USER.CREATE)
   async createUser(
     @Body() dto: CreateUserWithRoleDto,
-    @GetUser() actorUser: actorUserType,
+    @GetUser() actorUser: ActorUser,
   ) {
     const user = await this.userService.createUserWithRole(dto, actorUser);
 
@@ -206,7 +133,7 @@ export class UserController {
   async updateUser(
     @Param('id') userId: string,
     @Body() dto: UpdateUserDto,
-    @GetUser() actorUser: actorUserType,
+    @GetUser() actorUser: ActorUser,
   ) {
     const user = await this.userService.updateUser(userId, dto, actorUser);
 
@@ -234,7 +161,7 @@ export class UserController {
   async changePassword(
     @Param('id') userId: string,
     @Body() dto: ChangePasswordRequestDto,
-    @GetUser() actorUser: actorUserType,
+    @GetUser() actorUser: ActorUser,
   ) {
     await this.userService.changePassword({
       userId,
@@ -264,7 +191,7 @@ export class UserController {
   async toggleUserStatus(
     @Param('id') userId: string,
     @Body() dto: ToggleUserStatusRequestDto,
-    @GetUser() actorUser: actorUserType,
+    @GetUser() actorUser: ActorUser,
   ): Promise<ToggleUserStatusResponseDto> {
     await this.userService.activateUser(userId, dto.isActive, actorUser);
 
@@ -295,7 +222,7 @@ export class UserController {
   @Permissions(PERMISSIONS.USER.DELETE)
   async deleteUser(
     @Param('id') userId: string,
-    @GetUser() actorUser: actorUserType,
+    @GetUser() actorUser: ActorUser,
   ) {
     await this.userService.deleteUser(userId, actorUser);
 
@@ -318,7 +245,7 @@ export class UserController {
   @Permissions(PERMISSIONS.USER.RESTORE)
   async restoreUser(
     @Param('id') userId: string,
-    @GetUser() actorUser: actorUserType,
+    @GetUser() actorUser: ActorUser,
   ): Promise<RestoreUserResponseDto> {
     await this.userService.restoreUser(userId, actorUser);
 
@@ -333,41 +260,5 @@ export class UserController {
     );
 
     return ControllerResponse.message('User restored successfully');
-  }
-
-  // ===== EXPORT FUNCTIONALITY =====
-  @Get('export')
-  @ApiOperation({ summary: 'Export users data' })
-  @ApiResponse({
-    status: 200,
-    description: 'Export file generated successfully',
-    type: ExportResponseDto,
-  })
-  @Permissions(PERMISSIONS.USER.READ)
-  async exportUsers(
-    @Query() query: ExportUsersDto,
-    @Res() res: Response,
-    @GetUser() actor: ActorUser,
-  ): Promise<ExportResponseDto> {
-    const format = query.format || 'csv';
-
-    // Get data using the same pagination logic
-    const paginationResult = await this.userService.paginateUsers(query, actor);
-    const users = paginationResult.items;
-
-    // Create mapper
-    const mapper = new UserResponseExportMapper();
-
-    // Generate base filename
-    const baseFilename = query.filename || 'users';
-
-    // Use the simplified export method
-    return await this.exportService.exportData(
-      users,
-      mapper,
-      format,
-      baseFilename,
-      res,
-    );
   }
 }

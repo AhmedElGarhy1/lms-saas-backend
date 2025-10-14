@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { EnhancedErrorResponse } from '../exceptions/custom.exceptions';
+import { ErrorCode } from '../enums/error-codes.enum';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -72,6 +73,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       statusCode: status,
       message,
       error: this.getErrorType(status),
+      code: this.getErrorCode(status),
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
@@ -89,6 +91,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       message: 'Internal server error',
       error: 'Internal Server Error',
+      code: ErrorCode.INTERNAL_SERVER_ERROR,
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
@@ -150,6 +153,22 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     };
 
     return errorTypes[status] || 'Error';
+  }
+
+  private getErrorCode(status: number): ErrorCode {
+    const errorCodes: Record<number, ErrorCode> = {
+      [HttpStatus.BAD_REQUEST]: ErrorCode.BAD_REQUEST,
+      [HttpStatus.UNAUTHORIZED]: ErrorCode.UNAUTHORIZED,
+      [HttpStatus.FORBIDDEN]: ErrorCode.FORBIDDEN,
+      [HttpStatus.NOT_FOUND]: ErrorCode.NOT_FOUND,
+      [HttpStatus.CONFLICT]: ErrorCode.CONFLICT,
+      [HttpStatus.UNPROCESSABLE_ENTITY]: ErrorCode.UNPROCESSABLE_ENTITY,
+      [HttpStatus.TOO_MANY_REQUESTS]: ErrorCode.TOO_MANY_REQUESTS,
+      [HttpStatus.INTERNAL_SERVER_ERROR]: ErrorCode.INTERNAL_SERVER_ERROR,
+      [HttpStatus.SERVICE_UNAVAILABLE]: ErrorCode.SERVICE_UNAVAILABLE,
+    };
+
+    return errorCodes[status] || ErrorCode.UNKNOWN_ERROR;
   }
 
   private isRetryable(status: number): boolean {

@@ -7,17 +7,8 @@ import {
   Param,
   Delete,
   Put,
-  Res,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiBearerAuth,
-  ApiBody,
-  ApiParam,
-  ApiOperation,
-  ApiResponse,
-} from '@nestjs/swagger';
-import { Response } from 'express';
+import { ApiTags, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
 import {
   CreateApiResponses,
   ReadApiResponses,
@@ -38,13 +29,10 @@ import { UpdateCenterRequestDto } from '../dto/update-center.dto';
 import { CenterResponseDto } from '../dto/center-response.dto';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
-import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
 import { ExportService } from '@/shared/common/services/export.service';
-import { CenterResponseExportMapper } from '@/shared/common/mappers/center-response-export.mapper';
-import { ExportCentersDto } from '../dto/export-centers.dto';
-import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
+import { NoContext } from '@/shared/common/decorators/no-context';
 
 @Controller('centers')
 @ApiTags('Centers')
@@ -56,68 +44,6 @@ export class CentersController {
     private readonly activityLogService: ActivityLogService,
     private readonly exportService: ExportService,
   ) {}
-
-  @Post('access')
-  @CreateApiResponses('Grant center access to a user for this center')
-  @ApiParam({ name: 'id', description: 'Center ID', type: String })
-  @ApiBody({ type: CenterAccessDto })
-  @Permissions(PERMISSIONS.CENTER.GRANT_ACCESS)
-  async grantCenterAccess(
-    @Body() dto: CenterAccessDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.accessControlService.grantCenterAccess(
-      dto,
-      actor,
-    );
-
-    // Log center access granted
-    await this.activityLogService.log(
-      ActivityType.CENTER_ACCESS_GRANTED,
-      {
-        centerId: dto.centerId,
-        targetUserId: dto.userId,
-        grantedBy: actor.id,
-      },
-      actor,
-    );
-
-    return ControllerResponse.success(
-      result,
-      'Center access granted successfully',
-    );
-  }
-
-  @Delete('access')
-  @DeleteApiResponses('Revoke center access from a user for this center')
-  @ApiParam({ name: 'id', description: 'Center ID', type: String })
-  @ApiBody({ type: CenterAccessDto })
-  @Permissions(PERMISSIONS.CENTER.REVOKE_ACCESS)
-  async revokeCenterAccess(
-    @Body() dto: CenterAccessDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.accessControlService.revokeCenterAccess(
-      dto,
-      actor,
-    );
-
-    // Log center access revoked
-    await this.activityLogService.log(
-      ActivityType.CENTER_ACCESS_REVOKED,
-      {
-        centerId: dto.centerId,
-        targetUserId: dto.userId,
-        revokedBy: actor.id,
-      },
-      actor,
-    );
-
-    return ControllerResponse.success(
-      result,
-      'Center access revoked successfully',
-    );
-  }
 
   @Post()
   @CreateApiResponses('Create a new center')
@@ -146,6 +72,7 @@ export class CentersController {
   @Get()
   @ReadApiResponses('List centers with pagination, search, and filtering')
   @SerializeOptions({ type: CenterResponseDto })
+  @NoContext()
   listCenters(@Query() query: PaginateCentersDto, @GetUser() actor: ActorUser) {
     return this.centersService.paginateCenters(query, actor.id);
   }
@@ -224,44 +151,5 @@ export class CentersController {
     );
 
     return ControllerResponse.message('Center restored successfully');
-  }
-
-  // ===== EXPORT FUNCTIONALITY =====
-  @Get('export')
-  @ApiOperation({ summary: 'Export centers data' })
-  @ApiResponse({
-    status: 200,
-    description: 'Export file generated successfully',
-    type: ExportResponseDto,
-  })
-  // @Permissions(PERMISSIONS.CENTER.READ) // TODO: Add READ permission or use different permission
-  async exportCenters(
-    @Query() query: ExportCentersDto,
-    @Res() res: Response,
-    @GetUser() actor: ActorUser,
-  ): Promise<ExportResponseDto> {
-    const format = query.format || 'csv';
-
-    // Get data using the same pagination logic
-    const paginationResult = await this.centersService.paginateCenters(
-      query,
-      actor.id,
-    );
-    const centers = paginationResult.items;
-
-    // Create mapper
-    const mapper = new CenterResponseExportMapper();
-
-    // Generate base filename
-    const baseFilename = query.filename || 'centers';
-
-    // Use the simplified export method
-    return await this.exportService.exportData(
-      centers,
-      mapper,
-      format,
-      baseFilename,
-      res,
-    );
   }
 }
