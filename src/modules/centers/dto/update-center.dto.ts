@@ -36,4 +36,9 @@ export class UpdateCenterRequestDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @ApiProperty({ description: 'Center logo' })
+  @IsString()
+  @IsOptional()
+  logo?: string;
 }
