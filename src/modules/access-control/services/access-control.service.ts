@@ -1,8 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
-import { UserAccess } from '@/modules/access-control/entities';
+import { PermissionService } from './permission.service';
+import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { AccessControlHelperService } from './access-control-helper.service';
-import { UserAccessRepository, CenterAccessRepository } from '../repositories';
+import { UserAccessRepository } from '../repositories/user-access.repository';
+import { CenterAccessRepository } from '../repositories/center-access.repository';
 import { CenterAccessDto } from '../dto/center-access.dto';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
@@ -13,6 +15,7 @@ export class AccessControlService {
 
   constructor(
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly permissionService: PermissionService,
     private readonly userAccessRepository: UserAccessRepository,
     private readonly centerAccessRepository: CenterAccessRepository,
   ) {}

@@ -22,7 +22,7 @@ import {
 } from '../interfaces/user-service.interface';
 import { User } from '../entities/user.entity';
 import { CentersService } from '@/modules/centers/services/centers.service';
-import { UserRole } from '@/modules/access-control/entities';
+import { UserRole } from '@/modules/access-control/entities/user-role.entity';
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateAdminsDto } from '../dto/paginate-admins.dto';

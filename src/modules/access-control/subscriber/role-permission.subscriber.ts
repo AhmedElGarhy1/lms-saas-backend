@@ -3,10 +3,8 @@ import {
   EntitySubscriberInterface,
   InsertEvent,
   UpdateEvent,
-  In,
 } from 'typeorm';
-import { RolePermission } from '../entities';
-import { RoleType } from '@/shared/common/enums/role-type.enum';
+import { RolePermission } from '../entities/role-permission.entity';
 import { BadRequestException } from '@nestjs/common';
 import { PermissionRepository } from '../repositories/permission.repository';
 import { PermissionScope } from '../constants/permissions';

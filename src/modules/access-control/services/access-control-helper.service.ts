@@ -5,13 +5,15 @@ import {
   CenterAccessDeniedException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { In } from 'typeorm';
-import { UserRole, Role } from '../entities';
-import { UserAccess } from '../entities';
-import { UserRoleRepository, UserAccessRepository } from '../repositories/';
+import { UserRole } from '../entities/user-role.entity';
+import { Role } from '../entities/role.entity';
+import { UserAccess } from '../entities/user-access.entity';
+import { UserRoleRepository } from '../repositories/user-role.repository';
+import { UserAccessRepository } from '../repositories/user-access.repository';
 import { UserAccessParams } from '../interfaces/user-access.params';
 import { CenterAccessParams } from '../interfaces/center-access.params';
-import { Center } from '@/modules/centers/entities';
-import { CenterAccessRepository } from '../repositories';
+import { Center } from '@/modules/centers/entities/center.entity';
+import { CenterAccessRepository } from '../repositories/center-access.repository';
 
 @Injectable()
 export class AccessControlHelperService {

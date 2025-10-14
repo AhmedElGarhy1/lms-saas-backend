@@ -1,7 +1,7 @@
 import { IsUUID, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { PermissionScope } from '@/modules/access-control/constants/permissions';
-import { Permission } from '../entities';
+import { Permission } from '../entities/permission.entity';
 import { Exists } from '@/shared/common/decorators';
 
 export class RolePermissionDto {

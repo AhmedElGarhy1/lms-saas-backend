@@ -1,7 +1,6 @@
 import { Controller, Get, Query, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
-import {} from '@/shared/common/decorators';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
@@ -13,7 +12,7 @@ import { ExportUsersDto } from '../dto/export-users.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { PermissionScope } from '@/modules/access-control/constants/permissions';
-import { ActivityType } from '@/shared/modules/activity-log/entities';
+import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 
 @ApiTags('User Actions')
 @Controller('users/actions')

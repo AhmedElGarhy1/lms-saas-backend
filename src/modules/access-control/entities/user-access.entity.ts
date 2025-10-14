@@ -1,14 +1,5 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
-import { User } from '../../user/entities/user.entity';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
+import { User } from '@/modules/user/entities/user.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 

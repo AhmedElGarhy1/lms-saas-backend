@@ -4,7 +4,7 @@ import {
   InsertEvent,
   UpdateEvent,
 } from 'typeorm';
-import { UserRole } from '../entities';
+import { UserRole } from '../entities/user-role.entity';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { BadRequestException } from '@nestjs/common';
 import { RolesRepository } from '../repositories/roles.repository';

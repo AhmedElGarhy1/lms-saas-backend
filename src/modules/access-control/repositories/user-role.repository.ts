@@ -6,7 +6,8 @@ import {
 import { IsNull, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { UserRole, Role } from '../entities';
+import { UserRole } from '../entities/user-role.entity';
+import { Role } from '../entities/role.entity';
 import { LoggerService } from '@/shared/services/logger.service';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { DefaultRoles } from '../constants/roles';
