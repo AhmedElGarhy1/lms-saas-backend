@@ -15,17 +15,6 @@ export interface ChangePasswordParams {
   centerId?: string;
 }
 
-export interface GetProfileParams {
-  userId: string;
-  centerId?: string;
-  currentUserId?: string;
-}
-
-export interface GetCurrentUserProfileParams {
-  userId: string;
-  centerId?: string;
-}
-
 export interface UserServiceResponse<T = any> {
   data?: T;
   message?: string;

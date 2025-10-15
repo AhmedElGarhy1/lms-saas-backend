@@ -14,9 +14,7 @@ import { ProfileService } from './profile.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { CreateUserDto, CreateUserWithRoleDto } from '../dto/create-user.dto';
 import {
-  GetProfileParams,
   ChangePasswordParams,
-  GetCurrentUserProfileParams,
   UserServiceResponse,
   CurrentUserProfileResponse,
 } from '../interfaces/user-service.interface';
@@ -44,62 +42,6 @@ export class UserService {
     private readonly centersService: CentersService,
     private readonly activityLogService: ActivityLogService,
   ) {}
-
-  async getProfile(params: GetProfileParams): Promise<User> {
-    const { userId, centerId, currentUserId } = params;
-    // First check if the user exists
-    const user = await this.userRepository.findWithRelations(userId);
-
-    // Then check if current user can access the target user
-    if (currentUserId && currentUserId !== userId) {
-      try {
-        await this.accessControlHelperService.canUserAccess({
-          granterUserId: currentUserId,
-          targetUserId: userId,
-          centerId,
-        });
-      } catch {
-        throw new InsufficientPermissionsException(
-          'Access denied to this user',
-        );
-      }
-    }
-
-    if (!user) {
-      throw new ResourceNotFoundException('User not found');
-    }
-
-    // Then check if current user can access the target user
-    if (currentUserId && currentUserId !== userId) {
-      try {
-        await this.accessControlHelperService.canUserAccess({
-          granterUserId: currentUserId,
-          targetUserId: userId,
-          centerId,
-        });
-      } catch {
-        throw new InsufficientPermissionsException(
-          'Access denied to this user',
-        );
-      }
-    }
-
-    // Check center access if centerId is provided
-    if (centerId) {
-      const hasCenterAccess =
-        await this.accessControlHelperService.canCenterAccess({
-          userId: currentUserId || userId,
-          centerId,
-        });
-      if (!hasCenterAccess) {
-        throw new InsufficientPermissionsException(
-          'Access denied to this center',
-        );
-      }
-    }
-
-    return user;
-  }
 
   async changePassword(
     params: ChangePasswordParams,
@@ -289,7 +231,11 @@ export class UserService {
     return this.userRepository.findByEmail(email);
   }
 
-  async findUserById(id: string): Promise<User | null> {
+  async findUserById(id: string, actor: ActorUser): Promise<User | null> {
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserId: actor.id,
+      targetUserId: id,
+    });
     return this.userRepository.findWithRelations(id);
   }
 
@@ -328,56 +274,50 @@ export class UserService {
   }
 
   async getCurrentUserProfile(
-    params: GetCurrentUserProfileParams,
+    actor: ActorUser,
   ): Promise<CurrentUserProfileResponse> {
-    const { userId, centerId } = params;
-    try {
-      // Get user with profile
-      const user = await this.userRepository.findOne(userId);
-      if (!user) {
-        throw new ResourceNotFoundException('User not found');
-      }
-
-      this.logger.log(`Found user: ${user.id} - ${user.name}`);
-
-      // Determine context based on centerId
-      const returnData: CurrentUserProfileResponse = {
-        ...user,
-        context: { role: null as unknown as UserRole },
-        isAdmin: false,
-      };
-
-      const hasAdminRole =
-        await this.accessControlHelperService.hasAdminRole(userId);
-      returnData.isAdmin = hasAdminRole;
-
-      if (centerId) {
-        const center = await this.centersService.findCenterById(centerId);
-        if (center) {
-          returnData.context.center = center;
-          const contextRoles = await this.rolesService.findUserRole(
-            userId,
-            centerId,
-          );
-          returnData.context.role = contextRoles as UserRole;
-        }
-      }
-      if (!returnData.context.role) {
-        const userGlobalRole =
-          await this.accessControlHelperService.getUserRole(userId);
-        returnData.context.role = userGlobalRole as UserRole;
-      }
-
-      this.logger.log(`Returning profile for user: ${userId}`);
-
-      return returnData;
-    } catch (error) {
-      this.logger.error(
-        `Error in getCurrentUserProfile for user ${userId}:`,
-        error,
-      );
-      throw error;
+    // Get user with profile
+    const user = await this.userRepository.findOne(actor.id);
+    if (!user) {
+      throw new ResourceNotFoundException('User not found');
     }
+
+    this.logger.log(`Found user: ${user.id} - ${user.name}`);
+
+    // Determine context based on centerId
+    const returnData: CurrentUserProfileResponse = {
+      ...user,
+      context: { role: null as unknown as UserRole },
+      isAdmin: false,
+    };
+
+    const hasAdminRole = await this.accessControlHelperService.hasAdminRole(
+      actor.id,
+    );
+    returnData.isAdmin = hasAdminRole;
+
+    console.log('actor', actor);
+    if (actor.centerId) {
+      const center = await this.centersService.findCenterById(actor.centerId);
+      if (center) {
+        returnData.context.center = center;
+        const contextRoles = await this.rolesService.findUserRole(
+          actor.id,
+          actor.centerId,
+        );
+        returnData.context.role = contextRoles as UserRole;
+      }
+    }
+    if (!returnData.context.role) {
+      const userGlobalRole = await this.accessControlHelperService.getUserRole(
+        actor.id,
+      );
+      returnData.context.role = userGlobalRole as UserRole;
+    }
+
+    this.logger.log(`Returning profile for user: ${actor.id}`);
+
+    return returnData;
   }
 
   /**

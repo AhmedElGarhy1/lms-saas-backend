@@ -1,6 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { WinstonModule } from 'nest-winston';
 import { User } from './entities/user.entity';
 import { Profile } from './entities/profile.entity';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
@@ -14,12 +13,11 @@ import { UserRepository } from './repositories/user.repository';
 
 @Module({
   imports: [
-    WinstonModule,
     TypeOrmModule.forFeature([User, Profile]),
     AccessControlModule,
     forwardRef(() => CentersModule),
   ],
-  controllers: [UserController, UserActionsController, UserAccessController],
+  controllers: [UserActionsController, UserAccessController, UserController],
   providers: [UserService, ProfileService, UserRepository],
   exports: [UserService, ProfileService, UserRepository],
 })

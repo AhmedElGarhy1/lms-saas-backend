@@ -74,10 +74,7 @@ export class UserController {
   @ReadApiResponses('Get current user profile with comprehensive information')
   @NoContext()
   async getActorUserProfile(@GetUser() actorUser: ActorUser) {
-    return this.userService.getCurrentUserProfile({
-      userId: actorUser.id,
-      centerId: actorUser.centerId,
-    });
+    return this.userService.getCurrentUserProfile(actorUser);
   }
 
   @Get(':id')
@@ -85,17 +82,9 @@ export class UserController {
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiQuery({ name: 'centerId', required: false, type: String })
   @Permissions(PERMISSIONS.USER.READ)
-  async findOne(
-    @Param('id') userId: string,
-    @Query('centerId') centerId?: string,
-    @GetUser() actorUser?: ActorUser,
-  ) {
+  async findOne(@Param('id') userId: string, @GetUser() actor: ActorUser) {
     // TODO: implement later
-    return this.userService.getProfile({
-      userId,
-      centerId: actorUser?.centerId || centerId,
-      currentUserId: actorUser?.id,
-    });
+    return this.userService.findUserById(userId, actor);
   }
 
   @Post()

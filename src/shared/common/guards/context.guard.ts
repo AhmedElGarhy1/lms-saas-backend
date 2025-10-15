@@ -34,20 +34,26 @@ export class ContextGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
-    if (isPublic || noContext) {
+    if (isPublic) {
       return true;
     }
 
     const request: IRequest = context.switchToHttp().getRequest();
-    const user = request.user;
-
-    if (!user) {
-      throw new ForbiddenException('User not authenticated');
-    }
     const centerId = (request.get('x-center-id') ??
       request.centerId ??
       (request.body as { centerId?: string })?.centerId ??
       (request.query as { centerId?: string })?.centerId) as string;
+    const user = request.user;
+    user.centerId = centerId;
+
+    // first pass centerId
+    if (noContext) {
+      return true;
+    }
+
+    if (!user) {
+      throw new ForbiddenException('User not authenticated');
+    }
 
     console.log('centerId', centerId);
     console.log('user', user);
@@ -72,8 +78,6 @@ export class ContextGuard implements CanActivate {
         throw error;
       }
     }
-
-    user.centerId = centerId;
 
     // Set the userId (and maybe centerId) in the request context
     RequestContext.set({

@@ -146,8 +146,11 @@ export class AuthController {
   @Public()
   @CreateApiResponses('Setup two-factor authentication')
   @ApiBody({ type: TwoFASetupRequestDto })
-  async setup2FA(@Body() dto: TwoFASetupRequestDto) {
-    const result = await this.authService.setupTwoFactor(dto.email);
+  async setup2FA(
+    @Body() dto: TwoFASetupRequestDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.authService.setupTwoFactor(dto.email, actor);
 
     // Log 2FA setup initiation
     await this.activityLogService.log(ActivityType.TWO_FA_SETUP_INITIATED, {

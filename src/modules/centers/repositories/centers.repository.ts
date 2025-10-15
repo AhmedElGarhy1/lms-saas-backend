@@ -46,12 +46,19 @@ export class CentersRepository extends BaseRepository<Center> {
         .leftJoin('center.centerAccess', 'centerAccess')
         .andWhere('centerAccess.userId = :actorId', {
           actorId,
+        })
+        .andWhere('centerAccess.global = :global', {
+          global: true,
         });
     } else {
-      queryBuilder.leftJoin('center.userRoles', 'userRoles');
-      queryBuilder.andWhere('userRoles.userId = :actorId', {
-        actorId,
-      });
+      queryBuilder.leftJoin('center.centerAccess', 'centerAccess');
+      queryBuilder
+        .andWhere('centerAccess.userId = :actorId', {
+          actorId,
+        })
+        .andWhere('centerAccess.global = :global', {
+          global: false,
+        });
     }
     // subquery to to get accessible centers for params.userId
     if (

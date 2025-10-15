@@ -304,8 +304,8 @@ export class AuthService {
     };
   }
 
-  async setupTwoFactor(userId: string) {
-    const user = await this.userService.findUserById(userId);
+  async setupTwoFactor(userId: string, actor: ActorUser) {
+    const user = await this.userService.findUserById(userId, actor);
 
     if (!user) {
       throw new ResourceNotFoundException('User not found');
@@ -341,8 +341,12 @@ export class AuthService {
     };
   }
 
-  async enableTwoFactor(userId: string, verificationCode: string) {
-    const user = await this.userService.findUserById(userId);
+  async enableTwoFactor(
+    userId: string,
+    verificationCode: string,
+    actor: ActorUser,
+  ) {
+    const user = await this.userService.findUserById(userId, actor);
 
     if (!user) {
       throw new ResourceNotFoundException('User not found');
@@ -382,8 +386,12 @@ export class AuthService {
     return { message: 'Two-factor authentication enabled successfully' };
   }
 
-  async disableTwoFactor(userId: string, verificationCode: string) {
-    const user = await this.userService.findUserById(userId);
+  async disableTwoFactor(
+    userId: string,
+    verificationCode: string,
+    actor: ActorUser,
+  ) {
+    const user = await this.userService.findUserById(userId, actor);
 
     if (!user) {
       throw new ResourceNotFoundException('User not found');
