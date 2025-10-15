@@ -23,6 +23,10 @@ export class RolesService {
     private readonly userRoleRepository: UserRoleRepository,
   ) {}
 
+  async getMyPermissions(actor: ActorUser) {
+    return this.userRoleRepository.getUserPermissions(actor.id, actor.centerId);
+  }
+
   async paginateRoles(query: PaginateRolesDto, actor: ActorUser) {
     const centerId = query.centerId ?? actor.centerId;
     query.centerId = centerId;
@@ -48,7 +52,6 @@ export class RolesService {
     actor: ActorUser,
   ) {
     const role = await this.rolesRepository.findOne(roleId);
-    console.log(role, role?.centerId, actor.centerId);
     if (!role?.isSameScope(actor.centerId)) {
       throw new InsufficientPermissionsException(
         'You are not authorized to update this role',

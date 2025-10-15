@@ -384,6 +384,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     return this.repository.findOne({ where: { id } as any });
   }
 
+  async findOneSoftDeleted(id: string): Promise<T | null> {
+    return this.repository.findOne({ where: { id } as any, withDeleted: true });
+  }
+
   async findMany(options?: FindManyOptions<T>): Promise<T[]> {
     return this.repository.find(options);
   }
@@ -396,7 +400,6 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const entity = await this.repository.findOne({ where: { id } as any });
     if (!entity) return null;
 
-    console.log('entity', entity);
     this.repository.merge(entity, data);
 
     return this.repository.save(entity);

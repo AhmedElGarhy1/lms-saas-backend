@@ -18,6 +18,7 @@ import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshTokenStrategy } from './strategies/refresh.strategy';
 import { UserModule } from '../user/user.module';
+import { UserRepository } from '../user/repositories/user.repository';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { UserModule } from '../user/user.module';
     PasswordResetRepository,
     RefreshTokenRepository,
     TwoFactorService,
+    UserRepository,
     JwtStrategy,
     RefreshTokenStrategy,
   ],
@@ -61,6 +63,8 @@ import { UserModule } from '../user/user.module';
     PasswordResetRepository,
     RefreshTokenRepository,
     TwoFactorService,
+    JwtStrategy,
+    RefreshTokenStrategy,
   ],
 })
 export class AuthModule {}

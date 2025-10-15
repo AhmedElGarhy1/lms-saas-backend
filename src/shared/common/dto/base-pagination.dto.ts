@@ -1,4 +1,11 @@
-import { IsOptional, IsNumber, IsString, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsNumber,
+  IsString,
+  Min,
+  Max,
+  IsBoolean,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -90,6 +97,11 @@ export class BasePaginationDto {
     default: false,
   })
   @IsOptional()
-  @Type(() => Boolean)
-  isDeleted?: boolean = false;
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean;
+  })
+  isDeleted?: boolean;
 }

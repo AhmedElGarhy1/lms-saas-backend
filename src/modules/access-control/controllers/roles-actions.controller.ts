@@ -36,7 +36,7 @@ export class RolesActionsController {
     description: 'Export file generated successfully',
     type: ExportResponseDto,
   })
-  @Permissions(PERMISSIONS.ROLES.VIEW)
+  @Permissions(PERMISSIONS.ROLES.EXPORT)
   async exportRoles(
     @Query() query: ExportRolesDto,
     @Res() res: Response,

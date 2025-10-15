@@ -33,16 +33,9 @@ export class PaginateUsersDto extends BasePaginationDto {
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => {
-    if (typeof value === 'string') {
-      const lowerValue = value.toLowerCase();
-      if (lowerValue === 'true') return true;
-      if (lowerValue === 'false') return false;
-      return undefined; // Invalid string value
-    }
-    if (typeof value === 'boolean') {
-      return value; // Already a boolean
-    }
-    return undefined; // Not a string or boolean
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean;
   })
   isActive?: boolean;
 
@@ -99,16 +92,9 @@ export class PaginateUsersDto extends BasePaginationDto {
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => {
-    if (typeof value === 'string') {
-      const lowerValue = value.toLowerCase();
-      if (lowerValue === 'true') return true;
-      if (lowerValue === 'false') return false;
-      return undefined; // Invalid string value
-    }
-    if (typeof value === 'boolean') {
-      return value; // Already a boolean
-    }
-    return undefined; // Not a string or boolean
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean;
   })
   displayRole?: boolean;
 }

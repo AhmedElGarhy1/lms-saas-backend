@@ -182,7 +182,7 @@ export class UserService {
 
   async restoreUser(userId: string, actor: ActorUser): Promise<void> {
     // First check if the user exists
-    const user = await this.userRepository.findOne(userId);
+    const user = await this.userRepository.findOneSoftDeleted(userId);
     if (!user) {
       throw new ResourceNotFoundException('User not found');
     }
@@ -196,8 +196,6 @@ export class UserService {
 
     // Restore user
     await this.userRepository.restore(userId);
-
-    this.logger.log(`User restored: ${userId} by ${actor.id}`);
   }
 
   async activateUser(
@@ -296,7 +294,6 @@ export class UserService {
     );
     returnData.isAdmin = hasAdminRole;
 
-    console.log('actor', actor);
     if (actor.centerId) {
       const center = await this.centersService.findCenterById(actor.centerId);
       if (center) {

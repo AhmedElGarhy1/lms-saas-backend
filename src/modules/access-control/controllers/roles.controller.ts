@@ -55,6 +55,13 @@ export class RolesController {
     private readonly exportService: ExportService,
   ) {}
 
+  @Get('permissions/me')
+  @ReadApiResponses('Get my permissions')
+  @Permissions(PERMISSIONS.ROLES.VIEW)
+  async getMyPermissions(@GetUser() actor: ActorUser) {
+    return this.rolesService.getMyPermissions(actor);
+  }
+
   @Get('permissions')
   @ReadApiResponses('Get permissions')
   @ApiParam({ name: 'type', type: String })

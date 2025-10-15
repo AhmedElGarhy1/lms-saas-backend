@@ -55,7 +55,6 @@ export class UserController {
     @Query() query: PaginateUsersDto,
     @GetUser() actorUser: ActorUser,
   ) {
-    console.log(query.isDeleted, query.isActive);
     return this.userService.paginateUsers(query, actorUser);
   }
 

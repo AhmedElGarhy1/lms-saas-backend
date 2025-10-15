@@ -3,7 +3,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { UserRole } from '../entities/user-role.entity';
@@ -12,6 +12,9 @@ import { LoggerService } from '@/shared/services/logger.service';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { DefaultRoles } from '../constants/roles';
 import { AssignRoleDto } from '../dto/assign-role.dto';
+import { Permission } from '../entities/permission.entity';
+import { PermissionRepository } from './permission.repository';
+import { PermissionScope } from '../constants/permissions';
 
 @Injectable()
 export class UserRoleRepository extends BaseRepository<UserRole> {
@@ -21,8 +24,48 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
     protected readonly logger: LoggerService,
+    private readonly permissionRepository: PermissionRepository,
   ) {
     super(userRoleRepository, logger);
+  }
+
+  async getUserPermissions(
+    userId: string,
+    centerId?: string,
+  ): Promise<Permission[]> {
+    const userRole = await this.userRoleRepository.findOne({
+      where: { userId, ...(centerId && { centerId }) },
+      relations: ['role', 'role.permissions'],
+    });
+
+    if (userRole && userRole.role.rolePermissions.length > 0) {
+      return userRole.role.rolePermissions.map((rp) => {
+        const data = rp.permission;
+        data.scope = rp.permissionScope;
+        return data;
+      });
+    }
+    if (centerId) {
+      const isOwner = await this.isCenterOwner(userId, centerId);
+      if (isOwner) {
+        const centerPermissions = await this.permissionRepository.findMany({
+          where: {
+            scope: In([PermissionScope.CENTER, PermissionScope.BOTH]),
+          },
+        });
+        return centerPermissions.map((cp) => ({
+          ...cp,
+          scope: PermissionScope.CENTER,
+        }));
+      }
+    }
+
+    const isSuperAdmin = await this.isSuperAdmin(userId);
+    if (isSuperAdmin) {
+      return this.permissionRepository.findMany();
+    }
+
+    return [];
   }
 
   async getUserRoles(userId: string, centerId?: string): Promise<UserRole[]> {

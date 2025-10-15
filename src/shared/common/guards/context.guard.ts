@@ -44,6 +44,9 @@ export class ContextGuard implements CanActivate {
       (request.body as { centerId?: string })?.centerId ??
       (request.query as { centerId?: string })?.centerId) as string;
     const user = request.user;
+    if (!user) {
+      throw new ForbiddenException('User not authenticated');
+    }
     user.centerId = centerId;
 
     // first pass centerId
@@ -51,12 +54,6 @@ export class ContextGuard implements CanActivate {
       return true;
     }
 
-    if (!user) {
-      throw new ForbiddenException('User not authenticated');
-    }
-
-    console.log('centerId', centerId);
-    console.log('user', user);
     if (centerId) {
       await this.accessControlHelperService.validateCenterAccess({
         userId: user.id,

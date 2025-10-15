@@ -43,6 +43,21 @@ export const PERMISSIONS = {
       name: 'Revoke User Access',
       scope: PermissionScope.BOTH,
     },
+    READ_ALL: {
+      action: 'user:read-all',
+      name: 'Read All Users without User Access', // TODO: to implement
+      scope: PermissionScope.BOTH,
+    },
+    IMPORT: {
+      action: 'user:import',
+      name: 'Import Users',
+      scope: PermissionScope.BOTH,
+    },
+    EXPORT: {
+      action: 'user:export',
+      name: 'Export Users',
+      scope: PermissionScope.BOTH,
+    },
   },
 
   // ===== CENTER MANAGEMENT PERMISSIONS =====
@@ -83,6 +98,21 @@ export const PERMISSIONS = {
       name: 'Revoke Center Access',
       scope: PermissionScope.BOTH,
     },
+    READ_ALL: {
+      action: 'center:read-all',
+      name: 'Read All Centers without Center Access', // TODO: to implement
+      scope: PermissionScope.ADMIN,
+    },
+    IMPORT: {
+      action: 'center:import',
+      name: 'Import Centers',
+      scope: PermissionScope.ADMIN,
+    },
+    EXPORT: {
+      action: 'center:export',
+      name: 'Export Centers',
+      scope: PermissionScope.ADMIN,
+    },
   },
 
   // ===== ROLE MANAGEMENT PERMISSIONS =====
@@ -120,6 +150,16 @@ export const PERMISSIONS = {
     REMOVE: {
       action: 'roles:remove',
       name: 'Remove Role',
+      scope: PermissionScope.BOTH,
+    },
+    IMPORT: {
+      action: 'roles:import',
+      name: 'Import Roles',
+      scope: PermissionScope.BOTH,
+    },
+    EXPORT: {
+      action: 'roles:export',
+      name: 'Export Roles',
       scope: PermissionScope.BOTH,
     },
   },
