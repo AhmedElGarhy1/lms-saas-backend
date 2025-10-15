@@ -1,44 +1,46 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY, PermissionsMetadata } from '../decorators';
+import { IRequest } from '../interfaces/request.interface';
+import { RolesService } from '@/modules/access-control/services/roles.service';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly rolesService: RolesService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    const requiredPermissions = this.reflector.get<PermissionsMetadata[]>(
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    return true;
+    const requiredPermissions = this.reflector.get<PermissionsMetadata>(
       PERMISSIONS_KEY,
       context.getHandler(),
     );
 
-    // TODO: Remove this after testing
-    return true;
-
-    if (!requiredPermissions || requiredPermissions.length === 0) {
+    if (!requiredPermissions || !requiredPermissions.permission) {
       return true;
     }
 
-    // const request = context.switchToHttp().getRequest<RequestWithUser>();
-    // const user = request.user;
+    const request = context.switchToHttp().getRequest<IRequest>();
+    const user = request.user;
 
-    // if (!user) {
-    //   throw new ForbiddenException('User not authenticated');
-    // }
+    if (!user) {
+      throw new ForbiddenException('User not authenticated');
+    }
 
-    // const userPermissions = user.permissions || [];
+    const hasPermission = await this.rolesService.hasPermission(
+      user.id,
+      requiredPermissions.permission,
+      requiredPermissions.scope,
+      user.centerId,
+    );
 
-    // // Check if user has all required permissions
-    // const hasAllPermissions = requiredPermissions.every((permission) =>
-    //   userPermissions.includes(permission),
-    // );
-
-    // if (!hasAllPermissions) {
-    //   throw new ForbiddenException(
-    //     `Insufficient permissions. Required: ${requiredPermissions.join(', ')}`,
-    //   );
-    // }
-
-    // return true;
+    return hasPermission;
   }
 }

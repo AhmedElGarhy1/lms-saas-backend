@@ -101,7 +101,10 @@ export class UserRepository extends BaseRepository<User> {
       }
     } else {
       queryBuilder.andWhere(
-        'EXISTS (SELECT 1 FROM center_access ca WHERE ca."userId" = user.id AND ca."global" = false)',
+        'NOT EXISTS (SELECT 1 FROM center_access ca WHERE ca."userId" = user.id AND ca."global" = true)',
+      );
+      queryBuilder.andWhere(
+        `NOT EXISTS (SELECT 1 FROM user_roles ur WHERE ur."userId" = user.id AND ur."centerId" IS NULL)`,
       );
     }
 

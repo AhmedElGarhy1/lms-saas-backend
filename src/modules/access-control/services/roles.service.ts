@@ -14,6 +14,7 @@ import { AssignRoleDto } from '../dto/assign-role.dto';
 import { UserRoleRepository } from '../repositories/user-role.repository';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
+import { PermissionScope } from '../constants/permissions';
 
 @Injectable()
 export class RolesService {
@@ -135,5 +136,19 @@ export class RolesService {
 
     // Restore the role
     await this.rolesRepository.restore(roleId);
+  }
+
+  async hasPermission(
+    userId: string,
+    permission: string,
+    scope: PermissionScope,
+    centerId?: string,
+  ) {
+    return this.userRoleRepository.hasPermission(
+      userId,
+      permission,
+      scope,
+      centerId,
+    );
   }
 }

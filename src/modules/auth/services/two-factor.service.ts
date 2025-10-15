@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
 import { LoggerService } from '../../../shared/services/logger.service';
+import {
+  QrCodeGenerationFailedException,
+  TwoFactorGenerationFailedException,
+} from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
 export class TwoFactorService {
@@ -39,7 +43,7 @@ export class TwoFactorService {
       return await QRCode.toDataURL(otpauthUrl);
     } catch (error) {
       this.logger.error('Failed to generate QR code', error);
-      throw new Error('Failed to generate QR code');
+      throw new QrCodeGenerationFailedException('Failed to generate QR code');
     }
   }
 
@@ -71,7 +75,9 @@ export class TwoFactorService {
       });
     } catch (error) {
       this.logger.error('Failed to generate 2FA token', error);
-      throw new Error('Failed to generate 2FA token');
+      throw new TwoFactorGenerationFailedException(
+        'Failed to generate 2FA token',
+      );
     }
   }
 

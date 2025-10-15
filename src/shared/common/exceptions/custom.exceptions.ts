@@ -324,3 +324,201 @@ export class CenterAccessDeniedException extends HttpException {
     );
   }
 }
+
+export class SeederException extends HttpException {
+  constructor(message: string) {
+    super(
+      {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message,
+        error: 'Seeder Error',
+        code: ErrorCode.SEEDER_ERROR,
+        timestamp: new Date().toISOString(),
+        userMessage: 'Database seeding failed',
+        actionRequired: 'Please contact system administrator',
+        retryable: true,
+      } as EnhancedErrorResponse,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+}
+
+export class ExportFormatNotSupportedException extends HttpException {
+  constructor(format: string) {
+    super(
+      {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: `Unsupported export format: ${format}`,
+        error: 'Bad Request',
+        code: ErrorCode.EXPORT_FORMAT_NOT_SUPPORTED,
+        timestamp: new Date().toISOString(),
+        userMessage: 'The requested export format is not supported',
+        actionRequired: 'Please use a supported format (csv, xlsx, json)',
+        retryable: false,
+      } as EnhancedErrorResponse,
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}
+
+export class ExportDataUnavailableException extends HttpException {
+  constructor(message: string = 'No data available for export') {
+    super(
+      {
+        statusCode: HttpStatus.NOT_FOUND,
+        message,
+        error: 'Not Found',
+        code: ErrorCode.EXPORT_DATA_UNAVAILABLE,
+        timestamp: new Date().toISOString(),
+        userMessage: 'No data is available for export',
+        actionRequired: 'Please ensure there is data to export',
+        retryable: false,
+      } as EnhancedErrorResponse,
+      HttpStatus.NOT_FOUND,
+    );
+  }
+}
+
+export class ExportFailedException extends HttpException {
+  constructor(message: string) {
+    super(
+      {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message,
+        error: 'Export Failed',
+        code: ErrorCode.EXPORT_FAILED,
+        timestamp: new Date().toISOString(),
+        userMessage: 'Export operation failed',
+        actionRequired: 'Please try again or contact support',
+        retryable: true,
+      } as EnhancedErrorResponse,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+}
+
+export class TwoFactorGenerationFailedException extends HttpException {
+  constructor(message: string) {
+    super(
+      {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message,
+        error: 'Two Factor Generation Failed',
+        code: ErrorCode.TWO_FACTOR_GENERATION_FAILED,
+        timestamp: new Date().toISOString(),
+        userMessage: 'Failed to generate two-factor authentication token',
+        actionRequired: 'Please try again or contact support',
+        retryable: true,
+      } as EnhancedErrorResponse,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+}
+
+export class QrCodeGenerationFailedException extends HttpException {
+  constructor(message: string) {
+    super(
+      {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message,
+        error: 'QR Code Generation Failed',
+        code: ErrorCode.QR_CODE_GENERATION_FAILED,
+        timestamp: new Date().toISOString(),
+        userMessage: 'Failed to generate QR code for two-factor authentication',
+        actionRequired: 'Please try again or contact support',
+        retryable: true,
+      } as EnhancedErrorResponse,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+}
+
+export class MissingRequiredHeaderException extends HttpException {
+  constructor(header: string) {
+    super(
+      {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: `Missing required header: ${header}`,
+        error: 'Bad Request',
+        code: ErrorCode.MISSING_REQUIRED_HEADER,
+        timestamp: new Date().toISOString(),
+        userMessage: 'A required header is missing from the request',
+        actionRequired: `Please include the ${header} header in your request`,
+        retryable: false,
+      } as EnhancedErrorResponse,
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}
+
+export class InvalidContentTypeException extends HttpException {
+  constructor(message: string) {
+    super(
+      {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message,
+        error: 'Bad Request',
+        code: ErrorCode.INVALID_CONTENT_TYPE,
+        timestamp: new Date().toISOString(),
+        userMessage: 'Invalid content type in request',
+        actionRequired: 'Please use the correct content type',
+        retryable: false,
+      } as EnhancedErrorResponse,
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}
+
+export class RequestBodyTooLargeException extends HttpException {
+  constructor(message: string = 'Request body too large') {
+    super(
+      {
+        statusCode: HttpStatus.PAYLOAD_TOO_LARGE,
+        message,
+        error: 'Payload Too Large',
+        code: ErrorCode.REQUEST_BODY_TOO_LARGE,
+        timestamp: new Date().toISOString(),
+        userMessage: 'The request body is too large',
+        actionRequired: 'Please reduce the size of your request',
+        retryable: false,
+      } as EnhancedErrorResponse,
+      HttpStatus.PAYLOAD_TOO_LARGE,
+    );
+  }
+}
+
+export class UnsupportedContentTypeException extends HttpException {
+  constructor(message: string) {
+    super(
+      {
+        statusCode: HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        message,
+        error: 'Unsupported Media Type',
+        code: ErrorCode.UNSUPPORTED_CONTENT_TYPE,
+        timestamp: new Date().toISOString(),
+        userMessage: 'The content type is not supported',
+        actionRequired: 'Please use a supported content type',
+        retryable: false,
+      } as EnhancedErrorResponse,
+      HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+    );
+  }
+}
+
+export class SystemNotReadyException extends HttpException {
+  constructor(message: string = 'System is not ready') {
+    super(
+      {
+        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+        message,
+        error: 'Service Unavailable',
+        code: ErrorCode.SYSTEM_NOT_READY,
+        timestamp: new Date().toISOString(),
+        userMessage: 'The system is not ready to handle requests',
+        actionRequired: 'Please try again later',
+        retryable: true,
+      } as EnhancedErrorResponse,
+      HttpStatus.SERVICE_UNAVAILABLE,
+    );
+  }
+}

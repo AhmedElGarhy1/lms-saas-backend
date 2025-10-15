@@ -57,7 +57,7 @@ export class RolesController {
 
   @Get('permissions/me')
   @ReadApiResponses('Get my permissions')
-  @Permissions(PERMISSIONS.ROLES.VIEW)
+  // @Permissions(PERMISSIONS.ROLES.VIEW)
   async getMyPermissions(@GetUser() actor: ActorUser) {
     return this.rolesService.getMyPermissions(actor);
   }
@@ -65,7 +65,7 @@ export class RolesController {
   @Get('permissions')
   @ReadApiResponses('Get permissions')
   @ApiParam({ name: 'type', type: String })
-  @Permissions(PERMISSIONS.ROLES.VIEW)
+  // @Permissions(PERMISSIONS.ROLES.VIEW)
   async getPermissions(
     @Param('type') type: 'admin' | 'user' | 'all' = 'all',
     @GetUser() user: ActorUser,
@@ -109,7 +109,6 @@ export class RolesController {
     searchFields: ['name', 'description'],
     filterFields: ['type', 'isActive'],
   })
-  @Permissions(PERMISSIONS.ROLES.VIEW)
   async getRoles(
     @Query() query: PaginateRolesDto,
     @GetUser() actor: ActorUser,
@@ -120,7 +119,7 @@ export class RolesController {
   @Get(':roleId')
   @ReadApiResponses('Get role by ID')
   @ApiParam({ name: 'roleId', type: String })
-  @Permissions(PERMISSIONS.ROLES.VIEW)
+  // @Permissions(PERMISSIONS.ROLES.VIEW)
   async getRoleById(@Param('roleId') roleId: string) {
     const result = await this.rolesService.findById(roleId);
     return ControllerResponse.success(result, 'Role retrieved successfully');
@@ -207,7 +206,7 @@ export class RolesController {
     description: 'Export file generated successfully',
     type: ExportResponseDto,
   })
-  @Permissions(PERMISSIONS.ROLES.VIEW)
+  @Permissions(PERMISSIONS.ROLES.EXPORT)
   async exportRoles(
     @Query() query: ExportRolesDto,
     @Res() res: Response,

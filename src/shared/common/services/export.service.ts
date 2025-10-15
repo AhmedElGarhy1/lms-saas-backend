@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Response } from 'express';
 import { ExportResponseDto } from '../dto/export-response.dto';
+import {
+  ExportFormatNotSupportedException,
+  ExportDataUnavailableException,
+  ExportFailedException,
+} from '../exceptions/custom.exceptions';
 
 export interface ExportOptions {
   filename: string;
@@ -158,7 +163,7 @@ export class ExportService {
       case 'json':
         return await this.exportToJson(data, mapper, options.filename, res);
       default:
-        throw new Error(`Unsupported export format: ${options.format}`);
+        throw new ExportFormatNotSupportedException(options.format);
     }
   }
 
@@ -174,14 +179,12 @@ export class ExportService {
   ): Promise<ExportResponseDto> {
     // Validate format
     if (!this.isValidFormat(format)) {
-      throw new Error(
-        'Invalid export format. Supported formats: csv, xlsx, json',
-      );
+      throw new ExportFormatNotSupportedException(format);
     }
 
     // Check for empty data
     if (!data || data.length === 0) {
-      throw new Error('No data available for export');
+      throw new ExportDataUnavailableException();
     }
 
     // Generate filename with timestamp
@@ -195,7 +198,7 @@ export class ExportService {
     } else if (format === 'json') {
       return await this.exportToJson(data, mapper, finalFilename, res);
     } else {
-      throw new Error(`Unsupported format: ${format}`);
+      throw new ExportFormatNotSupportedException(format);
     }
   }
 

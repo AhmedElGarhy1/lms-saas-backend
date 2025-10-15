@@ -11,17 +11,19 @@
 [x] check delete, softDelete, restore
 [x] simplify frontend error handling
 [x] permissions restrictions and role_permissions table
-[ ] for forms display \* for requried fields (automatic)
+[x] for forms display \* for requried fields (automatic)
+[x] fix module actions incompatibility
+[x] activity logs on backend
+[x] activity logs on frontend
+[x] export functioanlity
+[x] fix login as center user
+[ ] continue on roles and permissions integration
 [ ] fix AccessDialog interface and paginations
-[ ] fix module actions incompatibility
-[ ] activity logs in both backend and frontend
-[ ] import/export functioanlity
+[ ] import functioanlity
 [ ] builk operations
 [ ] add backend loclization and integration
 [ ] think about implementing branches (later not now)
-[ ] fix login as center user
 [ ] fix autuntication and refresh token and doesn't exist center or unaccessable center (x-center-id)
 [ ] add transactions or unit of work
-[ ] how can I display users without any roles (for some reason this happened)
 [ ] view modals in all modules
 [ ] integrate twilio for some verifications

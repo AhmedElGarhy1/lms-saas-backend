@@ -35,7 +35,11 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
   ): Promise<Permission[]> {
     const userRole = await this.userRoleRepository.findOne({
       where: { userId, ...(centerId && { centerId }) },
-      relations: ['role', 'role.permissions'],
+      relations: [
+        'role',
+        'role.rolePermissions',
+        'role.rolePermissions.permission',
+      ],
     });
 
     if (userRole && userRole.role.rolePermissions.length > 0) {
@@ -215,5 +219,27 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
       }
     }
     await this.remove(existingUserRole.id);
+  }
+
+  async hasPermission(
+    userId: string,
+    permission: string,
+    scope: PermissionScope,
+    centerId?: string,
+  ) {
+    const userRole = await this.userRoleRepository.findOne({
+      where: {
+        userId,
+        ...(centerId && { centerId }),
+        role: {
+          rolePermissions: {
+            permissionScope: In([scope, PermissionScope.BOTH]),
+            permission: { action: permission },
+          },
+        },
+      },
+    });
+
+    return !!userRole;
   }
 }

@@ -64,7 +64,7 @@ export class UserActionsController {
     return data;
   }
 
-  @Get('admin/export')
+  @Get('export/admin')
   @ApiOperation({ summary: 'Export admin users data' })
   @ApiResponse({
     status: 200,

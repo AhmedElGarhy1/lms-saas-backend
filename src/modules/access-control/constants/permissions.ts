@@ -38,11 +38,6 @@ export const PERMISSIONS = {
       name: 'Grant User Access',
       scope: PermissionScope.BOTH,
     },
-    REVOKE_ACCESS: {
-      action: 'user:revoke-user-access',
-      name: 'Revoke User Access',
-      scope: PermissionScope.BOTH,
-    },
     READ_ALL: {
       action: 'user:read-all',
       name: 'Read All Users without User Access', // TODO: to implement
@@ -93,11 +88,6 @@ export const PERMISSIONS = {
       name: 'Grant Center Access',
       scope: PermissionScope.BOTH,
     },
-    REVOKE_ACCESS: {
-      action: 'center:revoke-access',
-      name: 'Revoke Center Access',
-      scope: PermissionScope.BOTH,
-    },
     READ_ALL: {
       action: 'center:read-all',
       name: 'Read All Centers without Center Access', // TODO: to implement
@@ -117,11 +107,6 @@ export const PERMISSIONS = {
 
   // ===== ROLE MANAGEMENT PERMISSIONS =====
   ROLES: {
-    VIEW: {
-      action: 'roles:view',
-      name: 'View Roles',
-      scope: PermissionScope.BOTH,
-    },
     CREATE: {
       action: 'roles:create',
       name: 'Create Role',
@@ -145,11 +130,6 @@ export const PERMISSIONS = {
     ASSIGN: {
       action: 'roles:assign',
       name: 'Assign Role',
-      scope: PermissionScope.BOTH,
-    },
-    REMOVE: {
-      action: 'roles:remove',
-      name: 'Remove Role',
       scope: PermissionScope.BOTH,
     },
     IMPORT: {

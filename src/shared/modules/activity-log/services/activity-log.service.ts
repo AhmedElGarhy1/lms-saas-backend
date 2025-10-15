@@ -6,6 +6,7 @@ import { RequestContext } from '@/shared/common/context/request.context';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateActivityLogsDto } from '../dto/paginate-activity-logs.dto';
 import { Pagination } from 'nestjs-typeorm-paginate';
+import { AuthenticationFailedException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
 export class ActivityLogService {
@@ -124,7 +125,9 @@ export class ActivityLogService {
     const actorId = requestContext?.userId;
 
     if (!actorId) {
-      throw new Error('User must be authenticated to view activity logs');
+      throw new AuthenticationFailedException(
+        'User must be authenticated to view activity logs',
+      );
     }
 
     return this.activityLogRepository.paginateActivityLogs(query, actorId);

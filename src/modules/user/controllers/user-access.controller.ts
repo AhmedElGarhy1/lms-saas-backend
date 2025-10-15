@@ -51,7 +51,7 @@ export class UserAccessController {
   @Delete()
   @DeleteApiResponses('Revoke user access to another user')
   @ApiBody({ type: UserAccessDto })
-  @Permissions(PERMISSIONS.USER.REVOKE_ACCESS)
+  @Permissions(PERMISSIONS.USER.GRANT_ACCESS)
   async revokeUserAccess(
     @Body() dto: UserAccessDto,
     @GetUser() actor: ActorUser,

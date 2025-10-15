@@ -58,7 +58,7 @@ export class CentersAccessController {
   @DeleteApiResponses('Revoke center access from a user for this center')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @ApiBody({ type: CenterAccessDto })
-  @Permissions(PERMISSIONS.CENTER.REVOKE_ACCESS)
+  @Permissions(PERMISSIONS.CENTER.GRANT_ACCESS)
   async revokeCenterAccess(
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,

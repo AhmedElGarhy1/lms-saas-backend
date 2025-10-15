@@ -26,6 +26,7 @@ import { DatabaseModule } from './shared/modules/database/database.module';
 import { AccessControlHelperService } from './modules/access-control/services/access-control-helper.service';
 import { ContextMiddleware } from './shared/common/middleware/context.middleware';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { RolesService } from './modules/access-control/services/roles.service';
 
 @Module({
   imports: [
@@ -114,8 +115,9 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     },
     {
       provide: APP_GUARD,
-      useFactory: (reflector: Reflector) => new PermissionsGuard(reflector),
-      inject: [Reflector],
+      useFactory: (reflector: Reflector, rolesService: RolesService) =>
+        new PermissionsGuard(reflector, rolesService),
+      inject: [Reflector, RolesService],
     },
   ],
 })

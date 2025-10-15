@@ -1,5 +1,11 @@
 import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
+import {
+  MissingRequiredHeaderException,
+  InvalidContentTypeException,
+  RequestBodyTooLargeException,
+  UnsupportedContentTypeException,
+} from '../exceptions/custom.exceptions';
 
 @Injectable()
 export class RequestValidationMiddleware implements NestMiddleware {
@@ -40,7 +46,7 @@ export class RequestValidationMiddleware implements NestMiddleware {
     const requiredHeaders = ['user-agent'];
     for (const header of requiredHeaders) {
       if (!req.get(header)) {
-        throw new Error(`Missing required header: ${header}`);
+        throw new MissingRequiredHeaderException(header);
       }
     }
 
@@ -48,7 +54,9 @@ export class RequestValidationMiddleware implements NestMiddleware {
     if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
       const contentType = req.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Content-Type must be application/json');
+        throw new InvalidContentTypeException(
+          'Content-Type must be application/json',
+        );
       }
     }
   }
@@ -58,7 +66,7 @@ export class RequestValidationMiddleware implements NestMiddleware {
     const maxSize = 1024 * 1024; // 1MB
 
     if (contentLength > maxSize) {
-      throw new Error('Request body too large');
+      throw new RequestBodyTooLargeException();
     }
   }
 
@@ -66,7 +74,7 @@ export class RequestValidationMiddleware implements NestMiddleware {
     if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
       const contentType = req.get('content-type');
       if (contentType && !contentType.includes('application/json')) {
-        throw new Error('Unsupported content type');
+        throw new UnsupportedContentTypeException('Unsupported content type');
       }
     }
   }

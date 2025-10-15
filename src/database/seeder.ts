@@ -26,6 +26,7 @@ import { UserRole } from '@/modules/access-control/entities/user-role.entity';
 import { RolePermission } from '@/modules/access-control/entities/role-permission.entity';
 import { DefaultRoles } from '@/modules/access-control/constants/roles';
 import { PermissionScope } from '@/modules/access-control/constants/permissions';
+import { SeederException } from '@/shared/common/exceptions/custom.exceptions';
 
 // Helper function to generate phone numbers that fit within 20 character limit
 const generateShortPhone = (): string => {
@@ -182,7 +183,9 @@ export class DatabaseSeeder {
           where: { id: userUuid },
         });
         if (!user) {
-          throw new Error(`Failed to create system user with ID: ${userUuid}`);
+          throw new SeederException(
+            `Failed to create system user with ID: ${userUuid}`,
+          );
         }
         return user;
       },
@@ -199,6 +202,7 @@ export class DatabaseSeeder {
       // Use CASCADE to handle foreign key constraints properly
       const tablesToClear = [
         'activity_logs',
+        'role_permissions',
         'user_roles',
         'user_access',
         'center_access',
@@ -283,7 +287,6 @@ export class DatabaseSeeder {
         name: (permission as any).name,
         action: (permission as any).action,
         description: (permission as any).name,
-        isAdmin: (permission as any).isAdmin,
         scope: (permission as any).scope,
       });
     });
@@ -528,7 +531,9 @@ export class DatabaseSeeder {
             where: { id: userUuid },
           });
           if (!user) {
-            throw new Error(`Failed to create user with ID: ${userUuid}`);
+            throw new SeederException(
+              `Failed to create user with ID: ${userUuid}`,
+            );
           }
           return user;
         },
@@ -865,9 +870,17 @@ export class DatabaseSeeder {
   ): Permission[] {
     // Filter permissions based on role type and scope
     return permissions.filter((permission) => {
-      // Super Admin and Center Owner get all permissions
-      if (role.name === 'Super Administrator' || role.name === 'Center Owner') {
+      // Super Admin gets all permissions
+      if (role.name === 'Super Administrator') {
         return true;
+      }
+
+      // Center Owner gets all center and both scope permissions
+      if (role.name === 'Owner') {
+        return (
+          permission.scope === PermissionScope.CENTER ||
+          permission.scope === PermissionScope.BOTH
+        );
       }
 
       // Admin roles get admin and both scope permissions
