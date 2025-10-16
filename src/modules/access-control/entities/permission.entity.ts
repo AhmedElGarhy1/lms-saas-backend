@@ -24,9 +24,6 @@ export class Permission {
   @Column({ nullable: true })
   description: string;
 
-  @Column({ default: false })
-  isAdmin: boolean;
-
   @Column({
     type: 'enum',
     enum: PermissionScope,

@@ -55,8 +55,12 @@ export class CentersService {
 
     const user = await this.userService.createUser(dto.user, actor);
     const centerRoleData = createOwnerRoleData(center.id);
+    // TODO: Add permissions to the role
     const centerRole = await this.rolesService.createRole(
-      centerRoleData,
+      {
+        ...centerRoleData,
+        rolePermissions: [],
+      },
       actor,
     );
 

@@ -37,10 +37,10 @@ export class RolesRepository extends BaseRepository<Role> {
   }
 
   async createRole(data: CreateRoleRequestDto): Promise<Role> {
-    const { permissions, ...roleData } = data;
+    const { rolePermissions, ...roleData } = data;
     const role = await this.create(roleData);
     await this.rolePermissionRepository.bulkInsert(
-      permissions.map((permission) => ({
+      rolePermissions.map((permission) => ({
         permissionId: permission.id,
         permissionScope: permission.scope,
         userId: role.createdBy,
@@ -51,19 +51,20 @@ export class RolesRepository extends BaseRepository<Role> {
   }
 
   async updateRole(roleId: string, data: CreateRoleRequestDto): Promise<Role> {
-    const { permissions, ...roleData } = data;
+    const { rolePermissions, ...roleData } = data;
     const role = await this.update(roleId, roleData);
     if (!role) {
       throw new ResourceNotFoundException('Role was not found');
     }
     // sync permissions
-    const toAdd = permissions.filter(
+    // TODO: sync permission scope also
+    const toAdd = rolePermissions.filter(
       (permission) =>
         !role.rolePermissions.some((p) => p.permissionId === permission.id),
     );
     const toRemove = role.rolePermissions.filter(
       (p) =>
-        !permissions.some((permission) => permission.id === p.permissionId),
+        !rolePermissions.some((permission) => permission.id === p.permissionId),
     );
     await this.rolePermissionRepository.bulkInsert(
       toAdd.map((permission) => ({

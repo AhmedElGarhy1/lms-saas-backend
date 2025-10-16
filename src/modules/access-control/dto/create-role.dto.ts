@@ -6,6 +6,7 @@ import {
   IsEnum,
   IsUUID,
   ValidateNested,
+  Min,
 } from 'class-validator';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
@@ -34,6 +35,6 @@ export class CreateRoleRequestDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => RolePermissionDto)
-  @MinLength(1)
-  permissions: RolePermissionDto[];
+  // @Min(1)
+  rolePermissions: RolePermissionDto[];
 }

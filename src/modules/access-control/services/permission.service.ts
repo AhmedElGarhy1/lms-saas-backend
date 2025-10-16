@@ -4,10 +4,11 @@ import { PermissionRepository } from '../repositories/permission.repository';
 import { Permission } from '../entities/permission.entity';
 import { LoggerService } from '@/shared/services/logger.service';
 import { UserRoleRepository } from '../repositories/user-role.repository';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere, In } from 'typeorm';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { PermissionScope } from '../constants/permissions';
 
 @Injectable()
 export class PermissionService {
@@ -22,30 +23,21 @@ export class PermissionService {
    * Get all permissions from database
    */
   async getPermissions(
-    type: 'admin' | 'user' | 'all' = 'all',
     actor: ActorUser,
+    scope?: PermissionScope,
   ): Promise<Permission[]> {
     const where: FindOptionsWhere<Permission> = {};
 
-    const userHighestRole = await this.accessControlHelperService.getUserRole(
-      actor.id,
-    );
-
-    const roleType = userHighestRole?.role?.type;
-
-    if (type === 'admin') {
-      if (roleType === RoleType.ADMIN || roleType === RoleType.SYSTEM) {
-        where.isAdmin = true;
-      } else
-        throw new InsufficientPermissionsException(
-          "You can't view admin permissions",
-        );
-    } else if (type === 'user') {
-      where.isAdmin = false;
-    } else if (type === 'all') {
-      if (roleType !== RoleType.SYSTEM && roleType !== RoleType.ADMIN) {
-        where.isAdmin = false;
-      }
+    if (actor.centerId) {
+      where.scope = scope || In([PermissionScope.CENTER, PermissionScope.BOTH]);
+    } else {
+      where.scope =
+        scope ||
+        In([
+          PermissionScope.ADMIN,
+          PermissionScope.BOTH,
+          PermissionScope.CENTER,
+        ]);
     }
 
     return await this.permissionRepository.findMany({ where });

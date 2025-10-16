@@ -18,6 +18,7 @@ import {
   ApiBearerAuth,
   ApiResponse,
   ApiOperation,
+  ApiQuery,
 } from '@nestjs/swagger';
 import {
   CreateApiResponses,
@@ -33,7 +34,10 @@ import { PaginationDocs } from '@/shared/common/decorators/pagination-docs.decor
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
+import {
+  PERMISSIONS,
+  PermissionScope,
+} from '@/modules/access-control/constants/permissions';
 import { RoleResponseDto } from '../dto/role-response.dto';
 import { SerializeOptions } from '@nestjs/common';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
@@ -57,20 +61,18 @@ export class RolesController {
 
   @Get('permissions/me')
   @ReadApiResponses('Get my permissions')
-  // @Permissions(PERMISSIONS.ROLES.VIEW)
   async getMyPermissions(@GetUser() actor: ActorUser) {
     return this.rolesService.getMyPermissions(actor);
   }
 
   @Get('permissions')
   @ReadApiResponses('Get permissions')
-  @ApiParam({ name: 'type', type: String })
-  // @Permissions(PERMISSIONS.ROLES.VIEW)
+  @ApiQuery({ name: 'scope', required: false, enum: PermissionScope })
   async getPermissions(
-    @Param('type') type: 'admin' | 'user' | 'all' = 'all',
-    @GetUser() user: ActorUser,
+    @Query('scope') scope: PermissionScope,
+    @GetUser() actor: ActorUser,
   ) {
-    const result = await this.permissionService.getPermissions(type, user);
+    const result = await this.permissionService.getPermissions(actor, scope);
     return ControllerResponse.success(
       result,
       'Permissions retrieved successfully',
@@ -94,7 +96,7 @@ export class RolesController {
         roleId: result.id,
         roleName: result.name,
         roleType: result.type,
-        permissions: dto.permissions,
+        rolePermissions: dto.rolePermissions,
         createdBy: actor.id,
       },
       actor,

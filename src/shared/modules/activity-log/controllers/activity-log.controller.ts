@@ -24,7 +24,6 @@ export class ActivityLogController {
     status: 200,
     description: 'Activity logs retrieved successfully',
   })
-  @Permissions(PERMISSIONS.ACTIVITY_LOG.VIEW)
   async getActivityLogs(@Query() query: PaginateActivityLogsDto) {
     return this.activityLogService.getActivityLogs(query);
   }
@@ -36,7 +35,6 @@ export class ActivityLogController {
     description: 'Export file generated successfully',
     type: ExportResponseDto,
   })
-  @Permissions(PERMISSIONS.ACTIVITY_LOG.EXPORT)
   async exportActivityLogs(
     @Query() query: ExportActivityLogsDto,
     @Res() res: Response,

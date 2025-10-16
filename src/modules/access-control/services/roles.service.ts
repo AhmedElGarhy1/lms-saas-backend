@@ -3,10 +3,7 @@ import {
   InsufficientPermissionsException,
   ResourceNotFoundException,
 } from '@/shared/common/exceptions/custom.exceptions';
-import { PaginationQuery } from '@/shared/common/utils/pagination.utils';
-import { Pagination } from 'nestjs-typeorm-paginate';
 import { RolesRepository } from '../repositories/roles.repository';
-import { Role } from '../entities/role.entity';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { CreateRoleRequestDto } from '../dto/create-role.dto';

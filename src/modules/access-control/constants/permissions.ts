@@ -144,20 +144,6 @@ export const PERMISSIONS = {
     },
   },
 
-  // ===== ACTIVITY LOG PERMISSIONS =====
-  ACTIVITY_LOG: {
-    VIEW: {
-      action: 'activity-log:view',
-      name: 'View Activity Logs',
-      scope: PermissionScope.BOTH,
-    },
-    EXPORT: {
-      action: 'activity-log:export',
-      name: 'Export Activity Logs',
-      scope: PermissionScope.BOTH,
-    },
-  },
-
   // ===== SYSTEM PERMISSIONS =====
   SYSTEM: {
     HEALTH_CHECK: {

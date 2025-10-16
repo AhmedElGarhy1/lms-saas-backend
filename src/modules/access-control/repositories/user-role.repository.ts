@@ -33,22 +33,13 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
     userId: string,
     centerId?: string,
   ): Promise<Permission[]> {
-    const userRole = await this.userRoleRepository.findOne({
-      where: { userId, ...(centerId && { centerId }) },
-      relations: [
-        'role',
-        'role.rolePermissions',
-        'role.rolePermissions.permission',
-      ],
-    });
+    let userRole: UserRole | null = null;
 
-    if (userRole && userRole.role.rolePermissions.length > 0) {
-      return userRole.role.rolePermissions.map((rp) => {
-        const data = rp.permission;
-        data.scope = rp.permissionScope;
-        return data;
-      });
+    const isSuperAdmin = await this.isSuperAdmin(userId);
+    if (isSuperAdmin) {
+      return this.permissionRepository.findMany();
     }
+
     if (centerId) {
       const isOwner = await this.isCenterOwner(userId, centerId);
       if (isOwner) {
@@ -62,11 +53,32 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
           scope: PermissionScope.CENTER,
         }));
       }
+      userRole = await this.userRoleRepository.findOne({
+        where: { userId, centerId },
+        relations: [
+          'role',
+          'role.rolePermissions',
+          'role.rolePermissions.permission',
+        ],
+      });
     }
 
-    const isSuperAdmin = await this.isSuperAdmin(userId);
-    if (isSuperAdmin) {
-      return this.permissionRepository.findMany();
+    if (!userRole && !centerId) {
+      userRole = await this.userRoleRepository.findOne({
+        where: { userId, centerId: IsNull() },
+        relations: [
+          'role',
+          'role.rolePermissions',
+          'role.rolePermissions.permission',
+        ],
+      });
+    }
+    if (userRole && userRole.role.rolePermissions.length > 0) {
+      return userRole.role.rolePermissions.map((rp) => {
+        const data = rp.permission;
+        data.scope = rp.permissionScope;
+        return data;
+      });
     }
 
     return [];
