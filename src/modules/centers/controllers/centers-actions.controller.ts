@@ -19,6 +19,7 @@ import { ActivityType } from '@/shared/modules/activity-log/entities/activity-lo
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
+import { ExportFormat } from '@/shared/common/dto';
 
 @ApiBearerAuth()
 @ApiTags('Centers Actions')
@@ -43,7 +44,7 @@ export class CentersActionsController {
     @Res() res: Response,
     @GetUser() actor: ActorUser,
   ): Promise<ExportResponseDto> {
-    const format = query.format || 'csv';
+    const format = query.format;
 
     // Get data using the same pagination logic
     const paginationResult = await this.centersService.paginateCenters(

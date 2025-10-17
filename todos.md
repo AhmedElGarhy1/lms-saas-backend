@@ -17,8 +17,8 @@
 [x] activity logs on frontend
 [x] export functioanlity
 [x] fix login as center user
-[ ] continue on roles and permissions integration
-[ ] fix AccessDialog interface and paginations
+[x] continue on roles and permissions integration
+[x] fix AccessDialog interface and paginations
 [ ] import functioanlity
 [ ] builk operations
 [ ] add backend loclization and integration

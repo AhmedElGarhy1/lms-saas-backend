@@ -37,7 +37,7 @@ export class UserActionsController {
     @Res() res: Response,
     @GetUser() actor: ActorUser,
   ): Promise<ExportResponseDto> {
-    const format = query.format || 'csv';
+    const format = query.format;
 
     // Get data using the same pagination logic
     const paginationResult = await this.userService.paginateUsers(query, actor);

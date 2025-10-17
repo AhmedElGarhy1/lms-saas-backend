@@ -16,7 +16,7 @@ export class ExportQueryDto {
   })
   @IsOptional()
   @IsEnum(ExportFormat)
-  format?: ExportFormat = ExportFormat.CSV;
+  format: ExportFormat = ExportFormat.CSV;
 
   @ApiProperty({
     description: 'Custom filename (without extension)',

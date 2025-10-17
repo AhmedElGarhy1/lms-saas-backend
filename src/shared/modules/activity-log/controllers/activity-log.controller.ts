@@ -9,6 +9,7 @@ import { ExportService } from '@/shared/common/services/export.service';
 import { ActivityLogExportMapper } from '@/shared/common/mappers/activity-log-export.mapper';
 import { ExportActivityLogsDto } from '../dto/export-activity-logs.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
+import { ExportFormat } from '@/shared/common/dto';
 
 @ApiTags('Activity Logs')
 @Controller('activity-logs')
@@ -39,7 +40,7 @@ export class ActivityLogController {
     @Query() query: ExportActivityLogsDto,
     @Res() res: Response,
   ): Promise<ExportResponseDto> {
-    const format = query.format || 'csv';
+    const format = query.format || ExportFormat.CSV;
 
     // Get data using the same pagination logic
     const paginationResult =

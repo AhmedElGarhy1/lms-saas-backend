@@ -18,6 +18,7 @@ import { ExportService } from '@/shared/common/services/export.service';
 import { RoleResponseExportMapper } from '@/shared/common/mappers/role-response-export.mapper';
 import { ExportRolesDto } from '../dto/export-roles.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
+import { ExportFormat } from '@/shared/common/dto';
 
 @ApiTags('Roles')
 @Controller('roles/actions')
@@ -42,7 +43,7 @@ export class RolesActionsController {
     @Res() res: Response,
     @GetUser() actor: ActorUser,
   ): Promise<ExportResponseDto> {
-    const format = query.format || 'csv';
+    const format = query.format;
 
     // Get data using the same pagination logic
     const paginationResult = await this.rolesService.paginateRoles(
