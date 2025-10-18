@@ -4,7 +4,7 @@ import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { UserService } from '@/modules/user/services/user.service';
 import { I18nTranslations } from '@/generated/i18n.generated';
-import { Locale } from '@/i18n/i18n.config';
+import { Locale } from '@/shared/common/enums/locale.enum';
 
 @Injectable()
 export class LocaleService {

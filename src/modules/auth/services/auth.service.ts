@@ -26,6 +26,8 @@ import { User } from '../../user/entities/user.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class AuthService {
@@ -40,6 +42,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly logger: LoggerService,
     private readonly activityLogService: ActivityLogService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
@@ -293,7 +296,10 @@ export class AuthService {
   async resetPassword(dto: ResetPasswordRequestDto) {
     // Use newPassword from the DTO
     await this.passwordResetService.resetPassword(dto.token, dto.newPassword);
-    return { success: true, message: 'Password reset successfully' };
+    return {
+      success: true,
+      message: this.i18n.translate('success.passwordReset'),
+    };
   }
 
   async refreshToken(dto: RefreshTokenRequestDto) {

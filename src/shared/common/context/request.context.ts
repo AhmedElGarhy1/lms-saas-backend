@@ -1,4 +1,5 @@
 // request-context.ts
+import { Locale } from '@/shared/common/enums/locale.enum';
 import { AsyncLocalStorage } from 'async_hooks';
 
 export interface IRequestContext {
@@ -7,6 +8,7 @@ export interface IRequestContext {
   ipAddress?: string;
   userAgent?: string;
   requestId?: string;
+  locale?: Locale;
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<IRequestContext>();

@@ -1,18 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { I18nResolver } from 'nestjs-i18n';
-import { Request } from 'express';
+import { Locale } from '../common/enums/locale.enum';
+import { RequestContext } from '../common/context/request.context';
 
 @Injectable()
 export class UserLocaleResolver implements I18nResolver {
-  resolve(context: any): string | Promise<string> {
-    const request = context.switchToHttp().getRequest() as Request;
+  constructor() {}
 
-    if (!request || !request.user) {
-      return 'en'; // Default to English if no user
-    }
-
-    // Get user locale from the request user object
-    const user = request.user as any;
-    return user.locale || 'en';
+  resolve(): string {
+    const locale = RequestContext.get().locale;
+    return locale || Locale.EN;
   }
 }

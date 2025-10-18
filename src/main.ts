@@ -4,9 +4,16 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import * as fs from 'fs';
 import { useContainer } from 'class-validator';
+import { UserMiddleware } from './shared/common/middleware/user.middleware';
+import { UserService } from './modules/user/services/user.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(
+    new UserMiddleware(app.get(UserService)).use.bind(
+      new UserMiddleware(app.get(UserService)),
+    ),
+  );
 
   // Configure class-validator to use NestJS container
   useContainer(app.select(AppModule), { fallbackOnErrors: true });

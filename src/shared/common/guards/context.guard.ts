@@ -80,6 +80,7 @@ export class ContextGuard implements CanActivate {
     RequestContext.set({
       userId: user.id,
       centerId: user.centerId,
+      locale: user.locale,
     });
 
     return true;

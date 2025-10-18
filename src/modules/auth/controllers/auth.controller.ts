@@ -24,6 +24,8 @@ import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -31,6 +33,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly activityLogService: ActivityLogService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Public()
@@ -51,7 +54,10 @@ export class AuthController {
         hasRefreshToken: !!result.refreshToken,
       });
 
-      return ControllerResponse.success(result, 'Login successful');
+      return ControllerResponse.success(
+        result,
+        this.i18n.translate('success.login'),
+      );
     } catch (error) {
       // Log failed login attempt
       await this.activityLogService.log(ActivityType.USER_LOGIN_FAILED, {
@@ -80,7 +86,10 @@ export class AuthController {
       signupTime: new Date().toISOString(),
     });
 
-    return ControllerResponse.success(result, 'User registered successfully');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.userRegistered'),
+    );
   }
 
   @Post('refresh')
@@ -91,7 +100,10 @@ export class AuthController {
     const result = await this.authService.refreshToken({
       refreshToken: dto.refreshToken,
     });
-    return ControllerResponse.success(result, 'Token refreshed successfully');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.tokenRefreshed'),
+    );
   }
 
   @Post('verify-email')
@@ -107,7 +119,10 @@ export class AuthController {
       verificationTime: new Date().toISOString(),
     });
 
-    return ControllerResponse.success(result, 'Email verified successfully');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.emailVerified'),
+    );
   }
 
   @Post('forgot-password')
@@ -123,7 +138,10 @@ export class AuthController {
       requestTime: new Date().toISOString(),
     });
 
-    return ControllerResponse.success(result, 'Password reset email sent');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.passwordResetSent'),
+    );
   }
 
   @Post('reset-password')
@@ -139,7 +157,10 @@ export class AuthController {
       resetTime: new Date().toISOString(),
     });
 
-    return ControllerResponse.success(result, 'Password reset successfully');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.passwordReset'),
+    );
   }
 
   @Post('setup-2fa')
@@ -158,7 +179,10 @@ export class AuthController {
       setupTime: new Date().toISOString(),
     });
 
-    return ControllerResponse.success(result, '2FA setup initiated');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.twoFactorSetup'),
+    );
   }
 
   @Post('verify-2fa')
@@ -175,7 +199,10 @@ export class AuthController {
         verificationTime: new Date().toISOString(),
       });
 
-      return ControllerResponse.success(result, '2FA verification completed');
+      return ControllerResponse.success(
+        result,
+        this.i18n.translate('success.twoFactorVerified'),
+      );
     } catch (error) {
       // Log failed 2FA verification
       await this.activityLogService.log(
@@ -207,6 +234,9 @@ export class AuthController {
       user,
     );
 
-    return ControllerResponse.success(result, 'Logout successful');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.logout'),
+    );
   }
 }

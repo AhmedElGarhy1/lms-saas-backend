@@ -507,6 +507,15 @@ export type I18nTranslations = {
         "validationPassed": string;
         "upload": string;
         "download": string;
+        "tokenRefreshed": string;
+        "emailVerified": string;
+        "passwordResetSent": string;
+        "passwordReset": string;
+        "twoFactorSetup": string;
+        "twoFactorVerified": string;
+        "userRegistered": string;
+        "userActivated": string;
+        "userDeactivated": string;
     };
     "system": {
         "healthCheck": string;

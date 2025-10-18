@@ -10,6 +10,7 @@ export class ContextMiddleware implements NestMiddleware {
   use(req: IRequest, res: Response, next: NextFunction) {
     const user = req.user;
     const centerId = req.centerId;
+    console.log('ContextMiddleware', user, centerId);
 
     // Extract IP address (considering proxies and load balancers)
     const ipAddress = this.getClientIpAddress(req);
@@ -20,18 +21,14 @@ export class ContextMiddleware implements NestMiddleware {
     // Generate unique request ID for tracking
     const requestId = randomUUID();
 
-    RequestContext.run(
-      {
-        userId: user?.id,
-        centerId,
-        ipAddress,
-        userAgent,
-        requestId,
-      },
-      () => {
-        next();
-      },
-    );
+    RequestContext.set({
+      userId: user?.id,
+      centerId,
+      ipAddress,
+      userAgent,
+      requestId,
+    });
+    next();
   }
 
   private getClientIpAddress(req: Request): string {

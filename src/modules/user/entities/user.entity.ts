@@ -9,7 +9,7 @@ import { UserAccess } from '@/modules/access-control/entities/user-access.entity
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserRole } from '@/modules/access-control/entities/user-role.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
-import { Locale } from '@/i18n/i18n.config';
+import { Locale } from '@/shared/common/enums/locale.enum';
 
 @Entity('users')
 export class User extends BaseEntity {

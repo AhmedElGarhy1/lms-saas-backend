@@ -25,6 +25,7 @@
 [-] import functioanlity
 [-] builk operations
 [ ] add backend loclization and integration
+[ ] query/parameter vlaidation
 [ ] think about implementing branches (later not now)
 [ ] fix autuntication and refresh token
 [ ] add transactions or unit of work

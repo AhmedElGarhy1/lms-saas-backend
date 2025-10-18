@@ -1,12 +1,16 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import { APP_INTERCEPTOR, APP_FILTER, APP_PIPE, APP_GUARD } from '@nestjs/core';
 import { Reflector } from '@nestjs/core';
-import { I18nModule } from 'nestjs-i18n';
-import { i18nConfig } from './i18n/i18n.config';
+import {
+  AcceptLanguageResolver,
+  I18nJsonLoader,
+  I18nModule,
+  QueryResolver,
+} from 'nestjs-i18n';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { UserModule } from '@/modules/user/user.module';
 import { CentersModule } from '@/modules/centers/centers.module';
@@ -30,6 +34,10 @@ import { AccessControlHelperService } from './modules/access-control/services/ac
 import { ContextMiddleware } from './shared/common/middleware/context.middleware';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RolesService } from './modules/access-control/services/roles.service';
+import { join } from 'path';
+import { UserLocaleResolver } from './shared/resolvers/user-locale.resolver';
+import { UserService } from './modules/user/services/user.service';
+import { Locale } from './shared/common/enums/locale.enum';
 
 @Module({
   imports: [
@@ -61,7 +69,21 @@ import { RolesService } from './modules/access-control/services/roles.service';
         },
       ],
     }),
-    I18nModule.forRoot(i18nConfig),
+    I18nModule.forRoot({
+      fallbackLanguage: Locale.EN,
+      loader: I18nJsonLoader,
+      loaderOptions: {
+        path: join(__dirname, '/i18n/'),
+        watch: true,
+        includeSubfolders: false,
+      },
+      typesOutputPath: join(__dirname, '../../src/generated/i18n.generated.ts'),
+      resolvers: [
+        { use: QueryResolver, options: ['lang'] },
+        UserLocaleResolver,
+        AcceptLanguageResolver,
+      ],
+    }),
     SharedModule,
     AuthModule,
     UserModule,
@@ -126,7 +148,7 @@ import { RolesService } from './modules/access-control/services/roles.service';
     },
   ],
 })
-export class AppModule {
+export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(ContextMiddleware).forRoutes('*');
   }

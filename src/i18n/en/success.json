@@ -23,5 +23,14 @@
   "dataCreated": "Data created successfully",
   "validationPassed": "Validation passed successfully",
   "upload": "File uploaded successfully",
-  "download": "File downloaded successfully"
+  "download": "File downloaded successfully",
+  "tokenRefreshed": "Token refreshed successfully",
+  "emailVerified": "Email verified successfully",
+  "passwordResetSent": "Password reset email sent",
+  "passwordReset": "Password reset successfully",
+  "twoFactorSetup": "2FA setup initiated",
+  "twoFactorVerified": "2FA verification completed",
+  "userRegistered": "User registered successfully",
+  "userActivated": "User activated successfully",
+  "userDeactivated": "User deactivated successfully"
 }

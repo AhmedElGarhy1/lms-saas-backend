@@ -181,7 +181,9 @@ export class UserController {
       actorUser,
     );
 
-    return ControllerResponse.message('Password changed successfully');
+    return ControllerResponse.message(
+      this.i18n.translate('success.passwordChange'),
+    );
   }
 
   @Patch(':id/status')
@@ -212,7 +214,9 @@ export class UserController {
 
     return {
       id: userId,
-      message: `User ${dto.isActive ? 'activated' : 'deactivated'} successfully`,
+      message: this.i18n.translate(
+        dto.isActive ? 'success.userActivated' : 'success.userDeactivated',
+      ),
       isActive: dto.isActive,
     };
   }
@@ -264,6 +268,10 @@ export class UserController {
       actorUser,
     );
 
-    return ControllerResponse.message('User restored successfully');
+    return ControllerResponse.message(
+      this.i18n.translate('success.restore', {
+        args: { resource: this.i18n.translate('common.resources.user') },
+      }),
+    );
   }
 }

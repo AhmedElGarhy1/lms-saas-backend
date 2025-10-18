@@ -47,7 +47,9 @@
     "removeData": "Remove all center-specific data"
   },
   "manageUsers": {
-    "title": "Manage Users"
+    "title": "Manage Users",
+    "description": "Manage user access for this center. Use the Grant/Revoke buttons to control which users can access this center.",
+    "allUsers": "All Users"
   },
   "manageAdmins": {
     "title": "Manage Admins",
@@ -70,5 +72,17 @@
     "noPermissionsFound": "No Permissions found",
     "adminScope": "Admin Scope",
     "centerScope": "Center Scope"
+  },
+  "manageAdminRoles": {
+    "title": "Manage Admin Roles",
+    "description": "Showing admin roles available for {{userName}} in the system. Use the Assign/Remove buttons to manage admin role assignments."
+  },
+  "manageRoles": {
+    "title": "Manage Roles",
+    "description": "Showing roles available for {{userName}} in your center. Use the Assign/Remove buttons to manage role assignments."
+  },
+  "rolesForCenter": {
+    "title": "Roles for {{centerName}}",
+    "description": "Showing roles available for {{userName}} in {{centerName}}. Use the Assign/Remove buttons to manage role assignments."
   }
 }
