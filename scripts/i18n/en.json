@@ -70,6 +70,20 @@
       "assign": "Assign",
       "revoke": "Revoke",
       "grant": "Grant",
+      "remove": "Remove",
+      "backToCenters": "Back to Centers",
+      "creating": "Creating...",
+      "createUser": "Create User",
+      "updating": "Updating...",
+      "updateUser": "Update User",
+      "deleting": "Deleting...",
+      "deleteUser": "Delete User",
+      "createCenter": "Create Center",
+      "updateCenter": "Update Center",
+      "deleteCenter": "Delete Center",
+      "createRole": "Create Role",
+      "updateRole": "Update Role",
+      "deleteRole": "Delete Role",
       "search": "Search",
       "filter": "Filter",
       "clear": "Clear",
@@ -226,7 +240,6 @@
       "basicInformation": "Basic Information",
       "roleName": "Role Name",
       "roleType": "Role Type",
-      "type": "Type",
       "totalPermissions": "Total Permissions",
       "permissionsAssigned": "permissions assigned",
       "createdAt": "Created At",
@@ -236,6 +249,15 @@
       "customRole": "Custom Role",
       "unknownUser": "Unknown User",
       "contactInformation": "Contact Information",
+      "show": "Show",
+      "activeStatus": "Active Status",
+      "adminName": "Admin Name",
+      "adminEmail": "Admin Email",
+      "adminPassword": "Admin Password",
+      "adminPhone": "Admin Phone",
+      "adminAddress": "Admin Address",
+      "adminDateOfBirth": "Admin Date of Birth",
+      "adminActiveStatus": "Admin Active Status",
       "selectDates": "Select dates...",
       "today": "Today",
       "yesterday": "Yesterday",
@@ -348,6 +370,14 @@
       "enterPatent": "Enter patent",
       "filterBy": "Filter by {field}",
       "searchCenters": "Search centers...",
+      "searchAdmins": "Search Admins...",
+      "enterCenterName": "Enter center name",
+      "enterCenterDescription": "Enter center description",
+      "enterAdminName": "Enter admin full name",
+      "enterAdminEmail": "Enter admin email",
+      "enterAdminPassword": "Enter admin password",
+      "enterAdminPhone": "Enter admin phone number",
+      "enterAdminAddress": "Enter admin address",
       "pickDateRange": "Pick a date range"
     },
     "messages": {
@@ -383,6 +413,94 @@
   "dashboard": {
     "welcome": "Welcome to Vision AI",
     "description": "A modern Learning Management System for multi-center organizations with secure role and permission management."
+  },
+  "dialogs": {
+    "createUser": {
+      "title": "Create New User"
+    },
+    "editUser": {
+      "title": "Edit User"
+    },
+    "viewUser": {
+      "title": "User Details"
+    },
+    "deleteUser": {
+      "title": "Delete User",
+      "message": "Are you sure you want to delete",
+      "cannotUndo": "This action cannot be undone.",
+      "warning": "This will permanently remove the user and all associated data."
+    },
+    "createRole": {
+      "title": "Create New Role"
+    },
+    "editRole": {
+      "title": "Edit Role"
+    },
+    "viewRole": {
+      "title": "Role Details"
+    },
+    "deleteRole": {
+      "title": "Delete Role",
+      "message": "Are you sure you want to delete this role?"
+    },
+    "createCenter": {
+      "title": "Create New Center"
+    },
+    "editCenter": {
+      "title": "Edit Center"
+    },
+    "viewCenter": {
+      "title": "Center Details"
+    },
+    "deleteCenter": {
+      "title": "Delete Center",
+      "message": "Are you sure you want to delete the center",
+      "cannotUndo": "This action cannot be undone.",
+      "warning": "This will permanently remove the center and all associated data.",
+      "thisActionWill": "This action will",
+      "removeCenter": "Remove the center from the system",
+      "disassociateUsers": "Disassociate all users from this center",
+      "removeData": "Remove all center-specific data"
+    },
+    "manageUsers": {
+      "title": "Manage Users",
+      "description": "Manage user access for this center. Use the Grant/Revoke buttons to control which users can access this center.",
+      "allUsers": "All Users"
+    },
+    "manageAdmins": {
+      "title": "Manage Admins",
+      "description": "Manage admin access for this center. Use the Grant/Revoke buttons to control which admins can manage this center."
+    },
+    "manageAccess": {
+      "title": "Manage Access",
+      "description": "Showing users that {{userName}} can access based on their roles and permissions. Use the Grant/Revoke buttons to manage access."
+    },
+    "manageCenterAccess": {
+      "title": "Manage Center Access",
+      "description": "Manage center access for this user. Use the Grant/Revoke buttons to control access to different centers.",
+      "allCenters": "All Centers"
+    },
+    "manageRoleUsers": {
+      "title": "Manage Role Users",
+      "description": "Manage user assignments for this role. Use the Grant/Revoke buttons to control which users have this role assigned.",
+      "searchPlaceholder": "Search users...",
+      "allUsers": "All Users",
+      "noPermissionsFound": "No Permissions found",
+      "adminScope": "Admin Scope",
+      "centerScope": "Center Scope"
+    },
+    "manageAdminRoles": {
+      "title": "Manage Admin Roles",
+      "description": "Showing admin roles available for {{userName}} in the system. Use the Assign/Remove buttons to manage admin role assignments."
+    },
+    "manageRoles": {
+      "title": "Manage Roles",
+      "description": "Showing roles available for {{userName}} in your center. Use the Assign/Remove buttons to manage role assignments."
+    },
+    "rolesForCenter": {
+      "title": "Roles for {{centerName}}",
+      "description": "Showing roles available for {{userName}} in {{centerName}}. Use the Assign/Remove buttons to manage role assignments."
+    }
   },
   "errors": {
     "RESOURCE_NOT_FOUND": "The requested resource was not found",
@@ -423,6 +541,14 @@
     "UNAUTHORIZED": "Unauthorized",
     "FORBIDDEN": "Forbidden"
   },
+  "export": {
+    "formats": {
+      "csv": "CSV",
+      "excel": "Excel",
+      "json": "JSON"
+    },
+    "tableExport": "table-export"
+  },
   "form": {
     "email": {
       "label": "Email",
@@ -441,12 +567,6 @@
     "roles": "Roles",
     "systemHealth": "System Health"
   },
-  "pagination": {
-    "selectedRows": "{{selected}} of {{total}} row(s) selected",
-    "showingResults": "Showing {{start}} to {{end}} of {{total}} results",
-    "rowsPerPage": "Rows per page",
-    "pageOf": "Page {{current}} of {{total}}"
-  },
   "pages": {
     "admins": {
       "title": "Admins",
@@ -458,7 +578,7 @@
     },
     "roles": {
       "title": "Roles",
-      "subtitle": "Manage user roles and permissions"
+      "subtitle": "Manage system roles and permissions"
     },
     "users": {
       "title": "Users",
@@ -467,15 +587,13 @@
     "health": {
       "title": "System Health",
       "subtitle": "Real-time monitoring of system performance and service status"
-    },
-    "roles": {
-      "title": "Roles",
-      "subtitle": "Manage system roles and permissions"
-    },
-    "centers": {
-      "title": "Centers",
-      "subtitle": "Manage learning centers"
     }
+  },
+  "pagination": {
+    "selectedRows": "{{selected}} of {{total}} row(s) selected",
+    "showingResults": "Showing {{start}} to {{end}} of {{total}} results",
+    "rowsPerPage": "Rows per page",
+    "pageOf": "Page {{current}} of {{total}}"
   },
   "selectCenter": {
     "title": "Select Center",
@@ -509,7 +627,16 @@
     "dataCreated": "Data created successfully",
     "validationPassed": "Validation passed successfully",
     "upload": "File uploaded successfully",
-    "download": "File downloaded successfully"
+    "download": "File downloaded successfully",
+    "tokenRefreshed": "Token refreshed successfully",
+    "emailVerified": "Email verified successfully",
+    "passwordResetSent": "Password reset email sent",
+    "passwordReset": "Password reset successfully",
+    "twoFactorSetup": "2FA setup initiated",
+    "twoFactorVerified": "2FA verification completed",
+    "userRegistered": "User registered successfully",
+    "userActivated": "User activated successfully",
+    "userDeactivated": "User deactivated successfully"
   },
   "system": {
     "healthCheck": "System health check",
@@ -601,88 +728,6 @@
     "translation": "Translation",
     "localization": "Localization",
     "internationalization": "Internationalization"
-  },
-  "export": {
-    "formats": {
-      "csv": "CSV",
-      "excel": "Excel",
-      "json": "JSON"
-    },
-    "tableExport": "table-export"
-  },
-  "dialogs": {
-    "createUser": {
-      "title": "Create New User"
-    },
-    "editUser": {
-      "title": "Edit User"
-    },
-    "viewUser": {
-      "title": "User Details"
-    },
-    "deleteUser": {
-      "title": "Delete User",
-      "message": "Are you sure you want to delete",
-      "cannotUndo": "This action cannot be undone.",
-      "warning": "This will permanently remove the user and all associated data."
-    },
-    "createRole": {
-      "title": "Create New Role"
-    },
-    "editRole": {
-      "title": "Edit Role"
-    },
-    "viewRole": {
-      "title": "Role Details"
-    },
-    "deleteRole": {
-      "title": "Delete Role",
-      "message": "Are you sure you want to delete this role?"
-    },
-    "createCenter": {
-      "title": "Create New Center"
-    },
-    "editCenter": {
-      "title": "Edit Center"
-    },
-    "viewCenter": {
-      "title": "Center Details"
-    },
-    "deleteCenter": {
-      "title": "Delete Center",
-      "message": "Are you sure you want to delete the center",
-      "cannotUndo": "This action cannot be undone.",
-      "warning": "This will permanently remove the center and all associated data.",
-      "thisActionWill": "This action will",
-      "removeCenter": "Remove the center from the system",
-      "disassociateUsers": "Disassociate all users from this center",
-      "removeData": "Remove all center-specific data"
-    },
-    "manageUsers": {
-      "title": "Manage Users"
-    },
-    "manageAdmins": {
-      "title": "Manage Admins",
-      "description": "Manage admin access for this center. Use the Grant/Revoke buttons to control which admins can manage this center."
-    },
-    "manageAccess": {
-      "title": "Manage Access",
-      "description": "Showing users that {{userName}} can access based on their roles and permissions. Use the Grant/Revoke buttons to manage access."
-    },
-    "manageCenterAccess": {
-      "title": "Manage Center Access",
-      "description": "Manage center access for this user. Use the Grant/Revoke buttons to control access to different centers.",
-      "allCenters": "All Centers"
-    },
-    "manageRoleUsers": {
-      "title": "Manage Role Users",
-      "description": "Manage user assignments for this role. Use the Grant/Revoke buttons to control which users have this role assigned.",
-      "searchPlaceholder": "Search users...",
-      "allUsers": "All Users",
-      "noPermissionsFound": "No Permissions found",
-      "adminScope": "Admin Scope",
-      "centerScope": "Center Scope"
-    }
   },
   "table": {
     "columns": {

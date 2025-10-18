@@ -70,6 +70,20 @@
       "assign": "تعيين",
       "revoke": "إلغاء",
       "grant": "منح",
+      "remove": "إزالة",
+      "backToCenters": "العودة إلى المراكز",
+      "creating": "جاري الإنشاء...",
+      "createUser": "إنشاء مستخدم",
+      "updating": "جاري التحديث...",
+      "updateUser": "تحديث المستخدم",
+      "deleting": "جاري الحذف...",
+      "deleteUser": "حذف المستخدم",
+      "createCenter": "إنشاء مركز",
+      "updateCenter": "تحديث المركز",
+      "deleteCenter": "حذف المركز",
+      "createRole": "إنشاء دور",
+      "updateRole": "تحديث الدور",
+      "deleteRole": "حذف الدور",
       "search": "بحث",
       "filter": "تصفية",
       "clear": "مسح",
@@ -226,7 +240,6 @@
       "basicInformation": "المعلومات الأساسية",
       "roleName": "اسم الدور",
       "roleType": "نوع الدور",
-      "type": "النوع",
       "totalPermissions": "إجمالي الصلاحيات",
       "permissionsAssigned": "صلاحية معينة",
       "createdAt": "تم الإنشاء في",
@@ -236,6 +249,15 @@
       "customRole": "دور مخصص",
       "unknownUser": "مستخدم غير معروف",
       "contactInformation": "معلومات الاتصال",
+      "show": "عرض",
+      "activeStatus": "حالة النشاط",
+      "adminName": "اسم المدير",
+      "adminEmail": "بريد المدير الإلكتروني",
+      "adminPassword": "كلمة مرور المدير",
+      "adminPhone": "هاتف المدير",
+      "adminAddress": "عنوان المدير",
+      "adminDateOfBirth": "تاريخ ميلاد المدير",
+      "adminActiveStatus": "حالة نشاط المدير",
       "selectDates": "اختر التواريخ...",
       "today": "اليوم",
       "yesterday": "أمس",
@@ -348,6 +370,14 @@
       "enterPatent": "أدخل البراءة",
       "filterBy": "تصفية حسب {field}",
       "searchCenters": "البحث في المراكز...",
+      "searchAdmins": "البحث في المديرين...",
+      "enterCenterName": "أدخل اسم المركز",
+      "enterCenterDescription": "أدخل وصف المركز",
+      "enterAdminName": "أدخل اسم المدير الكامل",
+      "enterAdminEmail": "أدخل بريد المدير الإلكتروني",
+      "enterAdminPassword": "أدخل كلمة مرور المدير",
+      "enterAdminPhone": "أدخل رقم هاتف المدير",
+      "enterAdminAddress": "أدخل عنوان المدير",
       "pickDateRange": "اختر نطاق التاريخ"
     },
     "messages": {
@@ -383,6 +413,94 @@
   "dashboard": {
     "welcome": "مرحباً بك في Vision AI",
     "description": "نظام إدارة التعلم الحديث للمنظمات متعددة المراكز مع إدارة آمنة للأدوار والصلاحيات."
+  },
+  "dialogs": {
+    "createUser": {
+      "title": "إنشاء مستخدم جديد"
+    },
+    "editUser": {
+      "title": "تعديل المستخدم"
+    },
+    "viewUser": {
+      "title": "تفاصيل المستخدم"
+    },
+    "deleteUser": {
+      "title": "حذف المستخدم",
+      "message": "هل أنت متأكد من حذف",
+      "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
+      "warning": "سيتم حذف المستخدم وجميع البيانات المرتبطة به نهائياً."
+    },
+    "createRole": {
+      "title": "إنشاء دور جديد"
+    },
+    "editRole": {
+      "title": "تعديل الدور"
+    },
+    "viewRole": {
+      "title": "تفاصيل الدور"
+    },
+    "deleteRole": {
+      "title": "حذف الدور",
+      "message": "هل أنت متأكد من حذف هذا الدور؟"
+    },
+    "createCenter": {
+      "title": "إنشاء مركز جديد"
+    },
+    "editCenter": {
+      "title": "تعديل المركز"
+    },
+    "viewCenter": {
+      "title": "تفاصيل المركز"
+    },
+    "deleteCenter": {
+      "title": "حذف المركز",
+      "message": "هل أنت متأكد من حذف المركز",
+      "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
+      "warning": "سيتم حذف المركز وجميع البيانات المرتبطة به نهائياً.",
+      "thisActionWill": "هذا الإجراء سيقوم بـ",
+      "removeCenter": "إزالة المركز من النظام",
+      "disassociateUsers": "فصل جميع المستخدمين عن هذا المركز",
+      "removeData": "إزالة جميع البيانات الخاصة بالمركز"
+    },
+    "manageUsers": {
+      "title": "إدارة المستخدمين",
+      "description": "إدارة وصول المستخدمين لهذا المركز. استخدم أزرار منح/إلغاء للتحكم في المستخدمين الذين يمكنهم الوصول إلى هذا المركز.",
+      "allUsers": "جميع المستخدمين"
+    },
+    "manageAdmins": {
+      "title": "إدارة المديرين",
+      "description": "إدارة وصول المديرين لهذا المركز. استخدم أزرار منح/إلغاء للتحكم في المديرين الذين يمكنهم إدارة هذا المركز."
+    },
+    "manageAccess": {
+      "title": "إدارة الوصول",
+      "description": "عرض المستخدمين الذين يمكن لـ {{userName}} الوصول إليهم بناءً على أدوارهم وصلاحياتهم. استخدم أزرار منح/إلغاء لإدارة الوصول."
+    },
+    "manageCenterAccess": {
+      "title": "إدارة وصول المركز",
+      "description": "إدارة وصول المركز لهذا المستخدم. استخدم أزرار منح/إلغاء للتحكم في الوصول إلى مراكز مختلفة.",
+      "allCenters": "جميع المراكز"
+    },
+    "manageRoleUsers": {
+      "title": "إدارة مستخدمي الدور",
+      "description": "إدارة تعيينات المستخدمين لهذا الدور. استخدم أزرار منح/إلغاء للتحكم في المستخدمين الذين لديهم هذا الدور معين.",
+      "searchPlaceholder": "البحث في المستخدمين...",
+      "allUsers": "جميع المستخدمين",
+      "noPermissionsFound": "لم يتم العثور على صلاحيات",
+      "adminScope": "نطاق المدير",
+      "centerScope": "نطاق المركز"
+    },
+    "manageAdminRoles": {
+      "title": "إدارة أدوار المدير",
+      "description": "عرض أدوار المدير المتاحة لـ {{userName}} في النظام. استخدم أزرار تعيين/إزالة لإدارة تعيينات أدوار المدير."
+    },
+    "manageRoles": {
+      "title": "إدارة الأدوار",
+      "description": "عرض الأدوار المتاحة لـ {{userName}} في مركزك. استخدم أزرار تعيين/إزالة لإدارة تعيينات الأدوار."
+    },
+    "rolesForCenter": {
+      "title": "أدوار {{centerName}}",
+      "description": "عرض الأدوار المتاحة لـ {{userName}} في {{centerName}}. استخدم أزرار تعيين/إزالة لإدارة تعيينات الأدوار."
+    }
   },
   "errors": {
     "RESOURCE_NOT_FOUND": "لم يتم العثور على المورد المطلوب",
@@ -423,6 +541,14 @@
     "UNAUTHORIZED": "غير مصرح",
     "FORBIDDEN": "ممنوع"
   },
+  "export": {
+    "formats": {
+      "csv": "CSV",
+      "excel": "Excel",
+      "json": "JSON"
+    },
+    "tableExport": "table-export"
+  },
   "form": {
     "email": {
       "label": "البريد الإلكتروني",
@@ -441,12 +567,6 @@
     "roles": "الأدوار",
     "systemHealth": "صحة النظام"
   },
-  "pagination": {
-    "selectedRows": "{{selected}} من {{total}} صف محدد",
-    "showingResults": "عرض {{start}} إلى {{end}} من {{total}} نتيجة",
-    "rowsPerPage": "صفوف في الصفحة",
-    "pageOf": "صفحة {{current}} من {{total}}"
-  },
   "pages": {
     "admins": {
       "title": "المديرون",
@@ -458,7 +578,7 @@
     },
     "roles": {
       "title": "الأدوار",
-      "subtitle": "إدارة أدوار المستخدمين والصلاحيات"
+      "subtitle": "إدارة أدوار وصلاحيات النظام"
     },
     "users": {
       "title": "المستخدمون",
@@ -467,15 +587,13 @@
     "health": {
       "title": "صحة النظام",
       "subtitle": "مراقبة الأداء وحالة الخدمات في الوقت الفعلي"
-    },
-    "roles": {
-      "title": "الأدوار",
-      "subtitle": "إدارة أدوار وصلاحيات النظام"
-    },
-    "centers": {
-      "title": "المراكز",
-      "subtitle": "إدارة مراكز التعلم"
     }
+  },
+  "pagination": {
+    "selectedRows": "{{selected}} من {{total}} صف محدد",
+    "showingResults": "عرض {{start}} إلى {{end}} من {{total}} نتيجة",
+    "rowsPerPage": "صفوف في الصفحة",
+    "pageOf": "صفحة {{current}} من {{total}}"
   },
   "selectCenter": {
     "title": "اختيار المركز",
@@ -509,7 +627,16 @@
     "dataCreated": "تم إنشاء البيانات بنجاح",
     "validationPassed": "تم اجتياز التحقق بنجاح",
     "upload": "تم رفع الملف بنجاح",
-    "download": "تم تحميل الملف بنجاح"
+    "download": "تم تحميل الملف بنجاح",
+    "tokenRefreshed": "تم تحديث الرمز المميز بنجاح",
+    "emailVerified": "تم التحقق من البريد الإلكتروني بنجاح",
+    "passwordResetSent": "تم إرسال بريد إعادة تعيين كلمة المرور",
+    "passwordReset": "تم إعادة تعيين كلمة المرور بنجاح",
+    "twoFactorSetup": "تم بدء إعداد المصادقة الثنائية",
+    "twoFactorVerified": "تم التحقق من المصادقة الثنائية بنجاح",
+    "userRegistered": "تم تسجيل المستخدم بنجاح",
+    "userActivated": "تم تفعيل المستخدم بنجاح",
+    "userDeactivated": "تم إلغاء تفعيل المستخدم بنجاح"
   },
   "system": {
     "healthCheck": "فحص صحة النظام",
@@ -601,88 +728,6 @@
     "translation": "الترجمة",
     "localization": "التوطين",
     "internationalization": "العولمة"
-  },
-  "export": {
-    "formats": {
-      "csv": "CSV",
-      "excel": "Excel",
-      "json": "JSON"
-    },
-    "tableExport": "table-export"
-  },
-  "dialogs": {
-    "createUser": {
-      "title": "إنشاء مستخدم جديد"
-    },
-    "editUser": {
-      "title": "تعديل المستخدم"
-    },
-    "viewUser": {
-      "title": "تفاصيل المستخدم"
-    },
-    "deleteUser": {
-      "title": "حذف المستخدم",
-      "message": "هل أنت متأكد من حذف",
-      "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
-      "warning": "سيتم حذف المستخدم وجميع البيانات المرتبطة به نهائياً."
-    },
-    "createRole": {
-      "title": "إنشاء دور جديد"
-    },
-    "editRole": {
-      "title": "تعديل الدور"
-    },
-    "viewRole": {
-      "title": "تفاصيل الدور"
-    },
-    "deleteRole": {
-      "title": "حذف الدور",
-      "message": "هل أنت متأكد من حذف هذا الدور؟"
-    },
-    "createCenter": {
-      "title": "إنشاء مركز جديد"
-    },
-    "editCenter": {
-      "title": "تعديل المركز"
-    },
-    "viewCenter": {
-      "title": "تفاصيل المركز"
-    },
-    "deleteCenter": {
-      "title": "حذف المركز",
-      "message": "هل أنت متأكد من حذف المركز",
-      "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
-      "warning": "سيتم حذف المركز وجميع البيانات المرتبطة به نهائياً.",
-      "thisActionWill": "هذا الإجراء سيقوم بـ",
-      "removeCenter": "إزالة المركز من النظام",
-      "disassociateUsers": "فصل جميع المستخدمين عن هذا المركز",
-      "removeData": "إزالة جميع البيانات الخاصة بالمركز"
-    },
-    "manageUsers": {
-      "title": "إدارة المستخدمين"
-    },
-    "manageAdmins": {
-      "title": "إدارة المديرين",
-      "description": "إدارة وصول المديرين لهذا المركز. استخدم أزرار منح/إلغاء للتحكم في المديرين الذين يمكنهم إدارة هذا المركز."
-    },
-    "manageAccess": {
-      "title": "إدارة الوصول",
-      "description": "عرض المستخدمين الذين يمكن لـ {{userName}} الوصول إليهم بناءً على أدوارهم وصلاحياتهم. استخدم أزرار منح/إلغاء لإدارة الوصول."
-    },
-    "manageCenterAccess": {
-      "title": "إدارة وصول المركز",
-      "description": "إدارة وصول المركز لهذا المستخدم. استخدم أزرار منح/إلغاء للتحكم في الوصول إلى مراكز مختلفة.",
-      "allCenters": "جميع المراكز"
-    },
-    "manageRoleUsers": {
-      "title": "إدارة مستخدمي الدور",
-      "description": "إدارة تعيينات المستخدمين لهذا الدور. استخدم أزرار منح/إلغاء للتحكم في المستخدمين الذين لديهم هذا الدور معين.",
-      "searchPlaceholder": "البحث في المستخدمين...",
-      "allUsers": "جميع المستخدمين",
-      "noPermissionsFound": "لم يتم العثور على صلاحيات",
-      "adminScope": "نطاق المدير",
-      "centerScope": "نطاق المركز"
-    }
   },
   "table": {
     "columns": {
