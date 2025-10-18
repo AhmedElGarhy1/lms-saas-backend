@@ -41,7 +41,21 @@ export type I18nTranslations = {
             "serverError": string;
         };
     };
+    "auth": {
+        "login": {
+            "title": string;
+            "subtitle": string;
+        };
+        "register": {
+            "title": string;
+            "subtitle": string;
+        };
+        "noAccount": string;
+    };
     "common": {
+        "actions": {
+            "switchCenter": string;
+        };
         "buttons": {
             "save": string;
             "cancel": string;
@@ -57,6 +71,11 @@ export type I18nTranslations = {
             "refresh": string;
             "export": string;
             "import": string;
+            "exportData": string;
+            "exporting": string;
+            "assign": string;
+            "revoke": string;
+            "grant": string;
             "search": string;
             "filter": string;
             "clear": string;
@@ -112,6 +131,7 @@ export type I18nTranslations = {
             "select": string;
             "selectAll": string;
             "none": string;
+            "all": string;
             "loading": string;
             "error": string;
             "success": string;
@@ -200,6 +220,39 @@ export type I18nTranslations = {
             "patent": string;
             "yes": string;
             "no": string;
+            "globalDashboard": string;
+            "current": string;
+            "dateRange": string;
+            "date": string;
+            "filename": string;
+            "optional": string;
+            "filter": string;
+            "assign": string;
+            "timestamps": string;
+            "basicInformation": string;
+            "roleName": string;
+            "roleType": string;
+            "totalPermissions": string;
+            "permissionsAssigned": string;
+            "createdAt": string;
+            "lastUpdated": string;
+            "include": string;
+            "systemRole": string;
+            "customRole": string;
+            "unknownUser": string;
+            "contactInformation": string;
+            "selectDates": string;
+            "today": string;
+            "yesterday": string;
+            "thisWeek": string;
+            "lastWeek": string;
+            "thisMonth": string;
+            "lastMonth": string;
+            "thisQuarter": string;
+            "lastQuarter": string;
+            "thisYear": string;
+            "lastYear": string;
+            "customRange": string;
         };
         "resources": {
             "resource": string;
@@ -216,6 +269,12 @@ export type I18nTranslations = {
             "records": string;
             "entity": string;
             "entities": string;
+            "users": string;
+            "roles": string;
+            "admins": string;
+            "centers": string;
+            "access": string;
+            "permissions": string;
         };
         "placeholders": {
             "search": string;
@@ -233,6 +292,8 @@ export type I18nTranslations = {
             "selectRole": string;
             "selectCenter": string;
             "selectPermissions": string;
+            "enterRoleName": string;
+            "enterRoleDescription": string;
             "tellAboutYourself": string;
             "enterCountry": string;
             "enterCity": string;
@@ -291,6 +352,8 @@ export type I18nTranslations = {
             "enterTrademark": string;
             "enterPatent": string;
             "filterBy": string;
+            "searchCenters": string;
+            "pickDateRange": string;
         };
         "messages": {
             "loading": string;
@@ -317,7 +380,14 @@ export type I18nTranslations = {
             "percentage": string;
             "fileSize": string;
             "temperature": string;
+            "showing": string;
+            "showingCount": string;
+            "foundResults": string;
         };
+    };
+    "dashboard": {
+        "welcome": string;
+        "description": string;
     };
     "errors": {
         "RESOURCE_NOT_FOUND": string;
@@ -358,11 +428,58 @@ export type I18nTranslations = {
         "UNAUTHORIZED": string;
         "FORBIDDEN": string;
     };
+    "form": {
+        "email": {
+            "label": string;
+            "placeholder": string;
+        };
+        "password": {
+            "label": string;
+            "placeholder": string;
+        };
+    };
+    "navigation": {
+        "dashboard": string;
+        "users": string;
+        "admins": string;
+        "centers": string;
+        "roles": string;
+        "systemHealth": string;
+    };
     "pagination": {
         "selectedRows": string;
         "showingResults": string;
         "rowsPerPage": string;
         "pageOf": string;
+    };
+    "pages": {
+        "admins": {
+            "title": string;
+            "subtitle": string;
+        };
+        "centers": {
+            "title": string;
+            "subtitle": string;
+        };
+        "roles": {
+            "title": string;
+            "subtitle": string;
+        };
+        "users": {
+            "title": string;
+            "subtitle": string;
+        };
+        "health": {
+            "title": string;
+            "subtitle": string;
+        };
+    };
+    "selectCenter": {
+        "title": string;
+        "description": string;
+        "descriptionUser": string;
+        "searchPlaceholder": string;
+        "globalOption": string;
     };
     "success": {
         "create": string;
@@ -386,6 +503,7 @@ export type I18nTranslations = {
         "dataSaved": string;
         "dataUpdated": string;
         "dataDeleted": string;
+        "dataCreated": string;
         "validationPassed": string;
         "upload": string;
         "download": string;
@@ -481,15 +599,119 @@ export type I18nTranslations = {
         "localization": string;
         "internationalization": string;
     };
+    "export": {
+        "formats": {
+            "csv": string;
+            "excel": string;
+            "json": string;
+        };
+        "tableExport": string;
+    };
+    "dialogs": {
+        "createUser": {
+            "title": string;
+        };
+        "editUser": {
+            "title": string;
+        };
+        "viewUser": {
+            "title": string;
+        };
+        "deleteUser": {
+            "title": string;
+            "message": string;
+            "cannotUndo": string;
+            "warning": string;
+        };
+        "createRole": {
+            "title": string;
+        };
+        "editRole": {
+            "title": string;
+        };
+        "viewRole": {
+            "title": string;
+        };
+        "deleteRole": {
+            "title": string;
+            "message": string;
+        };
+        "createCenter": {
+            "title": string;
+        };
+        "editCenter": {
+            "title": string;
+        };
+        "viewCenter": {
+            "title": string;
+        };
+        "deleteCenter": {
+            "title": string;
+            "message": string;
+            "cannotUndo": string;
+            "warning": string;
+            "thisActionWill": string;
+            "removeCenter": string;
+            "disassociateUsers": string;
+            "removeData": string;
+        };
+        "manageUsers": {
+            "title": string;
+        };
+        "manageAdmins": {
+            "title": string;
+            "description": string;
+        };
+        "manageAccess": {
+            "title": string;
+            "description": string;
+        };
+        "manageCenterAccess": {
+            "title": string;
+            "description": string;
+            "allCenters": string;
+        };
+        "manageRoleUsers": {
+            "title": string;
+            "description": string;
+            "searchPlaceholder": string;
+            "allUsers": string;
+            "noPermissionsFound": string;
+            "adminScope": string;
+            "centerScope": string;
+        };
+    };
     "table": {
         "columns": {
             "centerName": string;
             "contact": string;
             "roleName": string;
+            "name": string;
+            "email": string;
+            "phone": string;
+            "status": string;
+            "active": string;
+            "inactive": string;
+            "role": string;
+            "created": string;
+            "updated": string;
+            "actions": string;
+            "type": string;
+            "description": string;
         };
         "actions": {
             "deleteSelected": string;
             "toggleStatus": string;
+            "view": string;
+            "edit": string;
+            "delete": string;
+            "manageUsers": string;
+            "manageAdmins": string;
+            "manageAccess": string;
+            "manageRoles": string;
+            "manageCenters": string;
+            "activate": string;
+            "deactivate": string;
         };
         "selection": {
             "selectedItems": string;

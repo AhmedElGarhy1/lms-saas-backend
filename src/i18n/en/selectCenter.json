@@ -1,0 +1,7 @@
+{
+  "title": "Select Center",
+  "description": "Choose a center to work with, or switch to global scope for admin functions.",
+  "descriptionUser": "Choose a center to work with.",
+  "searchPlaceholder": "Search centers...",
+  "globalOption": "Global Dashboard"
+}

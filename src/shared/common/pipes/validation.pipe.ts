@@ -13,7 +13,7 @@ import {
 } from '../exceptions/custom.exceptions';
 import { ErrorCode } from '../enums/error-codes.enum';
 import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '../../../../generated/i18n.generated';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class CustomValidationPipe implements PipeTransform<any> {

@@ -10,7 +10,7 @@ import {
 import { Request } from 'express';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '../../../../generated/i18n.generated';
+import { I18nTranslations } from '@/generated/i18n.generated';
 import { LocaleService } from '../services/locale.service';
 
 @ApiBearerAuth()

@@ -33,7 +33,7 @@ import { ExportService } from '@/shared/common/services/export.service';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '../../../../generated/i18n.generated';
+import { I18nTranslations } from '@/generated/i18n.generated';
 import { NoContext } from '@/shared/common/decorators/no-context';
 
 @Controller('centers')

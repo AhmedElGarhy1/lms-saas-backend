@@ -9,7 +9,7 @@ import { RefreshTokenService } from './services/refresh-token.service';
 import { EmailVerificationRepository } from './repositories/email-verification.repository';
 import { PasswordResetRepository } from './repositories/password-reset.repository';
 import { RefreshTokenRepository } from './repositories/refresh-token.repository';
-import { TwoFactorService } from './services/two-factor.service';
+// import { TwoFactorService } from './services/two-factor.service';
 import { AuthController } from './controllers/auth.controller';
 import { User } from '../user/entities/user.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
@@ -49,7 +49,7 @@ import { UserRepository } from '../user/repositories/user.repository';
     EmailVerificationRepository,
     PasswordResetRepository,
     RefreshTokenRepository,
-    TwoFactorService,
+    // TwoFactorService,
     UserRepository,
     JwtStrategy,
     RefreshTokenStrategy,
@@ -62,7 +62,7 @@ import { UserRepository } from '../user/repositories/user.repository';
     EmailVerificationRepository,
     PasswordResetRepository,
     RefreshTokenRepository,
-    TwoFactorService,
+    // TwoFactorService,
     JwtStrategy,
     RefreshTokenStrategy,
   ],

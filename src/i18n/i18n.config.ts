@@ -18,9 +18,9 @@ export const i18nConfig: I18nOptions = {
   loaderOptions: {
     path: join(__dirname, '../i18n/'),
     watch: true,
-    includeSubfolders: true,
+    includeSubfolders: false,
   },
-  typesOutputPath: join(__dirname, '../generated/i18n.generated.ts'),
+  typesOutputPath: join(__dirname, '../../../src/generated/i18n.generated.ts'),
   resolvers: [
     { use: QueryResolver, options: ['lang'] },
     UserLocaleResolver,

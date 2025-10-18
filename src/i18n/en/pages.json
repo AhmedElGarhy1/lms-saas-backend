@@ -1,0 +1,22 @@
+{
+  "admins": {
+    "title": "Admins",
+    "subtitle": "Manage system administrators"
+  },
+  "centers": {
+    "title": "Centers",
+    "subtitle": "Manage learning centers"
+  },
+  "roles": {
+    "title": "Roles",
+    "subtitle": "Manage system roles and permissions"
+  },
+  "users": {
+    "title": "Users",
+    "subtitle": "Manage system users"
+  },
+  "health": {
+    "title": "System Health",
+    "subtitle": "Real-time monitoring of system performance and service status"
+  }
+}

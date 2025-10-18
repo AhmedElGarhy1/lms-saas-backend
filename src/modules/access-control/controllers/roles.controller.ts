@@ -44,7 +44,7 @@ import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '../../../../generated/i18n.generated';
+import { I18nTranslations } from '@/generated/i18n.generated';
 import { ExportService } from '@/shared/common/services/export.service';
 import { RoleResponseExportMapper } from '@/shared/common/mappers/role-response-export.mapper';
 import { ExportRolesDto } from '../dto/export-roles.dto';

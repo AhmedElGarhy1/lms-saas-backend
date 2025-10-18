@@ -10,7 +10,7 @@ import { Request } from 'express';
 import { ApiResponseBuilder } from '../dto/api-response.dto';
 import { ControllerResponse } from '../dto/controller-response.dto';
 import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '../../../../generated/i18n.generated';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
@@ -24,7 +24,6 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
       map((data) => {
         const processingTime = Date.now() - startTime;
         const requestId = request.headers['x-request-id'] as string;
-
         // If data is already wrapped in our standard format, return as is
         if (data && typeof data === 'object' && 'success' in data) {
           return data;
@@ -67,7 +66,6 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
             processingTime,
           );
         }
-
         // For single items, arrays, or null/undefined responses, use standard success response
         return ApiResponseBuilder.success(
           data || null, // Ensure we handle null/undefined gracefully

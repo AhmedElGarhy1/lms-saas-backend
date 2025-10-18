@@ -1,0 +1,8 @@
+{
+  "formats": {
+    "csv": "CSV",
+    "excel": "Excel",
+    "json": "JSON"
+  },
+  "tableExport": "table-export"
+}
