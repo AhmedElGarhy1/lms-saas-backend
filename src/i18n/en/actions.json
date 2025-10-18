@@ -1,0 +1,20 @@
+{
+  "retry": "Please try again",
+  "contactSupport": "Contact support if the problem persists",
+  "checkInput": "Please check your input and try again",
+  "fixErrors": "Fix the highlighted errors below",
+  "refreshPage": "Please refresh the page and try again",
+  "loginAgain": "Please log in again",
+  "selectCenter": "Please select a center",
+  "chooseDifferentValue": "Please choose a different value",
+  "fillRequiredFields": "Please fill in all required fields",
+  "useCorrectFormat": "Please use the correct format",
+  "shortenInput": "Please shorten your input",
+  "provideMoreInfo": "Please provide more information",
+  "contactAdministrator": "Please contact an administrator",
+  "checkPermissions": "Please check your permissions",
+  "verifyCredentials": "Please verify your credentials",
+  "selectValidOption": "Please select a valid option",
+  "enterValidData": "Please enter valid data",
+  "tryDifferentApproach": "Please try a different approach"
+}

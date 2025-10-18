@@ -19,11 +19,14 @@
 [x] fix login as center user
 [x] continue on roles and permissions integration
 [x] fix AccessDialog interface and paginations
-[ ] import functioanlity
-[ ] builk operations
+[x] export functiaonlity support csv, xlsx, json add popup to choose
+[x] fix manage roles in users and centers
+[x] fix scope related conditions so it will be controled only by permission
+[-] import functioanlity
+[-] builk operations
 [ ] add backend loclization and integration
 [ ] think about implementing branches (later not now)
-[ ] fix autuntication and refresh token and doesn't exist center or unaccessable center (x-center-id)
+[ ] fix autuntication and refresh token
 [ ] add transactions or unit of work
 [ ] view modals in all modules
 [ ] integrate twilio for some verifications

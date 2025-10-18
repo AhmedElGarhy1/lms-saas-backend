@@ -1,0 +1,16 @@
+{
+  "success": {
+    "operation": "Operation completed successfully",
+    "request": "Request processed successfully",
+    "dataRetrieved": "Data retrieved successfully",
+    "dataProcessed": "Data processed successfully"
+  },
+  "error": {
+    "operation": "Operation failed",
+    "request": "Request processing failed",
+    "dataRetrieval": "Failed to retrieve data",
+    "dataProcessing": "Failed to process data",
+    "invalidRequest": "Invalid request",
+    "serverError": "Internal server error"
+  }
+}

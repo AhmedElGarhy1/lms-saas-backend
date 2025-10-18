@@ -1,0 +1,22 @@
+{
+  "table": {
+    "columns": {
+      "centerName": "اسم المركز",
+      "contact": "التواصل",
+      "roleName": "اسم الدور"
+    },
+    "actions": {
+      "deleteSelected": "احذف المختار",
+      "toggleStatus": "تغيير الحالة"
+    },
+    "selection": {
+      "selectedItems": "{count} عنصر/عناصر مختارة",
+      "selectAll": "اختر الكل ({total})",
+      "deselectAll": "إلغاء اختيار الكل"
+    },
+    "trashToggle": {
+      "activeItems": "العناصر النشطة",
+      "deletedItems": "العناصر المحذوفة"
+    }
+  }
+}

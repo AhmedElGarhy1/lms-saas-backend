@@ -9,6 +9,7 @@ import { UserAccess } from '@/modules/access-control/entities/user-access.entity
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserRole } from '@/modules/access-control/entities/user-role.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
+import { Locale } from '@/i18n/i18n.config';
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -40,6 +41,9 @@ export class User extends BaseEntity {
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
+
+  @Column({ type: 'enum', enum: Locale, default: Locale.EN })
+  locale: Locale;
 
   // Relations
   @OneToMany(() => Center, (center) => center.creator)

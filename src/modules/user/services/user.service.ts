@@ -229,6 +229,10 @@ export class UserService {
     return this.userRepository.findByEmail(email);
   }
 
+  async findOne(id: string): Promise<User | null> {
+    return this.userRepository.findOne(id);
+  }
+
   async findUserById(id: string, actor: ActorUser): Promise<User | null> {
     await this.accessControlHelperService.validateUserAccess({
       granterUserId: actor.id,

@@ -1,0 +1,20 @@
+{
+  "columns": {
+    "centerName": "Center Name",
+    "contact": "Contact",
+    "roleName": "Role Name"
+  },
+  "actions": {
+    "deleteSelected": "Delete Selected",
+    "toggleStatus": "Toggle Status"
+  },
+  "selection": {
+    "selectedItems": "{count} {item}{count, plural, one {} other {s}} selected",
+    "selectAll": "Select All ({total})",
+    "deselectAll": "Deselect All"
+  },
+  "trashToggle": {
+    "activeItems": "Active Items",
+    "deletedItems": "Deleted Items"
+  }
+}

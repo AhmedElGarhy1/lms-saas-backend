@@ -36,6 +36,8 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '../../../../generated/i18n.generated';
 import { PermissionScope } from '@/modules/access-control/constants/permissions';
 import { NoContext } from '@/shared/common/decorators/no-context';
 
@@ -45,6 +47,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly activityLogService: ActivityLogService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Get()
@@ -110,7 +113,12 @@ export class UserController {
       actorUser,
     );
 
-    return ControllerResponse.success(user, 'User created successfully');
+    return ControllerResponse.success(
+      user,
+      this.i18n.translate('success.create', {
+        args: { resource: this.i18n.translate('common.resources.user') },
+      }),
+    );
   }
 
   @Put(':id')
@@ -138,7 +146,12 @@ export class UserController {
       actorUser,
     );
 
-    return ControllerResponse.success(user, 'User updated successfully');
+    return ControllerResponse.success(
+      user,
+      this.i18n.translate('success.update', {
+        args: { resource: this.i18n.translate('common.resources.user') },
+      }),
+    );
   }
 
   @Patch(':id/password')
@@ -224,7 +237,11 @@ export class UserController {
       actorUser,
     );
 
-    return ControllerResponse.message('User deleted successfully');
+    return ControllerResponse.message(
+      this.i18n.translate('success.delete', {
+        args: { resource: this.i18n.translate('common.resources.user') },
+      }),
+    );
   }
 
   @Patch(':id/restore')

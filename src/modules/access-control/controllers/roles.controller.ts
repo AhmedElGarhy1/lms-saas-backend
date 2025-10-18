@@ -43,6 +43,8 @@ import { SerializeOptions } from '@nestjs/common';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '../../../../generated/i18n.generated';
 import { ExportService } from '@/shared/common/services/export.service';
 import { RoleResponseExportMapper } from '@/shared/common/mappers/role-response-export.mapper';
 import { ExportRolesDto } from '../dto/export-roles.dto';
@@ -58,6 +60,7 @@ export class RolesController {
     private readonly permissionService: PermissionService,
     private readonly activityLogService: ActivityLogService,
     private readonly exportService: ExportService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Get('permissions/me')
@@ -76,7 +79,7 @@ export class RolesController {
     const result = await this.permissionService.getPermissions(actor, scope);
     return ControllerResponse.success(
       result,
-      'Permissions retrieved successfully',
+      this.i18n.translate('api.success.dataRetrieved'),
     );
   }
 
@@ -103,7 +106,12 @@ export class RolesController {
       actor,
     );
 
-    return ControllerResponse.success(result, 'Role created successfully');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.create', {
+        args: { resource: this.i18n.translate('common.resources.role') },
+      }),
+    );
   }
 
   @Get()
@@ -125,7 +133,10 @@ export class RolesController {
   // @Permissions(PERMISSIONS.ROLES.VIEW)
   async getRoleById(@Param('roleId') roleId: string) {
     const result = await this.rolesService.findById(roleId);
-    return ControllerResponse.success(result, 'Role retrieved successfully');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Put(':roleId')
@@ -152,7 +163,12 @@ export class RolesController {
       user,
     );
 
-    return ControllerResponse.success(result, 'Role updated successfully');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.update', {
+        args: { resource: this.i18n.translate('common.resources.role') },
+      }),
+    );
   }
 
   @Delete(':roleId')
@@ -175,7 +191,12 @@ export class RolesController {
       user,
     );
 
-    return ControllerResponse.success(result, 'Role deleted successfully');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.delete', {
+        args: { resource: this.i18n.translate('common.resources.role') },
+      }),
+    );
   }
 
   @Patch(':roleId/restore')

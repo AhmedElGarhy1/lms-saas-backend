@@ -6,6 +6,7 @@ import {
   ExportDataUnavailableException,
   ExportFailedException,
 } from '../exceptions/custom.exceptions';
+import { ExportFormat } from '../dto';
 
 export interface ExportOptions {
   filename: string;
@@ -173,7 +174,7 @@ export class ExportService {
   async exportData(
     data: any[],
     mapper: ExportMapper<any, any>,
-    format: string,
+    format: ExportFormat,
     filename: string,
     res: Response,
   ): Promise<ExportResponseDto> {

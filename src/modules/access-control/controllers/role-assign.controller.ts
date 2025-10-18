@@ -13,6 +13,8 @@ import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { AssignRoleDto } from '../dto/assign-role.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '../../../../generated/i18n.generated';
 
 @ApiTags('Roles')
 @Controller('roles/assign')
@@ -21,6 +23,7 @@ export class RoleAssignController {
   constructor(
     private readonly rolesService: RolesService,
     private readonly activityLogService: ActivityLogService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Post()
@@ -34,7 +37,10 @@ export class RoleAssignController {
       roleId: dto.roleId,
       assignedBy: user.id,
     });
-    return ControllerResponse.success(result, 'Role assigned successfully');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.roleAssigned'),
+    );
   }
 
   @Delete()
@@ -48,6 +54,9 @@ export class RoleAssignController {
       roleId: dto.roleId,
       removedBy: user.id,
     });
-    return ControllerResponse.success(result, 'Role removed successfully');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.roleRemoved'),
+    );
   }
 }

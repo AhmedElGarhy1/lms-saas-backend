@@ -1,0 +1,20 @@
+{
+  "retry": "حاول تاني",
+  "contactSupport": "كلم الدعم لو المشكلة مستمرة",
+  "checkInput": "راجع البيانات اللي دخلتها وحاول تاني",
+  "fixErrors": "صلّح الأخطاء اللي تحت",
+  "refreshPage": "اعمل تحديث للصفحة وحاول تاني",
+  "loginAgain": "سجل دخولك تاني",
+  "selectCenter": "اختار مركز",
+  "chooseDifferentValue": "اختار قيمة مختلفة",
+  "fillRequiredFields": "املأ كل الحقول المطلوبة",
+  "useCorrectFormat": "استخدم الصيغة الصحيحة",
+  "shortenInput": "قصّر البيانات اللي دخلتها",
+  "provideMoreInfo": "ادينا معلومات أكتر",
+  "contactAdministrator": "كلم المسؤول",
+  "checkPermissions": "راجع صلاحياتك",
+  "verifyCredentials": "تحقق من بيانات الدخول",
+  "selectValidOption": "اختار خيار صحيح",
+  "enterValidData": "ادخل بيانات صحيحة",
+  "tryDifferentApproach": "جرب طريقة مختلفة"
+}

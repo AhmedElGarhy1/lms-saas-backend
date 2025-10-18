@@ -1,0 +1,16 @@
+{
+  "success": {
+    "operation": "تم تنفيذ العملية بنجاح",
+    "request": "تم معالجة الطلب بنجاح",
+    "dataRetrieved": "تم جلب البيانات بنجاح",
+    "dataProcessed": "تم معالجة البيانات بنجاح"
+  },
+  "error": {
+    "operation": "فشلت العملية",
+    "request": "فشل معالجة الطلب",
+    "dataRetrieval": "فشل جلب البيانات",
+    "dataProcessing": "فشل معالجة البيانات",
+    "invalidRequest": "طلب غير صالح",
+    "serverError": "حدث خطأ في الخادم"
+  }
+}

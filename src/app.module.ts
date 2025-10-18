@@ -5,6 +5,8 @@ import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import { APP_INTERCEPTOR, APP_FILTER, APP_PIPE, APP_GUARD } from '@nestjs/core';
 import { Reflector } from '@nestjs/core';
+import { I18nModule } from 'nestjs-i18n';
+import { i18nConfig } from './i18n/i18n.config';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { UserModule } from '@/modules/user/user.module';
 import { CentersModule } from '@/modules/centers/centers.module';
@@ -12,6 +14,7 @@ import { AccessControlModule } from '@/modules/access-control/access-control.mod
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { SharedModule } from '@/shared/shared.module';
 import { SeederModule } from '@/database/seeder.module';
+import { LocaleModule } from '@/modules/locale/locale.module';
 import { ErrorInterceptor } from '@/shared/common/interceptors/error.interceptor';
 import { PerformanceInterceptor } from '@/shared/common/interceptors/performance.interceptor';
 import { GlobalExceptionFilter } from '@/shared/common/filters/global-exception.filter';
@@ -58,6 +61,7 @@ import { RolesService } from './modules/access-control/services/roles.service';
         },
       ],
     }),
+    I18nModule.forRoot(i18nConfig),
     SharedModule,
     AuthModule,
     UserModule,
@@ -65,6 +69,7 @@ import { RolesService } from './modules/access-control/services/roles.service';
     CentersModule,
     ActivityLogModule,
     SeederModule,
+    LocaleModule,
   ],
   controllers: [],
   providers: [

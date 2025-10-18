@@ -32,6 +32,8 @@ import { AccessControlService } from '@/modules/access-control/services/access-c
 import { ExportService } from '@/shared/common/services/export.service';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '../../../../generated/i18n.generated';
 import { NoContext } from '@/shared/common/decorators/no-context';
 
 @Controller('centers')
@@ -43,6 +45,7 @@ export class CentersController {
     private readonly accessControlService: AccessControlService,
     private readonly activityLogService: ActivityLogService,
     private readonly exportService: ExportService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Post()
@@ -66,7 +69,14 @@ export class CentersController {
       actor,
     );
 
-    return ControllerResponse.success(result, 'Center created successfully');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.create', {
+        args: {
+          resource: this.i18n.translate('common.resources.center'),
+        },
+      }),
+    );
   }
 
   @Get()
@@ -83,7 +93,10 @@ export class CentersController {
   // TODO: param validation
   async getCenterById(@Param('id') id: string) {
     const result = await this.centersService.findCenterById(id);
-    return ControllerResponse.success(result, 'Center retrieved successfully');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Put(':id')
@@ -110,7 +123,14 @@ export class CentersController {
       actor,
     );
 
-    return ControllerResponse.success(result, 'Center updated successfully');
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.update', {
+        args: {
+          resource: this.i18n.translate('common.resources.center'),
+        },
+      }),
+    );
   }
 
   @Delete(':id')
@@ -130,7 +150,13 @@ export class CentersController {
       actor,
     );
 
-    return ControllerResponse.message('Center deleted successfully');
+    return ControllerResponse.message(
+      this.i18n.translate('success.delete', {
+        args: {
+          resource: this.i18n.translate('common.resources.center'),
+        },
+      }),
+    );
   }
 
   @Patch(':id/restore')

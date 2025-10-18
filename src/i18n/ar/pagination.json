@@ -1,0 +1,6 @@
+{
+  "selectedRows": "{selected} من {total} صفوف مختارة",
+  "showingResults": "عرض {start} إلى {end} من {total} نتائج",
+  "rowsPerPage": "عدد الصفوف لكل صفحة",
+  "pageOf": "الصفحة {current} من {total}"
+}

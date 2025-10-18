@@ -64,6 +64,7 @@ export class UserRepository extends BaseRepository<User> {
     params: PaginateUsersDto,
     actorId: string,
   ): Promise<Pagination<UserResponseDto>> {
+    // TODO: error needs handling in this url: '/users/?page=1&limit=10&userAccess=include&roleId=fe19a0ea-808a-4112-844e-f39c83cd8d6d', (it display error in case of admin )
     const {
       centerId,
       userId,
@@ -120,12 +121,10 @@ export class UserRepository extends BaseRepository<User> {
       );
 
       if (isUser && !isCenterOwner) {
-        queryBuilder
-          .leftJoin('user.accessTarget', 'accessTarget')
-          .andWhere('accessTarget.centerId = :centerId', { centerId })
-          .andWhere('accessTarget.granterUserId = :actorId', {
-            actorId: actorId,
-          });
+        queryBuilder.andWhere(
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserId" = user.id AND ua."granterUserId" = :actorId AND ua."centerId" = :centerId)`,
+          { actorId, centerId },
+        );
       }
     } else {
       if (isSuperAdmin) {
@@ -161,9 +160,11 @@ export class UserRepository extends BaseRepository<User> {
     }
 
     if (roleId && roleAccess !== AccessibleUsersEnum.ALL) {
-      queryBuilder.andWhere('userRoles.roleId = :roleId', {
-        roleId: roleId,
-      });
+      queryBuilder
+        .leftJoinAndSelect('user.userRoles', 'userRoles')
+        .andWhere('userRoles.roleId = :roleId', {
+          roleId: roleId,
+        });
     }
 
     // Apply filters directly
@@ -254,23 +255,20 @@ export class UserRepository extends BaseRepository<User> {
     if (isSuperAdmin) {
       // do nothing
     } else {
-      queryBuilder
-        .leftJoin('user.accessTarget', 'accessTarget')
-        .andWhere('accessTarget.centerId IS NULL')
-        .andWhere('accessTarget.granterUserId = :actorId', {
-          actorId,
-        });
+      queryBuilder.andWhere(
+        `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserId" = user.id AND ua."granterUserId" = :actorId AND ua."centerId" IS NULL)`,
+        { actorId },
+      );
     }
 
     if (centerId) {
-      if (centerAccess !== AccessibleUsersEnum.INCLUDE) {
-        queryBuilder
-          .leftJoin('user.centerAccess', 'centerAccess')
-          .andWhere('centerAccess.global = :global', { global: true })
-          .andWhere('centerAccess.centerId = :centerId', { centerId })
-          .andWhere('centerAccess.userId = :actorId', {
-            actorId,
-          });
+      if (centerAccess !== AccessibleUsersEnum.ALL) {
+        queryBuilder.andWhere(
+          `EXISTS (
+          SELECT 1 FROM center_access ca 
+          WHERE ca."userId" = user.id AND ca."global" = true AND ca."centerId" = :centerId)`,
+          { centerId },
+        );
       }
       if (!roleId) {
         queryBuilder.orWhere('role.name = :roleName', {
