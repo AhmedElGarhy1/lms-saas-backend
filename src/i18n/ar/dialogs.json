@@ -1,10 +1,16 @@
 {
   "createUser": {
-    "title": "إنشاء مستخدم جديد"
+    "title": "إنشاء مستخدم",
+    "description": "إنشاء حساب مستخدم جديد مع الأذونات المناسبة"
   },
   "editUser": {
-    "title": "تعديل المستخدم"
+    "title": "تعديل المستخدم",
+    "description": "تحديث معلومات وإعدادات المستخدم"
   },
+  "selectCenterForRoleManagement": {
+    "title": "اختر المركز لإدارة الأدوار"
+  },
+  "centerSpecificRoleAssignment": "تعيين الأدوار الخاصة بالمركز",
   "viewUser": {
     "title": "تفاصيل المستخدم"
   },

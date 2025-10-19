@@ -180,9 +180,7 @@
     "patent": "Patent",
     "yes": "Yes",
     "no": "No",
-    "globalDashboard": "Global Dashboard",
     "current": "Current",
-    "dateRange": "Date Range",
     "date": "Date",
     "filename": "Filename",
     "optional": "Optional",
@@ -196,7 +194,6 @@
     "permissionsAssigned": "permissions assigned",
     "createdAt": "Created At",
     "lastUpdated": "Last Updated",
-    "include": "Include",
     "systemRole": "System Role",
     "customRole": "Custom Role",
     "unknownUser": "Unknown User",
@@ -221,7 +218,13 @@
     "lastQuarter": "Last quarter",
     "thisYear": "This year",
     "lastYear": "Last year",
-    "customRange": "Custom range"
+    "customRange": "Custom range",
+    "allUsers": "All Users",
+    "allAdmins": "All Admins",
+    "include": "Include",
+    "loadingRoles": "Loading roles...",
+    "globalDashboard": "Global Dashboard",
+    "dateRange": "Date Range"
   },
   "resources": {
     "resource": "Resource",
@@ -321,8 +324,6 @@
     "enterTrademark": "Enter trademark",
     "enterPatent": "Enter patent",
     "filterBy": "Filter by {field}",
-    "searchCenters": "Search centers...",
-    "searchAdmins": "Search Admins...",
     "enterCenterName": "Enter center name",
     "enterCenterDescription": "Enter center description",
     "enterAdminName": "Enter admin full name",
@@ -330,7 +331,13 @@
     "enterAdminPassword": "Enter admin password",
     "enterAdminPhone": "Enter admin phone number",
     "enterAdminAddress": "Enter admin address",
-    "pickDateRange": "Pick a date range"
+    "pickDateRange": "Pick a date range",
+    "enterFullName": "Enter full name",
+    "enterEmailAddress": "Enter email address",
+    "enterPhoneNumber": "Enter phone number",
+    "searchUsers": "Search users...",
+    "searchCenters": "Search centers...",
+    "searchAdmins": "Search admins..."
   },
   "messages": {
     "loading": "Loading...",
@@ -359,6 +366,10 @@
     "temperature": "Temperature",
     "showing": "Showing",
     "showingCount": "Showing {{count}} {{item}}",
-    "foundResults": "Found {{count}} results"
+    "foundResults": "Found {{count}} results",
+    "noCentersAvailable": "No centers available",
+    "noCentersAvailableForUser": "No centers are available for this user.",
+    "noRolesAvailable": "No roles available",
+    "noRolesAvailableForCenter": "No roles are available for this center."
   }
 }

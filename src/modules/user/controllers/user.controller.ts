@@ -8,6 +8,7 @@ import {
   Put,
   Delete,
   Patch,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import {
@@ -84,7 +85,10 @@ export class UserController {
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiQuery({ name: 'centerId', required: false, type: String })
   @Permissions(PERMISSIONS.USER.READ)
-  async findOne(@Param('id') userId: string, @GetUser() actor: ActorUser) {
+  async findOne(
+    @Param('id', ParseUUIDPipe) userId: string,
+    @GetUser() actor: ActorUser,
+  ) {
     // TODO: implement later
     return this.userService.findUserById(userId, actor);
   }
@@ -127,7 +131,7 @@ export class UserController {
   @ApiBody({ type: UpdateUserDto })
   @Permissions(PERMISSIONS.USER.UPDATE)
   async updateUser(
-    @Param('id') userId: string,
+    @Param('id', ParseUUIDPipe) userId: string,
     @Body() dto: UpdateUserDto,
     @GetUser() actorUser: ActorUser,
   ) {
@@ -160,7 +164,7 @@ export class UserController {
   @ApiBody({ type: ChangePasswordRequestDto })
   @Permissions(PERMISSIONS.USER.UPDATE)
   async changePassword(
-    @Param('id') userId: string,
+    @Param('id', ParseUUIDPipe) userId: string,
     @Body() dto: ChangePasswordRequestDto,
     @GetUser() actorUser: ActorUser,
   ) {
@@ -192,7 +196,7 @@ export class UserController {
   @ApiBody({ type: ToggleUserStatusRequestDto })
   @Permissions(PERMISSIONS.USER.UPDATE)
   async toggleUserStatus(
-    @Param('id') userId: string,
+    @Param('id', ParseUUIDPipe) userId: string,
     @Body() dto: ToggleUserStatusRequestDto,
     @GetUser() actorUser: ActorUser,
   ): Promise<ToggleUserStatusResponseDto> {
@@ -226,7 +230,7 @@ export class UserController {
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @Permissions(PERMISSIONS.USER.DELETE)
   async deleteUser(
-    @Param('id') userId: string,
+    @Param('id', ParseUUIDPipe) userId: string,
     @GetUser() actorUser: ActorUser,
   ) {
     await this.userService.deleteUser(userId, actorUser);
@@ -253,7 +257,7 @@ export class UserController {
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @Permissions(PERMISSIONS.USER.RESTORE)
   async restoreUser(
-    @Param('id') userId: string,
+    @Param('id', ParseUUIDPipe) userId: string,
     @GetUser() actorUser: ActorUser,
   ): Promise<RestoreUserResponseDto> {
     await this.userService.restoreUser(userId, actorUser);

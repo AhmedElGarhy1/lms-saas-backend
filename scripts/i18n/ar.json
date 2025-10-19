@@ -228,9 +228,7 @@
       "patent": "البراءة",
       "yes": "نعم",
       "no": "لا",
-      "globalDashboard": "لوحة التحكم العامة",
       "current": "الحالي",
-      "dateRange": "نطاق التاريخ",
       "date": "التاريخ",
       "filename": "اسم الملف",
       "optional": "اختياري",
@@ -244,7 +242,6 @@
       "permissionsAssigned": "صلاحية معينة",
       "createdAt": "تم الإنشاء في",
       "lastUpdated": "آخر تحديث",
-      "include": "تضمين",
       "systemRole": "دور النظام",
       "customRole": "دور مخصص",
       "unknownUser": "مستخدم غير معروف",
@@ -269,7 +266,13 @@
       "lastQuarter": "الربع الماضي",
       "thisYear": "هذا العام",
       "lastYear": "العام الماضي",
-      "customRange": "نطاق مخصص"
+      "customRange": "نطاق مخصص",
+      "allUsers": "جميع المستخدمين",
+      "allAdmins": "جميع المدراء",
+      "include": "تضمين",
+      "loadingRoles": "جاري تحميل الأدوار...",
+      "globalDashboard": "لوحة التحكم العامة",
+      "dateRange": "نطاق التاريخ"
     },
     "resources": {
       "resource": "المورد",
@@ -369,8 +372,6 @@
       "enterTrademark": "أدخل العلامة التجارية",
       "enterPatent": "أدخل البراءة",
       "filterBy": "تصفية حسب {field}",
-      "searchCenters": "البحث في المراكز...",
-      "searchAdmins": "البحث في المديرين...",
       "enterCenterName": "أدخل اسم المركز",
       "enterCenterDescription": "أدخل وصف المركز",
       "enterAdminName": "أدخل اسم المدير الكامل",
@@ -378,7 +379,13 @@
       "enterAdminPassword": "أدخل كلمة مرور المدير",
       "enterAdminPhone": "أدخل رقم هاتف المدير",
       "enterAdminAddress": "أدخل عنوان المدير",
-      "pickDateRange": "اختر نطاق التاريخ"
+      "pickDateRange": "اختر نطاق التاريخ",
+      "enterFullName": "أدخل الاسم الكامل",
+      "enterEmailAddress": "أدخل عنوان البريد الإلكتروني",
+      "enterPhoneNumber": "أدخل رقم الهاتف",
+      "searchUsers": "البحث في المستخدمين...",
+      "searchCenters": "البحث في المراكز...",
+      "searchAdmins": "البحث في المدراء..."
     },
     "messages": {
       "loading": "جاري التحميل...",
@@ -407,7 +414,11 @@
       "temperature": "درجة الحرارة",
       "showing": "عرض",
       "showingCount": "عرض {{count}} {{item}}",
-      "foundResults": "تم العثور على {{count}} نتيجة"
+      "foundResults": "تم العثور على {{count}} نتيجة",
+      "noCentersAvailable": "لا توجد مراكز متاحة",
+      "noCentersAvailableForUser": "لا توجد مراكز متاحة لهذا المستخدم.",
+      "noRolesAvailable": "لا توجد أدوار متاحة",
+      "noRolesAvailableForCenter": "لا توجد أدوار متاحة لهذا المركز."
     }
   },
   "dashboard": {
@@ -416,11 +427,17 @@
   },
   "dialogs": {
     "createUser": {
-      "title": "إنشاء مستخدم جديد"
+      "title": "إنشاء مستخدم",
+      "description": "إنشاء حساب مستخدم جديد مع الأذونات المناسبة"
     },
     "editUser": {
-      "title": "تعديل المستخدم"
+      "title": "تعديل المستخدم",
+      "description": "تحديث معلومات وإعدادات المستخدم"
     },
+    "selectCenterForRoleManagement": {
+      "title": "اختر المركز لإدارة الأدوار"
+    },
+    "centerSpecificRoleAssignment": "تعيين الأدوار الخاصة بالمركز",
     "viewUser": {
       "title": "تفاصيل المستخدم"
     },

@@ -9,6 +9,7 @@ import {
   Param,
   Query,
   Res,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { Response } from 'express';
 import {
@@ -131,7 +132,7 @@ export class RolesController {
   @ReadApiResponses('Get role by ID')
   @ApiParam({ name: 'roleId', type: String })
   // @Permissions(PERMISSIONS.ROLES.VIEW)
-  async getRoleById(@Param('roleId') roleId: string) {
+  async getRoleById(@Param('roleId', ParseUUIDPipe) roleId: string) {
     const result = await this.rolesService.findById(roleId);
     return ControllerResponse.success(
       result,
@@ -145,7 +146,7 @@ export class RolesController {
   @ApiBody({ type: CreateRoleRequestDto })
   @Permissions(PERMISSIONS.ROLES.UPDATE)
   async updateRole(
-    @Param('roleId') roleId: string,
+    @Param('roleId', ParseUUIDPipe) roleId: string,
     @Body() dto: CreateRoleRequestDto,
     @GetUser() user: ActorUser,
   ) {
@@ -176,7 +177,7 @@ export class RolesController {
   @ApiParam({ name: 'roleId', type: String })
   @Permissions(PERMISSIONS.ROLES.DELETE)
   async deleteRole(
-    @Param('roleId') roleId: string,
+    @Param('roleId', ParseUUIDPipe) roleId: string,
     @GetUser() user: ActorUser,
   ) {
     const result = await this.rolesService.deleteRole(roleId, user);
@@ -204,7 +205,7 @@ export class RolesController {
   @ApiParam({ name: 'roleId', type: String })
   @Permissions(PERMISSIONS.ROLES.RESTORE)
   async restoreRole(
-    @Param('roleId') roleId: string,
+    @Param('roleId', ParseUUIDPipe) roleId: string,
     @GetUser() user: ActorUser,
   ) {
     await this.rolesService.restoreRole(roleId, user);

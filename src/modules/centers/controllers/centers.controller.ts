@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Put,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
 import {
@@ -90,8 +91,7 @@ export class CentersController {
   @Get(':id')
   @ReadApiResponses('Get center by ID')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
-  // TODO: param validation
-  async getCenterById(@Param('id') id: string) {
+  async getCenterById(@Param('id', ParseUUIDPipe) id: string) {
     const result = await this.centersService.findCenterById(id);
     return ControllerResponse.success(
       result,

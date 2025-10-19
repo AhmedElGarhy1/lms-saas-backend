@@ -1,10 +1,16 @@
 {
   "createUser": {
-    "title": "Create New User"
+    "title": "Create User",
+    "description": "Create a new user account with appropriate permissions"
   },
   "editUser": {
-    "title": "Edit User"
+    "title": "Edit User",
+    "description": "Update user information and settings"
   },
+  "selectCenterForRoleManagement": {
+    "title": "Select Center for Role Management"
+  },
+  "centerSpecificRoleAssignment": "Center-specific role assignment",
   "viewUser": {
     "title": "User Details"
   },

@@ -24,8 +24,9 @@
 [x] fix scope related conditions so it will be controled only by permission
 [-] import functioanlity
 [-] builk operations
-[ ] add backend loclization and integration
-[ ] query/parameter vlaidation
+[x] add backend loclization and integration
+[x] query/parameter validation
+[ ] fronetnd issues (dialogs, roles permissions, delete)
 [ ] think about implementing branches (later not now)
 [ ] fix autuntication and refresh token
 [ ] add transactions or unit of work
