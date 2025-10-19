@@ -7,6 +7,7 @@ import { RefreshTokenRepository } from '../repositories/refresh-token.repository
 import { LoggerService } from '../../../shared/services/logger.service';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import { Transactional } from 'typeorm-transactional';
 
 export interface CreateRefreshTokenData {
   userId: string;
@@ -95,6 +96,7 @@ export class RefreshTokenService {
     };
   }
 
+  @Transactional()
   async refreshAccessToken(
     refreshToken: string,
   ): Promise<{ accessToken: string; newRefreshToken?: string }> {
@@ -114,7 +116,7 @@ export class RefreshTokenService {
       // Create new refresh token
       const newRefreshToken = await this.createRefreshToken({
         userId: tokenData.userId,
-        deviceInfo: tokenData.deviceInfo,
+        deviceInfo: tokenData.deviceInfo as any,
       });
 
       this.logger.log(
@@ -140,9 +142,10 @@ export class RefreshTokenService {
     this.logger.log(`Cleaned up expired refresh tokens`, 'RefreshTokenService');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async revokeAllUserSessions(
     userId: string,
-    exceptToken?: string,
+    _exceptToken?: string,
   ): Promise<void> {
     // For now, just delete all tokens for the user
     // In a more sophisticated implementation, you'd query and filter
@@ -161,19 +164,21 @@ export class RefreshTokenService {
     return crypto.randomBytes(64).toString('hex');
   }
 
-  private generateAccessToken(userId: string): string {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private generateAccessToken(_userId: string): string {
     // This would typically use JWT service
     // For now, return a placeholder
     return `access_${crypto.randomBytes(32).toString('hex')}`;
   }
 
   private getDefaultExpiration(): Date {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const expirationDays = this.configService.get(
       'REFRESH_TOKEN_EXPIRES_DAYS',
       '7',
     );
     return new Date(
-      Date.now() + parseInt(expirationDays) * 24 * 60 * 60 * 1000,
+      Date.now() + parseInt(String(expirationDays), 10) * 24 * 60 * 60 * 1000,
     );
   }
 }

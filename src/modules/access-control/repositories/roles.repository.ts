@@ -12,6 +12,7 @@ import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { CreateRoleRequestDto } from '../dto/create-role.dto';
 import { RolePermissionRepository } from './role-permission.repository';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> {
@@ -50,6 +51,7 @@ export class RolesRepository extends BaseRepository<Role> {
     return role;
   }
 
+  @Transactional()
   async updateRole(roleId: string, data: CreateRoleRequestDto): Promise<Role> {
     const { rolePermissions, ...roleData } = data;
     const role = await this.update(roleId, roleData);

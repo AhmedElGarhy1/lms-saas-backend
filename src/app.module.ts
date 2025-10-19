@@ -36,8 +36,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RolesService } from './modules/access-control/services/roles.service';
 import { join } from 'path';
 import { UserLocaleResolver } from './shared/resolvers/user-locale.resolver';
-import { UserService } from './modules/user/services/user.service';
 import { Locale } from './shared/common/enums/locale.enum';
+import { HealthModule } from './modules/health';
 
 @Module({
   imports: [
@@ -92,6 +92,7 @@ import { Locale } from './shared/common/enums/locale.enum';
     ActivityLogModule,
     SeederModule,
     LocaleModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [

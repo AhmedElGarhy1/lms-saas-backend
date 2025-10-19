@@ -15,6 +15,7 @@ import { AssignRoleDto } from '../dto/assign-role.dto';
 import { Permission } from '../entities/permission.entity';
 import { PermissionRepository } from './permission.repository';
 import { PermissionScope } from '../constants/permissions';
+import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
 export class UserRoleRepository extends BaseRepository<UserRole> {
@@ -187,6 +188,7 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
     });
   }
 
+  @Transactional()
   async assignUserRole(data: AssignRoleDto): Promise<UserRole> {
     const existingUserRole = await this.getUserRole(data.userId, data.centerId);
 

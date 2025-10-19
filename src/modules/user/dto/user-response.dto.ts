@@ -9,7 +9,11 @@ export class UserResponseDto {
 
   @ApiProperty({ description: 'User email' })
   @Expose()
-  email: string;
+  email?: string;
+
+  @ApiProperty({ description: 'User phone' })
+  @Expose()
+  phone?: string;
 
   @ApiProperty({ description: 'User name' })
   @Expose()

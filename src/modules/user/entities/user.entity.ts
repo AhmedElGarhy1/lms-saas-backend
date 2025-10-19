@@ -13,8 +13,11 @@ import { Locale } from '@/shared/common/enums/locale.enum';
 
 @Entity('users')
 export class User extends BaseEntity {
-  @Column({ unique: true })
-  email: string;
+  @Column({ unique: true, nullable: true })
+  email?: string;
+
+  @Column({ unique: true, nullable: true })
+  phone?: string;
 
   @Column()
   @Exclude()
@@ -36,9 +39,6 @@ export class User extends BaseEntity {
   @Column({ default: false })
   twoFactorEnabled: boolean;
 
-  @Column({ nullable: true })
-  profileId?: string;
-
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
@@ -56,8 +56,7 @@ export class User extends BaseEntity {
   passwordResetTokens: PasswordResetToken[];
 
   @OneToOne(() => Profile, (profile) => profile.user, { cascade: true })
-  @JoinColumn({ name: 'profileId' })
-  profile?: Profile;
+  profile: Profile;
 
   @OneToMany(() => RefreshToken, (token) => token.user)
   refreshTokens: RefreshToken[];

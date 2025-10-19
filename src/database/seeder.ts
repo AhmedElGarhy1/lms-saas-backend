@@ -594,14 +594,14 @@ export class DatabaseSeeder {
     const systemAdminUser = users.find((u) => u.email === 'admin@lms.com');
     const adminUsers = users.filter(
       (u) =>
-        u.email.includes('admin') &&
+        u.email?.includes('admin') &&
         u.email !== 'admin@lms.com' &&
         u.email !== 'superadmin@lms.com',
     );
-    const centerOwners = users.filter((u) => u.email.includes('owner'));
-    const centerUsers = users.filter((u) => u.email.includes('centeruser'));
+    const centerOwners = users.filter((u) => u.email?.includes('owner'));
+    const centerUsers = users.filter((u) => u.email?.includes('centeruser'));
     const deactivatedUsers = users.filter((u) =>
-      u.email.includes('deactivated'),
+      u.email?.includes('deactivated'),
     );
 
     // Assign global ADMIN roles

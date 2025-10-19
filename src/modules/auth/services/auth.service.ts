@@ -28,6 +28,7 @@ import { ActivityLogService } from '@/shared/modules/activity-log/services/activ
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
+import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
 export class AuthService {
@@ -71,6 +72,7 @@ export class AuthService {
     return user;
   }
 
+  @Transactional()
   async login(dto: LoginRequestDto) {
     const user = await this.validateUser(dto.email, dto.password);
     if (!user) {
@@ -166,6 +168,7 @@ export class AuthService {
     };
   }
 
+  @Transactional()
   async verify2FA(dto: TwoFactorRequest) {
     // Find user by email
     const user = await this.userService.findUserByEmail(dto.email);
@@ -312,6 +315,7 @@ export class AuthService {
     };
   }
 
+  @Transactional()
   async setupTwoFactor(userId: string, actor: ActorUser) {
     const user = await this.userService.findUserById(userId, actor);
 
@@ -355,6 +359,7 @@ export class AuthService {
     };
   }
 
+  @Transactional()
   async enableTwoFactor(
     userId: string,
     verificationCode: string,
@@ -402,6 +407,7 @@ export class AuthService {
     return { message: 'Two-factor authentication enabled successfully' };
   }
 
+  @Transactional()
   async disableTwoFactor(
     userId: string,
     verificationCode: string,
@@ -441,6 +447,7 @@ export class AuthService {
     return { message: 'Two-factor authentication disabled successfully' };
   }
 
+  @Transactional()
   async logout(actor: ActorUser) {
     // Invalidate refresh tokens for the user
     await this.refreshTokenService.deleteAllRefreshTokensForUser(actor.id);

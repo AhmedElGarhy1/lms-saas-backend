@@ -15,11 +15,6 @@ import { Role } from '@/modules/access-control/entities/role.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 
 export class UserProfileDto {
-  @ApiProperty({ description: 'User phone number', required: false })
-  @IsOptional()
-  @IsString()
-  phone?: string;
-
   @ApiProperty({ description: 'User address', required: false })
   @IsOptional()
   @IsString()
@@ -32,6 +27,11 @@ export class UserProfileDto {
 }
 
 export class CreateUserDto {
+  @ApiProperty({ description: 'User phone number', required: false })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
   @ApiProperty({ description: 'User full name' })
   @IsString()
   @IsNotEmpty()

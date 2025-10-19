@@ -9,6 +9,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Pagination, paginate } from 'nestjs-typeorm-paginate';
 import { LoggerService } from '@/shared/services/logger.service';
 import { BasePaginationDto } from '../dto/base-pagination.dto';
+import { Transactional } from 'typeorm-transactional';
 
 export interface QueryOptions<T> {
   select?: (keyof T)[];
@@ -58,6 +59,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   /**
    * Bulk insert with progress tracking and error handling
    */
+  @Transactional()
   async bulkInsert(
     entities: Partial<T>[],
     options: BulkOperationOptions = {},
@@ -100,6 +102,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   /**
    * Bulk update with progress tracking and error handling
    */
+  @Transactional()
   async bulkUpdate(
     where: any,
     updateData: Partial<T>,
@@ -161,6 +164,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   /**
    * Bulk delete with progress tracking and error handling
    */
+  @Transactional()
   async bulkDelete(
     where: any,
     options: BulkOperationOptions = {},

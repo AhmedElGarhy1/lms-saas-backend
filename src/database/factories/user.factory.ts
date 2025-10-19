@@ -147,7 +147,6 @@ export class UserFactory {
       id: faker.string.uuid(),
       userId: faker.string.uuid(),
       type: faker.helpers.arrayElement(Object.values(ProfileType)),
-      phone: faker.phone.number(),
       address: faker.location.streetAddress(),
       dateOfBirth: faker.date.birthdate({ min: 18, max: 65, mode: 'age' }),
     };

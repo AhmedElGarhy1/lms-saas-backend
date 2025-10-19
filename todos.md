@@ -22,15 +22,16 @@
 [x] export functiaonlity support csv, xlsx, json add popup to choose
 [x] fix manage roles in users and centers
 [x] fix scope related conditions so it will be controled only by permission
-[-] import functioanlity
-[-] builk operations
 [x] add backend loclization and integration
 [x] query/parameter validation
 [x] profile for user
 [x] fronetnd issues (dialogs, delete)
-[ ] fronetnd issues (roles permissions)
-[ ] think about implementing branches (later not now)
+[x] fronetnd issues (roles permissions)
+[x] add transactions or unit of work
+[ ] database indexing optimization
+[ ] think about implementing branches
 [ ] fix autuntication and refresh token
-[ ] add transactions or unit of work
 [ ] view modals in all modules
 [ ] integrate twilio for some verifications
+[ ] import functioanlity
+[ ] builk operations

@@ -30,9 +30,6 @@ export class Profile {
   type: ProfileType;
 
   @Column({ nullable: true })
-  phone?: string;
-
-  @Column({ nullable: true })
   address?: string;
 
   @Column({ nullable: true })

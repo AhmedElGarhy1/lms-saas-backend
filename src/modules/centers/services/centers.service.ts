@@ -15,6 +15,7 @@ import { RolesService } from '@/modules/access-control/services/roles.service';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { createOwnerRoleData } from '@/modules/access-control/constants/roles';
+import { Transactional } from 'typeorm-transactional';
 
 export interface SeederCenterData {
   name: string;
@@ -42,6 +43,7 @@ export class CentersService {
     return this.centersRepository.findOne(centerId);
   }
 
+  @Transactional()
   async createCenter(dto: CreateCenterDto, actor: ActorUser): Promise<Center> {
     // Create the center first
     const center = await this.centersRepository.create({

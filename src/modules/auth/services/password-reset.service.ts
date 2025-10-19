@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { UserService } from '../../user/services/user.service';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
+import { Transactional } from 'typeorm-transactional';
 
 export interface CreatePasswordResetData {
   userId: string;
@@ -77,6 +78,7 @@ export class PasswordResetService {
     );
   }
 
+  @Transactional()
   async resetPassword(token: string, newPassword: string): Promise<void> {
     const resetToken = await this.findPasswordResetToken(token);
 
@@ -115,7 +117,7 @@ export class PasswordResetService {
 
     const resetToken = await this.createPasswordResetToken({
       userId: user.id,
-      email: user.email,
+      email: user.email || '',
     });
 
     await this.mailerService.sendPasswordReset(

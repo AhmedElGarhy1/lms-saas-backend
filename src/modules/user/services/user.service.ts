@@ -27,6 +27,7 @@ import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
+import { Transactional } from 'typeorm-transactional';
 
 // UserListQuery interface moved to user-service.interface.ts
 
@@ -77,6 +78,7 @@ export class UserService {
     return { message: 'Password changed successfully', success: true };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async createUser(dto: CreateUserDto, actor: ActorUser): Promise<User> {
     const existingUser = await this.userRepository.findByEmail(dto.email);
     if (existingUser) {
@@ -89,25 +91,25 @@ export class UserService {
     // Create user
     const savedUser = await this.userRepository.create({
       email: dto.email.toLowerCase(),
-      password: hashedPassword,
+      password: hashedPassword, //TODO: do it in entity level
       name: dto.name,
       isActive: dto.isActive ?? true,
+      phone: dto.phone,
     });
 
     // Create profile with provided details or default
-    const profile = await this.profileService.createUserProfile(savedUser.id, {
-      phone: dto.profile.phone,
+    await this.profileService.createUserProfile(savedUser.id, {
       address: dto.profile.address,
       dateOfBirth: dto.profile.dateOfBirth
         ? new Date(dto.profile.dateOfBirth)
         : undefined,
     });
-    savedUser.profileId = profile.id;
     await this.userRepository.update(savedUser.id, savedUser);
 
     return savedUser;
   }
 
+  @Transactional()
   async createUserWithRole(dto: CreateUserWithRoleDto, actor: ActorUser) {
     const centerId = (dto.centerId ?? actor.centerId)!;
     dto.centerId = centerId;
@@ -332,6 +334,7 @@ export class UserService {
    * Update basic user information (name, email, isActive)
    * This method updates fields directly on the user entity
    */
+  @Transactional()
   async updateUser(
     userId: string,
     updateData: UpdateUserDto,

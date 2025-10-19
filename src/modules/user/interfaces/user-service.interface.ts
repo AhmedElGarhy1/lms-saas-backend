@@ -23,7 +23,8 @@ export interface UserServiceResponse<T = any> {
 
 export interface CurrentUserProfileResponse {
   id: string;
-  email: string;
+  email?: string;
+  phone?: string;
   name: string;
   isActive: boolean;
   twoFactorEnabled: boolean;
@@ -31,8 +32,7 @@ export interface CurrentUserProfileResponse {
   lockoutUntil?: Date;
   createdAt: Date;
   updatedAt: Date;
-  profile?: {
-    phone?: string;
+  profile: {
     address?: string;
     dateOfBirth?: Date;
   };
