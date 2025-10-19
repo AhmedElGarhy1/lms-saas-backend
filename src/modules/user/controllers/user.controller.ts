@@ -80,6 +80,16 @@ export class UserController {
     return this.userService.getCurrentUserProfile(actorUser);
   }
 
+  @Put('profile')
+  @UpdateApiResponses('Update current user profile')
+  @NoContext()
+  async updateActorUserProfile(
+    @Body() dto: UpdateUserDto,
+    @GetUser() actorUser: ActorUser,
+  ) {
+    return this.userService.updateUserProfile(dto, actorUser);
+  }
+
   @Get(':id')
   @ReadApiResponses('Get user profile by ID')
   @ApiParam({ name: 'id', description: 'User ID', type: String })

@@ -44,7 +44,7 @@ export class UserRepository extends BaseRepository<User> {
   async findWithRelations(userId: string): Promise<User | null> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
-      relations: ['profile', 'userRoles', 'userRoles.role'],
+      relations: ['profile'],
     });
 
     return user;

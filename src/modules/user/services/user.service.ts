@@ -279,7 +279,7 @@ export class UserService {
     actor: ActorUser,
   ): Promise<CurrentUserProfileResponse> {
     // Get user with profile
-    const user = await this.userRepository.findOne(actor.id);
+    const user = await this.userRepository.findWithRelations(actor.id);
     if (!user) {
       throw new ResourceNotFoundException('User not found');
     }
@@ -319,6 +319,13 @@ export class UserService {
     this.logger.log(`Returning profile for user: ${actor.id}`);
 
     return returnData;
+  }
+
+  async updateUserProfile(
+    updateData: UpdateUserDto,
+    actor: ActorUser,
+  ): Promise<User> {
+    return this.updateUser(actor.id, updateData, actor);
   }
 
   /**
