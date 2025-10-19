@@ -27,6 +27,8 @@
     "manageAccess": "إدارة الوصول",
     "manageRoles": "إدارة الأدوار",
     "manageCenters": "إدارة المراكز",
+    "createAdmin": "إنشاء مدير",
+    "editUser": "تعديل المستخدم",
     "activate": "تفعيل",
     "deactivate": "إلغاء التفعيل"
   },

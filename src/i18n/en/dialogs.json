@@ -16,9 +16,11 @@
   },
   "deleteUser": {
     "title": "Delete User",
-    "message": "Are you sure you want to delete",
+    "message": "Are you sure you want to delete {{userName}}? This will permanently remove the user and all associated data.",
     "cannotUndo": "This action cannot be undone.",
-    "warning": "This will permanently remove the user and all associated data."
+    "deactivateAccount": "User account will be deactivated",
+    "removeData": "All user data will be removed",
+    "cannotReverse": "This action cannot be reversed"
   },
   "createRole": {
     "title": "Create New Role"
@@ -31,7 +33,13 @@
   },
   "deleteRole": {
     "title": "Delete Role",
-    "message": "Are you sure you want to delete this role?"
+    "message": "Are you sure you want to delete the role {{roleName}}? This will permanently remove the role and all associated permissions.",
+    "cannotUndo": "This action cannot be undone.",
+    "thisActionWill": "This action will",
+    "removeRole": "Remove the role from the system",
+    "revokePermissions": "Revoke all permissions associated with this role",
+    "removeFromUsers": "Remove the role from all users who have it assigned",
+    "deleteData": "Delete all role-specific data"
   },
   "createCenter": {
     "title": "Create New Center"
@@ -44,34 +52,33 @@
   },
   "deleteCenter": {
     "title": "Delete Center",
-    "message": "Are you sure you want to delete the center",
+    "message": "Are you sure you want to delete the center {{centerName}}? This will permanently remove the center and all associated data.",
     "cannotUndo": "This action cannot be undone.",
-    "warning": "This will permanently remove the center and all associated data.",
     "thisActionWill": "This action will",
     "removeCenter": "Remove the center from the system",
     "disassociateUsers": "Disassociate all users from this center",
     "removeData": "Remove all center-specific data"
   },
   "manageUsers": {
-    "title": "Manage Users",
+    "title": "Manage Users - {{centerName}}",
     "description": "Manage user access for this center. Use the Grant/Revoke buttons to control which users can access this center.",
     "allUsers": "All Users"
   },
   "manageAdmins": {
-    "title": "Manage Admins",
+    "title": "Manage Admins - {{centerName}}",
     "description": "Manage admin access for this center. Use the Grant/Revoke buttons to control which admins can manage this center."
   },
   "manageAccess": {
-    "title": "Manage Access",
+    "title": "Manage Access - {{userName}}",
     "description": "Showing users that {{userName}} can access based on their roles and permissions. Use the Grant/Revoke buttons to manage access."
   },
   "manageCenterAccess": {
-    "title": "Manage Center Access",
+    "title": "Manage Center Access - {{userName}}",
     "description": "Manage center access for this user. Use the Grant/Revoke buttons to control access to different centers.",
     "allCenters": "All Centers"
   },
   "manageRoleUsers": {
-    "title": "Manage Role Users",
+    "title": "Manage Role Users - {{roleName}}",
     "description": "Manage user assignments for this role. Use the Grant/Revoke buttons to control which users have this role assigned.",
     "searchPlaceholder": "Search users...",
     "allUsers": "All Users",

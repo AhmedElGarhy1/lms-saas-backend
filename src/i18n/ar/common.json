@@ -93,6 +93,7 @@
     "none": "لا شيء",
     "all": "الكل",
     "loading": "جاري التحميل",
+    "loadingCenters": "جاري تحميل المراكز...",
     "error": "خطأ",
     "success": "نجح",
     "warning": "تحذير",
@@ -183,6 +184,7 @@
     "current": "الحالي",
     "date": "التاريخ",
     "filename": "اسم الملف",
+    "filenameOptional": "اسم الملف (اختياري)",
     "optional": "اختياري",
     "filter": "تصفية",
     "assign": "تعيين",
@@ -323,7 +325,7 @@
     "enterCopyright": "أدخل حقوق الطبع والنشر",
     "enterTrademark": "أدخل العلامة التجارية",
     "enterPatent": "أدخل البراءة",
-    "filterBy": "تصفية حسب {field}",
+    "filterBy": "تصفية حسب {{field}}",
     "enterCenterName": "أدخل اسم المركز",
     "enterCenterDescription": "أدخل وصف المركز",
     "enterAdminName": "أدخل اسم المدير الكامل",
@@ -337,7 +339,8 @@
     "enterPhoneNumber": "أدخل رقم الهاتف",
     "searchUsers": "البحث في المستخدمين...",
     "searchCenters": "البحث في المراكز...",
-    "searchAdmins": "البحث في المدراء..."
+    "searchAdmins": "البحث في المدراء...",
+    "searchItems": "البحث في {{item}}..."
   },
   "messages": {
     "loading": "جاري التحميل...",

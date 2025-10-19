@@ -1,7 +1,7 @@
 import fs from 'fs';
 
-const basePath = 'src/i18n/en.json';
-const targetPath = 'src/i18n/ar.json';
+const basePath = './i18n/en.json';
+const targetPath = './i18n/ar.json';
 
 function flatten(obj, prefix = '') {
   return Object.entries(obj).reduce((res, [key, val]) => {

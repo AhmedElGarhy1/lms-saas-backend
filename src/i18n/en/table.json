@@ -27,6 +27,8 @@
     "manageAccess": "Manage Access",
     "manageRoles": "Manage Roles",
     "manageCenters": "Manage Centers",
+    "createAdmin": "Create Admin",
+    "editUser": "Edit User",
     "activate": "Activate",
     "deactivate": "Deactivate"
   },

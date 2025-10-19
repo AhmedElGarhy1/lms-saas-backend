@@ -93,6 +93,7 @@
     "none": "None",
     "all": "All",
     "loading": "Loading",
+    "loadingCenters": "Loading centers...",
     "error": "Error",
     "success": "Success",
     "warning": "Warning",
@@ -183,6 +184,7 @@
     "current": "Current",
     "date": "Date",
     "filename": "Filename",
+    "filenameOptional": "Filename (Optional)",
     "optional": "Optional",
     "filter": "Filter",
     "assign": "Assign",
@@ -323,7 +325,7 @@
     "enterCopyright": "Enter copyright",
     "enterTrademark": "Enter trademark",
     "enterPatent": "Enter patent",
-    "filterBy": "Filter by {field}",
+    "filterBy": "Filter by {{field}}",
     "enterCenterName": "Enter center name",
     "enterCenterDescription": "Enter center description",
     "enterAdminName": "Enter admin full name",
@@ -337,7 +339,8 @@
     "enterPhoneNumber": "Enter phone number",
     "searchUsers": "Search users...",
     "searchCenters": "Search centers...",
-    "searchAdmins": "Search admins..."
+    "searchAdmins": "Search admins...",
+    "searchItems": "Search {{item}}..."
   },
   "messages": {
     "loading": "Loading...",
