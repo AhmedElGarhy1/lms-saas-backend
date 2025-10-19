@@ -26,8 +26,9 @@
 [-] builk operations
 [x] add backend loclization and integration
 [x] query/parameter validation
-[ ] fronetnd issues (dialogs, roles permissions, delete)
-[ ] profile for user
+[x] profile for user
+[x] fronetnd issues (dialogs, delete)
+[ ] fronetnd issues (roles permissions)
 [ ] think about implementing branches (later not now)
 [ ] fix autuntication and refresh token
 [ ] add transactions or unit of work

@@ -18,5 +18,33 @@
   "health": {
     "title": "صحة النظام",
     "subtitle": "مراقبة الأداء وحالة الخدمات في الوقت الفعلي"
+  },
+  "profile": {
+    "title": "الملف الشخصي",
+    "subtitle": "إدارة إعدادات حسابك وتفضيلاتك",
+    "tabs": {
+      "profile": "معلومات الملف الشخصي",
+      "security": "الأمان",
+      "preferences": "التفضيلات"
+    },
+    "sections": {
+      "personalInfo": "المعلومات الشخصية",
+      "personalInfoDescription": "تحديث معلوماتك الشخصية وتفاصيل الاتصال",
+      "security": "إعدادات الأمان",
+      "securityDescription": "إدارة كلمة المرور وتفضيلات الأمان",
+      "securityStatus": "حالة أمان حسابك",
+      "twoFactorEnabled": "المصادقة الثنائية مفعلة",
+      "twoFactorDisabled": "المصادقة الثنائية معطلة",
+      "securityRecommendations": "توصيات الأمان",
+      "strongPassword": "استخدم كلمة مرور قوية تحتوي على 8 أحرف على الأقل",
+      "passwordMix": "تضمين مزيج من الأحرف والأرقام والرموز",
+      "uniquePassword": "لا تعيد استخدام كلمات المرور من حسابات أخرى",
+      "enableTwoFactor": "فعّل المصادقة الثنائية للحصول على أمان إضافي",
+      "preferences": "التفضيلات",
+      "preferencesDescription": "تخصيص تفضيلات التطبيق",
+      "languageDescription": "اختر لغتك المفضلة",
+      "themeDescription": "اختر المظهر المفضل لديك",
+      "notificationsDescription": "إدارة تفضيلات الإشعارات"
+    }
   }
 }

@@ -126,13 +126,26 @@
       "name": "Name",
       "email": "Email",
       "phone": "Phone",
-      "address": "Address",
       "description": "Description",
       "status": "Status",
       "active": "Active",
       "inactive": "Inactive",
       "enabled": "Enabled",
       "disabled": "Disabled",
+      "userId": "User ID",
+      "twoFactorAuth": "Two-Factor Auth",
+      "never": "Never",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "theme": "Theme",
+      "notifications": "Notifications",
+      "phoneNumber": "Phone Number",
+      "dateOfBirth": "Date of Birth",
+      "address": "Address",
+      "bio": "Bio",
+      "profilePicture": "Profile Picture",
+      "characters": "characters",
       "created": "Created",
       "updated": "Updated",
       "actions": "Actions",
@@ -147,16 +160,12 @@
       "warning": "Warning",
       "info": "Info",
       "password": "Password",
-      "confirmPassword": "Confirm Password",
       "website": "Website",
       "role": "Role",
       "permissions": "Permissions",
       "avatar": "Avatar",
-      "bio": "Bio",
-      "dateOfBirth": "Date of Birth",
       "fullName": "Full Name",
       "emailAddress": "Email Address",
-      "phoneNumber": "Phone Number",
       "center": "Center",
       "user": "User",
       "admin": "Admin",
@@ -306,7 +315,6 @@
       "enterName": "Enter name",
       "enterEmail": "Enter email address",
       "enterPhone": "Enter phone number",
-      "enterAddress": "Enter address",
       "enterDescription": "Enter description",
       "enterWebsite": "Enter website URL",
       "enterPassword": "Enter password",
@@ -389,7 +397,9 @@
       "searchCenters": "Search centers...",
       "searchAdmins": "Search admins...",
       "searchItems": "Search {{item}}...",
-      "filterBy": "Filter by {{field}}"
+      "enterAddress": "Enter address",
+      "enterBio": "Tell us about yourself",
+      "selectDateOfBirth": "Select date of birth"
     },
     "messages": {
       "loading": "Loading...",
@@ -422,7 +432,11 @@
       "noCentersAvailable": "No centers available",
       "noCentersAvailableForUser": "No centers are available for this user.",
       "noRolesAvailable": "No roles available",
-      "noRolesAvailableForCenter": "No roles are available for this center."
+      "noRolesAvailableForCenter": "No roles are available for this center.",
+      "passwordsDoNotMatch": "Passwords do not match",
+      "passwordChangeSuccess": "Password changed successfully",
+      "passwordChangeError": "Failed to change password",
+      "avatarUpdated": "Avatar updated successfully"
     }
   },
   "dashboard": {
@@ -616,6 +630,34 @@
     "health": {
       "title": "System Health",
       "subtitle": "Real-time monitoring of system performance and service status"
+    },
+    "profile": {
+      "title": "Profile",
+      "subtitle": "Manage your account settings and preferences",
+      "tabs": {
+        "profile": "Profile Information",
+        "security": "Security",
+        "preferences": "Preferences"
+      },
+      "sections": {
+        "personalInfo": "Personal Information",
+        "personalInfoDescription": "Update your personal information and contact details",
+        "security": "Security Settings",
+        "securityDescription": "Manage your password and security preferences",
+        "securityStatus": "Your account security status",
+        "twoFactorEnabled": "2FA is enabled",
+        "twoFactorDisabled": "2FA is disabled",
+        "securityRecommendations": "Security Recommendations",
+        "strongPassword": "Use a strong password with at least 8 characters",
+        "passwordMix": "Include a mix of letters, numbers, and symbols",
+        "uniquePassword": "Don't reuse passwords from other accounts",
+        "enableTwoFactor": "Enable two-factor authentication for extra security",
+        "preferences": "Preferences",
+        "preferencesDescription": "Customize your application preferences",
+        "languageDescription": "Choose your preferred language",
+        "themeDescription": "Select your preferred theme",
+        "notificationsDescription": "Manage your notification preferences"
+      }
     }
   },
   "pagination": {
@@ -789,6 +831,8 @@
       "manageCenters": "Manage Centers",
       "createAdmin": "Create Admin",
       "editUser": "Edit User",
+      "saveChanges": "Save Changes",
+      "changePassword": "Change Password",
       "activate": "Activate",
       "deactivate": "Deactivate"
     },

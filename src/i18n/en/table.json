@@ -29,6 +29,8 @@
     "manageCenters": "Manage Centers",
     "createAdmin": "Create Admin",
     "editUser": "Edit User",
+    "saveChanges": "Save Changes",
+    "changePassword": "Change Password",
     "activate": "Activate",
     "deactivate": "Deactivate"
   },

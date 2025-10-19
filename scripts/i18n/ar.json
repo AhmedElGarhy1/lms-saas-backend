@@ -126,13 +126,22 @@
       "name": "الاسم",
       "email": "البريد الإلكتروني",
       "phone": "الهاتف",
-      "address": "العنوان",
       "description": "الوصف",
       "status": "الحالة",
       "active": "نشط",
       "inactive": "غير نشط",
       "enabled": "مفعل",
       "disabled": "معطل",
+      "userId": "معرف المستخدم",
+      "twoFactorAuth": "المصادقة الثنائية",
+      "never": "أبداً",
+      "currentPassword": "كلمة المرور الحالية",
+      "newPassword": "كلمة المرور الجديدة",
+      "theme": "المظهر",
+      "notifications": "الإشعارات",
+      "address": "العنوان",
+      "profilePicture": "الصورة الشخصية",
+      "characters": "حرف",
       "created": "تم الإنشاء",
       "updated": "تم التحديث",
       "actions": "الإجراءات",
@@ -306,7 +315,6 @@
       "enterName": "أدخل الاسم",
       "enterEmail": "أدخل عنوان البريد الإلكتروني",
       "enterPhone": "أدخل رقم الهاتف",
-      "enterAddress": "أدخل العنوان",
       "enterDescription": "أدخل الوصف",
       "enterWebsite": "أدخل رابط الموقع",
       "enterPassword": "أدخل كلمة المرور",
@@ -389,7 +397,9 @@
       "searchCenters": "البحث في المراكز...",
       "searchAdmins": "البحث في المدراء...",
       "searchItems": "البحث في {{item}}...",
-      "filterBy": "تصفية حسب {{field}}"
+      "enterAddress": "أدخل العنوان",
+      "enterBio": "أخبرنا عن نفسك",
+      "selectDateOfBirth": "اختر تاريخ الميلاد"
     },
     "messages": {
       "loading": "جاري التحميل...",
@@ -422,7 +432,11 @@
       "noCentersAvailable": "لا توجد مراكز متاحة",
       "noCentersAvailableForUser": "لا توجد مراكز متاحة لهذا المستخدم.",
       "noRolesAvailable": "لا توجد أدوار متاحة",
-      "noRolesAvailableForCenter": "لا توجد أدوار متاحة لهذا المركز."
+      "noRolesAvailableForCenter": "لا توجد أدوار متاحة لهذا المركز.",
+      "passwordsDoNotMatch": "كلمات المرور غير متطابقة",
+      "passwordChangeSuccess": "تم تغيير كلمة المرور بنجاح",
+      "passwordChangeError": "فشل في تغيير كلمة المرور",
+      "avatarUpdated": "تم تحديث الصورة الشخصية بنجاح"
     }
   },
   "dashboard": {
@@ -615,6 +629,34 @@
     "health": {
       "title": "صحة النظام",
       "subtitle": "مراقبة الأداء وحالة الخدمات في الوقت الفعلي"
+    },
+    "profile": {
+      "title": "الملف الشخصي",
+      "subtitle": "إدارة إعدادات حسابك وتفضيلاتك",
+      "tabs": {
+        "profile": "معلومات الملف الشخصي",
+        "security": "الأمان",
+        "preferences": "التفضيلات"
+      },
+      "sections": {
+        "personalInfo": "المعلومات الشخصية",
+        "personalInfoDescription": "تحديث معلوماتك الشخصية وتفاصيل الاتصال",
+        "security": "إعدادات الأمان",
+        "securityDescription": "إدارة كلمة المرور وتفضيلات الأمان",
+        "securityStatus": "حالة أمان حسابك",
+        "twoFactorEnabled": "المصادقة الثنائية مفعلة",
+        "twoFactorDisabled": "المصادقة الثنائية معطلة",
+        "securityRecommendations": "توصيات الأمان",
+        "strongPassword": "استخدم كلمة مرور قوية تحتوي على 8 أحرف على الأقل",
+        "passwordMix": "تضمين مزيج من الأحرف والأرقام والرموز",
+        "uniquePassword": "لا تعيد استخدام كلمات المرور من حسابات أخرى",
+        "enableTwoFactor": "فعّل المصادقة الثنائية للحصول على أمان إضافي",
+        "preferences": "التفضيلات",
+        "preferencesDescription": "تخصيص تفضيلات التطبيق",
+        "languageDescription": "اختر لغتك المفضلة",
+        "themeDescription": "اختر المظهر المفضل لديك",
+        "notificationsDescription": "إدارة تفضيلات الإشعارات"
+      }
     }
   },
   "pagination": {
@@ -788,6 +830,8 @@
       "manageCenters": "إدارة المراكز",
       "createAdmin": "إنشاء مدير",
       "editUser": "تعديل المستخدم",
+      "saveChanges": "حفظ التغييرات",
+      "changePassword": "تغيير كلمة المرور",
       "activate": "تفعيل",
       "deactivate": "إلغاء التفعيل"
     },

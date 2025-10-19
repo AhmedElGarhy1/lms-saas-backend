@@ -29,6 +29,8 @@
     "manageCenters": "إدارة المراكز",
     "createAdmin": "إنشاء مدير",
     "editUser": "تعديل المستخدم",
+    "saveChanges": "حفظ التغييرات",
+    "changePassword": "تغيير كلمة المرور",
     "activate": "تفعيل",
     "deactivate": "إلغاء التفعيل"
   },
