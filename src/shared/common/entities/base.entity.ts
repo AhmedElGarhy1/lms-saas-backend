@@ -12,8 +12,9 @@ import {
 } from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
 import { RequestContext } from '../context/request.context';
+import { BaseEntity as BaseEntityTypeORM } from 'typeorm';
 
-export abstract class BaseEntity {
+export abstract class BaseEntity extends BaseEntityTypeORM {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

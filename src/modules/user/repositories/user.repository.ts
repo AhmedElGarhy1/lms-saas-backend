@@ -40,6 +40,17 @@ export class UserRepository extends BaseRepository<User> {
     }
   }
 
+  async findByPhone(phone: string): Promise<User | null> {
+    try {
+      return await this.userRepository.findOne({
+        where: { phone },
+      });
+    } catch (error) {
+      this.logger.error(`Error finding user by phone ${phone}:`, error);
+      throw error;
+    }
+  }
+
   // Convenience methods with proper, safe queries
   async findWithRelations(userId: string): Promise<User | null> {
     const user = await this.userRepository.findOne({
@@ -74,18 +85,32 @@ export class UserRepository extends BaseRepository<User> {
       roleAccess,
       centerAccess,
       displayRole,
+      branchId,
+      branchAccess,
     } = params;
 
-    const include =
+    const includeCenter =
       centerId &&
       (!centerAccess || centerAccess === AccessibleUsersEnum.INCLUDE);
+
+    const includeBranch =
+      branchId &&
+      centerId &&
+      (!branchAccess || branchAccess === AccessibleUsersEnum.INCLUDE);
 
     // Create query builder with proper JOINs
     const queryBuilder = this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.profile', 'profile');
 
-    if (include) {
+    if (includeBranch) {
+      queryBuilder.andWhere(
+        'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userId" = user.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId)',
+        { branchId, centerId },
+      );
+    }
+
+    if (includeCenter) {
       queryBuilder.andWhere(
         'EXISTS (SELECT 1 FROM center_access ca WHERE ca."userId" = user.id AND ca."centerId" = :centerId AND ca."global" = false)',
         { centerId },
@@ -209,7 +234,16 @@ export class UserRepository extends BaseRepository<User> {
       );
     }
 
-    if (displayRole && include) {
+    if (branchId && branchAccess && centerId) {
+      filteredItems = await this.applyBranchAccess(
+        filteredItems,
+        branchId,
+        branchAccess,
+        centerId,
+      );
+    }
+
+    if (displayRole && includeCenter) {
       filteredItems = this.prepareUsersResponse(filteredItems);
     }
 
@@ -509,6 +543,36 @@ export class UserRepository extends BaseRepository<User> {
       filteredItems = filteredItems.map((user) =>
         Object.assign(user, {
           isCenterAccessible: true,
+        }),
+      );
+    }
+    return filteredItems;
+  }
+
+  private async applyBranchAccess(
+    users: UserResponseDto[],
+    branchId: string,
+    branchAccess: AccessibleUsersEnum,
+    centerId: string,
+  ): Promise<UserResponseDto[]> {
+    const userIds = users.map((user) => user.id);
+    let filteredItems: UserResponseDto[] = users;
+    if (branchAccess === AccessibleUsersEnum.ALL) {
+      const accessibleUsersIds =
+        await this.accessControlHelperService.getAccessibleUsersIdsForBranch(
+          branchId,
+          userIds,
+          centerId,
+        );
+      filteredItems = filteredItems.map((user) =>
+        Object.assign(user, {
+          isBranchAccessible: accessibleUsersIds.includes(user.id),
+        }),
+      );
+    } else {
+      filteredItems = filteredItems.map((user) =>
+        Object.assign(user, {
+          isBranchAccessible: true,
         }),
       );
     }

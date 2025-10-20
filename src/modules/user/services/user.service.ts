@@ -78,11 +78,24 @@ export class UserService {
     return { message: 'Password changed successfully', success: true };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async createUser(dto: CreateUserDto, actor: ActorUser): Promise<User> {
-    const existingUser = await this.userRepository.findByEmail(dto.email);
-    if (existingUser) {
-      throw new UserAlreadyExistsException(dto.email);
+    // Validate that at least one of email or phone is provided
+    dto.validateEmailOrPhone();
+
+    // Check for existing user by email if email is provided
+    if (dto.email) {
+      const existingUser = await this.userRepository.findByEmail(dto.email);
+      if (existingUser) {
+        throw new UserAlreadyExistsException(dto.email);
+      }
+    }
+
+    // Check for existing user by phone if phone is provided
+    if (dto.phone) {
+      const existingUser = await this.userRepository.findByPhone(dto.phone);
+      if (existingUser) {
+        throw new UserAlreadyExistsException(dto.phone);
+      }
     }
 
     // Hash password
@@ -90,7 +103,7 @@ export class UserService {
 
     // Create user
     const savedUser = await this.userRepository.create({
-      email: dto.email.toLowerCase(),
+      email: dto.email?.toLowerCase(),
       password: hashedPassword, //TODO: do it in entity level
       name: dto.name,
       isActive: dto.isActive ?? true,
@@ -126,7 +139,7 @@ export class UserService {
     }
 
     const bypassUserAccess =
-      await this.accessControlHelperService.bypassUserAccess(
+      await this.accessControlHelperService.bypassCenterInternalAccess(
         actor.id,
         centerId,
       );
@@ -229,6 +242,10 @@ export class UserService {
 
   async findUserByEmail(email: string): Promise<User | null> {
     return this.userRepository.findByEmail(email);
+  }
+
+  async findUserByPhone(phone: string): Promise<User | null> {
+    return this.userRepository.findByPhone(phone);
   }
 
   async findOne(id: string): Promise<User | null> {
@@ -354,12 +371,9 @@ export class UserService {
           ? new Date(updateData.profile.dateOfBirth)
           : undefined,
       });
-      delete (updateData as Partial<User>).profile;
+      delete (updateData as any).profile;
     }
-    const user = await this.userRepository.update(
-      userId,
-      updateData as Partial<User>,
-    );
+    const user = await this.userRepository.update(userId, updateData as any);
     return user!;
   }
 }

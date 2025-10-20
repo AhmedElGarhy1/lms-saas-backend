@@ -46,5 +46,17 @@
       "themeDescription": "اختر المظهر المفضل لديك",
       "notificationsDescription": "إدارة تفضيلات الإشعارات"
     }
+  },
+  "products": {
+    "title": "Products",
+    "subtitle": "إدارة products وإعداداتها"
+  },
+  "branches": {
+    "title": "الفروع",
+    "subtitle": "إدارة الفروع وإعداداتها"
+  },
+  "test-module": {
+    "title": "TestModule",
+    "subtitle": "إدارة test-module وإعداداتها"
   }
 }

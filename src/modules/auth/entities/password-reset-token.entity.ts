@@ -5,10 +5,13 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 
 @Entity('password_reset_tokens')
+@Index(['userId'])
+@Index(['expiresAt'])
 export class PasswordResetToken {
   @PrimaryGeneratedColumn('uuid')
   id: string;

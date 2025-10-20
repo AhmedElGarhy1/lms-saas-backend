@@ -48,7 +48,7 @@ export class AuthController {
 
       // Log successful login
       await this.activityLogService.log(ActivityType.USER_LOGIN, {
-        email: loginDto.email,
+        email: loginDto.emailOrPhone,
         userId: result.user?.id,
         loginTime: new Date().toISOString(),
         hasRefreshToken: !!result.refreshToken,
@@ -61,7 +61,7 @@ export class AuthController {
     } catch (error) {
       // Log failed login attempt
       await this.activityLogService.log(ActivityType.USER_LOGIN_FAILED, {
-        email: loginDto.email,
+        email: loginDto.emailOrPhone,
         errorMessage: error.message,
         attemptTime: new Date().toISOString(),
       });

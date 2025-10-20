@@ -120,7 +120,15 @@
       "unschedule": "إلغاء الجدولة",
       "clearSearch": "مسح البحث",
       "tryAgain": "حاول مرة أخرى",
-      "saving": "جاري الحفظ..."
+      "saving": "جاري الحفظ...",
+      "createProducts": "إنشاء Products",
+      "editProducts": "تعديل Products",
+      "createBranch": "إنشاء فرع",
+      "editBranch": "تعديل الفرع",
+      "toggleStatus": "تبديل الحالة",
+      "manageAccess": "إدارة الوصول",
+      "createTestModule": "إنشاء TestModule",
+      "editTestModule": "تعديل TestModule"
     },
     "labels": {
       "name": "الاسم",
@@ -167,6 +175,7 @@
       "emailAddress": "عنوان البريد الإلكتروني",
       "phoneNumber": "رقم الهاتف",
       "center": "المركز",
+      "location": "الموقع",
       "user": "المستخدم",
       "admin": "المدير",
       "manager": "المدير",
@@ -283,7 +292,10 @@
       "include": "تضمين",
       "loadingRoles": "جاري تحميل الأدوار...",
       "globalDashboard": "لوحة التحكم العامة",
-      "dateRange": "نطاق التاريخ"
+      "dateRange": "نطاق التاريخ",
+      "unknownProducts": "Products غير معروف",
+      "unknownBranch": "فرع غير معروف",
+      "unknownTestModule": "TestModule غير معروف"
     },
     "resources": {
       "resource": "المورد",
@@ -305,7 +317,13 @@
       "admins": "مديرين",
       "centers": "مراكز",
       "access": "الوصول",
-      "permissions": "الصلاحيات"
+      "permissions": "الصلاحيات",
+      "products": "products",
+      "productss": "productss",
+      "branches": "فروع",
+      "branch": "فرع",
+      "test-module": "test-module",
+      "test-modules": "test-modules"
     },
     "placeholders": {
       "search": "بحث...",
@@ -399,7 +417,9 @@
       "searchItems": "البحث في {{item}}...",
       "enterAddress": "أدخل العنوان",
       "enterBio": "أخبرنا عن نفسك",
-      "selectDateOfBirth": "اختر تاريخ الميلاد"
+      "selectDateOfBirth": "اختر تاريخ الميلاد",
+      "enterCenterId": "أدخل معرف المركز",
+      "enterLocation": "أدخل الموقع"
     },
     "messages": {
       "loading": "جاري التحميل...",
@@ -414,6 +434,7 @@
       "dataUpdated": "تم تحديث البيانات بنجاح",
       "dataDeleted": "تم حذف البيانات بنجاح",
       "dataCreated": "تم إنشاء البيانات بنجاح",
+      "dataRestored": "تم استعادة البيانات بنجاح",
       "dataRetrieved": "تم استرجاع البيانات بنجاح",
       "noResults": "لم يتم العثور على نتائج",
       "tryAgain": "يرجى المحاولة مرة أخرى",
@@ -436,7 +457,10 @@
       "passwordsDoNotMatch": "كلمات المرور غير متطابقة",
       "passwordChangeSuccess": "تم تغيير كلمة المرور بنجاح",
       "passwordChangeError": "فشل في تغيير كلمة المرور",
-      "avatarUpdated": "تم تحديث الصورة الشخصية بنجاح"
+      "avatarUpdated": "تم تحديث الصورة الشخصية بنجاح",
+      "insufficientPermissions": "ليس لديك صلاحيات كافية لتنفيذ هذا الإجراء",
+      "accessGranted": "تم منح الوصول بنجاح",
+      "accessRevoked": "تم إلغاء الوصول بنجاح"
     }
   },
   "dashboard": {
@@ -542,6 +566,70 @@
     "rolesForCenter": {
       "title": "أدوار {{centerName}}",
       "description": "عرض الأدوار المتاحة لـ {{userName}} في {{centerName}}. استخدم أزرار تعيين/إزالة لإدارة تعيينات الأدوار."
+    },
+    "createProducts": {
+      "title": "إنشاء Products جديد",
+      "description": "إنشاء products جديد في النظام"
+    },
+    "editProducts": {
+      "title": "تعديل Products",
+      "description": "تحديث معلومات وإعدادات products"
+    },
+    "viewProducts": {
+      "title": "تفاصيل Products",
+      "description": "عرض معلومات مفصلة حول هذا products"
+    },
+    "deleteProducts": {
+      "title": "حذف Products",
+      "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
+      "message": "هل أنت متأكد من أنك تريد حذف {{productsName}}؟ سيتم حذف products وجميع البيانات المرتبطة به نهائياً.",
+      "thisActionWill": "سيؤدي هذا الإجراء إلى:",
+      "removeProducts": "إزالة products من النظام",
+      "removeData": "إزالة جميع البيانات المرتبطة"
+    },
+    "createBranch": {
+      "title": "إنشاء فرع جديد",
+      "description": "إنشاء فرع جديد في النظام"
+    },
+    "editBranch": {
+      "title": "تعديل الفرع",
+      "description": "تحديث معلومات وإعدادات الفرع"
+    },
+    "viewBranch": {
+      "title": "تفاصيل الفرع",
+      "description": "عرض معلومات مفصلة حول هذا الفرع"
+    },
+    "deleteBranch": {
+      "title": "حذف الفرع",
+      "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
+      "message": "هل أنت متأكد من أنك تريد حذف {{branchName}}؟ سيتم حذف الفرع وجميع البيانات المرتبطة به نهائياً.",
+      "thisActionWill": "سيؤدي هذا الإجراء إلى:",
+      "removeBranch": "إزالة الفرع من النظام",
+      "removeData": "إزالة جميع البيانات المرتبطة"
+    },
+    "manageBranchAccess": {
+      "title": "إدارة وصول الفرع - {{branchName}}",
+      "description": "إدارة وصول المستخدمين للفرع {{branchName}}. استخدم أزرار منح/إلغاء للتحكم في المستخدمين الذين يمكنهم الوصول لهذا الفرع."
+    },
+    "createTestModule": {
+      "title": "إنشاء TestModule جديد",
+      "description": "إنشاء test-module جديد في النظام"
+    },
+    "editTestModule": {
+      "title": "تعديل TestModule",
+      "description": "تحديث معلومات وإعدادات test-module"
+    },
+    "viewTestModule": {
+      "title": "تفاصيل TestModule",
+      "description": "عرض معلومات مفصلة حول هذا test-module"
+    },
+    "deleteTestModule": {
+      "title": "حذف TestModule",
+      "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
+      "message": "هل أنت متأكد من أنك تريد حذف {{test-moduleName}}؟ سيتم حذف test-module وجميع البيانات المرتبطة به نهائياً.",
+      "thisActionWill": "سيؤدي هذا الإجراء إلى:",
+      "removeTestModule": "إزالة test-module من النظام",
+      "removeData": "إزالة جميع البيانات المرتبطة"
     }
   },
   "errors": {
@@ -589,7 +677,31 @@
       "excel": "Excel",
       "json": "JSON"
     },
-    "tableExport": "table-export"
+    "tableExport": "table-export",
+    "titles": {
+      "users": "تصدير المستخدمين",
+      "admins": "تصدير المديرين",
+      "centers": "تصدير المراكز",
+      "branches": "تصدير الفروع",
+      "roles": "تصدير الأدوار",
+      "activityLogs": "تصدير سجلات النشاط"
+    },
+    "descriptions": {
+      "users": "تصدير بيانات المستخدمين إلى تنسيق CSV أو Excel أو JSON",
+      "admins": "تصدير بيانات المستخدمين المديرين إلى تنسيق CSV أو Excel أو JSON",
+      "centers": "تصدير بيانات المراكز إلى تنسيق CSV أو Excel أو JSON",
+      "branches": "تصدير بيانات الفروع إلى تنسيق CSV أو Excel أو JSON",
+      "roles": "تصدير بيانات الأدوار إلى تنسيق CSV أو Excel أو JSON",
+      "activityLogs": "تصدير بيانات سجلات النشاط إلى تنسيق CSV أو Excel أو JSON"
+    },
+    "filenames": {
+      "users": "المستخدمين",
+      "admins": "المديرين",
+      "centers": "المراكز",
+      "branches": "الفروع",
+      "roles": "الأدوار",
+      "activityLogs": "سجلات-النشاط"
+    }
   },
   "form": {
     "email": {
@@ -606,6 +718,7 @@
     "users": "المستخدمون",
     "admins": "المديرون",
     "centers": "المراكز",
+    "branches": "الفروع",
     "roles": "الأدوار",
     "systemHealth": "صحة النظام"
   },
@@ -657,6 +770,18 @@
         "themeDescription": "اختر المظهر المفضل لديك",
         "notificationsDescription": "إدارة تفضيلات الإشعارات"
       }
+    },
+    "products": {
+      "title": "Products",
+      "subtitle": "إدارة products وإعداداتها"
+    },
+    "branches": {
+      "title": "الفروع",
+      "subtitle": "إدارة الفروع وإعداداتها"
+    },
+    "test-module": {
+      "title": "TestModule",
+      "subtitle": "إدارة test-module وإعداداتها"
     }
   },
   "pagination": {
@@ -815,7 +940,16 @@
       "updated": "تم التحديث",
       "actions": "الإجراءات",
       "type": "النوع",
-      "description": "الوصف"
+      "description": "الوصف",
+      "location": "الموقع",
+      "address": "العنوان",
+      "website": "الموقع الإلكتروني",
+      "capacity": "السعة",
+      "state": "الحالة",
+      "isActive": "نشط",
+      "createdBy": "تم الإنشاء بواسطة",
+      "branchId": "معرف الفرع",
+      "centerId": "معرف المركز"
     },
     "actions": {
       "deleteSelected": "حذف المحدد",
@@ -828,12 +962,20 @@
       "manageAccess": "إدارة الوصول",
       "manageRoles": "إدارة الأدوار",
       "manageCenters": "إدارة المراكز",
+      "manageBranches": "إدارة الفروع",
       "createAdmin": "إنشاء مدير",
       "editUser": "تعديل المستخدم",
       "saveChanges": "حفظ التغييرات",
       "changePassword": "تغيير كلمة المرور",
       "activate": "تفعيل",
-      "deactivate": "إلغاء التفعيل"
+      "deactivate": "إلغاء التفعيل",
+      "export": "تصدير",
+      "exportUsers": "تصدير المستخدمين",
+      "exportAdmins": "تصدير المديرين",
+      "exportCenters": "تصدير المراكز",
+      "exportBranches": "تصدير الفروع",
+      "exportRoles": "تصدير الأدوار",
+      "exportActivityLogs": "تصدير سجلات النشاط"
     },
     "selection": {
       "selectedItems": "{count} {item} محدد",

@@ -61,6 +61,10 @@ export class UserResponseDto {
   @Expose()
   isRoleAccessible?: boolean;
 
+  @ApiProperty({ description: 'Whether the user has branch access' })
+  @Expose()
+  isBranchAccessible?: boolean;
+
   @ApiProperty({ description: 'Creation date' })
   @Expose()
   @Type(() => Date)

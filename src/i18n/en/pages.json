@@ -46,5 +46,17 @@
       "themeDescription": "Select your preferred theme",
       "notificationsDescription": "Manage your notification preferences"
     }
+  },
+  "products": {
+    "title": "Products",
+    "subtitle": "Manage products and their settings"
+  },
+  "branches": {
+    "title": "Branches",
+    "subtitle": "Manage branches and their settings"
+  },
+  "test-module": {
+    "title": "TestModule",
+    "subtitle": "Manage test-module and their settings"
   }
 }

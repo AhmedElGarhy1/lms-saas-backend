@@ -522,3 +522,22 @@ export class SystemNotReadyException extends HttpException {
     );
   }
 }
+
+export class BranchAccessDeniedException extends HttpException {
+  constructor(message: string = 'Branch access denied') {
+    super(
+      {
+        statusCode: HttpStatus.FORBIDDEN,
+        message,
+        error: 'Branch Access Denied',
+        code: ErrorCode.BRANCH_ACCESS_DENIED,
+        timestamp: new Date().toISOString(),
+        userMessage: 'You do not have access to this branch',
+        actionRequired:
+          'Please contact your administrator to request branch access',
+        retryable: false,
+      } as EnhancedErrorResponse,
+      HttpStatus.FORBIDDEN,
+    );
+  }
+}

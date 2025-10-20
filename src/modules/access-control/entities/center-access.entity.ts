@@ -17,6 +17,9 @@ export class CenterAccess extends BaseEntity {
   @Column({ type: 'boolean', default: false })
   global: boolean;
 
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
+
   // Relations
   @ManyToOne(() => User, (user) => user.centerAccess, {
     onDelete: 'CASCADE',

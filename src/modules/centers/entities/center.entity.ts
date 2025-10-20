@@ -5,6 +5,8 @@ import { UserAccess } from '@/modules/access-control/entities/user-access.entity
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { UserRole } from '@/modules/access-control/entities/user-role.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
+import { Branch } from './branch.entity';
+import { BranchAccess } from '../../access-control/entities/branch-access.entity';
 
 @Entity('centers')
 @Index(['name'])
@@ -43,4 +45,10 @@ export class Center extends BaseEntity {
 
   @OneToMany(() => CenterAccess, (centerAccess) => centerAccess.center)
   centerAccess: CenterAccess[];
+
+  @OneToMany(() => Branch, (branch) => branch.center)
+  branches: Branch[];
+
+  @OneToMany(() => BranchAccess, (branchAccess) => branchAccess.center)
+  branchAccess: BranchAccess[];
 }

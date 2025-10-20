@@ -97,5 +97,69 @@
   "rolesForCenter": {
     "title": "أدوار {{centerName}}",
     "description": "عرض الأدوار المتاحة لـ {{userName}} في {{centerName}}. استخدم أزرار تعيين/إزالة لإدارة تعيينات الأدوار."
+  },
+  "createProducts": {
+    "title": "إنشاء Products جديد",
+    "description": "إنشاء products جديد في النظام"
+  },
+  "editProducts": {
+    "title": "تعديل Products",
+    "description": "تحديث معلومات وإعدادات products"
+  },
+  "viewProducts": {
+    "title": "تفاصيل Products",
+    "description": "عرض معلومات مفصلة حول هذا products"
+  },
+  "deleteProducts": {
+    "title": "حذف Products",
+    "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
+    "message": "هل أنت متأكد من أنك تريد حذف {{productsName}}؟ سيتم حذف products وجميع البيانات المرتبطة به نهائياً.",
+    "thisActionWill": "سيؤدي هذا الإجراء إلى:",
+    "removeProducts": "إزالة products من النظام",
+    "removeData": "إزالة جميع البيانات المرتبطة"
+  },
+  "createBranch": {
+    "title": "إنشاء فرع جديد",
+    "description": "إنشاء فرع جديد في النظام"
+  },
+  "editBranch": {
+    "title": "تعديل الفرع",
+    "description": "تحديث معلومات وإعدادات الفرع"
+  },
+  "viewBranch": {
+    "title": "تفاصيل الفرع",
+    "description": "عرض معلومات مفصلة حول هذا الفرع"
+  },
+  "deleteBranch": {
+    "title": "حذف الفرع",
+    "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
+    "message": "هل أنت متأكد من أنك تريد حذف {{branchName}}؟ سيتم حذف الفرع وجميع البيانات المرتبطة به نهائياً.",
+    "thisActionWill": "سيؤدي هذا الإجراء إلى:",
+    "removeBranch": "إزالة الفرع من النظام",
+    "removeData": "إزالة جميع البيانات المرتبطة"
+  },
+  "manageBranchAccess": {
+    "title": "إدارة وصول الفرع - {{branchName}}",
+    "description": "إدارة وصول المستخدمين للفرع {{branchName}}. استخدم أزرار منح/إلغاء للتحكم في المستخدمين الذين يمكنهم الوصول لهذا الفرع."
+  },
+  "createTestModule": {
+    "title": "إنشاء TestModule جديد",
+    "description": "إنشاء test-module جديد في النظام"
+  },
+  "editTestModule": {
+    "title": "تعديل TestModule",
+    "description": "تحديث معلومات وإعدادات test-module"
+  },
+  "viewTestModule": {
+    "title": "تفاصيل TestModule",
+    "description": "عرض معلومات مفصلة حول هذا test-module"
+  },
+  "deleteTestModule": {
+    "title": "حذف TestModule",
+    "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
+    "message": "هل أنت متأكد من أنك تريد حذف {{test-moduleName}}؟ سيتم حذف test-module وجميع البيانات المرتبطة به نهائياً.",
+    "thisActionWill": "سيؤدي هذا الإجراء إلى:",
+    "removeTestModule": "إزالة test-module من النظام",
+    "removeData": "إزالة جميع البيانات المرتبطة"
   }
 }

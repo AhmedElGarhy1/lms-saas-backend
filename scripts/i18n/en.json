@@ -120,7 +120,13 @@
       "unschedule": "Unschedule",
       "clearSearch": "Clear Search",
       "tryAgain": "Try Again",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "createBranch": "Create Branch",
+      "editBranch": "Edit Branch",
+      "toggleStatus": "Toggle Status",
+      "manageAccess": "Manage Access",
+      "createTestModule": "Create TestModule",
+      "editTestModule": "Edit TestModule"
     },
     "labels": {
       "name": "Name",
@@ -167,6 +173,7 @@
       "fullName": "Full Name",
       "emailAddress": "Email Address",
       "center": "Center",
+      "location": "Location",
       "user": "User",
       "admin": "Admin",
       "manager": "Manager",
@@ -283,7 +290,9 @@
       "include": "Include",
       "loadingRoles": "Loading roles...",
       "globalDashboard": "Global Dashboard",
-      "dateRange": "Date Range"
+      "dateRange": "Date Range",
+      "unknownBranch": "Unknown Branch",
+      "unknownTestModule": "Unknown TestModule"
     },
     "resources": {
       "resource": "Resource",
@@ -305,7 +314,11 @@
       "admins": "admins",
       "centers": "centers",
       "access": "access",
-      "permissions": "permissions"
+      "permissions": "permissions",
+      "branch": "branch",
+      "branches": "branches",
+      "test-module": "test-module",
+      "test-modules": "test-modules"
     },
     "placeholders": {
       "search": "Search...",
@@ -399,7 +412,9 @@
       "searchItems": "Search {{item}}...",
       "enterAddress": "Enter address",
       "enterBio": "Tell us about yourself",
-      "selectDateOfBirth": "Select date of birth"
+      "selectDateOfBirth": "Select date of birth",
+      "enterCenterId": "Enter center ID",
+      "enterLocation": "Enter location"
     },
     "messages": {
       "loading": "Loading...",
@@ -414,6 +429,7 @@
       "dataUpdated": "Data updated successfully",
       "dataDeleted": "Data deleted successfully",
       "dataCreated": "Data created successfully",
+      "dataRestored": "Data restored successfully",
       "dataRetrieved": "Data retrieved successfully",
       "noResults": "No results found",
       "tryAgain": "Please try again",
@@ -436,7 +452,10 @@
       "passwordsDoNotMatch": "Passwords do not match",
       "passwordChangeSuccess": "Password changed successfully",
       "passwordChangeError": "Failed to change password",
-      "avatarUpdated": "Avatar updated successfully"
+      "avatarUpdated": "Avatar updated successfully",
+      "insufficientPermissions": "You don't have sufficient permissions to perform this action",
+      "accessGranted": "Access granted successfully",
+      "accessRevoked": "Access revoked successfully"
     }
   },
   "dashboard": {
@@ -456,7 +475,6 @@
       "title": "Select Center for Role Management"
     },
     "centerSpecificRoleAssignment": "Center-specific role assignment",
-
     "viewUser": {
       "title": "User Details"
     },
@@ -543,6 +561,70 @@
     "rolesForCenter": {
       "title": "Roles for {{centerName}}",
       "description": "Showing roles available for {{userName}} in {{centerName}}. Use the Assign/Remove buttons to manage role assignments."
+    },
+    "createProducts": {
+      "title": "Create New Products",
+      "description": "Create a new products in the system"
+    },
+    "editProducts": {
+      "title": "Edit Products",
+      "description": "Update products information and settings"
+    },
+    "viewProducts": {
+      "title": "Products Details",
+      "description": "View detailed information about this products"
+    },
+    "deleteProducts": {
+      "title": "Delete Products",
+      "cannotUndo": "This action cannot be undone.",
+      "message": "Are you sure you want to delete {{productsName}}? This will permanently remove the products and all associated data.",
+      "thisActionWill": "This action will:",
+      "removeProducts": "Remove the products from the system",
+      "removeData": "Remove all associated data"
+    },
+    "createBranch": {
+      "title": "Create New Branch",
+      "description": "Create a new branch in the system"
+    },
+    "editBranch": {
+      "title": "Edit Branch",
+      "description": "Update branch information and settings"
+    },
+    "viewBranch": {
+      "title": "Branch Details",
+      "description": "View detailed information about this branch"
+    },
+    "deleteBranch": {
+      "title": "Delete Branch",
+      "cannotUndo": "This action cannot be undone.",
+      "message": "Are you sure you want to delete {{branchName}}? This will permanently remove the branch and all associated data.",
+      "thisActionWill": "This action will:",
+      "removeBranch": "Remove the branch from the system",
+      "removeData": "Remove all associated data"
+    },
+    "manageBranchAccess": {
+      "title": "Manage Branch Access - {{branchName}}",
+      "description": "Manage user access for the branch {{branchName}}. Use the Grant/Revoke buttons to control which users can access this branch."
+    },
+    "createTestModule": {
+      "title": "Create New TestModule",
+      "description": "Create a new test-module in the system"
+    },
+    "editTestModule": {
+      "title": "Edit TestModule",
+      "description": "Update test-module information and settings"
+    },
+    "viewTestModule": {
+      "title": "TestModule Details",
+      "description": "View detailed information about this test-module"
+    },
+    "deleteTestModule": {
+      "title": "Delete TestModule",
+      "cannotUndo": "This action cannot be undone.",
+      "message": "Are you sure you want to delete {{test-moduleName}}? This will permanently remove the test-module and all associated data.",
+      "thisActionWill": "This action will:",
+      "removeTestModule": "Remove the test-module from the system",
+      "removeData": "Remove all associated data"
     }
   },
   "errors": {
@@ -590,7 +672,31 @@
       "excel": "Excel",
       "json": "JSON"
     },
-    "tableExport": "table-export"
+    "tableExport": "table-export",
+    "titles": {
+      "users": "Export Users",
+      "admins": "Export Admins",
+      "centers": "Export Centers",
+      "branches": "Export Branches",
+      "roles": "Export Roles",
+      "activityLogs": "Export Activity Logs"
+    },
+    "descriptions": {
+      "users": "Export user data to CSV, Excel, or JSON format",
+      "admins": "Export admin user data to CSV, Excel, or JSON format",
+      "centers": "Export center data to CSV, Excel, or JSON format",
+      "branches": "Export branch data to CSV, Excel, or JSON format",
+      "roles": "Export role data to CSV, Excel, or JSON format",
+      "activityLogs": "Export activity log data to CSV, Excel, or JSON format"
+    },
+    "filenames": {
+      "users": "users",
+      "admins": "admins",
+      "centers": "centers",
+      "branches": "branches",
+      "roles": "roles",
+      "activityLogs": "activity-logs"
+    }
   },
   "form": {
     "email": {
@@ -607,6 +713,7 @@
     "users": "Users",
     "admins": "Admins",
     "centers": "Centers",
+    "branches": "Branches",
     "roles": "Roles",
     "systemHealth": "System Health"
   },
@@ -658,6 +765,18 @@
         "themeDescription": "Select your preferred theme",
         "notificationsDescription": "Manage your notification preferences"
       }
+    },
+    "products": {
+      "title": "Products",
+      "subtitle": "Manage products and their settings"
+    },
+    "branches": {
+      "title": "Branches",
+      "subtitle": "Manage branches and their settings"
+    },
+    "test-module": {
+      "title": "TestModule",
+      "subtitle": "Manage test-module and their settings"
     }
   },
   "pagination": {
@@ -816,7 +935,16 @@
       "updated": "Updated",
       "actions": "Actions",
       "type": "Type",
-      "description": "Description"
+      "description": "Description",
+      "location": "Location",
+      "address": "Address",
+      "website": "Website",
+      "capacity": "Capacity",
+      "state": "State",
+      "isActive": "Is Active",
+      "createdBy": "Created By",
+      "branchId": "Branch ID",
+      "centerId": "Center ID"
     },
     "actions": {
       "deleteSelected": "Delete Selected",
@@ -829,12 +957,20 @@
       "manageAccess": "Manage Access",
       "manageRoles": "Manage Roles",
       "manageCenters": "Manage Centers",
+      "manageBranches": "Manage Branches",
       "createAdmin": "Create Admin",
       "editUser": "Edit User",
       "saveChanges": "Save Changes",
       "changePassword": "Change Password",
       "activate": "Activate",
-      "deactivate": "Deactivate"
+      "deactivate": "Deactivate",
+      "export": "Export",
+      "exportUsers": "Export Users",
+      "exportAdmins": "Export Admins",
+      "exportCenters": "Export Centers",
+      "exportBranches": "Export Branches",
+      "exportRoles": "Export Roles",
+      "exportActivityLogs": "Export Activity Logs"
     },
     "selection": {
       "selectedItems": "{count} {item}{count, plural, one {} other {s}} selected",

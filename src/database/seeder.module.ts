@@ -17,6 +17,8 @@ import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
+import { Branch } from '@/modules/centers/entities/branch.entity';
+import { BranchAccess } from '@/modules/access-control/entities/branch-access.entity';
 import { RolePermission } from '@/modules/access-control/entities/role-permission.entity';
 
 @Module({
@@ -34,6 +36,8 @@ import { RolePermission } from '@/modules/access-control/entities/role-permissio
       UserRole,
       UserAccess,
       CenterAccess,
+      Branch,
+      BranchAccess,
       RefreshToken,
       EmailVerification,
       PasswordResetToken,

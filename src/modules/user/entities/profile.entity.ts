@@ -7,6 +7,7 @@ import {
   DeleteDateColumn,
   OneToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from './user.entity';
 
@@ -19,6 +20,8 @@ export enum ProfileType {
 }
 
 @Entity('profiles')
+@Index(['type'])
+@Index(['userId'])
 export class Profile {
   @PrimaryGeneratedColumn('uuid')
   id: string;

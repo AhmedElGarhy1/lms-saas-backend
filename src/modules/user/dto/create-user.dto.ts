@@ -7,6 +7,7 @@ import {
   ValidateNested,
   IsNotEmpty,
   IsUUID,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
@@ -38,10 +39,10 @@ export class CreateUserDto {
   @MinLength(2)
   name: string;
 
-  @ApiProperty({ description: 'User email address' })
+  @ApiProperty({ description: 'User email address', required: false })
+  @IsOptional()
   @IsEmail()
-  @IsNotEmpty()
-  email: string;
+  email?: string;
 
   @ApiProperty({ description: 'User password' })
   @IsString()
@@ -65,6 +66,14 @@ export class CreateUserDto {
   @ValidateNested()
   @Type(() => UserProfileDto)
   profile: UserProfileDto;
+
+  // Custom validation method
+  validateEmailOrPhone() {
+    if (!this.email && !this.phone) {
+      throw new Error('Either email or phone must be provided');
+    }
+    return true;
+  }
 }
 
 export class CreateUserWithRoleDto extends CreateUserDto {

@@ -21,6 +21,8 @@ import { RolePermissionRepository } from './repositories/role-permission.reposit
 import { CenterAccessRepository } from './repositories/center-access.repository';
 import { UserRoleSubscriber } from './subscriber/user-role.subscriber';
 import { RolePermissionSubscriber } from './subscriber/role-permission.subscriber';
+import { BranchAccess } from './entities/branch-access.entity';
+import { BranchAccessRepository } from './repositories/branch-access.repository';
 
 @Global()
 @Module({
@@ -32,6 +34,7 @@ import { RolePermissionSubscriber } from './subscriber/role-permission.subscribe
       RolePermission,
       CenterAccess,
       UserAccess,
+      BranchAccess,
     ]),
   ],
   controllers: [RolesController, RolesActionsController, RoleAssignController],
@@ -48,6 +51,7 @@ import { RolePermissionSubscriber } from './subscriber/role-permission.subscribe
     UserRoleSubscriber,
     RolePermissionSubscriber,
     UserAccessRepository,
+    BranchAccessRepository,
   ],
   exports: [AccessControlService, AccessControlHelperService, RolesService],
 })

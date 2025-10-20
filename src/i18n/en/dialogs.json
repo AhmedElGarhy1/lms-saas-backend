@@ -97,5 +97,69 @@
   "rolesForCenter": {
     "title": "Roles for {{centerName}}",
     "description": "Showing roles available for {{userName}} in {{centerName}}. Use the Assign/Remove buttons to manage role assignments."
+  },
+  "createProducts": {
+    "title": "Create New Products",
+    "description": "Create a new products in the system"
+  },
+  "editProducts": {
+    "title": "Edit Products",
+    "description": "Update products information and settings"
+  },
+  "viewProducts": {
+    "title": "Products Details",
+    "description": "View detailed information about this products"
+  },
+  "deleteProducts": {
+    "title": "Delete Products",
+    "cannotUndo": "This action cannot be undone.",
+    "message": "Are you sure you want to delete {{productsName}}? This will permanently remove the products and all associated data.",
+    "thisActionWill": "This action will:",
+    "removeProducts": "Remove the products from the system",
+    "removeData": "Remove all associated data"
+  },
+  "createBranch": {
+    "title": "Create New Branch",
+    "description": "Create a new branch in the system"
+  },
+  "editBranch": {
+    "title": "Edit Branch",
+    "description": "Update branch information and settings"
+  },
+  "viewBranch": {
+    "title": "Branch Details",
+    "description": "View detailed information about this branch"
+  },
+  "deleteBranch": {
+    "title": "Delete Branch",
+    "cannotUndo": "This action cannot be undone.",
+    "message": "Are you sure you want to delete {{branchName}}? This will permanently remove the branch and all associated data.",
+    "thisActionWill": "This action will:",
+    "removeBranch": "Remove the branch from the system",
+    "removeData": "Remove all associated data"
+  },
+  "manageBranchAccess": {
+    "title": "Manage Branch Access - {{branchName}}",
+    "description": "Manage user access for the branch {{branchName}}. Use the Grant/Revoke buttons to control which users can access this branch."
+  },
+  "createTestModule": {
+    "title": "Create New TestModule",
+    "description": "Create a new test-module in the system"
+  },
+  "editTestModule": {
+    "title": "Edit TestModule",
+    "description": "Update test-module information and settings"
+  },
+  "viewTestModule": {
+    "title": "TestModule Details",
+    "description": "View detailed information about this test-module"
+  },
+  "deleteTestModule": {
+    "title": "Delete TestModule",
+    "cannotUndo": "This action cannot be undone.",
+    "message": "Are you sure you want to delete {{test-moduleName}}? This will permanently remove the test-module and all associated data.",
+    "thisActionWill": "This action will:",
+    "removeTestModule": "Remove the test-module from the system",
+    "removeData": "Remove all associated data"
   }
 }

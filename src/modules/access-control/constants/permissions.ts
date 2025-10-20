@@ -144,6 +144,50 @@ export const PERMISSIONS = {
     },
   },
 
+  // ===== BRANCH MANAGEMENT PERMISSIONS =====
+  BRANCHES: {
+    CREATE: {
+      action: 'branches:create',
+      name: 'Create Branches',
+      scope: PermissionScope.CENTER,
+    },
+    UPDATE: {
+      action: 'branches:update',
+      name: 'Update Branches',
+      scope: PermissionScope.CENTER,
+    },
+    DELETE: {
+      action: 'branches:delete',
+      name: 'Delete Branches',
+      scope: PermissionScope.CENTER,
+    },
+    RESTORE: {
+      action: 'branches:restore',
+      name: 'Restore Branches',
+      scope: PermissionScope.CENTER,
+    },
+    ASSIGN: {
+      action: 'branches:assign',
+      name: 'Assign Branches',
+      scope: PermissionScope.CENTER,
+    },
+    IMPORT: {
+      action: 'branches:import',
+      name: 'Import Branches',
+      scope: PermissionScope.CENTER,
+    },
+    EXPORT: {
+      action: 'branches:export',
+      name: 'Export Branches',
+      scope: PermissionScope.CENTER,
+    },
+    READ_ALL: {
+      action: 'branches:read-all',
+      name: 'Read All Branches without Branch Access', // TODO: to implement
+      scope: PermissionScope.CENTER,
+    },
+  },
+
   // ===== SYSTEM PERMISSIONS =====
   SYSTEM: {
     HEALTH_CHECK: {

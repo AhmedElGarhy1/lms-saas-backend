@@ -48,6 +48,7 @@ export class ContextGuard implements CanActivate {
       throw new ForbiddenException('User not authenticated');
     }
     user.centerId = centerId;
+    request.user = user;
 
     // first pass centerId
     if (noContext) {

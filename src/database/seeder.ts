@@ -21,9 +21,11 @@ import { CenterFactory } from './factories/center.factory';
 import { faker } from '@faker-js/faker';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
+import { BranchAccess } from '@/modules/access-control/entities/branch-access.entity';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { UserRole } from '@/modules/access-control/entities/user-role.entity';
 import { RolePermission } from '@/modules/access-control/entities/role-permission.entity';
+import { Branch } from '@/modules/centers/entities/branch.entity';
 import { DefaultRoles } from '@/modules/access-control/constants/roles';
 import { PermissionScope } from '@/modules/access-control/constants/permissions';
 import { SeederException } from '@/shared/common/exceptions/custom.exceptions';
@@ -55,6 +57,10 @@ export class DatabaseSeeder {
     private readonly userAccessRepository: Repository<UserAccess>,
     @InjectRepository(CenterAccess)
     private readonly centerAccessRepository: Repository<CenterAccess>,
+    @InjectRepository(Branch)
+    private readonly branchRepository: Repository<Branch>,
+    @InjectRepository(BranchAccess)
+    private readonly branchAccessRepository: Repository<BranchAccess>,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     @InjectRepository(EmailVerification)
@@ -107,6 +113,12 @@ export class DatabaseSeeder {
       // Create role permissions
       await this.createRolePermissions(users, centers, systemUser.id);
 
+      // Create branches for centers
+      const branches = await this.createBranches(centers, systemUser.id);
+
+      // Create branch access for users
+      await this.createBranchAccess(users, branches, centers, systemUser.id);
+
       // Create activity logs
       await this.createActivityLogs(users, centers, systemUser.id);
 
@@ -151,26 +163,25 @@ export class DatabaseSeeder {
           'SET session_replication_role = replica',
         );
 
-        // Insert user first with the correct profile ID
+        // Insert user first
         await transactionalEntityManager.query(
-          `INSERT INTO users (id, email, password, name, "isActive", "profileId", "createdBy", "createdAt", "updatedAt") 
-           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
+          `INSERT INTO users (id, email, password, name, "isActive", "createdBy", "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
           [
             userUuid,
             'system@lms.com',
             hashedPassword,
             'System User',
             true,
-            profileUuid,
             userUuid, // createdBy is self for system user
           ],
         );
 
         // Insert profile with the correct user ID
         await transactionalEntityManager.query(
-          `INSERT INTO profiles (id, "userId", type, phone, address, "createdAt", "updatedAt") 
-           VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
-          [profileUuid, userUuid, ProfileType.ADMIN, '+1-555-0000', 'System'],
+          `INSERT INTO profiles (id, "userId", type, address, "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+          [profileUuid, userUuid, ProfileType.ADMIN, 'System'],
         );
 
         // Re-enable foreign key constraints
@@ -202,6 +213,8 @@ export class DatabaseSeeder {
       // Use CASCADE to handle foreign key constraints properly
       const tablesToClear = [
         'activity_logs',
+        'branch_access',
+        'branches',
         'role_permissions',
         'user_roles',
         'user_access',
@@ -499,26 +512,25 @@ export class DatabaseSeeder {
             'SET session_replication_role = replica',
           );
 
-          // Insert user first with the correct profile ID
+          // Insert user first
           await transactionalEntityManager.query(
-            `INSERT INTO users (id, email, password, name, "isActive", "profileId", "createdBy", "createdAt", "updatedAt") 
-           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
+            `INSERT INTO users (id, email, password, name, "isActive", "createdBy", "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
             [
               userUuid,
               userDataItem.email,
               userDataItem.password,
               userDataItem.name,
               userDataItem.isActive,
-              profileUuid,
               createdBy,
             ],
           );
 
           // Insert profile with the correct user ID
           await transactionalEntityManager.query(
-            `INSERT INTO profiles (id, "userId", type, phone, address, "dateOfBirth", "createdAt", "updatedAt") 
-           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
-            [profileUuid, userUuid, profileType, phone, address, dateOfBirth],
+            `INSERT INTO profiles (id, "userId", type, address, "dateOfBirth", "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
+            [profileUuid, userUuid, profileType, address, dateOfBirth],
           );
 
           // Re-enable foreign key constraints
@@ -861,6 +873,130 @@ export class DatabaseSeeder {
     }
 
     this.logger.log(`Created ${rolePermissions.length} role permissions`);
+  }
+
+  private async createBranches(
+    centers: Center[],
+    createdBy: string,
+  ): Promise<Branch[]> {
+    this.logger.log('Creating branches for centers...');
+
+    const branches: Branch[] = [];
+
+    for (const center of centers) {
+      // Create 2-4 branches per center
+      const branchCount = 2 + Math.floor(Math.random() * 3); // 2-4 branches
+
+      for (let i = 0; i < branchCount; i++) {
+        const branch = this.branchRepository.create({
+          centerId: center.id,
+          location: faker.location.city(),
+          isActive: faker.datatype.boolean({ probability: 0.9 }), // 90% active
+          address: faker.location.streetAddress(),
+          phone: generateShortPhone(),
+          email: faker.internet.email(),
+          createdBy: createdBy,
+        });
+
+        const savedBranch = await this.branchRepository.save(branch);
+        branches.push(savedBranch);
+
+        this.logger.log(
+          `Created branch "${savedBranch.location}" for center "${center.name}"`,
+        );
+      }
+    }
+
+    this.logger.log(
+      `Created ${branches.length} branches across ${centers.length} centers`,
+    );
+    return branches;
+  }
+
+  private async createBranchAccess(
+    users: User[],
+    branches: Branch[],
+    centers: Center[],
+    createdBy: string,
+  ): Promise<void> {
+    this.logger.log('Creating branch access for users...');
+
+    const branchAccesses: BranchAccess[] = [];
+
+    // Get center users (exclude system users and admins)
+    const centerUsers = users.filter(
+      (u) =>
+        u.email?.includes('centeruser') ||
+        u.email?.includes('owner') ||
+        u.email?.includes('deactivated'),
+    );
+
+    // Create a map of center to branches
+    const centerBranchesMap = new Map<string, Branch[]>();
+    for (const branch of branches) {
+      if (!centerBranchesMap.has(branch.centerId)) {
+        centerBranchesMap.set(branch.centerId, []);
+      }
+      centerBranchesMap.get(branch.centerId)!.push(branch);
+    }
+
+    // Create a map of center to users
+    const centerUsersMap = new Map<string, User[]>();
+    for (const user of centerUsers) {
+      // Get user's center from their email or assign randomly
+      let centerIndex = 0;
+      if (user.email?.includes('owner')) {
+        // Owner users get their own center
+        const match = user.email.match(/owner(\d+)@center(\d+)\.com/);
+        if (match) {
+          centerIndex = parseInt(match[2]) - 1;
+        }
+      } else {
+        // Other users get random centers
+        centerIndex = Math.floor(Math.random() * centers.length);
+      }
+
+      const center = centers[centerIndex];
+      if (center) {
+        if (!centerUsersMap.has(center.id)) {
+          centerUsersMap.set(center.id, []);
+        }
+        centerUsersMap.get(center.id)!.push(user);
+      }
+    }
+
+    // Assign users to branches within their centers
+    for (const [centerId, centerBranches] of centerBranchesMap) {
+      const centerUsers = centerUsersMap.get(centerId) || [];
+
+      for (const user of centerUsers) {
+        // Each user gets access to 1-3 random branches in their center
+        const branchCount = 1 + Math.floor(Math.random() * 3);
+        const shuffledBranches = [...centerBranches].sort(
+          () => 0.5 - Math.random(),
+        );
+        const userBranches = shuffledBranches.slice(0, branchCount);
+
+        for (const branch of userBranches) {
+          const branchAccess = this.branchAccessRepository.create({
+            userId: user.id,
+            branchId: branch.id,
+            centerId: centerId,
+            isActive:
+              user.isActive && faker.datatype.boolean({ probability: 0.95 }), // 95% active if user is active
+          });
+
+          branchAccesses.push(branchAccess);
+        }
+      }
+    }
+
+    // Save all branch accesses
+    if (branchAccesses.length > 0) {
+      await this.branchAccessRepository.save(branchAccesses);
+    }
+
+    this.logger.log(`Created ${branchAccesses.length} branch access records`);
   }
 
   private getPermissionsForRole(

@@ -6,13 +6,21 @@ import * as fs from 'fs';
 import { useContainer } from 'class-validator';
 import { UserMiddleware } from './shared/common/middleware/user.middleware';
 import { UserService } from './modules/user/services/user.service';
-import { initializeTransactionalContext } from 'typeorm-transactional';
+import {
+  initializeTransactionalContext,
+  addTransactionalDataSource,
+} from 'typeorm-transactional';
 import { TransactionPerformanceInterceptor } from './modules/health';
+import { DataSource } from 'typeorm';
 
 async function bootstrap() {
   initializeTransactionalContext();
 
   const app = await NestFactory.create(AppModule);
+
+  // Get the data source and add it to transactional context
+  const dataSource = app.get(DataSource);
+  addTransactionalDataSource(dataSource);
 
   // Add performance monitoring interceptor globally
   const transactionInterceptor = app.get(TransactionPerformanceInterceptor);

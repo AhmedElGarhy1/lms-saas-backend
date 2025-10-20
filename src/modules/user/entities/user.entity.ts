@@ -1,4 +1,4 @@
-import { Entity, Column, OneToMany, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, OneToMany, OneToOne, Index } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
@@ -9,9 +9,14 @@ import { UserAccess } from '@/modules/access-control/entities/user-access.entity
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserRole } from '@/modules/access-control/entities/user-role.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
+import { BranchAccess } from '@/modules/access-control/entities/branch-access.entity';
 import { Locale } from '@/shared/common/enums/locale.enum';
 
 @Entity('users')
+@Index(['email'])
+@Index(['phone'])
+@Index(['locale'])
+@Index(['isActive'])
 export class User extends BaseEntity {
   @Column({ unique: true, nullable: true })
   email?: string;
@@ -72,4 +77,7 @@ export class User extends BaseEntity {
 
   @OneToMany(() => CenterAccess, (centerAccess) => centerAccess.user)
   centerAccess: CenterAccess[];
+
+  @OneToMany(() => BranchAccess, (branchAccess) => branchAccess.user)
+  branchAccess: BranchAccess[];
 }

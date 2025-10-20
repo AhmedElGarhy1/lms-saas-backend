@@ -72,7 +72,13 @@
     "unschedule": "Unschedule",
     "clearSearch": "Clear Search",
     "tryAgain": "Try Again",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "createBranch": "Create Branch",
+    "editBranch": "Edit Branch",
+    "toggleStatus": "Toggle Status",
+    "manageAccess": "Manage Access",
+    "createTestModule": "Create TestModule",
+    "editTestModule": "Edit TestModule"
   },
   "labels": {
     "name": "Name",
@@ -119,6 +125,7 @@
     "fullName": "Full Name",
     "emailAddress": "Email Address",
     "center": "Center",
+    "location": "Location",
     "user": "User",
     "admin": "Admin",
     "manager": "Manager",
@@ -235,7 +242,9 @@
     "include": "Include",
     "loadingRoles": "Loading roles...",
     "globalDashboard": "Global Dashboard",
-    "dateRange": "Date Range"
+    "dateRange": "Date Range",
+    "unknownBranch": "Unknown Branch",
+    "unknownTestModule": "Unknown TestModule"
   },
   "resources": {
     "resource": "Resource",
@@ -257,7 +266,11 @@
     "admins": "admins",
     "centers": "centers",
     "access": "access",
-    "permissions": "permissions"
+    "permissions": "permissions",
+    "branch": "branch",
+    "branches": "branches",
+    "test-module": "test-module",
+    "test-modules": "test-modules"
   },
   "placeholders": {
     "search": "Search...",
@@ -351,7 +364,9 @@
     "searchItems": "Search {{item}}...",
     "enterAddress": "Enter address",
     "enterBio": "Tell us about yourself",
-    "selectDateOfBirth": "Select date of birth"
+    "selectDateOfBirth": "Select date of birth",
+    "enterCenterId": "Enter center ID",
+    "enterLocation": "Enter location"
   },
   "messages": {
     "loading": "Loading...",
@@ -366,6 +381,7 @@
     "dataUpdated": "Data updated successfully",
     "dataDeleted": "Data deleted successfully",
     "dataCreated": "Data created successfully",
+    "dataRestored": "Data restored successfully",
     "dataRetrieved": "Data retrieved successfully",
     "noResults": "No results found",
     "tryAgain": "Please try again",
@@ -388,6 +404,9 @@
     "passwordsDoNotMatch": "Passwords do not match",
     "passwordChangeSuccess": "Password changed successfully",
     "passwordChangeError": "Failed to change password",
-    "avatarUpdated": "Avatar updated successfully"
+    "avatarUpdated": "Avatar updated successfully",
+    "insufficientPermissions": "You don't have sufficient permissions to perform this action",
+    "accessGranted": "Access granted successfully",
+    "accessRevoked": "Access revoked successfully"
   }
 }

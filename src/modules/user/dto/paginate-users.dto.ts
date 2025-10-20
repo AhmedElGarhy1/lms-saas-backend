@@ -11,6 +11,7 @@ import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
+import { Branch } from '@/modules/centers/entities/branch.entity';
 
 export enum AccessibleUsersEnum {
   INCLUDE = 'include',
@@ -58,6 +59,15 @@ export class PaginateUsersDto extends BasePaginationDto {
   centerId?: string;
 
   @ApiPropertyOptional({
+    description: 'Filter by branch ID',
+    type: String,
+  })
+  @IsOptional()
+  @IsUUID()
+  @Exists(Branch)
+  branchId?: string;
+
+  @ApiPropertyOptional({
     description: 'Return only accessible users',
     enum: AccessibleUsersEnum,
     example: AccessibleUsersEnum.INCLUDE,
@@ -83,6 +93,15 @@ export class PaginateUsersDto extends BasePaginationDto {
   @IsOptional()
   @IsEnum(AccessibleUsersEnum)
   roleAccess?: AccessibleUsersEnum;
+
+  @ApiPropertyOptional({
+    description: 'Return only accessible branches',
+    enum: AccessibleUsersEnum,
+    example: AccessibleUsersEnum.INCLUDE,
+  })
+  @IsOptional()
+  @IsEnum(AccessibleUsersEnum)
+  branchAccess?: AccessibleUsersEnum;
 
   @ApiPropertyOptional({
     description: 'Display role in case of centerId provided',

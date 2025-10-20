@@ -3,6 +3,7 @@ import {
   InsufficientPermissionsException,
   AdminScopeAccessDeniedException,
   CenterAccessDeniedException,
+  BranchAccessDeniedException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { In } from 'typeorm';
 import { UserRole } from '../entities/user-role.entity';
@@ -14,6 +15,9 @@ import { UserAccessParams } from '../interfaces/user-access.params';
 import { CenterAccessParams } from '../interfaces/center-access.params';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { CenterAccessRepository } from '../repositories/center-access.repository';
+import { BranchAccess } from '@/modules/access-control/entities/branch-access.entity';
+import { BranchAccessRepository } from '../repositories/branch-access.repository';
+import { BranchAccessDto } from '../dto/branch-access.dto';
 
 @Injectable()
 export class AccessControlHelperService {
@@ -22,6 +26,7 @@ export class AccessControlHelperService {
     private userRoleRepository: UserRoleRepository,
     private userAccessRepository: UserAccessRepository,
     private centerAccessRepository: CenterAccessRepository,
+    private branchAccessRepository: BranchAccessRepository,
   ) {}
 
   /**
@@ -126,6 +131,22 @@ export class AccessControlHelperService {
       }),
     ).then((results) => results.filter((result) => result !== null));
   }
+  async getAccessibleUsersIdsForBranch(
+    branchId: string,
+    targetUserIds: string[],
+    centerId: string,
+  ): Promise<string[]> {
+    return Promise.all(
+      targetUserIds.map(async (targetUserId) => {
+        const canAccess = await this.canBranchAccess({
+          userId: targetUserId,
+          centerId,
+          branchId,
+        });
+        return canAccess ? targetUserId : null;
+      }),
+    ).then((results) => results.filter((result) => result !== null));
+  }
 
   // TODO: check if it works as expected later
   async getAccessibleUsersIdsForRole(
@@ -186,7 +207,7 @@ export class AccessControlHelperService {
     if (granterUserId === targetUserId) {
       return true;
     }
-    const bypassUserAccess = await this.bypassUserAccess(
+    const bypassUserAccess = await this.bypassCenterInternalAccess(
       granterUserId,
       centerId,
     );
@@ -236,6 +257,29 @@ export class AccessControlHelperService {
     }
   }
 
+  findBranchAccess(data: BranchAccessDto): Promise<BranchAccess | null> {
+    return this.branchAccessRepository.findBranchAccess(data);
+  }
+
+  async canBranchAccess(data: BranchAccessDto): Promise<boolean> {
+    const bypassBranchAccess = await this.bypassCenterInternalAccess(
+      data.userId,
+      data.centerId,
+    );
+    if (bypassBranchAccess) {
+      return true;
+    }
+    const branchAccess = await this.findBranchAccess(data);
+    return !!branchAccess;
+  }
+
+  async validateBranchAccess(data: BranchAccessDto): Promise<void> {
+    const branchAccess = await this.canBranchAccess(data);
+    if (!branchAccess) {
+      throw new BranchAccessDeniedException();
+    }
+  }
+
   async isSuperAdmin(userId: string) {
     return this.userRoleRepository.isSuperAdmin(userId);
   }
@@ -252,7 +296,10 @@ export class AccessControlHelperService {
     return this.userRoleRepository.hasUserRole(userId);
   }
 
-  async bypassUserAccess(userId: string, centerId?: string): Promise<boolean> {
+  async bypassCenterInternalAccess(
+    userId: string,
+    centerId?: string,
+  ): Promise<boolean> {
     const isSuperAdmin = await this.isSuperAdmin(userId);
     if (isSuperAdmin) {
       return true;

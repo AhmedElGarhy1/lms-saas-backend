@@ -1,11 +1,9 @@
-import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { User } from '@/modules/user/entities/user.entity';
+import { IsString, MinLength, IsOptional, IsNotEmpty } from 'class-validator';
 
 export class LoginRequestDto {
-  @IsEmail()
-  @Exists(User, 'email')
-  email: string;
+  @IsNotEmpty()
+  @IsString()
+  emailOrPhone: string;
 
   @IsString()
   @MinLength(6)

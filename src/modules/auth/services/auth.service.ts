@@ -46,13 +46,20 @@ export class AuthService {
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<User | null> {
-    const user = await this.userService.findUserByEmail(email);
+  async validateUser(
+    emailOrPhone: string,
+    password: string,
+  ): Promise<User | null> {
+    // Determine if it's an email or phone and find user accordingly
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailOrPhone);
+    const user = isEmail
+      ? await this.userService.findUserByEmail(emailOrPhone)
+      : await this.userService.findUserByPhone(emailOrPhone);
 
     if (!user) {
       // Log failed login attempt - user not found
       await this.activityLogService.log(ActivityType.USER_LOGIN_FAILED, {
-        email,
+        email: emailOrPhone,
         reason: 'User not found',
       });
       return null;
@@ -62,7 +69,7 @@ export class AuthService {
     if (!isPasswordValid) {
       // Log failed login attempt - invalid password
       await this.activityLogService.log(ActivityType.USER_LOGIN_FAILED, {
-        email,
+        email: emailOrPhone,
         userId: user.id,
         reason: 'Invalid password',
       });
@@ -74,22 +81,24 @@ export class AuthService {
 
   @Transactional()
   async login(dto: LoginRequestDto) {
-    const user = await this.validateUser(dto.email, dto.password);
+    const user = await this.validateUser(dto.emailOrPhone, dto.password);
     if (!user) {
-      this.logger.warn(`Failed login attempt for email: ${dto.email}`);
+      this.logger.warn(
+        `Failed login attempt for email/phone: ${dto.emailOrPhone}`,
+      );
       throw new AuthenticationFailedException('Invalid credentials');
     }
 
     if (!user.id || user.id.trim() === '') {
       this.logger.error(
-        `User object missing or invalid ID for email: ${dto.email}`,
+        `User object missing or invalid ID for email/phone: ${dto.emailOrPhone}`,
         'AuthService',
       );
       throw new AuthenticationFailedException('User data is invalid');
     }
 
     if (!user.isActive) {
-      this.logger.warn(`Login attempt for inactive user: ${dto.email}`);
+      this.logger.warn(`Login attempt for inactive user: ${dto.emailOrPhone}`);
       throw new BusinessLogicException(
         'Account is deactivated',
         'Your account has been deactivated',
@@ -99,7 +108,7 @@ export class AuthService {
 
     // Check if user is locked out
     if (user.lockoutUntil && user.lockoutUntil > new Date()) {
-      this.logger.warn(`Login attempt for locked user: ${dto.email}`);
+      this.logger.warn(`Login attempt for locked user: ${dto.emailOrPhone}`);
       throw new BusinessLogicException(
         'Account is temporarily locked',
         'Your account is temporarily locked due to multiple failed login attempts',
@@ -122,7 +131,7 @@ export class AuthService {
       // );
       const twoFactorCode = 'DISABLED';
       // In a real implementation, you would send this via SMS or email
-      this.logger.log(`2FA code for ${dto.email}: ${twoFactorCode}`);
+      this.logger.log(`2FA code for ${dto.emailOrPhone}: ${twoFactorCode}`);
 
       return {
         requiresTwoFactor: true,

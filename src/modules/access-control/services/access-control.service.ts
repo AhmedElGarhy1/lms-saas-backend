@@ -1,6 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
-import { PermissionService } from './permission.service';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { UserAccessRepository } from '../repositories/user-access.repository';
@@ -8,16 +7,17 @@ import { CenterAccessRepository } from '../repositories/center-access.repository
 import { CenterAccessDto } from '../dto/center-access.dto';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { BranchAccessDto } from '../dto/branch-access.dto';
+import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
+import { BranchAccessRepository } from '../repositories/branch-access.repository';
 
 @Injectable()
 export class AccessControlService {
-  private readonly logger = new Logger(AccessControlService.name);
-
   constructor(
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly permissionService: PermissionService,
     private readonly userAccessRepository: UserAccessRepository,
     private readonly centerAccessRepository: CenterAccessRepository,
+    private readonly branchAccessRepository: BranchAccessRepository,
   ) {}
 
   async grantUserAccess(body: UserAccessDto): Promise<void> {
@@ -164,5 +164,25 @@ export class AccessControlService {
     const userAccesses =
       await this.userAccessRepository.listUserAccesses(userId);
     return userAccesses.map((access: UserAccess) => access.targetUserId);
+  }
+
+  async assignUserToBranch(data: BranchAccessDto) {
+    const canAccess =
+      await this.accessControlHelperService.canBranchAccess(data);
+    if (canAccess) {
+      throw new ConflictException('User already assigned to branch');
+    }
+
+    // Create new assignment
+    const branchAccess =
+      await this.branchAccessRepository.grantBranchAccess(data);
+
+    return branchAccess;
+  }
+
+  async removeUserFromBranch(data: BranchAccessDto) {
+    await this.accessControlHelperService.validateBranchAccess(data);
+
+    return this.branchAccessRepository.revokeBranchAccess(data);
   }
 }

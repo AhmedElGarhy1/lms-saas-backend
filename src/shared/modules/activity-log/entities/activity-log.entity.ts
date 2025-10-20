@@ -53,6 +53,8 @@ export enum ActivityType {
   CENTER_ADMIN_REMOVED = 'CENTER_ADMIN_REMOVED',
   CENTER_EXPORT = 'CENTER_EXPORT',
   CENTER_IMPORT = 'CENTER_IMPORT',
+  BRANCH_EXPORT = 'BRANCH_EXPORT',
+  BRANCH_IMPORT = 'BRANCH_IMPORT',
 
   // ===== ROLE MANAGEMENT EVENTS =====
   ROLE_CREATED = 'ROLE_CREATED',
@@ -101,6 +103,7 @@ export enum ActivityType {
 @Index(['userId'])
 @Index(['centerId'])
 @Index(['createdAt'])
+@Index(['userId', 'centerId', 'type', 'createdAt'])
 export class ActivityLog {
   @PrimaryGeneratedColumn('uuid')
   id: string;

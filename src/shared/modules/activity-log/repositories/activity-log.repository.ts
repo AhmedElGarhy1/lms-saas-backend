@@ -47,7 +47,10 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
 
     // apply user access
     const bypassUserAccess =
-      await this.accessControlHelperService.bypassUserAccess(actorId, centerId);
+      await this.accessControlHelperService.bypassCenterInternalAccess(
+        actorId,
+        centerId,
+      );
     if (!bypassUserAccess) {
       queryBuilder.andWhere(
         `activityLog.userId IN (SELECT userId FROM user_access WHERE ${centerId ? 'centerId = :centerId AND' : ''} granterUserId = :actorId)`,
