@@ -14,7 +14,16 @@
     "updated": "Updated",
     "actions": "Actions",
     "type": "Type",
-    "description": "Description"
+    "description": "Description",
+    "location": "Location",
+    "address": "Address",
+    "website": "Website",
+    "capacity": "Capacity",
+    "state": "State",
+    "isActive": "Is Active",
+    "createdBy": "Created By",
+    "branchId": "Branch ID",
+    "centerId": "Center ID"
   },
   "actions": {
     "deleteSelected": "Delete Selected",
@@ -27,12 +36,20 @@
     "manageAccess": "Manage Access",
     "manageRoles": "Manage Roles",
     "manageCenters": "Manage Centers",
+    "manageBranches": "Manage Branches",
     "createAdmin": "Create Admin",
     "editUser": "Edit User",
     "saveChanges": "Save Changes",
     "changePassword": "Change Password",
     "activate": "Activate",
-    "deactivate": "Deactivate"
+    "deactivate": "Deactivate",
+    "export": "Export",
+    "exportUsers": "Export Users",
+    "exportAdmins": "Export Admins",
+    "exportCenters": "Export Centers",
+    "exportBranches": "Export Branches",
+    "exportRoles": "Export Roles",
+    "exportActivityLogs": "Export Activity Logs"
   },
   "selection": {
     "selectedItems": "{count} {item}{count, plural, one {} other {s}} selected",

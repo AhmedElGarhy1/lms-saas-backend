@@ -14,7 +14,16 @@
     "updated": "تم التحديث",
     "actions": "الإجراءات",
     "type": "النوع",
-    "description": "الوصف"
+    "description": "الوصف",
+    "location": "الموقع",
+    "address": "العنوان",
+    "website": "الموقع الإلكتروني",
+    "capacity": "السعة",
+    "state": "الحالة",
+    "isActive": "نشط",
+    "createdBy": "تم الإنشاء بواسطة",
+    "branchId": "معرف الفرع",
+    "centerId": "معرف المركز"
   },
   "actions": {
     "deleteSelected": "حذف المحدد",
@@ -27,12 +36,20 @@
     "manageAccess": "إدارة الوصول",
     "manageRoles": "إدارة الأدوار",
     "manageCenters": "إدارة المراكز",
+    "manageBranches": "إدارة الفروع",
     "createAdmin": "إنشاء مدير",
     "editUser": "تعديل المستخدم",
     "saveChanges": "حفظ التغييرات",
     "changePassword": "تغيير كلمة المرور",
     "activate": "تفعيل",
-    "deactivate": "إلغاء التفعيل"
+    "deactivate": "إلغاء التفعيل",
+    "export": "تصدير",
+    "exportUsers": "تصدير المستخدمين",
+    "exportAdmins": "تصدير المديرين",
+    "exportCenters": "تصدير المراكز",
+    "exportBranches": "تصدير الفروع",
+    "exportRoles": "تصدير الأدوار",
+    "exportActivityLogs": "تصدير سجلات النشاط"
   },
   "selection": {
     "selectedItems": "{count} {item} محدد",
