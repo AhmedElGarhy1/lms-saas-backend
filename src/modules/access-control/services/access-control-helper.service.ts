@@ -101,7 +101,6 @@ export class AccessControlHelperService {
     targetUserIds: string[],
     centerId?: string,
   ): Promise<string[]> {
-    // TODO: optimize this method later
     return Promise.all(
       targetUserIds.map(async (targetUserId) => {
         const canAccess = await this.canUserAccess({
@@ -114,7 +113,6 @@ export class AccessControlHelperService {
     ).then((results) => results.filter((result) => result !== null));
   }
 
-  // TODO: try to optimize this method
   async getAccessibleUsersIdsForCenter(
     centerId: string,
     targetUserIds: string[],
@@ -148,7 +146,6 @@ export class AccessControlHelperService {
     ).then((results) => results.filter((result) => result !== null));
   }
 
-  // TODO: check if it works as expected later
   async getAccessibleUsersIdsForRole(
     roleId: string,
     targetUserIds: string[],

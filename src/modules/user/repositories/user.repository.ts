@@ -75,7 +75,6 @@ export class UserRepository extends BaseRepository<User> {
     params: PaginateUsersDto,
     actorId: string,
   ): Promise<Pagination<UserResponseDto>> {
-    // TODO: error needs handling in this url: '/users/?page=1&limit=10&userAccess=include&roleId=fe19a0ea-808a-4112-844e-f39c83cd8d6d', (it display error in case of admin )
     const {
       centerId,
       userId,

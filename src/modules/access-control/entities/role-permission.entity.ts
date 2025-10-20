@@ -56,5 +56,3 @@ export class RolePermission {
   @UpdateDateColumn()
   updatedAt: Date;
 }
-
-// TODO: validation for permissionScope and permission

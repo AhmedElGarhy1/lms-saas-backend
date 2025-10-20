@@ -116,6 +116,9 @@ export class DatabaseSeeder {
       // Create branches for centers
       const branches = await this.createBranches(centers, systemUser.id);
 
+      // Create center access (global = false) for users
+      await this.createCenterAccess(users, centers, systemUser.id);
+
       // Create branch access for users
       await this.createBranchAccess(users, branches, centers, systemUser.id);
 
@@ -911,6 +914,66 @@ export class DatabaseSeeder {
       `Created ${branches.length} branches across ${centers.length} centers`,
     );
     return branches;
+  }
+
+  private async createCenterAccess(
+    users: User[],
+    centers: Center[],
+    createdBy: string,
+  ): Promise<void> {
+    this.logger.log('Creating center access (global = false) for users...');
+
+    const accesses: CenterAccess[] = [];
+
+    // Select users that should have center-scoped access (exclude pure system admins)
+    const eligibleUsers = users.filter(
+      (u) =>
+        u.email !== 'admin@lms.com' &&
+        u.email !== 'superadmin@lms.com' &&
+        (u.email?.includes('owner') ||
+          u.email?.includes('centeruser') ||
+          u.email?.includes('deactivated')),
+    );
+
+    // Map owners to their respective center by owner index in email pattern
+    const centerByOwnerIndex = new Map<number, Center>();
+    centers.forEach((center, idx) => centerByOwnerIndex.set(idx + 1, center));
+
+    for (const user of eligibleUsers) {
+      let center: Center | undefined;
+
+      if (user.email?.includes('owner')) {
+        // Owner pattern: owner{n}@center{n}.com
+        const match = user.email.match(/owner(\d+)@center(\d+)\.com/);
+        if (match) {
+          const idx = parseInt(match[2], 10);
+          center = centerByOwnerIndex.get(idx);
+        }
+      }
+
+      // Fallback/random assignment for non-owners or if parsing failed
+      if (!center) {
+        center = centers[Math.floor(Math.random() * centers.length)];
+      }
+
+      if (!center) continue;
+
+      accesses.push(
+        this.centerAccessRepository.create({
+          userId: user.id,
+          centerId: center.id,
+          global: false,
+          isActive: user.isActive ?? true,
+          createdBy,
+        }),
+      );
+    }
+
+    if (accesses.length > 0) {
+      await this.centerAccessRepository.save(accesses);
+    }
+
+    this.logger.log(`Created ${accesses.length} center access records`);
   }
 
   private async createBranchAccess(

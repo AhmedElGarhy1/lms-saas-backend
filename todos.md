@@ -28,8 +28,13 @@
 [x] fronetnd issues (dialogs, delete)
 [x] fronetnd issues (roles permissions)
 [x] add transactions or unit of work
-[ ] database indexing optimization
-[ ] think about implementing branches
+[x] think about implementing branches
+[x] database indexing optimization
+[ ] refactor profile page
+[ ] implement center access activation
+[ ] implement center access delete (delete user in center)
+[ ] frontend invalidate language when profile update
+[ ] multi profile for parents
 [ ] fix autuntication and refresh token
 [ ] view modals in all modules
 [ ] integrate twilio for some verifications

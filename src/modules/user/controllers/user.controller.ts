@@ -99,7 +99,6 @@ export class UserController {
     @Param('id', ParseUUIDPipe) userId: string,
     @GetUser() actor: ActorUser,
   ) {
-    // TODO: implement later
     return this.userService.findUserById(userId, actor);
   }
 

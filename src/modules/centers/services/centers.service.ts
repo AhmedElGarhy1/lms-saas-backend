@@ -121,8 +121,6 @@ export class CentersService {
     const center = await this.findCenterById(centerId);
     // Permission check should be in controller
 
-    // TODO: Check if center has active users before deletion
-
     await this.centersRepository.softRemove(centerId);
   }
 
