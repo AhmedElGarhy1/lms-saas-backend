@@ -30,7 +30,10 @@
 [x] add transactions or unit of work
 [x] think about implementing branches
 [x] database indexing optimization
-[ ] refactor profile page
+[x] refactor profile page
+[ ] all dialogs close buttons and on success
+[ ] fix user manage access in global scope (it work only on center scope)
+[ ] user manage access (it should be user access, center access)
 [ ] implement center access activation
 [ ] implement center access delete (delete user in center)
 [ ] frontend invalidate language when profile update

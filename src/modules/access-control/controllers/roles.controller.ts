@@ -51,6 +51,7 @@ import { RoleResponseExportMapper } from '@/shared/common/mappers/role-response-
 import { ExportRolesDto } from '../dto/export-roles.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { ExportFormat } from '@/shared/common/dto';
+import { NoContext } from '@/shared/common/decorators/no-context';
 
 @ApiTags('Roles')
 @Controller('roles')
@@ -66,6 +67,7 @@ export class RolesController {
 
   @Get('permissions/me')
   @ReadApiResponses('Get my permissions')
+  @NoContext()
   async getMyPermissions(@GetUser() actor: ActorUser) {
     return this.rolesService.getMyPermissions(actor);
   }
