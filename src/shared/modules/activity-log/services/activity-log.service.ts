@@ -109,13 +109,6 @@ export class ActivityLogService {
   }
 
   /**
-   * Get current request context information
-   */
-  getRequestContext() {
-    return RequestContext.get();
-  }
-
-  /**
    * Get paginated activity logs with filtering
    */
   async getActivityLogs(

@@ -31,6 +31,7 @@
 [x] think about implementing branches
 [x] database indexing optimization
 [x] refactor profile page
+[x] fix autuntication and refresh token
 [ ] all dialogs close buttons and on success
 [ ] fix user manage access in global scope (it work only on center scope)
 [ ] user manage access (it should be user access, center access)
@@ -38,7 +39,6 @@
 [ ] implement center access delete (delete user in center)
 [ ] frontend invalidate language when profile update
 [ ] multi profile for parents
-[ ] fix autuntication and refresh token
 [ ] view modals in all modules
 [ ] integrate twilio for some verifications
 [ ] import functioanlity

@@ -71,6 +71,12 @@
       "revoke": "إلغاء",
       "grant": "منح",
       "remove": "إزالة",
+      "saveChanges": "حفظ التغييرات",
+      "changePassword": "تغيير كلمة المرور",
+      "deleteSelected": "حذف المحدد",
+      "createAdmin": "إنشاء مدير",
+      "enable": "تفعيل",
+      "disable": "إلغاء التفعيل",
       "backToCenters": "العودة إلى المراكز",
       "creating": "جاري الإنشاء...",
       "createUser": "إنشاء مستخدم",
@@ -141,7 +147,6 @@
       "enabled": "مفعل",
       "disabled": "معطل",
       "userId": "معرف المستخدم",
-      "twoFactorAuth": "المصادقة الثنائية",
       "never": "أبداً",
       "currentPassword": "كلمة المرور الحالية",
       "newPassword": "كلمة المرور الجديدة",
@@ -185,6 +190,10 @@
       "timezone": "المنطقة الزمنية",
       "dateFormat": "تنسيق التاريخ",
       "timeFormat": "تنسيق الوقت",
+      "twoFactorAuth": "المصادقة الثنائية",
+      "sessionTimeout": "انتهاء صلاحية الجلسة",
+      "loginNotifications": "إشعارات تسجيل الدخول",
+      "suspiciousActivityAlerts": "تنبيهات النشاط المشبوه",
       "currency": "العملة",
       "country": "البلد",
       "city": "المدينة",
@@ -295,7 +304,12 @@
       "dateRange": "نطاق التاريخ",
       "unknownProducts": "Products غير معروف",
       "unknownBranch": "فرع غير معروف",
-      "unknownTestModule": "TestModule غير معروف"
+      "unknownTestModule": "TestModule غير معروف",
+      "system": "النظام"
+    },
+    "status": {
+      "active": "نشط",
+      "inactive": "غير نشط"
     },
     "resources": {
       "resource": "المورد",
@@ -419,7 +433,10 @@
       "enterBio": "أخبرنا عن نفسك",
       "selectDateOfBirth": "اختر تاريخ الميلاد",
       "enterCenterId": "أدخل معرف المركز",
-      "enterLocation": "أدخل الموقع"
+      "enterLocation": "أدخل الموقع",
+      "enterCurrentPassword": "أدخل كلمة المرور الحالية",
+      "enterNewPassword": "أدخل كلمة المرور الجديدة",
+      "confirmNewPassword": "أكد كلمة المرور الجديدة"
     },
     "messages": {
       "loading": "جاري التحميل...",
@@ -460,7 +477,9 @@
       "avatarUpdated": "تم تحديث الصورة الشخصية بنجاح",
       "insufficientPermissions": "ليس لديك صلاحيات كافية لتنفيذ هذا الإجراء",
       "accessGranted": "تم منح الوصول بنجاح",
-      "accessRevoked": "تم إلغاء الوصول بنجاح"
+      "accessRevoked": "تم إلغاء الوصول بنجاح",
+      "unauthorized": "غير مخول لك تنفيذ هذا الإجراء",
+      "forbidden": "هذا الإجراء محظور"
     }
   },
   "dashboard": {
@@ -538,11 +557,11 @@
       "description": "إدارة وصول المديرين لهذا المركز. استخدم أزرار منح/إلغاء للتحكم في المديرين الذين يمكنهم إدارة هذا المركز."
     },
     "manageAccess": {
-      "title": "إدارة الوصول - {{userName}}",
+      "title": "وصول المستخدم",
       "description": "عرض المستخدمين الذين يمكن لـ {{userName}} الوصول إليهم بناءً على أدوارهم وصلاحياتهم. استخدم أزرار منح/إلغاء لإدارة الوصول."
     },
     "manageCenterAccess": {
-      "title": "إدارة وصول المركز - {{userName}}",
+      "title": "وصول المركز",
       "description": "إدارة وصول المركز لهذا المستخدم. استخدم أزرار منح/إلغاء للتحكم في الوصول إلى مراكز مختلفة.",
       "allCenters": "جميع المراكز"
     },
@@ -677,31 +696,7 @@
       "excel": "Excel",
       "json": "JSON"
     },
-    "tableExport": "table-export",
-    "titles": {
-      "users": "تصدير المستخدمين",
-      "admins": "تصدير المديرين",
-      "centers": "تصدير المراكز",
-      "branches": "تصدير الفروع",
-      "roles": "تصدير الأدوار",
-      "activityLogs": "تصدير سجلات النشاط"
-    },
-    "descriptions": {
-      "users": "تصدير بيانات المستخدمين إلى تنسيق CSV أو Excel أو JSON",
-      "admins": "تصدير بيانات المستخدمين المديرين إلى تنسيق CSV أو Excel أو JSON",
-      "centers": "تصدير بيانات المراكز إلى تنسيق CSV أو Excel أو JSON",
-      "branches": "تصدير بيانات الفروع إلى تنسيق CSV أو Excel أو JSON",
-      "roles": "تصدير بيانات الأدوار إلى تنسيق CSV أو Excel أو JSON",
-      "activityLogs": "تصدير بيانات سجلات النشاط إلى تنسيق CSV أو Excel أو JSON"
-    },
-    "filenames": {
-      "users": "المستخدمين",
-      "admins": "المديرين",
-      "centers": "المراكز",
-      "branches": "الفروع",
-      "roles": "الأدوار",
-      "activityLogs": "سجلات-النشاط"
-    }
+    "tableExport": "table-export"
   },
   "form": {
     "email": {
@@ -753,6 +748,21 @@
       },
       "sections": {
         "personalInfo": "المعلومات الشخصية",
+        "editingMode": "وضع التعديل",
+        "password": "كلمة المرور",
+        "passwordDescription": "إدارة كلمة مرور حسابك",
+        "twoFactorAuth": "المصادقة الثنائية",
+        "twoFactorAuthDescription": "أضف طبقة إضافية من الأمان لحسابك",
+        "twoFactorEnabledDescription": "حسابك محمي بالمصادقة الثنائية",
+        "twoFactorDisabledDescription": "فعّل المصادقة الثنائية لتأمين حسابك",
+        "securitySettings": "إعدادات الأمان",
+        "securitySettingsDescription": "تكوين تفضيلات الأمان الخاصة بك",
+        "securityAlerts": "تنبيهات الأمان",
+        "securityAlertsDescription": "النشاط الأمني الأخير على حسابك",
+        "lastLogin": "آخر تسجيل دخول",
+        "failedAttempts": "محاولات تسجيل الدخول الفاشلة",
+        "lockoutUntil": "الحساب مقفل حتى",
+        "changePassword": "تغيير كلمة المرور",
         "personalInfoDescription": "تحديث معلوماتك الشخصية وتفاصيل الاتصال",
         "security": "إعدادات الأمان",
         "securityDescription": "إدارة كلمة المرور وتفضيلات الأمان",
@@ -943,13 +953,7 @@
       "description": "الوصف",
       "location": "الموقع",
       "address": "العنوان",
-      "website": "الموقع الإلكتروني",
-      "capacity": "السعة",
-      "state": "الحالة",
-      "isActive": "نشط",
-      "createdBy": "تم الإنشاء بواسطة",
-      "branchId": "معرف الفرع",
-      "centerId": "معرف المركز"
+      "avatar": "الصورة الشخصية"
     },
     "actions": {
       "deleteSelected": "حذف المحدد",
@@ -959,23 +963,20 @@
       "delete": "حذف",
       "manageUsers": "إدارة المستخدمين",
       "manageAdmins": "إدارة المديرين",
-      "manageAccess": "إدارة الوصول",
+      "manageAccess": "وصول المستخدم",
+      "manageCenterAccess": "وصول المركز",
       "manageRoles": "إدارة الأدوار",
       "manageCenters": "إدارة المراكز",
-      "manageBranches": "إدارة الفروع",
       "createAdmin": "إنشاء مدير",
       "editUser": "تعديل المستخدم",
+      "restore": "استعادة",
       "saveChanges": "حفظ التغييرات",
       "changePassword": "تغيير كلمة المرور",
       "activate": "تفعيل",
-      "deactivate": "إلغاء التفعيل",
-      "export": "تصدير",
-      "exportUsers": "تصدير المستخدمين",
-      "exportAdmins": "تصدير المديرين",
-      "exportCenters": "تصدير المراكز",
-      "exportBranches": "تصدير الفروع",
-      "exportRoles": "تصدير الأدوار",
-      "exportActivityLogs": "تصدير سجلات النشاط"
+      "deactivate": "إلغاء التفعيل"
+    },
+    "filters": {
+      "status": "الحالة"
     },
     "selection": {
       "selectedItems": "{count} {item} محدد",

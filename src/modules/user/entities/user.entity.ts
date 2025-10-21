@@ -5,7 +5,6 @@ import { EmailVerification } from '@/modules/auth/entities/email-verification.en
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
 import { UserInfo } from '@/modules/user/entities/user-info.entity';
 import { UserProfile } from '@/modules/user/entities/user-profile.entity';
-import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserRole } from '@/modules/access-control/entities/user-role.entity';
@@ -25,7 +24,7 @@ export class User extends BaseEntity {
   @Column({ unique: true, nullable: true })
   phone?: string;
 
-  @Column()
+  @Column({ select: false })
   @Exclude()
   password: string;
 
@@ -38,7 +37,7 @@ export class User extends BaseEntity {
   @Column({ nullable: true })
   lockoutUntil: Date;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, select: false })
   @Exclude()
   twoFactorSecret: string;
 
@@ -47,6 +46,10 @@ export class User extends BaseEntity {
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
+
+  @Column({ type: 'varchar', nullable: true, select: false })
+  @Exclude()
+  hashedRt: string | null;
 
   // Locale moved to UserInfo entity to avoid duplication
 
@@ -70,9 +73,6 @@ export class User extends BaseEntity {
     cascade: true,
   })
   userProfiles: UserProfile[];
-
-  @OneToMany(() => RefreshToken, (token) => token.user)
-  refreshTokens: RefreshToken[];
 
   @OneToMany(() => UserAccess, (access) => access.target)
   accessTarget: UserAccess[];

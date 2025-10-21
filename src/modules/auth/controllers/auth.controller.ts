@@ -1,8 +1,7 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { LoginRequestDto } from '../dto/login.dto';
 import { SignupRequestDto } from '../dto/signup.dto';
-import { RefreshTokenRequestDto } from '../dto/refresh-token.dto';
 import { ForgotPasswordRequestDto } from '../dto/forgot-password.dto';
 import { ResetPasswordRequestDto } from '../dto/reset-password.dto';
 import { VerifyEmailRequestDto } from '../dto/verify-email.dto';
@@ -26,6 +25,17 @@ import { ActivityLogService } from '@/shared/modules/activity-log/services/activ
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
+import { RefreshJwtGuard } from '../guards/refresh-jwt.guard';
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    sub: string;
+    email: string;
+    name: string;
+    type: 'refresh';
+    refreshToken: string;
+  };
+}
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -58,11 +68,13 @@ export class AuthController {
         result,
         this.i18n.translate('success.login'),
       );
-    } catch (error) {
+    } catch (error: unknown) {
       // Log failed login attempt
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       await this.activityLogService.log(ActivityType.USER_LOGIN_FAILED, {
         email: loginDto.emailOrPhone,
-        errorMessage: error.message,
+        errorMessage,
         attemptTime: new Date().toISOString(),
       });
 
@@ -94,12 +106,13 @@ export class AuthController {
 
   @Post('refresh')
   @Public()
+  @UseGuards(RefreshJwtGuard)
   @ReadApiResponses('Refresh access token')
-  @ApiBody({ type: RefreshTokenRequestDto })
-  async refreshToken(@Body() dto: RefreshTokenRequestDto) {
-    const result = await this.authService.refreshToken({
-      refreshToken: dto.refreshToken,
-    });
+  async refreshToken(@Req() req: AuthenticatedRequest) {
+    const userId = req.user.sub;
+    const refreshToken = req.user.refreshToken;
+
+    const result = await this.authService.refresh(userId, refreshToken);
     return ControllerResponse.success(
       result,
       this.i18n.translate('success.tokenRefreshed'),
@@ -203,13 +216,15 @@ export class AuthController {
         result,
         this.i18n.translate('success.twoFactorVerified'),
       );
-    } catch (error) {
+    } catch (error: unknown) {
       // Log failed 2FA verification
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       await this.activityLogService.log(
         ActivityType.TWO_FA_VERIFICATION_FAILED,
         {
           email: dto.email,
-          errorMessage: error.message,
+          errorMessage,
           attemptTime: new Date().toISOString(),
         },
       );

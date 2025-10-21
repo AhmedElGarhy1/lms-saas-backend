@@ -248,15 +248,33 @@ export class UserService {
 
   // Auth-related methods
 
-  async findUserByEmail(email: string): Promise<User | null> {
+  async findUserByEmail(
+    email: string,
+    withSensitiveData: boolean = false,
+  ): Promise<User | null> {
+    if (withSensitiveData) {
+      return this.userRepository.findByEmailWithSensitiveData(email);
+    }
     return this.userRepository.findByEmail(email);
   }
 
-  async findUserByPhone(phone: string): Promise<User | null> {
+  async findUserByPhone(
+    phone: string,
+    withSensitiveData: boolean = false,
+  ): Promise<User | null> {
+    if (withSensitiveData) {
+      return this.userRepository.findByPhoneWithSensitiveData(phone);
+    }
     return this.userRepository.findByPhone(phone);
   }
 
-  async findOne(id: string): Promise<User | null> {
+  async findOne(
+    id: string,
+    withSensitiveData: boolean = false,
+  ): Promise<User | null> {
+    if (withSensitiveData) {
+      return this.userRepository.findOneWithSensitiveData(id);
+    }
     return this.userRepository.findOne(id);
   }
 

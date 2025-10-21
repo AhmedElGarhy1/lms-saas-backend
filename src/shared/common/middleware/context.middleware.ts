@@ -21,7 +21,6 @@ export class ContextMiddleware implements NestMiddleware {
     const requestId = randomUUID();
 
     RequestContext.set({
-      userId: user?.id,
       centerId,
       ipAddress,
       userAgent,

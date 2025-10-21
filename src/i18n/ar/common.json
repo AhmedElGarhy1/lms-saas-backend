@@ -23,6 +23,12 @@
     "revoke": "إلغاء",
     "grant": "منح",
     "remove": "إزالة",
+    "saveChanges": "حفظ التغييرات",
+    "changePassword": "تغيير كلمة المرور",
+    "deleteSelected": "حذف المحدد",
+    "createAdmin": "إنشاء مدير",
+    "enable": "تفعيل",
+    "disable": "إلغاء التفعيل",
     "backToCenters": "العودة إلى المراكز",
     "creating": "جاري الإنشاء...",
     "createUser": "إنشاء مستخدم",
@@ -93,7 +99,6 @@
     "enabled": "مفعل",
     "disabled": "معطل",
     "userId": "معرف المستخدم",
-    "twoFactorAuth": "المصادقة الثنائية",
     "never": "أبداً",
     "currentPassword": "كلمة المرور الحالية",
     "newPassword": "كلمة المرور الجديدة",
@@ -137,6 +142,10 @@
     "timezone": "المنطقة الزمنية",
     "dateFormat": "تنسيق التاريخ",
     "timeFormat": "تنسيق الوقت",
+    "twoFactorAuth": "المصادقة الثنائية",
+    "sessionTimeout": "انتهاء صلاحية الجلسة",
+    "loginNotifications": "إشعارات تسجيل الدخول",
+    "suspiciousActivityAlerts": "تنبيهات النشاط المشبوه",
     "currency": "العملة",
     "country": "البلد",
     "city": "المدينة",
@@ -247,7 +256,12 @@
     "dateRange": "نطاق التاريخ",
     "unknownProducts": "Products غير معروف",
     "unknownBranch": "فرع غير معروف",
-    "unknownTestModule": "TestModule غير معروف"
+    "unknownTestModule": "TestModule غير معروف",
+    "system": "النظام"
+  },
+  "status": {
+    "active": "نشط",
+    "inactive": "غير نشط"
   },
   "resources": {
     "resource": "المورد",
@@ -371,7 +385,10 @@
     "enterBio": "أخبرنا عن نفسك",
     "selectDateOfBirth": "اختر تاريخ الميلاد",
     "enterCenterId": "أدخل معرف المركز",
-    "enterLocation": "أدخل الموقع"
+    "enterLocation": "أدخل الموقع",
+    "enterCurrentPassword": "أدخل كلمة المرور الحالية",
+    "enterNewPassword": "أدخل كلمة المرور الجديدة",
+    "confirmNewPassword": "أكد كلمة المرور الجديدة"
   },
   "messages": {
     "loading": "جاري التحميل...",
@@ -412,6 +429,8 @@
     "avatarUpdated": "تم تحديث الصورة الشخصية بنجاح",
     "insufficientPermissions": "ليس لديك صلاحيات كافية لتنفيذ هذا الإجراء",
     "accessGranted": "تم منح الوصول بنجاح",
-    "accessRevoked": "تم إلغاء الوصول بنجاح"
+    "accessRevoked": "تم إلغاء الوصول بنجاح",
+    "unauthorized": "غير مخول لك تنفيذ هذا الإجراء",
+    "forbidden": "هذا الإجراء محظور"
   }
 }

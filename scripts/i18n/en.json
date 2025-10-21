@@ -71,6 +71,12 @@
       "revoke": "Revoke",
       "grant": "Grant",
       "remove": "Remove",
+      "saveChanges": "Save Changes",
+      "changePassword": "Change Password",
+      "deleteSelected": "Delete Selected",
+      "createAdmin": "Create Admin",
+      "enable": "Enable",
+      "disable": "Disable",
       "backToCenters": "Back to Centers",
       "creating": "Creating...",
       "createUser": "Create User",
@@ -139,7 +145,6 @@
       "enabled": "Enabled",
       "disabled": "Disabled",
       "userId": "User ID",
-      "twoFactorAuth": "Two-Factor Auth",
       "never": "Never",
       "currentPassword": "Current Password",
       "newPassword": "New Password",
@@ -183,6 +188,10 @@
       "timezone": "Timezone",
       "dateFormat": "Date Format",
       "timeFormat": "Time Format",
+      "twoFactorAuth": "Two-Factor Authentication",
+      "sessionTimeout": "Session Timeout",
+      "loginNotifications": "Login Notifications",
+      "suspiciousActivityAlerts": "Suspicious Activity Alerts",
       "currency": "Currency",
       "country": "Country",
       "city": "City",
@@ -292,7 +301,12 @@
       "globalDashboard": "Global Dashboard",
       "dateRange": "Date Range",
       "unknownBranch": "Unknown Branch",
-      "unknownTestModule": "Unknown TestModule"
+      "unknownTestModule": "Unknown TestModule",
+      "system": "System"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
     },
     "resources": {
       "resource": "Resource",
@@ -414,7 +428,10 @@
       "enterBio": "Tell us about yourself",
       "selectDateOfBirth": "Select date of birth",
       "enterCenterId": "Enter center ID",
-      "enterLocation": "Enter location"
+      "enterLocation": "Enter location",
+      "enterCurrentPassword": "Enter current password",
+      "enterNewPassword": "Enter new password",
+      "confirmNewPassword": "Confirm new password"
     },
     "messages": {
       "loading": "Loading...",
@@ -455,7 +472,9 @@
       "avatarUpdated": "Avatar updated successfully",
       "insufficientPermissions": "You don't have sufficient permissions to perform this action",
       "accessGranted": "Access granted successfully",
-      "accessRevoked": "Access revoked successfully"
+      "accessRevoked": "Access revoked successfully",
+      "unauthorized": "You are not authorized to perform this action",
+      "forbidden": "This action is forbidden"
     }
   },
   "dashboard": {
@@ -533,11 +552,11 @@
       "description": "Manage admin access for this center. Use the Grant/Revoke buttons to control which admins can manage this center."
     },
     "manageAccess": {
-      "title": "Manage Access - {{userName}}",
+      "title": "User Access",
       "description": "Showing users that {{userName}} can access based on their roles and permissions. Use the Grant/Revoke buttons to manage access."
     },
     "manageCenterAccess": {
-      "title": "Manage Center Access - {{userName}}",
+      "title": "Center Access",
       "description": "Manage center access for this user. Use the Grant/Revoke buttons to control access to different centers.",
       "allCenters": "All Centers"
     },
@@ -672,31 +691,7 @@
       "excel": "Excel",
       "json": "JSON"
     },
-    "tableExport": "table-export",
-    "titles": {
-      "users": "Export Users",
-      "admins": "Export Admins",
-      "centers": "Export Centers",
-      "branches": "Export Branches",
-      "roles": "Export Roles",
-      "activityLogs": "Export Activity Logs"
-    },
-    "descriptions": {
-      "users": "Export user data to CSV, Excel, or JSON format",
-      "admins": "Export admin user data to CSV, Excel, or JSON format",
-      "centers": "Export center data to CSV, Excel, or JSON format",
-      "branches": "Export branch data to CSV, Excel, or JSON format",
-      "roles": "Export role data to CSV, Excel, or JSON format",
-      "activityLogs": "Export activity log data to CSV, Excel, or JSON format"
-    },
-    "filenames": {
-      "users": "users",
-      "admins": "admins",
-      "centers": "centers",
-      "branches": "branches",
-      "roles": "roles",
-      "activityLogs": "activity-logs"
-    }
+    "tableExport": "table-export"
   },
   "form": {
     "email": {
@@ -748,6 +743,21 @@
       },
       "sections": {
         "personalInfo": "Personal Information",
+        "editingMode": "Editing Mode",
+        "password": "Password",
+        "passwordDescription": "Manage your account password",
+        "twoFactorAuth": "Two-Factor Authentication",
+        "twoFactorAuthDescription": "Add an extra layer of security to your account",
+        "twoFactorEnabledDescription": "Your account is protected with 2FA",
+        "twoFactorDisabledDescription": "Enable 2FA to secure your account",
+        "securitySettings": "Security Settings",
+        "securitySettingsDescription": "Configure your security preferences",
+        "securityAlerts": "Security Alerts",
+        "securityAlertsDescription": "Recent security activity on your account",
+        "lastLogin": "Last Login",
+        "failedAttempts": "Failed Login Attempts",
+        "lockoutUntil": "Account Locked Until",
+        "changePassword": "Change Password",
         "personalInfoDescription": "Update your personal information and contact details",
         "security": "Security Settings",
         "securityDescription": "Manage your password and security preferences",
@@ -938,13 +948,7 @@
       "description": "Description",
       "location": "Location",
       "address": "Address",
-      "website": "Website",
-      "capacity": "Capacity",
-      "state": "State",
-      "isActive": "Is Active",
-      "createdBy": "Created By",
-      "branchId": "Branch ID",
-      "centerId": "Center ID"
+      "avatar": "Avatar"
     },
     "actions": {
       "deleteSelected": "Delete Selected",
@@ -954,23 +958,20 @@
       "delete": "Delete",
       "manageUsers": "Manage Users",
       "manageAdmins": "Manage Admins",
-      "manageAccess": "Manage Access",
+      "manageAccess": "User Access",
+      "manageCenterAccess": "Center Access",
       "manageRoles": "Manage Roles",
       "manageCenters": "Manage Centers",
-      "manageBranches": "Manage Branches",
       "createAdmin": "Create Admin",
       "editUser": "Edit User",
+      "restore": "Restore",
       "saveChanges": "Save Changes",
       "changePassword": "Change Password",
       "activate": "Activate",
-      "deactivate": "Deactivate",
-      "export": "Export",
-      "exportUsers": "Export Users",
-      "exportAdmins": "Export Admins",
-      "exportCenters": "Export Centers",
-      "exportBranches": "Export Branches",
-      "exportRoles": "Export Roles",
-      "exportActivityLogs": "Export Activity Logs"
+      "deactivate": "Deactivate"
+    },
+    "filters": {
+      "status": "Status"
     },
     "selection": {
       "selectedItems": "{count} {item}{count, plural, one {} other {s}} selected",

@@ -4,29 +4,5 @@
     "excel": "Excel",
     "json": "JSON"
   },
-  "tableExport": "table-export",
-  "titles": {
-    "users": "تصدير المستخدمين",
-    "admins": "تصدير المديرين",
-    "centers": "تصدير المراكز",
-    "branches": "تصدير الفروع",
-    "roles": "تصدير الأدوار",
-    "activityLogs": "تصدير سجلات النشاط"
-  },
-  "descriptions": {
-    "users": "تصدير بيانات المستخدمين إلى تنسيق CSV أو Excel أو JSON",
-    "admins": "تصدير بيانات المستخدمين المديرين إلى تنسيق CSV أو Excel أو JSON",
-    "centers": "تصدير بيانات المراكز إلى تنسيق CSV أو Excel أو JSON",
-    "branches": "تصدير بيانات الفروع إلى تنسيق CSV أو Excel أو JSON",
-    "roles": "تصدير بيانات الأدوار إلى تنسيق CSV أو Excel أو JSON",
-    "activityLogs": "تصدير بيانات سجلات النشاط إلى تنسيق CSV أو Excel أو JSON"
-  },
-  "filenames": {
-    "users": "المستخدمين",
-    "admins": "المديرين",
-    "centers": "المراكز",
-    "branches": "الفروع",
-    "roles": "الأدوار",
-    "activityLogs": "سجلات-النشاط"
-  }
+  "tableExport": "table-export"
 }

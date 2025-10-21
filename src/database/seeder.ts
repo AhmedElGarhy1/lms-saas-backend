@@ -10,7 +10,6 @@ import { Student } from '@/modules/students/entities/student.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
-import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
 import { ALL_PERMISSIONS } from '@/modules/access-control/constants/permissions';
@@ -74,8 +73,6 @@ export class DatabaseSeeder {
     private readonly branchRepository: Repository<Branch>,
     @InjectRepository(BranchAccess)
     private readonly branchAccessRepository: Repository<BranchAccess>,
-    @InjectRepository(RefreshToken)
-    private readonly refreshTokenRepository: Repository<RefreshToken>,
     @InjectRepository(EmailVerification)
     private readonly emailVerificationRepository: Repository<EmailVerification>,
     @InjectRepository(PasswordResetToken)

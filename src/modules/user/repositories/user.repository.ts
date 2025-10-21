@@ -30,25 +30,38 @@ export class UserRepository extends BaseRepository<User> {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    try {
-      return await this.userRepository.findOne({
-        where: { email },
-      });
-    } catch (error) {
-      this.logger.error(`Error finding user by email ${email}:`, error);
-      throw error;
-    }
+    return await this.userRepository.findOne({
+      where: { email },
+    });
+  }
+  async findByEmailWithSensitiveData(email: string): Promise<User | null> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect(['user.password', 'user.hashedRt'])
+      .where('user.email = :email', { email })
+      .getOne();
   }
 
   async findByPhone(phone: string): Promise<User | null> {
-    try {
-      return await this.userRepository.findOne({
-        where: { phone },
-      });
-    } catch (error) {
-      this.logger.error(`Error finding user by phone ${phone}:`, error);
-      throw error;
-    }
+    return await this.userRepository.findOne({
+      where: { phone },
+    });
+  }
+
+  async findByPhoneWithSensitiveData(phone: string): Promise<User | null> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect(['user.password', 'user.hashedRt'])
+      .where('user.phone = :phone', { phone })
+      .getOne();
+  }
+
+  async findOneWithSensitiveData(id: string): Promise<User | null> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect(['user.password', 'user.hashedRt'])
+      .where('user.id = :id', { id })
+      .getOne();
   }
 
   /**
@@ -372,18 +385,10 @@ export class UserRepository extends BaseRepository<User> {
     twoFactorSecret: string | null,
     twoFactorEnabled: boolean,
   ): Promise<void> {
-    try {
-      await this.userRepository.update(userId, {
-        twoFactorSecret: twoFactorSecret || undefined,
-        twoFactorEnabled,
-      });
-    } catch (error) {
-      this.logger.error(
-        `Error updating user two-factor settings ${userId}:`,
-        error,
-      );
-      throw error;
-    }
+    await this.userRepository.update(userId, {
+      twoFactorSecret: twoFactorSecret || undefined,
+      twoFactorEnabled,
+    });
   }
 
   async updateFailedLoginAttempts(
@@ -391,46 +396,24 @@ export class UserRepository extends BaseRepository<User> {
     failedAttempts: number,
     lockoutUntil?: Date,
   ): Promise<void> {
-    try {
-      const updateData: Partial<User> = {
-        failedLoginAttempts: failedAttempts,
-      };
-      if (lockoutUntil) {
-        updateData.lockoutUntil = lockoutUntil;
-      }
-
-      await this.userRepository.update(userId, updateData);
-    } catch (error) {
-      this.logger.error(
-        `Error updating failed login attempts ${userId}:`,
-        error,
-      );
-      throw error;
+    const updateData: Partial<User> = {
+      failedLoginAttempts: failedAttempts,
+    };
+    if (lockoutUntil) {
+      updateData.lockoutUntil = lockoutUntil;
     }
+    await this.userRepository.update(userId, updateData);
   }
 
   async resetFailedLoginAttempts(userId: string): Promise<void> {
-    try {
-      await this.userRepository.update(userId, {
-        failedLoginAttempts: 0,
-        lockoutUntil: undefined,
-      });
-    } catch (error) {
-      this.logger.error(
-        `Error resetting failed login attempts ${userId}:`,
-        error,
-      );
-      throw error;
-    }
+    await this.userRepository.update(userId, {
+      failedLoginAttempts: 0,
+      lockoutUntil: undefined,
+    });
   }
 
   async clearAllUsers(): Promise<void> {
-    try {
-      await this.userRepository.createQueryBuilder().delete().execute();
-    } catch (error) {
-      this.logger.error('Error clearing all users:', error);
-      throw error;
-    }
+    await this.userRepository.createQueryBuilder().delete().execute();
   }
 
   private prepareUsersResponse(users: UserResponseDto[]): UserResponseDto[] {

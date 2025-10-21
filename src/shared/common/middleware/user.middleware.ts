@@ -30,6 +30,7 @@ export class UserMiddleware implements NestMiddleware {
       next();
       return;
     }
+
     RequestContext.run(
       {
         userId: decoded.sub,

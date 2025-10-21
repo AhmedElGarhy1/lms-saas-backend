@@ -23,6 +23,12 @@
     "revoke": "Revoke",
     "grant": "Grant",
     "remove": "Remove",
+    "saveChanges": "Save Changes",
+    "changePassword": "Change Password",
+    "deleteSelected": "Delete Selected",
+    "createAdmin": "Create Admin",
+    "enable": "Enable",
+    "disable": "Disable",
     "backToCenters": "Back to Centers",
     "creating": "Creating...",
     "createUser": "Create User",
@@ -91,7 +97,6 @@
     "enabled": "Enabled",
     "disabled": "Disabled",
     "userId": "User ID",
-    "twoFactorAuth": "Two-Factor Auth",
     "never": "Never",
     "currentPassword": "Current Password",
     "newPassword": "New Password",
@@ -135,6 +140,10 @@
     "timezone": "Timezone",
     "dateFormat": "Date Format",
     "timeFormat": "Time Format",
+    "twoFactorAuth": "Two-Factor Authentication",
+    "sessionTimeout": "Session Timeout",
+    "loginNotifications": "Login Notifications",
+    "suspiciousActivityAlerts": "Suspicious Activity Alerts",
     "currency": "Currency",
     "country": "Country",
     "city": "City",
@@ -244,7 +253,12 @@
     "globalDashboard": "Global Dashboard",
     "dateRange": "Date Range",
     "unknownBranch": "Unknown Branch",
-    "unknownTestModule": "Unknown TestModule"
+    "unknownTestModule": "Unknown TestModule",
+    "system": "System"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
   },
   "resources": {
     "resource": "Resource",
@@ -366,7 +380,10 @@
     "enterBio": "Tell us about yourself",
     "selectDateOfBirth": "Select date of birth",
     "enterCenterId": "Enter center ID",
-    "enterLocation": "Enter location"
+    "enterLocation": "Enter location",
+    "enterCurrentPassword": "Enter current password",
+    "enterNewPassword": "Enter new password",
+    "confirmNewPassword": "Confirm new password"
   },
   "messages": {
     "loading": "Loading...",
@@ -407,6 +424,8 @@
     "avatarUpdated": "Avatar updated successfully",
     "insufficientPermissions": "You don't have sufficient permissions to perform this action",
     "accessGranted": "Access granted successfully",
-    "accessRevoked": "Access revoked successfully"
+    "accessRevoked": "Access revoked successfully",
+    "unauthorized": "You are not authorized to perform this action",
+    "forbidden": "This action is forbidden"
   }
 }

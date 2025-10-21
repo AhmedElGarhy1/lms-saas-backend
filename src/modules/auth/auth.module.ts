@@ -5,30 +5,24 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './services/auth.service';
 import { EmailVerificationService } from './services/email-verification.service';
 import { PasswordResetService } from './services/password-reset.service';
-import { RefreshTokenService } from './services/refresh-token.service';
 import { EmailVerificationRepository } from './repositories/email-verification.repository';
 import { PasswordResetRepository } from './repositories/password-reset.repository';
-import { RefreshTokenRepository } from './repositories/refresh-token.repository';
 // import { TwoFactorService } from './services/two-factor.service';
 import { AuthController } from './controllers/auth.controller';
 import { User } from '../user/entities/user.entity';
-import { RefreshToken } from './entities/refresh-token.entity';
 import { EmailVerification } from './entities/email-verification.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { RefreshTokenStrategy } from './strategies/refresh.strategy';
+import { RefreshJwtStrategy } from './strategies/refresh-jwt.strategy';
+import { AccessJwtGuard } from './guards/access-jwt.guard';
+import { RefreshJwtGuard } from './guards/refresh-jwt.guard';
 import { UserModule } from '../user/user.module';
 import { UserRepository } from '../user/repositories/user.repository';
 
 @Module({
   imports: [
     UserModule,
-    TypeOrmModule.forFeature([
-      User,
-      RefreshToken,
-      EmailVerification,
-      PasswordResetToken,
-    ]),
+    TypeOrmModule.forFeature([User, EmailVerification, PasswordResetToken]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -45,26 +39,26 @@ import { UserRepository } from '../user/repositories/user.repository';
     AuthService,
     EmailVerificationService,
     PasswordResetService,
-    RefreshTokenService,
     EmailVerificationRepository,
     PasswordResetRepository,
-    RefreshTokenRepository,
     // TwoFactorService,
     UserRepository,
     JwtStrategy,
-    RefreshTokenStrategy,
+    RefreshJwtStrategy,
+    AccessJwtGuard,
+    RefreshJwtGuard,
   ],
   exports: [
     AuthService,
     EmailVerificationService,
     PasswordResetService,
-    RefreshTokenService,
     EmailVerificationRepository,
     PasswordResetRepository,
-    RefreshTokenRepository,
     // TwoFactorService,
     JwtStrategy,
-    RefreshTokenStrategy,
+    RefreshJwtStrategy,
+    AccessJwtGuard,
+    RefreshJwtGuard,
   ],
 })
 export class AuthModule {}

@@ -10,7 +10,6 @@ import { ConfigService } from '@nestjs/config';
 import { UserService } from '../../user/services/user.service';
 import { EmailVerificationService } from './email-verification.service';
 import { PasswordResetService } from './password-reset.service';
-import { RefreshTokenService } from './refresh-token.service';
 // import { TwoFactorService } from './two-factor.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
@@ -20,7 +19,6 @@ import { ForgotPasswordRequestDto } from '../dto/forgot-password.dto';
 import { ResetPasswordRequestDto } from '../dto/reset-password.dto';
 import { VerifyEmailRequestDto } from '../dto/verify-email.dto';
 import { TwoFactorRequest } from '../dto/2fa.dto';
-import { RefreshTokenRequestDto } from '../dto/refresh-token.dto';
 import { LoggerService } from '../../../shared/services/logger.service';
 import { User } from '../../user/entities/user.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
@@ -29,6 +27,7 @@ import { ActivityType } from '@/shared/modules/activity-log/entities/activity-lo
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { Transactional } from 'typeorm-transactional';
+import { JwtPayload } from '../strategies/jwt.strategy';
 
 @Injectable()
 export class AuthService {
@@ -36,7 +35,6 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly emailVerificationService: EmailVerificationService,
     private readonly passwordResetService: PasswordResetService,
-    private readonly refreshTokenService: RefreshTokenService,
     // private readonly twoFactorService: TwoFactorService,
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
@@ -53,8 +51,8 @@ export class AuthService {
     // Determine if it's an email or phone and find user accordingly
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailOrPhone);
     const user = isEmail
-      ? await this.userService.findUserByEmail(emailOrPhone)
-      : await this.userService.findUserByPhone(emailOrPhone);
+      ? await this.userService.findUserByEmail(emailOrPhone, true)
+      : await this.userService.findUserByPhone(emailOrPhone, true);
 
     if (!user) {
       // Log failed login attempt - user not found
@@ -146,18 +144,14 @@ export class AuthService {
     // Generate tokens
     const tokens = this.generateTokens(user);
 
-    // Create refresh token
+    // Hash and store refresh token in database
+    const hashedRt = await bcrypt.hash(tokens.refreshToken, 10);
+    await this.userService.update(user.id, { hashedRt });
+
     this.logger.log(
       `Creating refresh token for user: ${user.email} (ID: ${user.id})`,
       'AuthService',
     );
-    await this.refreshTokenService.createRefreshToken({
-      userId: user.id,
-      deviceInfo: {
-        userAgent: (dto as any).userAgent,
-        ipAddress: (dto as any).ipAddress,
-      },
-    });
 
     this.logger.log(`User logged in: ${user.email}`, 'AuthService', {
       userId: user.id,
@@ -208,14 +202,9 @@ export class AuthService {
     // Generate final tokens
     const tokens = this.generateTokens(user);
 
-    // Create refresh token
-    await this.refreshTokenService.createRefreshToken({
-      userId: user.id,
-      deviceInfo: {
-        userAgent: (dto as any).userAgent,
-        ipAddress: (dto as any).ipAddress,
-      },
-    });
+    // Hash and store refresh token in database
+    const hashedRt = await bcrypt.hash(tokens.refreshToken, 10);
+    await this.userService.update(user.id, { hashedRt });
 
     this.logger.log(`2FA verified for user: ${user.email}`, 'AuthService', {
       userId: user.id,
@@ -311,16 +300,6 @@ export class AuthService {
     return {
       success: true,
       message: this.i18n.translate('success.passwordReset'),
-    };
-  }
-
-  async refreshToken(dto: RefreshTokenRequestDto) {
-    const { accessToken, newRefreshToken } =
-      await this.refreshTokenService.refreshAccessToken(dto.refreshToken);
-
-    return {
-      accessToken,
-      refreshToken: newRefreshToken,
     };
   }
 
@@ -458,8 +437,8 @@ export class AuthService {
 
   @Transactional()
   async logout(actor: ActorUser) {
-    // Invalidate refresh tokens for the user
-    await this.refreshTokenService.deleteAllRefreshTokensForUser(actor.id);
+    // Clear hashed refresh token from database
+    await this.userService.update(actor.id, { hashedRt: null });
 
     this.logger.log(`User ${actor.id} logged out`, 'AuthService', {
       userId: actor.id,
@@ -475,27 +454,44 @@ export class AuthService {
       name: user.name,
     };
 
-    const accessToken = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign(
+      { ...payload, type: 'access' },
+      {
+        expiresIn: this.configService.get('JWT_EXPIRES_IN'),
+      },
+    );
+    const refreshToken = this.jwtService.sign(
+      { ...payload, type: 'refresh' },
+      {
+        expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN'),
+      },
+    );
 
     return {
       accessToken,
-      refreshToken: this.generateRefreshToken(user.id),
+      refreshToken,
     };
   }
 
-  private generateRefreshToken(userId: string): string {
-    const refreshToken = crypto.randomBytes(64).toString('hex');
-    const refreshTokenExpiresAt = new Date(
-      Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
-    );
+  decodeToken(token: string) {
+    return this.jwtService.decode(token) as any;
+  }
 
-    // Store refresh token - userId will be set when the token is actually used
-    this.refreshTokenService.createRefreshToken({
-      userId,
-      token: refreshToken,
-      expiresAt: refreshTokenExpiresAt,
+  async refresh(userId: string, refreshToken: string) {
+    // Get user (validation already done by strategy)
+    const user = await this.userService.findOne(userId, true);
+    if (!user) {
+      throw new AuthenticationFailedException('User not found');
+    }
+
+    // Generate new tokens
+    const tokens = this.generateTokens(user);
+
+    // Update hashed refresh token in database (token rotation)
+    await this.userService.update(user.id, {
+      hashedRt: await bcrypt.hash(tokens.refreshToken, 10),
     });
 
-    return refreshToken;
+    return tokens;
   }
 }

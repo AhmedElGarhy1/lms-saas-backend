@@ -69,11 +69,11 @@
     "description": "Manage admin access for this center. Use the Grant/Revoke buttons to control which admins can manage this center."
   },
   "manageAccess": {
-    "title": "Manage Access - {{userName}}",
+    "title": "User Access",
     "description": "Showing users that {{userName}} can access based on their roles and permissions. Use the Grant/Revoke buttons to manage access."
   },
   "manageCenterAccess": {
-    "title": "Manage Center Access - {{userName}}",
+    "title": "Center Access",
     "description": "Manage center access for this user. Use the Grant/Revoke buttons to control access to different centers.",
     "allCenters": "All Centers"
   },

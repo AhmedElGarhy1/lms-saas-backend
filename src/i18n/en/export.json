@@ -4,29 +4,5 @@
     "excel": "Excel",
     "json": "JSON"
   },
-  "tableExport": "table-export",
-  "titles": {
-    "users": "Export Users",
-    "admins": "Export Admins",
-    "centers": "Export Centers",
-    "branches": "Export Branches",
-    "roles": "Export Roles",
-    "activityLogs": "Export Activity Logs"
-  },
-  "descriptions": {
-    "users": "Export user data to CSV, Excel, or JSON format",
-    "admins": "Export admin user data to CSV, Excel, or JSON format",
-    "centers": "Export center data to CSV, Excel, or JSON format",
-    "branches": "Export branch data to CSV, Excel, or JSON format",
-    "roles": "Export role data to CSV, Excel, or JSON format",
-    "activityLogs": "Export activity log data to CSV, Excel, or JSON format"
-  },
-  "filenames": {
-    "users": "users",
-    "admins": "admins",
-    "centers": "centers",
-    "branches": "branches",
-    "roles": "roles",
-    "activityLogs": "activity-logs"
-  }
+  "tableExport": "table-export"
 }
