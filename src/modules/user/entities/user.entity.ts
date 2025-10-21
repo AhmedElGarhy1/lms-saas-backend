@@ -3,19 +3,20 @@ import { Exclude } from 'class-transformer';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
-import { Profile } from '@/modules/user/entities/profile.entity';
+import { UserInfo } from '@/modules/user/entities/user-info.entity';
+import { UserProfile } from '@/modules/user/entities/user-profile.entity';
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserRole } from '@/modules/access-control/entities/user-role.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
 import { BranchAccess } from '@/modules/access-control/entities/branch-access.entity';
-import { Locale } from '@/shared/common/enums/locale.enum';
+// Locale enum removed - now handled in UserInfo entity
 
 @Entity('users')
 @Index(['email'])
 @Index(['phone'])
-@Index(['locale'])
+// Locale index removed - now in UserInfo entity
 @Index(['isActive'])
 export class User extends BaseEntity {
   @Column({ unique: true, nullable: true })
@@ -47,8 +48,7 @@ export class User extends BaseEntity {
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
-  @Column({ type: 'enum', enum: Locale, default: Locale.EN })
-  locale: Locale;
+  // Locale moved to UserInfo entity to avoid duplication
 
   // Relations
   @OneToMany(() => Center, (center) => center.creator)
@@ -60,8 +60,16 @@ export class User extends BaseEntity {
   @OneToMany(() => PasswordResetToken, (token) => token.user)
   passwordResetTokens: PasswordResetToken[];
 
-  @OneToOne(() => Profile, (profile) => profile.user, { cascade: true })
-  profile: Profile;
+  @OneToOne(() => UserInfo, (userInfo) => userInfo.user, {
+    cascade: true,
+    eager: true,
+  })
+  userInfo: UserInfo;
+
+  @OneToMany(() => UserProfile, (userProfile) => userProfile.user, {
+    cascade: true,
+  })
+  userProfiles: UserProfile[];
 
   @OneToMany(() => RefreshToken, (token) => token.user)
   refreshTokens: RefreshToken[];

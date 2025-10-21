@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { IRequest } from '../interfaces/request.interface';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { Locale } from '@/shared/common/enums/locale.enum';
 import { RequestContext } from '../context/request.context';
 import { NO_CONTEXT_KEY } from '../decorators/no-context';
 import {
@@ -81,7 +82,7 @@ export class ContextGuard implements CanActivate {
     RequestContext.set({
       userId: user.id,
       centerId: user.centerId,
-      locale: user.locale,
+      locale: (user.userInfo?.locale as Locale) || Locale.EN,
     });
 
     return true;

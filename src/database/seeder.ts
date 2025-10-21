@@ -2,7 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
-import { Profile, ProfileType } from '@/modules/user/entities/profile.entity';
+import { UserInfo } from '@/modules/user/entities/user-info.entity';
+import { UserProfile } from '@/modules/user/entities/user-profile.entity';
+import { Staff } from '@/modules/user/entities/staff.entity';
+import { Teacher } from '@/modules/teachers/entities/teacher.entity';
+import { Student } from '@/modules/students/entities/student.entity';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
 import { RefreshToken } from '@/modules/auth/entities/refresh-token.entity';
@@ -43,8 +48,16 @@ export class DatabaseSeeder {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @InjectRepository(Profile)
-    private readonly profileRepository: Repository<Profile>,
+    @InjectRepository(UserInfo)
+    private readonly userInfoRepository: Repository<UserInfo>,
+    @InjectRepository(UserProfile)
+    private readonly userProfileRepository: Repository<UserProfile>,
+    @InjectRepository(Staff)
+    private readonly staffRepository: Repository<Staff>,
+    @InjectRepository(Teacher)
+    private readonly teacherRepository: Repository<Teacher>,
+    @InjectRepository(Student)
+    private readonly studentRepository: Repository<Student>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(Permission)
@@ -100,6 +113,12 @@ export class DatabaseSeeder {
 
       // Create users with profiles (needed for center owners)
       const users = await this.createUsers(systemUser.id);
+
+      // Create user profiles and staff records for users
+      await this.createUserProfilesAndStaff(users);
+
+      // Create teachers and students with their profiles
+      await this.createTeachersAndStudents(users);
 
       // Create centers (with valid owner IDs)
       const centers = await this.createCenters(users, systemUser.id);
@@ -180,11 +199,11 @@ export class DatabaseSeeder {
           ],
         );
 
-        // Insert profile with the correct user ID
+        // Insert user info with the correct user ID
         await transactionalEntityManager.query(
-          `INSERT INTO profiles (id, "userId", type, address, "createdAt", "updatedAt") 
-           VALUES ($1, $2, $3, $4, NOW(), NOW())`,
-          [profileUuid, userUuid, ProfileType.ADMIN, 'System'],
+          `INSERT INTO user_info (id, "userId", "fullName", address, locale, "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
+          [profileUuid, userUuid, 'System User', 'System', 'en'],
         );
 
         // Re-enable foreign key constraints
@@ -222,7 +241,11 @@ export class DatabaseSeeder {
         'user_roles',
         'user_access',
         'center_access',
-        'profiles',
+        'user_profiles',
+        'staff',
+        'teachers',
+        'students',
+        'user_info',
         'users',
         'permissions',
         'roles',
@@ -462,15 +485,13 @@ export class DatabaseSeeder {
     const savedUsers: User[] = [];
 
     for (const userDataItem of userData) {
-      // Determine profile type based on user type
-      let profileType = ProfileType.BASE_USER;
+      // Determine user info data based on user type
       let phone: string | undefined;
       let address: string | undefined;
       let dateOfBirth: Date | undefined;
 
-      // Set profile type and additional data based on user type
+      // Set additional data based on user type
       if (userDataItem.userType === 'ADMIN') {
-        profileType = ProfileType.ADMIN;
         phone = '+1-555-0100';
         address = 'System Headquarters, Admin Building';
         // Set a reasonable birth date for admins (25-55 years old)
@@ -478,7 +499,6 @@ export class DatabaseSeeder {
         dateOfBirth = new Date();
         dateOfBirth.setFullYear(dateOfBirth.getFullYear() - age);
       } else if (userDataItem.userType === 'CENTER') {
-        profileType = ProfileType.BASE_USER; // Center users are base users
         phone = '+1-555-0200';
         address = 'Center Office';
         // Set a reasonable birth date for center users (22-50 years old)
@@ -487,7 +507,6 @@ export class DatabaseSeeder {
         dateOfBirth.setFullYear(dateOfBirth.getFullYear() - age);
       } else {
         // Default for regular users
-        profileType = ProfileType.BASE_USER;
         phone = '+1-555-0600';
         address = 'User Residence';
         // Set a reasonable birth date for regular users (18-50 years old)
@@ -529,11 +548,18 @@ export class DatabaseSeeder {
             ],
           );
 
-          // Insert profile with the correct user ID
+          // Insert user info with the correct user ID
           await transactionalEntityManager.query(
-            `INSERT INTO profiles (id, "userId", type, address, "dateOfBirth", "createdAt", "updatedAt") 
-           VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
-            [profileUuid, userUuid, profileType, address, dateOfBirth],
+            `INSERT INTO user_info (id, "userId", "fullName", address, "dateOfBirth", locale, "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+            [
+              profileUuid,
+              userUuid,
+              userDataItem.name,
+              address,
+              dateOfBirth,
+              'en',
+            ],
           );
 
           // Re-enable foreign key constraints
@@ -560,6 +586,140 @@ export class DatabaseSeeder {
     this.logger.log(`Created ${savedUsers.length} users with profiles`);
 
     return savedUsers;
+  }
+
+  private async createUserProfilesAndStaff(users: User[]): Promise<void> {
+    this.logger.log('Creating user profiles and staff records...');
+
+    for (const user of users) {
+      // Create staff record for all users (as per current system design)
+      const staff = this.staffRepository.create({});
+      const savedStaff = await this.staffRepository.save(staff);
+
+      // Create user profile linking user to staff
+      const userProfile = this.userProfileRepository.create({
+        userId: user.id,
+        profileType: ProfileType.STAFF,
+        profileRefId: savedStaff.id,
+      });
+      await this.userProfileRepository.save(userProfile);
+
+      this.logger.log(`Created staff profile for user: ${user.email}`);
+    }
+
+    this.logger.log(`Created ${users.length} staff profiles`);
+  }
+
+  private async createTeachersAndStudents(users: User[]): Promise<void> {
+    this.logger.log('Creating teachers and students...');
+
+    // Create 20 teachers
+    const teacherUsers = users.slice(0, 20); // Use first 20 users as teachers
+    for (let i = 0; i < teacherUsers.length; i++) {
+      const user = teacherUsers[i];
+
+      // Create teacher record
+      const teacher = this.teacherRepository.create({
+        teacherId: `TCH-${String(i + 1).padStart(3, '0')}`,
+        department: faker.helpers.arrayElement([
+          'English',
+          'Math',
+          'Science',
+          'History',
+          'Art',
+        ]),
+        subject: faker.helpers.arrayElement([
+          'Mathematics',
+          'English Literature',
+          'Physics',
+          'Chemistry',
+          'Biology',
+          'History',
+          'Art',
+        ]),
+        hireDate: faker.date.past({ years: 5 }),
+        salary: faker.number.int({ min: 30000, max: 80000 }),
+        status: faker.helpers.arrayElement([
+          'active',
+          'active',
+          'active',
+          'inactive',
+        ]), // 75% active
+        bio: faker.lorem.paragraph(),
+        qualifications: faker.helpers.arrayElement([
+          'Bachelor of Education',
+          'Master of Arts',
+          'PhD in Education',
+          'Teaching Certificate',
+        ]),
+      });
+      const savedTeacher = await this.teacherRepository.save(teacher);
+
+      // Create user profile linking user to teacher
+      const userProfile = this.userProfileRepository.create({
+        userId: user.id,
+        profileType: ProfileType.TEACHER,
+        profileRefId: savedTeacher.id,
+      });
+      await this.userProfileRepository.save(userProfile);
+
+      this.logger.log(`Created teacher profile for user: ${user.email}`);
+    }
+
+    // Create 50 students
+    const studentUsers = users.slice(20, 70); // Use next 50 users as students
+    for (let i = 0; i < studentUsers.length; i++) {
+      const user = studentUsers[i];
+
+      // Create student record
+      const student = this.studentRepository.create({
+        studentId: `STU-${String(i + 1).padStart(4, '0')}`,
+        grade: faker.helpers.arrayElement([
+          '1st',
+          '2nd',
+          '3rd',
+          '4th',
+          '5th',
+          '6th',
+          '7th',
+          '8th',
+          '9th',
+          '10th',
+          '11th',
+          '12th',
+        ]),
+        class: faker.helpers.arrayElement(['A', 'B', 'C', 'D']),
+        enrollmentDate: faker.date.past({ years: 2 }),
+        graduationDate: faker.datatype.boolean({ probability: 0.1 })
+          ? faker.date.future()
+          : undefined,
+        status: faker.helpers.arrayElement([
+          'active',
+          'active',
+          'active',
+          'inactive',
+          'graduated',
+        ]), // 60% active, 20% inactive, 20% graduated
+        notes: faker.datatype.boolean({ probability: 0.3 })
+          ? faker.lorem.sentence()
+          : undefined,
+      });
+      const savedStudent = await this.studentRepository.save(student);
+
+      // Create user profile linking user to student
+      const userProfile = this.userProfileRepository.create({
+        userId: user.id,
+        profileType: ProfileType.STUDENT,
+        profileRefId: savedStudent.id,
+      });
+      await this.userProfileRepository.save(userProfile);
+
+      this.logger.log(`Created student profile for user: ${user.email}`);
+    }
+
+    this.logger.log(
+      `Created ${teacherUsers.length} teachers and ${studentUsers.length} students`,
+    );
   }
 
   private async assignRolesAndPermissions(

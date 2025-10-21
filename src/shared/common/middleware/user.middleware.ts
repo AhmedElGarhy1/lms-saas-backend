@@ -4,6 +4,7 @@ import { decode, JwtPayload } from 'jsonwebtoken';
 import { RequestContext } from '../context/request.context';
 import { UserService } from '@/modules/user/services/user.service';
 import { IRequest } from '../interfaces/request.interface';
+import { Locale } from '@/shared/common/enums/locale.enum';
 
 export class UserMiddleware implements NestMiddleware {
   constructor(private readonly userService: UserService) {}
@@ -32,7 +33,7 @@ export class UserMiddleware implements NestMiddleware {
     RequestContext.run(
       {
         userId: decoded.sub,
-        locale: user.locale,
+        locale: (user.userInfo?.locale as Locale) || Locale.EN,
       },
       () => {
         next();

@@ -57,7 +57,6 @@ export class BranchesService {
 
     // Log activity
     await this.activityLogService.log(ActivityType.CENTER_CREATED, {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       branchId: branch.id,
       location: branch.location,
       action: 'branch_created',

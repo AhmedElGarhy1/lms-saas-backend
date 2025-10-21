@@ -10,10 +10,6 @@ export interface UserResponseExportData {
   twoFactorEnabled: boolean;
   createdAt: string;
   updatedAt: string;
-  profileId: string;
-  isUserAccessible: boolean;
-  isCenterAccessible: boolean;
-  isRoleAccessible: boolean;
 }
 
 export class UserResponseExportMapper
@@ -29,10 +25,6 @@ export class UserResponseExportMapper
       twoFactorEnabled: user.twoFactorEnabled,
       createdAt: user.createdAt?.toISOString() || '',
       updatedAt: user.updatedAt?.toISOString() || '',
-      profileId: user.profileId || '',
-      isUserAccessible: user.isUserAccessible || false,
-      isCenterAccessible: user.isCenterAccessible || false,
-      isRoleAccessible: user.isRoleAccessible || false,
     };
   }
 

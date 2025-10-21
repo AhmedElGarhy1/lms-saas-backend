@@ -32,9 +32,11 @@ export interface CurrentUserProfileResponse {
   lockoutUntil?: Date;
   createdAt: Date;
   updatedAt: Date;
-  profile: {
+  userInfo: {
+    fullName: string;
     address?: string;
     dateOfBirth?: Date;
+    locale: string;
   };
   context: {
     center?: Center;

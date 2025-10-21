@@ -116,7 +116,7 @@ export class RefreshTokenService {
       // Create new refresh token
       const newRefreshToken = await this.createRefreshToken({
         userId: tokenData.userId,
-        deviceInfo: tokenData.deviceInfo as any,
+        deviceInfo: tokenData.deviceInfo,
       });
 
       this.logger.log(
@@ -142,7 +142,6 @@ export class RefreshTokenService {
     this.logger.log(`Cleaned up expired refresh tokens`, 'RefreshTokenService');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async revokeAllUserSessions(
     userId: string,
     _exceptToken?: string,

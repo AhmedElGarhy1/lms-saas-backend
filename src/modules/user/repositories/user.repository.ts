@@ -16,7 +16,7 @@ import {
 import { RoleResponseDto } from '@/modules/access-control/dto/role-response.dto';
 import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
 import { DefaultRoles } from '@/modules/access-control/constants/roles';
-import { ProfileService } from '../services/profile.service';
+import { UserInfoService } from '../services/user-info.service';
 
 @Injectable()
 export class UserRepository extends BaseRepository<User> {
@@ -49,16 +49,6 @@ export class UserRepository extends BaseRepository<User> {
       this.logger.error(`Error finding user by phone ${phone}:`, error);
       throw error;
     }
-  }
-
-  // Convenience methods with proper, safe queries
-  async findWithRelations(userId: string): Promise<User | null> {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-      relations: ['profile'],
-    });
-
-    return user;
   }
 
   /**
@@ -98,9 +88,7 @@ export class UserRepository extends BaseRepository<User> {
       (!branchAccess || branchAccess === AccessibleUsersEnum.INCLUDE);
 
     // Create query builder with proper JOINs
-    const queryBuilder = this.userRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.profile', 'profile');
+    const queryBuilder = this.userRepository.createQueryBuilder('user');
 
     if (includeBranch) {
       queryBuilder.andWhere(
@@ -274,7 +262,6 @@ export class UserRepository extends BaseRepository<User> {
 
     const queryBuilder = this.userRepository
       .createQueryBuilder('user')
-      .leftJoinAndSelect('user.profile', 'profile')
       .leftJoinAndSelect('user.userRoles', 'userRoles')
       .leftJoinAndSelect('userRoles.role', 'role')
       .andWhere('userRoles.centerId IS NULL')

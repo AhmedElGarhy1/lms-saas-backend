@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { User } from '@/modules/user/entities/user.entity';
-import { Profile } from '@/modules/user/entities/profile.entity';
-import { ProfileType } from '@/modules/user/entities/profile.entity';
+import { UserInfo } from '@/modules/user/entities/user-info.entity';
 
 export class UserFactory {
   static create(overrides: Partial<User> = {}): Partial<User> {
@@ -19,7 +18,7 @@ export class UserFactory {
       lockoutUntil: faker.datatype.boolean({ probability: 0.05 })
         ? faker.date.future()
         : undefined,
-      profile: this.createProfile() as Profile,
+      userInfo: this.createUserInfo() as any,
       ...overrides,
     };
   }
@@ -142,13 +141,12 @@ export class UserFactory {
     });
   }
 
-  private static createProfile(): Partial<Profile> {
+  private static createUserInfo(): Partial<UserInfo> {
     return {
-      id: faker.string.uuid(),
-      userId: faker.string.uuid(),
-      type: faker.helpers.arrayElement(Object.values(ProfileType)),
+      fullName: faker.person.fullName(),
       address: faker.location.streetAddress(),
       dateOfBirth: faker.date.birthdate({ min: 18, max: 65, mode: 'age' }),
+      locale: faker.helpers.arrayElement(['en', 'ar']),
     };
   }
 }

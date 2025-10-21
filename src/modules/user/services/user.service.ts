@@ -10,7 +10,9 @@ import { UserRepository } from '../repositories/user.repository';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { ProfileService } from './profile.service';
+import { UserInfoService } from './user-info.service';
+import { StaffService } from './staff.service';
+import { UserProfileService } from './user-profile.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { CreateUserDto, CreateUserWithRoleDto } from '../dto/create-user.dto';
 import {
@@ -38,7 +40,9 @@ export class UserService {
     private readonly accessControlService: AccessControlService,
     private readonly rolesService: RolesService,
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly profileService: ProfileService,
+    private readonly userInfoService: UserInfoService,
+    private readonly userProfileService: UserProfileService,
+    private readonly staffService: StaffService,
     private readonly logger: LoggerService,
     private readonly centersService: CentersService,
     private readonly activityLogService: ActivityLogService,
@@ -110,13 +114,17 @@ export class UserService {
       phone: dto.phone,
     });
 
-    // Create profile with provided details or default
-    await this.profileService.createUserProfile(savedUser.id, {
-      address: dto.profile.address,
-      dateOfBirth: dto.profile.dateOfBirth
-        ? new Date(dto.profile.dateOfBirth)
-        : undefined,
+    // Create user info with provided details or default
+    await this.userInfoService.createUserInfo(savedUser.id, {
+      fullName: dto.fullName || savedUser.name,
+      address: dto.address,
+      dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
+      locale: (dto.locale as 'en' | 'ar') || 'en',
     });
+
+    // Create staff for user
+    await this.staffService.createStaffForUser(savedUser.id);
+
     await this.userRepository.update(savedUser.id, savedUser);
 
     return savedUser;
@@ -257,7 +265,84 @@ export class UserService {
       granterUserId: actor.id,
       targetUserId: id,
     });
-    return this.userRepository.findWithRelations(id);
+    return this.userRepository.findOne(id);
+  }
+
+  async findUserProfileById(id: string, actor: ActorUser): Promise<any> {
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserId: actor.id,
+      targetUserId: id,
+    });
+
+    const user = await this.userRepository.findOne(id);
+    if (!user) {
+      throw new ResourceNotFoundException('User not found');
+    }
+
+    // Get user info
+    const userInfo = await this.userInfoService.findUserInfoByUserId(id);
+    if (!userInfo) {
+      throw new ResourceNotFoundException('User info not found');
+    }
+
+    // Get user profiles
+    const userProfiles =
+      await this.userProfileService.findUserProfilesByUserId(id);
+
+    // Build flattened profiles array
+    const profiles = [];
+
+    for (const userProfile of userProfiles) {
+      let profileData = null;
+
+      switch (userProfile.profileType) {
+        case 'Staff':
+          profileData = await this.staffService.findStaffByUserId(id);
+          break;
+        case 'Teacher':
+          // TODO: Implement when TeacherService is available
+          profileData = { id: userProfile.profileRefId };
+          break;
+        case 'Student':
+          // TODO: Implement when StudentService is available
+          profileData = { id: userProfile.profileRefId };
+          break;
+        case 'Parent':
+          // TODO: Implement when ParentService is available
+          profileData = { id: userProfile.profileRefId };
+          break;
+      }
+
+      if (profileData) {
+        profiles.push({
+          type: userProfile.profileType,
+          data: profileData,
+        });
+      }
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      name: user.name,
+      isActive: user.isActive,
+      twoFactorEnabled: user.twoFactorEnabled,
+      failedLoginAttempts: user.failedLoginAttempts,
+      lockoutUntil: user.lockoutUntil,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      userInfo: {
+        id: userInfo.id,
+        fullName: userInfo.fullName,
+        address: userInfo.address,
+        dateOfBirth: userInfo.dateOfBirth,
+        locale: userInfo.locale,
+        createdAt: userInfo.createdAt,
+        updatedAt: userInfo.updatedAt,
+      },
+      profiles,
+    };
   }
 
   async updateFailedLoginAttempts(
@@ -298,7 +383,7 @@ export class UserService {
     actor: ActorUser,
   ): Promise<CurrentUserProfileResponse> {
     // Get user with profile
-    const user = await this.userRepository.findWithRelations(actor.id);
+    const user = await this.userRepository.findOne(actor.id);
     if (!user) {
       throw new ResourceNotFoundException('User not found');
     }
@@ -364,15 +449,25 @@ export class UserService {
 
     // Update user using repository
     // TODO: transaction
-    if (updateData.profile) {
-      await this.profileService.updateUserProfile(userId, {
-        ...updateData.profile,
-        dateOfBirth: updateData.profile.dateOfBirth
-          ? new Date(updateData.profile.dateOfBirth)
-          : undefined,
-      });
-      delete (updateData as any).profile;
+    const userInfoData: any = {};
+
+    // Extract user info fields
+    if (updateData.fullName) userInfoData.fullName = updateData.fullName;
+    if (updateData.address) userInfoData.address = updateData.address;
+    if (updateData.dateOfBirth)
+      userInfoData.dateOfBirth = new Date(updateData.dateOfBirth);
+    if (updateData.locale) userInfoData.locale = updateData.locale;
+
+    // Update user info if there are user info fields
+    if (Object.keys(userInfoData).length > 0) {
+      await this.userInfoService.updateUserInfo(userId, userInfoData);
     }
+
+    // Remove the fields we've processed from updateData
+    delete (updateData as any).fullName;
+    delete (updateData as any).address;
+    delete (updateData as any).dateOfBirth;
+    delete (updateData as any).locale;
     const user = await this.userRepository.update(userId, updateData as any);
     return user!;
   }

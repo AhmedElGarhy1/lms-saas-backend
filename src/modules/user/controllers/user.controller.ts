@@ -27,6 +27,7 @@ import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { CreateUserWithRoleDto } from '../dto/create-user.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
+import { UserProfileResponseDto } from '../dto/user-profile-response.dto';
 import {
   ToggleUserStatusRequestDto,
   ToggleUserStatusResponseDto,
@@ -100,6 +101,18 @@ export class UserController {
     @GetUser() actor: ActorUser,
   ) {
     return this.userService.findUserById(userId, actor);
+  }
+
+  @Get(':id/profile')
+  @ReadApiResponses('Get user profile with flattened structure')
+  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @SerializeOptions({ type: UserProfileResponseDto })
+  @Permissions(PERMISSIONS.USER.READ)
+  async findUserProfile(
+    @Param('id', ParseUUIDPipe) userId: string,
+    @GetUser() actor: ActorUser,
+  ) {
+    return this.userService.findUserProfileById(userId, actor);
   }
 
   @Post()

@@ -4,28 +4,15 @@ import {
   MinLength,
   IsOptional,
   IsBoolean,
-  ValidateNested,
   IsNotEmpty,
   IsUUID,
-  ValidateIf,
+  IsDateString,
+  IsNumber,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
-
-export class UserProfileDto {
-  @ApiProperty({ description: 'User address', required: false })
-  @IsOptional()
-  @IsString()
-  address?: string;
-
-  @ApiProperty({ description: 'User date of birth', required: false })
-  @IsOptional()
-  @IsString()
-  dateOfBirth?: string;
-}
 
 export class CreateUserDto {
   @ApiProperty({ description: 'User phone number', required: false })
@@ -59,13 +46,26 @@ export class CreateUserDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiProperty({
-    description: 'User profile information',
-    type: UserProfileDto,
-  })
-  @ValidateNested()
-  @Type(() => UserProfileDto)
-  profile: UserProfileDto;
+  // User Info fields (flattened)
+  @ApiProperty({ description: 'User full name for user info', required: false })
+  @IsOptional()
+  @IsString()
+  fullName?: string;
+
+  @ApiProperty({ description: 'User address', required: false })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiProperty({ description: 'User date of birth', required: false })
+  @IsOptional()
+  @IsDateString()
+  dateOfBirth?: string;
+
+  @ApiProperty({ description: 'User locale', required: false, default: 'en' })
+  @IsOptional()
+  @IsString()
+  locale?: string;
 
   // Custom validation method
   validateEmailOrPhone() {

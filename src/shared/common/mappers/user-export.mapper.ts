@@ -25,7 +25,8 @@ export class UserExportMapper implements ExportMapper<User, UserExportData> {
       twoFactorEnabled: user.twoFactorEnabled,
       createdAt: user.createdAt?.toISOString() || '',
       updatedAt: user.updatedAt?.toISOString() || '',
-      profileType: user.profile?.type || '',
+      profileType:
+        user.userProfiles?.map((p) => p.profileType).join(', ') || '',
       failedLoginAttempts: user.failedLoginAttempts,
     };
   }

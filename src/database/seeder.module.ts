@@ -7,7 +7,11 @@ import { UserModule } from '@/modules/user/user.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { DatabaseModule } from '@/shared/modules/database/database.module';
 import { User } from '@/modules/user/entities/user.entity';
-import { Profile } from '@/modules/user/entities/profile.entity';
+import { UserInfo } from '@/modules/user/entities/user-info.entity';
+import { UserProfile } from '@/modules/user/entities/user-profile.entity';
+import { Staff } from '@/modules/user/entities/staff.entity';
+import { Teacher } from '@/modules/teachers/entities/teacher.entity';
+import { Student } from '@/modules/students/entities/student.entity';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
 import { UserRole } from '@/modules/access-control/entities/user-role.entity';
@@ -30,7 +34,11 @@ import { RolePermission } from '@/modules/access-control/entities/role-permissio
     AccessControlModule,
     TypeOrmModule.forFeature([
       User,
-      Profile,
+      UserInfo,
+      UserProfile,
+      Staff,
+      Teacher,
+      Student,
       Role,
       Permission,
       UserRole,

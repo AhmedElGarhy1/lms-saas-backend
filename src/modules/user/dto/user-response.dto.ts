@@ -39,9 +39,7 @@ export class UserResponseDto {
   @Expose()
   twoFactorEnabled: boolean;
 
-  @ApiProperty({ description: 'Profile ID', required: false })
-  @Expose()
-  profileId?: string;
+  // Profile ID removed - use /users/:id/profile endpoint for profile data
 
   @ApiProperty({ description: 'Whether the user is active' })
   @Expose()

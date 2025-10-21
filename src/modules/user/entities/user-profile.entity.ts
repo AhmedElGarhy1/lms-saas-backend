@@ -5,38 +5,29 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
-  OneToOne,
+  ManyToOne,
   JoinColumn,
   Index,
 } from 'typeorm';
 import { User } from './user.entity';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
-export enum ProfileType {
-  STUDENT = 'STUDENT',
-  TEACHER = 'TEACHER',
-  GUARDIAN = 'GUARDIAN',
-  ADMIN = 'ADMIN',
-  BASE_USER = 'BASE_USER',
-}
-
-@Entity('profiles')
-@Index(['type'])
+@Entity('user_profiles')
 @Index(['userId'])
-export class Profile {
+@Index(['profileType'])
+@Index(['userId', 'profileType'])
+export class UserProfile {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column()
   userId: string;
 
   @Column({ type: 'enum', enum: ProfileType })
-  type: ProfileType;
+  profileType: ProfileType;
 
-  @Column({ nullable: true })
-  address?: string;
-
-  @Column({ nullable: true })
-  dateOfBirth?: Date;
+  @Column()
+  profileRefId: string;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -47,7 +38,7 @@ export class Profile {
   @DeleteDateColumn()
   deletedAt: Date;
 
-  @OneToOne(() => User, (user) => user.profile)
+  @ManyToOne(() => User, (user) => user.userProfiles)
   @JoinColumn({ name: 'userId' })
   user: User;
 }

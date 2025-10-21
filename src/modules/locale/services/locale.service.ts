@@ -40,8 +40,8 @@ export class LocaleService {
     const decoded = jwt.decode(accessToken);
     if (decoded) {
       const user = await this.userService.findOne(decoded.sub as string);
-      if (user) {
-        locale = user.locale;
+      if (user && user.userInfo) {
+        locale = user.userInfo.locale;
       }
     }
     return locale;
