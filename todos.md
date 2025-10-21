@@ -32,10 +32,11 @@
 [x] database indexing optimization
 [x] refactor profile page
 [x] fix autuntication and refresh token
-[ ] all dialogs close buttons and on success
-[ ] fix user manage access in global scope (it work only on center scope)
-[ ] user manage access (it should be user access, center access)
-[ ] implement center access activation
+[x] all dialogs close buttons and on success
+[x] fix user manage access in global scope (it work only on center scope)
+[x] user manage access (it should be user access, center access)
+[ ] implement access all resources permission
+[ ] implement center access activation for center users
 [ ] implement center access delete (delete user in center)
 [ ] frontend invalidate language when profile update
 [ ] multi profile for parents
