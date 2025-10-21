@@ -253,7 +253,6 @@
     "globalDashboard": "Global Dashboard",
     "dateRange": "Date Range",
     "unknownBranch": "Unknown Branch",
-    "unknownTestModule": "Unknown TestModule",
     "system": "System"
   },
   "status": {
