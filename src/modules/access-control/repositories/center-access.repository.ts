@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { CenterAccess } from '../entities/center-access.entity';
+import { CenterAccessDto } from '../dto/center-access.dto';
 
 @Injectable()
 export class CenterAccessRepository extends BaseRepository<CenterAccess> {
@@ -19,54 +20,22 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
     super(centerAccessRepository, logger);
   }
 
-  async findCenterAccess(
-    userId: string,
-    centerId: string,
-    global?: boolean,
-  ): Promise<CenterAccess | null> {
-    const whereCondition: any = { userId, centerId };
-    if (global !== undefined) {
-      whereCondition.global = global;
-    }
-
-    return this.centerAccessRepository.findOne({
-      where: whereCondition,
-    });
+  async findCenterAccess(data: CenterAccessDto): Promise<CenterAccess | null> {
+    return this.centerAccessRepository.findOneBy(data);
   }
 
-  async grantCenterAccess(
-    userId: string,
-    centerId: string,
-    global: boolean = false,
-  ): Promise<CenterAccess> {
+  async grantCenterAccess(data: CenterAccessDto): Promise<CenterAccess> {
     // Check if access already exists
-    const existingAccess = await this.findCenterAccess(
-      userId,
-      centerId,
-      global,
-    );
+    const existingAccess = await this.findCenterAccess(data);
     if (existingAccess) {
       throw new ConflictException('Access already exists');
     }
 
-    return this.create({
-      userId,
-      centerId,
-      global,
-    });
+    return this.create(data);
   }
 
-  async revokeCenterAccess(userId: string, centerId: string, global?: boolean) {
-    const whereCondition: any = { userId, centerId };
-    if (global !== undefined) {
-      whereCondition.global = global;
-    }
-
-    const existingAccess = await this.findCenterAccess(
-      userId,
-      centerId,
-      global,
-    );
+  async revokeCenterAccess(data: CenterAccessDto) {
+    const existingAccess = await this.findCenterAccess(data);
     if (!existingAccess) {
       throw new NotFoundException('Access not found');
     }

@@ -33,6 +33,7 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
   async getUserPermissions(
     userId: string,
     centerId?: string,
+    profileId?: string,
   ): Promise<Permission[]> {
     let userRole: UserRole | null = null;
 
@@ -55,7 +56,7 @@ export class UserRoleRepository extends BaseRepository<UserRole> {
         }));
       }
       userRole = await this.userRoleRepository.findOne({
-        where: { userId, centerId },
+        where: { userId, centerId, profileId },
         relations: [
           'role',
           'role.rolePermissions',

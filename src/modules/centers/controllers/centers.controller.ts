@@ -35,7 +35,7 @@ import { ActivityLogService } from '@/shared/modules/activity-log/services/activ
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
-import { NoContext } from '@/shared/common/decorators/no-context';
+import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 
 @Controller('centers')
 @ApiTags('Centers')

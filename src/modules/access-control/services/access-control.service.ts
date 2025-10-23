@@ -136,11 +136,7 @@ export class AccessControlService {
       targetUserId: dto.userId,
       centerId: dto.centerId,
     });
-    return this.centerAccessRepository.grantCenterAccess(
-      dto.userId,
-      dto.centerId,
-      dto.global,
-    );
+    return this.centerAccessRepository.grantCenterAccess(dto);
   }
 
   async revokeCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
@@ -151,11 +147,7 @@ export class AccessControlService {
       centerId: dto.centerId,
     });
 
-    return this.centerAccessRepository.revokeCenterAccess(
-      dto.userId,
-      dto.centerId,
-      dto.global,
-    );
+    return this.centerAccessRepository.revokeCenterAccess(dto);
   }
 
   // Additional methods needed by other services

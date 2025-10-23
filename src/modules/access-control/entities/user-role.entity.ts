@@ -3,6 +3,7 @@ import { User } from '@/modules/user/entities/user.entity';
 import { Role } from './role.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
+import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
 
 @Entity('user_roles')
 @Index(['userId', 'centerId', 'roleId'], { unique: true })
@@ -15,7 +16,14 @@ export class UserRole extends BaseEntity {
   roleId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  centerId: string;
+  centerId?: string;
+
+  @Column({ type: 'uuid' })
+  profileId: string;
+
+  @ManyToOne(() => UserProfile, (userProfile) => userProfile.userRoles)
+  @JoinColumn({ name: 'profileId' })
+  profile: UserProfile;
 
   @ManyToOne(() => User, (user) => user.userRoles, {
     onDelete: 'CASCADE',

@@ -8,18 +8,18 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
+  OneToMany,
 } from 'typeorm';
-import { User } from './user.entity';
+import { User } from '../../user/entities/user.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { BaseEntity } from '@/shared/common/entities/base.entity';
+import { UserRole } from '@/modules/access-control/entities/user-role.entity';
 
 @Entity('user_profiles')
 @Index(['userId'])
 @Index(['profileType'])
 @Index(['userId', 'profileType'])
-export class UserProfile {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class UserProfile extends BaseEntity {
   @Column()
   userId: string;
 
@@ -29,16 +29,10 @@ export class UserProfile {
   @Column()
   profileRefId: string;
 
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt: Date;
-
   @ManyToOne(() => User, (user) => user.userProfiles)
   @JoinColumn({ name: 'userId' })
   user: User;
+
+  @OneToMany(() => UserRole, (userRole) => userRole.profile)
+  userRoles: UserRole[];
 }

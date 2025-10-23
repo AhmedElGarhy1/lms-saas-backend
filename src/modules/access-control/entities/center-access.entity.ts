@@ -2,11 +2,12 @@ import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 @Entity('center_access')
-@Index(['userId', 'centerId', 'global'], { unique: true })
+@Index(['userId', 'centerId', 'profileType'], { unique: true })
 @Index(['centerId'])
-@Index(['global'])
+@Index(['profileType'])
 export class CenterAccess extends BaseEntity {
   @Column({ type: 'uuid' })
   userId: string;
@@ -14,11 +15,11 @@ export class CenterAccess extends BaseEntity {
   @Column({ type: 'uuid' })
   centerId: string;
 
-  @Column({ type: 'boolean', default: false })
-  global: boolean;
-
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
+
+  @Column({ type: 'enum', enum: ProfileType })
+  profileType: ProfileType;
 
   // Relations
   @ManyToOne(() => User, (user) => user.centerAccess, {

@@ -51,7 +51,7 @@ import { RoleResponseExportMapper } from '@/shared/common/mappers/role-response-
 import { ExportRolesDto } from '../dto/export-roles.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { ExportFormat } from '@/shared/common/dto';
-import { NoContext } from '@/shared/common/decorators/no-context';
+import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 
 @ApiTags('Roles')
 @Controller('roles')

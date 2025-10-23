@@ -11,16 +11,14 @@ import {
 import { User } from '@/modules/user/entities/user.entity';
 import { Branch } from '../../centers/entities/branch.entity';
 import { Center } from '../../centers/entities/center.entity';
+import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('branch_access')
 @Index(['userId', 'branchId'], { unique: true })
 @Index(['userId'])
 @Index(['branchId'])
 @Index(['centerId'])
-export class BranchAccess {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class BranchAccess extends BaseEntity {
   @Column({ type: 'uuid' })
   userId: string;
 
@@ -32,12 +30,6 @@ export class BranchAccess {
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 
   // Relations
   @ManyToOne(() => User, (user) => user.branchAccess, {

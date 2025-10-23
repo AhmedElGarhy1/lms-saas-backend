@@ -8,8 +8,6 @@ import { AccessControlModule } from '@/modules/access-control/access-control.mod
 import { DatabaseModule } from '@/shared/modules/database/database.module';
 import { User } from '@/modules/user/entities/user.entity';
 import { UserInfo } from '@/modules/user/entities/user-info.entity';
-import { UserProfile } from '@/modules/user/entities/user-profile.entity';
-import { Staff } from '@/modules/user/entities/staff.entity';
 import { Teacher } from '@/modules/teachers/entities/teacher.entity';
 import { Student } from '@/modules/students/entities/student.entity';
 import { Role } from '@/modules/access-control/entities/role.entity';
@@ -23,6 +21,9 @@ import { Center } from '@/modules/centers/entities/center.entity';
 import { Branch } from '@/modules/centers/entities/branch.entity';
 import { BranchAccess } from '@/modules/access-control/entities/branch-access.entity';
 import { RolePermission } from '@/modules/access-control/entities/role-permission.entity';
+import { Admin } from '@/modules/profile/entities/admin.entity';
+import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
+import { Staff } from '@/modules/profile/entities/staff.entity';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { RolePermission } from '@/modules/access-control/entities/role-permissio
       PasswordResetToken,
       Center,
       RolePermission,
+      Admin,
     ]),
   ],
   providers: [DatabaseSeeder],

@@ -3,24 +3,26 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { IRequest } from '../interfaces/request.interface';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { Locale } from '@/shared/common/enums/locale.enum';
 import { RequestContext } from '../context/request.context';
-import { NO_CONTEXT_KEY } from '../decorators/no-context';
+import { NO_CONTEXT_KEY } from '../decorators/no-context.decorator';
 import {
   CenterSelectionRequiredException,
-  AdminScopeAccessDeniedException,
+  ProfileSelectionRequiredException,
 } from '../exceptions/custom.exceptions';
+import { UserProfileService } from '@/modules/profile/services/user-profile.service';
 
 @Injectable()
 export class ContextGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly userProfileService: UserProfileService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -44,38 +46,36 @@ export class ContextGuard implements CanActivate {
       request.centerId ??
       (request.body as { centerId?: string })?.centerId ??
       (request.query as { centerId?: string })?.centerId) as string;
+
     const user = request.user;
     if (!user) {
       throw new ForbiddenException('User not authenticated');
     }
     user.centerId = centerId;
+
     request.user = user;
 
     // first pass centerId
     if (noContext) {
       return true;
     }
+    const profileId = RequestContext.get().profileId;
+    const profileType = RequestContext.get().profileType;
+    if (!profileId) {
+      throw new ProfileSelectionRequiredException();
+    }
+    if (!profileType) {
+      throw new InternalServerErrorException('Profile type not found');
+    }
 
-    if (centerId) {
-      await this.accessControlHelperService.validateCenterAccess({
+    try {
+      await this.accessControlHelperService.validateAdminAndCenterAccess({
         userId: user.id,
         centerId,
+        profileType,
       });
-    } else {
-      try {
-        await this.accessControlHelperService.validateAdminAccess({
-          userId: user.id,
-        });
-      } catch (error) {
-        // If it's an AdminScopeAccessDeniedException, convert it to CenterSelectionRequiredException
-        if (error instanceof AdminScopeAccessDeniedException) {
-          throw new CenterSelectionRequiredException(
-            'Admin user must select a center to access this resource. Please select a center from the available options.',
-          );
-        }
-        // Re-throw other exceptions as-is
-        throw error;
-      }
+    } catch {
+      throw new CenterSelectionRequiredException();
     }
 
     // Set the userId (and maybe centerId) in the request context

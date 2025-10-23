@@ -38,6 +38,9 @@ import { join } from 'path';
 import { UserLocaleResolver } from './shared/resolvers/user-locale.resolver';
 import { Locale } from './shared/common/enums/locale.enum';
 import { HealthModule } from './modules/health';
+import { UserProfileService } from './modules/profile/services/user-profile.service';
+import { ProfileModule } from './modules/profile/profile.module';
+import { ProfileGuard } from './shared/common/guards/profile.guard';
 
 @Module({
   imports: [
@@ -70,7 +73,7 @@ import { HealthModule } from './modules/health';
       ],
     }),
     I18nModule.forRoot({
-      fallbackLanguage: Locale.EN,
+      fallbackLanguage: Locale.AR,
       loader: I18nJsonLoader,
       loaderOptions: {
         path: join(__dirname, '/i18n/'),
@@ -93,6 +96,7 @@ import { HealthModule } from './modules/health';
     SeederModule,
     LocaleModule,
     HealthModule,
+    ProfileModule,
   ],
   controllers: [],
   providers: [
@@ -133,8 +137,22 @@ import { HealthModule } from './modules/health';
       provide: APP_GUARD,
       useFactory: (
         reflector: Reflector,
+        userProfileService: UserProfileService,
+      ) => new ProfileGuard(reflector, userProfileService),
+      inject: [Reflector, UserProfileService],
+    },
+    {
+      provide: APP_GUARD,
+      useFactory: (
+        reflector: Reflector,
         accessControlHelperService: AccessControlHelperService,
-      ) => new ContextGuard(reflector, accessControlHelperService),
+        userProfileService: UserProfileService,
+      ) =>
+        new ContextGuard(
+          reflector,
+          accessControlHelperService,
+          userProfileService,
+        ),
       inject: [Reflector, AccessControlHelperService],
     },
     {

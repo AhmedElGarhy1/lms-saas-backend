@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID, IsBoolean } from 'class-validator';
+import { IsUUID, IsBoolean, IsEnum } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { User } from '@/modules/user/entities/user.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 export class CenterAccessDto {
   @ApiProperty({
@@ -22,11 +23,11 @@ export class CenterAccessDto {
   centerId: string;
 
   @ApiProperty({
-    description:
-      'Whether this is global access (for admins) or local access (for center users)',
-    default: false,
+    description: 'The profile type of the user to grant center access to',
+    enum: ProfileType,
+    default: ProfileType.STAFF,
     required: true,
   })
-  @IsBoolean()
-  global: boolean;
+  @IsEnum(ProfileType)
+  profileType: ProfileType;
 }

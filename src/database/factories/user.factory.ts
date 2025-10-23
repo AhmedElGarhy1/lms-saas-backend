@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { User } from '@/modules/user/entities/user.entity';
 import { UserInfo } from '@/modules/user/entities/user-info.entity';
+import { Locale } from '@/shared/common/enums/locale.enum';
 
 export class UserFactory {
   static create(overrides: Partial<User> = {}): Partial<User> {
@@ -146,7 +147,7 @@ export class UserFactory {
       fullName: faker.person.fullName(),
       address: faker.location.streetAddress(),
       dateOfBirth: faker.date.birthdate({ min: 18, max: 65, mode: 'age' }),
-      locale: faker.helpers.arrayElement(['en', 'ar']),
+      locale: faker.helpers.enumValue(Locale),
     };
   }
 }

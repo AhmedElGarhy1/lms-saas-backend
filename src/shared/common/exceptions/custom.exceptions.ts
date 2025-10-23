@@ -541,3 +541,31 @@ export class BranchAccessDeniedException extends HttpException {
     );
   }
 }
+
+export class ProfileSelectionRequiredException extends HttpException {
+  constructor(message: string = 'Profile selection required') {
+    super(
+      {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message,
+        error: 'Profile Selection Required',
+        code: ErrorCode.PROFILE_SELECTION_REQUIRED,
+        timestamp: new Date().toISOString(),
+        userMessage: 'Please select a profile to continue',
+        actionRequired: 'Select a profile from the available options',
+        retryable: false,
+        details: [
+          {
+            field: 'profileId',
+            value: null,
+            message: 'Profile ID is required for this operation',
+            code: ErrorCode.PROFILE_SELECTION_REQUIRED,
+            suggestion:
+              'Please select a profile from the dropdown or contact your administrator',
+          },
+        ],
+      } as EnhancedErrorResponse,
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}

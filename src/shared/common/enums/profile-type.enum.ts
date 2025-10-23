@@ -3,4 +3,5 @@ export enum ProfileType {
   STAFF = 'Staff',
   PARENT = 'Parent',
   STUDENT = 'Student',
+  ADMIN = 'Admin',
 }

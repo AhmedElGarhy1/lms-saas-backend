@@ -41,7 +41,7 @@ import { ActivityType } from '@/shared/modules/activity-log/entities/activity-lo
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { PermissionScope } from '@/modules/access-control/constants/permissions';
-import { NoContext } from '@/shared/common/decorators/no-context';
+import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 
 @ApiTags('Users')
 @Controller('users')
@@ -74,23 +74,6 @@ export class UserController {
     return this.userService.paginateAdmins(query, actorUser);
   }
 
-  @Get('profile')
-  @ReadApiResponses('Get current user profile with comprehensive information')
-  @NoContext()
-  async getActorUserProfile(@GetUser() actorUser: ActorUser) {
-    return this.userService.getCurrentUserProfile(actorUser);
-  }
-
-  @Put('profile')
-  @UpdateApiResponses('Update current user profile')
-  @NoContext()
-  async updateActorUserProfile(
-    @Body() dto: UpdateUserDto,
-    @GetUser() actorUser: ActorUser,
-  ) {
-    return this.userService.updateUserProfile(dto, actorUser);
-  }
-
   @Get(':id')
   @ReadApiResponses('Get user profile by ID')
   @ApiParam({ name: 'id', description: 'User ID', type: String })
@@ -101,18 +84,6 @@ export class UserController {
     @GetUser() actor: ActorUser,
   ) {
     return this.userService.findUserById(userId, actor);
-  }
-
-  @Get(':id/profile')
-  @ReadApiResponses('Get user profile with flattened structure')
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @SerializeOptions({ type: UserProfileResponseDto })
-  @Permissions(PERMISSIONS.USER.READ)
-  async findUserProfile(
-    @Param('id', ParseUUIDPipe) userId: string,
-    @GetUser() actor: ActorUser,
-  ) {
-    return this.userService.findUserProfileById(userId, actor);
   }
 
   @Post()

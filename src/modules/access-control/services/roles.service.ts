@@ -22,7 +22,11 @@ export class RolesService {
   ) {}
 
   async getMyPermissions(actor: ActorUser) {
-    return this.userRoleRepository.getUserPermissions(actor.id, actor.centerId);
+    return this.userRoleRepository.getUserPermissions(
+      actor.id,
+      actor.centerId,
+      actor.profileId,
+    );
   }
 
   async paginateRoles(query: PaginateRolesDto, actor: ActorUser) {
@@ -129,6 +133,7 @@ export class RolesService {
     await this.accessControlerHelperService.validateAdminAndCenterAccess({
       userId: actor.id,
       centerId: role.centerId,
+      profileType: actor.profileType,
     });
 
     // Restore the role

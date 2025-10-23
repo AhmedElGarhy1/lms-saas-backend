@@ -1,3 +1,4 @@
+import { BaseEntity } from '@/shared/common/entities/base.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -10,10 +11,7 @@ import {
 
 @Entity('teachers')
 @Index(['teacherId'])
-export class Teacher {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class Teacher extends BaseEntity {
   @Column({ unique: true, nullable: true })
   teacherId?: string;
 
@@ -41,13 +39,4 @@ export class Teacher {
 
   @Column({ type: 'text', nullable: true })
   qualifications?: string;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt: Date;
 }
