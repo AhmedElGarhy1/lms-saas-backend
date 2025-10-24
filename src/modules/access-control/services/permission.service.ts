@@ -3,7 +3,7 @@ import { InsufficientPermissionsException } from '@/shared/common/exceptions/cus
 import { PermissionRepository } from '../repositories/permission.repository';
 import { Permission } from '../entities/permission.entity';
 import { LoggerService } from '@/shared/services/logger.service';
-import { UserRoleRepository } from '../repositories/user-role.repository';
+import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { FindOptionsWhere, In } from 'typeorm';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
@@ -14,7 +14,7 @@ import { PermissionScope } from '../constants/permissions';
 export class PermissionService {
   constructor(
     private readonly permissionRepository: PermissionRepository,
-    private readonly userRoleRepository: UserRoleRepository,
+    private readonly profileRoleRepository: ProfileRoleRepository,
     private readonly logger: LoggerService,
     private readonly accessControlHelperService: AccessControlHelperService,
   ) {}

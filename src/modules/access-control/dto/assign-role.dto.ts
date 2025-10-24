@@ -1,15 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsUUID } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { User } from '@/modules/user/entities/user.entity';
+import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 
 export class AssignRoleDto {
-  @ApiProperty({ description: 'User ID' })
+  @ApiProperty({ description: 'User Profile ID' })
   @IsUUID()
-  @Exists(User)
-  userId: string;
+  @Exists(UserProfile)
+  userProfileId: string;
 
   @ApiProperty({ description: 'Role ID' })
   @IsUUID()

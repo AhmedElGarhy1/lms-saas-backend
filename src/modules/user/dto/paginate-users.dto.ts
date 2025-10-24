@@ -25,7 +25,7 @@ export class PaginateUsersDto extends BasePaginationDto {
   })
   @IsOptional()
   @IsString()
-  userId?: string;
+  userProfileId?: string;
 
   @ApiPropertyOptional({
     description: 'Filter by user active status',

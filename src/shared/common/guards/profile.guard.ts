@@ -37,17 +37,17 @@ export class ProfileGuard implements CanActivate {
 
     const request: IRequest = context.switchToHttp().getRequest();
 
-    const profileId = (request.get('x-profile-id') ??
-      request.profileId ??
-      (request.body as { profileId?: string })?.profileId ??
-      (request.query as { profileId?: string })?.profileId) as string;
+    const userProfileId = (request.get('x-user-profile-id') ??
+      request.userProfileId ??
+      (request.body as { userProfileId?: string })?.userProfileId ??
+      (request.query as { userProfileId?: string })?.userProfileId) as string;
 
     const user = request.user;
     if (!user) {
       throw new ForbiddenException('User not authenticated');
     }
 
-    user.profileId = profileId;
+    user.userProfileId = userProfileId;
     request.user = user;
 
     // first pass profileId
@@ -55,17 +55,20 @@ export class ProfileGuard implements CanActivate {
       return true;
     }
 
-    if (!profileId) {
+    if (!userProfileId) {
       throw new ProfileSelectionRequiredException();
     }
-    const profile = await this.userProfileService.findOne(profileId);
+    const profile = await this.userProfileService.findOne(userProfileId);
     if (!profile) {
       throw new ProfileSelectionRequiredException();
     }
 
+    user.profileType = profile.profileType;
+    request.user = user;
+
     RequestContext.set({
-      profileId: profile.id,
-      profileType: profile.profileType,
+      userProfileId: profile.id,
+      userProfileType: profile.profileType,
     });
 
     return true;

@@ -305,7 +305,7 @@ export class AuthService {
 
   @Transactional()
   async setupTwoFactor(userId: string, actor: ActorUser) {
-    const user = await this.userService.findUserById(userId, actor);
+    const user = await this.userService.findOne(userId, true);
 
     if (!user) {
       throw new ResourceNotFoundException('User not found');
@@ -353,7 +353,7 @@ export class AuthService {
     verificationCode: string,
     actor: ActorUser,
   ) {
-    const user = await this.userService.findUserById(userId, actor);
+    const user = await this.userService.findOne(userId, true);
 
     if (!user) {
       throw new ResourceNotFoundException('User not found');
@@ -401,7 +401,7 @@ export class AuthService {
     verificationCode: string,
     actor: ActorUser,
   ) {
-    const user = await this.userService.findUserById(userId, actor);
+    const user = await this.userService.findOne(userId, true);
 
     if (!user) {
       throw new ResourceNotFoundException('User not found');

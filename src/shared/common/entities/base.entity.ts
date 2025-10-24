@@ -10,9 +10,9 @@ import {
   BeforeUpdate,
   BeforeInsert,
 } from 'typeorm';
-import { User } from '@/modules/user/entities/user.entity';
 import { RequestContext } from '../context/request.context';
 import { BaseEntity as BaseEntityTypeORM } from 'typeorm';
+import { User } from '@/modules/user/entities/user.entity';
 
 export abstract class BaseEntity extends BaseEntityTypeORM {
   @PrimaryGeneratedColumn('uuid')
@@ -49,13 +49,13 @@ export abstract class BaseEntity extends BaseEntityTypeORM {
   @JoinColumn({ name: 'deletedBy' })
   deleter?: User;
 
-  // auto set createdBy, updatedBy, deletedBy
   @BeforeInsert()
   protected setCreatedBy() {
     const ctx = RequestContext.get();
-    console.log('ctx?.userId', ctx?.userId);
-    if (ctx.userId) {
-      this.createdBy = ctx.userId;
+    const userId = ctx.userId; // Fallback to userId for backward compatibility
+
+    if (userId) {
+      this.createdBy = userId;
       this.createdAt = new Date();
     }
   }
@@ -63,10 +63,10 @@ export abstract class BaseEntity extends BaseEntityTypeORM {
   @BeforeUpdate()
   protected setUpdatedBy() {
     const ctx = RequestContext.get();
-    console.log('ctx?.userId', ctx?.userId);
-    console.log('this.updatedBy', this.updatedBy);
-    if (ctx.userId) {
-      this.updatedBy = ctx.userId;
+    const userId = ctx.userId; // Fallback to userId for backward compatibility
+
+    if (userId) {
+      this.updatedBy = userId;
       this.updatedAt = new Date();
     }
   }
@@ -74,8 +74,9 @@ export abstract class BaseEntity extends BaseEntityTypeORM {
   @BeforeRemove()
   protected setDeletedBy() {
     const ctx = RequestContext.get();
-    if (ctx.userId) {
-      this.deletedBy = ctx.userId;
+    const userId = ctx.userId; // Fallback to userId for backward compatibility
+    if (userId) {
+      this.deletedBy = userId;
       this.deletedAt = new Date();
     }
   }

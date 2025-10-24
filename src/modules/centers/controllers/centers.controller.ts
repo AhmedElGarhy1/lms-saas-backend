@@ -85,7 +85,7 @@ export class CentersController {
   @SerializeOptions({ type: CenterResponseDto })
   @NoContext()
   listCenters(@Query() query: PaginateCentersDto, @GetUser() actor: ActorUser) {
-    return this.centersService.paginateCenters(query, actor.id);
+    return this.centersService.paginateCenters(query, actor);
   }
 
   @Get(':id')

@@ -47,8 +47,7 @@ export class PaginateCentersDto extends BasePaginationDto {
   @IsOptional()
   @IsString()
   @IsUUID()
-  @Exists(User)
-  userId?: string;
+  userProfileId?: string;
 
   @ApiPropertyOptional({
     description: 'Filter by center access',

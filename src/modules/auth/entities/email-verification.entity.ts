@@ -16,13 +16,13 @@ export class EmailVerification {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ type: 'uuid' })
   userId: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', length: 255, unique: true })
   token: string;
 
-  @Column()
+  @Column({ type: 'timestamp' })
   expiresAt: Date;
 
   @CreateDateColumn()

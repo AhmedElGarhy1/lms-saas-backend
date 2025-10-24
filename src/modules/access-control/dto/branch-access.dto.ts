@@ -1,18 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID, IsBoolean } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { User } from '@/modules/user/entities/user.entity';
+import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { Branch } from '@/modules/centers/entities/branch.entity';
 
 export class BranchAccessDto {
   @ApiProperty({
-    description: 'The ID of the user to grant branch access to',
+    description: 'The ID of the user profile to grant branch access to',
     format: 'uuid',
   })
   @IsUUID()
-  @Exists(User)
-  userId: string;
+  @Exists(UserProfile)
+  userProfileId: string;
 
   @ApiProperty({
     description: 'The ID of the center for which to grant branch access',

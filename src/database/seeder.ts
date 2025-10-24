@@ -11,9 +11,10 @@ import { ActivityLogService } from '@/shared/modules/activity-log/services/activ
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@/modules/access-control/entities/role.entity';
-import { UserRole } from '@/modules/access-control/entities/user-role.entity';
+import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
 import { SeederException } from '@/shared/common/exceptions/custom.exceptions';
 import { Admin } from '@/modules/profile/entities/admin.entity';
+import { RoleType } from '@/shared/common/enums/role-type.enum';
 
 @Injectable()
 export class DatabaseSeeder {
@@ -32,8 +33,8 @@ export class DatabaseSeeder {
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(Permission)
     private readonly permissionRepository: Repository<Permission>,
-    @InjectRepository(UserRole)
-    private readonly userRoleRepository: Repository<UserRole>,
+    @InjectRepository(ProfileRole)
+    private readonly profileRoleRepository: Repository<ProfileRole>,
     private readonly activityLogService: ActivityLogService,
   ) {}
 
@@ -53,17 +54,23 @@ export class DatabaseSeeder {
       // Create superadmin user
       const superAdminUser = await this.createSuperAdminUser(systemUser.id);
 
-      // Create user profiles and staff records for superadmin
-      await this.createUserProfilesAndStaff([superAdminUser]);
+      // Create user profiles and staff records for both system user and superadmin
+      await this.createUserProfilesAndStaff([systemUser, superAdminUser]);
 
       // Create global roles
       await this.createGlobalRoles(systemUser.id);
 
-      // Assign roles and permissions to superadmin
-      await this.assignRolesAndPermissions([superAdminUser], systemUser.id);
+      // Assign roles and permissions to both system user and superadmin
+      await this.assignRolesAndPermissions(
+        [systemUser, superAdminUser],
+        systemUser.id,
+      );
 
       // Create activity logs
-      await this.createActivityLogs([superAdminUser], systemUser.id);
+      await this.createActivityLogs(
+        [systemUser, superAdminUser],
+        systemUser.id,
+      );
 
       this.logger.log('Database seeding completed successfully!');
     } catch (error) {
@@ -282,7 +289,7 @@ export class DatabaseSeeder {
       this.roleRepository.create({
         name: role.name,
         description: role.description,
-        type: role.type as any,
+        type: role.type as RoleType,
         createdBy: role.createdBy,
       }),
     );
@@ -295,52 +302,18 @@ export class DatabaseSeeder {
     this.logger.log('Creating user profiles and staff records...');
 
     for (const user of users) {
-      // Create staff record using raw SQL to avoid RequestContext issues
-      const admin = await this.adminRepository.manager.transaction(
+      // Create both admin and user profile in a single transaction
+      await this.userProfileRepository.manager.transaction(
         async (transactionalEntityManager) => {
-          // Generate UUID for staff
+          // Generate UUIDs for both admin and profile
           const adminResult = await transactionalEntityManager.query(
             'SELECT gen_random_uuid() as id',
           );
-          const adminUuid = adminResult[0].id;
-
-          // Temporarily disable foreign key constraints
-          await transactionalEntityManager.query(
-            'SET session_replication_role = replica',
-          );
-
-          // Insert staff record
-          await transactionalEntityManager.query(
-            `INSERT INTO admins (id, "createdBy", "createdAt", "updatedAt") 
-             VALUES ($1, $2, NOW(), NOW())`,
-            [adminUuid, user.createdBy],
-          );
-
-          // Re-enable foreign key constraints
-          await transactionalEntityManager.query(
-            'SET session_replication_role = DEFAULT',
-          );
-
-          // Return the staff object
-          const admin = await transactionalEntityManager.findOne(Admin, {
-            where: { id: adminUuid },
-          });
-          if (!admin) {
-            throw new SeederException(
-              `Failed to create admin with ID: ${adminUuid}`,
-            );
-          }
-          return admin;
-        },
-      );
-
-      // Create user profile linking user to staff using raw SQL
-      await this.userProfileRepository.manager.transaction(
-        async (transactionalEntityManager) => {
-          // Generate UUID for user profile
           const profileResult = await transactionalEntityManager.query(
             'SELECT gen_random_uuid() as id',
           );
+
+          const adminUuid = adminResult[0].id;
           const profileUuid = profileResult[0].id;
 
           // Temporarily disable foreign key constraints
@@ -348,11 +321,24 @@ export class DatabaseSeeder {
             'SET session_replication_role = replica',
           );
 
-          // Insert user profile
+          // Insert admin record first
+          await transactionalEntityManager.query(
+            `INSERT INTO admins (id, "createdBy", "createdAt", "updatedAt") 
+             VALUES ($1, $2, NOW(), NOW())`,
+            [adminUuid, user.createdBy],
+          );
+
+          // Insert user profile linking user to admin
           await transactionalEntityManager.query(
             `INSERT INTO user_profiles (id, "userId", "profileType", "profileRefId", "createdBy", "createdAt", "updatedAt") 
            VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
-            [profileUuid, user.id, ProfileType.ADMIN, admin.id, user.createdBy],
+            [
+              profileUuid,
+              user.id,
+              ProfileType.ADMIN,
+              adminUuid,
+              user.createdBy,
+            ],
           );
 
           // Re-enable foreign key constraints
@@ -383,17 +369,35 @@ export class DatabaseSeeder {
     );
 
     // Get users by type
+    const systemUser = users.find((u) => u.email === 'system@lms.com');
     const superAdminUser = users.find((u) => u.email === 'superadmin@lms.com');
+
+    // Assign Super Administrator role to system user
+    if (systemUser && superAdminRole) {
+      const systemUserProfile = await this.userProfileRepository.findOne({
+        where: { userId: systemUser.id, profileType: ProfileType.ADMIN },
+      });
+      await this.profileRoleRepository.save(
+        this.profileRoleRepository.create({
+          userProfileId: systemUserProfile?.id || '',
+          roleId: superAdminRole.id,
+          createdBy,
+        }),
+      );
+      this.logger.log(
+        `Assigned Super Administrator role to ${systemUser.email}`,
+      );
+    }
+
     // Assign Super Administrator role to superadmin user
     if (superAdminUser && superAdminRole) {
       const superAdminProfile = await this.userProfileRepository.findOne({
         where: { userId: superAdminUser.id, profileType: ProfileType.ADMIN },
       });
-      await this.userRoleRepository.save(
-        this.userRoleRepository.create({
-          userId: superAdminUser.id,
+      await this.profileRoleRepository.save(
+        this.profileRoleRepository.create({
+          userProfileId: superAdminProfile?.id || '',
           roleId: superAdminRole.id,
-          profileId: superAdminProfile?.id,
           createdBy,
         }),
       );
@@ -411,21 +415,38 @@ export class DatabaseSeeder {
   ): Promise<void> {
     this.logger.log('Creating activity logs...');
 
+    const systemUser = users.find((u) => u.email === 'system@lms.com');
     const superAdmin = users.find((u) => u.email === 'superadmin@lms.com');
 
-    if (!superAdmin) {
-      this.logger.warn('Super admin not found, skipping activity logs');
-      return;
+    // Log system user creation activity
+    if (systemUser) {
+      const systemUserProfile = await this.userProfileRepository.findOne({
+        where: { userId: systemUser.id, profileType: ProfileType.ADMIN },
+      });
+
+      await this.activityLogService.log(ActivityType.USER_CREATED, {
+        targetProfileId: systemUserProfile?.id,
+        userEmail: systemUser.email,
+        userName: systemUser.name,
+        createdBy,
+        seeder: true,
+      });
     }
 
-    // Log user creation activity
-    await this.activityLogService.log(ActivityType.USER_CREATED, {
-      targetUserId: superAdmin.id,
-      userEmail: superAdmin.email,
-      userName: superAdmin.name,
-      createdBy,
-      seeder: true,
-    });
+    // Log superadmin user creation activity
+    if (superAdmin) {
+      const superAdminProfile = await this.userProfileRepository.findOne({
+        where: { userId: superAdmin.id, profileType: ProfileType.ADMIN },
+      });
+
+      await this.activityLogService.log(ActivityType.USER_CREATED, {
+        targetProfileId: superAdminProfile?.id,
+        userEmail: superAdmin.email,
+        userName: superAdmin.name,
+        createdBy,
+        seeder: true,
+      });
+    }
 
     this.logger.log('Activity logs created successfully');
   }

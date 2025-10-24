@@ -67,7 +67,7 @@ export class RolesActionsController {
       res,
     );
     await this.activityLogService.log(ActivityType.ROLE_EXPORT, {
-      userId: actor.id,
+      userProfileId: actor.userProfileId,
       filename: baseFilename,
     });
     return data;

@@ -11,6 +11,7 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { CenterResponseDto } from '../dto/center-response.dto';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 import { AccessibleUsersEnum } from '@/modules/user/dto/paginate-users.dto';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @Injectable()
 export class CentersRepository extends BaseRepository<Center> {
@@ -29,52 +30,51 @@ export class CentersRepository extends BaseRepository<Center> {
 
   async paginateCenters(
     params: PaginateCentersDto,
-    actorId: string,
+    actor: ActorUser,
   ): Promise<Pagination<CenterResponseDto>> {
-    const { userId, isActive, centerAccess } = params;
+    const { userProfileId, isActive, centerAccess } = params;
     const queryBuilder = this.centerRepository.createQueryBuilder('center');
 
-    const isSuperAdmin =
-      await this.accessControlHelperService.isSuperAdmin(actorId);
-    const isAdmin = await this.accessControlHelperService.hasAdminRole(actorId);
+    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+      actor.userProfileId,
+    );
+    const isAdmin = await this.accessControlHelperService.hasAdminRole(
+      actor.userProfileId,
+    );
 
     // Apply access control
     if (isSuperAdmin) {
       // no access control
     } else if (isAdmin) {
-      queryBuilder
-        .leftJoin('center.centerAccess', 'centerAccess')
-        .andWhere('centerAccess.userId = :actorId', {
-          actorId,
-        })
-        .andWhere('centerAccess.global = :global', {
-          global: true,
-        });
+      queryBuilder.andWhere(
+        'center.id IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :userProfileId)',
+        {
+          userProfileId: userProfileId,
+        },
+      );
     } else {
-      queryBuilder.leftJoin('center.centerAccess', 'centerAccess');
-      queryBuilder
-        .andWhere('centerAccess.userId = :actorId', {
-          actorId,
-        })
-        .andWhere('centerAccess.global = :global', {
-          global: false,
-        });
+      queryBuilder.andWhere(
+        'center.id IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :userProfileId)',
+        {
+          userProfileId: userProfileId,
+        },
+      );
     }
     // subquery to to get accessible centers for params.userId
     if (
-      userId &&
+      userProfileId &&
       (!centerAccess || centerAccess === AccessibleUsersEnum.INCLUDE)
     ) {
       const isTargetUserSuperAdmin =
-        await this.accessControlHelperService.isSuperAdmin(userId);
+        await this.accessControlHelperService.isSuperAdmin(userProfileId);
 
       if (isTargetUserSuperAdmin) {
         // nothing
       } else {
         queryBuilder.andWhere(
-          'center.id IN (SELECT "centerId" FROM center_access WHERE "userId" = :userId)',
+          'center.id IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :userProfileId)',
           {
-            userId: userId,
+            userProfileId: userProfileId,
           },
         );
       }
@@ -95,10 +95,10 @@ export class CentersRepository extends BaseRepository<Center> {
 
     let filteredItems: CenterResponseDto[] = result.items;
 
-    if (userId && centerAccess) {
+    if (userProfileId && centerAccess) {
       filteredItems = await this.applyCenterAccess(
         filteredItems,
-        userId,
+        userProfileId,
         centerAccess,
       );
     }
@@ -131,15 +131,15 @@ export class CentersRepository extends BaseRepository<Center> {
 
   private async applyCenterAccess(
     centers: CenterResponseDto[],
-    userId: string,
+    userProfileId: string,
     centerAccess: AccessibleUsersEnum,
   ): Promise<CenterResponseDto[]> {
     let filteredItems: CenterResponseDto[] = centers;
     const centerIds = centers.map((center) => center.id);
     if (centerAccess === AccessibleUsersEnum.ALL) {
       const accessibleCentersIds =
-        await this.accessControlHelperService.getAccessibleCentersIdsForUser(
-          userId,
+        await this.accessControlHelperService.getAccessibleCentersIdsForProfile(
+          userProfileId,
           centerIds,
         );
       filteredItems = filteredItems.map((center) =>

@@ -15,6 +15,10 @@
     "title": "Users",
     "subtitle": "Manage system users"
   },
+  "staff": {
+    "title": "Staff",
+    "subtitle": "Manage staff members and their permissions"
+  },
   "health": {
     "title": "System Health",
     "subtitle": "Real-time monitoring of system performance and service status"
@@ -61,6 +65,25 @@
       "themeDescription": "Select your preferred theme",
       "notificationsDescription": "Manage your notification preferences"
     }
+  },
+  "selectProfile": {
+    "title": "Select Profile",
+    "subtitle": "Choose a profile to continue",
+    "searchPlaceholder": "Search profiles...",
+    "loading": "Loading profiles...",
+    "searching": "Searching...",
+    "noProfilesFound": "No profiles found matching your search",
+    "noProfilesAvailable": "No profiles available",
+    "profileSelected": "Profile selected successfully",
+    "errorSelecting": "Error selecting profile",
+    "errorLoading": "Error loading profiles"
+  },
+  "unauthorized": {
+    "title": "Access Denied",
+    "description": "You don't have permission to access this resource",
+    "message": "Please contact your administrator if you believe this is an error",
+    "goToDashboard": "Go to Dashboard",
+    "goBack": "Go Back"
   },
   "products": {
     "title": "Products",

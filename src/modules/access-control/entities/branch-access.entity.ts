@@ -8,19 +8,19 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { User } from '@/modules/user/entities/user.entity';
+import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
 import { Branch } from '../../centers/entities/branch.entity';
 import { Center } from '../../centers/entities/center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('branch_access')
-@Index(['userId', 'branchId'], { unique: true })
-@Index(['userId'])
+@Index(['userProfileId', 'branchId'], { unique: true })
+@Index(['userProfileId'])
 @Index(['branchId'])
 @Index(['centerId'])
 export class BranchAccess extends BaseEntity {
   @Column({ type: 'uuid' })
-  userId: string;
+  userProfileId: string;
 
   @Column({ type: 'uuid' })
   branchId: string;
@@ -32,11 +32,11 @@ export class BranchAccess extends BaseEntity {
   isActive: boolean;
 
   // Relations
-  @ManyToOne(() => User, (user) => user.branchAccess, {
+  @ManyToOne(() => UserProfile, (userProfile) => userProfile.branchAccess, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'userId' })
-  user: User;
+  @JoinColumn({ name: 'userProfileId' })
+  profile: UserProfile;
 
   @ManyToOne(() => Branch, (branch) => branch.branchAccess, {
     onDelete: 'CASCADE',

@@ -8,22 +8,17 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { User } from '@/modules/user/entities/user.entity';
 import { Role } from './role.entity';
 import { Permission } from './permission.entity';
 import { PermissionScope } from '@/modules/access-control/constants/permissions';
 
 @Entity('role_permissions')
-@Index(['userId', 'roleId', 'permissionId'], { unique: true })
-@Index(['userId'])
+@Index(['roleId', 'permissionId'], { unique: true })
 @Index(['roleId'])
 @Index(['permissionId'])
 export class RolePermission {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
-  @Column({ type: 'uuid' })
-  userId: string;
 
   @Column({ type: 'uuid' })
   roleId: string;
@@ -37,10 +32,6 @@ export class RolePermission {
     default: PermissionScope.CENTER,
   })
   permissionScope: PermissionScope;
-
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
-  user: User;
 
   @ManyToOne(() => Role, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'roleId' })

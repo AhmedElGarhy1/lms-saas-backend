@@ -15,14 +15,12 @@ import {
   CenterSelectionRequiredException,
   ProfileSelectionRequiredException,
 } from '../exceptions/custom.exceptions';
-import { UserProfileService } from '@/modules/profile/services/user-profile.service';
 
 @Injectable()
 export class ContextGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly userProfileService: UserProfileService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -59,20 +57,18 @@ export class ContextGuard implements CanActivate {
     if (noContext) {
       return true;
     }
-    const profileId = RequestContext.get().profileId;
-    const profileType = RequestContext.get().profileType;
-    if (!profileId) {
+    const { userProfileId, userProfileType } = RequestContext.get();
+    if (!userProfileId) {
       throw new ProfileSelectionRequiredException();
     }
-    if (!profileType) {
+    if (!userProfileType) {
       throw new InternalServerErrorException('Profile type not found');
     }
 
     try {
       await this.accessControlHelperService.validateAdminAndCenterAccess({
-        userId: user.id,
+        userProfileId,
         centerId,
-        profileType,
       });
     } catch {
       throw new CenterSelectionRequiredException();

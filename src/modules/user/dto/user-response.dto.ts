@@ -1,4 +1,5 @@
 import { RoleResponseDto } from '@/modules/access-control/dto/role-response.dto';
+import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type, Exclude } from 'class-transformer';
 
@@ -46,10 +47,22 @@ export class UserResponseDto {
   isActive: boolean;
 
   @ApiProperty({
-    description: 'Whether the user is accessible to the target user',
+    description: 'Whether the user is accessible to the target profile',
   })
   @Expose()
-  isUserAccessible?: boolean;
+  isProfileAccessible?: boolean;
+
+  @ApiProperty({
+    description: 'User profiles',
+  })
+  @Exclude()
+  userProfiles: UserProfile[];
+
+  @ApiProperty({
+    description: 'User profiles',
+  })
+  @Expose()
+  userProfile: UserProfile;
 
   @ApiProperty({ description: 'Whether the user has center access' })
   @Expose()

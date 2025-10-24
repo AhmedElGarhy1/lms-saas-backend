@@ -7,11 +7,7 @@ import { ActivityType } from '@/shared/modules/activity-log/entities/activity-lo
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import {
-  ResourceNotFoundException,
-  ValidationFailedException,
-} from '@/shared/common/exceptions/custom.exceptions';
-import { ErrorCode } from '@/shared/common/enums/error-codes.enum';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
 export class BranchesService {
@@ -33,7 +29,7 @@ export class BranchesService {
 
   async getBranch(branchId: string, actor: ActorUser) {
     await this.accessControlHelperService.validateBranchAccess({
-      userId: actor.id,
+      userProfileId: actor.userProfileId,
       centerId: actor.centerId!,
       branchId,
     });
@@ -71,7 +67,7 @@ export class BranchesService {
     actor: ActorUser,
   ) {
     await this.accessControlHelperService.validateBranchAccess({
-      userId: actor.id,
+      userProfileId: actor.userProfileId,
       centerId: actor.centerId!,
       branchId,
     });
@@ -94,7 +90,7 @@ export class BranchesService {
 
   async deleteBranch(branchId: string, actor: ActorUser) {
     await this.accessControlHelperService.validateBranchAccess({
-      userId: actor.id,
+      userProfileId: actor.userProfileId,
       centerId: actor.centerId!,
       branchId,
     });

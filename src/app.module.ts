@@ -146,13 +146,7 @@ import { ProfileGuard } from './shared/common/guards/profile.guard';
       useFactory: (
         reflector: Reflector,
         accessControlHelperService: AccessControlHelperService,
-        userProfileService: UserProfileService,
-      ) =>
-        new ContextGuard(
-          reflector,
-          accessControlHelperService,
-          userProfileService,
-        ),
+      ) => new ContextGuard(reflector, accessControlHelperService),
       inject: [Reflector, AccessControlHelperService],
     },
     {

@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
-const i18nDir = './i18n'; // where your source JSON files (en.json, ar.json, etc.) are
-const outDir = '../src/i18n'; // where the split output will go
+const i18nDir = './scripts/i18n'; // where your source JSON files (en.json, ar.json, etc.) are
+const outDir = './src/i18n'; // where the split output will go
 
 // Ensure output directory exists
 fs.mkdirSync(outDir, { recursive: true });

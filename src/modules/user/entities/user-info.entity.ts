@@ -6,7 +6,7 @@ import { Locale } from '@/shared/common/enums/locale.enum';
 @Entity('user_info')
 @Index(['userId'])
 export class UserInfo extends BaseEntity {
-  @Column({ unique: true })
+  @Column({ type: 'uuid', unique: true })
   userId: string;
 
   @Column()

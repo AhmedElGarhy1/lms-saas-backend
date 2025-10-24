@@ -15,6 +15,10 @@
     "title": "المستخدمون",
     "subtitle": "إدارة مستخدمي النظام"
   },
+  "staff": {
+    "title": "الموظفون",
+    "subtitle": "إدارة الموظفين وصلاحياتهم"
+  },
   "health": {
     "title": "صحة النظام",
     "subtitle": "مراقبة الأداء وحالة الخدمات في الوقت الفعلي"
@@ -61,6 +65,25 @@
       "themeDescription": "اختر المظهر المفضل لديك",
       "notificationsDescription": "إدارة تفضيلات الإشعارات"
     }
+  },
+  "selectProfile": {
+    "title": "اختر الملف الشخصي",
+    "subtitle": "اختر ملف شخصي للمتابعة",
+    "searchPlaceholder": "البحث في الملفات الشخصية...",
+    "loading": "جاري تحميل الملفات الشخصية...",
+    "searching": "جاري البحث...",
+    "noProfilesFound": "لم يتم العثور على ملفات شخصية تطابق بحثك",
+    "noProfilesAvailable": "لا توجد ملفات شخصية متاحة",
+    "profileSelected": "تم اختيار الملف الشخصي بنجاح",
+    "errorSelecting": "خطأ في اختيار الملف الشخصي",
+    "errorLoading": "خطأ في تحميل الملفات الشخصية"
+  },
+  "unauthorized": {
+    "title": "الوصول مرفوض",
+    "description": "ليس لديك صلاحية للوصول إلى هذا المورد",
+    "message": "يرجى الاتصال بالمدير إذا كنت تعتقد أن هذا خطأ",
+    "goToDashboard": "الذهاب إلى لوحة التحكم",
+    "goBack": "العودة"
   },
   "products": {
     "title": "Products",

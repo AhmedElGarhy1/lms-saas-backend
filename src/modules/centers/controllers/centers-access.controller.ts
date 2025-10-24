@@ -42,8 +42,7 @@ export class CentersAccessController {
       ActivityType.CENTER_ACCESS_GRANTED,
       {
         centerId: dto.centerId,
-        targetUserId: dto.userId,
-        grantedBy: actor.id,
+        targetUserProfileId: dto.userProfileId,
       },
       actor,
     );
@@ -73,7 +72,7 @@ export class CentersAccessController {
       ActivityType.CENTER_ACCESS_REVOKED,
       {
         centerId: dto.centerId,
-        targetUserId: dto.userId,
+        targetUserProfileId: dto.userProfileId,
         revokedBy: actor.id,
       },
       actor,

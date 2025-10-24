@@ -1,27 +1,31 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { User } from '@/modules/user/entities/user.entity';
+import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('user_access')
-@Index(['granterUserId', 'targetUserId', 'centerId'], { unique: true })
+@Index(['granterUserProfileId', 'targetUserProfileId', 'centerId'], { unique: true })
 export class UserAccess extends BaseEntity {
-  @Column()
-  targetUserId: string;
+  @Column({ type: 'uuid' })
+  targetUserProfileId: string;
 
-  @Column()
-  granterUserId: string;
+  @Column({ type: 'uuid' })
+  granterUserProfileId: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   centerId: string;
 
-  @ManyToOne(() => User, (user) => user.accessTarget)
-  @JoinColumn({ name: 'targetUserId' })
-  target: User;
+  @ManyToOne(() => UserProfile, (userProfile) => userProfile.accessTarget, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'targetUserProfileId' })
+  target: UserProfile;
 
-  @ManyToOne(() => User, (user) => user.accessGranter)
-  @JoinColumn({ name: 'granterUserId' })
-  granter: User;
+  @ManyToOne(() => UserProfile, (userProfile) => userProfile.accessGranter, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'granterUserProfileId' })
+  granter: UserProfile;
 
   @ManyToOne(() => Center, (center) => center.userAccess, {
     nullable: true,

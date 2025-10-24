@@ -33,9 +33,9 @@ export class RoleAssignController {
   async assignRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
     const result = await this.rolesService.assignRoleValidate(dto, user);
     await this.activityLogService.log(ActivityType.ROLE_ASSIGNED, {
-      userId: user.id,
+      userProfileId: user.userProfileId,
       roleId: dto.roleId,
-      assignedBy: user.id,
+      assignedBy: user.userProfileId,
     });
     return ControllerResponse.success(
       result,
@@ -50,9 +50,9 @@ export class RoleAssignController {
   async removeRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
     const result = await this.rolesService.removeUserRoleValidate(dto, user);
     await this.activityLogService.log(ActivityType.ROLE_REMOVED, {
-      userId: user.id,
+      userProfileId: user.userProfileId,
       roleId: dto.roleId,
-      removedBy: user.id,
+      removedBy: user.userProfileId,
     });
     return ControllerResponse.success(
       result,

@@ -3,7 +3,7 @@ import { Entity, Column, OneToMany, Index } from 'typeorm';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { Role } from '@/modules/access-control/entities/role.entity';
-import { UserRole } from '@/modules/access-control/entities/user-role.entity';
+import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
 import { Branch } from './branch.entity';
 import { BranchAccess } from '../../access-control/entities/branch-access.entity';
@@ -40,8 +40,8 @@ export class Center extends BaseEntity {
   @OneToMany(() => Role, (role) => role.center)
   roles: Role[];
 
-  @OneToMany(() => UserRole, (userRole) => userRole.center)
-  userRoles: UserRole[];
+  @OneToMany(() => ProfileRole, (profileRole) => profileRole.center)
+  profileRoles: ProfileRole[];
 
   @OneToMany(() => CenterAccess, (centerAccess) => centerAccess.center)
   centerAccess: CenterAccess[];

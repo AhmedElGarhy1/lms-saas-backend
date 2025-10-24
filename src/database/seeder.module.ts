@@ -12,7 +12,7 @@ import { Teacher } from '@/modules/teachers/entities/teacher.entity';
 import { Student } from '@/modules/students/entities/student.entity';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
-import { UserRole } from '@/modules/access-control/entities/user-role.entity';
+import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
@@ -41,7 +41,7 @@ import { Staff } from '@/modules/profile/entities/staff.entity';
       Student,
       Role,
       Permission,
-      UserRole,
+      ProfileRole,
       UserAccess,
       CenterAccess,
       Branch,

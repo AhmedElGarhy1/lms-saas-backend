@@ -49,7 +49,7 @@ export class CentersActionsController {
     // Get data using the same pagination logic
     const paginationResult = await this.centersService.paginateCenters(
       query,
-      actor.id,
+      actor,
     );
     const centers = paginationResult.items;
 

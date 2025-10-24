@@ -9,7 +9,7 @@ import { Admin } from '../entities/admin.entity';
 export class AdminRepository extends BaseRepository<Admin> {
   constructor(
     @InjectRepository(Admin)
-    private readonly adminRepository: Repository<Admin>,
+    readonly adminRepository: Repository<Admin>,
     protected readonly logger: LoggerService,
   ) {
     super(adminRepository, logger);

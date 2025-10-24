@@ -1,10 +1,11 @@
-import { UserRole } from '@/modules/access-control/entities/user-role.entity';
+import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Admin } from '../entities/admin.entity';
 import { Staff } from '../entities/staff.entity';
 import { Student } from '@/modules/students/entities/student.entity';
 import { Teacher } from '@/modules/teachers/entities/teacher.entity';
+import { Role } from '@/modules/access-control/entities/role.entity';
 
 export interface ProfileResponse {
   id: string;
@@ -24,8 +25,8 @@ export interface ProfileResponse {
     locale: string;
   };
   context: {
-    center?: Center;
-    role: UserRole;
+    center?: Center | null;
+    role: Role;
   };
   profileType: ProfileType;
   profile: Admin | Staff | Student | Teacher; // TODO: add parent

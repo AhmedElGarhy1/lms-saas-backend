@@ -6,10 +6,10 @@ import {
   BranchAccessDeniedException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { In } from 'typeorm';
-import { UserRole } from '../entities/user-role.entity';
+import { ProfileRole } from '../entities/profile-role.entity';
 import { Role } from '../entities/role.entity';
 import { UserAccess } from '../entities/user-access.entity';
-import { UserRoleRepository } from '../repositories/user-role.repository';
+import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { UserAccessRepository } from '../repositories/user-access.repository';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { CenterAccessRepository } from '../repositories/center-access.repository';
@@ -23,8 +23,8 @@ import { CenterAccessDto } from '../dto/center-access.dto';
 @Injectable()
 export class AccessControlHelperService {
   constructor(
-    @Inject(UserRoleRepository)
-    private userRoleRepository: UserRoleRepository,
+    @Inject(ProfileRoleRepository)
+    private profileRoleRepository: ProfileRoleRepository,
     private userAccessRepository: UserAccessRepository,
     private centerAccessRepository: CenterAccessRepository,
     private branchAccessRepository: BranchAccessRepository,
@@ -37,24 +37,21 @@ export class AccessControlHelperService {
    * @returns void
    */
   async validateAdminAndCenterAccess({
-    userId,
+    userProfileId,
     centerId,
-    profileType,
   }: {
-    userId: string;
-    profileType: ProfileType;
+    userProfileId: string;
     centerId?: string;
   }) {
     if (centerId) {
       await this.validateCenterAccess({
-        userId,
+        userProfileId,
         centerId,
-        profileType,
       });
 
       return;
     } else {
-      await this.validateAdminAccess({ userId });
+      await this.validateAdminAccess({ userProfileId });
       return;
     }
 
@@ -66,12 +63,12 @@ export class AccessControlHelperService {
    * @param userId - The user id
    * @returns void
    */
-  async validateAdminAccess({ userId }: { userId: string }) {
-    const isSuperAdmin = await this.isSuperAdmin(userId);
+  async validateAdminAccess({ userProfileId }: { userProfileId: string }) {
+    const isSuperAdmin = await this.isSuperAdmin(userProfileId);
     if (isSuperAdmin) {
       return;
     }
-    const haveAdminRole = await this.hasAdminRole(userId);
+    const haveAdminRole = await this.hasAdminRole(userProfileId);
     if (haveAdminRole) {
       return;
     }
@@ -80,127 +77,119 @@ export class AccessControlHelperService {
     );
   }
 
-  async getUserCenters(userId: string) {
+  async getUserCenters(userProfileId: string) {
     // Get centers from user's roles (centerId in userRoles = center access)
-    const userRoles = await this.userRoleRepository.findMany({
-      where: { userId },
+    const profileRoles = await this.profileRoleRepository.findMany({
+      where: { userProfileId },
       relations: ['role', 'role.center'],
     });
-    const _userRoles = userRoles as (UserRole & {
+    const _profileRoles = profileRoles as (ProfileRole & {
       role?: Role & { center?: Center };
     })[];
 
     // Extract unique center IDs from roles
-    const centerIds = _userRoles
-      .map((userRole) => userRole?.role?.center?.id)
+    const centerIds = _profileRoles
+      .map((profileRole) => profileRole?.role?.center?.id)
       .filter((centerId) => centerId !== null);
 
     return centerIds;
   }
 
-  async getUserRole(userId: string, centerId?: string) {
-    return this.userRoleRepository.getUserRole(userId, centerId);
+  async getProfileRole(userProfileId: string, centerId?: string) {
+    return this.profileRoleRepository.getProfileRole(userProfileId, centerId);
   }
 
-  async getAccessibleUsersIdsForUser(
-    userId: string,
-    targetUserIds: string[],
+  async getAccessibleProfilesIdsForUser(
+    userProfileId: string,
+    targetProfileIds: string[],
     centerId?: string,
   ): Promise<string[]> {
     return Promise.all(
-      targetUserIds.map(async (targetUserId) => {
+      targetProfileIds.map(async (targetProfileId) => {
         const canAccess = await this.canUserAccess({
-          granterUserId: userId,
-          targetUserId,
+          granterUserProfileId: userProfileId,
+          targetUserProfileId: targetProfileId,
           centerId,
         });
-        return canAccess ? targetUserId : null;
+        return canAccess ? targetProfileId : null;
       }),
     ).then((results) => results.filter((result) => result !== null));
   }
 
-  async getAccessibleUsersIdsForCenter(
+  async getAccessibleProfilesIdsForCenter(
     centerId: string,
-    targetUserIds: string[],
-    profileType: ProfileType,
+    targetProfileIds: string[],
   ): Promise<string[]> {
     return Promise.all(
-      targetUserIds.map(async (targetUserId) => {
+      targetProfileIds.map(async (targetProfileId) => {
         const canAccess = await this.canCenterAccess({
-          userId: targetUserId,
+          userProfileId: targetProfileId,
           centerId,
-          profileType,
         });
-        return canAccess ? targetUserId : null;
+        return canAccess ? targetProfileId : null;
       }),
     ).then((results) => results.filter((result) => result !== null));
   }
-  async getAccessibleUsersIdsForBranch(
+  async getAccessibleProfilesIdsForBranch(
     branchId: string,
-    targetUserIds: string[],
+    targetProfileIds: string[],
     centerId: string,
   ): Promise<string[]> {
     return Promise.all(
-      targetUserIds.map(async (targetUserId) => {
+      targetProfileIds.map(async (targetProfileId) => {
         const canAccess = await this.canBranchAccess({
-          userId: targetUserId,
+          userProfileId: targetProfileId,
           centerId,
           branchId,
         });
-        return canAccess ? targetUserId : null;
+        return canAccess ? targetProfileId : null;
       }),
     ).then((results) => results.filter((result) => result !== null));
   }
 
-  async getAccessibleUsersIdsForRole(
+  async getAccessibleProfilesIdsForRole(
     roleId: string,
-    targetUserIds: string[],
+    targetProfileIds: string[],
     centerId?: string,
   ): Promise<string[]> {
-    const result = await this.userRoleRepository.findMany({
+    const result = await this.profileRoleRepository.findMany({
       where: [
         {
           roleId,
           ...(centerId ? { centerId } : {}),
-          userId: In(targetUserIds),
+          userProfileId: In(targetProfileIds),
         },
       ],
     });
-    return result.map((result) => result.userId);
+    return result.map((result) => result.userProfileId);
   }
 
-  async getAccessibleCentersIdsForUser(
-    userId: string,
+  async getAccessibleCentersIdsForProfile(
+    userProfileId: string,
     targetCenterIds: string[],
   ): Promise<string[]> {
     const result = await Promise.all(
       targetCenterIds.map(async (targetCenterId) => {
-        // TODO: use profile type correctly
-        const canAccessStaff = await this.canCenterAccess({
-          userId,
+        const canAccess = await this.canCenterAccess({
+          userProfileId,
           centerId: targetCenterId,
-          profileType: ProfileType.STAFF,
         });
-        const canAccessAdmin = await this.canCenterAccess({
-          userId,
-          centerId: targetCenterId,
-          profileType: ProfileType.ADMIN,
-        });
-        return canAccessStaff || canAccessAdmin ? targetCenterId : null;
+
+        return canAccess ? targetCenterId : null;
       }),
     );
     return result.filter((result) => result !== null);
   }
 
-  async getAccessibleRolesIdsForUser(
-    userId: string,
+  async getAccessibleRolesIdsForProfile(
+    userProfileId: string,
     centerId?: string,
   ): Promise<string[]> {
-    const userRoles = await this.userRoleRepository.findUserRoles(
-      userId,
+    const profileRoles = await this.profileRoleRepository.findProfileRoles(
+      userProfileId,
       centerId,
     );
-    return userRoles.map((userRole) => userRole.roleId);
+    return profileRoles.map((profileRole) => profileRole.roleId);
   }
   // user access methods
   async findUserAccess(data: UserAccessDto): Promise<UserAccess | null> {
@@ -208,12 +197,12 @@ export class AccessControlHelperService {
   }
 
   async canUserAccess(data: UserAccessDto): Promise<boolean> {
-    const { granterUserId, targetUserId, centerId } = data;
-    if (granterUserId === targetUserId) {
+    const { granterUserProfileId, targetUserProfileId, centerId } = data;
+    if (granterUserProfileId === targetUserProfileId) {
       return true;
     }
     const bypassUserAccess = await this.bypassCenterInternalAccess(
-      granterUserId,
+      granterUserProfileId,
       centerId,
     );
     if (bypassUserAccess) {
@@ -235,8 +224,8 @@ export class AccessControlHelperService {
   // center access methods
 
   async canCenterAccess(data: CenterAccessDto): Promise<boolean> {
-    const { userId } = data;
-    const isSuperAdmin = await this.isSuperAdmin(userId);
+    const { userProfileId } = data;
+    const isSuperAdmin = await this.isSuperAdmin(userProfileId);
     if (isSuperAdmin) {
       return true;
     }
@@ -261,7 +250,7 @@ export class AccessControlHelperService {
 
   async canBranchAccess(data: BranchAccessDto): Promise<boolean> {
     const bypassBranchAccess = await this.bypassCenterInternalAccess(
-      data.userId,
+      data.userProfileId,
       data.centerId,
     );
     if (bypassBranchAccess) {
@@ -278,42 +267,41 @@ export class AccessControlHelperService {
     }
   }
 
-  async isSuperAdmin(userId: string) {
-    return this.userRoleRepository.isSuperAdmin(userId);
+  async isSuperAdmin(userProfileId: string) {
+    return this.profileRoleRepository.isSuperAdmin(userProfileId);
   }
 
-  async isCenterOwner(userId: string, centerId: string) {
-    return this.userRoleRepository.isCenterOwner(userId, centerId);
+  async isCenterOwner(userProfileId: string, centerId: string) {
+    return this.profileRoleRepository.isCenterOwner(userProfileId, centerId);
   }
 
-  async hasAdminRole(userId: string) {
-    return this.userRoleRepository.hasAdminRole(userId);
+  async hasAdminRole(userProfileId: string) {
+    return this.profileRoleRepository.hasAdminRole(userProfileId);
   }
 
-  async hasUserRole(userId: string) {
-    return this.userRoleRepository.hasUserRole(userId);
+  async hasUserRole(userProfileId: string) {
+    return this.profileRoleRepository.hasUserRole(userProfileId);
   }
 
   async bypassCenterInternalAccess(
-    userId: string,
+    userProfileId: string,
     centerId?: string,
   ): Promise<boolean> {
-    const isSuperAdmin = await this.isSuperAdmin(userId);
+    const isSuperAdmin = await this.isSuperAdmin(userProfileId);
     if (isSuperAdmin) {
       return true;
     }
     if (centerId) {
-      const isCenterOwner = await this.isCenterOwner(userId, centerId);
+      const isCenterOwner = await this.isCenterOwner(userProfileId, centerId);
       if (isCenterOwner) {
         return true;
       }
       const centerAccess = await this.centerAccessRepository.findCenterAccess({
-        userId,
+        userProfileId,
         centerId,
-        profileType: ProfileType.STAFF,
       });
       if (centerAccess) {
-        const haveAdminRole = await this.hasAdminRole(userId);
+        const haveAdminRole = await this.hasAdminRole(userProfileId);
         if (haveAdminRole) {
           return true;
         }

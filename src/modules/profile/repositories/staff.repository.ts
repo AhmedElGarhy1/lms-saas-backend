@@ -9,7 +9,7 @@ import { LoggerService } from '@/shared/services/logger.service';
 export class StaffRepository extends BaseRepository<Staff> {
   constructor(
     @InjectRepository(Staff)
-    private readonly staffRepository: Repository<Staff>,
+    readonly staffRepository: Repository<Staff>,
     protected readonly logger: LoggerService,
   ) {
     super(staffRepository, logger);

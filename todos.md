@@ -35,6 +35,8 @@
 [x] all dialogs close buttons and on success
 [x] fix user manage access in global scope (it work only on center scope)
 [x] user manage access (it should be user access, center access)
+[x] multi profile continue admins
+[ ] multi profile user list in center issue
 [ ] implement access all resources permission
 [ ] implement center access activation for center users
 [ ] implement center access delete (delete user in center)

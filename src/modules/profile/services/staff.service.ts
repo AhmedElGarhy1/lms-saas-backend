@@ -14,6 +14,16 @@ export class StaffService {
     private readonly logger: LoggerService,
   ) {}
 
+  async findStaffByProfileId(userProfileId: string): Promise<Staff | null> {
+    // Find staff by userProfileId through userProfile relationship
+    const userProfile = await this.userProfileService.findOne(userProfileId);
+    if (!userProfile) {
+      return null;
+    }
+
+    return this.staffRepository.findOne(userProfileId);
+  }
+
   async createStaffRecord(staffData: Partial<Staff> = {}): Promise<Staff> {
     const savedStaff = await this.staffRepository.createAndSave(staffData);
 
@@ -85,5 +95,28 @@ export class StaffService {
     this.logger.log(`Staff deleted: ${staffId}`, 'StaffService', {
       staffId,
     });
+  }
+
+  // Profile-specific creation methods
+  async createStaff(userId: string): Promise<Staff> {
+    return this.createStaffForUser(userId);
+  }
+
+  async createTeacher(userId: string): Promise<Staff> {
+    // For now, teachers are also staff records
+    // In the future, this will create a Teacher entity
+    return this.createStaffForUser(userId);
+  }
+
+  async createAdmin(userId: string): Promise<Staff> {
+    // For now, admins are also staff records
+    // In the future, this will create an Admin entity
+    return this.createStaffForUser(userId);
+  }
+
+  async createStudent(userId: string): Promise<Staff> {
+    // For now, students are also staff records
+    // In the future, this will create a Student entity
+    return this.createStaffForUser(userId);
   }
 }

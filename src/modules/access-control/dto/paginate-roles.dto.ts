@@ -3,19 +3,19 @@ import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { User } from '@/modules/user/entities/user.entity';
+import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 
 export class PaginateRolesDto extends BasePaginationDto {
   @ApiPropertyOptional({
-    description: 'Filter by user accessible',
+    description: 'Filter by user profile accessible',
     type: String,
   })
   @IsOptional()
   @IsString()
   @IsUUID()
-  @Exists(User)
-  userId?: string;
+  @Exists(UserProfile)
+  userProfileId?: string;
 
   @ApiPropertyOptional({
     description: 'Filter by center accessible',

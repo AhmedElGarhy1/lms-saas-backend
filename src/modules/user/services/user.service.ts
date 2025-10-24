@@ -15,13 +15,17 @@ import { StaffService } from '@/modules/profile/services/staff.service';
 import { UserProfileService } from '@/modules/profile/services/user-profile.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { CreateUserDto, CreateUserWithRoleDto } from '../dto/create-user.dto';
+import { CreateStaffDto } from '../dto/create-staff.dto';
+import { CreateTeacherDto } from '../dto/create-teacher.dto';
+import { CreateAdminDto } from '../dto/create-admin.dto';
+import { CreateStudentDto } from '../dto/create-student.dto';
 import {
   ChangePasswordParams,
   UserServiceResponse,
 } from '../interfaces/user-service.interface';
 import { User } from '../entities/user.entity';
 import { CentersService } from '@/modules/centers/services/centers.service';
-import { UserRole } from '@/modules/access-control/entities/user-role.entity';
+import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
@@ -130,40 +134,191 @@ export class UserService {
   }
 
   @Transactional()
+  // TODO: implement this method
   async createUserWithRole(dto: CreateUserWithRoleDto, actor: ActorUser) {
     const centerId = (dto.centerId ?? actor.centerId)!;
     dto.centerId = centerId;
     const user = await this.createUser(dto, actor);
-    if (actor.centerId) {
+
+    // Create user profile for the new user
+    const userProfile = await this.userProfileService.createUserProfile(
+      user.id,
+      ProfileType.STAFF, // Default to Staff for center users
+      user.id, // Use user.id as profileRefId for now
+    );
+
+    // Grant center access to the new user
+    if (centerId) {
       await this.accessControlService.grantCenterAccess(
         {
-          userId: user.id,
+          userProfileId: userProfile.id,
           centerId,
-          profileType: ProfileType.STAFF,
         },
         actor,
       );
     }
 
+    // Grant user access (granter can manage the new user)
     const bypassUserAccess =
       await this.accessControlHelperService.bypassCenterInternalAccess(
-        actor.id,
+        actor.userProfileId,
         centerId,
       );
     if (!bypassUserAccess) {
       await this.accessControlService.grantUserAccess({
-        granterUserId: actor.id,
-        targetUserId: user.id,
+        granterUserProfileId: actor.userProfileId,
+        targetUserProfileId: userProfile.id,
         centerId,
       });
     }
 
+    // Assign role to the new user
     await this.rolesService.assignRole({
-      userId: user.id,
+      userProfileId: userProfile.id,
       roleId: dto.roleId,
       centerId,
     });
+
     return user;
+  }
+
+  @Transactional()
+  async createStaff(dto: CreateStaffDto, actor: ActorUser) {
+    const centerId = (dto.centerId ?? actor.centerId)!;
+    dto.centerId = centerId;
+    const user = await this.createUser(dto, actor);
+
+    // Create staff profile
+    const staffProfile = await this.staffService.createStaff(user.id);
+    const userProfile = await this.userProfileService.createUserProfile(
+      user.id,
+      ProfileType.STAFF,
+      staffProfile.id,
+    );
+
+    // Apply access controls
+    await this.applyUserAccessControls(
+      userProfile,
+      actor,
+      centerId,
+      dto.roleId,
+    );
+
+    return user;
+  }
+
+  @Transactional()
+  async createTeacher(dto: CreateTeacherDto, actor: ActorUser) {
+    const centerId = (dto.centerId ?? actor.centerId)!;
+    dto.centerId = centerId;
+    const user = await this.createUser(dto, actor);
+
+    // Create teacher profile
+    const teacherProfile = await this.staffService.createTeacher(user.id);
+    const userProfile = await this.userProfileService.createUserProfile(
+      user.id,
+      ProfileType.TEACHER,
+      teacherProfile.id,
+    );
+
+    // Apply access controls
+    await this.applyUserAccessControls(
+      userProfile,
+      actor,
+      centerId,
+      dto.roleId,
+    );
+
+    return user;
+  }
+
+  @Transactional()
+  async createAdmin(dto: CreateAdminDto, actor: ActorUser) {
+    const centerId = (dto.centerId ?? actor.centerId)!;
+    dto.centerId = centerId;
+    const user = await this.createUser(dto, actor);
+
+    // Create admin profile
+    const adminProfile = await this.staffService.createAdmin(user.id);
+    const userProfile = await this.userProfileService.createUserProfile(
+      user.id,
+      ProfileType.ADMIN,
+      adminProfile.id,
+    );
+
+    // Apply access controls
+    await this.applyUserAccessControls(
+      userProfile,
+      actor,
+      centerId,
+      dto.roleId,
+    );
+
+    return user;
+  }
+
+  @Transactional()
+  async createStudent(dto: CreateStudentDto, actor: ActorUser) {
+    const centerId = (dto.centerId ?? actor.centerId)!;
+    dto.centerId = centerId;
+    const user = await this.createUser(dto, actor);
+
+    // Create student profile
+    const studentProfile = await this.staffService.createStudent(user.id);
+    const userProfile = await this.userProfileService.createUserProfile(
+      user.id,
+      ProfileType.STUDENT,
+      studentProfile.id,
+    );
+
+    // Apply access controls
+    await this.applyUserAccessControls(
+      userProfile,
+      actor,
+      centerId,
+      dto.roleId,
+    );
+
+    return user;
+  }
+
+  private async applyUserAccessControls(
+    userProfile: any,
+    actor: ActorUser,
+    centerId: string,
+    roleId: string,
+  ) {
+    // Grant center access to the new user
+    if (centerId) {
+      await this.accessControlService.grantCenterAccess(
+        {
+          userProfileId: userProfile.id,
+          centerId,
+        },
+        actor,
+      );
+    }
+
+    // Grant user access (granter can manage the new user)
+    const bypassUserAccess =
+      await this.accessControlHelperService.bypassCenterInternalAccess(
+        actor.userProfileId,
+        centerId,
+      );
+    if (!bypassUserAccess) {
+      await this.accessControlService.grantUserAccess({
+        granterUserProfileId: actor.userProfileId,
+        targetUserProfileId: userProfile.id,
+        centerId,
+      });
+    }
+
+    // Assign role to the new user
+    await this.rolesService.assignRole({
+      userProfileId: userProfile.id,
+      roleId,
+      centerId,
+    });
   }
 
   async paginateUsers(params: PaginateUsersDto, actor: ActorUser) {
@@ -171,18 +326,31 @@ export class UserService {
     params.centerId = centerId;
 
     await this.accessControlHelperService.validateAdminAndCenterAccess({
-      userId: actor.id,
+      userProfileId: actor.userProfileId,
       centerId,
-      profileType: actor.profileType,
     });
 
-    const result = await this.userRepository.paginateUsers(params, actor.id);
+    const result = await this.userRepository.paginateStaff(params, actor);
+
+    return result;
+  }
+
+  async paginateStaff(params: PaginateUsersDto, actor: ActorUser) {
+    const centerId = params.centerId ?? actor.centerId;
+    params.centerId = centerId;
+
+    await this.accessControlHelperService.validateAdminAndCenterAccess({
+      userProfileId: actor.userProfileId,
+      centerId,
+    });
+
+    const result = await this.userRepository.paginateStaff(params, actor);
 
     return result;
   }
 
   async paginateAdmins(params: PaginateAdminsDto, actor: ActorUser) {
-    return this.userRepository.paginateAdmins(params, actor.id);
+    return this.userRepository.paginateAdmins(params, actor);
   }
 
   async deleteUser(userId: string, actor: ActorUser): Promise<void> {
@@ -193,14 +361,14 @@ export class UserService {
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
-      actor.id,
+      actor.userProfileId,
     );
     if (!isSuperAdmin) {
       throw new InsufficientPermissionsException('Access denied to this user');
     }
     await this.userRepository.softRemove(userId);
 
-    this.logger.log(`User deleted: ${userId} by ${actor.id}`);
+    this.logger.log(`User deleted: ${userId} by ${actor.userProfileId}`);
   }
 
   async restoreUser(userId: string, actor: ActorUser): Promise<void> {
@@ -211,7 +379,7 @@ export class UserService {
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
-      actor.id,
+      actor.userProfileId,
     );
     if (!isSuperAdmin) {
       throw new InsufficientPermissionsException('Access denied to this user');
@@ -234,15 +402,15 @@ export class UserService {
 
     // Then check if current user can activate/deactivate the target user
     await this.accessControlHelperService.validateUserAccess({
-      granterUserId: actor.id,
-      targetUserId: userId,
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: actor.userProfileId, // Use actor's profileId for validation
     });
 
     // Update global activation status
     await this.userRepository.update(userId, { isActive });
 
     this.logger.log(
-      `User activation status updated: ${userId} to ${isActive} by ${actor.id}`,
+      `User activation status updated: ${userId} to ${isActive} by ${actor.userProfileId}`,
     );
   }
 
@@ -278,116 +446,65 @@ export class UserService {
     return this.userRepository.findOne(id);
   }
 
-  async findUserById(id: string, actor: ActorUser): Promise<User | null> {
+  async findUserByProfileId(
+    userProfileId: string,
+    actor: ActorUser,
+  ): Promise<User | null> {
     await this.accessControlHelperService.validateUserAccess({
-      granterUserId: actor.id,
-      targetUserId: id,
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: userProfileId,
     });
-    return this.userRepository.findOne(id);
-  }
-
-  async findUserProfileById(id: string, actor: ActorUser): Promise<any> {
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserId: actor.id,
-      targetUserId: id,
-    });
-
-    const user = await this.userRepository.findOne(id);
-    if (!user) {
-      throw new ResourceNotFoundException('User not found');
+    // Find user by profileId - need to get user from profile
+    const userProfile = await this.userProfileService.findOne(userProfileId);
+    if (!userProfile) {
+      throw new ResourceNotFoundException('User profile not found');
     }
-
-    // Get user info
-    const userInfo = await this.userInfoService.findUserInfoByUserId(id);
-    if (!userInfo) {
-      throw new ResourceNotFoundException('User info not found');
-    }
-
-    // Get user profiles
-    const userProfiles =
-      await this.userProfileService.findUserProfilesByUserId(id);
-
-    // Build flattened profiles array
-    const profiles = [];
-
-    for (const userProfile of userProfiles) {
-      let profileData = null;
-
-      switch (userProfile.profileType) {
-        case 'Staff':
-          profileData = await this.staffService.findStaffByUserId(id);
-          break;
-        case 'Teacher':
-          // TODO: Implement when TeacherService is available
-          profileData = { id: userProfile.profileRefId };
-          break;
-        case 'Student':
-          // TODO: Implement when StudentService is available
-          profileData = { id: userProfile.profileRefId };
-          break;
-        case 'Parent':
-          // TODO: Implement when ParentService is available
-          profileData = { id: userProfile.profileRefId };
-          break;
-      }
-
-      if (profileData) {
-        profiles.push({
-          type: userProfile.profileType,
-          data: profileData,
-        });
-      }
-    }
-
-    return {
-      id: user.id,
-      email: user.email,
-      phone: user.phone,
-      name: user.name,
-      isActive: user.isActive,
-      twoFactorEnabled: user.twoFactorEnabled,
-      failedLoginAttempts: user.failedLoginAttempts,
-      lockoutUntil: user.lockoutUntil,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      userInfo: {
-        id: userInfo.id,
-        fullName: userInfo.fullName,
-        address: userInfo.address,
-        dateOfBirth: userInfo.dateOfBirth,
-        locale: userInfo.locale,
-        createdAt: userInfo.createdAt,
-        updatedAt: userInfo.updatedAt,
-      },
-      profiles,
-    };
+    return this.userRepository.findOne(userProfile.userId);
   }
 
   async updateFailedLoginAttempts(
-    userId: string,
+    userProfileId: string,
     attempts: number,
   ): Promise<void> {
-    await this.userRepository.updateFailedLoginAttempts(userId, attempts);
+    // Find user by profileId
+    const userProfile = await this.userProfileService.findOne(userProfileId);
+    if (!userProfile) {
+      throw new ResourceNotFoundException('User profile not found');
+    }
+    await this.userRepository.updateFailedLoginAttempts(
+      userProfile.userId,
+      attempts,
+    );
   }
 
   async updateLockoutUntil(
-    userId: string,
+    userProfileId: string,
     lockoutUntil: Date | null,
   ): Promise<void> {
+    // Find user by profileId
+    const userProfile = await this.userProfileService.findOne(userProfileId);
+    if (!userProfile) {
+      throw new ResourceNotFoundException('User profile not found');
+    }
     await this.userRepository.updateFailedLoginAttempts(
-      userId,
+      userProfile.userId,
       0,
       lockoutUntil || undefined,
     );
   }
 
   async updateUserTwoFactor(
-    userId: string,
+    userProfileId: string,
     twoFactorSecret: string | null | undefined,
     twoFactorEnabled: boolean,
   ): Promise<void> {
+    // Find user by profileId
+    const userProfile = await this.userProfileService.findOne(userProfileId);
+    if (!userProfile) {
+      throw new ResourceNotFoundException('User profile not found');
+    }
     await this.userRepository.updateUserTwoFactor(
-      userId,
+      userProfile.userId,
       twoFactorSecret || null,
       twoFactorEnabled,
     );
@@ -404,8 +521,8 @@ export class UserService {
     actor: ActorUser,
   ): Promise<User> {
     await this.accessControlHelperService.validateUserAccess({
-      granterUserId: actor.id,
-      targetUserId: userId,
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: actor.userProfileId,
     });
 
     // Update user using repository

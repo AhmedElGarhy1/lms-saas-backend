@@ -11,7 +11,6 @@ export interface RoleExportData {
   updatedAt: string;
   centerId: string;
   centerName: string;
-  userCount: number;
 }
 
 export class RoleExportMapper implements ExportMapper<Role, RoleExportData> {
@@ -26,7 +25,6 @@ export class RoleExportMapper implements ExportMapper<Role, RoleExportData> {
       updatedAt: role.updatedAt?.toISOString() || '',
       centerId: role.centerId || '',
       centerName: role.center?.name || '',
-      userCount: role.userRoles?.length || 0,
     };
   }
 
@@ -41,7 +39,6 @@ export class RoleExportMapper implements ExportMapper<Role, RoleExportData> {
       'Updated At',
       'Center ID',
       'Center Name',
-      'User Count',
     ];
   }
 }

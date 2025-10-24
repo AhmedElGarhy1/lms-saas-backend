@@ -8,7 +8,7 @@ import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { CreateRoleRequestDto } from '../dto/create-role.dto';
 import { AssignRoleDto } from '../dto/assign-role.dto';
-import { UserRoleRepository } from '../repositories/user-role.repository';
+import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { PermissionScope } from '../constants/permissions';
@@ -18,14 +18,13 @@ export class RolesService {
   constructor(
     private readonly rolesRepository: RolesRepository,
     private readonly accessControlerHelperService: AccessControlHelperService,
-    private readonly userRoleRepository: UserRoleRepository,
+    private readonly profileRoleRepository: ProfileRoleRepository,
   ) {}
 
   async getMyPermissions(actor: ActorUser) {
-    return this.userRoleRepository.getUserPermissions(
-      actor.id,
+    return this.profileRoleRepository.getProfilePermissions(
+      actor.userProfileId,
       actor.centerId,
-      actor.profileId,
     );
   }
 
@@ -33,7 +32,7 @@ export class RolesService {
     const centerId = query.centerId ?? actor.centerId;
     query.centerId = centerId;
 
-    return this.rolesRepository.paginateRoles(query, actor.id);
+    return this.rolesRepository.paginateRoles(query, actor);
   }
 
   async createRole(data: CreateRoleRequestDto, actor: ActorUser) {
@@ -81,8 +80,8 @@ export class RolesService {
     const centerId = data.centerId ?? actor.centerId;
     data.centerId = centerId;
     await this.accessControlerHelperService.validateUserAccess({
-      granterUserId: actor.id,
-      targetUserId: data.userId,
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: data.userProfileId,
       centerId,
     });
 
@@ -90,17 +89,17 @@ export class RolesService {
   }
 
   async assignRole(data: AssignRoleDto) {
-    return this.userRoleRepository.assignUserRole(data);
+    return this.profileRoleRepository.assignProfileRole(data);
   }
 
   async removeUserRole(data: AssignRoleDto) {
-    return this.userRoleRepository.removeUserRole(data);
+    return this.profileRoleRepository.removeProfileRole(data);
   }
 
   async removeUserRoleValidate(data: AssignRoleDto, actor: ActorUser) {
     await this.accessControlerHelperService.validateUserAccess({
-      granterUserId: actor.id,
-      targetUserId: data.userId,
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: data.userProfileId,
       centerId: data.centerId,
     });
 
@@ -111,8 +110,8 @@ export class RolesService {
     return this.rolesRepository.findRolePermissions(roleId);
   }
 
-  async findUserRole(userId: string, centerId?: string) {
-    return this.userRoleRepository.getUserRole(userId, centerId);
+  async findUserRole(userProfileId: string, centerId?: string) {
+    return this.profileRoleRepository.getProfileRole(userProfileId, centerId);
   }
 
   async restoreRole(roleId: string, actor: ActorUser): Promise<void> {
@@ -131,9 +130,8 @@ export class RolesService {
 
     // Check permissions - only allow restore if user has appropriate permissions
     await this.accessControlerHelperService.validateAdminAndCenterAccess({
-      userId: actor.id,
+      userProfileId: actor.userProfileId,
       centerId: role.centerId,
-      profileType: actor.profileType,
     });
 
     // Restore the role
@@ -141,13 +139,13 @@ export class RolesService {
   }
 
   async hasPermission(
-    userId: string,
+    userProfileId: string,
     permission: string,
     scope: PermissionScope,
     centerId?: string,
   ) {
-    return this.userRoleRepository.hasPermission(
-      userId,
+    return this.profileRoleRepository.hasPermission(
+      userProfileId,
       permission,
       scope,
       centerId,

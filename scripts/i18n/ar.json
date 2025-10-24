@@ -84,6 +84,10 @@
       "updateUser": "تحديث المستخدم",
       "deleting": "جاري الحذف...",
       "deleteUser": "حذف المستخدم",
+      "createStaff": "إنشاء موظف",
+      "updateStaff": "تحديث الموظف",
+      "deleteStaff": "حذف الموظف",
+      "restoring": "جاري الاستعادة...",
       "createCenter": "إنشاء مركز",
       "updateCenter": "تحديث المركز",
       "deleteCenter": "حذف المركز",
@@ -426,6 +430,7 @@
       "enterEmailAddress": "أدخل عنوان البريد الإلكتروني",
       "enterPhoneNumber": "أدخل رقم الهاتف",
       "searchUsers": "البحث في المستخدمين...",
+      "searchStaff": "البحث في الموظفين...",
       "searchCenters": "البحث في المراكز...",
       "searchAdmins": "البحث في المدراء...",
       "searchItems": "البحث في {{item}}...",
@@ -509,6 +514,33 @@
       "deactivateAccount": "سيتم إلغاء تفعيل حساب المستخدم",
       "removeData": "سيتم حذف جميع بيانات المستخدم",
       "cannotReverse": "لا يمكن عكس هذا الإجراء"
+    },
+    "createStaff": {
+      "title": "إنشاء موظف",
+      "description": "إنشاء حساب موظف جديد مع الصلاحيات المناسبة"
+    },
+    "editStaff": {
+      "title": "تعديل الموظف",
+      "description": "تحديث معلومات وإعدادات الموظف"
+    },
+    "viewStaff": {
+      "title": "تفاصيل الموظف"
+    },
+    "deleteStaff": {
+      "title": "حذف الموظف",
+      "description": "هل أنت متأكد من حذف {{userName}}؟ سيتم حذف الموظف وجميع البيانات المرتبطة به نهائياً."
+    },
+    "activateStaff": {
+      "title": "تفعيل الموظف",
+      "description": "هل أنت متأكد من تفعيل {{userName}}؟ سيتم استعادة وصوله إلى النظام."
+    },
+    "deactivateStaff": {
+      "title": "إلغاء تفعيل الموظف",
+      "description": "هل أنت متأكد من إلغاء تفعيل {{userName}}؟ سيتم سحب وصوله إلى النظام."
+    },
+    "restoreStaff": {
+      "title": "استعادة الموظف",
+      "description": "هل أنت متأكد من استعادة {{userName}}؟ سيتم إعادة تفعيل حسابه واستعادة وصوله."
     },
     "createRole": {
       "title": "إنشاء دور جديد"
@@ -711,6 +743,7 @@
   "navigation": {
     "dashboard": "لوحة التحكم",
     "users": "المستخدمون",
+    "staff": "الموظفون",
     "admins": "المديرون",
     "centers": "المراكز",
     "branches": "الفروع",
@@ -733,6 +766,10 @@
     "users": {
       "title": "المستخدمون",
       "subtitle": "إدارة مستخدمي النظام"
+    },
+    "staff": {
+      "title": "الموظفون",
+      "subtitle": "إدارة الموظفين وصلاحياتهم"
     },
     "health": {
       "title": "صحة النظام",
@@ -780,6 +817,25 @@
         "themeDescription": "اختر المظهر المفضل لديك",
         "notificationsDescription": "إدارة تفضيلات الإشعارات"
       }
+    },
+    "selectProfile": {
+      "title": "اختر الملف الشخصي",
+      "subtitle": "اختر ملف شخصي للمتابعة",
+      "searchPlaceholder": "البحث في الملفات الشخصية...",
+      "loading": "جاري تحميل الملفات الشخصية...",
+      "searching": "جاري البحث...",
+      "noProfilesFound": "لم يتم العثور على ملفات شخصية تطابق بحثك",
+      "noProfilesAvailable": "لا توجد ملفات شخصية متاحة",
+      "profileSelected": "تم اختيار الملف الشخصي بنجاح",
+      "errorSelecting": "خطأ في اختيار الملف الشخصي",
+      "errorLoading": "خطأ في تحميل الملفات الشخصية"
+    },
+    "unauthorized": {
+      "title": "الوصول مرفوض",
+      "description": "ليس لديك صلاحية للوصول إلى هذا المورد",
+      "message": "يرجى الاتصال بالمدير إذا كنت تعتقد أن هذا خطأ",
+      "goToDashboard": "الذهاب إلى لوحة التحكم",
+      "goBack": "العودة"
     },
     "products": {
       "title": "Products",

@@ -67,7 +67,7 @@ export class CentersService {
     );
 
     await this.rolesService.assignRole({
-      userId: user.id,
+      userProfileId: actor.userProfileId,
       roleId: centerRole.id,
       centerId: center.id,
     });
@@ -75,16 +75,16 @@ export class CentersService {
     return center;
   }
 
-  async paginateCenters(query: PaginateCentersDto, actorId: string) {
-    return await this.centersRepository.paginateCenters(query, actorId);
+  async paginateCenters(query: PaginateCentersDto, actor: ActorUser) {
+    return await this.centersRepository.paginateCenters(query, actor);
   }
 
   async updateCenter(
     centerId: string,
     dto: UpdateCenterRequestDto,
-    userId: string,
+    userProfileId: string,
   ): Promise<Center> {
-    this.logger.info(`Updating center: ${centerId} by user: ${userId}`);
+    this.logger.info(`Updating center: ${centerId} by user profile: ${userProfileId}`);
 
     const center = await this.findCenterById(centerId);
     if (!center) {
@@ -115,8 +115,8 @@ export class CentersService {
     return updatedCenter;
   }
 
-  async deleteCenter(centerId: string, userId: string): Promise<void> {
-    this.logger.info(`Deleting center: ${centerId} by user: ${userId}`);
+  async deleteCenter(centerId: string, userProfileId: string): Promise<void> {
+    this.logger.info(`Deleting center: ${centerId} by user profile: ${userProfileId}`);
 
     const center = await this.findCenterById(centerId);
     // Permission check should be in controller
@@ -124,8 +124,8 @@ export class CentersService {
     await this.centersRepository.softRemove(centerId);
   }
 
-  async restoreCenter(centerId: string, userId: string): Promise<Center> {
-    this.logger.info(`Restoring center: ${centerId} by user: ${userId}`);
+  async restoreCenter(centerId: string, userProfileId: string): Promise<Center> {
+    this.logger.info(`Restoring center: ${centerId} by user profile: ${userProfileId}`);
 
     const center = await this.findCenterById(centerId);
     if (!center) {

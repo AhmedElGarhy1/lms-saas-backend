@@ -1,16 +1,14 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { User } from '@/modules/user/entities/user.entity';
+import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
-import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 @Entity('center_access')
-@Index(['userId', 'centerId', 'profileType'], { unique: true })
+@Index(['userProfileId', 'centerId'], { unique: true })
 @Index(['centerId'])
-@Index(['profileType'])
 export class CenterAccess extends BaseEntity {
   @Column({ type: 'uuid' })
-  userId: string;
+  userProfileId: string;
 
   @Column({ type: 'uuid' })
   centerId: string;
@@ -18,15 +16,12 @@ export class CenterAccess extends BaseEntity {
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
-  @Column({ type: 'enum', enum: ProfileType })
-  profileType: ProfileType;
-
   // Relations
-  @ManyToOne(() => User, (user) => user.centerAccess, {
+  @ManyToOne(() => UserProfile, (userProfile) => userProfile.centerAccess, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'userId' })
-  user: User;
+  @JoinColumn({ name: 'userProfileId' })
+  profile: UserProfile;
 
   @ManyToOne(() => Center, (center) => center.centerAccess, {
     onDelete: 'CASCADE',

@@ -32,7 +32,7 @@ export class BranchesAccessController {
   @Permissions(PERMISSIONS.CENTER.UPDATE)
   async assignUserToBranch(@Body() branchAccessDto: BranchAccessDto) {
     const branchAccess =
-      await this.accessControlService.assignUserToBranch(branchAccessDto);
+      await this.accessControlService.assignProfileToBranch(branchAccessDto);
     // Log activity
     await this.activityLogService.log(ActivityType.USER_ACCESS_GRANTED, {
       branchId: branchAccess.branchId,

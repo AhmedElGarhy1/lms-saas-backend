@@ -3,13 +3,9 @@ import { Exclude } from 'class-transformer';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
-import { UserInfo } from '@/modules/user/entities/user-info.entity';
 import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
-import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
+import { UserInfo } from './user-info.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
-import { UserRole } from '@/modules/access-control/entities/user-role.entity';
-import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
-import { BranchAccess } from '@/modules/access-control/entities/branch-access.entity';
 
 @Entity('users')
 @Index(['email'])
@@ -59,29 +55,14 @@ export class User extends BaseEntity {
   @OneToMany(() => PasswordResetToken, (token) => token.user)
   passwordResetTokens: PasswordResetToken[];
 
-  @OneToOne(() => UserInfo, (userInfo) => userInfo.user, {
-    cascade: true,
-    eager: true,
-  })
-  userInfo: UserInfo;
-
   @OneToMany(() => UserProfile, (userProfile) => userProfile.user, {
     cascade: true,
   })
   userProfiles: UserProfile[];
 
-  @OneToMany(() => UserAccess, (access) => access.target)
-  accessTarget: UserAccess[];
-
-  @OneToMany(() => UserAccess, (access) => access.granter)
-  accessGranter: UserAccess[];
-
-  @OneToMany(() => UserRole, (userRole) => userRole.user)
-  userRoles: UserRole[];
-
-  @OneToMany(() => CenterAccess, (centerAccess) => centerAccess.user)
-  centerAccess: CenterAccess[];
-
-  @OneToMany(() => BranchAccess, (branchAccess) => branchAccess.user)
-  branchAccess: BranchAccess[];
+  @OneToOne(() => UserInfo, (userInfo) => userInfo.user, {
+    cascade: true,
+    eager: true,
+  })
+  userInfo: UserInfo;
 }

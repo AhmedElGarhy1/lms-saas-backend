@@ -14,6 +14,12 @@ export class UserInfoService {
   ) {}
 
   // User info CRUD methods
+  async findUserInfoByUserId(userId: string): Promise<UserInfo | null> {
+    return this.userInfoRepository.findOne({
+      where: { userId },
+    });
+  }
+
   async updateUserInfo(
     userId: string,
     userInfoData: Partial<UserInfo>,
@@ -26,12 +32,6 @@ export class UserInfoService {
     }
 
     await this.userInfoRepository.update(userInfo.id, userInfoData);
-  }
-
-  async findUserInfoByUserId(userId: string): Promise<UserInfo | null> {
-    return this.userInfoRepository.findOne({
-      where: { userId },
-    });
   }
 
   async createUserInfo(

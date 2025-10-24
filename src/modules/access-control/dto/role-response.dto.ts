@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 
 export class RoleResponseDto {
@@ -27,10 +27,10 @@ export class RoleResponseDto {
   centerId?: string;
 
   @ApiProperty({
-    description: 'Whether the role is accessible to the target user',
+    description: 'Whether the role is accessible to the target profile',
   })
   @Expose()
-  isRoleAccessible?: boolean;
+  isProfileAccessible?: boolean;
 
   @ApiProperty({ description: 'Creation date' })
   @Expose()

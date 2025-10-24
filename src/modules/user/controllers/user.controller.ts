@@ -25,9 +25,12 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UserService } from '../services/user.service';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { CreateUserWithRoleDto } from '../dto/create-user.dto';
+import { CreateStaffDto } from '../dto/create-staff.dto';
+import { CreateTeacherDto } from '../dto/create-teacher.dto';
+import { CreateAdminDto } from '../dto/create-admin.dto';
+import { CreateStudentDto } from '../dto/create-student.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
-import { UserProfileResponseDto } from '../dto/user-profile-response.dto';
 import {
   ToggleUserStatusRequestDto,
   ToggleUserStatusResponseDto,
@@ -41,7 +44,6 @@ import { ActivityType } from '@/shared/modules/activity-log/entities/activity-lo
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { PermissionScope } from '@/modules/access-control/constants/permissions';
-import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 
 @ApiTags('Users')
 @Controller('users')
@@ -63,6 +65,17 @@ export class UserController {
     return this.userService.paginateUsers(query, actorUser);
   }
 
+  @Get('staff')
+  @ReadApiResponses('List staff users with pagination and filtering')
+  @SerializeOptions({ type: UserResponseDto })
+  @Permissions(PERMISSIONS.USER.READ, PermissionScope.ADMIN)
+  async paginateStaff(
+    @Query() query: PaginateUsersDto,
+    @GetUser() actorUser: ActorUser,
+  ) {
+    return this.userService.paginateStaff(query, actorUser);
+  }
+
   @Get('admin')
   @ReadApiResponses('List admin users with pagination and filtering')
   @SerializeOptions({ type: UserResponseDto })
@@ -75,7 +88,7 @@ export class UserController {
   }
 
   @Get(':id')
-  @ReadApiResponses('Get user profile by ID')
+  @ReadApiResponses('Get user profile by User ID')
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiQuery({ name: 'centerId', required: false, type: String })
   @Permissions(PERMISSIONS.USER.READ)
@@ -83,7 +96,7 @@ export class UserController {
     @Param('id', ParseUUIDPipe) userId: string,
     @GetUser() actor: ActorUser,
   ) {
-    return this.userService.findUserById(userId, actor);
+    return this.userService.findOne(userId);
   }
 
   @Post()
@@ -106,6 +119,138 @@ export class UserController {
         roleId: dto.roleId,
         centerId: dto.centerId,
         createdBy: actorUser.id,
+      },
+      actorUser,
+    );
+
+    return ControllerResponse.success(
+      user,
+      this.i18n.translate('success.create', {
+        args: { resource: this.i18n.translate('common.resources.user') },
+      }),
+    );
+  }
+
+  @Post('staff')
+  @CreateApiResponses('Create a new staff member')
+  @ApiBody({ type: CreateStaffDto })
+  @Permissions(PERMISSIONS.USER.CREATE)
+  async createStaff(
+    @Body() dto: CreateStaffDto,
+    @GetUser() actorUser: ActorUser,
+  ) {
+    const user = await this.userService.createStaff(dto, actorUser);
+
+    // Log the activity
+    await this.activityLogService.log(
+      ActivityType.USER_CREATED,
+      {
+        targetUserId: user.id,
+        email: user.email,
+        name: user.name,
+        roleId: dto.roleId,
+        centerId: dto.centerId,
+        createdBy: actorUser.id,
+        profileType: 'Staff',
+      },
+      actorUser,
+    );
+
+    return ControllerResponse.success(
+      user,
+      this.i18n.translate('success.create', {
+        args: { resource: this.i18n.translate('common.resources.user') },
+      }),
+    );
+  }
+
+  @Post('teacher')
+  @CreateApiResponses('Create a new teacher')
+  @ApiBody({ type: CreateTeacherDto })
+  @Permissions(PERMISSIONS.USER.CREATE)
+  async createTeacher(
+    @Body() dto: CreateTeacherDto,
+    @GetUser() actorUser: ActorUser,
+  ) {
+    const user = await this.userService.createTeacher(dto, actorUser);
+
+    // Log the activity
+    await this.activityLogService.log(
+      ActivityType.USER_CREATED,
+      {
+        targetUserId: user.id,
+        email: user.email,
+        name: user.name,
+        roleId: dto.roleId,
+        centerId: dto.centerId,
+        createdBy: actorUser.id,
+        profileType: 'Teacher',
+      },
+      actorUser,
+    );
+
+    return ControllerResponse.success(
+      user,
+      this.i18n.translate('success.create', {
+        args: { resource: this.i18n.translate('common.resources.user') },
+      }),
+    );
+  }
+
+  @Post('admin')
+  @CreateApiResponses('Create a new admin')
+  @ApiBody({ type: CreateAdminDto })
+  @Permissions(PERMISSIONS.USER.CREATE)
+  async createAdmin(
+    @Body() dto: CreateAdminDto,
+    @GetUser() actorUser: ActorUser,
+  ) {
+    const user = await this.userService.createAdmin(dto, actorUser);
+
+    // Log the activity
+    await this.activityLogService.log(
+      ActivityType.USER_CREATED,
+      {
+        targetUserId: user.id,
+        email: user.email,
+        name: user.name,
+        roleId: dto.roleId,
+        centerId: dto.centerId,
+        createdBy: actorUser.id,
+        profileType: 'Admin',
+      },
+      actorUser,
+    );
+
+    return ControllerResponse.success(
+      user,
+      this.i18n.translate('success.create', {
+        args: { resource: this.i18n.translate('common.resources.user') },
+      }),
+    );
+  }
+
+  @Post('student')
+  @CreateApiResponses('Create a new student')
+  @ApiBody({ type: CreateStudentDto })
+  @Permissions(PERMISSIONS.USER.CREATE)
+  async createStudent(
+    @Body() dto: CreateStudentDto,
+    @GetUser() actorUser: ActorUser,
+  ) {
+    const user = await this.userService.createStudent(dto, actorUser);
+
+    // Log the activity
+    await this.activityLogService.log(
+      ActivityType.USER_CREATED,
+      {
+        targetUserId: user.id,
+        email: user.email,
+        name: user.name,
+        roleId: dto.roleId,
+        centerId: dto.centerId,
+        createdBy: actorUser.id,
+        profileType: 'Student',
       },
       actorUser,
     );

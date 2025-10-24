@@ -9,14 +9,18 @@ import { StaffRepository } from './repositories/staff.repository';
 import { AdminRepository } from './repositories/admin.repository';
 import { ProfileController } from './controllers/profile.controller';
 import { UserModule } from '../user/user.module';
+import { CentersModule } from '../centers/centers.module';
+import { UserProfileRepository } from './repositories/user-profile.repository';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserProfile, Staff, Admin]),
     forwardRef(() => UserModule),
+    CentersModule,
   ],
   controllers: [ProfileController],
   providers: [
+    UserProfileRepository,
     UserProfileService,
     StaffService,
     StaffRepository,

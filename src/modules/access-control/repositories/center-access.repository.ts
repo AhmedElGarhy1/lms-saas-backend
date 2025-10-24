@@ -43,17 +43,17 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
     return this.centerAccessRepository.remove(existingAccess);
   }
 
-  async getUserCenterAccess(userId: string): Promise<CenterAccess[]> {
+  async getProfileCenterAccess(userProfileId: string): Promise<CenterAccess[]> {
     return this.centerAccessRepository.find({
-      where: { userId },
+      where: { userProfileId },
       relations: ['center'],
     });
   }
 
-  async getCenterUserAccess(centerId: string): Promise<CenterAccess[]> {
+  async getCenterProfileAccess(centerId: string): Promise<CenterAccess[]> {
     return this.centerAccessRepository.find({
       where: { centerId },
-      relations: ['user'],
+      relations: ['profile'],
     });
   }
 }

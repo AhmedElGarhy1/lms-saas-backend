@@ -13,6 +13,7 @@ import { CreateRoleRequestDto } from '../dto/create-role.dto';
 import { RolePermissionRepository } from './role-permission.repository';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { Transactional } from 'typeorm-transactional';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> {
@@ -85,9 +86,9 @@ export class RolesRepository extends BaseRepository<Role> {
 
   async paginateRoles(
     query: PaginateRolesDto,
-    actorId: string,
+    actor: ActorUser,
   ): Promise<Pagination<RoleResponseDto>> {
-    const { centerId, userId } = query;
+    const { centerId, userProfileId } = query;
     const queryBuilder = this.roleRepository.createQueryBuilder('role');
 
     // Apply center filter
@@ -114,15 +115,15 @@ export class RolesRepository extends BaseRepository<Role> {
     );
     let filteredItems: RoleResponseDto[] = result.items;
 
-    if (userId) {
+    if (userProfileId) {
       const accessibleRolesIds =
-        await this.accessControlHelperService.getAccessibleRolesIdsForUser(
-          userId,
+        await this.accessControlHelperService.getAccessibleRolesIdsForProfile(
+          userProfileId,
           centerId,
         );
       filteredItems = filteredItems.map((role) =>
         Object.assign(role, {
-          isUserAccessible: accessibleRolesIds.includes(role.id),
+          isProfileAccessible: accessibleRolesIds.includes(role.id),
         }),
       );
     }

@@ -8,7 +8,6 @@ import { CenterAccessDto } from '../dto/center-access.dto';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { BranchAccessDto } from '../dto/branch-access.dto';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { BranchAccessRepository } from '../repositories/branch-access.repository';
 
 @Injectable()
@@ -37,8 +36,8 @@ export class AccessControlService {
     // Check user already have access
     const IHaveAccessToGranterUser =
       await this.accessControlHelperService.canUserAccess({
-        granterUserId: actor.id,
-        targetUserId: body.granterUserId,
+        granterUserProfileId: actor.userProfileId,
+        targetUserProfileId: body.granterUserProfileId,
         centerId,
       });
 
@@ -50,8 +49,8 @@ export class AccessControlService {
 
     const IHaveAccessToTargetUser =
       await this.accessControlHelperService.canUserAccess({
-        granterUserId: actor.id,
-        targetUserId: body.targetUserId,
+        granterUserProfileId: actor.userProfileId,
+        targetUserProfileId: body.targetUserProfileId,
         centerId,
       });
 
@@ -63,7 +62,9 @@ export class AccessControlService {
 
     // check if target user have height role
     const isGranterSuperAdmin =
-      await this.accessControlHelperService.isSuperAdmin(body.granterUserId);
+      await this.accessControlHelperService.isSuperAdmin(
+        body.granterUserProfileId,
+      );
     if (isGranterSuperAdmin) {
       throw new InsufficientPermissionsException(
         'Granter user is a super admin and can access any user',
@@ -72,8 +73,8 @@ export class AccessControlService {
 
     // Check if access already exists
     const canAccess = await this.accessControlHelperService.canUserAccess({
-      granterUserId: body.granterUserId,
-      targetUserId: body.targetUserId,
+      granterUserProfileId: body.granterUserProfileId,
+      targetUserProfileId: body.targetUserProfileId,
       centerId: body.centerId,
     });
 
@@ -93,8 +94,8 @@ export class AccessControlService {
     // Check user already have access
     const IHaveAccessToGranterUser =
       await this.accessControlHelperService.canUserAccess({
-        granterUserId: actor.id,
-        targetUserId: body.granterUserId,
+        granterUserProfileId: actor.userProfileId,
+        targetUserProfileId: body.granterUserProfileId,
         centerId,
       });
 
@@ -106,8 +107,8 @@ export class AccessControlService {
 
     const IHaveAccessToTargetUser =
       await this.accessControlHelperService.canUserAccess({
-        granterUserId: actor.id,
-        targetUserId: body.targetUserId,
+        granterUserProfileId: actor.userProfileId,
+        targetUserProfileId: body.targetUserProfileId,
         centerId,
       });
 
@@ -132,8 +133,8 @@ export class AccessControlService {
   async grantCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
     // Validate that the granter has permission to grant access
     await this.accessControlHelperService.validateUserAccess({
-      granterUserId: actor.id,
-      targetUserId: dto.userId,
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: dto.userProfileId,
       centerId: dto.centerId,
     });
     return this.centerAccessRepository.grantCenterAccess(dto);
@@ -142,8 +143,8 @@ export class AccessControlService {
   async revokeCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
     // Validate that the granter has permission to revoke access
     await this.accessControlHelperService.validateUserAccess({
-      granterUserId: actor.id,
-      targetUserId: dto.userId,
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: dto.userProfileId,
       centerId: dto.centerId,
     });
 
@@ -152,17 +153,17 @@ export class AccessControlService {
 
   // Additional methods needed by other services
 
-  async getAccessibleUserIds(userId: string): Promise<string[]> {
+  async getAccessibleProfileIds(profileId: string): Promise<string[]> {
     const userAccesses =
-      await this.userAccessRepository.listUserAccesses(userId);
-    return userAccesses.map((access: UserAccess) => access.targetUserId);
+      await this.userAccessRepository.listUserAccesses(profileId);
+    return userAccesses.map((access: UserAccess) => access.targetUserProfileId);
   }
 
-  async assignUserToBranch(data: BranchAccessDto) {
+  async assignProfileToBranch(data: BranchAccessDto) {
     const canAccess =
       await this.accessControlHelperService.canBranchAccess(data);
     if (canAccess) {
-      throw new ConflictException('User already assigned to branch');
+      throw new ConflictException('Profile already assigned to branch');
     }
 
     // Create new assignment

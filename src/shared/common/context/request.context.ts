@@ -10,8 +10,8 @@ export interface IRequestContext {
   userAgent?: string;
   requestId?: string;
   locale?: Locale;
-  profileId?: string;
-  profileType?: ProfileType;
+  userProfileType?: ProfileType;
+  userProfileId?: string;
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<IRequestContext>();

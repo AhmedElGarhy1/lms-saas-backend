@@ -2,7 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Permission } from './entities/permission.entity';
 import { Role } from './entities/role.entity';
-import { UserRole } from './entities/user-role.entity';
+import { ProfileRole } from './entities/profile-role.entity';
 import { RolePermission } from './entities/role-permission.entity';
 import { CenterAccess } from './entities/center-access.entity';
 import { UserAccess } from './entities/user-access.entity';
@@ -16,10 +16,10 @@ import { RolesService } from './services/roles.service';
 import { PermissionRepository } from './repositories/permission.repository';
 import { UserAccessRepository } from './repositories/user-access.repository';
 import { RolesRepository } from './repositories/roles.repository';
-import { UserRoleRepository } from './repositories/user-role.repository';
+import { ProfileRoleRepository } from './repositories/profile-role.repository';
 import { RolePermissionRepository } from './repositories/role-permission.repository';
 import { CenterAccessRepository } from './repositories/center-access.repository';
-import { UserRoleSubscriber } from './subscriber/user-role.subscriber';
+import { ProfileRoleSubscriber } from './subscriber/profile-role.subscriber';
 import { RolePermissionSubscriber } from './subscriber/role-permission.subscriber';
 import { BranchAccess } from './entities/branch-access.entity';
 import { BranchAccessRepository } from './repositories/branch-access.repository';
@@ -30,7 +30,7 @@ import { BranchAccessRepository } from './repositories/branch-access.repository'
     TypeOrmModule.forFeature([
       Permission,
       Role,
-      UserRole,
+      ProfileRole,
       RolePermission,
       CenterAccess,
       UserAccess,
@@ -45,10 +45,10 @@ import { BranchAccessRepository } from './repositories/branch-access.repository'
     RolesService,
     PermissionRepository,
     RolesRepository,
-    UserRoleRepository,
+    ProfileRoleRepository,
     RolePermissionRepository,
     CenterAccessRepository,
-    UserRoleSubscriber,
+    ProfileRoleSubscriber,
     RolePermissionSubscriber,
     UserAccessRepository,
     BranchAccessRepository,

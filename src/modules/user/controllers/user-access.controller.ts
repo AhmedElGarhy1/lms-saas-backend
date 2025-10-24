@@ -38,8 +38,8 @@ export class UserAccessController {
     await this.activityLogService.log(
       ActivityType.USER_ACCESS_GRANTED,
       {
-        targetUserId: dto.targetUserId,
-        grantedBy: actor.id,
+        targetUserProfileId: dto.targetUserProfileId,
+        grantedBy: actor.userProfileId,
         centerId: dto.centerId,
       },
       actor,
@@ -65,8 +65,8 @@ export class UserAccessController {
     await this.activityLogService.log(
       ActivityType.USER_ACCESS_REVOKED,
       {
-        targetUserId: dto.targetUserId,
-        revokedBy: actor.id,
+        targetUserProfileId: dto.targetUserProfileId,
+        revokedBy: actor.userProfileId,
         centerId: dto.centerId,
       },
       actor,

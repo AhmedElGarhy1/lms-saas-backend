@@ -8,7 +8,7 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { UserRole } from './user-role.entity';
+import { ProfileRole } from './profile-role.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { Center } from '@/modules/centers/entities/center.entity';
@@ -39,8 +39,8 @@ export class Role extends BaseEntity {
   readOnly: boolean;
 
   // Relations
-  @OneToMany(() => UserRole, (userRole) => userRole.role)
-  userRoles: UserRole[];
+  @OneToMany(() => ProfileRole, (profileRole) => profileRole.role)
+  profileRoles: ProfileRole[];
 
   @ManyToOne(() => Center, (center) => center.roles, { nullable: true })
   @JoinColumn({ name: 'centerId' })

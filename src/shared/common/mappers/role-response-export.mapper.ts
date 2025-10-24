@@ -9,7 +9,6 @@ export interface RoleResponseExportData {
   createdAt: string;
   updatedAt: string;
   centerId: string;
-  isRoleAccessible: boolean;
   createdBy: string;
   updatedBy: string;
 }
@@ -26,7 +25,6 @@ export class RoleResponseExportMapper
       createdAt: role.createdAt?.toISOString() || '',
       updatedAt: role.updatedAt?.toISOString() || '',
       centerId: role.centerId || '',
-      isRoleAccessible: role.isRoleAccessible || false,
       createdBy: role.createdBy || '',
       updatedBy: role.updatedBy || '',
     };
@@ -41,7 +39,6 @@ export class RoleResponseExportMapper
       'Created At',
       'Updated At',
       'Center ID',
-      'Is Role Accessible',
       'Created By',
       'Updated By',
     ];

@@ -22,6 +22,33 @@
     "removeData": "All user data will be removed",
     "cannotReverse": "This action cannot be reversed"
   },
+  "createStaff": {
+    "title": "Create Staff",
+    "description": "Create a new staff member account with appropriate permissions"
+  },
+  "editStaff": {
+    "title": "Edit Staff",
+    "description": "Update staff member information and settings"
+  },
+  "viewStaff": {
+    "title": "Staff Details"
+  },
+  "deleteStaff": {
+    "title": "Delete Staff",
+    "description": "Are you sure you want to delete {{userName}}? This will permanently remove the staff member and all associated data."
+  },
+  "activateStaff": {
+    "title": "Activate Staff",
+    "description": "Are you sure you want to activate {{userName}}? This will restore their access to the system."
+  },
+  "deactivateStaff": {
+    "title": "Deactivate Staff",
+    "description": "Are you sure you want to deactivate {{userName}}? This will revoke their access to the system."
+  },
+  "restoreStaff": {
+    "title": "Restore Staff",
+    "description": "Are you sure you want to restore {{userName}}? This will reactivate their account and restore their access."
+  },
   "createRole": {
     "title": "Create New Role"
   },

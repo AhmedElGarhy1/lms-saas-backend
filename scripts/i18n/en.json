@@ -84,6 +84,11 @@
       "updateUser": "Update User",
       "deleting": "Deleting...",
       "deleteUser": "Delete User",
+      "createStaff": "Create Staff",
+      "updateStaff": "Update Staff",
+      "deleteStaff": "Delete Staff",
+      "restoring": "Restoring...",
+      "restore": "Restore",
       "createCenter": "Create Center",
       "updateCenter": "Update Center",
       "deleteCenter": "Delete Center",
@@ -420,6 +425,7 @@
       "enterEmailAddress": "Enter email address",
       "enterPhoneNumber": "Enter phone number",
       "searchUsers": "Search users...",
+      "searchStaff": "Search staff...",
       "searchCenters": "Search centers...",
       "searchAdmins": "Search admins...",
       "searchItems": "Search {{item}}...",
@@ -503,6 +509,33 @@
       "deactivateAccount": "User account will be deactivated",
       "removeData": "All user data will be removed",
       "cannotReverse": "This action cannot be reversed"
+    },
+    "createStaff": {
+      "title": "Create Staff",
+      "description": "Create a new staff member account with appropriate permissions"
+    },
+    "editStaff": {
+      "title": "Edit Staff",
+      "description": "Update staff member information and settings"
+    },
+    "viewStaff": {
+      "title": "Staff Details"
+    },
+    "deleteStaff": {
+      "title": "Delete Staff",
+      "description": "Are you sure you want to delete {{userName}}? This will permanently remove the staff member and all associated data."
+    },
+    "activateStaff": {
+      "title": "Activate Staff",
+      "description": "Are you sure you want to activate {{userName}}? This will restore their access to the system."
+    },
+    "deactivateStaff": {
+      "title": "Deactivate Staff",
+      "description": "Are you sure you want to deactivate {{userName}}? This will revoke their access to the system."
+    },
+    "restoreStaff": {
+      "title": "Restore Staff",
+      "description": "Are you sure you want to restore {{userName}}? This will reactivate their account and restore their access."
     },
     "createRole": {
       "title": "Create New Role"
@@ -705,6 +738,7 @@
   "navigation": {
     "dashboard": "Dashboard",
     "users": "Users",
+    "staff": "Staff",
     "admins": "Admins",
     "centers": "Centers",
     "branches": "Branches",
@@ -727,6 +761,10 @@
     "users": {
       "title": "Users",
       "subtitle": "Manage system users"
+    },
+    "staff": {
+      "title": "Staff",
+      "subtitle": "Manage staff members and their permissions"
     },
     "health": {
       "title": "System Health",
@@ -774,6 +812,25 @@
         "themeDescription": "Select your preferred theme",
         "notificationsDescription": "Manage your notification preferences"
       }
+    },
+    "selectProfile": {
+      "title": "Select Profile",
+      "subtitle": "Choose a profile to continue",
+      "searchPlaceholder": "Search profiles...",
+      "loading": "Loading profiles...",
+      "searching": "Searching...",
+      "noProfilesFound": "No profiles found matching your search",
+      "noProfilesAvailable": "No profiles available",
+      "profileSelected": "Profile selected successfully",
+      "errorSelecting": "Error selecting profile",
+      "errorLoading": "Error loading profiles"
+    },
+    "unauthorized": {
+      "title": "Access Denied",
+      "description": "You don't have permission to access this resource",
+      "message": "Please contact your administrator if you believe this is an error",
+      "goToDashboard": "Go to Dashboard",
+      "goBack": "Go Back"
     },
     "products": {
       "title": "Products",
