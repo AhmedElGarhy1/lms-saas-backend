@@ -1,4 +1,5 @@
 import { Controller, Post, Delete, Body } from '@nestjs/common';
+import { Transactional } from '@nestjs-cls/transactional';
 import { ApiTags, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import {
   CreateApiResponses,
@@ -30,6 +31,7 @@ export class RoleAssignController {
   @CreateApiResponses('Assign a role to a user')
   @ApiBody({ type: AssignRoleDto })
   @Permissions(PERMISSIONS.ROLES.ASSIGN)
+  @Transactional()
   async assignRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
     const result = await this.rolesService.assignRoleValidate(dto, user);
     await this.activityLogService.log(ActivityType.ROLE_ASSIGNED, {
@@ -47,6 +49,7 @@ export class RoleAssignController {
   @DeleteApiResponses('Remove a role from a user')
   @ApiBody({ type: AssignRoleDto })
   @Permissions(PERMISSIONS.ROLES.ASSIGN)
+  @Transactional()
   async removeRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
     const result = await this.rolesService.removeUserRoleValidate(dto, user);
     await this.activityLogService.log(ActivityType.ROLE_REMOVED, {

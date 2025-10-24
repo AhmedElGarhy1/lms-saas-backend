@@ -23,6 +23,10 @@ export class AccessControlService {
     await this.userAccessRepository.grantUserAccess(body);
   }
 
+  async grantUserAccessInternal(body: UserAccessDto): Promise<void> {
+    await this.userAccessRepository.grantUserAccess(body);
+  }
+
   async revokeUserAccess(body: UserAccessDto): Promise<void> {
     await this.userAccessRepository.revokeUserAccess(body);
   }
@@ -131,6 +135,10 @@ export class AccessControlService {
   // Center Access Management Methods
 
   async grantCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
+    return this.grantCenterAccessInternal(dto, actor);
+  }
+
+  async grantCenterAccessInternal(dto: CenterAccessDto, actor: ActorUser) {
     // Validate that the granter has permission to grant access
     await this.accessControlHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,

@@ -18,6 +18,7 @@ import {
 } from '@/shared/common/decorators/api-responses.decorator';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { SerializeOptions, Query } from '@nestjs/common';
+import { Transactional } from '@nestjs-cls/transactional';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 
 import { CentersService } from '../services/centers.service';
@@ -53,6 +54,7 @@ export class CentersController {
   @CreateApiResponses('Create a new center')
   @ApiBody({ type: CreateCenterDto })
   @Permissions(PERMISSIONS.CENTER.CREATE)
+  @Transactional()
   async createCenter(
     @Body() dto: CreateCenterDto,
     @GetUser() actor: ActorUser,

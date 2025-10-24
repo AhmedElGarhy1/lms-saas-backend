@@ -15,7 +15,7 @@ import { RolesService } from '@/modules/access-control/services/roles.service';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { createOwnerRoleData } from '@/modules/access-control/constants/roles';
-import { Transactional } from 'typeorm-transactional';
+import { Transactional } from '@nestjs-cls/transactional';
 
 export interface SeederCenterData {
   name: string;
@@ -43,7 +43,6 @@ export class CentersService {
     return this.centersRepository.findOne(centerId);
   }
 
-  @Transactional()
   async createCenter(dto: CreateCenterDto, actor: ActorUser): Promise<Center> {
     // Create the center first
     const center = await this.centersRepository.create({
@@ -58,7 +57,7 @@ export class CentersService {
     const user = await this.userService.createUser(dto.user, actor);
     const centerRoleData = createOwnerRoleData(center.id);
     // TODO: Add permissions to the role
-    const centerRole = await this.rolesService.createRole(
+    const centerRole = await this.rolesService.createRoleInternal(
       {
         ...centerRoleData,
         rolePermissions: [],
@@ -84,7 +83,9 @@ export class CentersService {
     dto: UpdateCenterRequestDto,
     userProfileId: string,
   ): Promise<Center> {
-    this.logger.info(`Updating center: ${centerId} by user profile: ${userProfileId}`);
+    this.logger.info(
+      `Updating center: ${centerId} by user profile: ${userProfileId}`,
+    );
 
     const center = await this.findCenterById(centerId);
     if (!center) {
@@ -116,7 +117,9 @@ export class CentersService {
   }
 
   async deleteCenter(centerId: string, userProfileId: string): Promise<void> {
-    this.logger.info(`Deleting center: ${centerId} by user profile: ${userProfileId}`);
+    this.logger.info(
+      `Deleting center: ${centerId} by user profile: ${userProfileId}`,
+    );
 
     const center = await this.findCenterById(centerId);
     // Permission check should be in controller
@@ -124,8 +127,13 @@ export class CentersService {
     await this.centersRepository.softRemove(centerId);
   }
 
-  async restoreCenter(centerId: string, userProfileId: string): Promise<Center> {
-    this.logger.info(`Restoring center: ${centerId} by user profile: ${userProfileId}`);
+  async restoreCenter(
+    centerId: string,
+    userProfileId: string,
+  ): Promise<Center> {
+    this.logger.info(
+      `Restoring center: ${centerId} by user profile: ${userProfileId}`,
+    );
 
     const center = await this.findCenterById(centerId);
     if (!center) {

@@ -42,6 +42,7 @@ export class StaffService {
     userId: string,
     staffData: Partial<Staff> = {},
   ): Promise<Staff> {
+    console.log(userId, staffData);
     // Check if user already has staff profile
     const existingStaffProfile =
       await this.userProfileService.findUserProfileByType(
@@ -56,7 +57,7 @@ export class StaffService {
     const staff = await this.createStaffRecord(staffData);
 
     // Create user profile linking to staff
-    await this.userProfileService.createUserProfile(
+    const userProfile = await this.userProfileService.createUserProfile(
       userId,
       ProfileType.STAFF,
       staff.id,
@@ -67,7 +68,7 @@ export class StaffService {
       staffId: staff.id,
     });
 
-    return staff;
+    return userProfile;
   }
 
   async findStaffByUserId(userId: string): Promise<Staff | null> {

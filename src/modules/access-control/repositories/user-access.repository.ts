@@ -1,23 +1,27 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { UserAccess } from '../entities/user-access.entity';
 import { LoggerService } from '../../../shared/services/logger.service';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 
 @Injectable()
 export class UserAccessRepository extends BaseRepository<UserAccess> {
   constructor(
-    @InjectRepository(UserAccess)
-    private readonly userAccessRepository: Repository<UserAccess>,
     protected readonly logger: LoggerService,
+    protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    super(userAccessRepository, logger);
+    super(logger, txHost);
+  }
+
+  protected getEntityClass(): typeof UserAccess {
+    return UserAccess;
   }
 
   async findUserAccess(data: UserAccessDto) {
-    return this.userAccessRepository.findOneBy({
+    return this.getRepository().findOneBy({
       granterUserProfileId: data.granterUserProfileId,
       targetUserProfileId: data.targetUserProfileId,
       ...(data.centerId && { centerId: data.centerId }),
@@ -25,16 +29,16 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
   }
 
   async grantUserAccess(body: UserAccessDto): Promise<void> {
-    const userAccess = this.userAccessRepository.create({
+    const userAccess = this.getRepository().create({
       granterUserProfileId: body.granterUserProfileId,
       targetUserProfileId: body.targetUserProfileId,
       ...(body.centerId && { centerId: body.centerId }),
     });
-    await this.userAccessRepository.save(userAccess);
+    await this.getRepository().save(userAccess);
   }
 
   async revokeUserAccess(body: UserAccessDto): Promise<void> {
-    const userAccess = await this.userAccessRepository.findOne({
+    const userAccess = await this.getRepository().findOne({
       where: {
         granterUserProfileId: body.granterUserProfileId,
         targetUserProfileId: body.targetUserProfileId,
@@ -42,11 +46,11 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
       },
     });
     if (!userAccess) throw new NotFoundException('User access not found');
-    await this.userAccessRepository.remove(userAccess);
+    await this.getRepository().remove(userAccess);
   }
 
   async listUserAccesses(userProfileId: string): Promise<UserAccess[]> {
-    return this.userAccessRepository.find({
+    return this.getRepository().find({
       where: { granterUserProfileId: userProfileId },
     });
   }

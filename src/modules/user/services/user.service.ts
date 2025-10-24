@@ -25,14 +25,13 @@ import {
 } from '../interfaces/user-service.interface';
 import { User } from '../entities/user.entity';
 import { CentersService } from '@/modules/centers/services/centers.service';
-import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
-import { Transactional } from 'typeorm-transactional';
+import { Transactional, Propagation } from '@nestjs-cls/transactional';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Locale } from '@/shared/common/enums/locale.enum';
 
@@ -123,17 +122,12 @@ export class UserService {
       address: dto.address,
       dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
       locale: dto.locale || Locale.AR,
+      userId: savedUser.id,
     });
-
-    // Create staff for user
-    await this.staffService.createStaffForUser(savedUser.id);
-
-    await this.userRepository.update(savedUser.id, savedUser);
 
     return savedUser;
   }
 
-  @Transactional()
   // TODO: implement this method
   async createUserWithRole(dto: CreateUserWithRoleDto, actor: ActorUser) {
     const centerId = (dto.centerId ?? actor.centerId)!;
@@ -149,7 +143,7 @@ export class UserService {
 
     // Grant center access to the new user
     if (centerId) {
-      await this.accessControlService.grantCenterAccess(
+      await this.accessControlService.grantCenterAccessInternal(
         {
           userProfileId: userProfile.id,
           centerId,
@@ -165,7 +159,7 @@ export class UserService {
         centerId,
       );
     if (!bypassUserAccess) {
-      await this.accessControlService.grantUserAccess({
+      await this.accessControlService.grantUserAccessInternal({
         granterUserProfileId: actor.userProfileId,
         targetUserProfileId: userProfile.id,
         centerId,
@@ -182,19 +176,13 @@ export class UserService {
     return user;
   }
 
-  @Transactional()
   async createStaff(dto: CreateStaffDto, actor: ActorUser) {
     const centerId = (dto.centerId ?? actor.centerId)!;
     dto.centerId = centerId;
     const user = await this.createUser(dto, actor);
 
     // Create staff profile
-    const staffProfile = await this.staffService.createStaff(user.id);
-    const userProfile = await this.userProfileService.createUserProfile(
-      user.id,
-      ProfileType.STAFF,
-      staffProfile.id,
-    );
+    const userProfile = await this.staffService.createStaff(user.id);
 
     // Apply access controls
     await this.applyUserAccessControls(
@@ -207,7 +195,6 @@ export class UserService {
     return user;
   }
 
-  @Transactional()
   async createTeacher(dto: CreateTeacherDto, actor: ActorUser) {
     const centerId = (dto.centerId ?? actor.centerId)!;
     dto.centerId = centerId;
@@ -232,7 +219,6 @@ export class UserService {
     return user;
   }
 
-  @Transactional()
   async createAdmin(dto: CreateAdminDto, actor: ActorUser) {
     const centerId = (dto.centerId ?? actor.centerId)!;
     dto.centerId = centerId;
@@ -257,7 +243,6 @@ export class UserService {
     return user;
   }
 
-  @Transactional()
   async createStudent(dto: CreateStudentDto, actor: ActorUser) {
     const centerId = (dto.centerId ?? actor.centerId)!;
     dto.centerId = centerId;
@@ -290,7 +275,7 @@ export class UserService {
   ) {
     // Grant center access to the new user
     if (centerId) {
-      await this.accessControlService.grantCenterAccess(
+      await this.accessControlService.grantCenterAccessInternal(
         {
           userProfileId: userProfile.id,
           centerId,
@@ -306,7 +291,7 @@ export class UserService {
         centerId,
       );
     if (!bypassUserAccess) {
-      await this.accessControlService.grantUserAccess({
+      await this.accessControlService.grantUserAccessInternal({
         granterUserProfileId: actor.userProfileId,
         targetUserProfileId: userProfile.id,
         centerId,
@@ -514,7 +499,6 @@ export class UserService {
     await this.userRepository.update(userId, updateData);
   }
 
-  @Transactional()
   async updateUser(
     userId: string,
     updateData: UpdateUserDto,

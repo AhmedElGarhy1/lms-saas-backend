@@ -12,6 +12,7 @@ import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { PermissionScope } from '../constants/permissions';
+import { Transactional } from '@nestjs-cls/transactional';
 
 @Injectable()
 export class RolesService {
@@ -36,6 +37,10 @@ export class RolesService {
   }
 
   async createRole(data: CreateRoleRequestDto, actor: ActorUser) {
+    return this.createRoleInternal(data, actor);
+  }
+
+  async createRoleInternal(data: CreateRoleRequestDto, actor: ActorUser) {
     const centerId = data.centerId ?? actor.centerId;
     data.centerId = centerId;
     if (centerId) {

@@ -6,42 +6,25 @@ import * as fs from 'fs';
 import { useContainer } from 'class-validator';
 import { UserMiddleware } from './shared/common/middleware/user.middleware';
 import { UserService } from './modules/user/services/user.service';
-import {
-  initializeTransactionalContext,
-  addTransactionalDataSource,
-} from 'typeorm-transactional';
 import { TransactionPerformanceInterceptor } from './modules/health';
-import { DataSource } from 'typeorm';
 
 async function bootstrap() {
-  initializeTransactionalContext();
-
   const app = await NestFactory.create(AppModule);
 
-  // Get the data source and add it to transactional context
-  const dataSource = app.get(DataSource);
-  addTransactionalDataSource(dataSource);
-
-  // Add performance monitoring interceptor globally
+  // Optional: interceptor to measure performance
   const transactionInterceptor = app.get(TransactionPerformanceInterceptor);
   app.useGlobalInterceptors(transactionInterceptor);
 
-  // attach user to reqeust if only token exist (even if expired)
+  // Attach user middleware
   app.use(
     new UserMiddleware(app.get(UserService)).use.bind(
       new UserMiddleware(app.get(UserService)),
     ),
   );
 
-  // Configure class-validator to use NestJS container
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
-
-  // Use Helmet for secure HTTP headers
   app.use(helmet());
 
-  // Validation is handled by CustomValidationPipe in app.module.ts
-
-  // Enable CORS using NestJS built-in method
   app.enableCors({
     origin: ['http://localhost:3001', 'https://lms-saas-khaki.vercel.app'],
     credentials: true,
@@ -56,7 +39,6 @@ async function bootstrap() {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
-        description: 'Enter your JWT token',
       },
       'JWT-auth',
     )
@@ -70,7 +52,6 @@ async function bootstrap() {
         default: 'ADMIN',
         example: 'ADMIN',
       },
-      description: 'Scope type (ADMIN or CENTER)',
     })
     .addGlobalParameters({
       in: 'header',
@@ -80,15 +61,14 @@ async function bootstrap() {
         type: 'string',
         example: '550e8400-e29b-41d4-a716-446655440000',
       },
-      description: 'Center ID (required if x-scope-type is CENTER)',
     })
     .addServer('http://localhost:3000', 'Development server')
     .addServer('https://api.lms-saas.com', 'Production server')
     .build();
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
-  // Save as JSON in the same directory as this script
   fs.writeFileSync(
     `${__dirname}/openapi.json`,
     JSON.stringify(document, null, 2),
@@ -97,7 +77,7 @@ async function bootstrap() {
   console.log('OpenAPI spec exported to', `${__dirname}/openapi.json`);
 
   await app.listen(3000);
-  console.log(`Application is running on: ${await app.getUrl()}`);
+  console.log(`🚀 App running on: ${await app.getUrl()}`);
 }
 
 void bootstrap();

@@ -11,6 +11,7 @@ import {
   TwoFactorRequest,
 } from '../dto/2fa.dto';
 import { Public } from '@/shared/common/decorators/public.decorator';
+import { Transactional } from '@nestjs-cls/transactional';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiBody } from '@nestjs/swagger';
 import {
@@ -52,6 +53,7 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
   @ReadApiResponses('User login')
   @ApiBody({ type: LoginRequestDto })
+  @Transactional()
   async login(@Body() loginDto: LoginRequestDto) {
     try {
       const result = await this.authService.login(loginDto);
@@ -88,6 +90,7 @@ export class AuthController {
   @Throttle({ default: { limit: 3, ttl: 300000 } }) // 3 attempts per 5 minutes
   @CreateApiResponses('User registration')
   @ApiBody({ type: SignupRequestDto })
+  @Transactional()
   async signup(@Body() signupDto: SignupRequestDto) {
     const result = await this.authService.signup(signupDto);
 
@@ -123,6 +126,7 @@ export class AuthController {
   @Public()
   @UpdateApiResponses('Verify email address')
   @ApiBody({ type: VerifyEmailRequestDto })
+  @Transactional()
   async verifyEmail(@Body() dto: VerifyEmailRequestDto) {
     const result = await this.authService.verifyEmail(dto);
 
@@ -161,6 +165,7 @@ export class AuthController {
   @Public()
   @UpdateApiResponses('Reset password with token')
   @ApiBody({ type: ResetPasswordRequestDto })
+  @Transactional()
   async resetPassword(@Body() dto: ResetPasswordRequestDto) {
     const result = await this.authService.resetPassword(dto);
 
@@ -180,6 +185,7 @@ export class AuthController {
   @Public()
   @CreateApiResponses('Setup two-factor authentication')
   @ApiBody({ type: TwoFASetupRequestDto })
+  @Transactional()
   async setup2FA(
     @Body() dto: TwoFASetupRequestDto,
     @GetUser() actor: ActorUser,
@@ -202,6 +208,7 @@ export class AuthController {
   @Public()
   @UpdateApiResponses('Verify two-factor authentication code')
   @ApiBody({ type: TwoFAVerifyRequestDto })
+  @Transactional()
   async verify2FA(@Body() dto: TwoFactorRequest) {
     try {
       const result = await this.authService.verify2FA(dto);
@@ -235,6 +242,7 @@ export class AuthController {
 
   @Post('logout')
   @UpdateApiResponses('User logout')
+  @Transactional()
   async logout(@GetUser() user: ActorUser) {
     const result = await this.authService.logout(user);
 

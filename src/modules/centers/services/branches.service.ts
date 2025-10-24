@@ -8,6 +8,7 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { Transactional } from '@nestjs-cls/transactional';
 
 @Injectable()
 export class BranchesService {

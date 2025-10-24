@@ -8,7 +8,7 @@ import { MailerService } from '../../../shared/services/mailer.service';
 import { LoggerService } from '../../../shared/services/logger.service';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
-import { Transactional } from 'typeorm-transactional';
+import { Transactional } from '@nestjs-cls/transactional';
 
 export interface CreateEmailVerificationData {
   userId: string;
@@ -75,7 +75,6 @@ export class EmailVerificationService {
     );
   }
 
-  @Transactional()
   async verifyEmail(token: string): Promise<{ userId: string; email: string }> {
     const verification = await this.findEmailVerification(token);
 

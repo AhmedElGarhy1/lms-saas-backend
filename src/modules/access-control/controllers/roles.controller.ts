@@ -12,6 +12,7 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { Transactional } from '@nestjs-cls/transactional';
 import {
   ApiTags,
   ApiParam,
@@ -90,6 +91,7 @@ export class RolesController {
   @CreateApiResponses('Create a new role')
   @ApiBody({ type: CreateRoleRequestDto })
   @Permissions(PERMISSIONS.ROLES.CREATE)
+  @Transactional()
   async createRole(
     @Body() dto: CreateRoleRequestDto,
     @GetUser() actor: ActorUser,
@@ -178,6 +180,7 @@ export class RolesController {
   @DeleteApiResponses('Delete a role')
   @ApiParam({ name: 'roleId', type: String })
   @Permissions(PERMISSIONS.ROLES.DELETE)
+  @Transactional()
   async deleteRole(
     @Param('roleId', ParseUUIDPipe) roleId: string,
     @GetUser() user: ActorUser,
@@ -206,6 +209,7 @@ export class RolesController {
   @UpdateApiResponses('Restore a deleted role')
   @ApiParam({ name: 'roleId', type: String })
   @Permissions(PERMISSIONS.ROLES.RESTORE)
+  @Transactional()
   async restoreRole(
     @Param('roleId', ParseUUIDPipe) roleId: string,
     @GetUser() user: ActorUser,

@@ -7,16 +7,21 @@ import { Pagination } from 'nestjs-typeorm-paginate';
 import { LoggerService } from '../../../../shared/services/logger.service';
 import { PaginateActivityLogsDto } from '../dto/paginate-activity-logs.dto';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 
 @Injectable()
 export class ActivityLogRepository extends BaseRepository<ActivityLog> {
   constructor(
-    @InjectRepository(ActivityLog)
-    private readonly activityLogRepository: Repository<ActivityLog>,
     protected readonly logger: LoggerService,
-    protected readonly accessControlHelperService: AccessControlHelperService,
+    protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    private readonly accessControlHelperService: AccessControlHelperService,
   ) {
-    super(activityLogRepository, logger);
+    super(logger, txHost);
+  }
+
+  protected getEntityClass(): typeof ActivityLog {
+    return ActivityLog;
   }
 
   // Single consolidated pagination method
@@ -27,7 +32,7 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
     const { centerId, userId, type } = query;
 
     // Create queryBuilder with relations
-    const queryBuilder = this.activityLogRepository
+    const queryBuilder = this.getRepository()
       .createQueryBuilder('activityLog')
       .leftJoinAndSelect('activityLog.actor', 'actor')
       .leftJoinAndSelect('activityLog.center', 'center');

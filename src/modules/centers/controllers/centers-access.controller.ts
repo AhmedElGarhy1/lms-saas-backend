@@ -1,4 +1,5 @@
 import { Controller, Post, Body, Delete } from '@nestjs/common';
+import { Transactional } from '@nestjs-cls/transactional';
 import { ApiTags, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
 import {
   CreateApiResponses,
@@ -28,6 +29,7 @@ export class CentersAccessController {
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @ApiBody({ type: CenterAccessDto })
   @Permissions(PERMISSIONS.CENTER.GRANT_ACCESS)
+  @Transactional()
   async grantCenterAccess(
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
@@ -58,6 +60,7 @@ export class CentersAccessController {
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @ApiBody({ type: CenterAccessDto })
   @Permissions(PERMISSIONS.CENTER.GRANT_ACCESS)
+  @Transactional()
   async revokeCenterAccess(
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,

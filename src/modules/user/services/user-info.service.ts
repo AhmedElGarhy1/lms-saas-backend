@@ -1,51 +1,37 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { UserInfo } from '../entities/user-info.entity';
 import { LoggerService } from 'src/shared/services/logger.service';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { Transactional, Propagation } from '@nestjs-cls/transactional';
+import { UserInfoRepository } from '../repositories/user-info.repository';
 
 @Injectable()
 export class UserInfoService {
   constructor(
-    @InjectRepository(UserInfo)
-    private readonly userInfoRepository: Repository<UserInfo>,
     private readonly logger: LoggerService,
+    private readonly userInfoRepository: UserInfoRepository,
   ) {}
 
   // User info CRUD methods
   async findUserInfoByUserId(userId: string): Promise<UserInfo | null> {
-    return this.userInfoRepository.findOne({
-      where: { userId },
-    });
+    return this.userInfoRepository.findUserInfoByUserId(userId);
   }
 
   async updateUserInfo(
     userId: string,
     userInfoData: Partial<UserInfo>,
   ): Promise<void> {
-    const userInfo = await this.userInfoRepository.findOne({
-      where: { userId },
-    });
-    if (!userInfo) {
-      throw new ResourceNotFoundException('User info not found');
-    }
-
-    await this.userInfoRepository.update(userInfo.id, userInfoData);
+    return this.userInfoRepository.updateUserInfo(userId, userInfoData);
   }
 
   async createUserInfo(
     userId: string,
     userInfoData: Partial<UserInfo>,
   ): Promise<UserInfo> {
-    const userInfo = this.userInfoRepository.create({
-      ...userInfoData,
-      userId,
-    });
-    return this.userInfoRepository.save(userInfo);
+    return this.userInfoRepository.createUserInfo(userId, userInfoData);
   }
 
   async deleteUserInfo(userInfoId: string): Promise<void> {
-    await this.userInfoRepository.softDelete(userInfoId);
+    return this.userInfoRepository.deleteUserInfo(userInfoId);
   }
 }

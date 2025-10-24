@@ -118,11 +118,11 @@ import { ProfileGuard } from './shared/common/guards/profile.guard';
     },
     {
       provide: APP_FILTER,
-      useClass: GlobalExceptionFilter,
+      useClass: TypeOrmExceptionFilter,
     },
     {
       provide: APP_FILTER,
-      useClass: TypeOrmExceptionFilter,
+      useClass: GlobalExceptionFilter,
     },
     {
       provide: APP_PIPE,

@@ -18,6 +18,7 @@ import {
   DeleteApiResponses,
 } from '@/shared/common/decorators';
 import { SerializeOptions } from '@nestjs/common';
+import { Transactional } from '@nestjs-cls/transactional';
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
@@ -103,6 +104,7 @@ export class UserController {
   @CreateApiResponses('Create a new user')
   @ApiBody({ type: CreateUserWithRoleDto })
   @Permissions(PERMISSIONS.USER.CREATE)
+  @Transactional()
   async createUser(
     @Body() dto: CreateUserWithRoleDto,
     @GetUser() actorUser: ActorUser,
@@ -135,6 +137,7 @@ export class UserController {
   @CreateApiResponses('Create a new staff member')
   @ApiBody({ type: CreateStaffDto })
   @Permissions(PERMISSIONS.USER.CREATE)
+  @Transactional()
   async createStaff(
     @Body() dto: CreateStaffDto,
     @GetUser() actorUser: ActorUser,
@@ -168,6 +171,7 @@ export class UserController {
   @CreateApiResponses('Create a new teacher')
   @ApiBody({ type: CreateTeacherDto })
   @Permissions(PERMISSIONS.USER.CREATE)
+  @Transactional()
   async createTeacher(
     @Body() dto: CreateTeacherDto,
     @GetUser() actorUser: ActorUser,
@@ -201,6 +205,7 @@ export class UserController {
   @CreateApiResponses('Create a new admin')
   @ApiBody({ type: CreateAdminDto })
   @Permissions(PERMISSIONS.USER.CREATE)
+  @Transactional()
   async createAdmin(
     @Body() dto: CreateAdminDto,
     @GetUser() actorUser: ActorUser,
@@ -234,6 +239,7 @@ export class UserController {
   @CreateApiResponses('Create a new student')
   @ApiBody({ type: CreateStudentDto })
   @Permissions(PERMISSIONS.USER.CREATE)
+  @Transactional()
   async createStudent(
     @Body() dto: CreateStudentDto,
     @GetUser() actorUser: ActorUser,
@@ -268,6 +274,7 @@ export class UserController {
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiBody({ type: UpdateUserDto })
   @Permissions(PERMISSIONS.USER.UPDATE)
+  @Transactional()
   async updateUser(
     @Param('id', ParseUUIDPipe) userId: string,
     @Body() dto: UpdateUserDto,

@@ -1,6 +1,4 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { UserProfile } from '../../profile/entities/user-profile.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { LoggerService } from '@/shared/services/logger.service';
@@ -13,7 +11,6 @@ import { ProfileResponse } from '../interfaces/profile.interface';
 import { UpdateUserDto } from '@/modules/user/dto/update-user.dto';
 import { UserService } from '@/modules/user/services/user.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
 import { Admin } from '../entities/admin.entity';
 import { UserProfileRepository } from '../repositories/user-profile.repository';
 import { CentersService } from '@/modules/centers/services/centers.service';
@@ -141,9 +138,10 @@ export class UserProfileService {
     userId: string,
     profileType: ProfileType,
   ): Promise<UserProfile | null> {
-    return this.userProfileRepository.userProfileRepository.findOne({
-      where: { userId, profileType },
-    });
+    return this.userProfileRepository.findUserProfileByType(
+      userId,
+      profileType,
+    );
   }
 
   async deleteUserProfile(userProfileId: string): Promise<void> {

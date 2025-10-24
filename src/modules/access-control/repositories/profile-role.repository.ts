@@ -15,19 +15,21 @@ import { AssignRoleDto } from '../dto/assign-role.dto';
 import { Permission } from '../entities/permission.entity';
 import { PermissionRepository } from './permission.repository';
 import { PermissionScope } from '../constants/permissions';
-import { Transactional } from 'typeorm-transactional';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 
 @Injectable()
 export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
   constructor(
-    @InjectRepository(ProfileRole)
-    private readonly profileRoleRepository: Repository<ProfileRole>,
-    @InjectRepository(Role)
-    private readonly roleRepository: Repository<Role>,
     protected readonly logger: LoggerService,
     private readonly permissionRepository: PermissionRepository,
+    protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    super(profileRoleRepository, logger);
+    super(logger, txHost);
+  }
+
+  protected getEntityClass(): typeof ProfileRole {
+    return ProfileRole;
   }
 
   async getProfilePermissions(
@@ -54,7 +56,7 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
           scope: PermissionScope.CENTER,
         }));
       }
-      profileRole = await this.profileRoleRepository.findOne({
+      profileRole = await this.getRepository().findOne({
         where: { userProfileId, centerId },
         relations: [
           'role',
@@ -65,7 +67,7 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
     }
 
     if (!profileRole && !centerId) {
-      profileRole = await this.profileRoleRepository.findOne({
+      profileRole = await this.getRepository().findOne({
         where: { userProfileId, centerId: IsNull() },
         relations: [
           'role',
@@ -89,7 +91,7 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
     userProfileId: string,
     centerId?: string,
   ): Promise<ProfileRole[]> {
-    return this.profileRoleRepository.find({
+    return this.getRepository().find({
       where: [
         {
           userProfileId,
@@ -123,7 +125,7 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
     userProfileId: string,
     centerId?: string,
   ): Promise<ProfileRole | null> {
-    return this.profileRoleRepository.findOne({
+    return this.getRepository().findOne({
       where: {
         userProfileId,
         centerId: centerId || IsNull(),
@@ -133,7 +135,7 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
   }
 
   async hasAdminRole(userProfileId: string): Promise<boolean> {
-    const profileRole = await this.profileRoleRepository.findOne({
+    const profileRole = await this.getRepository().findOne({
       where: {
         userProfileId,
         centerId: IsNull(),
@@ -146,14 +148,14 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
   }
 
   async hasUserRole(userProfileId: string): Promise<boolean> {
-    const profileRole = await this.profileRoleRepository.findOne({
+    const profileRole = await this.getRepository().findOne({
       where: { userProfileId, role: { type: RoleType.CENTER } },
     });
     return !!profileRole;
   }
 
   async isSuperAdmin(userProfileId: string): Promise<boolean> {
-    const profileRole = await this.profileRoleRepository.findOne({
+    const profileRole = await this.getRepository().findOne({
       where: {
         userProfileId,
         role: {
@@ -168,7 +170,7 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
     userProfileId: string,
     centerId: string,
   ): Promise<boolean> {
-    const profileRole = await this.profileRoleRepository.findOne({
+    const profileRole = await this.getRepository().findOne({
       where: {
         userProfileId,
         centerId,
@@ -184,20 +186,19 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
     userProfileId: string,
     centerId?: string,
   ): Promise<ProfileRole[]> {
-    return this.profileRoleRepository.find({
+    return this.getRepository().find({
       where: { userProfileId, centerId: centerId || IsNull() },
       relations: ['role'],
     });
   }
 
   async findProfileRolesByRoleId(roleId: string): Promise<ProfileRole[]> {
-    return this.profileRoleRepository.find({
+    return this.getRepository().find({
       where: { roleId },
       relations: ['role', 'userProfile'],
     });
   }
 
-  @Transactional()
   async assignProfileRole(data: AssignRoleDto): Promise<ProfileRole> {
     const existingProfileRole = await this.getProfileRole(
       data.userProfileId,
@@ -208,7 +209,8 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
       await this.removeProfileRole(existingProfileRole, true);
     }
 
-    const role = await this.roleRepository.findOneBy({ id: data.roleId });
+    const roleRepo = this.getEntityManager().getRepository(Role);
+    const role = await roleRepo.findOneBy({ id: data.roleId });
 
     if (!role?.isSameScope(data.centerId)) {
       throw new ForbiddenException(
@@ -216,13 +218,14 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
       );
     }
 
-    const profileRole = this.profileRoleRepository.create({
+    const repo = this.getRepository();
+    const profileRole = repo.create({
       userProfileId: data.userProfileId,
       roleId: data.roleId,
       centerId: data.centerId,
     });
 
-    return this.profileRoleRepository.save(profileRole);
+    return repo.save(profileRole);
   }
 
   async removeProfileRole(
@@ -258,7 +261,7 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
     scope: PermissionScope,
     centerId?: string,
   ) {
-    const profileRole = await this.profileRoleRepository.findOne({
+    const profileRole = await this.getRepository().findOne({
       where: {
         userProfileId,
         ...(centerId && { centerId }),

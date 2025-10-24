@@ -1,24 +1,28 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BranchAccess } from '../entities/branch-access.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { LoggerService } from '@/shared/services/logger.service';
 import { BranchAccessDto } from '../dto/branch-access.dto';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 
 @Injectable()
 export class BranchAccessRepository extends BaseRepository<BranchAccess> {
   constructor(
-    @InjectRepository(BranchAccess)
-    readonly branchAccessRepository: Repository<BranchAccess>,
     protected readonly logger: LoggerService,
+    protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    super(branchAccessRepository, logger);
+    super(logger, txHost);
+  }
+
+  protected getEntityClass(): typeof BranchAccess {
+    return BranchAccess;
   }
 
   findBranchAccess(data: BranchAccessDto): Promise<BranchAccess | null> {
-    return this.branchAccessRepository.findOneBy(data);
+    return this.getRepository().findOneBy(data);
   }
 
   async grantBranchAccess(data: BranchAccessDto) {

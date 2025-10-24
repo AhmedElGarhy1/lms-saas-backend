@@ -47,7 +47,7 @@ This guide covers the comprehensive transaction management system implemented in
 ### **Basic Transaction Usage**
 
 ```typescript
-import { Transactional } from 'typeorm-transactional';
+import { Transactional } from '@nestjs-cls/transactional';
 
 @Injectable()
 export class YourService {
@@ -62,21 +62,32 @@ export class YourService {
 }
 ```
 
-### **Enhanced Transaction with Metrics**
+### **Repository Pattern with Transactions**
+
+With the new `@nestjs-cls/transactional` system, repositories must use the `TransactionHost` pattern:
 
 ```typescript
-import { TransactionalWithMetrics } from '@/shared/common/decorators/transactional-with-metrics.decorator';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { BaseRepository } from '@/shared/common/repositories/base.repository';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 
 @Injectable()
-export class YourService {
-  @TransactionalWithMetrics('user_registration_with_role')
-  async createUserWithRole() {
-    // Automatically tracks performance
-    // Logs slow operations
-    // Provides detailed metrics
-    const user = await this.createUser();
-    const role = await this.assignRole(user.id);
-    return { user, role };
+export class UserRepository extends BaseRepository<User> {
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    protected readonly logger: LoggerService,
+    protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+  ) {
+    super(userRepository, logger, txHost);
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    // getRepository() returns transactional repository when in a transaction
+    return await this.getRepository().findOne({ where: { email } });
   }
 }
 ```
@@ -283,9 +294,30 @@ NEWRELIC_LICENSE_KEY=your_license_key
 
 ## 📚 **Additional Resources**
 
-- [TypeORM Transactional Documentation](https://github.com/odavid/typeorm-transactional-cls-hooked)
+- [@nestjs-cls/transactional Documentation](https://papooch.github.io/nestjs-cls/plugins/available-plugins/transactional/typeorm-adapter)
+- [NestJS CLS Documentation](https://papooch.github.io/nestjs-cls/)
 - [NestJS Performance Best Practices](https://docs.nestjs.com/techniques/performance)
 - [Database Performance Optimization](https://www.postgresql.org/docs/current/performance-tips.html)
+
+## 🔄 **Migration from typeorm-transactional**
+
+The system has been migrated from `typeorm-transactional` to `@nestjs-cls/transactional` for better maintainability and NestJS integration.
+
+### **Key Changes:**
+
+1. **Package**: `typeorm-transactional` → `@nestjs-cls/transactional` + `@nestjs-cls/transactional-adapter-typeorm`
+2. **Bootstrap**: No more `initializeTransactionalContext()` or `addTransactionalDataSource()` in `main.ts`
+3. **Module Setup**: Configured via `ClsModule` with `ClsPluginTransactional` in `DatabaseModule`
+4. **Repository Pattern**: Repositories inject `TransactionHost<TransactionalAdapterTypeOrm>` and use `getRepository()` method
+5. **Import Path**: `import { Transactional } from '@nestjs-cls/transactional'`
+
+### **Benefits:**
+
+- Better integration with NestJS dependency injection
+- No monkey-patching of TypeORM
+- More predictable transaction propagation
+- Active maintenance and support
+- Better TypeScript support
 
 ---
 

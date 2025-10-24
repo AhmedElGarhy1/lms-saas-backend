@@ -1,4 +1,5 @@
 import { Controller, Get, Query, Res } from '@nestjs/common';
+import { Transactional } from '@nestjs-cls/transactional';
 import { Response } from 'express';
 import {
   ApiTags,

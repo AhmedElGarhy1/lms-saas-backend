@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
 import { UserInfo } from '@/modules/user/entities/user-info.entity';
 import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
@@ -13,28 +12,15 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
 import { SeederException } from '@/shared/common/exceptions/custom.exceptions';
-import { Admin } from '@/modules/profile/entities/admin.entity';
 import { RoleType } from '@/shared/common/enums/role-type.enum';
+import { Admin } from '@/modules/profile/entities/admin.entity';
 
 @Injectable()
 export class DatabaseSeeder {
   private readonly logger = new Logger(DatabaseSeeder.name);
 
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(UserInfo)
-    private readonly userInfoRepository: Repository<UserInfo>,
-    @InjectRepository(UserProfile)
-    private readonly userProfileRepository: Repository<UserProfile>,
-    @InjectRepository(Admin)
-    private readonly adminRepository: Repository<Admin>,
-    @InjectRepository(Role)
-    private readonly roleRepository: Repository<Role>,
-    @InjectRepository(Permission)
-    private readonly permissionRepository: Repository<Permission>,
-    @InjectRepository(ProfileRole)
-    private readonly profileRoleRepository: Repository<ProfileRole>,
+    private readonly dataSource: DataSource,
     private readonly activityLogService: ActivityLogService,
   ) {}
 
@@ -83,7 +69,7 @@ export class DatabaseSeeder {
     this.logger.log('Creating system user...');
 
     // Check if system user already exists
-    let systemUser = await this.userRepository.findOne({
+    let systemUser = await this.dataSource.getRepository(User).findOne({
       where: { email: 'system@lms.com' },
     });
 
@@ -95,7 +81,7 @@ export class DatabaseSeeder {
     const hashedPassword = await bcrypt.hash('system123', 10);
 
     // Create system user using raw SQL to avoid circular dependencies
-    systemUser = await this.userRepository.manager.transaction(
+    systemUser = await this.dataSource.transaction(
       async (transactionalEntityManager) => {
         // Generate UUIDs for both user and profile
         const userResult = await transactionalEntityManager.query(
@@ -170,7 +156,7 @@ export class DatabaseSeeder {
     const hashedPassword = await bcrypt.hash('password123', 10);
 
     // Create superadmin user using raw SQL
-    const superAdminUser = await this.userRepository.manager.transaction(
+    const superAdminUser = await this.dataSource.transaction(
       async (transactionalEntityManager) => {
         // Generate UUIDs for both user and profile
         const userResult = await transactionalEntityManager.query(
@@ -243,11 +229,9 @@ export class DatabaseSeeder {
     this.logger.log('Resetting database...');
 
     try {
-      const dataSource = this.userRepository.manager.connection;
-
       // Drop all tables and recreate them
-      await dataSource.dropDatabase();
-      await dataSource.synchronize();
+      await this.dataSource.dropDatabase();
+      await this.dataSource.synchronize();
 
       this.logger.log('Database reset successfully');
     } catch (error) {
@@ -259,16 +243,20 @@ export class DatabaseSeeder {
   private async createPermissions(): Promise<void> {
     this.logger.log('Creating permissions...');
 
-    const permissionEntities = ALL_PERMISSIONS.map((permission) => {
-      return this.permissionRepository.create({
-        name: (permission as any).name,
-        action: (permission as any).action,
-        description: (permission as any).name,
-        scope: (permission as any).scope,
-      });
-    });
+    const permissionEntities = ALL_PERMISSIONS.map((permission) => ({
+      name: (permission as any).name,
+      action: (permission as any).action,
+      description: (permission as any).name,
+      scope: (permission as any).scope,
+    }));
 
-    await this.permissionRepository.save(permissionEntities);
+    await this.dataSource
+      .createQueryBuilder()
+      .insert()
+      .into(Permission)
+      .values(permissionEntities)
+      .execute();
+
     this.logger.log(`Created ${permissionEntities.length} permissions`);
   }
 
@@ -285,15 +273,19 @@ export class DatabaseSeeder {
       },
     ];
 
-    const roleEntities = globalRoles.map((role) =>
-      this.roleRepository.create({
-        name: role.name,
-        description: role.description,
-        type: role.type as RoleType,
-        createdBy: role.createdBy,
-      }),
-    );
-    await this.roleRepository.save(roleEntities);
+    const roleEntities = globalRoles.map((role) => ({
+      name: role.name,
+      description: role.description,
+      type: role.type as RoleType,
+      createdBy: role.createdBy,
+    }));
+
+    await this.dataSource
+      .createQueryBuilder()
+      .insert()
+      .into(Role)
+      .values(roleEntities)
+      .execute();
 
     this.logger.log(`Created ${roleEntities.length} global roles`);
   }
@@ -303,50 +295,42 @@ export class DatabaseSeeder {
 
     for (const user of users) {
       // Create both admin and user profile in a single transaction
-      await this.userProfileRepository.manager.transaction(
-        async (transactionalEntityManager) => {
-          // Generate UUIDs for both admin and profile
-          const adminResult = await transactionalEntityManager.query(
-            'SELECT gen_random_uuid() as id',
-          );
-          const profileResult = await transactionalEntityManager.query(
-            'SELECT gen_random_uuid() as id',
-          );
+      await this.dataSource.transaction(async (transactionalEntityManager) => {
+        // Generate UUIDs for both admin and profile
+        const adminResult = await transactionalEntityManager.query(
+          'SELECT gen_random_uuid() as id',
+        );
+        const profileResult = await transactionalEntityManager.query(
+          'SELECT gen_random_uuid() as id',
+        );
 
-          const adminUuid = adminResult[0].id;
-          const profileUuid = profileResult[0].id;
+        const adminUuid = adminResult[0].id;
+        const profileUuid = profileResult[0].id;
 
-          // Temporarily disable foreign key constraints
-          await transactionalEntityManager.query(
-            'SET session_replication_role = replica',
-          );
+        // Temporarily disable foreign key constraints
+        await transactionalEntityManager.query(
+          'SET session_replication_role = replica',
+        );
 
-          // Insert admin record first
-          await transactionalEntityManager.query(
-            `INSERT INTO admins (id, "createdBy", "createdAt", "updatedAt") 
+        // Insert admin record first
+        await transactionalEntityManager.query(
+          `INSERT INTO admins (id, "createdBy", "createdAt", "updatedAt") 
              VALUES ($1, $2, NOW(), NOW())`,
-            [adminUuid, user.createdBy],
-          );
+          [adminUuid, user.createdBy],
+        );
 
-          // Insert user profile linking user to admin
-          await transactionalEntityManager.query(
-            `INSERT INTO user_profiles (id, "userId", "profileType", "profileRefId", "createdBy", "createdAt", "updatedAt") 
+        // Insert user profile linking user to admin
+        await transactionalEntityManager.query(
+          `INSERT INTO user_profiles (id, "userId", "profileType", "profileRefId", "createdBy", "createdAt", "updatedAt") 
            VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
-            [
-              profileUuid,
-              user.id,
-              ProfileType.ADMIN,
-              adminUuid,
-              user.createdBy,
-            ],
-          );
+          [profileUuid, user.id, ProfileType.ADMIN, adminUuid, user.createdBy],
+        );
 
-          // Re-enable foreign key constraints
-          await transactionalEntityManager.query(
-            'SET session_replication_role = DEFAULT',
-          );
-        },
-      );
+        // Re-enable foreign key constraints
+        await transactionalEntityManager.query(
+          'SET session_replication_role = DEFAULT',
+        );
+      });
 
       this.logger.log(`Created staff profile for user: ${user.email}`);
     }
@@ -361,7 +345,7 @@ export class DatabaseSeeder {
     this.logger.log('Assigning roles and permissions...');
 
     // Get all roles
-    const allRoles = await this.roleRepository.find();
+    const allRoles = await this.dataSource.getRepository(Role).find();
 
     // Get Super Administrator role
     const superAdminRole = allRoles.find(
@@ -374,16 +358,17 @@ export class DatabaseSeeder {
 
     // Assign Super Administrator role to system user
     if (systemUser && superAdminRole) {
-      const systemUserProfile = await this.userProfileRepository.findOne({
-        where: { userId: systemUser.id, profileType: ProfileType.ADMIN },
+      const systemUserProfile = await this.dataSource
+        .getRepository(UserProfile)
+        .findOne({
+          where: { userId: systemUser.id, profileType: ProfileType.ADMIN },
+        });
+
+      await this.dataSource.getRepository(ProfileRole).save({
+        userProfileId: systemUserProfile?.id || '',
+        roleId: superAdminRole.id,
+        createdBy,
       });
-      await this.profileRoleRepository.save(
-        this.profileRoleRepository.create({
-          userProfileId: systemUserProfile?.id || '',
-          roleId: superAdminRole.id,
-          createdBy,
-        }),
-      );
       this.logger.log(
         `Assigned Super Administrator role to ${systemUser.email}`,
       );
@@ -391,16 +376,17 @@ export class DatabaseSeeder {
 
     // Assign Super Administrator role to superadmin user
     if (superAdminUser && superAdminRole) {
-      const superAdminProfile = await this.userProfileRepository.findOne({
-        where: { userId: superAdminUser.id, profileType: ProfileType.ADMIN },
+      const superAdminProfile = await this.dataSource
+        .getRepository(UserProfile)
+        .findOne({
+          where: { userId: superAdminUser.id, profileType: ProfileType.ADMIN },
+        });
+
+      await this.dataSource.getRepository(ProfileRole).save({
+        userProfileId: superAdminProfile?.id || '',
+        roleId: superAdminRole.id,
+        createdBy,
       });
-      await this.profileRoleRepository.save(
-        this.profileRoleRepository.create({
-          userProfileId: superAdminProfile?.id || '',
-          roleId: superAdminRole.id,
-          createdBy,
-        }),
-      );
       this.logger.log(
         `Assigned Super Administrator role to ${superAdminUser.email}`,
       );
@@ -420,9 +406,11 @@ export class DatabaseSeeder {
 
     // Log system user creation activity
     if (systemUser) {
-      const systemUserProfile = await this.userProfileRepository.findOne({
-        where: { userId: systemUser.id, profileType: ProfileType.ADMIN },
-      });
+      const systemUserProfile = await this.dataSource
+        .getRepository(UserProfile)
+        .findOne({
+          where: { userId: systemUser.id, profileType: ProfileType.ADMIN },
+        });
 
       await this.activityLogService.log(ActivityType.USER_CREATED, {
         targetProfileId: systemUserProfile?.id,
@@ -435,9 +423,11 @@ export class DatabaseSeeder {
 
     // Log superadmin user creation activity
     if (superAdmin) {
-      const superAdminProfile = await this.userProfileRepository.findOne({
-        where: { userId: superAdmin.id, profileType: ProfileType.ADMIN },
-      });
+      const superAdminProfile = await this.dataSource
+        .getRepository(UserProfile)
+        .findOne({
+          where: { userId: superAdmin.id, profileType: ProfileType.ADMIN },
+        });
 
       await this.activityLogService.log(ActivityType.USER_CREATED, {
         targetProfileId: superAdminProfile?.id,

@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../entities/user.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { LoggerService } from '../../../shared/services/logger.service';
@@ -17,25 +16,30 @@ import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
 import { DefaultRoles } from '@/modules/access-control/constants/roles';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 
 @Injectable()
 export class UserRepository extends BaseRepository<User> {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
     protected readonly logger: LoggerService,
     private readonly accessControlHelperService: AccessControlHelperService,
+    protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    super(userRepository, logger);
+    super(logger, txHost);
+  }
+
+  protected getEntityClass(): typeof User {
+    return User;
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return await this.userRepository.findOne({
+    return await this.getRepository().findOne({
       where: { email },
     });
   }
   async findByEmailWithSensitiveData(email: string): Promise<User | null> {
-    return this.userRepository
+    return this.getRepository()
       .createQueryBuilder('user')
       .addSelect(['user.password', 'user.hashedRt'])
       .where('user.email = :email', { email })
@@ -43,13 +47,13 @@ export class UserRepository extends BaseRepository<User> {
   }
 
   async findByPhone(phone: string): Promise<User | null> {
-    return await this.userRepository.findOne({
+    return await this.getRepository().findOne({
       where: { phone },
     });
   }
 
   async findByPhoneWithSensitiveData(phone: string): Promise<User | null> {
-    return this.userRepository
+    return this.getRepository()
       .createQueryBuilder('user')
       .addSelect(['user.password', 'user.hashedRt'])
       .where('user.phone = :phone', { phone })
@@ -57,7 +61,7 @@ export class UserRepository extends BaseRepository<User> {
   }
 
   async findOneWithSensitiveData(id: string): Promise<User | null> {
-    return this.userRepository
+    return this.getRepository()
       .createQueryBuilder('user')
       .addSelect(['user.password', 'user.hashedRt', 'user.twoFactorSecret'])
       .where('user.id = :id', { id })
@@ -101,7 +105,7 @@ export class UserRepository extends BaseRepository<User> {
       (!branchAccess || branchAccess === AccessibleUsersEnum.INCLUDE);
 
     // Create query builder with proper JOINs
-    const queryBuilder = this.userRepository
+    const queryBuilder = this.getRepository()
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.userProfiles', 'userProfiles')
       .where('userProfiles.profileType = :profileType', {
@@ -282,7 +286,7 @@ export class UserRepository extends BaseRepository<User> {
       centerAccess,
     } = params;
 
-    const queryBuilder = this.userRepository
+    const queryBuilder = this.getRepository()
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.userProfiles', 'userProfiles')
       .where('userProfiles.profileType = :profileType', {
@@ -402,7 +406,7 @@ export class UserRepository extends BaseRepository<User> {
     twoFactorSecret: string | null,
     twoFactorEnabled: boolean,
   ): Promise<void> {
-    await this.userRepository.update(userId, {
+    await this.getRepository().update(userId, {
       twoFactorSecret: twoFactorSecret || undefined,
       twoFactorEnabled,
     });
@@ -419,18 +423,18 @@ export class UserRepository extends BaseRepository<User> {
     if (lockoutUntil) {
       updateData.lockoutUntil = lockoutUntil;
     }
-    await this.userRepository.update(userId, updateData);
+    await this.getRepository().update(userId, updateData);
   }
 
   async resetFailedLoginAttempts(userId: string): Promise<void> {
-    await this.userRepository.update(userId, {
+    await this.getRepository().update(userId, {
       failedLoginAttempts: 0,
       lockoutUntil: undefined,
     });
   }
 
   async clearAllUsers(): Promise<void> {
-    await this.userRepository.createQueryBuilder().delete().execute();
+    await this.getRepository().createQueryBuilder().delete().execute();
   }
 
   private prepareUsersResponse(users: UserResponseDto[]): UserResponseDto[] {

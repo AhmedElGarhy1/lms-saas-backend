@@ -26,6 +26,6 @@ import { UserProfileRepository } from './repositories/user-profile.repository';
     StaffRepository,
     AdminRepository,
   ],
-  exports: [UserProfileService, StaffService],
+  exports: [UserProfileService, StaffService, UserProfileRepository],
 })
 export class ProfileModule {}

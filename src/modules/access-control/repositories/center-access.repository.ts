@@ -5,23 +5,27 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { CenterAccess } from '../entities/center-access.entity';
 import { CenterAccessDto } from '../dto/center-access.dto';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 
 @Injectable()
 export class CenterAccessRepository extends BaseRepository<CenterAccess> {
   constructor(
-    @InjectRepository(CenterAccess)
-    private readonly centerAccessRepository: Repository<CenterAccess>,
     protected readonly logger: LoggerService,
+    protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    super(centerAccessRepository, logger);
+    super(logger, txHost);
+  }
+
+  protected getEntityClass(): typeof CenterAccess {
+    return CenterAccess;
   }
 
   async findCenterAccess(data: CenterAccessDto): Promise<CenterAccess | null> {
-    return this.centerAccessRepository.findOneBy(data);
+    return this.getRepository().findOneBy(data);
   }
 
   async grantCenterAccess(data: CenterAccessDto): Promise<CenterAccess> {
@@ -40,18 +44,18 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
       throw new NotFoundException('Access not found');
     }
 
-    return this.centerAccessRepository.remove(existingAccess);
+    return this.getRepository().remove(existingAccess);
   }
 
   async getProfileCenterAccess(userProfileId: string): Promise<CenterAccess[]> {
-    return this.centerAccessRepository.find({
+    return this.getRepository().find({
       where: { userProfileId },
       relations: ['center'],
     });
   }
 
   async getCenterProfileAccess(centerId: string): Promise<CenterAccess[]> {
-    return this.centerAccessRepository.find({
+    return this.getRepository().find({
       where: { centerId },
       relations: ['profile'],
     });

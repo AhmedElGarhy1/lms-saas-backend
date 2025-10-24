@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Center } from '../entities/center.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
@@ -12,20 +11,25 @@ import { CenterResponseDto } from '../dto/center-response.dto';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 import { AccessibleUsersEnum } from '@/modules/user/dto/paginate-users.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 
 @Injectable()
 export class CentersRepository extends BaseRepository<Center> {
   constructor(
-    @InjectRepository(Center)
-    private readonly centerRepository: Repository<Center>,
     protected readonly logger: LoggerService,
+    protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
     private readonly accessControlHelperService: AccessControlHelperService,
   ) {
-    super(centerRepository, logger);
+    super(logger, txHost);
   }
 
-  findByName(name: string): Promise<Center | null> {
-    return this.centerRepository.findOne({ where: { name } });
+  protected getEntityClass(): typeof Center {
+    return Center;
+  }
+
+  async findByName(name: string): Promise<Center | null> {
+    return this.getRepository().findOne({ where: { name } });
   }
 
   async paginateCenters(
@@ -33,7 +37,7 @@ export class CentersRepository extends BaseRepository<Center> {
     actor: ActorUser,
   ): Promise<Pagination<CenterResponseDto>> {
     const { userProfileId, isActive, centerAccess } = params;
-    const queryBuilder = this.centerRepository.createQueryBuilder('center');
+    const queryBuilder = this.getRepository().createQueryBuilder('center');
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
@@ -113,7 +117,7 @@ export class CentersRepository extends BaseRepository<Center> {
     centerId: string,
     updateData: Partial<Center>,
   ): Promise<Center | null> {
-    await this.centerRepository.update(centerId, updateData);
+    await this.getRepository().update(centerId, updateData);
     return this.findOne(centerId);
   }
 
@@ -121,12 +125,12 @@ export class CentersRepository extends BaseRepository<Center> {
     centerId: string,
     isActive: boolean,
   ): Promise<void> {
-    await this.centerRepository.update(centerId, { isActive });
+    await this.getRepository().update(centerId, { isActive });
   }
 
   // Seeder method
   async clearAllCenters(): Promise<void> {
-    await this.centerRepository.createQueryBuilder().delete().execute();
+    await this.getRepository().createQueryBuilder().delete().execute();
   }
 
   private async applyCenterAccess(

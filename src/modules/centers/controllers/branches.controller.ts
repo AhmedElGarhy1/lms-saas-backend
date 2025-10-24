@@ -13,6 +13,7 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { Transactional } from '@nestjs-cls/transactional';
 import { BranchesService } from '../services/branches.service';
 import { CreateBranchDto } from '../dto/create-branch.dto';
 import { PaginateBranchesDto } from '../dto/paginate-branches.dto';
@@ -70,6 +71,7 @@ export class BranchesController {
     description: 'Invalid input data',
   })
   @Permissions(PERMISSIONS.CENTER.CREATE)
+  @Transactional()
   async createBranch(
     @Body() createBranchDto: CreateBranchDto,
     @GetUser() actor: ActorUser,

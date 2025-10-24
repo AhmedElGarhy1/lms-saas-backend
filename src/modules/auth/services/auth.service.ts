@@ -26,7 +26,7 @@ import { ActivityLogService } from '@/shared/modules/activity-log/services/activ
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
-import { Transactional } from 'typeorm-transactional';
+import { Transactional } from '@nestjs-cls/transactional';
 import { JwtPayload } from '../strategies/jwt.strategy';
 
 @Injectable()
@@ -77,7 +77,6 @@ export class AuthService {
     return user;
   }
 
-  @Transactional()
   async login(dto: LoginRequestDto) {
     const user = await this.validateUser(dto.emailOrPhone, dto.password);
     if (!user) {
@@ -171,7 +170,6 @@ export class AuthService {
     };
   }
 
-  @Transactional()
   async verify2FA(dto: TwoFactorRequest) {
     // Find user by email
     const user = await this.userService.findUserByEmail(dto.email);
@@ -303,7 +301,6 @@ export class AuthService {
     };
   }
 
-  @Transactional()
   async setupTwoFactor(userId: string, actor: ActorUser) {
     const user = await this.userService.findOne(userId, true);
 
@@ -347,7 +344,6 @@ export class AuthService {
     };
   }
 
-  @Transactional()
   async enableTwoFactor(
     userId: string,
     verificationCode: string,
@@ -395,7 +391,6 @@ export class AuthService {
     return { message: 'Two-factor authentication enabled successfully' };
   }
 
-  @Transactional()
   async disableTwoFactor(
     userId: string,
     verificationCode: string,
@@ -435,7 +430,6 @@ export class AuthService {
     return { message: 'Two-factor authentication disabled successfully' };
   }
 
-  @Transactional()
   async logout(actor: ActorUser) {
     // Clear hashed refresh token from database
     await this.userService.update(actor.id, { hashedRt: null });

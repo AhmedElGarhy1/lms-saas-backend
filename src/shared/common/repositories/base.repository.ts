@@ -4,12 +4,14 @@ import {
   ObjectLiteral,
   DeepPartial,
   FindManyOptions,
+  EntityManager,
 } from 'typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Pagination, paginate } from 'nestjs-typeorm-paginate';
 import { LoggerService } from '@/shared/services/logger.service';
 import { BasePaginationDto } from '../dto/base-pagination.dto';
-import { Transactional } from 'typeorm-transactional';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 
 export interface QueryOptions<T> {
   select?: (keyof T)[];
@@ -52,14 +54,40 @@ export interface PaginateOptions<T> {
 @Injectable()
 export abstract class BaseRepository<T extends ObjectLiteral> {
   constructor(
-    protected readonly repository: Repository<T>,
     protected readonly logger: LoggerService,
+    protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {}
+
+  /**
+   * Get the entity class for this repository
+   * Override this method in child repositories to specify the entity class
+   */
+  protected abstract getEntityClass(): new () => T;
+
+  /**
+   * Get the active repository - always from transaction context
+   */
+  protected getRepository(): Repository<T> {
+    return this.txHost.tx.getRepository(this.getEntityClass());
+  }
+
+  /**
+   * Get the active entity manager - always from transaction context
+   */
+  protected getEntityManager(): EntityManager {
+    return this.txHost.tx;
+  }
+
+  /**
+   * Get the active entity manager - public access for external use
+   */
+  public getManager(): EntityManager {
+    return this.txHost.tx;
+  }
 
   /**
    * Bulk insert with progress tracking and error handling
    */
-  @Transactional()
   async bulkInsert(
     entities: Partial<T>[],
     options: BulkOperationOptions = {},
@@ -87,7 +115,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
           error.stack,
           undefined,
           {
-            entity: this.repository.metadata.name,
+            entity: this.getRepository().metadata.name,
             totalProcessed,
             total,
           },
@@ -102,7 +130,6 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   /**
    * Bulk update with progress tracking and error handling
    */
-  @Transactional()
   async bulkUpdate(
     where: any,
     updateData: Partial<T>,
@@ -111,9 +138,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const { batchSize = 100, onProgress } = options;
     let totalProcessed = 0;
     let totalAffected = 0;
+    const repo = this.getRepository();
 
     // First, get all IDs that match the where condition
-    const queryBuilder = this.repository.createQueryBuilder('entity');
+    const queryBuilder = repo.createQueryBuilder('entity');
     this.applyWhereConditions(queryBuilder, where);
     const entities = await queryBuilder.getMany();
     const total = entities.length;
@@ -124,13 +152,13 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
 
       try {
         const batchIds = batch.map((entity) => entity.id);
-        const result = await this.repository.update(batchIds, updateData);
+        const result = await repo.update(batchIds, updateData);
         const affected = result.affected || 0;
         totalAffected += affected;
         totalProcessed += batch.length;
 
         this.logger.debug('Bulk update batch completed', undefined, {
-          entity: this.repository.metadata.name,
+          entity: repo.metadata.name,
           batchNumber,
           batchSize: batch.length,
           affected,
@@ -147,7 +175,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
           error.stack,
           undefined,
           {
-            entity: this.repository.metadata.name,
+            entity: repo.metadata.name,
             batchNumber,
             batchSize: batch.length,
             totalProcessed,
@@ -164,7 +192,6 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   /**
    * Bulk delete with progress tracking and error handling
    */
-  @Transactional()
   async bulkDelete(
     where: any,
     options: BulkOperationOptions = {},
@@ -172,9 +199,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const { batchSize = 100, onProgress } = options;
     let totalProcessed = 0;
     let totalAffected = 0;
+    const repo = this.getRepository();
 
     // First, get all IDs that match the where condition
-    const queryBuilder = this.repository.createQueryBuilder('entity');
+    const queryBuilder = repo.createQueryBuilder('entity');
     this.applyWhereConditions(queryBuilder, where);
     const entities = await queryBuilder.getMany();
     const total = entities.length;
@@ -185,13 +213,13 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
 
       try {
         const batchIds = batch.map((entity) => entity.id);
-        const result = await this.repository.delete(batchIds);
+        const result = await repo.delete(batchIds);
         const affected = result.affected || 0;
         totalAffected += affected;
         totalProcessed += batch.length;
 
         this.logger.debug('Bulk delete batch completed', undefined, {
-          entity: this.repository.metadata.name,
+          entity: repo.metadata.name,
           batchNumber,
           batchSize: batch.length,
           affected,
@@ -208,7 +236,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
           error.stack,
           undefined,
           {
-            entity: this.repository.metadata.name,
+            entity: repo.metadata.name,
             batchNumber,
             batchSize: batch.length,
             totalProcessed,
@@ -227,7 +255,8 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    */
   async countWithOptions(where?: any): Promise<number> {
     const startTime = Date.now();
-    const queryBuilder = this.repository.createQueryBuilder('entity');
+    const repo = this.getRepository();
+    const queryBuilder = repo.createQueryBuilder('entity');
 
     if (where) {
       this.applyWhereConditions(queryBuilder, where);
@@ -237,7 +266,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const duration = Date.now() - startTime;
 
     this.logger.debug('Enhanced count query executed', undefined, {
-      entity: this.repository.metadata.name,
+      entity: repo.metadata.name,
       duration,
       count,
       where: where ? JSON.stringify(where) : 'none',
@@ -251,7 +280,8 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    */
   async existsWithOptions(where: any): Promise<boolean> {
     const startTime = Date.now();
-    const queryBuilder = this.repository.createQueryBuilder('entity');
+    const repo = this.getRepository();
+    const queryBuilder = repo.createQueryBuilder('entity');
 
     this.applyWhereConditions(queryBuilder, where);
     queryBuilder.select('1').limit(1);
@@ -261,7 +291,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const duration = Date.now() - startTime;
 
     this.logger.debug('Enhanced exists query executed', undefined, {
-      entity: this.repository.metadata.name,
+      entity: repo.metadata.name,
       duration,
       exists,
       where: JSON.stringify(where),
@@ -380,51 +410,58 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   }
 
   async create(data: Partial<T>): Promise<T> {
-    const entity = this.repository.create(data as unknown as T);
-    return this.repository.save(entity);
+    const repo = this.getRepository();
+    const entity = repo.create(data as unknown as T);
+    return repo.save(entity);
   }
 
   async findOne(id: string): Promise<T | null> {
-    return this.repository.findOne({ where: { id } as any });
+    return this.getRepository().findOne({ where: { id } as any });
   }
 
   async findOneSoftDeleted(id: string): Promise<T | null> {
-    return this.repository.findOne({ where: { id } as any, withDeleted: true });
+    return this.getRepository().findOne({
+      where: { id } as any,
+      withDeleted: true,
+    });
   }
 
   async findMany(options?: FindManyOptions<T>): Promise<T[]> {
-    return this.repository.find(options);
+    return this.getRepository().find(options);
   }
 
   async findWithRelations(id: string): Promise<T | null> {
-    return this.repository.findOne({ where: { id } as any });
+    return this.getRepository().findOne({ where: { id } as any });
   }
 
   async update(id: string, data: DeepPartial<T>): Promise<T | null> {
-    const entity = await this.repository.findOne({ where: { id } as any });
+    const repo = this.getRepository();
+    const entity = await repo.findOne({ where: { id } as any });
     if (!entity) return null;
 
-    this.repository.merge(entity, data);
+    repo.merge(entity, data);
 
-    return this.repository.save(entity);
+    return repo.save(entity);
   }
 
   async softRemove(id: string): Promise<void> {
-    const entity = await this.repository.findOne({ where: { id } as any });
+    const repo = this.getRepository();
+    const entity = await repo.findOne({ where: { id } as any });
     if (!entity) throw new NotFoundException('Entity not found');
 
-    await this.repository.softRemove(entity);
+    await repo.softRemove(entity);
   }
 
   async remove(id: string): Promise<void> {
-    const entity = await this.repository.findOne({ where: { id } as any });
+    const repo = this.getRepository();
+    const entity = await repo.findOne({ where: { id } as any });
     if (!entity) throw new NotFoundException('Entity not found');
 
-    await this.repository.remove(entity);
+    await repo.remove(entity);
   }
 
   async restore(id: string): Promise<void> {
-    await this.repository.restore(id);
+    await this.getRepository().restore(id);
   }
 
   /**

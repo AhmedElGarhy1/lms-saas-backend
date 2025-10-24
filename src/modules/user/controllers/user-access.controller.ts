@@ -1,4 +1,5 @@
 import { Controller, Post, Body, Delete } from '@nestjs/common';
+import { Transactional } from '@nestjs-cls/transactional';
 import { ApiTags, ApiBody } from '@nestjs/swagger';
 import {
   CreateApiResponses,
@@ -25,6 +26,7 @@ export class UserAccessController {
   @CreateApiResponses('Grant user access to another user')
   @ApiBody({ type: UserAccessDto })
   @Permissions(PERMISSIONS.USER.GRANT_ACCESS)
+  @Transactional()
   async grantUserAccess(
     @Body() dto: UserAccessDto,
     @GetUser() actor: ActorUser,
@@ -52,6 +54,7 @@ export class UserAccessController {
   @DeleteApiResponses('Revoke user access to another user')
   @ApiBody({ type: UserAccessDto })
   @Permissions(PERMISSIONS.USER.GRANT_ACCESS)
+  @Transactional()
   async revokeUserAccess(
     @Body() dto: UserAccessDto,
     @GetUser() actor: ActorUser,

@@ -6,22 +6,27 @@ import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { LoggerService } from '@/shared/services/logger.service';
 import { PaginateBranchesDto } from '../dto/paginate-branches.dto';
 import { Pagination } from 'nestjs-typeorm-paginate';
+import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
+import { TransactionHost } from '@nestjs-cls/transactional';
 
 @Injectable()
 export class BranchesRepository extends BaseRepository<Branch> {
   constructor(
-    @InjectRepository(Branch)
-    private readonly branchRepository: Repository<Branch>,
     protected readonly logger: LoggerService,
+    protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    super(branchRepository, logger);
+    super(logger, txHost);
+  }
+
+  protected getEntityClass(): typeof Branch {
+    return Branch;
   }
 
   async paginateBranches(
     paginateDto: PaginateBranchesDto,
     centerId: string,
   ): Promise<Pagination<Branch>> {
-    const queryBuilder = this.branchRepository
+    const queryBuilder = this.getRepository()
       .createQueryBuilder('branch')
       .leftJoinAndSelect('branch.center', 'center')
       .leftJoinAndSelect('branch.branchAccess', 'branchAccess')

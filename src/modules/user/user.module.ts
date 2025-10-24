@@ -10,6 +10,7 @@ import { UserAccessController } from './controllers/user-access.controller';
 import { UserService } from './services/user.service';
 import { UserInfoService } from './services/user-info.service';
 import { UserRepository } from './repositories/user.repository';
+import { UserInfoRepository } from './repositories/user-info.repository';
 import { ProfileModule } from '../profile/profile.module';
 
 @Module({
@@ -20,7 +21,7 @@ import { ProfileModule } from '../profile/profile.module';
     forwardRef(() => ProfileModule),
   ],
   controllers: [UserActionsController, UserAccessController, UserController],
-  providers: [UserService, UserInfoService, UserRepository],
-  exports: [UserService, UserInfoService, UserRepository],
+  providers: [UserService, UserInfoService, UserRepository, UserInfoRepository],
+  exports: [UserService, UserInfoService, UserRepository, UserInfoRepository],
 })
 export class UserModule {}
