@@ -6,10 +6,6 @@ export class UserInfoResponseDto {
   @Expose()
   id: string;
 
-  @ApiProperty({ description: 'User full name' })
-  @Expose()
-  fullName: string;
-
   @ApiProperty({ description: 'User address', required: false })
   @Expose()
   address?: string;

@@ -15,13 +15,15 @@ import { CentersActionsController } from './controllers/centers-actions.controll
 import { BranchesActionsController } from './controllers/branches-actions.controller';
 import { CentersAccessController } from './controllers/centers-access.controller';
 import { BranchesAccessController } from './controllers/branches-access.controller';
+import { ProfileModule } from '../profile/profile.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Center, Branch]),
     ActivityLogModule,
-    AccessControlModule,
+    forwardRef(() => AccessControlModule),
     forwardRef(() => UserModule),
+    forwardRef(() => ProfileModule),
   ],
   controllers: [
     BranchesAccessController,

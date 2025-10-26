@@ -1,5 +1,14 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  forwardRef,
+} from '@nestjs/common';
+import {
+  BusinessLogicException,
+  InsufficientPermissionsException,
+} from '@/shared/common/exceptions/custom.exceptions';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { UserAccessRepository } from '../repositories/user-access.repository';
@@ -13,6 +22,7 @@ import { BranchAccessRepository } from '../repositories/branch-access.repository
 @Injectable()
 export class AccessControlService {
   constructor(
+    @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly userAccessRepository: UserAccessRepository,
     private readonly centerAccessRepository: CenterAccessRepository,
@@ -83,7 +93,7 @@ export class AccessControlService {
     });
 
     if (canAccess) {
-      throw new InsufficientPermissionsException('User already has access');
+      throw new BusinessLogicException('User already has access');
     }
 
     await this.grantUserAccess(body);
@@ -135,10 +145,6 @@ export class AccessControlService {
   // Center Access Management Methods
 
   async grantCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
-    return this.grantCenterAccessInternal(dto, actor);
-  }
-
-  async grantCenterAccessInternal(dto: CenterAccessDto, actor: ActorUser) {
     // Validate that the granter has permission to grant access
     await this.accessControlHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,

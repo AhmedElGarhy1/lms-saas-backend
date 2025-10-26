@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { forwardRef, Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Permission } from './entities/permission.entity';
 import { Role } from './entities/role.entity';
@@ -23,6 +23,7 @@ import { ProfileRoleSubscriber } from './subscriber/profile-role.subscriber';
 import { RolePermissionSubscriber } from './subscriber/role-permission.subscriber';
 import { BranchAccess } from './entities/branch-access.entity';
 import { BranchAccessRepository } from './repositories/branch-access.repository';
+import { ProfileModule } from '../profile/profile.module';
 
 @Global()
 @Module({
@@ -36,8 +37,9 @@ import { BranchAccessRepository } from './repositories/branch-access.repository'
       UserAccess,
       BranchAccess,
     ]),
+    forwardRef(() => ProfileModule),
   ],
-  controllers: [RolesController, RolesActionsController, RoleAssignController],
+  controllers: [RoleAssignController, RolesActionsController, RolesController],
   providers: [
     AccessControlService,
     AccessControlHelperService,

@@ -12,6 +12,8 @@ import { ControllerResponse } from '@/shared/common/dto/controller-response.dto'
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { LocaleService } from '../services/locale.service';
+import { RequestContext } from '@/shared/common/context/request.context';
+import { Locale } from '@/shared/common/enums/locale.enum';
 
 @ApiBearerAuth()
 @ApiTags('Locale')
@@ -34,8 +36,8 @@ export class LocaleController {
     description: 'Language code (if empty, returns user.locale language)',
     required: false,
   })
-  async getTranslations(@Req() req: Request, @Query('lang') lang?: string) {
-    const translations = await this.localeService.getTranslations(lang, req);
+  getTranslations(@Query('lang') lang?: string) {
+    const translations = this.localeService.getTranslations(lang);
     return ControllerResponse.success(
       translations,
       this.i18n.translate('api.success.dataRetrieved'),
@@ -48,8 +50,8 @@ export class LocaleController {
     status: 200,
     description: 'User locale retrieved successfully',
   })
-  async getUserLocale(@Req() req: Request) {
-    const userLocale = await this.localeService.getUserLocale(req);
+  getUserLocale() {
+    const userLocale = RequestContext.get().locale;
     return ControllerResponse.success(
       userLocale,
       this.i18n.translate('api.success.dataRetrieved'),

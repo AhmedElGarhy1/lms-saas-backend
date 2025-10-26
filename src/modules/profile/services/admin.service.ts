@@ -1,4 +1,4 @@
-import { Inject, forwardRef, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { StaffRepository } from '../repositories/staff.repository';
 import { UserProfileService } from './user-profile.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
@@ -6,41 +6,42 @@ import { LoggerService } from '@/shared/services/logger.service';
 import { Staff } from '../entities/staff.entity';
 import { ValidationFailedException } from '@/shared/common/exceptions/custom.exceptions';
 import { Admin } from '../entities/admin.entity';
+import { AdminRepository } from '../repositories/admin.repository';
 
 @Injectable()
-export class StaffService {
+export class AdminService {
   constructor(
-    private readonly staffRepository: StaffRepository,
-    @Inject(forwardRef(() => UserProfileService))
+    private readonly adminRepository: AdminRepository,
     private readonly userProfileService: UserProfileService,
     private readonly logger: LoggerService,
   ) {}
 
-  async createStaffForUser(userId: string, staffData: Partial<Staff> = {}) {
-    console.log(userId, staffData);
+  async createAdminForUser(userId: string, adminData: Partial<Admin> = {}) {
+    console.log(userId, adminData);
     // Check if user already has staff profile
-    const existingStaffProfile =
+    const existingAdminProfile =
       await this.userProfileService.findUserProfileByType(
         userId,
-        ProfileType.STAFF,
+        ProfileType.ADMIN,
       );
-    if (existingStaffProfile) {
-      throw new ValidationFailedException('User already has a staff profile');
+    if (existingAdminProfile) {
+      throw new ValidationFailedException('User already has a admin profile');
     }
 
-    // Create staff record
-    const staff = await this.staffRepository.create(staffData);
+    const admin = await this.adminRepository.create(adminData);
+    console.log('-----------------ADMIN', admin);
+    console.log('-----------------ADMIN', admin);
 
     // Create user profile linking to staff
     const userProfile = await this.userProfileService.createUserProfile(
       userId,
-      ProfileType.STAFF,
-      staff.id,
+      ProfileType.ADMIN,
+      admin.id,
     );
 
     this.logger.log(`Staff created for user: ${userId}`, 'StaffService', {
       userId,
-      staffId: staff.id,
+      adminId: admin.id,
     });
 
     return userProfile;
@@ -54,6 +55,6 @@ export class StaffService {
     if (!userProfile) {
       return null;
     }
-    return this.staffRepository.findOne(userProfile.profileRefId);
+    return this.adminRepository.findOne(userProfile.profileRefId);
   }
 }

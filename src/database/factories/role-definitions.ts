@@ -1,9 +1,5 @@
-import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { Role } from '@/modules/access-control/entities/role.entity';
-import {
-  ALL_PERMISSIONS,
-  PERMISSIONS,
-} from '@/modules/access-control/constants/permissions';
+import { ALL_PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { faker } from '@faker-js/faker';
 
 // Read-only roles that cannot be changed
@@ -19,7 +15,6 @@ export const READ_ONLY_ROLES = [
 export const SYSTEM_ROLES: Partial<Role>[] = [
   {
     name: 'Parent',
-    type: RoleType.SYSTEM,
     description: 'Parent with access to student information across all centers',
     rolePermissions: [],
     centerId: undefined,
@@ -27,7 +22,6 @@ export const SYSTEM_ROLES: Partial<Role>[] = [
   },
   {
     name: 'Student',
-    type: RoleType.SYSTEM,
     description:
       'Student with basic access to center resources across all centers',
     rolePermissions: [],
@@ -36,7 +30,6 @@ export const SYSTEM_ROLES: Partial<Role>[] = [
   },
   {
     name: 'Teacher',
-    type: RoleType.SYSTEM,
     description:
       'Teacher with educational content management access across all centers',
     rolePermissions: [],
@@ -49,7 +42,6 @@ export const SYSTEM_ROLES: Partial<Role>[] = [
 export const ADMIN_ROLES: Partial<Role>[] = [
   {
     name: 'Super Administrator',
-    type: RoleType.ADMIN,
     description: 'Ultimate system administrator with full access to everything',
     rolePermissions: [], // All permissions
     centerId: undefined,
@@ -57,7 +49,6 @@ export const ADMIN_ROLES: Partial<Role>[] = [
   },
   {
     name: 'Country Manager',
-    type: RoleType.ADMIN,
     description:
       'Country-level manager with administrative access to all centers in the country',
     rolePermissions: [],
@@ -65,21 +56,18 @@ export const ADMIN_ROLES: Partial<Role>[] = [
   },
   {
     name: 'Technical Support',
-    type: RoleType.ADMIN,
     description: 'Technical support staff with system maintenance access',
     rolePermissions: [],
     centerId: undefined,
   },
   {
     name: 'Language Centers Manager',
-    type: RoleType.ADMIN,
     description: 'Manager responsible for all language centers',
     rolePermissions: [],
     centerId: undefined,
   },
   {
     name: 'Academic Centers Manager',
-    type: RoleType.ADMIN,
     description: 'Manager responsible for all academic centers',
     rolePermissions: [],
     centerId: undefined,
@@ -90,7 +78,6 @@ export const ADMIN_ROLES: Partial<Role>[] = [
 export const CENTER_ROLES: Partial<Role>[] = [
   {
     name: 'Owner',
-    type: RoleType.CENTER,
     description: 'Ultimate center owner with full access within the center',
     rolePermissions: [], // Ultimate access - all permissions
     readOnly: true,
@@ -98,42 +85,36 @@ export const CENTER_ROLES: Partial<Role>[] = [
   },
   {
     name: 'Manager',
-    type: RoleType.CENTER,
     description: 'Center manager with management capabilities',
     rolePermissions: [],
     // centerId will be set when creating roles for specific centers
   },
   {
     name: 'Assistant',
-    type: RoleType.CENTER,
     description: 'Center assistant with limited administrative access',
     rolePermissions: [],
     // centerId will be set when creating roles for specific centers
   },
   {
     name: 'Accountant',
-    type: RoleType.CENTER,
     description: 'Center accountant with financial access',
     rolePermissions: [],
     // centerId will be set when creating roles for specific centers
   },
   {
     name: 'Cleaner',
-    type: RoleType.CENTER,
     description: 'Center maintenance staff with basic access',
     rolePermissions: [],
     // centerId will be set when creating roles for specific centers
   },
   {
     name: 'Receptionist',
-    type: RoleType.CENTER,
     description: 'Center receptionist with front desk access',
     rolePermissions: [],
     // centerId will be set when creating roles for specific centers
   },
   {
     name: 'Security Guard',
-    type: RoleType.CENTER,
     description: 'Center security guard with monitoring access',
     rolePermissions: [],
     // centerId will be set when creating roles for specific centers
@@ -169,22 +150,15 @@ export const createRandomRoles = (
   centerIds: string[],
   count: number = 3,
 ): Partial<Role>[] => {
-  const roleTypes = [RoleType.CENTER];
   const randomRoles: Partial<Role>[] = [];
 
   for (let i = 0; i < count; i++) {
     const centerId = faker.helpers.arrayElement(centerIds);
-    const roleType = faker.helpers.arrayElement(roleTypes);
-    const permissions = faker.helpers.arrayElements(
-      ALL_PERMISSIONS.map((p) => p.action),
-      { min: 2, max: 8 },
-    );
 
     const jobTitle = faker.person.jobTitle();
 
     randomRoles.push({
       name: jobTitle.length > 100 ? jobTitle.substring(0, 100) : jobTitle,
-      type: roleType,
       description: faker.lorem.sentence(),
       rolePermissions: [],
       centerId,

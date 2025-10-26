@@ -5,15 +5,19 @@ import {
   UpdateEvent,
 } from 'typeorm';
 import { ProfileRole } from '../entities/profile-role.entity';
-import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { BadRequestException } from '@nestjs/common';
 import { RolesRepository } from '../repositories/roles.repository';
+import { AccessControlHelperService } from '../services/access-control-helper.service';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 @EventSubscriber()
 export class ProfileRoleSubscriber
   implements EntitySubscriberInterface<ProfileRole>
 {
-  constructor(private readonly rolesRepository: RolesRepository) {}
+  constructor(
+    private readonly rolesRepository: RolesRepository,
+    private readonly accessControlHelperService: AccessControlHelperService,
+  ) {}
 
   listenTo() {
     return ProfileRole;
@@ -34,9 +38,13 @@ export class ProfileRoleSubscriber
       const role = await this.rolesRepository.findOne(profileRole.roleId);
       if (!role) throw new BadRequestException('Role not found');
 
-      if (profileRole.role.type !== RoleType.CENTER && profileRole.centerId) {
+      const profile = await this.accessControlHelperService.findUserProfile(
+        profileRole.userProfileId,
+      );
+
+      if (profile?.profileType === ProfileType.ADMIN && profileRole.centerId) {
         throw new BadRequestException(
-          'Admin and system role cannot be associated with a center',
+          'Admin role cannot be associated with a center',
         );
       }
     }

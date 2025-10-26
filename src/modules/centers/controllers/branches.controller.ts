@@ -33,8 +33,7 @@ export class BranchesController {
     status: 200,
     description: 'Branches retrieved successfully',
   })
-  @Permissions(PERMISSIONS.USER.READ)
-  async getBranches(
+  async paginateBranches(
     @Query() paginateDto: PaginateBranchesDto,
     @GetUser() actor: ActorUser,
   ) {
@@ -52,7 +51,6 @@ export class BranchesController {
     status: 404,
     description: 'Branch not found',
   })
-  @Permissions(PERMISSIONS.USER.READ)
   async getBranch(
     @Param('branchId', ParseUUIDPipe) branchId: string,
     @GetUser() actor: ActorUser,
@@ -70,7 +68,7 @@ export class BranchesController {
     status: 400,
     description: 'Invalid input data',
   })
-  @Permissions(PERMISSIONS.CENTER.CREATE)
+  @Permissions(PERMISSIONS.BRANCHES.CREATE)
   @Transactional()
   async createBranch(
     @Body() createBranchDto: CreateBranchDto,
@@ -90,7 +88,8 @@ export class BranchesController {
     status: 404,
     description: 'Branch not found',
   })
-  @Permissions(PERMISSIONS.CENTER.UPDATE)
+  @Permissions(PERMISSIONS.BRANCHES.UPDATE)
+  @Transactional()
   async updateBranch(
     @Param('branchId', ParseUUIDPipe) branchId: string,
     @Body() data: CreateBranchDto,
@@ -110,8 +109,8 @@ export class BranchesController {
     status: 404,
     description: 'Branch not found',
   })
-  @HttpCode(HttpStatus.OK)
-  @Permissions(PERMISSIONS.CENTER.DELETE)
+  @Permissions(PERMISSIONS.BRANCHES.DELETE)
+  @Transactional()
   async deleteBranch(
     @Param('branchId', ParseUUIDPipe) branchId: string,
     @GetUser() actor: ActorUser,

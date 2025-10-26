@@ -4,7 +4,6 @@ import { RoleResponseDto } from '@/modules/access-control/dto/role-response.dto'
 export interface RoleResponseExportData {
   id: string;
   name: string;
-  type: string;
   description: string;
   createdAt: string;
   updatedAt: string;
@@ -20,7 +19,6 @@ export class RoleResponseExportMapper
     return {
       id: role.id,
       name: role.name,
-      type: role.type,
       description: role.description || '',
       createdAt: role.createdAt?.toISOString() || '',
       updatedAt: role.updatedAt?.toISOString() || '',
@@ -34,7 +32,6 @@ export class RoleResponseExportMapper
     return [
       'ID',
       'Name',
-      'Type',
       'Description',
       'Created At',
       'Updated At',

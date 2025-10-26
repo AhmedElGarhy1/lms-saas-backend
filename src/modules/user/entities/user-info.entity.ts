@@ -9,9 +9,6 @@ export class UserInfo extends BaseEntity {
   @Column({ type: 'uuid', unique: true })
   userId: string;
 
-  @Column()
-  fullName: string;
-
   @Column({ nullable: true })
   address?: string;
 

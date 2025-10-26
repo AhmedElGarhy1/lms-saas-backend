@@ -19,24 +19,4 @@ export class StaffRepository extends BaseRepository<Staff> {
   protected getEntityClass(): typeof Staff {
     return Staff;
   }
-
-  async createAndSave(staffData: Partial<Staff>): Promise<Staff> {
-    const repo = this.getRepository();
-    const staff = repo.create(staffData);
-    return repo.save(staff);
-  }
-
-  async findById(id: string): Promise<Staff | null> {
-    return this.getRepository().findOne({
-      where: { id },
-    });
-  }
-
-  async updateById(id: string, staffData: Partial<Staff>): Promise<void> {
-    await this.getRepository().update(id, staffData);
-  }
-
-  async softDeleteById(id: string): Promise<void> {
-    await this.getRepository().softDelete(id);
-  }
 }

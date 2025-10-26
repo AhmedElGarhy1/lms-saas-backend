@@ -4,7 +4,9 @@ import { Center } from '@/modules/centers/entities/center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('user_access')
-@Index(['granterUserProfileId', 'targetUserProfileId', 'centerId'], { unique: true })
+@Index(['granterUserProfileId', 'targetUserProfileId', 'centerId'], {
+  unique: true,
+})
 export class UserAccess extends BaseEntity {
   @Column({ type: 'uuid' })
   targetUserProfileId: string;

@@ -9,7 +9,7 @@ export interface IRequestContext {
   ipAddress?: string;
   userAgent?: string;
   requestId?: string;
-  locale?: Locale;
+  locale: Locale;
   userProfileType?: ProfileType;
   userProfileId?: string;
 }
@@ -22,7 +22,11 @@ export class RequestContext {
   }
 
   static get(): IRequestContext {
-    return asyncLocalStorage.getStore() ?? {};
+    return (
+      asyncLocalStorage.getStore() ?? {
+        locale: Locale.AR,
+      }
+    );
   }
 
   static set(values: Partial<IRequestContext>) {

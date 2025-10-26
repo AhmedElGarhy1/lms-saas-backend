@@ -27,9 +27,7 @@ import { UserService } from '../services/user.service';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { CreateUserWithRoleDto } from '../dto/create-user.dto';
 import { CreateStaffDto } from '../dto/create-staff.dto';
-import { CreateTeacherDto } from '../dto/create-teacher.dto';
 import { CreateAdminDto } from '../dto/create-admin.dto';
-import { CreateStudentDto } from '../dto/create-student.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import {
@@ -44,32 +42,35 @@ import { ActivityLogService } from '@/shared/modules/activity-log/services/activ
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
-import { PermissionScope } from '@/modules/access-control/constants/permissions';
+import { AdminService } from '@/modules/profile/services/admin.service';
+import { StaffService } from '@/modules/profile/services/staff.service';
 
 @ApiTags('Users')
 @Controller('users')
 export class UserController {
   constructor(
     private readonly userService: UserService,
+    private readonly staffService: StaffService,
+    private readonly adminService: AdminService,
     private readonly activityLogService: ActivityLogService,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
-  @Get()
-  @ReadApiResponses('List users with pagination and filtering')
-  @SerializeOptions({ type: UserResponseDto })
-  @Permissions(PERMISSIONS.USER.READ)
-  async listUsers(
-    @Query() query: PaginateUsersDto,
-    @GetUser() actorUser: ActorUser,
-  ) {
-    return this.userService.paginateUsers(query, actorUser);
-  }
+  // @Get()
+  // @ReadApiResponses('List users with pagination and filtering')
+  // @SerializeOptions({ type: UserResponseDto })
+  // @Permissions(PERMISSIONS.USER.READ)
+  // async listUsers(
+  //   @Query() query: PaginateUsersDto,
+  //   @GetUser() actorUser: ActorUser,
+  // ) {
+  //   return this.userService.paginateUsers(query, actorUser);
+  // }
 
   @Get('staff')
   @ReadApiResponses('List staff users with pagination and filtering')
   @SerializeOptions({ type: UserResponseDto })
-  @Permissions(PERMISSIONS.USER.READ, PermissionScope.ADMIN)
+  @Permissions(PERMISSIONS.STAFF.READ)
   async paginateStaff(
     @Query() query: PaginateUsersDto,
     @GetUser() actorUser: ActorUser,
@@ -80,7 +81,7 @@ export class UserController {
   @Get('admin')
   @ReadApiResponses('List admin users with pagination and filtering')
   @SerializeOptions({ type: UserResponseDto })
-  @Permissions(PERMISSIONS.USER.READ, PermissionScope.ADMIN)
+  @Permissions(PERMISSIONS.ADMIN.READ)
   async paginateAdmins(
     @Query() query: PaginateAdminsDto,
     @GetUser() actorUser: ActorUser,
@@ -92,7 +93,7 @@ export class UserController {
   @ReadApiResponses('Get user profile by User ID')
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiQuery({ name: 'centerId', required: false, type: String })
-  @Permissions(PERMISSIONS.USER.READ)
+  @Permissions(PERMISSIONS.STAFF.READ)
   async findOne(
     @Param('id', ParseUUIDPipe) userId: string,
     @GetUser() actor: ActorUser,
@@ -103,7 +104,7 @@ export class UserController {
   @Post()
   @CreateApiResponses('Create a new user')
   @ApiBody({ type: CreateUserWithRoleDto })
-  @Permissions(PERMISSIONS.USER.CREATE)
+  @Permissions(PERMISSIONS.STAFF.CREATE)
   @Transactional()
   async createUser(
     @Body() dto: CreateUserWithRoleDto,
@@ -136,13 +137,14 @@ export class UserController {
   @Post('staff')
   @CreateApiResponses('Create a new staff member')
   @ApiBody({ type: CreateStaffDto })
-  @Permissions(PERMISSIONS.USER.CREATE)
+  @Permissions(PERMISSIONS.STAFF.CREATE)
   @Transactional()
   async createStaff(
     @Body() dto: CreateStaffDto,
     @GetUser() actorUser: ActorUser,
   ) {
-    const user = await this.userService.createStaff(dto, actorUser);
+    const user = await this.userService.createUser(dto, actorUser);
+    await this.staffService.createStaffForUser(user.id, {});
 
     // Log the activity
     await this.activityLogService.log(
@@ -167,50 +169,17 @@ export class UserController {
     );
   }
 
-  @Post('teacher')
-  @CreateApiResponses('Create a new teacher')
-  @ApiBody({ type: CreateTeacherDto })
-  @Permissions(PERMISSIONS.USER.CREATE)
-  @Transactional()
-  async createTeacher(
-    @Body() dto: CreateTeacherDto,
-    @GetUser() actorUser: ActorUser,
-  ) {
-    const user = await this.userService.createTeacher(dto, actorUser);
-
-    // Log the activity
-    await this.activityLogService.log(
-      ActivityType.USER_CREATED,
-      {
-        targetUserId: user.id,
-        email: user.email,
-        name: user.name,
-        roleId: dto.roleId,
-        centerId: dto.centerId,
-        createdBy: actorUser.id,
-        profileType: 'Teacher',
-      },
-      actorUser,
-    );
-
-    return ControllerResponse.success(
-      user,
-      this.i18n.translate('success.create', {
-        args: { resource: this.i18n.translate('common.resources.user') },
-      }),
-    );
-  }
-
   @Post('admin')
   @CreateApiResponses('Create a new admin')
   @ApiBody({ type: CreateAdminDto })
-  @Permissions(PERMISSIONS.USER.CREATE)
+  @Permissions(PERMISSIONS.ADMIN.CREATE)
   @Transactional()
   async createAdmin(
     @Body() dto: CreateAdminDto,
     @GetUser() actorUser: ActorUser,
   ) {
-    const user = await this.userService.createAdmin(dto, actorUser);
+    const user = await this.userService.createUser(dto, actorUser);
+    await this.adminService.createAdminForUser(user.id, {});
 
     // Log the activity
     await this.activityLogService.log(
@@ -235,45 +204,11 @@ export class UserController {
     );
   }
 
-  @Post('student')
-  @CreateApiResponses('Create a new student')
-  @ApiBody({ type: CreateStudentDto })
-  @Permissions(PERMISSIONS.USER.CREATE)
-  @Transactional()
-  async createStudent(
-    @Body() dto: CreateStudentDto,
-    @GetUser() actorUser: ActorUser,
-  ) {
-    const user = await this.userService.createStudent(dto, actorUser);
-
-    // Log the activity
-    await this.activityLogService.log(
-      ActivityType.USER_CREATED,
-      {
-        targetUserId: user.id,
-        email: user.email,
-        name: user.name,
-        roleId: dto.roleId,
-        centerId: dto.centerId,
-        createdBy: actorUser.id,
-        profileType: 'Student',
-      },
-      actorUser,
-    );
-
-    return ControllerResponse.success(
-      user,
-      this.i18n.translate('success.create', {
-        args: { resource: this.i18n.translate('common.resources.user') },
-      }),
-    );
-  }
-
   @Put(':id')
   @UpdateApiResponses('Update user information')
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiBody({ type: UpdateUserDto })
-  @Permissions(PERMISSIONS.USER.UPDATE)
+  @Permissions(PERMISSIONS.STAFF.UPDATE)
   @Transactional()
   async updateUser(
     @Param('id', ParseUUIDPipe) userId: string,
@@ -307,7 +242,7 @@ export class UserController {
   @UpdateApiResponses('Change user password')
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiBody({ type: ChangePasswordRequestDto })
-  @Permissions(PERMISSIONS.USER.UPDATE)
+  @Permissions(PERMISSIONS.STAFF.UPDATE)
   async changePassword(
     @Param('id', ParseUUIDPipe) userId: string,
     @Body() dto: ChangePasswordRequestDto,
@@ -339,7 +274,7 @@ export class UserController {
   @UpdateApiResponses('Toggle user active status')
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiBody({ type: ToggleUserStatusRequestDto })
-  @Permissions(PERMISSIONS.USER.UPDATE)
+  @Permissions(PERMISSIONS.STAFF.UPDATE)
   async toggleUserStatus(
     @Param('id', ParseUUIDPipe) userId: string,
     @Body() dto: ToggleUserStatusRequestDto,
@@ -373,7 +308,7 @@ export class UserController {
   @Delete(':id')
   @DeleteApiResponses('Delete a user')
   @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @Permissions(PERMISSIONS.USER.DELETE)
+  @Permissions(PERMISSIONS.STAFF.DELETE)
   async deleteUser(
     @Param('id', ParseUUIDPipe) userId: string,
     @GetUser() actorUser: ActorUser,
@@ -400,7 +335,7 @@ export class UserController {
   @Patch(':id/restore')
   @UpdateApiResponses('Restore a deleted user')
   @ApiParam({ name: 'id', description: 'User ID', type: String })
-  @Permissions(PERMISSIONS.USER.RESTORE)
+  @Permissions(PERMISSIONS.STAFF.RESTORE)
   async restoreUser(
     @Param('id', ParseUUIDPipe) userId: string,
     @GetUser() actorUser: ActorUser,

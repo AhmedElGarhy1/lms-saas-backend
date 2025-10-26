@@ -38,7 +38,7 @@ export class ProfileController {
     return this.userProfileService.getCurrentUserProfile(actorUser);
   }
 
-  @Put()
+  @Put('me')
   @UpdateApiResponses('Update current user profile')
   @NoContext()
   async updateActorUserProfile(

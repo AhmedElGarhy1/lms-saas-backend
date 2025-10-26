@@ -11,10 +11,6 @@ export const getDatabaseConfig = (
   password: configService.get('DB_PASSWORD') || 'root',
   database: configService.get('DB_NAME') || 'lms',
   autoLoadEntities: true,
-  synchronize: true,
-  // logging: configService.get('NODE_ENV') === 'development',
-  logging: false,
+  synchronize: false,
+  logging: ['error', 'warn'], // Only log errors and warnings
 });
-
-// Export for direct use
-export const typeOrmConfig = getDatabaseConfig(new ConfigService());

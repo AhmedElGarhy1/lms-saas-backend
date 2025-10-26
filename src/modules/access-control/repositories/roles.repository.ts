@@ -1,6 +1,4 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Role } from '../entities/role.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { LoggerService } from '@/shared/services/logger.service';
@@ -8,7 +6,6 @@ import { Pagination } from 'nestjs-typeorm-paginate';
 import { AccessControlHelperService } from '../services/access-control-helper.service';
 import { RoleResponseDto } from '../dto/role-response.dto';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
-import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { CreateRoleRequestDto } from '../dto/create-role.dto';
 import { RolePermissionRepository } from './role-permission.repository';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
@@ -21,6 +18,7 @@ export class RolesRepository extends BaseRepository<Role> {
   constructor(
     private readonly rolePermissionRepository: RolePermissionRepository,
     protected readonly logger: LoggerService,
+    @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
@@ -98,12 +96,7 @@ export class RolesRepository extends BaseRepository<Role> {
     if (centerId) {
       queryBuilder.where('role.centerId = :centerId', { centerId });
     } else {
-      queryBuilder
-        .where('role.centerId IS NULL')
-        .andWhere('role.type != :roleType', { roleType: RoleType.CENTER });
-    }
-    if (query.type) {
-      queryBuilder.where('role.type = :type', { type: query.type });
+      queryBuilder.where('role.centerId IS NULL');
     }
 
     const result = await this.paginate(

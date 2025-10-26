@@ -2,8 +2,6 @@ import { Controller, Get, Post, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DatabasePerformanceService } from '../services/database-performance.service';
 import { TransactionPerformanceInterceptor } from '../interceptors/transaction-performance.interceptor';
-import { Permissions } from '@/shared/common/decorators/permissions.decorator';
-import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { PerformanceAlertsService } from '../services/performance-alerts.service';
 import { Public } from '@/shared/common/decorators/public.decorator';
 
@@ -23,7 +21,6 @@ export class PerformanceController {
     status: 200,
     description: 'Database performance metrics retrieved successfully',
   })
-  @Permissions(PERMISSIONS.USER.READ) // Only allow admins to view performance data
   getDatabasePerformance() {
     return this.databasePerformanceService.getPerformanceStats();
   }
@@ -34,7 +31,6 @@ export class PerformanceController {
     status: 200,
     description: 'Transaction performance metrics retrieved successfully',
   })
-  @Permissions(PERMISSIONS.USER.READ)
   getTransactionPerformance() {
     return this.databasePerformanceService.getTransactionMetrics();
   }
@@ -79,7 +75,6 @@ export class PerformanceController {
     status: 200,
     description: 'Active alerts retrieved successfully',
   })
-  @Permissions(PERMISSIONS.USER.READ)
   getActiveAlerts() {
     return this.alertsService.getActiveAlerts();
   }
@@ -90,7 +85,6 @@ export class PerformanceController {
     status: 200,
     description: 'Performance statistics retrieved successfully',
   })
-  @Permissions(PERMISSIONS.USER.READ)
   getPerformanceStats() {
     return {
       database: this.databasePerformanceService.getPerformanceStats(),
@@ -110,7 +104,6 @@ export class PerformanceController {
     status: 200,
     description: 'Alert resolved successfully',
   })
-  @Permissions(PERMISSIONS.USER.READ)
   resolveAlert(@Body('alertId') alertId: string) {
     this.alertsService.resolveAlert(alertId);
     return { message: 'Alert resolved successfully' };

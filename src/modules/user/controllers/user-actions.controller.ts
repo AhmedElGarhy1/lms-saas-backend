@@ -31,7 +31,7 @@ export class UserActionsController {
     description: 'Export file generated successfully',
     type: ExportResponseDto,
   })
-  @Permissions(PERMISSIONS.USER.EXPORT, PermissionScope.CENTER)
+  @Permissions(PERMISSIONS.STAFF.EXPORT)
   async exportUsers(
     @Query() query: ExportUsersDto,
     @Res() res: Response,
@@ -71,7 +71,7 @@ export class UserActionsController {
     description: 'Export file generated successfully',
     type: ExportResponseDto,
   })
-  @Permissions(PERMISSIONS.USER.EXPORT, PermissionScope.ADMIN)
+  @Permissions(PERMISSIONS.ADMIN.EXPORT)
   async exportAdminUsers(
     @Query() query: ExportUsersDto,
     @Res() res: Response,

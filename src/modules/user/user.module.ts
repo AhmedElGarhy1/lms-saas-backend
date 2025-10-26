@@ -16,9 +16,9 @@ import { ProfileModule } from '../profile/profile.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, UserInfo]),
-    AccessControlModule,
+    forwardRef(() => AccessControlModule),
     forwardRef(() => CentersModule),
-    forwardRef(() => ProfileModule),
+    ProfileModule,
   ],
   controllers: [UserActionsController, UserAccessController, UserController],
   providers: [UserService, UserInfoService, UserRepository, UserInfoRepository],

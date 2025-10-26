@@ -19,7 +19,6 @@ export interface ProfileResponse {
   createdAt: Date;
   updatedAt: Date;
   userInfo: {
-    fullName: string;
     address?: string;
     dateOfBirth?: Date;
     locale: string;

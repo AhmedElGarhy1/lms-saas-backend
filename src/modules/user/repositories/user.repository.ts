@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { LoggerService } from '../../../shared/services/logger.service';
@@ -134,19 +133,12 @@ export class UserRepository extends BaseRepository<User> {
           )
           .leftJoinAndSelect('profileRoles.role', 'role');
       }
-    } else {
-      queryBuilder.andWhere(
-        'NOT EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id)',
-      );
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
-    const isAdmin = await this.accessControlHelperService.hasAdminRole(
-      actor.userProfileId,
-    );
-    const isUser = await this.accessControlHelperService.hasUserRole(
+    const isAdmin = await this.accessControlHelperService.isAdmin(
       actor.userProfileId,
     );
 
@@ -155,10 +147,13 @@ export class UserRepository extends BaseRepository<User> {
         actor.userProfileId,
         centerId,
       );
+      const isUser = await this.accessControlHelperService.isStaff(
+        actor.userProfileId,
+      );
 
       if (isUser && !isCenterOwner) {
         queryBuilder.andWhere(
-          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = profile.id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
           { userProfileId: actor.userProfileId, centerId },
         );
       }
@@ -172,7 +167,7 @@ export class UserRepository extends BaseRepository<User> {
          )`,
           { userProfileId: actor.userProfileId },
         );
-      } else if (isUser) {
+      } else {
         throw new BadRequestException('Access denied to this user');
       }
     }
@@ -190,7 +185,7 @@ export class UserRepository extends BaseRepository<User> {
             ${centerId ? 'AND ua."centerId" = :centerId' : ''}
           )`,
           {
-            granterUserProfileId: actor.userProfileId,
+            granterUserProfileId: userProfileId,
             centerId,
           },
         );
@@ -256,9 +251,7 @@ export class UserRepository extends BaseRepository<User> {
       );
     }
 
-    if (displayRole && includeCenter) {
-      filteredItems = this.prepareUsersResponse(filteredItems);
-    }
+    filteredItems = this.prepareUsersResponse(filteredItems);
 
     return {
       ...result,
@@ -294,12 +287,11 @@ export class UserRepository extends BaseRepository<User> {
       })
       .leftJoinAndSelect('userProfiles.profileRoles', 'profileRoles')
       .leftJoinAndSelect('profileRoles.role', 'role');
-    // .andWhere('role.type = :roleType', { roleType: RoleType.ADMIN });
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
-    const isAdmin = await this.accessControlHelperService.hasAdminRole(
+    const isAdmin = await this.accessControlHelperService.isAdmin(
       actor.userProfileId,
     );
 
@@ -308,7 +300,7 @@ export class UserRepository extends BaseRepository<User> {
       // do nothing
     } else {
       queryBuilder.andWhere(
-        `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = profile.id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" IS NULL)`,
+        `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" IS NULL)`,
         { userProfileId: actor.userProfileId },
       );
     }
@@ -318,7 +310,7 @@ export class UserRepository extends BaseRepository<User> {
         queryBuilder.andWhere(
           `EXISTS (
           SELECT 1 FROM center_access ca 
-          WHERE ca."userProfileId" = profile.id AND ca."global" = true AND ca."centerId" = :centerId)`,
+          WHERE ca."userProfileId" = "userProfiles".id AND ca."global" = true AND ca."centerId" = :centerId)`,
           { centerId },
         );
       }
@@ -330,17 +322,19 @@ export class UserRepository extends BaseRepository<User> {
     }
 
     if (userProfileId) {
-      queryBuilder.andWhere('profile.id != :userProfileId', { userProfileId });
+      queryBuilder.andWhere('"userProfiles".id != :userProfileId', {
+        userProfileId,
+      });
       if (userAccess === AccessibleUsersEnum.INCLUDE) {
         queryBuilder.andWhere(
           `EXISTS (
             SELECT 1 FROM "user_access" AS ua
-            WHERE ua."targetUserProfileId" = "profile"."id"
+            WHERE ua."targetUserProfileId" = "userProfiles"."id"
             AND ua."granterUserProfileId" = :granterUserProfileId
             ${centerId ? 'AND ua."centerId" = :centerId' : ''}
           )`,
           {
-            granterUserProfileId: actor.userProfileId,
+            granterUserProfileId: userProfileId,
             centerId,
           },
         );
@@ -363,8 +357,6 @@ export class UserRepository extends BaseRepository<User> {
       '/users/admin',
       queryBuilder,
     );
-
-    console.log(results.items);
 
     let filteredItems: UserResponseDto[] =
       results.items as unknown as UserResponseDto[];
@@ -447,13 +439,15 @@ export class UserRepository extends BaseRepository<User> {
       });
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       delete (userDto as any).userProfiles;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      delete (userDto as any).userProfile?.profileRoles;
       return userDto;
     });
   }
 
   private async applyUserAccess(
     users: UserResponseDto[],
-    userId: string,
+    userProfileId: string,
     userAccess: AccessibleUsersEnum,
     centerId?: string,
   ): Promise<UserResponseDto[]> {
@@ -462,7 +456,7 @@ export class UserRepository extends BaseRepository<User> {
     if (userAccess === AccessibleUsersEnum.ALL) {
       const accessibleProfileIds =
         await this.accessControlHelperService.getAccessibleProfilesIdsForUser(
-          userId,
+          userProfileId,
           userProfileIds,
           centerId,
         );

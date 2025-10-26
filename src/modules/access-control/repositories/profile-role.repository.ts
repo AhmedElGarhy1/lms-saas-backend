@@ -3,13 +3,11 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { In, IsNull, Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { In, IsNull } from 'typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { ProfileRole } from '../entities/profile-role.entity';
 import { Role } from '../entities/role.entity';
 import { LoggerService } from '@/shared/services/logger.service';
-import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { DefaultRoles } from '../constants/roles';
 import { AssignRoleDto } from '../dto/assign-role.dto';
 import { Permission } from '../entities/permission.entity';
@@ -134,26 +132,6 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
     });
   }
 
-  async hasAdminRole(userProfileId: string): Promise<boolean> {
-    const profileRole = await this.getRepository().findOne({
-      where: {
-        userProfileId,
-        centerId: IsNull(),
-        role: {
-          type: RoleType.ADMIN,
-        },
-      },
-    });
-    return !!profileRole;
-  }
-
-  async hasUserRole(userProfileId: string): Promise<boolean> {
-    const profileRole = await this.getRepository().findOne({
-      where: { userProfileId, role: { type: RoleType.CENTER } },
-    });
-    return !!profileRole;
-  }
-
   async isSuperAdmin(userProfileId: string): Promise<boolean> {
     const profileRole = await this.getRepository().findOne({
       where: {
@@ -175,7 +153,7 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
         userProfileId,
         centerId,
         role: {
-          name: 'Owner',
+          name: DefaultRoles.OWNER,
         },
       },
     });
@@ -206,7 +184,7 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
     );
 
     if (existingProfileRole) {
-      await this.removeProfileRole(existingProfileRole, true);
+      await this.removeProfileRole(existingProfileRole);
     }
 
     const roleRepo = this.getEntityManager().getRepository(Role);
@@ -228,10 +206,7 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
     return repo.save(profileRole);
   }
 
-  async removeProfileRole(
-    data: AssignRoleDto,
-    isReAssign: boolean = false,
-  ): Promise<void> {
+  async removeProfileRole(data: AssignRoleDto): Promise<void> {
     const existingProfileRole = await this.getProfileRole(
       data.userProfileId,
       data.centerId,
@@ -247,11 +222,7 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
         'You are not authorized to remove this role',
       );
     }
-    if (!isReAssign) {
-      if (existingProfileRole.role.type !== RoleType.CENTER) {
-        throw new ForbiddenException(`Profile must have global role`);
-      }
-    }
+
     await this.remove(existingProfileRole.id);
   }
 

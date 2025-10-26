@@ -17,7 +17,6 @@ export class PermissionsGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    return true;
     const requiredPermissions = this.reflector.get<PermissionsMetadata>(
       PERMISSIONS_KEY,
       context.getHandler(),
@@ -35,12 +34,12 @@ export class PermissionsGuard implements CanActivate {
     }
 
     const hasPermission = await this.rolesService.hasPermission(
-      user.id,
+      user.userProfileId,
       requiredPermissions.permission,
       requiredPermissions.scope,
       user.centerId,
     );
 
-    return hasPermission;
+    return !!hasPermission;
   }
 }

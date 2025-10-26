@@ -11,12 +11,13 @@ import { ProfileController } from './controllers/profile.controller';
 import { UserModule } from '../user/user.module';
 import { CentersModule } from '../centers/centers.module';
 import { UserProfileRepository } from './repositories/user-profile.repository';
+import { AdminService } from './services/admin.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserProfile, Staff, Admin]),
     forwardRef(() => UserModule),
-    CentersModule,
+    forwardRef(() => CentersModule),
   ],
   controllers: [ProfileController],
   providers: [
@@ -25,7 +26,8 @@ import { UserProfileRepository } from './repositories/user-profile.repository';
     StaffService,
     StaffRepository,
     AdminRepository,
+    AdminService,
   ],
-  exports: [UserProfileService, StaffService, UserProfileRepository],
+  exports: [UserProfileService, StaffService, AdminService],
 })
 export class ProfileModule {}

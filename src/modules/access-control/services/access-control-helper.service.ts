@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
   InsufficientPermissionsException,
   AdminScopeAccessDeniedException,
@@ -19,15 +19,19 @@ import { BranchAccessDto } from '../dto/branch-access.dto';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { CenterAccessDto } from '../dto/center-access.dto';
+import { UserProfileService } from '@/modules/profile/services/user-profile.service';
+import { PermissionScope } from '../constants/permissions';
+import { RolesService } from './roles.service';
 
 @Injectable()
 export class AccessControlHelperService {
   constructor(
-    @Inject(ProfileRoleRepository)
-    private profileRoleRepository: ProfileRoleRepository,
-    private userAccessRepository: UserAccessRepository,
-    private centerAccessRepository: CenterAccessRepository,
-    private branchAccessRepository: BranchAccessRepository,
+    private readonly profileRoleRepository: ProfileRoleRepository,
+    private readonly userAccessRepository: UserAccessRepository,
+    private readonly centerAccessRepository: CenterAccessRepository,
+    private readonly branchAccessRepository: BranchAccessRepository,
+    private readonly rolesService: RolesService,
+    private readonly userProfileService: UserProfileService,
   ) {}
 
   /**
@@ -68,31 +72,13 @@ export class AccessControlHelperService {
     if (isSuperAdmin) {
       return;
     }
-    const haveAdminRole = await this.hasAdminRole(userProfileId);
+    const haveAdminRole = await this.isAdmin(userProfileId);
     if (haveAdminRole) {
       return;
     }
     throw new AdminScopeAccessDeniedException(
       'You do not have access to admin scope. Please select a center to access center-specific resources.',
     );
-  }
-
-  async getUserCenters(userProfileId: string) {
-    // Get centers from user's roles (centerId in userRoles = center access)
-    const profileRoles = await this.profileRoleRepository.findMany({
-      where: { userProfileId },
-      relations: ['role', 'role.center'],
-    });
-    const _profileRoles = profileRoles as (ProfileRole & {
-      role?: Role & { center?: Center };
-    })[];
-
-    // Extract unique center IDs from roles
-    const centerIds = _profileRoles
-      .map((profileRole) => profileRole?.role?.center?.id)
-      .filter((centerId) => centerId !== null);
-
-    return centerIds;
   }
 
   async getProfileRole(userProfileId: string, centerId?: string) {
@@ -130,6 +116,7 @@ export class AccessControlHelperService {
       }),
     ).then((results) => results.filter((result) => result !== null));
   }
+
   async getAccessibleProfilesIdsForBranch(
     branchId: string,
     targetProfileIds: string[],
@@ -191,6 +178,7 @@ export class AccessControlHelperService {
     );
     return profileRoles.map((profileRole) => profileRole.roleId);
   }
+
   // user access methods
   async findUserAccess(data: UserAccessDto): Promise<UserAccess | null> {
     return this.userAccessRepository.findUserAccess(data);
@@ -275,12 +263,12 @@ export class AccessControlHelperService {
     return this.profileRoleRepository.isCenterOwner(userProfileId, centerId);
   }
 
-  async hasAdminRole(userProfileId: string) {
-    return this.profileRoleRepository.hasAdminRole(userProfileId);
+  async isAdmin(userProfileId: string) {
+    return this.userProfileService.isAdmin(userProfileId);
   }
 
-  async hasUserRole(userProfileId: string) {
-    return this.profileRoleRepository.hasUserRole(userProfileId);
+  async isStaff(userProfileId: string) {
+    return this.userProfileService.isStaff(userProfileId);
   }
 
   async bypassCenterInternalAccess(
@@ -301,12 +289,36 @@ export class AccessControlHelperService {
         centerId,
       });
       if (centerAccess) {
-        const haveAdminRole = await this.hasAdminRole(userProfileId);
+        const haveAdminRole = await this.isAdmin(userProfileId);
         if (haveAdminRole) {
           return true;
         }
       }
     }
     return false;
+  }
+  async findUserProfile(userProfileId: string) {
+    return this.userProfileService.findOne(userProfileId);
+  }
+
+  async hasPermission(
+    userProfileId: string,
+    permission: string,
+    scope: PermissionScope,
+    centerId?: string,
+  ) {
+    return this.rolesService.hasPermission(
+      userProfileId,
+      permission,
+      scope,
+      centerId,
+    );
+  }
+
+  async doesProfilesMatch(userProfileId: string, targetProfileId: string) {
+    return this.userProfileService.doesProfilesMatch(
+      userProfileId,
+      targetProfileId,
+    );
   }
 }

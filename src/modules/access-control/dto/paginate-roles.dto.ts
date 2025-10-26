@@ -1,5 +1,4 @@
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
-import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
@@ -26,12 +25,4 @@ export class PaginateRolesDto extends BasePaginationDto {
   @IsUUID()
   @Exists(Center)
   centerId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Filter by type accessible',
-    enum: [RoleType.ADMIN, RoleType.SYSTEM],
-  })
-  @IsOptional()
-  @IsEnum([RoleType.ADMIN, RoleType.SYSTEM])
-  type?: RoleType;
 }

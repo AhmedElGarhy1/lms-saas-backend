@@ -5,6 +5,7 @@ import * as jwt from 'jsonwebtoken';
 import { UserService } from '@/modules/user/services/user.service';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { Locale } from '@/shared/common/enums/locale.enum';
+import { RequestContext } from '@/shared/common/context/request.context';
 
 @Injectable()
 export class LocaleService {
@@ -22,29 +23,10 @@ export class LocaleService {
     return {};
   }
 
-  async getTranslations(lang: string | undefined, req: Request) {
-    const userLocale = await this.getUserLocale(req);
-
-    const currentLanguage = lang || userLocale;
+  getTranslations(lang: string | undefined) {
+    const currentLanguage = lang || RequestContext.get().locale;
 
     return this.loadTranslations(currentLanguage);
-  }
-
-  async getUserLocale(req: Request) {
-    const i18n = I18nContext.current();
-    let locale = i18n?.lang || 'ar';
-    const accessToken = req.headers.authorization?.split(' ')[1];
-    if (!accessToken) {
-      return locale;
-    }
-    const decoded = jwt.decode(accessToken);
-    if (decoded) {
-      const user = await this.userService.findOne(decoded.sub as string);
-      if (user && user.userInfo) {
-        locale = user.userInfo.locale;
-      }
-    }
-    return locale;
   }
 
   getAvailableLanguages() {

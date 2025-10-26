@@ -104,7 +104,6 @@ export class RolesController {
       {
         roleId: result.id,
         roleName: result.name,
-        roleType: result.type,
         rolePermissions: dto.rolePermissions,
         createdBy: actor.id,
       },

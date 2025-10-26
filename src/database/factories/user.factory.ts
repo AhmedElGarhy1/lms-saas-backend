@@ -144,7 +144,6 @@ export class UserFactory {
 
   private static createUserInfo(): Partial<UserInfo> {
     return {
-      fullName: faker.person.fullName(),
       address: faker.location.streetAddress(),
       dateOfBirth: faker.date.birthdate({ min: 18, max: 65, mode: 'age' }),
       locale: faker.helpers.enumValue(Locale),

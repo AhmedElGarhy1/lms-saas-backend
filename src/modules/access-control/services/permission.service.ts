@@ -1,12 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 import { PermissionRepository } from '../repositories/permission.repository';
 import { Permission } from '../entities/permission.entity';
 import { LoggerService } from '@/shared/services/logger.service';
-import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { FindOptionsWhere, In } from 'typeorm';
-import { AccessControlHelperService } from './access-control-helper.service';
-import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PermissionScope } from '../constants/permissions';
 
@@ -14,9 +10,7 @@ import { PermissionScope } from '../constants/permissions';
 export class PermissionService {
   constructor(
     private readonly permissionRepository: PermissionRepository,
-    private readonly profileRoleRepository: ProfileRoleRepository,
     private readonly logger: LoggerService,
-    private readonly accessControlHelperService: AccessControlHelperService,
   ) {}
 
   /**

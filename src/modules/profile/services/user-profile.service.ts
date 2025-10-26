@@ -22,6 +22,7 @@ export class UserProfileService {
     private readonly userProfileRepository: UserProfileRepository,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
+    @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly centerService: CentersService,
     private readonly logger: LoggerService,
@@ -162,5 +163,22 @@ export class UserProfileService {
         deletedCount: userProfiles.length,
       },
     );
+  }
+
+  async isAdmin(userProfileId: string) {
+    return !!(await this.userProfileRepository.isAdmin(userProfileId));
+  }
+
+  async isStaff(userProfileId: string) {
+    return !!(await this.userProfileRepository.isStaff(userProfileId));
+  }
+  async doesProfilesMatch(userProfileId: string, targetProfileId: string) {
+    const userProfile = await this.findOne(userProfileId);
+    const targetProfile = await this.findOne(targetProfileId);
+    return {
+      match: userProfile?.profileType === targetProfile?.profileType,
+      profileType: userProfile?.profileType,
+      targetProfileType: targetProfile?.profileType,
+    };
   }
 }

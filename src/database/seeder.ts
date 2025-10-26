@@ -12,8 +12,6 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
 import { SeederException } from '@/shared/common/exceptions/custom.exceptions';
-import { RoleType } from '@/shared/common/enums/role-type.enum';
-import { Admin } from '@/modules/profile/entities/admin.entity';
 
 @Injectable()
 export class DatabaseSeeder {
@@ -115,17 +113,9 @@ export class DatabaseSeeder {
 
         // Insert user info with the correct user ID
         await transactionalEntityManager.query(
-          `INSERT INTO user_info (id, "userId", "fullName", address, locale, "createdAt", "updatedAt", "createdBy", "updatedBy") 
-           VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), $6, $7)`,
-          [
-            profileUuid,
-            userUuid,
-            'System User',
-            'System',
-            'en',
-            userUuid,
-            userUuid,
-          ],
+          `INSERT INTO user_info (id, "userId", address, locale, "createdAt", "updatedAt", "createdBy", "updatedBy") 
+           VALUES ($1, $2, $3, $4, NOW(), NOW(), $5, $6)`,
+          [profileUuid, userUuid, 'System', 'en', userUuid, userUuid],
         );
 
         // Re-enable foreign key constraints
@@ -190,12 +180,11 @@ export class DatabaseSeeder {
 
         // Insert user info with the correct user ID
         await transactionalEntityManager.query(
-          `INSERT INTO user_info (id, "userId", "fullName", address, locale, "createdAt", "updatedAt", "createdBy", "updatedBy") 
-           VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), $6, $7)`,
+          `INSERT INTO user_info (id, "userId", address, locale, "createdAt", "updatedAt", "createdBy", "updatedBy") 
+           VALUES ($1, $2, $3, $4, NOW(), NOW(), $5, $6)`,
           [
             profileUuid,
             userUuid,
-            'Super Administrator',
             'System Headquarters',
             'en',
             createdBy,
@@ -276,7 +265,6 @@ export class DatabaseSeeder {
     const roleEntities = globalRoles.map((role) => ({
       name: role.name,
       description: role.description,
-      type: role.type as RoleType,
       createdBy: role.createdBy,
     }));
 

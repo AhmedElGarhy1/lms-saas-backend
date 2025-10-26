@@ -34,7 +34,7 @@ export class UserMiddleware implements NestMiddleware {
     RequestContext.run(
       {
         userId: decoded.sub,
-        locale: (user.userInfo?.locale as Locale) || Locale.EN,
+        locale: user.userInfo?.locale ?? Locale.AR,
       },
       () => {
         next();

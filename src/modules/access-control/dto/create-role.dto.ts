@@ -8,7 +8,6 @@ import {
   ValidateNested,
   Min,
 } from 'class-validator';
-import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { RolePermissionDto } from './role-permission.dto';
@@ -18,10 +17,6 @@ export class CreateRoleRequestDto {
   @IsString()
   @MinLength(2)
   name: string;
-
-  @IsEnum(RoleType)
-  @IsOptional()
-  type?: RoleType;
 
   @IsOptional()
   @IsString()

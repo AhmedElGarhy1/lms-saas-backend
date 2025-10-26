@@ -16,6 +16,7 @@ import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { createOwnerRoleData } from '@/modules/access-control/constants/roles';
 import { Transactional } from '@nestjs-cls/transactional';
+import { StaffService } from '@/modules/profile/services/staff.service';
 
 export interface SeederCenterData {
   name: string;
@@ -31,12 +32,14 @@ export interface SeederCenterData {
 export class CentersService {
   constructor(
     private readonly centersRepository: CentersRepository,
-    private readonly accessControlHelperService: AccessControlHelperService,
     private readonly accessControlService: AccessControlService,
     private readonly logger: LoggerService,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly rolesService: RolesService,
+    private readonly staffService: StaffService,
+    @Inject(forwardRef(() => AccessControlHelperService))
+    private readonly accessControlHelperService: AccessControlHelperService,
   ) {}
 
   async findCenterById(centerId: string): Promise<Center | null> {
@@ -55,21 +58,36 @@ export class CentersService {
     });
 
     const user = await this.userService.createUser(dto.user, actor);
+    const userProfile = await this.staffService.createStaffForUser(user.id, {});
     const centerRoleData = createOwnerRoleData(center.id);
-    // TODO: Add permissions to the role
-    const centerRole = await this.rolesService.createRoleInternal(
-      {
-        ...centerRoleData,
-        rolePermissions: [],
-      },
+    const centerRole = await this.rolesService.createRole(
+      centerRoleData,
       actor,
     );
-
     await this.rolesService.assignRole({
-      userProfileId: actor.userProfileId,
+      userProfileId: userProfile.id,
       roleId: centerRole.id,
       centerId: center.id,
     });
+    await this.accessControlService.grantCenterAccess(
+      {
+        userProfileId: userProfile.id,
+        centerId: center.id,
+      },
+      actor,
+    );
+    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+      actor.userProfileId,
+    );
+    if (!isSuperAdmin) {
+      await this.accessControlService.grantCenterAccess(
+        {
+          userProfileId: actor.userProfileId,
+          centerId: center.id,
+        },
+        actor,
+      );
+    }
 
     return center;
   }

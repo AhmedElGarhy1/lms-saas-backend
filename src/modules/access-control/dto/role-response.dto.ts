@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
-import { RoleType } from '@/shared/common/enums/role-type.enum';
 
 export class RoleResponseDto {
   @ApiProperty({ description: 'Role ID' })
@@ -14,10 +13,6 @@ export class RoleResponseDto {
   @ApiProperty({ description: 'Role description', required: false })
   @Expose()
   description?: string;
-
-  @ApiProperty({ description: 'Role type', enum: RoleType })
-  @Expose()
-  type: RoleType;
 
   @ApiProperty({
     description: 'Center ID (null for global roles)',

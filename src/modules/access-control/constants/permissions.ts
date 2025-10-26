@@ -7,51 +7,116 @@ export enum PermissionScope {
 // Permission constants for type safety and autocompletion
 
 export const PERMISSIONS = {
-  USER: {
-    CREATE: {
-      action: 'user:create',
-      name: 'Create Users',
-      scope: PermissionScope.BOTH,
-    },
+  // ===== STAFF MANAGEMENT PERMISSIONS =====
+  STAFF: {
     READ: {
-      action: 'user:read',
-      name: 'Read Users',
-      scope: PermissionScope.BOTH,
+      action: 'staff:read',
+      name: 'Read Staff',
+      scope: PermissionScope.CENTER,
+    },
+    CREATE: {
+      action: 'staff:create',
+      name: 'Create Staff',
+      scope: PermissionScope.CENTER,
     },
     UPDATE: {
-      action: 'user:update',
-      name: 'Update Users',
-      scope: PermissionScope.BOTH,
+      action: 'staff:update',
+      name: 'Update Staff',
+      scope: PermissionScope.CENTER,
     },
     DELETE: {
-      action: 'user:delete',
-      name: 'Delete Users',
-      scope: PermissionScope.BOTH,
+      action: 'staff:delete',
+      name: 'Delete Staff',
+      scope: PermissionScope.CENTER,
     },
     RESTORE: {
-      action: 'user:restore',
-      name: 'Restore Users',
-      scope: PermissionScope.BOTH,
+      action: 'staff:restore',
+      name: 'Restore Staff',
+      scope: PermissionScope.CENTER,
     },
-    GRANT_ACCESS: {
-      action: 'user:grant-user-access',
+    GRANT_USER_ACCESS: {
+      action: 'staff:grant-user-access',
       name: 'Grant User Access',
-      scope: PermissionScope.BOTH,
+      scope: PermissionScope.CENTER,
+    },
+    GRANT_BRANCH_ACCESS: {
+      action: 'staff:grant-branch-access',
+      name: 'Grant Branch Access',
+      scope: PermissionScope.CENTER,
+    },
+    GRANT_CENTER_ACCESS: {
+      action: 'staff:grant-center-access',
+      name: 'Grant Center Access',
+      scope: PermissionScope.ADMIN,
     },
     READ_ALL: {
-      action: 'user:read-all',
-      name: 'Read All Users without User Access', // TODO: to implement
-      scope: PermissionScope.BOTH,
+      action: 'staff:read-all',
+      name: 'Read All Staff without Staff Access', // TODO: to implement
+      scope: PermissionScope.CENTER,
     },
     IMPORT: {
-      action: 'user:import',
-      name: 'Import Users',
-      scope: PermissionScope.BOTH,
+      action: 'staff:import',
+      name: 'Import Staff',
+      scope: PermissionScope.CENTER,
     },
     EXPORT: {
-      action: 'user:export',
-      name: 'Export Users',
-      scope: PermissionScope.BOTH,
+      action: 'staff:export',
+      name: 'Export Staff',
+      scope: PermissionScope.CENTER,
+    },
+  },
+
+  // ===== ADMIN MANAGEMENT PERMISSIONS =====
+  ADMIN: {
+    READ: {
+      action: 'admin:read',
+      name: 'Read Admin',
+      scope: PermissionScope.ADMIN,
+    },
+    CREATE: {
+      action: 'admin:create',
+      name: 'Create Admin',
+      scope: PermissionScope.ADMIN,
+    },
+    UPDATE: {
+      action: 'admin:update',
+      name: 'Update Admin',
+      scope: PermissionScope.ADMIN,
+    },
+    DELETE: {
+      action: 'admin:delete',
+      name: 'Delete Admin',
+      scope: PermissionScope.ADMIN,
+    },
+    RESTORE: {
+      action: 'admin:restore',
+      name: 'Restore Admin',
+      scope: PermissionScope.ADMIN,
+    },
+    GRANT_ADMIN_ACCESS: {
+      action: 'admin:grant-admin-access',
+      name: 'Grant Admin Access',
+      scope: PermissionScope.ADMIN,
+    },
+    GRANT_CENTER_ACCESS: {
+      action: 'admin:grant-center-access',
+      name: 'Grant Center Access',
+      scope: PermissionScope.ADMIN,
+    },
+    READ_ALL: {
+      action: 'admin:read-all',
+      name: 'Read All Admin without Admin Access', // TODO: to implement
+      scope: PermissionScope.ADMIN,
+    },
+    IMPORT: {
+      action: 'admin:import',
+      name: 'Import Admin',
+      scope: PermissionScope.ADMIN,
+    },
+    EXPORT: {
+      action: 'admin:export',
+      name: 'Export Admin',
+      scope: PermissionScope.ADMIN,
     },
   },
 
@@ -62,12 +127,6 @@ export const PERMISSIONS = {
       name: 'Create Centers',
       scope: PermissionScope.ADMIN,
     },
-    // any one can view centers (it's part of his access)
-    // VIEW: {
-    //   action: 'center:view',
-    //   name: 'View Centers',
-    //   scope: ScopeType.BOTH,
-    // },
     UPDATE: {
       action: 'center:update',
       name: 'Update Centers',
@@ -82,11 +141,6 @@ export const PERMISSIONS = {
       action: 'center:restore',
       name: 'Restore Centers',
       scope: PermissionScope.ADMIN,
-    },
-    GRANT_ACCESS: {
-      action: 'center:grant-access',
-      name: 'Grant Center Access',
-      scope: PermissionScope.BOTH,
     },
     READ_ALL: {
       action: 'center:read-all',
@@ -164,11 +218,6 @@ export const PERMISSIONS = {
     RESTORE: {
       action: 'branches:restore',
       name: 'Restore Branches',
-      scope: PermissionScope.CENTER,
-    },
-    ASSIGN: {
-      action: 'branches:assign',
-      name: 'Assign Branches',
       scope: PermissionScope.CENTER,
     },
     IMPORT: {

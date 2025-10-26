@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
   InsufficientPermissionsException,
   ResourceNotFoundException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { RolesRepository } from '../repositories/roles.repository';
-import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { CreateRoleRequestDto } from '../dto/create-role.dto';
 import { AssignRoleDto } from '../dto/assign-role.dto';
@@ -12,12 +11,12 @@ import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { PermissionScope } from '../constants/permissions';
-import { Transactional } from '@nestjs-cls/transactional';
 
 @Injectable()
 export class RolesService {
   constructor(
     private readonly rolesRepository: RolesRepository,
+    @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlerHelperService: AccessControlHelperService,
     private readonly profileRoleRepository: ProfileRoleRepository,
   ) {}
@@ -37,17 +36,8 @@ export class RolesService {
   }
 
   async createRole(data: CreateRoleRequestDto, actor: ActorUser) {
-    return this.createRoleInternal(data, actor);
-  }
-
-  async createRoleInternal(data: CreateRoleRequestDto, actor: ActorUser) {
     const centerId = data.centerId ?? actor.centerId;
     data.centerId = centerId;
-    if (centerId) {
-      data.type = RoleType.CENTER;
-    } else {
-      data.type = data.type ?? RoleType.ADMIN;
-    }
 
     return this.rolesRepository.createRole(data);
   }
@@ -149,6 +139,23 @@ export class RolesService {
     scope: PermissionScope,
     centerId?: string,
   ) {
+    const isSuperAdmin =
+      await this.accessControlerHelperService.isSuperAdmin(userProfileId);
+
+    if (isSuperAdmin) {
+      return true;
+    }
+
+    if (centerId) {
+      const isCenterOwner =
+        await this.accessControlerHelperService.isCenterOwner(
+          userProfileId,
+          centerId,
+        );
+      if (isCenterOwner && scope === PermissionScope.CENTER) {
+        return true;
+      }
+    }
     return this.profileRoleRepository.hasPermission(
       userProfileId,
       permission,

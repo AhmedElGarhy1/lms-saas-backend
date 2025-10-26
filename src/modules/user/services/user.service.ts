@@ -15,10 +15,6 @@ import { StaffService } from '@/modules/profile/services/staff.service';
 import { UserProfileService } from '@/modules/profile/services/user-profile.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { CreateUserDto, CreateUserWithRoleDto } from '../dto/create-user.dto';
-import { CreateStaffDto } from '../dto/create-staff.dto';
-import { CreateTeacherDto } from '../dto/create-teacher.dto';
-import { CreateAdminDto } from '../dto/create-admin.dto';
-import { CreateStudentDto } from '../dto/create-student.dto';
 import {
   ChangePasswordParams,
   UserServiceResponse,
@@ -28,12 +24,11 @@ import { CentersService } from '@/modules/centers/services/centers.service';
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
-import { Transactional, Propagation } from '@nestjs-cls/transactional';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Locale } from '@/shared/common/enums/locale.enum';
+import { UpdateUserDto } from '../dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -85,9 +80,6 @@ export class UserService {
   }
 
   async createUser(dto: CreateUserDto, actor: ActorUser): Promise<User> {
-    // Validate that at least one of email or phone is provided
-    dto.validateEmailOrPhone();
-
     // Check for existing user by email if email is provided
     if (dto.email) {
       const existingUser = await this.userRepository.findByEmail(dto.email);
@@ -118,10 +110,11 @@ export class UserService {
 
     // Create user info with provided details or default
     await this.userInfoService.createUserInfo(savedUser.id, {
-      fullName: dto.fullName || savedUser.name,
-      address: dto.address,
-      dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
-      locale: dto.locale || Locale.AR,
+      address: dto.userInfo.address,
+      dateOfBirth: dto.userInfo.dateOfBirth
+        ? new Date(dto.userInfo.dateOfBirth)
+        : undefined,
+      locale: dto.userInfo.locale,
       userId: savedUser.id,
     });
 
@@ -143,7 +136,7 @@ export class UserService {
 
     // Grant center access to the new user
     if (centerId) {
-      await this.accessControlService.grantCenterAccessInternal(
+      await this.accessControlService.grantCenterAccess(
         {
           userProfileId: userProfile.id,
           centerId,
@@ -166,144 +159,15 @@ export class UserService {
       });
     }
 
-    // Assign role to the new user
-    await this.rolesService.assignRole({
-      userProfileId: userProfile.id,
-      roleId: dto.roleId,
-      centerId,
-    });
-
-    return user;
-  }
-
-  async createStaff(dto: CreateStaffDto, actor: ActorUser) {
-    const centerId = (dto.centerId ?? actor.centerId)!;
-    dto.centerId = centerId;
-    const user = await this.createUser(dto, actor);
-
-    // Create staff profile
-    const userProfile = await this.staffService.createStaff(user.id);
-
-    // Apply access controls
-    await this.applyUserAccessControls(
-      userProfile,
-      actor,
-      centerId,
-      dto.roleId,
-    );
-
-    return user;
-  }
-
-  async createTeacher(dto: CreateTeacherDto, actor: ActorUser) {
-    const centerId = (dto.centerId ?? actor.centerId)!;
-    dto.centerId = centerId;
-    const user = await this.createUser(dto, actor);
-
-    // Create teacher profile
-    const teacherProfile = await this.staffService.createTeacher(user.id);
-    const userProfile = await this.userProfileService.createUserProfile(
-      user.id,
-      ProfileType.TEACHER,
-      teacherProfile.id,
-    );
-
-    // Apply access controls
-    await this.applyUserAccessControls(
-      userProfile,
-      actor,
-      centerId,
-      dto.roleId,
-    );
-
-    return user;
-  }
-
-  async createAdmin(dto: CreateAdminDto, actor: ActorUser) {
-    const centerId = (dto.centerId ?? actor.centerId)!;
-    dto.centerId = centerId;
-    const user = await this.createUser(dto, actor);
-
-    // Create admin profile
-    const adminProfile = await this.staffService.createAdmin(user.id);
-    const userProfile = await this.userProfileService.createUserProfile(
-      user.id,
-      ProfileType.ADMIN,
-      adminProfile.id,
-    );
-
-    // Apply access controls
-    await this.applyUserAccessControls(
-      userProfile,
-      actor,
-      centerId,
-      dto.roleId,
-    );
-
-    return user;
-  }
-
-  async createStudent(dto: CreateStudentDto, actor: ActorUser) {
-    const centerId = (dto.centerId ?? actor.centerId)!;
-    dto.centerId = centerId;
-    const user = await this.createUser(dto, actor);
-
-    // Create student profile
-    const studentProfile = await this.staffService.createStudent(user.id);
-    const userProfile = await this.userProfileService.createUserProfile(
-      user.id,
-      ProfileType.STUDENT,
-      studentProfile.id,
-    );
-
-    // Apply access controls
-    await this.applyUserAccessControls(
-      userProfile,
-      actor,
-      centerId,
-      dto.roleId,
-    );
-
-    return user;
-  }
-
-  private async applyUserAccessControls(
-    userProfile: any,
-    actor: ActorUser,
-    centerId: string,
-    roleId: string,
-  ) {
-    // Grant center access to the new user
-    if (centerId) {
-      await this.accessControlService.grantCenterAccessInternal(
-        {
-          userProfileId: userProfile.id,
-          centerId,
-        },
-        actor,
-      );
-    }
-
-    // Grant user access (granter can manage the new user)
-    const bypassUserAccess =
-      await this.accessControlHelperService.bypassCenterInternalAccess(
-        actor.userProfileId,
-        centerId,
-      );
-    if (!bypassUserAccess) {
-      await this.accessControlService.grantUserAccessInternal({
-        granterUserProfileId: actor.userProfileId,
-        targetUserProfileId: userProfile.id,
+    if (dto.roleId) {
+      await this.rolesService.assignRole({
+        userProfileId: userProfile.id,
+        roleId: dto.roleId,
         centerId,
       });
     }
 
-    // Assign role to the new user
-    await this.rolesService.assignRole({
-      userProfileId: userProfile.id,
-      roleId,
-      centerId,
-    });
+    return user;
   }
 
   async paginateUsers(params: PaginateUsersDto, actor: ActorUser) {
@@ -509,28 +373,8 @@ export class UserService {
       targetUserProfileId: actor.userProfileId,
     });
 
-    // Update user using repository
-    // TODO: transaction
-    const userInfoData: any = {};
+    await this.userInfoService.updateUserInfo(userId, updateData.userInfo);
 
-    // Extract user info fields
-    if (updateData.fullName) userInfoData.fullName = updateData.fullName;
-    if (updateData.address) userInfoData.address = updateData.address;
-    if (updateData.dateOfBirth)
-      userInfoData.dateOfBirth = new Date(updateData.dateOfBirth);
-    if (updateData.locale) userInfoData.locale = updateData.locale;
-
-    // Update user info if there are user info fields
-    if (Object.keys(userInfoData).length > 0) {
-      await this.userInfoService.updateUserInfo(userId, userInfoData);
-    }
-
-    // Remove the fields we've processed from updateData
-    delete (updateData as any).fullName;
-    delete (updateData as any).address;
-    delete (updateData as any).dateOfBirth;
-    delete (updateData as any).locale;
-    const user = await this.userRepository.update(userId, updateData as any);
-    return user!;
+    return (await this.userRepository.update(userId, updateData))!;
   }
 }

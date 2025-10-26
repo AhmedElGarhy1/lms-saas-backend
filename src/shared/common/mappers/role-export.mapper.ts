@@ -4,7 +4,6 @@ import { Role } from '@/modules/access-control/entities/role.entity';
 export interface RoleExportData {
   id: string;
   name: string;
-  type: string;
   description: string;
   readOnly: boolean;
   createdAt: string;
@@ -18,7 +17,6 @@ export class RoleExportMapper implements ExportMapper<Role, RoleExportData> {
     return {
       id: role.id,
       name: role.name,
-      type: role.type,
       description: role.description || '',
       readOnly: role.readOnly,
       createdAt: role.createdAt?.toISOString() || '',
@@ -32,7 +30,6 @@ export class RoleExportMapper implements ExportMapper<Role, RoleExportData> {
     return [
       'ID',
       'Name',
-      'Type',
       'Description',
       'Read Only',
       'Created At',

@@ -15,7 +15,6 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 @Injectable()
 export class UserProfileRepository extends BaseRepository<UserProfile> {
   constructor(
-    private readonly dataSource: DataSource,
     protected readonly logger: LoggerService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
@@ -58,6 +57,18 @@ export class UserProfileRepository extends BaseRepository<UserProfile> {
   async findUserProfileByType(userId: string, profileType: ProfileType) {
     return this.getRepository().findOne({
       where: { userId, profileType },
+    });
+  }
+
+  async isAdmin(userProfileId: string) {
+    return this.getRepository().findOne({
+      where: { id: userProfileId, profileType: ProfileType.ADMIN },
+    });
+  }
+
+  async isStaff(userProfileId: string) {
+    return this.getRepository().findOne({
+      where: { id: userProfileId, profileType: ProfileType.STAFF },
     });
   }
 }

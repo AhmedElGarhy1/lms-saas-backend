@@ -1,11 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Center } from '../entities/center.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { LoggerService } from '../../../shared/services/logger.service';
 import { CENTER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
-import { RoleType } from '@/shared/common/enums/role-type.enum';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { CenterResponseDto } from '../dto/center-response.dto';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
@@ -19,6 +17,7 @@ export class CentersRepository extends BaseRepository<Center> {
   constructor(
     protected readonly logger: LoggerService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super(logger, txHost);
@@ -42,7 +41,7 @@ export class CentersRepository extends BaseRepository<Center> {
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
-    const isAdmin = await this.accessControlHelperService.hasAdminRole(
+    const isAdmin = await this.accessControlHelperService.isAdmin(
       actor.userProfileId,
     );
 
