@@ -288,8 +288,6 @@
     "permissions": "permissions",
     "branch": "branch",
     "branches": "branches",
-    "test-module": "test-module",
-    "test-modules": "test-modules",
     "profile": "profile",
     "profiles": "profiles"
   },
@@ -410,6 +408,7 @@
     "dataRetrieved": "Data retrieved successfully",
     "noResults": "No results found",
     "tryAgain": "Please try again",
+    "invalidUserData": "Invalid user data. Please refresh the page and try again.",
     "contactSupport": "Contact support if the problem persists",
     "welcome": "Welcome",
     "itemCount": "Item count",
