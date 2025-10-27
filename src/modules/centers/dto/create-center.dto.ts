@@ -5,7 +5,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { UpdateCenterRequestDto } from './update-center.dto';
 
 export class CreateCenterDto extends UpdateCenterRequestDto {
-  // User object for center admin
+  // User object for center owner
   @ApiProperty({ type: CreateUserDto })
   @ValidateNested()
   @Type(() => CreateUserDto)

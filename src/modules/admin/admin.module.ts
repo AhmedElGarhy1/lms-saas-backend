@@ -9,10 +9,8 @@ import { AdminController } from './controllers/admin.controller';
 import { AdminActionsController } from './controllers/admin-actions.controller';
 import { AdminService } from './services/admin.service';
 import { AdminRepository } from './repositories/admin.repository';
-import { AdminProfileCreationListener } from './listeners/admin-profile-creation.listener';
-import { AdminAccessSetupListener } from './listeners/admin-access-setup.listener';
-import { AdminRoleAssignmentListener } from './listeners/admin-role-assignment.listener';
-import { AdminActivityLogListener } from './listeners/admin-activity-log.listener';
+import { AdminListener } from './listeners/admin.listener';
+import { ActivityLogListener } from './listeners/activity-log.listener';
 
 @Module({
   imports: [
@@ -26,10 +24,8 @@ import { AdminActivityLogListener } from './listeners/admin-activity-log.listene
   providers: [
     AdminService,
     AdminRepository,
-    AdminProfileCreationListener,
-    AdminAccessSetupListener,
-    AdminRoleAssignmentListener,
-    AdminActivityLogListener,
+    AdminListener,
+    ActivityLogListener,
   ],
   exports: [AdminService, AdminRepository],
 })

@@ -77,10 +77,10 @@ export class StaffController {
     @Body() dto: CreateStaffDto,
     @GetUser() actorUser: ActorUser,
   ) {
-    const user = await this.staffService.createStaff(dto, actorUser);
+    await this.staffService.createStaff(dto, actorUser);
 
     return ControllerResponse.success(
-      user,
+      null,
       this.i18n.translate('success.create', {
         args: { resource: this.i18n.translate('common.resources.staff') },
       }),

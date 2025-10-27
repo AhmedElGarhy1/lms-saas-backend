@@ -9,11 +9,9 @@ import { StaffController } from './controllers/staff.controller';
 import { StaffActionsController } from './controllers/staff-actions.controller';
 import { StaffService } from './services/staff.service';
 import { StaffRepository } from './repositories/staff.repository';
-import { StaffProfileCreationListener } from './listeners/staff-profile-creation.listener';
-import { StaffAccessSetupListener } from './listeners/staff-access-setup.listener';
-import { StaffRoleAssignmentListener } from './listeners/staff-role-assignment.listener';
-import { CenterCreatedListener } from './listeners/center-created.listener';
-import { StaffActivityLogListener } from './listeners/staff-activity-log.listener';
+import { StaffListener } from './listeners/staff.listener';
+import { CenterListener } from './listeners/center.listener';
+import { ActivityLogListener } from './listeners/activity-log.listener';
 
 @Module({
   imports: [
@@ -27,11 +25,9 @@ import { StaffActivityLogListener } from './listeners/staff-activity-log.listene
   providers: [
     StaffService,
     StaffRepository,
-    StaffProfileCreationListener,
-    StaffAccessSetupListener,
-    StaffRoleAssignmentListener,
-    CenterCreatedListener,
-    StaffActivityLogListener,
+    StaffListener,
+    CenterListener,
+    ActivityLogListener,
   ],
   exports: [StaffService, StaffRepository],
 })

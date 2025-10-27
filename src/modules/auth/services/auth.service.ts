@@ -157,7 +157,11 @@ export class AuthService {
     // Emit login event for activity logging
     this.eventEmitter.emit(
       AuthEvents.USER_LOGGED_IN,
-      new UserLoggedInEvent(user.id!, user.email!),
+      new UserLoggedInEvent(
+        user.id!,
+        user.email!,
+        this.buildActorFromUser(user),
+      ),
     );
 
     return {
@@ -269,8 +273,8 @@ export class AuthService {
       dto.token,
     );
 
-    // Update user email verification status
-    await this.userService.update(userId, { emailVerified: true } as any);
+    // Email verification is handled by the EmailVerificationService
+    // No need to update user entity as verification is tracked by token deletion
 
     this.logger.log(`Email verified for user: ${email}`, 'AuthService', {
       userId,
@@ -289,7 +293,7 @@ export class AuthService {
   async forgotPassword(dto: ForgotPasswordRequestDto) {
     await this.passwordResetService.sendPasswordResetEmail(dto.email);
 
-    // Emit password reset requested event for activity logging
+    // Emit password reset requested event (not for activity logging)
     this.eventEmitter.emit(
       AuthEvents.PASSWORD_RESET_REQUESTED,
       new PasswordResetRequestedEvent(dto.email),
@@ -519,5 +523,16 @@ export class AuthService {
     });
 
     return tokens;
+  }
+
+  private buildActorFromUser(user: User): ActorUser {
+    // For login events, we create a minimal ActorUser with just the user ID
+    // The activity log will use this for tracking who performed the action
+    return {
+      ...user,
+      profileType: 'USER' as any, // Will be updated when we have profile info
+      userProfileId: user.id!, // Temporary - will be updated when we have profile info
+      centerId: undefined, // Will be updated when we have profile info
+    } as ActorUser;
   }
 }

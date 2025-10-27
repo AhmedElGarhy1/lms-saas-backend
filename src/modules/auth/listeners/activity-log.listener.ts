@@ -5,7 +5,6 @@ import { AuthActivityType } from '../enums/auth-activity-type.enum';
 import {
   UserLoggedInEvent,
   PasswordChangedEvent,
-  PasswordResetRequestedEvent,
   TwoFactorSetupEvent,
   TwoFactorEnabledEvent,
   TwoFactorDisabledEvent,
@@ -13,7 +12,7 @@ import {
 } from '../events/auth.events';
 
 @Injectable()
-export class AuthActivityLogListener {
+export class ActivityLogListener {
   constructor(private readonly activityLogService: ActivityLogService) {}
 
   @OnEvent(AuthEvents.USER_LOGGED_IN)
@@ -24,7 +23,7 @@ export class AuthActivityLogListener {
         userId: event.userId,
         email: event.email,
       },
-      { id: event.userId } as any,
+      event.actor,
     );
   }
 
@@ -36,17 +35,6 @@ export class AuthActivityLogListener {
         userId: event.userId,
       },
       event.actor,
-    );
-  }
-
-  @OnEvent(AuthEvents.PASSWORD_RESET_REQUESTED)
-  async handlePasswordResetRequested(event: PasswordResetRequestedEvent) {
-    await this.activityLogService.log(
-      AuthActivityType.PASSWORD_RESET_REQUESTED,
-      {
-        email: event.email,
-      },
-      { id: 'system' } as any,
     );
   }
 

@@ -77,10 +77,10 @@ export class AdminController {
     @Body() dto: CreateAdminDto,
     @GetUser() actorUser: ActorUser,
   ) {
-    const user = await this.adminService.createAdmin(dto, actorUser);
+    await this.adminService.createAdmin(dto, actorUser);
 
     return ControllerResponse.success(
-      user,
+      null,
       this.i18n.translate('success.create', {
         args: { resource: this.i18n.translate('common.resources.admin') },
       }),

@@ -11,7 +11,7 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { User } from '@/modules/user/entities/user.entity';
 import { Admin } from '../entities/admin.entity';
 import {
-  CreateAdminProfileEvent,
+  CreateAdminEvent,
   AdminEvents,
 } from '@/modules/admin/events/admin.events';
 import {
@@ -31,33 +31,20 @@ export class AdminService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async createAdmin(dto: CreateAdminDto, actor: ActorUser): Promise<User> {
-    // Create the base user first
-    const user = await this.userService.createUser(dto, actor);
-
-    // Emit event to create admin profile (listener handles the rest)
+  async createAdmin(dto: CreateAdminDto, actor: ActorUser): Promise<void> {
+    // Emit event to create admin (listener handles everything)
     this.eventEmitter.emit(
-      AdminEvents.PROFILE_CREATE,
-      new CreateAdminProfileEvent(user.id, dto, actor),
+      AdminEvents.CREATE,
+      new CreateAdminEvent(dto, actor),
     );
 
-    return user;
+    // The listener will handle user creation
   }
 
   async paginateAdmins(params: PaginateAdminDto, actor: ActorUser) {
     const centerId = params.centerId ?? actor.centerId;
     params.centerId = centerId;
-
-    await this.accessControlHelperService.validateAdminAndCenterAccess({
-      userProfileId: actor.userProfileId,
-      centerId,
-    });
-
-    return this.userService.paginateUsersByProfileType(
-      params,
-      actor,
-      ProfileType.ADMIN,
-    );
+    return this.userService.paginateAdmins(params, actor);
   }
 
   async updateAdmin(

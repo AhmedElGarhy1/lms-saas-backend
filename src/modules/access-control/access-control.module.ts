@@ -25,8 +25,11 @@ import { BranchAccess } from './entities/branch-access.entity';
 import { BranchAccessRepository } from './repositories/branch-access.repository';
 import { UserModule } from '../user/user.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
-import { RoleActivityLogListener } from './listeners/role-activity-log.listener';
-import { AccessControlActivityLogListener } from './listeners/access-control-activity-log.listener';
+import { UserAccessListener } from './listeners/user-access.listener';
+import { CenterAccessListener } from './listeners/center-access.listener';
+import { BranchAccessListener } from './listeners/branch-access.listener';
+import { RoleListener } from './listeners/role.listener';
+import { ActivityLogListener } from './listeners/activity-log.listener';
 
 @Global()
 @Module({
@@ -58,8 +61,11 @@ import { AccessControlActivityLogListener } from './listeners/access-control-act
     RolePermissionSubscriber,
     UserAccessRepository,
     BranchAccessRepository,
-    RoleActivityLogListener,
-    AccessControlActivityLogListener,
+    UserAccessListener,
+    CenterAccessListener,
+    BranchAccessListener,
+    RoleListener,
+    ActivityLogListener,
   ],
   exports: [AccessControlService, AccessControlHelperService, RolesService],
 })

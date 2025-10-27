@@ -11,7 +11,7 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { User } from '@/modules/user/entities/user.entity';
 import { Staff } from '../entities/staff.entity';
 import {
-  CreateStaffProfileEvent,
+  CreateStaffEvent,
   StaffEvents,
 } from '@/modules/staff/events/staff.events';
 import {
@@ -31,17 +31,14 @@ export class StaffService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async createStaff(dto: CreateStaffDto, actor: ActorUser): Promise<User> {
-    // Create the base user first
-    const user = await this.userService.createUser(dto, actor);
-
-    // Emit event to create staff profile (listener handles the rest)
+  async createStaff(dto: CreateStaffDto, actor: ActorUser): Promise<void> {
+    // Emit event to create staff (listener handles everything)
     this.eventEmitter.emit(
-      StaffEvents.PROFILE_CREATE,
-      new CreateStaffProfileEvent(user.id, dto, actor),
+      StaffEvents.CREATE,
+      new CreateStaffEvent(dto, actor),
     );
 
-    return user;
+    // The listener will handle user creation
   }
 
   async paginateStaff(params: PaginateStaffDto, actor: ActorUser) {

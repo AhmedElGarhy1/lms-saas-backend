@@ -4,10 +4,8 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { CreateStaffDto } from '@/modules/staff/dto/create-staff.dto';
 
 export enum StaffEvents {
-  PROFILE_CREATE = 'staff.profile.create',
+  CREATE = 'staff.create',
   CREATED = 'staff.created',
-  PROFILE_CREATED = 'staff.profile.created',
-  ACCESS_SETUP_NEEDED = 'staff.access.setup.needed',
 }
 
 export class StaffCreatedEvent {
@@ -18,29 +16,8 @@ export class StaffCreatedEvent {
   ) {}
 }
 
-export class CreateStaffProfileEvent {
+export class CreateStaffEvent {
   constructor(
-    public readonly userId: string,
-    public readonly dto: CreateStaffDto,
-    public readonly actor: ActorUser,
-  ) {}
-}
-
-export class StaffProfileCreatedEvent {
-  constructor(
-    public readonly userId: string,
-    public readonly userProfileId: string,
-    public readonly staffId: string,
-    public readonly dto: CreateStaffDto,
-    public readonly actor: ActorUser,
-  ) {}
-}
-
-export class StaffAccessSetupNeededEvent {
-  constructor(
-    public readonly userId: string,
-    public readonly userProfileId: string,
-    public readonly staffId: string,
     public readonly dto: CreateStaffDto,
     public readonly actor: ActorUser,
   ) {}

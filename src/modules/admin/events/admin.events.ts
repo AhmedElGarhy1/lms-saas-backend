@@ -4,10 +4,8 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { CreateAdminDto } from '@/modules/admin/dto/create-admin.dto';
 
 export enum AdminEvents {
-  PROFILE_CREATE = 'admin.profile.create',
+  CREATE = 'admin.create',
   CREATED = 'admin.created',
-  PROFILE_CREATED = 'admin.profile.created',
-  ACCESS_SETUP_NEEDED = 'admin.access.setup.needed',
 }
 
 export class AdminCreatedEvent {
@@ -18,29 +16,8 @@ export class AdminCreatedEvent {
   ) {}
 }
 
-export class CreateAdminProfileEvent {
+export class CreateAdminEvent {
   constructor(
-    public readonly userId: string,
-    public readonly dto: CreateAdminDto,
-    public readonly actor: ActorUser,
-  ) {}
-}
-
-export class AdminProfileCreatedEvent {
-  constructor(
-    public readonly userId: string,
-    public readonly userProfileId: string,
-    public readonly adminId: string,
-    public readonly dto: CreateAdminDto,
-    public readonly actor: ActorUser,
-  ) {}
-}
-
-export class AdminAccessSetupNeededEvent {
-  constructor(
-    public readonly userId: string,
-    public readonly userProfileId: string,
-    public readonly adminId: string,
     public readonly dto: CreateAdminDto,
     public readonly actor: ActorUser,
   ) {}

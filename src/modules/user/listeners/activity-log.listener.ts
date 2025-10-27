@@ -12,7 +12,7 @@ import {
 } from '../events/user.events';
 
 @Injectable()
-export class UserActivityLogListener {
+export class ActivityLogListener {
   constructor(private readonly activityLogService: ActivityLogService) {}
 
   @OnEvent(UserEvents.CREATED)

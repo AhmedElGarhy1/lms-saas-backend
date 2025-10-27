@@ -5,7 +5,7 @@ import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
 import { AdminCreatedEvent, AdminEvents } from '../events/admin.events';
 
 @Injectable()
-export class AdminActivityLogListener {
+export class ActivityLogListener {
   constructor(private readonly activityLogService: ActivityLogService) {}
 
   @OnEvent(AdminEvents.CREATED)

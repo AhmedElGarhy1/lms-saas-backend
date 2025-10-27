@@ -186,30 +186,8 @@ export class UserService {
     return result;
   }
 
-  async paginateUsersByProfileType(
-    params: PaginateUsersDto,
-    actor: ActorUser,
-    profileType: ProfileType,
-  ) {
-    const centerId = params.centerId ?? actor.centerId;
-    params.centerId = centerId;
-
-    await this.accessControlHelperService.validateAdminAndCenterAccess({
-      userProfileId: actor.userProfileId,
-      centerId,
-    });
-
-    const result = await this.userRepository.paginateUsersByProfileType(
-      params,
-      actor,
-      profileType,
-    );
-
-    return result;
-  }
-
   async paginateAdmins(params: PaginateUsersDto, actor: ActorUser) {
-    return this.paginateUsersByProfileType(params, actor, ProfileType.ADMIN);
+    return this.userRepository.paginateAdmins(params, actor);
   }
 
   async deleteUser(userId: string, actor: ActorUser): Promise<void> {

@@ -431,17 +431,18 @@ export class UserRepository extends BaseRepository<User> {
 
   private prepareUsersResponse(users: UserResponseDto[]): UserResponseDto[] {
     return users.map((user) => {
-      const userDto = Object.assign(user, {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        role: user?.userProfiles?.[0]?.profileRoles?.[0]
-          ?.role as RoleResponseDto,
-        userProfile: user.userProfiles[0],
-      });
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      delete (userDto as any).userProfiles;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      delete (userDto as any).userProfile?.profileRoles;
-      return userDto;
+      const role = user.userProfiles?.[0]?.profileRoles?.[0]
+        ?.role as RoleResponseDto;
+      const userProfile = user.userProfiles?.[0];
+
+      const { userProfiles, ...rest } = user;
+      const { profileRoles, ...cleanUserProfile } = userProfile ?? {};
+
+      return {
+        ...rest,
+        role,
+        userProfile: cleanUserProfile,
+      } as UserResponseDto;
     });
   }
 

@@ -62,17 +62,11 @@ export class CentersService {
       isActive: dto.isActive,
     });
 
-    // Create user
-    const user = await this.userService.createUser(dto.user, actor);
-
-    // Emit event for staff profile creation
+    // Emit event for user creation and staff profile creation
     this.eventEmitter.emit(
       CenterEvents.CREATED,
-      new CenterCreatedEvent(center, user, actor),
+      new CenterCreatedEvent(center, dto.user, actor),
     );
-
-    // Note: The listener will create staff profile and emit center.owner.assigned
-    // We can wait for it or handle async - depends on requirements
 
     return center;
   }

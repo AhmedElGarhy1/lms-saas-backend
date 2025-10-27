@@ -9,6 +9,7 @@ import {
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ProfileResponseDto } from '@/modules/profiles/dto/profile-response.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { UpdateUserProfileDto } from '../dto/update-user-profile.dto';
 import { UserService } from './user.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { Admin } from '@/modules/admin/entities/admin.entity';
@@ -85,14 +86,16 @@ export class UserProfileService {
     return returnData;
   }
 
-  async updateUserProfile(actor: ActorUser, updateData: any) {
+  async updateUserProfile(actor: ActorUser, updateData: UpdateUserProfileDto) {
     // Convert profile update data to user update format
     const userUpdateData: UpdateUserDto = {
-      name: updateData.name,
-      phone: updateData.phone,
+      name: updateData.name!,
+      phone: updateData.phone!,
       userInfo: {
         address: updateData.address,
-        dateOfBirth: updateData.dateOfBirth,
+        dateOfBirth: updateData.dateOfBirth
+          ? new Date(updateData.dateOfBirth)
+          : undefined,
       },
     };
 
