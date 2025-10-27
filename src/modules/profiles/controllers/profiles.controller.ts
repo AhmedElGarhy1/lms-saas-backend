@@ -24,6 +24,8 @@ import { PaginateProfilesDto } from '../dto/paginate-profiles.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
+import { NoContext } from '@/shared/common/decorators/no-context.decorator';
+import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 
 @ApiTags('Profiles')
 @Controller('profiles')
@@ -36,6 +38,7 @@ export class ProfilesController {
   @Get('me')
   @ReadApiResponses('Get current user profile')
   @SerializeOptions({ type: ProfileResponseDto })
+  @NoContext()
   async getCurrentProfile(@GetUser() actor: ActorUser) {
     const profile = await this.userProfileService.getCurrentUserProfile(actor);
 
@@ -50,6 +53,7 @@ export class ProfilesController {
   @Put('me')
   @UpdateApiResponses('Update current user profile')
   @ApiBody({ type: UpdateProfileDto })
+  @NoContext()
   async updateCurrentProfile(
     @Body() dto: UpdateProfileDto,
     @GetUser() actor: ActorUser,
@@ -89,6 +93,8 @@ export class ProfilesController {
   @ReadApiResponses('List all profiles with pagination and filtering')
   @SerializeOptions({ type: ProfileResponseDto })
   @Permissions(PERMISSIONS.ADMIN.READ)
+  @NoProfile()
+  @NoContext()
   async listProfiles(
     @Query() query: PaginateProfilesDto,
     @GetUser() actor: ActorUser,
