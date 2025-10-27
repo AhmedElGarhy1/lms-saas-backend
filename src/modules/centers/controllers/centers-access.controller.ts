@@ -15,8 +15,6 @@ import {
 } from '@/modules/access-control/constants/permissions';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import {
   BusinessLogicException,
   InsufficientPermissionsException,
@@ -30,7 +28,6 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 export class CentersAccessController {
   constructor(
     private readonly accessControlService: AccessControlService,
-    private readonly activityLogService: ActivityLogService,
     private readonly accessControlHelperService: AccessControlHelperService,
   ) {}
 
@@ -46,16 +43,6 @@ export class CentersAccessController {
 
     const result = await this.accessControlService.grantCenterAccess(
       dto,
-      actor,
-    );
-
-    // Log center access granted
-    await this.activityLogService.log(
-      ActivityType.CENTER_ACCESS_GRANTED,
-      {
-        centerId: dto.centerId,
-        targetUserProfileId: dto.userProfileId,
-      },
       actor,
     );
 
@@ -78,17 +65,6 @@ export class CentersAccessController {
 
     const result = await this.accessControlService.revokeCenterAccess(
       dto,
-      actor,
-    );
-
-    // Log center access revoked
-    await this.activityLogService.log(
-      ActivityType.CENTER_ACCESS_REVOKED,
-      {
-        centerId: dto.centerId,
-        targetUserProfileId: dto.userProfileId,
-        revokedBy: actor.id,
-      },
       actor,
     );
 

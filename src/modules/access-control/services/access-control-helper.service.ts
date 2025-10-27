@@ -19,7 +19,7 @@ import { BranchAccessDto } from '../dto/branch-access.dto';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { CenterAccessDto } from '../dto/center-access.dto';
-import { UserProfileService } from '@/modules/profile/services/user-profile.service';
+import { UserProfileService } from '@/modules/user/services/user-profile.service';
 import { PermissionScope } from '../constants/permissions';
 import { RolesService } from './roles.service';
 

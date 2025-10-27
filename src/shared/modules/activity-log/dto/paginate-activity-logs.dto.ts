@@ -1,7 +1,7 @@
 import { IsOptional, IsUUID, IsEnum } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
-import { ActivityType } from '../entities/activity-log.entity';
+// ActivityType is now handled by domain-specific enums
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { User } from '@/modules/user/entities/user.entity';
@@ -27,9 +27,8 @@ export class PaginateActivityLogsDto extends BasePaginationDto {
 
   @ApiPropertyOptional({
     description: 'Filter by activity type',
-    enum: ActivityType,
+    type: String,
   })
   @IsOptional()
-  @IsEnum(ActivityType)
-  type?: ActivityType;
+  type?: string;
 }

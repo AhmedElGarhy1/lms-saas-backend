@@ -1,21 +1,26 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateBranchDto } from '../dto/create-branch.dto';
 import { PaginateBranchesDto } from '../dto/paginate-branches.dto';
 import { BranchesRepository } from '../repositories/branches.repository';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { Transactional } from '@nestjs-cls/transactional';
+import {
+  BranchCreatedEvent,
+  BranchUpdatedEvent,
+  BranchDeletedEvent,
+  BranchEvents,
+} from '@/modules/centers/events/branch.events';
 
 @Injectable()
 export class BranchesService {
   constructor(
     private readonly branchesRepository: BranchesRepository,
-    private readonly activityLogService: ActivityLogService,
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async paginateBranches(
@@ -52,12 +57,11 @@ export class BranchesService {
       centerId: actor.centerId!,
     });
 
-    // Log activity
-    await this.activityLogService.log(ActivityType.CENTER_CREATED, {
-      branchId: branch.id,
-      location: branch.location,
-      action: 'branch_created',
-    });
+    // Emit event for activity logging
+    this.eventEmitter.emit(
+      BranchEvents.CREATED,
+      new BranchCreatedEvent(branch, actor),
+    );
 
     return branch;
   }
@@ -78,13 +82,11 @@ export class BranchesService {
     Object.assign(branch, data);
     const updatedBranch = await this.branchesRepository.update(branchId, data);
 
-    // Log activity
-    await this.activityLogService.log(ActivityType.CENTER_UPDATED, {
-      branchId: updatedBranch?.id,
-      location: updatedBranch?.location,
-      action: 'branch_updated',
-      new: data,
-    });
+    // Emit event for activity logging
+    this.eventEmitter.emit(
+      BranchEvents.UPDATED,
+      new BranchUpdatedEvent(branchId, data, actor),
+    );
 
     return updatedBranch;
   }
@@ -98,10 +100,10 @@ export class BranchesService {
 
     await this.branchesRepository.softRemove(branchId);
 
-    // Log activity
-    await this.activityLogService.log(ActivityType.CENTER_DELETED, {
-      branchId,
-      action: 'branch_deleted',
-    });
+    // Emit event for activity logging
+    this.eventEmitter.emit(
+      BranchEvents.DELETED,
+      new BranchDeletedEvent(branchId, actor),
+    );
   }
 }

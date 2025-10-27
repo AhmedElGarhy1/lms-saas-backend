@@ -43,8 +43,6 @@ import {
 import { RoleResponseDto } from '../dto/role-response.dto';
 import { SerializeOptions } from '@nestjs/common';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { ExportService } from '@/shared/common/services/export.service';
@@ -61,7 +59,6 @@ export class RolesController {
   constructor(
     private readonly rolesService: RolesService,
     private readonly permissionService: PermissionService,
-    private readonly activityLogService: ActivityLogService,
     private readonly exportService: ExportService,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
@@ -97,18 +94,6 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.rolesService.createRole(dto, actor);
-
-    // Log role creation
-    await this.activityLogService.log(
-      ActivityType.ROLE_CREATED,
-      {
-        roleId: result.id,
-        roleName: result.name,
-        rolePermissions: dto.rolePermissions,
-        createdBy: actor.id,
-      },
-      actor,
-    );
 
     return ControllerResponse.success(
       result,
@@ -155,18 +140,6 @@ export class RolesController {
   ) {
     const result = await this.rolesService.updateRole(roleId, dto, user);
 
-    // Log role update
-    await this.activityLogService.log(
-      ActivityType.ROLE_UPDATED,
-      {
-        roleId: roleId,
-        roleName: result?.name,
-        updatedFields: Object.keys(dto),
-        updatedBy: user.id,
-      },
-      user,
-    );
-
     return ControllerResponse.success(
       result,
       this.i18n.translate('success.update', {
@@ -186,16 +159,6 @@ export class RolesController {
   ) {
     const result = await this.rolesService.deleteRole(roleId, user);
 
-    // Log role deletion
-    await this.activityLogService.log(
-      ActivityType.ROLE_DELETED,
-      {
-        roleId: roleId,
-        deletedBy: user.id,
-      },
-      user,
-    );
-
     return ControllerResponse.success(
       result,
       this.i18n.translate('success.delete', {
@@ -214,16 +177,6 @@ export class RolesController {
     @GetUser() user: ActorUser,
   ) {
     await this.rolesService.restoreRole(roleId, user);
-
-    // Log role restoration
-    await this.activityLogService.log(
-      ActivityType.ROLE_RESTORED,
-      {
-        roleId: roleId,
-        restoredBy: user.id,
-      },
-      user,
-    );
 
     return ControllerResponse.message('Role restored successfully');
   }

@@ -12,8 +12,6 @@ import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { AssignRoleDto } from '../dto/assign-role.dto';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 
@@ -23,7 +21,6 @@ import { I18nTranslations } from '@/generated/i18n.generated';
 export class RoleAssignController {
   constructor(
     private readonly rolesService: RolesService,
-    private readonly activityLogService: ActivityLogService,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
@@ -34,11 +31,6 @@ export class RoleAssignController {
   @Transactional()
   async assignRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
     const result = await this.rolesService.assignRoleValidate(dto, user);
-    await this.activityLogService.log(ActivityType.ROLE_ASSIGNED, {
-      userProfileId: user.userProfileId,
-      roleId: dto.roleId,
-      assignedBy: user.userProfileId,
-    });
     return ControllerResponse.success(
       result,
       this.i18n.translate('success.roleAssigned'),
@@ -52,11 +44,6 @@ export class RoleAssignController {
   @Transactional()
   async removeRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
     const result = await this.rolesService.removeUserRoleValidate(dto, user);
-    await this.activityLogService.log(ActivityType.ROLE_REMOVED, {
-      userProfileId: user.userProfileId,
-      roleId: dto.roleId,
-      removedBy: user.userProfileId,
-    });
     return ControllerResponse.success(
       result,
       this.i18n.translate('success.roleRemoved'),

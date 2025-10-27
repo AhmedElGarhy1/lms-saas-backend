@@ -18,11 +18,14 @@ import { AccessJwtGuard } from './guards/access-jwt.guard';
 import { RefreshJwtGuard } from './guards/refresh-jwt.guard';
 import { UserModule } from '../user/user.module';
 import { UserRepository } from '../user/repositories/user.repository';
+import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
+import { AuthActivityLogListener } from './listeners/auth-activity-log.listener';
 
 @Module({
   imports: [
     UserModule,
     TypeOrmModule.forFeature([User, EmailVerification, PasswordResetToken]),
+    ActivityLogModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -47,6 +50,7 @@ import { UserRepository } from '../user/repositories/user.repository';
     RefreshJwtStrategy,
     AccessJwtGuard,
     RefreshJwtGuard,
+    AuthActivityLogListener,
   ],
   exports: [
     AuthService,

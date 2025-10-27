@@ -1,7 +1,7 @@
-import { ActivityType } from '../entities/activity-log.entity';
+// ActivityType is now handled by domain-specific enums
 
 export interface CreateActivityLogDto {
-  type: ActivityType;
+  type: string;
   description?: string;
   metadata?: Record<string, any>;
   actorId?: string | null;

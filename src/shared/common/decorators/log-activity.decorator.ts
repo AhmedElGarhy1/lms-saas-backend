@@ -1,8 +1,8 @@
 import { SetMetadata } from '@nestjs/common';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
+// ActivityType is now handled by domain-specific enums
 
 export interface ActivityLogOptions {
-  type: ActivityType;
+  type: string;
   description?: string;
   metadata?: Record<string, any>;
   targetUserId?: string;

@@ -1,5 +1,5 @@
 import { RoleResponseDto } from '@/modules/access-control/dto/role-response.dto';
-import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
+import { UserProfile } from '@/modules/user/entities/user-profile.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type, Exclude } from 'class-transformer';
 

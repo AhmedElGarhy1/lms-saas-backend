@@ -5,6 +5,7 @@ import {
   Injectable,
   forwardRef,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   BusinessLogicException,
   InsufficientPermissionsException,
@@ -18,6 +19,15 @@ import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { BranchAccessDto } from '../dto/branch-access.dto';
 import { BranchAccessRepository } from '../repositories/branch-access.repository';
+import {
+  CenterAccessGrantedEvent,
+  CenterAccessRevokedEvent,
+  UserAccessGrantedEvent,
+  UserAccessRevokedEvent,
+  BranchAccessGrantedEvent,
+  BranchAccessRevokedEvent,
+  AccessControlEvents,
+} from '@/modules/access-control/events/access-control.events';
 
 @Injectable()
 export class AccessControlService {
@@ -27,6 +37,7 @@ export class AccessControlService {
     private readonly userAccessRepository: UserAccessRepository,
     private readonly centerAccessRepository: CenterAccessRepository,
     private readonly branchAccessRepository: BranchAccessRepository,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async grantUserAccess(body: UserAccessDto): Promise<void> {
@@ -35,10 +46,42 @@ export class AccessControlService {
 
   async grantUserAccessInternal(body: UserAccessDto): Promise<void> {
     await this.userAccessRepository.grantUserAccess(body);
+
+    // Get the actual user ID from the profile ID
+    const granterProfile =
+      await this.accessControlHelperService.findUserProfile(
+        body.granterUserProfileId,
+      );
+
+    this.eventEmitter.emit(
+      AccessControlEvents.USER_ACCESS_GRANTED,
+      new UserAccessGrantedEvent(
+        body.granterUserProfileId,
+        body.targetUserProfileId,
+        body.centerId!,
+        { id: granterProfile?.userId || null } as ActorUser,
+      ),
+    );
   }
 
   async revokeUserAccess(body: UserAccessDto): Promise<void> {
     await this.userAccessRepository.revokeUserAccess(body);
+
+    // Get the actual user ID from the profile ID
+    const granterProfile =
+      await this.accessControlHelperService.findUserProfile(
+        body.granterUserProfileId,
+      );
+
+    this.eventEmitter.emit(
+      AccessControlEvents.USER_ACCESS_REVOKED,
+      new UserAccessRevokedEvent(
+        body.granterUserProfileId,
+        body.targetUserProfileId,
+        body.centerId!,
+        { id: granterProfile?.userId || null } as ActorUser,
+      ),
+    );
   }
 
   async grantUserAccessValidate(
@@ -151,7 +194,15 @@ export class AccessControlService {
       targetUserProfileId: dto.userProfileId,
       centerId: dto.centerId,
     });
-    return this.centerAccessRepository.grantCenterAccess(dto);
+
+    const result = await this.centerAccessRepository.grantCenterAccess(dto);
+
+    this.eventEmitter.emit(
+      AccessControlEvents.CENTER_ACCESS_GRANTED,
+      new CenterAccessGrantedEvent(dto.userProfileId, dto.centerId, actor),
+    );
+
+    return result;
   }
 
   async revokeCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
@@ -162,7 +213,14 @@ export class AccessControlService {
       centerId: dto.centerId,
     });
 
-    return this.centerAccessRepository.revokeCenterAccess(dto);
+    const result = await this.centerAccessRepository.revokeCenterAccess(dto);
+
+    this.eventEmitter.emit(
+      AccessControlEvents.CENTER_ACCESS_REVOKED,
+      new CenterAccessRevokedEvent(dto.userProfileId, dto.centerId, actor),
+    );
+
+    return result;
   }
 
   // Additional methods needed by other services
@@ -173,7 +231,7 @@ export class AccessControlService {
     return userAccesses.map((access: UserAccess) => access.targetUserProfileId);
   }
 
-  async assignProfileToBranch(data: BranchAccessDto) {
+  async assignProfileToBranch(data: BranchAccessDto, actor: ActorUser) {
     const canAccess =
       await this.accessControlHelperService.canBranchAccess(data);
     if (canAccess) {
@@ -184,12 +242,36 @@ export class AccessControlService {
     const branchAccess =
       await this.branchAccessRepository.grantBranchAccess(data);
 
+    // Emit event for activity logging
+    this.eventEmitter.emit(
+      AccessControlEvents.BRANCH_ACCESS_GRANTED,
+      new BranchAccessGrantedEvent(
+        data.userProfileId,
+        data.branchId,
+        data.centerId!,
+        actor,
+      ),
+    );
+
     return branchAccess;
   }
 
-  async removeUserFromBranch(data: BranchAccessDto) {
+  async removeUserFromBranch(data: BranchAccessDto, actor: ActorUser) {
     await this.accessControlHelperService.validateBranchAccess(data);
 
-    return this.branchAccessRepository.revokeBranchAccess(data);
+    const result = await this.branchAccessRepository.revokeBranchAccess(data);
+
+    // Emit event for activity logging
+    this.eventEmitter.emit(
+      AccessControlEvents.BRANCH_ACCESS_REVOKED,
+      new BranchAccessRevokedEvent(
+        data.userProfileId,
+        data.branchId,
+        data.centerId!,
+        actor,
+      ),
+    );
+
+    return result;
   }
 }

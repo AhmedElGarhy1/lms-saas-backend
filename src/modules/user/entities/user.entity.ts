@@ -3,7 +3,7 @@ import { Exclude } from 'class-transformer';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
 import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
-import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
+import { UserProfile } from './user-profile.entity';
 import { UserInfo } from './user-info.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 

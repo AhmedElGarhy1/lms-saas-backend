@@ -32,5 +32,6 @@
   "twoFactorVerified": "2FA verification completed",
   "userRegistered": "User registered successfully",
   "userActivated": "User activated successfully",
-  "userDeactivated": "User deactivated successfully"
+  "userDeactivated": "User deactivated successfully",
+  "found": "{resource} found successfully"
 }

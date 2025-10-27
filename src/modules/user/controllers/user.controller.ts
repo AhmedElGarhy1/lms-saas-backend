@@ -26,8 +26,6 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UserService } from '../services/user.service';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { CreateUserWithRoleDto } from '../dto/create-user.dto';
-import { CreateStaffDto } from '../dto/create-staff.dto';
-import { CreateAdminDto } from '../dto/create-admin.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import {
@@ -35,24 +33,16 @@ import {
   ToggleUserStatusResponseDto,
 } from '../dto/toggle-user-status.dto';
 import { RestoreUserResponseDto } from '../dto/delete-user.dto';
-import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
-import { AdminService } from '@/modules/profile/services/admin.service';
-import { StaffService } from '@/modules/profile/services/staff.service';
 
 @ApiTags('Users')
 @Controller('users')
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    private readonly staffService: StaffService,
-    private readonly adminService: AdminService,
-    private readonly activityLogService: ActivityLogService,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
@@ -66,28 +56,6 @@ export class UserController {
   // ) {
   //   return this.userService.paginateUsers(query, actorUser);
   // }
-
-  @Get('staff')
-  @ReadApiResponses('List staff users with pagination and filtering')
-  @SerializeOptions({ type: UserResponseDto })
-  @Permissions(PERMISSIONS.STAFF.READ)
-  async paginateStaff(
-    @Query() query: PaginateUsersDto,
-    @GetUser() actorUser: ActorUser,
-  ) {
-    return this.userService.paginateStaff(query, actorUser);
-  }
-
-  @Get('admin')
-  @ReadApiResponses('List admin users with pagination and filtering')
-  @SerializeOptions({ type: UserResponseDto })
-  @Permissions(PERMISSIONS.ADMIN.READ)
-  async paginateAdmins(
-    @Query() query: PaginateAdminsDto,
-    @GetUser() actorUser: ActorUser,
-  ) {
-    return this.userService.paginateAdmins(query, actorUser);
-  }
 
   @Get(':id')
   @ReadApiResponses('Get user profile by User ID')
@@ -112,90 +80,6 @@ export class UserController {
   ) {
     const user = await this.userService.createUserWithRole(dto, actorUser);
 
-    // Log the activity
-    await this.activityLogService.log(
-      ActivityType.USER_CREATED,
-      {
-        targetUserId: user.id,
-        email: user.email,
-        name: user.name,
-        roleId: dto.roleId,
-        centerId: dto.centerId,
-        createdBy: actorUser.id,
-      },
-      actorUser,
-    );
-
-    return ControllerResponse.success(
-      user,
-      this.i18n.translate('success.create', {
-        args: { resource: this.i18n.translate('common.resources.user') },
-      }),
-    );
-  }
-
-  @Post('staff')
-  @CreateApiResponses('Create a new staff member')
-  @ApiBody({ type: CreateStaffDto })
-  @Permissions(PERMISSIONS.STAFF.CREATE)
-  @Transactional()
-  async createStaff(
-    @Body() dto: CreateStaffDto,
-    @GetUser() actorUser: ActorUser,
-  ) {
-    const user = await this.userService.createUser(dto, actorUser);
-    await this.staffService.createStaffForUser(user.id, {});
-
-    // Log the activity
-    await this.activityLogService.log(
-      ActivityType.USER_CREATED,
-      {
-        targetUserId: user.id,
-        email: user.email,
-        name: user.name,
-        roleId: dto.roleId,
-        centerId: dto.centerId,
-        createdBy: actorUser.id,
-        profileType: 'Staff',
-      },
-      actorUser,
-    );
-
-    return ControllerResponse.success(
-      user,
-      this.i18n.translate('success.create', {
-        args: { resource: this.i18n.translate('common.resources.user') },
-      }),
-    );
-  }
-
-  @Post('admin')
-  @CreateApiResponses('Create a new admin')
-  @ApiBody({ type: CreateAdminDto })
-  @Permissions(PERMISSIONS.ADMIN.CREATE)
-  @Transactional()
-  async createAdmin(
-    @Body() dto: CreateAdminDto,
-    @GetUser() actorUser: ActorUser,
-  ) {
-    const user = await this.userService.createUser(dto, actorUser);
-    await this.adminService.createAdminForUser(user.id, {});
-
-    // Log the activity
-    await this.activityLogService.log(
-      ActivityType.USER_CREATED,
-      {
-        targetUserId: user.id,
-        email: user.email,
-        name: user.name,
-        roleId: dto.roleId,
-        centerId: dto.centerId,
-        createdBy: actorUser.id,
-        profileType: 'Admin',
-      },
-      actorUser,
-    );
-
     return ControllerResponse.success(
       user,
       this.i18n.translate('success.create', {
@@ -216,19 +100,6 @@ export class UserController {
     @GetUser() actorUser: ActorUser,
   ) {
     const user = await this.userService.updateUser(userId, dto, actorUser);
-
-    // Log the activity
-    await this.activityLogService.log(
-      ActivityType.USER_UPDATED,
-      {
-        targetUserId: userId,
-        email: user.email,
-        name: user.name,
-        updatedFields: Object.keys(dto),
-        updatedBy: actorUser.id,
-      },
-      actorUser,
-    );
 
     return ControllerResponse.success(
       user,
@@ -254,17 +125,6 @@ export class UserController {
       centerId: actorUser.centerId,
     });
 
-    // Log the activity
-    await this.activityLogService.log(
-      ActivityType.PASSWORD_CHANGED,
-      {
-        targetUserId: userId,
-        changedBy: actorUser.id,
-        isSelfChange: actorUser.id === userId,
-      },
-      actorUser,
-    );
-
     return ControllerResponse.message(
       this.i18n.translate('success.passwordChange'),
     );
@@ -281,20 +141,6 @@ export class UserController {
     @GetUser() actorUser: ActorUser,
   ): Promise<ToggleUserStatusResponseDto> {
     await this.userService.activateUser(userId, dto.isActive, actorUser);
-
-    // Log the activity
-    const activityType = dto.isActive
-      ? ActivityType.USER_ACTIVATED
-      : ActivityType.USER_DEACTIVATED;
-    await this.activityLogService.log(
-      activityType,
-      {
-        targetUserId: userId,
-        isActive: dto.isActive,
-        changedBy: actorUser.id,
-      },
-      actorUser,
-    );
 
     return {
       id: userId,
@@ -315,16 +161,6 @@ export class UserController {
   ) {
     await this.userService.deleteUser(userId, actorUser);
 
-    // Log the activity
-    await this.activityLogService.log(
-      ActivityType.USER_DELETED,
-      {
-        targetUserId: userId,
-        deletedBy: actorUser.id,
-      },
-      actorUser,
-    );
-
     return ControllerResponse.message(
       this.i18n.translate('success.delete', {
         args: { resource: this.i18n.translate('common.resources.user') },
@@ -341,16 +177,6 @@ export class UserController {
     @GetUser() actorUser: ActorUser,
   ): Promise<RestoreUserResponseDto> {
     await this.userService.restoreUser(userId, actorUser);
-
-    // Log the activity
-    await this.activityLogService.log(
-      ActivityType.USER_RESTORED,
-      {
-        targetUserId: userId,
-        restoredBy: actorUser.id,
-      },
-      actorUser,
-    );
 
     return ControllerResponse.message(
       this.i18n.translate('success.restore', {

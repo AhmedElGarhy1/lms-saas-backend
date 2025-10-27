@@ -32,8 +32,6 @@ import { CenterResponseDto } from '../dto/center-response.dto';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { ExportService } from '@/shared/common/services/export.service';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
@@ -45,7 +43,6 @@ export class CentersController {
   constructor(
     private readonly centersService: CentersService,
     private readonly accessControlService: AccessControlService,
-    private readonly activityLogService: ActivityLogService,
     private readonly exportService: ExportService,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
@@ -60,17 +57,6 @@ export class CentersController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.centersService.createCenter(dto, actor);
-
-    // Log center creation
-    await this.activityLogService.log(
-      ActivityType.CENTER_CREATED,
-      {
-        centerId: result.id,
-        centerName: result.name,
-        createdBy: actor.id,
-      },
-      actor,
-    );
 
     return ControllerResponse.success(
       result,
@@ -111,19 +97,7 @@ export class CentersController {
     @Body() dto: UpdateCenterRequestDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.centersService.updateCenter(id, dto, actor.id);
-
-    // Log center update
-    await this.activityLogService.log(
-      ActivityType.CENTER_UPDATED,
-      {
-        centerId: id,
-        centerName: result.name,
-        updatedFields: Object.keys(dto),
-        updatedBy: actor.id,
-      },
-      actor,
-    );
+    const result = await this.centersService.updateCenter(id, dto, actor);
 
     return ControllerResponse.success(
       result,
@@ -140,17 +114,7 @@ export class CentersController {
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @Permissions(PERMISSIONS.CENTER.DELETE)
   async deleteCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
-    await this.centersService.deleteCenter(id, actor.id);
-
-    // Log center deletion
-    await this.activityLogService.log(
-      ActivityType.CENTER_DELETED,
-      {
-        centerId: id,
-        deletedBy: actor.id,
-      },
-      actor,
-    );
+    await this.centersService.deleteCenter(id, actor);
 
     return ControllerResponse.message(
       this.i18n.translate('success.delete', {
@@ -166,17 +130,7 @@ export class CentersController {
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @Permissions(PERMISSIONS.CENTER.RESTORE)
   async restoreCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
-    await this.centersService.restoreCenter(id, actor.id);
-
-    // Log center restoration
-    await this.activityLogService.log(
-      ActivityType.CENTER_RESTORED,
-      {
-        centerId: id,
-        restoredBy: actor.id,
-      },
-      actor,
-    );
+    await this.centersService.restoreCenter(id, actor);
 
     return ControllerResponse.message('Center restored successfully');
   }

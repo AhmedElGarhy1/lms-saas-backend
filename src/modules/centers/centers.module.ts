@@ -15,7 +15,8 @@ import { CentersActionsController } from './controllers/centers-actions.controll
 import { BranchesActionsController } from './controllers/branches-actions.controller';
 import { CentersAccessController } from './controllers/centers-access.controller';
 import { BranchesAccessController } from './controllers/branches-access.controller';
-import { ProfileModule } from '../profile/profile.module';
+import { CenterActivityLogListener } from './listeners/center-activity-log.listener';
+import { BranchActivityLogListener } from './listeners/branch-activity-log.listener';
 
 @Module({
   imports: [
@@ -23,7 +24,6 @@ import { ProfileModule } from '../profile/profile.module';
     ActivityLogModule,
     forwardRef(() => AccessControlModule),
     forwardRef(() => UserModule),
-    forwardRef(() => ProfileModule),
   ],
   controllers: [
     BranchesAccessController,
@@ -38,6 +38,8 @@ import { ProfileModule } from '../profile/profile.module';
     BranchesService,
     CentersRepository,
     BranchesRepository,
+    CenterActivityLogListener,
+    BranchActivityLogListener,
   ],
   exports: [CentersService, BranchesService],
 })

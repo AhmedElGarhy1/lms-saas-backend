@@ -6,12 +6,12 @@ import { Pagination } from 'nestjs-typeorm-paginate';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { USER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 import { UserResponseDto } from '../dto/user-response.dto';
+import { UserProfile } from '../entities/user-profile.entity';
 import {
   AccessibleUsersEnum,
   PaginateUsersDto,
 } from '../dto/paginate-users.dto';
 import { RoleResponseDto } from '@/modules/access-control/dto/role-response.dto';
-import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
 import { DefaultRoles } from '@/modules/access-control/constants/roles';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
@@ -266,7 +266,7 @@ export class UserRepository extends BaseRepository<User> {
    * @returns Paginated admins
    */
   async paginateAdmins(
-    params: PaginateAdminsDto,
+    params: PaginateUsersDto,
     actor: ActorUser,
   ): Promise<Pagination<UserResponseDto>> {
     const {
@@ -569,5 +569,163 @@ export class UserRepository extends BaseRepository<User> {
       );
     }
     return filteredItems;
+  }
+
+  async paginateUsersByProfileType(
+    params: PaginateUsersDto,
+    actor: ActorUser,
+    profileType: ProfileType,
+  ): Promise<Pagination<UserResponseDto>> {
+    const {
+      centerId,
+      userProfileId,
+      isActive,
+      roleId,
+      userAccess,
+      roleAccess,
+      centerAccess,
+      displayRole,
+      branchId,
+      branchAccess,
+    } = params;
+
+    const includeCenter =
+      centerId &&
+      (!centerAccess || centerAccess === AccessibleUsersEnum.INCLUDE);
+
+    const includeBranch =
+      branchId &&
+      centerId &&
+      (!branchAccess || branchAccess === AccessibleUsersEnum.INCLUDE);
+
+    // Create query builder with proper JOINs
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.userProfiles', 'userProfiles')
+      .where('userProfiles.profileType = :profileType', {
+        profileType,
+      });
+
+    if (includeBranch) {
+      queryBuilder.andWhere(
+        'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = userProfiles.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId)',
+        { branchId, centerId },
+      );
+    }
+
+    if (includeCenter) {
+      queryBuilder.andWhere(
+        'EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId)',
+        { centerId },
+      );
+      if (displayRole) {
+        queryBuilder
+          .leftJoinAndSelect(
+            'userProfiles.profileRoles',
+            'profileRoles',
+            'profileRoles.userProfileId = userProfiles.id AND profileRoles.centerId = :centerId',
+            { centerId },
+          )
+          .leftJoinAndSelect('profileRoles.role', 'role');
+      }
+    }
+
+    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+      actor.userProfileId,
+    );
+    const isAdmin = await this.accessControlHelperService.isAdmin(
+      actor.userProfileId,
+    );
+
+    if (centerId) {
+      const isCenterOwner = await this.accessControlHelperService.isCenterOwner(
+        actor.userProfileId,
+        centerId,
+      );
+
+      if (!isCenterOwner && !isSuperAdmin) {
+        queryBuilder.andWhere(
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
+          { userProfileId: actor.userProfileId, centerId },
+        );
+      }
+    }
+
+    if (userProfileId) {
+      queryBuilder.andWhere('"userProfiles".id != :userProfileId', {
+        userProfileId,
+      });
+      if (userAccess === AccessibleUsersEnum.INCLUDE) {
+        queryBuilder.andWhere(
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId)`,
+          { userProfileId: actor.userProfileId },
+        );
+      }
+    }
+
+    if (isActive !== undefined) {
+      queryBuilder.andWhere('user.isActive = :isActive', { isActive });
+    }
+
+    if (roleId) {
+      queryBuilder.andWhere('role.id = :roleId', { roleId });
+    }
+
+    if (roleAccess === AccessibleUsersEnum.INCLUDE) {
+      queryBuilder.andWhere(
+        `EXISTS (SELECT 1 FROM profile_roles pr WHERE pr."userProfileId" = "userProfiles".id AND pr."roleId" IN (SELECT pr2."roleId" FROM profile_roles pr2 WHERE pr2."userProfileId" = :userProfileId))`,
+        { userProfileId: actor.userProfileId },
+      );
+    }
+
+    // Apply pagination
+    const page = params.page || 1;
+    const limit = params.limit || 10;
+    const skip = (page - 1) * limit;
+
+    queryBuilder.skip(skip).take(limit);
+
+    // Apply sorting
+    if (params.sortBy) {
+      const sortOrder = 'DESC'; // Default sort order
+      queryBuilder.orderBy(`user.${params.sortBy}`, sortOrder);
+    } else {
+      queryBuilder.orderBy('user.createdAt', 'DESC');
+    }
+
+    const [users, total] = await queryBuilder.getManyAndCount();
+
+    // Transform to response DTOs
+    const items = users.map((user) => {
+      const userProfile = user.userProfiles?.[0];
+      const profileRole = userProfile?.profileRoles?.[0];
+      const role = profileRole?.role;
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        isActive: user.isActive,
+        failedLoginAttempts: user.failedLoginAttempts,
+        twoFactorEnabled: user.twoFactorEnabled,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        createdBy: user.createdBy,
+        userProfiles: user.userProfiles,
+        userProfile: userProfile || ({} as UserProfile),
+      };
+    });
+
+    return {
+      items,
+      meta: {
+        itemCount: total,
+        totalItems: total,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      },
+    };
   }
 }

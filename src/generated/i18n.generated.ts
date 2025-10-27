@@ -270,10 +270,14 @@ export type I18nTranslations = {
             "entities": string;
             "users": string;
             "roles": string;
+            "admin": string;
             "admins": string;
+            "staff": string;
             "centers": string;
             "access": string;
             "permissions": string;
+            "profile": string;
+            "profiles": string;
         };
         "placeholders": {
             "search": string;
@@ -515,6 +519,7 @@ export type I18nTranslations = {
         "userRegistered": string;
         "userActivated": string;
         "userDeactivated": string;
+        "found": string;
     };
     "system": {
         "healthCheck": string;

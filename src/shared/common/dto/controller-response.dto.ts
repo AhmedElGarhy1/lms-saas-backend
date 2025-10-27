@@ -15,4 +15,8 @@ export class ControllerResponse<T = any> {
   static message(message: string): ControllerResponse<null> {
     return new ControllerResponse(null, message);
   }
+
+  static error(message: string): ControllerResponse<null> {
+    return new ControllerResponse(null, message);
+  }
 }

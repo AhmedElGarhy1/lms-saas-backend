@@ -1,4 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   InsufficientPermissionsException,
   ResourceNotFoundException,
@@ -11,6 +12,17 @@ import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { PermissionScope } from '../constants/permissions';
+import {
+  RoleEvents,
+  RoleCreatedEvent,
+  RoleUpdatedEvent,
+  RoleDeletedEvent,
+} from '@/modules/access-control/events/role.events';
+import {
+  RoleAssignedEvent,
+  RoleRevokedEvent,
+  AccessControlEvents,
+} from '@/modules/access-control/events/access-control.events';
 
 @Injectable()
 export class RolesService {
@@ -19,6 +31,7 @@ export class RolesService {
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlerHelperService: AccessControlHelperService,
     private readonly profileRoleRepository: ProfileRoleRepository,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async getMyPermissions(actor: ActorUser) {
@@ -39,7 +52,14 @@ export class RolesService {
     const centerId = data.centerId ?? actor.centerId;
     data.centerId = centerId;
 
-    return this.rolesRepository.createRole(data);
+    const role = await this.rolesRepository.createRole(data);
+
+    this.eventEmitter.emit(
+      RoleEvents.CREATED,
+      new RoleCreatedEvent(role, actor),
+    );
+
+    return role;
   }
 
   async updateRole(
@@ -54,7 +74,14 @@ export class RolesService {
       );
     }
 
-    return this.rolesRepository.updateRole(roleId, data);
+    const updatedRole = await this.rolesRepository.updateRole(roleId, data);
+
+    this.eventEmitter.emit(
+      RoleEvents.UPDATED,
+      new RoleUpdatedEvent(roleId, data, actor),
+    );
+
+    return updatedRole;
   }
 
   async deleteRole(roleId: string, actor: ActorUser) {
@@ -68,7 +95,12 @@ export class RolesService {
       );
     }
 
-    return this.rolesRepository.softRemove(roleId);
+    await this.rolesRepository.softRemove(roleId);
+
+    this.eventEmitter.emit(
+      RoleEvents.DELETED,
+      new RoleDeletedEvent(roleId, actor),
+    );
   }
 
   async assignRoleValidate(data: AssignRoleDto, actor: ActorUser) {
@@ -80,15 +112,34 @@ export class RolesService {
       centerId,
     });
 
-    return this.assignRole(data);
+    return this.assignRole(data, actor);
   }
 
-  async assignRole(data: AssignRoleDto) {
-    return this.profileRoleRepository.assignProfileRole(data);
+  async assignRole(data: AssignRoleDto, actor?: ActorUser) {
+    const result = await this.profileRoleRepository.assignProfileRole(data);
+
+    this.eventEmitter.emit(
+      RoleEvents.ASSIGNED,
+      new RoleAssignedEvent(
+        data.userProfileId,
+        data.roleId,
+        data.centerId!,
+        actor,
+      ),
+    );
+
+    return result;
   }
 
-  async removeUserRole(data: AssignRoleDto) {
-    return this.profileRoleRepository.removeProfileRole(data);
+  async removeUserRole(data: AssignRoleDto, actor?: ActorUser) {
+    const result = await this.profileRoleRepository.removeProfileRole(data);
+
+    this.eventEmitter.emit(
+      RoleEvents.REVOKED,
+      new RoleRevokedEvent(data.userProfileId, data.centerId!, actor),
+    );
+
+    return result;
   }
 
   async removeUserRoleValidate(data: AssignRoleDto, actor: ActorUser) {
@@ -98,7 +149,7 @@ export class RolesService {
       centerId: data.centerId,
     });
 
-    return this.removeUserRole(data);
+    return this.removeUserRole(data, actor);
   }
 
   async findById(roleId: string) {

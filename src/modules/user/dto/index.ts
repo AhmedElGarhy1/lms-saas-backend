@@ -4,6 +4,7 @@ export { ChangePasswordRequestDto } from './change-password.dto';
 export { ActivateUserRequestDto } from './activate-user.dto';
 export { ToggleUserStatusRequestDto } from './toggle-user-status.dto';
 export { PaginateUsersDto as UserFilterDto } from './paginate-users.dto';
+export { UpdateUserDto } from './update-user.dto';
 
 // Response DTOs
 export { UserResponseDto } from './user-response.dto';

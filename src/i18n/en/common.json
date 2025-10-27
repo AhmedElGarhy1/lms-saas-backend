@@ -137,6 +137,7 @@
     "location": "Location",
     "user": "User",
     "admin": "Admin",
+    "staff": "Staff",
     "manager": "Manager",
     "instructor": "Instructor",
     "student": "Student",
@@ -281,13 +282,16 @@
     "users": "users",
     "roles": "roles",
     "admins": "admins",
+    "staff": "staff",
     "centers": "centers",
     "access": "access",
     "permissions": "permissions",
     "branch": "branch",
     "branches": "branches",
     "test-module": "test-module",
-    "test-modules": "test-modules"
+    "test-modules": "test-modules",
+    "profile": "profile",
+    "profiles": "profiles"
   },
   "placeholders": {
     "search": "Search...",

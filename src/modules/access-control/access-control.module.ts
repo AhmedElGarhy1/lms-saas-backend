@@ -23,7 +23,10 @@ import { ProfileRoleSubscriber } from './subscriber/profile-role.subscriber';
 import { RolePermissionSubscriber } from './subscriber/role-permission.subscriber';
 import { BranchAccess } from './entities/branch-access.entity';
 import { BranchAccessRepository } from './repositories/branch-access.repository';
-import { ProfileModule } from '../profile/profile.module';
+import { UserModule } from '../user/user.module';
+import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
+import { RoleActivityLogListener } from './listeners/role-activity-log.listener';
+import { AccessControlActivityLogListener } from './listeners/access-control-activity-log.listener';
 
 @Global()
 @Module({
@@ -37,7 +40,8 @@ import { ProfileModule } from '../profile/profile.module';
       UserAccess,
       BranchAccess,
     ]),
-    forwardRef(() => ProfileModule),
+    forwardRef(() => UserModule),
+    ActivityLogModule,
   ],
   controllers: [RoleAssignController, RolesActionsController, RolesController],
   providers: [
@@ -54,6 +58,8 @@ import { ProfileModule } from '../profile/profile.module';
     RolePermissionSubscriber,
     UserAccessRepository,
     BranchAccessRepository,
+    RoleActivityLogListener,
+    AccessControlActivityLogListener,
   ],
   exports: [AccessControlService, AccessControlHelperService, RolesService],
 })

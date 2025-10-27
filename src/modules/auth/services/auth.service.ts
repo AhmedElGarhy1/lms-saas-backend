@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   AuthenticationFailedException,
   ResourceNotFoundException,
@@ -22,12 +23,19 @@ import { TwoFactorRequest } from '../dto/2fa.dto';
 import { LoggerService } from '../../../shared/services/logger.service';
 import { User } from '../../user/entities/user.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { Transactional } from '@nestjs-cls/transactional';
 import { JwtPayload } from '../strategies/jwt.strategy';
+import {
+  UserLoggedInEvent,
+  PasswordChangedEvent,
+  PasswordResetRequestedEvent,
+  TwoFactorSetupEvent,
+  TwoFactorEnabledEvent,
+  TwoFactorDisabledEvent,
+  AuthEvents,
+} from '@/modules/auth/events/auth.events';
 
 @Injectable()
 export class AuthService {
@@ -40,8 +48,8 @@ export class AuthService {
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService,
     private readonly logger: LoggerService,
-    private readonly activityLogService: ActivityLogService,
     private readonly i18n: I18nService<I18nTranslations>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async validateUser(
@@ -55,22 +63,11 @@ export class AuthService {
       : await this.userService.findUserByPhone(emailOrPhone, true);
 
     if (!user) {
-      // Log failed login attempt - user not found
-      await this.activityLogService.log(ActivityType.USER_LOGIN_FAILED, {
-        email: emailOrPhone,
-        reason: 'User not found',
-      });
       return null;
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      // Log failed login attempt - invalid password
-      await this.activityLogService.log(ActivityType.USER_LOGIN_FAILED, {
-        email: emailOrPhone,
-        userId: user.id,
-        reason: 'Invalid password',
-      });
       return null;
     }
 
@@ -156,6 +153,12 @@ export class AuthService {
       userId: user.id,
       email: user.email,
     });
+
+    // Emit login event for activity logging
+    this.eventEmitter.emit(
+      AuthEvents.USER_LOGGED_IN,
+      new UserLoggedInEvent(user.id!, user.email!),
+    );
 
     return {
       accessToken: tokens.accessToken,
@@ -286,6 +289,12 @@ export class AuthService {
   async forgotPassword(dto: ForgotPasswordRequestDto) {
     await this.passwordResetService.sendPasswordResetEmail(dto.email);
 
+    // Emit password reset requested event for activity logging
+    this.eventEmitter.emit(
+      AuthEvents.PASSWORD_RESET_REQUESTED,
+      new PasswordResetRequestedEvent(dto.email),
+    );
+
     return {
       message:
         'If an account with this email exists, a password reset link has been sent.',
@@ -295,6 +304,11 @@ export class AuthService {
   async resetPassword(dto: ResetPasswordRequestDto) {
     // Use newPassword from the DTO
     await this.passwordResetService.resetPassword(dto.token, dto.newPassword);
+
+    // Get user ID from the token (we'll need to modify password reset service to return it)
+    // For now, we'll emit the event without user ID
+    // TODO: Modify password reset service to return user ID
+
     return {
       success: true,
       message: this.i18n.translate('success.passwordReset'),
@@ -326,6 +340,12 @@ export class AuthService {
 
     // Store secret temporarily (not enabled yet)
     await this.userService.updateUserTwoFactor(userId, secret, false);
+
+    // Emit event for activity logging
+    this.eventEmitter.emit(
+      AuthEvents.TWO_FA_SETUP,
+      new TwoFactorSetupEvent(userId, actor),
+    );
 
     this.logger.log(
       `2FA setup initiated for user: ${user.email}`,
@@ -383,6 +403,12 @@ export class AuthService {
       true,
     );
 
+    // Emit event for activity logging
+    this.eventEmitter.emit(
+      AuthEvents.TWO_FA_ENABLED,
+      new TwoFactorEnabledEvent(userId, actor),
+    );
+
     this.logger.log(`2FA enabled for user: ${user.email}`, 'AuthService', {
       userId: user.id,
       email: user.email,
@@ -421,6 +447,12 @@ export class AuthService {
 
     // Disable 2FA
     await this.userService.updateUserTwoFactor(userId, null, false);
+
+    // Emit event for activity logging
+    this.eventEmitter.emit(
+      AuthEvents.TWO_FA_DISABLED,
+      new TwoFactorDisabledEvent(userId, actor),
+    );
 
     this.logger.log(`2FA disabled for user: ${user.email}`, 'AuthService', {
       userId: user.id,

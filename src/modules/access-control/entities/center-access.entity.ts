@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
+import { UserProfile } from '@/modules/user/entities/user-profile.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 

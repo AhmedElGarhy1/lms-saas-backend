@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   ResourceNotFoundException,
   InsufficientPermissionsException,
@@ -11,8 +12,7 @@ import { AccessControlService } from '@/modules/access-control/services/access-c
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { UserInfoService } from './user-info.service';
-import { StaffService } from '@/modules/profile/services/staff.service';
-import { UserProfileService } from '@/modules/profile/services/user-profile.service';
+import { UserProfileService } from './user-profile.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { CreateUserDto, CreateUserWithRoleDto } from '../dto/create-user.dto';
 import {
@@ -23,12 +23,13 @@ import { User } from '../entities/user.entity';
 import { CentersService } from '@/modules/centers/services/centers.service';
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { PaginateAdminsDto } from '../dto/paginate-admins.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { Locale } from '@/shared/common/enums/locale.enum';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import {
+  PasswordChangedEvent,
+  AuthEvents,
+} from '@/modules/auth/events/auth.events';
 
 @Injectable()
 export class UserService {
@@ -39,10 +40,10 @@ export class UserService {
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly userInfoService: UserInfoService,
     private readonly userProfileService: UserProfileService,
-    private readonly staffService: StaffService,
     private readonly logger: LoggerService,
     private readonly centersService: CentersService,
     private readonly activityLogService: ActivityLogService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async changePassword(
@@ -68,12 +69,11 @@ export class UserService {
     // Update password
     await this.userRepository.update(userId, { password: hashedPassword });
 
-    // Log password change activity
-    await this.activityLogService.log(ActivityType.PASSWORD_CHANGED, {
-      targetUserId: userId,
-      email: user.email,
-      isSelfChange: true, // This is a self-service password change
-    });
+    // Emit event for activity logging
+    this.eventEmitter.emit(
+      AuthEvents.PASSWORD_CHANGED,
+      new PasswordChangedEvent(userId, { id: userId } as ActorUser),
+    );
 
     this.logger.log(`Password changed for user: ${userId}`);
     return { message: 'Password changed successfully', success: true };
@@ -160,31 +160,37 @@ export class UserService {
     }
 
     if (dto.roleId) {
-      await this.rolesService.assignRole({
-        userProfileId: userProfile.id,
-        roleId: dto.roleId,
-        centerId,
-      });
+      await this.rolesService.assignRole(
+        {
+          userProfileId: userProfile.id,
+          roleId: dto.roleId,
+          centerId,
+        },
+        actor,
+      );
     }
 
     return user;
+  }
+
+  async paginateStaff(params: PaginateUsersDto, actor: ActorUser) {
+    return this.userRepository.paginateStaff(params, actor);
   }
 
   async paginateUsers(params: PaginateUsersDto, actor: ActorUser) {
     const centerId = params.centerId ?? actor.centerId;
     params.centerId = centerId;
 
-    await this.accessControlHelperService.validateAdminAndCenterAccess({
-      userProfileId: actor.userProfileId,
-      centerId,
-    });
-
     const result = await this.userRepository.paginateStaff(params, actor);
 
     return result;
   }
 
-  async paginateStaff(params: PaginateUsersDto, actor: ActorUser) {
+  async paginateUsersByProfileType(
+    params: PaginateUsersDto,
+    actor: ActorUser,
+    profileType: ProfileType,
+  ) {
     const centerId = params.centerId ?? actor.centerId;
     params.centerId = centerId;
 
@@ -193,13 +199,17 @@ export class UserService {
       centerId,
     });
 
-    const result = await this.userRepository.paginateStaff(params, actor);
+    const result = await this.userRepository.paginateUsersByProfileType(
+      params,
+      actor,
+      profileType,
+    );
 
     return result;
   }
 
-  async paginateAdmins(params: PaginateAdminsDto, actor: ActorUser) {
-    return this.userRepository.paginateAdmins(params, actor);
+  async paginateAdmins(params: PaginateUsersDto, actor: ActorUser) {
+    return this.paginateUsersByProfileType(params, actor, ProfileType.ADMIN);
   }
 
   async deleteUser(userId: string, actor: ActorUser): Promise<void> {

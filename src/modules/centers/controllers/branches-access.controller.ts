@@ -1,19 +1,16 @@
 import { Controller, Post, Delete, Body } from '@nestjs/common';
+import { GetUser } from '@/shared/common/decorators/get-user.decorator';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { BranchAccessDto } from '@/modules/access-control/dto/branch-access.dto';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 
 @ApiTags('Centers - Branches')
 @Controller('centers/branches/access')
 export class BranchesAccessController {
-  constructor(
-    private readonly activityLogService: ActivityLogService,
-    private readonly accessControlService: AccessControlService,
-  ) {}
+  constructor(private readonly accessControlService: AccessControlService) {}
 
   @Post()
   @ApiOperation({ summary: 'Assign user to branch' })
@@ -30,14 +27,14 @@ export class BranchesAccessController {
     description: 'User or branch not found',
   })
   @Permissions(PERMISSIONS.CENTER.UPDATE)
-  async assignUserToBranch(@Body() branchAccessDto: BranchAccessDto) {
-    const branchAccess =
-      await this.accessControlService.assignProfileToBranch(branchAccessDto);
-    // Log activity
-    await this.activityLogService.log(ActivityType.USER_ACCESS_GRANTED, {
-      branchId: branchAccess.branchId,
-      action: 'user_branch_access_granted',
-    });
+  async assignUserToBranch(
+    @Body() branchAccessDto: BranchAccessDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const branchAccess = await this.accessControlService.assignProfileToBranch(
+      branchAccessDto,
+      actor,
+    );
     return branchAccess;
   }
 
@@ -52,14 +49,13 @@ export class BranchesAccessController {
     description: 'User assignment not found',
   })
   @Permissions(PERMISSIONS.CENTER.UPDATE)
-  async removeUserFromBranch(@Body() branchAccessDto: BranchAccessDto) {
-    const branchAccess =
-      await this.accessControlService.removeUserFromBranch(branchAccessDto);
-
-    // Log activity
-    await this.activityLogService.log(ActivityType.USER_ACCESS_REVOKED, {
-      branchId: branchAccess.branchId,
-      action: 'user_branch_access_revoked',
-    });
+  async removeUserFromBranch(
+    @Body() branchAccessDto: BranchAccessDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const branchAccess = await this.accessControlService.removeUserFromBranch(
+      branchAccessDto,
+      actor,
+    );
   }
 }

@@ -1,4 +1,5 @@
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   ResourceNotFoundException,
   BusinessLogicException,
@@ -14,9 +15,13 @@ import { UserService } from '@/modules/user/services/user.service';
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { createOwnerRoleData } from '@/modules/access-control/constants/roles';
-import { Transactional } from '@nestjs-cls/transactional';
-import { StaffService } from '@/modules/profile/services/staff.service';
+import {
+  CenterCreatedEvent,
+  CenterUpdatedEvent,
+  CenterDeletedEvent,
+  CenterRestoredEvent,
+  CenterEvents,
+} from '@/modules/centers/events/center.events';
 
 export interface SeederCenterData {
   name: string;
@@ -37,9 +42,9 @@ export class CentersService {
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly rolesService: RolesService,
-    private readonly staffService: StaffService,
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async findCenterById(centerId: string): Promise<Center | null> {
@@ -57,37 +62,17 @@ export class CentersService {
       isActive: dto.isActive,
     });
 
+    // Create user
     const user = await this.userService.createUser(dto.user, actor);
-    const userProfile = await this.staffService.createStaffForUser(user.id, {});
-    const centerRoleData = createOwnerRoleData(center.id);
-    const centerRole = await this.rolesService.createRole(
-      centerRoleData,
-      actor,
+
+    // Emit event for staff profile creation
+    this.eventEmitter.emit(
+      CenterEvents.CREATED,
+      new CenterCreatedEvent(center, user, actor),
     );
-    await this.rolesService.assignRole({
-      userProfileId: userProfile.id,
-      roleId: centerRole.id,
-      centerId: center.id,
-    });
-    await this.accessControlService.grantCenterAccess(
-      {
-        userProfileId: userProfile.id,
-        centerId: center.id,
-      },
-      actor,
-    );
-    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
-      actor.userProfileId,
-    );
-    if (!isSuperAdmin) {
-      await this.accessControlService.grantCenterAccess(
-        {
-          userProfileId: actor.userProfileId,
-          centerId: center.id,
-        },
-        actor,
-      );
-    }
+
+    // Note: The listener will create staff profile and emit center.owner.assigned
+    // We can wait for it or handle async - depends on requirements
 
     return center;
   }
@@ -99,10 +84,10 @@ export class CentersService {
   async updateCenter(
     centerId: string,
     dto: UpdateCenterRequestDto,
-    userProfileId: string,
+    actor: ActorUser,
   ): Promise<Center> {
     this.logger.info(
-      `Updating center: ${centerId} by user profile: ${userProfileId}`,
+      `Updating center: ${centerId} by user profile: ${actor.userProfileId}`,
     );
 
     const center = await this.findCenterById(centerId);
@@ -131,26 +116,35 @@ export class CentersService {
       );
     }
 
+    // Emit event for activity logging
+    this.eventEmitter.emit(
+      CenterEvents.UPDATED,
+      new CenterUpdatedEvent(centerId, dto, actor),
+    );
+
     return updatedCenter;
   }
 
-  async deleteCenter(centerId: string, userProfileId: string): Promise<void> {
+  async deleteCenter(centerId: string, actor: ActorUser): Promise<void> {
     this.logger.info(
-      `Deleting center: ${centerId} by user profile: ${userProfileId}`,
+      `Deleting center: ${centerId} by user profile: ${actor.userProfileId}`,
     );
 
     const center = await this.findCenterById(centerId);
     // Permission check should be in controller
 
     await this.centersRepository.softRemove(centerId);
+
+    // Emit event for activity logging
+    this.eventEmitter.emit(
+      CenterEvents.DELETED,
+      new CenterDeletedEvent(centerId, actor),
+    );
   }
 
-  async restoreCenter(
-    centerId: string,
-    userProfileId: string,
-  ): Promise<Center> {
+  async restoreCenter(centerId: string, actor: ActorUser): Promise<Center> {
     this.logger.info(
-      `Restoring center: ${centerId} by user profile: ${userProfileId}`,
+      `Restoring center: ${centerId} by user profile: ${actor.userProfileId}`,
     );
 
     const center = await this.findCenterById(centerId);
@@ -162,6 +156,13 @@ export class CentersService {
 
     await this.centersRepository.restore(centerId);
     const restoredCenter = await this.findCenterById(centerId);
+
+    // Emit event for activity logging
+    this.eventEmitter.emit(
+      CenterEvents.RESTORED,
+      new CenterRestoredEvent(centerId, actor),
+    );
+
     return restoredCenter!;
   }
 

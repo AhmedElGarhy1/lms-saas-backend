@@ -38,8 +38,10 @@ import { join } from 'path';
 import { UserLocaleResolver } from './shared/resolvers/user-locale.resolver';
 import { Locale } from './shared/common/enums/locale.enum';
 import { HealthModule } from './modules/health';
-import { UserProfileService } from './modules/profile/services/user-profile.service';
-import { ProfileModule } from './modules/profile/profile.module';
+import { UserProfileService } from './modules/user/services/user-profile.service';
+import { StaffModule } from './modules/staff/staff.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { ProfilesModule } from './modules/profiles/profiles.module';
 import { ProfileGuard } from './shared/common/guards/profile.guard';
 
 @Module({
@@ -90,13 +92,15 @@ import { ProfileGuard } from './shared/common/guards/profile.guard';
     SharedModule,
     AuthModule,
     UserModule,
+    StaffModule,
+    AdminModule,
+    ProfilesModule,
     AccessControlModule,
     CentersModule,
     ActivityLogModule,
     SeederModule,
     LocaleModule,
     HealthModule,
-    ProfileModule,
   ],
   controllers: [],
   providers: [

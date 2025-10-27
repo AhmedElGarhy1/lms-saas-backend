@@ -13,8 +13,6 @@ import { ExportService } from '@/shared/common/services/export.service';
 import { BranchResponseExportMapper } from '@/shared/common/mappers/branch-response-export.mapper';
 import { ExportBranchesDto } from '../dto/export-branches.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 
@@ -25,7 +23,6 @@ export class BranchesActionsController {
   constructor(
     private readonly branchesService: BranchesService,
     private readonly exportService: ExportService,
-    private readonly activityLogService: ActivityLogService,
   ) {}
 
   @Get('export')
@@ -64,10 +61,6 @@ export class BranchesActionsController {
       baseFilename,
       res,
     );
-    await this.activityLogService.log(ActivityType.BRANCH_EXPORT, {
-      userId: actor.id,
-      filename: baseFilename,
-    });
     return data;
   }
 }

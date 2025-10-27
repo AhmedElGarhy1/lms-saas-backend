@@ -10,8 +10,6 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import {
   BusinessLogicException,
@@ -24,7 +22,6 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 export class UserAccessController {
   constructor(
     private readonly accessControlService: AccessControlService,
-    private readonly activityLogService: ActivityLogService,
     private readonly accessControlHelperService: AccessControlHelperService,
   ) {}
 
@@ -43,17 +40,6 @@ export class UserAccessController {
       actor,
     );
 
-    // Log the activity
-    await this.activityLogService.log(
-      ActivityType.USER_ACCESS_GRANTED,
-      {
-        targetUserProfileId: dto.targetUserProfileId,
-        grantedBy: actor.userProfileId,
-        centerId: dto.centerId,
-      },
-      actor,
-    );
-
     return result;
   }
 
@@ -69,17 +55,6 @@ export class UserAccessController {
 
     const result = await this.accessControlService.revokeUserAccessValidate(
       dto,
-      actor,
-    );
-
-    // Log the activity
-    await this.activityLogService.log(
-      ActivityType.USER_ACCESS_REVOKED,
-      {
-        targetUserProfileId: dto.targetUserProfileId,
-        revokedBy: actor.userProfileId,
-        centerId: dto.centerId,
-      },
       actor,
     );
 

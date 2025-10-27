@@ -10,7 +10,7 @@ import { IRequest } from '../interfaces/request.interface';
 import { RequestContext } from '../context/request.context';
 import { NOP_PROFILE_KEY } from '../decorators/no-profile.decorator';
 import { ProfileSelectionRequiredException } from '../exceptions/custom.exceptions';
-import { UserProfileService } from '@/modules/profile/services/user-profile.service';
+import { UserProfileService } from '@/modules/user/services/user-profile.service';
 
 @Injectable()
 export class ProfileGuard implements CanActivate {

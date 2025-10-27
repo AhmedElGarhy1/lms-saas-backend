@@ -13,8 +13,6 @@ import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { ExportService } from '@/shared/common/services/export.service';
 import { RoleResponseExportMapper } from '@/shared/common/mappers/role-response-export.mapper';
 import { ExportRolesDto } from '../dto/export-roles.dto';
@@ -27,7 +25,6 @@ import { ExportFormat } from '@/shared/common/dto';
 export class RolesActionsController {
   constructor(
     private readonly rolesService: RolesService,
-    private readonly activityLogService: ActivityLogService,
     private readonly exportService: ExportService,
   ) {}
 
@@ -67,10 +64,6 @@ export class RolesActionsController {
       baseFilename,
       res,
     );
-    await this.activityLogService.log(ActivityType.ROLE_EXPORT, {
-      userProfileId: actor.userProfileId,
-      filename: baseFilename,
-    });
     return data;
   }
 }

@@ -15,8 +15,6 @@ import { ExportService } from '@/shared/common/services/export.service';
 import { CenterResponseExportMapper } from '@/shared/common/mappers/center-response-export.mapper';
 import { ExportCentersDto } from '../dto/export-centers.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { ExportFormat } from '@/shared/common/dto';
@@ -28,7 +26,6 @@ export class CentersActionsController {
   constructor(
     private readonly centersService: CentersService,
     private readonly exportService: ExportService,
-    private readonly activityLogService: ActivityLogService,
   ) {}
 
   @Get('export')
@@ -67,10 +64,6 @@ export class CentersActionsController {
       baseFilename,
       res,
     );
-    await this.activityLogService.log(ActivityType.CENTER_EXPORT, {
-      userId: actor.id,
-      filename: baseFilename,
-    });
     return data;
   }
 }

@@ -22,8 +22,6 @@ import {
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { RefreshJwtGuard } from '../guards/refresh-jwt.guard';
@@ -43,7 +41,6 @@ interface AuthenticatedRequest extends Request {
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly activityLogService: ActivityLogService,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
@@ -58,27 +55,13 @@ export class AuthController {
     try {
       const result = await this.authService.login(loginDto);
 
-      // Log successful login
-      await this.activityLogService.log(ActivityType.USER_LOGIN, {
-        email: loginDto.emailOrPhone,
-        userId: result.user?.id,
-        loginTime: new Date().toISOString(),
-        hasRefreshToken: !!result.refreshToken,
-      });
-
       return ControllerResponse.success(
         result,
         this.i18n.translate('success.login'),
       );
     } catch (error: unknown) {
-      // Log failed login attempt
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      await this.activityLogService.log(ActivityType.USER_LOGIN_FAILED, {
-        email: loginDto.emailOrPhone,
-        errorMessage,
-        attemptTime: new Date().toISOString(),
-      });
 
       throw error;
     }
@@ -93,13 +76,6 @@ export class AuthController {
   @Transactional()
   async signup(@Body() signupDto: SignupRequestDto) {
     const result = await this.authService.signup(signupDto);
-
-    // Log user signup
-    await this.activityLogService.log(ActivityType.USER_SIGNUP, {
-      email: signupDto.email,
-      name: signupDto.name,
-      signupTime: new Date().toISOString(),
-    });
 
     return ControllerResponse.success(
       result,
@@ -130,12 +106,6 @@ export class AuthController {
   async verifyEmail(@Body() dto: VerifyEmailRequestDto) {
     const result = await this.authService.verifyEmail(dto);
 
-    // Log email verification
-    await this.activityLogService.log(ActivityType.EMAIL_VERIFIED, {
-      email: dto.email,
-      verificationTime: new Date().toISOString(),
-    });
-
     return ControllerResponse.success(
       result,
       this.i18n.translate('success.emailVerified'),
@@ -148,12 +118,6 @@ export class AuthController {
   @ApiBody({ type: ForgotPasswordRequestDto })
   async forgotPassword(@Body() dto: ForgotPasswordRequestDto) {
     const result = await this.authService.forgotPassword(dto);
-
-    // Log password reset request
-    await this.activityLogService.log(ActivityType.PASSWORD_RESET_REQUESTED, {
-      email: dto.email,
-      requestTime: new Date().toISOString(),
-    });
 
     return ControllerResponse.success(
       result,
@@ -168,12 +132,6 @@ export class AuthController {
   @Transactional()
   async resetPassword(@Body() dto: ResetPasswordRequestDto) {
     const result = await this.authService.resetPassword(dto);
-
-    // Log password reset completion
-    await this.activityLogService.log(ActivityType.PASSWORD_RESET_COMPLETED, {
-      email: dto.email,
-      resetTime: new Date().toISOString(),
-    });
 
     return ControllerResponse.success(
       result,
@@ -192,12 +150,6 @@ export class AuthController {
   ) {
     const result = await this.authService.setupTwoFactor(dto.email, actor);
 
-    // Log 2FA setup initiation
-    await this.activityLogService.log(ActivityType.TWO_FA_SETUP_INITIATED, {
-      email: dto.email,
-      setupTime: new Date().toISOString(),
-    });
-
     return ControllerResponse.success(
       result,
       this.i18n.translate('success.twoFactorSetup'),
@@ -213,28 +165,13 @@ export class AuthController {
     try {
       const result = await this.authService.verify2FA(dto);
 
-      // Log successful 2FA verification
-      await this.activityLogService.log(ActivityType.TWO_FA_ENABLED, {
-        email: dto.email,
-        verificationTime: new Date().toISOString(),
-      });
-
       return ControllerResponse.success(
         result,
         this.i18n.translate('success.twoFactorVerified'),
       );
     } catch (error: unknown) {
-      // Log failed 2FA verification
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      await this.activityLogService.log(
-        ActivityType.TWO_FA_VERIFICATION_FAILED,
-        {
-          email: dto.email,
-          errorMessage,
-          attemptTime: new Date().toISOString(),
-        },
-      );
 
       throw error;
     }
@@ -245,17 +182,6 @@ export class AuthController {
   @Transactional()
   async logout(@GetUser() user: ActorUser) {
     const result = await this.authService.logout(user);
-
-    // Log user logout
-    await this.activityLogService.log(
-      ActivityType.USER_LOGOUT,
-      {
-        email: user.email,
-        userId: user.id,
-        logoutTime: new Date().toISOString(),
-      },
-      user,
-    );
 
     return ControllerResponse.success(
       result,

@@ -2,12 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
 import { UserInfo } from '@/modules/user/entities/user-info.entity';
-import { UserProfile } from '@/modules/profile/entities/user-profile.entity';
+import { UserProfile } from '@/modules/user/entities/user-profile.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
 import { ALL_PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { ActivityType } from '@/shared/modules/activity-log/entities/activity-log.entity';
+import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
@@ -400,7 +400,7 @@ export class DatabaseSeeder {
           where: { userId: systemUser.id, profileType: ProfileType.ADMIN },
         });
 
-      await this.activityLogService.log(ActivityType.USER_CREATED, {
+      await this.activityLogService.log(UserActivityType.USER_CREATED, {
         targetProfileId: systemUserProfile?.id,
         userEmail: systemUser.email,
         userName: systemUser.name,
@@ -417,7 +417,7 @@ export class DatabaseSeeder {
           where: { userId: superAdmin.id, profileType: ProfileType.ADMIN },
         });
 
-      await this.activityLogService.log(ActivityType.USER_CREATED, {
+      await this.activityLogService.log(UserActivityType.USER_CREATED, {
         targetProfileId: superAdminProfile?.id,
         userEmail: superAdmin.email,
         userName: superAdmin.name,

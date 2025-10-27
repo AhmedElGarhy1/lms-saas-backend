@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ActivityLog, ActivityType } from '../entities/activity-log.entity';
+import { ActivityLog } from '../entities/activity-log.entity';
 import { CreateActivityLogDto } from '../dto/create-activity-log.dto';
 import { ActivityLogRepository } from '../repositories/activity-log.repository';
 import { RequestContext } from '@/shared/common/context/request.context';
@@ -81,12 +81,12 @@ export class ActivityLogService {
    * Simple log method - single method that handles everything
    */
   async log(
-    type: ActivityType,
+    type: string,
     metadata?: Record<string, any>,
     actor?: ActorUser,
   ): Promise<ActivityLog> {
     try {
-      if (actor) {
+      if (actor && actor.id) {
         return await this.createActivityLog({
           type,
           metadata,

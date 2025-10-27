@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ActivityLog } from '../entities/activity-log.entity';
@@ -15,6 +15,7 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
   constructor(
     protected readonly logger: LoggerService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super(logger, txHost);
