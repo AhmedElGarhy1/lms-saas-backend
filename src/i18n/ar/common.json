@@ -27,6 +27,8 @@
     "centerAccess": "الوصول للمركز",
     "activateSelected": "تفعيل المحدد",
     "deactivateSelected": "إلغاء تفعيل المحدد",
+    "selectCenter": "اختيار المركز",
+    "selectProfile": "اختيار الملف الشخصي",
     "saveChanges": "حفظ التغييرات",
     "changePassword": "تغيير كلمة المرور",
     "deleteSelected": "حذف المحدد",
@@ -444,6 +446,7 @@
     "insufficientPermissions": "ليس لديك صلاحيات كافية لتنفيذ هذا الإجراء",
     "accessGranted": "تم منح الوصول بنجاح",
     "accessRevoked": "تم إلغاء الوصول بنجاح",
-    "unauthorized": "غير مخول لك تنفيذ هذا الإجراء"
+    "unauthorized": "غير مخول لك تنفيذ هذا الإجراء",
+    "contactAdmin": "إذا كنت تعتقد أن هذا خطأ، يرجى الاتصال بالمدير"
   }
 }

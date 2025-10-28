@@ -27,6 +27,8 @@
     "centerAccess": "Center Access",
     "activateSelected": "Activate Selected",
     "deactivateSelected": "Deactivate Selected",
+    "selectCenter": "Select Center",
+    "selectProfile": "Select Profile",
     "saveChanges": "Save Changes",
     "changePassword": "Change Password",
     "deleteSelected": "Delete Selected",
@@ -440,6 +442,7 @@
     "insufficientPermissions": "You don't have sufficient permissions to perform this action",
     "accessGranted": "Access granted successfully",
     "accessRevoked": "Access revoked successfully",
-    "unauthorized": "You are not authorized to perform this action"
+    "unauthorized": "You are not authorized to perform this action",
+    "contactAdmin": "If you believe this is an error, please contact your administrator"
   }
 }

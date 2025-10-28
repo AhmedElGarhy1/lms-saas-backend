@@ -19,6 +19,14 @@
     "title": "Staff",
     "subtitle": "Manage staff members and their permissions"
   },
+  "centerInactive": {
+    "title": "Center Inactive",
+    "description": "The selected center is currently inactive and cannot be accessed. Please select a different center to continue."
+  },
+  "profileInactive": {
+    "title": "Profile Inactive",
+    "description": "Your selected profile is currently inactive and cannot be accessed. Please select a different profile to continue."
+  },
   "health": {
     "title": "System Health",
     "subtitle": "Real-time monitoring of system performance and service status"

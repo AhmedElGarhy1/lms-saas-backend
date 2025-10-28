@@ -75,6 +75,8 @@
       "centerAccess": "Center Access",
       "activateSelected": "Activate Selected",
       "deactivateSelected": "Deactivate Selected",
+      "selectCenter": "Select Center",
+      "selectProfile": "Select Profile",
       "saveChanges": "Save Changes",
       "changePassword": "Change Password",
       "deleteSelected": "Delete Selected",
@@ -457,7 +459,7 @@
       "operationFailed": "Operation failed",
       "dataSaved": "Data saved successfully",
       "dataUpdated": "Data updated successfully",
-      "forbidden": "Access forbidden",
+      "forbidden": "This action is forbidden",
       "dataDeleted": "Data deleted successfully",
       "dataCreated": "Data created successfully",
       "dataRestored": "Data restored successfully",
@@ -489,7 +491,7 @@
       "accessGranted": "Access granted successfully",
       "accessRevoked": "Access revoked successfully",
       "unauthorized": "You are not authorized to perform this action",
-      "forbidden": "This action is forbidden"
+      "contactAdmin": "If you believe this is an error, please contact your administrator"
     }
   },
   "dashboard": {
@@ -776,6 +778,14 @@
       "title": "Staff",
       "subtitle": "Manage staff members and their permissions"
     },
+    "centerInactive": {
+      "title": "Center Inactive",
+      "description": "The selected center is currently inactive and cannot be accessed. Please select a different center to continue."
+    },
+    "profileInactive": {
+      "title": "Profile Inactive",
+      "description": "Your selected profile is currently inactive and cannot be accessed. Please select a different profile to continue."
+    },
     "health": {
       "title": "System Health",
       "subtitle": "Real-time monitoring of system performance and service status"
@@ -867,18 +877,6 @@
     "descriptionUser": "Choose a center to work with.",
     "searchPlaceholder": "Search centers...",
     "globalOption": "Global Dashboard"
-  },
-  "centerInactive": {
-    "title": "Center Inactive",
-    "description": "The selected center is currently inactive and cannot be accessed. Please select a different center to continue.",
-    "selectCenterButton": "Select Different Center",
-    "contactAdmin": "If you believe this is an error, please contact your administrator."
-  },
-  "profileInactive": {
-    "title": "Profile Inactive",
-    "description": "Your selected profile is currently inactive and cannot be accessed. Please select a different profile to continue.",
-    "selectProfileButton": "Select Different Profile",
-    "contactAdmin": "If you believe this is an error, please contact your administrator."
   },
   "success": {
     "create": "{resource} created successfully",
