@@ -32,13 +32,13 @@ export class StaffService {
   ) {}
 
   async createStaff(dto: CreateStaffDto, actor: ActorUser): Promise<void> {
-    // Emit event to create staff (listener handles everything)
+    // Create staff entity
+    const staff = await this.staffRepository.create({});
+
     await this.eventEmitter.emitAsync(
       StaffEvents.CREATE,
-      new CreateStaffEvent(dto, actor),
+      new CreateStaffEvent(dto, actor, staff),
     );
-
-    // The listener will handle user creation
   }
 
   async paginateStaff(params: PaginateStaffDto, actor: ActorUser) {

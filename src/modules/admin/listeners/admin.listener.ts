@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { AdminRepository } from '../repositories/admin.repository';
-import { UserProfileService } from '@/modules/user/services/user-profile.service';
-import { UserService } from '@/modules/user/services/user.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
@@ -22,9 +19,6 @@ import { User } from '@/modules/user/entities/user.entity';
 @Injectable()
 export class AdminListener {
   constructor(
-    private readonly adminRepository: AdminRepository,
-    private readonly userProfileService: UserProfileService,
-    private readonly userService: UserService,
     private readonly eventEmitter: EventEmitter2,
     private readonly activityLogService: ActivityLogService,
   ) {}
@@ -38,13 +32,6 @@ export class AdminListener {
       UserEvents.CREATE,
       new CreateUserEvent(dto, actor, admin.id, ProfileType.ADMIN),
     )) as [{ user: User; userProfile: UserProfile }];
-
-    console.log('--------------------------------');
-    console.log('--------------------------------');
-    console.log('handleCreateAdmin -> userProfile', userProfile);
-    console.log('handleCreateAdmin -> user', user);
-    console.log('--------------------------------');
-    console.log('--------------------------------');
 
     // Grant center access
     if (centerId) {
