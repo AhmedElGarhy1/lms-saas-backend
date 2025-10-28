@@ -9,6 +9,7 @@
     "status": "الحالة",
     "active": "نشط",
     "inactive": "غير نشط",
+    "createdAt": "تاريخ الإنشاء",
     "role": "الدور",
     "created": "تم الإنشاء",
     "updated": "تم التحديث",

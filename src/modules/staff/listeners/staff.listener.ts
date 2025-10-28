@@ -38,27 +38,21 @@ export class StaffListener {
         AccessControlEvents.GRANT_CENTER_ACCESS,
         new GrantCenterAccessEvent(userProfile.id, centerId, actor),
       );
-    }
-
-    // Grant user access
-    if (centerId) {
       await this.eventEmitter.emitAsync(
         AccessControlEvents.GRANT_USER_ACCESS,
         new GrantUserAccessEvent(
           actor.userProfileId,
           userProfile.id,
-          centerId,
           actor,
+          centerId,
         ),
       );
-    }
-
-    // Assign role if specified
-    if (dto.roleId && centerId) {
-      await this.eventEmitter.emitAsync(
-        AccessControlEvents.ASSIGN_ROLE,
-        new AssignRoleEvent(userProfile.id, dto.roleId, centerId, actor),
-      );
+      if (dto.roleId) {
+        await this.eventEmitter.emitAsync(
+          AccessControlEvents.ASSIGN_ROLE,
+          new AssignRoleEvent(userProfile.id, dto.roleId, actor, centerId),
+        );
+      }
     }
 
     // Log activity

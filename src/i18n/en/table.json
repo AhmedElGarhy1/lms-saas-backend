@@ -9,6 +9,7 @@
     "status": "Status",
     "active": "Active",
     "inactive": "Inactive",
+    "createdAt": "Created At",
     "role": "Role",
     "created": "Created",
     "updated": "Updated",

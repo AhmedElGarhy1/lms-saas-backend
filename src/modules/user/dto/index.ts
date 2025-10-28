@@ -1,5 +1,4 @@
 // Request DTOs
-export { CreateUserWithRoleDto as CreateUserRequestDto } from './create-user.dto';
 export { ChangePasswordRequestDto } from './change-password.dto';
 export { ActivateUserRequestDto } from './activate-user.dto';
 export { ToggleUserStatusRequestDto } from './toggle-user-status.dto';

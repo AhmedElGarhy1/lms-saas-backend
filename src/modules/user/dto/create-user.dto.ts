@@ -71,24 +71,3 @@ export class CreateUserDto {
   @IsNotEmpty()
   userInfo: UserInfoDto;
 }
-
-// Base DTO with role and center fields for profile-specific user creation
-export class CreateUserWithRoleDto extends CreateUserDto {
-  @ApiProperty({
-    description: 'Role ID for the user',
-  })
-  @IsUUID()
-  @Exists(Role)
-  @IsOptional()
-  roleId?: string;
-
-  @ApiProperty({
-    description: 'Center ID (null for global roles)',
-    nullable: true,
-    required: false,
-  })
-  @IsOptional()
-  @IsUUID()
-  @Exists(Center)
-  centerId?: string;
-}

@@ -1,27 +1,25 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   InsufficientPermissionsException,
   AdminScopeAccessDeniedException,
   CenterAccessDeniedException,
+  InactiveCenterException,
   BranchAccessDeniedException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { In } from 'typeorm';
-import { ProfileRole } from '../entities/profile-role.entity';
-import { Role } from '../entities/role.entity';
 import { UserAccess } from '../entities/user-access.entity';
 import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { UserAccessRepository } from '../repositories/user-access.repository';
-import { Center } from '@/modules/centers/entities/center.entity';
 import { CenterAccessRepository } from '../repositories/center-access.repository';
 import { BranchAccess } from '@/modules/access-control/entities/branch-access.entity';
 import { BranchAccessRepository } from '../repositories/branch-access.repository';
 import { BranchAccessDto } from '../dto/branch-access.dto';
-import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { CenterAccessDto } from '../dto/center-access.dto';
 import { UserProfileService } from '@/modules/user/services/user-profile.service';
 import { PermissionScope } from '../constants/permissions';
 import { RolesService } from './roles.service';
+import { CentersService } from '@/modules/centers/services/centers.service';
 
 @Injectable()
 export class AccessControlHelperService {
@@ -30,6 +28,7 @@ export class AccessControlHelperService {
     private readonly userAccessRepository: UserAccessRepository,
     private readonly centerAccessRepository: CenterAccessRepository,
     private readonly branchAccessRepository: BranchAccessRepository,
+    private readonly centersService: CentersService,
     private readonly rolesService: RolesService,
     private readonly userProfileService: UserProfileService,
   ) {}
@@ -224,6 +223,14 @@ export class AccessControlHelperService {
   }
 
   async validateCenterAccess(data: CenterAccessDto): Promise<void> {
+    // Check if center is active
+    const center = await this.centersService.findCenterById(data.centerId);
+
+    if (!center.isActive) {
+      throw new InactiveCenterException('Center is not active');
+    }
+
+    // Check if user has access to the center
     const centerAccess = await this.canCenterAccess(data);
     if (!centerAccess) {
       throw new CenterAccessDeniedException(

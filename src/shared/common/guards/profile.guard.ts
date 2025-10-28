@@ -9,7 +9,10 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { IRequest } from '../interfaces/request.interface';
 import { RequestContext } from '../context/request.context';
 import { NOP_PROFILE_KEY } from '../decorators/no-profile.decorator';
-import { ProfileSelectionRequiredException } from '../exceptions/custom.exceptions';
+import {
+  InactiveProfileException,
+  ProfileSelectionRequiredException,
+} from '../exceptions/custom.exceptions';
 import { UserProfileService } from '@/modules/user/services/user-profile.service';
 
 @Injectable()
@@ -61,6 +64,9 @@ export class ProfileGuard implements CanActivate {
     const profile = await this.userProfileService.findOne(userProfileId);
     if (!profile) {
       throw new ProfileSelectionRequiredException();
+    }
+    if (!profile.isActive) {
+      throw new InactiveProfileException('Profile is inactive');
     }
 
     user.profileType = profile.profileType;

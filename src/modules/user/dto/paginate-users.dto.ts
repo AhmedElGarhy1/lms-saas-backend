@@ -28,19 +28,6 @@ export class PaginateUsersDto extends BasePaginationDto {
   userProfileId?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter by user active status',
-    type: Boolean,
-  })
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return value as boolean;
-  })
-  isActive?: boolean;
-
-  @ApiPropertyOptional({
     description: 'Filter by role ID',
     type: String,
   })
@@ -102,18 +89,4 @@ export class PaginateUsersDto extends BasePaginationDto {
   @IsOptional()
   @IsEnum(AccessibleUsersEnum)
   branchAccess?: AccessibleUsersEnum;
-
-  @ApiPropertyOptional({
-    description: 'Display role in case of centerId provided',
-    type: Boolean,
-    example: true,
-  })
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return value as boolean;
-  })
-  displayRole?: boolean;
 }

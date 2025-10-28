@@ -15,6 +15,10 @@ import {
   GrantUserAccessEvent,
   AccessControlEvents,
 } from '@/modules/access-control/events/access-control.events';
+import { CreateUserEvent } from '@/modules/user/events/user.events';
+import { UserEvents } from '@/modules/user/events/user.events';
+import { UserProfile } from '@/modules/user/entities/user-profile.entity';
+import { User } from '@/modules/user/entities/user.entity';
 
 @Injectable()
 export class CenterListener {
@@ -29,32 +33,24 @@ export class CenterListener {
   async handleCenterCreated(event: CreateCenterEvent) {
     const { center, userData, actor } = event;
 
-    // Create user first
-    const user = await this.userService.createUser(userData, actor);
-
     // Create staff profile for center owner
     const staff = await this.staffRepository.create({});
-    const userProfile = await this.userProfileService.createUserProfile(
-      user.id,
-      ProfileType.STAFF,
-      staff.id,
+
+    const [{ userProfile }] = (await this.eventEmitter.emitAsync(
+      UserEvents.CREATE,
+      new CreateUserEvent(userData, actor, staff.id, ProfileType.STAFF),
+    )) as [{ user: User; userProfile: UserProfile }];
+
+    // Grant actor center access
+    await this.eventEmitter.emitAsync(
+      AccessControlEvents.GRANT_CENTER_ACCESS,
+      new GrantCenterAccessEvent(actor.userProfileId, center.id, actor),
     );
 
-    // Grant center access
+    // Grant staff center access
     await this.eventEmitter.emitAsync(
       AccessControlEvents.GRANT_CENTER_ACCESS,
       new GrantCenterAccessEvent(userProfile.id, center.id, actor),
-    );
-
-    // Grant user access
-    await this.eventEmitter.emitAsync(
-      AccessControlEvents.GRANT_USER_ACCESS,
-      new GrantUserAccessEvent(
-        actor.userProfileId,
-        userProfile.id,
-        center.id,
-        actor,
-      ),
     );
 
     // Emit event for role assignment

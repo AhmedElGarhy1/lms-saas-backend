@@ -1,7 +1,7 @@
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UpdateUserDto } from '@/modules/user/dto/update-user.dto';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { CreateUserWithRoleDto } from '../dto/create-user.dto';
+import { CreateUserDto } from '../dto/create-user.dto';
 
 export enum UserEvents {
   CREATE = 'user.create',
@@ -13,7 +13,7 @@ export enum UserEvents {
 
 export class CreateUserEvent {
   constructor(
-    public readonly dto: CreateUserWithRoleDto,
+    public readonly dto: CreateUserDto,
     public readonly actor: ActorUser,
     public readonly targetProfileId: string,
     public readonly targetProfileType: ProfileType,

@@ -50,6 +50,7 @@ import { ProfileGuard } from './shared/common/guards/profile.guard';
       wildcard: true,
       delimiter: '.',
       maxListeners: 10,
+      ignoreErrors: false,
     }),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -69,8 +70,8 @@ import { ProfileGuard } from './shared/common/guards/profile.guard';
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          ttl: process.env.NODE_ENV === 'test' ? 1 : 60000,
-          limit: process.env.NODE_ENV === 'test' ? 1000 : 100000, // Temporarily increased for testing
+          ttl: 60000,
+          limit: 10,
         },
       ],
     }),

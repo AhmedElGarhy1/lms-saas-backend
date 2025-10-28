@@ -71,6 +71,10 @@
       "revoke": "Revoke",
       "grant": "Grant",
       "remove": "Remove",
+      "manageRoles": "Manage Roles",
+      "centerAccess": "Center Access",
+      "activateSelected": "Activate Selected",
+      "deactivateSelected": "Deactivate Selected",
       "saveChanges": "Save Changes",
       "changePassword": "Change Password",
       "deleteSelected": "Delete Selected",
@@ -159,6 +163,8 @@
       "dateOfBirth": "Date of Birth",
       "address": "Address",
       "bio": "Bio",
+      "locale": "Locale",
+      "logo": "Logo",
       "profilePicture": "Profile Picture",
       "characters": "characters",
       "created": "Created",
@@ -185,6 +191,7 @@
       "location": "Location",
       "user": "User",
       "admin": "Admin",
+      "staff": "Staff",
       "manager": "Manager",
       "instructor": "Instructor",
       "student": "Student",
@@ -329,13 +336,14 @@
       "users": "users",
       "roles": "roles",
       "admins": "admins",
+      "staff": "staff",
       "centers": "centers",
       "access": "access",
       "permissions": "permissions",
       "branch": "branch",
       "branches": "branches",
-      "test-module": "test-module",
-      "test-modules": "test-modules"
+      "profile": "profile",
+      "profiles": "profiles"
     },
     "placeholders": {
       "search": "Search...",
@@ -358,6 +366,7 @@
       "enterCountry": "Enter country",
       "enterCity": "Enter city",
       "enterState": "Enter state",
+      "enterLogoUrl": "Enter logo URL",
       "enterZipCode": "Enter ZIP code",
       "enterDepartment": "Enter department",
       "enterPosition": "Enter position",
@@ -448,6 +457,7 @@
       "operationFailed": "Operation failed",
       "dataSaved": "Data saved successfully",
       "dataUpdated": "Data updated successfully",
+      "forbidden": "Access forbidden",
       "dataDeleted": "Data deleted successfully",
       "dataCreated": "Data created successfully",
       "dataRestored": "Data restored successfully",
@@ -858,6 +868,18 @@
     "searchPlaceholder": "Search centers...",
     "globalOption": "Global Dashboard"
   },
+  "centerInactive": {
+    "title": "Center Inactive",
+    "description": "The selected center is currently inactive and cannot be accessed. Please select a different center to continue.",
+    "selectCenterButton": "Select Different Center",
+    "contactAdmin": "If you believe this is an error, please contact your administrator."
+  },
+  "profileInactive": {
+    "title": "Profile Inactive",
+    "description": "Your selected profile is currently inactive and cannot be accessed. Please select a different profile to continue.",
+    "selectProfileButton": "Select Different Profile",
+    "contactAdmin": "If you believe this is an error, please contact your administrator."
+  },
   "success": {
     "create": "{resource} created successfully",
     "update": "{resource} updated successfully",
@@ -892,7 +914,8 @@
     "twoFactorVerified": "2FA verification completed",
     "userRegistered": "User registered successfully",
     "userActivated": "User activated successfully",
-    "userDeactivated": "User deactivated successfully"
+    "userDeactivated": "User deactivated successfully",
+    "found": "{resource} found successfully"
   },
   "system": {
     "healthCheck": "System health check",
@@ -996,6 +1019,7 @@
       "status": "Status",
       "active": "Active",
       "inactive": "Inactive",
+      "createdAt": "Created At",
       "role": "Role",
       "created": "Created",
       "updated": "Updated",

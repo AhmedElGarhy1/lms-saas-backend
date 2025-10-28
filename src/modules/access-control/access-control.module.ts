@@ -24,6 +24,7 @@ import { RolePermissionSubscriber } from './subscriber/role-permission.subscribe
 import { BranchAccess } from './entities/branch-access.entity';
 import { BranchAccessRepository } from './repositories/branch-access.repository';
 import { UserModule } from '../user/user.module';
+import { CentersModule } from '../centers/centers.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { UserAccessListener } from './listeners/user-access.listener';
 import { CenterAccessListener } from './listeners/center-access.listener';
@@ -43,6 +44,7 @@ import { RoleListener } from './listeners/role.listener';
       BranchAccess,
     ]),
     forwardRef(() => UserModule),
+    forwardRef(() => CentersModule),
     ActivityLogModule,
   ],
   controllers: [RoleAssignController, RolesActionsController, RolesController],

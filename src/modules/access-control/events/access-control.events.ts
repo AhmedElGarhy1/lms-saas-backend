@@ -33,8 +33,8 @@ export class GrantUserAccessEvent {
   constructor(
     public readonly granterUserProfileId: string,
     public readonly targetUserProfileId: string,
-    public readonly centerId: string,
     public readonly actor: ActorUser,
+    public readonly centerId?: string,
   ) {}
 }
 
@@ -42,8 +42,8 @@ export class RevokeUserAccessEvent {
   constructor(
     public readonly granterUserProfileId: string,
     public readonly targetUserProfileId: string,
-    public readonly centerId: string,
     public readonly actor: ActorUser,
+    public readonly centerId?: string,
   ) {}
 }
 
@@ -60,8 +60,8 @@ export class RevokeBranchAccessEvent {
   constructor(
     public readonly userProfileId: string,
     public readonly branchId: string,
-    public readonly centerId: string,
     public readonly actor: ActorUser,
+    public readonly centerId: string,
   ) {}
 }
 
@@ -69,8 +69,8 @@ export class AssignRoleEvent {
   constructor(
     public readonly userProfileId: string,
     public readonly roleId: string,
-    public readonly centerId: string,
     public readonly actor: ActorUser,
+    public readonly centerId?: string,
   ) {}
 }
 
@@ -78,7 +78,7 @@ export class RevokeRoleEvent {
   constructor(
     public readonly userProfileId: string,
     public readonly roleId: string,
-    public readonly centerId: string,
     public readonly actor: ActorUser,
+    public readonly centerId?: string,
   ) {}
 }

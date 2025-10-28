@@ -11,6 +11,6 @@ export const getDatabaseConfig = (
   password: configService.get('DB_PASSWORD') || 'root',
   database: configService.get('DB_NAME') || 'lms',
   autoLoadEntities: true,
-  synchronize: false,
+  synchronize: true,
   logging: ['error', 'warn'], // Only log errors and warnings
 });

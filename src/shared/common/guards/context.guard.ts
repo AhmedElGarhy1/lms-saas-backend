@@ -65,14 +65,10 @@ export class ContextGuard implements CanActivate {
       throw new InternalServerErrorException('Profile type not found');
     }
 
-    try {
-      await this.accessControlHelperService.validateAdminAndCenterAccess({
-        userProfileId,
-        centerId,
-      });
-    } catch {
-      throw new CenterSelectionRequiredException();
-    }
+    await this.accessControlHelperService.validateAdminAndCenterAccess({
+      userProfileId,
+      centerId,
+    });
 
     // Set the userId (and maybe centerId) in the request context
     RequestContext.set({

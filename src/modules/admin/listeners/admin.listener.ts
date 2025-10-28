@@ -6,10 +6,9 @@ import { ActivityLogService } from '@/shared/modules/activity-log/services/activ
 import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
 import { CreateAdminEvent, AdminEvents } from '../events/admin.events';
 import {
-  GrantCenterAccessEvent,
-  GrantUserAccessEvent,
   AssignRoleEvent,
   AccessControlEvents,
+  GrantUserAccessEvent,
 } from '@/modules/access-control/events/access-control.events';
 import { UserEvents } from '@/shared/events/event-types.enum';
 import { CreateUserEvent } from '@/modules/user/events/user.events';
@@ -26,39 +25,28 @@ export class AdminListener {
   @OnEvent(AdminEvents.CREATE)
   async handleCreateAdmin(event: CreateAdminEvent) {
     const { dto, actor, admin } = event;
-    const centerId = dto.centerId ?? actor.centerId;
 
     const [{ userProfile, user }] = (await this.eventEmitter.emitAsync(
       UserEvents.CREATE,
       new CreateUserEvent(dto, actor, admin.id, ProfileType.ADMIN),
     )) as [{ user: User; userProfile: UserProfile }];
 
-    // Grant center access
-    if (centerId) {
-      await this.eventEmitter.emitAsync(
-        AccessControlEvents.GRANT_CENTER_ACCESS,
-        new GrantCenterAccessEvent(userProfile.id, centerId, actor),
-      );
-    }
+    // grant user access
+    await this.eventEmitter.emitAsync(
+      AccessControlEvents.GRANT_USER_ACCESS,
+      new GrantUserAccessEvent(
+        actor.userProfileId,
+        userProfile.id,
+        actor,
+        actor.centerId,
+      ),
+    );
 
-    // Grant user access
-    if (centerId) {
-      await this.eventEmitter.emitAsync(
-        AccessControlEvents.GRANT_USER_ACCESS,
-        new GrantUserAccessEvent(
-          actor.userProfileId,
-          userProfile.id,
-          centerId,
-          actor,
-        ),
-      );
-    }
-
-    // Assign role if specified
-    if (dto.roleId && centerId) {
+    // Assign role if specified (admin roles are global, no center required)
+    if (dto.roleId) {
       await this.eventEmitter.emitAsync(
         AccessControlEvents.ASSIGN_ROLE,
-        new AssignRoleEvent(userProfile.id, dto.roleId, centerId, actor),
+        new AssignRoleEvent(userProfile.id, dto.roleId, actor),
       );
     }
 

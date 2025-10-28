@@ -14,6 +14,11 @@ import {
   DeleteRoleEvent,
   RoleEvents,
 } from '../events/role.events';
+import {
+  AssignCenterOwnerEvent,
+  CenterEvents,
+} from '@/modules/centers/events/center.events';
+import { createOwnerRoleData } from '../constants/roles';
 
 @Injectable()
 export class RoleListener {
@@ -76,6 +81,18 @@ export class RoleListener {
         centerId: event.role.centerId,
       },
       event.actor,
+    );
+  }
+
+  @OnEvent(CenterEvents.ASSIGN_OWNER)
+  async handleAssignOwner(event: AssignCenterOwnerEvent) {
+    const { center, userProfile, actor } = event;
+    const role = await this.rolesService.createRole(
+      createOwnerRoleData(center.id),
+      actor,
+    );
+    await this.handleAssignRole(
+      new AssignRoleEvent(userProfile.id, role.id, actor, center.id),
     );
   }
 

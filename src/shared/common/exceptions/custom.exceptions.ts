@@ -271,16 +271,6 @@ export class CenterSelectionRequiredException extends HttpException {
         userMessage: 'Please select a center to continue',
         actionRequired: 'Select a center from the available options',
         retryable: false,
-        details: [
-          {
-            field: 'centerId',
-            value: null,
-            message: 'Center ID is required for this operation',
-            code: ErrorCode.CENTER_SELECTION_REQUIRED,
-            suggestion:
-              'Please select a center from the dropdown or contact your administrator',
-          },
-        ],
       } as EnhancedErrorResponse,
       HttpStatus.BAD_REQUEST,
     );
@@ -318,6 +308,45 @@ export class CenterAccessDeniedException extends HttpException {
         userMessage: 'You do not have access to this center',
         actionRequired:
           'Please contact your administrator to request center access',
+        retryable: false,
+      } as EnhancedErrorResponse,
+      HttpStatus.FORBIDDEN,
+    );
+  }
+}
+
+export class InactiveCenterException extends HttpException {
+  constructor(message: string = 'Center is inactive') {
+    super(
+      {
+        statusCode: HttpStatus.FORBIDDEN,
+        message,
+        error: 'Inactive Center',
+        code: ErrorCode.CENTER_INACTIVE,
+        timestamp: new Date().toISOString(),
+        userMessage: 'This center is currently inactive and cannot be accessed',
+        actionRequired:
+          'Please contact your administrator to activate the center',
+        retryable: false,
+      } as EnhancedErrorResponse,
+      HttpStatus.FORBIDDEN,
+    );
+  }
+}
+
+export class InactiveProfileException extends HttpException {
+  constructor(message: string = 'Profile is inactive') {
+    super(
+      {
+        statusCode: HttpStatus.FORBIDDEN,
+        message,
+        error: 'Inactive Profile',
+        code: ErrorCode.PROFILE_INACTIVE,
+        timestamp: new Date().toISOString(),
+        userMessage:
+          'This profile is currently inactive and cannot be accessed',
+        actionRequired:
+          'Please contact your administrator to activate the profile',
         retryable: false,
       } as EnhancedErrorResponse,
       HttpStatus.FORBIDDEN,

@@ -14,7 +14,7 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { UserInfoService } from './user-info.service';
 import { UserProfileService } from './user-profile.service';
 import { LoggerService } from '@/shared/services/logger.service';
-import { CreateUserDto, CreateUserWithRoleDto } from '../dto/create-user.dto';
+import { CreateUserDto } from '../dto/create-user.dto';
 import {
   ChangePasswordParams,
   UserServiceResponse,
@@ -121,57 +121,57 @@ export class UserService {
     return savedUser;
   }
 
-  // TODO: implement this method
-  async createUserWithRole(dto: CreateUserWithRoleDto, actor: ActorUser) {
-    const centerId = (dto.centerId ?? actor.centerId)!;
-    dto.centerId = centerId;
-    const user = await this.createUser(dto, actor);
+  // // TODO: implement this method
+  // async createUserWithRole(dto: CreateUserWithRoleDto, actor: ActorUser) {
+  //   const centerId = (dto.centerId ?? actor.centerId)!;
+  //   dto.centerId = centerId;
+  //   const user = await this.createUser(dto, actor);
 
-    // Create user profile for the new user
-    const userProfile = await this.userProfileService.createUserProfile(
-      user.id,
-      ProfileType.STAFF, // Default to Staff for center users
-      user.id, // Use user.id as profileRefId for now
-    );
+  //   // Create user profile for the new user
+  //   const userProfile = await this.userProfileService.createUserProfile(
+  //     user.id,
+  //     ProfileType.STAFF, // Default to Staff for center users
+  //     user.id, // Use user.id as profileRefId for now
+  //   );
 
-    // Grant center access to the new user
-    if (centerId) {
-      await this.accessControlService.grantCenterAccess(
-        {
-          userProfileId: userProfile.id,
-          centerId,
-        },
-        actor,
-      );
-    }
+  //   // Grant center access to the new user
+  //   if (centerId) {
+  //     await this.accessControlService.grantCenterAccess(
+  //       {
+  //         userProfileId: userProfile.id,
+  //         centerId,
+  //       },
+  //       actor,
+  //     );
+  //   }
 
-    // Grant user access (granter can manage the new user)
-    const bypassUserAccess =
-      await this.accessControlHelperService.bypassCenterInternalAccess(
-        actor.userProfileId,
-        centerId,
-      );
-    if (!bypassUserAccess) {
-      await this.accessControlService.grantUserAccessInternal({
-        granterUserProfileId: actor.userProfileId,
-        targetUserProfileId: userProfile.id,
-        centerId,
-      });
-    }
+  //   // Grant user access (granter can manage the new user)
+  //   const bypassUserAccess =
+  //     await this.accessControlHelperService.bypassCenterInternalAccess(
+  //       actor.userProfileId,
+  //       centerId,
+  //     );
+  //   if (!bypassUserAccess) {
+  //     await this.accessControlService.grantUserAccessInternal({
+  //       granterUserProfileId: actor.userProfileId,
+  //       targetUserProfileId: userProfile.id,
+  //       centerId,
+  //     });
+  //   }
 
-    if (dto.roleId) {
-      await this.rolesService.assignRole(
-        {
-          userProfileId: userProfile.id,
-          roleId: dto.roleId,
-          centerId,
-        },
-        actor,
-      );
-    }
+  //   if (dto.roleId) {
+  //     await this.rolesService.assignRole(
+  //       {
+  //         userProfileId: userProfile.id,
+  //         roleId: dto.roleId,
+  //         centerId,
+  //       },
+  //       actor,
+  //     );
+  //   }
 
-    return user;
-  }
+  //   return user;
+  // }
 
   async paginateStaff(params: PaginateUsersDto, actor: ActorUser) {
     return this.userRepository.paginateStaff(params, actor);

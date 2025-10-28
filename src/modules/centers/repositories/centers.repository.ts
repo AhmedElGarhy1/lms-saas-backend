@@ -35,31 +35,22 @@ export class CentersRepository extends BaseRepository<Center> {
     params: PaginateCentersDto,
     actor: ActorUser,
   ): Promise<Pagination<CenterResponseDto>> {
-    const { userProfileId, isActive, centerAccess } = params;
+    const { userProfileId, centerAccess } = params;
     const queryBuilder = this.getRepository().createQueryBuilder('center');
+    this.applyIsActiveFilter(queryBuilder, params, 'center');
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
-      actor.userProfileId,
-    );
-    const isAdmin = await this.accessControlHelperService.isAdmin(
       actor.userProfileId,
     );
 
     // Apply access control
     if (isSuperAdmin) {
       // no access control
-    } else if (isAdmin) {
-      queryBuilder.andWhere(
-        'center.id IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :userProfileId)',
-        {
-          userProfileId: userProfileId,
-        },
-      );
     } else {
       queryBuilder.andWhere(
-        'center.id IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :userProfileId)',
+        'center.id IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :actorUserProfileId)',
         {
-          userProfileId: userProfileId,
+          actorUserProfileId: actor.userProfileId,
         },
       );
     }
@@ -81,12 +72,6 @@ export class CentersRepository extends BaseRepository<Center> {
           },
         );
       }
-    }
-
-    if (isActive !== undefined) {
-      queryBuilder.andWhere('center.isActive = :isActive', {
-        isActive: isActive,
-      });
     }
 
     const result = await this.paginate(

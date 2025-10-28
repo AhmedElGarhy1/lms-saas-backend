@@ -1,10 +1,8 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Param,
-  Query,
   Put,
   Delete,
   Patch,
@@ -12,22 +10,17 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import {
-  CreateApiResponses,
   ReadApiResponses,
   UpdateApiResponses,
   DeleteApiResponses,
 } from '@/shared/common/decorators';
-import { SerializeOptions } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
-import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UserService } from '../services/user.service';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { CreateUserWithRoleDto } from '../dto/create-user.dto';
 import { ChangePasswordRequestDto } from '../dto/change-password.dto';
-import { UserResponseDto } from '../dto/user-response.dto';
 import {
   ToggleUserStatusRequestDto,
   ToggleUserStatusResponseDto,
@@ -69,24 +62,24 @@ export class UserController {
     return this.userService.findOne(userId);
   }
 
-  @Post()
-  @CreateApiResponses('Create a new user')
-  @ApiBody({ type: CreateUserWithRoleDto })
-  @Permissions(PERMISSIONS.STAFF.CREATE)
-  @Transactional()
-  async createUser(
-    @Body() dto: CreateUserWithRoleDto,
-    @GetUser() actorUser: ActorUser,
-  ) {
-    const user = await this.userService.createUserWithRole(dto, actorUser);
+  // @Post()
+  // @CreateApiResponses('Create a new user')
+  // @ApiBody({ type: CreateUserWithRoleDto })
+  // @Permissions(PERMISSIONS.STAFF.CREATE)
+  // @Transactional()
+  // async createUser(
+  //   @Body() dto: CreateUserWithRoleDto,
+  //   @GetUser() actorUser: ActorUser,
+  // ) {
+  //   const user = await this.userService.createUserWithRole(dto, actorUser);
 
-    return ControllerResponse.success(
-      user,
-      this.i18n.translate('success.create', {
-        args: { resource: this.i18n.translate('common.resources.user') },
-      }),
-    );
-  }
+  //   return ControllerResponse.success(
+  //     user,
+  //     this.i18n.translate('success.create', {
+  //       args: { resource: this.i18n.translate('common.resources.user') },
+  //     }),
+  //   );
+  // }
 
   @Put(':id')
   @UpdateApiResponses('Update user information')

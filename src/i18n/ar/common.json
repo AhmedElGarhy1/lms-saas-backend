@@ -23,6 +23,10 @@
     "revoke": "إلغاء",
     "grant": "منح",
     "remove": "إزالة",
+    "manageRoles": "إدارة الأدوار",
+    "centerAccess": "الوصول للمركز",
+    "activateSelected": "تفعيل المحدد",
+    "deactivateSelected": "إلغاء تفعيل المحدد",
     "saveChanges": "حفظ التغييرات",
     "changePassword": "تغيير كلمة المرور",
     "deleteSelected": "حذف المحدد",
@@ -110,6 +114,8 @@
     "notifications": "الإشعارات",
     "address": "العنوان",
     "profilePicture": "الصورة الشخصية",
+    "locale": "اللغة",
+    "logo": "الشعار",
     "characters": "حرف",
     "created": "تم الإنشاء",
     "updated": "تم التحديث",
@@ -316,6 +322,7 @@
     "enterCountry": "أدخل البلد",
     "enterCity": "أدخل المدينة",
     "enterState": "أدخل الولاية",
+    "enterLogoUrl": "أدخل رابط الشعار",
     "enterZipCode": "أدخل الرمز البريدي",
     "enterDepartment": "أدخل القسم",
     "enterPosition": "أدخل المنصب",
@@ -406,6 +413,7 @@
     "operationFailed": "فشلت العملية",
     "dataSaved": "تم حفظ البيانات بنجاح",
     "dataUpdated": "تم تحديث البيانات بنجاح",
+    "forbidden": "هذا الإجراء محظور",
     "dataDeleted": "تم حذف البيانات بنجاح",
     "dataCreated": "تم إنشاء البيانات بنجاح",
     "dataRestored": "تم استعادة البيانات بنجاح",
@@ -436,7 +444,6 @@
     "insufficientPermissions": "ليس لديك صلاحيات كافية لتنفيذ هذا الإجراء",
     "accessGranted": "تم منح الوصول بنجاح",
     "accessRevoked": "تم إلغاء الوصول بنجاح",
-    "unauthorized": "غير مخول لك تنفيذ هذا الإجراء",
-    "forbidden": "هذا الإجراء محظور"
+    "unauthorized": "غير مخول لك تنفيذ هذا الإجراء"
   }
 }

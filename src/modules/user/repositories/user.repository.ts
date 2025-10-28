@@ -17,6 +17,8 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
+import { PaginateStaffDto } from '@/modules/staff/dto/paginate-staff.dto';
+import { PaginateAdminDto } from '@/modules/admin/dto/paginate-admin.dto';
 
 @Injectable()
 export class UserRepository extends BaseRepository<User> {
@@ -78,13 +80,12 @@ export class UserRepository extends BaseRepository<User> {
    * @returns Paginated users in the specified center
    */
   async paginateStaff(
-    params: PaginateUsersDto,
+    params: PaginateStaffDto,
     actor: ActorUser,
   ): Promise<Pagination<UserResponseDto>> {
     const {
       centerId,
       userProfileId,
-      isActive,
       roleId,
       userAccess,
       roleAccess,
@@ -110,6 +111,7 @@ export class UserRepository extends BaseRepository<User> {
       .where('userProfiles.profileType = :profileType', {
         profileType: ProfileType.STAFF,
       });
+    this.applyIsActiveFilter(queryBuilder, params, 'userProfiles');
 
     if (includeBranch) {
       queryBuilder.andWhere(
@@ -161,12 +163,15 @@ export class UserRepository extends BaseRepository<User> {
       if (isSuperAdmin) {
         // super admin users have no access control - can see all users
       } else if (isAdmin) {
-        queryBuilder.leftJoin('user.centerAccess', 'centerAccess').andWhere(
-          `centerAccess.centerId IN (
-           SELECT ca."centerId" FROM center_access ca WHERE ca."userProfileId" = :userProfileId
-         )`,
-          { userProfileId: actor.userProfileId },
-        );
+        queryBuilder
+          .andWhere(
+            `EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = "userProfiles".id AND ca."centerId" = :centerId)`,
+            { centerId },
+          )
+          .orWhere(
+            `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
+            { userProfileId: actor.userProfileId, centerId },
+          );
       } else {
         throw new BadRequestException('Access denied to this user');
       }
@@ -190,21 +195,6 @@ export class UserRepository extends BaseRepository<User> {
           },
         );
       }
-    }
-
-    // if (roleId && roleAccess !== AccessibleUsersEnum.ALL) {
-    //   queryBuilder
-    //     .leftJoinAndSelect('user.userRoles', 'userRoles')
-    //     .andWhere('userRoles.roleId = :roleId', {
-    //       roleId: roleId,
-    //     });
-    // }
-
-    // Apply filters directly
-    if (isActive !== undefined) {
-      queryBuilder.andWhere('user.isActive = :isActive', {
-        isActive: isActive,
-      });
     }
 
     const result = await this.paginate(
@@ -266,7 +256,7 @@ export class UserRepository extends BaseRepository<User> {
    * @returns Paginated admins
    */
   async paginateAdmins(
-    params: PaginateUsersDto,
+    params: PaginateAdminDto,
     actor: ActorUser,
   ): Promise<Pagination<UserResponseDto>> {
     const {
@@ -274,7 +264,6 @@ export class UserRepository extends BaseRepository<User> {
       roleId,
       userProfileId,
       userAccess,
-      isActive,
       roleAccess,
       centerAccess,
     } = params;
@@ -287,6 +276,8 @@ export class UserRepository extends BaseRepository<User> {
       })
       .leftJoinAndSelect('userProfiles.profileRoles', 'profileRoles')
       .leftJoinAndSelect('profileRoles.role', 'role');
+
+    this.applyIsActiveFilter(queryBuilder, params, 'userProfiles');
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
@@ -310,7 +301,7 @@ export class UserRepository extends BaseRepository<User> {
         queryBuilder.andWhere(
           `EXISTS (
           SELECT 1 FROM center_access ca 
-          WHERE ca."userProfileId" = "userProfiles".id AND ca."global" = true AND ca."centerId" = :centerId)`,
+          WHERE ca."userProfileId" = "userProfiles".id AND ca."centerId" = :centerId)`,
           { centerId },
         );
       }
@@ -343,12 +334,6 @@ export class UserRepository extends BaseRepository<User> {
 
     if (roleId && roleAccess !== AccessibleUsersEnum.ALL) {
       queryBuilder.andWhere('role.id = :roleId', { roleId });
-    }
-
-    if (isActive !== undefined) {
-      queryBuilder.andWhere('user.isActive = :isActive', {
-        isActive,
-      });
     }
 
     const results = await this.paginate(
@@ -468,7 +453,7 @@ export class UserRepository extends BaseRepository<User> {
           ),
         }),
       );
-    } else if (userAccess === AccessibleUsersEnum.INCLUDE) {
+    } else {
       filteredItems = filteredItems.map((user) =>
         Object.assign(user, {
           isProfileAccessible: true,
@@ -570,163 +555,5 @@ export class UserRepository extends BaseRepository<User> {
       );
     }
     return filteredItems;
-  }
-
-  async paginateUsersByProfileType(
-    params: PaginateUsersDto,
-    actor: ActorUser,
-    profileType: ProfileType,
-  ): Promise<Pagination<UserResponseDto>> {
-    const {
-      centerId,
-      userProfileId,
-      isActive,
-      roleId,
-      userAccess,
-      roleAccess,
-      centerAccess,
-      displayRole,
-      branchId,
-      branchAccess,
-    } = params;
-
-    const includeCenter =
-      centerId &&
-      (!centerAccess || centerAccess === AccessibleUsersEnum.INCLUDE);
-
-    const includeBranch =
-      branchId &&
-      centerId &&
-      (!branchAccess || branchAccess === AccessibleUsersEnum.INCLUDE);
-
-    // Create query builder with proper JOINs
-    const queryBuilder = this.getRepository()
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.userProfiles', 'userProfiles')
-      .where('userProfiles.profileType = :profileType', {
-        profileType,
-      });
-
-    if (includeBranch) {
-      queryBuilder.andWhere(
-        'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = userProfiles.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId)',
-        { branchId, centerId },
-      );
-    }
-
-    if (includeCenter) {
-      queryBuilder.andWhere(
-        'EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId)',
-        { centerId },
-      );
-      if (displayRole) {
-        queryBuilder
-          .leftJoinAndSelect(
-            'userProfiles.profileRoles',
-            'profileRoles',
-            'profileRoles.userProfileId = userProfiles.id AND profileRoles.centerId = :centerId',
-            { centerId },
-          )
-          .leftJoinAndSelect('profileRoles.role', 'role');
-      }
-    }
-
-    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
-      actor.userProfileId,
-    );
-    const isAdmin = await this.accessControlHelperService.isAdmin(
-      actor.userProfileId,
-    );
-
-    if (centerId) {
-      const isCenterOwner = await this.accessControlHelperService.isCenterOwner(
-        actor.userProfileId,
-        centerId,
-      );
-
-      if (!isCenterOwner && !isSuperAdmin) {
-        queryBuilder.andWhere(
-          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
-          { userProfileId: actor.userProfileId, centerId },
-        );
-      }
-    }
-
-    if (userProfileId) {
-      queryBuilder.andWhere('"userProfiles".id != :userProfileId', {
-        userProfileId,
-      });
-      if (userAccess === AccessibleUsersEnum.INCLUDE) {
-        queryBuilder.andWhere(
-          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId)`,
-          { userProfileId: actor.userProfileId },
-        );
-      }
-    }
-
-    if (isActive !== undefined) {
-      queryBuilder.andWhere('user.isActive = :isActive', { isActive });
-    }
-
-    if (roleId) {
-      queryBuilder.andWhere('role.id = :roleId', { roleId });
-    }
-
-    if (roleAccess === AccessibleUsersEnum.INCLUDE) {
-      queryBuilder.andWhere(
-        `EXISTS (SELECT 1 FROM profile_roles pr WHERE pr."userProfileId" = "userProfiles".id AND pr."roleId" IN (SELECT pr2."roleId" FROM profile_roles pr2 WHERE pr2."userProfileId" = :userProfileId))`,
-        { userProfileId: actor.userProfileId },
-      );
-    }
-
-    // Apply pagination
-    const page = params.page || 1;
-    const limit = params.limit || 10;
-    const skip = (page - 1) * limit;
-
-    queryBuilder.skip(skip).take(limit);
-
-    // Apply sorting
-    if (params.sortBy) {
-      const sortOrder = 'DESC'; // Default sort order
-      queryBuilder.orderBy(`user.${params.sortBy}`, sortOrder);
-    } else {
-      queryBuilder.orderBy('user.createdAt', 'DESC');
-    }
-
-    const [users, total] = await queryBuilder.getManyAndCount();
-
-    // Transform to response DTOs
-    const items = users.map((user) => {
-      const userProfile = user.userProfiles?.[0];
-      const profileRole = userProfile?.profileRoles?.[0];
-      const role = profileRole?.role;
-
-      return {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        isActive: user.isActive,
-        failedLoginAttempts: user.failedLoginAttempts,
-        twoFactorEnabled: user.twoFactorEnabled,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-        createdBy: user.createdBy,
-        userProfiles: user.userProfiles,
-        userProfile: userProfile || ({} as UserProfile),
-      };
-    });
-
-    return {
-      items,
-      meta: {
-        itemCount: total,
-        totalItems: total,
-        itemsPerPage: limit,
-        totalPages: Math.ceil(total / limit),
-        currentPage: page,
-      },
-    };
   }
 }

@@ -492,4 +492,20 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       });
     }
   }
+
+  protected applyIsActiveFilter<T extends BasePaginationDto>(
+    queryBuilder: SelectQueryBuilder<any>,
+    dto: T,
+    alias: string = 'entity',
+  ): void {
+    if (!dto.applyIsActive) {
+      queryBuilder.andWhere(`${alias}.isActive = :isActive`, {
+        isActive: true,
+      });
+    } else if (dto.isActive !== undefined) {
+      queryBuilder.andWhere(`${alias}.isActive = :isActive`, {
+        isActive: dto.isActive,
+      });
+    }
+  }
 }

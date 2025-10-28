@@ -47,8 +47,12 @@ export class CentersService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async findCenterById(centerId: string): Promise<Center | null> {
-    return this.centersRepository.findOne(centerId);
+  async findCenterById(centerId: string): Promise<Center> {
+    const center = await this.centersRepository.findOne(centerId);
+    if (!center) {
+      throw new ResourceNotFoundException('Center not found');
+    }
+    return center;
   }
 
   async createCenter(dto: CreateCenterDto, actor: ActorUser): Promise<Center> {

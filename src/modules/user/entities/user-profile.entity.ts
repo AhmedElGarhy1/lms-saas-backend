@@ -28,6 +28,9 @@ export class UserProfile extends BaseEntity {
   @Column({ type: 'uuid' })
   profileRefId: string;
 
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
+
   @ManyToOne(() => User, (user) => user.userProfiles)
   @JoinColumn({ name: 'userId' })
   user: User;
