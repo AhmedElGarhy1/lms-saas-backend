@@ -16,10 +16,10 @@ import { RolesService } from '@/modules/access-control/services/roles.service';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import {
-  CenterCreatedEvent,
-  CenterUpdatedEvent,
-  CenterDeletedEvent,
-  CenterRestoredEvent,
+  CreateCenterEvent,
+  UpdateCenterEvent,
+  DeleteCenterEvent,
+  RestoreCenterEvent,
   CenterEvents,
 } from '@/modules/centers/events/center.events';
 
@@ -63,9 +63,9 @@ export class CentersService {
     });
 
     // Emit event for user creation and staff profile creation
-    this.eventEmitter.emit(
-      CenterEvents.CREATED,
-      new CenterCreatedEvent(center, dto.user, actor),
+    await this.eventEmitter.emitAsync(
+      CenterEvents.CREATE,
+      new CreateCenterEvent(center, dto.user, actor),
     );
 
     return center;
@@ -111,9 +111,9 @@ export class CentersService {
     }
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
-      CenterEvents.UPDATED,
-      new CenterUpdatedEvent(centerId, dto, actor),
+    await this.eventEmitter.emitAsync(
+      CenterEvents.UPDATE,
+      new UpdateCenterEvent(centerId, dto, actor),
     );
 
     return updatedCenter;
@@ -130,9 +130,9 @@ export class CentersService {
     await this.centersRepository.softRemove(centerId);
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
-      CenterEvents.DELETED,
-      new CenterDeletedEvent(centerId, actor),
+    await this.eventEmitter.emitAsync(
+      CenterEvents.DELETE,
+      new DeleteCenterEvent(centerId, actor),
     );
   }
 
@@ -152,9 +152,9 @@ export class CentersService {
     const restoredCenter = await this.findCenterById(centerId);
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
-      CenterEvents.RESTORED,
-      new CenterRestoredEvent(centerId, actor),
+    await this.eventEmitter.emitAsync(
+      CenterEvents.RESTORE,
+      new RestoreCenterEvent(centerId, actor),
     );
 
     return restoredCenter!;

@@ -5,20 +5,12 @@ import { CreateAdminDto } from '@/modules/admin/dto/create-admin.dto';
 
 export enum AdminEvents {
   CREATE = 'admin.create',
-  CREATED = 'admin.created',
-}
-
-export class AdminCreatedEvent {
-  constructor(
-    public readonly user: User,
-    public readonly admin: Admin,
-    public readonly actor: ActorUser,
-  ) {}
 }
 
 export class CreateAdminEvent {
   constructor(
     public readonly dto: CreateAdminDto,
     public readonly actor: ActorUser,
+    public readonly admin: Admin,
   ) {}
 }

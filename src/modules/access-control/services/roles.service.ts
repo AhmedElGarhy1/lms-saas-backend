@@ -14,15 +14,11 @@ import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { PermissionScope } from '../constants/permissions';
 import {
   RoleEvents,
-  RoleCreatedEvent,
-  RoleUpdatedEvent,
-  RoleDeletedEvent,
+  CreateRoleEvent,
+  UpdateRoleEvent,
+  DeleteRoleEvent,
 } from '@/modules/access-control/events/role.events';
-import {
-  RoleAssignedEvent,
-  RoleRevokedEvent,
-  AccessControlEvents,
-} from '@/modules/access-control/events/access-control.events';
+import { AccessControlEvents } from '@/modules/access-control/events/access-control.events';
 
 @Injectable()
 export class RolesService {
@@ -54,10 +50,7 @@ export class RolesService {
 
     const role = await this.rolesRepository.createRole(data);
 
-    this.eventEmitter.emit(
-      RoleEvents.CREATED,
-      new RoleCreatedEvent(role, actor),
-    );
+    await this.eventEmitter.emitAsync(RoleEvents.CREATE, new CreateRoleEvent(role, actor));
 
     return role;
   }
@@ -76,9 +69,9 @@ export class RolesService {
 
     const updatedRole = await this.rolesRepository.updateRole(roleId, data);
 
-    this.eventEmitter.emit(
-      RoleEvents.UPDATED,
-      new RoleUpdatedEvent(roleId, data, actor),
+    await this.eventEmitter.emitAsync(
+      RoleEvents.UPDATE,
+      new UpdateRoleEvent(roleId, data, actor),
     );
 
     return updatedRole;
@@ -97,9 +90,9 @@ export class RolesService {
 
     await this.rolesRepository.softRemove(roleId);
 
-    this.eventEmitter.emit(
-      RoleEvents.DELETED,
-      new RoleDeletedEvent(roleId, actor),
+    await this.eventEmitter.emitAsync(
+      RoleEvents.DELETE,
+      new DeleteRoleEvent(roleId, actor),
     );
   }
 
@@ -118,26 +111,11 @@ export class RolesService {
   async assignRole(data: AssignRoleDto, actor?: ActorUser) {
     const result = await this.profileRoleRepository.assignProfileRole(data);
 
-    this.eventEmitter.emit(
-      RoleEvents.ASSIGNED,
-      new RoleAssignedEvent(
-        data.userProfileId,
-        data.roleId,
-        data.centerId!,
-        actor,
-      ),
-    );
-
     return result;
   }
 
   async removeUserRole(data: AssignRoleDto, actor?: ActorUser) {
     const result = await this.profileRoleRepository.removeProfileRole(data);
-
-    this.eventEmitter.emit(
-      RoleEvents.REVOKED,
-      new RoleRevokedEvent(data.userProfileId, data.centerId!, actor),
-    );
 
     return result;
   }

@@ -29,7 +29,6 @@ import { UserAccessListener } from './listeners/user-access.listener';
 import { CenterAccessListener } from './listeners/center-access.listener';
 import { BranchAccessListener } from './listeners/branch-access.listener';
 import { RoleListener } from './listeners/role.listener';
-import { ActivityLogListener } from './listeners/activity-log.listener';
 
 @Global()
 @Module({
@@ -65,7 +64,6 @@ import { ActivityLogListener } from './listeners/activity-log.listener';
     CenterAccessListener,
     BranchAccessListener,
     RoleListener,
-    ActivityLogListener,
   ],
   exports: [AccessControlService, AccessControlHelperService, RolesService],
 })

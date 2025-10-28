@@ -3,21 +3,19 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { CreateRoleRequestDto } from '@/modules/access-control/dto/create-role.dto';
 
 export enum RoleEvents {
-  CREATED = 'role.created',
-  UPDATED = 'role.updated',
-  DELETED = 'role.deleted',
-  ASSIGNED = 'role.assigned',
-  REVOKED = 'role.revoked',
+  CREATE = 'role.create',
+  UPDATE = 'role.update',
+  DELETE = 'role.delete',
 }
 
-export class RoleCreatedEvent {
+export class CreateRoleEvent {
   constructor(
     public readonly role: Role,
     public readonly actor: ActorUser,
   ) {}
 }
 
-export class RoleUpdatedEvent {
+export class UpdateRoleEvent {
   constructor(
     public readonly roleId: string,
     public readonly updates: CreateRoleRequestDto,
@@ -25,26 +23,9 @@ export class RoleUpdatedEvent {
   ) {}
 }
 
-export class RoleDeletedEvent {
+export class DeleteRoleEvent {
   constructor(
     public readonly roleId: string,
     public readonly actor: ActorUser,
-  ) {}
-}
-
-export class RoleAssignedEvent {
-  constructor(
-    public readonly userProfileId: string,
-    public readonly roleId: string,
-    public readonly centerId: string,
-    public readonly actor?: ActorUser,
-  ) {}
-}
-
-export class RoleRevokedEvent {
-  constructor(
-    public readonly userProfileId: string,
-    public readonly centerId: string,
-    public readonly actor?: ActorUser,
   ) {}
 }

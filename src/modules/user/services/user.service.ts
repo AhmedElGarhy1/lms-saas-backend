@@ -70,7 +70,7 @@ export class UserService {
     await this.userRepository.update(userId, { password: hashedPassword });
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
+    await this.eventEmitter.emitAsync(
       AuthEvents.PASSWORD_CHANGED,
       new PasswordChangedEvent(userId, { id: userId } as ActorUser),
     );

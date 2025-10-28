@@ -1,23 +1,26 @@
-import { User } from '@/modules/user/entities/user.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UpdateUserDto } from '@/modules/user/dto/update-user.dto';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { CreateUserWithRoleDto } from '../dto/create-user.dto';
 
 export enum UserEvents {
-  CREATED = 'user.created',
-  UPDATED = 'user.updated',
-  DELETED = 'user.deleted',
-  RESTORED = 'user.restored',
-  ACTIVATED = 'user.activated',
+  CREATE = 'user.create',
+  UPDATE = 'user.update',
+  DELETE = 'user.delete',
+  RESTORE = 'user.restore',
+  ACTIVATE = 'user.activate',
 }
 
-export class UserCreatedEvent {
+export class CreateUserEvent {
   constructor(
-    public readonly user: User,
+    public readonly dto: CreateUserWithRoleDto,
     public readonly actor: ActorUser,
+    public readonly targetProfileId: string,
+    public readonly targetProfileType: ProfileType,
   ) {}
 }
 
-export class UserUpdatedEvent {
+export class UpdateUserEvent {
   constructor(
     public readonly userId: string,
     public readonly updates: UpdateUserDto,
@@ -25,21 +28,21 @@ export class UserUpdatedEvent {
   ) {}
 }
 
-export class UserDeletedEvent {
+export class DeleteUserEvent {
   constructor(
     public readonly userId: string,
     public readonly actor: ActorUser,
   ) {}
 }
 
-export class UserRestoredEvent {
+export class RestoreUserEvent {
   constructor(
     public readonly userId: string,
     public readonly actor: ActorUser,
   ) {}
 }
 
-export class UserActivatedEvent {
+export class ActivateUserEvent {
   constructor(
     public readonly userId: string,
     public readonly isActive: boolean,

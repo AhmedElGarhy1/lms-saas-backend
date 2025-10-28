@@ -155,7 +155,7 @@ export class AuthService {
     });
 
     // Emit login event for activity logging
-    this.eventEmitter.emit(
+    await this.eventEmitter.emitAsync(
       AuthEvents.USER_LOGGED_IN,
       new UserLoggedInEvent(
         user.id!,
@@ -294,7 +294,7 @@ export class AuthService {
     await this.passwordResetService.sendPasswordResetEmail(dto.email);
 
     // Emit password reset requested event (not for activity logging)
-    this.eventEmitter.emit(
+    await this.eventEmitter.emitAsync(
       AuthEvents.PASSWORD_RESET_REQUESTED,
       new PasswordResetRequestedEvent(dto.email),
     );
@@ -346,7 +346,7 @@ export class AuthService {
     await this.userService.updateUserTwoFactor(userId, secret, false);
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
+    await this.eventEmitter.emitAsync(
       AuthEvents.TWO_FA_SETUP,
       new TwoFactorSetupEvent(userId, actor),
     );
@@ -408,7 +408,7 @@ export class AuthService {
     );
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
+    await this.eventEmitter.emitAsync(
       AuthEvents.TWO_FA_ENABLED,
       new TwoFactorEnabledEvent(userId, actor),
     );
@@ -453,7 +453,7 @@ export class AuthService {
     await this.userService.updateUserTwoFactor(userId, null, false);
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
+    await this.eventEmitter.emitAsync(
       AuthEvents.TWO_FA_DISABLED,
       new TwoFactorDisabledEvent(userId, actor),
     );

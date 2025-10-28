@@ -14,7 +14,7 @@ import { UserProfileService } from './services/user-profile.service';
 import { UserRepository } from './repositories/user.repository';
 import { UserInfoRepository } from './repositories/user-info.repository';
 import { UserProfileRepository } from './repositories/user-profile.repository';
-import { ActivityLogListener } from './listeners/activity-log.listener';
+import { UserListener } from './listeners/user.listener';
 
 @Module({
   imports: [
@@ -31,7 +31,7 @@ import { ActivityLogListener } from './listeners/activity-log.listener';
     UserRepository,
     UserInfoRepository,
     UserProfileRepository,
-    ActivityLogListener,
+    UserListener,
   ],
   exports: [
     UserService,

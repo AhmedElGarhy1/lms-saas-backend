@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AccessControlService } from '../services/access-control.service';
+import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
+import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
 import {
   GrantUserAccessEvent,
   RevokeUserAccessEvent,
-  UserAccessGrantedEvent,
-  UserAccessRevokedEvent,
   AccessControlEvents,
 } from '../events/access-control.events';
 
@@ -14,7 +13,7 @@ import {
 export class UserAccessListener {
   constructor(
     private readonly accessControlService: AccessControlService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   @OnEvent(AccessControlEvents.GRANT_USER_ACCESS)
@@ -29,15 +28,16 @@ export class UserAccessListener {
       centerId,
     });
 
-    // Emit result event for activity logging
-    this.eventEmitter.emit(
-      AccessControlEvents.USER_ACCESS_GRANTED,
-      new UserAccessGrantedEvent(
+    // Log activity
+    await this.activityLogService.log(
+      UserActivityType.USER_ACCESS_GRANTED,
+      {
         granterUserProfileId,
         targetUserProfileId,
         centerId,
-        actor,
-      ),
+        accessType: 'USER',
+      },
+      actor,
     );
   }
 
@@ -53,15 +53,16 @@ export class UserAccessListener {
       centerId,
     });
 
-    // Emit result event for activity logging
-    this.eventEmitter.emit(
-      AccessControlEvents.USER_ACCESS_REVOKED,
-      new UserAccessRevokedEvent(
+    // Log activity
+    await this.activityLogService.log(
+      UserActivityType.USER_ACCESS_REVOKED,
+      {
         granterUserProfileId,
         targetUserProfileId,
         centerId,
-        actor,
-      ),
+        accessType: 'USER',
+      },
+      actor,
     );
   }
 }

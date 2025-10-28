@@ -5,11 +5,9 @@ import { StaffRepository } from '../repositories/staff.repository';
 import { UserProfileService } from '@/modules/user/services/user-profile.service';
 import { UserService } from '@/modules/user/services/user.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import {
-  CreateStaffEvent,
-  StaffCreatedEvent,
-  StaffEvents,
-} from '../events/staff.events';
+import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
+import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
+import { CreateStaffEvent, StaffEvents } from '../events/staff.events';
 import {
   GrantCenterAccessEvent,
   GrantUserAccessEvent,
@@ -24,6 +22,7 @@ export class StaffListener {
     private readonly userProfileService: UserProfileService,
     private readonly userService: UserService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   @OnEvent(StaffEvents.CREATE)
@@ -47,7 +46,7 @@ export class StaffListener {
 
     // Grant center access
     if (centerId) {
-      this.eventEmitter.emit(
+      await this.eventEmitter.emitAsync(
         AccessControlEvents.GRANT_CENTER_ACCESS,
         new GrantCenterAccessEvent(userProfile.id, centerId, actor),
       );
@@ -55,7 +54,7 @@ export class StaffListener {
 
     // Grant user access
     if (centerId) {
-      this.eventEmitter.emit(
+      await this.eventEmitter.emitAsync(
         AccessControlEvents.GRANT_USER_ACCESS,
         new GrantUserAccessEvent(
           actor.userProfileId,
@@ -68,16 +67,23 @@ export class StaffListener {
 
     // Assign role if specified
     if (dto.roleId && centerId) {
-      this.eventEmitter.emit(
+      await this.eventEmitter.emitAsync(
         AccessControlEvents.ASSIGN_ROLE,
         new AssignRoleEvent(userProfile.id, dto.roleId, centerId, actor),
       );
     }
 
-    // Emit completion event
-    this.eventEmitter.emit(
-      StaffEvents.CREATED,
-      new StaffCreatedEvent(user, staff, actor),
+    // Log activity
+    await this.activityLogService.log(
+      UserActivityType.USER_CREATED,
+      {
+        targetUserId: user.id,
+        email: user.email,
+        name: user.name,
+        profileType: 'STAFF',
+        createdBy: actor.id,
+      },
+      actor,
     );
   }
 }

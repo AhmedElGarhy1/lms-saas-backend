@@ -1,18 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { RolesService } from '../services/roles.service';
+import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
+import { RoleActivityType } from '../enums/role-activity-type.enum';
 import {
   AssignRoleEvent,
   RevokeRoleEvent,
-  RoleAssignedEvent,
-  RoleRevokedEvent,
   AccessControlEvents,
 } from '../events/access-control.events';
 import {
-  RoleCreatedEvent,
-  RoleUpdatedEvent,
-  RoleDeletedEvent,
+  CreateRoleEvent,
+  UpdateRoleEvent,
+  DeleteRoleEvent,
   RoleEvents,
 } from '../events/role.events';
 
@@ -20,7 +19,7 @@ import {
 export class RoleListener {
   constructor(
     private readonly rolesService: RolesService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   @OnEvent(AccessControlEvents.ASSIGN_ROLE)
@@ -33,10 +32,15 @@ export class RoleListener {
       actor,
     );
 
-    // Emit result event for activity logging
-    this.eventEmitter.emit(
-      AccessControlEvents.ROLE_ASSIGNED,
-      new RoleAssignedEvent(userProfileId, roleId, centerId, actor),
+    // Log activity
+    await this.activityLogService.log(
+      RoleActivityType.ROLE_ASSIGNED,
+      {
+        userProfileId,
+        roleId,
+        centerId,
+      },
+      actor,
     );
   }
 
@@ -50,26 +54,53 @@ export class RoleListener {
       actor,
     );
 
-    // Emit result event for activity logging
-    this.eventEmitter.emit(
-      AccessControlEvents.ROLE_REVOKED,
-      new RoleRevokedEvent(userProfileId, centerId, actor),
+    // Log activity
+    await this.activityLogService.log(
+      RoleActivityType.ROLE_REMOVED,
+      {
+        userProfileId,
+        centerId,
+      },
+      actor,
     );
   }
 
-  @OnEvent(RoleEvents.CREATED)
-  async handleRoleCreated(event: RoleCreatedEvent) {
-    // Handle role creation if needed
-    // This could emit events for activity logging or other side effects
+  @OnEvent(RoleEvents.CREATE)
+  async handleRoleCreated(event: CreateRoleEvent) {
+    // Log activity
+    await this.activityLogService.log(
+      RoleActivityType.ROLE_CREATED,
+      {
+        roleId: event.role.id,
+        roleName: event.role.name,
+        centerId: event.role.centerId,
+      },
+      event.actor,
+    );
   }
 
-  @OnEvent(RoleEvents.UPDATED)
-  async handleRoleUpdated(event: RoleUpdatedEvent) {
-    // Handle role updates if needed
+  @OnEvent(RoleEvents.UPDATE)
+  async handleRoleUpdated(event: UpdateRoleEvent) {
+    // Log activity
+    await this.activityLogService.log(
+      RoleActivityType.ROLE_UPDATED,
+      {
+        roleId: event.roleId,
+        updatedFields: Object.keys(event.updates),
+      },
+      event.actor,
+    );
   }
 
-  @OnEvent(RoleEvents.DELETED)
-  async handleRoleDeleted(event: RoleDeletedEvent) {
-    // Handle role deletion if needed
+  @OnEvent(RoleEvents.DELETE)
+  async handleRoleDeleted(event: DeleteRoleEvent) {
+    // Log activity
+    await this.activityLogService.log(
+      RoleActivityType.ROLE_DELETED,
+      {
+        roleId: event.roleId,
+      },
+      event.actor,
+    );
   }
 }

@@ -15,10 +15,10 @@ import {
   AdminEvents,
 } from '@/modules/admin/events/admin.events';
 import {
-  UserUpdatedEvent,
-  UserDeletedEvent,
-  UserRestoredEvent,
-  UserActivatedEvent,
+  UpdateUserEvent,
+  DeleteUserEvent,
+  RestoreUserEvent,
+  ActivateUserEvent,
   UserEvents,
 } from '@/modules/user/events/user.events';
 
@@ -32,13 +32,14 @@ export class AdminService {
   ) {}
 
   async createAdmin(dto: CreateAdminDto, actor: ActorUser): Promise<void> {
-    // Emit event to create admin (listener handles everything)
-    this.eventEmitter.emit(
-      AdminEvents.CREATE,
-      new CreateAdminEvent(dto, actor),
-    );
+    // Create admin entity
+    const admin = await this.adminRepository.create({});
 
-    // The listener will handle user creation
+    // Emit event to create admin (listener handles everything)
+    await this.eventEmitter.emitAsync(
+      AdminEvents.CREATE,
+      new CreateAdminEvent(dto, actor, admin),
+    );
   }
 
   async paginateAdmins(params: PaginateAdminDto, actor: ActorUser) {
@@ -60,9 +61,9 @@ export class AdminService {
     const user = await this.userService.updateUser(userId, updateData, actor);
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
-      UserEvents.UPDATED,
-      new UserUpdatedEvent(userId, updateData, actor),
+    await this.eventEmitter.emitAsync(
+      UserEvents.UPDATE,
+      new UpdateUserEvent(userId, updateData, actor),
     );
 
     return user;
@@ -79,9 +80,9 @@ export class AdminService {
     await this.userService.deleteUser(userId, actor);
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
-      UserEvents.DELETED,
-      new UserDeletedEvent(userId, actor),
+    await this.eventEmitter.emitAsync(
+      UserEvents.DELETE,
+      new DeleteUserEvent(userId, actor),
     );
   }
 
@@ -96,9 +97,9 @@ export class AdminService {
     await this.userService.restoreUser(userId, actor);
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
-      UserEvents.RESTORED,
-      new UserRestoredEvent(userId, actor),
+    await this.eventEmitter.emitAsync(
+      UserEvents.RESTORE,
+      new RestoreUserEvent(userId, actor),
     );
   }
 
@@ -115,9 +116,9 @@ export class AdminService {
     await this.userService.activateUser(userId, isActive, actor);
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
-      UserEvents.ACTIVATED,
-      new UserActivatedEvent(userId, isActive, actor),
+    await this.eventEmitter.emitAsync(
+      UserEvents.ACTIVATE,
+      new ActivateUserEvent(userId, isActive, actor),
     );
   }
 

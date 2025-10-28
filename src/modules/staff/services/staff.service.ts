@@ -15,10 +15,10 @@ import {
   StaffEvents,
 } from '@/modules/staff/events/staff.events';
 import {
-  UserUpdatedEvent,
-  UserDeletedEvent,
-  UserRestoredEvent,
-  UserActivatedEvent,
+  UpdateUserEvent,
+  DeleteUserEvent,
+  RestoreUserEvent,
+  ActivateUserEvent,
   UserEvents,
 } from '@/modules/user/events/user.events';
 
@@ -33,7 +33,7 @@ export class StaffService {
 
   async createStaff(dto: CreateStaffDto, actor: ActorUser): Promise<void> {
     // Emit event to create staff (listener handles everything)
-    this.eventEmitter.emit(
+    await this.eventEmitter.emitAsync(
       StaffEvents.CREATE,
       new CreateStaffEvent(dto, actor),
     );
@@ -60,9 +60,9 @@ export class StaffService {
     const user = await this.userService.updateUser(userId, updateData, actor);
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
-      UserEvents.UPDATED,
-      new UserUpdatedEvent(userId, updateData, actor),
+    await this.eventEmitter.emitAsync(
+      UserEvents.UPDATE,
+      new UpdateUserEvent(userId, updateData, actor),
     );
 
     return user;
@@ -79,9 +79,9 @@ export class StaffService {
     await this.userService.deleteUser(userId, actor);
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
-      UserEvents.DELETED,
-      new UserDeletedEvent(userId, actor),
+    await this.eventEmitter.emitAsync(
+      UserEvents.DELETE,
+      new DeleteUserEvent(userId, actor),
     );
   }
 
@@ -96,9 +96,9 @@ export class StaffService {
     await this.userService.restoreUser(userId, actor);
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
-      UserEvents.RESTORED,
-      new UserRestoredEvent(userId, actor),
+    await this.eventEmitter.emitAsync(
+      UserEvents.RESTORE,
+      new RestoreUserEvent(userId, actor),
     );
   }
 
@@ -115,9 +115,9 @@ export class StaffService {
     await this.userService.activateUser(userId, isActive, actor);
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
-      UserEvents.ACTIVATED,
-      new UserActivatedEvent(userId, isActive, actor),
+    await this.eventEmitter.emitAsync(
+      UserEvents.ACTIVATE,
+      new ActivateUserEvent(userId, isActive, actor),
     );
   }
 

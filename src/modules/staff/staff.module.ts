@@ -11,7 +11,6 @@ import { StaffService } from './services/staff.service';
 import { StaffRepository } from './repositories/staff.repository';
 import { StaffListener } from './listeners/staff.listener';
 import { CenterListener } from './listeners/center.listener';
-import { ActivityLogListener } from './listeners/activity-log.listener';
 
 @Module({
   imports: [
@@ -22,13 +21,7 @@ import { ActivityLogListener } from './listeners/activity-log.listener';
     ActivityLogModule,
   ],
   controllers: [StaffController, StaffActionsController],
-  providers: [
-    StaffService,
-    StaffRepository,
-    StaffListener,
-    CenterListener,
-    ActivityLogListener,
-  ],
+  providers: [StaffService, StaffRepository, StaffListener, CenterListener],
   exports: [StaffService, StaffRepository],
 })
 export class StaffModule {}

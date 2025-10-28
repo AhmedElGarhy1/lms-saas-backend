@@ -19,15 +19,7 @@ import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { BranchAccessDto } from '../dto/branch-access.dto';
 import { BranchAccessRepository } from '../repositories/branch-access.repository';
-import {
-  CenterAccessGrantedEvent,
-  CenterAccessRevokedEvent,
-  UserAccessGrantedEvent,
-  UserAccessRevokedEvent,
-  BranchAccessGrantedEvent,
-  BranchAccessRevokedEvent,
-  AccessControlEvents,
-} from '@/modules/access-control/events/access-control.events';
+import { AccessControlEvents } from '@/modules/access-control/events/access-control.events';
 
 @Injectable()
 export class AccessControlService {
@@ -52,16 +44,6 @@ export class AccessControlService {
       await this.accessControlHelperService.findUserProfile(
         body.granterUserProfileId,
       );
-
-    this.eventEmitter.emit(
-      AccessControlEvents.USER_ACCESS_GRANTED,
-      new UserAccessGrantedEvent(
-        body.granterUserProfileId,
-        body.targetUserProfileId,
-        body.centerId!,
-        { id: granterProfile?.userId || null } as ActorUser,
-      ),
-    );
   }
 
   async revokeUserAccess(body: UserAccessDto): Promise<void> {
@@ -72,16 +54,6 @@ export class AccessControlService {
       await this.accessControlHelperService.findUserProfile(
         body.granterUserProfileId,
       );
-
-    this.eventEmitter.emit(
-      AccessControlEvents.USER_ACCESS_REVOKED,
-      new UserAccessRevokedEvent(
-        body.granterUserProfileId,
-        body.targetUserProfileId,
-        body.centerId!,
-        { id: granterProfile?.userId || null } as ActorUser,
-      ),
-    );
   }
 
   async grantUserAccessValidate(
@@ -197,11 +169,6 @@ export class AccessControlService {
 
     const result = await this.centerAccessRepository.grantCenterAccess(dto);
 
-    this.eventEmitter.emit(
-      AccessControlEvents.CENTER_ACCESS_GRANTED,
-      new CenterAccessGrantedEvent(dto.userProfileId, dto.centerId, actor),
-    );
-
     return result;
   }
 
@@ -214,11 +181,6 @@ export class AccessControlService {
     });
 
     const result = await this.centerAccessRepository.revokeCenterAccess(dto);
-
-    this.eventEmitter.emit(
-      AccessControlEvents.CENTER_ACCESS_REVOKED,
-      new CenterAccessRevokedEvent(dto.userProfileId, dto.centerId, actor),
-    );
 
     return result;
   }
@@ -242,17 +204,6 @@ export class AccessControlService {
     const branchAccess =
       await this.branchAccessRepository.grantBranchAccess(data);
 
-    // Emit event for activity logging
-    this.eventEmitter.emit(
-      AccessControlEvents.BRANCH_ACCESS_GRANTED,
-      new BranchAccessGrantedEvent(
-        data.userProfileId,
-        data.branchId,
-        data.centerId!,
-        actor,
-      ),
-    );
-
     return branchAccess;
   }
 
@@ -260,17 +211,6 @@ export class AccessControlService {
     await this.accessControlHelperService.validateBranchAccess(data);
 
     const result = await this.branchAccessRepository.revokeBranchAccess(data);
-
-    // Emit event for activity logging
-    this.eventEmitter.emit(
-      AccessControlEvents.BRANCH_ACCESS_REVOKED,
-      new BranchAccessRevokedEvent(
-        data.userProfileId,
-        data.branchId,
-        data.centerId!,
-        actor,
-      ),
-    );
 
     return result;
   }

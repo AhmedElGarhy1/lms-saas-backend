@@ -6,8 +6,8 @@ import { UserProfileService } from '@/modules/user/services/user-profile.service
 import { UserService } from '@/modules/user/services/user.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import {
-  CenterCreatedEvent,
-  CenterOwnerAssignedEvent,
+  CreateCenterEvent,
+  AssignCenterOwnerEvent,
   CenterEvents,
 } from '@/modules/centers/events/center.events';
 import {
@@ -25,8 +25,8 @@ export class CenterListener {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  @OnEvent(CenterEvents.CREATED)
-  async handleCenterCreated(event: CenterCreatedEvent) {
+  @OnEvent(CenterEvents.CREATE)
+  async handleCenterCreated(event: CreateCenterEvent) {
     const { center, userData, actor } = event;
 
     // Create user first
@@ -41,13 +41,13 @@ export class CenterListener {
     );
 
     // Grant center access
-    this.eventEmitter.emit(
+    await this.eventEmitter.emitAsync(
       AccessControlEvents.GRANT_CENTER_ACCESS,
       new GrantCenterAccessEvent(userProfile.id, center.id, actor),
     );
 
     // Grant user access
-    this.eventEmitter.emit(
+    await this.eventEmitter.emitAsync(
       AccessControlEvents.GRANT_USER_ACCESS,
       new GrantUserAccessEvent(
         actor.userProfileId,
@@ -58,9 +58,9 @@ export class CenterListener {
     );
 
     // Emit event for role assignment
-    this.eventEmitter.emit(
-      CenterEvents.OWNER_ASSIGNED,
-      new CenterOwnerAssignedEvent(center, userProfile, actor),
+    await this.eventEmitter.emitAsync(
+      CenterEvents.ASSIGN_OWNER,
+      new AssignCenterOwnerEvent(center, userProfile, actor),
     );
   }
 }

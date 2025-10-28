@@ -31,11 +31,11 @@ export class PerformanceAlertsService {
   /**
    * Check for slow transactions and create alerts
    */
-  checkSlowTransaction(
+  async checkSlowTransaction(
     className: string,
     methodName: string,
     duration: number,
-  ): void {
+  ): Promise<void> {
     if (duration > this.alertThresholds.slowTransaction) {
       const alertId = `slow_transaction_${className}_${methodName}`;
       const alert: PerformanceAlert = {
@@ -52,19 +52,19 @@ export class PerformanceAlertsService {
         timestamp: new Date(),
       };
 
-      this.createAlert(alert);
+      await this.createAlert(alert);
     }
   }
 
   /**
    * Check for high error rates
    */
-  checkErrorRate(
+  async checkErrorRate(
     className: string,
     methodName: string,
     errorCount: number,
     totalCount: number,
-  ): void {
+  ): Promise<void> {
     const errorRate = errorCount / totalCount;
     if (errorRate > this.alertThresholds.highErrorRate) {
       const alertId = `high_error_rate_${className}_${methodName}`;
@@ -84,14 +84,14 @@ export class PerformanceAlertsService {
         timestamp: new Date(),
       };
 
-      this.createAlert(alert);
+      await this.createAlert(alert);
     }
   }
 
   /**
    * Check system memory usage
    */
-  checkMemoryUsage(): void {
+  async checkMemoryUsage(): Promise<void> {
     const memUsage = process.memoryUsage();
     const totalMem = memUsage.heapTotal;
     const usedMem = memUsage.heapUsed;
@@ -113,14 +113,14 @@ export class PerformanceAlertsService {
         timestamp: new Date(),
       };
 
-      this.createAlert(alert);
+      await this.createAlert(alert);
     }
   }
 
   /**
    * Create and emit alert
    */
-  private createAlert(alert: PerformanceAlert): void {
+  private async createAlert(alert: PerformanceAlert): Promise<void> {
     this.alerts.set(alert.id, alert);
 
     // Log the alert
@@ -131,7 +131,7 @@ export class PerformanceAlertsService {
     }
 
     // Emit event for external monitoring systems
-    this.eventEmitter.emit('performance.alert', alert);
+    await this.eventEmitter.emitAsync('performance.alert', alert);
 
     // Auto-resolve after 5 minutes for non-critical alerts
     if (alert.severity === 'warning') {
@@ -147,12 +147,12 @@ export class PerformanceAlertsService {
   /**
    * Resolve an alert
    */
-  resolveAlert(alertId: string): void {
+  async resolveAlert(alertId: string): Promise<void> {
     const alert = this.alerts.get(alertId);
     if (alert) {
       alert.resolved = true;
       this.logger.log(`Alert resolved: ${alert.message}`);
-      this.eventEmitter.emit('performance.alert.resolved', alert);
+      await this.eventEmitter.emitAsync('performance.alert.resolved', alert);
     }
   }
 

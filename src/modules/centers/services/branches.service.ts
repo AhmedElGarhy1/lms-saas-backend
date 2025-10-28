@@ -58,7 +58,7 @@ export class BranchesService {
     });
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
+    await this.eventEmitter.emitAsync(
       BranchEvents.CREATED,
       new BranchCreatedEvent(branch, actor),
     );
@@ -83,7 +83,7 @@ export class BranchesService {
     const updatedBranch = await this.branchesRepository.update(branchId, data);
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
+    await this.eventEmitter.emitAsync(
       BranchEvents.UPDATED,
       new BranchUpdatedEvent(branchId, data, actor),
     );
@@ -101,7 +101,7 @@ export class BranchesService {
     await this.branchesRepository.softRemove(branchId);
 
     // Emit event for activity logging
-    this.eventEmitter.emit(
+    await this.eventEmitter.emitAsync(
       BranchEvents.DELETED,
       new BranchDeletedEvent(branchId, actor),
     );

@@ -15,7 +15,6 @@ import { CentersActionsController } from './controllers/centers-actions.controll
 import { BranchesActionsController } from './controllers/branches-actions.controller';
 import { CentersAccessController } from './controllers/centers-access.controller';
 import { BranchesAccessController } from './controllers/branches-access.controller';
-import { ActivityLogListener } from './listeners/activity-log.listener';
 
 @Module({
   imports: [
@@ -37,7 +36,6 @@ import { ActivityLogListener } from './listeners/activity-log.listener';
     BranchesService,
     CentersRepository,
     BranchesRepository,
-    ActivityLogListener,
   ],
   exports: [CentersService, BranchesService],
 })

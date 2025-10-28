@@ -6,14 +6,14 @@ import { CreateUserDto } from '@/modules/user/dto/create-user.dto';
 import { UpdateCenterRequestDto } from '@/modules/centers/dto/update-center.dto';
 
 export enum CenterEvents {
-  CREATED = 'center.created',
-  UPDATED = 'center.updated',
-  DELETED = 'center.deleted',
-  RESTORED = 'center.restored',
-  OWNER_ASSIGNED = 'center.owner.assigned',
+  CREATE = 'center.create',
+  UPDATE = 'center.update',
+  DELETE = 'center.delete',
+  RESTORE = 'center.restore',
+  ASSIGN_OWNER = 'center.assign.owner',
 }
 
-export class CenterCreatedEvent {
+export class CreateCenterEvent {
   constructor(
     public readonly center: Center,
     public readonly userData: CreateUserDto,
@@ -21,7 +21,7 @@ export class CenterCreatedEvent {
   ) {}
 }
 
-export class CenterUpdatedEvent {
+export class UpdateCenterEvent {
   constructor(
     public readonly centerId: string,
     public readonly updates: Partial<UpdateCenterRequestDto>,
@@ -29,21 +29,21 @@ export class CenterUpdatedEvent {
   ) {}
 }
 
-export class CenterDeletedEvent {
+export class DeleteCenterEvent {
   constructor(
     public readonly centerId: string,
     public readonly actor: ActorUser,
   ) {}
 }
 
-export class CenterRestoredEvent {
+export class RestoreCenterEvent {
   constructor(
     public readonly centerId: string,
     public readonly actor: ActorUser,
   ) {}
 }
 
-export class CenterOwnerAssignedEvent {
+export class AssignCenterOwnerEvent {
   constructor(
     public readonly center: Center,
     public readonly userProfile: UserProfile,
