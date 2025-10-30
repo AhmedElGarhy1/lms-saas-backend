@@ -24,7 +24,13 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
     return CenterAccess;
   }
 
-  async findCenterAccess(data: CenterAccessDto): Promise<CenterAccess | null> {
+  async findCenterAccess(
+    data: CenterAccessDto,
+    isDeleted?: boolean,
+  ): Promise<CenterAccess | null> {
+    if (isDeleted) {
+      return this.findOneSoftDeleted(data);
+    }
     return this.getRepository().findOneBy(data);
   }
 

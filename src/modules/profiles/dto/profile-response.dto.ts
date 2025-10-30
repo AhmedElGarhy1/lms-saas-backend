@@ -8,22 +8,6 @@ import { Teacher } from '@/modules/teachers/entities/teacher.entity';
 import { Student } from '@/modules/students/entities/student.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
-export class ProfileContextDto {
-  @ApiProperty({
-    description: 'User role in current context',
-    type: 'object',
-    additionalProperties: true,
-  })
-  role?: Role | null;
-
-  @ApiProperty({
-    description: 'Center context',
-    type: 'object',
-    additionalProperties: true,
-  })
-  center?: Center | null;
-}
-
 export class ProfileResponseDto {
   @ApiProperty({
     description: 'User ID',
@@ -104,10 +88,18 @@ export class ProfileResponseDto {
   deletedAt?: Date;
 
   @ApiProperty({
-    description: 'Profile context with role and center information',
-    type: ProfileContextDto,
+    description: 'User role in current context',
+    type: 'object',
+    additionalProperties: true,
   })
-  context: ProfileContextDto;
+  role?: Role | null;
+
+  @ApiProperty({
+    description: 'Center context',
+    type: 'object',
+    additionalProperties: true,
+  })
+  center?: Center | null;
 
   @ApiProperty({
     description: 'Profile type',

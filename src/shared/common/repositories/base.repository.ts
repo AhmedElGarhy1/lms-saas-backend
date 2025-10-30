@@ -5,6 +5,8 @@ import {
   DeepPartial,
   FindManyOptions,
   EntityManager,
+  FindOneOptions,
+  FindOptionsWhere,
 } from 'typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Pagination, paginate } from 'nestjs-typeorm-paginate';
@@ -419,9 +421,15 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     return this.getRepository().findOne({ where: { id } as any });
   }
 
-  async findOneSoftDeleted(id: string): Promise<T | null> {
+  async findOneSoftDeletedById(id: string): Promise<T | null> {
     return this.getRepository().findOne({
       where: { id } as any,
+      withDeleted: true,
+    });
+  }
+  async findOneSoftDeleted(data: FindOptionsWhere<T>): Promise<T | null> {
+    return this.getRepository().findOne({
+      where: data,
       withDeleted: true,
     });
   }

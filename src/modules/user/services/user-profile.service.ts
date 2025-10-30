@@ -41,33 +41,39 @@ export class UserProfileService {
     if (!user) {
       throw new ResourceNotFoundException('User not found');
     }
-    console.log(actor);
 
     this.logger.log(`Found user: ${user.id} - ${user.name}`);
 
     // Determine context based on centerId
     const returnData: ProfileResponseDto = {
       ...user,
-      context: { role: null as unknown as Role },
       profileType: actor.profileType,
-      profile: null as unknown as Admin,
+      profile: null,
     };
+
+    if (!actor.userProfileId) return returnData;
+    const userProfile = await this.findOne(actor.userProfileId);
+    if (!userProfile) {
+      throw new ResourceNotFoundException('User profile not found');
+    }
+    actor.userProfileId = userProfile.id;
+    actor.profileType = userProfile.profileType;
 
     if (actor.centerId) {
       const profileRole = await this.accessControlHelperService.getProfileRole(
         actor.userProfileId,
         actor.centerId,
       );
-      returnData.context.role = profileRole?.role as Role;
-      returnData.context.center = await this.centerService.findCenterById(
+      returnData.role = profileRole?.role as Role;
+      returnData.center = await this.centerService.findCenterById(
         actor.centerId,
       );
     }
-    if (!returnData.context.role) {
+    if (!returnData.role) {
       const profileRole = await this.accessControlHelperService.getProfileRole(
         actor.userProfileId,
       );
-      returnData.context.role = profileRole?.role as Role;
+      returnData.role = profileRole?.role as Role;
     }
 
     const profile = await this.userProfileRepository.getTargetProfile(
@@ -110,6 +116,10 @@ export class UserProfileService {
     };
 
     return this.userService.updateUser(actor.id, userUpdateData, actor);
+  }
+
+  async findForUser(userId: string, userProfileId: string) {
+    return this.userProfileRepository.findForUser(userId, userProfileId);
   }
 
   async findOne(userProfileId: string) {
@@ -170,6 +180,10 @@ export class UserProfileService {
 
   async deleteUserProfile(userProfileId: string): Promise<void> {
     await this.userProfileRepository.softRemove(userProfileId);
+  }
+
+  async restoreUserProfile(userProfileId: string): Promise<void> {
+    await this.userProfileRepository.restore(userProfileId);
   }
 
   async deleteUserProfilesByUserId(userId: string): Promise<void> {

@@ -94,14 +94,8 @@ export class UserRepository extends BaseRepository<User> {
       displayDetailes,
       branchId,
       branchAccess,
+      isDeleted,
     } = params;
-
-    const isActiveField = centerId
-      ? 'centerAccess.isActive'
-      : 'userProfiles.isActive';
-    const isActiveOutputField = centerId
-      ? 'userProfile.centerAccess.isActive'
-      : 'userProfile.isActive';
 
     const includeCenter =
       centerId &&
@@ -120,16 +114,27 @@ export class UserRepository extends BaseRepository<User> {
         profileType: ProfileType.STAFF,
       });
 
+    this.applyIsActiveFilter(
+      queryBuilder,
+      params,
+      centerId && displayDetailes
+        ? 'centerAccess.isActive'
+        : 'userProfiles.isActive',
+    );
+
     if (includeBranch) {
       queryBuilder.andWhere(
-        'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = userProfiles.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId)',
+        'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = userProfiles.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId AND ba."deletedAt" IS NULL)',
         { branchId, centerId },
       );
     }
 
     if (includeCenter) {
+      delete params.isDeleted;
       queryBuilder.andWhere(
-        'EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId)',
+        `EXISTS 
+          (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId
+           ${isDeleted ? 'AND ca."deletedAt" IS NOT NULL' : 'AND ca."deletedAt" IS NULL'})`,
         { centerId },
       );
       if (displayDetailes) {
@@ -142,12 +147,18 @@ export class UserRepository extends BaseRepository<User> {
           )
           .leftJoinAndSelect('profileRoles.role', 'role');
 
-        queryBuilder.leftJoinAndSelect(
-          'userProfiles.centerAccess',
-          'centerAccess',
-          'centerAccess.centerId = :centerId AND centerAccess.userProfileId = userProfiles.id',
-          { centerId },
-        );
+        queryBuilder
+          .withDeleted()
+          .andWhere('user.deletedAt IS NULL')
+          .leftJoinAndSelect(
+            'userProfiles.centerAccess',
+            'centerAccess',
+            `
+            "centerAccess"."centerId" = :centerId
+            AND "centerAccess"."userProfileId" = "userProfiles"."id"           
+            `,
+            { centerId },
+          );
       }
     }
 
@@ -169,7 +180,7 @@ export class UserRepository extends BaseRepository<User> {
 
       if (isUser && !isCenterOwner) {
         queryBuilder.andWhere(
-          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
           { userProfileId: actor.userProfileId, centerId },
         );
       }
@@ -179,11 +190,11 @@ export class UserRepository extends BaseRepository<User> {
       } else if (isAdmin) {
         queryBuilder
           .andWhere(
-            `EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = "userProfiles".id AND ca."centerId" = :centerId)`,
+            `EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = "userProfiles".id AND ca."centerId" = :centerId AND ca."deletedAt" IS NULL)`,
             { centerId },
           )
           .orWhere(
-            `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
+            `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
             { userProfileId: actor.userProfileId, centerId },
           );
       } else {
@@ -201,6 +212,7 @@ export class UserRepository extends BaseRepository<User> {
             SELECT 1 FROM "user_access" AS ua
             WHERE ua."targetUserProfileId" = "userProfiles"."id"
             AND ua."granterUserProfileId" = :granterUserProfileId
+            AND ua."deletedAt" IS NULL
             ${centerId ? 'AND ua."centerId" = :centerId' : ''}
           )`,
           {
@@ -255,10 +267,7 @@ export class UserRepository extends BaseRepository<User> {
       );
     }
 
-    filteredItems = this.prepareUsersResponse(
-      filteredItems,
-      isActiveOutputField,
-    );
+    filteredItems = this.prepareUsersResponse(filteredItems);
 
     return {
       ...result,
@@ -283,21 +292,30 @@ export class UserRepository extends BaseRepository<User> {
       userAccess,
       roleAccess,
       centerAccess,
+      isDeleted,
     } = params;
-
-    const isActiveField = 'userProfiles.isActive';
-    const isActiveOutputField = 'userProfile.isActive';
+    delete params.isDeleted;
 
     const queryBuilder = this.getRepository()
       .createQueryBuilder('user')
+      .withDeleted()
       .leftJoinAndSelect('user.userProfiles', 'userProfiles')
       .where('userProfiles.profileType = :profileType', {
         profileType: ProfileType.ADMIN,
       })
       .leftJoinAndSelect('userProfiles.profileRoles', 'profileRoles')
-      .leftJoinAndSelect('profileRoles.role', 'role');
+      .leftJoinAndSelect('profileRoles.role', 'role')
+      .andWhere(
+        '("user"."deletedAt" IS NULL AND "profileRoles"."deletedAt" IS NULL AND "role"."deletedAt" IS NULL)',
+      );
 
-    this.applyIsActiveFilter(queryBuilder, params, isActiveField);
+    if (isDeleted) {
+      queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');
+    } else {
+      queryBuilder.andWhere('userProfiles.deletedAt IS NULL');
+    }
+
+    this.applyIsActiveFilter(queryBuilder, params, 'userProfiles.isActive');
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
@@ -311,7 +329,7 @@ export class UserRepository extends BaseRepository<User> {
       // do nothing
     } else {
       queryBuilder.andWhere(
-        `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" IS NULL)`,
+        `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" IS NULL AND ua."deletedAt" IS NULL)`,
         { userProfileId: actor.userProfileId },
       );
     }
@@ -321,7 +339,7 @@ export class UserRepository extends BaseRepository<User> {
         queryBuilder.andWhere(
           `EXISTS (
           SELECT 1 FROM center_access ca 
-          WHERE ca."userProfileId" = "userProfiles".id AND ca."centerId" = :centerId)`,
+          WHERE ca."userProfileId" = "userProfiles".id AND ca."centerId" = :centerId AND ca."deletedAt" IS NULL)`,
           { centerId },
         );
       }
@@ -342,6 +360,7 @@ export class UserRepository extends BaseRepository<User> {
             SELECT 1 FROM "user_access" AS ua
             WHERE ua."targetUserProfileId" = "userProfiles"."id"
             AND ua."granterUserProfileId" = :granterUserProfileId
+            AND ua."deletedAt" IS NULL
             ${centerId ? 'AND ua."centerId" = :centerId' : ''}
           )`,
           {
@@ -390,10 +409,7 @@ export class UserRepository extends BaseRepository<User> {
       );
     }
 
-    filteredItems = this.prepareUsersResponse(
-      filteredItems,
-      isActiveOutputField,
-    );
+    filteredItems = this.prepareUsersResponse(filteredItems);
 
     return {
       ...results,
@@ -437,20 +453,15 @@ export class UserRepository extends BaseRepository<User> {
     await this.getRepository().createQueryBuilder().delete().execute();
   }
 
-  private prepareUsersResponse(
-    users: UserResponseDto[],
-    isActiveField: string,
-  ): UserResponseDto[] {
+  private prepareUsersResponse(users: UserResponseDto[]): UserResponseDto[] {
     return users.map((user) => {
       const role = user.userProfiles?.[0]?.profileRoles?.[0]
         ?.role as RoleResponseDto;
       let userProfile = user.userProfiles?.[0];
       // @ts-ignore
       userProfile.centerAccess = userProfile?.centerAccess?.[0];
-      console.log('user before omit', user);
 
       user = _.omit(user, ['userProfiles']) as UserResponseDto;
-      console.log('user after omit', user);
       userProfile = _.omit(userProfile, ['profileRoles']) as UserProfile;
 
       const userResponse = {
@@ -458,8 +469,6 @@ export class UserRepository extends BaseRepository<User> {
         role,
         userProfile,
       } as UserResponseDto;
-
-      userResponse.isActive = _.get(userResponse, isActiveField) as boolean;
 
       return userResponse;
     });

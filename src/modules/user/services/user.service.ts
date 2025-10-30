@@ -212,7 +212,7 @@ export class UserService {
 
   async restoreUser(userId: string, actor: ActorUser): Promise<void> {
     // First check if the user exists
-    const user = await this.userRepository.findOneSoftDeleted(userId);
+    const user = await this.userRepository.findOneSoftDeletedById(userId);
     if (!user) {
       throw new ResourceNotFoundException('User not found');
     }

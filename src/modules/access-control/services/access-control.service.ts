@@ -223,8 +223,10 @@ export class AccessControlService {
     body: CenterAccessDto,
     actor: ActorUser,
   ): Promise<void> {
-    const centerAccess =
-      await this.accessControlHelperService.findCenterAccess(body);
+    const centerAccess = await this.accessControlHelperService.findCenterAccess(
+      body,
+      true,
+    );
     if (!centerAccess) {
       throw new ResourceNotFoundException('Center access not found');
     }

@@ -39,6 +39,7 @@ export class ProfilesController {
   @ReadApiResponses('Get current user profile')
   @SerializeOptions({ type: ProfileResponseDto })
   @NoContext()
+  @NoProfile()
   async getCurrentProfile(@GetUser() actor: ActorUser) {
     const profile = await this.userProfileService.getCurrentUserProfile(actor);
 
@@ -89,25 +90,5 @@ export class ProfilesController {
     );
   }
 
-  @Get()
-  @ReadApiResponses('List all profiles with pagination and filtering')
-  @SerializeOptions({ type: ProfileResponseDto })
-  @Permissions(PERMISSIONS.ADMIN.READ)
-  @NoProfile()
-  @NoContext()
-  async listProfiles(
-    @Query() query: PaginateProfilesDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    // For now, we'll return the current user's profiles
-    // In the future, this could be enhanced to list all profiles with proper pagination
-    const profiles = await this.userProfileService.listProfiles(actor);
-
-    return ControllerResponse.success(
-      profiles,
-      this.i18n.translate('success.found', {
-        args: { resource: this.i18n.translate('common.resources.profiles') },
-      }),
-    );
-  }
+  // Moved to UserProfileController (/user-profiles)
 }

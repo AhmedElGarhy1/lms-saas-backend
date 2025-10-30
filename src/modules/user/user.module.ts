@@ -7,6 +7,7 @@ import { AccessControlModule } from '@/modules/access-control/access-control.mod
 import { CentersModule } from '@/modules/centers/centers.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { UserController } from './controllers/user.controller';
+import { UserProfileController } from './controllers/user-profile.controller';
 import { UserAccessController } from './controllers/user-access.controller';
 import { UserService } from './services/user.service';
 import { UserInfoService } from './services/user-info.service';
@@ -23,7 +24,7 @@ import { UserListener } from './listeners/user.listener';
     forwardRef(() => CentersModule),
     ActivityLogModule,
   ],
-  controllers: [UserAccessController, UserController],
+  controllers: [UserAccessController, UserController, UserProfileController],
   providers: [
     UserService,
     UserInfoService,

@@ -20,18 +20,14 @@ import { ControllerResponse } from '@/shared/common/dto/controller-response.dto'
 import { SerializeOptions, Query } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
-
 import { CentersService } from '../services/centers.service';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { CreateCenterDto } from '../dto/create-center.dto';
 import { UpdateCenterRequestDto } from '../dto/update-center.dto';
 import { CenterResponseDto } from '../dto/center-response.dto';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { AccessControlService } from '@/modules/access-control/services/access-control.service';
-import { ExportService } from '@/shared/common/services/export.service';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
@@ -42,8 +38,6 @@ import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 export class CentersController {
   constructor(
     private readonly centersService: CentersService,
-    private readonly accessControlService: AccessControlService,
-    private readonly exportService: ExportService,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 

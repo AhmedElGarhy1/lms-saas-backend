@@ -212,22 +212,31 @@ export class AccessControlHelperService {
 
   // center access methods
 
-  async findCenterAccess(data: CenterAccessDto): Promise<CenterAccess | null> {
-    return this.centerAccessRepository.findCenterAccess(data);
+  async findCenterAccess(
+    data: CenterAccessDto,
+    isDeleted?: boolean,
+  ): Promise<CenterAccess | null> {
+    return this.centerAccessRepository.findCenterAccess(data, isDeleted);
   }
 
-  async canCenterAccess(data: CenterAccessDto): Promise<boolean> {
+  async canCenterAccess(
+    data: CenterAccessDto,
+    isDeleted?: boolean,
+  ): Promise<boolean> {
     const { userProfileId } = data;
     const isSuperAdmin = await this.isSuperAdmin(userProfileId);
     if (isSuperAdmin) {
       return true;
     }
 
-    const centerAccess = await this.findCenterAccess(data);
+    const centerAccess = await this.findCenterAccess(data, isDeleted);
     return !!centerAccess;
   }
 
-  async validateCenterAccess(data: CenterAccessDto): Promise<void> {
+  async validateCenterAccess(
+    data: CenterAccessDto,
+    isDeleted?: boolean,
+  ): Promise<void> {
     // Check if center is active
     const center = await this.centersService.findCenterById(data.centerId);
 
@@ -237,7 +246,7 @@ export class AccessControlHelperService {
 
     // Check if user has access to the center
     console.log('data', data);
-    const canAccess = await this.canCenterAccess(data);
+    const canAccess = await this.canCenterAccess(data, isDeleted);
     if (!canAccess) {
       throw new CenterAccessDeniedException(
         'You do not have access to this center',

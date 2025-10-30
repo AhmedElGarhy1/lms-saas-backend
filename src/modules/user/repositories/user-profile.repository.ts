@@ -25,6 +25,12 @@ export class UserProfileRepository extends BaseRepository<UserProfile> {
     return UserProfile;
   }
 
+  findForUser(userId: string, userProfileId: string) {
+    return this.getRepository().findOne({
+      where: { userId, id: userProfileId },
+    });
+  }
+
   getTargetProfile(userProfileId: string, profileType: ProfileType) {
     return this.getProfileTypeRepository(profileType)
       .createQueryBuilder('profile')
