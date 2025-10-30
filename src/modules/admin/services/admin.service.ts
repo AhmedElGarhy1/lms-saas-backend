@@ -49,27 +49,31 @@ export class AdminService {
   }
 
   async updateAdmin(
-    userId: string,
+    userProfileId: string,
     updateData: UpdateAdminDto,
     actor: ActorUser,
   ): Promise<User> {
     await this.accessControlHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: actor.userProfileId,
+      targetUserProfileId: userProfileId,
     });
 
-    const user = await this.userService.updateUser(userId, updateData, actor);
+    const user = await this.userService.updateUserByProfileId(
+      userProfileId,
+      updateData,
+      actor,
+    );
 
     // Emit event for activity logging
     await this.eventEmitter.emitAsync(
       UserEvents.UPDATE,
-      new UpdateUserEvent(userId, updateData, actor),
+      new UpdateUserEvent(userProfileId, updateData, actor),
     );
 
     return user;
   }
 
-  async deleteAdmin(userId: string, actor: ActorUser): Promise<void> {
+  async deleteAdmin(userProfileId: string, actor: ActorUser): Promise<void> {
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
@@ -77,16 +81,16 @@ export class AdminService {
       throw new Error('Access denied');
     }
 
-    await this.userService.deleteUser(userId, actor);
+    await this.userService.deleteUserByProfileId(userProfileId, actor);
 
     // Emit event for activity logging
     await this.eventEmitter.emitAsync(
       UserEvents.DELETE,
-      new DeleteUserEvent(userId, actor),
+      new DeleteUserEvent(userProfileId, actor),
     );
   }
 
-  async restoreAdmin(userId: string, actor: ActorUser): Promise<void> {
+  async restoreAdmin(userProfileId: string, actor: ActorUser): Promise<void> {
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
@@ -94,36 +98,39 @@ export class AdminService {
       throw new Error('Access denied');
     }
 
-    await this.userService.restoreUser(userId, actor);
+    await this.userService.restoreUserByProfileId(userProfileId, actor);
 
     // Emit event for activity logging
     await this.eventEmitter.emitAsync(
       UserEvents.RESTORE,
-      new RestoreUserEvent(userId, actor),
+      new RestoreUserEvent(userProfileId, actor),
     );
   }
 
   async toggleAdminStatus(
-    userId: string,
+    userProfileId: string,
     isActive: boolean,
     actor: ActorUser,
   ): Promise<void> {
     await this.accessControlHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: actor.userProfileId,
+      targetUserProfileId: userProfileId,
     });
 
-    await this.userService.activateUser(userId, isActive, actor);
+    await this.userService.activateProfileUser(userProfileId, isActive, actor);
 
     // Emit event for activity logging
     await this.eventEmitter.emitAsync(
       UserEvents.ACTIVATE,
-      new ActivateUserEvent(userId, isActive, actor),
+      new ActivateUserEvent(userProfileId, isActive, actor),
     );
   }
 
-  async findOne(userId: string): Promise<User> {
-    const user = await this.userService.findOne(userId);
+  async findOne(userProfileId: string, actor: ActorUser): Promise<User> {
+    const user = await this.userService.findUserByProfileId(
+      userProfileId,
+      actor,
+    );
     if (!user) {
       throw new Error('User not found');
     }

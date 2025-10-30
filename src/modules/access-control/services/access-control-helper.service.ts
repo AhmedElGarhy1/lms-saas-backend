@@ -3,6 +3,7 @@ import {
   InsufficientPermissionsException,
   AdminScopeAccessDeniedException,
   CenterAccessDeniedException,
+  CenterAccessInactiveException,
   InactiveCenterException,
   BranchAccessDeniedException,
 } from '@/shared/common/exceptions/custom.exceptions';
@@ -20,6 +21,7 @@ import { UserProfileService } from '@/modules/user/services/user-profile.service
 import { PermissionScope } from '../constants/permissions';
 import { RolesService } from './roles.service';
 import { CentersService } from '@/modules/centers/services/centers.service';
+import { CenterAccess } from '../entities/center-access.entity';
 
 @Injectable()
 export class AccessControlHelperService {
@@ -210,6 +212,10 @@ export class AccessControlHelperService {
 
   // center access methods
 
+  async findCenterAccess(data: CenterAccessDto): Promise<CenterAccess | null> {
+    return this.centerAccessRepository.findCenterAccess(data);
+  }
+
   async canCenterAccess(data: CenterAccessDto): Promise<boolean> {
     const { userProfileId } = data;
     const isSuperAdmin = await this.isSuperAdmin(userProfileId);
@@ -217,8 +223,7 @@ export class AccessControlHelperService {
       return true;
     }
 
-    const centerAccess =
-      await this.centerAccessRepository.findCenterAccess(data);
+    const centerAccess = await this.findCenterAccess(data);
     return !!centerAccess;
   }
 
@@ -231,10 +236,20 @@ export class AccessControlHelperService {
     }
 
     // Check if user has access to the center
-    const centerAccess = await this.canCenterAccess(data);
-    if (!centerAccess) {
+    console.log('data', data);
+    const canAccess = await this.canCenterAccess(data);
+    if (!canAccess) {
       throw new CenterAccessDeniedException(
         'You do not have access to this center',
+      );
+    }
+    const centerAccess = await this.findCenterAccess(data);
+    if (!centerAccess) return;
+
+    // Check if the user's access to the center is active
+    if (!centerAccess.isActive) {
+      throw new CenterAccessInactiveException(
+        'Your access to this center is currently inactive',
       );
     }
   }

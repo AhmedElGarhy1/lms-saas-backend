@@ -315,6 +315,25 @@ export class CenterAccessDeniedException extends HttpException {
   }
 }
 
+export class CenterAccessInactiveException extends HttpException {
+  constructor(message: string = 'Center access is inactive') {
+    super(
+      {
+        statusCode: HttpStatus.FORBIDDEN,
+        message,
+        error: 'Center Access Inactive',
+        code: ErrorCode.CENTER_ACCESS_INACTIVE,
+        timestamp: new Date().toISOString(),
+        userMessage: 'Your access to this center is currently inactive',
+        actionRequired:
+          'Please contact the center administrator for more information',
+        retryable: false,
+      } as EnhancedErrorResponse,
+      HttpStatus.FORBIDDEN,
+    );
+  }
+}
+
 export class InactiveCenterException extends HttpException {
   constructor(message: string = 'Center is inactive') {
     super(

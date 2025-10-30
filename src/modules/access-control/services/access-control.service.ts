@@ -9,6 +9,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   BusinessLogicException,
   InsufficientPermissionsException,
+  ResourceNotFoundException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { AccessControlHelperService } from './access-control-helper.service';
@@ -38,22 +39,10 @@ export class AccessControlService {
 
   async grantUserAccessInternal(body: UserAccessDto): Promise<void> {
     await this.userAccessRepository.grantUserAccess(body);
-
-    // Get the actual user ID from the profile ID
-    const granterProfile =
-      await this.accessControlHelperService.findUserProfile(
-        body.granterUserProfileId,
-      );
   }
 
   async revokeUserAccess(body: UserAccessDto): Promise<void> {
     await this.userAccessRepository.revokeUserAccess(body);
-
-    // Get the actual user ID from the profile ID
-    const granterProfile =
-      await this.accessControlHelperService.findUserProfile(
-        body.granterUserProfileId,
-      );
   }
 
   async grantUserAccessValidate(
@@ -213,5 +202,50 @@ export class AccessControlService {
     const result = await this.branchAccessRepository.revokeBranchAccess(data);
 
     return result;
+  }
+
+  async softRemoveCenterAccess(
+    body: CenterAccessDto,
+    actor: ActorUser,
+  ): Promise<void> {
+    const centerAccess =
+      await this.accessControlHelperService.findCenterAccess(body);
+    if (!centerAccess) {
+      throw new ResourceNotFoundException('Center access not found');
+    }
+    if (centerAccess.deletedAt)
+      throw new BusinessLogicException('Center access already deleted');
+
+    await this.centerAccessRepository.softRemove(centerAccess.id);
+  }
+
+  async restoreCenterAccess(
+    body: CenterAccessDto,
+    actor: ActorUser,
+  ): Promise<void> {
+    const centerAccess =
+      await this.accessControlHelperService.findCenterAccess(body);
+    if (!centerAccess) {
+      throw new ResourceNotFoundException('Center access not found');
+    }
+    if (!centerAccess.deletedAt)
+      throw new BusinessLogicException('Center access not deleted');
+    await this.centerAccessRepository.restore(centerAccess.id);
+  }
+
+  async activateCenterAccess(
+    body: CenterAccessDto,
+    isActive: boolean,
+    actor: ActorUser,
+  ): Promise<void> {
+    console.log(body);
+    const centerAccess =
+      await this.accessControlHelperService.findCenterAccess(body);
+    if (!centerAccess) {
+      throw new ResourceNotFoundException('Center access not found');
+    }
+    await this.centerAccessRepository.update(centerAccess.id, { isActive });
+
+    // Emit event for activity logging
   }
 }

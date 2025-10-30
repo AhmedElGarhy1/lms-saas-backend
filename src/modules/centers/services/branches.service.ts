@@ -106,4 +106,35 @@ export class BranchesService {
       new BranchDeletedEvent(branchId, actor),
     );
   }
+
+  async toggleBranchStatus(
+    branchId: string,
+    isActive: boolean,
+    actor: ActorUser,
+  ): Promise<void> {
+    await this.accessControlHelperService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId,
+    });
+
+    const branch = await this.branchesRepository.findOne(branchId);
+    if (!branch) {
+      throw new ResourceNotFoundException(
+        `Branch with ID ${branchId} not found`,
+      );
+    }
+
+    await this.branchesRepository.update(branchId, { isActive });
+
+    // Emit event for activity logging
+    await this.eventEmitter.emitAsync(
+      BranchEvents.UPDATED,
+      new BranchUpdatedEvent(
+        branchId,
+        { location: branch.location, isActive } as any,
+        actor,
+      ),
+    );
+  }
 }

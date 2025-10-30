@@ -32,7 +32,7 @@ export class BranchesRepository extends BaseRepository<Branch> {
       .leftJoinAndSelect('branch.branchAccess', 'branchAccess')
       .where('branch.centerId = :centerId', { centerId });
 
-    this.applyIsActiveFilter(queryBuilder, paginateDto, 'branch');
+    this.applyIsActiveFilter(queryBuilder, paginateDto, 'branch.isActive');
     return this.paginate(
       paginateDto,
       {

@@ -4,6 +4,7 @@ import {
   Post,
   Put,
   Delete,
+  Patch,
   Body,
   Param,
   Query,
@@ -116,5 +117,30 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     return this.branchesService.deleteBranch(branchId, actor);
+  }
+
+  @Patch(':branchId/status')
+  @ApiOperation({ summary: 'Toggle branch active status' })
+  @ApiParam({ name: 'branchId', description: 'Branch ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Branch status updated successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Branch not found',
+  })
+  @Permissions(PERMISSIONS.BRANCHES.UPDATE)
+  @Transactional()
+  async toggleBranchStatus(
+    @Param('branchId', ParseUUIDPipe) branchId: string,
+    @Body() body: { isActive: boolean },
+    @GetUser() actor: ActorUser,
+  ) {
+    return this.branchesService.toggleBranchStatus(
+      branchId,
+      body.isActive,
+      actor,
+    );
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   ResourceNotFoundException,
@@ -30,6 +30,8 @@ import {
   PasswordChangedEvent,
   AuthEvents,
 } from '@/modules/auth/events/auth.events';
+import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
+import { ActivateUserEvent, UserEvents } from '../events/user.events';
 
 @Injectable()
 export class UserService {
@@ -226,6 +228,20 @@ export class UserService {
     await this.userRepository.restore(userId);
   }
 
+  async deleteCenterAccess(
+    body: CenterAccessDto,
+    actor: ActorUser,
+  ): Promise<void> {
+    return this.accessControlService.softRemoveCenterAccess(body, actor);
+  }
+
+  async restoreCenterAccess(
+    body: CenterAccessDto,
+    actor: ActorUser,
+  ): Promise<void> {
+    return this.accessControlService.restoreCenterAccess(body, actor);
+  }
+
   async activateUser(
     userId: string,
     isActive: boolean,
@@ -248,6 +264,44 @@ export class UserService {
 
     this.logger.log(
       `User activation status updated: ${userId} to ${isActive} by ${actor.userProfileId}`,
+    );
+  }
+
+  async activateProfileUser(
+    userProfileId: string,
+    isActive: boolean,
+    actor: ActorUser,
+  ): Promise<void> {
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: actor.userProfileId,
+    });
+
+    await this.userProfileService.activateProfileUser(userProfileId, isActive);
+
+    // Emit event for activity logging
+    await this.eventEmitter.emitAsync(
+      UserEvents.ACTIVATE,
+      new ActivateUserEvent(userProfileId, isActive, actor),
+    );
+  }
+
+  async activateCenterAccess(
+    userProfileId: string,
+    isActive: boolean,
+    actor: ActorUser,
+  ): Promise<void> {
+    if (!actor.centerId)
+      throw new ForbiddenException(
+        'You are not authorized to toggle this center access',
+      );
+    await this.accessControlService.activateCenterAccess(
+      {
+        centerId: actor.centerId,
+        userProfileId: userProfileId,
+      },
+      isActive,
+      actor,
     );
   }
 
@@ -364,5 +418,70 @@ export class UserService {
     await this.userInfoService.updateUserInfo(userId, updateData.userInfo);
 
     return (await this.userRepository.update(userId, updateData))!;
+  }
+
+  // Methods that work with userProfileId
+  async updateUserByProfileId(
+    userProfileId: string,
+    updateData: UpdateUserDto,
+    actor: ActorUser,
+  ): Promise<User> {
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: userProfileId,
+    });
+
+    // Find user by profileId
+    const userProfile = await this.userProfileService.findOne(userProfileId);
+    if (!userProfile) {
+      throw new ResourceNotFoundException('User profile not found');
+    }
+
+    await this.userInfoService.updateUserInfo(
+      userProfile.userId,
+      updateData.userInfo,
+    );
+
+    return (await this.userRepository.update(userProfile.userId, updateData))!;
+  }
+
+  async deleteUserByProfileId(
+    userProfileId: string,
+    actor: ActorUser,
+  ): Promise<void> {
+    // Find user by profileId
+    const userProfile = await this.userProfileService.findOne(userProfileId);
+    if (!userProfile) {
+      throw new ResourceNotFoundException('User profile not found');
+    }
+
+    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+      actor.userProfileId,
+    );
+    if (!isSuperAdmin) {
+      throw new InsufficientPermissionsException('Access denied to this user');
+    }
+
+    await this.userRepository.softRemove(userProfile.userId);
+  }
+
+  async restoreUserByProfileId(
+    userProfileId: string,
+    actor: ActorUser,
+  ): Promise<void> {
+    // Find user by profileId
+    const userProfile = await this.userProfileService.findOne(userProfileId);
+    if (!userProfile) {
+      throw new ResourceNotFoundException('User profile not found');
+    }
+
+    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+      actor.userProfileId,
+    );
+    if (!isSuperAdmin) {
+      throw new InsufficientPermissionsException('Access denied to this user');
+    }
+
+    await this.userRepository.restore(userProfile.userId);
   }
 }

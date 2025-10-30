@@ -71,7 +71,7 @@ import { ProfileGuard } from './shared/common/guards/profile.guard';
       throttlers: [
         {
           ttl: 60000,
-          limit: 10,
+          limit: 50,
         },
       ],
     }),

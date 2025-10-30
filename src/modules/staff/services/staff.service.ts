@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { StaffRepository } from '../repositories/staff.repository';
 import { UserService } from '@/modules/user/services/user.service';
@@ -21,6 +21,7 @@ import {
   ActivateUserEvent,
   UserEvents,
 } from '@/modules/user/events/user.events';
+import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
 export class StaffService {
@@ -59,7 +60,6 @@ export class StaffService {
 
     const user = await this.userService.updateUser(userId, updateData, actor);
 
-    // Emit event for activity logging
     await this.eventEmitter.emitAsync(
       UserEvents.UPDATE,
       new UpdateUserEvent(userId, updateData, actor),
@@ -69,11 +69,13 @@ export class StaffService {
   }
 
   async deleteStaff(userId: string, actor: ActorUser): Promise<void> {
-    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+    const isAdmin = await this.accessControlHelperService.isAdmin(
       actor.userProfileId,
     );
-    if (!isSuperAdmin) {
-      throw new Error('Access denied');
+    if (!isAdmin) {
+      throw new ForbiddenException(
+        'You are not authorized to delete this staff',
+      );
     }
 
     await this.userService.deleteUser(userId, actor);
@@ -102,23 +104,59 @@ export class StaffService {
     );
   }
 
-  async toggleStaffStatus(
-    userId: string,
-    isActive: boolean,
+  async deleteStaffAccess(
+    userProfileId: string,
     actor: ActorUser,
   ): Promise<void> {
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: actor.userProfileId,
-    });
+    if (!actor.centerId)
+      throw new ForbiddenException(
+        'You are not authorized to delete this staff access',
+      );
 
-    await this.userService.activateUser(userId, isActive, actor);
+    await this.userService.deleteCenterAccess(
+      {
+        centerId: actor.centerId,
+        userProfileId: userProfileId,
+      },
+      actor,
+    );
 
     // Emit event for activity logging
     await this.eventEmitter.emitAsync(
-      UserEvents.ACTIVATE,
-      new ActivateUserEvent(userId, isActive, actor),
+      UserEvents.DELETE,
+      new DeleteUserEvent(userProfileId, actor),
     );
+  }
+
+  async restoreStaffAccess(
+    userProfileId: string,
+    actor: ActorUser,
+  ): Promise<void> {
+    if (!actor.centerId)
+      throw new ForbiddenException(
+        'You are not authorized to restore this staff access',
+      );
+    await this.userService.restoreCenterAccess(
+      {
+        centerId: actor.centerId,
+        userProfileId: userProfileId,
+      },
+      actor,
+    );
+
+    // Emit event for activity logging
+    await this.eventEmitter.emitAsync(
+      UserEvents.RESTORE,
+      new RestoreUserEvent(userProfileId, actor),
+    );
+  }
+
+  async toggleStaffStatus(
+    userProfileId: string,
+    isActive: boolean,
+    actor: ActorUser,
+  ): Promise<void> {
+    await this.userService.activateCenterAccess(userProfileId, isActive, actor);
   }
 
   async findOne(userId: string): Promise<User> {

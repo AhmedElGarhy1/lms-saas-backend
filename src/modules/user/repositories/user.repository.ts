@@ -19,6 +19,7 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { PaginateStaffDto } from '@/modules/staff/dto/paginate-staff.dto';
 import { PaginateAdminDto } from '@/modules/admin/dto/paginate-admin.dto';
+import * as _ from 'lodash';
 
 @Injectable()
 export class UserRepository extends BaseRepository<User> {
@@ -90,10 +91,17 @@ export class UserRepository extends BaseRepository<User> {
       userAccess,
       roleAccess,
       centerAccess,
-      displayRole,
+      displayDetailes,
       branchId,
       branchAccess,
     } = params;
+
+    const isActiveField = centerId
+      ? 'centerAccess.isActive'
+      : 'userProfiles.isActive';
+    const isActiveOutputField = centerId
+      ? 'userProfile.centerAccess.isActive'
+      : 'userProfile.isActive';
 
     const includeCenter =
       centerId &&
@@ -111,7 +119,6 @@ export class UserRepository extends BaseRepository<User> {
       .where('userProfiles.profileType = :profileType', {
         profileType: ProfileType.STAFF,
       });
-    this.applyIsActiveFilter(queryBuilder, params, 'userProfiles');
 
     if (includeBranch) {
       queryBuilder.andWhere(
@@ -125,7 +132,7 @@ export class UserRepository extends BaseRepository<User> {
         'EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId)',
         { centerId },
       );
-      if (displayRole) {
+      if (displayDetailes) {
         queryBuilder
           .leftJoinAndSelect(
             'userProfiles.profileRoles',
@@ -134,6 +141,13 @@ export class UserRepository extends BaseRepository<User> {
             { centerId },
           )
           .leftJoinAndSelect('profileRoles.role', 'role');
+
+        queryBuilder.leftJoinAndSelect(
+          'userProfiles.centerAccess',
+          'centerAccess',
+          'centerAccess.centerId = :centerId AND centerAccess.userProfileId = userProfiles.id',
+          { centerId },
+        );
       }
     }
 
@@ -241,7 +255,10 @@ export class UserRepository extends BaseRepository<User> {
       );
     }
 
-    filteredItems = this.prepareUsersResponse(filteredItems);
+    filteredItems = this.prepareUsersResponse(
+      filteredItems,
+      isActiveOutputField,
+    );
 
     return {
       ...result,
@@ -268,6 +285,9 @@ export class UserRepository extends BaseRepository<User> {
       centerAccess,
     } = params;
 
+    const isActiveField = 'userProfiles.isActive';
+    const isActiveOutputField = 'userProfile.isActive';
+
     const queryBuilder = this.getRepository()
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.userProfiles', 'userProfiles')
@@ -277,7 +297,7 @@ export class UserRepository extends BaseRepository<User> {
       .leftJoinAndSelect('userProfiles.profileRoles', 'profileRoles')
       .leftJoinAndSelect('profileRoles.role', 'role');
 
-    this.applyIsActiveFilter(queryBuilder, params, 'userProfiles');
+    this.applyIsActiveFilter(queryBuilder, params, isActiveField);
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
@@ -370,7 +390,10 @@ export class UserRepository extends BaseRepository<User> {
       );
     }
 
-    filteredItems = this.prepareUsersResponse(filteredItems);
+    filteredItems = this.prepareUsersResponse(
+      filteredItems,
+      isActiveOutputField,
+    );
 
     return {
       ...results,
@@ -414,20 +437,31 @@ export class UserRepository extends BaseRepository<User> {
     await this.getRepository().createQueryBuilder().delete().execute();
   }
 
-  private prepareUsersResponse(users: UserResponseDto[]): UserResponseDto[] {
+  private prepareUsersResponse(
+    users: UserResponseDto[],
+    isActiveField: string,
+  ): UserResponseDto[] {
     return users.map((user) => {
       const role = user.userProfiles?.[0]?.profileRoles?.[0]
         ?.role as RoleResponseDto;
-      const userProfile = user.userProfiles?.[0];
+      let userProfile = user.userProfiles?.[0];
+      // @ts-ignore
+      userProfile.centerAccess = userProfile?.centerAccess?.[0];
+      console.log('user before omit', user);
 
-      const { userProfiles, ...rest } = user;
-      const { profileRoles, ...cleanUserProfile } = userProfile ?? {};
+      user = _.omit(user, ['userProfiles']) as UserResponseDto;
+      console.log('user after omit', user);
+      userProfile = _.omit(userProfile, ['profileRoles']) as UserProfile;
 
-      return {
-        ...rest,
+      const userResponse = {
+        ...user,
         role,
-        userProfile: cleanUserProfile,
+        userProfile,
       } as UserResponseDto;
+
+      userResponse.isActive = _.get(userResponse, isActiveField) as boolean;
+
+      return userResponse;
     });
   }
 

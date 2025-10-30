@@ -65,7 +65,6 @@ export class RolesController {
 
   @Get('permissions/me')
   @ReadApiResponses('Get my permissions')
-  @NoContext()
   async getMyPermissions(@GetUser() actor: ActorUser) {
     return this.rolesService.getMyPermissions(actor);
   }

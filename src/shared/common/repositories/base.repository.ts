@@ -496,14 +496,14 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   protected applyIsActiveFilter<T extends BasePaginationDto>(
     queryBuilder: SelectQueryBuilder<any>,
     dto: T,
-    alias: string = 'entity',
+    isActiveField: string,
   ): void {
     if (!dto.applyIsActive) {
-      queryBuilder.andWhere(`${alias}.isActive = :isActive`, {
+      queryBuilder.andWhere(`${isActiveField} = :isActive`, {
         isActive: true,
       });
     } else if (dto.isActive !== undefined) {
-      queryBuilder.andWhere(`${alias}.isActive = :isActive`, {
+      queryBuilder.andWhere(`${isActiveField} = :isActive`, {
         isActive: dto.isActive,
       });
     }

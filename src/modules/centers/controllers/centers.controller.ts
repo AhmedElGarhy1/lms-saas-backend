@@ -134,4 +134,26 @@ export class CentersController {
 
     return ControllerResponse.message('Center restored successfully');
   }
+
+  @Patch(':id/status')
+  @UpdateApiResponses('Toggle center active status')
+  @ApiParam({ name: 'id', description: 'Center ID', type: String })
+  @ApiBody({
+    schema: { type: 'object', properties: { isActive: { type: 'boolean' } } },
+  })
+  @Permissions(PERMISSIONS.CENTER.UPDATE)
+  @Transactional()
+  async toggleCenterStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { isActive: boolean },
+    @GetUser() actor: ActorUser,
+  ) {
+    await this.centersService.toggleCenterStatus(id, body.isActive, actor);
+
+    return ControllerResponse.message(
+      this.i18n.translate('success.update', {
+        args: { resource: this.i18n.translate('common.resources.center') },
+      }),
+    );
+  }
 }

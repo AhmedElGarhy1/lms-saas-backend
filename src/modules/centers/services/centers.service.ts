@@ -199,4 +199,20 @@ export class CentersService {
     this.logger.info(`Center created for seeding: ${savedCenter.id}`);
     return savedCenter;
   }
+
+  async toggleCenterStatus(
+    centerId: string,
+    isActive: boolean,
+    actor: ActorUser,
+  ): Promise<void> {
+    await this.findCenterById(centerId);
+
+    await this.centersRepository.update(centerId, { isActive });
+
+    // Emit event for activity logging
+    await this.eventEmitter.emitAsync(
+      CenterEvents.UPDATE,
+      new UpdateCenterEvent(centerId, { isActive } as any, actor),
+    );
+  }
 }

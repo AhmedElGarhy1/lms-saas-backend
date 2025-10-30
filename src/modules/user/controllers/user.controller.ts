@@ -8,7 +8,14 @@ import {
   Patch,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiParam,
+  ApiQuery,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import {
   ReadApiResponses,
   UpdateApiResponses,
@@ -31,7 +38,7 @@ import { ControllerResponse } from '@/shared/common/dto/controller-response.dto'
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 
-@ApiTags('Users')
+@ApiTags('Users (Legacy)')
 @Controller('users')
 export class UserController {
   constructor(
@@ -52,6 +59,23 @@ export class UserController {
 
   @Get(':id')
   @ReadApiResponses('Get user profile by User ID')
+  @ApiOperation({
+    summary: 'Get user profile by User ID',
+    deprecated: true,
+    description:
+      'DEPRECATED: Use /staff/:id or /admin/:id instead. This endpoint will be removed in a future version.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+    headers: {
+      'X-Deprecated': {
+        description:
+          'This endpoint is deprecated. Use /staff/:id or /admin/:id instead.',
+        schema: { type: 'string' },
+      },
+    },
+  })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiQuery({ name: 'centerId', required: false, type: String })
   @Permissions(PERMISSIONS.STAFF.READ)
@@ -83,6 +107,23 @@ export class UserController {
 
   @Put(':id')
   @UpdateApiResponses('Update user information')
+  @ApiOperation({
+    summary: 'Update user information',
+    deprecated: true,
+    description:
+      'DEPRECATED: Use /staff/:id or /admin/:id instead. This endpoint will be removed in a future version.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User updated successfully',
+    headers: {
+      'X-Deprecated': {
+        description:
+          'This endpoint is deprecated. Use /staff/:id or /admin/:id instead.',
+        schema: { type: 'string' },
+      },
+    },
+  })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiBody({ type: UpdateUserDto })
   @Permissions(PERMISSIONS.STAFF.UPDATE)
@@ -125,6 +166,23 @@ export class UserController {
 
   @Patch(':id/status')
   @UpdateApiResponses('Toggle user active status')
+  @ApiOperation({
+    summary: 'Toggle user active status',
+    deprecated: true,
+    description:
+      'DEPRECATED: Use /staff/:id/status or /admin/:id/status instead. This endpoint will be removed in a future version.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User status updated successfully',
+    headers: {
+      'X-Deprecated': {
+        description:
+          'This endpoint is deprecated. Use /staff/:id/status or /admin/:id/status instead.',
+        schema: { type: 'string' },
+      },
+    },
+  })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiBody({ type: ToggleUserStatusRequestDto })
   @Permissions(PERMISSIONS.STAFF.UPDATE)
@@ -146,6 +204,23 @@ export class UserController {
 
   @Delete(':id')
   @DeleteApiResponses('Delete a user')
+  @ApiOperation({
+    summary: 'Delete a user',
+    deprecated: true,
+    description:
+      'DEPRECATED: Use /staff/:id or /admin/:id instead. This endpoint will be removed in a future version.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User deleted successfully',
+    headers: {
+      'X-Deprecated': {
+        description:
+          'This endpoint is deprecated. Use /staff/:id or /admin/:id instead.',
+        schema: { type: 'string' },
+      },
+    },
+  })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @Permissions(PERMISSIONS.STAFF.DELETE)
   async deleteUser(
@@ -163,6 +238,23 @@ export class UserController {
 
   @Patch(':id/restore')
   @UpdateApiResponses('Restore a deleted user')
+  @ApiOperation({
+    summary: 'Restore a deleted user',
+    deprecated: true,
+    description:
+      'DEPRECATED: Use /staff/:id/restore or /admin/:id/restore instead. This endpoint will be removed in a future version.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User restored successfully',
+    headers: {
+      'X-Deprecated': {
+        description:
+          'This endpoint is deprecated. Use /staff/:id/restore or /admin/:id/restore instead.',
+        schema: { type: 'string' },
+      },
+    },
+  })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @Permissions(PERMISSIONS.STAFF.RESTORE)
   async restoreUser(

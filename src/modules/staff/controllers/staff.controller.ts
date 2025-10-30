@@ -56,16 +56,20 @@ export class StaffController {
     return this.staffService.paginateStaff(query, actorUser);
   }
 
-  @Get(':id')
-  @ReadApiResponses('Get staff member by User ID')
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @Get(':userProfileId')
+  @ReadApiResponses('Get staff member by User Profile ID')
+  @ApiParam({
+    name: 'userProfileId',
+    description: 'User Profile ID',
+    type: String,
+  })
   @ApiQuery({ name: 'centerId', required: false, type: String })
   @Permissions(PERMISSIONS.STAFF.READ)
   async findOne(
-    @Param('id', ParseUUIDPipe) userId: string,
+    @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
     @GetUser() actor: ActorUser,
   ) {
-    return this.staffService.findOne(userId);
+    return this.staffService.findOne(userProfileId);
   }
 
   @Post()
@@ -87,18 +91,26 @@ export class StaffController {
     );
   }
 
-  @Put(':id')
+  @Put(':userProfileId')
   @UpdateApiResponses('Update staff member information')
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiParam({
+    name: 'userProfileId',
+    description: 'User Profile ID',
+    type: String,
+  })
   @ApiBody({ type: UpdateStaffDto })
   @Permissions(PERMISSIONS.STAFF.UPDATE)
   @Transactional()
   async updateStaff(
-    @Param('id', ParseUUIDPipe) userId: string,
+    @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
     @Body() dto: UpdateStaffDto,
     @GetUser() actorUser: ActorUser,
   ) {
-    const user = await this.staffService.updateStaff(userId, dto, actorUser);
+    const user = await this.staffService.updateStaff(
+      userProfileId,
+      dto,
+      actorUser,
+    );
 
     return ControllerResponse.success(
       user,
@@ -108,20 +120,28 @@ export class StaffController {
     );
   }
 
-  @Patch(':id/status')
+  @Patch(':userProfileId/status')
   @UpdateApiResponses('Toggle staff member active status')
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiParam({
+    name: 'userProfileId',
+    description: 'User Profile ID',
+    type: String,
+  })
   @ApiBody({ type: ToggleUserStatusRequestDto })
   @Permissions(PERMISSIONS.STAFF.UPDATE)
   async toggleStaffStatus(
-    @Param('id', ParseUUIDPipe) userId: string,
+    @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
     @Body() dto: ToggleUserStatusRequestDto,
     @GetUser() actorUser: ActorUser,
   ): Promise<ToggleUserStatusResponseDto> {
-    await this.staffService.toggleStaffStatus(userId, dto.isActive, actorUser);
+    await this.staffService.toggleStaffStatus(
+      userProfileId,
+      dto.isActive,
+      actorUser,
+    );
 
     return {
-      id: userId,
+      id: userProfileId,
       message: this.i18n.translate(
         dto.isActive ? 'success.userActivated' : 'success.userDeactivated',
       ),
@@ -129,15 +149,19 @@ export class StaffController {
     };
   }
 
-  @Delete(':id')
+  @Delete(':userProfileId')
   @DeleteApiResponses('Delete a staff member')
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiParam({
+    name: 'userProfileId',
+    description: 'User Profile ID',
+    type: String,
+  })
   @Permissions(PERMISSIONS.STAFF.DELETE)
   async deleteStaff(
-    @Param('id', ParseUUIDPipe) userId: string,
+    @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
     @GetUser() actorUser: ActorUser,
   ) {
-    await this.staffService.deleteStaff(userId, actorUser);
+    await this.staffService.deleteStaff(userProfileId, actorUser);
 
     return ControllerResponse.message(
       this.i18n.translate('success.delete', {
@@ -148,13 +172,17 @@ export class StaffController {
 
   @Patch(':id/restore')
   @UpdateApiResponses('Restore a deleted staff member')
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiParam({
+    name: 'userProfileId',
+    description: 'User Profile ID',
+    type: String,
+  })
   @Permissions(PERMISSIONS.STAFF.RESTORE)
   async restoreStaff(
-    @Param('id', ParseUUIDPipe) userId: string,
+    @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
     @GetUser() actorUser: ActorUser,
   ): Promise<RestoreUserResponseDto> {
-    await this.staffService.restoreStaff(userId, actorUser);
+    await this.staffService.restoreStaff(userProfileId, actorUser);
 
     return ControllerResponse.message(
       this.i18n.translate('success.restore', {

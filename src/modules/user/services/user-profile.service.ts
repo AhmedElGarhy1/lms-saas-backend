@@ -86,6 +86,16 @@ export class UserProfileService {
     return returnData;
   }
 
+  async activateProfileUser(userProfileId: string, isActive: boolean) {
+    const userProfile = await this.findOne(userProfileId);
+    if (!userProfile) {
+      throw new ResourceNotFoundException('User profile not found');
+    }
+    await this.userProfileRepository.update(userProfileId, { isActive });
+
+    return userProfile;
+  }
+
   async updateUserProfile(actor: ActorUser, updateData: UpdateUserProfileDto) {
     // Convert profile update data to user update format
     const userUpdateData: UpdateUserDto = {

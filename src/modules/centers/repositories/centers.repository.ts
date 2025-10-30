@@ -37,7 +37,7 @@ export class CentersRepository extends BaseRepository<Center> {
   ): Promise<Pagination<CenterResponseDto>> {
     const { userProfileId, centerAccess } = params;
     const queryBuilder = this.getRepository().createQueryBuilder('center');
-    this.applyIsActiveFilter(queryBuilder, params, 'center');
+    this.applyIsActiveFilter(queryBuilder, params, 'center.isActive');
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
@@ -48,7 +48,7 @@ export class CentersRepository extends BaseRepository<Center> {
       // no access control
     } else {
       queryBuilder.andWhere(
-        'center.id IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :actorUserProfileId)',
+        'center.id IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :actorUserProfileId AND "isActive" = true)',
         {
           actorUserProfileId: actor.userProfileId,
         },

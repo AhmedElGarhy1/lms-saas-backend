@@ -56,16 +56,20 @@ export class AdminController {
     return this.adminService.paginateAdmins(query, actorUser);
   }
 
-  @Get(':id')
-  @ReadApiResponses('Get admin user by User ID')
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @Get(':userProfileId')
+  @ReadApiResponses('Get admin user by User Profile ID')
+  @ApiParam({
+    name: 'userProfileId',
+    description: 'User Profile ID',
+    type: String,
+  })
   @ApiQuery({ name: 'centerId', required: false, type: String })
   @Permissions(PERMISSIONS.ADMIN.READ)
   async findOne(
-    @Param('id', ParseUUIDPipe) userId: string,
+    @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
     @GetUser() actor: ActorUser,
   ) {
-    return this.adminService.findOne(userId);
+    return this.adminService.findOne(userProfileId, actor);
   }
 
   @Post()
@@ -87,18 +91,26 @@ export class AdminController {
     );
   }
 
-  @Put(':id')
+  @Put(':userProfileId')
   @UpdateApiResponses('Update admin user information')
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiParam({
+    name: 'userProfileId',
+    description: 'User Profile ID',
+    type: String,
+  })
   @ApiBody({ type: UpdateAdminDto })
   @Permissions(PERMISSIONS.ADMIN.UPDATE)
   @Transactional()
   async updateAdmin(
-    @Param('id', ParseUUIDPipe) userId: string,
+    @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
     @Body() dto: UpdateAdminDto,
     @GetUser() actorUser: ActorUser,
   ) {
-    const user = await this.adminService.updateAdmin(userId, dto, actorUser);
+    const user = await this.adminService.updateAdmin(
+      userProfileId,
+      dto,
+      actorUser,
+    );
 
     return ControllerResponse.success(
       user,
@@ -108,20 +120,28 @@ export class AdminController {
     );
   }
 
-  @Patch(':id/status')
+  @Patch(':userProfileId/status')
   @UpdateApiResponses('Toggle admin user active status')
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiParam({
+    name: 'userProfileId',
+    description: 'User Profile ID',
+    type: String,
+  })
   @ApiBody({ type: ToggleUserStatusRequestDto })
   @Permissions(PERMISSIONS.ADMIN.UPDATE)
   async toggleAdminStatus(
-    @Param('id', ParseUUIDPipe) userId: string,
+    @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
     @Body() dto: ToggleUserStatusRequestDto,
     @GetUser() actorUser: ActorUser,
   ): Promise<ToggleUserStatusResponseDto> {
-    await this.adminService.toggleAdminStatus(userId, dto.isActive, actorUser);
+    await this.adminService.toggleAdminStatus(
+      userProfileId,
+      dto.isActive,
+      actorUser,
+    );
 
     return {
-      id: userId,
+      id: userProfileId,
       message: this.i18n.translate(
         dto.isActive ? 'success.userActivated' : 'success.userDeactivated',
       ),
@@ -129,15 +149,19 @@ export class AdminController {
     };
   }
 
-  @Delete(':id')
+  @Delete(':userProfileId')
   @DeleteApiResponses('Delete an admin user')
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiParam({
+    name: 'userProfileId',
+    description: 'User Profile ID',
+    type: String,
+  })
   @Permissions(PERMISSIONS.ADMIN.DELETE)
   async deleteAdmin(
-    @Param('id', ParseUUIDPipe) userId: string,
+    @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
     @GetUser() actorUser: ActorUser,
   ) {
-    await this.adminService.deleteAdmin(userId, actorUser);
+    await this.adminService.deleteAdmin(userProfileId, actorUser);
 
     return ControllerResponse.message(
       this.i18n.translate('success.delete', {
@@ -146,15 +170,19 @@ export class AdminController {
     );
   }
 
-  @Patch(':id/restore')
+  @Patch(':userProfileId/restore')
   @UpdateApiResponses('Restore a deleted admin user')
-  @ApiParam({ name: 'id', description: 'User ID', type: String })
+  @ApiParam({
+    name: 'userProfileId',
+    description: 'User Profile ID',
+    type: String,
+  })
   @Permissions(PERMISSIONS.ADMIN.RESTORE)
   async restoreAdmin(
-    @Param('id', ParseUUIDPipe) userId: string,
+    @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
     @GetUser() actorUser: ActorUser,
   ): Promise<RestoreUserResponseDto> {
-    await this.adminService.restoreAdmin(userId, actorUser);
+    await this.adminService.restoreAdmin(userProfileId, actorUser);
 
     return ControllerResponse.message(
       this.i18n.translate('success.restore', {
