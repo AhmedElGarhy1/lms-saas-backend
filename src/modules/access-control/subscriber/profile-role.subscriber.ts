@@ -3,13 +3,15 @@ import {
   EntitySubscriberInterface,
   InsertEvent,
   UpdateEvent,
+  DataSource,
 } from 'typeorm';
 import { ProfileRole } from '../entities/profile-role.entity';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 import { RolesRepository } from '../repositories/roles.repository';
 import { AccessControlHelperService } from '../services/access-control-helper.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import { InjectDataSource } from '@nestjs/typeorm';
 
 @EventSubscriber()
 export class ProfileRoleSubscriber
@@ -18,7 +20,10 @@ export class ProfileRoleSubscriber
   constructor(
     private readonly rolesRepository: RolesRepository,
     private readonly accessControlHelperService: AccessControlHelperService,
-  ) {}
+    @InjectDataSource() private readonly dataSource: DataSource,
+  ) {
+    this.dataSource.subscribers.push(this);
+  }
 
   listenTo() {
     return ProfileRole;

@@ -7,11 +7,11 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
-import { Transactional } from '@nestjs-cls/transactional';
 import {
   BranchCreatedEvent,
   BranchUpdatedEvent,
   BranchDeletedEvent,
+  BranchRestoredEvent,
   BranchEvents,
 } from '@/modules/centers/events/branch.events';
 
@@ -135,6 +135,30 @@ export class BranchesService {
         { location: branch.location, isActive } as any,
         actor,
       ),
+    );
+  }
+
+  async restoreBranch(branchId: string, actor: ActorUser): Promise<void> {
+    await this.accessControlHelperService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId,
+    });
+
+    const branch =
+      await this.branchesRepository.findOneSoftDeletedById(branchId);
+    if (!branch) {
+      throw new ResourceNotFoundException(
+        `Branch with ID ${branchId} not found`,
+      );
+    }
+
+    await this.branchesRepository.restore(branchId);
+
+    // Emit event for activity logging
+    await this.eventEmitter.emitAsync(
+      BranchEvents.RESTORED,
+      new BranchRestoredEvent(branchId, actor),
     );
   }
 }

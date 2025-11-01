@@ -195,7 +195,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    * Bulk delete with progress tracking and error handling
    */
   async bulkDelete(
-    where: any,
+    where: FindOptionsWhere<T>,
     options: BulkOperationOptions = {},
   ): Promise<number> {
     const { batchSize = 100, onProgress } = options;
@@ -255,7 +255,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   /**
    * Enhanced count method with advanced query building
    */
-  async countWithOptions(where?: any): Promise<number> {
+  async countWithOptions(where?: FindOptionsWhere<T>): Promise<number> {
     const startTime = Date.now();
     const repo = this.getRepository();
     const queryBuilder = repo.createQueryBuilder('entity');
@@ -280,7 +280,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   /**
    * Enhanced exists method with advanced query building
    */
-  async existsWithOptions(where: any): Promise<boolean> {
+  async existsWithOptions(where: FindOptionsWhere<T>): Promise<boolean> {
     const startTime = Date.now();
     const repo = this.getRepository();
     const queryBuilder = repo.createQueryBuilder('entity');
@@ -307,7 +307,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    */
   private applyWhereConditions(
     queryBuilder: SelectQueryBuilder<T>,
-    where: any,
+    where: FindOptionsWhere<T>,
   ): void {
     if (typeof where === 'object' && where !== null) {
       Object.entries(where).forEach(([key, value], index) => {
@@ -483,8 +483,8 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    * ```
    */
   protected applyDateFilters<T extends BasePaginationDto>(
-    queryBuilder: SelectQueryBuilder<any>,
-    paginationDto: T,
+    queryBuilder: SelectQueryBuilder<T>,
+    paginationDto: BasePaginationDto,
     dateField: string = 'createdAt',
     alias: string = 'entity',
   ): void {

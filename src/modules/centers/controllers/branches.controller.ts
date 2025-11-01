@@ -8,9 +8,6 @@ import {
   Body,
   Param,
   Query,
-  HttpCode,
-  HttpStatus,
-  UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
@@ -22,6 +19,8 @@ import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { GetUser } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { UpdateApiResponses } from '@/shared/common/decorators';
+import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 
 @ApiTags('Centers - Branches')
 @Controller('centers/branches')
@@ -142,5 +141,18 @@ export class BranchesController {
       body.isActive,
       actor,
     );
+  }
+
+  @Patch(':branchId/restore')
+  @UpdateApiResponses('Restore deleted branch')
+  @ApiParam({ name: 'branchId', description: 'Branch ID', type: String })
+  @Permissions(PERMISSIONS.BRANCHES.RESTORE)
+  @Transactional()
+  async restoreBranch(
+    @Param('branchId', ParseUUIDPipe) branchId: string,
+    @GetUser() actor: ActorUser,
+  ) {
+    await this.branchesService.restoreBranch(branchId, actor);
+    return ControllerResponse.message('Branch restored successfully');
   }
 }

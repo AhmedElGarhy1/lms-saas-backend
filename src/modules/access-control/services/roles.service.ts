@@ -50,7 +50,10 @@ export class RolesService {
 
     const role = await this.rolesRepository.createRole(data);
 
-    await this.eventEmitter.emitAsync(RoleEvents.CREATE, new CreateRoleEvent(role, actor));
+    await this.eventEmitter.emitAsync(
+      RoleEvents.CREATE,
+      new CreateRoleEvent(role, actor),
+    );
 
     return role;
   }
@@ -61,7 +64,10 @@ export class RolesService {
     actor: ActorUser,
   ) {
     const role = await this.rolesRepository.findOne(roleId);
-    if (!role?.isSameScope(actor.centerId)) {
+    if (!role) {
+      throw new ResourceNotFoundException('Role not found');
+    }
+    if (!role.isSameScope(actor.centerId)) {
       throw new InsufficientPermissionsException(
         'You are not authorized to update this role',
       );

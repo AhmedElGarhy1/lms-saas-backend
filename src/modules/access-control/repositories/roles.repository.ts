@@ -12,6 +12,7 @@ import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exc
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
+import { In } from 'typeorm';
 
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> {
@@ -60,27 +61,48 @@ export class RolesRepository extends BaseRepository<Role> {
     if (!role) {
       throw new ResourceNotFoundException('Role was not found');
     }
+    const existingRolePermissions =
+      await this.rolePermissionRepository.findMany({
+        where: { roleId },
+      });
     // sync permissions
     // TODO: sync permission scope also
     const toAdd = rolePermissions.filter(
-      (permission) =>
-        !role.rolePermissions.some((p) => p.permissionId === permission.id),
+      (p) => !existingRolePermissions.some((erp) => erp.permissionId === p.id),
     );
-    const toRemove = role.rolePermissions.filter(
-      (p) =>
-        !rolePermissions.some((permission) => permission.id === p.permissionId),
+    const toRemove = existingRolePermissions.filter(
+      (erp) => !rolePermissions.some((p) => p.id === erp.permissionId),
     );
-    await this.rolePermissionRepository.bulkInsert(
-      toAdd.map((permission) => ({
-        permissionId: permission.id,
-        permissionScope: permission.scope,
-        userId: role.createdBy,
-        roleId: role.id,
-      })),
+
+    const toUpdate = rolePermissions.filter((p) =>
+      existingRolePermissions.some(
+        (permission) =>
+          permission.permissionId === p.id &&
+          permission.permissionScope !== p.scope,
+      ),
     );
-    await this.rolePermissionRepository.bulkDelete(
-      toRemove.map((permission) => permission.id),
-    );
+    console.log({
+      toAdd,
+      toRemove,
+      toUpdate,
+    });
+    if (toAdd.length > 0) {
+      await this.rolePermissionRepository.bulkInsert(
+        toAdd.map((rp) => ({
+          permissionId: rp.id,
+          permissionScope: rp.scope,
+          userId: role.createdBy,
+          roleId: role.id,
+        })),
+      );
+    }
+    if (toRemove.length > 0) {
+      await this.rolePermissionRepository.bulkDelete({
+        id: In(toRemove.map((rp) => rp.id)),
+      });
+    }
+    // if (toUpdate.length > 0) {
+    // }
 
     return role;
   }

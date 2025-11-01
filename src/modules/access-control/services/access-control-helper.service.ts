@@ -235,31 +235,30 @@ export class AccessControlHelperService {
 
   async validateCenterAccess(
     data: CenterAccessDto,
-    isDeleted?: boolean,
+    config: {
+      includeDeleted?: boolean;
+      includeInactive?: boolean;
+    } = {},
   ): Promise<void> {
     // Check if center is active
     const center = await this.centersService.findCenterById(data.centerId);
 
     if (!center.isActive) {
-      throw new InactiveCenterException('Center is not active');
+      throw new InactiveCenterException();
     }
 
     // Check if user has access to the center
-    console.log('data', data);
-    const canAccess = await this.canCenterAccess(data, isDeleted);
+
+    const canAccess = await this.canCenterAccess(data, config.includeDeleted);
     if (!canAccess) {
-      throw new CenterAccessDeniedException(
-        'You do not have access to this center',
-      );
+      throw new CenterAccessDeniedException();
     }
     const centerAccess = await this.findCenterAccess(data);
     if (!centerAccess) return;
 
     // Check if the user's access to the center is active
-    if (!centerAccess.isActive) {
-      throw new CenterAccessInactiveException(
-        'Your access to this center is currently inactive',
-      );
+    if (!centerAccess.isActive && !config.includeInactive) {
+      throw new CenterAccessInactiveException();
     }
   }
 

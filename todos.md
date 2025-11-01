@@ -14,7 +14,6 @@
 [x] for forms display \* for requried fields (automatic)
 [x] fix module actions incompatibility
 [x] activity logs on backend
-[x] activity logs on frontend
 [x] export functioanlity
 [x] fix login as center user
 [x] continue on roles and permissions integration
@@ -37,13 +36,27 @@
 [x] user manage access (it should be user access, center access)
 [x] multi profile continue admins
 [x] multi profile user list in center issue
-[ ] continue testing existing functionality after migrating to userProfileId (start from checking table configs (admin|staff))
-[ ] implement access all resources permission
-[ ] implement center access activation for center users
-[ ] implement center access delete (delete user in center)
+[x] continue testing existing functionality after migrating to userProfileId (start from checking table configs (admin|staff))
+[x] implement center access activation for center users
+[x] implement center access delete (delete user in center)
+[x] check dialogs open/close
+[ ] remove admin scope permissions from center roles page
+[ ] fix role permissions bad ux in frontend and logic in edit making both for not both permissions
+[ ] create center with dublicated admin email doesn't throw error and doesn't store user
+[ ] check soft delete for all modules
+[ ] role delete: remove users assigned to that user
+[ ] create center with branch
+[ ] disable center actions in case of inactive
+[ ] new: center role with admin permission throw error
+[ ] restrict phone number validation and fix not uniqe email when null
+[ ] implement import user (or diffrent name) to import user from another center (internal center prespective)
+[ ] double check permissions in all over the application (+ canActivate)
+[ ] when i display tables data I should disply myself also
 [ ] frontend invalidate language when profile update
+[ ] activity logs on frontend
 [ ] multi profile for parents
 [ ] view modals in all modules
 [ ] integrate twilio for some verifications
 [ ] import functioanlity
 [ ] builk operations
+[ ] implement access all resources permission
