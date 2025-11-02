@@ -17,6 +17,7 @@ import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import {
   CreateCenterEvent,
+  CreateCenterBranchEvent,
   UpdateCenterEvent,
   DeleteCenterEvent,
   RestoreCenterEvent,
@@ -66,10 +67,10 @@ export class CentersService {
       isActive: dto.isActive,
     });
 
-    // Emit event for user creation and staff profile creation
+    // Emit event for user creation and staff profile creation (if user data provided)
     await this.eventEmitter.emitAsync(
       CenterEvents.CREATE,
-      new CreateCenterEvent(center, dto.user, actor),
+      new CreateCenterEvent(center, actor, dto.user, dto.branch),
     );
 
     return center;

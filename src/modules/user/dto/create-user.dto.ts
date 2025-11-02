@@ -6,15 +6,13 @@ import {
   IsOptional,
   IsBoolean,
   IsNotEmpty,
-  IsUUID,
   IsDateString,
   IsEnum,
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { Role } from '@/modules/access-control/entities/role.entity';
-import { Center } from '@/modules/centers/entities/center.entity';
+import { NotExists } from '@/shared/common/decorators/not-exists.decorator';
+import { User } from '@/modules/user/entities/user.entity';
 import { Locale } from '@/shared/common/enums/locale.enum';
 import { Type } from 'class-transformer';
 
@@ -37,6 +35,7 @@ export class UserInfoDto {
 export class CreateUserDto {
   @ApiProperty({ description: 'User phone number', required: false })
   @IsString()
+  @NotExists(User, 'phone', { message: 'Phone number already exists' })
   phone: string;
 
   @ApiProperty({ description: 'User full name' })
@@ -48,6 +47,7 @@ export class CreateUserDto {
   @ApiProperty({ description: 'User email address', required: false })
   @IsOptional()
   @IsEmail()
+  @NotExists(User, 'email', { message: 'Email already exists' })
   email?: string;
 
   @ApiProperty({ description: 'User password' })

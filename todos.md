@@ -40,14 +40,14 @@
 [x] implement center access activation for center users
 [x] implement center access delete (delete user in center)
 [x] check dialogs open/close
-[ ] remove admin scope permissions from center roles page
-[ ] fix role permissions bad ux in frontend and logic in edit making both for not both permissions
-[ ] create center with dublicated admin email doesn't throw error and doesn't store user
-[ ] check soft delete for all modules
-[ ] role delete: remove users assigned to that user
-[ ] create center with branch
+[x] (frontend) remove admin scope permissions from center roles page
+[x] (frontend) fix role permissions bad ux in frontend and logic in edit making both for not both permissions
+[x] (backend) create center with dublicated admin email doesn't throw error and doesn't store user
+[x] (both) check soft delete for all modules
+[x] (backend) role delete: remove users assigned to that user
+[x] (both) create center with branch
+[x] new: center role with admin permission throw error
 [ ] disable center actions in case of inactive
-[ ] new: center role with admin permission throw error
 [ ] restrict phone number validation and fix not uniqe email when null
 [ ] implement import user (or diffrent name) to import user from another center (internal center prespective)
 [ ] double check permissions in all over the application (+ canActivate)
@@ -60,3 +60,4 @@
 [ ] import functioanlity
 [ ] builk operations
 [ ] implement access all resources permission
+[ ] consider using prisma instead of typeorm

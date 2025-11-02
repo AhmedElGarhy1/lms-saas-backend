@@ -146,7 +146,7 @@ export class RolesService {
 
   async restoreRole(roleId: string, actor: ActorUser): Promise<void> {
     // First check if the role exists
-    const role = await this.rolesRepository.findOne(roleId);
+    const role = await this.rolesRepository.findOneSoftDeleted({ id: roleId });
     if (!role) {
       throw new ResourceNotFoundException('Role not found');
     }
@@ -157,12 +157,6 @@ export class RolesService {
         'Role is not deleted and cannot be restored',
       );
     }
-
-    // Check permissions - only allow restore if user has appropriate permissions
-    await this.accessControlerHelperService.validateAdminAndCenterAccess({
-      userProfileId: actor.userProfileId,
-      centerId: role.centerId,
-    });
 
     // Restore the role
     await this.rolesRepository.restore(roleId);

@@ -15,6 +15,7 @@ import { CentersActionsController } from './controllers/centers-actions.controll
 import { BranchesActionsController } from './controllers/branches-actions.controller';
 import { CentersAccessController } from './controllers/centers-access.controller';
 import { BranchesAccessController } from './controllers/branches-access.controller';
+import { BranchListener } from './listeners/branch.listener';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { BranchesAccessController } from './controllers/branches-access.controll
     BranchesService,
     CentersRepository,
     BranchesRepository,
+    BranchListener,
   ],
   exports: [CentersService, BranchesService],
 })

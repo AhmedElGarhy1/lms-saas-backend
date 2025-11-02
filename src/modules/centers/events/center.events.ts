@@ -1,9 +1,9 @@
 import { Center } from '@/modules/centers/entities/center.entity';
-import { User } from '@/modules/user/entities/user.entity';
 import { UserProfile } from '@/modules/user/entities/user-profile.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { CreateUserDto } from '@/modules/user/dto/create-user.dto';
 import { UpdateCenterRequestDto } from '@/modules/centers/dto/update-center.dto';
+import { CreateBranchDto } from '@/modules/centers/dto/create-branch.dto';
 
 export enum CenterEvents {
   CREATE = 'center.create',
@@ -11,12 +11,22 @@ export enum CenterEvents {
   DELETE = 'center.delete',
   RESTORE = 'center.restore',
   ASSIGN_OWNER = 'center.assign.owner',
+  CREATE_BRANCH = 'center.create.branch',
 }
 
 export class CreateCenterEvent {
   constructor(
     public readonly center: Center,
-    public readonly userData: CreateUserDto,
+    public readonly actor: ActorUser,
+    public readonly userData?: CreateUserDto,
+    public readonly branchData?: CreateBranchDto,
+  ) {}
+}
+
+export class CreateCenterBranchEvent {
+  constructor(
+    public readonly center: Center,
+    public readonly branchData: CreateBranchDto,
     public readonly actor: ActorUser,
   ) {}
 }
@@ -46,7 +56,7 @@ export class RestoreCenterEvent {
 export class AssignCenterOwnerEvent {
   constructor(
     public readonly center: Center,
-    public readonly userProfile: UserProfile,
-    public readonly actor: ActorUser,
+    public readonly userProfile?: UserProfile,
+    public readonly actor?: ActorUser,
   ) {}
 }

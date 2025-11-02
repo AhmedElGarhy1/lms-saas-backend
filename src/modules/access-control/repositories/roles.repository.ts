@@ -13,6 +13,7 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { In } from 'typeorm';
+import { RolePermission } from '../entities/role-permission.entity';
 
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> {
@@ -74,13 +75,19 @@ export class RolesRepository extends BaseRepository<Role> {
       (erp) => !rolePermissions.some((p) => p.id === erp.permissionId),
     );
 
-    const toUpdate = rolePermissions.filter((p) =>
-      existingRolePermissions.some(
-        (permission) =>
-          permission.permissionId === p.id &&
-          permission.permissionScope !== p.scope,
-      ),
-    );
+    const toUpdate: RolePermission[] = existingRolePermissions
+      .map((erp) => {
+        const exists = rolePermissions.find((p) => p.id === erp.permissionId);
+        if (exists && exists.scope !== erp.permissionScope) {
+          return {
+            ...erp,
+            permissionScope: exists.scope,
+          };
+        }
+        return undefined;
+      })
+      .filter((rp) => rp !== undefined);
+
     console.log({
       toAdd,
       toRemove,
@@ -101,8 +108,22 @@ export class RolesRepository extends BaseRepository<Role> {
         id: In(toRemove.map((rp) => rp.id)),
       });
     }
-    // if (toUpdate.length > 0) {
-    // }
+    if (toUpdate.length > 0) {
+      const results = await this.rolePermissionRepository.updateMany(
+        toUpdate.map((rp) => ({
+          id: rp.id,
+          data: {
+            permissionScope: rp.permissionScope,
+          },
+        })),
+      );
+      console.log('-------------------');
+      console.log('-------------------');
+      console.log('-------------------');
+      console.log(results);
+      console.log('-------------------');
+      console.log('-------------------');
+    }
 
     return role;
   }

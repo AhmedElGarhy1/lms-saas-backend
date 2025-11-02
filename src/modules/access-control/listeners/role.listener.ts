@@ -18,13 +18,17 @@ import {
   AssignCenterOwnerEvent,
   CenterEvents,
 } from '@/modules/centers/events/center.events';
-import { createOwnerRoleData } from '../constants/roles';
+import { createOwnerRoleData, DefaultRoles } from '../constants/roles';
+import { ProfileRoleRepository } from '../repositories/profile-role.repository';
+import { RolesRepository } from '../repositories/roles.repository';
 
 @Injectable()
 export class RoleListener {
   constructor(
     private readonly rolesService: RolesService,
     private readonly activityLogService: ActivityLogService,
+    private readonly profileRoleRepository: ProfileRoleRepository,
+    private readonly rolesRepository: RolesRepository,
   ) {}
 
   @OnEvent(AccessControlEvents.ASSIGN_ROLE)
@@ -87,13 +91,22 @@ export class RoleListener {
   @OnEvent(CenterEvents.ASSIGN_OWNER)
   async handleAssignOwner(event: AssignCenterOwnerEvent) {
     const { center, userProfile, actor } = event;
+
+    if (!actor) {
+      return;
+    }
+
     const role = await this.rolesService.createRole(
       createOwnerRoleData(center.id),
       actor,
     );
-    await this.handleAssignRole(
-      new AssignRoleEvent(userProfile.id, role.id, actor, center.id),
-    );
+
+    // Only assign role to userProfile if userProfile is provided
+    if (userProfile) {
+      await this.handleAssignRole(
+        new AssignRoleEvent(userProfile.id, role.id, actor, center.id),
+      );
+    }
   }
 
   @OnEvent(RoleEvents.UPDATE)
@@ -111,6 +124,24 @@ export class RoleListener {
 
   @OnEvent(RoleEvents.DELETE)
   async handleRoleDeleted(event: DeleteRoleEvent) {
+    const { roleId, actor } = event;
+    // remove profiles assigned to this role
+    const profileRoles =
+      await this.profileRoleRepository.findProfileRolesByRoleId(roleId);
+    // can done on background job
+    await Promise.all(
+      profileRoles.map((pr) =>
+        this.rolesService.removeUserRole(
+          {
+            userProfileId: pr.userProfileId,
+            roleId: pr.roleId,
+            centerId: pr.centerId,
+          },
+          actor,
+        ),
+      ),
+    );
+
     // Log activity
     await this.activityLogService.log(
       RoleActivityType.ROLE_DELETED,

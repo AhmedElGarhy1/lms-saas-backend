@@ -129,12 +129,19 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     return results;
   }
 
+  async updateMany(data: { id: string; data: DeepPartial<T> }[]): Promise<T[]> {
+    const results = await Promise.all(
+      data.map((item) => this.updateThrow(item.id, item.data)),
+    );
+    return results.map((result) => result as T);
+  }
+
   /**
    * Bulk update with progress tracking and error handling
    */
   async bulkUpdate(
     where: any,
-    updateData: Partial<T>,
+    updateData: DeepPartial<T>,
     options: BulkOperationOptions = {},
   ): Promise<number> {
     const { batchSize = 100, onProgress } = options;
@@ -153,9 +160,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       const batchNumber = Math.floor(i / batchSize) + 1;
 
       try {
-        const batchIds = batch.map((entity) => entity.id);
-        const result = await repo.update(batchIds, updateData);
-        const affected = result.affected || 0;
+        const results = await Promise.all(
+          batch.map((entity) => this.update(entity.id, updateData)),
+        );
+        const affected = results.length;
         totalAffected += affected;
         totalProcessed += batch.length;
 
@@ -450,6 +458,12 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     repo.merge(entity, data);
 
     return repo.save(entity);
+  }
+
+  async updateThrow(id: string, data: DeepPartial<T>): Promise<T | null> {
+    const entity = await this.update(id, data);
+    if (!entity) throw new NotFoundException('Entity not found');
+    return entity;
   }
 
   async softRemove(id: string): Promise<void> {

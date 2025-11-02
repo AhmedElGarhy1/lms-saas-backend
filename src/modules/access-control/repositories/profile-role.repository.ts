@@ -173,7 +173,6 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
   async findProfileRolesByRoleId(roleId: string): Promise<ProfileRole[]> {
     return this.getRepository().find({
       where: { roleId },
-      relations: ['role', 'userProfile'],
     });
   }
 

@@ -1,13 +1,22 @@
-import { ValidateNested } from 'class-validator';
+import { ValidateNested, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateUserDto } from '@/modules/user/dto/create-user.dto';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { UpdateCenterRequestDto } from './update-center.dto';
+import { CreateBranchDto } from './create-branch.dto';
 
 export class CreateCenterDto extends UpdateCenterRequestDto {
-  // User object for center owner
-  @ApiProperty({ type: CreateUserDto })
+  // User object for center owner (optional - can create center without user)
+  @ApiPropertyOptional({ type: CreateUserDto })
+  @IsOptional()
   @ValidateNested()
   @Type(() => CreateUserDto)
-  user: CreateUserDto;
+  user?: CreateUserDto;
+
+  // Branch object (optional - can create center without branch)
+  @ApiPropertyOptional({ type: CreateBranchDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateBranchDto)
+  branch?: CreateBranchDto;
 }

@@ -1,3 +1,4 @@
+import { NotExists } from '@/shared/common/decorators';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
@@ -6,6 +7,7 @@ import {
   IsUrl,
   IsBoolean,
 } from 'class-validator';
+import { Center } from '../entities/center.entity';
 
 export class UpdateCenterRequestDto {
   @ApiProperty({ description: 'Center name' })
@@ -23,6 +25,7 @@ export class UpdateCenterRequestDto {
   phone?: string;
 
   @ApiProperty({ description: 'Center email' })
+  @NotExists(Center, 'email', { message: 'Email already exists' })
   @IsEmail()
   @IsOptional()
   email?: string;
