@@ -36,7 +36,6 @@ export class BranchListener {
         centerId: branch.centerId,
         location: branch.location,
         address: branch.address,
-        phone: branch.phone,
         email: branch.email,
       },
       actor,

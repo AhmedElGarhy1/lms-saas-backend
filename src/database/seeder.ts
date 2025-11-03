@@ -99,8 +99,8 @@ export class DatabaseSeeder {
 
         // Insert user first
         await transactionalEntityManager.query(
-          `INSERT INTO users (id, email, password, name, "isActive", "createdBy", "createdAt", "updatedAt") 
-           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+          `INSERT INTO users (id, email, password, name, "isActive", "createdBy", "phone", "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
           [
             userUuid,
             'system@lms.com',
@@ -108,6 +108,7 @@ export class DatabaseSeeder {
             'System User',
             true,
             userUuid, // createdBy is self for system user
+            '01000000000',
           ],
         );
 
@@ -166,8 +167,8 @@ export class DatabaseSeeder {
 
         // Insert user first
         await transactionalEntityManager.query(
-          `INSERT INTO users (id, email, password, name, "isActive", "createdBy", "createdAt", "updatedAt") 
-           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+          `INSERT INTO users (id, email, password, name, "isActive", "createdBy", "phone", "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
           [
             userUuid,
             'superadmin@lms.com',
@@ -175,6 +176,7 @@ export class DatabaseSeeder {
             'Super Administrator',
             true,
             createdBy,
+            '01000000000',
           ],
         );
 
@@ -185,7 +187,7 @@ export class DatabaseSeeder {
           [
             profileUuid,
             userUuid,
-            'System Headquarters',
+            'Super Administrator Headquarters',
             'en',
             createdBy,
             createdBy,

@@ -8,21 +8,21 @@ import { UserInfo } from './user-info.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('users')
-@Index(['email'])
+@Index(['email'], { where: 'email IS NOT NULL', unique: true })
 @Index(['phone'])
 @Index(['isActive'])
 export class User extends BaseEntity {
-  @Column({ unique: true, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   email?: string;
 
-  @Column({ unique: true, nullable: true })
-  phone?: string;
+  @Column({ type: 'varchar', length: 12 })
+  phone: string;
 
-  @Column({ select: false })
+  @Column({ type: 'varchar', length: 255, select: false })
   @Exclude()
   password: string;
 
-  @Column()
+  @Column({ type: 'varchar', length: 255 })
   name: string;
 
   @Column({ default: 0 })
@@ -31,7 +31,7 @@ export class User extends BaseEntity {
   @Column({ nullable: true })
   lockoutUntil: Date;
 
-  @Column({ nullable: true, select: false })
+  @Column({ type: 'varchar', length: 255, nullable: true, select: false })
   @Exclude()
   twoFactorSecret: string;
 

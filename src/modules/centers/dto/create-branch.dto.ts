@@ -26,16 +26,6 @@ export class CreateBranchDto {
   address?: string;
 
   @ApiPropertyOptional({
-    description: 'Phone number of the branch',
-    example: '+1-555-0123',
-    maxLength: 20,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(20)
-  phone?: string;
-
-  @ApiPropertyOptional({
     description: 'Email address of the branch',
     example: 'downtown@school.edu',
     maxLength: 255,

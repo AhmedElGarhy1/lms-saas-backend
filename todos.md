@@ -47,8 +47,7 @@
 [x] (backend) role delete: remove users assigned to that user
 [x] (both) create center with branch
 [x] new: center role with admin permission throw error
-[ ] disable center actions in case of inactive
-[ ] restrict phone number validation and fix not uniqe email when null
+[x] restrict phone number validation and fix not uniqe email when null
 [ ] implement import user (or diffrent name) to import user from another center (internal center prespective)
 [ ] double check permissions in all over the application (+ canActivate)
 [ ] when i display tables data I should disply myself also
@@ -61,3 +60,5 @@
 [ ] builk operations
 [ ] implement access all resources permission
 [ ] consider using prisma instead of typeorm
+
+[ ] disable center actions in case of inactive

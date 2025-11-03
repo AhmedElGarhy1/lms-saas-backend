@@ -28,9 +28,6 @@ export class Branch extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   address?: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: true })
-  phone?: string;
-
   @Column({ type: 'varchar', length: 255, nullable: true })
   email?: string;
 

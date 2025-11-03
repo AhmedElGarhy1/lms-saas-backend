@@ -9,6 +9,7 @@ import {
   IsDateString,
   IsEnum,
   ValidateNested,
+  Matches,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { NotExists } from '@/shared/common/decorators/not-exists.decorator';
@@ -34,7 +35,9 @@ export class UserInfoDto {
 }
 export class CreateUserDto {
   @ApiProperty({ description: 'User phone number', required: false })
-  @IsString()
+  @Matches(/^(\+?20)?1[0-2,5]\d{8}$/, {
+    message: 'Phone number must be a valid Egyptian mobile number',
+  })
   @NotExists(User, 'phone', { message: 'Phone number already exists' })
   phone: string;
 

@@ -6,6 +6,7 @@ import {
   IsEmail,
   IsUrl,
   IsBoolean,
+  Matches,
 } from 'class-validator';
 import { Center } from '../entities/center.entity';
 
@@ -22,6 +23,9 @@ export class UpdateCenterRequestDto {
   @ApiProperty({ description: 'Center phone' })
   @IsString()
   @IsOptional()
+  @Matches(/^(\+?20)?1[0-2,5]\d{8}$/, {
+    message: 'Phone number must be a valid Egyptian mobile number',
+  })
   phone?: string;
 
   @ApiProperty({ description: 'Center email' })

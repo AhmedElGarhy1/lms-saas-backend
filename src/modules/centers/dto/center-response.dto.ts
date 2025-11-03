@@ -16,15 +16,15 @@ export class CenterResponseDto {
 
   @ApiProperty({ description: 'Center city' })
   @Expose()
-  logo: string;
+  logo?: string;
 
   @ApiProperty({ description: 'Center phone number' })
   @Expose()
-  phone: string;
+  phone?: string;
 
   @ApiProperty({ description: 'Center email' })
   @Expose()
-  email: string;
+  email?: string;
 
   @ApiProperty({ description: 'Center website', required: false })
   @Expose()

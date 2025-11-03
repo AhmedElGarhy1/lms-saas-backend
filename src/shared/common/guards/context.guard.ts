@@ -40,10 +40,12 @@ export class ContextGuard implements CanActivate {
     }
 
     const request: IRequest = context.switchToHttp().getRequest();
-    const centerId = (request.get('x-center-id') ??
-      request.centerId ??
-      (request.body as { centerId?: string })?.centerId ??
-      (request.query as { centerId?: string })?.centerId) as string;
+    // const centerId = (request.get('x-center-id') ??
+    //   request.centerId ??
+    //   (request.body as { centerId?: string })?.centerId ??
+    //   (request.query as { centerId?: string })?.centerId) as string;
+
+    const centerId = (request.get('x-center-id') ?? request.centerId) as string;
 
     const user = request.user;
     if (!user) {

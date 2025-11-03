@@ -10,24 +10,26 @@ import { BranchAccess } from '../../access-control/entities/branch-access.entity
 
 @Entity('centers')
 @Index(['name'])
+@Index(['email'], { where: 'email IS NOT NULL', unique: true })
+@Index(['phone'], { where: 'phone IS NOT NULL', unique: true })
 export class Center extends BaseEntity {
-  @Column({ type: 'varchar', length: 255, unique: true })
+  @Column({ type: 'varchar', length: 255 })
   name: string;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  description?: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: true })
-  phone: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  email: string;
+  @Column({ type: 'varchar', nullable: true })
+  phone?: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  website: string;
+  email?: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  logo: string;
+  website?: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  logo?: string;
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
