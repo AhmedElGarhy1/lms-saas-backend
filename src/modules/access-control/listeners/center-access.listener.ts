@@ -6,8 +6,8 @@ import { CenterActivityType } from '@/modules/centers/enums/center-activity-type
 import {
   GrantCenterAccessEvent,
   RevokeCenterAccessEvent,
-  AccessControlEvents,
 } from '../events/access-control.events';
+import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 
 @Injectable()
 export class CenterAccessListener {

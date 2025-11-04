@@ -1,0 +1,69 @@
+import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
+import { BaseEntity } from '@/shared/common/entities/base.entity';
+import { User } from '@/modules/user/entities/user.entity';
+import { Center } from '@/modules/centers/entities/center.entity';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { NotificationStatus } from '../enums/notification-status.enum';
+import { NotificationChannel } from '../enums/notification-channel.enum';
+import { NotificationType } from '../enums/notification-type.enum';
+
+@Entity('notification_logs')
+@Index(['userId'])
+@Index(['centerId'])
+@Index(['status'])
+@Index(['type'])
+@Index(['channel'])
+@Index(['createdAt'])
+@Index(['userId', 'centerId', 'status'])
+@Index(['userId', 'profileType', 'profileId'])
+@Index(['profileType', 'profileId'])
+export class NotificationLog extends BaseEntity {
+  @Column({ type: 'varchar', length: 100 })
+  type: NotificationType;
+
+  @Column({ type: 'enum', enum: NotificationChannel })
+  channel: NotificationChannel;
+
+  @Column({
+    type: 'enum',
+    enum: NotificationStatus,
+    default: NotificationStatus.PENDING,
+  })
+  status: NotificationStatus;
+
+  @Column({ type: 'varchar', length: 255 })
+  recipient: string;
+
+  @Column({ type: 'jsonb', nullable: true })
+  metadata?: Record<string, any>;
+
+  @Column({ type: 'uuid', nullable: true })
+  userId?: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  centerId?: string;
+
+  @Column({ type: 'enum', enum: ProfileType, nullable: true })
+  profileType?: ProfileType | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  profileId?: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  error?: string;
+
+  @Column({ type: 'int', default: 0 })
+  retryCount: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastAttemptAt?: Date;
+
+  // Relations
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'userId' })
+  user?: User;
+
+  @ManyToOne(() => Center, { nullable: true })
+  @JoinColumn({ name: 'centerId' })
+  center?: Center;
+}

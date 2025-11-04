@@ -21,8 +21,8 @@ import {
   UpdateCenterEvent,
   DeleteCenterEvent,
   RestoreCenterEvent,
-  CenterEvents,
 } from '@/modules/centers/events/center.events';
+import { CenterEvents } from '@/shared/events/center.events.enum';
 
 export interface SeederCenterData {
   name: string;

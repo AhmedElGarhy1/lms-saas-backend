@@ -252,30 +252,6 @@ const sensitiveEndpoints = [
 
 ## 🚀 Usage Examples
 
-### Rate Limiting Implementation
-
-```typescript
-import { RateLimit, RateLimitGuard } from '../common/guards/rate-limit.guard';
-
-@Controller('auth')
-@UseGuards(RateLimitGuard)
-export class AuthController {
-  @Post('login')
-  @RateLimit({ windowMs: 15 * 60 * 1000, maxRequests: 5 })
-  async login() {
-    // Login logic
-  }
-
-  @Post('signup')
-  @RateLimit({ windowMs: 60 * 60 * 1000, maxRequests: 3 })
-  async signup() {
-    // Signup logic
-  }
-}
-```
-
-### Enhanced Repository Usage
-
 ```typescript
 import { BaseRepository } from '../common/repositories/base.repository';
 

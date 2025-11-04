@@ -4,13 +4,14 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
-import { CreateAdminEvent, AdminEvents } from '../events/admin.events';
+import { CreateAdminEvent } from '../events/admin.events';
+import { AdminEvents } from '@/shared/events/admin.events.enum';
 import {
   AssignRoleEvent,
-  AccessControlEvents,
   GrantUserAccessEvent,
 } from '@/modules/access-control/events/access-control.events';
-import { UserEvents } from '@/shared/events/event-types.enum';
+import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
+import { UserEvents } from '@/shared/events/user.events.enum';
 import { CreateUserEvent } from '@/modules/user/events/user.events';
 import { UserProfile } from '@/modules/user/entities/user-profile.entity';
 import { User } from '@/modules/user/entities/user.entity';

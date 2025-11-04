@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="{{locale}}" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>التحقق من البريد الإلكتروني</title>
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; line-height: 1.8; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; direction: rtl;">
+  <div style="background-color: #f4f4f4; padding: 20px; border-radius: 5px;">
+    <h1 style="color: #007bff;">التحقق من البريد الإلكتروني</h1>
+    <p>مرحباً {{name}},</p>
+    <p>يرجى التحقق من عنوان بريدك الإلكتروني بالضغط على الرابط أدناه:</p>
+    {{#if link}}
+    <a href="{{link}}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px;">التحقق من البريد الإلكتروني</a>
+    {{/if}}
+    <p style="margin-top: 20px;">سوف ينتهي صلاحية هذا الرابط خلال {{expiresIn}}.</p>
+    <p style="margin-top: 30px; color: #666; font-size: 12px;">مع أطيب التحيات،<br>فريق نظام إدارة التعلم</p>
+  </div>
+</body>
+</html>
+
+
+

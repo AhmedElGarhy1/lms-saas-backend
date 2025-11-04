@@ -5,15 +5,6 @@ import { CreateUserDto } from '@/modules/user/dto/create-user.dto';
 import { UpdateCenterRequestDto } from '@/modules/centers/dto/update-center.dto';
 import { CreateBranchDto } from '@/modules/centers/dto/create-branch.dto';
 
-export enum CenterEvents {
-  CREATE = 'center.create',
-  UPDATE = 'center.update',
-  DELETE = 'center.delete',
-  RESTORE = 'center.restore',
-  ASSIGN_OWNER = 'center.assign.owner',
-  CREATE_BRANCH = 'center.create.branch',
-}
-
 export class CreateCenterEvent {
   constructor(
     public readonly center: Center,

@@ -3,10 +3,6 @@ import { Admin } from '@/modules/admin/entities/admin.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { CreateAdminDto } from '@/modules/admin/dto/create-admin.dto';
 
-export enum AdminEvents {
-  CREATE = 'admin.create',
-}
-
 export class CreateAdminEvent {
   constructor(
     public readonly dto: CreateAdminDto,

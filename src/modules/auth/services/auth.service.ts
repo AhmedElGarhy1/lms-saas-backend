@@ -6,7 +6,6 @@ import {
   BusinessLogicException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { JwtService } from '@nestjs/jwt';
-import { MailerService } from '../../../shared/services/mailer.service';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../../user/services/user.service';
 import { EmailVerificationService } from './email-verification.service';
@@ -30,12 +29,11 @@ import { JwtPayload } from '../strategies/jwt.strategy';
 import {
   UserLoggedInEvent,
   PasswordChangedEvent,
-  PasswordResetRequestedEvent,
   TwoFactorSetupEvent,
   TwoFactorEnabledEvent,
   TwoFactorDisabledEvent,
-  AuthEvents,
 } from '@/modules/auth/events/auth.events';
+import { AuthEvents } from '@/shared/events/auth.events.enum';
 
 @Injectable()
 export class AuthService {
@@ -45,7 +43,6 @@ export class AuthService {
     private readonly passwordResetService: PasswordResetService,
     // private readonly twoFactorService: TwoFactorService,
     private readonly jwtService: JwtService,
-    private readonly mailerService: MailerService,
     private readonly configService: ConfigService,
     private readonly logger: LoggerService,
     private readonly i18n: I18nService<I18nTranslations>,
@@ -291,13 +288,8 @@ export class AuthService {
   }
 
   async forgotPassword(dto: ForgotPasswordRequestDto) {
+    // Password reset service will emit the event
     await this.passwordResetService.sendPasswordResetEmail(dto.email);
-
-    // Emit password reset requested event (not for activity logging)
-    await this.eventEmitter.emitAsync(
-      AuthEvents.PASSWORD_RESET_REQUESTED,
-      new PasswordResetRequestedEvent(dto.email),
-    );
 
     return {
       message:

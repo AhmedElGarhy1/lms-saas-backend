@@ -13,12 +13,12 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { PermissionScope } from '../constants/permissions';
 import {
-  RoleEvents,
   CreateRoleEvent,
   UpdateRoleEvent,
   DeleteRoleEvent,
 } from '@/modules/access-control/events/role.events';
-import { AccessControlEvents } from '@/modules/access-control/events/access-control.events';
+import { RoleEvents } from '@/shared/events/role.events.enum';
+import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 
 @Injectable()
 export class RolesService {

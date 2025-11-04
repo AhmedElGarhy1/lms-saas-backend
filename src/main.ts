@@ -7,6 +7,8 @@ import { useContainer } from 'class-validator';
 import { UserMiddleware } from './shared/common/middleware/user.middleware';
 import { UserService } from './modules/user/services/user.service';
 import { TransactionPerformanceInterceptor } from './modules/health';
+import { RedisIoAdapter } from './modules/notifications/adapters/redis-io.adapter';
+import { RedisService } from './shared/modules/redis/redis.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -74,6 +76,10 @@ async function bootstrap() {
   );
 
   console.log('OpenAPI spec exported to', `${__dirname}/openapi.json`);
+
+  // Configure Redis adapter for Socket.IO (horizontal scaling)
+  const redisService = app.get(RedisService);
+  app.useWebSocketAdapter(new RedisIoAdapter(redisService, app));
 
   await app.listen(3000);
   console.log(`🚀 App running on: ${await app.getUrl()}`);

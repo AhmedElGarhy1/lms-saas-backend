@@ -6,8 +6,8 @@ import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
 import {
   GrantUserAccessEvent,
   RevokeUserAccessEvent,
-  AccessControlEvents,
 } from '../events/access-control.events';
+import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 
 @Injectable()
 export class UserAccessListener {

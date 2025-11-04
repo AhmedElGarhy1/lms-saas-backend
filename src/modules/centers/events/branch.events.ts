@@ -2,13 +2,6 @@ import { Branch } from '@/modules/centers/entities/branch.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { CreateBranchDto } from '@/modules/centers/dto/create-branch.dto';
 
-export enum BranchEvents {
-  CREATED = 'branch.created',
-  UPDATED = 'branch.updated',
-  DELETED = 'branch.deleted',
-  RESTORED = 'branch.restored',
-}
-
 export class BranchCreatedEvent {
   constructor(
     public readonly branch: Branch,

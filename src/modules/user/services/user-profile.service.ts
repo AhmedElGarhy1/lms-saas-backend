@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Optional } from '@nestjs/common';
 import { UserProfile } from '../entities/user-profile.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { LoggerService } from '@/shared/services/logger.service';
@@ -16,6 +16,7 @@ import { Admin } from '@/modules/admin/entities/admin.entity';
 import { UserProfileRepository } from '../repositories/user-profile.repository';
 import { CentersService } from '@/modules/centers/services/centers.service';
 import { Role } from '@/modules/access-control/entities/role.entity';
+import { InAppNotificationService } from '@/modules/notifications/services/in-app-notification.service';
 
 @Injectable()
 export class UserProfileService {
@@ -27,6 +28,9 @@ export class UserProfileService {
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly centerService: CentersService,
     private readonly logger: LoggerService,
+    @Optional()
+    @Inject(forwardRef(() => InAppNotificationService))
+    private readonly inAppNotificationService?: InAppNotificationService,
   ) {}
 
   async listProfiles(actorUser: ActorUser): Promise<UserProfile[]> {
@@ -49,6 +53,7 @@ export class UserProfileService {
       ...user,
       profileType: actor.profileType,
       profile: null,
+      unreadNotificationCount: undefined, // Will be set below if InAppNotificationService is available
     };
 
     if (!actor.userProfileId) return returnData;
@@ -86,6 +91,23 @@ export class UserProfileService {
 
     returnData.profile = profile;
     returnData.profileType = actor.profileType;
+
+    // Add unread notification count if service is available
+    if (this.inAppNotificationService) {
+      try {
+        returnData.unreadNotificationCount =
+          await this.inAppNotificationService.getUnreadCount(
+            actor.id,
+            actor.profileType,
+            actor.userProfileId,
+          );
+      } catch (error) {
+        this.logger.warn(
+          `Failed to get unread notification count: ${error instanceof Error ? error.message : String(error)}`,
+          'UserProfileService',
+        );
+      }
+    }
 
     this.logger.log(`Returning profile for user: ${actor.id}`);
 

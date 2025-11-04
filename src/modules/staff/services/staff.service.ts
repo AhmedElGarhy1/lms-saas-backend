@@ -10,17 +10,15 @@ import { PaginateStaffDto } from '../dto/paginate-staff.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { User } from '@/modules/user/entities/user.entity';
 import { Staff } from '../entities/staff.entity';
-import {
-  CreateStaffEvent,
-  StaffEvents,
-} from '@/modules/staff/events/staff.events';
+import { CreateStaffEvent } from '@/modules/staff/events/staff.events';
+import { StaffEvents } from '@/shared/events/staff.events.enum';
 import {
   UpdateUserEvent,
   DeleteUserEvent,
   RestoreUserEvent,
   ActivateUserEvent,
-  UserEvents,
 } from '@/modules/user/events/user.events';
+import { UserEvents } from '@/shared/events/user.events.enum';
 import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()

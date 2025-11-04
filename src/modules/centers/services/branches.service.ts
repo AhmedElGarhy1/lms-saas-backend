@@ -12,8 +12,8 @@ import {
   BranchUpdatedEvent,
   BranchDeletedEvent,
   BranchRestoredEvent,
-  BranchEvents,
 } from '@/modules/centers/events/branch.events';
+import { BranchEvents } from '@/shared/events/branch.events.enum';
 
 @Injectable()
 export class BranchesService {

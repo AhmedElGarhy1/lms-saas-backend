@@ -26,12 +26,11 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import {
-  PasswordChangedEvent,
-  AuthEvents,
-} from '@/modules/auth/events/auth.events';
+import { PasswordChangedEvent } from '@/modules/auth/events/auth.events';
+import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
-import { ActivateUserEvent, UserEvents } from '../events/user.events';
+import { ActivateUserEvent } from '../events/user.events';
+import { UserEvents } from '@/shared/events/user.events.enum';
 
 @Injectable()
 export class UserService {

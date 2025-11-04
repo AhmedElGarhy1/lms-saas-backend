@@ -10,17 +10,15 @@ import { PaginateAdminDto } from '../dto/paginate-admin.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { User } from '@/modules/user/entities/user.entity';
 import { Admin } from '../entities/admin.entity';
-import {
-  CreateAdminEvent,
-  AdminEvents,
-} from '@/modules/admin/events/admin.events';
+import { CreateAdminEvent } from '@/modules/admin/events/admin.events';
+import { AdminEvents } from '@/shared/events/admin.events.enum';
 import {
   UpdateUserEvent,
   DeleteUserEvent,
   RestoreUserEvent,
   ActivateUserEvent,
-  UserEvents,
 } from '@/modules/user/events/user.events';
+import { UserEvents } from '@/shared/events/user.events.enum';
 
 @Injectable()
 export class AdminService {

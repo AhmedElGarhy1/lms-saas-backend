@@ -4,9 +4,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { EmailVerificationRepository } from '../repositories/email-verification.repository';
-import { MailerService } from '../../../shared/services/mailer.service';
 import { LoggerService } from '../../../shared/services/logger.service';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { AuthEvents } from '@/shared/events/auth.events.enum';
+import { EmailVerificationRequestedEvent } from '../events/auth.events';
 import * as crypto from 'crypto';
 import { Transactional } from '@nestjs-cls/transactional';
 
@@ -21,9 +23,9 @@ export interface CreateEmailVerificationData {
 export class EmailVerificationService {
   constructor(
     private readonly emailVerificationRepository: EmailVerificationRepository,
-    private readonly mailerService: MailerService,
     private readonly logger: LoggerService,
     private readonly configService: ConfigService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async createEmailVerification(data: CreateEmailVerificationData) {
@@ -96,27 +98,33 @@ export class EmailVerificationService {
     };
   }
 
-  async sendVerificationEmail(userId: string, email: string): Promise<void> {
+  async sendVerificationEmail(
+    userId: string,
+    email: string,
+    name?: string,
+  ): Promise<void> {
     const verification = await this.createEmailVerification({ userId, email });
 
-    const verificationUrl = `${this.configService.get('FRONTEND_URL')}/verify-email?token=${verification.token}`;
+    const verificationUrl = `${this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000')}/verify-email?token=${verification.token}`;
+    const expiresIn = this.configService.get<string>(
+      'EMAIL_VERIFICATION_EXPIRES_HOURS',
+      '24',
+    );
 
-    const html = `
-      <h2>Email Verification</h2>
-      <p>Please verify your email address by clicking the link below:</p>
-      <a href="${verificationUrl}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
-      <p>This link will expire in 24 hours.</p>
-      <p>Best regards,<br>LMS Team</p>
-    `;
-
-    await this.mailerService.sendMail(
-      email,
-      'Verify Your Email Address - LMS',
-      html,
+    // Emit event for notification system
+    await this.eventEmitter.emitAsync(
+      AuthEvents.EMAIL_VERIFICATION_REQUESTED,
+      new EmailVerificationRequestedEvent(
+        userId,
+        email,
+        verification.token,
+        verificationUrl,
+        name,
+      ),
     );
 
     this.logger.log(
-      `Verification email sent to: ${email}`,
+      `Email verification event emitted to: ${email}`,
       'EmailVerificationService',
       {
         userId,
@@ -125,12 +133,16 @@ export class EmailVerificationService {
     );
   }
 
-  async resendVerificationEmail(userId: string, email: string): Promise<void> {
+  async resendVerificationEmail(
+    userId: string,
+    email: string,
+    name?: string,
+  ): Promise<void> {
     // Delete any existing verification tokens for this user
     await this.emailVerificationRepository.deleteExpiredVerifications();
 
     // Create new verification
-    await this.sendVerificationEmail(userId, email);
+    await this.sendVerificationEmail(userId, email, name);
   }
 
   private generateVerificationToken(): string {

@@ -3,14 +3,6 @@ import { UpdateUserDto } from '@/modules/user/dto/update-user.dto';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { CreateUserDto } from '../dto/create-user.dto';
 
-export enum UserEvents {
-  CREATE = 'user.create',
-  UPDATE = 'user.update',
-  DELETE = 'user.delete',
-  RESTORE = 'user.restore',
-  ACTIVATE = 'user.activate',
-}
-
 export class CreateUserEvent {
   constructor(
     public readonly dto: CreateUserDto,

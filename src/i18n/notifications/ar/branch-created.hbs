@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="{{locale}}" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تم إنشاء الفرع بنجاح</title>
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; line-height: 1.8; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; direction: rtl;">
+  <div style="background-color: #f4f4f4; padding: 20px; border-radius: 5px;">
+    <h1 style="color: #007bff;">تم إنشاء الفرع بنجاح</h1>
+    <p>مرحباً،</p>
+    <p>تم إضافة فرع جديد إلى مركزك بنجاح!</p>
+    {{#if branch}}
+    <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+      <h2 style="color: #007bff; margin-top: 0;">تفاصيل الفرع:</h2>
+      <p><strong>الاسم:</strong> {{branch.name}}</p>
+      {{#if branch.address}}
+      <p><strong>العنوان:</strong> {{branch.address}}</p>
+      {{/if}}
+      {{#if branch.phone}}
+      <p><strong>الهاتف:</strong> {{branch.phone}}</p>
+      {{/if}}
+      {{#if branch.email}}
+      <p><strong>البريد الإلكتروني:</strong> {{branch.email}}</p>
+      {{/if}}
+      {{#if branch.center}}
+      <p><strong>المركز:</strong> {{branch.center.name}}</p>
+      {{/if}}
+    </div>
+    {{/if}}
+    <p>يمكنك الآن إدارة هذا الفرع وتعيين الموظفين.</p>
+    {{#if link}}
+    <a href="{{link}}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px;">عرض الفرع</a>
+    {{/if}}
+    <p style="margin-top: 30px; color: #666; font-size: 12px;">مع أطيب التحيات،<br>فريق نظام إدارة التعلم</p>
+  </div>
+</body>
+</html>
+
+
+

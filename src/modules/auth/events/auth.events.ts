@@ -1,16 +1,5 @@
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 
-export enum AuthEvents {
-  USER_LOGGED_IN = 'user.logged.in',
-  USER_LOGGED_OUT = 'user.logged.out',
-  PASSWORD_CHANGED = 'password.changed',
-  EMAIL_VERIFIED = 'email.verified',
-  PASSWORD_RESET_REQUESTED = 'password.reset.requested',
-  TWO_FA_SETUP = 'two.fa.setup',
-  TWO_FA_ENABLED = 'two.fa.enabled',
-  TWO_FA_DISABLED = 'two.fa.disabled',
-}
-
 export class UserLoggedInEvent {
   constructor(
     public readonly userId: string,
@@ -35,7 +24,33 @@ export class EmailVerifiedEvent {
 }
 
 export class PasswordResetRequestedEvent {
-  constructor(public readonly email: string) {}
+  constructor(
+    public readonly email: string,
+    public readonly userId?: string,
+    public readonly name?: string,
+    public readonly token?: string,
+    public readonly resetUrl?: string,
+  ) {}
+}
+
+export class EmailVerificationRequestedEvent {
+  constructor(
+    public readonly userId: string,
+    public readonly email: string,
+    public readonly token: string,
+    public readonly verificationUrl: string,
+    public readonly name?: string,
+  ) {}
+}
+
+export class OtpSentEvent {
+  constructor(
+    public readonly userId: string,
+    public readonly otpCode: string,
+    public readonly expiresIn: number, // in minutes
+    public readonly email?: string,
+    public readonly phone?: string,
+  ) {}
 }
 
 export class TwoFactorSetupEvent {

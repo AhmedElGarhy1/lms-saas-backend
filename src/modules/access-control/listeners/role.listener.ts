@@ -6,18 +6,16 @@ import { RoleActivityType } from '../enums/role-activity-type.enum';
 import {
   AssignRoleEvent,
   RevokeRoleEvent,
-  AccessControlEvents,
 } from '../events/access-control.events';
+import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 import {
   CreateRoleEvent,
   UpdateRoleEvent,
   DeleteRoleEvent,
-  RoleEvents,
 } from '../events/role.events';
-import {
-  AssignCenterOwnerEvent,
-  CenterEvents,
-} from '@/modules/centers/events/center.events';
+import { RoleEvents } from '@/shared/events/role.events.enum';
+import { AssignCenterOwnerEvent } from '@/modules/centers/events/center.events';
+import { CenterEvents } from '@/shared/events/center.events.enum';
 import { createOwnerRoleData, DefaultRoles } from '../constants/roles';
 import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { RolesRepository } from '../repositories/roles.repository';

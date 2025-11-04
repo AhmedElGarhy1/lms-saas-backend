@@ -62,3 +62,11 @@
 [ ] consider using prisma instead of typeorm
 
 [ ] disable center actions in case of inactive
+Caching in RecipientResolverService - Cache frequent center queries (centerId + profileType) for a few minutes -⚙️ Medium - When centers have 1k+ users
+[] Template existence validation - Ensure template files exist before dispatching - ⚙️ Low When template library grows
+[] Dynamic concurrency scaling - Adjust concurrency automatically based on system load - ⚙️ Low - Under heavy background queue load
+[] Bulk notification insertion - Batch insert DB writes for IN_APP channel - ⚙️ Medium–High - If DB write latency increases
+[] NotificationPolicyService - Central config for “who gets notified for what” - ⚙️ High When event count > 10 types
+[] Analytics hooks - Add metrics like success/failure rate per event type - ⚙️ Medium - After you set up metrics stack
+
+[] Generate the EventMap automatically (Advanced) for event emitter type safty

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="{{locale}}" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تم إنشاء المركز بنجاح</title>
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; line-height: 1.8; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; direction: rtl;">
+  <div style="background-color: #f4f4f4; padding: 20px; border-radius: 5px;">
+    <h1 style="color: #007bff;">تم إنشاء المركز بنجاح</h1>
+    <p>مرحباً {{#if userData.name}}{{userData.name}}{{else}}عزيزي{{/if}},</p>
+    <p>تم إنشاء مركز التعلم الخاص بك بنجاح!</p>
+    {{#if center}}
+    <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+      <h2 style="color: #007bff; margin-top: 0;">تفاصيل المركز:</h2>
+      <p><strong>الاسم:</strong> {{center.name}}</p>
+      {{#if center.address}}
+      <p><strong>العنوان:</strong> {{center.address}}</p>
+      {{/if}}
+      {{#if center.phone}}
+      <p><strong>الهاتف:</strong> {{center.phone}}</p>
+      {{/if}}
+      {{#if center.email}}
+      <p><strong>البريد الإلكتروني:</strong> {{center.email}}</p>
+      {{/if}}
+    </div>
+    {{/if}}
+    <p>يمكنك الآن البدء في إدارة مركزك، وإضافة الفروع والموظفين والطلاب.</p>
+    {{#if link}}
+    <a href="{{link}}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px;">إدارة المركز</a>
+    {{/if}}
+    <p style="margin-top: 30px; color: #666; font-size: 12px;">مع أطيب التحيات،<br>فريق نظام إدارة التعلم</p>
+  </div>
+</body>
+</html>
+
+
+

@@ -20,7 +20,7 @@ import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { BranchAccessDto } from '../dto/branch-access.dto';
 import { BranchAccessRepository } from '../repositories/branch-access.repository';
-import { AccessControlEvents } from '@/modules/access-control/events/access-control.events';
+import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 
 @Injectable()
 export class AccessControlService {

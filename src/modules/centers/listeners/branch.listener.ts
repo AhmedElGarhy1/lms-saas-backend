@@ -3,8 +3,10 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { BranchesService } from '../services/branches.service';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { CenterActivityType } from '../enums/center-activity-type.enum';
-import { CreateCenterBranchEvent, CenterEvents } from '../events/center.events';
-import { BranchEvents, BranchCreatedEvent } from '../events/branch.events';
+import { CreateCenterBranchEvent } from '../events/center.events';
+import { CenterEvents } from '@/shared/events/center.events.enum';
+import { BranchCreatedEvent } from '../events/branch.events';
+import { BranchEvents } from '@/shared/events/branch.events.enum';
 
 @Injectable()
 export class BranchListener {

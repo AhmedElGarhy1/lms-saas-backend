@@ -1,0 +1,6 @@
+export enum NotificationGroup {
+  SYSTEM = 'SYSTEM',
+  PROMOTIONS = 'PROMOTIONS',
+  SECURITY = 'SECURITY',
+  MANAGEMENT = 'MANAGEMENT',
+}

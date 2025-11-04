@@ -4,15 +4,17 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
-import { CreateStaffEvent, StaffEvents } from '../events/staff.events';
+import { CreateStaffEvent } from '../events/staff.events';
+import { StaffEvents } from '@/shared/events/staff.events.enum';
 import {
   GrantCenterAccessEvent,
   GrantUserAccessEvent,
   AssignRoleEvent,
-  AccessControlEvents,
 } from '@/modules/access-control/events/access-control.events';
+import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 import { UserProfile } from '@/modules/user/entities/user-profile.entity';
-import { CreateUserEvent, UserEvents } from '@/modules/user/events/user.events';
+import { CreateUserEvent } from '@/modules/user/events/user.events';
+import { UserEvents } from '@/shared/events/user.events.enum';
 import { User } from '@/modules/user/entities/user.entity';
 
 @Injectable()

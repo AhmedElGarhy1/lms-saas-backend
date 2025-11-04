@@ -10,15 +10,13 @@ import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import {
   CreateCenterEvent,
   AssignCenterOwnerEvent,
-  CenterEvents,
   CreateCenterBranchEvent,
 } from '@/modules/centers/events/center.events';
-import {
-  GrantCenterAccessEvent,
-  AccessControlEvents,
-} from '@/modules/access-control/events/access-control.events';
+import { CenterEvents } from '@/shared/events/center.events.enum';
+import { GrantCenterAccessEvent } from '@/modules/access-control/events/access-control.events';
+import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 import { CreateUserEvent } from '@/modules/user/events/user.events';
-import { UserEvents } from '@/modules/user/events/user.events';
+import { UserEvents } from '@/shared/events/user.events.enum';
 import { UserProfile } from '@/modules/user/entities/user-profile.entity';
 import { User } from '@/modules/user/entities/user.entity';
 

@@ -43,6 +43,12 @@ import { StaffModule } from './modules/staff/staff.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ProfilesModule } from './modules/profiles/profiles.module';
 import { ProfileGuard } from './shared/common/guards/profile.guard';
+import { NotificationModule } from './modules/notifications/notifications.module';
+import { BullModule } from '@nestjs/bullmq';
+import { RedisModule } from './shared/modules/redis/redis.module';
+import { RedisService } from './shared/modules/redis/redis.service';
+import { validateEnv } from './shared/config/env.validation';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -55,6 +61,7 @@ import { ProfileGuard } from './shared/common/guards/profile.guard';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      validate: validateEnv,
     }),
     WinstonModule.forRoot({
       transports: [
@@ -91,6 +98,15 @@ import { ProfileGuard } from './shared/common/guards/profile.guard';
       ],
     }),
     SharedModule,
+    RedisModule,
+    ScheduleModule.forRoot(),
+    BullModule.forRootAsync({
+      imports: [RedisModule],
+      useFactory: (redisService: RedisService) => ({
+        connection: redisService.getClient(),
+      }),
+      inject: [RedisService],
+    }),
     AuthModule,
     UserModule,
     StaffModule,
@@ -102,6 +118,7 @@ import { ProfileGuard } from './shared/common/guards/profile.guard';
     SeederModule,
     LocaleModule,
     HealthModule,
+    NotificationModule,
   ],
   controllers: [],
   providers: [

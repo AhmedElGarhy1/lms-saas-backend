@@ -4,10 +4,12 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PasswordResetRepository } from '../repositories/password-reset.repository';
-import { MailerService } from '../../../shared/services/mailer.service';
 import { LoggerService } from '../../../shared/services/logger.service';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../../user/services/user.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { AuthEvents } from '@/shared/events/auth.events.enum';
+import { PasswordResetRequestedEvent } from '../events/auth.events';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { Transactional } from '@nestjs-cls/transactional';
@@ -23,10 +25,10 @@ export interface CreatePasswordResetData {
 export class PasswordResetService {
   constructor(
     private readonly passwordResetRepository: PasswordResetRepository,
-    private readonly mailerService: MailerService,
     private readonly logger: LoggerService,
     private readonly configService: ConfigService,
     private readonly userService: UserService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async createPasswordResetToken(data: CreatePasswordResetData) {
@@ -119,14 +121,26 @@ export class PasswordResetService {
       email: user.email || '',
     });
 
-    await this.mailerService.sendPasswordReset(
-      email,
-      user.name,
-      resetToken.token,
+    const resetUrl = `${this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000')}/reset-password?token=${resetToken.token}`;
+    const expiresIn = this.configService.get<string>(
+      'PASSWORD_RESET_EXPIRES_HOURS',
+      '1',
+    );
+
+    // Emit event for notification system
+    await this.eventEmitter.emitAsync(
+      AuthEvents.PASSWORD_RESET_REQUESTED,
+      new PasswordResetRequestedEvent(
+        email,
+        user.id,
+        user.name,
+        resetToken.token,
+        resetUrl,
+      ),
     );
 
     this.logger.log(
-      `Password reset email sent to: ${email}`,
+      `Password reset event emitted for: ${email}`,
       'PasswordResetService',
       {
         userId: user.id,

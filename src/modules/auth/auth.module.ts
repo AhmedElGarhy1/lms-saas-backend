@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthService } from './services/auth.service';
 import { EmailVerificationService } from './services/email-verification.service';
 import { PasswordResetService } from './services/password-reset.service';
@@ -25,6 +26,7 @@ import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.mo
     UserModule,
     TypeOrmModule.forFeature([User, EmailVerification, PasswordResetToken]),
     ActivityLogModule,
+    EventEmitterModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
