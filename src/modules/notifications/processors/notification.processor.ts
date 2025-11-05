@@ -4,6 +4,7 @@ import { Job } from 'bullmq';
 import { NotificationJobData } from '../types/notification-job-data.interface';
 import { NotificationSenderService } from '../services/notification-sender.service';
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
+import { NotificationLog } from '../entities/notification-log.entity';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationPayload } from '../types/notification-payload.interface';
 import { LoggerService } from '@/shared/services/logger.service';
@@ -156,16 +157,41 @@ export class NotificationProcessor extends WorkerHost {
 
       // Update notification log if exists
       if (userId) {
-        const logs = await this.logRepository.findMany({
-          where: {
-            userId,
-            type,
-            channel,
-            status: NotificationStatus.PENDING,
-          },
-          order: { createdAt: 'DESC' },
-          take: 1,
-        });
+        const jobId = job.id || (job.data?.data?.jobId as string | undefined);
+
+        // First try to find by jobId if available
+        let logs: NotificationLog[] = [];
+        if (jobId) {
+          logs = await this.logRepository.findMany({
+            where: {
+              jobId: jobId,
+            },
+            order: { createdAt: 'DESC' },
+            take: 1,
+          });
+        }
+
+        // Fallback to search by userId, type, channel, and status (PENDING or RETRYING)
+        if (logs.length === 0) {
+          logs = await this.logRepository.findMany({
+            where: [
+              {
+                userId,
+                type,
+                channel,
+                status: NotificationStatus.PENDING,
+              },
+              {
+                userId,
+                type,
+                channel,
+                status: NotificationStatus.RETRYING,
+              },
+            ],
+            order: { createdAt: 'DESC' },
+            take: 1,
+          });
+        }
 
         if (logs.length > 0) {
           const log = logs[0];
@@ -256,16 +282,33 @@ export class NotificationProcessor extends WorkerHost {
 
     // Update notification log if exists to mark as permanently failed
     if (userId) {
-      const logs = await this.logRepository.findMany({
-        where: {
-          userId,
-          type,
-          channel,
-          status: NotificationStatus.RETRYING,
-        },
-        order: { createdAt: 'DESC' },
-        take: 1,
-      });
+      const jobId = job.id || (job.data?.data?.jobId as string | undefined);
+
+      // First try to find by jobId if available
+      let logs: NotificationLog[] = [];
+      if (jobId) {
+        logs = await this.logRepository.findMany({
+          where: {
+            jobId: jobId,
+          },
+          order: { createdAt: 'DESC' },
+          take: 1,
+        });
+      }
+
+      // Fallback to search by userId, type, channel, and RETRYING status
+      if (logs.length === 0) {
+        logs = await this.logRepository.findMany({
+          where: {
+            userId,
+            type,
+            channel,
+            status: NotificationStatus.RETRYING,
+          },
+          order: { createdAt: 'DESC' },
+          take: 1,
+        });
+      }
 
       if (logs.length > 0) {
         const log = logs[0];

@@ -131,6 +131,7 @@ export class PasswordResetService {
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.PASSWORD_RESET_REQUESTED,
       new PasswordResetRequestedEvent(
+        null as any,
         email,
         user.id,
         user.name,

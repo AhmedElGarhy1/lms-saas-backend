@@ -16,8 +16,10 @@ export class WebSocketAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    console.log('guard canActivate');
     const client: Socket = context.switchToWs().getClient();
     const token = this.extractToken(client);
+    console.log('token', token);
 
     if (!token) {
       throw new WsException('Unauthorized: No token provided');
@@ -46,7 +48,16 @@ export class WebSocketAuthGuard implements CanActivate {
       // Attach user info to socket
       client.data.userId = payload.sub;
       client.data.user = user;
-
+      console.log('client.data', client.data);
+      console.log('payload', payload);
+      console.log('user', user);
+      console.log('client', client);
+      console.log('client.data', client.data);
+      console.log('client.data.userId', client.data.userId);
+      console.log('client.data.user', client.data.user);
+      console.log('client.data.user.id', client.data.user.id);
+      console.log('client.data.user.email', client.data.user.email);
+      console.log('client.data.user.name', client.data.user.name);
       return true;
     } catch (error) {
       if (error instanceof WsException) {

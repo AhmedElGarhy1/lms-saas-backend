@@ -19,6 +19,8 @@ import {
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
+import { MoreThan } from 'typeorm';
+import { NotificationType } from '../enums/notification-type.enum';
 
 interface ExtractedNotificationData {
   title: string;
@@ -78,29 +80,50 @@ export class InAppAdapter implements NotificationAdapter {
       // 1. Extract notification data from payload
       const notificationData = this.extractNotificationData(payload);
 
-      // 2. Create notification entity
+      // 2. Check for duplicate notification before creating
+      const isDuplicate = await this.checkDuplicateNotification(
+        payload,
+        payload.type,
+      );
+
+      if (isDuplicate) {
+        this.logger.debug(
+          `Duplicate notification detected for user ${payload.userId}, type ${payload.type}, skipping creation`,
+          'InAppAdapter',
+          {
+            userId: payload.userId,
+            type: payload.type,
+            profileType: payload.profileType,
+            profileId: payload.profileId,
+            correlationId: payload.correlationId,
+          },
+        );
+        return; // Skip duplicate notification
+      }
+
+      // 3. Create notification entity
       const notification = await this.createNotificationEntity(
         payload,
         notificationData,
       );
 
-      // 3. Emit created event
+      // 4. Emit created event
       this.emitCreatedEvent(notification, payload.userId!, payload);
 
-      // 4. Deliver via WebSocket with retry logic
+      // 5. Deliver via WebSocket with retry logic
       const deliveryResult = await this.deliverWithRetry(
         payload.userId!,
         notification,
         startTime,
       );
 
-      // 5. Update notification status in database
+      // 6. Update notification status in database
       await this.updateNotificationStatus(
         notification,
         deliveryResult.delivered,
       );
 
-      // 6. Create audit log
+      // 7. Create audit log
       await this.createAuditLog(
         payload,
         notification,
@@ -108,7 +131,7 @@ export class InAppAdapter implements NotificationAdapter {
         startTime,
       );
 
-      // 7. Track metrics
+      // 8. Track metrics
       await this.trackMetrics(
         payload.userId!,
         payload,
@@ -116,7 +139,7 @@ export class InAppAdapter implements NotificationAdapter {
         startTime,
       );
 
-      // 8. Emit delivery events
+      // 9. Emit delivery events
       this.emitDeliveryEvent(
         notification,
         payload.userId!,
@@ -124,7 +147,7 @@ export class InAppAdapter implements NotificationAdapter {
         deliveryResult,
       );
 
-      // 9. Log final status
+      // 10. Log final status
       this.logFinalStatus(notification, payload, deliveryResult, startTime);
     } catch (error) {
       const errorMessage =
@@ -189,6 +212,44 @@ export class InAppAdapter implements NotificationAdapter {
       icon,
       expiresAt,
     };
+  }
+
+  /**
+   * Check if a duplicate notification exists for this user/event
+   * Prevents duplicate notifications within a short time window
+   */
+  private async checkDuplicateNotification(
+    payload: NotificationPayload,
+    type: NotificationType,
+  ): Promise<boolean> {
+    const { userId, profileType, profileId } = payload;
+
+    if (!userId) {
+      return false;
+    }
+
+    const fiveSecondsAgo = new Date(Date.now() - 5000);
+
+    const where: any = {
+      userId,
+      type,
+      createdAt: MoreThan(fiveSecondsAgo),
+    };
+
+    if (profileType) {
+      where.profileType = profileType;
+      if (profileId) {
+        where.profileId = profileId;
+      }
+    }
+
+    const existing = await this.notificationRepository.findMany({
+      where,
+      order: { createdAt: 'DESC' },
+      take: 1,
+    });
+
+    return existing.length > 0;
   }
 
   /**

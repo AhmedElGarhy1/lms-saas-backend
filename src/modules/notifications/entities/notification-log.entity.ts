@@ -1,5 +1,13 @@
-import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
-import { BaseEntity } from '@/shared/common/entities/base.entity';
+import {
+  Entity,
+  Column,
+  Index,
+  ManyToOne,
+  JoinColumn,
+  UpdateDateColumn,
+  CreateDateColumn,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
@@ -17,7 +25,10 @@ import { NotificationType } from '../enums/notification-type.enum';
 @Index(['userId', 'centerId', 'status'])
 @Index(['userId', 'profileType', 'profileId'])
 @Index(['profileType', 'profileId'])
-export class NotificationLog extends BaseEntity {
+export class NotificationLog {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
   @Column({ type: 'varchar', length: 100 })
   type: NotificationType;
 
@@ -58,6 +69,10 @@ export class NotificationLog extends BaseEntity {
   @Column({ type: 'timestamp', nullable: true })
   lastAttemptAt?: Date;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Index(['jobId'])
+  jobId?: string;
+
   // Relations
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'userId' })
@@ -66,4 +81,10 @@ export class NotificationLog extends BaseEntity {
   @ManyToOne(() => Center, { nullable: true })
   @JoinColumn({ name: 'centerId' })
   center?: Center;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

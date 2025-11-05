@@ -1,4 +1,14 @@
-import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  Index,
+  ManyToOne,
+  JoinColumn,
+  PrimaryGeneratedColumn,
+  DeleteDateColumn,
+  UpdateDateColumn,
+  CreateDateColumn,
+} from 'typeorm';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { User } from '@/modules/user/entities/user.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
@@ -18,7 +28,10 @@ export enum NotificationStatus {
 @Index(['userId', 'createdAt'])
 @Index(['userId', 'profileType', 'profileId'])
 @Index(['createdAt'])
-export class Notification extends BaseEntity {
+export class Notification {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
   @Column({ type: 'uuid' })
   userId: string;
 
@@ -84,4 +97,10 @@ export class Notification extends BaseEntity {
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
   user: User;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

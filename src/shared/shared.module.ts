@@ -11,11 +11,16 @@ import { HealthService } from './services/health.service';
 import { TypeOrmExceptionFilter } from './common/filters/typeorm-exception.filter';
 import { RedisModule } from './modules/redis/redis.module';
 import { TypeSafeEventEmitter } from './services/type-safe-event-emitter.service';
-import { CommandGuard } from './common/guards/command.guard';
 
 @Global()
 @Module({
-  imports: [ConfigModule, WinstonModule, ActivityLogModule, RedisModule, EventEmitterModule],
+  imports: [
+    ConfigModule,
+    WinstonModule,
+    ActivityLogModule,
+    RedisModule,
+    EventEmitterModule,
+  ],
   controllers: [HealthController],
   providers: [
     LoggerService,
@@ -24,7 +29,6 @@ import { CommandGuard } from './common/guards/command.guard';
     HealthService,
     TypeOrmExceptionFilter,
     TypeSafeEventEmitter,
-    CommandGuard,
   ],
   exports: [
     LoggerService,
@@ -34,7 +38,6 @@ import { CommandGuard } from './common/guards/command.guard';
     ConfigModule,
     RedisModule,
     TypeSafeEventEmitter,
-    CommandGuard,
   ],
 })
 export class SharedModule {}

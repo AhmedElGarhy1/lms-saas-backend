@@ -114,6 +114,7 @@ export class EmailVerificationService {
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.EMAIL_VERIFICATION_REQUESTED,
       new EmailVerificationRequestedEvent(
+        null as any,
         userId,
         email,
         verification.token,

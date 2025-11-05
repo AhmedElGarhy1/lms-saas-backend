@@ -81,3 +81,4 @@ Caching in RecipientResolverService - Cache frequent center queries (centerId + 
 [ ] see who we handle and what is hte diffrence between logs and activity_logs and notifications
 [ ] update notifications to cover all existing modules events
 [ ] (frontend) Data flow: ⚠️ Needs standardization (28 violations)
+[ ] notifications register user connection first when he opens (there is a problem in sending notifications because of redis not found user connection)

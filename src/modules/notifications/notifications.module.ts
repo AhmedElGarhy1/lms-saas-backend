@@ -41,10 +41,7 @@ import { RecipientResolverService } from './services/recipient-resolver.service'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      NotificationLog,
-      Notification,
-    ]),
+    TypeOrmModule.forFeature([NotificationLog, Notification]),
     UserModule,
     JwtModule,
     AuthModule,
@@ -100,10 +97,7 @@ import { RecipientResolverService } from './services/recipient-resolver.service'
     ChannelSelectionService,
     RecipientResolverService,
   ],
-  controllers: [
-    NotificationHistoryController,
-    InAppNotificationController,
-  ],
+  controllers: [NotificationHistoryController, InAppNotificationController],
   exports: [
     NotificationService,
     EmailAdapter, // Export for backward compatibility during migration

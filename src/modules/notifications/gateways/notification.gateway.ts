@@ -6,8 +6,7 @@ import {
   SubscribeMessage,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { UseGuards, Logger } from '@nestjs/common';
-import { WebSocketAuthGuard } from '../guards/websocket-auth.guard';
+import { Logger } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { Notification } from '../entities/notification.entity';
 import { LoggerService } from '@/shared/services/logger.service';
@@ -39,7 +38,6 @@ const MAX_RECONCILE_CONNECTIONS = 10000;
   },
   namespace: '/notifications',
 })
-@UseGuards(WebSocketAuthGuard)
 export class NotificationGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
@@ -85,6 +83,7 @@ export class NotificationGateway
   async handleConnection(client: Socket) {
     const socketData = client.data as SocketData;
     const userId = socketData.userId;
+    console.log('socketData', socketData);
     if (!userId || typeof userId !== 'string') {
       this.logger.warn('Connection attempt without userId');
       client.disconnect();
@@ -280,7 +279,6 @@ export class NotificationGateway
     // This is just acknowledgment - actual read status is updated via API
   }
 
-
   /**
    * Helper: Get active sockets for a user
    */
@@ -288,7 +286,6 @@ export class NotificationGateway
     const key = this.redisKey('connections', userId);
     return this.redisService.getClient().smembers(key);
   }
-
 
   /**
    * Helper: Emit notification to user's sockets
@@ -443,7 +440,6 @@ export class NotificationGateway
       this.config.rateLimit.ttl,
     );
   }
-
 
   /**
    * Update active connections metric using Redis counter

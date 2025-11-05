@@ -6,16 +6,15 @@ import { randomUUID } from 'crypto';
  * Events represent facts (what happened) and are result-oriented.
  */
 export abstract class BaseEvent {
-  public readonly actor?: ActorUser;
+  public readonly actor: ActorUser;
   public readonly correlationId: string;
   public readonly timestamp: Date;
   public readonly source?: string;
 
-  constructor(actor?: ActorUser, source?: string, correlationId?: string) {
+  constructor(actor: ActorUser, source?: string, correlationId?: string) {
     this.actor = actor;
     this.correlationId = correlationId || randomUUID(); // Use provided correlationId or generate new one
     this.timestamp = new Date();
     this.source = source;
   }
 }
-

@@ -105,4 +105,31 @@ export class NotificationListener {
       // Don't throw - graceful degradation, allow other events to process
     }
   }
+
+  @OnEvent(CenterEvents.CREATED)
+  async handleCenterCreated(event: CreateCenterEvent) {
+    const { actor } = event;
+    const recipient: RecipientInfo = {
+      userId: actor.id,
+      profileId: actor.userProfileId,
+      profileType: actor.profileType,
+      phone: actor.phone,
+      email: actor.email || null,
+    };
+    await this.handleNotification(CenterEvents.CREATED, event, [recipient]);
+  }
+
+  @OnEvent(CenterEvents.UPDATED)
+  async handleCenterUpdated(event: UpdateCenterEvent) {
+    const { actor } = event;
+    const recipient: RecipientInfo = {
+      userId: actor.id,
+      profileId: actor.userProfileId,
+      profileType: actor.profileType,
+      phone: actor.phone,
+      email: actor.email || null,
+    };
+    console.log('recipient', recipient);
+    await this.handleNotification(CenterEvents.UPDATED, event, [recipient]);
+  }
 }

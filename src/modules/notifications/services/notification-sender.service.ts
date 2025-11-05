@@ -141,20 +141,56 @@ export class NotificationSenderService {
         locale,
       );
 
-      // Create log entry
-      notificationLog = await this.logRepository.create({
-        type: payload.type,
-        channel: payload.channel,
-        status: NotificationStatus.PENDING,
-        recipient: payload.recipient,
-        metadata: payload.data,
-        userId: payload.userId,
-        centerId: payload.centerId,
-        profileType: payload.profileType,
-        profileId: payload.profileId,
-        retryCount: 0,
-        lastAttemptAt: new Date(),
-      });
+      // Extract jobId from payload data if available (for retries)
+      const jobId = dataObj.jobId as string | undefined;
+
+      // Try to find existing log entry for this job (for retries)
+      if (jobId && payload.userId) {
+        const existingLogs = await this.logRepository.findMany({
+          where: {
+            jobId: jobId,
+            userId: payload.userId,
+            type: payload.type,
+            channel: payload.channel,
+          },
+          order: { createdAt: 'DESC' },
+          take: 1,
+        });
+
+        if (existingLogs.length > 0) {
+          notificationLog = existingLogs[0];
+          // Update existing log for retry
+          const currentRetryCount = (notificationLog.retryCount || 0) + 1;
+          await this.logRepository.update(notificationLog.id, {
+            status: NotificationStatus.RETRYING,
+            retryCount: currentRetryCount,
+            lastAttemptAt: new Date(),
+            // Clear previous error by omitting it (will remain as is if not set)
+          });
+        }
+      }
+
+      // Create new log entry only if we didn't find an existing one
+      if (!notificationLog) {
+        notificationLog = await this.logRepository.create({
+          type: payload.type,
+          channel: payload.channel,
+          status: NotificationStatus.PENDING,
+          recipient: payload.recipient,
+          metadata: {
+            ...payload.data,
+            jobId: jobId,
+            correlationId: payload.correlationId,
+          },
+          userId: payload.userId,
+          centerId: payload.centerId,
+          profileType: payload.profileType,
+          profileId: payload.profileId,
+          jobId: jobId, // Store jobId directly
+          retryCount: 0,
+          lastAttemptAt: new Date(),
+        });
+      }
 
       // Prepare payload with rendered content
       const sendPayload: NotificationPayload = {

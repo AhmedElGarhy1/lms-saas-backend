@@ -79,23 +79,12 @@ export class InAppNotificationService {
     profileType?: ProfileType | null,
     profileId?: string | null,
   ): Promise<number> {
-    const cacheKey = this.getCacheKey(userId, profileType, profileId);
-
-    // Try to get from cache
-    const cached = await this.redisService.get(cacheKey);
-    if (cached !== null) {
-      return parseInt(cached, 10);
-    }
-
     // Get from database
     const count = await this.notificationRepository.getUnreadCount(
       userId,
       profileType,
       profileId,
     );
-
-    // Cache the result
-    await this.redisService.set(cacheKey, count.toString(), this.CACHE_TTL);
 
     return count;
   }
@@ -122,14 +111,6 @@ export class InAppNotificationService {
           : null,
       ),
     );
-
-    void this.invalidateCache(userId).catch((err) =>
-      this.logger.error(
-        `Failed to invalidate cache for user ${userId}`,
-        err instanceof Error ? err.stack : undefined,
-        'InAppNotificationService',
-      ),
-    );
   }
 
   async markMultipleAsRead(
@@ -139,13 +120,6 @@ export class InAppNotificationService {
     await this.notificationRepository.markMultipleAsRead(
       notificationIds,
       userId,
-    );
-    void this.invalidateCache(userId).catch((err) =>
-      this.logger.error(
-        `Failed to invalidate cache for user ${userId}`,
-        err instanceof Error ? err.stack : undefined,
-        'InAppNotificationService',
-      ),
     );
   }
 
@@ -158,13 +132,6 @@ export class InAppNotificationService {
       userId,
       profileType,
       profileId,
-    );
-    void this.invalidateCache(userId, profileType, profileId).catch((err) =>
-      this.logger.error(
-        `Failed to invalidate cache for user ${userId}`,
-        err instanceof Error ? err.stack : undefined,
-        'InAppNotificationService',
-      ),
     );
   }
 
@@ -189,17 +156,6 @@ export class InAppNotificationService {
     );
   }
 
-  private getCacheKey(
-    userId: string,
-    profileType?: ProfileType | null,
-    profileId?: string | null,
-  ): string {
-    const parts = [this.redisKeyPrefix, 'notification:unread:count', userId];
-    if (profileType) parts.push(profileType);
-    if (profileId) parts.push(profileId);
-    return parts.join(':');
-  }
-
   /**
    * Check if user has exceeded rate limit for IN_APP notifications
    * Uses sliding window algorithm with channel-specific limits
@@ -221,27 +177,6 @@ export class InAppNotificationService {
   getRateLimitConfig(): { limit: number; windowSeconds: number } {
     return this.channelRateLimitService.getChannelRateLimitConfig(
       NotificationChannel.IN_APP,
-    );
-  }
-
-  private async invalidateCache(
-    userId: string,
-    profileType?: ProfileType | null,
-    profileId?: string | null,
-  ): Promise<void> {
-    const cacheKey = this.getCacheKey(userId, profileType, profileId);
-    await this.redisService.del(cacheKey);
-
-    // Also invalidate wildcard patterns (user-level cache)
-    const userLevelKey = this.getCacheKey(userId);
-    if (cacheKey !== userLevelKey) {
-      await this.redisService.del(userLevelKey);
-    }
-
-    this.logger.debug(
-      `Invalidated unread count cache for user ${userId}`,
-      undefined,
-      { userId },
     );
   }
 }
