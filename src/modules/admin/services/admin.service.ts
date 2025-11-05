@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AdminRepository } from '../repositories/admin.repository';
 import { UserService } from '@/modules/user/services/user.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
@@ -12,8 +11,7 @@ import { User } from '@/modules/user/entities/user.entity';
 import { Admin } from '../entities/admin.entity';
 import { CreateAdminEvent } from '@/modules/admin/events/admin.events';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
-// Note: User event emissions are now handled by command handlers
-// No need to import old event classes or emit events here
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 
 @Injectable()
 export class AdminService {
@@ -21,7 +19,7 @@ export class AdminService {
     private readonly adminRepository: AdminRepository,
     private readonly userService: UserService,
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   async createAdmin(dto: CreateAdminDto, actor: ActorUser): Promise<void> {
@@ -29,7 +27,7 @@ export class AdminService {
     const admin = await this.adminRepository.create({});
 
     // Emit event to create admin (listener handles everything)
-    await this.eventEmitter.emitAsync(
+    await this.typeSafeEventEmitter.emitAsync(
       AdminEvents.CREATE,
       new CreateAdminEvent(dto, actor, admin),
     );

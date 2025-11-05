@@ -7,9 +7,9 @@ import { PasswordResetRepository } from '../repositories/password-reset.reposito
 import { LoggerService } from '../../../shared/services/logger.service';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../../user/services/user.service';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { PasswordResetRequestedEvent } from '../events/auth.events';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { Transactional } from '@nestjs-cls/transactional';
@@ -28,7 +28,7 @@ export class PasswordResetService {
     private readonly logger: LoggerService,
     private readonly configService: ConfigService,
     private readonly userService: UserService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   async createPasswordResetToken(data: CreatePasswordResetData) {
@@ -128,7 +128,7 @@ export class PasswordResetService {
     );
 
     // Emit event for notification system
-    await this.eventEmitter.emitAsync(
+    await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.PASSWORD_RESET_REQUESTED,
       new PasswordResetRequestedEvent(
         email,

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { StaffRepository } from '../repositories/staff.repository';
 import { UserProfileService } from '@/modules/user/services/user-profile.service';
 import { UserService } from '@/modules/user/services/user.service';
@@ -14,6 +13,7 @@ import { CenterEvents } from '@/shared/events/center.events.enum';
 import { GrantCenterAccessEvent } from '@/modules/access-control/events/access-control.events';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 import { UserProfile } from '@/modules/user/entities/user-profile.entity';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 
 @Injectable()
 export class CenterListener {
@@ -21,7 +21,7 @@ export class CenterListener {
     private readonly staffRepository: StaffRepository,
     private readonly userProfileService: UserProfileService,
     private readonly userService: UserService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   @OnEvent(CenterEvents.CREATED)
@@ -36,7 +36,7 @@ export class CenterListener {
     // No need to manually log here as the domain event will trigger the activity log
 
     // Grant actor center access
-    await this.eventEmitter.emitAsync(
+    await this.typeSafeEventEmitter.emitAsync(
       AccessControlEvents.GRANT_CENTER_ACCESS,
       new GrantCenterAccessEvent(actor.userProfileId, center.id, actor),
     );
@@ -59,7 +59,7 @@ export class CenterListener {
       );
 
       // Grant staff center access
-      await this.eventEmitter.emitAsync(
+      await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.GRANT_CENTER_ACCESS,
         new GrantCenterAccessEvent(userProfile.id, center.id, actor),
       );
@@ -67,13 +67,13 @@ export class CenterListener {
 
     // Always emit ASSIGN_OWNER event to create owner role
     // Role will be assigned only if userProfile exists
-    await this.eventEmitter.emitAsync(
+    await this.typeSafeEventEmitter.emitAsync(
       CenterEvents.ASSIGN_OWNER,
       new AssignCenterOwnerEvent(center, userProfile, actor),
     );
 
     if (branchData) {
-      await this.eventEmitter.emitAsync(
+      await this.typeSafeEventEmitter.emitAsync(
         CenterEvents.CREATE_BRANCH,
         new CreateCenterBranchEvent(center, branchData, actor),
       );

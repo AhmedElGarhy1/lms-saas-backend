@@ -5,7 +5,6 @@ import {
   Injectable,
   forwardRef,
 } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   BusinessLogicException,
   InsufficientPermissionsException,
@@ -25,6 +24,7 @@ import {
   ActivateCenterAccessEvent,
   DeactivateCenterAccessEvent,
 } from '../events/access-control.events';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 
 @Injectable()
 export class AccessControlService {
@@ -34,7 +34,7 @@ export class AccessControlService {
     private readonly userAccessRepository: UserAccessRepository,
     private readonly centerAccessRepository: CenterAccessRepository,
     private readonly branchAccessRepository: BranchAccessRepository,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   async grantUserAccess(body: UserAccessDto): Promise<void> {
@@ -253,7 +253,7 @@ export class AccessControlService {
 
     // Emit event for activity logging
     if (isActive) {
-      await this.eventEmitter.emitAsync(
+      await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.ACTIVATE_CENTER_ACCESS,
         new ActivateCenterAccessEvent(
           body.userProfileId,
@@ -263,7 +263,7 @@ export class AccessControlService {
         ),
       );
     } else {
-      await this.eventEmitter.emitAsync(
+      await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.DEACTIVATE_CENTER_ACCESS,
         new DeactivateCenterAccessEvent(
           body.userProfileId,

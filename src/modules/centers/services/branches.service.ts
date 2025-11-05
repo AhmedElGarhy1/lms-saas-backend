@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateBranchDto } from '../dto/create-branch.dto';
 import { PaginateBranchesDto } from '../dto/paginate-branches.dto';
 import { BranchesRepository } from '../repositories/branches.repository';
@@ -14,13 +13,14 @@ import {
   BranchRestoredEvent,
 } from '@/modules/centers/events/branch.events';
 import { BranchEvents } from '@/shared/events/branch.events.enum';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 
 @Injectable()
 export class BranchesService {
   constructor(
     private readonly branchesRepository: BranchesRepository,
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   async paginateBranches(
@@ -58,7 +58,7 @@ export class BranchesService {
     });
 
     // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
+    await this.typeSafeEventEmitter.emitAsync(
       BranchEvents.CREATED,
       new BranchCreatedEvent(branch, actor),
     );
@@ -83,7 +83,7 @@ export class BranchesService {
     const updatedBranch = await this.branchesRepository.update(branchId, data);
 
     // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
+    await this.typeSafeEventEmitter.emitAsync(
       BranchEvents.UPDATED,
       new BranchUpdatedEvent(branchId, branch.centerId, data, actor),
     );
@@ -102,7 +102,7 @@ export class BranchesService {
     await this.branchesRepository.softRemove(branchId);
 
     // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
+    await this.typeSafeEventEmitter.emitAsync(
       BranchEvents.DELETED,
       new BranchDeletedEvent(branchId, branch.centerId, actor),
     );
@@ -129,7 +129,7 @@ export class BranchesService {
     await this.branchesRepository.update(branchId, { isActive });
 
     // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
+    await this.typeSafeEventEmitter.emitAsync(
       BranchEvents.UPDATED,
       new BranchUpdatedEvent(
         branchId,
@@ -158,7 +158,7 @@ export class BranchesService {
     await this.branchesRepository.restore(branchId);
 
     // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
+    await this.typeSafeEventEmitter.emitAsync(
       BranchEvents.RESTORED,
       new BranchRestoredEvent(branchId, branch.centerId, actor),
     );

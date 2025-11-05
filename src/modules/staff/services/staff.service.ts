@@ -1,5 +1,4 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { StaffRepository } from '../repositories/staff.repository';
 import { UserService } from '@/modules/user/services/user.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
@@ -12,8 +11,7 @@ import { User } from '@/modules/user/entities/user.entity';
 import { Staff } from '../entities/staff.entity';
 import { CreateStaffEvent } from '@/modules/staff/events/staff.events';
 import { StaffEvents } from '@/shared/events/staff.events.enum';
-// Note: User event emissions are now handled by command handlers
-// No need to import old event classes or emit events here
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
@@ -22,14 +20,14 @@ export class StaffService {
     private readonly staffRepository: StaffRepository,
     private readonly userService: UserService,
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   async createStaff(dto: CreateStaffDto, actor: ActorUser): Promise<void> {
     // Create staff entity
     const staff = await this.staffRepository.create({});
 
-    await this.eventEmitter.emitAsync(
+    await this.typeSafeEventEmitter.emitAsync(
       StaffEvents.CREATE,
       new CreateStaffEvent(dto, actor, staff),
     );

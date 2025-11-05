@@ -6,11 +6,10 @@ import {
 import { EmailVerificationRepository } from '../repositories/email-verification.repository';
 import { LoggerService } from '../../../shared/services/logger.service';
 import { ConfigService } from '@nestjs/config';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { EmailVerificationRequestedEvent } from '../events/auth.events';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import * as crypto from 'crypto';
-import { Transactional } from '@nestjs-cls/transactional';
 
 export interface CreateEmailVerificationData {
   userId: string;
@@ -25,7 +24,7 @@ export class EmailVerificationService {
     private readonly emailVerificationRepository: EmailVerificationRepository,
     private readonly logger: LoggerService,
     private readonly configService: ConfigService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   async createEmailVerification(data: CreateEmailVerificationData) {
@@ -112,7 +111,7 @@ export class EmailVerificationService {
     );
 
     // Emit event for notification system
-    await this.eventEmitter.emitAsync(
+    await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.EMAIL_VERIFICATION_REQUESTED,
       new EmailVerificationRequestedEvent(
         userId,

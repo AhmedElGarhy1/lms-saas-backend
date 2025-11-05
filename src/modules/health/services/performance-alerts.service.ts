@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+// eslint-disable-next-line no-restricted-imports
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 export interface PerformanceAlert {

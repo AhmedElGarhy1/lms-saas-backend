@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-// eslint-disable-next-line no-restricted-imports
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { CreateStaffEvent } from '../events/staff.events';
 import { StaffEvents } from '@/shared/events/staff.events.enum';
@@ -13,11 +11,12 @@ import {
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 import { UserService } from '@/modules/user/services/user.service';
 import { UserProfileService } from '@/modules/user/services/user-profile.service';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 
 @Injectable()
 export class StaffListener {
   constructor(
-    private readonly eventEmitter: EventEmitter2,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly userService: UserService,
     private readonly userProfileService: UserProfileService,
   ) {}
@@ -40,11 +39,11 @@ export class StaffListener {
 
     // Grant center access
     if (centerId) {
-      await this.eventEmitter.emitAsync(
+      await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.GRANT_CENTER_ACCESS,
         new GrantCenterAccessEvent(userProfile.id, centerId, actor),
       );
-      await this.eventEmitter.emitAsync(
+      await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.GRANT_USER_ACCESS,
         new GrantUserAccessEvent(
           actor.userProfileId,
@@ -54,7 +53,7 @@ export class StaffListener {
         ),
       );
       if (dto.roleId) {
-        await this.eventEmitter.emitAsync(
+        await this.typeSafeEventEmitter.emitAsync(
           AccessControlEvents.ASSIGN_ROLE,
           new AssignRoleEvent(userProfile.id, dto.roleId, actor, centerId),
         );
