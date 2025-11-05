@@ -85,7 +85,7 @@ export class BranchesService {
     // Emit event for activity logging
     await this.eventEmitter.emitAsync(
       BranchEvents.UPDATED,
-      new BranchUpdatedEvent(branchId, data, actor),
+      new BranchUpdatedEvent(branchId, branch.centerId, data, actor),
     );
 
     return updatedBranch;
@@ -98,12 +98,13 @@ export class BranchesService {
       branchId,
     });
 
+    const branch = await this.getBranch(branchId, actor);
     await this.branchesRepository.softRemove(branchId);
 
     // Emit event for activity logging
     await this.eventEmitter.emitAsync(
       BranchEvents.DELETED,
-      new BranchDeletedEvent(branchId, actor),
+      new BranchDeletedEvent(branchId, branch.centerId, actor),
     );
   }
 
@@ -132,6 +133,7 @@ export class BranchesService {
       BranchEvents.UPDATED,
       new BranchUpdatedEvent(
         branchId,
+        branch.centerId,
         { location: branch.location, isActive } as any,
         actor,
       ),
@@ -158,7 +160,7 @@ export class BranchesService {
     // Emit event for activity logging
     await this.eventEmitter.emitAsync(
       BranchEvents.RESTORED,
-      new BranchRestoredEvent(branchId, actor),
+      new BranchRestoredEvent(branchId, branch.centerId, actor),
     );
   }
 }

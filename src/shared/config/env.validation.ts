@@ -1,6 +1,6 @@
 import { config } from 'dotenv';
 import { resolve } from 'path';
-import { cleanEnv, str, port, url } from 'envalid';
+import { cleanEnv, str, port, url, bool } from 'envalid';
 
 config({ path: resolve(process.cwd(), '.env') });
 
@@ -228,6 +228,11 @@ export function validateEnv() {
     NOTIFICATION_INACTIVITY_THRESHOLD_HOURS: str({
       desc: 'Hours threshold for considering user inactive (default: 24)',
       default: '24',
+    }),
+
+    DB_ENABLE_QUERY_LOGGING: bool({
+      desc: 'Enable database query logging for performance monitoring',
+      default: false,
     }),
   });
 

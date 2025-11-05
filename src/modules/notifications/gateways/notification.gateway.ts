@@ -185,7 +185,7 @@ export class NotificationGateway
       // Check per-user rate limit
       const userWithinLimit = await this.checkUserRateLimit(userId);
       if (!userWithinLimit) {
-        this.handleRateLimitExceeded(userId, 'user');
+        this.handleRateLimitExceeded(userId);
         return; // Skip delivery, notification remains in DB
       }
 
@@ -197,19 +197,6 @@ export class NotificationGateway
           `No active connections for user ${userId}, notification will be available on next fetch`,
         );
         return;
-      }
-
-      // Filter sockets within rate limit
-      const activeSockets = await this.filterSocketsWithinRateLimit(
-        socketIds,
-        userId,
-        notification.id,
-      );
-
-      // If no sockets are within limit, skip delivery
-      if (activeSockets.length === 0) {
-        this.handleRateLimitExceeded(userId, 'socket');
-        return; // Skip delivery, notification remains in DB
       }
 
       // Refresh TTL on activity to prevent unexpected expiration
@@ -226,7 +213,7 @@ export class NotificationGateway
 
       // Structured logging for WebSocket operations
       this.logger.debug(
-        `Notification sent to user ${userId} via ${activeSockets.length} connection(s)`,
+        `Notification sent to user ${userId} via ${socketIds.length} connection(s)`,
       );
       this.loggerService.debug(
         `In-app notification delivered via WebSocket`,
@@ -234,7 +221,7 @@ export class NotificationGateway
         {
           userId,
           notificationId: notification.id,
-          socketCount: activeSockets.length,
+          socketCount: socketIds.length,
           channel: 'websocket',
           timestamp: new Date().toISOString(),
         },
@@ -293,33 +280,6 @@ export class NotificationGateway
     // This is just acknowledgment - actual read status is updated via API
   }
 
-  /**
-   * Handle delivery acknowledgment (optional - for analytics)
-   */
-  @SubscribeMessage('notification:delivered')
-  handleDeliveryAcknowledgment(
-    client: Socket,
-    data: { notificationId: string },
-  ): void {
-    const socketData = client.data as SocketData;
-    const userId = socketData.userId;
-    const socketId = client.id;
-
-    this.logger.debug(
-      `Notification ${data.notificationId} delivered to user ${userId} on socket ${socketId}`,
-    );
-    this.loggerService.debug(
-      `Notification delivery acknowledged`,
-      'NotificationGateway',
-      {
-        userId,
-        socketId,
-        notificationId: data.notificationId,
-        timestamp: new Date().toISOString(),
-      },
-    );
-    // Optional: Store in Redis for analytics if needed in future
-  }
 
   /**
    * Helper: Get active sockets for a user
@@ -329,40 +289,6 @@ export class NotificationGateway
     return this.redisService.getClient().smembers(key);
   }
 
-  /**
-   * Helper: Filter sockets within rate limit
-   */
-  private async filterSocketsWithinRateLimit(
-    socketIds: string[],
-    userId: string,
-    notificationId: string,
-  ): Promise<string[]> {
-    const activeSockets: string[] = [];
-
-    for (const socketId of socketIds) {
-      const socketWithinLimit = await this.checkSocketRateLimit(socketId);
-      if (socketWithinLimit) {
-        activeSockets.push(socketId);
-      } else {
-        this.logger.warn(
-          `Socket ${socketId} exceeded rate limit (${this.config.rateLimit.socket}/min), excluding from delivery`,
-        );
-        this.loggerService.warn(
-          `Rate limit exceeded for socket`,
-          'NotificationGateway',
-          {
-            userId,
-            socketId,
-            notificationId,
-            limit: this.config.rateLimit.socket,
-            window: '1 minute',
-          },
-        );
-      }
-    }
-
-    return activeSockets;
-  }
 
   /**
    * Helper: Emit notification to user's sockets
@@ -376,7 +302,6 @@ export class NotificationGateway
       actionType: notification.actionType,
       type: notification.type,
       priority: notification.priority,
-      severity: notification.severity,
       icon: notification.icon,
       readAt: notification.readAt,
       createdAt: notification.createdAt,
@@ -388,34 +313,28 @@ export class NotificationGateway
 
   /**
    * Helper: Handle rate limit exceeded - emit throttled event to client
+   * Note: This event is for debugging/monitoring only, not required for client implementation
    */
-  private handleRateLimitExceeded(
-    userId: string,
-    type: 'user' | 'socket',
-  ): void {
-    const limit =
-      type === 'user'
-        ? this.config.rateLimit.user
-        : this.config.rateLimit.socket;
+  private handleRateLimitExceeded(userId: string): void {
+    const limit = this.config.rateLimit.user;
 
     this.logger.warn(
-      `${type === 'user' ? 'User' : 'Socket'} ${userId} exceeded rate limit (${limit}/min), skipping notification delivery`,
+      `User ${userId} exceeded rate limit (${limit}/min), skipping notification delivery`,
     );
     this.loggerService.warn(
-      `Rate limit exceeded for ${type}`,
+      `Rate limit exceeded for user`,
       'NotificationGateway',
       {
         userId,
         limit,
         window: '1 minute',
-        type,
       },
     );
 
-    // Emit throttled event to client for feedback
+    // Emit throttled event to client for debugging/monitoring (optional - debug-only)
     this.server.to(`user:${userId}`).emit('notification:throttled', {
       reason: 'rate-limit',
-      type,
+      type: 'user',
       limit,
       window: '1 minute',
     });
@@ -525,16 +444,6 @@ export class NotificationGateway
     );
   }
 
-  /**
-   * Check if socket has exceeded rate limit using sliding window algorithm
-   */
-  private async checkSocketRateLimit(socketId: string): Promise<boolean> {
-    return this.rateLimiter.checkRateLimit(
-      `socket:${socketId}`,
-      this.config.rateLimit.socket,
-      this.config.rateLimit.ttl,
-    );
-  }
 
   /**
    * Update active connections metric using Redis counter

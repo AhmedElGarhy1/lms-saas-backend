@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   AuthenticationFailedException,
   ResourceNotFoundException,
@@ -12,7 +11,6 @@ import { EmailVerificationService } from './email-verification.service';
 import { PasswordResetService } from './password-reset.service';
 // import { TwoFactorService } from './two-factor.service';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
 import { LoginRequestDto } from '../dto/login.dto';
 import { SignupRequestDto } from '../dto/signup.dto';
 import { ForgotPasswordRequestDto } from '../dto/forgot-password.dto';
@@ -24,16 +22,16 @@ import { User } from '../../user/entities/user.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
-import { Transactional } from '@nestjs-cls/transactional';
-import { JwtPayload } from '../strategies/jwt.strategy';
 import {
   UserLoggedInEvent,
-  PasswordChangedEvent,
+  UserLoggedOutEvent,
+  TokenRefreshedEvent,
   TwoFactorSetupEvent,
   TwoFactorEnabledEvent,
   TwoFactorDisabledEvent,
 } from '@/modules/auth/events/auth.events';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 
 @Injectable()
 export class AuthService {
@@ -46,7 +44,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly logger: LoggerService,
     private readonly i18n: I18nService<I18nTranslations>,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   async validateUser(
@@ -152,7 +150,7 @@ export class AuthService {
     });
 
     // Emit login event for activity logging
-    await this.eventEmitter.emitAsync(
+    await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.USER_LOGGED_IN,
       new UserLoggedInEvent(
         user.id!,
@@ -226,7 +224,7 @@ export class AuthService {
     };
   }
 
-  async signup(dto: SignupRequestDto) {
+  async signup(_dto: SignupRequestDto) {
     // // Check if user already exists
     // const existingUser = await this.userService.findUserByEmail(dto.email);
     // if (existingUser) {
@@ -338,7 +336,7 @@ export class AuthService {
     await this.userService.updateUserTwoFactor(userId, secret, false);
 
     // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
+    await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.TWO_FA_SETUP,
       new TwoFactorSetupEvent(userId, actor),
     );
@@ -399,16 +397,16 @@ export class AuthService {
       true,
     );
 
-    // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
-      AuthEvents.TWO_FA_ENABLED,
-      new TwoFactorEnabledEvent(userId, actor),
-    );
-
     this.logger.log(`2FA enabled for user: ${user.email}`, 'AuthService', {
       userId: user.id,
       email: user.email,
     });
+
+    // Emit event after work is done
+    await this.typeSafeEventEmitter.emitAsync(
+      AuthEvents.TWO_FA_ENABLED,
+      new TwoFactorEnabledEvent(userId, actor),
+    );
 
     return { message: 'Two-factor authentication enabled successfully' };
   }
@@ -444,16 +442,16 @@ export class AuthService {
     // Disable 2FA
     await this.userService.updateUserTwoFactor(userId, null, false);
 
-    // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
-      AuthEvents.TWO_FA_DISABLED,
-      new TwoFactorDisabledEvent(userId, actor),
-    );
-
     this.logger.log(`2FA disabled for user: ${user.email}`, 'AuthService', {
       userId: user.id,
       email: user.email,
     });
+
+    // Emit event after work is done
+    await this.typeSafeEventEmitter.emitAsync(
+      AuthEvents.TWO_FA_DISABLED,
+      new TwoFactorDisabledEvent(userId, actor),
+    );
 
     return { message: 'Two-factor authentication disabled successfully' };
   }
@@ -465,6 +463,12 @@ export class AuthService {
     this.logger.log(`User ${actor.id} logged out`, 'AuthService', {
       userId: actor.id,
     });
+
+    // Emit event after work is done
+    await this.typeSafeEventEmitter.emitAsync(
+      AuthEvents.USER_LOGGED_OUT,
+      new UserLoggedOutEvent(actor.id, actor),
+    );
 
     return { message: 'Logged out successfully' };
   }
@@ -496,10 +500,20 @@ export class AuthService {
   }
 
   decodeToken(token: string) {
-    return this.jwtService.decode(token) as any;
+    return this.jwtService.decode(token);
   }
 
-  async refresh(userId: string, refreshToken: string) {
+  async refresh(userId: string, refreshToken: string, actor?: ActorUser) {
+    // Build actor if not provided
+    let finalActor = actor;
+    if (!finalActor) {
+      const user = await this.userService.findOne(userId, true);
+      if (!user) {
+        throw new AuthenticationFailedException('User not found');
+      }
+      finalActor = this.buildActorFromUser(user);
+    }
+
     // Get user (validation already done by strategy)
     const user = await this.userService.findOne(userId, true);
     if (!user) {
@@ -514,7 +528,24 @@ export class AuthService {
       hashedRt: await bcrypt.hash(tokens.refreshToken, 10),
     });
 
+    // Emit event after work is done
+    await this.typeSafeEventEmitter.emitAsync(
+      AuthEvents.TOKEN_REFRESHED,
+      new TokenRefreshedEvent(userId, finalActor),
+    );
+
     return tokens;
+  }
+
+  /**
+   * Build actor from user ID - helper for command handlers
+   */
+  async buildActorFromUserId(userId: string): Promise<ActorUser> {
+    const user = await this.userService.findOne(userId, true);
+    if (!user) {
+      throw new AuthenticationFailedException('User not found');
+    }
+    return this.buildActorFromUser(user);
   }
 
   private buildActorFromUser(user: User): ActorUser {

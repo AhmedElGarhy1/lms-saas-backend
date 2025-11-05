@@ -1,5 +1,4 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   ResourceNotFoundException,
   InsufficientPermissionsException,
@@ -29,8 +28,15 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { PasswordChangedEvent } from '@/modules/auth/events/auth.events';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
-import { ActivateUserEvent } from '../events/user.events';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { UserEvents } from '@/shared/events/user.events.enum';
+import {
+  UserCreatedEvent,
+  UserUpdatedEvent,
+  UserDeletedEvent,
+  UserRestoredEvent,
+  UserActivatedEvent,
+} from '../events/user.events';
 
 @Injectable()
 export class UserService {
@@ -44,7 +50,7 @@ export class UserService {
     private readonly logger: LoggerService,
     private readonly centersService: CentersService,
     private readonly activityLogService: ActivityLogService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly eventEmitter: TypeSafeEventEmitter,
   ) {}
 
   async changePassword(
@@ -118,6 +124,27 @@ export class UserService {
       locale: dto.userInfo.locale,
       userId: savedUser.id,
     });
+
+    // Get or create a default profile (ADMIN type as fallback) - check if one exists first
+    // Note: In most cases, a specific profile type will be created by the caller
+    // This is a fallback for basic user creation
+    let profile = await this.userProfileService.findUserProfileByType(
+      savedUser.id,
+      ProfileType.ADMIN,
+    );
+    if (!profile) {
+      profile = await this.userProfileService.createUserProfile(
+        savedUser.id,
+        ProfileType.ADMIN,
+        savedUser.id,
+      );
+    }
+
+    // Emit event after work is done
+    await this.eventEmitter.emitAsync(
+      UserEvents.CREATED,
+      new UserCreatedEvent(savedUser, profile, actor),
+    );
 
     return savedUser;
   }
@@ -207,6 +234,12 @@ export class UserService {
     await this.userRepository.softRemove(userId);
 
     this.logger.log(`User deleted: ${userId} by ${actor.userProfileId}`);
+
+    // Emit event after work is done
+    await this.eventEmitter.emitAsync(
+      UserEvents.DELETED,
+      new UserDeletedEvent(userId, actor),
+    );
   }
 
   async restoreUser(userId: string, actor: ActorUser): Promise<void> {
@@ -225,6 +258,12 @@ export class UserService {
 
     // Restore user
     await this.userRepository.restore(userId);
+
+    // Emit event after work is done
+    await this.eventEmitter.emitAsync(
+      UserEvents.RESTORED,
+      new UserRestoredEvent(userId, actor),
+    );
   }
 
   async deleteCenterAccess(
@@ -264,6 +303,12 @@ export class UserService {
     this.logger.log(
       `User activation status updated: ${userId} to ${isActive} by ${actor.userProfileId}`,
     );
+
+    // Emit event after work is done
+    await this.eventEmitter.emitAsync(
+      UserEvents.ACTIVATED,
+      new UserActivatedEvent(userId, isActive, actor),
+    );
   }
 
   async activateProfileUser(
@@ -278,10 +323,16 @@ export class UserService {
 
     await this.userProfileService.activateProfileUser(userProfileId, isActive);
 
-    // Emit event for activity logging
+    // Get userId from profile for command emission
+    const profile = await this.userProfileService.findOne(userProfileId);
+    if (!profile) {
+      throw new ResourceNotFoundException('User profile not found');
+    }
+
+    // Emit event after work is done
     await this.eventEmitter.emitAsync(
-      UserEvents.ACTIVATE,
-      new ActivateUserEvent(userProfileId, isActive, actor),
+      UserEvents.ACTIVATED,
+      new UserActivatedEvent(profile.userId, isActive, actor),
     );
   }
 
@@ -416,7 +467,20 @@ export class UserService {
 
     await this.userInfoService.updateUserInfo(userId, updateData.userInfo);
 
-    return (await this.userRepository.update(userId, updateData))!;
+    const updatedUser = (await this.userRepository.update(userId, updateData))!;
+
+    // Determine which fields were updated
+    const updatedFields = Object.keys(updateData).filter(
+      (key) => key !== 'userInfo' && updateData[key as keyof UpdateUserDto],
+    );
+
+    // Emit event after work is done
+    await this.eventEmitter.emitAsync(
+      UserEvents.UPDATED,
+      new UserUpdatedEvent(updatedUser, updatedFields, actor),
+    );
+
+    return updatedUser;
   }
 
   // Methods that work with userProfileId
@@ -436,12 +500,8 @@ export class UserService {
       throw new ResourceNotFoundException('User profile not found');
     }
 
-    await this.userInfoService.updateUserInfo(
-      userProfile.userId,
-      updateData.userInfo,
-    );
-
-    return (await this.userRepository.update(userProfile.userId, updateData))!;
+    // Call updateUser which will handle the work and emit event
+    return this.updateUser(userProfile.userId, updateData, actor);
   }
 
   async deleteUserByProfileId(

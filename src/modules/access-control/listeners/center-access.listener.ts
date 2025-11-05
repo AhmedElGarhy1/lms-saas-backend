@@ -6,6 +6,8 @@ import { CenterActivityType } from '@/modules/centers/enums/center-activity-type
 import {
   GrantCenterAccessEvent,
   RevokeCenterAccessEvent,
+  ActivateCenterAccessEvent,
+  DeactivateCenterAccessEvent,
 } from '../events/access-control.events';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 
@@ -54,6 +56,40 @@ export class CenterAccessListener {
       {
         userProfileId,
         centerId,
+        accessType: 'CENTER',
+      },
+      actor,
+    );
+  }
+
+  @OnEvent(AccessControlEvents.ACTIVATE_CENTER_ACCESS)
+  async handleActivateCenterAccess(event: ActivateCenterAccessEvent) {
+    const { userProfileId, centerId, isActive, actor } = event;
+
+    // Log activity
+    await this.activityLogService.log(
+      CenterActivityType.CENTER_ACCESS_ACTIVATED,
+      {
+        userProfileId,
+        centerId,
+        isActive,
+        accessType: 'CENTER',
+      },
+      actor,
+    );
+  }
+
+  @OnEvent(AccessControlEvents.DEACTIVATE_CENTER_ACCESS)
+  async handleDeactivateCenterAccess(event: DeactivateCenterAccessEvent) {
+    const { userProfileId, centerId, isActive, actor } = event;
+
+    // Log activity
+    await this.activityLogService.log(
+      CenterActivityType.CENTER_ACCESS_DEACTIVATED,
+      {
+        userProfileId,
+        centerId,
+        isActive,
         accessType: 'CENTER',
       },
       actor,

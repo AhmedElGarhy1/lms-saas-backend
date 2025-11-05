@@ -6,9 +6,8 @@ import {
   Body,
   Delete,
   ParseUUIDPipe,
-  Query,
 } from '@nestjs/common';
-import { ApiTags, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiParam, ApiBody } from '@nestjs/swagger';
 import {
   ReadApiResponses,
   UpdateApiResponses,
@@ -23,9 +22,8 @@ import { ControllerResponse } from '@/shared/common/dto/controller-response.dto'
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { UserProfileService } from '@/modules/user/services/user-profile.service';
+import { UserService } from '@/modules/user/services/user.service';
 import { UpdateUserProfileStatusDto } from '@/modules/user/dto/update-user-profile-status.dto';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 
@@ -34,7 +32,7 @@ import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 export class UserProfileController {
   constructor(
     private readonly userProfileService: UserProfileService,
-    private readonly activityLogService: ActivityLogService,
+    private readonly userService: UserService,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
@@ -61,7 +59,7 @@ export class UserProfileController {
   @Permissions(PERMISSIONS.ADMIN.READ)
   async getProfile(
     @Param('id', ParseUUIDPipe) userProfileId: string,
-    @GetUser() actor: ActorUser,
+    @GetUser() _actor: ActorUser,
   ) {
     const profile = await this.userProfileService.findOne(userProfileId);
     return ControllerResponse.success(
@@ -82,20 +80,10 @@ export class UserProfileController {
     @Body() dto: UpdateUserProfileStatusDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.userProfileService.activateProfileUser(
+    // Use UserService method which handles event emission
+    await this.userService.activateProfileUser(
       userProfileId,
       dto.isActive,
-    );
-
-    await this.activityLogService.log(
-      dto.isActive
-        ? UserActivityType.USER_ACTIVATED
-        : UserActivityType.USER_UPDATED,
-      {
-        targetProfileId: userProfileId,
-        isActive: dto.isActive,
-        updatedBy: actor.id,
-      },
       actor,
     );
 
@@ -114,17 +102,10 @@ export class UserProfileController {
   @Transactional()
   async deleteProfile(
     @Param('id', ParseUUIDPipe) userProfileId: string,
-    @GetUser() actor: ActorUser,
+    @GetUser() _actor: ActorUser,
   ) {
     await this.userProfileService.deleteUserProfile(userProfileId);
-    await this.activityLogService.log(
-      UserActivityType.USER_DELETED,
-      {
-        targetProfileId: userProfileId,
-        deletedBy: actor.id,
-      },
-      actor,
-    );
+    // Note: Activity logging should be handled by event listeners if UserProfileService emits events
     return ControllerResponse.success(
       { id: userProfileId },
       this.i18n.translate('success.delete', {
@@ -140,19 +121,10 @@ export class UserProfileController {
   @Transactional()
   async restoreProfile(
     @Param('id', ParseUUIDPipe) userProfileId: string,
-    @GetUser() actor: ActorUser,
+    @GetUser() _actor: ActorUser,
   ) {
     await this.userProfileService.restoreUserProfile(userProfileId);
-
-    await this.activityLogService.log(
-      UserActivityType.USER_RESTORED,
-      {
-        targetProfileId: userProfileId,
-        restoredBy: actor.id,
-      },
-      actor,
-    );
-
+    // Note: Activity logging should be handled by event listeners if UserProfileService emits events
     return ControllerResponse.success(
       { id: userProfileId },
       this.i18n.translate('success.restore', {

@@ -12,6 +12,7 @@ export class BranchCreatedEvent {
 export class BranchUpdatedEvent {
   constructor(
     public readonly branchId: string,
+    public readonly centerId: string, // Add centerId
     public readonly updates: CreateBranchDto,
     public readonly actor: ActorUser,
   ) {}
@@ -20,6 +21,7 @@ export class BranchUpdatedEvent {
 export class BranchDeletedEvent {
   constructor(
     public readonly branchId: string,
+    public readonly centerId: string, // Add centerId
     public readonly actor: ActorUser,
   ) {}
 }
@@ -27,6 +29,7 @@ export class BranchDeletedEvent {
 export class BranchRestoredEvent {
   constructor(
     public readonly branchId: string,
+    public readonly centerId: string, // Add centerId
     public readonly actor: ActorUser,
   ) {}
 }

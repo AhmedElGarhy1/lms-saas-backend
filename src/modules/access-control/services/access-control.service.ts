@@ -21,6 +21,10 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { BranchAccessDto } from '../dto/branch-access.dto';
 import { BranchAccessRepository } from '../repositories/branch-access.repository';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
+import {
+  ActivateCenterAccessEvent,
+  DeactivateCenterAccessEvent,
+} from '../events/access-control.events';
 
 @Injectable()
 export class AccessControlService {
@@ -240,7 +244,6 @@ export class AccessControlService {
     isActive: boolean,
     actor: ActorUser,
   ): Promise<void> {
-    console.log(body);
     const centerAccess =
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
@@ -249,5 +252,26 @@ export class AccessControlService {
     await this.centerAccessRepository.update(centerAccess.id, { isActive });
 
     // Emit event for activity logging
+    if (isActive) {
+      await this.eventEmitter.emitAsync(
+        AccessControlEvents.ACTIVATE_CENTER_ACCESS,
+        new ActivateCenterAccessEvent(
+          body.userProfileId,
+          body.centerId,
+          isActive,
+          actor,
+        ),
+      );
+    } else {
+      await this.eventEmitter.emitAsync(
+        AccessControlEvents.DEACTIVATE_CENTER_ACCESS,
+        new DeactivateCenterAccessEvent(
+          body.userProfileId,
+          body.centerId,
+          isActive,
+          actor,
+        ),
+      );
+    }
   }
 }

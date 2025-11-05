@@ -12,13 +12,8 @@ import { User } from '@/modules/user/entities/user.entity';
 import { Staff } from '../entities/staff.entity';
 import { CreateStaffEvent } from '@/modules/staff/events/staff.events';
 import { StaffEvents } from '@/shared/events/staff.events.enum';
-import {
-  UpdateUserEvent,
-  DeleteUserEvent,
-  RestoreUserEvent,
-  ActivateUserEvent,
-} from '@/modules/user/events/user.events';
-import { UserEvents } from '@/shared/events/user.events.enum';
+// Note: User event emissions are now handled by command handlers
+// No need to import old event classes or emit events here
 import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
@@ -56,14 +51,9 @@ export class StaffService {
       targetUserProfileId: actor.userProfileId,
     });
 
-    const user = await this.userService.updateUser(userId, updateData, actor);
-
-    await this.eventEmitter.emitAsync(
-      UserEvents.UPDATE,
-      new UpdateUserEvent(userId, updateData, actor),
-    );
-
-    return user;
+    // Note: updateUser now emits UserCommands.UPDATE internally
+    // Command handler will emit UserEvents.UPDATED, which triggers activity logging
+    return await this.userService.updateUser(userId, updateData, actor);
   }
 
   async deleteStaff(userId: string, actor: ActorUser): Promise<void> {
@@ -76,13 +66,9 @@ export class StaffService {
       );
     }
 
+    // Note: deleteUser now emits UserCommands.DELETE internally
+    // Command handler will emit UserEvents.DELETED, which triggers activity logging
     await this.userService.deleteUser(userId, actor);
-
-    // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
-      UserEvents.DELETE,
-      new DeleteUserEvent(userId, actor),
-    );
   }
 
   async restoreStaff(userId: string, actor: ActorUser): Promise<void> {
@@ -93,13 +79,9 @@ export class StaffService {
       throw new Error('Access denied');
     }
 
+    // Note: restoreUser now emits UserCommands.RESTORE internally
+    // Command handler will emit UserEvents.RESTORED, which triggers activity logging
     await this.userService.restoreUser(userId, actor);
-
-    // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
-      UserEvents.RESTORE,
-      new RestoreUserEvent(userId, actor),
-    );
   }
 
   async deleteStaffAccess(
@@ -111,18 +93,13 @@ export class StaffService {
         'You are not authorized to delete this staff access',
       );
 
+    // Note: deleteCenterAccess is not a user command, so no user event emission here
     await this.userService.deleteCenterAccess(
       {
         centerId: actor.centerId,
         userProfileId: userProfileId,
       },
       actor,
-    );
-
-    // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
-      UserEvents.DELETE,
-      new DeleteUserEvent(userProfileId, actor),
     );
   }
 
@@ -134,18 +111,13 @@ export class StaffService {
       throw new ForbiddenException(
         'You are not authorized to restore this staff access',
       );
+    // Note: restoreCenterAccess is not a user command, so no user event emission here
     await this.userService.restoreCenterAccess(
       {
         centerId: actor.centerId,
         userProfileId: userProfileId,
       },
       actor,
-    );
-
-    // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
-      UserEvents.RESTORE,
-      new RestoreUserEvent(userProfileId, actor),
     );
   }
 

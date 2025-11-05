@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
+// eslint-disable-next-line no-restricted-imports
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
 import { CreateStaffEvent } from '../events/staff.events';
 import { StaffEvents } from '@/shared/events/staff.events.enum';
 import {
@@ -12,26 +11,31 @@ import {
   AssignRoleEvent,
 } from '@/modules/access-control/events/access-control.events';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
-import { UserProfile } from '@/modules/user/entities/user-profile.entity';
-import { CreateUserEvent } from '@/modules/user/events/user.events';
-import { UserEvents } from '@/shared/events/user.events.enum';
-import { User } from '@/modules/user/entities/user.entity';
+import { UserService } from '@/modules/user/services/user.service';
+import { UserProfileService } from '@/modules/user/services/user-profile.service';
 
 @Injectable()
 export class StaffListener {
   constructor(
     private readonly eventEmitter: EventEmitter2,
-    private readonly activityLogService: ActivityLogService,
+    private readonly userService: UserService,
+    private readonly userProfileService: UserProfileService,
   ) {}
 
   @OnEvent(StaffEvents.CREATE)
   async handleCreateStaff(event: CreateStaffEvent) {
     const { dto, actor, staff } = event;
 
-    const [{ userProfile, user }] = (await this.eventEmitter.emitAsync(
-      UserEvents.CREATE,
-      new CreateUserEvent(dto, actor, staff.id, ProfileType.STAFF),
-    )) as [{ user: User; userProfile: UserProfile }];
+    // Create user directly - service will emit UserCreatedEvent
+    const createdUser = await this.userService.createUser(dto, actor);
+
+    // Create staff profile for the user
+    const userProfile = await this.userProfileService.createUserProfile(
+      createdUser.id,
+      ProfileType.STAFF,
+      staff.id,
+    );
+    
     const centerId = dto.centerId ?? actor.centerId;
 
     // Grant center access
@@ -57,17 +61,7 @@ export class StaffListener {
       }
     }
 
-    // Log activity
-    await this.activityLogService.log(
-      UserActivityType.USER_CREATED,
-      {
-        targetUserId: user.id,
-        email: user.email,
-        name: user.name,
-        profileType: ProfileType.STAFF,
-        createdBy: actor.id,
-      },
-      actor,
-    );
+    // Note: Activity logging is now handled by UserActivityListener listening to UserEvents.CREATED
+    // No need to manually log here as the domain event will trigger the activity log
   }
 }

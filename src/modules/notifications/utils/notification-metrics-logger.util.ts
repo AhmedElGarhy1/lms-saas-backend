@@ -13,6 +13,8 @@ export interface NotificationMetrics {
   failureCount?: number;
   centerId?: string;
   recipientId?: string;
+  profileId?: string;
+  profileType?: string;
   error?: string;
 }
 
@@ -64,6 +66,7 @@ export function logNotificationComplete(
 
 /**
  * Log per-recipient notification error with standardized format
+ * Includes enhanced context with profile information for better debugging
  * @param logger - LoggerService instance
  * @param metrics - Notification metrics to log
  * @param error - Optional Error object for stack trace
@@ -73,14 +76,17 @@ export function logNotificationError(
   metrics: NotificationMetrics,
   error?: Error,
 ): void {
+  const errorMessage = `Failed to process notification for recipient: userId=${metrics.recipientId}${metrics.profileId ? `, profileId=${metrics.profileId}` : ''}${metrics.profileType ? `, profileType=${metrics.profileType}` : ''}`;
   logger.error(
-    `Failed to process notification for recipient ${metrics.recipientId}`,
+    errorMessage,
     error?.stack,
     'NotificationService',
     {
       eventName: metrics.eventName,
       correlationId: metrics.correlationId,
       recipientId: metrics.recipientId,
+      profileId: metrics.profileId,
+      profileType: metrics.profileType,
       error: metrics.error || error?.message,
     },
   );

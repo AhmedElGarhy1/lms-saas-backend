@@ -3,7 +3,6 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationRepository } from '../repositories/notification.repository';
 import { Notification } from '../entities/notification.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { NotificationType } from '../enums/notification-type.enum';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { ConfigService } from '@nestjs/config';
@@ -12,7 +11,9 @@ import { NotificationReadEvent } from '../events/notification.events';
 import { SlidingWindowRateLimiter } from '../utils/sliding-window-rate-limit';
 import { ChannelRateLimitService } from './channel-rate-limit.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { FindManyOptions } from 'typeorm';
+import { Pagination } from 'nestjs-typeorm-paginate';
+import { GetInAppNotificationsDto } from '../dto/in-app-notification.dto';
+import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 
 @Injectable()
 export class InAppNotificationService {
@@ -24,7 +25,7 @@ export class InAppNotificationService {
   private readonly rateLimiter: SlidingWindowRateLimiter;
 
   constructor(
-    public readonly notificationRepository: NotificationRepository,
+    private readonly notificationRepository: NotificationRepository,
     private readonly redisService: RedisService,
     private readonly logger: LoggerService,
     private readonly eventEmitter: EventEmitter2,
@@ -53,58 +54,12 @@ export class InAppNotificationService {
 
   async getUserNotifications(
     userId: string,
-    query: {
-      page?: number;
-      limit?: number;
-      cursor?: string;
-      read?: boolean;
-      type?: NotificationType;
-      profileType?: ProfileType | null;
-    },
-  ): Promise<{ data: Notification[]; total: number; hasMore: boolean }> {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
-
-    const whereClause: {
-      userId: string;
-      isArchived: boolean;
-      readAt?: null | undefined;
-      type?: NotificationType;
-      profileType?: ProfileType | null;
-    } = {
+    query: GetInAppNotificationsDto,
+  ): Promise<Pagination<Notification>> {
+    return await this.notificationRepository.getUserNotificationsWithFilters(
       userId,
-      isArchived: false,
-    };
-
-    if (query.read !== undefined) {
-      // TypeORM uses IsNull() or Not(IsNull()) for null checks
-      // For now, we'll filter by null/not null directly in the repository query
-      // This will be handled by the repository's findByUserId method
-      whereClause.readAt = query.read ? undefined : null; // null = unread, undefined = read
-    }
-    if (query.type) {
-      whereClause.type = query.type;
-    }
-    if (query.profileType !== undefined) {
-      whereClause.profileType = query.profileType;
-    }
-
-    const options: FindManyOptions<Notification> & {
-      where?: Record<string, unknown>;
-    } = {
-      where: whereClause as Record<string, unknown>,
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit + 1, // Fetch one extra to determine hasMore
-    };
-
-    const [notifications, total] =
-      await this.notificationRepository.findByUserId(userId, options);
-
-    const hasMore = notifications.length > limit;
-    const data = hasMore ? notifications.slice(0, limit) : notifications;
-
-    return { data, total, hasMore };
+      query,
+    );
   }
 
   async getUnreadNotifications(
@@ -222,6 +177,16 @@ export class InAppNotificationService {
     await this.notificationRepository.update(notificationId, {
       isArchived: true,
     });
+  }
+
+  async getArchivedNotifications(
+    userId: string,
+    query: BasePaginationDto,
+  ): Promise<Pagination<Notification>> {
+    return await this.notificationRepository.getArchivedNotificationsWithPagination(
+      userId,
+      query,
+    );
   }
 
   private getCacheKey(

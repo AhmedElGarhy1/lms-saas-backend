@@ -6,7 +6,6 @@ import { UserProfile } from './entities/user-profile.entity';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { CentersModule } from '@/modules/centers/centers.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
-import { UserController } from './controllers/user.controller';
 import { UserProfileController } from './controllers/user-profile.controller';
 import { UserAccessController } from './controllers/user-access.controller';
 import { UserService } from './services/user.service';
@@ -15,7 +14,8 @@ import { UserProfileService } from './services/user-profile.service';
 import { UserRepository } from './repositories/user.repository';
 import { UserInfoRepository } from './repositories/user-info.repository';
 import { UserProfileRepository } from './repositories/user-profile.repository';
-import { UserListener } from './listeners/user.listener';
+import { UserActivityListener } from './listeners/domain-events/user-activity.listener';
+import { UserCreatedOrchestrator } from './orchestrators/user-created.orchestrator';
 
 @Module({
   imports: [
@@ -24,7 +24,7 @@ import { UserListener } from './listeners/user.listener';
     forwardRef(() => CentersModule),
     ActivityLogModule,
   ],
-  controllers: [UserAccessController, UserController, UserProfileController],
+  controllers: [UserAccessController, UserProfileController],
   providers: [
     UserService,
     UserInfoService,
@@ -32,7 +32,8 @@ import { UserListener } from './listeners/user.listener';
     UserRepository,
     UserInfoRepository,
     UserProfileRepository,
-    UserListener,
+    UserActivityListener,
+    UserCreatedOrchestrator,
   ],
   exports: [
     UserService,

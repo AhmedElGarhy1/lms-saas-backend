@@ -6,6 +6,9 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { FindManyOptions, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Pagination } from 'nestjs-typeorm-paginate';
+import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
+import { GetInAppNotificationsDto } from '../dto/in-app-notification.dto';
 
 @Injectable()
 export class NotificationRepository extends BaseRepository<Notification> {
@@ -132,24 +135,6 @@ export class NotificationRepository extends BaseRepository<Notification> {
     await repo.update({ id: notificationId }, { readAt: new Date() });
   }
 
-  async markAsUnread(notificationId: string, userId: string): Promise<void> {
-    const repo = this.getRepository();
-    // First verify the notification belongs to the user
-    const notification = await repo.findOne({
-      where: { id: notificationId, userId },
-    });
-    if (!notification) {
-      throw new Error('Notification not found or access denied');
-    }
-    // Use query builder to set null
-    await repo
-      .createQueryBuilder()
-      .update(Notification)
-      .set({ readAt: () => 'NULL' })
-      .where('id = :id', { id: notificationId })
-      .execute();
-  }
-
   async markAllAsRead(
     userId: string,
     profileType?: ProfileType | null,
@@ -243,5 +228,79 @@ export class NotificationRepository extends BaseRepository<Notification> {
       .from(Notification)
       .where('expiresAt <= :now', { now: new Date() })
       .execute();
+  }
+
+  async getUserNotificationsWithFilters(
+    userId: string,
+    query: GetInAppNotificationsDto,
+  ): Promise<Pagination<Notification>> {
+    const repo = this.getRepository();
+    const queryBuilder = repo.createQueryBuilder('notification');
+
+    queryBuilder.where('notification.userId = :userId', { userId });
+    queryBuilder.andWhere('notification.isArchived = :isArchived', {
+      isArchived: false,
+    });
+
+    // Handle read filter
+    if (query.read !== undefined) {
+      if (query.read) {
+        queryBuilder.andWhere('notification.readAt IS NOT NULL');
+      } else {
+        queryBuilder.andWhere('notification.readAt IS NULL');
+      }
+    }
+
+    // Handle type filter
+    if (query.type) {
+      queryBuilder.andWhere('notification.type = :type', { type: query.type });
+    }
+
+    // Handle profileType filter
+    if (query.profileType !== undefined) {
+      queryBuilder.andWhere('notification.profileType = :profileType', {
+        profileType: query.profileType,
+      });
+    }
+
+    // Default sort
+    queryBuilder.orderBy('notification.createdAt', 'DESC');
+
+    // Use repository's paginate method
+    return this.paginate(
+      query,
+      {
+        searchableColumns: ['title', 'message'],
+        sortableColumns: ['createdAt', 'readAt', 'priority'],
+        defaultSortBy: ['createdAt', 'DESC'],
+      },
+      '/notifications/in-app',
+      queryBuilder,
+    );
+  }
+
+  async getArchivedNotificationsWithPagination(
+    userId: string,
+    query: BasePaginationDto,
+  ): Promise<Pagination<Notification>> {
+    const repo = this.getRepository();
+    const queryBuilder = repo.createQueryBuilder('notification');
+
+    queryBuilder.where('notification.userId = :userId', { userId });
+    queryBuilder.andWhere('notification.isArchived = :isArchived', {
+      isArchived: true,
+    });
+    queryBuilder.orderBy('notification.createdAt', 'DESC');
+
+    return this.paginate(
+      query,
+      {
+        searchableColumns: ['title', 'message'],
+        sortableColumns: ['createdAt', 'readAt', 'priority'],
+        defaultSortBy: ['createdAt', 'DESC'],
+      },
+      '/notifications/in-app/archived',
+      queryBuilder,
+    );
   }
 }

@@ -1,8 +1,8 @@
 export enum CenterEvents {
-  CREATE = 'center.created',
-  UPDATE = 'center.updated',
-  DELETE = 'center.deleted',
-  RESTORE = 'center.restored',
+  CREATED = 'center.created',
+  UPDATED = 'center.updated',
+  DELETED = 'center.deleted',
+  RESTORED = 'center.restored',
   ASSIGN_OWNER = 'center.assigned.owner',
   CREATE_BRANCH = 'center.created.branch',
 }

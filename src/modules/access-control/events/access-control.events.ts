@@ -17,6 +17,24 @@ export class RevokeCenterAccessEvent {
   ) {}
 }
 
+export class ActivateCenterAccessEvent {
+  constructor(
+    public readonly userProfileId: string,
+    public readonly centerId: string,
+    public readonly isActive: boolean,
+    public readonly actor: ActorUser,
+  ) {}
+}
+
+export class DeactivateCenterAccessEvent {
+  constructor(
+    public readonly userProfileId: string,
+    public readonly centerId: string,
+    public readonly isActive: boolean,
+    public readonly actor: ActorUser,
+  ) {}
+}
+
 export class GrantUserAccessEvent {
   constructor(
     public readonly granterUserProfileId: string,

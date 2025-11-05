@@ -4,8 +4,6 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { StaffRepository } from '../repositories/staff.repository';
 import { UserProfileService } from '@/modules/user/services/user-profile.service';
 import { UserService } from '@/modules/user/services/user.service';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { CenterActivityType } from '@/modules/centers/enums/center-activity-type.enum';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import {
   CreateCenterEvent,
@@ -15,10 +13,7 @@ import {
 import { CenterEvents } from '@/shared/events/center.events.enum';
 import { GrantCenterAccessEvent } from '@/modules/access-control/events/access-control.events';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
-import { CreateUserEvent } from '@/modules/user/events/user.events';
-import { UserEvents } from '@/shared/events/user.events.enum';
 import { UserProfile } from '@/modules/user/entities/user-profile.entity';
-import { User } from '@/modules/user/entities/user.entity';
 
 @Injectable()
 export class CenterListener {
@@ -27,21 +22,18 @@ export class CenterListener {
     private readonly userProfileService: UserProfileService,
     private readonly userService: UserService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly activityLogService: ActivityLogService,
   ) {}
 
-  @OnEvent(CenterEvents.CREATE)
+  @OnEvent(CenterEvents.CREATED)
   async handleCenterCreated(event: CreateCenterEvent) {
     const { center, userData, actor, branchData } = event;
 
-    await this.activityLogService.log(CenterActivityType.CENTER_CREATED, {
-      centerId: center.id,
-      centerName: center.name,
-      email: center.email,
-      phone: center.phone,
-      website: center.website,
-      isActive: center.isActive,
-    });
+    if (!actor) {
+      throw new Error('Actor is required for center creation');
+    }
+
+    // Note: Activity logging is now handled by CenterActivityListener listening to CenterEvents.CREATED
+    // No need to manually log here as the domain event will trigger the activity log
 
     // Grant actor center access
     await this.eventEmitter.emitAsync(
@@ -56,13 +48,15 @@ export class CenterListener {
       // Create staff profile for center owner
       const staff = await this.staffRepository.create({});
 
-      const [{ userProfile: createdUserProfile }] =
-        (await this.eventEmitter.emitAsync(
-          UserEvents.CREATE,
-          new CreateUserEvent(userData, actor, staff.id, ProfileType.STAFF),
-        )) as [{ user: User; userProfile: UserProfile }];
+      // Create user directly - service will emit UserCreatedEvent
+      const createdUser = await this.userService.createUser(userData, actor);
 
-      userProfile = createdUserProfile;
+      // Create staff profile for the user
+      userProfile = await this.userProfileService.createUserProfile(
+        createdUser.id,
+        ProfileType.STAFF,
+        staff.id,
+      );
 
       // Grant staff center access
       await this.eventEmitter.emitAsync(

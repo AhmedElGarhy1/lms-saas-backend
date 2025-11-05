@@ -8,6 +8,8 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationType } from '../enums/notification-type.enum';
+import { Pagination } from 'nestjs-typeorm-paginate';
+import { GetNotificationHistoryDto } from '../dto/notification-history.dto';
 
 @Injectable()
 export class NotificationLogRepository extends BaseRepository<NotificationLog> {
@@ -61,53 +63,39 @@ export class NotificationLogRepository extends BaseRepository<NotificationLog> {
 
   async findUserHistory(
     userId: string,
-    filters: {
-      status?: NotificationStatus;
-      channel?: NotificationChannel;
-      type?: NotificationType;
-      fromDate?: Date;
-      toDate?: Date;
-    },
-    page: number = 1,
-    limit: number = 20,
-  ): Promise<{ data: NotificationLog[]; total: number }> {
+    query: GetNotificationHistoryDto,
+  ): Promise<Pagination<NotificationLog>> {
     const queryBuilder = this.getRepository().createQueryBuilder('log');
 
     queryBuilder.where('log.userId = :userId', { userId });
 
-    if (filters.status) {
-      queryBuilder.andWhere('log.status = :status', { status: filters.status });
+    if (query.status) {
+      queryBuilder.andWhere('log.status = :status', { status: query.status });
     }
 
-    if (filters.channel) {
+    if (query.channel) {
       queryBuilder.andWhere('log.channel = :channel', {
-        channel: filters.channel,
+        channel: query.channel,
       });
     }
 
-    if (filters.type) {
-      queryBuilder.andWhere('log.type = :type', { type: filters.type });
+    if (query.type) {
+      queryBuilder.andWhere('log.type = :type', { type: query.type });
     }
 
-    if (filters.fromDate) {
-      queryBuilder.andWhere('log.createdAt >= :fromDate', {
-        fromDate: filters.fromDate,
-      });
-    }
-
-    if (filters.toDate) {
-      queryBuilder.andWhere('log.createdAt <= :toDate', {
-        toDate: filters.toDate,
-      });
-    }
-
+    // Default sort
     queryBuilder.orderBy('log.createdAt', 'DESC');
 
-    const [data, total] = await queryBuilder
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getManyAndCount();
-
-    return { data, total };
+    // Use repository's paginate method (it handles dateFrom/dateTo automatically)
+    return this.paginate(
+      query,
+      {
+        searchableColumns: ['recipient'],
+        sortableColumns: ['createdAt', 'status', 'channel', 'type'],
+        defaultSortBy: ['createdAt', 'DESC'],
+      },
+      '/notifications/history',
+      queryBuilder,
+    );
   }
 }

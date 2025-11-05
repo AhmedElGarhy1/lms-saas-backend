@@ -72,7 +72,7 @@ export class RoleListener {
     );
   }
 
-  @OnEvent(RoleEvents.CREATE)
+  @OnEvent(RoleEvents.CREATED)
   async handleRoleCreated(event: CreateRoleEvent) {
     // Log activity
     await this.activityLogService.log(
@@ -107,7 +107,7 @@ export class RoleListener {
     }
   }
 
-  @OnEvent(RoleEvents.UPDATE)
+  @OnEvent(RoleEvents.UPDATED)
   async handleRoleUpdated(event: UpdateRoleEvent) {
     // Log activity
     await this.activityLogService.log(
@@ -120,7 +120,7 @@ export class RoleListener {
     );
   }
 
-  @OnEvent(RoleEvents.DELETE)
+  @OnEvent(RoleEvents.DELETED)
   async handleRoleDeleted(event: DeleteRoleEvent) {
     const { roleId, actor } = event;
     // remove profiles assigned to this role

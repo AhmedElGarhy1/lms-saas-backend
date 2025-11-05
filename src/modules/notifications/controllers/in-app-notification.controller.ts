@@ -1,31 +1,19 @@
-import {
-  Controller,
-  Get,
-  Put,
-  Param,
-  Body,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
+import { Controller, Get, Put, Param, Body, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { InAppNotificationService } from '../services/in-app-notification.service';
 import {
   GetInAppNotificationsDto,
-  InAppNotificationResponseDto,
-  PaginatedInAppNotificationsDto,
   MarkAsReadDto,
-  UnreadCountResponseDto,
 } from '../dto/in-app-notification.dto';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { plainToInstance } from 'class-transformer';
+import { Pagination } from 'nestjs-typeorm-paginate';
+import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
+import { Notification } from '../entities/notification.entity';
 
 @ApiTags('In-App Notifications')
 @Controller('notifications/in-app')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth('JWT-auth')
 export class InAppNotificationController {
   constructor(
     private readonly inAppNotificationService: InAppNotificationService,
@@ -36,26 +24,8 @@ export class InAppNotificationController {
   async getNotifications(
     @GetUser() actor: ActorUser,
     @Query() query: GetInAppNotificationsDto,
-  ): Promise<PaginatedInAppNotificationsDto> {
-    const result = await this.inAppNotificationService.getUserNotifications(
-      actor.id,
-      query,
-    );
-
-    const notifications = result.data.map((n) =>
-      plainToInstance(InAppNotificationResponseDto, {
-        ...n,
-        isRead: n.readAt !== null,
-      }),
-    );
-
-    return {
-      data: notifications,
-      total: result.total,
-      page: query.page ?? 1,
-      limit: query.limit ?? 20,
-      hasMore: result.hasMore,
-    };
+  ): Promise<Pagination<Notification>> {
+    return this.inAppNotificationService.getUserNotifications(actor.id, query);
   }
 
   @Get('unread')
@@ -64,7 +34,7 @@ export class InAppNotificationController {
     @GetUser() actor: ActorUser,
     @Query('profileType') profileType?: ProfileType,
     @Query('profileId') profileId?: string,
-  ): Promise<InAppNotificationResponseDto[]> {
+  ) {
     const notifications =
       await this.inAppNotificationService.getUnreadNotifications(
         actor.id,
@@ -72,12 +42,7 @@ export class InAppNotificationController {
         profileId,
       );
 
-    return notifications.map((n) =>
-      plainToInstance(InAppNotificationResponseDto, {
-        ...n,
-        isRead: n.readAt !== null,
-      }),
-    );
+    return notifications;
   }
 
   @Get('unread/count')
@@ -86,7 +51,7 @@ export class InAppNotificationController {
     @GetUser() actor: ActorUser,
     @Query('profileType') profileType?: ProfileType,
     @Query('profileId') profileId?: string,
-  ): Promise<UnreadCountResponseDto> {
+  ) {
     const count = await this.inAppNotificationService.getUnreadCount(
       actor.id,
       profileType,
@@ -108,21 +73,6 @@ export class InAppNotificationController {
   ): Promise<{ success: boolean }> {
     await this.inAppNotificationService.markMultipleAsRead(
       dto.notificationIds,
-      actor.id,
-    );
-    return { success: true };
-  }
-
-  @Put(':id/unread')
-  @ApiOperation({ summary: 'Mark notification as unread' })
-  async markAsUnread(
-    @GetUser() actor: ActorUser,
-    @Param('id') notificationId: string,
-  ): Promise<{ success: boolean }> {
-    // Note: This uses the repository directly since service doesn't have markAsUnread
-    // For now, we can implement it in the service or call repository
-    await this.inAppNotificationService.notificationRepository.markAsUnread(
-      notificationId,
       actor.id,
     );
     return { success: true };
@@ -157,29 +107,11 @@ export class InAppNotificationController {
   @ApiOperation({ summary: 'Get archived notifications' })
   async getArchived(
     @GetUser() actor: ActorUser,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
-  ): Promise<PaginatedInAppNotificationsDto> {
-    const [notifications, total] =
-      await this.inAppNotificationService.notificationRepository.findArchived(
-        actor.id,
-        page,
-        limit,
-      );
-
-    const data = notifications.map((n) =>
-      plainToInstance(InAppNotificationResponseDto, {
-        ...n,
-        isRead: n.readAt !== null,
-      }),
+    @Query() query: BasePaginationDto,
+  ): Promise<Pagination<Notification>> {
+    return await this.inAppNotificationService.getArchivedNotifications(
+      actor.id,
+      query,
     );
-
-    return {
-      data,
-      total,
-      page,
-      limit,
-      hasMore: (page - 1) * limit + notifications.length < total,
-    };
   }
 }

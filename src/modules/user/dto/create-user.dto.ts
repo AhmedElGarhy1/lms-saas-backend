@@ -35,7 +35,7 @@ export class UserInfoDto {
 }
 export class CreateUserDto {
   @ApiProperty({ description: 'User phone number', required: false })
-  @Matches(/^(\+?20)?1[0-2,5]\d{8}$/, {
+  @Matches(/^(01)[0-2,5]\d{8}$/, {
     message: 'Phone number must be a valid Egyptian mobile number',
   })
   @NotExists(User, 'phone', { message: 'Phone number already exists' })

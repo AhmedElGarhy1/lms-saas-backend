@@ -4,14 +4,22 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { CreateUserDto } from '@/modules/user/dto/create-user.dto';
 import { UpdateCenterRequestDto } from '@/modules/centers/dto/update-center.dto';
 import { CreateBranchDto } from '@/modules/centers/dto/create-branch.dto';
+import { BaseEvent } from '@/shared/common/base/base-event';
 
-export class CreateCenterEvent {
+/**
+ * Event (result-focused, output-oriented)
+ * Represents the fact that a center was created.
+ */
+export class CreateCenterEvent extends BaseEvent {
   constructor(
     public readonly center: Center,
-    public readonly actor: ActorUser,
+    actor: ActorUser,
     public readonly userData?: CreateUserDto,
     public readonly branchData?: CreateBranchDto,
-  ) {}
+    correlationId?: string,
+  ) {
+    super(actor, 'center.command.handler', correlationId);
+  }
 }
 
 export class CreateCenterBranchEvent {
@@ -22,26 +30,47 @@ export class CreateCenterBranchEvent {
   ) {}
 }
 
-export class UpdateCenterEvent {
+/**
+ * Event (result-focused, output-oriented)
+ * Represents the fact that a center was updated.
+ */
+export class UpdateCenterEvent extends BaseEvent {
   constructor(
     public readonly centerId: string,
     public readonly updates: Partial<UpdateCenterRequestDto>,
-    public readonly actor: ActorUser,
-  ) {}
+    actor: ActorUser,
+    correlationId?: string,
+  ) {
+    super(actor, 'center.command.handler', correlationId);
+  }
 }
 
-export class DeleteCenterEvent {
+/**
+ * Event (result-focused, output-oriented)
+ * Represents the fact that a center was deleted.
+ */
+export class DeleteCenterEvent extends BaseEvent {
   constructor(
     public readonly centerId: string,
-    public readonly actor: ActorUser,
-  ) {}
+    actor: ActorUser,
+    correlationId?: string,
+  ) {
+    super(actor, 'center.command.handler', correlationId);
+  }
 }
 
-export class RestoreCenterEvent {
+/**
+ * Event (result-focused, output-oriented)
+ * Represents the fact that a center was restored.
+ */
+export class RestoreCenterEvent extends BaseEvent {
   constructor(
     public readonly centerId: string,
-    public readonly actor: ActorUser,
-  ) {}
+    actor: ActorUser,
+    correlationId?: string,
+  ) {
+    super(actor, 'center.command.handler', correlationId);
+  }
 }
 
 export class AssignCenterOwnerEvent {

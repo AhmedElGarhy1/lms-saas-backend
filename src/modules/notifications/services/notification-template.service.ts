@@ -554,7 +554,7 @@ export class NotificationTemplateService {
    * @param event - Event object containing data
    * @param userId - Optional user ID for generating action URLs
    * @param centerId - Optional center ID for generating action URLs
-   * @returns Object with title, message, actionUrl, priority, and severity
+   * @returns Object with title, message, actionUrl, and priority (severity can be derived from priority: 0-1=info, 2-3=success, 4-5=warning, 6-7=error)
    */
   buildInAppNotificationData(
     eventName: EventType | string,
@@ -566,40 +566,39 @@ export class NotificationTemplateService {
     message: string;
     actionUrl?: string;
     priority?: number;
-    severity?: string;
   } {
     const baseUrl =
       this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
     const eventObj = event as Record<string, unknown>;
 
     // User events
-    if (String(eventName) === UserEvents.CREATE) {
+    if (String(eventName) === UserEvents.CREATED) {
       return {
         title: 'Welcome!',
         message: `Your account has been created successfully. Welcome to the platform!`,
         actionUrl: userId ? `${baseUrl}/users/${userId}` : undefined,
-        severity: 'success',
+        priority: 2,
       };
     }
-    if (String(eventName) === UserEvents.ACTIVATE) {
+    if (String(eventName) === UserEvents.ACTIVATED) {
       return {
         title: 'Account Activated',
         message: `Your account has been activated. You can now access all features.`,
         actionUrl: userId ? `${baseUrl}/users/${userId}` : undefined,
-        severity: 'success',
+        priority: 2,
       };
     }
-    if (String(eventName) === UserEvents.UPDATE) {
+    if (String(eventName) === UserEvents.UPDATED) {
       return {
         title: 'Profile Updated',
         message: `Your profile information has been updated.`,
         actionUrl: userId ? `${baseUrl}/users/${userId}` : undefined,
-        severity: 'info',
+        priority: 0,
       };
     }
 
     // Center events
-    if (String(eventName) === CenterEvents.CREATE) {
+    if (String(eventName) === CenterEvents.CREATED) {
       const centerObj =
         eventObj &&
         typeof eventObj.center === 'object' &&
@@ -616,15 +615,15 @@ export class NotificationTemplateService {
         title: 'New Center Created',
         message: `A new center "${centerName}" has been created.`,
         actionUrl: centerId ? `${baseUrl}/centers/${centerId}` : undefined,
-        severity: 'success',
+        priority: 2,
       };
     }
-    if (String(eventName) === CenterEvents.UPDATE) {
+    if (String(eventName) === CenterEvents.UPDATED) {
       return {
         title: 'Center Updated',
         message: `Center information has been updated.`,
         actionUrl: centerId ? `${baseUrl}/centers/${centerId}` : undefined,
-        severity: 'info',
+        priority: 0,
       };
     }
 
@@ -648,7 +647,7 @@ export class NotificationTemplateService {
         actionUrl: centerId
           ? `${baseUrl}/centers/${centerId}/branches`
           : undefined,
-        severity: 'success',
+        priority: 2,
       };
     }
 
@@ -659,8 +658,7 @@ export class NotificationTemplateService {
         message: `You requested to reset your password. Click the link below to reset it.`,
         actionUrl:
           typeof eventObj.resetUrl === 'string' ? eventObj.resetUrl : undefined,
-        priority: 3,
-        severity: 'warning',
+        priority: 4,
       };
     }
     if (String(eventName) === AuthEvents.EMAIL_VERIFICATION_REQUESTED) {
@@ -671,8 +669,7 @@ export class NotificationTemplateService {
           typeof eventObj.verificationUrl === 'string'
             ? eventObj.verificationUrl
             : undefined,
-        priority: 3,
-        severity: 'warning',
+        priority: 4,
       };
     }
     if (String(eventName) === AuthEvents.OTP_SENT) {
@@ -687,8 +684,7 @@ export class NotificationTemplateService {
       return {
         title: 'Verification Code Sent',
         message: `Your verification code is: ${otpCode}. It will expire in ${expiresIn} minutes.`,
-        priority: 3,
-        severity: 'info',
+        priority: 0,
       };
     }
 
@@ -696,7 +692,7 @@ export class NotificationTemplateService {
     return {
       title: 'New Notification',
       message: `You have a new notification: ${eventName}`,
-      severity: 'info',
+      priority: 0,
     };
   }
 }

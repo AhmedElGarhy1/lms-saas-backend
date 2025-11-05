@@ -18,6 +18,8 @@ import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { ExportFormat } from '@/shared/common/dto';
+import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
+import { SystemActivityType } from '@/shared/modules/activity-log/enums/system-activity-type.enum';
 
 @ApiBearerAuth()
 @ApiTags('Centers Actions')
@@ -26,6 +28,7 @@ export class CentersActionsController {
   constructor(
     private readonly centersService: CentersService,
     private readonly exportService: ExportService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   @Get('export')
@@ -64,6 +67,23 @@ export class CentersActionsController {
       baseFilename,
       res,
     );
+
+    // Log activity
+    await this.activityLogService.log(
+      SystemActivityType.DATA_EXPORTED,
+      {
+        resourceType: 'centers',
+        format,
+        filename: baseFilename,
+        recordCount: centers.length,
+        filters: {
+          search: query.search,
+          isActive: query.isActive,
+        },
+      },
+      actor,
+    );
+
     return data;
   }
 }

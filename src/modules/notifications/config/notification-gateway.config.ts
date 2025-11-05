@@ -8,7 +8,6 @@ export interface NotificationGatewayConfig {
   };
   rateLimit: {
     user: number;
-    socket: number;
     ttl: number;
   };
   connectionTTL: number;
@@ -42,11 +41,6 @@ export const notificationGatewayConfig = (
         configService.get<string>('WEBSOCKET_RATE_LIMIT_USER') ?? '100',
         10,
       ) || 100,
-    socket:
-      parseInt(
-        configService.get<string>('WEBSOCKET_RATE_LIMIT_SOCKET') ?? '50',
-        10,
-      ) || 50,
     ttl: 60, // 1 minute in seconds
   },
 

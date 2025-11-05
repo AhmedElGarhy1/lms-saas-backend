@@ -1,5 +1,4 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   InsufficientPermissionsException,
   ResourceNotFoundException,
@@ -12,13 +11,14 @@ import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { PermissionScope } from '../constants/permissions';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { RoleEvents } from '@/shared/events/role.events.enum';
 import {
   CreateRoleEvent,
   UpdateRoleEvent,
   DeleteRoleEvent,
-} from '@/modules/access-control/events/role.events';
-import { RoleEvents } from '@/shared/events/role.events.enum';
-import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
+  RestoreRoleEvent,
+} from '../events/role.events';
 
 @Injectable()
 export class RolesService {
@@ -27,7 +27,7 @@ export class RolesService {
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlerHelperService: AccessControlHelperService,
     private readonly profileRoleRepository: ProfileRoleRepository,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   async getMyPermissions(actor: ActorUser) {
@@ -50,8 +50,9 @@ export class RolesService {
 
     const role = await this.rolesRepository.createRole(data);
 
-    await this.eventEmitter.emitAsync(
-      RoleEvents.CREATE,
+    // Emit event after work is done
+    await this.typeSafeEventEmitter.emitAsync(
+      RoleEvents.CREATED,
       new CreateRoleEvent(role, actor),
     );
 
@@ -73,10 +74,11 @@ export class RolesService {
       );
     }
 
-    const updatedRole = await this.rolesRepository.updateRole(roleId, data);
+    const updatedRole = await this.rolesRepository.updateRole(roleId, data, actor);
 
-    await this.eventEmitter.emitAsync(
-      RoleEvents.UPDATE,
+    // Emit event after work is done
+    await this.typeSafeEventEmitter.emitAsync(
+      RoleEvents.UPDATED,
       new UpdateRoleEvent(roleId, data, actor),
     );
 
@@ -96,8 +98,9 @@ export class RolesService {
 
     await this.rolesRepository.softRemove(roleId);
 
-    await this.eventEmitter.emitAsync(
-      RoleEvents.DELETE,
+    // Emit event after work is done
+    await this.typeSafeEventEmitter.emitAsync(
+      RoleEvents.DELETED,
       new DeleteRoleEvent(roleId, actor),
     );
   }
@@ -160,6 +163,12 @@ export class RolesService {
 
     // Restore the role
     await this.rolesRepository.restore(roleId);
+
+    // Emit event after work is done
+    await this.typeSafeEventEmitter.emitAsync(
+      RoleEvents.RESTORED,
+      new RestoreRoleEvent(roleId, actor),
+    );
   }
 
   async hasPermission(

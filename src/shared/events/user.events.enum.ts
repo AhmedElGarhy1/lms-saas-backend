@@ -1,7 +1,7 @@
 export enum UserEvents {
-  CREATE = 'user.created',
-  UPDATE = 'user.updated',
-  DELETE = 'user.deleted',
-  RESTORE = 'user.restored',
-  ACTIVATE = 'user.activated',
+  CREATED = 'user.created',
+  UPDATED = 'user.updated',
+  DELETED = 'user.deleted',
+  RESTORED = 'user.restored',
+  ACTIVATED = 'user.activated',
 }

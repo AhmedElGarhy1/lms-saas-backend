@@ -56,7 +56,11 @@ export class RolesRepository extends BaseRepository<Role> {
     return role;
   }
 
-  async updateRole(roleId: string, data: CreateRoleRequestDto): Promise<Role> {
+  async updateRole(
+    roleId: string,
+    data: CreateRoleRequestDto,
+    actor?: ActorUser,
+  ): Promise<Role> {
     const { rolePermissions, ...roleData } = data;
     const role = await this.update(roleId, roleData);
     if (!role) {
@@ -88,11 +92,6 @@ export class RolesRepository extends BaseRepository<Role> {
       })
       .filter((rp) => rp !== undefined);
 
-    console.log({
-      toAdd,
-      toRemove,
-      toUpdate,
-    });
     if (toAdd.length > 0) {
       await this.rolePermissionRepository.bulkInsert(
         toAdd.map((rp) => ({
@@ -102,14 +101,20 @@ export class RolesRepository extends BaseRepository<Role> {
           roleId: role.id,
         })),
       );
+
+      // Note: Detailed permission change logging should be handled by event listeners
+      // The RoleEvents.UPDATED event will be emitted by the service after this method returns
     }
     if (toRemove.length > 0) {
       await this.rolePermissionRepository.bulkDelete({
         id: In(toRemove.map((rp) => rp.id)),
       });
+
+      // Note: Detailed permission change logging should be handled by event listeners
+      // The RoleEvents.UPDATED event will be emitted by the service after this method returns
     }
     if (toUpdate.length > 0) {
-      const results = await this.rolePermissionRepository.updateMany(
+      await this.rolePermissionRepository.updateMany(
         toUpdate.map((rp) => ({
           id: rp.id,
           data: {
@@ -117,12 +122,9 @@ export class RolesRepository extends BaseRepository<Role> {
           },
         })),
       );
-      console.log('-------------------');
-      console.log('-------------------');
-      console.log('-------------------');
-      console.log(results);
-      console.log('-------------------');
-      console.log('-------------------');
+
+      // Note: Detailed permission change logging should be handled by event listeners
+      // The RoleEvents.UPDATED event will be emitted by the service after this method returns
     }
 
     return role;

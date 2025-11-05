@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 
 export interface QueryPerformanceMetrics {
   query: string;
@@ -15,22 +16,35 @@ export class DatabasePerformanceService {
   private readonly logger = new Logger(DatabasePerformanceService.name);
   private readonly slowQueryThreshold = 1000; // 1 second
   private readonly queryMetrics: QueryPerformanceMetrics[] = [];
+  private readonly enableQueryLogging: boolean;
 
   constructor(
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    private readonly configService: ConfigService,
   ) {
+    // Only enable query logging if explicitly enabled via environment variable
+    // Default: false (respects base config which only logs errors/warnings)
+    this.enableQueryLogging =
+      this.configService.get('DB_ENABLE_QUERY_LOGGING') === 'true';
     this.setupQueryLogging();
   }
 
   private setupQueryLogging(): void {
-    // Enable query logging for performance monitoring
-    this.dataSource.setOptions({
-      logging: ['query', 'error', 'warn'],
-      logger: 'advanced-console',
-    });
+    // Only override TypeORM logging if explicitly enabled
+    // This allows metrics tracking without flooding logs with queries
+    if (this.enableQueryLogging) {
+      this.dataSource.setOptions({
+        logging: ['query', 'error', 'warn'],
+        logger: 'advanced-console',
+      });
+      this.logger.log(
+        'Database query logging enabled via DB_ENABLE_QUERY_LOGGING',
+      );
+    }
 
-    // Hook into query execution
+    // Hook into query execution for metrics tracking (always enabled)
+    // This tracks performance without logging every query
     const originalQuery = this.dataSource.query.bind(this.dataSource);
     this.dataSource.query = async (query: string, parameters?: any[]) => {
       const startTime = Date.now();

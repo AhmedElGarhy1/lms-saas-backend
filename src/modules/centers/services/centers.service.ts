@@ -1,5 +1,4 @@
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   ResourceNotFoundException,
   BusinessLogicException,
@@ -15,14 +14,14 @@ import { UserService } from '@/modules/user/services/user.service';
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { CenterEvents } from '@/shared/events/center.events.enum';
 import {
   CreateCenterEvent,
-  CreateCenterBranchEvent,
   UpdateCenterEvent,
   DeleteCenterEvent,
   RestoreCenterEvent,
-} from '@/modules/centers/events/center.events';
-import { CenterEvents } from '@/shared/events/center.events.enum';
+} from '../events/center.events';
 
 export interface SeederCenterData {
   name: string;
@@ -45,7 +44,7 @@ export class CentersService {
     private readonly rolesService: RolesService,
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   async findCenterById(centerId: string): Promise<Center> {
@@ -57,7 +56,7 @@ export class CentersService {
   }
 
   async createCenter(dto: CreateCenterDto, actor: ActorUser): Promise<Center> {
-    // Create the center first
+    // Create the center
     const center = await this.centersRepository.create({
       name: dto.name,
       description: dto.description,
@@ -67,10 +66,10 @@ export class CentersService {
       isActive: dto.isActive,
     });
 
-    // Emit event for user creation and staff profile creation (if user data provided)
-    await this.eventEmitter.emitAsync(
-      CenterEvents.CREATE,
-      new CreateCenterEvent(center, actor, dto.user, dto.branch),
+    // Emit event after work is done
+    await this.typeSafeEventEmitter.emitAsync(
+      CenterEvents.CREATED,
+      new CreateCenterEvent(center, actor),
     );
 
     return center;
@@ -115,9 +114,9 @@ export class CentersService {
       );
     }
 
-    // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
-      CenterEvents.UPDATE,
+    // Emit event after work is done
+    await this.typeSafeEventEmitter.emitAsync(
+      CenterEvents.UPDATED,
       new UpdateCenterEvent(centerId, dto, actor),
     );
 
@@ -129,14 +128,14 @@ export class CentersService {
       `Deleting center: ${centerId} by user profile: ${actor.userProfileId}`,
     );
 
-    const center = await this.findCenterById(centerId);
+    await this.findCenterById(centerId);
     // Permission check should be in controller
 
     await this.centersRepository.softRemove(centerId);
 
-    // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
-      CenterEvents.DELETE,
+    // Emit event after work is done
+    await this.typeSafeEventEmitter.emitAsync(
+      CenterEvents.DELETED,
       new DeleteCenterEvent(centerId, actor),
     );
   }
@@ -156,13 +155,13 @@ export class CentersService {
     await this.centersRepository.restore(centerId);
     const restoredCenter = await this.findCenterById(centerId);
 
-    // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
-      CenterEvents.RESTORE,
+    // Emit event after work is done
+    await this.typeSafeEventEmitter.emitAsync(
+      CenterEvents.RESTORED,
       new RestoreCenterEvent(centerId, actor),
     );
 
-    return restoredCenter!;
+    return restoredCenter;
   }
 
   async updateCenterActivation(
@@ -176,10 +175,12 @@ export class CentersService {
       this.logger.info(
         `Center ${centerId} activation updated to ${isActive} by ${updatedBy}`,
       );
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       this.logger.error(
         `Error updating center activation for center ${centerId}:`,
-        error,
+        errorMessage,
       );
       throw error;
     }
@@ -210,10 +211,14 @@ export class CentersService {
 
     await this.centersRepository.update(centerId, { isActive });
 
-    // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
-      CenterEvents.UPDATE,
-      new UpdateCenterEvent(centerId, { isActive } as any, actor),
+    // Emit event after work is done
+    await this.typeSafeEventEmitter.emitAsync(
+      CenterEvents.UPDATED,
+      new UpdateCenterEvent(
+        centerId,
+        { isActive } as UpdateCenterRequestDto,
+        actor,
+      ),
     );
   }
 }

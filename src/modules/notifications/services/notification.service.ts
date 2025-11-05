@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
-import { NotificationPreferenceService } from './notification-preference.service';
 import { NotificationJobData } from '../types/notification-job-data.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationPayload } from '../types/notification-payload.interface';
@@ -14,10 +13,9 @@ import { ChannelRetryStrategyService } from './channel-retry-strategy.service';
 import {
   NotificationEventsMap,
   DEFAULT_NOTIFICATION_MAPPING,
-  getUnmappedEventSeverity,
+  getUnmappedEventLogLevel,
   NotificationEventMapping,
   resolveChannels,
-  resolveChannelsSafe,
   isProfileScoped,
 } from '../config/notifications.map';
 import {
@@ -48,7 +46,8 @@ interface NotificationProcessingContext {
   eventName: EventType | string;
   event: NotificationEvent | Record<string, unknown>;
   mapping: NotificationEventMapping;
-  recipient: string;
+  recipient: string; // Keep for backward compat
+  phone?: string; // Add phone field for channel routing
   userId?: string;
   centerId?: string;
   locale: string;
@@ -66,10 +65,11 @@ export class NotificationService {
   // Initialize p-limit once per service instance (not per method call)
   // This ensures optimal performance by reusing the limiter across all processEvent calls
   private readonly concurrencyLimit = pLimit(20);
+  // Concurrency limit constant for logging (p-limit doesn't expose limit value)
+  private static readonly CONCURRENCY_LIMIT = 20;
 
   constructor(
     @InjectQueue('notifications') private readonly queue: Queue,
-    private readonly preferenceService: NotificationPreferenceService,
     private readonly senderService: NotificationSenderService,
     private readonly channelSelectionService: ChannelSelectionService,
     private readonly templateService: NotificationTemplateService,
@@ -117,7 +117,7 @@ export class NotificationService {
    *
    * Orchestration pipeline:
    * 1. Lookup notification mapping from NotificationEventsMap (with fallback to DEFAULT_NOTIFICATION_MAPPING)
-   * 2. Extract recipient, userId, centerId, locale, profileInfo from event data
+   * 2. Extract recipient, userId, centerId, locale, profileInfo from event data or RecipientInfo
    * 3. Determine channels based on mapping (profile-scoped vs user-level)
    * 4. Check user preferences for each channel (parallelized)
    * 5. Apply dynamic channel selection based on user activity and urgency
@@ -136,14 +136,15 @@ export class NotificationService {
    * - Use concurrency limiting to prevent event loop pressure
    * - Deduplicate recipients by userId before processing
    * - Track metrics for multi-recipient notifications
+   * - Events remain immutable - recipient info passed explicitly
    *
    * @param eventName - Event type (EventType enum or string)
-   * @param event - Event object containing notification data
+   * @param event - Event object containing notification data (remains immutable)
    * @param recipients - Optional array of recipients to notify (for multi-recipient events)
    */
   async processEvent(
-    eventName: EventType | string,
-    event: NotificationEvent | Record<string, unknown>,
+    eventName: EventType,
+    event: NotificationEvent,
     recipients?: RecipientInfo[],
   ): Promise<void> {
     // Extract or generate correlation ID for request tracing
@@ -154,7 +155,21 @@ export class NotificationService {
     if (recipients && recipients.length > 0) {
       // Deduplicate recipients by userId (final safety check)
       const uniqueRecipients = this.deduplicateRecipients(recipients);
-      const concurrencyLimit = 20;
+
+      // Validate after deduplication: ensure at least one recipient remains
+      if (uniqueRecipients.length === 0) {
+        this.logger.warn(
+          `No valid recipients after deduplication for event: ${eventName}`,
+          'NotificationService',
+          {
+            eventName,
+            correlationId,
+            originalCount: recipients.length,
+          },
+        );
+        return;
+      }
+
       const startTime = Date.now();
 
       // Log structured metrics at start
@@ -162,7 +177,7 @@ export class NotificationService {
         eventName,
         correlationId,
         recipientCount: uniqueRecipients.length,
-        concurrencyLimit,
+        concurrencyLimit: NotificationService.CONCURRENCY_LIMIT,
         centerId: extractCenterId(event),
       });
 
@@ -181,31 +196,24 @@ export class NotificationService {
         uniqueRecipients.map((recipient) =>
           this.concurrencyLimit(async () => {
             try {
-              // Create modified event with recipient data
-              const recipientEvent = {
-                ...event,
-                actor: {
-                  ...(event as any).actor,
-                  userId: recipient.userId,
-                  userProfileId: recipient.profileId,
-                  profileType: recipient.profileType,
-                  email: recipient.email,
-                },
-              };
+              // Pass recipient info explicitly - event remains immutable
               await this.processEventForRecipient(
                 eventName,
-                recipientEvent,
+                event,
                 correlationId,
+                recipient,
               );
             } catch (error) {
+              // Enhanced error logging with profile information
               logNotificationError(
                 this.logger,
                 {
                   eventName,
                   correlationId,
                   recipientId: recipient.userId,
-                  error:
-                    error instanceof Error ? error.message : String(error),
+                  profileId: recipient.profileId,
+                  profileType: recipient.profileType,
+                  error: error instanceof Error ? error.message : String(error),
                 },
                 error instanceof Error ? error : undefined,
               );
@@ -218,10 +226,12 @@ export class NotificationService {
       // Log summary with timing metrics
       const endTime = Date.now();
       const duration = endTime - startTime;
-      const successCount = results.filter((r) => r.status === 'fulfilled')
-        .length;
-      const failureCount = results.filter((r) => r.status === 'rejected')
-        .length;
+      const successCount = results.filter(
+        (r) => r.status === 'fulfilled',
+      ).length;
+      const failureCount = results.filter(
+        (r) => r.status === 'rejected',
+      ).length;
       logNotificationComplete(this.logger, {
         eventName,
         correlationId,
@@ -229,7 +239,7 @@ export class NotificationService {
         successCount,
         failureCount,
         recipientCount: uniqueRecipients.length,
-        concurrencyLimit,
+        concurrencyLimit: NotificationService.CONCURRENCY_LIMIT,
       });
     } else {
       // Existing single-recipient logic (backward compatible)
@@ -240,11 +250,17 @@ export class NotificationService {
   /**
    * Process event for a single recipient
    * Extracted from processEvent to avoid code duplication
+   *
+   * @param eventName - Event type (EventType enum or string)
+   * @param event - Event object containing notification data (remains immutable)
+   * @param correlationId - Correlation ID for request tracing
+   * @param recipientInfo - Optional recipient info (for multi-recipient scenarios)
    */
   private async processEventForRecipient(
     eventName: EventType | string,
     event: NotificationEvent | Record<string, unknown>,
     correlationId: string,
+    recipientInfo?: RecipientInfo,
   ): Promise<void> {
     // Initialize processing context
     const context: Partial<NotificationProcessingContext> = {
@@ -255,12 +271,12 @@ export class NotificationService {
 
     // Execute pipeline steps sequentially
     this.lookupMapping(context);
-    const hasRecipient = this.extractEventData(context);
+    const hasRecipient = this.extractEventData(context, recipientInfo);
     if (!hasRecipient) {
       return; // Early exit if no recipient
     }
     this.determineChannels(context);
-    await this.checkPreferences(context);
+    this.checkPreferences(context);
     if (context.enabledChannels && context.enabledChannels.length === 0) {
       return; // Early exit if no enabled channels
     }
@@ -292,25 +308,28 @@ export class NotificationService {
     let mapping = NotificationEventsMap[eventName as EventType];
     if (!mapping) {
       // Use default mapping for unmapped events
-      const severity = getUnmappedEventSeverity(eventName!);
+      const { logLevel, priority } = getUnmappedEventLogLevel(eventName!);
       const logMessage = `No notification mapping found for event: ${eventName}, using default mapping`;
 
-      if (severity === 'error') {
+      if (logLevel === 'error') {
         this.logger.error(logMessage, undefined, 'NotificationService', {
           eventName,
-          severity,
+          logLevel,
+          priority,
           correlationId: context.correlationId,
         });
-      } else if (severity === 'warn') {
+      } else if (logLevel === 'warn') {
         this.logger.warn(logMessage, 'NotificationService', {
           eventName,
-          severity,
+          logLevel,
+          priority,
           correlationId: context.correlationId,
         });
       } else {
         this.logger.log(logMessage, 'NotificationService', {
           eventName,
-          severity,
+          logLevel,
+          priority,
           correlationId: context.correlationId,
         });
       }
@@ -322,16 +341,47 @@ export class NotificationService {
   }
 
   /**
-   * Pipeline Step 2: Extract data from event
+   * Pipeline Step 2: Extract data from event or use provided recipient info
+   * When recipientInfo is provided, use it directly instead of extracting from event
+   * This keeps events immutable and makes recipient data flow explicit
+   *
+   * @param context - Processing context to populate
+   * @param recipientInfo - Optional recipient info (for multi-recipient scenarios)
    * @returns true if recipient found, false otherwise (early exit)
    */
   private extractEventData(
     context: Partial<NotificationProcessingContext>,
+    recipientInfo?: RecipientInfo,
   ): boolean {
-    const { event, mapping } = context;
+    const { event } = context;
     if (!event) {
       return false;
     }
+
+    // If recipient info is provided, use it directly (for multi-recipient scenarios)
+    if (recipientInfo) {
+      // Validate phone exists (required)
+      if (!recipientInfo.phone) {
+        this.logger.error(
+          `Recipient ${recipientInfo.userId} missing required phone number`,
+          undefined,
+          'NotificationService',
+          { userId: recipientInfo.userId },
+        );
+        return false; // Early exit
+      }
+
+      context.userId = recipientInfo.userId;
+      context.profileType = recipientInfo.profileType;
+      context.profileId = recipientInfo.profileId;
+      context.recipient = recipientInfo.email || recipientInfo.phone; // Fallback for backward compat
+      context.phone = recipientInfo.phone; // Store phone separately for channel routing
+      context.centerId = extractCenterId(event);
+      context.locale = extractLocale(event);
+      return true;
+    }
+
+    // Fallback to extraction from event (for single-recipient scenarios)
     const recipient = extractRecipient(event);
     if (!recipient) {
       this.logger.debug(
@@ -372,62 +422,14 @@ export class NotificationService {
   }
 
   /**
-   * Pipeline Step 4: Check user preferences for each channel
+   * Pipeline Step 4: All channels are enabled (preferences removed)
+   * Users receive notifications based on internal configuration only
    */
-  private async checkPreferences(
+  private checkPreferences(
     context: Partial<NotificationProcessingContext>,
-  ): Promise<void> {
-    const {
-      userId,
-      channelsToCheck,
-      mapping,
-      profileType,
-      profileId,
-    } = context;
-    const profileScoped = mapping ? isProfileScoped(mapping) : false;
-    const enabledChannels: NotificationChannel[] = [];
-
-    if (userId) {
-      // Parallelize preference checks for better performance
-      const preferenceChecks = await Promise.all(
-        channelsToCheck!.map((channel) =>
-          this.preferenceService
-            .isEnabled(
-              userId,
-              channel,
-              mapping!.group,
-              profileScoped ? profileType : null,
-              profileScoped ? profileId : null,
-            )
-            .then((isEnabled) => ({ channel, isEnabled }))
-            .catch((error) => {
-              // Log error but assume enabled to avoid blocking
-              this.logger.warn(
-                `Failed to check preference for channel ${channel}: ${error instanceof Error ? error.message : String(error)}`,
-                'NotificationService',
-              );
-              return { channel, isEnabled: true };
-            }),
-        ),
-      );
-
-      for (const { channel, isEnabled } of preferenceChecks) {
-        if (isEnabled) {
-          enabledChannels.push(channel);
-        }
-      }
-    } else {
-      // If no userId, assume enabled (system notifications)
-      enabledChannels.push(...channelsToCheck!);
-    }
-
-    context.enabledChannels = enabledChannels;
-
-    if (enabledChannels.length === 0) {
-      this.logger.debug(
-        `User ${userId} has disabled all channels for ${context.eventName}`,
-      );
-    }
+  ): void {
+    // All channels from mapping are enabled - no user preferences
+    context.enabledChannels = context.channelsToCheck || [];
   }
 
   /**
@@ -517,7 +519,6 @@ export class NotificationService {
       templateData.actionUrl =
         inAppData.actionUrl || (templateData.actionUrl as string | undefined);
       templateData.priority = inAppData.priority ?? mapping.priority ?? 0;
-      templateData.severity = inAppData.severity;
     }
 
     context.templateData = templateData;
@@ -531,6 +532,7 @@ export class NotificationService {
   ): Promise<void> {
     const {
       recipient,
+      phone,
       finalChannels,
       mapping,
       templateData,
@@ -543,14 +545,60 @@ export class NotificationService {
     } = context;
     const profileScoped = mapping ? isProfileScoped(mapping) : false;
 
-    if (!finalChannels || !recipient || !mapping || !templateData || !locale) {
+    if (!finalChannels || !mapping || !templateData || !locale) {
       return;
     }
 
     // Process each final channel (after dynamic selection)
     for (const channel of finalChannels) {
+      // Determine recipient based on channel type
+      let channelRecipient: string | null = null;
+
+      if (channel === NotificationChannel.EMAIL) {
+        // EMAIL channel requires email
+        const email = recipient?.includes('@') ? recipient : null;
+        if (!email) {
+          this.logger.debug(
+            `Skipping EMAIL channel: no email for user ${userId}`,
+            'NotificationService',
+            { userId, eventName },
+          );
+          continue; // Skip this channel
+        }
+        channelRecipient = email;
+      } else if (
+        channel === NotificationChannel.SMS ||
+        channel === NotificationChannel.WHATSAPP
+      ) {
+        // SMS/WHATSAPP channels require phone
+        channelRecipient = phone || null;
+        if (!channelRecipient) {
+          this.logger.warn(
+            `Skipping ${channel} channel: no phone for user ${userId}`,
+            'NotificationService',
+            { userId, eventName, channel },
+          );
+          continue; // Skip this channel
+        }
+      } else if (channel === NotificationChannel.IN_APP) {
+        // IN_APP uses userId, not recipient
+        channelRecipient = userId || '';
+      } else {
+        // PUSH or other channels - use email or phone as fallback
+        channelRecipient = recipient || phone || null;
+      }
+
+      if (!channelRecipient) {
+        this.logger.debug(
+          `Skipping ${channel} channel: no recipient data`,
+          'NotificationService',
+          { userId, eventName, channel },
+        );
+        continue;
+      }
+
       const payload: NotificationPayload = {
-        recipient,
+        recipient: channelRecipient, // Channel-specific recipient
         channel,
         type: mapping.type,
         group: mapping.group,

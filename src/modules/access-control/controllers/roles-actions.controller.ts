@@ -18,6 +18,8 @@ import { RoleResponseExportMapper } from '@/shared/common/mappers/role-response-
 import { ExportRolesDto } from '../dto/export-roles.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { ExportFormat } from '@/shared/common/dto';
+import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
+import { SystemActivityType } from '@/shared/modules/activity-log/enums/system-activity-type.enum';
 
 @ApiTags('Roles')
 @Controller('roles/actions')
@@ -26,6 +28,7 @@ export class RolesActionsController {
   constructor(
     private readonly rolesService: RolesService,
     private readonly exportService: ExportService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   @Get('export')
@@ -64,6 +67,23 @@ export class RolesActionsController {
       baseFilename,
       res,
     );
+
+    // Log activity
+    await this.activityLogService.log(
+      SystemActivityType.DATA_EXPORTED,
+      {
+        resourceType: 'roles',
+        format,
+        filename: baseFilename,
+        recordCount: roles.length,
+        filters: {
+          search: query.search,
+          centerId: query.centerId,
+        },
+      },
+      actor,
+    );
+
     return data;
   }
 }

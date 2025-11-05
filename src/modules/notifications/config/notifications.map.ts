@@ -83,16 +83,17 @@ export function isProfileScoped(mapping: NotificationEventMapping): boolean {
 }
 
 /**
- * Helper function to determine log severity for unmapped events
+ * Helper function to determine log level and priority for unmapped events
  * @param eventName - The event name that was not mapped
- * @returns Log severity level ('info', 'warn', or 'error')
+ * @returns Object with log level and priority (priority can be derived: 0-1=info, 2-3=success, 4-5=warning, 6-7=error)
  */
-export function getUnmappedEventSeverity(
-  eventName: EventType | string,
-): 'info' | 'warn' | 'error' {
+export function getUnmappedEventLogLevel(eventName: EventType | string): {
+  logLevel: 'info' | 'warn' | 'error';
+  priority: number;
+} {
   const upperEventName = eventName.toUpperCase();
 
-  // Security events: WARN
+  // Security events: WARN (priority 4)
   if (
     upperEventName.includes('AUTH') ||
     upperEventName.includes('SECURITY') ||
@@ -100,26 +101,26 @@ export function getUnmappedEventSeverity(
     upperEventName.includes('OTP') ||
     upperEventName.includes('VERIFICATION')
   ) {
-    return 'warn';
+    return { logLevel: 'warn', priority: 4 };
   }
 
-  // Deletions: WARN
+  // Deletions: WARN (priority 4)
   if (upperEventName.includes('DELETE') || upperEventName.includes('REMOVE')) {
-    return 'warn';
+    return { logLevel: 'warn', priority: 4 };
   }
 
-  // System critical: ERROR
+  // System critical: ERROR (priority 6)
   if (
     upperEventName.includes('SYSTEM') ||
     upperEventName.includes('CRITICAL') ||
     upperEventName.includes('FAILURE') ||
     upperEventName.includes('ERROR')
   ) {
-    return 'error';
+    return { logLevel: 'error', priority: 6 };
   }
 
-  // Default: INFO
-  return 'info';
+  // Default: INFO (priority 0)
+  return { logLevel: 'info', priority: 0 };
 }
 
 /**
@@ -137,32 +138,32 @@ export const NotificationEventsMap: Partial<
   Record<EventType, NotificationEventMapping>
 > = {
   // 👤 USER EVENTS
-  [UserEvents.CREATE]: {
+  [UserEvents.CREATED]: {
     type: NotificationType.USER_REGISTERED,
     channels: [NotificationChannel.IN_APP, NotificationChannel.WHATSAPP],
     template: 'user-registered',
     group: NotificationGroup.SYSTEM,
     priority: 1,
   },
-  [UserEvents.UPDATE]: {
+  [UserEvents.UPDATED]: {
     type: NotificationType.USER_UPDATED,
     channels: [NotificationChannel.IN_APP],
     template: 'user-updated',
     group: NotificationGroup.SYSTEM,
   },
-  [UserEvents.DELETE]: {
+  [UserEvents.DELETED]: {
     type: NotificationType.USER_DELETED,
     channels: [NotificationChannel.IN_APP],
     template: 'user-deleted',
     group: NotificationGroup.SYSTEM,
   },
-  [UserEvents.RESTORE]: {
+  [UserEvents.RESTORED]: {
     type: NotificationType.USER_RESTORED,
     channels: [NotificationChannel.IN_APP],
     template: 'user-restored',
     group: NotificationGroup.SYSTEM,
   },
-  [UserEvents.ACTIVATE]: {
+  [UserEvents.ACTIVATED]: {
     type: NotificationType.USER_ACTIVATED,
     channels: [NotificationChannel.IN_APP, NotificationChannel.WHATSAPP],
     template: 'user-activated',
@@ -171,7 +172,7 @@ export const NotificationEventsMap: Partial<
   },
 
   // 🏫 CENTER EVENTS
-  [CenterEvents.CREATE]: {
+  [CenterEvents.CREATED]: {
     type: NotificationType.CENTER_CREATED,
     channels: [NotificationChannel.EMAIL, NotificationChannel.WHATSAPP], // sent to center contact + admins
     template: 'center-created',
@@ -179,7 +180,7 @@ export const NotificationEventsMap: Partial<
     priority: 3,
     requiresAudit: true,
   },
-  [CenterEvents.UPDATE]: {
+  [CenterEvents.UPDATED]: {
     type: NotificationType.CENTER_UPDATED,
     channels: {
       [ProfileType.ADMIN]: [NotificationChannel.IN_APP],
@@ -191,7 +192,7 @@ export const NotificationEventsMap: Partial<
     template: 'center-updated',
     group: NotificationGroup.MANAGEMENT,
   },
-  [CenterEvents.DELETE]: {
+  [CenterEvents.DELETED]: {
     type: NotificationType.CENTER_DELETED,
     channels: {
       [ProfileType.ADMIN]: [
@@ -207,7 +208,7 @@ export const NotificationEventsMap: Partial<
     group: NotificationGroup.MANAGEMENT,
     priority: 7,
   },
-  [CenterEvents.RESTORE]: {
+  [CenterEvents.RESTORED]: {
     type: NotificationType.CENTER_RESTORED,
     channels: {
       [ProfileType.ADMIN]: [NotificationChannel.IN_APP],

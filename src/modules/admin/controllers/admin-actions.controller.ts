@@ -12,6 +12,8 @@ import { ExportService } from '@/shared/common/services/export.service';
 import { UserResponseExportMapper } from '@/shared/common/mappers/user-response-export.mapper';
 import { ExportUsersDto } from '@/modules/user/dto/export-users.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
+import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
+import { SystemActivityType } from '@/shared/modules/activity-log/enums/system-activity-type.enum';
 
 @ApiTags('Admin Actions')
 @Controller('admin/actions')
@@ -20,6 +22,7 @@ export class AdminActionsController {
     private readonly adminService: AdminService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly exportService: ExportService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   // ===== EXPORT FUNCTIONALITY =====
@@ -59,6 +62,23 @@ export class AdminActionsController {
       baseFilename,
       res,
     );
+
+    // Log activity
+    await this.activityLogService.log(
+      SystemActivityType.DATA_EXPORTED,
+      {
+        resourceType: 'admin',
+        format,
+        filename: baseFilename,
+        recordCount: users.length,
+        filters: {
+          search: query.search,
+          isActive: query.isActive,
+        },
+      },
+      actor,
+    );
+
     return data;
   }
 }

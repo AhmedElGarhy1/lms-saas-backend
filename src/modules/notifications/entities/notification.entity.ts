@@ -6,13 +6,6 @@ import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationActionType } from '../enums/notification-action-type.enum';
 
-export enum NotificationSeverity {
-  INFO = 'info',
-  SUCCESS = 'success',
-  WARNING = 'warning',
-  ERROR = 'error',
-}
-
 export enum NotificationStatus {
   PENDING = 'PENDING',
   SENT = 'SENT',
@@ -66,13 +59,6 @@ export class Notification extends BaseEntity {
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   icon?: string;
-
-  @Column({
-    type: 'enum',
-    enum: NotificationSeverity,
-    nullable: true,
-  })
-  severity?: NotificationSeverity;
 
   @Column({ type: 'enum', enum: ProfileType, nullable: true })
   profileType?: ProfileType | null;

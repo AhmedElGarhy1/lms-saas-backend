@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
+// eslint-disable-next-line no-restricted-imports
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
 import { CreateAdminEvent } from '../events/admin.events';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
 import {
@@ -11,28 +10,32 @@ import {
   GrantUserAccessEvent,
 } from '@/modules/access-control/events/access-control.events';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
-import { UserEvents } from '@/shared/events/user.events.enum';
-import { CreateUserEvent } from '@/modules/user/events/user.events';
-import { UserProfile } from '@/modules/user/entities/user-profile.entity';
-import { User } from '@/modules/user/entities/user.entity';
+import { UserService } from '@/modules/user/services/user.service';
+import { UserProfileService } from '@/modules/user/services/user-profile.service';
 
 @Injectable()
 export class AdminListener {
   constructor(
     private readonly eventEmitter: EventEmitter2,
-    private readonly activityLogService: ActivityLogService,
+    private readonly userService: UserService,
+    private readonly userProfileService: UserProfileService,
   ) {}
 
   @OnEvent(AdminEvents.CREATE)
   async handleCreateAdmin(event: CreateAdminEvent) {
     const { dto, actor, admin } = event;
 
-    const [{ userProfile, user }] = (await this.eventEmitter.emitAsync(
-      UserEvents.CREATE,
-      new CreateUserEvent(dto, actor, admin.id, ProfileType.ADMIN),
-    )) as [{ user: User; userProfile: UserProfile }];
+    // Create user directly - service will emit UserCreatedEvent
+    const createdUser = await this.userService.createUser(dto, actor);
 
-    // grant user access
+    // Create admin profile for the user
+    const userProfile = await this.userProfileService.createUserProfile(
+      createdUser.id,
+      ProfileType.ADMIN,
+      admin.id,
+    );
+
+    // Grant user access
     await this.eventEmitter.emitAsync(
       AccessControlEvents.GRANT_USER_ACCESS,
       new GrantUserAccessEvent(
@@ -51,18 +54,7 @@ export class AdminListener {
       );
     }
 
-    // Log activity
-    await this.activityLogService.log(
-      UserActivityType.USER_CREATED,
-      {
-        targetUserId: user.id,
-        targetUserProfileId: userProfile.id,
-        email: user.email,
-        name: user.name,
-        profileType: 'ADMIN',
-        createdBy: actor.id,
-      },
-      actor,
-    );
+    // Note: Activity logging is now handled by UserActivityListener listening to UserEvents.CREATED
+    // No need to manually log here as the domain event will trigger the activity log
   }
 }

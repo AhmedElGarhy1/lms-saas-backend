@@ -20,6 +20,7 @@ import { RefreshJwtGuard } from './guards/refresh-jwt.guard';
 import { UserModule } from '../user/user.module';
 import { UserRepository } from '../user/repositories/user.repository';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
+import { AuthListener } from './listeners/auth.listener';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.mo
     RefreshJwtStrategy,
     AccessJwtGuard,
     RefreshJwtGuard,
+    AuthListener,
   ],
   exports: [
     AuthService,

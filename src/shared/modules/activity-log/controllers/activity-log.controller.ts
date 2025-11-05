@@ -10,6 +10,9 @@ import { ActivityLogExportMapper } from '@/shared/common/mappers/activity-log-ex
 import { ExportActivityLogsDto } from '../dto/export-activity-logs.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { ExportFormat } from '@/shared/common/dto';
+import { SystemActivityType } from '../enums/system-activity-type.enum';
+import { GetUser } from '@/shared/common/decorators/get-user.decorator';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @ApiTags('Activity Logs')
 @Controller('activity-logs')
@@ -25,8 +28,31 @@ export class ActivityLogController {
     status: 200,
     description: 'Activity logs retrieved successfully',
   })
-  async getActivityLogs(@Query() query: PaginateActivityLogsDto) {
-    return this.activityLogService.getActivityLogs(query);
+  async getActivityLogs(
+    @Query() query: PaginateActivityLogsDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.activityLogService.getActivityLogs(query);
+
+    // Log activity for viewing activity logs
+    await this.activityLogService.log(
+      SystemActivityType.ACTIVITY_LOG_VIEWED,
+      {
+        filters: {
+          centerId: query.centerId,
+          userId: query.userId,
+          type: query.type,
+          page: query.page,
+          limit: query.limit,
+          search: query.search,
+        },
+        resultCount: result.items.length,
+        totalCount: result.meta.totalItems,
+      },
+      actor,
+    );
+
+    return result;
   }
 
   @Get('export')
@@ -39,6 +65,7 @@ export class ActivityLogController {
   async exportActivityLogs(
     @Query() query: ExportActivityLogsDto,
     @Res() res: Response,
+    @GetUser() actor: ActorUser,
   ): Promise<ExportResponseDto> {
     const format = query.format || ExportFormat.CSV;
 
@@ -54,12 +81,31 @@ export class ActivityLogController {
     const baseFilename = query.filename || 'activity-logs';
 
     // Use the simplified export method
-    return await this.exportService.exportData(
+    const data = await this.exportService.exportData(
       activityLogs,
       mapper,
       format,
       baseFilename,
       res,
     );
+
+    // Log activity for exporting activity logs
+    await this.activityLogService.log(
+      SystemActivityType.ACTIVITY_LOG_EXPORTED,
+      {
+        format,
+        filename: baseFilename,
+        recordCount: activityLogs.length,
+        filters: {
+          centerId: query.centerId,
+          userId: query.userId,
+          type: query.type,
+          search: query.search,
+        },
+      },
+      actor,
+    );
+
+    return data;
   }
 }

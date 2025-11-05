@@ -6,10 +6,7 @@ import { NotificationPayload } from '../types/notification-payload.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationRepository } from '../repositories/notification.repository';
 import { Notification } from '../entities/notification.entity';
-import {
-  NotificationSeverity,
-  NotificationStatus as NotificationEntityStatus,
-} from '../entities/notification.entity';
+import { NotificationStatus as NotificationEntityStatus } from '../entities/notification.entity';
 import { NotificationGateway } from '../gateways/notification.gateway';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationActionType } from '../enums/notification-action-type.enum';
@@ -29,7 +26,6 @@ interface ExtractedNotificationData {
   actionUrl: string | undefined;
   actionType: NotificationActionType;
   priority: number;
-  severity: NotificationSeverity;
   icon: string | undefined;
   expiresAt: Date | undefined;
 }
@@ -179,9 +175,6 @@ export class InAppAdapter implements NotificationAdapter {
         ? NotificationActionType.NAVIGATE
         : NotificationActionType.NONE;
     const priority = payload.data.priority ?? 0;
-    const severity = payload.data.severity
-      ? (payload.data.severity as NotificationSeverity)
-      : NotificationSeverity.INFO;
     const icon = payload.data.icon ?? undefined;
     const expiresAt = payload.data.expiresAt
       ? new Date(payload.data.expiresAt)
@@ -193,7 +186,6 @@ export class InAppAdapter implements NotificationAdapter {
       actionUrl,
       actionType,
       priority,
-      severity,
       icon,
       expiresAt,
     };
@@ -214,7 +206,6 @@ export class InAppAdapter implements NotificationAdapter {
       actionType: data.actionType,
       type: payload.type,
       priority: data.priority,
-      severity: data.severity,
       icon: data.icon,
       expiresAt: data.expiresAt,
       data: payload.data,
@@ -387,7 +378,6 @@ export class InAppAdapter implements NotificationAdapter {
           actionUrl: notification.actionUrl,
           actionType: notification.actionType,
           priority: notification.priority,
-          severity: notification.severity,
           // Enhanced metadata for debugging
           eventType: payload.data.eventName,
           payloadData: payload.data,

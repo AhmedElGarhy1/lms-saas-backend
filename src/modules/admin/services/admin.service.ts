@@ -12,13 +12,8 @@ import { User } from '@/modules/user/entities/user.entity';
 import { Admin } from '../entities/admin.entity';
 import { CreateAdminEvent } from '@/modules/admin/events/admin.events';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
-import {
-  UpdateUserEvent,
-  DeleteUserEvent,
-  RestoreUserEvent,
-  ActivateUserEvent,
-} from '@/modules/user/events/user.events';
-import { UserEvents } from '@/shared/events/user.events.enum';
+// Note: User event emissions are now handled by command handlers
+// No need to import old event classes or emit events here
 
 @Injectable()
 export class AdminService {
@@ -56,19 +51,13 @@ export class AdminService {
       targetUserProfileId: userProfileId,
     });
 
-    const user = await this.userService.updateUserByProfileId(
+    // Note: updateUserByProfileId now emits UserCommands.UPDATE internally
+    // Command handler will emit UserEvents.UPDATED, which triggers activity logging
+    return await this.userService.updateUserByProfileId(
       userProfileId,
       updateData,
       actor,
     );
-
-    // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
-      UserEvents.UPDATE,
-      new UpdateUserEvent(userProfileId, updateData, actor),
-    );
-
-    return user;
   }
 
   async deleteAdmin(userProfileId: string, actor: ActorUser): Promise<void> {
@@ -79,13 +68,14 @@ export class AdminService {
       throw new Error('Access denied');
     }
 
-    await this.userService.deleteUserByProfileId(userProfileId, actor);
-
-    // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
-      UserEvents.DELETE,
-      new DeleteUserEvent(userProfileId, actor),
-    );
+    // Note: deleteUserByProfileId should emit UserCommands.DELETE internally
+    // For now, calling deleteUser directly which emits the command
+    const userProfile = await this.userService.findUserByProfileId(userProfileId, actor);
+    if (!userProfile) {
+      throw new Error('User profile not found');
+    }
+    await this.userService.deleteUser(userProfile.id, actor);
+    // Command handler will emit UserEvents.DELETED, which triggers activity logging
   }
 
   async restoreAdmin(userProfileId: string, actor: ActorUser): Promise<void> {
@@ -96,13 +86,14 @@ export class AdminService {
       throw new Error('Access denied');
     }
 
-    await this.userService.restoreUserByProfileId(userProfileId, actor);
-
-    // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
-      UserEvents.RESTORE,
-      new RestoreUserEvent(userProfileId, actor),
-    );
+    // Note: restoreUserByProfileId should emit UserCommands.RESTORE internally
+    // For now, calling restoreUser directly which emits the command
+    const userProfile = await this.userService.findUserByProfileId(userProfileId, actor);
+    if (!userProfile) {
+      throw new Error('User profile not found');
+    }
+    await this.userService.restoreUser(userProfile.id, actor);
+    // Command handler will emit UserEvents.RESTORED, which triggers activity logging
   }
 
   async toggleAdminStatus(
@@ -115,13 +106,9 @@ export class AdminService {
       targetUserProfileId: userProfileId,
     });
 
+    // Note: activateProfileUser emits UserCommands.ACTIVATE internally
+    // Command handler will emit UserEvents.ACTIVATED, which triggers activity logging
     await this.userService.activateProfileUser(userProfileId, isActive, actor);
-
-    // Emit event for activity logging
-    await this.eventEmitter.emitAsync(
-      UserEvents.ACTIVATE,
-      new ActivateUserEvent(userProfileId, isActive, actor),
-    );
   }
 
   async findOne(userProfileId: string, actor: ActorUser): Promise<User> {

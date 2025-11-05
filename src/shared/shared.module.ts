@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { WinstonModule } from 'nest-winston';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LoggerService } from './services/logger.service';
 import { DatabaseService } from './database.service';
 import { ExportService } from './common/services/export.service';
@@ -9,10 +10,12 @@ import { ActivityLogModule } from './modules/activity-log/activity-log.module';
 import { HealthService } from './services/health.service';
 import { TypeOrmExceptionFilter } from './common/filters/typeorm-exception.filter';
 import { RedisModule } from './modules/redis/redis.module';
+import { TypeSafeEventEmitter } from './services/type-safe-event-emitter.service';
+import { CommandGuard } from './common/guards/command.guard';
 
 @Global()
 @Module({
-  imports: [ConfigModule, WinstonModule, ActivityLogModule, RedisModule],
+  imports: [ConfigModule, WinstonModule, ActivityLogModule, RedisModule, EventEmitterModule],
   controllers: [HealthController],
   providers: [
     LoggerService,
@@ -20,6 +23,8 @@ import { RedisModule } from './modules/redis/redis.module';
     ExportService,
     HealthService,
     TypeOrmExceptionFilter,
+    TypeSafeEventEmitter,
+    CommandGuard,
   ],
   exports: [
     LoggerService,
@@ -28,6 +33,8 @@ import { RedisModule } from './modules/redis/redis.module';
     ActivityLogModule,
     ConfigModule,
     RedisModule,
+    TypeSafeEventEmitter,
+    CommandGuard,
   ],
 })
 export class SharedModule {}

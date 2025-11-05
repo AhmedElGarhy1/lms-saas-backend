@@ -2,9 +2,6 @@ import {
   IsEnum,
   IsOptional,
   IsUUID,
-  IsInt,
-  Min,
-  Max,
   IsBoolean,
   IsArray,
   ArrayNotEmpty,
@@ -13,25 +10,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { NotificationType } from '../enums/notification-type.enum';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { NotificationSeverity } from '../entities/notification.entity';
-import { NotificationActionType } from '../enums/notification-action-type.enum';
+import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 
-export class GetInAppNotificationsDto {
-  @ApiPropertyOptional({ default: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
-
-  @ApiPropertyOptional({ default: 20 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  limit?: number = 20;
-
+export class GetInAppNotificationsDto extends BasePaginationDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()
@@ -52,76 +33,6 @@ export class GetInAppNotificationsDto {
   @IsOptional()
   @IsEnum(ProfileType)
   profileType?: ProfileType | null;
-}
-
-export class InAppNotificationResponseDto {
-  @ApiProperty()
-  id: string;
-
-  @ApiProperty()
-  title: string;
-
-  @ApiProperty()
-  message: string;
-
-  @ApiPropertyOptional()
-  actionUrl?: string;
-
-  @ApiPropertyOptional({ enum: NotificationActionType })
-  actionType?: NotificationActionType;
-
-  @ApiPropertyOptional()
-  readAt?: Date;
-
-  @ApiProperty()
-  isRead: boolean;
-
-  @ApiProperty({ enum: NotificationType })
-  type: NotificationType;
-
-  @ApiProperty()
-  priority: number;
-
-  @ApiPropertyOptional({ enum: NotificationSeverity })
-  severity?: NotificationSeverity;
-
-  @ApiPropertyOptional()
-  icon?: string;
-
-  @ApiPropertyOptional()
-  data?: Record<string, any>;
-
-  @ApiPropertyOptional({ enum: ProfileType })
-  profileType?: ProfileType | null;
-
-  @ApiPropertyOptional()
-  profileId?: string | null;
-
-  @ApiProperty()
-  createdAt: Date;
-
-  @ApiProperty()
-  updatedAt: Date;
-}
-
-export class PaginatedInAppNotificationsDto {
-  @ApiProperty({ type: [InAppNotificationResponseDto] })
-  data: InAppNotificationResponseDto[];
-
-  @ApiProperty()
-  total: number;
-
-  @ApiProperty()
-  page: number;
-
-  @ApiProperty()
-  limit: number;
-
-  @ApiProperty()
-  hasMore: boolean;
-
-  @ApiPropertyOptional()
-  nextCursor?: string;
 }
 
 export class MarkAsReadDto {
