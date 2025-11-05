@@ -234,6 +234,30 @@ export function validateEnv() {
       desc: 'Enable database query logging for performance monitoring',
       default: false,
     }),
+    WEBSOCKET_CONNECTION_RATE_LIMIT_IP: str({
+      desc: 'Maximum connection attempts per IP per window (default: 10)',
+      default: '10',
+    }),
+    WEBSOCKET_CONNECTION_RATE_LIMIT_IP_WINDOW: str({
+      desc: 'Time window in seconds for IP rate limit (default: 60)',
+      default: '60',
+    }),
+    WEBSOCKET_CONNECTION_RATE_LIMIT_USER: str({
+      desc: 'Maximum connection attempts per user per window (default: 5)',
+      default: '5',
+    }),
+    WEBSOCKET_CONNECTION_RATE_LIMIT_USER_WINDOW: str({
+      desc: 'Time window in seconds for user rate limit (default: 60)',
+      default: '60',
+    }),
+    WEBSOCKET_RATE_LIMIT_FAIL_CLOSED: bool({
+      desc: 'Fail closed if rate limiter unavailable (default: false)',
+      default: false,
+    }),
+    NOTIFICATION_CONFIG_STRICT_VALIDATION: bool({
+      desc: 'Strict validation for notification configuration (default: true)',
+      default: true,
+    }),
   });
 
   // Return the validated environment object

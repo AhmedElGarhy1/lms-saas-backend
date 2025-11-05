@@ -83,7 +83,6 @@ export class NotificationGateway
   async handleConnection(client: Socket) {
     const socketData = client.data as SocketData;
     const userId = socketData.userId;
-    console.log('socketData', socketData);
     if (!userId || typeof userId !== 'string') {
       this.logger.warn('Connection attempt without userId');
       client.disconnect();

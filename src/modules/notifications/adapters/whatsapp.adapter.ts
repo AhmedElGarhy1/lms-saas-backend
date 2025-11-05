@@ -1,16 +1,20 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
-import { NotificationPayload } from '../types/notification-payload.interface';
+import { WhatsAppNotificationPayload } from '../types/notification-payload.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { WhatsAppProvider } from './providers/whatsapp-provider.interface';
 import { TwilioWhatsAppProvider } from './providers/twilio-whatsapp.provider';
 import { MetaWhatsAppProvider } from './providers/meta-whatsapp.provider';
+import {
+  MissingNotificationContentException,
+  NotificationSendingFailedException,
+} from '../exceptions/notification.exceptions';
 
 @Injectable()
-export class WhatsAppAdapter implements NotificationAdapter, OnModuleInit {
+export class WhatsAppAdapter implements NotificationAdapter<WhatsAppNotificationPayload>, OnModuleInit {
   private provider: WhatsAppProvider | null = null;
 
   constructor(
@@ -69,17 +73,17 @@ export class WhatsAppAdapter implements NotificationAdapter, OnModuleInit {
     }
   }
 
-  async send(payload: NotificationPayload): Promise<void> {
-    if (payload.channel !== NotificationChannel.WHATSAPP) {
-      throw new Error('WhatsAppAdapter can only send WHATSAPP notifications');
-    }
-
+  async send(payload: WhatsAppNotificationPayload): Promise<void> {
+    // Type system ensures channel is WHATSAPP, no runtime check needed
     const phoneNumber = payload.recipient;
     const message =
       payload.data.content || payload.data.html || payload.data.message || '';
 
     if (!message) {
-      throw new Error('WhatsApp message content is required');
+      throw new MissingNotificationContentException(
+        NotificationChannel.WHATSAPP,
+        'content',
+      );
     }
 
     // If no provider is configured, log and return (don't throw)
@@ -133,29 +137,19 @@ export class WhatsAppAdapter implements NotificationAdapter, OnModuleInit {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      const latency = Date.now() - startTime;
 
-      // Track failure metric
+      // Track failure metric (must succeed even if send fails)
       await this.metricsService.incrementFailed(
         NotificationChannel.WHATSAPP,
         payload.type,
       );
 
-      this.logger.error(
-        `Failed to send WhatsApp message via ${this.provider.getProviderName()} (${latency}ms): ${errorMessage}`,
-        error instanceof Error ? error.stack : undefined,
-        'WhatsAppAdapter',
-        {
-          channel: NotificationChannel.WHATSAPP,
-          type: payload.type,
-          recipient: phoneNumber,
-          status: 'failed',
-          provider: this.provider.getProviderName(),
-          error: errorMessage,
-          latency,
-        },
+      // Re-throw error - global handler will log it
+      throw new NotificationSendingFailedException(
+        NotificationChannel.WHATSAPP,
+        errorMessage,
+        payload.userId,
       );
-      throw new Error(`Failed to send WhatsApp message: ${errorMessage}`);
     }
   }
 }

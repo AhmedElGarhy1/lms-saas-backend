@@ -11,9 +11,9 @@ import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
-import { NotificationChannel } from '../enums/notification-channel.enum';
 import { ConfigService } from '@nestjs/config';
 import { ChannelRetryStrategyService } from '../services/channel-retry-strategy.service';
+import { NotificationSendingFailedException } from '../exceptions/notification.exceptions';
 
 /**
  * Processor concurrency must be a static value in the decorator.
@@ -48,13 +48,10 @@ export class NotificationProcessor extends WorkerHost {
 
   async process(job: Job<NotificationJobData>): Promise<void> {
     // Destructure job data for cleaner code
-    const {
-      channel,
-      type,
-      userId,
-      data: payloadData,
-      retryable = true, // Default to retriable if not specified
-    } = job.data;
+    // NotificationJobData extends NotificationPayload which has common properties from BaseNotificationPayload
+    const jobData = job.data as NotificationPayload & NotificationJobData;
+    const { channel, type, userId, data: payloadData } = jobData;
+    const retryable = jobData.retryable ?? true; // Default to retriable if not specified
     const retryCount = job.attemptsMade || 0;
     const jobId = job.id || 'unknown';
     const attempt = retryCount + 1;
@@ -82,14 +79,20 @@ export class NotificationProcessor extends WorkerHost {
 
     try {
       // Update job data with retry count
+      // Create payload with retry metadata in data field, but keep it as NotificationPayload
       const payload: NotificationPayload = {
-        ...job.data,
+        ...jobData,
         data: {
           ...payloadData,
           retryCount,
           jobId,
         },
-      };
+      } as NotificationPayload;
+
+      // Extract correlationId from payload data if available
+      const correlationId =
+        (payloadData?.correlationId as string | undefined) ||
+        jobData.correlationId;
 
       // Send notification
       const results = await this.senderService.send(payload);
@@ -107,6 +110,7 @@ export class NotificationProcessor extends WorkerHost {
             channel,
             userId,
             attempt,
+            correlationId,
           },
         );
       } else {
@@ -128,15 +132,25 @@ export class NotificationProcessor extends WorkerHost {
               userId,
               attempt,
               error: failedChannel.error,
+              correlationId,
             },
           );
         }
 
-        throw new Error(`All notification channels failed: ${errors}`);
+        throw new NotificationSendingFailedException(
+          channel,
+          `All notification channels failed: ${errors}`,
+          userId,
+        );
       }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
+
+      // Extract correlationId from job data if available
+      const correlationId =
+        (payloadData?.correlationId as string | undefined) ||
+        jobData.correlationId;
 
       // Enhanced error logging with structured context
       this.logger.error(
@@ -152,19 +166,20 @@ export class NotificationProcessor extends WorkerHost {
           retryCount,
           retryable,
           error: errorMessage,
+          correlationId,
         },
       );
 
       // Update notification log if exists
       if (userId) {
-        const jobId = job.id || (job.data?.data?.jobId as string | undefined);
+        const jobIdValue = job.id || jobData.jobId;
 
         // First try to find by jobId if available
         let logs: NotificationLog[] = [];
-        if (jobId) {
+        if (jobIdValue) {
           logs = await this.logRepository.findMany({
             where: {
-              jobId: jobId,
+              jobId: jobIdValue as string,
             },
             order: { createdAt: 'DESC' },
             take: 1,
@@ -235,7 +250,8 @@ export class NotificationProcessor extends WorkerHost {
 
   @OnWorkerEvent('completed')
   async onCompleted(job: Job<NotificationJobData>): Promise<void> {
-    const { channel, type, userId } = job.data;
+    const jobData = job.data as NotificationPayload & NotificationJobData;
+    const { channel, type, userId } = jobData;
     const jobId = job.id || 'unknown';
 
     // Update queue backlog metrics (metrics are already tracked in senderService.send())
@@ -256,7 +272,8 @@ export class NotificationProcessor extends WorkerHost {
 
   @OnWorkerEvent('failed')
   async onFailed(job: Job<NotificationJobData>, error: Error): Promise<void> {
-    const { channel, type, userId, retryable } = job.data;
+    const jobData = job.data as NotificationPayload & NotificationJobData;
+    const { channel, type, userId, retryable } = jobData;
     const jobId = job.id || 'unknown';
     const errorMessage = error instanceof Error ? error.message : String(error);
     const retryCount = job.attemptsMade || 0;
@@ -282,14 +299,14 @@ export class NotificationProcessor extends WorkerHost {
 
     // Update notification log if exists to mark as permanently failed
     if (userId) {
-      const jobId = job.id || (job.data?.data?.jobId as string | undefined);
+      const jobIdValue = job.id || jobData.jobId;
 
       // First try to find by jobId if available
       let logs: NotificationLog[] = [];
-      if (jobId) {
+      if (jobIdValue) {
         logs = await this.logRepository.findMany({
           where: {
-            jobId: jobId,
+            jobId: jobIdValue as string,
           },
           order: { createdAt: 'DESC' },
           take: 1,

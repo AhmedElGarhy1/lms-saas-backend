@@ -9,6 +9,7 @@ import { FindManyOptions, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { GetInAppNotificationsDto } from '../dto/in-app-notification.dto';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
 export class NotificationRepository extends BaseRepository<Notification> {
@@ -130,7 +131,7 @@ export class NotificationRepository extends BaseRepository<Notification> {
       where: { id: notificationId, userId },
     });
     if (!notification) {
-      throw new Error('Notification not found or access denied');
+      throw new ResourceNotFoundException('Notification not found or access denied');
     }
     await repo.update({ id: notificationId }, { readAt: new Date() });
   }

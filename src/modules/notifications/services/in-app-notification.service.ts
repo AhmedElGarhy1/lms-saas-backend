@@ -14,6 +14,7 @@ import { NotificationChannel } from '../enums/notification-channel.enum';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { GetInAppNotificationsDto } from '../dto/in-app-notification.dto';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
 export class InAppNotificationService {
@@ -93,7 +94,7 @@ export class InAppNotificationService {
     const notification =
       await this.notificationRepository.findOne(notificationId);
     if (!notification || notification.userId !== userId) {
-      throw new Error('Notification not found or access denied');
+      throw new ResourceNotFoundException('Notification not found or access denied');
     }
 
     await this.notificationRepository.markAsRead(notificationId, userId);
@@ -139,7 +140,7 @@ export class InAppNotificationService {
     const notification =
       await this.notificationRepository.findOne(notificationId);
     if (!notification || notification.userId !== userId) {
-      throw new Error('Notification not found or access denied');
+      throw new ResourceNotFoundException('Notification not found or access denied');
     }
     await this.notificationRepository.update(notificationId, {
       isArchived: true,

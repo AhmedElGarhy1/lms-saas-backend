@@ -50,9 +50,8 @@ Authenticate using a JWT access token. Provide it via one of:
 ### Authentication Flow
 
 1. Client connects to WebSocket endpoint with token
-2. Backend validates token via `WebSocketAuthGuard`
-3. If valid: connection established, user ID stored in socket data
-4. If invalid: connection rejected with error message
+2. If valid: connection established, user ID stored in socket data
+3. If invalid: connection rejected with error message
 
 ---
 

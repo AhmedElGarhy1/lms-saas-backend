@@ -104,6 +104,9 @@ export class NotificationSenderService {
           payload.channel,
           payload.type,
         );
+        const jobId = (payload.data as Record<string, unknown>)?.jobId as
+          | string
+          | undefined;
         this.logger.error(
           `Failed to send in-app notification: ${payload.type}`,
           error instanceof Error ? error.stack : undefined,
@@ -113,6 +116,7 @@ export class NotificationSenderService {
             type: payload.type,
             userId: payload.userId,
             correlationId: payload.correlationId,
+            jobId,
           },
         );
         results.push({
@@ -129,6 +133,37 @@ export class NotificationSenderService {
     const startTime = Date.now();
 
     try {
+      // Validate required variables before rendering
+      const validationResult = this.templateService.validateRequiredVariables(
+        payload.type,
+        payload.channel,
+        payload.data as Record<string, unknown>,
+      );
+
+      if (!validationResult.isValid) {
+        const errorMessage = `Missing required template variables: ${validationResult.missingVariables.join(', ')}`;
+        this.logger.error(
+          `Failed to send notification: ${payload.type} via ${payload.channel}`,
+          undefined,
+          'NotificationSenderService',
+          {
+            channel: payload.channel,
+            type: payload.type,
+            userId: payload.userId,
+            correlationId: payload.correlationId,
+            missingVariables: validationResult.missingVariables,
+          },
+        );
+
+        // For now, log error but continue (fail-open strategy)
+        // Can be changed to throw exception if needed
+        // throw new MissingTemplateVariablesException(
+        //   payload.type,
+        //   payload.channel,
+        //   validationResult.missingVariables,
+        // );
+      }
+
       // Load and render template
       const locale = payload.locale || 'en';
       const dataObj = payload.data as Record<string, unknown>;
@@ -193,17 +228,78 @@ export class NotificationSenderService {
       }
 
       // Prepare payload with rendered content
-      const sendPayload: NotificationPayload = {
-        ...payload,
-        data: {
-          ...dataObj,
-          html: renderedContent,
-          content: renderedContent,
-        },
-        subject:
-          payload.subject ||
-          (typeof dataObj.subject === 'string' ? dataObj.subject : undefined),
+      // Build channel-specific payload based on channel type
+      // Extract common fields and channel first since payload is a union type
+      const channel = payload.channel;
+      const commonFields = {
+        type: payload.type,
+        group: payload.group,
+        locale: payload.locale,
+        centerId: payload.centerId,
+        userId: payload.userId,
+        profileType: payload.profileType,
+        profileId: payload.profileId,
+        correlationId: payload.correlationId,
       };
+
+      let sendPayload: NotificationPayload;
+
+      if (channel === NotificationChannel.EMAIL) {
+        sendPayload = {
+          ...commonFields,
+          channel: NotificationChannel.EMAIL,
+          recipient: payload.recipient,
+          subject:
+            (payload as any).subject ||
+            (typeof dataObj.subject === 'string'
+              ? dataObj.subject
+              : 'Notification'),
+          data: {
+            html: renderedContent,
+            content: renderedContent,
+            ...dataObj,
+          },
+        } as NotificationPayload;
+      } else if (
+        channel === NotificationChannel.SMS ||
+        channel === NotificationChannel.WHATSAPP
+      ) {
+        sendPayload = {
+          ...commonFields,
+          channel: channel,
+          recipient: payload.recipient,
+          data: {
+            content: renderedContent,
+            message: renderedContent,
+            html: renderedContent,
+            ...dataObj,
+          },
+        } as NotificationPayload;
+      } else if (channel === NotificationChannel.PUSH) {
+        sendPayload = {
+          ...commonFields,
+          channel: NotificationChannel.PUSH,
+          recipient: payload.recipient,
+          title: (payload as any).title || 'Notification',
+          data: {
+            message: renderedContent,
+            ...dataObj,
+          },
+        } as NotificationPayload;
+      } else {
+        // This should not happen for known channels, but handle gracefully
+        // IN_APP is handled at the top of the method, so this is a fallback
+        sendPayload = {
+          ...commonFields,
+          channel: channel,
+          recipient: (payload as any).recipient || '',
+          data: {
+            ...dataObj,
+            html: renderedContent,
+            content: renderedContent,
+          },
+        } as unknown as NotificationPayload;
+      }
 
       // Send notification
       await adapter.send(sendPayload);
@@ -263,6 +359,10 @@ export class NotificationSenderService {
           recipient: payload.recipient,
           userId: payload.userId,
           correlationId: payload.correlationId,
+          jobId: (payload.data as Record<string, unknown>)?.jobId as
+            | string
+            | undefined,
+          error: errorMessage,
         },
       );
 

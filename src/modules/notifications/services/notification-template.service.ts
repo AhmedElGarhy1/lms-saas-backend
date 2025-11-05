@@ -12,6 +12,18 @@ import { CenterEvents } from '@/shared/events/center.events.enum';
 import { BranchEvents } from '@/shared/events/branch.events.enum';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { NotificationEvent } from '../types/notification-event.types';
+import {
+  TemplateRenderingException,
+  MissingTemplateVariablesException,
+} from '../exceptions/notification.exceptions';
+import {
+  emailTemplateConfig,
+  smsTemplateConfig,
+  whatsappTemplateConfig,
+  pushTemplateConfig,
+} from '../config';
+import { NotificationType } from '../enums/notification-type.enum';
+import { NotificationChannel } from '../enums/notification-channel.enum';
 
 @Injectable()
 export class NotificationTemplateService {
@@ -45,12 +57,22 @@ export class NotificationTemplateService {
           const compiledTemplate = Handlebars.compile(templateContent);
           return compiledTemplate;
         } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
           this.logger.error(
             `Failed to load template: ${templatePath}`,
             error instanceof Error ? error.stack : undefined,
+            'NotificationTemplateService',
+            {
+              templateName,
+              locale,
+              templatePath,
+              error: errorMessage,
+            },
           );
-          throw new Error(
-            `Template not found: ${templateName} for locale: ${locale}`,
+          throw new TemplateRenderingException(
+            templateName,
+            `Template not found: ${templateName} for locale: ${locale}. ${errorMessage}`,
           );
         }
       }),
@@ -114,13 +136,173 @@ export class NotificationTemplateService {
   }
 
   /**
+   * Get template path from channel-specific config if available
+   * Falls back to mapping.template if config doesn't exist
+   * @param notificationType - The notification type
+   * @param channel - The notification channel
+   * @param fallbackTemplate - Fallback template path from NotificationEventsMap
+   * @returns Template path from config or fallback
+   */
+  getTemplatePathFromConfig(
+    notificationType: NotificationType,
+    channel: NotificationChannel,
+    fallbackTemplate: string,
+  ): string {
+    let configTemplate: string | undefined;
+
+    switch (channel) {
+      case NotificationChannel.EMAIL:
+        configTemplate = (
+          emailTemplateConfig as Record<string, { templatePath: string }>
+        )[notificationType]?.templatePath;
+        break;
+      case NotificationChannel.SMS:
+        configTemplate = (
+          smsTemplateConfig as Record<string, { templatePath: string }>
+        )[notificationType]?.templatePath;
+        break;
+      case NotificationChannel.WHATSAPP:
+        configTemplate = (
+          whatsappTemplateConfig as Record<string, { templatePath: string }>
+        )[notificationType]?.templatePath;
+        break;
+      case NotificationChannel.PUSH:
+        configTemplate = (
+          pushTemplateConfig as Record<string, { templatePath: string }>
+        )[notificationType]?.templatePath;
+        break;
+      default:
+        // For IN_APP, etc., use fallback
+        return fallbackTemplate;
+    }
+
+    // Use config template if available, otherwise fallback
+    return configTemplate || fallbackTemplate;
+  }
+
+  /**
+   * Get email subject from config if available
+   * @param notificationType - The notification type
+   * @param fallbackSubject - Fallback subject if config doesn't exist
+   * @returns Subject from config or fallback
+   */
+  getEmailSubjectFromConfig(
+    notificationType: NotificationType,
+    fallbackSubject: string,
+  ): string {
+    const config = (
+      emailTemplateConfig as Record<
+        string,
+        { subject?: string; templatePath: string }
+      >
+    )[notificationType];
+
+    return config?.subject || fallbackSubject;
+  }
+
+  /**
+   * Validate that all required variables from config are present in template data
+   * @param notificationType - The notification type
+   * @param channel - The notification channel
+   * @param templateData - The template data to validate
+   * @returns Object with isValid flag and missing variables array
+   */
+  validateRequiredVariables(
+    notificationType: NotificationType,
+    channel: NotificationChannel,
+    templateData: Record<string, unknown>,
+  ): { isValid: boolean; missingVariables: string[] } {
+    let config:
+      | { requiredVariables?: readonly string[] }
+      | undefined = undefined;
+
+    // Get required variables from channel-specific config
+    switch (channel) {
+      case NotificationChannel.EMAIL:
+        config = (
+          emailTemplateConfig as Record<
+            string,
+            { requiredVariables?: readonly string[] }
+          >
+        )[notificationType];
+        break;
+      case NotificationChannel.SMS:
+        config = (
+          smsTemplateConfig as Record<
+            string,
+            { requiredVariables?: readonly string[] }
+          >
+        )[notificationType];
+        break;
+      case NotificationChannel.WHATSAPP:
+        config = (
+          whatsappTemplateConfig as Record<
+            string,
+            { requiredVariables?: readonly string[] }
+          >
+        )[notificationType];
+        break;
+      case NotificationChannel.PUSH:
+        config = (
+          pushTemplateConfig as Record<
+            string,
+            { requiredVariables?: readonly string[] }
+          >
+        )[notificationType];
+        break;
+      default:
+        // For IN_APP, etc., no required variables validation
+        return { isValid: true, missingVariables: [] };
+    }
+
+    // If no required variables defined, validation passes
+    if (!config?.requiredVariables || config.requiredVariables.length === 0) {
+      return { isValid: true, missingVariables: [] };
+    }
+
+    // Check each required variable
+    const missingVariables: string[] = [];
+    for (const varName of config.requiredVariables) {
+      // Check if variable exists in data (handle nested paths like "user.name")
+      const parts = varName.split('.');
+      let current: unknown = templateData;
+      let found = true;
+
+      for (const part of parts) {
+        if (
+          current === null ||
+          current === undefined ||
+          typeof current !== 'object'
+        ) {
+          found = false;
+          break;
+        }
+        current = (current as Record<string, unknown>)[part];
+      }
+
+      // Variable is missing if not found or is null/undefined
+      if (!found || current === null || current === undefined) {
+        missingVariables.push(varName);
+      }
+    }
+
+    return {
+      isValid: missingVariables.length === 0,
+      missingVariables,
+    };
+  }
+
+  /**
    * Render template safely with fallbacks and missing variable detection
+   * Now also validates against config-based requiredVariables
    */
   async renderTemplateSafe(
     templateName: string,
     data: Record<string, any>,
     locale: string = 'en',
     eventType?: string,
+    notificationType?: NotificationType,
+    channel?: NotificationChannel,
   ): Promise<string> {
     const template = await this.loadTemplateWithFallback(templateName, locale);
 
@@ -129,7 +311,31 @@ export class NotificationTemplateService {
       return this.getFallbackContent(eventType, data);
     }
 
-    // Detect missing variables (basic check)
+    // Validate required variables from config if notificationType and channel are provided
+    if (notificationType && channel) {
+      const validationResult = this.validateRequiredVariables(
+        notificationType,
+        channel,
+        data,
+      );
+
+      if (!validationResult.isValid) {
+        this.logger.warn(
+          `Missing required template variables for ${notificationType} via ${channel}: ${validationResult.missingVariables.join(', ')}`,
+          'NotificationTemplateService',
+          {
+            eventType,
+            templateName,
+            locale,
+            notificationType,
+            channel,
+            missingVariables: validationResult.missingVariables,
+          },
+        );
+      }
+    }
+
+    // Detect missing variables (template-based check for additional safety)
     const missingVars = this.detectMissingVariables(template, data);
     if (missingVars.length > 0) {
       this.logger.warn(

@@ -26,7 +26,6 @@ import { InAppNotificationController } from './controllers/in-app-notification.c
 import { NotificationRepository } from './repositories/notification.repository';
 import { InAppNotificationService } from './services/in-app-notification.service';
 import { NotificationGateway } from './gateways/notification.gateway';
-import { WebSocketAuthGuard } from './guards/websocket-auth.guard';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { UserModule } from '../user/user.module';
@@ -38,6 +37,7 @@ import { ChannelRateLimitService } from './services/channel-rate-limit.service';
 import { ChannelRetryStrategyService } from './services/channel-retry-strategy.service';
 import { ChannelSelectionService } from './services/channel-selection.service';
 import { RecipientResolverService } from './services/recipient-resolver.service';
+import { NotificationConfigValidatorService } from './services/notification-config-validator.service';
 
 @Module({
   imports: [
@@ -87,7 +87,6 @@ import { RecipientResolverService } from './services/recipient-resolver.service'
     MetaWhatsAppProvider,
     InAppNotificationService,
     NotificationGateway,
-    WebSocketAuthGuard,
     RedisCleanupJob,
     TemplateCacheService,
     MetricsBatchService,
@@ -96,6 +95,7 @@ import { RecipientResolverService } from './services/recipient-resolver.service'
     NotificationMetricsService,
     ChannelSelectionService,
     RecipientResolverService,
+    NotificationConfigValidatorService, // Validates configs on module init
   ],
   controllers: [NotificationHistoryController, InAppNotificationController],
   exports: [

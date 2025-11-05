@@ -1,0 +1,7 @@
+⚠️ What you risk by not implementing the essentials now
+Risk	Description	Impact
+No HTTP metrics endpoint	Prometheus cannot scrape metrics; no external monitoring	Medium–High
+No graceful shutdown	In-flight jobs may be lost during deployments	High
+No DLQ reprocessing endpoint	Permanently failed notifications can’t be retried easily	High
+No circuit breakers	External service failures (email/SMS/WhatsApp) could cascade	Medium–High
+Database indexes may be insufficient	At high scale, queries may slow down	Medium

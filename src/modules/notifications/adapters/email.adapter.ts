@@ -2,14 +2,19 @@ import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
-import { NotificationPayload } from '../types/notification-payload.interface';
+import { EmailNotificationPayload } from '../types/notification-payload.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
+import { LoggerService } from '@/shared/services/logger.service';
+import { NotificationSendingFailedException } from '../exceptions/notification.exceptions';
 
 @Injectable()
-export class EmailAdapter implements NotificationAdapter {
+export class EmailAdapter implements NotificationAdapter<EmailNotificationPayload> {
   private transporter: nodemailer.Transporter;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly logger: LoggerService,
+  ) {
     this.transporter = nodemailer.createTransport({
       host: this.config.get<string>('EMAIL_HOST', 'smtp.gmail.com'),
       port: this.config.get<number>('EMAIL_PORT', 465),
@@ -24,15 +29,12 @@ export class EmailAdapter implements NotificationAdapter {
     }) as nodemailer.Transporter;
   }
 
-  async send(payload: NotificationPayload): Promise<void> {
-    if (payload.channel !== NotificationChannel.EMAIL) {
-      throw new Error('EmailAdapter can only send EMAIL notifications');
-    }
-
+  async send(payload: EmailNotificationPayload): Promise<void> {
+    // Type system ensures channel is EMAIL, no runtime check needed
     await this.transporter.sendMail({
       from: `"LMS SaaS" <${this.config.get<string>('EMAIL_USER')}>`,
       to: payload.recipient,
-      subject: payload.subject || 'Notification',
+      subject: payload.subject,
       html: payload.data.html || payload.data.content || '',
     });
   }

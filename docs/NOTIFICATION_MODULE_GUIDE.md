@@ -1027,10 +1027,6 @@ describe('NotificationService', () => {
 
 ### WebSocket Not Connecting
 
-1. **Check Authentication**:
-   - Verify JWT token is valid
-   - Check `WebSocketAuthGuard` logs
-
 2. **Check Redis Connection**:
    - Verify Redis is accessible
    - Check Redis adapter configuration

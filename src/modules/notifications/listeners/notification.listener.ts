@@ -129,7 +129,6 @@ export class NotificationListener {
       phone: actor.phone,
       email: actor.email || null,
     };
-    console.log('recipient', recipient);
     await this.handleNotification(CenterEvents.UPDATED, event, [recipient]);
   }
 }

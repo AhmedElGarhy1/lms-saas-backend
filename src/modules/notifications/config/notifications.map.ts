@@ -137,40 +137,6 @@ export function getUnmappedEventLogLevel(eventName: EventType | string): {
 export const NotificationEventsMap: Partial<
   Record<EventType, NotificationEventMapping>
 > = {
-  // 👤 USER EVENTS
-  [UserEvents.CREATED]: {
-    type: NotificationType.USER_REGISTERED,
-    channels: [NotificationChannel.IN_APP, NotificationChannel.WHATSAPP],
-    template: 'user-registered',
-    group: NotificationGroup.SYSTEM,
-    priority: 1,
-  },
-  [UserEvents.UPDATED]: {
-    type: NotificationType.USER_UPDATED,
-    channels: [NotificationChannel.IN_APP],
-    template: 'user-updated',
-    group: NotificationGroup.SYSTEM,
-  },
-  [UserEvents.DELETED]: {
-    type: NotificationType.USER_DELETED,
-    channels: [NotificationChannel.IN_APP],
-    template: 'user-deleted',
-    group: NotificationGroup.SYSTEM,
-  },
-  [UserEvents.RESTORED]: {
-    type: NotificationType.USER_RESTORED,
-    channels: [NotificationChannel.IN_APP],
-    template: 'user-restored',
-    group: NotificationGroup.SYSTEM,
-  },
-  [UserEvents.ACTIVATED]: {
-    type: NotificationType.USER_ACTIVATED,
-    channels: [NotificationChannel.IN_APP, NotificationChannel.WHATSAPP],
-    template: 'user-activated',
-    group: NotificationGroup.SYSTEM,
-    priority: 2,
-  },
-
   // 🏫 CENTER EVENTS
   [CenterEvents.CREATED]: {
     type: NotificationType.CENTER_CREATED,
@@ -191,70 +157,6 @@ export const NotificationEventsMap: Partial<
     },
     template: 'center-updated',
     group: NotificationGroup.MANAGEMENT,
-  },
-  [CenterEvents.DELETED]: {
-    type: NotificationType.CENTER_DELETED,
-    channels: {
-      [ProfileType.ADMIN]: [
-        NotificationChannel.IN_APP,
-        NotificationChannel.WHATSAPP,
-      ],
-      [ProfileType.STAFF]: [
-        NotificationChannel.IN_APP,
-        NotificationChannel.WHATSAPP,
-      ],
-    },
-    template: 'center-deleted',
-    group: NotificationGroup.MANAGEMENT,
-    priority: 7,
-  },
-  [CenterEvents.RESTORED]: {
-    type: NotificationType.CENTER_RESTORED,
-    channels: {
-      [ProfileType.ADMIN]: [NotificationChannel.IN_APP],
-      [ProfileType.STAFF]: [
-        NotificationChannel.IN_APP,
-        NotificationChannel.WHATSAPP,
-      ],
-    },
-    template: 'center-restored',
-    group: NotificationGroup.MANAGEMENT,
-  },
-
-  // 🌿 BRANCH EVENTS
-  [BranchEvents.CREATED]: {
-    type: NotificationType.BRANCH_CREATED,
-    channels: {
-      [ProfileType.STAFF]: [
-        NotificationChannel.IN_APP,
-        NotificationChannel.WHATSAPP,
-      ],
-    },
-    template: 'branch-created',
-    group: NotificationGroup.MANAGEMENT,
-  },
-  [BranchEvents.UPDATED]: {
-    type: NotificationType.BRANCH_UPDATED,
-    channels: {
-      [ProfileType.STAFF]: [
-        NotificationChannel.IN_APP,
-        NotificationChannel.WHATSAPP,
-      ],
-    },
-    template: 'branch-updated',
-    group: NotificationGroup.MANAGEMENT,
-  },
-  [BranchEvents.DELETED]: {
-    type: NotificationType.BRANCH_DELETED,
-    channels: {
-      [ProfileType.STAFF]: [
-        NotificationChannel.IN_APP,
-        NotificationChannel.WHATSAPP,
-      ],
-    },
-    template: 'branch-deleted',
-    group: NotificationGroup.MANAGEMENT,
-    priority: 6,
   },
 
   // 🔐 AUTH EVENTS

@@ -1,0 +1,41 @@
+name: Validate Notification Configs
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/modules/notifications/config/**'
+      - 'src/modules/notifications/services/notification-config-validator.service.ts'
+      - 'scripts/validate-notification-configs.ts'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/modules/notifications/config/**'
+      - 'src/modules/notifications/services/notification-config-validator.service.ts'
+      - 'scripts/validate-notification-configs.ts'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  validate:
+    name: Validate Notification Configurations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript compilation check
+        run: npm run build
+
+      - name: Validate notification configurations
+        run: npm run validate:notification-configs
+

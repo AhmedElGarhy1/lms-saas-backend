@@ -38,6 +38,8 @@ import {
   logNotificationComplete,
   logNotificationError,
 } from '../utils/notification-metrics-logger.util';
+import { NotificationTemplateData } from '../types/template-data.types';
+import { createUserId, createCorrelationId } from '../types/branded-types';
 
 /**
  * Context object passed through the notification processing pipeline
@@ -56,7 +58,7 @@ interface NotificationProcessingContext {
   channelsToCheck: NotificationChannel[];
   enabledChannels: NotificationChannel[];
   finalChannels: NotificationChannel[];
-  templateData: Record<string, unknown>;
+  templateData: NotificationTemplateData;
   correlationId: string;
 }
 
@@ -476,6 +478,7 @@ export class NotificationService {
           {
             eventName: context.eventName,
             userId,
+            correlationId: context.correlationId,
           },
         );
         // Fallback to original enabled channels
@@ -597,19 +600,87 @@ export class NotificationService {
         continue;
       }
 
-      const payload: NotificationPayload = {
-        recipient: channelRecipient, // Channel-specific recipient
+      // Build payload based on channel type
+      // For EMAIL, we need subject and html
+      // For SMS/WHATSAPP, we need content
+      // For IN_APP, we need title and message
+      const basePayload = {
+        recipient: channelRecipient,
         channel,
         type: mapping.type,
         group: mapping.group,
-        data: templateData,
         locale,
         centerId,
-        userId,
+        userId: userId ? createUserId(userId) : undefined,
         profileType: profileScoped ? profileType : null,
         profileId: profileScoped ? profileId : null,
-        correlationId: context.correlationId,
+        correlationId: context.correlationId
+          ? createCorrelationId(context.correlationId)
+          : undefined,
       };
+
+      // Get template path from config (with fallback to mapping.template)
+      const templatePath = this.templateService.getTemplatePathFromConfig(
+        mapping.type,
+        channel,
+        mapping.template,
+      );
+
+      // Create channel-specific payload
+      let payload: NotificationPayload;
+      if (channel === NotificationChannel.EMAIL) {
+        // Get email subject from config
+        const emailSubject = this.templateService.getEmailSubjectFromConfig(
+          mapping.type,
+          (templateData as any).subject || 'Notification',
+        );
+
+        payload = {
+          ...basePayload,
+          channel: NotificationChannel.EMAIL,
+          subject: emailSubject,
+          data: {
+            html: (templateData as any).html || '',
+            content: (templateData as any).content || '',
+            ...templateData,
+            template: templatePath, // Use template path from config
+          },
+        } as NotificationPayload;
+      } else if (
+        channel === NotificationChannel.SMS ||
+        channel === NotificationChannel.WHATSAPP
+      ) {
+        payload = {
+          ...basePayload,
+          channel,
+          data: {
+            content: (templateData as any).content || '',
+            message: (templateData as any).message || '',
+            html: (templateData as any).html || '',
+            ...templateData,
+            template: templatePath, // Use template path from config
+          },
+        } as NotificationPayload;
+      } else if (channel === NotificationChannel.IN_APP) {
+        payload = {
+          ...basePayload,
+          channel: NotificationChannel.IN_APP,
+          title: (templateData as any).title || 'Notification',
+          data: {
+            message: (templateData as any).message || '',
+            content: (templateData as any).content || '',
+            html: (templateData as any).html || '',
+            ...templateData,
+          },
+        } as NotificationPayload;
+      } else {
+        // Fallback for other channels
+        payload = {
+          ...basePayload,
+          channel,
+          data: templateData as any,
+        } as NotificationPayload;
+      }
 
       // Skip queue for IN_APP notifications - send directly for real-time delivery
       if (channel === NotificationChannel.IN_APP) {

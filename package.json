@@ -22,7 +22,8 @@
     "db:migrate:generate": "typeorm migration:generate",
     "db:migrate:revert": "typeorm migration:revert",
     "seed": "ts-node -r tsconfig-paths/register src/database/seed.ts",
-    "lint:i18n": "eslint \"src/i18n/*.json\""
+    "lint:i18n": "eslint \"src/i18n/*.json\"",
+    "validate:notification-configs": "ts-node -r tsconfig-paths/register scripts/validate-notification-configs.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.846.0",
@@ -66,6 +67,7 @@
     "passport-jwt": "^4.0.1",
     "pg": "^8.16.3",
     "qrcode": "^1.5.4",
+    "rate-limiter-flexible": "^8.1.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",

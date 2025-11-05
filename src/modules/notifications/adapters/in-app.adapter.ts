@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ConfigService } from '@nestjs/config';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
-import { NotificationPayload } from '../types/notification-payload.interface';
+import {
+  InAppNotificationPayload,
+  NotificationPayload,
+} from '../types/notification-payload.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationRepository } from '../repositories/notification.repository';
 import { Notification } from '../entities/notification.entity';
@@ -21,6 +24,8 @@ import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { MoreThan } from 'typeorm';
 import { NotificationType } from '../enums/notification-type.enum';
+import { InvalidOperationException } from '@/shared/common/exceptions/custom.exceptions';
+import { NotificationSendingFailedException } from '../exceptions/notification.exceptions';
 
 interface ExtractedNotificationData {
   title: string;
@@ -40,7 +45,9 @@ interface DeliveryResult {
 }
 
 @Injectable()
-export class InAppAdapter implements NotificationAdapter {
+export class InAppAdapter
+  implements NotificationAdapter<InAppNotificationPayload>
+{
   private readonly maxRetries: number;
   private readonly maxRetryDelayMs: number;
 
@@ -65,116 +72,100 @@ export class InAppAdapter implements NotificationAdapter {
     );
   }
 
-  async send(payload: NotificationPayload): Promise<void> {
-    if (payload.channel !== NotificationChannel.IN_APP) {
-      throw new Error('InAppAdapter can only send IN_APP notifications');
-    }
-
+  async send(payload: InAppNotificationPayload): Promise<void> {
+    // Type system ensures channel is IN_APP, no runtime check needed
     if (!payload.userId) {
-      throw new Error('userId is required for in-app notifications');
+      throw new InvalidOperationException(
+        'userId is required for in-app notifications',
+      );
     }
 
     const startTime = Date.now();
 
+    // 1. Extract notification data from payload
+    const notificationData = this.extractNotificationData(payload);
+
+    // 2. Check for duplicate notification before creating
+    const isDuplicate = await this.checkDuplicateNotification(
+      payload,
+      payload.type,
+    );
+
+    if (isDuplicate) {
+      this.logger.debug(
+        `Duplicate notification detected for user ${payload.userId}, type ${payload.type}, skipping creation`,
+        'InAppAdapter',
+        {
+          userId: payload.userId,
+          type: payload.type,
+          profileType: payload.profileType,
+          profileId: payload.profileId,
+          correlationId: payload.correlationId,
+        },
+      );
+      return; // Skip duplicate notification
+    }
+
+    // 3. Create notification entity
+    const notification = await this.createNotificationEntity(
+      payload,
+      notificationData,
+    );
+
+    // 4. Emit created event
+    this.emitCreatedEvent(notification, payload.userId!, payload);
+
+    // 5. Deliver via WebSocket with retry logic
+    const deliveryResult = await this.deliverWithRetry(
+      payload.userId!,
+      notification,
+      startTime,
+    );
+
+    // 6. Update notification status in database
+    await this.updateNotificationStatus(notification, deliveryResult.delivered);
+
+    // 7. Create audit log
+    await this.createAuditLog(payload, notification, deliveryResult, startTime);
+
+    // 8. Track metrics (wrap in try-catch to ensure metrics are tracked even if tracking fails)
     try {
-      // 1. Extract notification data from payload
-      const notificationData = this.extractNotificationData(payload);
-
-      // 2. Check for duplicate notification before creating
-      const isDuplicate = await this.checkDuplicateNotification(
-        payload,
-        payload.type,
-      );
-
-      if (isDuplicate) {
-        this.logger.debug(
-          `Duplicate notification detected for user ${payload.userId}, type ${payload.type}, skipping creation`,
-          'InAppAdapter',
-          {
-            userId: payload.userId,
-            type: payload.type,
-            profileType: payload.profileType,
-            profileId: payload.profileId,
-            correlationId: payload.correlationId,
-          },
-        );
-        return; // Skip duplicate notification
-      }
-
-      // 3. Create notification entity
-      const notification = await this.createNotificationEntity(
-        payload,
-        notificationData,
-      );
-
-      // 4. Emit created event
-      this.emitCreatedEvent(notification, payload.userId!, payload);
-
-      // 5. Deliver via WebSocket with retry logic
-      const deliveryResult = await this.deliverWithRetry(
-        payload.userId!,
-        notification,
-        startTime,
-      );
-
-      // 6. Update notification status in database
-      await this.updateNotificationStatus(
-        notification,
-        deliveryResult.delivered,
-      );
-
-      // 7. Create audit log
-      await this.createAuditLog(
-        payload,
-        notification,
-        deliveryResult,
-        startTime,
-      );
-
-      // 8. Track metrics
       await this.trackMetrics(
         payload.userId!,
         payload,
         deliveryResult,
         startTime,
       );
-
-      // 9. Emit delivery events
-      this.emitDeliveryEvent(
-        notification,
-        payload.userId!,
-        payload,
-        deliveryResult,
-      );
-
-      // 10. Log final status
-      this.logFinalStatus(notification, payload, deliveryResult, startTime);
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      this.logger.error(
-        `Failed to send in-app notification`,
-        errorMessage,
+    } catch (metricsError) {
+      // Metrics tracking failure should not break the notification flow
+      this.logger.warn(
+        'Failed to track metrics for in-app notification',
         'InAppAdapter',
         {
           userId: payload.userId,
           type: payload.type,
+          correlationId: payload.correlationId,
         },
       );
-      // Track failure metric
-      await this.metricsService.incrementFailed(
-        NotificationChannel.IN_APP,
-        payload.type,
-      );
-      // Don't throw - graceful failure, notification is logged
     }
+
+    // 9. Emit delivery events
+    this.emitDeliveryEvent(
+      notification,
+      payload.userId!,
+      payload,
+      deliveryResult,
+    );
+
+    // 10. Log final status
+    this.logFinalStatus(notification, payload, deliveryResult, startTime);
   }
 
   /**
    * Extract notification data from payload with defaults
    */
   private extractNotificationData(
-    payload: NotificationPayload,
+    payload: InAppNotificationPayload,
   ): ExtractedNotificationData {
     const getOrDefault = <T>(value: T | undefined, fallback: T): T => {
       return value ?? fallback;
@@ -191,7 +182,10 @@ export class InAppAdapter implements NotificationAdapter {
         undefined,
       '',
     );
-    const actionUrl = payload.data.actionUrl ?? payload.data.url ?? undefined;
+    const actionUrl =
+      (payload.data.actionUrl as string | undefined) ??
+      (payload.data.url as string | undefined) ??
+      undefined;
     const actionType = payload.data.actionType
       ? (payload.data.actionType as NotificationActionType)
       : actionUrl
@@ -219,7 +213,7 @@ export class InAppAdapter implements NotificationAdapter {
    * Prevents duplicate notifications within a short time window
    */
   private async checkDuplicateNotification(
-    payload: NotificationPayload,
+    payload: InAppNotificationPayload,
     type: NotificationType,
   ): Promise<boolean> {
     const { userId, profileType, profileId } = payload;
@@ -256,7 +250,7 @@ export class InAppAdapter implements NotificationAdapter {
    * Create notification entity in database
    */
   private async createNotificationEntity(
-    payload: NotificationPayload,
+    payload: InAppNotificationPayload,
     data: ExtractedNotificationData,
   ): Promise<Notification> {
     return this.notificationRepository.createNotification({
@@ -285,7 +279,7 @@ export class InAppAdapter implements NotificationAdapter {
   private emitCreatedEvent(
     notification: Notification,
     userId: string,
-    payload: NotificationPayload,
+    payload: InAppNotificationPayload,
   ): void {
     this.eventEmitter.emit(
       NotificationEvents.CREATED,
@@ -410,7 +404,7 @@ export class InAppAdapter implements NotificationAdapter {
    * Create audit log entry
    */
   private async createAuditLog(
-    payload: NotificationPayload,
+    payload: InAppNotificationPayload,
     notification: Notification,
     deliveryResult: DeliveryResult,
     startTime: number,
@@ -489,7 +483,7 @@ export class InAppAdapter implements NotificationAdapter {
    */
   private async trackMetrics(
     userId: string,
-    payload: NotificationPayload,
+    payload: InAppNotificationPayload,
     deliveryResult: DeliveryResult,
     startTime: number,
   ): Promise<void> {
@@ -525,7 +519,7 @@ export class InAppAdapter implements NotificationAdapter {
   private emitDeliveryEvent(
     notification: Notification,
     userId: string,
-    payload: NotificationPayload,
+    payload: InAppNotificationPayload,
     deliveryResult: DeliveryResult,
   ): void {
     if (deliveryResult.delivered) {
@@ -564,7 +558,7 @@ export class InAppAdapter implements NotificationAdapter {
    */
   private logFinalStatus(
     notification: Notification,
-    payload: NotificationPayload,
+    payload: InAppNotificationPayload,
     deliveryResult: DeliveryResult,
     startTime: number,
   ): void {
