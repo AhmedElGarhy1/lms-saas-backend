@@ -165,31 +165,3 @@ export function extractProfileInfo(
     profileId,
   };
 }
-
-/**
- * Extract locale from event data
- * @param event - Event object containing locale information
- * @returns Locale string, defaults to 'en' if not found
- */
-export function extractLocale(
-  event: NotificationEvent | Record<string, unknown>,
-): string {
-  const eventObj = event as Record<string, unknown>;
-  if (typeof eventObj.locale === 'string' && eventObj.locale) {
-    return eventObj.locale;
-  }
-  const userInfo =
-    isObject(event) && 'userInfo' in event ? event.userInfo : null;
-  if (
-    isObject(userInfo) &&
-    typeof userInfo.locale === 'string' &&
-    userInfo.locale
-  ) {
-    return userInfo.locale;
-  }
-  const actor = isObject(event) && 'actor' in event ? event.actor : null;
-  if (isObject(actor) && typeof actor.locale === 'string' && actor.locale) {
-    return actor.locale;
-  }
-  return 'en'; // Default locale
-}

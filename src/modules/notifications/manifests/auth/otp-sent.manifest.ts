@@ -18,20 +18,16 @@ export const otpSentManifest: NotificationManifest = {
   channels: {
     [NotificationChannel.SMS]: {
       requiredVariables: ['otpCode', 'expiresIn'],
-      defaultLocale: 'en',
     },
     [NotificationChannel.WHATSAPP]: {
       requiredVariables: ['otpCode', 'expiresIn'],
-      defaultLocale: 'en',
     },
     [NotificationChannel.EMAIL]: {
       subject: 'Your Verification Code',
       requiredVariables: ['otpCode', 'expiresIn'],
-      defaultLocale: 'en',
     },
     [NotificationChannel.IN_APP]: {
       requiredVariables: ['otpCode', 'expiresIn'],
-      defaultLocale: 'en',
     },
   },
 } as const;

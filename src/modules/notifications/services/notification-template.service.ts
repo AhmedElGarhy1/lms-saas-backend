@@ -1,30 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { readFileSync } from 'fs';
-import { join } from 'path';
 import * as Handlebars from 'handlebars';
 import { z } from 'zod';
 import { LoggerService } from '@/shared/services/logger.service';
 import { TemplateCacheService } from './template-cache.service';
-import { NotificationEventMapping } from '../config/notifications.map';
-import { EventType } from '@/shared/events';
-import { CenterEvents } from '@/shared/events/center.events.enum';
-import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { NotificationEvent } from '../types/notification-event.types';
-import {
-  TemplateRenderingException,
-  MissingTemplateVariablesException,
-} from '../exceptions/notification.exceptions';
-// Old config imports removed - using manifests now
+import { TemplateRenderingException } from '../exceptions/notification.exceptions';
 import { NotificationType } from '../enums/notification-type.enum';
 import { ValidateEventForNotification } from '../types/event-validation.types';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import {
   getChannelExtension,
-  getChannelFolder,
   TemplateFallbackStrategy,
 } from '../config/template-format.config';
 import { resolveTemplatePathWithFallback } from '../utils/template-path.util';
-import { Config } from '@/shared/config/config';
 
 @Injectable()
 export class NotificationTemplateService {
@@ -32,158 +21,6 @@ export class NotificationTemplateService {
     private readonly logger: LoggerService,
     private readonly cacheService: TemplateCacheService,
   ) {}
-
-  /**
-   * Load and compile template with caching
-   */
-  loadTemplate(
-    templateName: string,
-    locale: string = 'en',
-  ): Promise<HandlebarsTemplateDelegate> {
-    return Promise.resolve(
-      this.cacheService.getCompiledTemplate(templateName, locale, () => {
-        // Load template from file system
-        const templatePath = join(
-          process.cwd(),
-          'src',
-          'i18n',
-          'notifications',
-          locale,
-          `${templateName}.hbs`,
-        );
-
-        try {
-          const templateContent = readFileSync(templatePath, 'utf-8');
-          const compiledTemplate = Handlebars.compile(templateContent);
-          return compiledTemplate;
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : String(error);
-          this.logger.error(
-            `Failed to load template: ${templatePath}`,
-            error instanceof Error ? error.stack : undefined,
-            'NotificationTemplateService',
-            {
-              templateName,
-              locale,
-              templatePath,
-              error: errorMessage,
-            },
-          );
-          throw new TemplateRenderingException(
-            templateName,
-            `Template not found: ${templateName} for locale: ${locale}. ${errorMessage}`,
-          );
-        }
-      }),
-    );
-  }
-
-  /**
-   * Load template with fallback chain: locale -> en -> default -> null
-   */
-  async loadTemplateWithFallback(
-    templateName: string,
-    locale: string = 'en',
-  ): Promise<HandlebarsTemplateDelegate | null> {
-    // Try 1: Requested locale
-    try {
-      return await this.loadTemplate(templateName, locale);
-    } catch {
-      this.logger.debug(
-        `Template ${templateName} not found for locale ${locale}, trying English fallback`,
-        'NotificationTemplateService',
-      );
-    }
-
-    // Try 2: English fallback (if not already English)
-    if (locale !== 'en') {
-      try {
-        return await this.loadTemplate(templateName, 'en');
-      } catch {
-        this.logger.debug(
-          `Template ${templateName} not found for English, trying default fallback`,
-          'NotificationTemplateService',
-        );
-      }
-    }
-
-    // Try 3: Default template fallback
-    try {
-      return await this.loadTemplate('default', 'en');
-    } catch (error) {
-      this.logger.error(
-        `Default template not found, notification rendering will fail`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationTemplateService',
-      );
-    }
-
-    // All fallbacks failed
-    return null;
-  }
-
-  /**
-   * Render template with data
-   */
-  async renderTemplate(
-    templateName: string,
-    data: Record<string, any>,
-    locale: string = 'en',
-  ): Promise<string> {
-    const template = await this.loadTemplate(templateName, locale);
-    return template(data);
-  }
-
-  /**
-   * @deprecated Legacy method - no longer used. All notifications use manifest system.
-   * This method is kept for internal fallback rendering but should not be called directly.
-   * @param notificationType - The notification type
-   * @param channel - The notification channel
-   * @param fallbackTemplate - Fallback template path
-   * @returns Template path (fallback)
-   */
-  getTemplatePathFromConfig(
-    notificationType: NotificationType,
-    channel: NotificationChannel,
-    fallbackTemplate: string,
-  ): string {
-    // Legacy method - manifests handle template paths now
-    return fallbackTemplate;
-  }
-
-  /**
-   * Render template with caching (for bulk notifications with same content)
-   */
-  async renderTemplateCached(
-    templateName: string,
-    data: Record<string, any>,
-    locale: string = 'en',
-  ): Promise<string> {
-    return this.cacheService.getRenderedContent(
-      templateName,
-      locale,
-      data,
-      async () => {
-        const template = await this.loadTemplate(templateName, locale);
-        return template(data);
-      },
-    );
-  }
-
-  /**
-   * Clear template cache (useful for development)
-   */
-  clearCache(): void {
-    this.cacheService.clearAll();
-  }
-
-  /**
-   * Clear specific template from cache
-   */
-  clearTemplateCache(templateName: string, locale: string = 'en'): void {
-    this.cacheService.clearCompiledCache(templateName, locale);
-  }
 
   /**
    * Ensure all required template fields have defaults
@@ -196,7 +33,7 @@ export class NotificationTemplateService {
     TNotificationType extends NotificationType = NotificationType,
   >(
     event: ValidateEventForNotification<
-      NotificationEvent | Record<string, unknown> | any,
+      NotificationEvent | Record<string, unknown>,
       TNotificationType
     >,
     mapping: { type: TNotificationType },
@@ -279,111 +116,13 @@ export class NotificationTemplateService {
   }
 
   /**
-   * Build title, message, and actionUrl for in-app notifications based on event type
-   * @param eventName - Type of event (EventType or string)
-   * @param event - Event object containing data
-   * @param userId - Optional user ID for generating action URLs
-   * @param centerId - Optional center ID for generating action URLs
-   * @returns Object with title, message, actionUrl, and priority (severity can be derived from priority: 0-1=info, 2-3=success, 4-5=warning, 6-7=error)
-   */
-  buildInAppNotificationData(
-    eventName: EventType | string,
-    event: NotificationEvent | Record<string, unknown>,
-    userId?: string,
-    centerId?: string,
-  ): {
-    title: string;
-    message: string;
-    actionUrl?: string;
-    priority?: number;
-  } {
-    const baseUrl = Config.app.frontendUrl;
-    const eventObj = event as Record<string, unknown>;
-
-    // Center events
-    if (String(eventName) === CenterEvents.CREATED) {
-      const centerObj =
-        eventObj &&
-        typeof eventObj.center === 'object' &&
-        eventObj.center !== null
-          ? (eventObj.center as Record<string, unknown>)
-          : null;
-      const centerName =
-        (centerObj && typeof centerObj.name === 'string'
-          ? centerObj.name
-          : undefined) ||
-        (typeof eventObj.name === 'string' ? eventObj.name : undefined) ||
-        'Center';
-      return {
-        title: 'New Center Created',
-        message: `A new center "${centerName}" has been created.`,
-        actionUrl: centerId ? `${baseUrl}/centers/${centerId}` : undefined,
-        priority: 2,
-      };
-    }
-    if (String(eventName) === CenterEvents.UPDATED) {
-      return {
-        title: 'Center Updated',
-        message: `Center information has been updated.`,
-        actionUrl: centerId ? `${baseUrl}/centers/${centerId}` : undefined,
-        priority: 0,
-      };
-    }
-
-    // Auth events
-    if (String(eventName) === AuthEvents.PASSWORD_RESET_REQUESTED) {
-      return {
-        title: 'Password Reset Requested',
-        message: `You requested to reset your password. Click the link below to reset it.`,
-        actionUrl:
-          typeof eventObj.resetUrl === 'string' ? eventObj.resetUrl : undefined,
-        priority: 4,
-      };
-    }
-    if (String(eventName) === AuthEvents.EMAIL_VERIFICATION_REQUESTED) {
-      return {
-        title: 'Verify Your Email',
-        message: `Please verify your email address to complete your registration.`,
-        actionUrl:
-          typeof eventObj.verificationUrl === 'string'
-            ? eventObj.verificationUrl
-            : undefined,
-        priority: 4,
-      };
-    }
-    if (String(eventName) === AuthEvents.OTP_SENT) {
-      const otpCode =
-        typeof eventObj.otpCode === 'string' ? eventObj.otpCode : 'N/A';
-      const expiresIn =
-        typeof eventObj.expiresIn === 'number'
-          ? eventObj.expiresIn
-          : typeof eventObj.expiresIn === 'string'
-            ? parseInt(eventObj.expiresIn, 10)
-            : 10;
-      return {
-        title: 'Verification Code Sent',
-        message: `Your verification code is: ${otpCode}. It will expire in ${expiresIn} minutes.`,
-        priority: 0,
-      };
-    }
-
-    // Default fallback
-    return {
-      title: 'New Notification',
-      message: `You have a new notification: ${eventName}`,
-      priority: 0,
-    };
-  }
-
-  /**
    * Schema for validating IN_APP JSON templates
+   * Data comes from JSON template files, not hardcoded in service
    */
   private readonly inAppTemplateSchema = z.object({
     title: z.string(),
     message: z.string(),
-    actionUrl: z.string().nullable().optional(),
     priority: z.number().optional(),
-    icon: z.string().optional(),
     expiresAt: z.string().optional(),
   });
 
@@ -473,11 +212,29 @@ export class NotificationTemplateService {
    */
   private renderTextTemplate(
     content: string,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
   ): string {
-    return content.replace(/{{(\w+)}}/g, (_, key) => {
+    return content.replace(/{{(\w+)}}/g, (_, key: string) => {
       const value = data[key];
-      return value !== undefined && value !== null ? String(value) : '';
+      if (value === undefined || value === null) {
+        return '';
+      }
+      if (typeof value === 'object') {
+        try {
+          return JSON.stringify(value);
+        } catch {
+          return '[object]';
+        }
+      }
+      if (
+        typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'boolean'
+      ) {
+        return String(value);
+      }
+      // Fallback for other types (symbol, bigint, function, etc.)
+      return '[unknown]';
     });
   }
 
@@ -489,14 +246,14 @@ export class NotificationTemplateService {
    */
   private renderJsonTemplate(
     content: string,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
   ): object {
     // First, interpolate variables in JSON string
     const interpolated = this.renderTextTemplate(content, data);
 
     try {
       // Parse JSON
-      const parsed = JSON.parse(interpolated);
+      const parsed: unknown = JSON.parse(interpolated);
 
       // Validate schema
       const validated = this.inAppTemplateSchema.parse(parsed);
@@ -539,7 +296,7 @@ export class NotificationTemplateService {
    */
   async renderTemplateWithChannel(
     templateName: string,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     locale: string = 'en',
     channel: NotificationChannel,
   ): Promise<string | object> {

@@ -4,6 +4,8 @@ export interface RecipientInfo {
   userId: string;
   profileId: string | null; // Can be null for auth events
   email: string | null;
-  phone: string | null; // Can be null for email-only events
+  phone: string; // Required - always exists in user
+  locale: string; // Required - from user.userInfo.locale
+  centerId?: string | null; // Optional - only for center events
   profileType: ProfileType | null; // Can be null for auth events
 }

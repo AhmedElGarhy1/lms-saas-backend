@@ -1,7 +1,6 @@
 import { NotificationType } from '../../enums/notification-type.enum';
 import { NotificationChannel } from '../../enums/notification-channel.enum';
 import { NotificationGroup } from '../../enums/notification-group.enum';
-import { NotificationActionType } from '../../enums/notification-action-type.enum';
 import {
   NotificationTemplatePath,
   TemplateBasePath,
@@ -21,13 +20,11 @@ export interface ChannelManifest {
    * If not provided, will be derived from NotificationManifest.templateBase (resolved at runtime as string)
    * Note: When explicitly set, use NotificationTemplatePath. When derived from templateBase, it's a string.
    */
-  template?: NotificationTemplatePath | string;
+  template?: NotificationTemplatePath;
   /** Email subject (required for EMAIL channel) */
   subject?: string;
   /** Required template variables that must be present in template data (after ensureTemplateData transformation) */
   requiredVariables?: readonly string[];
-  /** Default locale if not specified in rendering request */
-  defaultLocale?: string;
 }
 
 /**
@@ -55,8 +52,6 @@ export interface NotificationManifest {
   priority?: number;
   /** Whether to use i18n localization */
   localized?: boolean;
-  /** Action type for IN_APP notifications */
-  actionType?: NotificationActionType;
   /** Whether this notification requires audit logging */
   requiresAudit?: boolean;
   /** Channel-specific configurations */
@@ -88,7 +83,7 @@ export interface RenderedNotification {
   /** Metadata about the rendering */
   metadata: {
     /** Template path used */
-    template: NotificationTemplatePath | string;
+    template: string;
     /** Locale used */
     locale: string;
     /** Whether fallback template was used */

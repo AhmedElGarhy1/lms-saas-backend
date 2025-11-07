@@ -12,7 +12,6 @@ import { Notification } from '../entities/notification.entity';
 import { NotificationStatus as NotificationEntityStatus } from '../entities/notification.entity';
 import { NotificationGateway } from '../gateways/notification.gateway';
 import { LoggerService } from '@/shared/services/logger.service';
-import { NotificationActionType } from '../enums/notification-action-type.enum';
 import { NotificationEvents } from '@/shared/events/notification.events.enum';
 import {
   NotificationCreatedEvent,
@@ -29,10 +28,7 @@ import { NotificationSendingFailedException } from '../exceptions/notification.e
 interface ExtractedNotificationData {
   title: string;
   message: string;
-  actionUrl: string | undefined;
-  actionType: NotificationActionType;
   priority: number;
-  icon: string | undefined;
   expiresAt: Date | undefined;
 }
 
@@ -155,17 +151,7 @@ export class InAppAdapter
         undefined,
       '',
     );
-    const actionUrl =
-      payload.data.actionUrl ??
-      (payload.data.url as string | undefined) ??
-      undefined;
-    const actionType = payload.data.actionType
-      ? (payload.data.actionType as NotificationActionType)
-      : actionUrl
-        ? NotificationActionType.NAVIGATE
-        : NotificationActionType.NONE;
     const priority = payload.data.priority ?? 0;
-    const icon = payload.data.icon ?? undefined;
     const expiresAt = payload.data.expiresAt
       ? new Date(payload.data.expiresAt)
       : undefined;
@@ -173,10 +159,7 @@ export class InAppAdapter
     return {
       title,
       message,
-      actionUrl,
-      actionType,
       priority,
-      icon,
       expiresAt,
     };
   }
@@ -192,11 +175,8 @@ export class InAppAdapter
       userId: payload.userId,
       title: data.title,
       message: data.message,
-      actionUrl: data.actionUrl,
-      actionType: data.actionType,
       type: payload.type,
       priority: data.priority,
-      icon: data.icon,
       expiresAt: data.expiresAt,
       data: payload.data,
       profileType: payload.profileType,
@@ -370,8 +350,6 @@ export class InAppAdapter
           notificationId: notification.id,
           title: notification.title,
           message: notification.message,
-          actionUrl: notification.actionUrl,
-          actionType: notification.actionType,
           priority: notification.priority,
           // Enhanced metadata for debugging
           eventType: payload.data.eventName,

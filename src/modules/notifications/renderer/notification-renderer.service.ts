@@ -21,8 +21,6 @@ import { TemplateRenderingException } from '../exceptions/notification.exception
  */
 @Injectable()
 export class NotificationRenderer {
-  private readonly defaultLocale = 'en';
-
   constructor(
     private readonly manifestResolver: NotificationManifestResolver,
     private readonly templateService: NotificationTemplateService,
@@ -57,8 +55,8 @@ export class NotificationRenderer {
       channel,
     );
 
-    // 4. Determine locale (config defaultLocale → renderer defaultLocale → 'en')
-    const finalLocale = locale || config.defaultLocale || this.defaultLocale;
+    // 4. Use provided locale (must come from RecipientInfo)
+    const finalLocale = locale;
 
     // 5. Extract base template path (remove channel prefix if present)
     // Template path from config may be like "email/auth/otp-sent" or just "auth/otp-sent"

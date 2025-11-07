@@ -71,7 +71,7 @@ export class NotificationManifestResolver {
     // This is acceptable since templateBase-derived paths are validated at runtime
     return {
       ...config,
-      template: resolvedTemplate,
+      template: resolvedTemplate as NotificationTemplatePath,
     };
   }
 }

@@ -292,11 +292,8 @@ export class NotificationGateway
       id: notification.id,
       title: notification.title,
       message: notification.message,
-      actionUrl: notification.actionUrl,
-      actionType: notification.actionType,
       type: notification.type,
       priority: notification.priority,
-      icon: notification.icon,
       readAt: notification.readAt,
       createdAt: notification.createdAt,
     };

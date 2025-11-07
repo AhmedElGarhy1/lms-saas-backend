@@ -5,16 +5,13 @@ import {
   ManyToOne,
   JoinColumn,
   PrimaryGeneratedColumn,
-  DeleteDateColumn,
   UpdateDateColumn,
   CreateDateColumn,
 } from 'typeorm';
-import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { User } from '@/modules/user/entities/user.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { NotificationActionType } from '../enums/notification-action-type.enum';
 
 export enum NotificationStatus {
   PENDING = 'PENDING',
@@ -41,17 +38,6 @@ export class Notification {
   @Column({ type: 'text' })
   message: string;
 
-  @Column({ type: 'varchar', length: 500, nullable: true })
-  actionUrl?: string;
-
-  @Column({
-    type: 'enum',
-    enum: NotificationActionType,
-    nullable: true,
-    default: NotificationActionType.NAVIGATE,
-  })
-  actionType?: NotificationActionType;
-
   @Column({ type: 'timestamp', nullable: true })
   readAt?: Date;
 
@@ -69,9 +55,6 @@ export class Notification {
 
   @Column({ type: 'timestamp', nullable: true })
   expiresAt?: Date;
-
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  icon?: string;
 
   @Column({ type: 'enum', enum: ProfileType, nullable: true })
   profileType?: ProfileType | null;

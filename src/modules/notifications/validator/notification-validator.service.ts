@@ -9,6 +9,7 @@ import { NotificationEventsMap } from '../config/notifications.map';
 import { EXPECTED_LISTENER_EVENTS } from '../config/expected-listeners.registry';
 import { NotificationTemplatePath } from '../types/templates.generated';
 import { EventType } from '@/shared/events';
+import { Locale } from '@/shared/common/enums/locale.enum';
 
 interface ValidationResult {
   isValid: boolean;
@@ -182,23 +183,21 @@ export class NotificationValidator implements OnModuleInit {
           continue;
         }
 
-        // Check template exists
-        const templatePath = getTemplatePath(
-          resolvedTemplate,
-          channelConfig.defaultLocale || 'en',
-          channel,
-        );
-
-        if (
-          !templateExists(
+        // Check template exists for all supported locales
+        // This ensures templates are available for all users regardless of their locale
+        const supportedLocales = Object.values(Locale);
+        for (const locale of supportedLocales) {
+          const templatePath = getTemplatePath(
             resolvedTemplate,
-            channelConfig.defaultLocale || 'en',
+            locale,
             channel,
-          )
-        ) {
-          errors.push(
-            `Missing template: ${type}:${channel} (${resolvedTemplate}) - Path: ${templatePath}`,
           );
+
+          if (!templateExists(resolvedTemplate, locale, channel)) {
+            errors.push(
+              `Missing template: ${type}:${channel} (${resolvedTemplate}) for locale ${locale} - Path: ${templatePath}`,
+            );
+          }
         }
 
         // Validate template path against generated type (if using explicit template)

@@ -71,10 +71,7 @@ export interface InAppNotificationPayload extends BaseNotificationPayload {
     message: string;
     content?: string;
     html?: string;
-    actionUrl?: string;
-    actionType?: string;
     priority?: number;
-    icon?: string;
     expiresAt?: Date;
     [key: string]: unknown;
   };

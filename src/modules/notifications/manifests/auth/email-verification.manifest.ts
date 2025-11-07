@@ -19,19 +19,15 @@ export const emailVerificationManifest: NotificationManifest = {
     [NotificationChannel.EMAIL]: {
       subject: 'Verify Your Email',
       requiredVariables: ['link', 'expiresIn', 'name'],
-      defaultLocale: 'en',
     },
     [NotificationChannel.SMS]: {
       requiredVariables: ['link', 'expiresIn', 'name'],
-      defaultLocale: 'en',
     },
     [NotificationChannel.WHATSAPP]: {
       requiredVariables: ['link', 'expiresIn', 'name'],
-      defaultLocale: 'en',
     },
     [NotificationChannel.IN_APP]: {
       requiredVariables: ['link', 'expiresIn', 'name'],
-      defaultLocale: 'en',
     },
   },
 } as const;

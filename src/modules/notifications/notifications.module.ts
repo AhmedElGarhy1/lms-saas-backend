@@ -108,7 +108,6 @@ import { NotificationAlertService } from './services/notification-alert.service'
   controllers: [NotificationHistoryController, InAppNotificationController],
   exports: [
     NotificationService,
-    EmailAdapter, // Export for backward compatibility during migration
     InAppNotificationService, // Export for use in UserProfileService
     NotificationManifestResolver, // Export for use in other modules
     NotificationRenderer, // Export for use in other modules

@@ -42,10 +42,10 @@ The Manifest-Driven Notification System provides a type-safe, centralized way to
 
 ```typescript
 interface ChannelManifest {
-  template: string;                    // Template path (without .hbs)
-  subject?: string;                    // Required for EMAIL channel
+  template: string; // Template path (without .hbs)
+  subject?: string; // Required for EMAIL channel
   requiredVariables?: readonly string[]; // Variables template expects (must match template exactly)
-  defaultLocale?: string;              // Default locale (defaults to 'en')
+  defaultLocale?: string; // Default locale (defaults to 'en')
 }
 ```
 
@@ -53,12 +53,11 @@ interface ChannelManifest {
 
 ```typescript
 interface NotificationManifest {
-  type: NotificationType;               // Notification type enum
-  group: NotificationGroup;            // Notification group enum
-  priority?: number;                   // 1-10 (higher = more urgent)
-  localized?: boolean;                 // Use i18n templates
-  actionType?: NotificationActionType;  // For IN_APP notifications
-  requiresAudit?: boolean;              // For security events
+  type: NotificationType; // Notification type enum
+  group: NotificationGroup; // Notification group enum
+  priority?: number; // 1-10 (higher = more urgent)
+  localized?: boolean; // Use i18n templates
+  requiresAudit?: boolean; // For security events
   channels: {
     [NotificationChannel.EMAIL]?: ChannelManifest;
     [NotificationChannel.SMS]?: ChannelManifest;
@@ -147,36 +146,36 @@ export const yourTypeManifest: NotificationManifest = {
 
 ```typescript
 // ✅ Good
-template: 'auth/otp-sent'
-template: 'center/center-created'
+template: 'auth/otp-sent';
+template: 'center/center-created';
 
 // ❌ Bad
-template: 'template1'
-template: 'notif'
+template: 'template1';
+template: 'notif';
 ```
 
 ### 2. **Always Specify Required Variables**
 
 ```typescript
 // ✅ Good
-requiredVariables: ['otp', 'expiresIn', 'userName']
+requiredVariables: ['otp', 'expiresIn', 'userName'];
 
 // ❌ Bad (missing variables will cause runtime errors)
-requiredVariables: []
+requiredVariables: [];
 ```
 
 ### 3. **Variables Must Match Template Exactly**
 
 ```typescript
 // ✅ Good - template uses {{otpCode}}, so requiredVariables includes 'otpCode'
-requiredVariables: ['otpCode', 'expiresIn']
+requiredVariables: ['otpCode', 'expiresIn'];
 
 // ✅ Good - ensureTemplateData transforms resetUrl → link, so use 'link'
-requiredVariables: ['link', 'expiresIn', 'name']
+requiredVariables: ['link', 'expiresIn', 'name'];
 
 // ❌ Bad - template uses {{otpCode}} but manifest requires 'otp'
 // This will fail validation because template expects 'otpCode'
-requiredVariables: ['otp', 'expiresIn'] // Template uses {{otpCode}}, not {{otp}}
+requiredVariables: ['otp', 'expiresIn']; // Template uses {{otpCode}}, not {{otp}}
 ```
 
 **Note:** Event data transformations (e.g., `resetUrl` → `link`, `verificationUrl` → `link`) are handled by `ensureTemplateData` before rendering. Use the final variable names that templates expect.
@@ -185,16 +184,16 @@ requiredVariables: ['otp', 'expiresIn'] // Template uses {{otpCode}}, not {{otp}
 
 ```typescript
 // Security events (OTP, password reset)
-priority: 4-5
+priority: 4 - 5;
 
 // Important updates (center created, user registered)
-priority: 3
+priority: 3;
 
 // Routine updates (center updated, branch created)
-priority: 2
+priority: 2;
 
 // Low priority (reminders, notifications)
-priority: 1
+priority: 1;
 ```
 
 ### 5. **Mark Security Events for Audit**
@@ -211,7 +210,7 @@ requiresAudit: false, // For routine notifications
 
 ```typescript
 // ✅ Good - always specify defaultLocale
-defaultLocale: 'en'
+defaultLocale: 'en';
 
 // ✅ Also acceptable - defaults to 'en' if omitted
 // defaultLocale: 'en', // Optional
@@ -236,17 +235,24 @@ Variables in `requiredVariables` must match exactly what your template expects. 
 ### Example: OTP Notification
 
 **Template:**
+
 ```handlebars
-Your OTP is: {{otpCode}}  <!-- Template uses {{otpCode}} -->
-Expires in: {{expiresIn}} minutes
+Your OTP is:
+{{otpCode}}
+<!-- Template uses {{otpCode}} -->
+Expires in:
+{{expiresIn}}
+minutes
 ```
 
 **Manifest:**
+
 ```typescript
-requiredVariables: ['otpCode', 'expiresIn'] // Must match template exactly
+requiredVariables: ['otpCode', 'expiresIn']; // Must match template exactly
 ```
 
 **Event Data (after ensureTemplateData):**
+
 ```typescript
 {
   otpCode: '123456',  // Matches template {{otpCode}}
@@ -258,17 +264,22 @@ requiredVariables: ['otpCode', 'expiresIn'] // Must match template exactly
 ### Example: Password Reset
 
 **Template:**
+
 ```handlebars
-<a href="{{link}}">Reset Password</a>  <!-- Template uses {{link}} -->
-Expires in: {{expiresIn}}
+<a href='{{link}}'>Reset Password</a>
+<!-- Template uses {{link}} -->
+Expires in:
+{{expiresIn}}
 ```
 
 **Manifest:**
+
 ```typescript
-requiredVariables: ['link', 'expiresIn', 'name'] // Use 'link', not 'resetUrl'
+requiredVariables: ['link', 'expiresIn', 'name']; // Use 'link', not 'resetUrl'
 ```
 
 **Event Data (before ensureTemplateData):**
+
 ```typescript
 {
   resetUrl: 'https://...',  // Event uses resetUrl
@@ -277,6 +288,7 @@ requiredVariables: ['link', 'expiresIn', 'name'] // Use 'link', not 'resetUrl'
 ```
 
 **Event Data (after ensureTemplateData):**
+
 ```typescript
 {
   link: 'https://...',  // Transformed to 'link' for template
@@ -293,10 +305,12 @@ requiredVariables: ['link', 'expiresIn', 'name'] // Use 'link', not 'resetUrl'
 ### EMAIL Channel
 
 **Required:**
+
 - `subject`: Email subject line
 - `template`: Template path
 
 **Example:**
+
 ```typescript
 [NotificationChannel.EMAIL]: {
   template: 'auth/password-reset',
@@ -309,9 +323,11 @@ requiredVariables: ['link', 'expiresIn', 'name'] // Use 'link', not 'resetUrl'
 ### SMS Channel
 
 **Required:**
+
 - `template`: Template path
 
 **Example:**
+
 ```typescript
 [NotificationChannel.SMS]: {
   template: 'auth/otp-sent',
@@ -323,11 +339,13 @@ requiredVariables: ['link', 'expiresIn', 'name'] // Use 'link', not 'resetUrl'
 ### WhatsApp Channel
 
 **Required:**
+
 - `template`: Template path
 
 **Note:** WhatsApp templates must be pre-approved by WhatsApp Business API.
 
 **Example:**
+
 ```typescript
 [NotificationChannel.WHATSAPP]: {
   template: 'auth/otp-sent',
@@ -339,11 +357,13 @@ requiredVariables: ['link', 'expiresIn', 'name'] // Use 'link', not 'resetUrl'
 ### IN_APP Channel
 
 **Required:**
+
 - `template`: Template path
 
 **Note:** IN_APP notifications don't require a subject, but the payload should include `title` and `message`.
 
 **Example:**
+
 ```typescript
 [NotificationChannel.IN_APP]: {
   template: 'auth/otp-sent',
@@ -355,11 +375,13 @@ requiredVariables: ['link', 'expiresIn', 'name'] // Use 'link', not 'resetUrl'
 ### PUSH Channel
 
 **Required:**
+
 - `template`: Template path
 
 **Note:** PUSH notifications require `title` in the payload (not in manifest).
 
 **Example:**
+
 ```typescript
 [NotificationChannel.PUSH]: {
   template: 'notifications/new-message',
@@ -389,12 +411,14 @@ export const NotificationRegistry = {
 ### Error: "Missing template: X:CHANNEL (template-path)"
 
 **Solution:** Create the template file:
+
 1. Create `src/i18n/notifications/en/template-path.hbs`
 2. Ensure the template path in manifest matches the file path
 
 ### Error: "Missing required template variables: [var1, var2]"
 
-**Solution:** 
+**Solution:**
+
 1. Check what variables your template actually uses (e.g., `{{otpCode}}`, `{{link}}`)
 2. Ensure `requiredVariables` matches template variable names exactly
 3. Remember that `ensureTemplateData` handles transformations (e.g., `resetUrl` → `link`)
@@ -416,11 +440,13 @@ channels: {
 
 ### Validation Warnings in CI
 
-**Solution:** 
+**Solution:**
+
 - **Warnings** (non-blocking): Missing manifests for unmigrated types - expected
 - **Errors** (blocking): Missing templates or invalid configurations - must fix
 
 Run validation:
+
 ```bash
 # Local dev (warn-only)
 npm run validate:notification-manifests:warn
@@ -515,8 +541,8 @@ When migrating an existing notification type:
 ## Support
 
 For questions or issues:
+
 1. Check this documentation
 2. Review existing manifest examples
 3. Run validation script to identify errors
 4. Check application logs for detailed error messages
-

@@ -673,7 +673,6 @@ export const NotificationEventsMap: Partial<
     priority: 7,
     localized: true,
     profileScoped: false,
-    actionType: NotificationActionType.NAVIGATE,
   },
 };
 ```

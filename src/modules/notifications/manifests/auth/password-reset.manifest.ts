@@ -19,15 +19,12 @@ export const passwordResetManifest: NotificationManifest = {
     [NotificationChannel.EMAIL]: {
       subject: 'Password Reset Request',
       requiredVariables: ['link', 'expiresIn', 'name'],
-      defaultLocale: 'en',
     },
     [NotificationChannel.SMS]: {
       requiredVariables: ['link', 'expiresIn', 'name'],
-      defaultLocale: 'en',
     },
     [NotificationChannel.WHATSAPP]: {
       requiredVariables: ['link', 'expiresIn', 'name'],
-      defaultLocale: 'en',
     },
   },
 } as const;

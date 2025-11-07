@@ -47,7 +47,6 @@ export class NotificationSenderService {
     private readonly circuitBreaker?: NotificationCircuitBreakerService,
   ) {
     // Initialize adapter registry
-    // Note: PUSH adapter removed - not yet implemented
     this.adapterRegistry = new Map<NotificationChannel, NotificationAdapter>([
       [NotificationChannel.EMAIL, emailAdapter],
       [NotificationChannel.SMS, smsAdapter],

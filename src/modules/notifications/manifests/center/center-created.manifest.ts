@@ -24,19 +24,15 @@ export const centerCreatedManifest: NotificationManifest = {
     [NotificationChannel.EMAIL]: {
       subject: 'Center Created Successfully',
       requiredVariables: ['center'],
-      defaultLocale: 'en',
     },
     [NotificationChannel.SMS]: {
       requiredVariables: ['center'],
-      defaultLocale: 'en',
     },
     [NotificationChannel.WHATSAPP]: {
       requiredVariables: ['center'],
-      defaultLocale: 'en',
     },
     [NotificationChannel.IN_APP]: {
       requiredVariables: ['center'],
-      defaultLocale: 'en',
     },
   },
 } as const;

@@ -34,7 +34,6 @@ export function generateDefaultManifest(
   // Default channels: IN_APP only (safest fallback)
   const defaultChannelConfig: ChannelManifest = {
     requiredVariables: [],
-    defaultLocale: 'en',
   };
 
   return {

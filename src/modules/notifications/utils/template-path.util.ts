@@ -5,7 +5,6 @@ import { NotificationChannel } from '../enums/notification-channel.enum';
 import {
   getChannelExtension,
   getChannelFolder,
-  getFallbackChannels,
   TemplateFallbackStrategy,
 } from '../config/template-format.config';
 
@@ -44,7 +43,7 @@ export function getTemplatePath(
     );
   }
 
-  // Legacy support: assume .hbs extension if no channel specified
+  // Fallback: assume .hbs extension if no channel specified
   return join(
     process.cwd(),
     'src/i18n/notifications',
