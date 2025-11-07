@@ -1,23 +1,29 @@
-name: Validate Notification Configs
+name: Validate Notification Manifests
 
 on:
   push:
     branches: [main, develop]
     paths:
-      - 'src/modules/notifications/config/**'
-      - 'src/modules/notifications/services/notification-config-validator.service.ts'
-      - 'scripts/validate-notification-configs.ts'
+      - 'src/modules/notifications/manifests/**'
+      - 'src/modules/notifications/validator/**'
+      - 'src/modules/notifications/types/manifest.types.ts'
+      - 'src/i18n/notifications/**'
+      - 'scripts/validate-notification-manifests.ts'
+      - 'scripts/generate-template-types.ts'
   pull_request:
     branches: [main, develop]
     paths:
-      - 'src/modules/notifications/config/**'
-      - 'src/modules/notifications/services/notification-config-validator.service.ts'
-      - 'scripts/validate-notification-configs.ts'
+      - 'src/modules/notifications/manifests/**'
+      - 'src/modules/notifications/validator/**'
+      - 'src/modules/notifications/types/manifest.types.ts'
+      - 'src/i18n/notifications/**'
+      - 'scripts/validate-notification-manifests.ts'
+      - 'scripts/generate-template-types.ts'
   workflow_dispatch: # Allow manual triggering
 
 jobs:
   validate:
-    name: Validate Notification Configurations
+    name: Validate Notification Manifests
     runs-on: ubuntu-latest
 
     steps:
@@ -33,9 +39,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate template types
+        run: npm run generate:templates
+
       - name: Run TypeScript compilation check
         run: npm run build
 
-      - name: Validate notification configurations
-        run: npm run validate:notification-configs
+      - name: Validate notification manifests
+        run: npm run validate:notification-manifests
 
