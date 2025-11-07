@@ -3,8 +3,5 @@
  *
  * Centralized exports for notification configuration files
  *
- * Note: Channel-specific configs removed - all notifications use manifest system now.
+ * Note: Event-to-notification mapping removed. All handlers now use trigger() directly.
  */
-
-// Core configuration types and map
-export * from './notifications.map';

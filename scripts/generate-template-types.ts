@@ -29,7 +29,7 @@ const CHANNEL_EXTENSIONS: Record<string, string[]> = {
  * @param dir - Directory to scan
  * @param channelPrefix - Channel prefix (e.g., 'email', 'sms')
  * @param base - Base path for template identifier
- * @returns Array of template paths with channel prefix (e.g., 'email/auth/otp-sent')
+ * @returns Array of template paths with channel prefix (e.g., 'email/auth/otp')
  */
 function collectChannelTemplates(
   dir: string,
@@ -94,7 +94,7 @@ function collectAllTemplates(templatesDir: string): string[] {
 
 /**
  * Extract base template paths (without channel prefix)
- * Example: 'email/auth/otp-sent' → 'auth/otp-sent'
+ * Example: 'email/auth/otp' → 'auth/otp'
  */
 function extractBasePaths(templates: string[]): string[] {
   const basePaths = new Set<string>();

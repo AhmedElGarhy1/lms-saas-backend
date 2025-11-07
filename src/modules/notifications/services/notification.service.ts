@@ -10,18 +10,10 @@ import { NotificationTemplateService } from './notification-template.service';
 import { InAppNotificationService } from './in-app-notification.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { ChannelRetryStrategyService } from './channel-retry-strategy.service';
-import {
-  NotificationEventsMap,
-  DEFAULT_NOTIFICATION_MAPPING,
-  getUnmappedEventLogLevel,
-  NotificationEventMapping,
-} from '../config/notifications.map';
 import { NotificationManifestResolver } from '../manifests/registry/notification-manifest-resolver.service';
 import { NotificationManifest } from '../manifests/types/manifest.types';
-import { generateDefaultManifest } from '../manifests/default-manifest.generator';
 import { NotificationRenderer } from '../renderer/notification-renderer.service';
 import { NotificationIdempotencyCacheService } from './notification-idempotency-cache.service';
-import { EventType } from '@/shared/events';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { RequestContext } from '@/shared/common/context/request.context';
 import { randomUUID } from 'crypto';
@@ -41,24 +33,26 @@ import {
   isValidE164,
   normalizePhone,
 } from '../utils/recipient-validator.util';
+import { AudienceId } from '../types/audience.types';
+import { NotificationType } from '../enums/notification-type.enum';
 
 /**
  * Context object passed through the notification processing pipeline
  *
  * Fields are populated sequentially as the pipeline progresses:
- * 1. lookupMapping: eventName, event, mapping, manifest, correlationId
- * 2. extractEventData: userId, recipient, phone, centerId, locale, profileType, profileId
- * 3. determineChannels: enabledChannels (from manifest)
- * 4. selectOptimalChannels: finalChannels (optimized based on user activity)
- * 5. prepareTemplateData: templateData
- * 6. routeToChannels: uses finalChannels, templateData, manifest
+ * 1. extractEventData: userId, recipient, phone, centerId, locale, profileType, profileId
+ * 2. determineChannels: enabledChannels (from manifest and audience)
+ * 3. selectOptimalChannels: finalChannels (optimized based on user activity)
+ * 4. prepareTemplateData: templateData
+ * 5. routeToChannels: uses finalChannels, templateData, manifest
  */
 interface NotificationProcessingContext {
   // Event and mapping
-  eventName: EventType | string;
+  eventName: NotificationType; // Notification type enum
   event: NotificationEvent | Record<string, unknown>;
-  mapping: NotificationEventMapping; // EventType → NotificationType mapping
+  mapping: { type: NotificationType }; // Simple mapping for compatibility
   manifest: NotificationManifest; // Single source of truth for all config
+  audience?: AudienceId; // Audience identifier for multi-audience notifications
   correlationId: string;
 
   // Recipient information
@@ -71,6 +65,7 @@ interface NotificationProcessingContext {
   profileId?: string | null;
 
   // Channel selection (progressive refinement)
+  requestedChannels?: NotificationChannel[]; // Optional channels override from caller
   enabledChannels: NotificationChannel[]; // Channels from manifest (after preferences check)
   finalChannels: NotificationChannel[]; // Optimized channels (after activity-based selection)
 
@@ -81,7 +76,7 @@ interface NotificationProcessingContext {
 @Injectable()
 export class NotificationService {
   // Initialize p-limit once per service instance (not per method call)
-  // This ensures optimal performance by reusing the limiter across all processEvent calls
+  // This ensures optimal performance by reusing the limiter across all trigger calls
   private readonly concurrencyLimit = pLimit(20);
   // Concurrency limit constant for logging (p-limit doesn't expose limit value)
   private static readonly CONCURRENCY_LIMIT = 20;
@@ -108,161 +103,38 @@ export class NotificationService {
   }
 
   /**
-   * Process a domain event and orchestrate notification delivery
-   *
-   * Orchestration pipeline:
-   * 1. Lookup notification mapping from NotificationEventsMap (with fallback to DEFAULT_NOTIFICATION_MAPPING)
-   * 2. Extract recipient, userId, centerId, locale, profileInfo from event data or RecipientInfo
-   * 3. Determine channels based on manifest (all users get same channels)
-   * 4. Check user preferences for each channel (parallelized)
-   * 5. Apply dynamic channel selection based on user activity and urgency
-   * 6. Prepare template data with defaults and IN_APP-specific fields
-   * 7. For IN_APP: Check rate limit, send directly via NotificationSenderService
-   * 8. For other channels: Enqueue via BullMQ queue
-   *
-   * Edge cases handled:
-   * - Missing userId: Assumes enabled for system notifications
-   * - Channels: Loaded from manifest (all users get same channels)
-   * - Unmapped events: Uses DEFAULT_NOTIFICATION_MAPPING with severity-based logging
-   * - Rate limit exceeded: Skips IN_APP delivery, continues with other channels
-   *
-   * Multi-recipient support:
-   * - If recipients array is provided, process each recipient through the pipeline
-   * - Use concurrency limiting to prevent event loop pressure
-   * - Deduplicate recipients by userId before processing
-   * - Track metrics for multi-recipient notifications
-   * - Events remain immutable - recipient info passed explicitly
-   *
-   * @param eventName - Event type (EventType enum or string)
-   * @param event - Event object containing notification data (remains immutable)
-   * @param recipients - Optional array of recipients to notify (for multi-recipient events)
-   */
-  async processEvent(
-    eventName: EventType,
-    event: NotificationEvent,
-    recipients: RecipientInfo[],
-  ): Promise<void> {
-    // Extract or generate correlation ID for request tracing
-    const requestContext = RequestContext.get();
-    const correlationId = requestContext?.requestId || randomUUID();
-
-    // Process each recipient
-    if (recipients.length > 0) {
-      // Deduplicate recipients by userId (final safety check)
-      const uniqueRecipients = this.deduplicateRecipients(recipients);
-
-      // Validate after deduplication: ensure at least one recipient remains
-      if (uniqueRecipients.length === 0) {
-        this.logger.warn(
-          `No valid recipients after deduplication for event: ${eventName}`,
-          'NotificationService',
-          {
-            eventName,
-            correlationId,
-            originalCount: recipients.length,
-          },
-        );
-        return;
-      }
-
-      const startTime = Date.now();
-
-      // Log structured metrics at start
-      logNotificationStart(this.logger, {
-        eventName,
-        correlationId,
-        recipientCount: uniqueRecipients.length,
-        concurrencyLimit: NotificationService.CONCURRENCY_LIMIT,
-        centerId: uniqueRecipients[0]?.centerId ?? undefined,
-      });
-
-      // Track metrics
-      if (this.metricsService) {
-        // Note: metricsService doesn't have increment method that takes custom tags
-        // We'll log the metric differently or extend the service later
-        this.logger.debug(
-          `Multi-recipient notification: ${uniqueRecipients.length} recipients for ${eventName}`,
-          'NotificationService',
-        );
-      }
-
-      // Process with concurrency limit
-      const results = await Promise.allSettled(
-        uniqueRecipients.map((recipient) =>
-          this.concurrencyLimit(async () => {
-            try {
-              // Pass recipient info explicitly - event remains immutable
-              await this.processEventForRecipient(
-                eventName,
-                event,
-                correlationId,
-                recipient,
-              );
-            } catch (error) {
-              // Enhanced error logging with profile information
-              logNotificationError(
-                this.logger,
-                {
-                  eventName,
-                  correlationId,
-                  recipientId: recipient.userId,
-                  profileId: recipient.profileId ?? undefined,
-                  profileType: recipient.profileType ?? undefined,
-                  error: error instanceof Error ? error.message : String(error),
-                },
-                error instanceof Error ? error : undefined,
-              );
-              throw error; // Re-throw to be caught by Promise.allSettled
-            }
-          }),
-        ),
-      );
-
-      // Log summary with timing metrics
-      const endTime = Date.now();
-      const duration = endTime - startTime;
-      const successCount = results.filter(
-        (r) => r.status === 'fulfilled',
-      ).length;
-      const failureCount = results.filter(
-        (r) => r.status === 'rejected',
-      ).length;
-      logNotificationComplete(this.logger, {
-        eventName,
-        correlationId,
-        duration,
-        successCount,
-        failureCount,
-        recipientCount: uniqueRecipients.length,
-        concurrencyLimit: NotificationService.CONCURRENCY_LIMIT,
-      });
-    }
-  }
-
-  /**
    * Process event for a single recipient
-   * Extracted from processEvent to avoid code duplication
+   * Used by trigger() method for processing notifications
    *
-   * @param eventName - Event type (EventType enum or string)
+   * @param notificationType - Notification type
    * @param event - Event object containing notification data (remains immutable)
    * @param correlationId - Correlation ID for request tracing
    * @param recipientInfo - Required recipient info with all necessary data
+   * @param manifest - Notification manifest (required)
+   * @param audience - Audience identifier (required for multi-audience manifests)
+   * @param channels - Optional array of channels to use. If provided, only these channels will be used.
    */
   private async processEventForRecipient(
-    eventName: EventType | string,
+    notificationType: NotificationType,
     event: NotificationEvent | Record<string, unknown>,
     correlationId: string,
     recipientInfo: RecipientInfo,
+    manifest: NotificationManifest,
+    audience: AudienceId,
+    channels?: NotificationChannel[],
   ): Promise<void> {
     // Initialize processing context
     const context: Partial<NotificationProcessingContext> = {
-      eventName,
+      eventName: notificationType,
       event,
       correlationId,
+      requestedChannels: channels,
+      audience,
+      manifest,
+      mapping: { type: notificationType }, // Simple mapping for compatibility
     };
 
     // Execute pipeline steps sequentially
-    this.lookupMapping(context);
     this.extractEventData(context, recipientInfo);
     this.determineChannels(context);
     if (context.enabledChannels && context.enabledChannels.length === 0) {
@@ -289,92 +161,136 @@ export class NotificationService {
   }
 
   /**
-   * Pipeline Step 1: Lookup notification mapping and load manifest
+   * Trigger a notification with audience specification
+   * This is the preferred method for sending notifications with multi-audience support
+   *
+   * @param type - Notification type
+   * @param options - Trigger options including audience, event, recipients, and optional channels
    */
-  private lookupMapping(context: Partial<NotificationProcessingContext>): void {
-    const { eventName } = context;
-    let mapping = NotificationEventsMap[eventName as EventType];
-    if (!mapping) {
-      // Use default mapping for unmapped events
-      const { logLevel, priority } = getUnmappedEventLogLevel(eventName!);
-      const logMessage = `No notification mapping found for event: ${eventName}, using default mapping`;
+  async trigger(
+    type: NotificationType,
+    options: {
+      audience: AudienceId;
+      event: NotificationEvent | Record<string, unknown>;
+      recipients: RecipientInfo[];
+      channels?: NotificationChannel[];
+    },
+  ): Promise<void> {
+    const { audience, event, recipients, channels } = options;
 
-      if (logLevel === 'error') {
-        this.logger.error(logMessage, undefined, 'NotificationService', {
-          eventName,
-          logLevel,
-          priority,
-          correlationId: context.correlationId,
-        });
-      } else if (logLevel === 'warn') {
-        this.logger.warn(logMessage, 'NotificationService', {
-          eventName,
-          logLevel,
-          priority,
-          correlationId: context.correlationId,
-        });
-      } else {
-        this.logger.log(logMessage, 'NotificationService', {
-          eventName,
-          logLevel,
-          priority,
-          correlationId: context.correlationId,
-        });
-      }
+    // Get manifest
+    const manifest = this.manifestResolver.getManifest(type);
 
-      mapping = DEFAULT_NOTIFICATION_MAPPING;
-    }
+    // Validate audience exists
+    this.manifestResolver.getAudienceConfig(manifest, audience);
 
-    context.mapping = mapping;
+    // Extract or generate correlation ID
+    const requestContext = RequestContext.get();
+    const correlationId = requestContext?.requestId || randomUUID();
 
-    // Load manifest - single source of truth for all config
-    try {
-      const manifest = this.manifestResolver.getManifest(mapping.type);
-      context.manifest = manifest;
-    } catch {
-      // Generate default manifest as fallback
-      const defaultManifest = generateDefaultManifest(mapping.type);
-      context.manifest = defaultManifest;
+    // Process each recipient
+    if (recipients.length > 0) {
+      const uniqueRecipients = this.deduplicateRecipients(recipients);
 
-      // Log warning with full context
-      this.logger.warn(
-        `NotificationType ${mapping.type} has no manifest in registry, using default manifest`,
-        'NotificationService',
-        {
-          notificationType: mapping.type,
-          eventName: context.eventName,
-          correlationId: context.correlationId,
-          defaultChannels: Object.keys(defaultManifest.channels),
-          defaultGroup: defaultManifest.group,
-          defaultPriority: defaultManifest.priority,
-        },
-      );
-
-      // Track default manifest usage in metrics
-      if (this.metricsService) {
-        // Note: We could add a specific metric for default manifest usage
-        // For now, we log it and can add metrics later if needed
-        this.logger.debug(
-          `Default manifest generated for ${mapping.type}`,
+      if (uniqueRecipients.length === 0) {
+        this.logger.warn(
+          `No valid recipients after deduplication for notification: ${type}`,
           'NotificationService',
           {
-            notificationType: mapping.type,
-            eventName: context.eventName,
+            notificationType: type,
+            audience,
+            correlationId,
+            originalCount: recipients.length,
           },
         );
+        return;
       }
+
+      const startTime = Date.now();
+
+      logNotificationStart(this.logger, {
+        eventName: type,
+        correlationId,
+        recipientCount: uniqueRecipients.length,
+        concurrencyLimit: NotificationService.CONCURRENCY_LIMIT,
+      });
+
+      const results = await Promise.allSettled(
+        uniqueRecipients.map((recipient) =>
+          this.concurrencyLimit(async () => {
+            try {
+              await this.processEventForRecipient(
+                type,
+                event,
+                correlationId,
+                recipient,
+                manifest,
+                audience,
+                channels,
+              );
+            } catch (error) {
+              logNotificationError(
+                this.logger,
+                {
+                  eventName: type,
+                  correlationId,
+                  recipientId: recipient.userId,
+                  profileId: recipient.profileId ?? undefined,
+                  profileType: recipient.profileType ?? undefined,
+                  error: error instanceof Error ? error.message : String(error),
+                },
+                error instanceof Error ? error : undefined,
+              );
+              throw error;
+            }
+          }),
+        ),
+      );
+
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      const successCount = results.filter(
+        (r) => r.status === 'fulfilled',
+      ).length;
+      const failureCount = results.filter(
+        (r) => r.status === 'rejected',
+      ).length;
+      logNotificationComplete(this.logger, {
+        eventName: type,
+        correlationId,
+        duration,
+        successCount,
+        failureCount,
+        recipientCount: uniqueRecipients.length,
+        concurrencyLimit: NotificationService.CONCURRENCY_LIMIT,
+      });
     }
   }
 
   /**
-   * Get all channels defined in manifest
+   * Get all channels defined in manifest for a specific audience
    * @param manifest - Notification manifest
+   * @param audience - Audience identifier
    * @returns Array of notification channels
    */
   private getChannelsFromManifest(
     manifest: NotificationManifest,
+    audience?: AudienceId,
   ): NotificationChannel[] {
-    return Object.keys(manifest.channels) as NotificationChannel[];
+    if (audience) {
+      const audienceConfig = this.manifestResolver.getAudienceConfig(
+        manifest,
+        audience,
+      );
+      return Object.keys(audienceConfig.channels) as NotificationChannel[];
+    }
+    // Fallback: get channels from first audience (for backward compatibility during migration)
+    const firstAudience = Object.keys(manifest.audiences)[0];
+    if (firstAudience) {
+      const audienceConfig = manifest.audiences[firstAudience];
+      return Object.keys(audienceConfig.channels) as NotificationChannel[];
+    }
+    return [];
   }
 
   /**
@@ -399,19 +315,90 @@ export class NotificationService {
   }
 
   /**
-   * Pipeline Step 3: Determine channels based on manifest
+   * Pipeline Step 3: Determine channels based on manifest and audience
+   * If requestedChannels is provided, filters manifest channels to only include requested ones.
+   * If not provided, uses all channels from manifest for the specified audience (default behavior).
    */
   private determineChannels(
     context: Partial<NotificationProcessingContext>,
   ): void {
-    const { manifest } = context;
+    const { manifest, requestedChannels, audience } = context;
     if (!manifest) {
       context.enabledChannels = [];
       return;
     }
 
-    // Get channels from manifest - all users get same channels
-    context.enabledChannels = this.getChannelsFromManifest(manifest) || [];
+    // Get all channels from manifest for the specified audience
+    const manifestChannels =
+      this.getChannelsFromManifest(manifest, audience) || [];
+
+    // If specific channels requested, filter manifest channels
+    if (requestedChannels && requestedChannels.length > 0) {
+      const validChannels = this.validateRequestedChannels(
+        requestedChannels,
+        manifest,
+        manifestChannels,
+      );
+      context.enabledChannels = validChannels;
+    } else {
+      // Default: use all channels from manifest for the audience
+      context.enabledChannels = manifestChannels;
+    }
+  }
+
+  /**
+   * Validate requested channels against manifest and return only valid ones
+   * Logs warnings for channels that don't exist in manifest
+   *
+   * @param requestedChannels - Channels requested by caller
+   * @param manifest - Notification manifest containing available channels
+   * @param manifestChannels - Pre-computed list of channels from manifest
+   * @returns Array of valid channels that exist in both requested and manifest
+   */
+  private validateRequestedChannels(
+    requestedChannels: NotificationChannel[],
+    manifest: NotificationManifest,
+    manifestChannels: NotificationChannel[],
+  ): NotificationChannel[] {
+    const validChannels: NotificationChannel[] = [];
+    const invalidChannels: NotificationChannel[] = [];
+
+    for (const channel of requestedChannels) {
+      if (manifestChannels.includes(channel)) {
+        validChannels.push(channel);
+      } else {
+        invalidChannels.push(channel);
+      }
+    }
+
+    // Log warnings for invalid channels
+    if (invalidChannels.length > 0) {
+      this.logger.warn(
+        `Requested channels not available in manifest: ${invalidChannels.join(', ')}`,
+        'NotificationService',
+        {
+          notificationType: manifest.type,
+          requestedChannels,
+          availableChannels: manifestChannels,
+          invalidChannels,
+        },
+      );
+    }
+
+    // Log info if no valid channels found
+    if (validChannels.length === 0 && requestedChannels.length > 0) {
+      this.logger.warn(
+        `No valid channels found after filtering. Requested: ${requestedChannels.join(', ')}, Available: ${manifestChannels.join(', ')}`,
+        'NotificationService',
+        {
+          notificationType: manifest.type,
+          requestedChannels,
+          availableChannels: manifestChannels,
+        },
+      );
+    }
+
+    return validChannels;
   }
 
   /**
@@ -483,9 +470,8 @@ export class NotificationService {
     }
 
     // Prepare template data with link variable for auth events
-    // Type assertion needed due to generic constraints, but type safety is enforced at compile time
     const templateData = this.templateService.ensureTemplateData(
-      event as any,
+      event,
       mapping,
       eventName,
     );
@@ -519,25 +505,59 @@ export class NotificationService {
       eventName,
     } = context;
 
-    if (!finalChannels || !mapping || !manifest || !templateData || !locale) {
+    if (
+      !finalChannels ||
+      !mapping ||
+      !manifest ||
+      !templateData ||
+      !locale ||
+      !userId ||
+      !eventName ||
+      !context.correlationId
+    ) {
       return;
     }
 
     // Process each final channel (after dynamic selection)
     for (const channel of finalChannels) {
-      // Validate channel support
-      if (!manifest.channels[channel]) {
-        this.logger.error(
-          `Channel ${channel} not supported for notification type ${mapping.type}`,
-          undefined,
-          'NotificationService',
-          {
-            notificationType: mapping.type,
-            channel,
-            eventName,
-          },
+      // Validate channel support for the audience
+      const { audience } = context;
+      if (audience) {
+        try {
+          // Validate channel exists for this audience
+          this.manifestResolver.getChannelConfig(manifest, audience, channel);
+        } catch {
+          this.logger.error(
+            `Channel ${channel} not supported for audience ${audience} in notification type ${mapping.type}`,
+            undefined,
+            'NotificationService',
+            {
+              notificationType: mapping.type,
+              channel,
+              audience,
+              eventName,
+            },
+          );
+          continue;
+        }
+      } else {
+        // Fallback: check if channel exists in any audience
+        const hasChannel = Object.values(manifest.audiences).some(
+          (audienceConfig) => audienceConfig.channels[channel],
         );
-        continue;
+        if (!hasChannel) {
+          this.logger.error(
+            `Channel ${channel} not supported for notification type ${mapping.type}`,
+            undefined,
+            'NotificationService',
+            {
+              notificationType: mapping.type,
+              channel,
+              eventName,
+            },
+          );
+          continue;
+        }
       }
 
       // Determine and validate recipient for this channel
@@ -586,6 +606,7 @@ export class NotificationService {
         channel,
         templateData as Record<string, unknown>,
         locale,
+        context.audience,
       );
 
       const payload = this.buildPayload(
@@ -636,9 +657,9 @@ export class NotificationService {
     channel: NotificationChannel,
     recipient: string | undefined,
     phone: string | undefined,
-    userId: string | undefined,
-    eventName: string | undefined,
-    notificationType: string,
+    userId: string,
+    eventName: NotificationType,
+    notificationType: NotificationType,
   ): Promise<string | null> {
     let channelRecipient: string | null = null;
 
@@ -734,12 +755,11 @@ export class NotificationService {
    */
   private async checkIdempotency(
     context: Partial<NotificationProcessingContext>,
-    notificationType: string,
+    notificationType: NotificationType,
     channel: NotificationChannel,
     channelRecipient: string,
   ): Promise<{ shouldProceed: boolean; lockAcquired: boolean }> {
-    // Type assertion needed - notificationType comes from mapping.type which is NotificationType
-    const type = notificationType as any;
+    const type = notificationType;
     if (!this.idempotencyCache || !context.correlationId) {
       return { shouldProceed: true, lockAcquired: false };
     }
@@ -824,14 +844,14 @@ export class NotificationService {
   private buildBasePayload(
     channelRecipient: string,
     channel: NotificationChannel,
-    mapping: NotificationEventMapping,
+    mapping: { type: NotificationType },
     manifest: NotificationManifest,
     locale: string,
     centerId: string | undefined,
-    userId: string | undefined,
+    userId: string,
     profileType: ProfileType | null | undefined,
     profileId: string | null | undefined,
-    correlationId: string | undefined,
+    correlationId: string,
   ) {
     return {
       recipient: channelRecipient,
@@ -840,12 +860,10 @@ export class NotificationService {
       group: manifest.group,
       locale,
       centerId,
-      userId: userId ? createUserId(userId) : undefined,
+      userId: createUserId(userId),
       profileType: profileType ?? null,
       profileId: profileId ?? null,
-      correlationId: correlationId
-        ? createCorrelationId(correlationId)
-        : undefined,
+      correlationId: createCorrelationId(correlationId),
     };
   }
 
@@ -975,31 +993,29 @@ export class NotificationService {
   private async sendOrEnqueueNotification(
     channel: NotificationChannel,
     payload: NotificationPayload,
-    userId: string | undefined,
-    eventName: string | undefined,
-    correlationId: string | undefined,
+    userId: string,
+    eventName: NotificationType,
+    correlationId: string,
     priority: number,
   ): Promise<void> {
     if (channel === NotificationChannel.IN_APP) {
       // Check rate limit for IN_APP
-      if (userId) {
-        const userWithinLimit =
-          await this.inAppNotificationService.checkUserRateLimit(userId);
-        if (!userWithinLimit) {
-          const rateLimitConfig =
-            this.inAppNotificationService.getRateLimitConfig();
-          this.logger.warn(
-            `User ${userId} exceeded rate limit (${rateLimitConfig.limit}/${rateLimitConfig.windowSeconds}s) for IN_APP notification, skipping delivery`,
-            'NotificationService',
-            {
-              userId,
-              eventName,
-              limit: rateLimitConfig.limit,
-              window: `${rateLimitConfig.windowSeconds} seconds`,
-            },
-          );
-          return;
-        }
+      const userWithinLimit =
+        await this.inAppNotificationService.checkUserRateLimit(userId);
+      if (!userWithinLimit) {
+        const rateLimitConfig =
+          this.inAppNotificationService.getRateLimitConfig();
+        this.logger.warn(
+          `User ${userId} exceeded rate limit (${rateLimitConfig.limit}/${rateLimitConfig.windowSeconds}s) for IN_APP notification, skipping delivery`,
+          'NotificationService',
+          {
+            userId,
+            eventName,
+            limit: rateLimitConfig.limit,
+            window: `${rateLimitConfig.windowSeconds} seconds`,
+          },
+        );
+        return;
       }
 
       // Send directly without queuing for low latency

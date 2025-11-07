@@ -5,6 +5,7 @@ import {
   NotificationTemplatePath,
   TemplateBasePath,
 } from '../../types/templates.generated';
+import { AudienceId } from '../../types/audience.types';
 
 /**
  * Configuration for a single notification channel
@@ -28,8 +29,23 @@ export interface ChannelManifest {
 }
 
 /**
+ * Configuration for a single audience
+ * Defines channels and configurations specific to this audience
+ */
+export interface AudienceManifest {
+  /** Channel-specific configurations for this audience */
+  channels: {
+    [NotificationChannel.EMAIL]?: ChannelManifest;
+    [NotificationChannel.SMS]?: ChannelManifest;
+    [NotificationChannel.WHATSAPP]?: ChannelManifest;
+    [NotificationChannel.IN_APP]?: ChannelManifest;
+    [NotificationChannel.PUSH]?: ChannelManifest;
+  };
+}
+
+/**
  * Complete manifest for a notification type
- * Defines all supported channels and their configurations
+ * Uses multi-audience format where different audiences can have different channels and configurations
  */
 export interface NotificationManifest {
   /** Notification type identifier */
@@ -39,11 +55,11 @@ export interface NotificationManifest {
   /**
    * Base template path (without channel prefix or extension)
    * Must be from generated TemplateBasePath type for type safety.
-   * Example: 'auth/otp-sent' will resolve to:
-   * - email/auth/otp-sent.hbs (for EMAIL)
-   * - sms/auth/otp-sent.txt (for SMS)
-   * - whatsapp/auth/otp-sent.txt (for WHATSAPP)
-   * - in-app/auth/otp-sent.json (for IN_APP)
+   * Example: 'auth/otp' will resolve to:
+   * - email/auth/otp.hbs (for EMAIL)
+   * - sms/auth/otp.txt (for SMS)
+   * - whatsapp/auth/otp.txt (for WHATSAPP)
+   * - in-app/auth/otp.json (for IN_APP)
    *
    * If not provided, each channel must specify its own template path
    */
@@ -54,13 +70,9 @@ export interface NotificationManifest {
   localized?: boolean;
   /** Whether this notification requires audit logging */
   requiresAudit?: boolean;
-  /** Channel-specific configurations */
-  channels: {
-    [NotificationChannel.EMAIL]?: ChannelManifest;
-    [NotificationChannel.SMS]?: ChannelManifest;
-    [NotificationChannel.WHATSAPP]?: ChannelManifest;
-    [NotificationChannel.IN_APP]?: ChannelManifest;
-    [NotificationChannel.PUSH]?: ChannelManifest;
+  /** Audience-specific configurations */
+  audiences: {
+    [audienceId: string]: AudienceManifest;
   };
 }
 

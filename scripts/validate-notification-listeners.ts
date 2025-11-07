@@ -28,7 +28,7 @@ try {
 
 // Extract @OnEvent handlers using regex
 // Pattern matches: @OnEvent(EventName.EVENT_NAME)
-// Examples: @OnEvent(AuthEvents.OTP_SENT) or @OnEvent(CenterEvents.CREATED)
+// Examples: @OnEvent(AuthEvents.OTP) or @OnEvent(CenterEvents.CREATED)
 const onEventPattern = /@OnEvent\((\w+Events\.\w+)\)/g;
 const foundEnumRefs: string[] = [];
 let match;
@@ -40,7 +40,7 @@ while ((match = onEventPattern.exec(listenerFile)) !== null) {
 // Map enum references to actual event string values
 const enumToEventMap: Record<string, string> = {
   // AuthEvents
-  'AuthEvents.OTP_SENT': AuthEvents.OTP_SENT,
+  'AuthEvents.OTP': AuthEvents.OTP,
   'AuthEvents.PASSWORD_RESET_REQUESTED': AuthEvents.PASSWORD_RESET_REQUESTED,
   'AuthEvents.EMAIL_VERIFICATION_REQUESTED':
     AuthEvents.EMAIL_VERIFICATION_REQUESTED,

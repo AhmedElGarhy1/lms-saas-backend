@@ -1,10 +1,19 @@
 import { EventType } from '@/shared/events';
-import { REQUIRED_NOTIFICATION_EVENTS } from './required-events.registry';
+import { AuthEvents } from '@/shared/events/auth.events.enum';
+import { CenterEvents } from '@/shared/events/center.events.enum';
 
 /**
  * Events that should have @OnEvent listeners in NotificationListener
- * Should match REQUIRED_NOTIFICATION_EVENTS (all mapped events need listeners)
+ * Note: This is for documentation/validation purposes only.
+ * All handlers now use trigger() directly with NotificationType.
  */
 export const EXPECTED_LISTENER_EVENTS: readonly EventType[] = [
-  ...REQUIRED_NOTIFICATION_EVENTS,
+  // Auth events that should trigger notifications
+  AuthEvents.OTP,
+  AuthEvents.PASSWORD_RESET_REQUESTED,
+  AuthEvents.EMAIL_VERIFICATION_REQUESTED,
+
+  // Center events that should trigger notifications
+  CenterEvents.CREATED,
+  CenterEvents.UPDATED,
 ] as const;

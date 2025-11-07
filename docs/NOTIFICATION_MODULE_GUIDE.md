@@ -175,7 +175,8 @@ BullMQ Queue → NotificationProcessor → NotificationSenderService → Channel
 
 **Key Methods**:
 
-- `processEvent(eventName, event)` - Main orchestration method
+- `processEvent(eventName, event, recipients, channels?)` - Main orchestration method
+  - `channels` (optional): Array of channels to use. If not provided, all channels from manifest are used.
 - `enqueueNotifications(payloads)` - Bulk notification enqueueing
 
 #### NotificationListener
@@ -702,21 +703,86 @@ Thank you!
 
 ```typescript
 import { NotificationService } from '@/modules/notifications/services/notification.service';
+import { NotificationChannel } from '@/modules/notifications/enums/notification-channel.enum';
+import { AuthEvents } from '@/shared/events/auth.events.enum';
+import { RecipientInfo } from '@/modules/notifications/types/recipient-info.interface';
 
 @Injectable()
 export class YourService {
   constructor(private readonly notificationService: NotificationService) {}
 
   async sendCustomNotification(userId: string) {
-    await this.notificationService.processEvent('custom.event', {
+    const recipients: RecipientInfo[] = [{
       userId,
       email: 'user@example.com',
-      name: 'John Doe',
-      // ... other data
-    });
+      phone: '+1234567890',
+      locale: 'en',
+      profileId: null,
+      profileType: null,
+    }];
+
+    // Use all channels from manifest (default behavior)
+    await this.notificationService.processEvent(
+      AuthEvents.OTP,
+      event,
+      recipients
+    );
+
+    // Or specify only specific channels
+    await this.notificationService.processEvent(
+      AuthEvents.OTP,
+      event,
+      recipients,
+      [NotificationChannel.WHATSAPP, NotificationChannel.SMS]
+    );
   }
 }
 ```
+
+### Dynamic Channel Selection
+
+You can override the default channels from the manifest by providing a `channels` parameter when calling `processEvent()`. This allows runtime flexibility for channel selection.
+
+**Benefits:**
+- **Cost Optimization**: Send only to necessary channels
+- **Conditional Logic**: "Send via WhatsApp if available, otherwise SMS"
+- **User Preferences**: Respect user channel preferences at runtime
+- **A/B Testing**: Test different channel combinations
+
+**Example Usage:**
+
+```typescript
+import { NotificationChannel } from '@/modules/notifications/enums/notification-channel.enum';
+
+// Default: Use all channels from manifest
+await notificationService.processEvent(
+  AuthEvents.OTP,
+  event,
+  recipients
+);
+
+// Specific channels only (e.g., WhatsApp and SMS)
+await notificationService.processEvent(
+  AuthEvents.OTP,
+  event,
+  recipients,
+  [NotificationChannel.WHATSAPP, NotificationChannel.SMS]
+);
+
+// Single channel (e.g., email only)
+await notificationService.processEvent(
+  AuthEvents.OTP,
+  event,
+  recipients,
+  [NotificationChannel.EMAIL]
+);
+```
+
+**Important Notes:**
+- If a requested channel doesn't exist in the manifest, it will be filtered out with a warning log
+- If all requested channels are invalid, the notification will be skipped (no channels to send to)
+- The channel selection still goes through the optimization pipeline (user activity, preferences, etc.)
+- This feature is fully backward compatible - existing code continues to work without changes
 
 ### Accessing In-App Notifications via API
 
@@ -780,7 +846,7 @@ Defined in `enums/notification-type.enum.ts`:
 - `USER_REGISTERED`
 - `PASSWORD_RESET`
 - `EMAIL_VERIFICATION`
-- `OTP_SENT`
+- `OTP`
 - `USER_ACTIVATED`
 - `USER_DEACTIVATED`
 - `CENTER_CREATED`

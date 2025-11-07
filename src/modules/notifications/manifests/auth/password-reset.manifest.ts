@@ -15,16 +15,20 @@ export const passwordResetManifest: NotificationManifest = {
   priority: 3,
   requiresAudit: true,
   templateBase: 'auth/password-reset',
-  channels: {
-    [NotificationChannel.EMAIL]: {
-      subject: 'Password Reset Request',
-      requiredVariables: ['link', 'expiresIn', 'name'],
-    },
-    [NotificationChannel.SMS]: {
-      requiredVariables: ['link', 'expiresIn', 'name'],
-    },
-    [NotificationChannel.WHATSAPP]: {
-      requiredVariables: ['link', 'expiresIn', 'name'],
+  audiences: {
+    DEFAULT: {
+      channels: {
+        [NotificationChannel.EMAIL]: {
+          subject: 'Password Reset Request',
+          requiredVariables: ['link', 'expiresIn', 'name'],
+        },
+        [NotificationChannel.SMS]: {
+          requiredVariables: ['link', 'expiresIn', 'name'],
+        },
+        [NotificationChannel.WHATSAPP]: {
+          requiredVariables: ['link', 'expiresIn', 'name'],
+        },
+      },
     },
   },
 } as const;

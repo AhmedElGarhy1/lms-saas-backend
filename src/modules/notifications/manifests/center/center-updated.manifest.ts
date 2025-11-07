@@ -14,19 +14,23 @@ export const centerUpdatedManifest: NotificationManifest = {
   group: NotificationGroup.MANAGEMENT,
   priority: 2,
   templateBase: 'center-updated',
-  channels: {
-    [NotificationChannel.EMAIL]: {
-      subject: 'Center Information Updated',
-      requiredVariables: ['center'],
-    },
-    [NotificationChannel.SMS]: {
-      requiredVariables: ['center'],
-    },
-    [NotificationChannel.WHATSAPP]: {
-      requiredVariables: ['center'],
-    },
-    [NotificationChannel.IN_APP]: {
-      requiredVariables: ['center'],
+  audiences: {
+    DEFAULT: {
+      channels: {
+        [NotificationChannel.EMAIL]: {
+          subject: 'Center Information Updated',
+          requiredVariables: ['center'],
+        },
+        [NotificationChannel.SMS]: {
+          requiredVariables: ['center'],
+        },
+        [NotificationChannel.WHATSAPP]: {
+          requiredVariables: ['center'],
+        },
+        [NotificationChannel.IN_APP]: {
+          requiredVariables: ['center'],
+        },
+      },
     },
   },
 } as const;

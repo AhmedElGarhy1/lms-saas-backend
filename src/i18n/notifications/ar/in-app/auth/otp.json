@@ -1,0 +1,7 @@
+{
+  "title": "التحقق من رمز OTP",
+  "message": "رمز التحقق الخاص بك هو {{otpCode}}. صالح لمدة {{expiresIn}} دقيقة.",
+  "actionUrl": null,
+  "priority": 4
+}
+

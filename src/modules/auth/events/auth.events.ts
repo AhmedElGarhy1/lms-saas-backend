@@ -80,7 +80,7 @@ export class EmailVerificationRequestedEvent extends BaseEvent {
   }
 }
 
-export class OtpSentEvent extends BaseEvent {
+export class OtpEvent extends BaseEvent {
   constructor(
     actor: ActorUser,
     public readonly userId: string,

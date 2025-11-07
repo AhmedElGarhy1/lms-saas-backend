@@ -4,11 +4,7 @@ import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationRegistry } from '../manifests/registry/notification-registry';
 import { NotificationManifestResolver } from '../manifests/registry/notification-manifest-resolver.service';
 import { templateExists, getTemplatePath } from '../utils/template-path.util';
-import { REQUIRED_NOTIFICATION_EVENTS } from '../config/required-events.registry';
-import { NotificationEventsMap } from '../config/notifications.map';
-import { EXPECTED_LISTENER_EVENTS } from '../config/expected-listeners.registry';
 import { NotificationTemplatePath } from '../types/templates.generated';
-import { EventType } from '@/shared/events';
 import { Locale } from '@/shared/common/enums/locale.enum';
 
 interface ValidationResult {
@@ -113,7 +109,8 @@ export class NotificationValidator implements OnModuleInit {
         !manifest ||
         Object.keys(manifest).length === 0 ||
         !manifest.type ||
-        !manifest.channels
+        !manifest.audiences ||
+        Object.keys(manifest.audiences).length === 0
       );
     });
 
@@ -121,16 +118,8 @@ export class NotificationValidator implements OnModuleInit {
       errors.push(`Missing manifests (required): ${missingTypes.join(', ')}`);
     }
 
-    // 1.5. Check all required events are mapped
-    const unmappedRequiredEvents = REQUIRED_NOTIFICATION_EVENTS.filter(
-      (event) => !NotificationEventsMap[event],
-    );
-
-    if (unmappedRequiredEvents.length > 0) {
-      errors.push(
-        `Missing required event mappings: ${unmappedRequiredEvents.join(', ')}`,
-      );
-    }
+    // Note: Event-to-notification mapping is no longer used.
+    // All handlers now use trigger() directly with NotificationType.
 
     // 2. Check all templates exist and validate channel configs
     for (const [type, manifest] of Object.entries(NotificationRegistry)) {
@@ -138,47 +127,57 @@ export class NotificationValidator implements OnModuleInit {
       if (
         !manifest ||
         Object.keys(manifest).length === 0 ||
-        !manifest.channels
+        !manifest.audiences ||
+        Object.keys(manifest.audiences).length === 0
       ) {
         continue;
       }
 
-      for (const [channelKey, channelConfig] of Object.entries(
-        manifest.channels,
+      // Validate each audience
+      for (const [audienceId, audienceConfig] of Object.entries(
+        manifest.audiences,
       )) {
-        if (!channelConfig) continue;
-
-        // Convert channel key to NotificationChannel enum
-        const channel = channelKey as NotificationChannel;
-
-        // Resolve template path (handles templateBase derivation)
-        let resolvedTemplate: string;
-        try {
-          if (this.manifestResolver) {
-            const resolvedConfig = this.manifestResolver.getChannelConfig(
-              manifest,
-              channel,
-            );
-            resolvedTemplate = resolvedConfig.template!;
-          } else {
-            // Fallback: use explicit template or derive from templateBase
-            const channelFolder = channel.toLowerCase().replace('_', '-');
-            resolvedTemplate =
-              channelConfig.template ||
-              (manifest.templateBase
-                ? `${channelFolder}/${manifest.templateBase}`
-                : '');
-          }
-        } catch (error) {
-          errors.push(
-            `Failed to resolve template for ${type}:${channel}: ${error instanceof Error ? error.message : String(error)}`,
-          );
+        if (!audienceConfig || !audienceConfig.channels) {
           continue;
         }
 
+        for (const [channelKey, channelConfig] of Object.entries(
+          audienceConfig.channels,
+        )) {
+          if (!channelConfig) continue;
+
+          // Convert channel key to NotificationChannel enum
+          const channel = channelKey as NotificationChannel;
+
+          // Resolve template path (handles templateBase derivation)
+          let resolvedTemplate: string;
+          try {
+            if (this.manifestResolver) {
+              const resolvedConfig = this.manifestResolver.getChannelConfig(
+                manifest,
+                audienceId,
+                channel,
+              );
+              resolvedTemplate = resolvedConfig.template!;
+            } else {
+              // Fallback: use explicit template or derive from templateBase
+              const channelFolder = channel.toLowerCase().replace('_', '-');
+              resolvedTemplate =
+                channelConfig.template ||
+                (manifest.templateBase
+                  ? `${channelFolder}/${manifest.templateBase}`
+                  : '');
+            }
+          } catch (error) {
+            errors.push(
+              `Failed to resolve template for ${type}:${audienceId}:${channel}: ${error instanceof Error ? error.message : String(error)}`,
+            );
+            continue;
+          }
+
         if (!resolvedTemplate) {
           errors.push(
-            `Missing template path for ${type}:${channel}. Either provide templateBase in manifest or explicit template in channel config.`,
+            `Missing template path for ${type}:${audienceId}:${channel}. Either provide templateBase in manifest or explicit template in channel config.`,
           );
           continue;
         }
@@ -195,7 +194,7 @@ export class NotificationValidator implements OnModuleInit {
 
           if (!templateExists(resolvedTemplate, locale, channel)) {
             errors.push(
-              `Missing template: ${type}:${channel} (${resolvedTemplate}) for locale ${locale} - Path: ${templatePath}`,
+              `Missing template: ${type}:${audienceId}:${channel} (${resolvedTemplate}) for locale ${locale} - Path: ${templatePath}`,
             );
           }
         }
@@ -212,25 +211,16 @@ export class NotificationValidator implements OnModuleInit {
 
         // Check EMAIL has subject
         if (channel === NotificationChannel.EMAIL && !channelConfig.subject) {
-          warnings.push(`EMAIL channel missing subject: ${type}:${channel}`);
+          warnings.push(
+            `EMAIL channel missing subject: ${type}:${audienceId}:${channel}`,
+          );
         }
       }
     }
-
-    // 3. Check: All mapped events should have listeners
-    const mappedEvents = Object.keys(NotificationEventsMap);
-    const expectedListeners = EXPECTED_LISTENER_EVENTS;
-
-    const mappedWithoutListeners = mappedEvents.filter(
-      (event) => expectedListeners.includes(event as EventType),
-      // Note: Full validation requires script execution
-    );
-
-    if (mappedWithoutListeners.length > 0) {
-      warnings.push(
-        `Mapped events may be missing listeners: ${mappedWithoutListeners.join(', ')}. Run 'npm run validate:notification-listeners' to verify.`,
-      );
     }
+
+    // Note: Event-to-notification mapping validation removed.
+    // All handlers now use trigger() directly with NotificationType.
 
     return {
       isValid: errors.length === 0,

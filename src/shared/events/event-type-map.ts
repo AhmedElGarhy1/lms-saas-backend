@@ -56,7 +56,7 @@ import { CreateStaffEvent } from '@/modules/staff/events/staff.events';
 import {
   PasswordResetRequestedEvent,
   EmailVerificationRequestedEvent,
-  OtpSentEvent,
+  OtpEvent,
 } from '@/modules/auth/events/auth.events';
 
 // Import event enums for type safety
@@ -141,7 +141,7 @@ export type EventTypeMap = {
   // Additional Auth Events
   [AuthEvents.PASSWORD_RESET_REQUESTED]: PasswordResetRequestedEvent;
   [AuthEvents.EMAIL_VERIFICATION_REQUESTED]: EmailVerificationRequestedEvent;
-  [AuthEvents.OTP_SENT]: OtpSentEvent;
+  [AuthEvents.OTP]: OtpEvent;
 };
 
 /**

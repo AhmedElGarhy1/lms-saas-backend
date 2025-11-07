@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { NotificationService } from '../services/notification.service';
 import { LoggerService } from '@/shared/services/logger.service';
-import { RecipientResolverService } from '../services/recipient-resolver.service';
 import { CenterEvents } from '@/shared/events/center.events.enum';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import {
@@ -12,14 +11,12 @@ import {
 import {
   PasswordResetRequestedEvent,
   EmailVerificationRequestedEvent,
-  OtpSentEvent,
+  OtpEvent,
 } from '@/modules/auth/events/auth.events';
-import { EventType } from '@/shared/events';
 import { ValidateEvent } from '../types/event-notification-mapping.types';
-import { NotificationEvent } from '../types/notification-event.types';
 import { RecipientInfo } from '../types/recipient-info.interface';
-import { UserProfileService } from '@/modules/user/services/user-profile.service';
-import { User } from '@/modules/user/entities/user.entity';
+import { NotificationChannel } from '../enums/notification-channel.enum';
+import { NotificationType } from '../enums/notification-type.enum';
 import { UserService } from '@/modules/user/services/user.service';
 
 @Injectable()
@@ -27,30 +24,25 @@ export class NotificationListener {
   constructor(
     private readonly notificationService: NotificationService,
     private readonly logger: LoggerService,
-    private readonly recipientResolver: RecipientResolverService,
-    private readonly userProfileService: UserProfileService,
     private readonly userService: UserService,
   ) {}
 
   /**
-   * Unified notification handler with consistent error handling
-   * Ensures all notifications go through the same pipeline
-   * @param eventName - Event type identifier
-   * @param event - Event object containing notification data
-   * @param recipients - Array of recipients (required, never undefined)
+   * Validate recipients - phone and locale are always required
+   * @param recipients - Array of recipients to validate
+   * @param notificationType - Notification type for logging context
+   * @returns Array of valid recipients
    */
-  private async handleNotification(
-    eventName: EventType,
-    event: NotificationEvent,
+  private validateRecipients(
     recipients: RecipientInfo[],
-  ): Promise<void> {
-    // Validate recipients - phone and locale are always required
-    const validRecipients = recipients.filter((r) => {
+    notificationType: NotificationType,
+  ): RecipientInfo[] {
+    return recipients.filter((r) => {
       if (!r.phone) {
         this.logger.warn(
           `Recipient ${r.userId} missing required phone, skipping`,
           'NotificationListener',
-          { userId: r.userId, eventName },
+          { userId: r.userId, notificationType },
         );
         return false;
       }
@@ -58,61 +50,83 @@ export class NotificationListener {
         this.logger.warn(
           `Recipient ${r.userId} missing required locale, skipping`,
           'NotificationListener',
-          { userId: r.userId, eventName },
+          { userId: r.userId, notificationType },
         );
         return false;
       }
       return true;
     });
-
-    if (validRecipients.length === 0) {
-      this.logger.warn(
-        `No valid recipients for event ${eventName}, skipping notification`,
-        'NotificationListener',
-        { eventName, originalCount: recipients.length },
-      );
-      return;
-    }
-
-    // Use validated recipients
-    try {
-      await this.notificationService.processEvent(
-        eventName,
-        event,
-        validRecipients,
-      );
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      this.logger.error(
-        `Failed to process notification for event ${eventName}: ${errorMessage}`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationListener',
-        {
-          eventName,
-          error: errorMessage,
-          recipientCount: validRecipients.length,
-        },
-      );
-      // Don't throw - graceful degradation, allow other events to process
-    }
   }
 
   @OnEvent(CenterEvents.CREATED)
   async handleCenterCreated(
     event: ValidateEvent<CreateCenterEvent, CenterEvents.CREATED>,
   ) {
-    const { actor } = event;
-    const recipient: RecipientInfo = {
+    const { actor, center } = event;
+
+    // For now, use actor for both audiences
+    // TODO: Fetch actual owner from center.ownerId when available
+    const owner: RecipientInfo = {
+      userId: actor.id, // TODO: Use center.ownerId when available
+      profileId: actor.userProfileId,
+      profileType: actor.profileType,
+      phone: actor.getPhone(),
+      email: center.email || actor.email || null,
+      locale: actor.userInfo?.locale || 'en',
+      centerId: center.id,
+    };
+
+    // Admin recipient (creator)
+    const admin: RecipientInfo = {
       userId: actor.id,
       profileId: actor.userProfileId,
       profileType: actor.profileType,
       phone: actor.getPhone(),
       email: actor.email || null,
-      locale: actor.userInfo.locale,
-      centerId: actor.centerId || null,
+      locale: actor.userInfo?.locale || 'en',
+      centerId: center.id,
     };
-    await this.handleNotification(CenterEvents.CREATED, event, [recipient]);
+
+    // Send to owner audience
+    try {
+      await this.notificationService.trigger(NotificationType.CENTER_CREATED, {
+        audience: 'OWNER',
+        event,
+        recipients: [owner],
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to send CENTER_CREATED notification to OWNER audience`,
+        error instanceof Error ? error.stack : undefined,
+        'NotificationListener',
+        {
+          centerId: center.id,
+          notificationType: NotificationType.CENTER_CREATED,
+          audience: 'OWNER',
+        },
+      );
+    }
+
+    // Send to admin audience
+    try {
+      await this.notificationService.trigger(NotificationType.CENTER_CREATED, {
+        audience: 'ADMIN',
+        event,
+        recipients: [admin],
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to send CENTER_CREATED notification to ADMIN audience`,
+        error instanceof Error ? error.stack : undefined,
+        'NotificationListener',
+        {
+          centerId: center.id,
+          adminId: actor.id,
+          notificationType: NotificationType.CENTER_CREATED,
+          audience: 'ADMIN',
+        },
+      );
+    }
   }
 
   @OnEvent(CenterEvents.UPDATED)
@@ -126,10 +140,38 @@ export class NotificationListener {
       profileType: actor.profileType,
       phone: actor.getPhone(),
       email: actor.email || null,
-      locale: actor.userInfo?.locale,
+      locale: actor.userInfo?.locale || 'en',
       centerId: actor.centerId || null,
     };
-    await this.handleNotification(CenterEvents.UPDATED, event, [recipient]);
+
+    const validRecipients = this.validateRecipients(
+      [recipient],
+      NotificationType.CENTER_UPDATED,
+    );
+
+    if (validRecipients.length === 0) {
+      return;
+    }
+
+    try {
+      await this.notificationService.trigger(NotificationType.CENTER_UPDATED, {
+        audience: 'DEFAULT',
+        event,
+        recipients: validRecipients,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to send CENTER_UPDATED notification`,
+        error instanceof Error ? error.stack : undefined,
+        'NotificationListener',
+        {
+          centerId: actor.centerId,
+          userId: actor.id,
+          notificationType: NotificationType.CENTER_UPDATED,
+          audience: 'DEFAULT',
+        },
+      );
+    }
   }
 
   @OnEvent(AuthEvents.PASSWORD_RESET_REQUESTED)
@@ -167,9 +209,33 @@ export class NotificationListener {
       locale: user.userInfo.locale,
     };
 
-    await this.handleNotification(AuthEvents.PASSWORD_RESET_REQUESTED, event, [
-      recipient,
-    ]);
+    const validRecipients = this.validateRecipients(
+      [recipient],
+      NotificationType.PASSWORD_RESET,
+    );
+
+    if (validRecipients.length === 0) {
+      return;
+    }
+
+    try {
+      await this.notificationService.trigger(NotificationType.PASSWORD_RESET, {
+        audience: 'DEFAULT',
+        event,
+        recipients: validRecipients,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to send PASSWORD_RESET notification`,
+        error instanceof Error ? error.stack : undefined,
+        'NotificationListener',
+        {
+          userId: user.id,
+          notificationType: NotificationType.PASSWORD_RESET,
+          audience: 'DEFAULT',
+        },
+      );
+    }
   }
 
   @OnEvent(AuthEvents.EMAIL_VERIFICATION_REQUESTED)
@@ -208,19 +274,44 @@ export class NotificationListener {
       centerId: undefined,
     };
 
-    await this.handleNotification(
-      AuthEvents.EMAIL_VERIFICATION_REQUESTED,
-      event,
+    const validRecipients = this.validateRecipients(
       [recipient],
+      NotificationType.EMAIL_VERIFICATION,
     );
+
+    if (validRecipients.length === 0) {
+      return;
+    }
+
+    try {
+      await this.notificationService.trigger(
+        NotificationType.EMAIL_VERIFICATION,
+        {
+          audience: 'DEFAULT',
+          event,
+          recipients: validRecipients,
+        },
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send EMAIL_VERIFICATION notification`,
+        error instanceof Error ? error.stack : undefined,
+        'NotificationListener',
+        {
+          userId: user.id,
+          notificationType: NotificationType.EMAIL_VERIFICATION,
+          audience: 'DEFAULT',
+        },
+      );
+    }
   }
 
-  @OnEvent(AuthEvents.OTP_SENT)
-  async handleOtpSent(event: ValidateEvent<OtpSentEvent, AuthEvents.OTP_SENT>) {
+  @OnEvent(AuthEvents.OTP)
+  async handleOtp(event: ValidateEvent<OtpEvent, AuthEvents.OTP>) {
     // Fetch user to get phone and locale
     if (!event.userId) {
       this.logger.warn(
-        'OTP sent event missing userId, skipping notification',
+        'OTP event missing userId, skipping notification',
         'NotificationListener',
       );
       return;
@@ -245,6 +336,34 @@ export class NotificationListener {
       locale: user.userInfo.locale,
     };
 
-    await this.handleNotification(AuthEvents.OTP_SENT, event, [recipient]);
+    const validRecipients = this.validateRecipients(
+      [recipient],
+      NotificationType.OTP,
+    );
+
+    if (validRecipients.length === 0) {
+      return;
+    }
+
+    try {
+      await this.notificationService.trigger(NotificationType.OTP, {
+        audience: 'DEFAULT',
+        event,
+        recipients: validRecipients,
+        channels: [NotificationChannel.SMS],
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to send OTP notification`,
+        error instanceof Error ? error.stack : undefined,
+        'NotificationListener',
+        {
+          userId: user.id,
+          notificationType: NotificationType.OTP,
+          audience: 'DEFAULT',
+          channels: [NotificationChannel.SMS],
+        },
+      );
+    }
   }
 }

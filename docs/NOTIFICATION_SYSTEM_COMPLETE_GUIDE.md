@@ -36,7 +36,7 @@ The notification system is a **manifest-driven, type-safe notification framework
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Domain Event Emitted                      │
-│              (e.g., OtpSentEvent, CenterCreatedEvent)        │
+│              (e.g., OtpEvent, CenterCreatedEvent)        │
 └──────────────────────┬──────────────────────────────────────┘
                        │
                        ▼
@@ -84,7 +84,7 @@ src/modules/notifications/
 │   └── notification.listener.ts
 ├── manifests/                   # Notification manifests
 │   ├── auth/
-│   │   ├── otp-sent.manifest.ts
+│   │   ├── otp.manifest.ts
 │   │   ├── password-reset.manifest.ts
 │   │   └── email-verification.manifest.ts
 │   ├── center/
@@ -127,14 +127,14 @@ The notification system has **three layers of type safety**:
 ```typescript
 // Generated from file system scan
 export type NotificationTemplatePath =
-  | 'email/auth/otp-sent'
-  | 'sms/auth/otp-sent'
-  | 'whatsapp/auth/otp-sent'
-  | 'in-app/auth/otp-sent';
+  | 'email/auth/otp'
+  | 'sms/auth/otp'
+  | 'whatsapp/auth/otp'
+  | 'in-app/auth/otp';
 // ... all template paths
 
 export type TemplateBasePath =
-  | 'auth/otp-sent'
+  | 'auth/otp'
   | 'auth/password-reset'
   | 'center-created';
 // ... all base paths
@@ -150,7 +150,7 @@ export type TemplateBasePath =
 
 ```typescript
 // ✅ Type-safe - TypeScript validates path exists
-templateBase: 'auth/otp-sent'; // Must be in TemplateBasePath
+templateBase: 'auth/otp'; // Must be in TemplateBasePath
 
 // ❌ Type error - path doesn't exist
 templateBase: 'auth/invalid-path'; // TypeScript error!
@@ -183,10 +183,10 @@ export type ValidateEventForNotification<
 
 ```typescript
 // Manifest requires: ['otpCode', 'expiresIn']
-// If OtpSentEvent is missing otpCode:
-@OnEvent(AuthEvents.OTP_SENT)
-async handleOtpSent(
-  event: ValidateEvent<OtpSentEvent, AuthEvents.OTP_SENT>  // ❌ Type error!
+// If OtpEvent is missing otpCode:
+@OnEvent(AuthEvents.OTP)
+async handleOtp(
+  event: ValidateEvent<OtpEvent, AuthEvents.OTP>  // ❌ Type error!
 ) { ... }
 ```
 
@@ -712,10 +712,10 @@ Hello {{name}}, your OTP is {{otpCode}}. Expires in {{expiresIn}}.
 
 ```
 1. Try channel-specific template:
-   en/email/auth/otp-sent.hbs
+   en/email/auth/otp.hbs
 
 2. Fallback to email template (if configured):
-   en/email/auth/otp-sent.hbs
+   en/email/auth/otp.hbs
 
 3. Fallback to default template in channel folder:
    en/email/default.hbs
@@ -798,7 +798,7 @@ ensureTemplateData() transforms:
 
 ```typescript
 // ✅ Good
-templateBase: 'auth/otp-sent'; // TypeScript validates this exists
+templateBase: 'auth/otp'; // TypeScript validates this exists
 
 // ❌ Bad
 templateBase: 'auth/invalid'; // TypeScript error!
@@ -819,14 +819,14 @@ requiredVariables: ['otp', 'expiry']; // Template will fail at runtime
 
 ```typescript
 // ✅ Good - TypeScript validates event has required properties
-@OnEvent(AuthEvents.OTP_SENT)
-async handleOtpSent(
-  event: ValidateEvent<OtpSentEvent, AuthEvents.OTP_SENT>
+@OnEvent(AuthEvents.OTP)
+async handleOtp(
+  event: ValidateEvent<OtpEvent, AuthEvents.OTP>
 ) { ... }
 
 // ❌ Bad - No type safety
-@OnEvent(AuthEvents.OTP_SENT)
-async handleOtpSent(event: OtpSentEvent) { ... }
+@OnEvent(AuthEvents.OTP)
+async handleOtp(event: OtpEvent) { ... }
 ```
 
 ### 4. Run Validations Before Committing

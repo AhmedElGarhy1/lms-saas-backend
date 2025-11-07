@@ -6,7 +6,7 @@ export enum AuthEvents {
   EMAIL_VERIFIED = 'email.verified',
   PASSWORD_RESET_REQUESTED = 'password.reset.requested',
   EMAIL_VERIFICATION_REQUESTED = 'email.verification.requested',
-  OTP_SENT = 'auth.otp.sent',
+  OTP = 'auth.otp.sent',
   TWO_FA_SETUP = 'two.fa.setup',
   TWO_FA_ENABLED = 'two.fa.enabled',
   TWO_FA_DISABLED = 'two.fa.disabled',

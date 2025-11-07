@@ -1,7 +1,10 @@
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationGroup } from '../enums/notification-group.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { NotificationManifest, ChannelManifest } from './types/manifest.types';
+import {
+  NotificationManifest,
+  ChannelManifest,
+} from './types/manifest.types';
 
 /**
  * Generate a default manifest for a notification type
@@ -41,8 +44,12 @@ export function generateDefaultManifest(
     group,
     priority: 1, // Lowest priority
     templateBase: 'default', // Use default template
-    channels: {
-      [NotificationChannel.IN_APP]: defaultChannelConfig,
+    audiences: {
+      DEFAULT: {
+        channels: {
+          [NotificationChannel.IN_APP]: defaultChannelConfig,
+        },
+      },
     },
   };
 }

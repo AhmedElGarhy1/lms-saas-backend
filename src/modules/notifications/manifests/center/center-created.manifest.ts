@@ -7,12 +7,13 @@ import { NotificationGroup } from '../../enums/notification-group.enum';
  * Manifest for CENTER_CREATED notification
  *
  * Sent when a new learning center is created
- * Supports EMAIL and WhatsApp channels
+ * Multi-audience support:
+ * - ADMIN: Receives in-app notification
+ * - OWNER: Receives email and in-app notification
  *
  * Template variables:
- * - center: Center object with name, address, phone, email
- * - userData: Optional user data with name
- * - link: Optional link to manage center
+ * - ADMIN: creatorName, centerName
+ * - OWNER: centerName, ownerName
  */
 export const centerCreatedManifest: NotificationManifest = {
   type: NotificationType.CENTER_CREATED,
@@ -20,19 +21,24 @@ export const centerCreatedManifest: NotificationManifest = {
   priority: 3,
   requiresAudit: true,
   templateBase: 'center-created',
-  channels: {
-    [NotificationChannel.EMAIL]: {
-      subject: 'Center Created Successfully',
-      requiredVariables: ['center'],
+  audiences: {
+    ADMIN: {
+      channels: {
+        [NotificationChannel.IN_APP]: {
+          requiredVariables: ['creatorName', 'centerName'],
+        },
+      },
     },
-    [NotificationChannel.SMS]: {
-      requiredVariables: ['center'],
-    },
-    [NotificationChannel.WHATSAPP]: {
-      requiredVariables: ['center'],
-    },
-    [NotificationChannel.IN_APP]: {
-      requiredVariables: ['center'],
+    OWNER: {
+      channels: {
+        [NotificationChannel.EMAIL]: {
+          subject: 'Your new center is ready!',
+          requiredVariables: ['centerName', 'ownerName'],
+        },
+        [NotificationChannel.IN_APP]: {
+          requiredVariables: ['centerName'],
+        },
+      },
     },
   },
 } as const;

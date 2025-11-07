@@ -1,10 +1,11 @@
 import { LoggerService } from '@/shared/services/logger.service';
+import { NotificationType } from '../enums/notification-type.enum';
 
 /**
  * Standardized metrics structure for notification logging
  */
 export interface NotificationMetrics {
-  eventName: string;
+  eventName: NotificationType;
   correlationId: string;
   recipientCount?: number;
   concurrencyLimit?: number;

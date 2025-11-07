@@ -1,6 +1,6 @@
 export enum NotificationType {
   // Auth & Security notifications
-  OTP_SENT = 'OTP_SENT',
+  OTP = 'OTP',
   PASSWORD_RESET = 'PASSWORD_RESET',
   EMAIL_VERIFICATION = 'EMAIL_VERIFICATION',
 

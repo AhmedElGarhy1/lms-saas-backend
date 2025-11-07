@@ -146,7 +146,7 @@ export const yourTypeManifest: NotificationManifest = {
 
 ```typescript
 // ✅ Good
-template: 'auth/otp-sent';
+template: 'auth/otp';
 template: 'center/center-created';
 
 // ❌ Bad
@@ -330,7 +330,7 @@ requiredVariables: ['link', 'expiresIn', 'name']; // Use 'link', not 'resetUrl'
 
 ```typescript
 [NotificationChannel.SMS]: {
-  template: 'auth/otp-sent',
+  template: 'auth/otp',
   requiredVariables: ['otpCode', 'expiresIn'], // Must match template variable names
   defaultLocale: 'en',
 }
@@ -348,7 +348,7 @@ requiredVariables: ['link', 'expiresIn', 'name']; // Use 'link', not 'resetUrl'
 
 ```typescript
 [NotificationChannel.WHATSAPP]: {
-  template: 'auth/otp-sent',
+  template: 'auth/otp',
   requiredVariables: ['otp', 'expiresIn'],
   defaultLocale: 'en',
 }
@@ -366,7 +366,7 @@ requiredVariables: ['link', 'expiresIn', 'name']; // Use 'link', not 'resetUrl'
 
 ```typescript
 [NotificationChannel.IN_APP]: {
-  template: 'auth/otp-sent',
+  template: 'auth/otp',
   requiredVariables: ['otp', 'expiresIn'],
   defaultLocale: 'en',
 }
@@ -462,19 +462,19 @@ npm run validate:notification-manifests
 ### Example 1: OTP Sent Notification
 
 ```typescript
-export const otpSentManifest: NotificationManifest = {
-  type: NotificationType.OTP_SENT,
+export const otpManifest: NotificationManifest = {
+  type: NotificationType.OTP,
   group: NotificationGroup.SECURITY,
   priority: 4,
   requiresAudit: true,
   channels: {
     [NotificationChannel.SMS]: {
-      template: 'auth/otp-sent',
+      template: 'auth/otp',
       requiredVariables: ['otpCode', 'expiresIn'], // Template uses {{otpCode}}
       defaultLocale: 'en',
     },
     [NotificationChannel.EMAIL]: {
-      template: 'auth/otp-sent',
+      template: 'auth/otp',
       subject: 'Your Verification Code',
       requiredVariables: ['otpCode', 'expiresIn'], // Must match template exactly
       defaultLocale: 'en',

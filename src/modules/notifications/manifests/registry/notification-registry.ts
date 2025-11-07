@@ -2,7 +2,7 @@ import { NotificationType } from '../../enums/notification-type.enum';
 import { NotificationManifest } from '../types/manifest.types';
 
 // Import manifests for verification notifications and center updates
-import { otpSentManifest } from '../auth/otp-sent.manifest';
+import { otpManifest } from '../auth/otp.manifest';
 import { passwordResetManifest } from '../auth/password-reset.manifest';
 import { emailVerificationManifest } from '../auth/email-verification.manifest';
 import { centerUpdatedManifest } from '../center/center-updated.manifest';
@@ -12,7 +12,7 @@ import { centerCreatedManifest } from '../center/center-created.manifest';
  * Central registry of notification manifests
  *
  * All notification types are now migrated to the manifest system:
- * - Verification notifications (OTP_SENT, PASSWORD_RESET, EMAIL_VERIFICATION)
+ * - Verification notifications (OTP, PASSWORD_RESET, EMAIL_VERIFICATION)
  * - Center notifications (CENTER_CREATED, CENTER_UPDATED)
  *
  * Using Record<NotificationType, NotificationManifest> ensures all types are required at compile time.
@@ -23,7 +23,7 @@ export const NotificationRegistry: Record<
   NotificationManifest
 > = {
   // Verification notifications
-  [NotificationType.OTP_SENT]: otpSentManifest,
+  [NotificationType.OTP]: otpManifest,
   [NotificationType.PASSWORD_RESET]: passwordResetManifest,
   [NotificationType.EMAIL_VERIFICATION]: emailVerificationManifest,
 

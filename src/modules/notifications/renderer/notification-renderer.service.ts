@@ -4,9 +4,13 @@ import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationManifestResolver } from '../manifests/registry/notification-manifest-resolver.service';
 import { NotificationTemplateService } from '../services/notification-template.service';
 import { LoggerService } from '@/shared/services/logger.service';
-import { RenderedNotification } from '../manifests/types/manifest.types';
+import {
+  RenderedNotification,
+  NotificationManifest,
+} from '../manifests/types/manifest.types';
 import { MissingTemplateVariablesException } from '../exceptions/notification.exceptions';
 import { TemplateRenderingException } from '../exceptions/notification.exceptions';
+import { AudienceId } from '../types/audience.types';
 
 /**
  * Service responsible for rendering notifications based on manifests
@@ -33,6 +37,7 @@ export class NotificationRenderer {
    * @param channel - Notification channel
    * @param eventData - Event data to render
    * @param locale - Locale for rendering (defaults to 'en')
+   * @param audience - Optional audience identifier for multi-audience notifications
    * @returns Rendered notification with content and metadata
    */
   async render(
@@ -40,12 +45,19 @@ export class NotificationRenderer {
     channel: NotificationChannel,
     eventData: Record<string, unknown>,
     locale: string = 'en',
+    audience?: AudienceId,
   ): Promise<RenderedNotification> {
     // 1. Get manifest via resolver
     const manifest = this.manifestResolver.getManifest(notificationType);
 
-    // 2. Get channel config via resolver
-    const config = this.manifestResolver.getChannelConfig(manifest, channel);
+    // 2. Get channel config via resolver (with audience if provided)
+    // If no audience provided, use first available audience as fallback
+    const resolvedAudience = audience || this.getDefaultAudience(manifest);
+    const config = this.manifestResolver.getChannelConfig(
+      manifest,
+      resolvedAudience,
+      channel,
+    );
 
     // 3. Validate required variables (variables must match template exactly)
     this.validateRequiredVariables(
@@ -148,6 +160,22 @@ export class NotificationRenderer {
         usedFallback,
       },
     };
+  }
+
+  /**
+   * Get default audience from manifest (first available audience)
+   * Used as fallback when audience is not provided
+   * @param manifest - Notification manifest
+   * @returns First audience ID or throws error if no audiences
+   */
+  private getDefaultAudience(manifest: NotificationManifest): AudienceId {
+    const audiences = Object.keys(manifest.audiences || {});
+    if (audiences.length === 0) {
+      throw new Error(
+        `No audiences defined in manifest for type ${manifest.type}`,
+      );
+    }
+    return audiences[0];
   }
 
   /**

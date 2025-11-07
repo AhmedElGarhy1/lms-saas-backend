@@ -13,7 +13,7 @@ import { AuthEvents } from '@/shared/events/auth.events.enum';
 import {
   PasswordResetRequestedEvent,
   EmailVerificationRequestedEvent,
-  OtpSentEvent,
+  OtpEvent,
 } from '../events/auth.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { VerificationType } from '../enums/verification-type.enum';
@@ -339,10 +339,10 @@ export class VerificationService {
       Math.floor((expiresAt.getTime() - now.getTime()) / (1000 * 60)),
     );
 
-    // Emit OTP_SENT event for notification system
+    // Emit OTP event for notification system
     await this.typeSafeEventEmitter.emitAsync(
-      AuthEvents.OTP_SENT,
-      new OtpSentEvent(
+      AuthEvents.OTP,
+      new OtpEvent(
         null as any,
         userId,
         verificationToken.code!,
@@ -488,14 +488,14 @@ export class VerificationService {
       channel === NotificationChannel.SMS ||
       channel === NotificationChannel.WHATSAPP
     ) {
-      // Emit OTP_SENT event for SMS/WhatsApp with code
+      // Emit OTP event for SMS/WhatsApp with code
       const expiresInMinutes =
         remainingHours > 0
           ? remainingHours * 60
           : Config.auth.passwordResetExpiresHours * 60;
       await this.typeSafeEventEmitter.emitAsync(
-        AuthEvents.OTP_SENT,
-        new OtpSentEvent(
+        AuthEvents.OTP,
+        new OtpEvent(
           null as any,
           userId,
           verificationToken.code!,

@@ -37,7 +37,7 @@ export class NotificationTemplateService {
       TNotificationType
     >,
     mapping: { type: TNotificationType },
-    eventName: string,
+    eventName: TNotificationType,
   ): Record<string, unknown> {
     const eventObj = event as Record<string, unknown>;
     const templateData: Record<string, unknown> = {
