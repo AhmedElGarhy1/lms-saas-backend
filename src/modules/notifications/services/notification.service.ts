@@ -649,6 +649,10 @@ export class NotificationService {
 
   /**
    * Determine recipient for a channel and validate format
+   * Ensures each channel stores the correct recipient type:
+   * - EMAIL: email address
+   * - SMS/WHATSAPP: phone number
+   * - IN_APP: userId
    * @returns Validated recipient string or null if invalid/missing
    */
   private async determineAndValidateRecipient(
@@ -677,8 +681,8 @@ export class NotificationService {
       channel === NotificationChannel.SMS ||
       channel === NotificationChannel.WHATSAPP
     ) {
-      channelRecipient = phone || null;
-      if (!channelRecipient) {
+      // For SMS/WhatsApp, MUST use phone, never fallback to recipient or userId
+      if (!phone) {
         this.logger.warn(
           `Skipping ${channel} channel: no phone for user ${userId}`,
           'NotificationService',
@@ -686,10 +690,27 @@ export class NotificationService {
         );
         return null;
       }
+      // Validate phone is actually a phone number (not userId or email)
+      if (phone === userId || phone.includes('@')) {
+        this.logger.error(
+          `Invalid phone value for ${channel} channel: phone appears to be userId or email`,
+          undefined,
+          'NotificationService',
+          {
+            userId,
+            eventName,
+            channel,
+            phone: phone.substring(0, 20),
+          },
+        );
+        return null;
+      }
+      channelRecipient = phone;
     } else if (channel === NotificationChannel.IN_APP) {
+      // For IN_APP, use userId as recipient
       channelRecipient = userId || '';
     } else {
-      // PUSH or other channels
+      // PUSH or other channels - use appropriate fallback
       channelRecipient = recipient || phone || null;
     }
 
@@ -724,6 +745,7 @@ export class NotificationService {
       channel === NotificationChannel.SMS ||
       channel === NotificationChannel.WHATSAPP
     ) {
+      // Normalize and validate phone format
       const normalizedPhone = normalizePhone(channelRecipient);
       if (!normalizedPhone || !isValidE164(normalizedPhone)) {
         this.logger.warn(
@@ -838,6 +860,11 @@ export class NotificationService {
 
   /**
    * Build base payload with common fields
+   * Note: channelRecipient is already validated and channel-specific:
+   * - EMAIL: email address
+   * - SMS/WHATSAPP: phone number (E164 format)
+   * - IN_APP: userId
+   * - PUSH: device token or appropriate identifier
    */
   private buildBasePayload(
     channelRecipient: string,
@@ -852,7 +879,7 @@ export class NotificationService {
     correlationId: string,
   ) {
     return {
-      recipient: channelRecipient,
+      recipient: channelRecipient, // Channel-specific recipient (validated in determineAndValidateRecipient)
       channel,
       type: mapping.type,
       group: manifest.group,
