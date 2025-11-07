@@ -27,6 +27,8 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { RefreshJwtGuard } from '../guards/refresh-jwt.guard';
+import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
+import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -90,10 +92,11 @@ export class AuthController {
   }
 
   @Post('verify-email')
-  @Public()
   @UpdateApiResponses('Verify email address')
   @ApiBody({ type: VerifyEmailRequestDto })
   @Transactional()
+  @NoProfile()
+  @NoContext()
   async verifyEmail(@Body() dto: VerifyEmailRequestDto) {
     const result = await this.authService.verifyEmail(dto);
 
@@ -104,9 +107,10 @@ export class AuthController {
   }
 
   @Post('request-email-verification')
-  @Public()
   @UpdateApiResponses('Request email verification')
   @ApiBody({ type: RequestEmailVerificationRequestDto })
+  @NoProfile()
+  @NoContext()
   async requestEmailVerification(
     @Body() dto: RequestEmailVerificationRequestDto,
   ) {
@@ -119,9 +123,10 @@ export class AuthController {
   }
 
   @Post('request-phone-verification')
-  @Public()
   @UpdateApiResponses('Request phone verification')
   @ApiBody({ type: RequestPhoneVerificationRequestDto })
+  @NoProfile()
+  @NoContext()
   async requestPhoneVerification(
     @Body() dto: RequestPhoneVerificationRequestDto,
   ) {
@@ -136,6 +141,8 @@ export class AuthController {
   @Post('verify-phone')
   @UpdateApiResponses('Verify phone number with OTP code')
   @ApiBody({ type: VerifyPhoneRequestDto })
+  @NoProfile()
+  @NoContext()
   @Transactional()
   async verifyPhone(
     @Body() dto: VerifyPhoneRequestDto,
@@ -180,10 +187,11 @@ export class AuthController {
   }
 
   @Post('setup-2fa')
-  @Public()
   @CreateApiResponses('Setup two-factor authentication')
   @ApiBody({ type: TwoFASetupRequestDto })
   @Transactional()
+  @NoProfile()
+  @NoContext()
   async setup2FA(
     @Body() dto: TwoFASetupRequestDto,
     @GetUser() actor: ActorUser,
@@ -197,10 +205,11 @@ export class AuthController {
   }
 
   @Post('verify-2fa')
-  @Public()
   @UpdateApiResponses('Verify two-factor authentication code')
   @ApiBody({ type: TwoFAVerifyRequestDto })
   @Transactional()
+  @NoProfile()
+  @NoContext()
   async verify2FA(@Body() dto: TwoFactorRequest) {
     const result = await this.authService.verify2FA(dto);
 
@@ -213,6 +222,8 @@ export class AuthController {
   @Post('logout')
   @UpdateApiResponses('User logout')
   @Transactional()
+  @NoProfile()
+  @NoContext()
   async logout(@GetUser() user: ActorUser) {
     const result = await this.authService.logout(user);
 
