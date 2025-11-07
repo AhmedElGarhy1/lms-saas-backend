@@ -6,6 +6,7 @@ import { UserProfile } from './entities/user-profile.entity';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { CentersModule } from '@/modules/centers/centers.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
+import { AuthModule } from '@/modules/auth/auth.module';
 import { UserProfileController } from './controllers/user-profile.controller';
 import { UserAccessController } from './controllers/user-access.controller';
 import { UserService } from './services/user.service';
@@ -15,13 +16,13 @@ import { UserRepository } from './repositories/user.repository';
 import { UserInfoRepository } from './repositories/user-info.repository';
 import { UserProfileRepository } from './repositories/user-profile.repository';
 import { UserActivityListener } from './listeners/domain-events/user-activity.listener';
-import { UserCreatedOrchestrator } from './orchestrators/user-created.orchestrator';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, UserInfo, UserProfile]),
     forwardRef(() => AccessControlModule),
     forwardRef(() => CentersModule),
+    forwardRef(() => AuthModule),
     ActivityLogModule,
   ],
   controllers: [UserAccessController, UserProfileController],
@@ -33,7 +34,6 @@ import { UserCreatedOrchestrator } from './orchestrators/user-created.orchestrat
     UserInfoRepository,
     UserProfileRepository,
     UserActivityListener,
-    UserCreatedOrchestrator,
   ],
   exports: [
     UserService,

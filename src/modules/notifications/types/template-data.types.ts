@@ -131,6 +131,7 @@ export function hasBranchData(
 export function hasActorData(
   data: NotificationTemplateData,
 ): data is ActorTemplateData {
-  return 'actor' in data && typeof data.actor === 'object' && data.actor !== null;
+  return (
+    'actor' in data && typeof data.actor === 'object' && data.actor !== null
+  );
 }
-

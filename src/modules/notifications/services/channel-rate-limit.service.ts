@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { SlidingWindowRateLimiter } from '../utils/sliding-window-rate-limit';
+import { Config } from '@/shared/config/config';
 
 interface ChannelRateLimitConfig {
   limit: number;
@@ -27,10 +27,8 @@ export class ChannelRateLimitService {
   constructor(
     private readonly redisService: RedisService,
     private readonly logger: LoggerService,
-    private readonly configService: ConfigService,
   ) {
-    this.redisKeyPrefix =
-      this.configService.get<string>('REDIS_KEY_PREFIX') || 'dev';
+    this.redisKeyPrefix = Config.redis.keyPrefix;
 
     // Initialize sliding window rate limiter
     this.rateLimiter = new SlidingWindowRateLimiter(
@@ -51,6 +49,7 @@ export class ChannelRateLimitService {
 
   /**
    * Initialize channel-specific rate limits from environment variables
+   * Uses a single window for all channels (simplified configuration)
    */
   private initializeChannelLimits(): Map<
     NotificationChannel,
@@ -58,95 +57,37 @@ export class ChannelRateLimitService {
   > {
     const limits = new Map<NotificationChannel, ChannelRateLimitConfig>();
 
+    // Get single window for all channels (simplified from per-channel windows)
+    const windowSeconds = Config.notification.rateLimit.windowSeconds;
+
     // IN_APP: Higher limit for real-time notifications
     limits.set(NotificationChannel.IN_APP, {
-      limit:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RATE_LIMIT_IN_APP',
-            '100',
-          ),
-          10,
-        ) || 100,
-      windowSeconds:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RATE_LIMIT_IN_APP_WINDOW',
-            '60',
-          ),
-          10,
-        ) || 60,
+      limit: Config.notification.rateLimit.inApp,
+      windowSeconds,
     });
 
     // EMAIL: Moderate limit
     limits.set(NotificationChannel.EMAIL, {
-      limit:
-        parseInt(
-          this.configService.get<string>('NOTIFICATION_RATE_LIMIT_EMAIL', '50'),
-          10,
-        ) || 50,
-      windowSeconds:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RATE_LIMIT_EMAIL_WINDOW',
-            '60',
-          ),
-          10,
-        ) || 60,
+      limit: Config.notification.rateLimit.email,
+      windowSeconds,
     });
 
     // SMS: Lower limit (costs more)
     limits.set(NotificationChannel.SMS, {
-      limit:
-        parseInt(
-          this.configService.get<string>('NOTIFICATION_RATE_LIMIT_SMS', '20'),
-          10,
-        ) || 20,
-      windowSeconds:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RATE_LIMIT_SMS_WINDOW',
-            '60',
-          ),
-          10,
-        ) || 60,
+      limit: Config.notification.rateLimit.sms,
+      windowSeconds,
     });
 
     // WHATSAPP: Moderate limit
     limits.set(NotificationChannel.WHATSAPP, {
-      limit:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RATE_LIMIT_WHATSAPP',
-            '30',
-          ),
-          10,
-        ) || 30,
-      windowSeconds:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RATE_LIMIT_WHATSAPP_WINDOW',
-            '60',
-          ),
-          10,
-        ) || 60,
+      limit: Config.notification.rateLimit.whatsapp,
+      windowSeconds,
     });
 
     // PUSH: Higher limit (no direct cost)
     limits.set(NotificationChannel.PUSH, {
-      limit:
-        parseInt(
-          this.configService.get<string>('NOTIFICATION_RATE_LIMIT_PUSH', '80'),
-          10,
-        ) || 80,
-      windowSeconds:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RATE_LIMIT_PUSH_WINDOW',
-            '60',
-          ),
-          10,
-        ) || 60,
+      limit: Config.notification.rateLimit.push,
+      windowSeconds,
     });
 
     return limits;

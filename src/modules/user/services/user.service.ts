@@ -125,27 +125,6 @@ export class UserService {
       userId: savedUser.id,
     });
 
-    // Get or create a default profile (ADMIN type as fallback) - check if one exists first
-    // Note: In most cases, a specific profile type will be created by the caller
-    // This is a fallback for basic user creation
-    let profile = await this.userProfileService.findUserProfileByType(
-      savedUser.id,
-      ProfileType.ADMIN,
-    );
-    if (!profile) {
-      profile = await this.userProfileService.createUserProfile(
-        savedUser.id,
-        ProfileType.ADMIN,
-        savedUser.id,
-      );
-    }
-
-    // Emit event after work is done
-    await this.eventEmitter.emitAsync(
-      UserEvents.CREATED,
-      new UserCreatedEvent(savedUser, profile, actor),
-    );
-
     return savedUser;
   }
 

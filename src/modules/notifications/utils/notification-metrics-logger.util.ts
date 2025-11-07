@@ -77,18 +77,12 @@ export function logNotificationError(
   error?: Error,
 ): void {
   const errorMessage = `Failed to process notification for recipient: userId=${metrics.recipientId}${metrics.profileId ? `, profileId=${metrics.profileId}` : ''}${metrics.profileType ? `, profileType=${metrics.profileType}` : ''}`;
-  logger.error(
-    errorMessage,
-    error?.stack,
-    'NotificationService',
-    {
-      eventName: metrics.eventName,
-      correlationId: metrics.correlationId,
-      recipientId: metrics.recipientId,
-      profileId: metrics.profileId,
-      profileType: metrics.profileType,
-      error: metrics.error || error?.message,
-    },
-  );
+  logger.error(errorMessage, error?.stack, 'NotificationService', {
+    eventName: metrics.eventName,
+    correlationId: metrics.correlationId,
+    recipientId: metrics.recipientId,
+    profileId: metrics.profileId,
+    profileType: metrics.profileType,
+    error: metrics.error || error?.message,
+  });
 }
-

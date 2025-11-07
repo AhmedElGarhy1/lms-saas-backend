@@ -22,6 +22,7 @@ import { NotificationType } from '../enums/notification-type.enum';
 @Index(['type'])
 @Index(['channel'])
 @Index(['createdAt'])
+@Index(['status', 'createdAt']) // Composite index for DLQ cleanup (status + createdAt for efficient date-based queries)
 @Index(['userId', 'centerId', 'status'])
 @Index(['userId', 'profileType', 'profileId'])
 @Index(['profileType', 'profileId'])

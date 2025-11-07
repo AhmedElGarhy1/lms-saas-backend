@@ -5,11 +5,11 @@ import { RedisService } from '@/shared/modules/redis/redis.service';
 import { INestApplicationContext, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { UserService } from '@/modules/user/services/user.service';
 import { JwtPayload } from '@/modules/auth/strategies/jwt.strategy';
 import { RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible';
 import { notificationGatewayConfig } from '../config/notification-gateway.config';
+import { Config } from '@/shared/config/config';
 
 /**
  * Custom Socket.IO adapter that integrates Redis for horizontal scaling
@@ -20,7 +20,6 @@ export class RedisIoAdapter extends IoAdapter {
   private readonly logger = new Logger(RedisIoAdapter.name);
   private readonly app: INestApplicationContext;
   private jwtService: JwtService;
-  private configService: ConfigService;
   private userService: UserService;
   private ipRateLimiter?: RateLimiterRedis;
   private userRateLimiter?: RateLimiterRedis;
@@ -38,17 +37,15 @@ export class RedisIoAdapter extends IoAdapter {
     // Get services from app context (will be available after app is initialized)
     try {
       this.jwtService = app.get(JwtService, { strict: false });
-      this.configService = app.get(ConfigService, { strict: false });
       this.userService = app.get(UserService, { strict: false });
       // Get Redis key prefix for metrics tracking
-      this.redisKeyPrefix =
-        this.configService.get<string>('REDIS_KEY_PREFIX') || 'dev';
+      this.redisKeyPrefix = Config.redis.keyPrefix;
     } catch {
       // Services might not be available yet, will be resolved in createIOServer
       this.logger.warn(
         'Could not resolve services in constructor, will resolve in createIOServer',
       );
-      this.redisKeyPrefix = 'dev'; // Default fallback
+      this.redisKeyPrefix = Config.redis.keyPrefix; // Use Config directly
     }
   }
 
@@ -57,15 +54,13 @@ export class RedisIoAdapter extends IoAdapter {
     const server = super.createIOServer(port, options) as Server;
 
     // Resolve services if not already resolved
-    if (!this.jwtService || !this.configService || !this.userService) {
+    if (!this.jwtService || !this.userService) {
       try {
         this.jwtService = this.app.get(JwtService, { strict: false });
-        this.configService = this.app.get(ConfigService, { strict: false });
         this.userService = this.app.get(UserService, { strict: false });
         // Get Redis key prefix if not already set
         if (!this.redisKeyPrefix) {
-          this.redisKeyPrefix =
-            this.configService.get<string>('REDIS_KEY_PREFIX') || 'dev';
+          this.redisKeyPrefix = Config.redis.keyPrefix;
         }
       } catch (error) {
         this.logger.error(
@@ -75,13 +70,11 @@ export class RedisIoAdapter extends IoAdapter {
       }
     }
 
-    // Initialize rate limiters if config service is available
-    if (this.configService) {
-      this.initializeRateLimiters();
-    }
+    // Initialize rate limiters
+    this.initializeRateLimiters();
 
     // Add global authentication middleware for all WebSocket namespaces
-    if (this.jwtService && this.configService && this.userService) {
+    if (this.jwtService && this.userService) {
       this.setupAuthenticationMiddleware(server);
     } else {
       this.logger.warn(
@@ -210,7 +203,7 @@ export class RedisIoAdapter extends IoAdapter {
         }
 
         // Verify JWT token
-        const jwtSecret = this.configService.getOrThrow<string>('JWT_SECRET');
+        const jwtSecret = Config.jwt.secret;
         const payload = this.jwtService.verify<JwtPayload>(token, {
           secret: jwtSecret,
         });
@@ -434,7 +427,7 @@ export class RedisIoAdapter extends IoAdapter {
    */
   private initializeRateLimiters(): void {
     try {
-      const config = notificationGatewayConfig(this.configService);
+      const config = notificationGatewayConfig();
       this.connectionRateLimitConfig = config.connectionRateLimit;
 
       const redisClient = this.redisService.getClient();

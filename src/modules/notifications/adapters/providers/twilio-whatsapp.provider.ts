@@ -1,21 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { LoggerService } from '@/shared/services/logger.service';
 import { WhatsAppProvider } from './whatsapp-provider.interface';
 import * as twilio from 'twilio';
+import { Config } from '@/shared/config/config';
 
 @Injectable()
 export class TwilioWhatsAppProvider implements WhatsAppProvider {
   private twilioClient: twilio.Twilio | null = null;
   private readonly fromNumber: string | null;
 
-  constructor(
-    private readonly config: ConfigService,
-    private readonly logger: LoggerService,
-  ) {
-    const accountSid = this.config.get<string>('TWILIO_ACCOUNT_SID');
-    const authToken = this.config.get<string>('TWILIO_AUTH_TOKEN');
-    this.fromNumber = this.config.get<string>('TWILIO_WHATSAPP_NUMBER') || null;
+  constructor(private readonly logger: LoggerService) {
+    const accountSid = Config.twilio.accountSid;
+    const authToken = Config.twilio.authToken;
+    this.fromNumber = Config.twilio.whatsappNumber || null;
 
     if (
       accountSid &&

@@ -68,7 +68,10 @@ export class AdminService {
 
     // Note: deleteUserByProfileId should emit UserCommands.DELETE internally
     // For now, calling deleteUser directly which emits the command
-    const userProfile = await this.userService.findUserByProfileId(userProfileId, actor);
+    const userProfile = await this.userService.findUserByProfileId(
+      userProfileId,
+      actor,
+    );
     if (!userProfile) {
       throw new Error('User profile not found');
     }
@@ -86,7 +89,10 @@ export class AdminService {
 
     // Note: restoreUserByProfileId should emit UserCommands.RESTORE internally
     // For now, calling restoreUser directly which emits the command
-    const userProfile = await this.userService.findUserByProfileId(userProfileId, actor);
+    const userProfile = await this.userService.findUserByProfileId(
+      userProfileId,
+      actor,
+    );
     if (!userProfile) {
       throw new Error('User profile not found');
     }

@@ -1,27 +1,31 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
 import { SmsNotificationPayload } from '../types/notification-payload.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
+import { TimeoutConfigService } from '../config/timeout.config';
 import * as twilio from 'twilio';
+import pTimeout from 'p-timeout';
+import { Config } from '@/shared/config/config';
 import {
   MissingNotificationContentException,
   NotificationSendingFailedException,
 } from '../exceptions/notification.exceptions';
 
 @Injectable()
-export class SmsAdapter implements NotificationAdapter<SmsNotificationPayload>, OnModuleInit {
+export class SmsAdapter
+  implements NotificationAdapter<SmsNotificationPayload>, OnModuleInit
+{
   private twilioClient: twilio.Twilio | null = null;
   private readonly fromNumber: string | null;
 
   constructor(
-    private readonly config: ConfigService,
     private readonly logger: LoggerService,
     private readonly metricsService: NotificationMetricsService,
+    private readonly timeoutConfig: TimeoutConfigService,
   ) {
-    this.fromNumber = this.config.get<string>('TWILIO_PHONE_NUMBER') || null;
+    this.fromNumber = Config.twilio.phoneNumber || null;
   }
 
   onModuleInit() {
@@ -30,8 +34,8 @@ export class SmsAdapter implements NotificationAdapter<SmsNotificationPayload>, 
   }
 
   private initializeTwilio(): void {
-    const accountSid = this.config.get<string>('TWILIO_ACCOUNT_SID');
-    const authToken = this.config.get<string>('TWILIO_AUTH_TOKEN');
+    const accountSid = Config.twilio.accountSid;
+    const authToken = Config.twilio.authToken;
 
     if (
       accountSid &&
@@ -63,8 +67,8 @@ export class SmsAdapter implements NotificationAdapter<SmsNotificationPayload>, 
    * Validate configuration in production/staging environments
    */
   private validateConfiguration(): void {
-    const nodeEnv = this.config.get<string>('NODE_ENV', 'development');
-    const isProduction = nodeEnv === 'production' || nodeEnv === 'staging';
+    const nodeEnv = Config.app.nodeEnv;
+    const isProduction = nodeEnv === 'production';
 
     if (isProduction && !this.isConfigured()) {
       this.logger.error(
@@ -120,11 +124,19 @@ export class SmsAdapter implements NotificationAdapter<SmsNotificationPayload>, 
 
     const startTime = Date.now();
     try {
-      await this.twilioClient!.messages.create({
-        body: message,
-        from: this.fromNumber!,
-        to: phoneNumber,
-      });
+      // Wrap Twilio API call with timeout guard
+      const timeoutMs = this.timeoutConfig.getTimeout(NotificationChannel.SMS);
+      await pTimeout(
+        this.twilioClient!.messages.create({
+          body: message,
+          from: this.fromNumber!,
+          to: phoneNumber,
+        }),
+        {
+          milliseconds: timeoutMs,
+          message: `SMS send timeout after ${timeoutMs}ms`,
+        },
+      );
 
       const latency = Date.now() - startTime;
 

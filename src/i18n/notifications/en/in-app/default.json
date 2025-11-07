@@ -1,0 +1,7 @@
+{
+  "title": "Notification",
+  "message": "{{#if message}}{{message}}{{else}}You have received a notification.{{/if}}",
+  "actionUrl": "{{#if link}}{{link}}{{else}}null{{/if}}",
+  "priority": 1
+}
+

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ConfigService } from '@nestjs/config';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
+import { Config } from '@/shared/config/config';
 import {
   InAppNotificationPayload,
   NotificationPayload,
@@ -22,7 +22,6 @@ import {
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
-import { MoreThan } from 'typeorm';
 import { NotificationType } from '../enums/notification-type.enum';
 import { InvalidOperationException } from '@/shared/common/exceptions/custom.exceptions';
 import { NotificationSendingFailedException } from '../exceptions/notification.exceptions';
@@ -58,18 +57,10 @@ export class InAppAdapter
     private readonly eventEmitter: EventEmitter2,
     private readonly logRepository: NotificationLogRepository,
     private readonly metricsService: NotificationMetricsService,
-    private readonly configService: ConfigService,
   ) {
-    // Load retry configuration from environment
-    this.maxRetries = parseInt(
-      this.configService.get<string>('NOTIFICATION_RETRY_MAX_ATTEMPTS') || '3',
-      10,
-    );
-    this.maxRetryDelayMs = parseInt(
-      this.configService.get<string>('NOTIFICATION_RETRY_MAX_DELAY_MS') ||
-        '10000',
-      10,
-    );
+    // Load retry configuration from Config (IN_APP-specific for WebSocket delivery)
+    this.maxRetries = Config.notification.inAppRetry.maxAttempts;
+    this.maxRetryDelayMs = Config.notification.inAppRetry.maxDelayMs;
   }
 
   async send(payload: InAppNotificationPayload): Promise<void> {
@@ -85,39 +76,21 @@ export class InAppAdapter
     // 1. Extract notification data from payload
     const notificationData = this.extractNotificationData(payload);
 
-    // 2. Check for duplicate notification before creating
-    const isDuplicate = await this.checkDuplicateNotification(
-      payload,
-      payload.type,
-    );
+    // Note: Idempotency check is handled at NotificationService level via NotificationIdempotencyCacheService
+    // No need for duplicate check here - it's already done before adapter.send() is called
 
-    if (isDuplicate) {
-      this.logger.debug(
-        `Duplicate notification detected for user ${payload.userId}, type ${payload.type}, skipping creation`,
-        'InAppAdapter',
-        {
-          userId: payload.userId,
-          type: payload.type,
-          profileType: payload.profileType,
-          profileId: payload.profileId,
-          correlationId: payload.correlationId,
-        },
-      );
-      return; // Skip duplicate notification
-    }
-
-    // 3. Create notification entity
+    // 2. Create notification entity
     const notification = await this.createNotificationEntity(
       payload,
       notificationData,
     );
 
     // 4. Emit created event
-    this.emitCreatedEvent(notification, payload.userId!, payload);
+    this.emitCreatedEvent(notification, payload.userId, payload);
 
     // 5. Deliver via WebSocket with retry logic
     const deliveryResult = await this.deliverWithRetry(
-      payload.userId!,
+      payload.userId,
       notification,
       startTime,
     );
@@ -131,7 +104,7 @@ export class InAppAdapter
     // 8. Track metrics (wrap in try-catch to ensure metrics are tracked even if tracking fails)
     try {
       await this.trackMetrics(
-        payload.userId!,
+        payload.userId,
         payload,
         deliveryResult,
         startTime,
@@ -152,7 +125,7 @@ export class InAppAdapter
     // 9. Emit delivery events
     this.emitDeliveryEvent(
       notification,
-      payload.userId!,
+      payload.userId,
       payload,
       deliveryResult,
     );
@@ -183,7 +156,7 @@ export class InAppAdapter
       '',
     );
     const actionUrl =
-      (payload.data.actionUrl as string | undefined) ??
+      payload.data.actionUrl ??
       (payload.data.url as string | undefined) ??
       undefined;
     const actionType = payload.data.actionType
@@ -206,44 +179,6 @@ export class InAppAdapter
       icon,
       expiresAt,
     };
-  }
-
-  /**
-   * Check if a duplicate notification exists for this user/event
-   * Prevents duplicate notifications within a short time window
-   */
-  private async checkDuplicateNotification(
-    payload: InAppNotificationPayload,
-    type: NotificationType,
-  ): Promise<boolean> {
-    const { userId, profileType, profileId } = payload;
-
-    if (!userId) {
-      return false;
-    }
-
-    const fiveSecondsAgo = new Date(Date.now() - 5000);
-
-    const where: any = {
-      userId,
-      type,
-      createdAt: MoreThan(fiveSecondsAgo),
-    };
-
-    if (profileType) {
-      where.profileType = profileType;
-      if (profileId) {
-        where.profileId = profileId;
-      }
-    }
-
-    const existing = await this.notificationRepository.findMany({
-      where,
-      order: { createdAt: 'DESC' },
-      take: 1,
-    });
-
-    return existing.length > 0;
   }
 
   /**
@@ -294,6 +229,11 @@ export class InAppAdapter
 
   /**
    * Deliver notification via WebSocket with retry logic
+   *
+   * Note: IN_APP notifications use custom retry logic here because they are sent directly
+   * (not queued via BullMQ). Unlike EMAIL, SMS, and WhatsApp which are queued and retried
+   * by BullMQ, IN_APP notifications need immediate delivery with retry for WebSocket failures.
+   * This ensures real-time delivery while handling transient WebSocket connection issues.
    */
   private async deliverWithRetry(
     userId: string,

@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { LoggerService } from '@/shared/services/logger.service';
-import { ConfigService } from '@nestjs/config';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { MetricsBatchService } from './metrics-batch.service';
+import { Config } from '@/shared/config/config';
 
 /**
  * Service for tracking notification metrics (Prometheus-compatible)
@@ -18,11 +18,9 @@ export class NotificationMetricsService {
   constructor(
     private readonly redisService: RedisService,
     private readonly logger: LoggerService,
-    private readonly configService: ConfigService,
     private readonly batchService: MetricsBatchService,
   ) {
-    this.redisKeyPrefix =
-      this.configService.get<string>('REDIS_KEY_PREFIX') || 'dev';
+    this.redisKeyPrefix = Config.redis.keyPrefix;
   }
 
   /**

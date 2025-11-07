@@ -3,7 +3,6 @@ import {
   EmailAdapter,
   SmsAdapter,
   WhatsAppAdapter,
-  PushAdapter,
   InAppAdapter,
 } from '../adapters';
 import { NotificationAdapter } from '../adapters/interfaces/notification-adapter.interface';
@@ -16,7 +15,13 @@ import { NotificationStatus } from '../enums/notification-status.enum';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationMetricsService } from './notification-metrics.service';
 import pLimit from 'p-limit';
-import { ConfigService } from '@nestjs/config';
+import { Config } from '@/shared/config/config';
+import { RequestContext } from '@/shared/common/context/request.context';
+import { NotificationIdempotencyCacheService } from './notification-idempotency-cache.service';
+import {
+  NotificationCircuitBreakerService,
+  CircuitState,
+} from './notification-circuit-breaker.service';
 
 interface ChannelResult {
   channel: NotificationChannel;
@@ -33,32 +38,36 @@ export class NotificationSenderService {
     private readonly emailAdapter: EmailAdapter,
     private readonly smsAdapter: SmsAdapter,
     private readonly whatsappAdapter: WhatsAppAdapter,
-    private readonly pushAdapter: PushAdapter,
     private readonly inAppAdapter: InAppAdapter,
     private readonly templateService: NotificationTemplateService,
     private readonly logRepository: NotificationLogRepository,
     private readonly logger: LoggerService,
     private readonly metricsService: NotificationMetricsService,
-    private readonly configService: ConfigService,
+    private readonly idempotencyCache?: NotificationIdempotencyCacheService,
+    private readonly circuitBreaker?: NotificationCircuitBreakerService,
   ) {
     // Initialize adapter registry
-    this.adapterRegistry = new Map([
+    // Note: PUSH adapter removed - not yet implemented
+    this.adapterRegistry = new Map<NotificationChannel, NotificationAdapter>([
       [NotificationChannel.EMAIL, emailAdapter],
       [NotificationChannel.SMS, smsAdapter],
       [NotificationChannel.WHATSAPP, whatsappAdapter],
-      [NotificationChannel.PUSH, pushAdapter],
       [NotificationChannel.IN_APP, inAppAdapter],
     ]);
 
-    // Get concurrency limit from config (default: 5)
-    this.sendMultipleConcurrency =
-      parseInt(
-        this.configService.get<string>(
-          'NOTIFICATION_SEND_MULTIPLE_CONCURRENCY',
-          '5',
-        ),
-        10,
-      ) || 5;
+    // Get concurrency limit from config
+    this.sendMultipleConcurrency = Config.notification.sendMultipleConcurrency;
+  }
+
+  /**
+   * Get correlationId from RequestContext with fallback to payload
+   */
+  private getCorrelationId(payload: NotificationPayload): string | undefined {
+    return (
+      RequestContext.get()?.correlationId ||
+      RequestContext.get()?.requestId ||
+      payload.correlationId
+    );
   }
 
   /**
@@ -68,12 +77,13 @@ export class NotificationSenderService {
   async send(payload: NotificationPayload): Promise<ChannelResult[]> {
     const results: ChannelResult[] = [];
     const adapter = this.adapterRegistry.get(payload.channel);
+    const correlationId = this.getCorrelationId(payload);
 
     if (!adapter) {
       const error = `No adapter found for channel: ${payload.channel}`;
       this.logger.error(error, undefined, 'NotificationSenderService', {
         channel: payload.channel,
-        correlationId: payload.correlationId,
+        correlationId,
       });
       results.push({
         channel: payload.channel,
@@ -88,10 +98,29 @@ export class NotificationSenderService {
       const startTime = Date.now();
       try {
         // IN_APP adapter handles persistence and WebSocket emission
-        await adapter.send(payload);
+        // Use circuit breaker for IN_APP as well
+        await (this.circuitBreaker
+          ? this.circuitBreaker.executeWithCircuitBreaker(
+              payload.channel,
+              async () => {
+                await adapter.send(payload);
+              },
+            )
+          : adapter.send(payload)); // Fallback if circuit breaker not available
         const latency = Date.now() - startTime;
         await this.metricsService.incrementSent(payload.channel, payload.type);
         await this.metricsService.recordLatency(payload.channel, latency);
+
+        // Mark as sent in idempotency cache (if service is available)
+        if (this.idempotencyCache && correlationId) {
+          await this.idempotencyCache.markSent(
+            correlationId,
+            payload.type,
+            payload.channel,
+            payload.recipient || payload.userId || 'unknown',
+          );
+        }
+
         results.push({
           channel: payload.channel,
           success: true,
@@ -115,7 +144,7 @@ export class NotificationSenderService {
             channel: payload.channel,
             type: payload.type,
             userId: payload.userId,
-            correlationId: payload.correlationId,
+            correlationId,
             jobId,
           },
         );
@@ -133,48 +162,30 @@ export class NotificationSenderService {
     const startTime = Date.now();
 
     try {
-      // Validate required variables before rendering
-      const validationResult = this.templateService.validateRequiredVariables(
-        payload.type,
-        payload.channel,
-        payload.data as Record<string, unknown>,
-      );
+      // All notifications now come pre-rendered from the manifest system
+      const dataObj = payload.data as Record<string, unknown>;
+      const renderedContent = dataObj.content as string;
 
-      if (!validationResult.isValid) {
-        const errorMessage = `Missing required template variables: ${validationResult.missingVariables.join(', ')}`;
+      if (!renderedContent || typeof renderedContent !== 'string') {
+        const errorMessage = `Missing pre-rendered content for ${payload.type}:${payload.channel}. Manifest system should provide rendered content.`;
         this.logger.error(
-          `Failed to send notification: ${payload.type} via ${payload.channel}`,
+          errorMessage,
           undefined,
           'NotificationSenderService',
           {
             channel: payload.channel,
             type: payload.type,
             userId: payload.userId,
-            correlationId: payload.correlationId,
-            missingVariables: validationResult.missingVariables,
+            correlationId,
           },
         );
-
-        // For now, log error but continue (fail-open strategy)
-        // Can be changed to throw exception if needed
-        // throw new MissingTemplateVariablesException(
-        //   payload.type,
-        //   payload.channel,
-        //   validationResult.missingVariables,
-        // );
+        results.push({
+          channel: payload.channel,
+          success: false,
+          error: errorMessage,
+        });
+        return results;
       }
-
-      // Load and render template
-      const locale = payload.locale || 'en';
-      const dataObj = payload.data as Record<string, unknown>;
-      const templateName =
-        (typeof dataObj.template === 'string' ? dataObj.template : undefined) ||
-        'default';
-      const renderedContent = await this.templateService.renderTemplate(
-        templateName,
-        payload.data,
-        locale,
-      );
 
       // Extract jobId from payload data if available (for retries)
       const jobId = dataObj.jobId as string | undefined;
@@ -215,7 +226,7 @@ export class NotificationSenderService {
           metadata: {
             ...payload.data,
             jobId: jobId,
-            correlationId: payload.correlationId,
+            correlationId,
           },
           userId: payload.userId,
           centerId: payload.centerId,
@@ -301,8 +312,15 @@ export class NotificationSenderService {
         } as unknown as NotificationPayload;
       }
 
-      // Send notification
-      await adapter.send(sendPayload);
+      // Send notification with circuit breaker protection
+      await (this.circuitBreaker
+        ? this.circuitBreaker.executeWithCircuitBreaker(
+            payload.channel,
+            async () => {
+              await adapter.send(sendPayload);
+            },
+          )
+        : adapter.send(sendPayload)); // Fallback if circuit breaker not available
       const latency = Date.now() - startTime;
 
       // Update log as success
@@ -316,6 +334,16 @@ export class NotificationSenderService {
       // Track metrics
       await this.metricsService.incrementSent(payload.channel, payload.type);
       await this.metricsService.recordLatency(payload.channel, latency);
+
+      // Mark as sent in idempotency cache (if service is available)
+      if (this.idempotencyCache && correlationId) {
+        await this.idempotencyCache.markSent(
+          correlationId,
+          payload.type,
+          payload.channel,
+          payload.recipient,
+        );
+      }
 
       results.push({
         channel: payload.channel,
@@ -402,6 +430,7 @@ export class NotificationSenderService {
             // But if send() itself throws, catch it here
             const errorMessage =
               error instanceof Error ? error.message : String(error);
+            const correlationId = this.getCorrelationId(payload);
             this.logger.error(
               `Unexpected error in sendMultiple for channel ${payload.channel}`,
               error instanceof Error ? error.stack : undefined,
@@ -410,7 +439,7 @@ export class NotificationSenderService {
                 channel: payload.channel,
                 type: payload.type,
                 userId: payload.userId,
-                correlationId: payload.correlationId,
+                correlationId,
               },
             );
             return [

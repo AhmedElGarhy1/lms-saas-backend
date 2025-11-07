@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Staff } from './entities/staff.entity';
 import { UserModule } from '@/modules/user/user.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
+import { AuthModule } from '@/modules/auth/auth.module';
 import { SharedModule } from '@/shared/shared.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { StaffController } from './controllers/staff.controller';
@@ -17,6 +18,7 @@ import { CenterListener } from './listeners/center.listener';
     TypeOrmModule.forFeature([Staff]),
     forwardRef(() => UserModule),
     forwardRef(() => AccessControlModule),
+    forwardRef(() => AuthModule),
     SharedModule,
     ActivityLogModule,
   ],

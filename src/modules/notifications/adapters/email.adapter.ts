@@ -1,27 +1,30 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { ConfigService } from '@nestjs/config';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
 import { EmailNotificationPayload } from '../types/notification-payload.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { LoggerService } from '@/shared/services/logger.service';
-import { NotificationSendingFailedException } from '../exceptions/notification.exceptions';
+import { TimeoutConfigService } from '../config/timeout.config';
+import pTimeout from 'p-timeout';
+import { Config } from '@/shared/config/config';
 
 @Injectable()
-export class EmailAdapter implements NotificationAdapter<EmailNotificationPayload> {
+export class EmailAdapter
+  implements NotificationAdapter<EmailNotificationPayload>
+{
   private transporter: nodemailer.Transporter;
 
   constructor(
-    private readonly config: ConfigService,
     private readonly logger: LoggerService,
+    private readonly timeoutConfig: TimeoutConfigService,
   ) {
     this.transporter = nodemailer.createTransport({
-      host: this.config.get<string>('EMAIL_HOST', 'smtp.gmail.com'),
-      port: this.config.get<number>('EMAIL_PORT', 465),
+      host: Config.email.host,
+      port: Config.email.port,
       secure: true,
       auth: {
-        user: this.config.get<string>('EMAIL_USER'),
-        pass: this.config.get<string>('EMAIL_PASS'),
+        user: Config.email.user,
+        pass: Config.email.pass,
       },
       tls: {
         rejectUnauthorized: false,
@@ -31,18 +34,26 @@ export class EmailAdapter implements NotificationAdapter<EmailNotificationPayloa
 
   async send(payload: EmailNotificationPayload): Promise<void> {
     // Type system ensures channel is EMAIL, no runtime check needed
-    await this.transporter.sendMail({
-      from: `"LMS SaaS" <${this.config.get<string>('EMAIL_USER')}>`,
-      to: payload.recipient,
-      subject: payload.subject,
-      html: payload.data.html || payload.data.content || '',
-    });
+    // Wrap SMTP send with timeout guard
+    const timeoutMs = this.timeoutConfig.getTimeout(NotificationChannel.EMAIL);
+    await pTimeout(
+      this.transporter.sendMail({
+        from: `"LMS SaaS" <${Config.email.user}>`,
+        to: payload.recipient,
+        subject: payload.subject,
+        html: payload.data.html || payload.data.content || '',
+      }),
+      {
+        milliseconds: timeoutMs,
+        message: `Email send timeout after ${timeoutMs}ms`,
+      },
+    );
   }
 
   // Legacy method for backward compatibility during migration
   async sendMail(to: string, subject: string, html: string): Promise<void> {
     await this.transporter.sendMail({
-      from: `"LMS SaaS" <${this.config.get<string>('EMAIL_USER')}>`,
+      from: `"LMS SaaS" <${Config.email.user}>`,
       to,
       subject,
       html,
@@ -54,7 +65,7 @@ export class EmailAdapter implements NotificationAdapter<EmailNotificationPayloa
     name: string,
     resetToken: string,
   ): Promise<void> {
-    const resetUrl = `${this.config.get<string>('FRONTEND_URL', 'http://localhost:3000')}/reset-password?token=${resetToken}`;
+    const resetUrl = `${Config.app.frontendUrl}/reset-password?token=${resetToken}`;
 
     const html = `
       <h2>Password Reset Request</h2>

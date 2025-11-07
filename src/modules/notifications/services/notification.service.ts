@@ -15,9 +15,12 @@ import {
   DEFAULT_NOTIFICATION_MAPPING,
   getUnmappedEventLogLevel,
   NotificationEventMapping,
-  resolveChannels,
-  isProfileScoped,
 } from '../config/notifications.map';
+import { NotificationManifestResolver } from '../manifests/registry/notification-manifest-resolver.service';
+import { NotificationManifest } from '../manifests/types/manifest.types';
+import { generateDefaultManifest } from '../manifests/default-manifest.generator';
+import { NotificationRenderer } from '../renderer/notification-renderer.service';
+import { NotificationIdempotencyCacheService } from './notification-idempotency-cache.service';
 import {
   extractRecipient,
   extractUserId,
@@ -40,26 +43,47 @@ import {
 } from '../utils/notification-metrics-logger.util';
 import { NotificationTemplateData } from '../types/template-data.types';
 import { createUserId, createCorrelationId } from '../types/branded-types';
+import {
+  isValidEmail,
+  isValidE164,
+  normalizePhone,
+  isValidRecipientForChannel,
+} from '../utils/recipient-validator.util';
 
 /**
  * Context object passed through the notification processing pipeline
+ *
+ * Fields are populated sequentially as the pipeline progresses:
+ * 1. lookupMapping: eventName, event, mapping, manifest, correlationId
+ * 2. extractEventData: userId, recipient, phone, centerId, locale, profileType, profileId
+ * 3. determineChannels: enabledChannels (from manifest)
+ * 4. selectOptimalChannels: finalChannels (optimized based on user activity)
+ * 5. prepareTemplateData: templateData
+ * 6. routeToChannels: uses finalChannels, templateData, manifest
  */
 interface NotificationProcessingContext {
+  // Event and mapping
   eventName: EventType | string;
   event: NotificationEvent | Record<string, unknown>;
-  mapping: NotificationEventMapping;
-  recipient: string; // Keep for backward compat
-  phone?: string; // Add phone field for channel routing
+  mapping: NotificationEventMapping; // EventType → NotificationType mapping
+  manifest: NotificationManifest; // Single source of truth for all config
+  correlationId: string;
+
+  // Recipient information
   userId?: string;
+  recipient: string; // Email or phone (for backward compat and logging)
+  phone?: string; // Phone number for SMS/WhatsApp routing
   centerId?: string;
   locale: string;
   profileType?: ProfileType | null;
   profileId?: string | null;
-  channelsToCheck: NotificationChannel[];
-  enabledChannels: NotificationChannel[];
-  finalChannels: NotificationChannel[];
+
+  // Channel selection (progressive refinement)
+  enabledChannels: NotificationChannel[]; // Channels from manifest (after preferences check)
+  finalChannels: NotificationChannel[]; // Optimized channels (after activity-based selection)
+
+  // Template data
   templateData: NotificationTemplateData;
-  correlationId: string;
 }
 
 @Injectable()
@@ -78,7 +102,10 @@ export class NotificationService {
     private readonly inAppNotificationService: InAppNotificationService,
     private readonly logger: LoggerService,
     private readonly retryStrategyService: ChannelRetryStrategyService,
+    private readonly manifestResolver: NotificationManifestResolver,
+    private readonly renderer: NotificationRenderer,
     private readonly metricsService?: NotificationMetricsService,
+    private readonly idempotencyCache?: NotificationIdempotencyCacheService,
   ) {}
 
   /**
@@ -120,7 +147,7 @@ export class NotificationService {
    * Orchestration pipeline:
    * 1. Lookup notification mapping from NotificationEventsMap (with fallback to DEFAULT_NOTIFICATION_MAPPING)
    * 2. Extract recipient, userId, centerId, locale, profileInfo from event data or RecipientInfo
-   * 3. Determine channels based on mapping (profile-scoped vs user-level)
+   * 3. Determine channels based on manifest (all users get same channels)
    * 4. Check user preferences for each channel (parallelized)
    * 5. Apply dynamic channel selection based on user activity and urgency
    * 6. Prepare template data with defaults and IN_APP-specific fields
@@ -129,7 +156,7 @@ export class NotificationService {
    *
    * Edge cases handled:
    * - Missing userId: Assumes enabled for system notifications
-   * - Profile-scoped channels: Resolved dynamically using resolveChannels() helper
+   * - Channels: Loaded from manifest (all users get same channels)
    * - Unmapped events: Uses DEFAULT_NOTIFICATION_MAPPING with severity-based logging
    * - Rate limit exceeded: Skips IN_APP delivery, continues with other channels
    *
@@ -213,8 +240,8 @@ export class NotificationService {
                   eventName,
                   correlationId,
                   recipientId: recipient.userId,
-                  profileId: recipient.profileId,
-                  profileType: recipient.profileType,
+                  profileId: recipient.profileId ?? undefined,
+                  profileType: recipient.profileType ?? undefined,
                   error: error instanceof Error ? error.message : String(error),
                 },
                 error instanceof Error ? error : undefined,
@@ -303,7 +330,7 @@ export class NotificationService {
   }
 
   /**
-   * Pipeline Step 1: Lookup notification mapping
+   * Pipeline Step 1: Lookup notification mapping and load manifest
    */
   private lookupMapping(context: Partial<NotificationProcessingContext>): void {
     const { eventName } = context;
@@ -340,6 +367,55 @@ export class NotificationService {
     }
 
     context.mapping = mapping;
+
+    // Load manifest - single source of truth for all config
+    try {
+      const manifest = this.manifestResolver.getManifest(mapping.type);
+      context.manifest = manifest;
+    } catch (error) {
+      // Generate default manifest as fallback
+      const defaultManifest = generateDefaultManifest(mapping.type);
+      context.manifest = defaultManifest;
+
+      // Log warning with full context
+      this.logger.warn(
+        `NotificationType ${mapping.type} has no manifest in registry, using default manifest`,
+        'NotificationService',
+        {
+          notificationType: mapping.type,
+          eventName: context.eventName,
+          correlationId: context.correlationId,
+          defaultChannels: Object.keys(defaultManifest.channels),
+          defaultGroup: defaultManifest.group,
+          defaultPriority: defaultManifest.priority,
+        },
+      );
+
+      // Track default manifest usage in metrics
+      if (this.metricsService) {
+        // Note: We could add a specific metric for default manifest usage
+        // For now, we log it and can add metrics later if needed
+        this.logger.debug(
+          `Default manifest generated for ${mapping.type}`,
+          'NotificationService',
+          {
+            notificationType: mapping.type,
+            eventName: context.eventName,
+          },
+        );
+      }
+    }
+  }
+
+  /**
+   * Get all channels defined in manifest
+   * @param manifest - Notification manifest
+   * @returns Array of notification channels
+   */
+  private getChannelsFromManifest(
+    manifest: NotificationManifest,
+  ): NotificationChannel[] {
+    return Object.keys(manifest.channels) as NotificationChannel[];
   }
 
   /**
@@ -408,19 +484,19 @@ export class NotificationService {
   }
 
   /**
-   * Pipeline Step 3: Determine channels based on mapping
+   * Pipeline Step 3: Determine channels based on manifest
    */
   private determineChannels(
     context: Partial<NotificationProcessingContext>,
   ): void {
-    const { mapping, profileType } = context;
-    if (!mapping) {
-      context.channelsToCheck = [];
+    const { manifest } = context;
+    if (!manifest) {
+      context.enabledChannels = [];
       return;
     }
 
-    // Use helper function to resolve channels dynamically
-    context.channelsToCheck = resolveChannels(mapping, profileType);
+    // Get channels from manifest - all users get same channels
+    context.enabledChannels = this.getChannelsFromManifest(manifest) || [];
   }
 
   /**
@@ -430,8 +506,8 @@ export class NotificationService {
   private checkPreferences(
     context: Partial<NotificationProcessingContext>,
   ): void {
-    // All channels from mapping are enabled - no user preferences
-    context.enabledChannels = context.channelsToCheck || [];
+    // All channels from manifest are enabled - no user preferences
+    // enabledChannels is already set in determineChannels()
   }
 
   /**
@@ -440,21 +516,22 @@ export class NotificationService {
   private async selectOptimalChannels(
     context: Partial<NotificationProcessingContext>,
   ): Promise<void> {
-    const { userId, enabledChannels, mapping } = context;
+    const { userId, enabledChannels, manifest } = context;
     let finalChannels: NotificationChannel[] = enabledChannels!;
 
-    if (userId) {
+    if (userId && manifest) {
       try {
         finalChannels =
           await this.channelSelectionService.selectOptimalChannels(
             userId,
             enabledChannels!,
             {
-              priority: mapping!.priority,
-              eventType: mapping!.type,
-              isSecurityEvent: mapping!.requiresAudit || false,
+              priority: manifest.priority,
+              eventType: manifest.type,
+              isSecurityEvent: manifest.requiresAudit || false,
             },
-            mapping!,
+            manifest.priority,
+            manifest.requiresAudit,
           );
 
         if (finalChannels.length === 0) {
@@ -495,16 +572,24 @@ export class NotificationService {
   private prepareTemplateData(
     context: Partial<NotificationProcessingContext>,
   ): void {
-    const { event, mapping, eventName, finalChannels, userId, centerId } =
-      context;
+    const {
+      event,
+      mapping,
+      manifest,
+      eventName,
+      finalChannels,
+      userId,
+      centerId,
+    } = context;
 
-    if (!event || !mapping || !eventName || !finalChannels) {
+    if (!event || !mapping || !manifest || !eventName || !finalChannels) {
       return;
     }
 
     // Prepare template data with link variable for auth events
+    // Type assertion needed due to generic constraints, but type safety is enforced at compile time
     const templateData = this.templateService.ensureTemplateData(
-      event,
+      event as Record<string, unknown>,
       mapping,
       eventName,
     );
@@ -521,7 +606,7 @@ export class NotificationService {
       templateData.message = inAppData.message;
       templateData.actionUrl =
         inAppData.actionUrl || (templateData.actionUrl as string | undefined);
-      templateData.priority = inAppData.priority ?? mapping.priority ?? 0;
+      templateData.priority = inAppData.priority ?? manifest.priority ?? 0;
     }
 
     context.templateData = templateData;
@@ -538,6 +623,7 @@ export class NotificationService {
       phone,
       finalChannels,
       mapping,
+      manifest,
       templateData,
       locale,
       centerId,
@@ -546,9 +632,8 @@ export class NotificationService {
       profileId,
       eventName,
     } = context;
-    const profileScoped = mapping ? isProfileScoped(mapping) : false;
 
-    if (!finalChannels || !mapping || !templateData || !locale) {
+    if (!finalChannels || !mapping || !manifest || !templateData || !locale) {
       return;
     }
 
@@ -600,6 +685,52 @@ export class NotificationService {
         continue;
       }
 
+      // Validate recipient format based on channel
+      if (channel === NotificationChannel.EMAIL) {
+        if (!isValidEmail(channelRecipient)) {
+          this.logger.warn(
+            `Invalid email format for ${channel} channel: ${channelRecipient.substring(0, 20)}`,
+            'NotificationService',
+            {
+              userId,
+              eventName,
+              channel,
+              recipient: channelRecipient.substring(0, 20),
+            },
+          );
+          // Track invalid recipient metric
+          if (this.metricsService) {
+            await this.metricsService.incrementFailed(channel, mapping.type);
+          }
+          continue; // Skip invalid recipient
+        }
+      } else if (
+        channel === NotificationChannel.SMS ||
+        channel === NotificationChannel.WHATSAPP
+      ) {
+        // Normalize phone to E.164 format
+        const normalizedPhone = normalizePhone(channelRecipient);
+        if (!normalizedPhone || !isValidE164(normalizedPhone)) {
+          this.logger.warn(
+            `Invalid phone format for ${channel} channel: ${channelRecipient.substring(0, 20)}`,
+            'NotificationService',
+            {
+              userId,
+              eventName,
+              channel,
+              recipient: channelRecipient.substring(0, 20),
+            },
+          );
+          // Track invalid recipient metric
+          if (this.metricsService) {
+            await this.metricsService.incrementFailed(channel, mapping.type);
+          }
+          continue; // Skip invalid recipient
+        }
+        // Use normalized phone number
+        channelRecipient = normalizedPhone;
+      }
+
       // Build payload based on channel type
       // For EMAIL, we need subject and html
       // For SMS/WHATSAPP, we need content
@@ -608,42 +739,145 @@ export class NotificationService {
         recipient: channelRecipient,
         channel,
         type: mapping.type,
-        group: mapping.group,
+        group: manifest.group,
         locale,
         centerId,
         userId: userId ? createUserId(userId) : undefined,
-        profileType: profileScoped ? profileType : null,
-        profileId: profileScoped ? profileId : null,
+        profileType: profileType ?? null,
+        profileId: profileId ?? null,
         correlationId: context.correlationId
           ? createCorrelationId(context.correlationId)
           : undefined,
       };
 
-      // Get template path from config (with fallback to mapping.template)
-      const templatePath = this.templateService.getTemplatePathFromConfig(
+      // Check idempotency before processing (if cache service is available)
+      // Use distributed lock to prevent race conditions
+      let lockAcquired = false;
+      if (this.idempotencyCache && context.correlationId) {
+        try {
+          // Acquire lock to prevent concurrent processing
+          lockAcquired = await this.idempotencyCache.acquireLock(
+            context.correlationId,
+            mapping.type,
+            channel,
+            channelRecipient,
+          );
+
+          if (!lockAcquired) {
+            // Lock already held or timeout - skip to prevent duplicate
+            this.logger.debug(
+              `Skipping notification (lock not acquired): ${mapping.type}:${channel}`,
+              'NotificationService',
+              {
+                correlationId: context.correlationId,
+                type: mapping.type,
+                channel,
+                recipient: channelRecipient.substring(0, 20),
+              },
+            );
+            continue; // Skip this notification
+          }
+
+          // Check if already sent (with lock held)
+          const alreadySent = await this.idempotencyCache.checkAndSet(
+            context.correlationId,
+            mapping.type,
+            channel,
+            channelRecipient,
+          );
+
+          if (alreadySent) {
+            // Release lock before continuing
+            await this.idempotencyCache.releaseLock(
+              context.correlationId,
+              mapping.type,
+              channel,
+              channelRecipient,
+            );
+            this.logger.debug(
+              `Skipping duplicate notification (idempotency): ${mapping.type}:${channel}`,
+              'NotificationService',
+              {
+                correlationId: context.correlationId,
+                type: mapping.type,
+                channel,
+                recipient: channelRecipient.substring(0, 20),
+              },
+            );
+            continue; // Skip this notification
+          }
+        } catch (error) {
+          // On error, release lock if acquired
+          if (lockAcquired) {
+            await this.idempotencyCache.releaseLock(
+              context.correlationId,
+              mapping.type,
+              channel,
+              channelRecipient,
+            );
+          }
+          // Fail open - allow notification to proceed
+          this.logger.warn(
+            `Idempotency check failed, proceeding anyway: ${mapping.type}:${channel}`,
+            'NotificationService',
+            {
+              correlationId: context.correlationId,
+              type: mapping.type,
+              channel,
+              error: error instanceof Error ? error.message : String(error),
+            },
+          );
+        }
+      }
+
+      // Use manifest-driven rendering (mandatory - all types must have manifests)
+      // Manifest is already loaded in context from lookupMapping step
+
+      // Check if this channel is supported in manifest
+      if (!manifest.channels[channel]) {
+        this.logger.error(
+          `Channel ${channel} not supported for notification type ${mapping.type}`,
+          undefined,
+          'NotificationService',
+          {
+            notificationType: mapping.type,
+            channel,
+            eventName,
+          },
+        );
+        continue; // Skip unsupported channel
+      }
+
+      // Use renderer to get pre-rendered content
+      const rendered = await this.renderer.render(
         mapping.type,
         channel,
-        mapping.template,
+        templateData as Record<string, unknown>,
+        locale,
       );
 
-      // Create channel-specific payload
+      // Build payload with rendered content
       let payload: NotificationPayload;
-      if (channel === NotificationChannel.EMAIL) {
-        // Get email subject from config
-        const emailSubject = this.templateService.getEmailSubjectFromConfig(
-          mapping.type,
-          (templateData as any).subject || 'Notification',
-        );
 
+      if (channel === NotificationChannel.EMAIL) {
+        if (!rendered.subject) {
+          this.logger.error(
+            `Email subject missing for ${mapping.type}`,
+            undefined,
+            'NotificationService',
+            { notificationType: mapping.type, channel },
+          );
+          continue; // Skip this channel
+        }
         payload = {
           ...basePayload,
           channel: NotificationChannel.EMAIL,
-          subject: emailSubject,
+          subject: rendered.subject,
           data: {
-            html: (templateData as any).html || '',
-            content: (templateData as any).content || '',
+            html: rendered.content,
+            content: rendered.content,
             ...templateData,
-            template: templatePath, // Use template path from config
+            template: rendered.metadata.template,
           },
         } as NotificationPayload;
       } else if (
@@ -654,23 +888,55 @@ export class NotificationService {
           ...basePayload,
           channel,
           data: {
-            content: (templateData as any).content || '',
-            message: (templateData as any).message || '',
-            html: (templateData as any).html || '',
+            content: rendered.content,
+            message: rendered.content,
+            html: rendered.content,
             ...templateData,
-            template: templatePath, // Use template path from config
+            template: rendered.metadata.template,
           },
         } as NotificationPayload;
       } else if (channel === NotificationChannel.IN_APP) {
+        // IN_APP content is an object from JSON template
+        const inAppContent =
+          typeof rendered.content === 'object'
+            ? rendered.content
+            : { message: rendered.content };
         payload = {
           ...basePayload,
           channel: NotificationChannel.IN_APP,
+          title:
+            (inAppContent as any).title ||
+            (templateData as any).title ||
+            'Notification',
+          data: {
+            message: (inAppContent as any).message || String(rendered.content),
+            content:
+              typeof rendered.content === 'string'
+                ? rendered.content
+                : undefined,
+            html:
+              typeof rendered.content === 'string'
+                ? rendered.content
+                : undefined,
+            actionUrl: (inAppContent as any).actionUrl,
+            priority: (inAppContent as any).priority,
+            icon: (inAppContent as any).icon,
+            expiresAt: (inAppContent as any).expiresAt,
+            ...templateData,
+            ...(typeof rendered.content === 'object' ? rendered.content : {}),
+          },
+        } as NotificationPayload;
+      } else if (channel === NotificationChannel.PUSH) {
+        // PUSH channel requires title
+        payload = {
+          ...basePayload,
+          channel: NotificationChannel.PUSH,
           title: (templateData as any).title || 'Notification',
           data: {
-            message: (templateData as any).message || '',
-            content: (templateData as any).content || '',
-            html: (templateData as any).html || '',
             ...templateData,
+            content: rendered.content,
+            message: rendered.content,
+            template: rendered.metadata.template,
           },
         } as NotificationPayload;
       } else {
@@ -678,65 +944,85 @@ export class NotificationService {
         payload = {
           ...basePayload,
           channel,
-          data: templateData as any,
-        } as NotificationPayload;
+          data: {
+            ...templateData,
+            content: rendered.content,
+            template: rendered.metadata.template,
+          },
+        } as unknown as NotificationPayload;
       }
 
-      // Skip queue for IN_APP notifications - send directly for real-time delivery
-      if (channel === NotificationChannel.IN_APP) {
-        try {
-          // Check rate limit for IN_APP notifications before sending
-          if (userId) {
-            const userWithinLimit =
-              await this.inAppNotificationService.checkUserRateLimit(userId);
-            if (!userWithinLimit) {
-              const rateLimitConfig =
-                this.inAppNotificationService.getRateLimitConfig();
-              this.logger.warn(
-                `User ${userId} exceeded rate limit (${rateLimitConfig.limit}/${rateLimitConfig.windowSeconds}s) for IN_APP notification, skipping delivery`,
-                'NotificationService',
-                {
-                  userId,
-                  eventName,
-                  limit: rateLimitConfig.limit,
-                  window: `${rateLimitConfig.windowSeconds} seconds`,
-                },
-              );
-              // Skip this IN_APP notification, continue with other channels
-              continue;
+      // Send notification (lock will be released in finally block)
+      try {
+        // Skip queue for IN_APP notifications - send directly for real-time delivery
+        if (channel === NotificationChannel.IN_APP) {
+          try {
+            // Check rate limit for IN_APP notifications before sending
+            if (userId) {
+              const userWithinLimit =
+                await this.inAppNotificationService.checkUserRateLimit(userId);
+              if (!userWithinLimit) {
+                const rateLimitConfig =
+                  this.inAppNotificationService.getRateLimitConfig();
+                this.logger.warn(
+                  `User ${userId} exceeded rate limit (${rateLimitConfig.limit}/${rateLimitConfig.windowSeconds}s) for IN_APP notification, skipping delivery`,
+                  'NotificationService',
+                  {
+                    userId,
+                    eventName,
+                    limit: rateLimitConfig.limit,
+                    window: `${rateLimitConfig.windowSeconds} seconds`,
+                  },
+                );
+                // Skip this IN_APP notification, continue with other channels
+                continue;
+              }
             }
+
+            // Send directly without queuing for low latency
+            await this.senderService.send(payload);
+            this.logger.debug(
+              `IN_APP notification sent directly (skipped queue): ${eventName} to user ${userId}`,
+              'NotificationService',
+              {
+                eventName,
+                userId,
+                correlationId: context.correlationId,
+              },
+            );
+
+            // TODO: Future - Track delivery acknowledgment for analytics
+            // This could be used for batching/throttling in future phases
+          } catch (error) {
+            this.logger.error(
+              `Failed to send IN_APP notification directly: ${error instanceof Error ? error.message : String(error)}`,
+              error instanceof Error ? error.stack : undefined,
+              'NotificationService',
+              {
+                userId,
+                eventName,
+                correlationId: context.correlationId,
+              },
+            );
+            // Don't throw - already logged, continue with other channels
           }
-
-          // Send directly without queuing for low latency
-          await this.senderService.send(payload);
-          this.logger.debug(
-            `IN_APP notification sent directly (skipped queue): ${eventName} to user ${userId}`,
-            'NotificationService',
-            {
-              eventName,
-              userId,
-              correlationId: context.correlationId,
-            },
-          );
-
-          // TODO: Future - Track delivery acknowledgment for analytics
-          // This could be used for batching/throttling in future phases
-        } catch (error) {
-          this.logger.error(
-            `Failed to send IN_APP notification directly: ${error instanceof Error ? error.message : String(error)}`,
-            error instanceof Error ? error.stack : undefined,
-            'NotificationService',
-            {
-              userId,
-              eventName,
-              correlationId: context.correlationId,
-            },
-          );
-          // Don't throw - already logged, continue with other channels
+        } else {
+          // For other channels, enqueue job for async processing
+          // Lock will be released after enqueue (markSent happens in processor)
+          await this.enqueueJob(payload, manifest.priority || 0);
         }
-      } else {
-        // For other channels, enqueue job for async processing
-        await this.enqueueJob(payload, mapping.priority || 0);
+      } finally {
+        // Release lock after notification is sent/enqueued
+        // For IN_APP: released after send completes
+        // For other channels: released after enqueue (processor handles markSent separately)
+        if (lockAcquired && this.idempotencyCache && context.correlationId) {
+          await this.idempotencyCache.releaseLock(
+            context.correlationId,
+            mapping.type,
+            channel,
+            channelRecipient,
+          );
+        }
       }
     }
   }

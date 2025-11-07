@@ -25,4 +25,3 @@ export function createCorrelationId(id: string): CorrelationId {
 export function createUserId(id: string): UserId {
   return id as UserId;
 }
-

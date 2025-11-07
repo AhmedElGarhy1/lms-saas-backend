@@ -23,7 +23,10 @@
     "db:migrate:revert": "typeorm migration:revert",
     "seed": "ts-node -r tsconfig-paths/register src/database/seed.ts",
     "lint:i18n": "eslint \"src/i18n/*.json\"",
-    "validate:notification-configs": "ts-node -r tsconfig-paths/register scripts/validate-notification-configs.ts"
+    "generate:templates": "ts-node -r tsconfig-paths/register scripts/generate-template-types.ts",
+    "validate:notification-manifests": "ts-node -r tsconfig-paths/register scripts/validate-notification-manifests.ts",
+    "validate:notification-manifests:warn": "set VALIDATE_WARN_ONLY=true && ts-node -r tsconfig-paths/register scripts/validate-notification-manifests.ts",
+    "validate:notification-listeners": "ts-node -r tsconfig-paths/register scripts/validate-notification-listeners.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.846.0",
@@ -63,6 +66,7 @@
     "nestjs-typeorm-paginate": "^4.1.0",
     "nodemailer": "^6.10.1",
     "p-limit": "^7.2.0",
+    "p-timeout": "^7.0.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.16.3",
@@ -76,7 +80,8 @@
     "twilio": "^5.10.4",
     "typeorm": "^0.3.25",
     "winston": "^3.17.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

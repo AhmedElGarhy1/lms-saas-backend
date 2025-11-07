@@ -1,7 +1,6 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NotificationLog } from './entities/notification-log.entity';
 import { Notification } from './entities/notification.entity';
 import { NotificationService } from './services/notification.service';
@@ -14,7 +13,6 @@ import {
   EmailAdapter,
   SmsAdapter,
   WhatsAppAdapter,
-  PushAdapter,
   InAppAdapter,
 } from './adapters';
 import { TwilioWhatsAppProvider } from './adapters/providers/twilio-whatsapp.provider';
@@ -37,7 +35,14 @@ import { ChannelRateLimitService } from './services/channel-rate-limit.service';
 import { ChannelRetryStrategyService } from './services/channel-retry-strategy.service';
 import { ChannelSelectionService } from './services/channel-selection.service';
 import { RecipientResolverService } from './services/recipient-resolver.service';
-import { NotificationConfigValidatorService } from './services/notification-config-validator.service';
+import { NotificationManifestResolver } from './manifests/registry/notification-manifest-resolver.service';
+import { NotificationRenderer } from './renderer/notification-renderer.service';
+import { NotificationValidator } from './validator/notification-validator.service';
+import { NotificationIdempotencyCacheService } from './services/notification-idempotency-cache.service';
+import { NotificationCircuitBreakerService } from './services/notification-circuit-breaker.service';
+import { TimeoutConfigService } from './config/timeout.config';
+import { NotificationDlqCleanupJob } from './jobs/notification-dlq-cleanup.job';
+import { NotificationAlertService } from './services/notification-alert.service';
 
 @Module({
   imports: [
@@ -47,11 +52,8 @@ import { NotificationConfigValidatorService } from './services/notification-conf
     AuthModule,
     BullModule.registerQueueAsync({
       name: 'notifications',
-      imports: [ConfigModule, RedisModule],
-      useFactory: (
-        configService: ConfigService,
-        redisService: RedisService,
-      ) => ({
+      imports: [RedisModule],
+      useFactory: (redisService: RedisService) => ({
         connection: redisService.getClient(),
         defaultJobOptions: {
           attempts: 3,
@@ -67,7 +69,7 @@ import { NotificationConfigValidatorService } from './services/notification-conf
           },
         },
       }),
-      inject: [ConfigService, RedisService],
+      inject: [RedisService],
     }),
   ],
   providers: [
@@ -81,13 +83,13 @@ import { NotificationConfigValidatorService } from './services/notification-conf
     EmailAdapter,
     SmsAdapter,
     WhatsAppAdapter,
-    PushAdapter,
     InAppAdapter,
     TwilioWhatsAppProvider,
     MetaWhatsAppProvider,
     InAppNotificationService,
     NotificationGateway,
     RedisCleanupJob,
+    NotificationDlqCleanupJob, // Cleanup job for old failed notifications
     TemplateCacheService,
     MetricsBatchService,
     ChannelRateLimitService,
@@ -95,13 +97,21 @@ import { NotificationConfigValidatorService } from './services/notification-conf
     NotificationMetricsService,
     ChannelSelectionService,
     RecipientResolverService,
-    NotificationConfigValidatorService, // Validates configs on module init
+    NotificationManifestResolver, // Resolves manifests for renderer
+    NotificationRenderer, // Renders notifications using manifests
+    NotificationValidator, // Validates manifests on module init
+    NotificationIdempotencyCacheService, // Idempotency cache for preventing duplicate sends
+    NotificationCircuitBreakerService, // Circuit breaker with sliding window for preventing false positives
+    TimeoutConfigService, // Provider-specific timeout configuration
+    NotificationAlertService, // Alert service for queue backlog and system health
   ],
   controllers: [NotificationHistoryController, InAppNotificationController],
   exports: [
     NotificationService,
     EmailAdapter, // Export for backward compatibility during migration
     InAppNotificationService, // Export for use in UserProfileService
+    NotificationManifestResolver, // Export for use in other modules
+    NotificationRenderer, // Export for use in other modules
   ],
 })
 export class NotificationModule {}

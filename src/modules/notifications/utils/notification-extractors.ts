@@ -56,16 +56,16 @@ export function extractRecipient(
   if (
     isObject(event) &&
     'resetUrl' in event &&
-    typeof (event as Record<string, unknown>).email === 'string'
+    typeof event.email === 'string'
   ) {
-    return (event as Record<string, unknown>).email as string; // Password reset event
+    return event.email; // Password reset event
   }
   if (
     isObject(event) &&
     'verificationUrl' in event &&
-    typeof (event as Record<string, unknown>).email === 'string'
+    typeof event.email === 'string'
   ) {
-    return (event as Record<string, unknown>).email as string; // Email verification event
+    return event.email; // Email verification event
   }
   return null;
 }

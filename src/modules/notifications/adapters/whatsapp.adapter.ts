@@ -1,26 +1,30 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
 import { WhatsAppNotificationPayload } from '../types/notification-payload.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
+import { TimeoutConfigService } from '../config/timeout.config';
 import { WhatsAppProvider } from './providers/whatsapp-provider.interface';
 import { TwilioWhatsAppProvider } from './providers/twilio-whatsapp.provider';
 import { MetaWhatsAppProvider } from './providers/meta-whatsapp.provider';
+import pTimeout from 'p-timeout';
+import { Config } from '@/shared/config/config';
 import {
   MissingNotificationContentException,
   NotificationSendingFailedException,
 } from '../exceptions/notification.exceptions';
 
 @Injectable()
-export class WhatsAppAdapter implements NotificationAdapter<WhatsAppNotificationPayload>, OnModuleInit {
+export class WhatsAppAdapter
+  implements NotificationAdapter<WhatsAppNotificationPayload>, OnModuleInit
+{
   private provider: WhatsAppProvider | null = null;
 
   constructor(
-    private readonly config: ConfigService,
     private readonly logger: LoggerService,
     private readonly metricsService: NotificationMetricsService,
+    private readonly timeoutConfig: TimeoutConfigService,
     private readonly twilioProvider: TwilioWhatsAppProvider,
     private readonly metaProvider: MetaWhatsAppProvider,
   ) {}
@@ -60,8 +64,8 @@ export class WhatsAppAdapter implements NotificationAdapter<WhatsAppNotification
    * Validate configuration in production/staging environments
    */
   private validateConfiguration(): void {
-    const nodeEnv = this.config.get<string>('NODE_ENV', 'development');
-    const isProduction = nodeEnv === 'production' || nodeEnv === 'staging';
+    const nodeEnv = Config.app.nodeEnv;
+    const isProduction = nodeEnv === 'production';
 
     if (isProduction && !this.provider) {
       this.logger.error(
@@ -109,7 +113,14 @@ export class WhatsAppAdapter implements NotificationAdapter<WhatsAppNotification
 
     const startTime = Date.now();
     try {
-      await this.provider.sendMessage(phoneNumber, message);
+      // Wrap provider API call with timeout guard
+      const timeoutMs = this.timeoutConfig.getTimeout(
+        NotificationChannel.WHATSAPP,
+      );
+      await pTimeout(this.provider.sendMessage(phoneNumber, message), {
+        milliseconds: timeoutMs,
+        message: `WhatsApp send timeout after ${timeoutMs}ms`,
+      });
       const latency = Date.now() - startTime;
 
       // Track metrics

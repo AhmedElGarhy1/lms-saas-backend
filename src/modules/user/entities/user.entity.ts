@@ -1,8 +1,7 @@
 import { Entity, Column, OneToMany, OneToOne, Index } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { Center } from '@/modules/centers/entities/center.entity';
-import { EmailVerification } from '@/modules/auth/entities/email-verification.entity';
-import { PasswordResetToken } from '@/modules/auth/entities/password-reset-token.entity';
+import { VerificationToken } from '@/modules/auth/entities/verification-token.entity';
 import { UserProfile } from './user-profile.entity';
 import { UserInfo } from './user-info.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
@@ -45,15 +44,18 @@ export class User extends BaseEntity {
   @Exclude()
   hashedRt: string | null;
 
+  @Column({ type: 'boolean', default: false })
+  phoneVerified: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  emailVerified: boolean;
+
   // Relations
   @OneToMany(() => Center, (center) => center.creator)
   centersCreated: Center[];
 
-  @OneToMany(() => EmailVerification, (verification) => verification.user)
-  emailVerifications: EmailVerification[];
-
-  @OneToMany(() => PasswordResetToken, (token) => token.user)
-  passwordResetTokens: PasswordResetToken[];
+  @OneToMany(() => VerificationToken, (token) => token.user)
+  verificationTokens: VerificationToken[];
 
   @OneToMany(() => UserProfile, (userProfile) => userProfile.user, {
     cascade: true,
@@ -65,4 +67,8 @@ export class User extends BaseEntity {
     eager: true,
   })
   userInfo: UserInfo;
+
+  getPhone(): string {
+    return `+2${this.phone}`;
+  }
 }

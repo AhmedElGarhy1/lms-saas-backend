@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
+import { Config } from '@/shared/config/config';
 
 export interface QueryPerformanceMetrics {
   query: string;
@@ -21,12 +21,10 @@ export class DatabasePerformanceService {
   constructor(
     @InjectDataSource()
     private readonly dataSource: DataSource,
-    private readonly configService: ConfigService,
   ) {
     // Only enable query logging if explicitly enabled via environment variable
     // Default: false (respects base config which only logs errors/warnings)
-    this.enableQueryLogging =
-      this.configService.get('DB_ENABLE_QUERY_LOGGING') === 'true';
+    this.enableQueryLogging = Config.database.enableQueryLogging;
     this.setupQueryLogging();
   }
 

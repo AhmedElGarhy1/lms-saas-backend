@@ -1,0 +1,2 @@
+Your learning center has been created successfully! Center: {{center.name}}. You can now start managing your center.
+

@@ -98,4 +98,21 @@ export class NotificationLogRepository extends BaseRepository<NotificationLog> {
       queryBuilder,
     );
   }
+
+  /**
+   * Delete old failed notification logs older than cutoff date
+   * Used by DLQ cleanup job
+   */
+  async deleteOldFailedLogs(cutoffDate: Date): Promise<number> {
+    const repo = this.getRepository();
+    const deleteResult = await repo
+      .createQueryBuilder()
+      .delete()
+      .from(NotificationLog)
+      .where('status = :status', { status: NotificationStatus.FAILED })
+      .andWhere('createdAt < :cutoffDate', { cutoffDate })
+      .execute();
+
+    return deleteResult.affected || 0;
+  }
 }

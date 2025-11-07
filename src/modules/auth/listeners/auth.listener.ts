@@ -26,8 +26,8 @@ export class AuthListener {
         return;
       }
       actor = {
-        id: user.id!,
-        userProfileId: user.id!, // Temporary - will be updated when we have profile info
+        id: user.id,
+        userProfileId: user.id, // Temporary - will be updated when we have profile info
         profileType: 'USER' as any,
         centerId: undefined,
       } as ActorUser;
@@ -55,8 +55,8 @@ export class AuthListener {
         return;
       }
       actor = {
-        id: user.id!,
-        userProfileId: user.id!, // Temporary - will be updated when we have profile info
+        id: user.id,
+        userProfileId: user.id, // Temporary - will be updated when we have profile info
         profileType: 'USER' as any,
         centerId: undefined,
       } as ActorUser;

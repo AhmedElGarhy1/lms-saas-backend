@@ -74,7 +74,11 @@ export class RolesService {
       );
     }
 
-    const updatedRole = await this.rolesRepository.updateRole(roleId, data, actor);
+    const updatedRole = await this.rolesRepository.updateRole(
+      roleId,
+      data,
+      actor,
+    );
 
     // Emit event after work is done
     await this.typeSafeEventEmitter.emitAsync(

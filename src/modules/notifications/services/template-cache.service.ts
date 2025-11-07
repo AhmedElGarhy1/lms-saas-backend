@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { LoggerService } from '@/shared/services/logger.service';
 import * as Handlebars from 'handlebars';
-import { ConfigService } from '@nestjs/config';
 
 /**
  * Service for caching compiled Handlebars templates and pre-rendered content
@@ -18,21 +17,19 @@ export class TemplateCacheService {
   > = new Map();
   private readonly CACHE_TTL = 3600; // 1 hour for rendered content
 
-  constructor(
-    private readonly logger: LoggerService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly logger: LoggerService) {}
 
   /**
    * Get or compile template with caching
+   * @param cacheKey - Cache key (can include channel prefix, e.g., "en:EMAIL:auth/otp-sent")
+   * @param locale - Locale code (for logging)
+   * @param compileFn - Function to compile template if cache miss
    */
   getCompiledTemplate(
-    templateName: string,
+    cacheKey: string,
     locale: string,
     compileFn: () => HandlebarsTemplateDelegate,
   ): HandlebarsTemplateDelegate {
-    const cacheKey = `${locale}:${templateName}`;
-
     if (this.compiledTemplateCache.has(cacheKey)) {
       this.logger.debug(`Template cache hit: ${cacheKey}`);
       return this.compiledTemplateCache.get(cacheKey)!;

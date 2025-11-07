@@ -5,7 +5,6 @@ import { Notification } from '../entities/notification.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { LoggerService } from '@/shared/services/logger.service';
-import { ConfigService } from '@nestjs/config';
 import { NotificationEvents } from '@/shared/events/notification.events.enum';
 import { NotificationReadEvent } from '../events/notification.events';
 import { SlidingWindowRateLimiter } from '../utils/sliding-window-rate-limit';
@@ -15,6 +14,7 @@ import { Pagination } from 'nestjs-typeorm-paginate';
 import { GetInAppNotificationsDto } from '../dto/in-app-notification.dto';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { Config } from '@/shared/config/config';
 
 @Injectable()
 export class InAppNotificationService {
@@ -30,16 +30,10 @@ export class InAppNotificationService {
     private readonly redisService: RedisService,
     private readonly logger: LoggerService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly configService: ConfigService,
     private readonly channelRateLimitService: ChannelRateLimitService,
   ) {
-    this.redisKeyPrefix =
-      this.configService.get<string>('REDIS_KEY_PREFIX') || 'dev';
-    this.rateLimitUser =
-      parseInt(
-        this.configService.get<string>('WEBSOCKET_RATE_LIMIT_USER', '100'),
-        10,
-      ) || 100;
+    this.redisKeyPrefix = Config.redis.keyPrefix;
+    this.rateLimitUser = Config.websocket.rateLimit.user;
 
     // Initialize sliding window rate limiter
     this.rateLimiter = new SlidingWindowRateLimiter(
@@ -94,7 +88,9 @@ export class InAppNotificationService {
     const notification =
       await this.notificationRepository.findOne(notificationId);
     if (!notification || notification.userId !== userId) {
-      throw new ResourceNotFoundException('Notification not found or access denied');
+      throw new ResourceNotFoundException(
+        'Notification not found or access denied',
+      );
     }
 
     await this.notificationRepository.markAsRead(notificationId, userId);
@@ -140,7 +136,9 @@ export class InAppNotificationService {
     const notification =
       await this.notificationRepository.findOne(notificationId);
     if (!notification || notification.userId !== userId) {
-      throw new ResourceNotFoundException('Notification not found or access denied');
+      throw new ResourceNotFoundException(
+        'Notification not found or access denied',
+      );
     }
     await this.notificationRepository.update(notificationId, {
       isArchived: true,

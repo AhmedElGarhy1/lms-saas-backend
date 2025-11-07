@@ -1,20 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { LoggerService } from '@/shared/services/logger.service';
 import { WhatsAppProvider } from './whatsapp-provider.interface';
+import { Config } from '@/shared/config/config';
 
 @Injectable()
 export class MetaWhatsAppProvider implements WhatsAppProvider {
   private readonly accessToken: string | null;
   private readonly phoneNumberId: string | null;
 
-  constructor(
-    private readonly config: ConfigService,
-    private readonly logger: LoggerService,
-  ) {
-    this.accessToken = this.config.get<string>('WHATSAPP_ACCESS_TOKEN') || null;
-    this.phoneNumberId =
-      this.config.get<string>('WHATSAPP_PHONE_NUMBER_ID') || null;
+  constructor(private readonly logger: LoggerService) {
+    this.accessToken = Config.whatsapp.accessToken || null;
+    this.phoneNumberId = Config.whatsapp.phoneNumberId || null;
 
     if (this.isConfigured()) {
       this.logger.debug(

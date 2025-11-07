@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule, getDataSourceToken } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClsModule } from 'nestjs-cls';
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
@@ -21,10 +20,7 @@ import { NotExistsConstraint } from '../../common/validators/not-exists.constrai
         new ClsPluginTransactional({
           imports: [
             TypeOrmModule.forRootAsync({
-              imports: [ConfigModule],
-              useFactory: (configService: ConfigService) =>
-                getDatabaseConfig(configService),
-              inject: [ConfigService],
+              useFactory: () => getDatabaseConfig(),
             }),
           ],
           adapter: new TransactionalAdapterTypeOrm({

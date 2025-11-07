@@ -1,18 +1,15 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Config } from '@/shared/config/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthService } from './services/auth.service';
-import { EmailVerificationService } from './services/email-verification.service';
-import { PasswordResetService } from './services/password-reset.service';
-import { EmailVerificationRepository } from './repositories/email-verification.repository';
-import { PasswordResetRepository } from './repositories/password-reset.repository';
+import { VerificationService } from './services/verification.service';
+import { VerificationTokenRepository } from './repositories/verification-token.repository';
 // import { TwoFactorService } from './services/two-factor.service';
 import { AuthController } from './controllers/auth.controller';
 import { User } from '../user/entities/user.entity';
-import { EmailVerification } from './entities/email-verification.entity';
-import { PasswordResetToken } from './entities/password-reset-token.entity';
+import { VerificationToken } from './entities/verification-token.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshJwtStrategy } from './strategies/refresh-jwt.strategy';
 import { AccessJwtGuard } from './guards/access-jwt.guard';
@@ -25,27 +22,23 @@ import { AuthListener } from './listeners/auth.listener';
 @Module({
   imports: [
     UserModule,
-    TypeOrmModule.forFeature([User, EmailVerification, PasswordResetToken]),
+    TypeOrmModule.forFeature([User, VerificationToken]),
     ActivityLogModule,
     EventEmitterModule,
     JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
+      useFactory: () => ({
+        secret: Config.jwt.secret,
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '15m'),
+          expiresIn: Config.jwt.expiresIn,
         },
       }),
-      inject: [ConfigService],
     }),
   ],
   controllers: [AuthController],
   providers: [
     AuthService,
-    EmailVerificationService,
-    PasswordResetService,
-    EmailVerificationRepository,
-    PasswordResetRepository,
+    VerificationService,
+    VerificationTokenRepository,
     // TwoFactorService,
     UserRepository,
     JwtStrategy,
@@ -56,10 +49,8 @@ import { AuthListener } from './listeners/auth.listener';
   ],
   exports: [
     AuthService,
-    EmailVerificationService,
-    PasswordResetService,
-    EmailVerificationRepository,
-    PasswordResetRepository,
+    VerificationService,
+    VerificationTokenRepository,
     // TwoFactorService,
     JwtStrategy,
     RefreshJwtStrategy,

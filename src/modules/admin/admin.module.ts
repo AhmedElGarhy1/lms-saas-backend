@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Admin } from './entities/admin.entity';
 import { UserModule } from '@/modules/user/user.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
+import { AuthModule } from '@/modules/auth/auth.module';
 import { SharedModule } from '@/shared/shared.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { AdminController } from './controllers/admin.controller';
@@ -16,6 +17,7 @@ import { AdminListener } from './listeners/admin.listener';
     TypeOrmModule.forFeature([Admin]),
     forwardRef(() => UserModule),
     forwardRef(() => AccessControlModule),
+    forwardRef(() => AuthModule),
     SharedModule,
     ActivityLogModule,
   ],

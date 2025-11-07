@@ -1,19 +1,10 @@
 /**
  * Notification Configuration Module
- * 
- * Centralized exports for all notification configuration files
+ *
+ * Centralized exports for notification configuration files
+ *
+ * Note: Channel-specific configs removed - all notifications use manifest system now.
  */
 
 // Core configuration types and map
 export * from './notifications.map';
-export * from './notification-config.types';
-
-// Channel-specific configurations
-export * from './email.config';
-export * from './sms.config';
-export * from './whatsapp.config';
-export * from './push.config';
-
-// Validation utilities
-export * from './config-validator';
-

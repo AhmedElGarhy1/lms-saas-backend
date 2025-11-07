@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { ConfigService } from '@nestjs/config';
+import { Config } from '../config/config';
 
 @Injectable()
 export class MailerService {
   private transporter: nodemailer.Transporter;
 
-  constructor(private readonly config: ConfigService) {
+  constructor() {
     this.transporter = nodemailer.createTransport({
-      host: this.config.get<string>('EMAIL_HOST', 'smtp.gmail.com'),
-      port: this.config.get<number>('EMAIL_PORT', 465),
+      host: Config.email.host,
+      port: Config.email.port,
       secure: true,
       auth: {
-        user: this.config.get<string>('EMAIL_USER'),
-        pass: this.config.get<string>('EMAIL_PASS'),
+        user: Config.email.user,
+        pass: Config.email.pass,
       },
       tls: {
         rejectUnauthorized: false,
@@ -23,7 +23,7 @@ export class MailerService {
 
   async sendMail(to: string, subject: string, html: string): Promise<void> {
     await this.transporter.sendMail({
-      from: `"LMS SaaS" <${this.config.get<string>('EMAIL_USER')}>`,
+      from: `"LMS SaaS" <${Config.email.user}>`,
       to,
       subject,
       html,
@@ -36,7 +36,7 @@ export class MailerService {
     name: string,
     resetToken: string,
   ): Promise<void> {
-    const resetUrl = `${this.config.get<string>('FRONTEND_URL', 'http://localhost:3000')}/reset-password?token=${resetToken}`;
+    const resetUrl = `${Config.app.frontendUrl}/reset-password?token=${resetToken}`;
 
     const html = `
       <h2>Password Reset Request</h2>

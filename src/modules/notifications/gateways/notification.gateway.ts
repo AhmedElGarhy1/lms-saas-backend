@@ -10,7 +10,6 @@ import { Logger } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { Notification } from '../entities/notification.entity';
 import { LoggerService } from '@/shared/services/logger.service';
-import { ConfigService } from '@nestjs/config';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { SlidingWindowRateLimiter } from '../utils/sliding-window-rate-limit';
@@ -53,11 +52,10 @@ export class NotificationGateway
   constructor(
     private readonly redisService: RedisService,
     private readonly loggerService: LoggerService,
-    private readonly configService: ConfigService,
     private readonly metricsService: NotificationMetricsService,
   ) {
     // Load configuration from factory
-    this.config = notificationGatewayConfig(configService);
+    this.config = notificationGatewayConfig();
 
     // Counter key for active connections
     this.connectionsCounterKey = this.redisKey('connections', 'count');

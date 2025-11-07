@@ -39,7 +39,11 @@ export class ChannelAdapterException extends ServiceUnavailableException {
  * Exception thrown when wrong channel is used with an adapter
  */
 export class InvalidChannelException extends InvalidOperationException {
-  constructor(adapter: string, expectedChannel: string, receivedChannel: string) {
+  constructor(
+    adapter: string,
+    expectedChannel: string,
+    receivedChannel: string,
+  ) {
     super(
       `${adapter} can only send ${expectedChannel} notifications, received ${receivedChannel}`,
     );
@@ -69,4 +73,3 @@ export class MissingTemplateVariablesException extends InvalidOperationException
     );
   }
 }
-

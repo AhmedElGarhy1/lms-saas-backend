@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { ConfigService } from '@nestjs/config';
+import { Config } from '@/shared/config/config';
 import { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../../user/services/user.service';
@@ -28,14 +28,13 @@ export class RefreshJwtStrategy extends PassportStrategy(
   'jwt-refresh',
 ) {
   constructor(
-    config: ConfigService,
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromBodyField('refreshToken'),
       ignoreExpiration: false,
-      secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
+      secretOrKey: Config.jwt.secret,
       passReqToCallback: true,
     });
   }

@@ -1,4 +1,4 @@
-import { ConfigService } from '@nestjs/config';
+import { Config } from '@/shared/config/config';
 
 export interface NotificationGatewayConfig {
   redisPrefix: string;
@@ -28,67 +28,30 @@ export interface NotificationGatewayConfig {
  * Configuration factory for NotificationGateway
  * Extracts all environment variable parsing into a single place
  */
-export const notificationGatewayConfig = (
-  configService: ConfigService,
-): NotificationGatewayConfig => ({
-  redisPrefix: configService.get<string>('REDIS_KEY_PREFIX') ?? 'dev',
+export const notificationGatewayConfig = (): NotificationGatewayConfig => ({
+  redisPrefix: Config.redis.keyPrefix,
 
   retry: {
-    maxAttempts:
-      parseInt(
-        configService.get<string>('WEBSOCKET_RETRY_MAX_ATTEMPTS') ?? '3',
-        10,
-      ) || 3,
-    baseDelayMs:
-      parseInt(
-        configService.get<string>('WEBSOCKET_RETRY_DELAY_MS') ?? '100',
-        10,
-      ) || 100,
+    maxAttempts: Config.websocket.retry.maxAttempts,
+    baseDelayMs: Config.websocket.retry.baseDelayMs,
   },
 
   rateLimit: {
-    user:
-      parseInt(
-        configService.get<string>('WEBSOCKET_RATE_LIMIT_USER') ?? '100',
-        10,
-      ) || 100,
-    ttl: 60, // 1 minute in seconds
+    user: Config.websocket.rateLimit.user,
+    ttl: Config.websocket.rateLimit.ttl,
   },
 
   connectionRateLimit: {
     ip: {
-      limit:
-        parseInt(
-          configService.get<string>('WEBSOCKET_CONNECTION_RATE_LIMIT_IP') ??
-            '10',
-          10,
-        ) || 10,
-      windowSeconds:
-        parseInt(
-          configService.get<string>(
-            'WEBSOCKET_CONNECTION_RATE_LIMIT_IP_WINDOW',
-          ) ?? '60',
-          10,
-        ) || 60,
+      limit: Config.websocket.connectionRateLimit.ip.limit,
+      windowSeconds: Config.websocket.connectionRateLimit.ip.windowSeconds,
     },
     user: {
-      limit:
-        parseInt(
-          configService.get<string>('WEBSOCKET_CONNECTION_RATE_LIMIT_USER') ??
-            '5',
-          10,
-        ) || 5,
-      windowSeconds:
-        parseInt(
-          configService.get<string>(
-            'WEBSOCKET_CONNECTION_RATE_LIMIT_USER_WINDOW',
-          ) ?? '60',
-          10,
-        ) || 60,
+      limit: Config.websocket.connectionRateLimit.user.limit,
+      windowSeconds: Config.websocket.connectionRateLimit.user.windowSeconds,
     },
-    failClosed:
-      configService.get<string>('WEBSOCKET_RATE_LIMIT_FAIL_CLOSED') === 'true',
+    failClosed: Config.websocket.connectionRateLimit.failClosed,
   },
 
-  connectionTTL: 7 * 24 * 60 * 60, // 7 days in seconds
+  connectionTTL: Config.websocket.connectionTtl,
 });

@@ -1,9 +1,16 @@
-import { IsEmail } from 'class-validator';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { User } from '@/modules/user/entities/user.entity';
+import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
+import { NotificationChannel } from '@/modules/notifications/enums/notification-channel.enum';
 
 export class ForgotPasswordRequestDto {
   @IsEmail()
-  @Exists(User, 'email')
-  email: string;
+  @IsOptional()
+  email?: string;
+
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @IsEnum(NotificationChannel)
+  @IsOptional()
+  channel?: NotificationChannel; // Optional - will be auto-detected based on email/phone
 }

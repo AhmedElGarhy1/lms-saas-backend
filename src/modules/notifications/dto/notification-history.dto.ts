@@ -21,5 +21,3 @@ export class GetNotificationHistoryDto extends BasePaginationDto {
   @IsEnum(NotificationType)
   type?: NotificationType;
 }
-
-

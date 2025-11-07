@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NotificationChannel } from '../enums/notification-channel.enum';
+import { Config } from '@/shared/config/config';
 
 export interface ChannelRetryConfig {
   maxAttempts: number;
@@ -20,7 +20,7 @@ export class ChannelRetryStrategyService {
   >;
   private readonly defaultRetryConfig: ChannelRetryConfig;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor() {
     // Default retry config (fallback)
     this.defaultRetryConfig = {
       maxAttempts: 3,
@@ -43,102 +43,30 @@ export class ChannelRetryStrategyService {
 
     // EMAIL: Standard retries (3 attempts, exponential backoff)
     configs.set(NotificationChannel.EMAIL, {
-      maxAttempts:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RETRY_EMAIL_MAX_ATTEMPTS',
-            '3',
-          ),
-          10,
-        ) || 3,
-      backoffType:
-        (this.configService.get<string>(
-          'NOTIFICATION_RETRY_EMAIL_BACKOFF_TYPE',
-          'exponential',
-        ) as 'exponential' | 'fixed') || 'exponential',
-      backoffDelay:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RETRY_EMAIL_BACKOFF_DELAY',
-            '2000',
-          ),
-          10,
-        ) || 2000,
+      maxAttempts: Config.notification.retry.email.maxAttempts,
+      backoffType: Config.notification.retry.email.backoffType,
+      backoffDelay: Config.notification.retry.email.backoffDelay,
     });
 
     // SMS: Fewer retries (costs more, 2 attempts)
     configs.set(NotificationChannel.SMS, {
-      maxAttempts:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RETRY_SMS_MAX_ATTEMPTS',
-            '2',
-          ),
-          10,
-        ) || 2,
-      backoffType:
-        (this.configService.get<string>(
-          'NOTIFICATION_RETRY_SMS_BACKOFF_TYPE',
-          'exponential',
-        ) as 'exponential' | 'fixed') || 'exponential',
-      backoffDelay:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RETRY_SMS_BACKOFF_DELAY',
-            '3000',
-          ),
-          10,
-        ) || 3000,
+      maxAttempts: Config.notification.retry.sms.maxAttempts,
+      backoffType: Config.notification.retry.sms.backoffType,
+      backoffDelay: Config.notification.retry.sms.backoffDelay,
     });
 
     // WHATSAPP: Moderate retries (2-3 attempts depending on provider)
     configs.set(NotificationChannel.WHATSAPP, {
-      maxAttempts:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RETRY_WHATSAPP_MAX_ATTEMPTS',
-            '2',
-          ),
-          10,
-        ) || 2,
-      backoffType:
-        (this.configService.get<string>(
-          'NOTIFICATION_RETRY_WHATSAPP_BACKOFF_TYPE',
-          'exponential',
-        ) as 'exponential' | 'fixed') || 'exponential',
-      backoffDelay:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RETRY_WHATSAPP_BACKOFF_DELAY',
-            '3000',
-          ),
-          10,
-        ) || 3000,
+      maxAttempts: Config.notification.retry.whatsapp.maxAttempts,
+      backoffType: Config.notification.retry.whatsapp.backoffType,
+      backoffDelay: Config.notification.retry.whatsapp.backoffDelay,
     });
 
     // PUSH: More retries (no direct cost, 4 attempts)
     configs.set(NotificationChannel.PUSH, {
-      maxAttempts:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RETRY_PUSH_MAX_ATTEMPTS',
-            '4',
-          ),
-          10,
-        ) || 4,
-      backoffType:
-        (this.configService.get<string>(
-          'NOTIFICATION_RETRY_PUSH_BACKOFF_TYPE',
-          'exponential',
-        ) as 'exponential' | 'fixed') || 'exponential',
-      backoffDelay:
-        parseInt(
-          this.configService.get<string>(
-            'NOTIFICATION_RETRY_PUSH_BACKOFF_DELAY',
-            '2000',
-          ),
-          10,
-        ) || 2000,
+      maxAttempts: Config.notification.retry.push.maxAttempts,
+      backoffType: Config.notification.retry.push.backoffType,
+      backoffDelay: Config.notification.retry.push.backoffDelay,
     });
 
     // IN_APP: No retries (handled separately, direct send)

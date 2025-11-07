@@ -12,7 +12,7 @@ import {
 
 /**
  * Domain Event Listener for Center Activity Logging
- * 
+ *
  * Handles side effects (activity logging) for center domain events.
  * This listener can coexist with other domain event listeners.
  */
@@ -70,4 +70,3 @@ export class CenterActivityListener {
     );
   }
 }
-

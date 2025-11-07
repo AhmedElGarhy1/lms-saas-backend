@@ -1,0 +1,2 @@
+Your OTP code is {{otpCode}}. Valid for {{expiresIn}} minutes. Do not share this code with anyone.
+

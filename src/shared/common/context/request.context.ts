@@ -8,7 +8,8 @@ export interface IRequestContext {
   centerId?: string;
   ipAddress?: string;
   userAgent?: string;
-  requestId?: string;
+  requestId?: string; // Used as correlationId for request tracing
+  correlationId?: string; // Explicit correlationId for notification tracing (alias of requestId)
   locale: Locale;
   userProfileType?: ProfileType;
   userProfileId?: string;

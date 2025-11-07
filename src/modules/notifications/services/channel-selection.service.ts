@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { NotificationEventMapping } from '../config/notifications.map';
 import { LoggerService } from '@/shared/services/logger.service';
 import { UserService } from '@/modules/user/services/user.service';
+import { UserRepository } from '@/modules/user/repositories/user.repository';
+import { In } from 'typeorm';
+import { Config } from '@/shared/config/config';
 
 interface EventContext {
   priority?: number;
@@ -22,20 +23,14 @@ export class ChannelSelectionService {
 
   constructor(
     private readonly userService: UserService,
+    private readonly userRepository: UserRepository,
     private readonly logger: LoggerService,
-    private readonly config: ConfigService,
   ) {
     // Cache TTL: 1 hour (in milliseconds)
     this.cacheTTL = 60 * 60 * 1000;
-    // Inactivity threshold: 24 hours by default
+    // Inactivity threshold from config
     this.inactivityThresholdHours =
-      parseInt(
-        this.config.get<string>(
-          'NOTIFICATION_INACTIVITY_THRESHOLD_HOURS',
-          '24',
-        ),
-        10,
-      ) || 24;
+      Config.notification.inactivityThresholdHours;
   }
 
   /**
@@ -45,81 +40,54 @@ export class ChannelSelectionService {
     userId: string,
     baseChannels: NotificationChannel[],
     eventContext: EventContext,
-    mapping: NotificationEventMapping,
+    priority?: number,
+    requiresAudit?: boolean,
   ): Promise<NotificationChannel[]> {
     try {
       // Start with base channels
       let selectedChannels = [...baseChannels];
+      const effectivePriority = priority ?? eventContext.priority ?? 0;
+
+      // Helper to check if external channels exist
+      const hasExternalChannel = () =>
+        selectedChannels.includes(NotificationChannel.SMS) ||
+        selectedChannels.includes(NotificationChannel.EMAIL) ||
+        selectedChannels.includes(NotificationChannel.WHATSAPP);
 
       // Check if user is active
       const isActive = await this.isUserActive(userId);
 
-      // If user is inactive and has IN_APP in channels, prefer SMS/EMAIL
+      // Rule 1: Inactive users - prefer external channels over IN_APP
       if (!isActive && selectedChannels.includes(NotificationChannel.IN_APP)) {
-        // For inactive users, prioritize external channels
-        const hasExternalChannel =
-          selectedChannels.includes(NotificationChannel.SMS) ||
-          selectedChannels.includes(NotificationChannel.EMAIL) ||
-          selectedChannels.includes(NotificationChannel.WHATSAPP);
-
-        if (hasExternalChannel) {
-          // Remove IN_APP for inactive users if external channels available
+        if (hasExternalChannel()) {
           selectedChannels = selectedChannels.filter(
             (ch) => ch !== NotificationChannel.IN_APP,
           );
           this.logger.debug(
             `User ${userId} is inactive, prioritizing external channels over IN_APP`,
             'ChannelSelectionService',
-            {
-              userId,
-              isActive,
-              selectedChannels,
-            },
+            { userId, isActive, selectedChannels },
           );
         }
       }
 
-      // For critical events (priority >= 8), force SMS/EMAIL even if IN_APP enabled
-      if (
-        eventContext.priority &&
-        eventContext.priority >= 8 &&
-        selectedChannels.includes(NotificationChannel.IN_APP)
-      ) {
-        const shouldForce = this.shouldForceUrgentChannel(
-          eventContext.priority,
-          selectedChannels,
+      // Rule 2: Critical events (priority >= 8) - ensure external channel exists
+      if (effectivePriority >= 8 && !hasExternalChannel()) {
+        // Add SMS as fallback for critical events if no external channel
+        selectedChannels.push(NotificationChannel.SMS);
+        this.logger.debug(
+          `Critical event (priority ${effectivePriority}), added SMS channel`,
+          'ChannelSelectionService',
+          { userId, priority: effectivePriority, selectedChannels },
         );
-        if (shouldForce) {
-          // Ensure at least one external channel for critical events
-          if (
-            !selectedChannels.includes(NotificationChannel.SMS) &&
-            !selectedChannels.includes(NotificationChannel.EMAIL) &&
-            !selectedChannels.includes(NotificationChannel.WHATSAPP)
-          ) {
-            // Add SMS as fallback for critical events
-            selectedChannels.push(NotificationChannel.SMS);
-            this.logger.debug(
-              `Critical event (priority ${eventContext.priority}), added SMS channel`,
-              'ChannelSelectionService',
-              {
-                userId,
-                priority: eventContext.priority,
-                selectedChannels,
-              },
-            );
-          }
-        }
       }
 
-      // If selection fails or results in empty array, fallback to baseChannels
+      // Ensure we don't return empty array
       if (selectedChannels.length === 0) {
         this.logger.warn(
           `Channel selection resulted in empty array, using baseChannels fallback`,
           'ChannelSelectionService',
-          {
-            userId,
-            baseChannels,
-          },
+          { userId, baseChannels },
         );
         return baseChannels;
       }
@@ -130,13 +98,8 @@ export class ChannelSelectionService {
         `Failed to select optimal channels for user ${userId}`,
         error instanceof Error ? error.stack : undefined,
         'ChannelSelectionService',
-        {
-          userId,
-          baseChannels,
-        },
+        { userId, baseChannels },
       );
-
-      // Fallback to baseChannels
       return baseChannels;
     }
   }
@@ -201,24 +164,6 @@ export class ChannelSelectionService {
   }
 
   /**
-   * Determine if urgent channels should be forced for critical events
-   */
-  shouldForceUrgentChannel(
-    priority: number,
-    channels: NotificationChannel[],
-  ): boolean {
-    // Priority >= 8 requires external channel
-    if (priority >= 8) {
-      const hasExternalChannel =
-        channels.includes(NotificationChannel.SMS) ||
-        channels.includes(NotificationChannel.EMAIL) ||
-        channels.includes(NotificationChannel.WHATSAPP);
-      return !hasExternalChannel;
-    }
-    return false;
-  }
-
-  /**
    * Batch check user activity for multiple users (performance optimization)
    */
   async batchCheckUserActivity(
@@ -237,44 +182,41 @@ export class ChannelSelectionService {
       }
     }
 
-    // Batch query for uncached users (fetch individually for now)
-    // TODO: Implement batch query if UserService.adds batch find method
+    // Batch query for uncached users
     if (uncachedUserIds.length > 0) {
       try {
         const now = Date.now();
         const thresholdMs = this.inactivityThresholdHours * 60 * 60 * 1000;
 
-        // Fetch users individually (can be optimized with batch query later)
-        await Promise.all(
-          uncachedUserIds.map(async (userId) => {
-            try {
-              const user = await this.userService.findOne(userId);
-              if (user) {
-                const lastActivity = (user as any).lastLogin || user.updatedAt;
-                const isActive = lastActivity
-                  ? now - new Date(lastActivity).getTime() < thresholdMs
-                  : false;
+        // Fetch users in batch using repository
+        const users = await this.userRepository.findMany({
+          where: {
+            id: In(uncachedUserIds),
+          },
+          select: ['id', 'updatedAt'],
+        });
 
-                result.set(userId, isActive);
+        // Process batch results
+        const userMap = new Map(users.map((user) => [user.id, user]));
 
-                // Cache result
-                this.activityCache.set(userId, {
-                  isActive,
-                  timestamp: now,
-                });
-              } else {
-                result.set(userId, false);
-              }
-            } catch (err) {
-              // Individual user fetch failed, mark as inactive
-              result.set(userId, false);
-            }
-          }),
-        );
-
-        // Mark any remaining uncached users as inactive
         for (const userId of uncachedUserIds) {
-          if (!result.has(userId)) {
+          const user = userMap.get(userId);
+          if (user) {
+            // Use updatedAt as last activity indicator
+            const lastActivity = user.updatedAt;
+            const isActive = lastActivity
+              ? now - new Date(lastActivity).getTime() < thresholdMs
+              : false;
+
+            result.set(userId, isActive);
+
+            // Cache result
+            this.activityCache.set(userId, {
+              isActive,
+              timestamp: now,
+            });
+          } else {
+            // User not found, mark as inactive
             result.set(userId, false);
           }
         }

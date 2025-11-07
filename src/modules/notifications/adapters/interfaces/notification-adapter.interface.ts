@@ -11,7 +11,9 @@ import {
  * Base interface for all notification adapters
  * Each adapter implementation should use a specific channel payload type
  */
-export interface NotificationAdapter<T extends NotificationPayload = NotificationPayload> {
+export interface NotificationAdapter<
+  T extends NotificationPayload = NotificationPayload,
+> {
   send(payload: T): Promise<void>;
 }
 

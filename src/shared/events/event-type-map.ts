@@ -56,6 +56,7 @@ import { CreateStaffEvent } from '@/modules/staff/events/staff.events';
 import {
   PasswordResetRequestedEvent,
   EmailVerificationRequestedEvent,
+  OtpSentEvent,
 } from '@/modules/auth/events/auth.events';
 
 // Import event enums for type safety
@@ -84,7 +85,7 @@ export type CommandTypeMap = Record<string, never>;
  * Event Type Map
  * Maps event names to their event class types.
  * Events represent facts (what happened).
- * 
+ *
  * Uses enum values for type safety - ensures all keys match the enum definitions.
  */
 export type EventTypeMap = {
@@ -140,6 +141,7 @@ export type EventTypeMap = {
   // Additional Auth Events
   [AuthEvents.PASSWORD_RESET_REQUESTED]: PasswordResetRequestedEvent;
   [AuthEvents.EMAIL_VERIFICATION_REQUESTED]: EmailVerificationRequestedEvent;
+  [AuthEvents.OTP_SENT]: OtpSentEvent;
 };
 
 /**

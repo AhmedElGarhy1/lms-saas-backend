@@ -1,18 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import {
   AuthenticationFailedException,
   ResourceNotFoundException,
   BusinessLogicException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+import { Config } from '@/shared/config/config';
 import { UserService } from '../../user/services/user.service';
-import { EmailVerificationService } from './email-verification.service';
-import { PasswordResetService } from './password-reset.service';
+import { VerificationService } from './verification.service';
 // import { TwoFactorService } from './two-factor.service';
 import * as bcrypt from 'bcrypt';
 import { LoginRequestDto } from '../dto/login.dto';
-import { SignupRequestDto } from '../dto/signup.dto';
 import { ForgotPasswordRequestDto } from '../dto/forgot-password.dto';
 import { ResetPasswordRequestDto } from '../dto/reset-password.dto';
 import { VerifyEmailRequestDto } from '../dto/verify-email.dto';
@@ -22,6 +24,8 @@ import { User } from '../../user/entities/user.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
+import { VerificationType } from '../enums/verification-type.enum';
+import { NotificationChannel } from '../../notifications/enums/notification-channel.enum';
 import {
   UserLoggedInEvent,
   UserLoggedOutEvent,
@@ -37,11 +41,9 @@ import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.
 export class AuthService {
   constructor(
     private readonly userService: UserService,
-    private readonly emailVerificationService: EmailVerificationService,
-    private readonly passwordResetService: PasswordResetService,
+    private readonly verificationService: VerificationService,
     // private readonly twoFactorService: TwoFactorService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
     private readonly logger: LoggerService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
@@ -85,6 +87,16 @@ export class AuthService {
       );
       throw new AuthenticationFailedException('User data is invalid');
     }
+
+    // Check if phone is verified (if required)
+    // TODO: Make this configurable via environment variable
+    // For now, phone verification is optional for login
+    // if (!user.phoneVerified) {
+    //   throw new BusinessLogicException(
+    //     'Phone not verified',
+    //     'Please verify your phone number before logging in',
+    //   );
+    // }
 
     if (!user.isActive) {
       this.logger.warn(`Login attempt for inactive user: ${dto.emailOrPhone}`);
@@ -152,11 +164,7 @@ export class AuthService {
     // Emit login event for activity logging
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.USER_LOGGED_IN,
-      new UserLoggedInEvent(
-        user.id!,
-        user.email!,
-        this.buildActorFromUser(user),
-      ),
+      new UserLoggedInEvent(user.id || '', user.email || '', null as any),
     );
 
     return {
@@ -224,52 +232,13 @@ export class AuthService {
     };
   }
 
-  async signup(_dto: SignupRequestDto) {
-    // // Check if user already exists
-    // const existingUser = await this.userService.findUserByEmail(dto.email);
-    // if (existingUser) {
-    //   throw new ConflictException('User with this email already exists');
-    // }
-    // // Create user
-    // const user = await this.userService.createUser({
-    //   email: dto.email,
-    //   password: dto.password,
-    //   name: dto.name,
-    //   // TODO: add profile correctly
-    //   profile: {
-    //     phone: '',
-    //     address: '',
-    //     dateOfBirth: '',
-    //   },
-    // });
-    // // Send email verification
-    // await this.emailVerificationService.sendVerificationEmail(
-    //   user.id,
-    //   user.email,
-    // );
-    // this.logger.log(`User signed up: ${user.email}`, 'AuthService', {
-    //   userId: user.id,
-    //   email: user.email,
-    // });
-    // return {
-    //   message:
-    //     'User created successfully. Please check your email to verify your account.',
-    //   user: {
-    //     id: user.id,
-    //     email: user.email,
-    //     name: user.name,
-    //     isActive: user.isActive,
-    //   },
-    // };
-  }
-
   async verifyEmail(dto: VerifyEmailRequestDto) {
-    const { userId, email } = await this.emailVerificationService.verifyEmail(
+    const { userId, email } = await this.verificationService.verifyToken(
       dto.token,
     );
 
-    // Email verification is handled by the EmailVerificationService
-    // No need to update user entity as verification is tracked by token deletion
+    // Update user emailVerified flag
+    await this.userService.update(userId, { emailVerified: true });
 
     this.logger.log(`Email verified for user: ${email}`, 'AuthService', {
       userId,
@@ -285,23 +254,148 @@ export class AuthService {
     };
   }
 
-  async forgotPassword(dto: ForgotPasswordRequestDto) {
-    // Password reset service will emit the event
-    await this.passwordResetService.sendPasswordResetEmail(dto.email);
+  async requestEmailVerification(
+    userId?: string,
+    email?: string,
+  ): Promise<void> {
+    let user;
+
+    // Find user by userId or email
+    if (userId) {
+      user = await this.userService.findOne(userId);
+    } else if (email) {
+      user = await this.userService.findUserByEmail(email);
+    } else {
+      throw new BadRequestException('Either userId or email is required');
+    }
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.email) {
+      throw new BadRequestException('User does not have an email address');
+    }
+
+    // Use user's stored email
+    await this.verificationService.sendEmailVerification(
+      user.id || '',
+      user.email,
+      user.name,
+    );
+  }
+
+  async requestPhoneVerification(
+    userId?: string,
+    phone?: string,
+  ): Promise<void> {
+    let user;
+
+    // Find user by userId or phone
+    if (userId) {
+      user = await this.userService.findOne(userId);
+    } else if (phone) {
+      user = await this.userService.findUserByPhone(phone);
+    } else {
+      throw new BadRequestException('Either userId or phone is required');
+    }
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Use provided phone or user's stored phone (formatted correctly)
+    const phoneToUse = phone || user.getPhone();
+    if (!phoneToUse) {
+      throw new BadRequestException('User does not have a phone number');
+    }
+
+    // Send phone verification OTP
+    await this.verificationService.sendPhoneVerification(
+      user.id || '',
+      phoneToUse,
+    );
+  }
+
+  async verifyPhone(code: string, userId: string): Promise<void> {
+    const { userId: verifiedUserId } =
+      await this.verificationService.verifyCode(
+        code,
+        VerificationType.PHONE_VERIFICATION,
+        NotificationChannel.SMS,
+        userId,
+      );
+
+    // Update user phoneVerified flag
+    await this.userService.update(verifiedUserId, { phoneVerified: true });
+
+    this.logger.log(
+      `Phone verified for user: ${verifiedUserId}`,
+      'AuthService',
+      {
+        userId: verifiedUserId,
+      },
+    );
+  }
+
+  async forgotPassword(dto: ForgotPasswordRequestDto, actor: ActorUser) {
+    // Find user by email or phone
+    let user;
+    if (actor) {
+      user = actor;
+    } else if (dto.email) {
+      user = await this.userService.findUserByEmail(dto.email);
+    } else if (dto.phone) {
+      user = await this.userService.findUserByPhone(dto.phone);
+    }
+
+    if (!user) {
+      // Don't reveal if user exists or not for security
+      this.logger.warn(
+        `Password reset requested for non-existent user`,
+        'AuthService',
+      );
+      return {
+        message: 'If an account exists, a password reset link has been sent.',
+      };
+    }
+
+    // Determine channel if not provided
+    let channel = dto.channel as NotificationChannel;
+    if (!channel) {
+      // Auto-detect channel based on input
+      if (dto.email) {
+        channel = NotificationChannel.EMAIL;
+      } else if (dto.phone) {
+        channel = NotificationChannel.SMS; // Default to SMS for phone
+      } else {
+        throw new BadRequestException('Either email or phone is required');
+      }
+    }
+
+    // Send password reset via selected channel (will use user's stored email/phone)
+    await this.verificationService.sendPasswordReset(user.id, channel);
 
     return {
       message:
-        'If an account with this email exists, a password reset link has been sent.',
+        'If an account exists, a password reset link has been sent via the selected channel.',
     };
   }
 
   async resetPassword(dto: ResetPasswordRequestDto) {
     // Use newPassword from the DTO
-    await this.passwordResetService.resetPassword(dto.token, dto.newPassword);
-
-    // Get user ID from the token (we'll need to modify password reset service to return it)
-    // For now, we'll emit the event without user ID
-    // TODO: Modify password reset service to return user ID
+    // Check if it's a token or code
+    if (dto.token) {
+      await this.verificationService.resetPassword(dto.token, dto.newPassword);
+    } else if (dto.code) {
+      await this.verificationService.resetPasswordByCode(
+        dto.code,
+        dto.newPassword,
+        dto.userId,
+      );
+    } else {
+      throw new Error('Either token or code is required');
+    }
 
     return {
       success: true,
@@ -483,13 +577,13 @@ export class AuthService {
     const accessToken = this.jwtService.sign(
       { ...payload, type: 'access' },
       {
-        expiresIn: this.configService.get('JWT_EXPIRES_IN'),
+        expiresIn: Config.jwt.expiresIn,
       },
     );
     const refreshToken = this.jwtService.sign(
       { ...payload, type: 'refresh' },
       {
-        expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN'),
+        expiresIn: Config.jwt.refreshExpiresIn,
       },
     );
 
@@ -499,21 +593,11 @@ export class AuthService {
     };
   }
 
-  decodeToken(token: string) {
+  decodeToken(token: string): unknown {
     return this.jwtService.decode(token);
   }
 
-  async refresh(userId: string, refreshToken: string, actor?: ActorUser) {
-    // Build actor if not provided
-    let finalActor = actor;
-    if (!finalActor) {
-      const user = await this.userService.findOne(userId, true);
-      if (!user) {
-        throw new AuthenticationFailedException('User not found');
-      }
-      finalActor = this.buildActorFromUser(user);
-    }
-
+  async refresh(userId: string) {
     // Get user (validation already done by strategy)
     const user = await this.userService.findOne(userId, true);
     if (!user) {
@@ -531,31 +615,9 @@ export class AuthService {
     // Emit event after work is done
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.TOKEN_REFRESHED,
-      new TokenRefreshedEvent(userId, finalActor),
+      new TokenRefreshedEvent(userId, null as any),
     );
 
     return tokens;
-  }
-
-  /**
-   * Build actor from user ID - helper for command handlers
-   */
-  async buildActorFromUserId(userId: string): Promise<ActorUser> {
-    const user = await this.userService.findOne(userId, true);
-    if (!user) {
-      throw new AuthenticationFailedException('User not found');
-    }
-    return this.buildActorFromUser(user);
-  }
-
-  private buildActorFromUser(user: User): ActorUser {
-    // For login events, we create a minimal ActorUser with just the user ID
-    // The activity log will use this for tracking who performed the action
-    return {
-      ...user,
-      profileType: 'USER' as any, // Will be updated when we have profile info
-      userProfileId: user.id!, // Temporary - will be updated when we have profile info
-      centerId: undefined, // Will be updated when we have profile info
-    } as ActorUser;
   }
 }

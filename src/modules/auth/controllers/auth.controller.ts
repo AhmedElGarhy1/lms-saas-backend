@@ -1,10 +1,12 @@
 import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { LoginRequestDto } from '../dto/login.dto';
-import { SignupRequestDto } from '../dto/signup.dto';
 import { ForgotPasswordRequestDto } from '../dto/forgot-password.dto';
 import { ResetPasswordRequestDto } from '../dto/reset-password.dto';
 import { VerifyEmailRequestDto } from '../dto/verify-email.dto';
+import { VerifyPhoneRequestDto } from '../dto/verify-phone.dto';
+import { RequestEmailVerificationRequestDto } from '../dto/request-email-verification.dto';
+import { RequestPhoneVerificationRequestDto } from '../dto/request-phone-verification.dto';
 import {
   TwoFASetupRequestDto,
   TwoFAVerifyRequestDto,
@@ -52,19 +54,12 @@ export class AuthController {
   @ApiBody({ type: LoginRequestDto })
   @Transactional()
   async login(@Body() loginDto: LoginRequestDto) {
-    try {
-      const result = await this.authService.login(loginDto);
+    const result = await this.authService.login(loginDto);
 
-      return ControllerResponse.success(
-        result,
-        this.i18n.translate('success.login'),
-      );
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-
-      throw error;
-    }
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.login'),
+    );
   }
 
   @Public()
@@ -72,14 +67,11 @@ export class AuthController {
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 3, ttl: 300000 } }) // 3 attempts per 5 minutes
   @CreateApiResponses('User registration')
-  @ApiBody({ type: SignupRequestDto })
   @Transactional()
-  async signup(@Body() signupDto: SignupRequestDto) {
-    const result = await this.authService.signup(signupDto);
-
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('success.userRegistered'),
+  signup(): never {
+    // Signup is not implemented - users should be created through user management endpoints
+    throw new Error(
+      'Signup is not implemented. Please use user management endpoints.',
     );
   }
 
@@ -89,9 +81,8 @@ export class AuthController {
   @ReadApiResponses('Refresh access token')
   async refreshToken(@Req() req: AuthenticatedRequest) {
     const userId = req.user.sub;
-    const refreshToken = req.user.refreshToken;
 
-    const result = await this.authService.refresh(userId, refreshToken);
+    const result = await this.authService.refresh(userId);
     return ControllerResponse.success(
       result,
       this.i18n.translate('success.tokenRefreshed'),
@@ -112,12 +103,61 @@ export class AuthController {
     );
   }
 
+  @Post('request-email-verification')
+  @Public()
+  @UpdateApiResponses('Request email verification')
+  @ApiBody({ type: RequestEmailVerificationRequestDto })
+  async requestEmailVerification(
+    @Body() dto: RequestEmailVerificationRequestDto,
+  ) {
+    await this.authService.requestEmailVerification(dto.userId, dto.email);
+
+    return ControllerResponse.success(
+      { message: 'Email verification request sent' },
+      this.i18n.translate('success.emailVerified'),
+    );
+  }
+
+  @Post('request-phone-verification')
+  @Public()
+  @UpdateApiResponses('Request phone verification')
+  @ApiBody({ type: RequestPhoneVerificationRequestDto })
+  async requestPhoneVerification(
+    @Body() dto: RequestPhoneVerificationRequestDto,
+  ) {
+    await this.authService.requestPhoneVerification(dto.userId, dto.phone);
+
+    return ControllerResponse.success(
+      { message: 'Phone verification request sent' },
+      this.i18n.translate('success.emailVerified'), // Use existing translation key
+    );
+  }
+
+  @Post('verify-phone')
+  @UpdateApiResponses('Verify phone number with OTP code')
+  @ApiBody({ type: VerifyPhoneRequestDto })
+  @Transactional()
+  async verifyPhone(
+    @Body() dto: VerifyPhoneRequestDto,
+    @GetUser() user: ActorUser,
+  ) {
+    await this.authService.verifyPhone(dto.code, dto.userId || user.id);
+
+    return ControllerResponse.success(
+      { message: 'Phone verified successfully' },
+      this.i18n.translate('success.emailVerified'), // Use existing translation key
+    );
+  }
+
   @Post('forgot-password')
   @Public()
   @UpdateApiResponses('Request password reset')
   @ApiBody({ type: ForgotPasswordRequestDto })
-  async forgotPassword(@Body() dto: ForgotPasswordRequestDto) {
-    const result = await this.authService.forgotPassword(dto);
+  async forgotPassword(
+    @Body() dto: ForgotPasswordRequestDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.authService.forgotPassword(dto, actor);
 
     return ControllerResponse.success(
       result,
@@ -162,19 +202,12 @@ export class AuthController {
   @ApiBody({ type: TwoFAVerifyRequestDto })
   @Transactional()
   async verify2FA(@Body() dto: TwoFactorRequest) {
-    try {
-      const result = await this.authService.verify2FA(dto);
+    const result = await this.authService.verify2FA(dto);
 
-      return ControllerResponse.success(
-        result,
-        this.i18n.translate('success.twoFactorVerified'),
-      );
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-
-      throw error;
-    }
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.twoFactorVerified'),
+    );
   }
 
   @Post('logout')

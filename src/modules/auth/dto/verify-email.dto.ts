@@ -1,12 +1,6 @@
-import { IsEmail, IsString } from 'class-validator';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { User } from '@/modules/user/entities/user.entity';
+import { IsString } from 'class-validator';
 
 export class VerifyEmailRequestDto {
-  @IsEmail()
-  @Exists(User, 'email')
-  email: string;
-
   @IsString()
   token: string;
 }

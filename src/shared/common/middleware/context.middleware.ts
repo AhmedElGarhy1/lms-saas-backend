@@ -17,7 +17,7 @@ export class ContextMiddleware implements NestMiddleware {
     // Extract User-Agent
     const userAgent = req.get('user-agent') || 'Unknown';
 
-    // Generate unique request ID for tracking
+    // Generate unique request ID for tracking (used as correlationId)
     const requestId = randomUUID();
 
     RequestContext.set({
@@ -25,6 +25,7 @@ export class ContextMiddleware implements NestMiddleware {
       ipAddress,
       userAgent,
       requestId,
+      correlationId: requestId, // Explicit correlationId for notification tracing
     });
     next();
   }

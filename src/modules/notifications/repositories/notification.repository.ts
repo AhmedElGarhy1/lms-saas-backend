@@ -131,7 +131,9 @@ export class NotificationRepository extends BaseRepository<Notification> {
       where: { id: notificationId, userId },
     });
     if (!notification) {
-      throw new ResourceNotFoundException('Notification not found or access denied');
+      throw new ResourceNotFoundException(
+        'Notification not found or access denied',
+      );
     }
     await repo.update({ id: notificationId }, { readAt: new Date() });
   }

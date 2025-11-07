@@ -64,6 +64,7 @@
 [ ] implement access all resources permission
 [ ] consider using prisma instead of typeorm
 [ ] check create user optionality
+[ ] fix actor is required in all activity logs conside made system activities
 
 [ ] disable center actions in case of inactive
 Caching in RecipientResolverService - Cache frequent center queries (centerId + profileType) for a few minutes -⚙️ Medium - When centers have 1k+ users
@@ -82,3 +83,5 @@ Caching in RecipientResolverService - Cache frequent center queries (centerId + 
 [ ] update notifications to cover all existing modules events
 [ ] (frontend) Data flow: ⚠️ Needs standardization (28 violations)
 [ ] notifications register user connection first when he opens (there is a problem in sending notifications because of redis not found user connection)
+
+[ ] implement DLQ for Queue

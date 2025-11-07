@@ -52,4 +52,3 @@ export function isPushPayload(
 ): payload is PushNotificationPayload {
   return payload.channel === NotificationChannel.PUSH;
 }
-

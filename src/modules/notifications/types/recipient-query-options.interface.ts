@@ -5,4 +5,3 @@ export interface RecipientQueryOptions {
   excludeUserIds?: string[];
   skipSelfUserId?: string;
 }
-

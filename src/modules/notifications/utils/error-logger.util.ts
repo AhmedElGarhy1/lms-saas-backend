@@ -29,16 +29,11 @@ export class NotificationErrorLogger {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const stack = error instanceof Error ? error.stack : undefined;
 
-    logger.error(
-      message,
-      stack,
-      service,
-      {
-        ...context,
-        error: errorMessage,
-        timestamp: new Date().toISOString(),
-      },
-    );
+    logger.error(message, stack, service, {
+      ...context,
+      error: errorMessage,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   /**
@@ -50,14 +45,10 @@ export class NotificationErrorLogger {
     service: string,
     context: ErrorLogContext,
   ): void {
-    logger.warn(
-      message,
-      service,
-      {
-        ...context,
-        timestamp: new Date().toISOString(),
-      },
-    );
+    logger.warn(message, service, {
+      ...context,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   /**
@@ -69,14 +60,9 @@ export class NotificationErrorLogger {
     service: string,
     context: ErrorLogContext,
   ): void {
-    logger.debug(
-      message,
-      service,
-      {
-        ...context,
-        timestamp: new Date().toISOString(),
-      },
-    );
+    logger.debug(message, service, {
+      ...context,
+      timestamp: new Date().toISOString(),
+    });
   }
 }
-

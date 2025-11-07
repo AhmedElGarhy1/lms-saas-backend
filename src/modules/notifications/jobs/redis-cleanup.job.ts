@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { RedisService } from '@/shared/modules/redis/redis.service';
-import { ConfigService } from '@nestjs/config';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { LoggerService } from '@/shared/services/logger.service';
+import { Config } from '@/shared/config/config';
 
 /**
  * Periodic job to clean up stale socket connections in Redis.
@@ -26,12 +26,10 @@ export class RedisCleanupJob {
 
   constructor(
     private readonly redisService: RedisService,
-    private readonly configService: ConfigService,
     private readonly metricsService: NotificationMetricsService,
     private readonly loggerService: LoggerService,
   ) {
-    this.redisKeyPrefix =
-      this.configService.get<string>('REDIS_KEY_PREFIX') || 'dev';
+    this.redisKeyPrefix = Config.redis.keyPrefix;
   }
 
   /**
