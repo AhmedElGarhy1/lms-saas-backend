@@ -3,6 +3,7 @@ export enum NotificationType {
   OTP = 'OTP',
   PASSWORD_RESET = 'PASSWORD_RESET',
   EMAIL_VERIFICATION = 'EMAIL_VERIFICATION',
+  PHONE_VERIFIED = 'PHONE_VERIFIED',
 
   // Center notifications
   CENTER_CREATED = 'CENTER_CREATED',

@@ -4,6 +4,7 @@ export enum AuthEvents {
   TOKEN_REFRESHED = 'token.refreshed',
   PASSWORD_CHANGED = 'password.changed',
   EMAIL_VERIFIED = 'email.verified',
+  PHONE_VERIFIED = 'phone.verified',
   PASSWORD_RESET_REQUESTED = 'password.reset.requested',
   EMAIL_VERIFICATION_REQUESTED = 'email.verification.requested',
   OTP = 'auth.otp.sent',

@@ -4,10 +4,7 @@ import * as Handlebars from 'handlebars';
 import { z } from 'zod';
 import { LoggerService } from '@/shared/services/logger.service';
 import { TemplateCacheService } from './template-cache.service';
-import { NotificationEvent } from '../types/notification-event.types';
 import { TemplateRenderingException } from '../exceptions/notification.exceptions';
-import { NotificationType } from '../enums/notification-type.enum';
-import { ValidateEventForNotification } from '../types/event-validation.types';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import {
   getChannelExtension,
@@ -23,106 +20,12 @@ export class NotificationTemplateService {
   ) {}
 
   /**
-   * Ensure all required template fields have defaults
-   * @param event - Event object containing data
-   * @param mapping - Notification event mapping configuration
-   * @param eventName - Name of the event
-   * @returns Template data with all required fields filled
-   */
-  ensureTemplateData<
-    TNotificationType extends NotificationType = NotificationType,
-  >(
-    event: ValidateEventForNotification<
-      NotificationEvent | Record<string, unknown>,
-      TNotificationType
-    >,
-    mapping: { type: TNotificationType },
-    eventName: TNotificationType,
-  ): Record<string, unknown> {
-    const eventObj = event as Record<string, unknown>;
-    const templateData: Record<string, unknown> = {
-      ...eventObj,
-      eventName,
-    };
-
-    // Map resetUrl/verificationUrl to link for template consistency
-    if (typeof eventObj.resetUrl === 'string' && eventObj.resetUrl) {
-      templateData.link = eventObj.resetUrl;
-      templateData.actionUrl = eventObj.resetUrl; // For IN_APP notifications
-      templateData.expiresIn =
-        (typeof eventObj.expiresIn !== 'undefined'
-          ? eventObj.expiresIn
-          : undefined) || '1 hour'; // Default, can be overridden
-      templateData.name =
-        (typeof eventObj.name === 'string' ? eventObj.name : undefined) ||
-        'User'; // Fallback name
-    }
-    if (
-      typeof eventObj.verificationUrl === 'string' &&
-      eventObj.verificationUrl
-    ) {
-      templateData.link = eventObj.verificationUrl;
-      templateData.actionUrl = eventObj.verificationUrl; // For IN_APP notifications
-      templateData.expiresIn =
-        (typeof eventObj.expiresIn !== 'undefined'
-          ? eventObj.expiresIn
-          : undefined) || '24 hours'; // Default, can be overridden
-      templateData.name =
-        (typeof eventObj.name === 'string' ? eventObj.name : undefined) ||
-        'User'; // Use name if provided, otherwise default
-    }
-    if (typeof eventObj.otpCode !== 'undefined' && eventObj.otpCode) {
-      templateData.otpCode = eventObj.otpCode;
-      templateData.otp = eventObj.otpCode; // Map otpCode to otp for SMS/WhatsApp templates
-      const expiresInValue =
-        typeof eventObj.expiresIn === 'number'
-          ? eventObj.expiresIn
-          : typeof eventObj.expiresIn === 'string'
-            ? parseInt(eventObj.expiresIn, 10)
-            : 10;
-      templateData.expiresIn = `${expiresInValue} minutes`;
-      templateData.name =
-        (typeof eventObj.name === 'string' ? eventObj.name : undefined) ||
-        'User'; // Default name, should be fetched from user if needed
-    }
-
-    // Ensure default fields are present
-    if (!templateData.name) {
-      templateData.name =
-        (typeof eventObj.name === 'string' ? eventObj.name : undefined) ||
-        'User';
-    }
-    if (!templateData.message) {
-      templateData.message =
-        (typeof eventObj.message === 'string' ? eventObj.message : undefined) ||
-        'You have a new notification';
-    }
-    if (!templateData.link && !templateData.actionUrl) {
-      // Try to extract link from various event properties
-      templateData.link =
-        (typeof eventObj.link === 'string' ? eventObj.link : undefined) ||
-        (typeof eventObj.url === 'string' ? eventObj.url : undefined) ||
-        (typeof eventObj.actionUrl === 'string'
-          ? eventObj.actionUrl
-          : undefined) ||
-        (typeof eventObj.redirectUrl === 'string'
-          ? eventObj.redirectUrl
-          : undefined) ||
-        '';
-      templateData.actionUrl = templateData.link;
-    }
-
-    return templateData;
-  }
-
-  /**
    * Schema for validating IN_APP JSON templates
    * Data comes from JSON template files, not hardcoded in service
    */
   private readonly inAppTemplateSchema = z.object({
     title: z.string(),
     message: z.string(),
-    priority: z.number().optional(),
     expiresAt: z.string().optional(),
   });
 

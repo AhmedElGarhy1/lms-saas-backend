@@ -381,7 +381,7 @@ export class VerificationService {
       channel: NotificationChannel.EMAIL,
     });
 
-    const verificationUrl = `${Config.app.frontendUrl}/verify-email?token=${verificationToken.token}`;
+    const link = `${Config.app.frontendUrl}/verify-email?token=${verificationToken.token}`;
 
     // Calculate remaining time for existing token
     const now = new Date();
@@ -399,7 +399,7 @@ export class VerificationService {
         userId,
         email,
         verificationToken.token,
-        verificationUrl,
+        link,
         name,
       ),
     );
@@ -461,7 +461,7 @@ export class VerificationService {
       channel,
     });
 
-    const resetUrl = `${Config.app.frontendUrl}/reset-password?token=${verificationToken.token}`;
+    const link = `${Config.app.frontendUrl}/reset-password?token=${verificationToken.token}`;
 
     // Calculate remaining time for existing token
     const now = new Date();
@@ -481,7 +481,7 @@ export class VerificationService {
           userId,
           user.name,
           verificationToken.token,
-          resetUrl,
+          link,
         ),
       );
     } else if (

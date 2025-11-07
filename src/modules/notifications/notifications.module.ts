@@ -27,6 +27,7 @@ import { NotificationGateway } from './gateways/notification.gateway';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { UserModule } from '../user/user.module';
+import { CentersModule } from '@/modules/centers/centers.module';
 import { RedisCleanupJob } from './jobs/redis-cleanup.job';
 import { TemplateCacheService } from './services/template-cache.service';
 import { NotificationMetricsService } from './services/notification-metrics.service';
@@ -48,6 +49,7 @@ import { NotificationAlertService } from './services/notification-alert.service'
   imports: [
     TypeOrmModule.forFeature([NotificationLog, Notification]),
     UserModule,
+    CentersModule,
     JwtModule,
     AuthModule,
     BullModule.registerQueueAsync({

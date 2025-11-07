@@ -57,6 +57,7 @@ import {
   PasswordResetRequestedEvent,
   EmailVerificationRequestedEvent,
   OtpEvent,
+  PhoneVerifiedEvent,
 } from '@/modules/auth/events/auth.events';
 
 // Import event enums for type safety
@@ -142,6 +143,7 @@ export type EventTypeMap = {
   [AuthEvents.PASSWORD_RESET_REQUESTED]: PasswordResetRequestedEvent;
   [AuthEvents.EMAIL_VERIFICATION_REQUESTED]: EmailVerificationRequestedEvent;
   [AuthEvents.OTP]: OtpEvent;
+  [AuthEvents.PHONE_VERIFIED]: PhoneVerifiedEvent;
 };
 
 /**

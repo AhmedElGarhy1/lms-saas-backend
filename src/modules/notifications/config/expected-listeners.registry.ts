@@ -12,6 +12,7 @@ export const EXPECTED_LISTENER_EVENTS: readonly EventType[] = [
   AuthEvents.OTP,
   AuthEvents.PASSWORD_RESET_REQUESTED,
   AuthEvents.EMAIL_VERIFICATION_REQUESTED,
+  AuthEvents.PHONE_VERIFIED,
 
   // Center events that should trigger notifications
   CenterEvents.CREATED,

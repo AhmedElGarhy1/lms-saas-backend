@@ -21,7 +21,7 @@ import { AudienceId } from '../types/audience.types';
  * - Rendering templates with proper error context
  *
  * Note: Variable names must match template variables exactly.
- * Event data transformations (e.g., resetUrl → link) are handled by ensureTemplateData before rendering.
+ * Events should use template-friendly property names (e.g., `link` instead of `resetUrl`).
  */
 @Injectable()
 export class NotificationRenderer {

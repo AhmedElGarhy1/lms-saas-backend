@@ -1,7 +1,5 @@
 {
   "title": "OTP Verification",
-  "message": "Your verification code is {{otpCode}}. Valid for {{expiresIn}} minutes.",
-  "actionUrl": null,
-  "priority": 4
+  "message": "Your verification code is {{otpCode}}. Valid for {{expiresIn}} minutes."
 }
 

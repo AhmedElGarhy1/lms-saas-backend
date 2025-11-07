@@ -9,7 +9,6 @@ interface BaseTemplateData {
   phone?: string;
   message?: string;
   link?: string;
-  actionUrl?: string;
   title?: string;
   expiresIn?: string;
   [key: string]: unknown;

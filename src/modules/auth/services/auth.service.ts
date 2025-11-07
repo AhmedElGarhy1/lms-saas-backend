@@ -33,6 +33,7 @@ import {
   TwoFactorSetupEvent,
   TwoFactorEnabledEvent,
   TwoFactorDisabledEvent,
+  PhoneVerifiedEvent,
 } from '@/modules/auth/events/auth.events';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
@@ -326,8 +327,28 @@ export class AuthService {
         userId,
       );
 
+    // Get user to get phone and create actor
+    const user = await this.userService.findOne(verifiedUserId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     // Update user phoneVerified flag
     await this.userService.update(verifiedUserId, { phoneVerified: true });
+
+    // Create actor from user (the user themselves is the actor)
+    const actor: ActorUser = {
+      ...user,
+      userProfileId: user.id,
+      profileType: 'USER' as any,
+      centerId: undefined,
+    } as ActorUser;
+
+    // Emit phone verified event (target user is the verified user, not the actor)
+    await this.typeSafeEventEmitter.emitAsync(
+      AuthEvents.PHONE_VERIFIED,
+      new PhoneVerifiedEvent(verifiedUserId, user.getPhone(), actor),
+    );
 
     this.logger.log(
       `Phone verified for user: ${verifiedUserId}`,

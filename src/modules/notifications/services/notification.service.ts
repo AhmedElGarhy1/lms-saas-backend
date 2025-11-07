@@ -458,25 +458,23 @@ export class NotificationService {
   }
 
   /**
-   * Pipeline Step 6: Prepare template data with defaults and IN_APP-specific fields
+   * Pipeline Step 6: Prepare template data with IN_APP-specific fields
    */
   private prepareTemplateData(
     context: Partial<NotificationProcessingContext>,
   ): void {
-    const { event, mapping, manifest, eventName, finalChannels } = context;
+    const { event, manifest, finalChannels } = context;
 
-    if (!event || !mapping || !manifest || !eventName || !finalChannels) {
+    if (!event || !manifest || !finalChannels) {
       return;
     }
 
-    // Prepare template data with link variable for auth events
-    const templateData = this.templateService.ensureTemplateData(
-      event,
-      mapping,
-      eventName,
-    );
+    // Use event data directly - no mapping needed
+    const templateData = {
+      ...(event as Record<string, unknown>),
+    };
 
-    // For IN_APP notifications, priority comes from manifest or template
+    // For IN_APP notifications, priority comes from manifest
     if (finalChannels.includes(NotificationChannel.IN_APP)) {
       templateData.priority = manifest.priority ?? 0;
     }
@@ -939,11 +937,7 @@ export class NotificationService {
             (typeof rendered.content === 'string'
               ? rendered.content
               : JSON.stringify(rendered.content)),
-          priority:
-            (inAppContent as Record<string, unknown>).priority ??
-            templateData.priority ??
-            manifest.priority ??
-            0,
+          priority: manifest.priority ?? 0,
           expiresAt: (inAppContent as Record<string, unknown>).expiresAt
             ? new Date(
                 (inAppContent as Record<string, unknown>).expiresAt as string,

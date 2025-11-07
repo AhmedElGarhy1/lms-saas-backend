@@ -157,7 +157,6 @@ export class TemplateCacheService {
       // Include key fields that affect rendering
       name: data.name,
       link: data.link,
-      actionUrl: data.actionUrl,
     };
     return JSON.stringify(stableData)
       .split('')

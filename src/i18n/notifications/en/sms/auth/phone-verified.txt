@@ -1,0 +1,2 @@
+Your phone number {{phone}} has been successfully verified. Thank you for verifying your account.
+

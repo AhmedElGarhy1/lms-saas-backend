@@ -1,7 +1,5 @@
 {
   "title": "Email Verification",
-  "message": "Please verify your email address by clicking the link below.",
-  "actionUrl": "{{link}}",
-  "priority": 3
+  "message": "Please verify your email address by clicking the link below."
 }
 

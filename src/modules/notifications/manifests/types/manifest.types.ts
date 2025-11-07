@@ -12,7 +12,7 @@ import { AudienceId } from '../../types/audience.types';
  * Defines template and required variables
  *
  * Note: Variables must match exactly what the template expects.
- * Event data transformations (e.g., resetUrl → link) are handled by ensureTemplateData.
+ * Events should use template-friendly property names directly (e.g., `link` instead of `resetUrl`).
  */
 export interface ChannelManifest {
   /**
@@ -24,7 +24,7 @@ export interface ChannelManifest {
   template?: NotificationTemplatePath;
   /** Email subject (required for EMAIL channel) */
   subject?: string;
-  /** Required template variables that must be present in template data (after ensureTemplateData transformation) */
+  /** Required template variables that must be present in event data */
   requiredVariables?: readonly string[];
 }
 

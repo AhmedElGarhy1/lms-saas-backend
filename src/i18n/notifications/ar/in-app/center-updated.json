@@ -1,7 +1,5 @@
 {
   "title": "تم تحديث معلومات المركز",
-  "message": "تم تحديث معلومات مركزك {{center.name}} بنجاح.",
-  "actionUrl": null,
-  "priority": 1
+  "message": "تم تحديث معلومات مركزك {{center.name}} بنجاح."
 }
 

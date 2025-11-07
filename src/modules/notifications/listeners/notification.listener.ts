@@ -12,12 +12,16 @@ import {
   PasswordResetRequestedEvent,
   EmailVerificationRequestedEvent,
   OtpEvent,
+  PhoneVerifiedEvent,
 } from '@/modules/auth/events/auth.events';
 import { ValidateEvent } from '../types/event-notification-mapping.types';
 import { RecipientInfo } from '../types/recipient-info.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationType } from '../enums/notification-type.enum';
 import { UserService } from '@/modules/user/services/user.service';
+import { CentersService } from '@/modules/centers/services/centers.service';
+import { NotificationManifestResolver } from '../manifests/registry/notification-manifest-resolver.service';
+import { NotificationEvent } from '../types/notification-event.types';
 
 @Injectable()
 export class NotificationListener {
@@ -25,7 +29,148 @@ export class NotificationListener {
     private readonly notificationService: NotificationService,
     private readonly logger: LoggerService,
     private readonly userService: UserService,
+    private readonly centersService: CentersService,
+    private readonly manifestResolver: NotificationManifestResolver,
   ) {}
+
+  /**
+   * Validate that event data contains all required template variables
+   * This provides early detection of missing data before rendering
+   * @param notificationType - Notification type
+   * @param audience - Audience identifier
+   * @param eventData - Event data to validate
+   * @returns Array of missing variable names (format: "channel:variable"), empty if all present
+   */
+  private validateEventData(
+    notificationType: NotificationType,
+    audience: string,
+    eventData: NotificationEvent | Record<string, unknown>,
+  ): string[] {
+    try {
+      const manifest = this.manifestResolver.getManifest(notificationType);
+      const audienceConfig = this.manifestResolver.getAudienceConfig(
+        manifest,
+        audience,
+      );
+
+      if (!audienceConfig) {
+        return [];
+      }
+
+      const missing: string[] = [];
+
+      // Check all channels for required variables
+      for (const [channel, channelConfig] of Object.entries(
+        audienceConfig.channels,
+      )) {
+        if (!channelConfig?.requiredVariables) {
+          continue;
+        }
+
+        for (const variable of channelConfig.requiredVariables) {
+          const eventObj = eventData as Record<string, unknown>;
+          if (
+            !(variable in eventObj) ||
+            eventObj[variable] === null ||
+            eventObj[variable] === undefined
+          ) {
+            missing.push(`${channel}:${variable}`);
+          }
+        }
+      }
+
+      return missing;
+    } catch (error) {
+      // If manifest resolution fails, return empty (will be caught later)
+      this.logger.warn(
+        `Failed to validate event data for ${notificationType}:${audience}`,
+        'NotificationListener',
+        {
+          notificationType,
+          audience,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
+      return [];
+    }
+  }
+
+  /**
+   * Validate event data and trigger notification with comprehensive error handling
+   * This helper method centralizes validation, logging, and error handling logic
+   */
+  private async validateAndTriggerNotification(
+    notificationType: NotificationType,
+    audience: string,
+    event: NotificationEvent | Record<string, unknown>,
+    recipients: RecipientInfo[],
+    options?: {
+      channels?: NotificationChannel[];
+      context?: Record<string, unknown>;
+    },
+  ): Promise<void> {
+    const { channels, context = {} } = options || {};
+
+    // Early validation: Check if required template variables are present
+    const missingVariables = this.validateEventData(
+      notificationType,
+      audience,
+      event,
+    );
+
+    if (missingVariables.length > 0) {
+      this.logger.error(
+        `${notificationType} notification will fail - Missing required template variables: ${missingVariables.join(', ')}`,
+        undefined,
+        'NotificationListener',
+        {
+          notificationType,
+          audience,
+          missingVariables,
+          eventDataKeys: Object.keys(event).join(', '),
+          ...context,
+        },
+      );
+    }
+
+    try {
+      await this.notificationService.trigger(notificationType, {
+        audience,
+        event,
+        recipients,
+        channels,
+      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const extractedMissing = this.extractMissingVariables(errorMessage);
+
+      this.logger.error(
+        `Failed to send ${notificationType} notification${extractedMissing ? ` - Missing variables: ${extractedMissing.join(', ')}` : ''}`,
+        error instanceof Error ? error.stack : undefined,
+        'NotificationListener',
+        {
+          notificationType,
+          audience,
+          error: errorMessage,
+          missingVariables: extractedMissing || missingVariables,
+          eventDataKeys: Object.keys(event).join(', '),
+          ...context,
+        },
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Extract missing variables from error message
+   */
+  private extractMissingVariables(errorMessage: string): string[] | undefined {
+    const match = errorMessage.match(
+      /Missing required template variables.*?: (.+)$/,
+    );
+    return match ? match[1].split(', ').map((v) => v.trim()) : undefined;
+  }
 
   /**
    * Validate recipients - phone and locale are always required
@@ -88,52 +233,73 @@ export class NotificationListener {
     };
 
     // Send to owner audience
-    try {
-      await this.notificationService.trigger(NotificationType.CENTER_CREATED, {
-        audience: 'OWNER',
-        event,
-        recipients: [owner],
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to send CENTER_CREATED notification to OWNER audience`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationListener',
-        {
+    await this.validateAndTriggerNotification(
+      NotificationType.CENTER_CREATED,
+      'OWNER',
+      event,
+      [owner],
+      {
+        context: {
           centerId: center.id,
-          notificationType: NotificationType.CENTER_CREATED,
-          audience: 'OWNER',
         },
-      );
-    }
+      },
+    );
 
     // Send to admin audience
-    try {
-      await this.notificationService.trigger(NotificationType.CENTER_CREATED, {
-        audience: 'ADMIN',
-        event,
-        recipients: [admin],
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to send CENTER_CREATED notification to ADMIN audience`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationListener',
-        {
+    await this.validateAndTriggerNotification(
+      NotificationType.CENTER_CREATED,
+      'ADMIN',
+      event,
+      [admin],
+      {
+        context: {
           centerId: center.id,
           adminId: actor.id,
-          notificationType: NotificationType.CENTER_CREATED,
-          audience: 'ADMIN',
         },
-      );
-    }
+      },
+    );
   }
 
   @OnEvent(CenterEvents.UPDATED)
   async handleCenterUpdated(
     event: ValidateEvent<UpdateCenterEvent, CenterEvents.UPDATED>,
   ) {
-    const { actor } = event;
+    const { actor, centerId } = event;
+
+    // Fetch center from database (required for template)
+    let center: {
+      id: string;
+      name: string;
+      email?: string;
+      phone?: string;
+      website?: string;
+      description?: string;
+      isActive: boolean;
+    } | null = null;
+    try {
+      const centerEntity = await this.centersService.findCenterById(centerId);
+      center = {
+        id: centerEntity.id,
+        name: centerEntity.name,
+        email: centerEntity.email || undefined,
+        phone: centerEntity.phone || undefined,
+        website: centerEntity.website || undefined,
+        description: centerEntity.description || undefined,
+        isActive: centerEntity.isActive,
+      };
+    } catch (error) {
+      this.logger.warn(
+        `Center ${centerId} not found for CENTER_UPDATED notification`,
+        'NotificationListener',
+        {
+          centerId,
+          userId: actor.id,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
+      // Continue anyway - notification will fail validation but won't crash
+    }
+
     const recipient: RecipientInfo = {
       userId: actor.id,
       profileId: actor.userProfileId,
@@ -141,7 +307,7 @@ export class NotificationListener {
       phone: actor.getPhone(),
       email: actor.email || null,
       locale: actor.userInfo?.locale || 'en',
-      centerId: actor.centerId || null,
+      centerId: centerId,
     };
 
     const validRecipients = this.validateRecipients(
@@ -153,25 +319,26 @@ export class NotificationListener {
       return;
     }
 
-    try {
-      await this.notificationService.trigger(NotificationType.CENTER_UPDATED, {
-        audience: 'DEFAULT',
-        event,
-        recipients: validRecipients,
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to send CENTER_UPDATED notification`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationListener',
-        {
-          centerId: actor.centerId,
+    // Add center to event data (required by template)
+    const eventWithCenter = {
+      ...event,
+      center: center || undefined,
+    };
+
+    // Use helper method for validation and triggering
+    await this.validateAndTriggerNotification(
+      NotificationType.CENTER_UPDATED,
+      'DEFAULT',
+      eventWithCenter,
+      validRecipients,
+      {
+        context: {
+          centerId,
           userId: actor.id,
-          notificationType: NotificationType.CENTER_UPDATED,
-          audience: 'DEFAULT',
+          centerFetched: center !== null,
         },
-      );
-    }
+      },
+    );
   }
 
   @OnEvent(AuthEvents.PASSWORD_RESET_REQUESTED)
@@ -218,24 +385,17 @@ export class NotificationListener {
       return;
     }
 
-    try {
-      await this.notificationService.trigger(NotificationType.PASSWORD_RESET, {
-        audience: 'DEFAULT',
-        event,
-        recipients: validRecipients,
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to send PASSWORD_RESET notification`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationListener',
-        {
+    await this.validateAndTriggerNotification(
+      NotificationType.PASSWORD_RESET,
+      'DEFAULT',
+      event,
+      validRecipients,
+      {
+        context: {
           userId: user.id,
-          notificationType: NotificationType.PASSWORD_RESET,
-          audience: 'DEFAULT',
         },
-      );
-    }
+      },
+    );
   }
 
   @OnEvent(AuthEvents.EMAIL_VERIFICATION_REQUESTED)
@@ -283,27 +443,17 @@ export class NotificationListener {
       return;
     }
 
-    try {
-      await this.notificationService.trigger(
-        NotificationType.EMAIL_VERIFICATION,
-        {
-          audience: 'DEFAULT',
-          event,
-          recipients: validRecipients,
-        },
-      );
-    } catch (error) {
-      this.logger.error(
-        `Failed to send EMAIL_VERIFICATION notification`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationListener',
-        {
+    await this.validateAndTriggerNotification(
+      NotificationType.EMAIL_VERIFICATION,
+      'DEFAULT',
+      event,
+      validRecipients,
+      {
+        context: {
           userId: user.id,
-          notificationType: NotificationType.EMAIL_VERIFICATION,
-          audience: 'DEFAULT',
         },
-      );
-    }
+      },
+    );
   }
 
   @OnEvent(AuthEvents.OTP)
@@ -345,25 +495,74 @@ export class NotificationListener {
       return;
     }
 
-    try {
-      await this.notificationService.trigger(NotificationType.OTP, {
-        audience: 'DEFAULT',
-        event,
-        recipients: validRecipients,
+    await this.validateAndTriggerNotification(
+      NotificationType.OTP,
+      'DEFAULT',
+      event,
+      validRecipients,
+      {
         channels: [NotificationChannel.SMS],
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to send OTP notification`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationListener',
-        {
+        context: {
           userId: user.id,
-          notificationType: NotificationType.OTP,
-          audience: 'DEFAULT',
-          channels: [NotificationChannel.SMS],
         },
+      },
+    );
+  }
+
+  @OnEvent(AuthEvents.PHONE_VERIFIED)
+  async handlePhoneVerified(
+    event: ValidateEvent<PhoneVerifiedEvent, AuthEvents.PHONE_VERIFIED>,
+  ) {
+    // Fetch user to get locale and ensure user exists
+    // Note: event.userId is the target user (not actor)
+    if (!event.userId) {
+      this.logger.warn(
+        'Phone verified event missing userId, skipping notification',
+        'NotificationListener',
       );
+      return;
     }
+
+    const user = await this.userService.findOne(event.userId);
+
+    if (!user) {
+      this.logger.warn(
+        `User ${event.userId} not found for phone verified notification`,
+        'NotificationListener',
+      );
+      return;
+    }
+
+    const recipient: RecipientInfo = {
+      userId: user.id,
+      profileId: null,
+      profileType: null,
+      phone: event.phone || user.getPhone(),
+      email: null,
+      locale: user.userInfo.locale,
+      centerId: undefined,
+    };
+
+    const validRecipients = this.validateRecipients(
+      [recipient],
+      NotificationType.PHONE_VERIFIED,
+    );
+
+    if (validRecipients.length === 0) {
+      return;
+    }
+
+    await this.validateAndTriggerNotification(
+      NotificationType.PHONE_VERIFIED,
+      'DEFAULT',
+      event,
+      validRecipients,
+      {
+        channels: [NotificationChannel.SMS, NotificationChannel.IN_APP],
+        context: {
+          userId: user.id,
+        },
+      },
+    );
   }
 }

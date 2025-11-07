@@ -85,3 +85,6 @@ Caching in RecipientResolverService - Cache frequent center queries (centerId + 
 [ ] notifications register user connection first when he opens (there is a problem in sending notifications because of redis not found user connection)
 
 [ ] implement DLQ for Queue
+[ ] clear correlationId from all events
+[ ] remove actionUrl and priority from in_app messages
+[ ] remove command related code
