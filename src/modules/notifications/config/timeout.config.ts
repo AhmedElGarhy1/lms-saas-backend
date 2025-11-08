@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { Config } from '@/shared/config/config';
+import { NotificationConfig } from './notification.config';
 
 /**
  * Configuration service for provider-specific timeout values
@@ -12,11 +12,11 @@ export class TimeoutConfigService {
 
   constructor() {
     this.timeouts = new Map([
-      [NotificationChannel.SMS, Config.notification.timeouts.sms],
-      [NotificationChannel.EMAIL, Config.notification.timeouts.email],
-      [NotificationChannel.WHATSAPP, Config.notification.timeouts.whatsapp],
-      [NotificationChannel.PUSH, Config.notification.timeouts.push],
-      [NotificationChannel.IN_APP, Config.notification.timeouts.inApp],
+      [NotificationChannel.SMS, NotificationConfig.timeouts.sms],
+      [NotificationChannel.EMAIL, NotificationConfig.timeouts.email],
+      [NotificationChannel.WHATSAPP, NotificationConfig.timeouts.whatsapp],
+      [NotificationChannel.PUSH, NotificationConfig.timeouts.push],
+      [NotificationChannel.IN_APP, NotificationConfig.timeouts.inApp],
     ]);
   }
 

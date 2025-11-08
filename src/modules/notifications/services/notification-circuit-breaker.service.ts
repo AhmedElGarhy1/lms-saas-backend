@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
+import { NotificationConfig } from '../config/notification.config';
 import { Config } from '@/shared/config/config';
 
 /**
@@ -31,10 +32,10 @@ export class NotificationCircuitBreakerService {
     private readonly logger: LoggerService,
   ) {
     this.redisKeyPrefix = Config.redis.keyPrefix;
-    this.errorThreshold = Config.notification.circuitBreaker.errorThreshold;
-    this.windowSeconds = Config.notification.circuitBreaker.windowSeconds;
+    this.errorThreshold = NotificationConfig.circuitBreaker.errorThreshold;
+    this.windowSeconds = NotificationConfig.circuitBreaker.windowSeconds;
     this.resetTimeoutSeconds =
-      Config.notification.circuitBreaker.resetTimeoutSeconds;
+      NotificationConfig.circuitBreaker.resetTimeoutSeconds;
 
     // Initialize state keys for each channel
     Object.values(NotificationChannel).forEach((channel) => {

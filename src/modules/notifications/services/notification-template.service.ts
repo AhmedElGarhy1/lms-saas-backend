@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { readFileSync } from 'fs';
+import { readFile } from 'fs/promises';
 import * as Handlebars from 'handlebars';
 import { z } from 'zod';
 import { LoggerService } from '@/shared/services/logger.service';
-import { TemplateCacheService } from './template-cache.service';
+import { RedisTemplateCacheService } from './redis-template-cache.service';
 import { TemplateRenderingException } from '../exceptions/notification.exceptions';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import {
@@ -16,7 +16,7 @@ import { resolveTemplatePathWithFallback } from '../utils/template-path.util';
 export class NotificationTemplateService {
   constructor(
     private readonly logger: LoggerService,
-    private readonly cacheService: TemplateCacheService,
+    private readonly redisCache: RedisTemplateCacheService,
   ) {}
 
   /**
@@ -30,23 +30,23 @@ export class NotificationTemplateService {
   });
 
   /**
-   * Load template content from file system with channel support
+   * Load template content from file system with channel support (async)
    * @param templateName - Template path (can include channel prefix or be base path)
    * @param locale - Locale code
    * @param channel - Notification channel
    * @returns Template content as string
    */
-  private loadTemplateContent(
+  private async loadTemplateContent(
     templateName: string,
     locale: string = 'en',
     channel: NotificationChannel,
-  ): string {
+  ): Promise<string> {
     // Try to resolve with fallback strategy
     const templatePath = resolveTemplatePathWithFallback(
       templateName,
       locale,
       channel,
-      TemplateFallbackStrategy.CHANNEL_OR_EMAIL,
+      TemplateFallbackStrategy.CHANNEL_OR_WHATSAPP,
     );
 
     if (!templatePath) {
@@ -57,7 +57,11 @@ export class NotificationTemplateService {
     }
 
     try {
-      return readFileSync(templatePath, 'utf-8');
+      // Use Redis cache for template source
+      return await this.redisCache.getTemplateSource(
+        `${locale}:${channel}:${templateName}`,
+        async () => readFile(templatePath, 'utf-8'),
+      );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
@@ -87,23 +91,22 @@ export class NotificationTemplateService {
    * @param channel - Notification channel
    * @returns Compiled Handlebars template
    */
-  loadTemplateWithChannel(
+  async loadTemplateWithChannel(
     templateName: string,
     locale: string = 'en',
     channel: NotificationChannel,
   ): Promise<HandlebarsTemplateDelegate> {
     const cacheKey = `${locale}:${channel}:${templateName}`;
 
-    return Promise.resolve(
-      this.cacheService.getCompiledTemplate(cacheKey, locale, () => {
-        const templateContent = this.loadTemplateContent(
-          templateName,
-          locale,
-          channel,
-        );
-        return Handlebars.compile(templateContent);
-      }),
-    );
+    // Get compiled template with Redis caching
+    return this.redisCache.getCompiledTemplate(cacheKey, async () => {
+      const templateContent = await this.loadTemplateContent(
+        templateName,
+        locale,
+        channel,
+      );
+      return Handlebars.compile(templateContent);
+    });
   }
 
   /**
@@ -205,8 +208,8 @@ export class NotificationTemplateService {
   ): Promise<string | object> {
     const extension = getChannelExtension(channel);
 
-    // Load template content
-    const templateContent = this.loadTemplateContent(
+    // Load template content (async - uses Redis cache)
+    const templateContent = await this.loadTemplateContent(
       templateName,
       locale,
       channel,

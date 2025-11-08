@@ -11,18 +11,24 @@ import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Config } from '@/shared/config/config';
 import { ChannelRetryStrategyService } from '../services/channel-retry-strategy.service';
+import { NotificationConfig } from '../config/notification.config';
 import { NotificationSendingFailedException } from '../exceptions/notification.exceptions';
 import { RequestContext } from '@/shared/common/context/request.context';
+import { Locale } from '@/shared/common/enums/locale.enum';
 import { randomUUID } from 'crypto';
 import { NotificationAlertService } from '../services/notification-alert.service';
+import {
+  isNotificationJobData,
+  isRecord,
+  getStringProperty,
+} from '../utils/type-guards.util';
 
 /**
  * Processor concurrency must be a static value in the decorator.
- * To change concurrency, update NOTIFICATION_CONCURRENCY env variable and restart the application.
+ * To change concurrency, update NotificationConfig.concurrency and restart the application.
  */
-const PROCESSOR_CONCURRENCY = Config.notification.concurrency;
+const PROCESSOR_CONCURRENCY = NotificationConfig.concurrency;
 
 @Processor('notifications', {
   concurrency: PROCESSOR_CONCURRENCY,
@@ -41,13 +47,20 @@ export class NotificationProcessor extends WorkerHost {
     private readonly alertService?: NotificationAlertService,
   ) {
     super();
-    this.retryThreshold = Config.notification.retryThreshold;
+    this.retryThreshold = NotificationConfig.retryThreshold;
   }
 
   async process(job: Job<NotificationJobData>): Promise<void> {
+    // Validate job data using type guard
+    if (!isNotificationJobData(job.data)) {
+      throw new Error(
+        `Invalid job data format: expected NotificationJobData, got ${typeof job.data}`,
+      );
+    }
+
     // Destructure job data for cleaner code
     // NotificationJobData extends NotificationPayload which has common properties from BaseNotificationPayload
-    const jobData = job.data as NotificationPayload & NotificationJobData;
+    const jobData = job.data;
     const { channel, type, userId, data: payloadData } = jobData;
     const retryable = jobData.retryable ?? true; // Default to retriable if not specified
     const retryCount = job.attemptsMade || 0;
@@ -55,19 +68,20 @@ export class NotificationProcessor extends WorkerHost {
     const attempt = retryCount + 1;
 
     // Extract correlationId from job data to restore async context
+    // Use type guard to safely access payloadData
     const correlationId =
-      (payloadData?.correlationId as string | undefined) ||
+      (isRecord(payloadData) ? getStringProperty(payloadData, 'correlationId') : undefined) ||
       jobData.correlationId ||
       randomUUID();
 
-    // Restore async context with correlationId for request tracing
-    // This ensures correlationId propagates through all async operations
-    return RequestContext.run(
-      {
-        requestId: correlationId,
-        correlationId: correlationId,
-        locale: 'en' as any, // Default locale
-      },
+      // Restore async context with correlationId for request tracing
+      // This ensures correlationId propagates through all async operations
+      return RequestContext.run(
+        {
+          requestId: correlationId,
+          correlationId: correlationId,
+          locale: Locale.EN, // Default locale
+        },
       async () => {
         this.logger.debug(
           `Processing notification job: ${jobId}, type: ${type}, channel: ${channel}, attempt: ${attempt}`,
@@ -93,8 +107,18 @@ export class NotificationProcessor extends WorkerHost {
 
         try {
           // Update job data with retry count
-          // Create payload with retry metadata in data field, but keep it as NotificationPayload
-          const payload: NotificationPayload = {
+          // Create payload with retry metadata in data field
+          // jobData is already validated as NotificationJobData which extends NotificationPayload
+          // Preserve the original data structure and add retry metadata
+          // Since jobData is already a valid NotificationPayload, payloadData should always be a record
+          if (!isRecord(payloadData)) {
+            throw new Error(`Invalid payload data structure for notification ${jobId}: data is not an object`);
+          }
+          // Preserve the original data structure and add retry metadata
+          // The data field structure depends on the channel (discriminated union)
+          // Since jobData is already validated, we can safely add metadata properties
+          // TypeScript can't narrow the discriminated union, so we use a type assertion
+          const payload = {
             ...jobData,
             data: {
               ...payloadData,
@@ -181,39 +205,36 @@ export class NotificationProcessor extends WorkerHost {
           if (userId) {
             const jobIdValue = job.id || jobData.jobId;
 
-            // First try to find by jobId if available
-            let logs: NotificationLog[] = [];
+            // Optimized: Try to find log using single query with OR conditions
+            // First try jobId, then fallback to userId/type/channel/status combination
+            const whereConditions: Array<Record<string, unknown>> = [];
+
             if (jobIdValue) {
-              logs = await this.logRepository.findMany({
-                where: {
-                  jobId: jobIdValue,
-                },
-                order: { createdAt: 'DESC' },
-                take: 1,
-              });
+              whereConditions.push({ jobId: jobIdValue });
             }
 
-            // Fallback to search by userId, type, channel, and status (PENDING or RETRYING)
-            if (logs.length === 0) {
-              logs = await this.logRepository.findMany({
-                where: [
-                  {
-                    userId,
-                    type,
-                    channel,
-                    status: NotificationStatus.PENDING,
-                  },
-                  {
-                    userId,
-                    type,
-                    channel,
-                    status: NotificationStatus.RETRYING,
-                  },
-                ],
-                order: { createdAt: 'DESC' },
-                take: 1,
-              });
-            }
+            // Add fallback conditions for PENDING or RETRYING status
+            whereConditions.push(
+              {
+                userId,
+                type,
+                channel,
+                status: NotificationStatus.PENDING,
+              },
+              {
+                userId,
+                type,
+                channel,
+                status: NotificationStatus.RETRYING,
+              },
+            );
+
+            // Single query with OR conditions (more efficient than multiple queries)
+            const logs = await this.logRepository.findMany({
+              where: whereConditions,
+              order: { createdAt: 'DESC' },
+              take: 1, // Only need the most recent
+            });
 
             if (logs.length > 0) {
               const log = logs[0];
@@ -260,7 +281,16 @@ export class NotificationProcessor extends WorkerHost {
 
   @OnWorkerEvent('completed')
   async onCompleted(job: Job<NotificationJobData>): Promise<void> {
-    const jobData = job.data as NotificationPayload & NotificationJobData;
+    if (!isNotificationJobData(job.data)) {
+      this.logger.error(
+        `Invalid job data in onCompleted: ${job.id}`,
+        undefined,
+        'NotificationProcessor',
+        { jobId: job.id },
+      );
+      return;
+    }
+    const jobData = job.data;
     const { channel, type, userId } = jobData;
     const jobId = job.id || 'unknown';
 
@@ -270,8 +300,8 @@ export class NotificationProcessor extends WorkerHost {
 
     // Check queue backlog and send alerts if needed
     if (this.alertService) {
-      const warningThreshold = Config.notification.queue.warningThreshold;
-      const criticalThreshold = Config.notification.queue.criticalThreshold;
+      const warningThreshold = NotificationConfig.queue.warningThreshold;
+      const criticalThreshold = NotificationConfig.queue.criticalThreshold;
 
       if (queueSize >= criticalThreshold) {
         await this.alertService.sendAlert(
@@ -315,7 +345,16 @@ export class NotificationProcessor extends WorkerHost {
 
   @OnWorkerEvent('failed')
   async onFailed(job: Job<NotificationJobData>, error: Error): Promise<void> {
-    const jobData = job.data as NotificationPayload & NotificationJobData;
+    if (!isNotificationJobData(job.data)) {
+      this.logger.error(
+        `Invalid job data in onFailed: ${job.id}`,
+        undefined,
+        'NotificationProcessor',
+        { jobId: job.id },
+      );
+      return;
+    }
+    const jobData = job.data;
     const { channel, type, userId, retryable } = jobData;
     const jobId = job.id || 'unknown';
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -327,8 +366,8 @@ export class NotificationProcessor extends WorkerHost {
 
     // Check queue backlog and send alerts if needed
     if (this.alertService) {
-      const warningThreshold = Config.notification.queue.warningThreshold;
-      const criticalThreshold = Config.notification.queue.criticalThreshold;
+      const warningThreshold = NotificationConfig.queue.warningThreshold;
+      const criticalThreshold = NotificationConfig.queue.criticalThreshold;
 
       if (queueSize >= criticalThreshold) {
         await this.alertService.sendAlert(
@@ -376,31 +415,27 @@ export class NotificationProcessor extends WorkerHost {
     if (userId) {
       const jobIdValue = job.id || jobData.jobId;
 
-      // First try to find by jobId if available
-      let logs: NotificationLog[] = [];
+      // Optimized: Single query with OR conditions
+      const whereConditions: Array<Record<string, unknown>> = [];
+
       if (jobIdValue) {
-        logs = await this.logRepository.findMany({
-          where: {
-            jobId: jobIdValue,
-          },
-          order: { createdAt: 'DESC' },
-          take: 1,
-        });
+        whereConditions.push({ jobId: jobIdValue });
       }
 
-      // Fallback to search by userId, type, channel, and RETRYING status
-      if (logs.length === 0) {
-        logs = await this.logRepository.findMany({
-          where: {
-            userId,
-            type,
-            channel,
-            status: NotificationStatus.RETRYING,
-          },
-          order: { createdAt: 'DESC' },
-          take: 1,
-        });
-      }
+      // Add fallback condition for RETRYING status
+      whereConditions.push({
+        userId,
+        type,
+        channel,
+        status: NotificationStatus.RETRYING,
+      });
+
+      // Single query with OR conditions (more efficient than multiple queries)
+      const logs = await this.logRepository.findMany({
+        where: whereConditions,
+        order: { createdAt: 'DESC' },
+        take: 1, // Only need the most recent
+      });
 
       if (logs.length > 0) {
         const log = logs[0];

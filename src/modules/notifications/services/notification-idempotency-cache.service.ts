@@ -3,12 +3,22 @@ import { RedisService } from '@/shared/modules/redis/redis.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
+import { STRING_CONSTANTS } from '../constants/notification.constants';
+import { NotificationConfig } from '../config/notification.config';
 import { Config } from '@/shared/config/config';
 
 /**
  * Service for managing idempotency cache using Redis
  * Prevents duplicate notifications by caching successful sends with short TTL
  * Reduces database load from idempotency checks
+ *
+ * Error Handling Strategy: FAIL_OPEN
+ * - If idempotency check fails (e.g., Redis unavailable), notifications are allowed
+ * - Prevents duplicate prevention from blocking all notifications
+ * - Idempotency is best-effort, not critical for system operation
+ * - Errors are logged but do not block notification processing
+ *
+ * @see ERROR_HANDLING_CONFIG.IDEMPOTENCY
  */
 @Injectable()
 export class NotificationIdempotencyCacheService {
@@ -22,9 +32,9 @@ export class NotificationIdempotencyCacheService {
     private readonly logger: LoggerService,
   ) {
     this.redisKeyPrefix = Config.redis.keyPrefix;
-    this.defaultTtlSeconds = Config.notification.idempotency.cacheTtlSeconds;
-    this.lockTtlSeconds = Config.notification.idempotency.lockTtlSeconds;
-    this.lockTimeoutMs = Config.notification.idempotency.lockTimeoutMs;
+    this.defaultTtlSeconds = NotificationConfig.idempotency.cacheTtlSeconds;
+    this.lockTtlSeconds = NotificationConfig.idempotency.lockTtlSeconds;
+    this.lockTimeoutMs = NotificationConfig.idempotency.lockTimeoutMs;
   }
 
   /**
@@ -38,8 +48,8 @@ export class NotificationIdempotencyCacheService {
   ): string {
     // Hash recipient if it's too long to avoid key length issues
     const recipientHash =
-      recipient.length > 50
-        ? Buffer.from(recipient).toString('base64').slice(0, 50)
+      recipient.length > STRING_CONSTANTS.MAX_RECIPIENT_HASH_LENGTH
+        ? Buffer.from(recipient).toString('base64').slice(0, STRING_CONSTANTS.MAX_RECIPIENT_HASH_LENGTH)
         : recipient;
 
     return `${this.redisKeyPrefix}:notification:idempotency:${correlationId}:${type}:${channel}:${recipientHash}`;
@@ -55,8 +65,8 @@ export class NotificationIdempotencyCacheService {
     recipient: string,
   ): string {
     const recipientHash =
-      recipient.length > 50
-        ? Buffer.from(recipient).toString('base64').slice(0, 50)
+      recipient.length > STRING_CONSTANTS.MAX_RECIPIENT_HASH_LENGTH
+        ? Buffer.from(recipient).toString('base64').slice(0, STRING_CONSTANTS.MAX_RECIPIENT_HASH_LENGTH)
         : recipient;
 
     return `${this.redisKeyPrefix}:notification:lock:${correlationId}:${type}:${channel}:${recipientHash}`;
@@ -103,7 +113,7 @@ export class NotificationIdempotencyCacheService {
           correlationId,
           type,
           channel,
-          recipient: recipient.substring(0, 20),
+          recipient: recipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH),
         },
       );
       return false;
@@ -118,7 +128,7 @@ export class NotificationIdempotencyCacheService {
           correlationId,
           type,
           channel,
-          recipient: recipient.substring(0, 20),
+          recipient: recipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH),
         },
       );
       return false; // Fail open - allow notification
@@ -192,7 +202,7 @@ export class NotificationIdempotencyCacheService {
           correlationId,
           type,
           channel,
-          recipient: recipient.substring(0, 20), // Log first 20 chars for debugging
+          recipient: recipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH), // Log first 20 chars for debugging
         },
       );
       return false; // Fail open - allow notification

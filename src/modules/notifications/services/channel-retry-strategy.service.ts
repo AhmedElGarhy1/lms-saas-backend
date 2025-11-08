@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { Config } from '@/shared/config/config';
+import { NotificationConfig } from '../config/notification.config';
 
 export interface ChannelRetryConfig {
   maxAttempts: number;
@@ -43,30 +43,30 @@ export class ChannelRetryStrategyService {
 
     // EMAIL: Standard retries (3 attempts, exponential backoff)
     configs.set(NotificationChannel.EMAIL, {
-      maxAttempts: Config.notification.retry.email.maxAttempts,
-      backoffType: Config.notification.retry.email.backoffType,
-      backoffDelay: Config.notification.retry.email.backoffDelay,
+      maxAttempts: NotificationConfig.retry.email.maxAttempts,
+      backoffType: NotificationConfig.retry.email.backoffType,
+      backoffDelay: NotificationConfig.retry.email.backoffDelay,
     });
 
     // SMS: Fewer retries (costs more, 2 attempts)
     configs.set(NotificationChannel.SMS, {
-      maxAttempts: Config.notification.retry.sms.maxAttempts,
-      backoffType: Config.notification.retry.sms.backoffType,
-      backoffDelay: Config.notification.retry.sms.backoffDelay,
+      maxAttempts: NotificationConfig.retry.sms.maxAttempts,
+      backoffType: NotificationConfig.retry.sms.backoffType,
+      backoffDelay: NotificationConfig.retry.sms.backoffDelay,
     });
 
     // WHATSAPP: Moderate retries (2-3 attempts depending on provider)
     configs.set(NotificationChannel.WHATSAPP, {
-      maxAttempts: Config.notification.retry.whatsapp.maxAttempts,
-      backoffType: Config.notification.retry.whatsapp.backoffType,
-      backoffDelay: Config.notification.retry.whatsapp.backoffDelay,
+      maxAttempts: NotificationConfig.retry.whatsapp.maxAttempts,
+      backoffType: NotificationConfig.retry.whatsapp.backoffType,
+      backoffDelay: NotificationConfig.retry.whatsapp.backoffDelay,
     });
 
     // PUSH: More retries (no direct cost, 4 attempts)
     configs.set(NotificationChannel.PUSH, {
-      maxAttempts: Config.notification.retry.push.maxAttempts,
-      backoffType: Config.notification.retry.push.backoffType,
-      backoffDelay: Config.notification.retry.push.backoffDelay,
+      maxAttempts: NotificationConfig.retry.push.maxAttempts,
+      backoffType: NotificationConfig.retry.push.backoffType,
+      backoffDelay: NotificationConfig.retry.push.backoffDelay,
     });
 
     // IN_APP: No retries (handled separately, direct send)

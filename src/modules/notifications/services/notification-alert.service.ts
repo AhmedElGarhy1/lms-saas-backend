@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { LoggerService } from '@/shared/services/logger.service';
-import { Config } from '@/shared/config/config';
+import { NotificationConfig } from '../config/notification.config';
 
 /**
  * Service for sending alerts about notification system health
@@ -13,8 +13,8 @@ export class NotificationAlertService {
   private readonly lastAlertTime = new Map<string, number>();
 
   constructor(private readonly logger: LoggerService) {
-    this.enabled = Config.notification.alerts.enabled;
-    this.alertThrottleMinutes = Config.notification.alerts.throttleMinutes;
+    this.enabled = NotificationConfig.alerts.enabled;
+    this.alertThrottleMinutes = NotificationConfig.alerts.throttleMinutes;
   }
 
   /**

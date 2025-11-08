@@ -15,6 +15,7 @@ import { GetInAppNotificationsDto } from '../dto/in-app-notification.dto';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { Config } from '@/shared/config/config';
+import { WebSocketConfig } from '../config/notification.config';
 
 @Injectable()
 export class InAppNotificationService {
@@ -33,7 +34,7 @@ export class InAppNotificationService {
     private readonly channelRateLimitService: ChannelRateLimitService,
   ) {
     this.redisKeyPrefix = Config.redis.keyPrefix;
-    this.rateLimitUser = Config.websocket.rateLimit.user;
+    this.rateLimitUser = WebSocketConfig.rateLimit.user;
 
     // Initialize sliding window rate limiter
     this.rateLimiter = new SlidingWindowRateLimiter(

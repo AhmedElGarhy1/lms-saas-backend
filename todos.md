@@ -48,6 +48,11 @@
 [x] (both) create center with branch
 [x] new: center role with admin permission throw error
 [x] restrict phone number validation and fix not uniqe email when null
+[x] implement sending notifications
+[x] check all channels content in both languages
+[x] check the overall app language and exceptions
+[x] check if whatsapp and email and all channels are working or not
+
 [ ] implement import user (or diffrent name) to import user from another center (internal center prespective)
 [ ] make final decigion about will we have endpoint for each profile or shared endpoint for all profiles with custom permissions
 [ ] update activity logs to cover more logs
@@ -74,11 +79,6 @@ Caching in RecipientResolverService - Cache frequent center queries (centerId + 
 [] NotificationPolicyService - Central config for “who gets notified for what” - ⚙️ High When event count > 10 types
 [] Analytics hooks - Add metrics like success/failure rate per event type - ⚙️ Medium - After you set up metrics stack
 
-[ ] Generate the EventMap automatically (Advanced) for event emitter type safty
-[ ] implement sending notifications
-[ ] check all channels content in both languages
-[ ] check the overall app language and exceptions
-[ ] check if whatsapp and email and all channels are working or not
 [ ] see who we handle and what is hte diffrence between logs and activity_logs and notifications
 [ ] update notifications to cover all existing modules events
 [ ] (frontend) Data flow: ⚠️ Needs standardization (28 violations)
@@ -86,5 +86,6 @@ Caching in RecipientResolverService - Cache frequent center queries (centerId + 
 
 [ ] implement DLQ for Queue
 [ ] clear correlationId from all events
-[ ] remove actionUrl and priority from in_app messages
 [ ] remove command related code
+[ ] standrize redis keys for easy mantainnce
+[ ] optimize notifications history meta filed it talkes tooooo much

@@ -1,10 +1,28 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { LoggerService } from '@/shared/services/logger.service';
 import { UserService } from '@/modules/user/services/user.service';
 import { UserRepository } from '@/modules/user/repositories/user.repository';
 import { In } from 'typeorm';
-import { Config } from '@/shared/config/config';
+import { CACHE_CONSTANTS, TIME_CONSTANTS_MS } from '../constants/notification.constants';
+import { NotificationConfig } from '../config/notification.config';
+
+/**
+ * Type guard to check if user has lastLogin property
+ */
+interface UserWithLastLogin {
+  lastLogin?: Date | string | null;
+  updatedAt: Date | string;
+}
+
+function hasLastLogin(user: unknown): user is UserWithLastLogin {
+  return (
+    typeof user === 'object' &&
+    user !== null &&
+    'updatedAt' in user &&
+    (user as Record<string, unknown>).updatedAt !== undefined
+  );
+}
 
 interface EventContext {
   priority?: number;
@@ -13,7 +31,7 @@ interface EventContext {
 }
 
 @Injectable()
-export class ChannelSelectionService {
+export class ChannelSelectionService implements OnModuleDestroy {
   private readonly activityCache = new Map<
     string,
     { isActive: boolean; timestamp: number }
@@ -27,10 +45,10 @@ export class ChannelSelectionService {
     private readonly logger: LoggerService,
   ) {
     // Cache TTL: 1 hour (in milliseconds)
-    this.cacheTTL = 60 * 60 * 1000;
+    this.cacheTTL = CACHE_CONSTANTS.ACTIVITY_CACHE_TTL_MS;
     // Inactivity threshold from config
     this.inactivityThresholdHours =
-      Config.notification.inactivityThresholdHours;
+      NotificationConfig.inactivityThresholdHours;
   }
 
   /**
@@ -130,7 +148,8 @@ export class ChannelSelectionService {
 
       // Check if user has lastLogin or updatedAt field
       // Using updatedAt as proxy for activity (last profile update)
-      const lastActivity = (user as any).lastLogin || user.updatedAt;
+      // User entity doesn't have lastLogin, so we use updatedAt
+      const lastActivity = user.updatedAt;
       if (!lastActivity) {
         // No activity data, assume inactive
         this.activityCache.set(userId, {
@@ -141,7 +160,7 @@ export class ChannelSelectionService {
       }
 
       const hoursSinceActivity =
-        (Date.now() - new Date(lastActivity).getTime()) / (1000 * 60 * 60);
+        (Date.now() - new Date(lastActivity).getTime()) / TIME_CONSTANTS_MS.ONE_HOUR_MS;
       const isActive = hoursSinceActivity < threshold;
 
       // Cache result
@@ -186,7 +205,7 @@ export class ChannelSelectionService {
     if (uncachedUserIds.length > 0) {
       try {
         const now = Date.now();
-        const thresholdMs = this.inactivityThresholdHours * 60 * 60 * 1000;
+        const thresholdMs = this.inactivityThresholdHours * TIME_CONSTANTS_MS.ONE_HOUR_MS;
 
         // Fetch users in batch using repository
         const users = await this.userRepository.findMany({
@@ -251,5 +270,17 @@ export class ChannelSelectionService {
    */
   clearUserCache(userId: string): void {
     this.activityCache.delete(userId);
+  }
+
+  /**
+   * Clear activity cache on module destroy
+   * Prevents memory leaks in long-running processes
+   */
+  onModuleDestroy(): void {
+    this.activityCache.clear();
+    this.logger.debug(
+      'Channel selection activity cache cleared',
+      'ChannelSelectionService',
+    );
   }
 }

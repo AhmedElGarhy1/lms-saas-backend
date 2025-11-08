@@ -4,6 +4,8 @@ import { RedisService } from '@/shared/modules/redis/redis.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { SlidingWindowRateLimiter } from '../utils/sliding-window-rate-limit';
 import { Config } from '@/shared/config/config';
+import { CONCURRENCY_CONSTANTS } from '../constants/notification.constants';
+import { NotificationConfig } from '../config/notification.config';
 
 interface ChannelRateLimitConfig {
   limit: number;
@@ -13,6 +15,14 @@ interface ChannelRateLimitConfig {
 /**
  * Service for managing per-channel rate limits
  * Provides channel-specific rate limiting configuration
+ *
+ * Error Handling Strategy: FAIL_OPEN
+ * - If rate limiting service fails (e.g., Redis unavailable), requests are allowed
+ * - Prevents Redis failures from blocking all notifications
+ * - Rate limiting is a protection mechanism, not a hard requirement
+ * - Errors are logged but do not block notification processing
+ *
+ * @see ERROR_HANDLING_CONFIG.RATE_LIMITING
  */
 @Injectable()
 export class ChannelRateLimitService {
@@ -39,8 +49,8 @@ export class ChannelRateLimitService {
 
     // Default rate limit (fallback)
     this.defaultLimit = {
-      limit: 100,
-      windowSeconds: 60,
+      limit: CONCURRENCY_CONSTANTS.DEFAULT_RATE_LIMIT,
+      windowSeconds: CONCURRENCY_CONSTANTS.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
     };
 
     // Initialize channel-specific limits from config
@@ -58,35 +68,35 @@ export class ChannelRateLimitService {
     const limits = new Map<NotificationChannel, ChannelRateLimitConfig>();
 
     // Get single window for all channels (simplified from per-channel windows)
-    const windowSeconds = Config.notification.rateLimit.windowSeconds;
+    const windowSeconds = NotificationConfig.rateLimit.windowSeconds;
 
     // IN_APP: Higher limit for real-time notifications
     limits.set(NotificationChannel.IN_APP, {
-      limit: Config.notification.rateLimit.inApp,
+      limit: NotificationConfig.rateLimit.inApp,
       windowSeconds,
     });
 
     // EMAIL: Moderate limit
     limits.set(NotificationChannel.EMAIL, {
-      limit: Config.notification.rateLimit.email,
+      limit: NotificationConfig.rateLimit.email,
       windowSeconds,
     });
 
     // SMS: Lower limit (costs more)
     limits.set(NotificationChannel.SMS, {
-      limit: Config.notification.rateLimit.sms,
+      limit: NotificationConfig.rateLimit.sms,
       windowSeconds,
     });
 
     // WHATSAPP: Moderate limit
     limits.set(NotificationChannel.WHATSAPP, {
-      limit: Config.notification.rateLimit.whatsapp,
+      limit: NotificationConfig.rateLimit.whatsapp,
       windowSeconds,
     });
 
     // PUSH: Higher limit (no direct cost)
     limits.set(NotificationChannel.PUSH, {
-      limit: Config.notification.rateLimit.push,
+      limit: NotificationConfig.rateLimit.push,
       windowSeconds,
     });
 

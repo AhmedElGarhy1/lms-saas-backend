@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
-import { Config } from '@/shared/config/config';
+import { NotificationConfig } from '../config/notification.config';
 import {
   InAppNotificationPayload,
   NotificationPayload,
@@ -55,8 +55,8 @@ export class InAppAdapter
     private readonly metricsService: NotificationMetricsService,
   ) {
     // Load retry configuration from Config (IN_APP-specific for WebSocket delivery)
-    this.maxRetries = Config.notification.inAppRetry.maxAttempts;
-    this.maxRetryDelayMs = Config.notification.inAppRetry.maxDelayMs;
+    this.maxRetries = NotificationConfig.inAppRetry.maxAttempts;
+    this.maxRetryDelayMs = NotificationConfig.inAppRetry.maxDelayMs;
   }
 
   async send(payload: InAppNotificationPayload): Promise<void> {

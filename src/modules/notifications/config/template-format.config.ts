@@ -38,22 +38,24 @@ export function getChannelFolder(channel: NotificationChannel): string {
 
 /**
  * Fallback hierarchy for template resolution
- * Order: channel-specific → email → default
+ * Order: channel-specific → whatsapp → default
  */
 export enum TemplateFallbackStrategy {
   /** Try channel-specific template only */
   CHANNEL_ONLY = 'channel-only',
-  /** Try channel-specific, then fallback to email template */
-  CHANNEL_OR_EMAIL = 'channel-or-email',
-  /** Try channel-specific, email, then default template */
+  /** Try channel-specific, then fallback to whatsapp template */
+  CHANNEL_OR_WHATSAPP = 'channel-or-whatsapp',
+  /** Try channel-specific, whatsapp, then default template */
   FULL = 'full',
+  /** @deprecated Use CHANNEL_OR_WHATSAPP instead. Kept for backward compatibility */
+  CHANNEL_OR_EMAIL = 'channel-or-email',
 }
 
 /**
  * Default fallback strategy
  */
 export const DEFAULT_FALLBACK_STRATEGY =
-  TemplateFallbackStrategy.CHANNEL_OR_EMAIL;
+  TemplateFallbackStrategy.CHANNEL_OR_WHATSAPP;
 
 /**
  * Get fallback channels for a given channel
@@ -69,9 +71,15 @@ export function getFallbackChannels(
     return channels;
   }
 
-  // Add email as fallback (if not already email)
-  if (channel !== NotificationChannel.EMAIL) {
-    channels.push(NotificationChannel.EMAIL);
+  // Add whatsapp as fallback (if not already whatsapp)
+  // Also handle deprecated CHANNEL_OR_EMAIL for backward compatibility
+  if (
+    strategy === TemplateFallbackStrategy.CHANNEL_OR_WHATSAPP ||
+    strategy === TemplateFallbackStrategy.CHANNEL_OR_EMAIL
+  ) {
+    if (channel !== NotificationChannel.WHATSAPP) {
+      channels.push(NotificationChannel.WHATSAPP);
+    }
   }
 
   // Note: Default template is handled separately (not a channel)

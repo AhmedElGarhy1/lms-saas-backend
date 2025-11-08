@@ -4,16 +4,26 @@ import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { MetricsBatchService } from './metrics-batch.service';
+import { METRICS_CONSTANTS, REDIS_CONSTANTS } from '../constants/notification.constants';
+import { NotificationConfig } from '../config/notification.config';
 import { Config } from '@/shared/config/config';
 
 /**
  * Service for tracking notification metrics (Prometheus-compatible)
  * Stores metrics in Redis for scalability
+ *
+ * Error Handling Strategy: FAIL_OPEN
+ * - Metrics failures should never block notifications
+ * - Metrics are for observability, not business logic
+ * - Errors are logged but do not propagate
+ * - Batching ensures failures don't affect notification flow
+ *
+ * @see ERROR_HANDLING_CONFIG.METRICS
  */
 @Injectable()
 export class NotificationMetricsService {
   private readonly redisKeyPrefix: string;
-  private readonly METRIC_TTL = 30 * 24 * 60 * 60; // 30 days
+  private readonly METRIC_TTL = METRICS_CONSTANTS.METRIC_TTL_SECONDS;
 
   constructor(
     private readonly redisService: RedisService,
@@ -206,7 +216,7 @@ export class NotificationMetricsService {
     do {
       const [nextCursor, keys] = await this.redisService
         .getClient()
-        .scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+        .scan(cursor, 'MATCH', pattern, 'COUNT', REDIS_CONSTANTS.SCAN_BATCH_SIZE);
       cursor = nextCursor;
       keysToDelete.push(...keys);
     } while (cursor !== '0');

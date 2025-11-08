@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { LoggerService } from '@/shared/services/logger.service';
-import { Config } from '@/shared/config/config';
+import { NotificationConfig } from '../config/notification.config';
 
 /**
  * Periodic job to clean up old failed notification logs from DLQ
@@ -20,7 +20,7 @@ export class NotificationDlqCleanupJob {
     private readonly logRepository: NotificationLogRepository,
     private readonly loggerService: LoggerService,
   ) {
-    this.retentionDays = Config.notification.dlq.retentionDays;
+    this.retentionDays = NotificationConfig.dlq.retentionDays;
   }
 
   /**

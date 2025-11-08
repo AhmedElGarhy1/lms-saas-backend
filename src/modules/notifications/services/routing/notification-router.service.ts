@@ -1,0 +1,870 @@
+import { Injectable } from '@nestjs/common';
+import { Queue, Job } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
+import { NotificationChannel } from '../../enums/notification-channel.enum';
+import { NotificationType } from '../../enums/notification-type.enum';
+import {
+  NotificationPayload,
+  EmailNotificationPayload,
+  SmsNotificationPayload,
+  WhatsAppNotificationPayload,
+  InAppNotificationPayload,
+  PushNotificationPayload,
+} from '../../types/notification-payload.interface';
+import { NotificationJobData } from '../../types/notification-job-data.interface';
+import { NotificationManifest } from '../../manifests/types/manifest.types';
+import { RenderedNotification } from '../../manifests/types/manifest.types';
+import { NotificationTemplateData } from '../../types/template-data.types';
+import { NotificationSenderService } from '../notification-sender.service';
+import { InAppNotificationService } from '../in-app-notification.service';
+import { NotificationRenderer } from '../../renderer/notification-renderer.service';
+import { NotificationManifestResolver } from '../../manifests/registry/notification-manifest-resolver.service';
+import { NotificationIdempotencyCacheService } from '../notification-idempotency-cache.service';
+import { NotificationMetricsService } from '../notification-metrics.service';
+import { ChannelRetryStrategyService } from '../channel-retry-strategy.service';
+import { LoggerService } from '@/shared/services/logger.service';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import {
+  isValidEmail,
+  isValidE164,
+  normalizePhone,
+} from '../../utils/recipient-validator.util';
+import { createUserId, createCorrelationId } from '../../types/branded-types';
+import {
+  QUEUE_CONSTANTS,
+  STRING_CONSTANTS,
+} from '../../constants/notification.constants';
+import { NotificationProcessingContext } from '../pipeline/notification-pipeline.service';
+
+/**
+ * Service responsible for routing notifications to channels
+ * Handles: recipient validation, idempotency checks, template rendering, payload building, sending/enqueueing
+ */
+@Injectable()
+export class NotificationRouterService {
+  constructor(
+    @InjectQueue('notifications') private readonly queue: Queue,
+    private readonly senderService: NotificationSenderService,
+    private readonly inAppNotificationService: InAppNotificationService,
+    private readonly renderer: NotificationRenderer,
+    private readonly manifestResolver: NotificationManifestResolver,
+    private readonly retryStrategyService: ChannelRetryStrategyService,
+    private readonly logger: LoggerService,
+    private readonly idempotencyCache?: NotificationIdempotencyCacheService,
+    private readonly metricsService?: NotificationMetricsService,
+  ) {}
+
+  /**
+   * Route notifications to channels
+   * Processes each channel: validates recipient, checks idempotency, renders template, builds payload, sends/enqueues
+   */
+  async route(
+    context: NotificationProcessingContext,
+    preRenderedCache?: Map<string, RenderedNotification>,
+  ): Promise<void> {
+    const {
+      recipient,
+      phone,
+      finalChannels,
+      mapping,
+      manifest,
+      templateData,
+      locale,
+      centerId,
+      userId,
+      profileType,
+      profileId,
+      eventName,
+      correlationId,
+      audience,
+    } = context;
+
+    if (
+      !finalChannels ||
+      !mapping ||
+      !manifest ||
+      !templateData ||
+      !locale ||
+      !userId ||
+      !eventName ||
+      !correlationId
+    ) {
+      return;
+    }
+
+    // Collect payloads for bulk enqueue (non-IN_APP channels)
+    const payloadsToEnqueue: NotificationPayload[] = [];
+    // Track idempotency locks that need to be released after bulk enqueue
+    const locksToRelease: Array<{
+      correlationId: string;
+      type: NotificationType;
+      channel: NotificationChannel;
+      recipient: string;
+    }> = [];
+    const priority = manifest.priority || 0;
+
+    // Process each final channel (after dynamic selection)
+    for (const channel of finalChannels) {
+      // Validate channel support for the audience
+      if (audience) {
+        try {
+          // Validate channel exists for this audience
+          this.manifestResolver.getChannelConfig(manifest, audience, channel);
+        } catch {
+          this.logger.error(
+            `Channel ${channel} not supported for audience ${audience} in notification type ${mapping.type}`,
+            undefined,
+            'NotificationRouterService',
+            {
+              notificationType: mapping.type,
+              channel,
+              audience,
+              eventName,
+            },
+          );
+          continue;
+        }
+      } else {
+        // Fallback: check if channel exists in any audience
+        const hasChannel = Object.values(manifest.audiences).some(
+          (audienceConfig) => audienceConfig.channels[channel],
+        );
+        if (!hasChannel) {
+          this.logger.error(
+            `Channel ${channel} not supported for notification type ${mapping.type}`,
+            undefined,
+            'NotificationRouterService',
+            {
+              notificationType: mapping.type,
+              channel,
+              eventName,
+            },
+          );
+          continue;
+        }
+      }
+
+      // Determine and validate recipient for this channel
+      const channelRecipient = await this.determineAndValidateRecipient(
+        channel,
+        recipient,
+        phone,
+        userId,
+        eventName,
+        mapping.type,
+      );
+
+      if (!channelRecipient) {
+        continue; // Recipient validation failed or skipped
+      }
+
+      // Check idempotency with distributed lock
+      const idempotencyResult = await this.checkIdempotency(
+        correlationId,
+        mapping.type,
+        channel,
+        channelRecipient,
+      );
+
+      if (!idempotencyResult.shouldProceed) {
+        continue; // Already sent or lock failed
+      }
+
+      // Build base payload
+      const basePayload = this.buildBasePayload(
+        channelRecipient,
+        channel,
+        mapping,
+        manifest,
+        locale,
+        centerId,
+        userId,
+        profileType,
+        profileId,
+        correlationId,
+      );
+
+      // Render template and build payload (use cache if available for bulk optimization)
+      let rendered: RenderedNotification;
+      const cacheKey = this.getTemplateCacheKey(
+        mapping.type,
+        channel,
+        locale,
+        templateData as Record<string, unknown>,
+        audience,
+      );
+
+      if (preRenderedCache && preRenderedCache.has(cacheKey)) {
+        // Use pre-rendered content from cache (bulk optimization)
+        rendered = preRenderedCache.get(cacheKey)!;
+        this.logger.debug(
+          `Using pre-rendered template from cache: ${cacheKey}`,
+          'NotificationRouterService',
+          {
+            notificationType: mapping.type,
+            channel,
+            locale,
+          },
+        );
+      } else {
+        // Render template (normal flow or cache miss)
+        rendered = await this.renderer.render(
+          mapping.type,
+          channel,
+          templateData as Record<string, unknown>,
+          locale,
+          audience,
+        );
+        // Store in cache if provided
+        if (preRenderedCache) {
+          preRenderedCache.set(cacheKey, rendered);
+        }
+      }
+
+      const payload = this.buildPayload(
+        channel,
+        basePayload,
+        rendered,
+        templateData,
+        manifest,
+      );
+
+      if (!payload) {
+        continue; // Payload building failed (e.g., missing subject for email)
+      }
+
+      // Handle IN_APP directly (low latency requirement) or collect for bulk enqueue
+      if (channel === NotificationChannel.IN_APP) {
+        // Send IN_APP directly without queuing for low latency
+        try {
+          await this.sendOrEnqueueNotification(
+            channel,
+            payload,
+            userId,
+            eventName,
+            correlationId,
+            priority,
+          );
+        } finally {
+          // Release idempotency lock if acquired
+          if (
+            idempotencyResult.lockAcquired &&
+            this.idempotencyCache &&
+            correlationId
+          ) {
+            await this.idempotencyCache.releaseLock(
+              correlationId,
+              mapping.type,
+              channel,
+              channelRecipient,
+            );
+          }
+        }
+      } else {
+        // Collect non-IN_APP payloads for bulk enqueue
+        payloadsToEnqueue.push(payload);
+        // Track lock for release after bulk enqueue
+        if (
+          idempotencyResult.lockAcquired &&
+          this.idempotencyCache &&
+          correlationId
+        ) {
+          locksToRelease.push({
+            correlationId,
+            type: mapping.type,
+            channel,
+            recipient: channelRecipient,
+          });
+        }
+      }
+    }
+
+    // Enqueue all collected payloads in bulk (single Redis round-trip)
+    if (payloadsToEnqueue.length > 0) {
+      try {
+        await this.enqueueNotifications(payloadsToEnqueue, priority);
+        this.logger.debug(
+          `Bulk enqueued ${payloadsToEnqueue.length} notification(s) for user ${userId}`,
+          'NotificationRouterService',
+          {
+            eventName,
+            userId,
+            correlationId,
+            channelCount: payloadsToEnqueue.length,
+            channels: payloadsToEnqueue.map((p) => p.channel),
+          },
+        );
+
+        // Release idempotency locks after successful bulk enqueue
+        if (this.idempotencyCache) {
+          await Promise.allSettled(
+            locksToRelease.map((lock) =>
+              this.idempotencyCache!.releaseLock(
+                lock.correlationId,
+                lock.type,
+                lock.channel,
+                lock.recipient,
+              ),
+            ),
+          );
+        }
+      } catch (error) {
+        this.logger.error(
+          `Failed to bulk enqueue notifications: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error.stack : undefined,
+          'NotificationRouterService',
+          {
+            eventName,
+            userId,
+            correlationId,
+            payloadCount: payloadsToEnqueue.length,
+          },
+        );
+        // Release locks on failure so they can be retried
+        if (this.idempotencyCache) {
+          await Promise.allSettled(
+            locksToRelease.map((lock) =>
+              this.idempotencyCache!.releaseLock(
+                lock.correlationId,
+                lock.type,
+                lock.channel,
+                lock.recipient,
+              ),
+            ),
+          );
+        }
+        // Don't throw - individual failures are handled by the queue processor
+      }
+    }
+  }
+
+  /**
+   * Determine recipient for a channel and validate format
+   */
+  private async determineAndValidateRecipient(
+    channel: NotificationChannel,
+    recipient: string | undefined,
+    phone: string | undefined,
+    userId: string,
+    eventName: NotificationType,
+    notificationType: NotificationType,
+  ): Promise<string | null> {
+    let channelRecipient: string | null = null;
+
+    // Determine recipient based on channel type
+    if (channel === NotificationChannel.EMAIL) {
+      const email = recipient?.includes('@') ? recipient : null;
+      if (!email) {
+        this.logger.debug(
+          `Skipping EMAIL channel: no email for user ${userId}`,
+          'NotificationRouterService',
+          { userId, eventName },
+        );
+        return null;
+      }
+      channelRecipient = email;
+    } else if (
+      channel === NotificationChannel.SMS ||
+      channel === NotificationChannel.WHATSAPP
+    ) {
+      // For SMS/WhatsApp, MUST use phone, never fallback to recipient or userId
+      if (!phone) {
+        this.logger.warn(
+          `Skipping ${channel} channel: no phone for user ${userId}`,
+          'NotificationRouterService',
+          { userId, eventName, channel },
+        );
+        return null;
+      }
+      // Validate phone is actually a phone number (not userId or email)
+      if (phone === userId || phone.includes('@')) {
+        this.logger.error(
+          `Invalid phone value for ${channel} channel: phone appears to be userId or email`,
+          undefined,
+          'NotificationRouterService',
+          {
+            userId,
+            eventName,
+            channel,
+            phone: phone.substring(
+              0,
+              STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
+            ),
+          },
+        );
+        return null;
+      }
+      channelRecipient = phone;
+    } else if (channel === NotificationChannel.IN_APP) {
+      // For IN_APP, use userId as recipient
+      channelRecipient = userId || '';
+    } else {
+      // PUSH or other channels - use appropriate fallback
+      channelRecipient = recipient || phone || null;
+    }
+
+    if (!channelRecipient) {
+      this.logger.debug(
+        `Skipping ${channel} channel: no recipient data`,
+        'NotificationRouterService',
+        { userId, eventName, channel },
+      );
+      return null;
+    }
+
+    // Validate recipient format
+    if (channel === NotificationChannel.EMAIL) {
+      if (!isValidEmail(channelRecipient)) {
+        this.logger.warn(
+          `Invalid email format for ${channel} channel: ${channelRecipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH)}`,
+          'NotificationRouterService',
+          {
+            userId,
+            eventName,
+            channel,
+            recipient: channelRecipient.substring(
+              0,
+              STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
+            ),
+          },
+        );
+        if (this.metricsService) {
+          await this.metricsService.incrementFailed(channel, notificationType);
+        }
+        return null;
+      }
+    } else if (
+      channel === NotificationChannel.SMS ||
+      channel === NotificationChannel.WHATSAPP
+    ) {
+      // Normalize and validate phone format
+      const normalizedPhone = normalizePhone(channelRecipient);
+      if (!normalizedPhone || !isValidE164(normalizedPhone)) {
+        this.logger.warn(
+          `Invalid phone format for ${channel} channel: ${channelRecipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH)}`,
+          'NotificationRouterService',
+          {
+            userId,
+            eventName,
+            channel,
+            recipient: channelRecipient.substring(
+              0,
+              STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
+            ),
+          },
+        );
+        if (this.metricsService) {
+          await this.metricsService.incrementFailed(channel, notificationType);
+        }
+        return null;
+      }
+      channelRecipient = normalizedPhone;
+    }
+
+    return channelRecipient;
+  }
+
+  /**
+   * Check idempotency with distributed lock
+   */
+  private async checkIdempotency(
+    correlationId: string,
+    notificationType: NotificationType,
+    channel: NotificationChannel,
+    channelRecipient: string,
+  ): Promise<{ shouldProceed: boolean; lockAcquired: boolean }> {
+    if (!this.idempotencyCache || !correlationId) {
+      return { shouldProceed: true, lockAcquired: false };
+    }
+
+    let lockAcquired = false;
+    try {
+      lockAcquired = await this.idempotencyCache.acquireLock(
+        correlationId,
+        notificationType,
+        channel,
+        channelRecipient,
+      );
+
+      if (!lockAcquired) {
+        this.logger.debug(
+          `Skipping notification (lock not acquired): ${notificationType}:${channel}`,
+          'NotificationRouterService',
+          {
+            correlationId,
+            type: notificationType,
+            channel,
+            recipient: channelRecipient.substring(
+              0,
+              STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
+            ),
+          },
+        );
+        return { shouldProceed: false, lockAcquired: false };
+      }
+
+      const alreadySent = await this.idempotencyCache.checkAndSet(
+        correlationId,
+        notificationType,
+        channel,
+        channelRecipient,
+      );
+
+      if (alreadySent) {
+        await this.idempotencyCache.releaseLock(
+          correlationId,
+          notificationType,
+          channel,
+          channelRecipient,
+        );
+        this.logger.debug(
+          `Skipping duplicate notification (idempotency): ${notificationType}:${channel}`,
+          'NotificationRouterService',
+          {
+            correlationId,
+            type: notificationType,
+            channel,
+            recipient: channelRecipient.substring(
+              0,
+              STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
+            ),
+          },
+        );
+        return { shouldProceed: false, lockAcquired: false };
+      }
+
+      return { shouldProceed: true, lockAcquired: true };
+    } catch (error) {
+      if (lockAcquired) {
+        await this.idempotencyCache.releaseLock(
+          correlationId,
+          notificationType,
+          channel,
+          channelRecipient,
+        );
+      }
+      this.logger.warn(
+        `Idempotency check failed, proceeding anyway: ${notificationType}:${channel}`,
+        'NotificationRouterService',
+        {
+          correlationId,
+          type: notificationType,
+          channel,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
+      return { shouldProceed: true, lockAcquired: false };
+    }
+  }
+
+  /**
+   * Build base payload with common fields
+   */
+  private buildBasePayload(
+    channelRecipient: string,
+    channel: NotificationChannel,
+    mapping: { type: NotificationType },
+    manifest: NotificationManifest,
+    locale: string,
+    centerId: string | undefined,
+    userId: string,
+    profileType: ProfileType | null | undefined,
+    profileId: string | null | undefined,
+    correlationId: string,
+  ) {
+    return {
+      recipient: channelRecipient,
+      channel,
+      type: mapping.type,
+      group: manifest.group,
+      locale,
+      centerId,
+      userId: createUserId(userId),
+      profileType: profileType ?? null,
+      profileId: profileId ?? null,
+      correlationId: createCorrelationId(correlationId),
+    };
+  }
+
+  /**
+   * Build channel-specific payload from rendered content
+   */
+  private buildPayload(
+    channel: NotificationChannel,
+    basePayload: ReturnType<typeof this.buildBasePayload>,
+    rendered: {
+      subject?: string;
+      content: string | object;
+      metadata: { template: string };
+    },
+    templateData: NotificationTemplateData,
+    manifest: NotificationManifest,
+  ): NotificationPayload | null {
+    if (channel === NotificationChannel.EMAIL) {
+      if (!rendered.subject) {
+        this.logger.error(
+          `Missing subject for EMAIL notification: ${basePayload.type}`,
+          undefined,
+          'NotificationRouterService',
+          {
+            notificationType: basePayload.type,
+            channel,
+            userId: basePayload.userId,
+          },
+        );
+        return null;
+      }
+
+      return {
+        ...basePayload,
+        subject: rendered.subject,
+        data: {
+          html: rendered.content as string,
+          content: rendered.content as string,
+          template: rendered.metadata.template,
+        },
+      } as EmailNotificationPayload;
+    }
+
+    if (
+      channel === NotificationChannel.SMS ||
+      channel === NotificationChannel.WHATSAPP
+    ) {
+      if (channel === NotificationChannel.SMS) {
+        return {
+          ...basePayload,
+          data: {
+            content: rendered.content as string,
+            template: rendered.metadata.template,
+          },
+        } as SmsNotificationPayload;
+      } else {
+        return {
+          ...basePayload,
+          data: {
+            content: rendered.content as string,
+            template: rendered.metadata.template,
+          },
+        } as WhatsAppNotificationPayload;
+      }
+    }
+
+    if (channel === NotificationChannel.IN_APP) {
+      const inAppContent = rendered.content as Record<string, unknown>;
+      const title =
+        (inAppContent.title as string) ||
+        (templateData.title as string) ||
+        'Notification';
+      const message =
+        (inAppContent.message as string) ||
+        (inAppContent.content as string) ||
+        '';
+
+      return {
+        ...basePayload,
+        title,
+        data: {
+          message,
+          ...inAppContent,
+          template: rendered.metadata.template,
+          expiresAt: inAppContent.expiresAt as Date | undefined,
+        },
+      } as InAppNotificationPayload;
+    }
+
+    if (channel === NotificationChannel.PUSH) {
+      const pushContent = rendered.content as Record<string, unknown>;
+      const title =
+        (pushContent.title as string) ||
+        (templateData.title as string) ||
+        'Notification';
+      const message =
+        (pushContent.message as string) || (pushContent.body as string) || '';
+
+      return {
+        ...basePayload,
+        title,
+        data: {
+          message,
+          ...((pushContent.data as Record<string, unknown> | undefined)
+            ? { data: pushContent.data as Record<string, unknown> }
+            : {}),
+          template: rendered.metadata.template,
+        },
+      } as PushNotificationPayload;
+    }
+
+    // Unknown channel type
+    this.logger.warn(
+      `Unknown channel type: ${channel}`,
+      'NotificationRouterService',
+      {
+        notificationType: basePayload.type,
+        channel,
+      },
+    );
+    return null;
+  }
+
+  /**
+   * Send notification directly (IN_APP) or enqueue for async processing
+   */
+  private async sendOrEnqueueNotification(
+    channel: NotificationChannel,
+    payload: NotificationPayload,
+    userId: string,
+    eventName: NotificationType,
+    correlationId: string,
+    priority: number,
+  ): Promise<void> {
+    if (channel === NotificationChannel.IN_APP) {
+      // Check rate limit before sending
+      const userWithinLimit =
+        await this.inAppNotificationService.checkUserRateLimit(userId);
+      if (!userWithinLimit) {
+        const rateLimitConfig =
+          this.inAppNotificationService.getRateLimitConfig();
+        this.logger.warn(
+          `User ${userId} exceeded rate limit (${rateLimitConfig.limit}/${rateLimitConfig.windowSeconds}s) for IN_APP notification, skipping delivery`,
+          'NotificationRouterService',
+          {
+            userId,
+            eventName,
+            correlationId,
+            limit: rateLimitConfig.limit,
+            window: `${rateLimitConfig.windowSeconds} seconds`,
+          },
+        );
+        return;
+      }
+
+      // Send IN_APP directly without queuing for low latency
+      try {
+        await this.senderService.send(payload);
+        this.logger.debug(
+          `IN_APP notification sent directly: ${eventName} to user ${userId}`,
+          'NotificationRouterService',
+          {
+            userId,
+            eventName,
+            correlationId,
+          },
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to send IN_APP notification directly: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error.stack : undefined,
+          'NotificationRouterService',
+          {
+            userId,
+            eventName,
+            correlationId,
+          },
+        );
+        // Don't throw - already logged, continue with other channels
+      }
+    } else {
+      // Enqueue for async processing
+      await this.enqueueJob(payload, priority);
+    }
+  }
+
+  /**
+   * Enqueue a notification job to the BullMQ queue
+   */
+  private async enqueueJob(
+    payload: NotificationPayload,
+    priority: number = 0,
+  ): Promise<void> {
+    const jobData: NotificationJobData = {
+      ...payload,
+      retryCount: 0,
+    };
+
+    // Get channel-specific retry configuration
+    const retryConfig = this.retryStrategyService.getRetryConfig(
+      payload.channel,
+    );
+
+    await this.queue.add('send-notification', jobData, {
+      attempts: retryConfig.maxAttempts,
+      priority,
+      backoff: {
+        type: retryConfig.backoffType,
+        delay: retryConfig.backoffDelay,
+      },
+      removeOnComplete: {
+        age: QUEUE_CONSTANTS.COMPLETED_JOB_AGE_SECONDS,
+      },
+      removeOnFail: {
+        age: QUEUE_CONSTANTS.FAILED_JOB_AGE_SECONDS,
+      },
+    });
+  }
+
+  /**
+   * Enqueue multiple notifications in bulk
+   */
+  async enqueueNotifications(
+    payloads: NotificationPayload[],
+    priority: number = 0,
+  ): Promise<Job<NotificationJobData>[]> {
+    if (payloads.length === 0) {
+      return [];
+    }
+
+    const jobs = payloads.map((payload) => {
+      const jobData: NotificationJobData = {
+        ...payload,
+        retryCount: 0,
+      };
+
+      const retryConfig = this.retryStrategyService.getRetryConfig(
+        payload.channel,
+      );
+
+      return {
+        name: 'send-notification',
+        data: jobData,
+        opts: {
+          attempts: retryConfig.maxAttempts,
+          priority,
+          backoff: {
+            type: retryConfig.backoffType,
+            delay: retryConfig.backoffDelay,
+          },
+          removeOnComplete: {
+            age: QUEUE_CONSTANTS.COMPLETED_JOB_AGE_SECONDS,
+          },
+          removeOnFail: {
+            age: QUEUE_CONSTANTS.FAILED_JOB_AGE_SECONDS,
+          },
+        },
+      };
+    });
+
+    // Use BullMQ bulk add for efficiency (single Redis round-trip)
+    return this.queue.addBulk(jobs);
+  }
+
+  /**
+   * Get template cache key for bulk rendering optimization
+   */
+  private getTemplateCacheKey(
+    notificationType: NotificationType,
+    channel: NotificationChannel,
+    locale: string,
+    templateData: Record<string, unknown>,
+    audience?: string,
+  ): string {
+    // Create hash of template data (excluding recipient-specific fields)
+    const dataForHash = { ...templateData };
+    delete dataForHash.userId;
+    delete dataForHash.email;
+    delete dataForHash.phone;
+    delete dataForHash.locale;
+
+    const dataHash = JSON.stringify(dataForHash);
+    return `${notificationType}:${channel}:${locale}:${audience || 'default'}:${dataHash}`;
+  }
+}

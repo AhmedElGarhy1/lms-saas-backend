@@ -1,9 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { Queue } from 'bullmq';
+import { Queue, Job } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { NotificationJobData } from '../types/notification-job-data.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { NotificationPayload } from '../types/notification-payload.interface';
+import {
+  NotificationPayload,
+  EmailNotificationPayload,
+  SmsNotificationPayload,
+  WhatsAppNotificationPayload,
+  InAppNotificationPayload,
+  PushNotificationPayload,
+} from '../types/notification-payload.interface';
 import { NotificationSenderService } from './notification-sender.service';
 import { ChannelSelectionService } from './channel-selection.service';
 import { NotificationTemplateService } from './notification-template.service';
@@ -13,10 +20,11 @@ import { ChannelRetryStrategyService } from './channel-retry-strategy.service';
 import { NotificationManifestResolver } from '../manifests/registry/notification-manifest-resolver.service';
 import { NotificationManifest } from '../manifests/types/manifest.types';
 import { NotificationRenderer } from '../renderer/notification-renderer.service';
+import { RenderedNotification } from '../manifests/types/manifest.types';
 import { NotificationIdempotencyCacheService } from './notification-idempotency-cache.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { RequestContext } from '@/shared/common/context/request.context';
-import { randomUUID } from 'crypto';
+import { randomUUID, createHash } from 'crypto';
 import { NotificationEvent } from '../types/notification-event.types';
 import pLimit from 'p-limit';
 import { RecipientInfo } from '../types/recipient-info.interface';
@@ -35,51 +43,29 @@ import {
 } from '../utils/recipient-validator.util';
 import { AudienceId } from '../types/audience.types';
 import { NotificationType } from '../enums/notification-type.enum';
+import {
+  validateRecipients,
+  ValidatedRecipientInfo,
+} from '../validation/recipient-info.schema';
+import { InvalidRecipientException } from '../exceptions/invalid-recipient.exception';
+import {
+  CONCURRENCY_CONSTANTS,
+  QUEUE_CONSTANTS,
+  STRING_CONSTANTS,
+} from '../constants/notification.constants';
+import { NotificationPipelineService, NotificationProcessingContext } from './pipeline/notification-pipeline.service';
+import { NotificationRouterService } from './routing/notification-router.service';
+import { BulkNotificationResult } from '../types/bulk-notification-result.interface';
 
-/**
- * Context object passed through the notification processing pipeline
- *
- * Fields are populated sequentially as the pipeline progresses:
- * 1. extractEventData: userId, recipient, phone, centerId, locale, profileType, profileId
- * 2. determineChannels: enabledChannels (from manifest and audience)
- * 3. selectOptimalChannels: finalChannels (optimized based on user activity)
- * 4. prepareTemplateData: templateData
- * 5. routeToChannels: uses finalChannels, templateData, manifest
- */
-interface NotificationProcessingContext {
-  // Event and mapping
-  eventName: NotificationType; // Notification type enum
-  event: NotificationEvent | Record<string, unknown>;
-  mapping: { type: NotificationType }; // Simple mapping for compatibility
-  manifest: NotificationManifest; // Single source of truth for all config
-  audience?: AudienceId; // Audience identifier for multi-audience notifications
-  correlationId: string;
-
-  // Recipient information
-  userId?: string;
-  recipient: string; // Email or phone (for backward compat and logging)
-  phone?: string; // Phone number for SMS/WhatsApp routing
-  centerId?: string;
-  locale: string;
-  profileType?: ProfileType | null;
-  profileId?: string | null;
-
-  // Channel selection (progressive refinement)
-  requestedChannels?: NotificationChannel[]; // Optional channels override from caller
-  enabledChannels: NotificationChannel[]; // Channels from manifest (after preferences check)
-  finalChannels: NotificationChannel[]; // Optimized channels (after activity-based selection)
-
-  // Template data
-  templateData: NotificationTemplateData;
-}
+// NotificationProcessingContext is imported from pipeline service
 
 @Injectable()
 export class NotificationService {
   // Initialize p-limit once per service instance (not per method call)
   // This ensures optimal performance by reusing the limiter across all trigger calls
-  private readonly concurrencyLimit = pLimit(20);
+  private readonly concurrencyLimit = pLimit(CONCURRENCY_CONSTANTS.DEFAULT_CONCURRENCY_LIMIT);
   // Concurrency limit constant for logging (p-limit doesn't expose limit value)
-  private static readonly CONCURRENCY_LIMIT = 20;
+  private static readonly CONCURRENCY_LIMIT = CONCURRENCY_CONSTANTS.DEFAULT_CONCURRENCY_LIMIT;
 
   constructor(
     @InjectQueue('notifications') private readonly queue: Queue,
@@ -91,15 +77,22 @@ export class NotificationService {
     private readonly retryStrategyService: ChannelRetryStrategyService,
     private readonly manifestResolver: NotificationManifestResolver,
     private readonly renderer: NotificationRenderer,
+    private readonly pipelineService: NotificationPipelineService,
+    private readonly routerService: NotificationRouterService,
     private readonly metricsService?: NotificationMetricsService,
     private readonly idempotencyCache?: NotificationIdempotencyCacheService,
   ) {}
 
   /**
-   * Enqueue multiple notifications
+   * @deprecated This method has been moved to NotificationRouterService.enqueueNotifications()
+   * Kept temporarily for backward compatibility but is no longer used.
    */
-  async enqueueNotifications(payloads: NotificationPayload[]): Promise<void> {
-    await Promise.all(payloads.map((payload) => this.enqueueJob(payload, 0)));
+  async enqueueNotifications(
+    payloads: NotificationPayload[],
+    priority: number = 0,
+  ): Promise<Job<NotificationJobData>[]> {
+    // Delegate to router service
+    return this.routerService.enqueueNotifications(payloads, priority);
   }
 
   /**
@@ -113,6 +106,7 @@ export class NotificationService {
    * @param manifest - Notification manifest (required)
    * @param audience - Audience identifier (required for multi-audience manifests)
    * @param channels - Optional array of channels to use. If provided, only these channels will be used.
+   * @param preRenderedCache - Optional cache of pre-rendered templates (for bulk optimization)
    */
   private async processEventForRecipient(
     notificationType: NotificationType,
@@ -122,9 +116,10 @@ export class NotificationService {
     manifest: NotificationManifest,
     audience: AudienceId,
     channels?: NotificationChannel[],
+    preRenderedCache?: Map<string, RenderedNotification>,
   ): Promise<void> {
     // Initialize processing context
-    const context: Partial<NotificationProcessingContext> = {
+    const context: NotificationProcessingContext = {
       eventName: notificationType,
       event,
       correlationId,
@@ -132,17 +127,22 @@ export class NotificationService {
       audience,
       manifest,
       mapping: { type: notificationType }, // Simple mapping for compatibility
+      enabledChannels: [],
+      finalChannels: [],
+      recipient: '',
+      locale: 'en',
+      templateData: {} as NotificationTemplateData,
     };
 
-    // Execute pipeline steps sequentially
-    this.extractEventData(context, recipientInfo);
-    this.determineChannels(context);
+    // Execute pipeline steps using pipeline service
+    await this.pipelineService.process(context, recipientInfo);
+    
     if (context.enabledChannels && context.enabledChannels.length === 0) {
       return; // Early exit if no enabled channels
     }
-    await this.selectOptimalChannels(context);
-    this.prepareTemplateData(context);
-    await this.routeToChannels(context);
+
+    // Route to channels using router service
+    await this.routerService.route(context, preRenderedCache);
   }
 
   /**
@@ -166,6 +166,7 @@ export class NotificationService {
    *
    * @param type - Notification type
    * @param options - Trigger options including audience, event, recipients, and optional channels
+   * @returns Detailed result of the bulk notification operation
    */
   async trigger(
     type: NotificationType,
@@ -175,8 +176,20 @@ export class NotificationService {
       recipients: RecipientInfo[];
       channels?: NotificationChannel[];
     },
-  ): Promise<void> {
+  ): Promise<BulkNotificationResult> {
     const { audience, event, recipients, channels } = options;
+    const startTime = Date.now();
+
+    // Initialize result object
+    const result: BulkNotificationResult = {
+      total: recipients.length,
+      sent: 0,
+      failed: 0,
+      skipped: 0,
+      errors: [],
+      duration: 0,
+      correlationId: '',
+    };
 
     // Get manifest
     const manifest = this.manifestResolver.getManifest(type);
@@ -187,10 +200,62 @@ export class NotificationService {
     // Extract or generate correlation ID
     const requestContext = RequestContext.get();
     const correlationId = requestContext?.requestId || randomUUID();
+    result.correlationId = correlationId;
+
+    // Validate all recipients before processing
+    const validationResult = validateRecipients(recipients);
+    
+    if (validationResult.errors.length > 0) {
+      // Log validation errors
+      for (const error of validationResult.errors) {
+        const recipient = recipients[error.index];
+        const errorMessages = error.errors.errors.map((e) => e.message).join('; ');
+        
+        result.errors.push({
+          recipient: recipient?.userId || `index-${error.index}`,
+          error: errorMessages,
+          code: 'VALIDATION_ERROR',
+        });
+        
+        this.logger.error(
+          `Invalid recipient at index ${error.index}`,
+          undefined,
+          'NotificationService',
+          {
+            notificationType: type,
+            audience,
+            correlationId,
+            validationErrors: error.errors.errors.map((e) => ({
+              field: e.path.join('.'),
+              message: e.message,
+            })),
+          },
+        );
+      }
+
+      // Update skipped count for validation errors
+      result.skipped = validationResult.errors.length;
+
+      // Throw exception with all validation errors
+      const allErrors = validationResult.errors.flatMap((e) =>
+        e.errors.errors.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        })),
+      );
+      throw InvalidRecipientException.fromZodError({
+        issues: allErrors.map((e) => ({
+          path: e.field.split('.'),
+          message: e.message,
+        })),
+      });
+    }
 
     // Process each recipient
-    if (recipients.length > 0) {
-      const uniqueRecipients = this.deduplicateRecipients(recipients);
+    if (validationResult.valid.length > 0) {
+      const uniqueRecipients = this.deduplicateRecipients(
+        validationResult.valid as RecipientInfo[],
+      );
 
       if (uniqueRecipients.length === 0) {
         this.logger.warn(
@@ -201,12 +266,13 @@ export class NotificationService {
             audience,
             correlationId,
             originalCount: recipients.length,
+            validatedCount: validationResult.valid.length,
           },
         );
-        return;
+        result.skipped = result.total;
+        result.duration = Date.now() - startTime;
+        return result;
       }
-
-      const startTime = Date.now();
 
       logNotificationStart(this.logger, {
         eventName: type,
@@ -214,6 +280,37 @@ export class NotificationService {
         recipientCount: uniqueRecipients.length,
         concurrencyLimit: NotificationService.CONCURRENCY_LIMIT,
       });
+
+      // Bulk rendering optimization: Group recipients by template data hash
+      // and pre-render templates once per group
+      const preRenderedCache = new Map<string, RenderedNotification>();
+      
+      // Group recipients by template data hash (same template data = same rendered content)
+      const recipientGroups = this.groupRecipientsByTemplateData(
+        uniqueRecipients,
+        type,
+        event,
+        manifest,
+        audience,
+        channels,
+      );
+
+      // Pre-render templates for each group (only if group has multiple recipients)
+      for (const group of recipientGroups) {
+        if (group.recipients.length > 1) {
+          // Multiple recipients with same template data - render once
+          await this.preRenderTemplatesForGroup(
+            group,
+            type,
+            event,
+            manifest,
+            audience,
+            preRenderedCache,
+            correlationId,
+          );
+        }
+        // If group has only 1 recipient, render on-demand (no optimization needed)
+      }
 
       const results = await Promise.allSettled(
         uniqueRecipients.map((recipient) =>
@@ -227,8 +324,18 @@ export class NotificationService {
                 manifest,
                 audience,
                 channels,
+                preRenderedCache, // Pass cache for reuse
               );
             } catch (error) {
+              const errorMessage = error instanceof Error ? error.message : String(error);
+              const errorCode = error instanceof Error && 'code' in error ? String(error.code) : 'UNKNOWN_ERROR';
+              
+              result.errors.push({
+                recipient: recipient.userId,
+                error: errorMessage,
+                code: errorCode,
+              });
+              
               logNotificationError(
                 this.logger,
                 {
@@ -237,7 +344,7 @@ export class NotificationService {
                   recipientId: recipient.userId,
                   profileId: recipient.profileId ?? undefined,
                   profileType: recipient.profileType ?? undefined,
-                  error: error instanceof Error ? error.message : String(error),
+                  error: errorMessage,
                 },
                 error instanceof Error ? error : undefined,
               );
@@ -255,6 +362,12 @@ export class NotificationService {
       const failureCount = results.filter(
         (r) => r.status === 'rejected',
       ).length;
+      
+      // Update result object
+      result.sent = successCount;
+      result.failed = failureCount;
+      result.duration = duration;
+      
       logNotificationComplete(this.logger, {
         eventName: type,
         correlationId,
@@ -264,229 +377,33 @@ export class NotificationService {
         recipientCount: uniqueRecipients.length,
         concurrencyLimit: NotificationService.CONCURRENCY_LIMIT,
       });
-    }
-  }
-
-  /**
-   * Get all channels defined in manifest for a specific audience
-   * @param manifest - Notification manifest
-   * @param audience - Audience identifier
-   * @returns Array of notification channels
-   */
-  private getChannelsFromManifest(
-    manifest: NotificationManifest,
-    audience?: AudienceId,
-  ): NotificationChannel[] {
-    if (audience) {
-      const audienceConfig = this.manifestResolver.getAudienceConfig(
-        manifest,
-        audience,
-      );
-      return Object.keys(audienceConfig.channels) as NotificationChannel[];
-    }
-    // Fallback: get channels from first audience (for backward compatibility during migration)
-    const firstAudience = Object.keys(manifest.audiences)[0];
-    if (firstAudience) {
-      const audienceConfig = manifest.audiences[firstAudience];
-      return Object.keys(audienceConfig.channels) as NotificationChannel[];
-    }
-    return [];
-  }
-
-  /**
-   * Pipeline Step 2: Extract data from recipient info
-   * All data must be provided via RecipientInfo - no extraction from events
-   *
-   * @param context - Processing context to populate
-   * @param recipientInfo - Required recipient info with all necessary data
-   */
-  private extractEventData(
-    context: Partial<NotificationProcessingContext>,
-    recipientInfo: RecipientInfo,
-  ): void {
-    // Use data directly from recipientInfo - no extraction from events
-    context.userId = recipientInfo.userId;
-    context.profileType = recipientInfo.profileType;
-    context.profileId = recipientInfo.profileId;
-    context.recipient = recipientInfo.email || recipientInfo.phone; // For backward compat and logging
-    context.phone = recipientInfo.phone; // Required - always exists
-    context.centerId = recipientInfo.centerId || undefined; // Optional
-    context.locale = recipientInfo.locale; // Required - from user.userInfo.locale
-  }
-
-  /**
-   * Pipeline Step 3: Determine channels based on manifest and audience
-   * If requestedChannels is provided, filters manifest channels to only include requested ones.
-   * If not provided, uses all channels from manifest for the specified audience (default behavior).
-   */
-  private determineChannels(
-    context: Partial<NotificationProcessingContext>,
-  ): void {
-    const { manifest, requestedChannels, audience } = context;
-    if (!manifest) {
-      context.enabledChannels = [];
-      return;
-    }
-
-    // Get all channels from manifest for the specified audience
-    const manifestChannels =
-      this.getChannelsFromManifest(manifest, audience) || [];
-
-    // If specific channels requested, filter manifest channels
-    if (requestedChannels && requestedChannels.length > 0) {
-      const validChannels = this.validateRequestedChannels(
-        requestedChannels,
-        manifest,
-        manifestChannels,
-      );
-      context.enabledChannels = validChannels;
     } else {
-      // Default: use all channels from manifest for the audience
-      context.enabledChannels = manifestChannels;
+      // No valid recipients
+      result.skipped = result.total;
+      result.duration = Date.now() - startTime;
     }
+    
+    return result;
   }
 
   /**
-   * Validate requested channels against manifest and return only valid ones
-   * Logs warnings for channels that don't exist in manifest
-   *
-   * @param requestedChannels - Channels requested by caller
-   * @param manifest - Notification manifest containing available channels
-   * @param manifestChannels - Pre-computed list of channels from manifest
-   * @returns Array of valid channels that exist in both requested and manifest
+   * NOTE: The following methods have been moved to dedicated services:
+   * - extractEventData, determineChannels, selectOptimalChannels, prepareTemplateData -> NotificationPipelineService
+   * - routeToChannels, determineAndValidateRecipient, checkIdempotency, buildBasePayload, buildPayload, sendOrEnqueueNotification, enqueueJob, enqueueNotifications -> NotificationRouterService
+   * 
+   * These methods are kept here temporarily for reference but are no longer used.
+   * They will be removed in a future cleanup.
    */
-  private validateRequestedChannels(
-    requestedChannels: NotificationChannel[],
-    manifest: NotificationManifest,
-    manifestChannels: NotificationChannel[],
-  ): NotificationChannel[] {
-    const validChannels: NotificationChannel[] = [];
-    const invalidChannels: NotificationChannel[] = [];
-
-    for (const channel of requestedChannels) {
-      if (manifestChannels.includes(channel)) {
-        validChannels.push(channel);
-      } else {
-        invalidChannels.push(channel);
-      }
-    }
-
-    // Log warnings for invalid channels
-    if (invalidChannels.length > 0) {
-      this.logger.warn(
-        `Requested channels not available in manifest: ${invalidChannels.join(', ')}`,
-        'NotificationService',
-        {
-          notificationType: manifest.type,
-          requestedChannels,
-          availableChannels: manifestChannels,
-          invalidChannels,
-        },
-      );
-    }
-
-    // Log info if no valid channels found
-    if (validChannels.length === 0 && requestedChannels.length > 0) {
-      this.logger.warn(
-        `No valid channels found after filtering. Requested: ${requestedChannels.join(', ')}, Available: ${manifestChannels.join(', ')}`,
-        'NotificationService',
-        {
-          notificationType: manifest.type,
-          requestedChannels,
-          availableChannels: manifestChannels,
-        },
-      );
-    }
-
-    return validChannels;
-  }
-
-  /**
-   * Pipeline Step 5: Select optimal channels based on user activity and urgency
-   */
-  private async selectOptimalChannels(
-    context: Partial<NotificationProcessingContext>,
-  ): Promise<void> {
-    const { userId, enabledChannels, manifest } = context;
-    let finalChannels: NotificationChannel[] = enabledChannels!;
-
-    if (userId && manifest) {
-      try {
-        finalChannels =
-          await this.channelSelectionService.selectOptimalChannels(
-            userId,
-            enabledChannels!,
-            {
-              priority: manifest.priority,
-              eventType: manifest.type,
-              isSecurityEvent: manifest.requiresAudit || false,
-            },
-            manifest.priority,
-            manifest.requiresAudit,
-          );
-
-        if (finalChannels.length === 0) {
-          // Fallback to enabledChannels
-          finalChannels = enabledChannels!;
-          this.logger.debug(
-            `Dynamic channel selection resulted in empty array, using enabledChannels fallback`,
-            'NotificationService',
-            {
-              eventName: context.eventName,
-              userId,
-              fallbackChannels: finalChannels,
-            },
-          );
-        }
-      } catch (error) {
-        this.logger.error(
-          `Failed to apply dynamic channel selection, using original channels`,
-          error instanceof Error ? error.stack : undefined,
-          'NotificationService',
-          {
-            eventName: context.eventName,
-            userId,
-            correlationId: context.correlationId,
-          },
-        );
-        // Fallback to original enabled channels
-        finalChannels = enabledChannels!;
-      }
-    }
-
-    context.finalChannels = finalChannels;
-  }
-
-  /**
-   * Pipeline Step 6: Prepare template data with IN_APP-specific fields
-   */
-  private prepareTemplateData(
-    context: Partial<NotificationProcessingContext>,
-  ): void {
-    const { event, manifest, finalChannels } = context;
-
-    if (!event || !manifest || !finalChannels) {
-      return;
-    }
-
-    // Use event data directly - no mapping needed
-    const templateData = {
-      ...(event as Record<string, unknown>),
-    };
-
-    // For IN_APP notifications, priority comes from manifest
-    if (finalChannels.includes(NotificationChannel.IN_APP)) {
-      templateData.priority = manifest.priority ?? 0;
-    }
-
-    context.templateData = templateData;
-  }
 
   /**
    * Pipeline Step 7 & 8: Route notifications to channels (IN_APP direct send, others enqueue)
+   * @deprecated This method has been moved to NotificationRouterService.route()
+   * @param context - Processing context
+   * @param preRenderedCache - Optional cache of pre-rendered templates (for bulk optimization)
    */
   private async routeToChannels(
     context: Partial<NotificationProcessingContext>,
+    preRenderedCache?: Map<string, RenderedNotification>,
   ): Promise<void> {
     const {
       recipient,
@@ -515,6 +432,17 @@ export class NotificationService {
     ) {
       return;
     }
+
+    // Collect payloads for bulk enqueue (non-IN_APP channels)
+    const payloadsToEnqueue: NotificationPayload[] = [];
+    // Track idempotency locks that need to be released after bulk enqueue
+    const locksToRelease: Array<{
+      correlationId: string;
+      type: NotificationType;
+      channel: NotificationChannel;
+      recipient: string;
+    }> = [];
+    const priority = manifest.priority || 0;
 
     // Process each final channel (after dynamic selection)
     for (const channel of finalChannels) {
@@ -598,14 +526,42 @@ export class NotificationService {
         context.correlationId,
       );
 
-      // Render template and build payload
-      const rendered = await this.renderer.render(
+      // Render template and build payload (use cache if available for bulk optimization)
+      let rendered: RenderedNotification;
+      const cacheKey = this.getTemplateCacheKey(
         mapping.type,
         channel,
-        templateData as Record<string, unknown>,
         locale,
+        templateData as Record<string, unknown>,
         context.audience,
       );
+
+      if (preRenderedCache && preRenderedCache.has(cacheKey)) {
+        // Use pre-rendered content from cache (bulk optimization)
+        rendered = preRenderedCache.get(cacheKey)!;
+        this.logger.debug(
+          `Using pre-rendered template from cache: ${cacheKey}`,
+          'NotificationService',
+          {
+            notificationType: mapping.type,
+            channel,
+            locale,
+          },
+        );
+      } else {
+        // Render template (normal flow or cache miss)
+        rendered = await this.renderer.render(
+          mapping.type,
+          channel,
+          templateData as Record<string, unknown>,
+          locale,
+          context.audience,
+        );
+        // Store in cache if provided
+        if (preRenderedCache) {
+          preRenderedCache.set(cacheKey, rendered);
+        }
+      }
 
       const payload = this.buildPayload(
         channel,
@@ -619,30 +575,107 @@ export class NotificationService {
         continue; // Payload building failed (e.g., missing subject for email)
       }
 
-      // Send or enqueue notification
-      try {
-        await this.sendOrEnqueueNotification(
-          channel,
-          payload,
-          userId,
-          eventName,
-          context.correlationId,
-          manifest.priority || 0,
-        );
-      } finally {
-        // Release idempotency lock if acquired
+      // Handle IN_APP directly (low latency requirement) or collect for bulk enqueue
+      if (channel === NotificationChannel.IN_APP) {
+        // Send IN_APP directly without queuing for low latency
+        try {
+          await this.sendOrEnqueueNotification(
+            channel,
+            payload,
+            userId,
+            eventName,
+            context.correlationId,
+            priority,
+          );
+        } finally {
+          // Release idempotency lock if acquired
+          if (
+            idempotencyResult.lockAcquired &&
+            this.idempotencyCache &&
+            context.correlationId
+          ) {
+            await this.idempotencyCache.releaseLock(
+              context.correlationId,
+              mapping.type,
+              channel,
+              channelRecipient,
+            );
+          }
+        }
+      } else {
+        // Collect non-IN_APP payloads for bulk enqueue
+        payloadsToEnqueue.push(payload);
+        // Track lock for release after bulk enqueue
         if (
           idempotencyResult.lockAcquired &&
           this.idempotencyCache &&
           context.correlationId
         ) {
-          await this.idempotencyCache.releaseLock(
-            context.correlationId,
-            mapping.type,
+          locksToRelease.push({
+            correlationId: context.correlationId,
+            type: mapping.type,
             channel,
-            channelRecipient,
+            recipient: channelRecipient,
+          });
+        }
+      }
+    }
+
+    // Enqueue all collected payloads in bulk (single Redis round-trip)
+    if (payloadsToEnqueue.length > 0) {
+      try {
+        await this.enqueueNotifications(payloadsToEnqueue, priority);
+        this.logger.debug(
+          `Bulk enqueued ${payloadsToEnqueue.length} notification(s) for user ${userId}`,
+          'NotificationService',
+          {
+            eventName,
+            userId,
+            correlationId: context.correlationId,
+            channelCount: payloadsToEnqueue.length,
+            channels: payloadsToEnqueue.map((p) => p.channel),
+          },
+        );
+
+        // Release idempotency locks after successful bulk enqueue
+        if (this.idempotencyCache) {
+          await Promise.allSettled(
+            locksToRelease.map((lock) =>
+              this.idempotencyCache!.releaseLock(
+                lock.correlationId,
+                lock.type,
+                lock.channel,
+                lock.recipient,
+              ),
+            ),
           );
         }
+      } catch (error) {
+        this.logger.error(
+          `Failed to bulk enqueue notifications: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error.stack : undefined,
+          'NotificationService',
+          {
+            eventName,
+            userId,
+            correlationId: context.correlationId,
+            payloadCount: payloadsToEnqueue.length,
+          },
+        );
+        // Release locks on failure so they can be retried
+        if (this.idempotencyCache) {
+          await Promise.allSettled(
+            locksToRelease.map((lock) =>
+              this.idempotencyCache!.releaseLock(
+                lock.correlationId,
+                lock.type,
+                lock.channel,
+                lock.recipient,
+              ),
+            ),
+          );
+        }
+        // Don't throw - individual failures are handled by the queue processor
       }
     }
   }
@@ -700,7 +733,7 @@ export class NotificationService {
             userId,
             eventName,
             channel,
-            phone: phone.substring(0, 20),
+            phone: phone.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH),
           },
         );
         return null;
@@ -727,13 +760,13 @@ export class NotificationService {
     if (channel === NotificationChannel.EMAIL) {
       if (!isValidEmail(channelRecipient)) {
         this.logger.warn(
-          `Invalid email format for ${channel} channel: ${channelRecipient.substring(0, 20)}`,
+          `Invalid email format for ${channel} channel: ${channelRecipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH)}`,
           'NotificationService',
           {
             userId,
             eventName,
             channel,
-            recipient: channelRecipient.substring(0, 20),
+            recipient: channelRecipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH),
           },
         );
         if (this.metricsService) {
@@ -755,7 +788,7 @@ export class NotificationService {
             userId,
             eventName,
             channel,
-            recipient: channelRecipient.substring(0, 20),
+            recipient: channelRecipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH),
           },
         );
         if (this.metricsService) {
@@ -801,7 +834,7 @@ export class NotificationService {
             correlationId: context.correlationId,
             type: notificationType,
             channel,
-            recipient: channelRecipient.substring(0, 20),
+            recipient: channelRecipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH),
           },
         );
         return { shouldProceed: false, lockAcquired: false };
@@ -828,7 +861,7 @@ export class NotificationService {
             correlationId: context.correlationId,
             type: notificationType,
             channel,
-            recipient: channelRecipient.substring(0, 20),
+            recipient: channelRecipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH),
           },
         );
         return { shouldProceed: false, lockAcquired: false };
@@ -996,16 +1029,48 @@ export class NotificationService {
       } as NotificationPayload;
     }
 
-    // Fallback for other channels
-    return {
+    // Fallback for other channels (should not happen for known channels)
+    // Build a safe payload based on channel type
+    const fallbackPayload = {
       ...basePayload,
       channel,
+      recipient: basePayload.recipient || '',
       data: {
         ...templateData,
-        content: rendered.content,
+        content: typeof rendered.content === 'string' ? rendered.content : String(rendered.content),
         template: rendered.metadata.template,
       },
-    } as unknown as NotificationPayload;
+    };
+
+    // Add channel-specific required fields
+    if (channel === NotificationChannel.EMAIL) {
+      return {
+        ...fallbackPayload,
+        subject: typeof templateData.title === 'string' ? templateData.title : 'Notification',
+        data: {
+          ...fallbackPayload.data,
+          html: typeof rendered.content === 'string' ? rendered.content : String(rendered.content),
+        },
+      } as EmailNotificationPayload;
+    } else if (channel === NotificationChannel.PUSH || channel === NotificationChannel.IN_APP) {
+      return {
+        ...fallbackPayload,
+        title: typeof templateData.title === 'string' ? templateData.title : 'Notification',
+        data: {
+          ...fallbackPayload.data,
+          message: typeof rendered.content === 'string' ? rendered.content : String(rendered.content),
+        },
+      } as PushNotificationPayload | InAppNotificationPayload;
+    } else {
+      // SMS or WhatsApp
+      return {
+        ...fallbackPayload,
+        data: {
+          ...fallbackPayload.data,
+          content: typeof rendered.content === 'string' ? rendered.content : String(rendered.content),
+        },
+      } as SmsNotificationPayload | WhatsAppNotificationPayload;
+    }
   }
 
   /**
@@ -1098,11 +1163,207 @@ export class NotificationService {
         delay: retryConfig.backoffDelay,
       },
       removeOnComplete: {
-        age: 24 * 3600, // Keep completed jobs for 24 hours
+        age: QUEUE_CONSTANTS.COMPLETED_JOB_AGE_SECONDS,
       },
       removeOnFail: {
-        age: 7 * 24 * 3600, // Keep failed jobs for 7 days
+        age: QUEUE_CONSTANTS.FAILED_JOB_AGE_SECONDS,
       },
     });
+  }
+
+  /**
+   * Group recipients by template data hash for bulk rendering optimization
+   * Recipients with the same template data (excluding recipient-specific fields) are grouped together
+   */
+  private groupRecipientsByTemplateData(
+    recipients: RecipientInfo[],
+    notificationType: NotificationType,
+    event: NotificationEvent | Record<string, unknown>,
+    manifest: NotificationManifest,
+    audience: AudienceId,
+    channels?: NotificationChannel[],
+  ): Array<{ templateDataHash: string; recipients: RecipientInfo[] }> {
+    const groups = new Map<string, RecipientInfo[]>();
+
+    for (const recipient of recipients) {
+      // Create template data hash (excluding recipient-specific fields)
+      const templateData = this.prepareTemplateDataForHash(
+        event,
+        recipient,
+        manifest,
+      );
+      const hash = this.hashTemplateData(
+        notificationType,
+        recipient.locale,
+        templateData,
+        audience,
+      );
+
+      if (!groups.has(hash)) {
+        groups.set(hash, []);
+      }
+      groups.get(hash)!.push(recipient);
+    }
+
+    return Array.from(groups.entries()).map(([templateDataHash, recipients]) => ({
+      templateDataHash,
+      recipients,
+    }));
+  }
+
+  /**
+   * Prepare template data for hashing (exclude recipient-specific fields)
+   */
+  private prepareTemplateDataForHash(
+    event: NotificationEvent | Record<string, unknown>,
+    recipient: RecipientInfo,
+    manifest: NotificationManifest,
+  ): Record<string, unknown> {
+    // Clone event data and exclude recipient-specific fields
+    const eventData = { ...(event as Record<string, unknown>) };
+    
+    // Remove recipient-specific fields that don't affect template rendering
+    // These fields are added per-recipient in buildBasePayload
+    delete eventData.userId;
+    delete eventData.recipient;
+    delete eventData.phone;
+    delete eventData.centerId;
+    delete eventData.profileId;
+    delete eventData.profileType;
+    delete eventData.locale; // Locale is part of hash, not template data
+
+    // Add priority for IN_APP (from manifest)
+    if (manifest.priority !== undefined) {
+      eventData.priority = manifest.priority;
+    }
+
+    return eventData;
+  }
+
+  /**
+   * Hash template data to create cache key for bulk rendering
+   */
+  private hashTemplateData(
+    notificationType: NotificationType,
+    locale: string,
+    templateData: Record<string, unknown>,
+    audience?: AudienceId,
+  ): string {
+    // Create stable hash from template data (excluding recipient-specific fields)
+    const hashInput = JSON.stringify({
+      type: notificationType,
+      locale,
+      audience,
+      data: templateData,
+    });
+
+    // Use SHA-256 for consistent hashing
+    return createHash('sha256').update(hashInput).digest('hex').substring(0, 16);
+  }
+
+  /**
+   * Get cache key for pre-rendered template
+   */
+  private getTemplateCacheKey(
+    notificationType: NotificationType,
+    channel: NotificationChannel,
+    locale: string,
+    templateData: Record<string, unknown>,
+    audience?: AudienceId,
+  ): string {
+    // Create hash excluding recipient-specific fields
+    const dataForHash = { ...templateData };
+    delete dataForHash.userId;
+    delete dataForHash.recipient;
+    delete dataForHash.phone;
+    delete dataForHash.centerId;
+    delete dataForHash.profileId;
+    delete dataForHash.profileType;
+
+    const hash = this.hashTemplateData(notificationType, locale, dataForHash, audience);
+    return `${notificationType}:${channel}:${locale}:${hash}`;
+  }
+
+  /**
+   * Pre-render templates for a group of recipients with the same template data
+   * This is the key optimization: render once, reuse for all recipients in the group
+   */
+  private async preRenderTemplatesForGroup(
+    group: { templateDataHash: string; recipients: RecipientInfo[] },
+    notificationType: NotificationType,
+    event: NotificationEvent | Record<string, unknown>,
+    manifest: NotificationManifest,
+    audience: AudienceId,
+    cache: Map<string, RenderedNotification>,
+    correlationId: string,
+  ): Promise<void> {
+    if (group.recipients.length === 0) {
+      return;
+    }
+
+    // Use first recipient as representative (all have same template data)
+    const representative = group.recipients[0];
+    const templateData = this.prepareTemplateDataForHash(
+      event,
+      representative,
+      manifest,
+    );
+
+    // Get all channels from manifest for this audience
+    const audienceConfig = this.manifestResolver.getAudienceConfig(manifest, audience);
+    const availableChannels = Object.keys(audienceConfig.channels) as NotificationChannel[];
+
+    // Pre-render for each channel and locale combination
+    const locales = new Set(group.recipients.map((r) => r.locale));
+
+    for (const channel of availableChannels) {
+      for (const locale of locales) {
+        try {
+          const cacheKey = this.getTemplateCacheKey(
+            notificationType,
+            channel,
+            locale,
+            templateData,
+            audience,
+          );
+
+          // Only render if not already cached
+          if (!cache.has(cacheKey)) {
+            // Render template once for this group
+            const rendered = await this.renderer.render(
+              notificationType,
+              channel,
+              templateData,
+              locale,
+              audience,
+            );
+            cache.set(cacheKey, rendered);
+            this.logger.debug(
+              `Pre-rendered template for bulk group: ${cacheKey}`,
+              'NotificationService',
+              {
+                notificationType,
+                channel,
+                locale,
+                groupSize: group.recipients.length,
+                correlationId,
+              },
+            );
+          }
+        } catch (error) {
+          this.logger.warn(
+            `Failed to pre-render template for group: ${group.templateDataHash}`,
+            'NotificationService',
+            {
+              error: error instanceof Error ? error.message : String(error),
+              channel,
+              locale,
+              correlationId,
+            },
+          );
+          // Continue with other channels/locales - don't fail entire group
+        }
+      }
+    }
   }
 }

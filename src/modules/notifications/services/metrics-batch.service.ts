@@ -2,6 +2,7 @@ import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
+import { NotificationConfig } from '../config/notification.config';
 import { Config } from '@/shared/config/config';
 
 interface BatchEntry {
@@ -50,8 +51,8 @@ export class MetricsBatchService implements OnModuleDestroy {
     private readonly logger: LoggerService,
   ) {
     this.redisKeyPrefix = Config.redis.keyPrefix;
-    this.batchSize = Config.notification.metricsBatchSize;
-    this.flushIntervalMs = Config.notification.metricsFlushIntervalMs;
+    this.batchSize = NotificationConfig.metricsBatchSize;
+    this.flushIntervalMs = NotificationConfig.metricsFlushIntervalMs;
 
     // Start periodic flush timer
     this.startPeriodicFlush();

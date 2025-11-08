@@ -1,4 +1,5 @@
 import { Config } from '@/shared/config/config';
+import { WebSocketConfig } from './notification.config';
 
 export interface NotificationGatewayConfig {
   redisPrefix: string;
@@ -32,26 +33,26 @@ export const notificationGatewayConfig = (): NotificationGatewayConfig => ({
   redisPrefix: Config.redis.keyPrefix,
 
   retry: {
-    maxAttempts: Config.websocket.retry.maxAttempts,
-    baseDelayMs: Config.websocket.retry.baseDelayMs,
+    maxAttempts: WebSocketConfig.retry.maxAttempts,
+    baseDelayMs: WebSocketConfig.retry.baseDelayMs,
   },
 
   rateLimit: {
-    user: Config.websocket.rateLimit.user,
-    ttl: Config.websocket.rateLimit.ttl,
+    user: WebSocketConfig.rateLimit.user,
+    ttl: WebSocketConfig.rateLimit.ttl,
   },
 
   connectionRateLimit: {
     ip: {
-      limit: Config.websocket.connectionRateLimit.ip.limit,
-      windowSeconds: Config.websocket.connectionRateLimit.ip.windowSeconds,
+      limit: WebSocketConfig.connectionRateLimit.ip.limit,
+      windowSeconds: WebSocketConfig.connectionRateLimit.ip.windowSeconds,
     },
     user: {
-      limit: Config.websocket.connectionRateLimit.user.limit,
-      windowSeconds: Config.websocket.connectionRateLimit.user.windowSeconds,
+      limit: WebSocketConfig.connectionRateLimit.user.limit,
+      windowSeconds: WebSocketConfig.connectionRateLimit.user.windowSeconds,
     },
-    failClosed: Config.websocket.connectionRateLimit.failClosed,
+    failClosed: WebSocketConfig.connectionRateLimit.failClosed,
   },
 
-  connectionTTL: Config.websocket.connectionTtl,
+  connectionTTL: WebSocketConfig.connectionTtl,
 });

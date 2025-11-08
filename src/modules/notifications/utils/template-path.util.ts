@@ -80,7 +80,7 @@ export function resolveTemplatePathWithFallback(
   template: string,
   locale: string = 'en',
   channel: NotificationChannel,
-  strategy: TemplateFallbackStrategy = TemplateFallbackStrategy.CHANNEL_OR_EMAIL,
+  strategy: TemplateFallbackStrategy = TemplateFallbackStrategy.CHANNEL_OR_WHATSAPP,
 ): string | null {
   // Level 1: Try primary template (channel-specific)
   const primaryPath = getTemplatePath(template, locale, channel);

@@ -4,6 +4,7 @@ import { RedisService } from '@/shared/modules/redis/redis.service';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { Config } from '@/shared/config/config';
+import { REDIS_CONSTANTS } from '../constants/notification.constants';
 
 /**
  * Periodic job to clean up stale socket connections in Redis.
@@ -22,7 +23,7 @@ import { Config } from '@/shared/config/config';
 export class RedisCleanupJob {
   private readonly logger = new Logger(RedisCleanupJob.name);
   private readonly redisKeyPrefix: string;
-  private readonly staleTTLThreshold: number = 6 * 24 * 60 * 60; // 6 days (close to 7-day TTL)
+  private readonly staleTTLThreshold: number = REDIS_CONSTANTS.STALE_TTL_THRESHOLD_SECONDS;
 
   constructor(
     private readonly redisService: RedisService,
@@ -61,7 +62,7 @@ export class RedisCleanupJob {
           'MATCH',
           pattern,
           'COUNT',
-          100,
+          REDIS_CONSTANTS.SCAN_BATCH_SIZE,
         );
         cursor = nextCursor;
 
@@ -114,7 +115,7 @@ export class RedisCleanupJob {
 
           // Remove keys with very low TTL (likely stale, close to expiration)
           // This catches connections that should have been cleaned up but weren't
-          if (ttl > 0 && ttl < 60) {
+          if (ttl > 0 && ttl < REDIS_CONSTANTS.NEAR_EXPIRATION_TTL_SECONDS) {
             // Less than 1 minute remaining - likely stale
             await client.del(key);
             stats.keysCleaned++;
@@ -126,7 +127,7 @@ export class RedisCleanupJob {
           }
 
           // Log connection stats for monitoring
-          if (socketIds.length > 10) {
+          if (socketIds.length > REDIS_CONSTANTS.HIGH_CONNECTION_COUNT_THRESHOLD) {
             stats.warnings++;
             this.logger.warn(
               `User ${userId} has ${socketIds.length} active connections - potential leak`,
@@ -222,7 +223,7 @@ export class RedisCleanupJob {
           'MATCH',
           pattern,
           'COUNT',
-          100,
+          REDIS_CONSTANTS.SCAN_BATCH_SIZE,
         );
         cursor = nextCursor;
 
@@ -263,7 +264,7 @@ export class RedisCleanupJob {
           }
 
           // Remove keys with very low TTL
-          if (ttl > 0 && ttl < 60) {
+          if (ttl > 0 && ttl < REDIS_CONSTANTS.NEAR_EXPIRATION_TTL_SECONDS) {
             await client.del(key);
             cleaned.push(key);
             stats.staleKeysRemoved++;

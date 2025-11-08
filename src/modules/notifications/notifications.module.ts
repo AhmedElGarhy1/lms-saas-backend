@@ -30,6 +30,7 @@ import { UserModule } from '../user/user.module';
 import { CentersModule } from '@/modules/centers/centers.module';
 import { RedisCleanupJob } from './jobs/redis-cleanup.job';
 import { TemplateCacheService } from './services/template-cache.service';
+import { RedisTemplateCacheService } from './services/redis-template-cache.service';
 import { NotificationMetricsService } from './services/notification-metrics.service';
 import { MetricsBatchService } from './services/metrics-batch.service';
 import { ChannelRateLimitService } from './services/channel-rate-limit.service';
@@ -44,6 +45,12 @@ import { NotificationCircuitBreakerService } from './services/notification-circu
 import { TimeoutConfigService } from './config/timeout.config';
 import { NotificationDlqCleanupJob } from './jobs/notification-dlq-cleanup.job';
 import { NotificationAlertService } from './services/notification-alert.service';
+import { QUEUE_CONSTANTS } from './constants/notification.constants';
+import { TemplateHotReloadService } from './services/template-hot-reload.service';
+import { NotificationPipelineService } from './services/pipeline/notification-pipeline.service';
+import { NotificationRouterService } from './services/routing/notification-router.service';
+import { NotificationTracerService } from './observability/notification-tracer.service';
+import { PrometheusMetricsService } from './observability/prometheus-metrics.service';
 
 @Module({
   imports: [
@@ -64,10 +71,10 @@ import { NotificationAlertService } from './services/notification-alert.service'
             delay: 2000,
           },
           removeOnComplete: {
-            age: 24 * 3600, // 24 hours
+            age: QUEUE_CONSTANTS.COMPLETED_JOB_AGE_SECONDS,
           },
           removeOnFail: {
-            age: 7 * 24 * 3600, // 7 days
+            age: QUEUE_CONSTANTS.FAILED_JOB_AGE_SECONDS,
           },
         },
       }),
@@ -92,7 +99,8 @@ import { NotificationAlertService } from './services/notification-alert.service'
     NotificationGateway,
     RedisCleanupJob,
     NotificationDlqCleanupJob, // Cleanup job for old failed notifications
-    TemplateCacheService,
+    TemplateCacheService, // Legacy - can be removed after migration
+    RedisTemplateCacheService, // New Redis-based template cache
     MetricsBatchService,
     ChannelRateLimitService,
     ChannelRetryStrategyService,
@@ -106,6 +114,11 @@ import { NotificationAlertService } from './services/notification-alert.service'
     NotificationCircuitBreakerService, // Circuit breaker with sliding window for preventing false positives
     TimeoutConfigService, // Provider-specific timeout configuration
     NotificationAlertService, // Alert service for queue backlog and system health
+    TemplateHotReloadService, // Hot reload templates in development
+    NotificationPipelineService, // Pipeline service for processing steps
+    NotificationRouterService, // Router service for channel routing
+    NotificationTracerService, // Tracing service for observability
+    PrometheusMetricsService, // Prometheus metrics wrapper service
   ],
   controllers: [NotificationHistoryController, InAppNotificationController],
   exports: [
