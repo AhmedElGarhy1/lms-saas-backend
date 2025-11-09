@@ -5,6 +5,7 @@ import { NotificationChannel } from '../../enums/notification-channel.enum';
 import { NotificationManifest } from '../../manifests/types/manifest.types';
 import { NotificationGroup } from '../../enums/notification-group.enum';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { TemplateBasePath } from '../../types/templates.generated';
 import {
   EmailNotificationPayload,
   SmsNotificationPayload,
@@ -28,7 +29,7 @@ export function createMockRecipientInfo(
     userId: faker.string.uuid(),
     profileId: faker.string.uuid(),
     email: faker.internet.email(),
-    phone: faker.phone.number('+2##########'),
+    phone: faker.phone.number(),
     locale: faker.helpers.arrayElement(['en', 'ar']),
     centerId: faker.string.uuid(),
     profileType: faker.helpers.arrayElement([

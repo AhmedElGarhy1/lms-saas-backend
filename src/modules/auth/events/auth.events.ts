@@ -6,9 +6,8 @@ export class UserLoggedInEvent extends BaseEvent {
     public readonly userId: string,
     public readonly email: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'auth.service', correlationId);
+    super(actor);
   }
 }
 
@@ -16,9 +15,8 @@ export class UserLoggedOutEvent extends BaseEvent {
   constructor(
     public readonly userId: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'auth.service', correlationId);
+    super(actor);
   }
 }
 
@@ -26,9 +24,8 @@ export class TokenRefreshedEvent extends BaseEvent {
   constructor(
     public readonly userId: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'auth.service', correlationId);
+    super(actor);
   }
 }
 
@@ -36,9 +33,8 @@ export class PasswordChangedEvent extends BaseEvent {
   constructor(
     public readonly userId: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'auth.service', correlationId);
+    super(actor);
   }
 }
 
@@ -46,9 +42,8 @@ export class EmailVerifiedEvent extends BaseEvent {
   constructor(
     public readonly userId: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'auth.service', correlationId);
+    super(actor);
   }
 }
 
@@ -57,9 +52,8 @@ export class PhoneVerifiedEvent extends BaseEvent {
     public readonly userId: string,
     public readonly phone: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'auth.service', correlationId);
+    super(actor);
   }
 }
 
@@ -71,9 +65,8 @@ export class PasswordResetRequestedEvent extends BaseEvent {
     public readonly name?: string,
     public readonly token?: string,
     public readonly link?: string,
-    correlationId?: string,
   ) {
-    super(actor, 'auth.service', correlationId);
+    super(actor);
   }
 }
 
@@ -85,9 +78,8 @@ export class EmailVerificationRequestedEvent extends BaseEvent {
     public readonly token: string,
     public readonly link: string,
     public readonly name?: string,
-    correlationId?: string,
   ) {
-    super(actor, 'auth.service', correlationId);
+    super(actor);
   }
 }
 
@@ -99,9 +91,8 @@ export class OtpEvent extends BaseEvent {
     public readonly expiresIn: number, // in minutes
     public readonly email?: string,
     public readonly phone?: string,
-    correlationId?: string,
   ) {
-    super(actor, 'auth.service', correlationId);
+    super(actor);
   }
 }
 
@@ -109,9 +100,8 @@ export class TwoFactorSetupEvent extends BaseEvent {
   constructor(
     public readonly userId: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'auth.service', correlationId);
+    super(actor);
   }
 }
 
@@ -119,9 +109,8 @@ export class TwoFactorEnabledEvent extends BaseEvent {
   constructor(
     public readonly userId: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'auth.service', correlationId);
+    super(actor);
   }
 }
 
@@ -129,8 +118,7 @@ export class TwoFactorDisabledEvent extends BaseEvent {
   constructor(
     public readonly userId: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'auth.service', correlationId);
+    super(actor);
   }
 }

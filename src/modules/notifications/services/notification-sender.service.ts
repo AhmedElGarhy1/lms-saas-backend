@@ -17,7 +17,6 @@ import { NotificationStatus } from '../enums/notification-status.enum';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationMetricsService } from './notification-metrics.service';
 import pLimit from 'p-limit';
-import { RequestContext } from '@/shared/common/context/request.context';
 import { NotificationConfig } from '../config/notification.config';
 import { NotificationIdempotencyCacheService } from './notification-idempotency-cache.service';
 import {
@@ -109,14 +108,11 @@ export class NotificationSenderService {
   }
 
   /**
-   * Get correlationId from RequestContext with fallback to payload
+   * Get correlationId from payload
+   * No longer uses RequestContext to support background/queue contexts
    */
   private getCorrelationId(payload: NotificationPayload): string | undefined {
-    return (
-      RequestContext.get()?.correlationId ||
-      RequestContext.get()?.requestId ||
-      payload.correlationId
-    );
+    return payload.correlationId;
   }
 
   /**

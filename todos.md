@@ -84,7 +84,7 @@ Caching in RecipientResolverService - Cache frequent center queries (centerId + 
 [ ] (frontend) Data flow: ⚠️ Needs standardization (28 violations)
 [ ] notifications register user connection first when he opens (there is a problem in sending notifications because of redis not found user connection)
 
-[ ] implement DLQ for Queue
+[x] implement DLQ for Queue
 [ ] clear correlationId from all events
 [ ] remove command related code
 [ ] standrize redis keys for easy mantainnce

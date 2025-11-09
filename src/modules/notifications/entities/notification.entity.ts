@@ -12,13 +12,7 @@ import { User } from '@/modules/user/entities/user.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-
-export enum NotificationStatus {
-  PENDING = 'PENDING',
-  SENT = 'SENT',
-  DELIVERED = 'DELIVERED',
-  FAILED = 'FAILED',
-}
+import { NotificationStatus } from '../enums/notification-status.enum';
 
 @Entity('notifications')
 @Index(['userId', 'readAt'])

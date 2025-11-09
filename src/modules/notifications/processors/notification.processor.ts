@@ -14,8 +14,6 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { ChannelRetryStrategyService } from '../services/channel-retry-strategy.service';
 import { NotificationConfig } from '../config/notification.config';
 import { NotificationSendingFailedException } from '../exceptions/notification.exceptions';
-import { RequestContext } from '@/shared/common/context/request.context';
-import { Locale } from '@/shared/common/enums/locale.enum';
 import { randomUUID } from 'crypto';
 import { NotificationAlertService } from '../services/notification-alert.service';
 import {
@@ -26,9 +24,9 @@ import {
 
 /**
  * Processor concurrency must be a static value in the decorator.
- * To change concurrency, update NotificationConfig.concurrency and restart the application.
+ * To change concurrency, update NotificationConfig.concurrency.processor and restart the application.
  */
-const PROCESSOR_CONCURRENCY = NotificationConfig.concurrency;
+const PROCESSOR_CONCURRENCY = NotificationConfig.concurrency.processor;
 
 @Processor('notifications', {
   concurrency: PROCESSOR_CONCURRENCY,
@@ -67,23 +65,17 @@ export class NotificationProcessor extends WorkerHost {
     const jobId = job.id || 'unknown';
     const attempt = retryCount + 1;
 
-    // Extract correlationId from job data to restore async context
+    // Extract correlationId from job data
     // Use type guard to safely access payloadData
+    // No longer using RequestContext - correlationId flows through payload
     const correlationId =
       (isRecord(payloadData) ? getStringProperty(payloadData, 'correlationId') : undefined) ||
       jobData.correlationId ||
       randomUUID();
 
-      // Restore async context with correlationId for request tracing
-      // This ensures correlationId propagates through all async operations
-      return RequestContext.run(
-        {
-          requestId: correlationId,
-          correlationId: correlationId,
-          locale: Locale.EN, // Default locale
-        },
-      async () => {
-        this.logger.debug(
+      // Process notification without RequestContext wrapper
+      // correlationId is passed through payload and used directly
+      this.logger.debug(
           `Processing notification job: ${jobId}, type: ${type}, channel: ${channel}, attempt: ${attempt}`,
           'NotificationProcessor',
           {
@@ -181,9 +173,8 @@ export class NotificationProcessor extends WorkerHost {
             error instanceof Error ? error.message : String(error);
 
           // Enhanced error logging with structured context
-          // correlationId is available from RequestContext
-          const ctxCorrelationId =
-            RequestContext.get()?.correlationId || correlationId;
+          // correlationId is available from job data
+          const ctxCorrelationId = correlationId;
           this.logger.error(
             `Failed to send notification: ${jobId}, attempt: ${attempt}`,
             error instanceof Error ? error.stack : undefined,
@@ -275,8 +266,6 @@ export class NotificationProcessor extends WorkerHost {
           // Re-throw to trigger BullMQ retry for retriable errors
           throw error;
         }
-      },
-    );
   }
 
   @OnWorkerEvent('completed')

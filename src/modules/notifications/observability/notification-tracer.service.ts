@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { LoggerService } from '@/shared/services/logger.service';
-import { RequestContext } from '@/shared/common/context/request.context';
+import { randomUUID } from 'crypto';
 
 /**
  * Span context for tracing notification operations
@@ -199,11 +199,13 @@ export class NotificationTracerService {
   }
 
   /**
-   * Get correlation ID from request context or generate a new one
+   * Get correlation ID - generate a new one for each span
+   * No longer uses RequestContext to support background/queue contexts
    */
   private getCorrelationId(): string {
-    const context = RequestContext.get();
-    return context?.requestId || context?.correlationId || 'no-correlation-id';
+    // Generate a new correlationId for tracing
+    // In the future, this could accept correlationId as a parameter
+    return randomUUID();
   }
 }
 

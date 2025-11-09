@@ -11,9 +11,8 @@ export class CreateRoleEvent extends BaseEvent {
   constructor(
     public readonly role: Role,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'role.command.handler', correlationId);
+    super(actor);
   }
 }
 
@@ -26,9 +25,8 @@ export class UpdateRoleEvent extends BaseEvent {
     public readonly roleId: string,
     public readonly updates: CreateRoleRequestDto,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'role.command.handler', correlationId);
+    super(actor);
   }
 }
 
@@ -40,9 +38,8 @@ export class DeleteRoleEvent extends BaseEvent {
   constructor(
     public readonly roleId: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'role.command.handler', correlationId);
+    super(actor);
   }
 }
 
@@ -54,8 +51,7 @@ export class RestoreRoleEvent extends BaseEvent {
   constructor(
     public readonly roleId: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'role.command.handler', correlationId);
+    super(actor);
   }
 }

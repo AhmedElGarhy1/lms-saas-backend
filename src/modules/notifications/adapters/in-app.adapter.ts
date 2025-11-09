@@ -9,7 +9,7 @@ import {
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationRepository } from '../repositories/notification.repository';
 import { Notification } from '../entities/notification.entity';
-import { NotificationStatus as NotificationEntityStatus } from '../entities/notification.entity';
+import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationGateway } from '../gateways/notification.gateway';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationEvents } from '@/shared/events/notification.events.enum';
@@ -19,7 +19,6 @@ import {
   NotificationFailedEvent,
 } from '../events/notification.events';
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
-import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { NotificationType } from '../enums/notification-type.enum';
 import { InvalidOperationException } from '@/shared/common/exceptions/custom.exceptions';
@@ -184,7 +183,7 @@ export class InAppAdapter
       isArchived: false,
       readAt: undefined,
       channel: NotificationChannel.IN_APP,
-      status: NotificationEntityStatus.PENDING,
+      status: NotificationStatus.PENDING,
     });
   }
 
@@ -312,8 +311,8 @@ export class InAppAdapter
   ): Promise<void> {
     if (notification.id) {
       notification.status = delivered
-        ? NotificationEntityStatus.DELIVERED
-        : NotificationEntityStatus.FAILED;
+        ? NotificationStatus.DELIVERED
+        : NotificationStatus.FAILED;
       await this.notificationRepository.update(notification.id, {
         status: notification.status,
       });

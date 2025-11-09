@@ -28,7 +28,6 @@ import {
 import { TestEnvGuard } from '../test/helpers/test-env-guard';
 import { testManifests, testRecipients } from '../test/fixtures';
 import { InvalidRecipientException } from '../exceptions/invalid-recipient.exception';
-import { RequestContext } from '@/shared/common/context/request.context';
 import { Locale } from '@/shared/common/enums/locale.enum';
 
 describe('Trigger Flow', () => {
@@ -294,26 +293,23 @@ describe('Trigger Flow', () => {
       expect(result.duration).toBeGreaterThanOrEqual(0);
     });
 
-    it('should handle correlation ID from RequestContext', async () => {
-      const correlationId = 'test-correlation-id';
-      RequestContext.run(
-        { requestId: correlationId, correlationId, locale: Locale.EN },
-        async () => {
-          const recipient = createMockRecipientInfo();
-          const event = createMockNotificationEvent();
+    it('should generate correlation ID for each notification', async () => {
+      const recipient = createMockRecipientInfo();
+      const event = createMockNotificationEvent();
 
-          const result = await service.trigger(
-            NotificationType.CENTER_CREATED,
-            {
-              audience: 'OWNER',
-              event,
-              recipients: [recipient],
-            },
-          );
-
-          expect(result.correlationId).toBe(correlationId);
+      const result = await service.trigger(
+        NotificationType.CENTER_CREATED,
+        {
+          audience: 'OWNER',
+          event,
+          recipients: [recipient],
         },
       );
+
+      // correlationId is now generated internally, not from RequestContext
+      expect(result.correlationId).toBeDefined();
+      expect(typeof result.correlationId).toBe('string');
+      expect(result.correlationId.length).toBeGreaterThan(0);
     });
 
     it('should generate correlation ID if not in context', async () => {

@@ -5,7 +5,6 @@ import { NotificationManifestResolver } from '../manifests/registry/notification
 import { NotificationManifest } from '../manifests/types/manifest.types';
 import { NotificationRenderer } from '../renderer/notification-renderer.service';
 import { RenderedNotification } from '../manifests/types/manifest.types';
-import { RequestContext } from '@/shared/common/context/request.context';
 import { randomUUID, createHash } from 'crypto';
 import { NotificationEvent } from '../types/notification-event.types';
 import { RecipientInfo } from '../types/recipient-info.interface';
@@ -112,8 +111,9 @@ export class NotificationService {
     const manifest = this.manifestResolver.getManifest(type);
     this.manifestResolver.getAudienceConfig(manifest, audience);
 
-    const requestContext = RequestContext.get();
-    const correlationId = requestContext?.requestId ?? randomUUID();
+    // Generate correlationId at entry point - don't rely on RequestContext
+    // This works in all contexts: HTTP requests, background jobs, event listeners, cron jobs
+    const correlationId = randomUUID();
     result.correlationId = correlationId;
 
     const validationResult = validateRecipients(recipients);

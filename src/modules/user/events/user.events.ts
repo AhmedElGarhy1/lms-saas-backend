@@ -12,9 +12,8 @@ export class UserCreatedEvent extends BaseEvent {
     public readonly user: User,
     public readonly profile: UserProfile,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'user.command.handler', correlationId);
+    super(actor);
   }
 }
 
@@ -27,9 +26,8 @@ export class UserUpdatedEvent extends BaseEvent {
     public readonly user: User,
     public readonly updatedFields: string[],
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'user.command.handler', correlationId);
+    super(actor);
   }
 }
 
@@ -41,9 +39,8 @@ export class UserDeletedEvent extends BaseEvent {
   constructor(
     public readonly userId: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'user.command.handler', correlationId);
+    super(actor);
   }
 }
 
@@ -55,9 +52,8 @@ export class UserRestoredEvent extends BaseEvent {
   constructor(
     public readonly userId: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'user.command.handler', correlationId);
+    super(actor);
   }
 }
 
@@ -70,8 +66,7 @@ export class UserActivatedEvent extends BaseEvent {
     public readonly userId: string,
     public readonly isActive: boolean,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'user.command.handler', correlationId);
+    super(actor);
   }
 }

@@ -16,9 +16,8 @@ export class CreateCenterEvent extends BaseEvent {
     actor: ActorUser,
     public readonly userData?: CreateUserDto,
     public readonly branchData?: CreateBranchDto,
-    correlationId?: string,
   ) {
-    super(actor, 'center.command.handler', correlationId);
+    super(actor);
   }
 }
 
@@ -39,9 +38,8 @@ export class UpdateCenterEvent extends BaseEvent {
     public readonly centerId: string,
     public readonly updates: Partial<UpdateCenterRequestDto>,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'center.command.handler', correlationId);
+    super(actor);
   }
 }
 
@@ -53,9 +51,8 @@ export class DeleteCenterEvent extends BaseEvent {
   constructor(
     public readonly centerId: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'center.command.handler', correlationId);
+    super(actor);
   }
 }
 
@@ -67,9 +64,8 @@ export class RestoreCenterEvent extends BaseEvent {
   constructor(
     public readonly centerId: string,
     actor: ActorUser,
-    correlationId?: string,
   ) {
-    super(actor, 'center.command.handler', correlationId);
+    super(actor);
   }
 }
 

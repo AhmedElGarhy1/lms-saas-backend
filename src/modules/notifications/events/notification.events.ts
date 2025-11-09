@@ -1,6 +1,6 @@
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { NotificationStatus } from '../entities/notification.entity';
+import { NotificationStatus } from '../enums/notification-status.enum';
 
 /**
  * Event emitted when a notification is created

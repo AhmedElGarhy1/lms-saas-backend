@@ -1,4 +1,4 @@
-import { RecipientInfo } from '../../types/recipient-info.interface';
+import { RecipientInfo } from '../types/recipient-info.interface';
 import { faker } from '@faker-js/faker';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
@@ -33,9 +33,15 @@ export function generateFakeRecipients(
     let locale = 'en';
     if (options?.localeDistribution) {
       const rand = Math.random();
-      if (options.localeDistribution.ar && rand < options.localeDistribution.ar) {
+      if (
+        options.localeDistribution.ar &&
+        rand < options.localeDistribution.ar
+      ) {
         locale = 'ar';
-      } else if (options.localeDistribution.en && rand < options.localeDistribution.en) {
+      } else if (
+        options.localeDistribution.en &&
+        rand < options.localeDistribution.en
+      ) {
         locale = 'en';
       }
     } else {
@@ -51,7 +57,7 @@ export function generateFakeRecipients(
       phone:
         shouldError && Math.random() < 0.5
           ? 'invalid-phone'
-          : faker.phone.number('+1##########'),
+          : faker.phone.number(),
       locale,
       centerId: `center-${i % 10}`,
       profileType:
@@ -59,7 +65,7 @@ export function generateFakeRecipients(
           ? ProfileType.ADMIN
           : i % 3 === 1
             ? ProfileType.STAFF
-            : ProfileType.OWNER,
+            : ProfileType.TEACHER,
       profileId: `profile-${i}`,
     });
   }
@@ -110,5 +116,3 @@ export function calculateMetrics(
     successRate: result.total > 0 ? result.sent / result.total : 0,
   };
 }
-
-
