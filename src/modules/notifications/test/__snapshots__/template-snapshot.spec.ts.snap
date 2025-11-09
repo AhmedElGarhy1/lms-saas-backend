@@ -1,0 +1,44 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Template Snapshot Tests Email Template Snapshots should handle email template with complex data 1`] = `
+"
+        <div>
+          <h2>Test Center - New Notification</h2>
+          <p>Created by: Admin User</p>
+          <p>Owner: Owner User</p>
+          <ul>
+            <li>Item 1</li>
+            <li>Item 2</li>
+          </ul>
+        </div>
+      "
+`;
+
+exports[`Template Snapshot Tests Email Template Snapshots should render email template with consistent output 1`] = `
+"
+        <h1>Welcome, John Doe!</h1>
+        <p>Your verification code is: <strong>123456</strong></p>
+        <p>This code expires in 10 minutes.</p>
+      "
+`;
+
+exports[`Template Snapshot Tests In-App JSON Template Snapshots should render IN_APP JSON template with consistent structure 1`] = `
+{
+  "expiresAt": "2024-12-31T23:59:59Z",
+  "message": "You have a new notification",
+  "title": "New Notification",
+}
+`;
+
+exports[`Template Snapshot Tests In-App JSON Template Snapshots should validate IN_APP JSON schema matches snapshot 1`] = `
+{
+  "message": "Test Message",
+  "title": "Test Title",
+}
+`;
+
+exports[`Template Snapshot Tests Multi-locale Template Snapshots should render Arabic template correctly 1`] = `"مرحبا جون، أهلا بك!"`;
+
+exports[`Template Snapshot Tests Multi-locale Template Snapshots should render English template correctly 1`] = `"Hello John, welcome!"`;
+
+exports[`Template Snapshot Tests SMS Template Snapshots should render SMS template with consistent output 1`] = `"Hello John Doe, your OTP is 123456. Expires in 10 minutes."`;

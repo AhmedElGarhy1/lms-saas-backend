@@ -4,6 +4,8 @@ import { NotificationLogRepository } from '../repositories/notification-log.repo
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationConfig } from '../config/notification.config';
+import { RedisService } from '@/shared/modules/redis/redis.service';
+import { Config } from '@/shared/config/config';
 
 /**
  * Periodic job to clean up old failed notification logs from DLQ
@@ -19,6 +21,7 @@ export class NotificationDlqCleanupJob {
   constructor(
     private readonly logRepository: NotificationLogRepository,
     private readonly loggerService: LoggerService,
+    private readonly redisService: RedisService,
   ) {
     this.retentionDays = NotificationConfig.dlq.retentionDays;
   }
@@ -71,6 +74,9 @@ export class NotificationDlqCleanupJob {
       // Delete entries older than cutoff date using repository method
       const deletedCount =
         await this.logRepository.deleteOldFailedLogs(cutoffDate);
+
+      // Persist cleanup run timestamp
+      await this.persistCleanupRun();
 
       const duration = Date.now() - startTime;
 
@@ -142,5 +148,76 @@ export class NotificationDlqCleanupJob {
       oldestFailedDate: oldest,
       entriesToBeDeleted: oldEntries.length,
     };
+  }
+
+  /**
+   * Get DLQ health status
+   */
+  async getDlqHealthStatus(): Promise<{
+    totalFailed: number;
+    oldestFailedDate: Date | null;
+    entriesToBeDeleted: number;
+    lastCleanupRun: Date | null;
+    isHealthy: boolean;
+  }> {
+    const stats = await this.getRetentionStats();
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - this.retentionDays);
+
+    // Get last cleanup run timestamp from Redis
+    const lastCleanupRun = await this.getLastCleanupRun();
+
+    // Check if DLQ is growing too large (warning threshold)
+    const isHealthy = stats.totalFailed < 10000; // Configurable threshold
+
+    // Check if cleanup job is stalling (should run daily)
+    const hoursSinceLastRun = lastCleanupRun
+      ? (Date.now() - lastCleanupRun.getTime()) / (1000 * 60 * 60)
+      : Infinity;
+    const isStalling = hoursSinceLastRun > 25; // More than 25 hours = stalling
+
+    return {
+      ...stats,
+      lastCleanupRun,
+      isHealthy: isHealthy && !isStalling,
+    };
+  }
+
+  /**
+   * Get last cleanup run timestamp from Redis
+   */
+  private async getLastCleanupRun(): Promise<Date | null> {
+    try {
+      const client = this.redisService.getClient();
+      const key = `${Config.redis.keyPrefix}:notification:dlq:last_cleanup`;
+      const timestamp = await client.get(key);
+
+      if (timestamp) {
+        return new Date(parseInt(timestamp, 10));
+      }
+      return null;
+    } catch (error) {
+      this.logger.warn(
+        'Failed to get last cleanup run timestamp',
+        'NotificationDlqCleanupJob',
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Persist cleanup run timestamp to Redis
+   */
+  private async persistCleanupRun(): Promise<void> {
+    try {
+      const client = this.redisService.getClient();
+      const key = `${Config.redis.keyPrefix}:notification:dlq:last_cleanup`;
+      await client.set(key, Date.now().toString(), 'EX', 7 * 24 * 60 * 60); // 7 days TTL
+    } catch (error) {
+      this.logger.warn(
+        'Failed to persist cleanup run timestamp',
+        'NotificationDlqCleanupJob',
+      );
+    }
   }
 }

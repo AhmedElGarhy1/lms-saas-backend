@@ -29,7 +29,6 @@ import { AuthModule } from '@/modules/auth/auth.module';
 import { UserModule } from '../user/user.module';
 import { CentersModule } from '@/modules/centers/centers.module';
 import { RedisCleanupJob } from './jobs/redis-cleanup.job';
-import { TemplateCacheService } from './services/template-cache.service';
 import { RedisTemplateCacheService } from './services/redis-template-cache.service';
 import { NotificationMetricsService } from './services/notification-metrics.service';
 import { MetricsBatchService } from './services/metrics-batch.service';
@@ -49,8 +48,9 @@ import { QUEUE_CONSTANTS } from './constants/notification.constants';
 import { TemplateHotReloadService } from './services/template-hot-reload.service';
 import { NotificationPipelineService } from './services/pipeline/notification-pipeline.service';
 import { NotificationRouterService } from './services/routing/notification-router.service';
-import { NotificationTracerService } from './observability/notification-tracer.service';
-import { PrometheusMetricsService } from './observability/prometheus-metrics.service';
+import { MultiRecipientProcessor } from './services/multi-recipient-processor.service';
+import { RecipientValidationService } from './services/recipient-validation.service';
+import { PayloadBuilderService } from './services/payload-builder.service';
 
 @Module({
   imports: [
@@ -99,8 +99,7 @@ import { PrometheusMetricsService } from './observability/prometheus-metrics.ser
     NotificationGateway,
     RedisCleanupJob,
     NotificationDlqCleanupJob, // Cleanup job for old failed notifications
-    TemplateCacheService, // Legacy - can be removed after migration
-    RedisTemplateCacheService, // New Redis-based template cache
+    RedisTemplateCacheService, // Redis-based template cache
     MetricsBatchService,
     ChannelRateLimitService,
     ChannelRetryStrategyService,
@@ -117,8 +116,9 @@ import { PrometheusMetricsService } from './observability/prometheus-metrics.ser
     TemplateHotReloadService, // Hot reload templates in development
     NotificationPipelineService, // Pipeline service for processing steps
     NotificationRouterService, // Router service for channel routing
-    NotificationTracerService, // Tracing service for observability
-    PrometheusMetricsService, // Prometheus metrics wrapper service
+    MultiRecipientProcessor, // Multi-recipient processing with concurrency control
+    RecipientValidationService, // Pure service for recipient validation
+    PayloadBuilderService, // Pure service for payload building
   ],
   controllers: [NotificationHistoryController, InAppNotificationController],
   exports: [

@@ -223,7 +223,27 @@ export class NotificationTemplateService {
         locale,
         channel,
       );
+      try {
       return template(data);
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        this.logger.error(
+          `Failed to render Handlebars template: ${templateName}`,
+          error instanceof Error ? error.stack : undefined,
+          'NotificationTemplateService',
+          {
+            templateName,
+            locale,
+            channel,
+            error: errorMessage,
+          },
+        );
+        throw new TemplateRenderingException(
+          templateName,
+          `Failed to render template ${templateName}: ${errorMessage}`,
+        );
+      }
     } else if (extension === '.txt') {
       // Simple text interpolation
       return this.renderTextTemplate(templateContent, data);

@@ -309,4 +309,39 @@ export class NotificationIdempotencyCacheService {
       };
     }
   }
+
+  /**
+   * Get idempotency health status
+   */
+  async getHealthStatus(): Promise<{
+    activeLocks: number;
+    cacheHitRate: number;
+    isHealthy: boolean;
+  }> {
+    // Count active locks (keys with lock prefix)
+    const client = this.redisService.getClient();
+    const pattern = `${this.redisKeyPrefix}:notification:lock:*`;
+
+    // Use SCAN to count locks (non-blocking)
+    let activeLocks = 0;
+    let cursor = '0';
+
+    do {
+      const [nextCursor, keys] = await client.scan(
+        cursor,
+        'MATCH',
+        pattern,
+        'COUNT',
+        100,
+      );
+      cursor = nextCursor;
+      activeLocks += keys.length;
+    } while (cursor !== '0');
+
+    return {
+      activeLocks,
+      cacheHitRate: 0, // TODO: Track cache hits/misses
+      isHealthy: activeLocks < 1000, // Configurable threshold
+    };
+  }
 }

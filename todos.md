@@ -89,3 +89,5 @@ Caching in RecipientResolverService - Cache frequent center queries (centerId + 
 [ ] remove command related code
 [ ] standrize redis keys for easy mantainnce
 [ ] optimize notifications history meta filed it talkes tooooo much
+[ ] remove corinationId form dtos and from events dtos it's overhead
+[ ] fix frontend build issue

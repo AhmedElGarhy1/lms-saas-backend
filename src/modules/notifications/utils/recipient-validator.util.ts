@@ -15,10 +15,10 @@ export function isValidEmail(email: string): boolean {
   }
 
   // Basic email regex (simplified RFC 5322)
-  // Allows: local@domain format
+  // Requires: local@domain.tld format (domain must have at least one dot)
   // More permissive than strict RFC 5322 but catches most invalid formats
   const emailRegex =
-    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
   return emailRegex.test(email.trim());
 }
@@ -34,11 +34,21 @@ export function isValidE164(phone: string): boolean {
     return false;
   }
 
-  // E.164 format: + followed by 1-15 digits
+  // E.164 format: + followed by 1-15 digits (country code must not start with 0)
   // Example: +1234567890, +441234567890
-  const e164Regex = /^\+[1-9]\d{1,14}$/;
+  // Minimum: 7 digits total (realistic minimum for a complete phone number)
+  // Maximum: 15 digits total (E.164 maximum)
+  const trimmed = phone.trim();
+  
+  // Check length first (including +)
+  if (trimmed.length < 8 || trimmed.length > 16) { // +1 + 6 digits minimum = 8 chars
+    return false;
+  }
+  
+  // E.164 format: + followed by country code (1-3 digits, not starting with 0) + subscriber number
+  const e164Regex = /^\+[1-9]\d{6,14}$/; // At least 7 digits after + (1 country + 6 subscriber minimum)
 
-  return e164Regex.test(phone.trim());
+  return e164Regex.test(trimmed);
 }
 
 /**

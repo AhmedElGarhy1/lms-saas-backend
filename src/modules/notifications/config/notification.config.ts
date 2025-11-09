@@ -20,10 +20,21 @@ import {
  */
 export const NotificationConfig = {
   /**
-   * Processor concurrency (number of concurrent jobs)
-   * Default: 5
+   * Concurrency configuration
    */
-  concurrency: 5,
+  concurrency: {
+    /**
+     * Processor concurrency (number of concurrent jobs)
+     * Default: 5
+     */
+    processor: 5,
+
+    /**
+     * Maximum recipients processed concurrently per batch
+     * Default: 10
+     */
+    maxRecipientsPerBatch: 10,
+  },
 
   /**
    * Retry threshold for marking notifications as RETRYING vs FAILED

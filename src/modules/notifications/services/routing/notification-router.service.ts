@@ -22,14 +22,10 @@ import { NotificationManifestResolver } from '../../manifests/registry/notificat
 import { NotificationIdempotencyCacheService } from '../notification-idempotency-cache.service';
 import { NotificationMetricsService } from '../notification-metrics.service';
 import { ChannelRetryStrategyService } from '../channel-retry-strategy.service';
+import { RecipientValidationService } from '../recipient-validation.service';
+import { PayloadBuilderService } from '../payload-builder.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import {
-  isValidEmail,
-  isValidE164,
-  normalizePhone,
-} from '../../utils/recipient-validator.util';
-import { createUserId, createCorrelationId } from '../../types/branded-types';
 import {
   QUEUE_CONSTANTS,
   STRING_CONSTANTS,
@@ -49,6 +45,8 @@ export class NotificationRouterService {
     private readonly renderer: NotificationRenderer,
     private readonly manifestResolver: NotificationManifestResolver,
     private readonly retryStrategyService: ChannelRetryStrategyService,
+    private readonly recipientValidator: RecipientValidationService,
+    private readonly payloadBuilder: PayloadBuilderService,
     private readonly logger: LoggerService,
     private readonly idempotencyCache?: NotificationIdempotencyCacheService,
     private readonly metricsService?: NotificationMetricsService,
@@ -144,17 +142,45 @@ export class NotificationRouterService {
         }
       }
 
-      // Determine and validate recipient for this channel
-      const channelRecipient = await this.determineAndValidateRecipient(
+      // Determine and validate recipient for this channel (pure service)
+      const channelRecipient = this.recipientValidator.determineAndValidateRecipient(
         channel,
         recipient,
         phone,
         userId,
-        eventName,
-        mapping.type,
       );
 
       if (!channelRecipient) {
+        // Log why recipient validation failed
+        if (channel === NotificationChannel.EMAIL && !recipient?.includes('@')) {
+          this.logger.debug(
+            `Skipping EMAIL channel: no email for user ${userId}`,
+            'NotificationRouterService',
+            { userId, eventName },
+          );
+        } else if (
+          (channel === NotificationChannel.SMS ||
+            channel === NotificationChannel.WHATSAPP) &&
+          !phone
+        ) {
+          this.logger.warn(
+            `Skipping ${channel} channel: no phone for user ${userId}`,
+            'NotificationRouterService',
+            { userId, eventName, channel },
+          );
+        } else {
+          this.logger.debug(
+            `Skipping ${channel} channel: invalid recipient format`,
+            'NotificationRouterService',
+            { userId, eventName, channel },
+          );
+        }
+
+        // Record failed metric if validation failed due to format
+        if (this.metricsService && channelRecipient === null) {
+          await this.metricsService.incrementFailed(channel, mapping.type);
+        }
+
         continue; // Recipient validation failed or skipped
       }
 
@@ -170,17 +196,17 @@ export class NotificationRouterService {
         continue; // Already sent or lock failed
       }
 
-      // Build base payload
-      const basePayload = this.buildBasePayload(
+      // Build base payload (pure service)
+      const basePayload = this.payloadBuilder.buildBasePayload(
         channelRecipient,
         channel,
-        mapping,
+        mapping.type,
         manifest,
         locale,
         centerId,
         userId,
-        profileType,
-        profileId,
+        profileType ?? undefined,
+        profileId ?? undefined,
         correlationId,
       );
 
@@ -221,15 +247,38 @@ export class NotificationRouterService {
         }
       }
 
-      const payload = this.buildPayload(
+      // Build channel-specific payload (pure service)
+      const payload = this.payloadBuilder.buildPayload(
         channel,
         basePayload,
         rendered,
         templateData,
-        manifest,
       );
 
       if (!payload) {
+        // Log why payload building failed
+        if (channel === NotificationChannel.EMAIL && !rendered.subject) {
+          this.logger.error(
+            `Missing subject for EMAIL notification: ${mapping.type}`,
+            undefined,
+            'NotificationRouterService',
+            {
+              notificationType: mapping.type,
+              channel,
+              userId,
+            },
+          );
+        } else {
+          this.logger.warn(
+            `Failed to build payload for ${channel} channel`,
+            'NotificationRouterService',
+            {
+              notificationType: mapping.type,
+              channel,
+              userId,
+            },
+          );
+        }
         continue; // Payload building failed (e.g., missing subject for email)
       }
 
@@ -338,131 +387,6 @@ export class NotificationRouterService {
     }
   }
 
-  /**
-   * Determine recipient for a channel and validate format
-   */
-  private async determineAndValidateRecipient(
-    channel: NotificationChannel,
-    recipient: string | undefined,
-    phone: string | undefined,
-    userId: string,
-    eventName: NotificationType,
-    notificationType: NotificationType,
-  ): Promise<string | null> {
-    let channelRecipient: string | null = null;
-
-    // Determine recipient based on channel type
-    if (channel === NotificationChannel.EMAIL) {
-      const email = recipient?.includes('@') ? recipient : null;
-      if (!email) {
-        this.logger.debug(
-          `Skipping EMAIL channel: no email for user ${userId}`,
-          'NotificationRouterService',
-          { userId, eventName },
-        );
-        return null;
-      }
-      channelRecipient = email;
-    } else if (
-      channel === NotificationChannel.SMS ||
-      channel === NotificationChannel.WHATSAPP
-    ) {
-      // For SMS/WhatsApp, MUST use phone, never fallback to recipient or userId
-      if (!phone) {
-        this.logger.warn(
-          `Skipping ${channel} channel: no phone for user ${userId}`,
-          'NotificationRouterService',
-          { userId, eventName, channel },
-        );
-        return null;
-      }
-      // Validate phone is actually a phone number (not userId or email)
-      if (phone === userId || phone.includes('@')) {
-        this.logger.error(
-          `Invalid phone value for ${channel} channel: phone appears to be userId or email`,
-          undefined,
-          'NotificationRouterService',
-          {
-            userId,
-            eventName,
-            channel,
-            phone: phone.substring(
-              0,
-              STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
-            ),
-          },
-        );
-        return null;
-      }
-      channelRecipient = phone;
-    } else if (channel === NotificationChannel.IN_APP) {
-      // For IN_APP, use userId as recipient
-      channelRecipient = userId || '';
-    } else {
-      // PUSH or other channels - use appropriate fallback
-      channelRecipient = recipient || phone || null;
-    }
-
-    if (!channelRecipient) {
-      this.logger.debug(
-        `Skipping ${channel} channel: no recipient data`,
-        'NotificationRouterService',
-        { userId, eventName, channel },
-      );
-      return null;
-    }
-
-    // Validate recipient format
-    if (channel === NotificationChannel.EMAIL) {
-      if (!isValidEmail(channelRecipient)) {
-        this.logger.warn(
-          `Invalid email format for ${channel} channel: ${channelRecipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH)}`,
-          'NotificationRouterService',
-          {
-            userId,
-            eventName,
-            channel,
-            recipient: channelRecipient.substring(
-              0,
-              STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
-            ),
-          },
-        );
-        if (this.metricsService) {
-          await this.metricsService.incrementFailed(channel, notificationType);
-        }
-        return null;
-      }
-    } else if (
-      channel === NotificationChannel.SMS ||
-      channel === NotificationChannel.WHATSAPP
-    ) {
-      // Normalize and validate phone format
-      const normalizedPhone = normalizePhone(channelRecipient);
-      if (!normalizedPhone || !isValidE164(normalizedPhone)) {
-        this.logger.warn(
-          `Invalid phone format for ${channel} channel: ${channelRecipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH)}`,
-          'NotificationRouterService',
-          {
-            userId,
-            eventName,
-            channel,
-            recipient: channelRecipient.substring(
-              0,
-              STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
-            ),
-          },
-        );
-        if (this.metricsService) {
-          await this.metricsService.incrementFailed(channel, notificationType);
-        }
-        return null;
-      }
-      channelRecipient = normalizedPhone;
-    }
-
-    return channelRecipient;
-  }
 
   /**
    * Check idempotency with distributed lock
@@ -557,154 +481,6 @@ export class NotificationRouterService {
     }
   }
 
-  /**
-   * Build base payload with common fields
-   */
-  private buildBasePayload(
-    channelRecipient: string,
-    channel: NotificationChannel,
-    mapping: { type: NotificationType },
-    manifest: NotificationManifest,
-    locale: string,
-    centerId: string | undefined,
-    userId: string,
-    profileType: ProfileType | null | undefined,
-    profileId: string | null | undefined,
-    correlationId: string,
-  ) {
-    return {
-      recipient: channelRecipient,
-      channel,
-      type: mapping.type,
-      group: manifest.group,
-      locale,
-      centerId,
-      userId: createUserId(userId),
-      profileType: profileType ?? null,
-      profileId: profileId ?? null,
-      correlationId: createCorrelationId(correlationId),
-    };
-  }
-
-  /**
-   * Build channel-specific payload from rendered content
-   */
-  private buildPayload(
-    channel: NotificationChannel,
-    basePayload: ReturnType<typeof this.buildBasePayload>,
-    rendered: {
-      subject?: string;
-      content: string | object;
-      metadata: { template: string };
-    },
-    templateData: NotificationTemplateData,
-    manifest: NotificationManifest,
-  ): NotificationPayload | null {
-    if (channel === NotificationChannel.EMAIL) {
-      if (!rendered.subject) {
-        this.logger.error(
-          `Missing subject for EMAIL notification: ${basePayload.type}`,
-          undefined,
-          'NotificationRouterService',
-          {
-            notificationType: basePayload.type,
-            channel,
-            userId: basePayload.userId,
-          },
-        );
-        return null;
-      }
-
-      return {
-        ...basePayload,
-        subject: rendered.subject,
-        data: {
-          html: rendered.content as string,
-          content: rendered.content as string,
-          template: rendered.metadata.template,
-        },
-      } as EmailNotificationPayload;
-    }
-
-    if (
-      channel === NotificationChannel.SMS ||
-      channel === NotificationChannel.WHATSAPP
-    ) {
-      if (channel === NotificationChannel.SMS) {
-        return {
-          ...basePayload,
-          data: {
-            content: rendered.content as string,
-            template: rendered.metadata.template,
-          },
-        } as SmsNotificationPayload;
-      } else {
-        return {
-          ...basePayload,
-          data: {
-            content: rendered.content as string,
-            template: rendered.metadata.template,
-          },
-        } as WhatsAppNotificationPayload;
-      }
-    }
-
-    if (channel === NotificationChannel.IN_APP) {
-      const inAppContent = rendered.content as Record<string, unknown>;
-      const title =
-        (inAppContent.title as string) ||
-        (templateData.title as string) ||
-        'Notification';
-      const message =
-        (inAppContent.message as string) ||
-        (inAppContent.content as string) ||
-        '';
-
-      return {
-        ...basePayload,
-        title,
-        data: {
-          message,
-          ...inAppContent,
-          template: rendered.metadata.template,
-          expiresAt: inAppContent.expiresAt as Date | undefined,
-        },
-      } as InAppNotificationPayload;
-    }
-
-    if (channel === NotificationChannel.PUSH) {
-      const pushContent = rendered.content as Record<string, unknown>;
-      const title =
-        (pushContent.title as string) ||
-        (templateData.title as string) ||
-        'Notification';
-      const message =
-        (pushContent.message as string) || (pushContent.body as string) || '';
-
-      return {
-        ...basePayload,
-        title,
-        data: {
-          message,
-          ...((pushContent.data as Record<string, unknown> | undefined)
-            ? { data: pushContent.data as Record<string, unknown> }
-            : {}),
-          template: rendered.metadata.template,
-        },
-      } as PushNotificationPayload;
-    }
-
-    // Unknown channel type
-    this.logger.warn(
-      `Unknown channel type: ${channel}`,
-      'NotificationRouterService',
-      {
-        notificationType: basePayload.type,
-        channel,
-      },
-    );
-    return null;
-  }
 
   /**
    * Send notification directly (IN_APP) or enqueue for async processing

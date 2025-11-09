@@ -167,6 +167,62 @@ export class NotificationCircuitBreakerService {
   }
 
   /**
+   * Get health status for all channels
+   */
+  async getHealthStatus(): Promise<
+    Record<
+      NotificationChannel,
+      {
+        state: CircuitState;
+        failureCount: number;
+        lastFailureTime: Date | null;
+        isHealthy: boolean;
+      }
+    >
+  > {
+    const status: Record<NotificationChannel, any> = {} as any;
+
+    for (const channel of Object.values(NotificationChannel)) {
+      const state = await this.getCircuitState(channel);
+      const failureKey = this.getFailureKey(channel);
+      const client = this.redisService.getClient();
+
+      // Get failure count in window
+      const now = Date.now();
+      const windowStart = now - this.windowSeconds * 1000;
+      const failures = await client.zrangebyscore(
+        failureKey,
+        windowStart,
+        now,
+      );
+
+      const lastFailure =
+        failures.length > 0
+          ? new Date(parseInt(failures[failures.length - 1] as string))
+          : null;
+
+      status[channel] = {
+        state,
+        failureCount: failures.length,
+        lastFailureTime: lastFailure,
+        isHealthy:
+          state === CircuitState.CLOSED &&
+          failures.length < this.errorThreshold,
+      };
+    }
+
+    return status;
+  }
+
+  /**
+   * Explicitly check if circuit is open (for monitoring)
+   */
+  async isOpen(channel: NotificationChannel): Promise<boolean> {
+    const state = await this.getCircuitState(channel);
+    return state === CircuitState.OPEN;
+  }
+
+  /**
    * Get current circuit state for a channel
    */
   async getCircuitState(channel: NotificationChannel): Promise<CircuitState> {
