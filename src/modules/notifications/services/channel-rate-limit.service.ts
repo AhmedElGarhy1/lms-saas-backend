@@ -3,7 +3,6 @@ import { NotificationChannel } from '../enums/notification-channel.enum';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { LoggerService } from '@/shared/services/logger.service';
 import { SlidingWindowRateLimiter } from '../utils/sliding-window-rate-limit';
-import { Config } from '@/shared/config/config';
 import { CONCURRENCY_CONSTANTS } from '../constants/notification.constants';
 import { NotificationConfig } from '../config/notification.config';
 
@@ -26,7 +25,6 @@ interface ChannelRateLimitConfig {
  */
 @Injectable()
 export class ChannelRateLimitService {
-  private readonly redisKeyPrefix: string;
   private readonly rateLimiter: SlidingWindowRateLimiter;
   private readonly channelLimits: Map<
     NotificationChannel,
@@ -38,13 +36,10 @@ export class ChannelRateLimitService {
     private readonly redisService: RedisService,
     private readonly logger: LoggerService,
   ) {
-    this.redisKeyPrefix = Config.redis.keyPrefix;
-
     // Initialize sliding window rate limiter
     this.rateLimiter = new SlidingWindowRateLimiter(
       this.redisService,
       this.logger,
-      this.redisKeyPrefix,
     );
 
     // Default rate limit (fallback)

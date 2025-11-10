@@ -40,7 +40,6 @@ export class InAppNotificationService {
     this.rateLimiter = new SlidingWindowRateLimiter(
       this.redisService,
       this.logger,
-      this.redisKeyPrefix,
     );
   }
 

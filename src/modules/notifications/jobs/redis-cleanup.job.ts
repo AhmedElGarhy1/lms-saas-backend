@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { RedisService } from '@/shared/modules/redis/redis.service';
+import { notificationKeys } from '../utils/notification-redis-key-builder';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { LoggerService } from '@/shared/services/logger.service';
-import { Config } from '@/shared/config/config';
 import { REDIS_CONSTANTS } from '../constants/notification.constants';
 
 /**
@@ -22,16 +22,13 @@ import { REDIS_CONSTANTS } from '../constants/notification.constants';
 @Injectable()
 export class RedisCleanupJob {
   private readonly logger = new Logger(RedisCleanupJob.name);
-  private readonly redisKeyPrefix: string;
   private readonly staleTTLThreshold: number = REDIS_CONSTANTS.STALE_TTL_THRESHOLD_SECONDS;
 
   constructor(
     private readonly redisService: RedisService,
     private readonly metricsService: NotificationMetricsService,
     private readonly loggerService: LoggerService,
-  ) {
-    this.redisKeyPrefix = Config.redis.keyPrefix;
-  }
+  ) {}
 
   /**
    * Cleanup stale socket connections every hour
@@ -41,7 +38,7 @@ export class RedisCleanupJob {
   @Cron(CronExpression.EVERY_HOUR)
   async cleanupStaleConnections(): Promise<void> {
     const client = this.redisService.getClient();
-    const pattern = `${this.redisKeyPrefix}:notification:connections:*`;
+    const pattern = notificationKeys.connectionPattern();
 
     const stats = {
       keysScanned: 0,
@@ -204,7 +201,7 @@ export class RedisCleanupJob {
     };
   }> {
     const client = this.redisService.getClient();
-    const pattern = `${this.redisKeyPrefix}:notification:connections:*`;
+    const pattern = notificationKeys.connectionPattern();
     const cleaned: string[] = [];
 
     const stats = {

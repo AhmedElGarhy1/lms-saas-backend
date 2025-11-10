@@ -5,7 +5,7 @@ import { NotificationStatus } from '../enums/notification-status.enum';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationConfig } from '../config/notification.config';
 import { RedisService } from '@/shared/modules/redis/redis.service';
-import { Config } from '@/shared/config/config';
+import { notificationKeys } from '../utils/notification-redis-key-builder';
 
 /**
  * Periodic job to clean up old failed notification logs from DLQ
@@ -189,7 +189,7 @@ export class NotificationDlqCleanupJob {
   private async getLastCleanupRun(): Promise<Date | null> {
     try {
       const client = this.redisService.getClient();
-      const key = `${Config.redis.keyPrefix}:notification:dlq:last_cleanup`;
+      const key = notificationKeys.dlqLastCleanup();
       const timestamp = await client.get(key);
 
       if (timestamp) {
@@ -211,7 +211,7 @@ export class NotificationDlqCleanupJob {
   private async persistCleanupRun(): Promise<void> {
     try {
       const client = this.redisService.getClient();
-      const key = `${Config.redis.keyPrefix}:notification:dlq:last_cleanup`;
+      const key = notificationKeys.dlqLastCleanup();
       await client.set(key, Date.now().toString(), 'EX', 7 * 24 * 60 * 60); // 7 days TTL
     } catch (error) {
       this.logger.warn(

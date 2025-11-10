@@ -23,6 +23,8 @@ import { NotificationMetricsService } from '../services/notification-metrics.ser
 import { NotificationType } from '../enums/notification-type.enum';
 import { InvalidOperationException } from '@/shared/common/exceptions/custom.exceptions';
 import { NotificationSendingFailedException } from '../exceptions/notification.exceptions';
+import { buildStandardizedMetadata } from '../utils/metadata-builder.util';
+import { RenderedNotification } from '../manifests/types/manifest.types';
 
 interface ExtractedNotificationData {
   title: string;
@@ -338,6 +340,38 @@ export class InAppAdapter
         });
       }
 
+      // Extract template path and rendered content
+      const templatePath = (payload.data.template as string) || '';
+      const renderedContent = notification.message || (payload.data.message as string) || '';
+
+      // Create a RenderedNotification object for metadata building
+      const rendered: RenderedNotification = {
+        type: payload.type,
+        channel: NotificationChannel.IN_APP,
+        content: renderedContent,
+        metadata: {
+          template: templatePath,
+          locale: payload.locale || 'en',
+        },
+      };
+
+      // Build standardized metadata
+      const standardizedMetadata = buildStandardizedMetadata(
+        payload,
+        rendered,
+        {
+          jobId: (payload.data.jobId as string) || undefined,
+          correlationId: payload.correlationId || '',
+          retryCount: deliveryResult.attempts - 1,
+          latencyMs: totalLatency,
+          attempts: deliveryResult.attempts,
+          deliveredAt: deliveryResult.delivered ? new Date() : undefined,
+          notificationId: notification.id,
+          payloadData: payload.data,
+          retryHistory,
+        },
+      );
+
       const logEntry = await this.logRepository.create({
         type: payload.type,
         channel: NotificationChannel.IN_APP,
@@ -345,19 +379,7 @@ export class InAppAdapter
           ? NotificationStatus.SENT
           : NotificationStatus.FAILED,
         recipient: payload.recipient || payload.userId || 'unknown',
-        metadata: {
-          notificationId: notification.id,
-          title: notification.title,
-          message: notification.message,
-          priority: notification.priority,
-          // Enhanced metadata for debugging
-          eventType: payload.data.eventName,
-          payloadData: payload.data,
-          attempts: deliveryResult.attempts,
-          retryHistory,
-          latencyMs: totalLatency,
-          deliveredAt: deliveryResult.delivered ? new Date() : undefined,
-        },
+        metadata: standardizedMetadata,
         userId: payload.userId,
         centerId: payload.centerId,
         profileType: payload.profileType,

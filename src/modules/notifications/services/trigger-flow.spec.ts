@@ -294,17 +294,17 @@ describe('Trigger Flow', () => {
     });
 
     it('should generate correlation ID for each notification', async () => {
-      const recipient = createMockRecipientInfo();
-      const event = createMockNotificationEvent();
+          const recipient = createMockRecipientInfo();
+          const event = createMockNotificationEvent();
 
-      const result = await service.trigger(
-        NotificationType.CENTER_CREATED,
-        {
-          audience: 'OWNER',
-          event,
-          recipients: [recipient],
-        },
-      );
+          const result = await service.trigger(
+            NotificationType.CENTER_CREATED,
+            {
+              audience: 'OWNER',
+              event,
+              recipients: [recipient],
+            },
+          );
 
       // correlationId is now generated internally, not from RequestContext
       expect(result.correlationId).toBeDefined();

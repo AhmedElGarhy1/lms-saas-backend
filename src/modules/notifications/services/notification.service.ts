@@ -67,7 +67,7 @@ export class NotificationService {
     };
 
     await this.pipelineService.process(context, recipientInfo);
-
+    
     if (context.enabledChannels && context.enabledChannels.length === 0) {
       return;
     }
@@ -117,20 +117,20 @@ export class NotificationService {
     result.correlationId = correlationId;
 
     const validationResult = validateRecipients(recipients);
-
+    
     if (validationResult.errors.length > 0) {
       for (const error of validationResult.errors) {
         const recipient = recipients[error.index];
         const errorMessages = error.errors.errors
           .map((e) => e.message)
           .join('; ');
-
+        
         result.errors.push({
           recipient: recipient?.userId ?? `index-${error.index}`,
           error: errorMessages,
           code: 'VALIDATION_ERROR',
         });
-
+        
         this.logger.error(
           `Invalid recipient at index ${error.index}`,
           undefined,
@@ -219,14 +219,14 @@ export class NotificationService {
         await this.multiRecipientProcessor.processRecipients(
           uniqueRecipients,
           async (recipient) => {
-            await this.processEventForRecipient(
-              type,
-              event,
-              correlationId,
-              recipient,
-              manifest,
-              audience,
-              channels,
+              await this.processEventForRecipient(
+                type,
+                event,
+                correlationId,
+                recipient,
+                manifest,
+                audience,
+                channels,
               preRenderedCache,
             );
           },
@@ -250,32 +250,32 @@ export class NotificationService {
             'code' in error && typeof error.code === 'string'
               ? error.code
               : 'UNKNOWN_ERROR';
-
-          result.errors.push({
+              
+              result.errors.push({
             recipient: processResult.recipient.userId,
             error: error.message,
-            code: errorCode,
-          });
-
-          logNotificationError(
-            this.logger,
-            {
-              eventName: type,
-              correlationId,
+                code: errorCode,
+              });
+              
+              logNotificationError(
+                this.logger,
+                {
+                  eventName: type,
+                  correlationId,
               recipientId: processResult.recipient.userId,
               profileId: processResult.recipient.profileId ?? undefined,
               profileType: processResult.recipient.profileType ?? undefined,
               error: error.message,
-            },
+                },
             error,
-          );
-        }
+              );
+            }
       }
 
       result.sent = successCount;
       result.failed = failureCount;
       result.duration = duration;
-
+      
       logNotificationComplete(this.logger, {
         eventName: type,
         correlationId,
@@ -289,7 +289,7 @@ export class NotificationService {
       result.skipped = result.total;
       result.duration = Date.now() - startTime;
     }
-
+    
     return result;
   }
 
@@ -325,8 +325,8 @@ export class NotificationService {
 
     return Array.from(groups.entries()).map(
       ([templateDataHash, recipients]) => ({
-        templateDataHash,
-        recipients,
+      templateDataHash,
+      recipients,
       }),
     );
   }

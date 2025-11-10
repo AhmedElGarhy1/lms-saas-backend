@@ -49,8 +49,6 @@ export class StaffService {
       targetUserProfileId: actor.userProfileId,
     });
 
-    // Note: updateUser now emits UserCommands.UPDATE internally
-    // Command handler will emit UserEvents.UPDATED, which triggers activity logging
     return await this.userService.updateUser(userId, updateData, actor);
   }
 
@@ -64,8 +62,6 @@ export class StaffService {
       );
     }
 
-    // Note: deleteUser now emits UserCommands.DELETE internally
-    // Command handler will emit UserEvents.DELETED, which triggers activity logging
     await this.userService.deleteUser(userId, actor);
   }
 
@@ -77,8 +73,6 @@ export class StaffService {
       throw new Error('Access denied');
     }
 
-    // Note: restoreUser now emits UserCommands.RESTORE internally
-    // Command handler will emit UserEvents.RESTORED, which triggers activity logging
     await this.userService.restoreUser(userId, actor);
   }
 

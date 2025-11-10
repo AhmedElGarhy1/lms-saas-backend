@@ -4,7 +4,6 @@ import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { TimeoutConfigService } from '../config/timeout.config';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { NotificationType } from '../enums/notification-type.enum';
 import {
   createMockSmsPayload,
   createMockLoggerService,
@@ -17,15 +16,60 @@ import {
   NotificationSendingFailedException,
 } from '../exceptions/notification.exceptions';
 import * as twilio from 'twilio';
-import pTimeout from 'p-timeout';
+
+// Type for Twilio message creation result
+interface MockTwilioMessage {
+  sid: string;
+  status: string;
+}
+
+// Type for Twilio messages API
+interface MockTwilioMessages {
+  create: jest.MockedFunction<
+    (params: {
+      body: string;
+      from: string;
+      to: string;
+    }) => Promise<MockTwilioMessage>
+  >;
+}
+
+// Type for mocked Twilio client
+interface MockTwilioClient {
+  messages: MockTwilioMessages;
+}
 
 // Mock Twilio - must be set up before any imports
-jest.mock('twilio', () => {
-  const mockTwilio = jest.fn(() => ({
-    messages: {
-      create: jest.fn(),
+// We'll create a shared mock client that can be updated in beforeEach
+let sharedMockCreate: jest.MockedFunction<
+  (params: { body: string; from: string; to: string }) => Promise<{
+    sid: string;
+    status: string;
+  }>
+>;
+
+const createMockTwilioClient = () => ({
+  messages: {
+    get create() {
+      // Return the shared mock if it exists, otherwise create a default one
+      if (sharedMockCreate) {
+        return sharedMockCreate;
+      }
+      // Create a default mock on first access
+      const defaultMock = jest.fn().mockResolvedValue({
+        sid: 'default-sid',
+        status: 'queued',
+      });
+      sharedMockCreate = defaultMock;
+      return defaultMock;
     },
-  }));
+  },
+});
+
+jest.mock('twilio', () => {
+  const mockTwilio = jest.fn(
+    () => createMockTwilioClient() as unknown as twilio.Twilio,
+  );
   return mockTwilio;
 });
 
@@ -47,7 +91,7 @@ jest.mock('@/shared/config/config', () => ({
 
 describe('SmsAdapter', () => {
   let adapter: SmsAdapter;
-  let mockTwilioClient: jest.Mocked<twilio.Twilio>;
+  let mockTwilioClient: MockTwilioClient;
   let mockLogger: LoggerService;
   let mockMetrics: NotificationMetricsService;
   let mockTimeoutConfig: jest.Mocked<TimeoutConfigService>;
@@ -59,24 +103,46 @@ describe('SmsAdapter', () => {
     mockLogger = createMockLoggerService();
     mockMetrics = createMockMetricsService();
 
+    // Create the mock Twilio client with proper typing
+    const mockCreate = jest
+      .fn<
+        Promise<MockTwilioMessage>,
+        [{ body: string; from: string; to: string }]
+      >()
+      .mockResolvedValue({
+        sid: 'mock-message-sid',
+        status: 'sent',
+      });
+
+    // Set the shared mock so the getter returns it
+    sharedMockCreate = mockCreate;
+
     mockTwilioClient = {
       messages: {
-        create: jest.fn().mockResolvedValue({
-          sid: 'mock-message-sid',
-          status: 'sent',
-        }),
+        create: mockCreate,
       },
-    } as any;
+    };
 
-    // Reset the twilio mock before each test
+    // Reset the twilio mock and set it to return a new client that uses our shared mock
     (twilio as jest.MockedFunction<typeof twilio>).mockReset();
     (twilio as jest.MockedFunction<typeof twilio>).mockReturnValue(
-      mockTwilioClient,
+      createMockTwilioClient() as unknown as twilio.Twilio,
     );
 
     mockTimeoutConfig = {
-      getTimeout: jest.fn().mockReturnValue(5000),
-    } as any;
+      getTimeout: jest
+        .fn<number, [NotificationChannel]>()
+        .mockReturnValue(5000),
+      getAllTimeouts: jest
+        .fn<Record<NotificationChannel, number>, []>()
+        .mockReturnValue({
+          [NotificationChannel.EMAIL]: 5000,
+          [NotificationChannel.SMS]: 5000,
+          [NotificationChannel.WHATSAPP]: 5000,
+          [NotificationChannel.IN_APP]: 5000,
+          [NotificationChannel.PUSH]: 5000,
+        }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -97,25 +163,48 @@ describe('SmsAdapter', () => {
     }).compile();
 
     adapter = module.get<SmsAdapter>(SmsAdapter);
-    // Ensure adapter is properly initialized
-    await adapter.onModuleInit();
 
-    // Verify twilio was called during initialization (may have been called before mock was set)
-    // The important thing is that the adapter is configured
+    // Verify the adapter is defined before initialization
     expect(adapter).toBeDefined();
+
+    // Verify Config is mocked correctly by importing it
+    // This ensures the mock is applied before the adapter uses it
+    const { Config: TestConfig } = await import('@/shared/config/config');
+
+    // Verify the mock values are correct
+    expect(TestConfig.twilio.accountSid).toBe('test-account-sid');
+    expect(TestConfig.twilio.authToken).toBe('test-auth-token');
+    expect(TestConfig.twilio.phoneNumber).toBe('+1234567890');
+
+    // Clear any previous calls to twilio mock
+    (twilio as jest.MockedFunction<typeof twilio>).mockClear();
+
+    // Ensure adapter is properly initialized
+    // The adapter will call initializeTwilio() which should call twilio()
+    adapter.onModuleInit();
+
+    // Verify twilio was called during initialization with correct credentials
+    // This verifies that the adapter read the Config and tried to initialize Twilio
+    // Note: If this fails, it means the Config mock isn't working or the adapter
+    // isn't reading from the mocked Config
+    expect(twilio).toHaveBeenCalledWith('test-account-sid', 'test-auth-token');
+
+    // The adapter should have stored the mock client during initialization
+    // The sharedMockCreate getter ensures all calls go through our mock
+    expect(sharedMockCreate).toBe(mockCreate);
   });
 
   afterEach(async () => {
     // Reset mock call history but keep implementation
-    if (mockTwilioClient?.messages?.create) {
-      mockTwilioClient.messages.create.mockClear();
-      mockTwilioClient.messages.create.mockResolvedValue({
+    // Use sharedMockCreate since that's what the adapter actually uses
+    if (sharedMockCreate) {
+      sharedMockCreate.mockClear();
+      // Reset to default successful response
+      sharedMockCreate.mockResolvedValue({
         sid: 'SMxxx',
         status: 'queued',
       });
     }
-    // Clear other mocks
-    jest.clearAllMocks();
     // Wait a tick to ensure any pending promises are settled
     await flushPromises();
   });
@@ -137,10 +226,11 @@ describe('SmsAdapter', () => {
 
     it('should use correct from number', async () => {
       const payload = createMockSmsPayload();
+      sharedMockCreate.mockClear();
 
       await adapter.send(payload);
 
-      expect(mockTwilioClient.messages.create).toHaveBeenCalledWith(
+      expect(sharedMockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           from: '+1234567890',
         }),
@@ -150,10 +240,11 @@ describe('SmsAdapter', () => {
     it('should use correct to number', async () => {
       const payload = createMockSmsPayload();
       payload.recipient = '+1987654321';
+      sharedMockCreate.mockClear();
 
       await adapter.send(payload);
 
-      expect(mockTwilioClient.messages.create).toHaveBeenCalledWith(
+      expect(sharedMockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           to: '+1987654321',
         }),
@@ -163,10 +254,11 @@ describe('SmsAdapter', () => {
     it('should use correct message body', async () => {
       const payload = createMockSmsPayload();
       payload.data.content = 'Test message content';
+      sharedMockCreate.mockClear();
 
       await adapter.send(payload);
 
-      expect(mockTwilioClient.messages.create).toHaveBeenCalledWith(
+      expect(sharedMockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           body: 'Test message content',
         }),
@@ -176,10 +268,11 @@ describe('SmsAdapter', () => {
     it('should use content from data.content', async () => {
       const payload = createMockSmsPayload();
       payload.data.content = 'Content from data.content';
+      sharedMockCreate.mockClear();
 
       await adapter.send(payload);
 
-      expect(mockTwilioClient.messages.create).toHaveBeenCalledWith(
+      expect(sharedMockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           body: 'Content from data.content',
         }),
@@ -190,10 +283,11 @@ describe('SmsAdapter', () => {
       const payload = createMockSmsPayload({
         data: { content: '', html: 'HTML content' },
       });
+      sharedMockCreate.mockClear();
 
       await adapter.send(payload);
 
-      expect(mockTwilioClient.messages.create).toHaveBeenCalledWith(
+      expect(sharedMockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           body: 'HTML content',
         }),
@@ -208,10 +302,11 @@ describe('SmsAdapter', () => {
           message: 'Message content',
         },
       });
+      sharedMockCreate.mockClear();
 
       await adapter.send(payload);
 
-      expect(mockTwilioClient.messages.create).toHaveBeenCalledWith(
+      expect(sharedMockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           body: 'Message content',
         }),
@@ -231,7 +326,8 @@ describe('SmsAdapter', () => {
     it('should handle timeout', async () => {
       const payload = createMockSmsPayload();
       // Mock a promise that resolves quickly (p-timeout will handle actual timeout)
-      mockTwilioClient.messages.create = jest.fn().mockResolvedValue({
+      sharedMockCreate.mockClear();
+      sharedMockCreate.mockResolvedValue({
         sid: 'SMxxx',
         status: 'queued',
       });
@@ -241,11 +337,9 @@ describe('SmsAdapter', () => {
 
     it('should handle Twilio API errors', async () => {
       const payload = createMockSmsPayload();
-      // Reset and set up the mock to reject
-      jest.clearAllMocks();
-      mockTwilioClient.messages.create = jest
-        .fn()
-        .mockRejectedValue(new Error('Twilio API error: 20003'));
+      // Set up the mock to reject
+      sharedMockCreate.mockClear();
+      sharedMockCreate.mockRejectedValue(new Error('Twilio API error: 20003'));
 
       await expect(adapter.send(payload)).rejects.toThrow(
         NotificationSendingFailedException,
@@ -254,11 +348,9 @@ describe('SmsAdapter', () => {
 
     it('should handle network errors', async () => {
       const payload = createMockSmsPayload();
-      // Reset and set up the mock to reject
-      jest.clearAllMocks();
-      mockTwilioClient.messages.create = jest
-        .fn()
-        .mockRejectedValue(new Error('Network timeout'));
+      // Set up the mock to reject
+      sharedMockCreate.mockClear();
+      sharedMockCreate.mockRejectedValue(new Error('Network timeout'));
 
       await expect(adapter.send(payload)).rejects.toThrow(
         NotificationSendingFailedException,
@@ -267,6 +359,7 @@ describe('SmsAdapter', () => {
 
     it('should track metrics on success', async () => {
       const payload = createMockSmsPayload();
+      sharedMockCreate.mockClear();
 
       await adapter.send(payload);
 
@@ -282,13 +375,12 @@ describe('SmsAdapter', () => {
 
     it('should track metrics on failure', async () => {
       const payload = createMockSmsPayload();
-      mockTwilioClient.messages.create = jest
-        .fn()
-        .mockRejectedValue(new Error('Twilio error'));
+      sharedMockCreate.mockClear();
+      sharedMockCreate.mockRejectedValue(new Error('Twilio error'));
 
       try {
         await adapter.send(payload);
-      } catch (error) {
+      } catch {
         // Expected to throw
       }
 
@@ -300,6 +392,7 @@ describe('SmsAdapter', () => {
 
     it('should log send attempts', async () => {
       const payload = createMockSmsPayload();
+      sharedMockCreate.mockClear();
 
       await adapter.send(payload);
 
@@ -340,7 +433,7 @@ describe('SmsAdapter', () => {
         mockMetrics,
         mockTimeoutConfig,
       );
-      await newAdapter.onModuleInit();
+      newAdapter.onModuleInit();
 
       expect(mockLogger.warn).toHaveBeenCalled();
     });
@@ -366,7 +459,7 @@ describe('SmsAdapter', () => {
         mockMetrics,
         mockTimeoutConfig,
       );
-      await unconfiguredAdapter.onModuleInit();
+      unconfiguredAdapter.onModuleInit();
 
       const payload = createMockSmsPayload();
       await unconfiguredAdapter.send(payload);

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
+import { notificationKeys } from '../utils/notification-redis-key-builder';
 import { LoggerService } from '@/shared/services/logger.service';
-import { Config } from '@/shared/config/config';
 import { CACHE_CONSTANTS, REDIS_CONSTANTS } from '../constants/notification.constants';
 import { NotificationConfig } from '../config/notification.config';
 import * as Handlebars from 'handlebars';
@@ -31,10 +31,7 @@ import * as Handlebars from 'handlebars';
  */
 @Injectable()
 export class RedisTemplateCacheService {
-  private readonly redisKeyPrefix: string;
   private readonly CACHE_TTL: number;
-  private readonly TEMPLATE_SOURCE_PREFIX = 'template:source:';
-  private readonly COMPILED_TEMPLATE_PREFIX = 'template:compiled:';
 
   // In-memory cache for compiled templates (per-instance)
   // This is a small optimization to avoid recompiling within the same instance
@@ -46,7 +43,6 @@ export class RedisTemplateCacheService {
     private readonly redisService: RedisService,
     private readonly logger: LoggerService,
   ) {
-    this.redisKeyPrefix = Config.redis.keyPrefix;
     // Get TTL from NotificationConfig
     this.CACHE_TTL = NotificationConfig.templateCacheTtlSeconds;
   }
@@ -61,7 +57,7 @@ export class RedisTemplateCacheService {
     cacheKey: string,
     loadFn: () => Promise<string>,
   ): Promise<string> {
-    const redisKey = `${this.redisKeyPrefix}:${this.TEMPLATE_SOURCE_PREFIX}${cacheKey}`;
+    const redisKey = notificationKeys.templateSource(cacheKey);
     const client = this.redisService.getClient();
 
     try {
@@ -135,8 +131,8 @@ export class RedisTemplateCacheService {
   async clearTemplateCache(templatePath?: string): Promise<void> {
     const client = this.redisService.getClient();
     const pattern = templatePath
-      ? `${this.redisKeyPrefix}:${this.TEMPLATE_SOURCE_PREFIX}*${templatePath}*`
-      : `${this.redisKeyPrefix}:${this.TEMPLATE_SOURCE_PREFIX}*`;
+      ? notificationKeys.templateSourcePatternWithFilter(templatePath)
+      : notificationKeys.templateSourcePattern();
 
     try {
       let cursor = '0';
@@ -194,7 +190,7 @@ export class RedisTemplateCacheService {
     ttl: number;
   }> {
     const client = this.redisService.getClient();
-    const pattern = `${this.redisKeyPrefix}:${this.TEMPLATE_SOURCE_PREFIX}*`;
+    const pattern = notificationKeys.templateSourcePattern();
 
     try {
       let cursor = '0';

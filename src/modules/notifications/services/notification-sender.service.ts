@@ -19,18 +19,14 @@ import { NotificationMetricsService } from './notification-metrics.service';
 import pLimit from 'p-limit';
 import { NotificationConfig } from '../config/notification.config';
 import { NotificationIdempotencyCacheService } from './notification-idempotency-cache.service';
-import {
-  NotificationCircuitBreakerService,
-  CircuitState,
-} from './notification-circuit-breaker.service';
+import { NotificationCircuitBreakerService } from './notification-circuit-breaker.service';
 import { isRecord, getStringProperty } from '../utils/type-guards.util';
 import {
   EmailNotificationPayload,
-  SmsNotificationPayload,
-  WhatsAppNotificationPayload,
-  InAppNotificationPayload,
   PushNotificationPayload,
 } from '../types/notification-payload.interface';
+import { buildStandardizedMetadata } from '../utils/metadata-builder.util';
+import { RenderedNotification } from '../manifests/types/manifest.types';
 
 /**
  * Type guard to check if payload is EmailNotificationPayload
@@ -48,15 +44,6 @@ function isPushPayload(
   payload: NotificationPayload,
 ): payload is PushNotificationPayload {
   return payload.channel === NotificationChannel.PUSH && 'title' in payload;
-}
-
-/**
- * Type guard to check if payload is InAppNotificationPayload
- */
-function isInAppPayload(
-  payload: NotificationPayload,
-): payload is InAppNotificationPayload {
-  return payload.channel === NotificationChannel.IN_APP && 'title' in payload;
 }
 
 interface ChannelResult {
@@ -209,6 +196,12 @@ export class NotificationSenderService {
       let notificationLog: NotificationLog | null = null;
       const startTime = Date.now();
 
+      // Declare variables outside try block for use in catch block
+      let rendered: RenderedNotification | null = null;
+      let jobId: string | undefined;
+      let sendPayload: NotificationPayload | null = null;
+      const correlationIdForMetadata = correlationId || '';
+
       try {
         // All notifications now come pre-rendered from the manifest system
         // Use type guard to safely access payload.data
@@ -260,7 +253,7 @@ export class NotificationSenderService {
         }
 
         // Extract jobId from payload data if available (for retries)
-        const jobId = getStringProperty(dataObj, 'jobId');
+        jobId = getStringProperty(dataObj, 'jobId');
 
         // Try to find existing log entry for this job (for retries)
         if (jobId && payload.userId) {
@@ -287,18 +280,33 @@ export class NotificationSenderService {
           }
         }
 
+        // Extract template path from payload data
+        const templatePath = getStringProperty(dataObj, 'template') || '';
+
+        // Create a minimal RenderedNotification object for metadata building
+        rendered = {
+          type: payload.type,
+          channel: payload.channel,
+          content: renderedContent,
+          metadata: {
+            template: templatePath,
+            locale: payload.locale || 'en',
+          },
+        };
+
         // Create new log entry only if we didn't find an existing one
-        if (!notificationLog) {
+        // Use minimal metadata initially, will be updated after successful send
+        if (!notificationLog && rendered) {
           notificationLog = await logRepo.save({
             type: payload.type,
             channel: payload.channel,
             status: NotificationStatus.PENDING,
             recipient: payload.recipient,
-            metadata: {
-              ...payload.data,
+            metadata: buildStandardizedMetadata(payload, rendered, {
               jobId: jobId,
-              correlationId,
-            },
+              correlationId: correlationIdForMetadata,
+              retryCount: 0,
+            }),
             userId: payload.userId,
             centerId: payload.centerId,
             profileType: payload.profileType,
@@ -324,7 +332,7 @@ export class NotificationSenderService {
           correlationId: payload.correlationId,
         };
 
-        let sendPayload: NotificationPayload;
+        // Declare sendPayload variable (already declared outside try block)
 
         if (channel === NotificationChannel.EMAIL) {
           const subject = isEmailPayload(payload)
@@ -400,24 +408,50 @@ export class NotificationSenderService {
         }
 
         // Send notification with circuit breaker protection
+        if (!sendPayload) {
+          throw new Error('Failed to build send payload');
+        }
+        // TypeScript now knows sendPayload is not null
+        const finalPayload = sendPayload;
         await (this.circuitBreaker
           ? this.circuitBreaker.executeWithCircuitBreaker(
               payload.channel,
               async () => {
-                await adapter.send(sendPayload);
+                await adapter.send(finalPayload);
               },
             )
-          : adapter.send(sendPayload)); // Fallback if circuit breaker not available
+          : adapter.send(finalPayload)); // Fallback if circuit breaker not available
         const latency = Date.now() - startTime;
 
-        // Update log as success (within transaction)
+        // Update log as success with standardized metadata (within transaction)
         if (notificationLog) {
-          await logRepo.update(notificationLog.id, {
-            status: NotificationStatus.SENT,
-            lastAttemptAt: new Date(),
-          });
-        }
+          // Build standardized metadata with rendered content and performance metrics
+          if (sendPayload && rendered) {
+            const standardizedMetadata = buildStandardizedMetadata(
+              sendPayload,
+              rendered,
+              {
+                jobId: jobId,
+                correlationId: correlationIdForMetadata,
+                retryCount: notificationLog.retryCount || 0,
+                latencyMs: latency,
+                deliveredAt: new Date(),
+              },
+            );
 
+            await logRepo.update(notificationLog.id, {
+              status: NotificationStatus.SENT,
+              metadata: standardizedMetadata,
+              lastAttemptAt: new Date(),
+            });
+          } else {
+            // Fallback if sendPayload or rendered not available
+            await logRepo.update(notificationLog.id, {
+              status: NotificationStatus.SENT,
+              lastAttemptAt: new Date(),
+            });
+          }
+        }
         // Track metrics (outside transaction - these are non-critical)
         await this.metricsService.incrementSent(payload.channel, payload.type);
         await this.metricsService.recordLatency(payload.channel, latency);
@@ -454,15 +488,38 @@ export class NotificationSenderService {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
 
-        // Update log as failed (within transaction)
+        // Update log as failed with standardized metadata (within transaction)
         if (notificationLog) {
-          await logRepo.update(notificationLog.id, {
-            status: NotificationStatus.FAILED,
-            error: errorMessage,
-            lastAttemptAt: new Date(),
-          });
-        }
+          // Build standardized metadata even for failed sends (for consistency)
+          // Use sendPayload if available (created before send), otherwise use original payload
+          const payloadForMetadata = sendPayload || payload;
+          if (rendered) {
+            const standardizedMetadata = buildStandardizedMetadata(
+              payloadForMetadata,
+              rendered,
+              {
+                jobId: jobId,
+                correlationId: correlationIdForMetadata,
+                retryCount: notificationLog.retryCount || 0,
+                latencyMs: Date.now() - startTime,
+              },
+            );
 
+            await logRepo.update(notificationLog.id, {
+              status: NotificationStatus.FAILED,
+              error: errorMessage,
+              metadata: standardizedMetadata,
+              lastAttemptAt: new Date(),
+            });
+          } else {
+            // Fallback if rendered not available
+            await logRepo.update(notificationLog.id, {
+              status: NotificationStatus.FAILED,
+              error: errorMessage,
+              lastAttemptAt: new Date(),
+            });
+          }
+        }
         // Track metrics (outside transaction - these are non-critical)
         await this.metricsService.incrementFailed(
           payload.channel,

@@ -10,12 +10,6 @@ import { NotificationTemplateData } from '../../types/template-data.types';
 import { ChannelSelectionService } from '../channel-selection.service';
 import { NotificationManifestResolver } from '../../manifests/registry/notification-manifest-resolver.service';
 import { LoggerService } from '@/shared/services/logger.service';
-import {
-  isValidEmail,
-  isValidE164,
-  normalizePhone,
-} from '../../utils/recipient-validator.util';
-import { STRING_CONSTANTS } from '../../constants/notification.constants';
 
 /**
  * Context object passed through the notification processing pipeline
@@ -69,7 +63,7 @@ export class NotificationPipelineService {
   ): Promise<NotificationProcessingContext> {
     this.extractEventData(context, recipientInfo);
     this.determineChannels(context);
-    
+
     if (context.enabledChannels && context.enabledChannels.length === 0) {
       this.logger.debug(
         `No enabled channels for ${context.eventName}, skipping`,
@@ -81,7 +75,7 @@ export class NotificationPipelineService {
 
     await this.selectOptimalChannels(context);
     this.prepareTemplateData(context);
-    
+
     return context;
   }
 
@@ -302,4 +296,3 @@ export class NotificationPipelineService {
     }
   }
 }
-

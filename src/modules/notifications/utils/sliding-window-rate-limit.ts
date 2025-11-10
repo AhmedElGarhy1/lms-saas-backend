@@ -1,4 +1,5 @@
 import { RedisService } from '@/shared/modules/redis/redis.service';
+import { notificationKeys } from './notification-redis-key-builder';
 import { LoggerService } from '@/shared/services/logger.service';
 
 /**
@@ -9,7 +10,6 @@ export class SlidingWindowRateLimiter {
   constructor(
     private readonly redisService: RedisService,
     private readonly logger: LoggerService,
-    private readonly redisKeyPrefix: string,
   ) {}
 
   /**
@@ -24,7 +24,7 @@ export class SlidingWindowRateLimiter {
     limit: number,
     windowSeconds: number,
   ): Promise<boolean> {
-    const redisKey = `${this.redisKeyPrefix}:notification:rate:${key}`;
+    const redisKey = notificationKeys.rateLimit(key);
     const client = this.redisService.getClient();
     const now = Date.now();
     const windowStart = now - windowSeconds * 1000;
@@ -90,7 +90,7 @@ export class SlidingWindowRateLimiter {
    * @returns Current request count
    */
   async getCurrentCount(key: string, windowSeconds: number): Promise<number> {
-    const redisKey = `${this.redisKeyPrefix}:notification:rate:${key}`;
+    const redisKey = notificationKeys.rateLimit(key);
     const client = this.redisService.getClient();
     const now = Date.now();
     const windowStart = now - windowSeconds * 1000;
@@ -115,7 +115,7 @@ export class SlidingWindowRateLimiter {
    * @param key - Redis key to reset
    */
   async reset(key: string): Promise<void> {
-    const redisKey = `${this.redisKeyPrefix}:notification:rate:${key}`;
+    const redisKey = notificationKeys.rateLimit(key);
     const client = this.redisService.getClient();
     await client.del(redisKey);
   }

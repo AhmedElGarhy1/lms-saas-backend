@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
+import { notificationKeys } from '../utils/notification-redis-key-builder';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { MetricsBatchService } from './metrics-batch.service';
 import { METRICS_CONSTANTS, REDIS_CONSTANTS } from '../constants/notification.constants';
 import { NotificationConfig } from '../config/notification.config';
-import { Config } from '@/shared/config/config';
 
 /**
  * Service for tracking notification metrics (Prometheus-compatible)
@@ -22,16 +22,13 @@ import { Config } from '@/shared/config/config';
  */
 @Injectable()
 export class NotificationMetricsService {
-  private readonly redisKeyPrefix: string;
   private readonly METRIC_TTL = METRICS_CONSTANTS.METRIC_TTL_SECONDS;
 
   constructor(
     private readonly redisService: RedisService,
     private readonly logger: LoggerService,
     private readonly batchService: MetricsBatchService,
-  ) {
-    this.redisKeyPrefix = Config.redis.keyPrefix;
-  }
+  ) {}
 
   /**
    * Increment counter for sent notifications (batched)
@@ -209,7 +206,7 @@ export class NotificationMetricsService {
    * Reset all metrics (for testing)
    */
   async resetMetrics(): Promise<void> {
-    const pattern = `${this.redisKeyPrefix}:metrics:*`;
+    const pattern = notificationKeys.metricsPattern();
     let cursor = '0';
     const keysToDelete: string[] = [];
 
@@ -232,22 +229,14 @@ export class NotificationMetricsService {
     channel: NotificationChannel,
     type?: string,
   ): string {
-    const parts = [
-      this.redisKeyPrefix,
-      'metrics',
-      'counter',
-      metric,
-      channel.toLowerCase(),
-    ];
-    if (type) parts.push(type.toLowerCase());
-    return parts.join(':');
+    return notificationKeys.metricsCounter(metric, channel, type);
   }
 
   private getLatencyKey(channel: NotificationChannel): string {
-    return `${this.redisKeyPrefix}:metrics:latency:${channel.toLowerCase()}`;
+    return notificationKeys.metricsLatency(channel);
   }
 
   private getGaugeKey(metric: string): string {
-    return `${this.redisKeyPrefix}:metrics:gauge:${metric}`;
+    return notificationKeys.metricsGauge(metric);
   }
 }

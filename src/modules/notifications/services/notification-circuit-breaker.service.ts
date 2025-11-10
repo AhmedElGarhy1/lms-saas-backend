@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
+import { notificationKeys } from '../utils/notification-redis-key-builder';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationConfig } from '../config/notification.config';
-import { Config } from '@/shared/config/config';
 
 /**
  * Circuit breaker states
@@ -21,43 +21,32 @@ export enum CircuitState {
  */
 @Injectable()
 export class NotificationCircuitBreakerService {
-  private readonly redisKeyPrefix: string;
   private readonly errorThreshold: number;
   private readonly windowSeconds: number;
   private readonly resetTimeoutSeconds: number;
-  private readonly stateKeys: Map<NotificationChannel, string> = new Map();
 
   constructor(
     private readonly redisService: RedisService,
     private readonly logger: LoggerService,
   ) {
-    this.redisKeyPrefix = Config.redis.keyPrefix;
     this.errorThreshold = NotificationConfig.circuitBreaker.errorThreshold;
     this.windowSeconds = NotificationConfig.circuitBreaker.windowSeconds;
     this.resetTimeoutSeconds =
       NotificationConfig.circuitBreaker.resetTimeoutSeconds;
-
-    // Initialize state keys for each channel
-    Object.values(NotificationChannel).forEach((channel) => {
-      this.stateKeys.set(
-        channel,
-        `${this.redisKeyPrefix}:notification:circuit:state:${channel}`,
-      );
-    });
   }
 
   /**
    * Get Redis key for failures tracking
    */
   private getFailureKey(channel: NotificationChannel): string {
-    return `${this.redisKeyPrefix}:notification:circuit:failures:${channel}`;
+    return notificationKeys.circuitBreakerFailures(channel);
   }
 
   /**
    * Get Redis key for state tracking
    */
   private getStateKey(channel: NotificationChannel): string {
-    return this.stateKeys.get(channel)!;
+    return notificationKeys.circuitBreakerState(channel);
   }
 
   /**

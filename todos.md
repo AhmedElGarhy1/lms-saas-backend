@@ -77,17 +77,15 @@ Caching in RecipientResolverService - Cache frequent center queries (centerId + 
 [] Dynamic concurrency scaling - Adjust concurrency automatically based on system load - ⚙️ Low - Under heavy background queue load
 [] Bulk notification insertion - Batch insert DB writes for IN_APP channel - ⚙️ Medium–High - If DB write latency increases
 [] NotificationPolicyService - Central config for “who gets notified for what” - ⚙️ High When event count > 10 types
-[] Analytics hooks - Add metrics like success/failure rate per event type - ⚙️ Medium - After you set up metrics stack
 
 [ ] see who we handle and what is hte diffrence between logs and activity_logs and notifications
 [ ] update notifications to cover all existing modules events
-[ ] (frontend) Data flow: ⚠️ Needs standardization (28 violations)
-[ ] notifications register user connection first when he opens (there is a problem in sending notifications because of redis not found user connection)
+[x] (frontend) Data flow: ⚠️ Needs standardization (28 violations)
+[x] notifications register user connection first when he opens (there is a problem in sending notifications because of redis not found user connection)
 
 [x] implement DLQ for Queue
-[ ] clear correlationId from all events
-[ ] remove command related code
-[ ] standrize redis keys for easy mantainnce
-[ ] optimize notifications history meta filed it talkes tooooo much
-[ ] remove corinationId form dtos and from events dtos it's overhead
-[ ] fix frontend build issue
+[x] clear correlationId from all events
+[x] remove command related code
+[x] standrize redis keys for easy mantainnce
+[x] optimize notifications history meta filed it talkes tooooo much
+[-] fix frontend build issue

@@ -75,7 +75,7 @@ export class NotificationProcessor extends WorkerHost {
 
       // Process notification without RequestContext wrapper
       // correlationId is passed through payload and used directly
-      this.logger.debug(
+        this.logger.debug(
           `Processing notification job: ${jobId}, type: ${type}, channel: ${channel}, attempt: ${attempt}`,
           'NotificationProcessor',
           {

@@ -2,6 +2,7 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import { Server, ServerOptions } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { RedisService } from '@/shared/modules/redis/redis.service';
+import { notificationKeys } from '../utils/notification-redis-key-builder';
 import { INestApplicationContext, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
@@ -26,7 +27,6 @@ export class RedisIoAdapter extends IoAdapter {
   private connectionRateLimitConfig?: ReturnType<
     typeof notificationGatewayConfig
   >['connectionRateLimit'];
-  private redisKeyPrefix: string;
 
   constructor(
     private readonly redisService: RedisService,
@@ -38,14 +38,11 @@ export class RedisIoAdapter extends IoAdapter {
     try {
       this.jwtService = app.get(JwtService, { strict: false });
       this.userService = app.get(UserService, { strict: false });
-      // Get Redis key prefix for metrics tracking
-      this.redisKeyPrefix = Config.redis.keyPrefix;
     } catch {
       // Services might not be available yet, will be resolved in createIOServer
       this.logger.warn(
         'Could not resolve services in constructor, will resolve in createIOServer',
       );
-      this.redisKeyPrefix = Config.redis.keyPrefix; // Use Config directly
     }
   }
 
@@ -58,10 +55,6 @@ export class RedisIoAdapter extends IoAdapter {
       try {
         this.jwtService = this.app.get(JwtService, { strict: false });
         this.userService = this.app.get(UserService, { strict: false });
-        // Get Redis key prefix if not already set
-        if (!this.redisKeyPrefix) {
-          this.redisKeyPrefix = Config.redis.keyPrefix;
-        }
       } catch (error) {
         this.logger.error(
           'Failed to resolve services for WebSocket authentication',
@@ -381,7 +374,7 @@ export class RedisIoAdapter extends IoAdapter {
   ): Promise<void> {
     try {
       const client = this.redisService.getClient();
-      const metricKey = `${this.redisKeyPrefix}:metrics:connection_rate_limit:${type}:total`;
+      const metricKey = notificationKeys.connectionRateLimitMetric(type);
       const METRIC_TTL = 30 * 24 * 60 * 60; // 30 days
 
       // Increment counter and set TTL
@@ -431,18 +424,23 @@ export class RedisIoAdapter extends IoAdapter {
       this.connectionRateLimitConfig = config.connectionRateLimit;
 
       const redisClient = this.redisService.getClient();
-      const redisKeyPrefix = config.redisPrefix;
+
+      // Note: rate-limiter-flexible requires a keyPrefix string, not individual keys
+      // We'll use a pattern that matches our key builder structure
+      // The library will append the actual identifier (IP/user ID) to the prefix
+      const ipKeyPrefix = notificationKeys.connectionRateLimitIp('');
+      const userKeyPrefix = notificationKeys.connectionRateLimitUser('');
 
       this.ipRateLimiter = new RateLimiterRedis({
         storeClient: redisClient,
-        keyPrefix: `${redisKeyPrefix}:connection:rate:ip`,
+        keyPrefix: ipKeyPrefix.replace(/:[^:]*$/, ':'), // Remove trailing identifier, keep prefix pattern
         points: config.connectionRateLimit.ip.limit,
         duration: config.connectionRateLimit.ip.windowSeconds,
       });
 
       this.userRateLimiter = new RateLimiterRedis({
         storeClient: redisClient,
-        keyPrefix: `${redisKeyPrefix}:connection:rate:user`,
+        keyPrefix: userKeyPrefix.replace(/:[^:]*$/, ':'), // Remove trailing identifier, keep prefix pattern
         points: config.connectionRateLimit.user.limit,
         duration: config.connectionRateLimit.user.windowSeconds,
       });

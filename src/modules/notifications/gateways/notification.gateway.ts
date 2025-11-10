@@ -8,6 +8,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
+import { notificationKeys } from '../utils/notification-redis-key-builder';
 import { Notification } from '../entities/notification.entity';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
@@ -58,13 +59,12 @@ export class NotificationGateway
     this.config = notificationGatewayConfig();
 
     // Counter key for active connections
-    this.connectionsCounterKey = this.redisKey('connections', 'count');
+    this.connectionsCounterKey = notificationKeys.connectionCounterActive();
 
     // Initialize sliding window rate limiter
     this.rateLimiter = new SlidingWindowRateLimiter(
       this.redisService,
       this.loggerService,
-      this.config.redisPrefix,
     );
 
     // Lua script for atomic socket removal: SREM + SCARD + DEL if empty
@@ -280,7 +280,7 @@ export class NotificationGateway
    * Helper: Get active sockets for a user
    */
   private async getActiveSockets(userId: string): Promise<string[]> {
-    const key = this.redisKey('connections', userId);
+    const key = notificationKeys.connection(userId);
     return this.redisService.getClient().smembers(key);
   }
 
@@ -331,12 +331,6 @@ export class NotificationGateway
     });
   }
 
-  /**
-   * Helper: Generate Redis key with prefix
-   */
-  private redisKey(...segments: string[]): string {
-    return `${this.config.redisPrefix}:notification:${segments.join(':')}`;
-  }
 
   /**
    * Add socket to Redis SET for user (atomic operation)
@@ -347,7 +341,7 @@ export class NotificationGateway
   ): Promise<void> {
     await retryOperation(
       async () => {
-        const key = this.redisKey('connections', userId);
+        const key = notificationKeys.connection(userId);
         const client = this.redisService.getClient();
 
         // Add socket to SET and set TTL atomically using pipeline
@@ -379,7 +373,7 @@ export class NotificationGateway
   ): Promise<{ removed: number; remainingCount: number }> {
     return retryOperation(
       async () => {
-        const key = this.redisKey('connections', userId);
+        const key = notificationKeys.connection(userId);
         const client = this.redisService.getClient();
 
         // Execute Lua script atomically
@@ -420,7 +414,7 @@ export class NotificationGateway
    * Refresh TTL on connection key
    */
   private async refreshConnectionTTL(userId: string): Promise<void> {
-    const key = this.redisKey('connections', userId);
+    const key = notificationKeys.connection(userId);
     await this.redisService.getClient().expire(key, this.config.connectionTTL);
   }
 
@@ -474,7 +468,7 @@ export class NotificationGateway
    * Optimized with limits to prevent blocking at scale
    */
   private async reconcileActiveConnectionsMetric(): Promise<void> {
-    const pattern = this.redisKey('connections', '*');
+    const pattern = notificationKeys.connectionPattern();
     let cursor = '0';
     let totalConnections = 0;
     let keysProcessed = 0;

@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
+import { notificationKeys } from '../utils/notification-redis-key-builder';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { STRING_CONSTANTS } from '../constants/notification.constants';
 import { NotificationConfig } from '../config/notification.config';
-import { Config } from '@/shared/config/config';
 
 /**
  * Service for managing idempotency cache using Redis
@@ -22,7 +22,6 @@ import { Config } from '@/shared/config/config';
  */
 @Injectable()
 export class NotificationIdempotencyCacheService {
-  private readonly redisKeyPrefix: string;
   private readonly defaultTtlSeconds: number;
   private readonly lockTtlSeconds: number;
   private readonly lockTimeoutMs: number;
@@ -31,45 +30,9 @@ export class NotificationIdempotencyCacheService {
     private readonly redisService: RedisService,
     private readonly logger: LoggerService,
   ) {
-    this.redisKeyPrefix = Config.redis.keyPrefix;
     this.defaultTtlSeconds = NotificationConfig.idempotency.cacheTtlSeconds;
     this.lockTtlSeconds = NotificationConfig.idempotency.lockTtlSeconds;
     this.lockTimeoutMs = NotificationConfig.idempotency.lockTimeoutMs;
-  }
-
-  /**
-   * Build cache key for idempotency check
-   */
-  private buildKey(
-    correlationId: string,
-    type: NotificationType,
-    channel: NotificationChannel,
-    recipient: string,
-  ): string {
-    // Hash recipient if it's too long to avoid key length issues
-    const recipientHash =
-      recipient.length > STRING_CONSTANTS.MAX_RECIPIENT_HASH_LENGTH
-        ? Buffer.from(recipient).toString('base64').slice(0, STRING_CONSTANTS.MAX_RECIPIENT_HASH_LENGTH)
-        : recipient;
-
-    return `${this.redisKeyPrefix}:notification:idempotency:${correlationId}:${type}:${channel}:${recipientHash}`;
-  }
-
-  /**
-   * Build lock key for distributed locking
-   */
-  private buildLockKey(
-    correlationId: string,
-    type: NotificationType,
-    channel: NotificationChannel,
-    recipient: string,
-  ): string {
-    const recipientHash =
-      recipient.length > STRING_CONSTANTS.MAX_RECIPIENT_HASH_LENGTH
-        ? Buffer.from(recipient).toString('base64').slice(0, STRING_CONSTANTS.MAX_RECIPIENT_HASH_LENGTH)
-        : recipient;
-
-    return `${this.redisKeyPrefix}:notification:lock:${correlationId}:${type}:${channel}:${recipientHash}`;
   }
 
   /**
@@ -82,7 +45,7 @@ export class NotificationIdempotencyCacheService {
     channel: NotificationChannel,
     recipient: string,
   ): Promise<boolean> {
-    const lockKey = this.buildLockKey(correlationId, type, channel, recipient);
+    const lockKey = notificationKeys.lock(correlationId, type, channel, recipient);
     const client = this.redisService.getClient();
 
     try {
@@ -144,7 +107,7 @@ export class NotificationIdempotencyCacheService {
     channel: NotificationChannel,
     recipient: string,
   ): Promise<void> {
-    const lockKey = this.buildLockKey(correlationId, type, channel, recipient);
+    const lockKey = notificationKeys.lock(correlationId, type, channel, recipient);
     const client = this.redisService.getClient();
 
     try {
@@ -174,7 +137,7 @@ export class NotificationIdempotencyCacheService {
     channel: NotificationChannel,
     recipient: string,
   ): Promise<boolean> {
-    const key = this.buildKey(correlationId, type, channel, recipient);
+    const key = notificationKeys.idempotency(correlationId, type, channel, recipient);
     const client = this.redisService.getClient();
 
     try {
@@ -218,7 +181,7 @@ export class NotificationIdempotencyCacheService {
     channel: NotificationChannel,
     recipient: string,
   ): Promise<void> {
-    const key = this.buildKey(correlationId, type, channel, recipient);
+    const key = notificationKeys.idempotency(correlationId, type, channel, recipient);
     const client = this.redisService.getClient();
 
     try {
@@ -253,7 +216,7 @@ export class NotificationIdempotencyCacheService {
     channel: NotificationChannel,
     recipient: string,
   ): Promise<void> {
-    const key = this.buildKey(correlationId, type, channel, recipient);
+    const key = notificationKeys.idempotency(correlationId, type, channel, recipient);
     const client = this.redisService.getClient();
 
     try {
@@ -276,7 +239,7 @@ export class NotificationIdempotencyCacheService {
   }> {
     try {
       const client = this.redisService.getClient();
-      const pattern = `${this.redisKeyPrefix}:notification:idempotency:*`;
+      const pattern = notificationKeys.idempotencyPattern();
 
       // Count keys matching pattern (note: SCAN is more efficient for large datasets)
       let count = 0;
@@ -320,7 +283,7 @@ export class NotificationIdempotencyCacheService {
   }> {
     // Count active locks (keys with lock prefix)
     const client = this.redisService.getClient();
-    const pattern = `${this.redisKeyPrefix}:notification:lock:*`;
+    const pattern = notificationKeys.lockPattern();
 
     // Use SCAN to count locks (non-blocking)
     let activeLocks = 0;

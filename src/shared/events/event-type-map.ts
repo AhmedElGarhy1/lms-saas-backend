@@ -1,10 +1,7 @@
 /**
- * Type Maps for Commands and Events
+ * Type Maps for Events
  *
- * Separates command and event types for better type safety and clarity.
- * Commands are used only for complex cross-domain coordination (orchestrators).
- * Simple CRUD operations emit events directly after performing work.
- *
+ * Provides type safety for event emissions and listeners.
  * Uses enum values for type safety - ensures all keys match the enum definitions.
  */
 
@@ -71,18 +68,6 @@ import { AdminEvents } from '@/shared/events/admin.events.enum';
 import { StaffEvents } from '@/shared/events/staff.events.enum';
 
 /**
- * Command Type Map
- * Maps command names to their command class types.
- * Commands represent intentions (what we want to do).
- *
- * Commands are used ONLY for complex cross-domain coordination via orchestrators.
- * Simple CRUD operations do NOT use commands - they emit events directly.
- *
- * Uses enum values for type safety - ensures all keys match the enum definitions.
- */
-export type CommandTypeMap = Record<string, never>;
-
-/**
  * Event Type Map
  * Maps event names to their event class types.
  * Events represent facts (what happened).
@@ -147,22 +132,6 @@ export type EventTypeMap = {
 };
 
 /**
- * Combined type map for backward compatibility.
- * TypeSafeEventEmitter can use this for unified command/event handling.
- */
-export type UnifiedTypeMap = CommandTypeMap & EventTypeMap;
-
-/**
- * Helper type to extract command name from CommandTypeMap
- */
-export type CommandName = keyof CommandTypeMap;
-
-/**
- * Helper type to extract command payload type for a given command name
- */
-export type CommandPayload<T extends CommandName> = CommandTypeMap[T];
-
-/**
  * Helper type to extract event name from EventTypeMap
  */
 export type EventName = keyof EventTypeMap;
@@ -171,14 +140,3 @@ export type EventName = keyof EventTypeMap;
  * Helper type to extract payload type for a given event name
  */
 export type EventPayload<T extends EventName> = EventTypeMap[T];
-
-/**
- * Unified type for backward compatibility with existing code
- */
-export type EventOrCommandName = keyof UnifiedTypeMap;
-
-/**
- * Unified payload type for backward compatibility
- */
-export type EventOrCommandPayload<T extends EventOrCommandName> =
-  UnifiedTypeMap[T];

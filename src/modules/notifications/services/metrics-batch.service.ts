@@ -1,9 +1,9 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
+import { notificationKeys } from '../utils/notification-redis-key-builder';
 import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationConfig } from '../config/notification.config';
-import { Config } from '@/shared/config/config';
 
 interface BatchEntry {
   key: string;
@@ -32,7 +32,6 @@ interface AvgLatencyEntry {
  */
 @Injectable()
 export class MetricsBatchService implements OnModuleDestroy {
-  private readonly redisKeyPrefix: string;
   private readonly METRIC_TTL = 30 * 24 * 60 * 60; // 30 days
   private readonly batchSize: number;
   private readonly flushIntervalMs: number;
@@ -50,7 +49,6 @@ export class MetricsBatchService implements OnModuleDestroy {
     private readonly redisService: RedisService,
     private readonly logger: LoggerService,
   ) {
-    this.redisKeyPrefix = Config.redis.keyPrefix;
     this.batchSize = NotificationConfig.metricsBatchSize;
     this.flushIntervalMs = NotificationConfig.metricsFlushIntervalMs;
 
@@ -257,22 +255,14 @@ export class MetricsBatchService implements OnModuleDestroy {
     channel: NotificationChannel,
     type?: string,
   ): string {
-    const parts = [
-      this.redisKeyPrefix,
-      'metrics',
-      'counter',
-      metric,
-      channel.toLowerCase(),
-    ];
-    if (type) parts.push(type.toLowerCase());
-    return parts.join(':');
+    return notificationKeys.metricsCounter(metric, channel, type);
   }
 
   private getLatencyKey(channel: NotificationChannel): string {
-    return `${this.redisKeyPrefix}:metrics:latency:${channel.toLowerCase()}`;
+    return notificationKeys.metricsLatency(channel);
   }
 
   private getGaugeKey(metric: string): string {
-    return `${this.redisKeyPrefix}:metrics:gauge:${metric}`;
+    return notificationKeys.metricsGauge(metric);
   }
 }
