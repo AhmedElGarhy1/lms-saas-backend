@@ -3,25 +3,21 @@ import {
   ExecutionContext,
   Injectable,
   NestInterceptor,
-  Inject,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
 import {
   ErrorDetail,
   EnhancedErrorResponse,
 } from '../exceptions/custom.exceptions';
 import { ErrorCode } from '../enums/error-codes.enum';
+import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
 export class ErrorInterceptor implements NestInterceptor {
-  constructor(
-    @Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: Logger,
-  ) {}
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
@@ -29,19 +25,6 @@ export class ErrorInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       catchError((error) => {
-        // Log the error with context
-        this.logger.error(
-          `Error in ${method} ${url}: ${error.message}`,
-          error.stack,
-          {
-            method,
-            url,
-            userAgent: request.headers['user-agent'],
-            ip: request.ip,
-            userId: request.user?.id,
-          },
-        );
-
         // Handle different types of errors
         if (error instanceof HttpException) {
           // HTTP exceptions are already properly formatted

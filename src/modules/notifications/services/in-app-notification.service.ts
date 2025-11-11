@@ -4,7 +4,7 @@ import { NotificationRepository } from '../repositories/notification.repository'
 import { Notification } from '../entities/notification.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { RedisService } from '@/shared/modules/redis/redis.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { NotificationEvents } from '@/shared/events/notification.events.enum';
 import { NotificationReadEvent } from '../events/notification.events';
 import { SlidingWindowRateLimiter } from '../utils/sliding-window-rate-limit';
@@ -18,7 +18,7 @@ import { Config } from '@/shared/config/config';
 import { WebSocketConfig } from '../config/notification.config';
 
 @Injectable()
-export class InAppNotificationService {
+export class InAppNotificationService extends BaseService {
   private readonly CACHE_TTL = 5 * 60; // 5 minutes
 
   private readonly redisKeyPrefix: string;
@@ -29,17 +29,16 @@ export class InAppNotificationService {
   constructor(
     private readonly notificationRepository: NotificationRepository,
     private readonly redisService: RedisService,
-    private readonly logger: LoggerService,
     private readonly eventEmitter: EventEmitter2,
     private readonly channelRateLimitService: ChannelRateLimitService,
   ) {
+    super();
     this.redisKeyPrefix = Config.redis.keyPrefix;
     this.rateLimitUser = WebSocketConfig.rateLimit.user;
 
     // Initialize sliding window rate limiter
     this.rateLimiter = new SlidingWindowRateLimiter(
       this.redisService,
-      this.logger,
     );
   }
 

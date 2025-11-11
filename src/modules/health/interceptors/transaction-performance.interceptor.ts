@@ -3,11 +3,12 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  Logger,
 } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { PerformanceAlertsService } from '../services/performance-alerts.service';
-import { LoggerService } from '@/shared/services/logger.service';
 
 @Injectable()
 export class TransactionPerformanceInterceptor implements NestInterceptor {
@@ -15,11 +16,16 @@ export class TransactionPerformanceInterceptor implements NestInterceptor {
     string,
     { success: number; error: number }
   >();
+  private readonly logger: Logger;
 
   constructor(
     private readonly alertsService: PerformanceAlertsService,
-    private readonly logger: LoggerService,
-  ) {}
+    private readonly moduleRef: ModuleRef,
+  ) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const startTime = Date.now();
@@ -112,23 +118,15 @@ export class TransactionPerformanceInterceptor implements NestInterceptor {
 
     // Log slow transactions (>1000ms)
     if (duration > 1000) {
-      this.logger.warn(
-        'Slow transaction detected',
-        'TransactionPerformanceInterceptor',
-        {
-          ...logData,
-          duration,
-        },
-      );
+      this.logger.warn('Slow transaction detected', {
+        ...logData,
+        duration,
+      });
     } else {
-      this.logger.info(
-        'Transaction completed',
-        'TransactionPerformanceInterceptor',
-        {
-          ...logData,
-          duration,
-        },
-      );
+      this.logger.log('Transaction completed', {
+        ...logData,
+        duration,
+      });
     }
 
     // Send to external monitoring systems

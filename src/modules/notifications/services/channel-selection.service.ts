@@ -1,6 +1,6 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, Logger } from '@nestjs/common';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { UserService } from '@/modules/user/services/user.service';
 import { UserRepository } from '@/modules/user/repositories/user.repository';
 import { In } from 'typeorm';
@@ -31,7 +31,8 @@ interface EventContext {
 }
 
 @Injectable()
-export class ChannelSelectionService implements OnModuleDestroy {
+export class ChannelSelectionService extends BaseService implements OnModuleDestroy {
+  private readonly logger: Logger;
   private readonly activityCache = new Map<
     string,
     { isActive: boolean; timestamp: number }
@@ -42,8 +43,10 @@ export class ChannelSelectionService implements OnModuleDestroy {
   constructor(
     private readonly userService: UserService,
     private readonly userRepository: UserRepository,
-    private readonly logger: LoggerService,
   ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
     // Cache TTL: 1 hour (in milliseconds)
     this.cacheTTL = CACHE_CONSTANTS.ACTIVITY_CACHE_TTL_MS;
     // Inactivity threshold from config
@@ -83,7 +86,6 @@ export class ChannelSelectionService implements OnModuleDestroy {
           );
           this.logger.debug(
             `User ${userId} is inactive, prioritizing external channels over IN_APP`,
-            'ChannelSelectionService',
             { userId, isActive, selectedChannels },
           );
         }
@@ -95,7 +97,6 @@ export class ChannelSelectionService implements OnModuleDestroy {
         selectedChannels.push(NotificationChannel.SMS);
         this.logger.debug(
           `Critical event (priority ${effectivePriority}), added SMS channel`,
-          'ChannelSelectionService',
           { userId, priority: effectivePriority, selectedChannels },
         );
       }
@@ -104,7 +105,6 @@ export class ChannelSelectionService implements OnModuleDestroy {
       if (selectedChannels.length === 0) {
         this.logger.warn(
           `Channel selection resulted in empty array, using baseChannels fallback`,
-          'ChannelSelectionService',
           { userId, baseChannels },
         );
         return baseChannels;
@@ -114,8 +114,7 @@ export class ChannelSelectionService implements OnModuleDestroy {
     } catch (error) {
       this.logger.error(
         `Failed to select optimal channels for user ${userId}`,
-        error instanceof Error ? error.stack : undefined,
-        'ChannelSelectionService',
+        error,
         { userId, baseChannels },
       );
       return baseChannels;
@@ -173,8 +172,8 @@ export class ChannelSelectionService implements OnModuleDestroy {
     } catch (error) {
       this.logger.error(
         `Failed to check user activity for ${userId}`,
-        error instanceof Error ? error.stack : undefined,
-        'ChannelSelectionService',
+        error,
+        { userId },
       );
 
       // On error, assume inactive (safer for critical notifications)
@@ -242,8 +241,7 @@ export class ChannelSelectionService implements OnModuleDestroy {
       } catch (error) {
         this.logger.error(
           `Failed to batch check user activity`,
-          error instanceof Error ? error.stack : undefined,
-          'ChannelSelectionService',
+          error,
         );
 
         // On error, assume all uncached users are inactive
@@ -278,9 +276,6 @@ export class ChannelSelectionService implements OnModuleDestroy {
    */
   onModuleDestroy(): void {
     this.activityCache.clear();
-    this.logger.debug(
-      'Channel selection activity cache cleared',
-      'ChannelSelectionService',
-    );
+    this.logger.debug('Channel selection activity cache cleared');
   }
 }

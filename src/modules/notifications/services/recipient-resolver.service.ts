@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
-export class RecipientResolverService {
-  constructor(private readonly logger: LoggerService) {}
+export class RecipientResolverService extends BaseService {
+  constructor() {
+    super();
+  }
 
   /**
    * Placeholder service for future recipient resolution functionality

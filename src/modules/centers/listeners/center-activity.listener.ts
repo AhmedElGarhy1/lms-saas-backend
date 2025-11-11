@@ -18,10 +18,13 @@ import {
  */
 @Injectable()
 export class CenterActivityListener {
-  constructor(private readonly activityLogService: ActivityLogService) {}
+  constructor(
+    private readonly activityLogService: ActivityLogService,
+  ) {}
 
   @OnEvent(CenterEvents.CREATED)
   async handleCenterCreated(event: CreateCenterEvent) {
+    // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.CENTER_CREATED,
       {
@@ -38,6 +41,7 @@ export class CenterActivityListener {
 
   @OnEvent(CenterEvents.UPDATED)
   async handleCenterUpdated(event: UpdateCenterEvent) {
+    // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.CENTER_UPDATED,
       {
@@ -50,6 +54,7 @@ export class CenterActivityListener {
 
   @OnEvent(CenterEvents.DELETED)
   async handleCenterDeleted(event: DeleteCenterEvent) {
+    // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.CENTER_DELETED,
       {
@@ -61,6 +66,7 @@ export class CenterActivityListener {
 
   @OnEvent(CenterEvents.RESTORED)
   async handleCenterRestored(event: RestoreCenterEvent) {
+    // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.CENTER_RESTORED,
       {

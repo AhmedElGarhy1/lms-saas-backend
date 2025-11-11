@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationIdempotencyCacheService } from '../notification-idempotency-cache.service';
 import { RedisService } from '@/shared/modules/redis/redis.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { Logger } from '@nestjs/common';
 import { NotificationType } from '../../enums/notification-type.enum';
 import { NotificationChannel } from '../../enums/notification-channel.enum';
 import { FakeRedis } from '../../test/fakes/fake-redis';
@@ -11,7 +11,7 @@ import { TestEnvGuard } from '../../test/helpers/test-env-guard';
 describe('NotificationIdempotencyCacheService - Contract Tests', () => {
   let service: NotificationIdempotencyCacheService;
   let fakeRedis: FakeRedis;
-  let mockLogger: LoggerService;
+  let mockLogger: Logger;
   let mockRedisService: jest.Mocked<RedisService>;
 
   beforeEach(async () => {
@@ -33,7 +33,7 @@ describe('NotificationIdempotencyCacheService - Contract Tests', () => {
           useValue: mockRedisService,
         },
         {
-          provide: LoggerService,
+          provide: Logger,
           useValue: mockLogger,
         },
       ],

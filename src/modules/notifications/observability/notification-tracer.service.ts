@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { LoggerService } from '@/shared/services/logger.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { BaseService } from '@/shared/common/services/base.service';
 import { randomUUID } from 'crypto';
 
 /**
@@ -30,8 +30,14 @@ export interface NotificationSpan {
  * - Duration tracking
  */
 @Injectable()
-export class NotificationTracerService {
-  constructor(private readonly logger: LoggerService) {}
+export class NotificationTracerService extends BaseService {
+  private readonly logger: Logger;
+
+  constructor() {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   /**
    * Start a new span for tracing
@@ -52,16 +58,6 @@ export class NotificationTracerService {
         ...attributes,
       },
     };
-
-    this.logger.debug(
-      `[TRACE] Span started: ${name}`,
-      'NotificationTracerService',
-      {
-        span: name,
-        correlationId,
-        attributes: span.attributes,
-      },
-    );
 
     return span;
   }
@@ -105,12 +101,18 @@ export class NotificationTracerService {
     if (error) {
       logContext.error = error.message;
     }
-    this.logger[logLevel](
-      `[TRACE] Span ended: ${span.name} (${duration}ms)`,
-      error instanceof Error ? error.stack : undefined,
-      'NotificationTracerService',
-      logContext,
-    );
+    if (error instanceof Error && logLevel === 'error') {
+      this.logger.error(
+        `[TRACE] Span ended: ${span.name} (${duration}ms)`,
+        error,
+        logContext,
+      );
+    } else {
+      this.logger[logLevel](
+        `[TRACE] Span ended: ${span.name} (${duration}ms)`,
+        logContext,
+      );
+    }
   }
 
   /**
@@ -136,19 +138,7 @@ export class NotificationTracerService {
     eventName: string,
     attributes?: Record<string, string | number | boolean>,
   ): void {
-    this.logger.debug(
-      `[TRACE] Event: ${eventName} in span: ${span.name}`,
-      'NotificationTracerService',
-      {
-        span: span.name,
-        event: eventName,
-        correlationId: span.attributes.correlationId,
-        attributes: {
-          ...span.attributes,
-          ...attributes,
-        },
-      },
-    );
+    // Event tracking - no logging needed, use proper tracing system
   }
 
   /**

@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationManifestResolver } from '../manifests/registry/notification-manifest-resolver.service';
 import { NotificationTemplateService } from '../services/notification-template.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import {
   RenderedNotification,
   NotificationManifest,
@@ -24,12 +24,17 @@ import { AudienceId } from '../types/audience.types';
  * Events should use template-friendly property names (e.g., `link` instead of `resetUrl`).
  */
 @Injectable()
-export class NotificationRenderer {
+export class NotificationRenderer extends BaseService {
+  private readonly logger: Logger;
+
   constructor(
     private readonly manifestResolver: NotificationManifestResolver,
     private readonly templateService: NotificationTemplateService,
-    private readonly logger: LoggerService,
-  ) {}
+  ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   /**
    * Render a notification template based on manifest configuration
@@ -90,7 +95,6 @@ export class NotificationRenderer {
         error instanceof Error ? error.message : String(error);
       this.logger.warn(
         `Failed to render template: ${templatePath} for ${notificationType}:${channel}, attempting fallback`,
-        'NotificationRenderer',
         {
           notificationType,
           channel,
@@ -112,7 +116,6 @@ export class NotificationRenderer {
         usedFallback = true;
         this.logger.warn(
           `Using fallback template '${fallbackTemplate}' for ${notificationType}:${channel}`,
-          'NotificationRenderer',
           {
             notificationType,
             channel,
@@ -129,19 +132,32 @@ export class NotificationRenderer {
           fallbackError instanceof Error
             ? fallbackError.message
             : String(fallbackError);
-        this.logger.error(
-          `Failed to render both primary and fallback templates for ${notificationType}:${channel}`,
-          fallbackError instanceof Error ? fallbackError.stack : undefined,
-          'NotificationRenderer',
-          {
-            notificationType,
-            channel,
-            originalTemplate: templatePath,
-            originalError: errorMessage,
-            fallbackError: fallbackErrorMessage,
-            locale: finalLocale,
-          },
-        );
+        if (fallbackError instanceof Error) {
+          this.logger.error(
+            `Failed to render both primary and fallback templates for ${notificationType}:${channel}`,
+            fallbackError,
+            {
+              notificationType,
+              channel,
+              originalTemplate: templatePath,
+              originalError: errorMessage,
+              fallbackError: fallbackErrorMessage,
+              locale: finalLocale,
+            },
+          );
+        } else {
+          this.logger.error(
+            `Failed to render both primary and fallback templates for ${notificationType}:${channel}`,
+            {
+              notificationType,
+              channel,
+              originalTemplate: templatePath,
+              originalError: errorMessage,
+              fallbackError: fallbackErrorMessage,
+              locale: finalLocale,
+            },
+          );
+        }
         throw new TemplateRenderingException(
           templatePath,
           `Failed to render ${notificationType}:${channel}: ${errorMessage}. Fallback also failed: ${fallbackErrorMessage}`,

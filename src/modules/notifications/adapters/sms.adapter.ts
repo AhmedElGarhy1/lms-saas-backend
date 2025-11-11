@@ -1,8 +1,7 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
 import { SmsNotificationPayload } from '../types/notification-payload.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { TimeoutConfigService } from '../config/timeout.config';
 import * as twilio from 'twilio';
@@ -19,12 +18,15 @@ export class SmsAdapter
 {
   private twilioClient: twilio.Twilio | null = null;
   private readonly fromNumber: string | null;
+  private readonly logger: Logger;
 
   constructor(
-    private readonly logger: LoggerService,
     private readonly metricsService: NotificationMetricsService,
     private readonly timeoutConfig: TimeoutConfigService,
   ) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
     this.fromNumber = Config.twilio.phoneNumber || null;
   }
 
@@ -45,20 +47,15 @@ export class SmsAdapter
     ) {
       try {
         this.twilioClient = twilio(accountSid, authToken);
-        this.logger.debug(
-          'Twilio SMS client initialized successfully',
-          'SmsAdapter',
-        );
       } catch (error) {
         this.logger.error(
           'Failed to initialize Twilio SMS client',
-          error instanceof Error ? error.stack : undefined,
+          error instanceof Error ? error.stack : String(error),
         );
       }
     } else {
       this.logger.warn(
         'Twilio credentials not configured. SMS adapter will log messages only.',
-        'SmsAdapter',
       );
     }
   }
@@ -73,8 +70,6 @@ export class SmsAdapter
     if (isProduction && !this.isConfigured()) {
       this.logger.error(
         'CRITICAL: Twilio SMS is not configured in production/staging environment. Notifications will fail silently.',
-        undefined,
-        'SmsAdapter',
       );
       // Don't throw - allow app to start, but log critical error
     }
@@ -101,19 +96,8 @@ export class SmsAdapter
       );
     }
 
-    // If Twilio is not configured, log and return (don't throw)
+    // If Twilio is not configured, return (don't throw)
     if (!this.isConfigured()) {
-      this.logger.log(
-        `SMS would be sent to ${phoneNumber}: ${message.substring(0, 100)}...`,
-        'SmsAdapter',
-        {
-          channel: NotificationChannel.SMS,
-          type: payload.type,
-          recipient: phoneNumber,
-          status: 'failed',
-          messageLength: message.length,
-        },
-      );
       // Track as failed metric (no provider configured)
       await this.metricsService.incrementFailed(
         NotificationChannel.SMS,
@@ -146,14 +130,6 @@ export class SmsAdapter
         payload.type,
       );
       await this.metricsService.recordLatency(NotificationChannel.SMS, latency);
-
-      this.logger.debug(`SMS sent successfully (${latency}ms)`, 'SmsAdapter', {
-        channel: NotificationChannel.SMS,
-        type: payload.type,
-        recipient: phoneNumber,
-        status: 'sent',
-        latency,
-      });
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);

@@ -5,19 +5,14 @@ import { NotificationRepository } from '../repositories/notification.repository'
 import { NotificationGateway } from '../gateways/notification.gateway';
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
-import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationType } from '../enums/notification-type.enum';
 import {
   createMockInAppPayload,
-  createMockLoggerService,
   createMockMetricsService,
 } from '../test/helpers';
 import { TestEnvGuard } from '../test/helpers/test-env-guard';
-import {
-  createMockNotification,
-  MockNotification,
-} from '../test/helpers/mock-entities';
+import { createMockNotification } from '../test/helpers/mock-entities';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { InvalidOperationException } from '@/shared/common/exceptions/custom.exceptions';
 
@@ -27,14 +22,12 @@ describe('InAppAdapter', () => {
   let mockGateway: jest.Mocked<NotificationGateway>;
   let mockLogRepository: jest.Mocked<NotificationLogRepository>;
   let mockMetrics: NotificationMetricsService;
-  let mockLogger: LoggerService;
   let mockEventEmitter: jest.Mocked<EventEmitter2>;
 
   beforeEach(async () => {
     // Ensure test environment
     TestEnvGuard.setupTestEnvironment({ throwOnError: false });
 
-    mockLogger = createMockLoggerService();
     mockMetrics = createMockMetricsService();
 
     const mockNotification = createMockNotification({
@@ -87,10 +80,6 @@ describe('InAppAdapter', () => {
         {
           provide: NotificationMetricsService,
           useValue: mockMetrics,
-        },
-        {
-          provide: LoggerService,
-          useValue: mockLogger,
         },
         {
           provide: EventEmitter2,

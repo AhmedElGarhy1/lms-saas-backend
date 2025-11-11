@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
   forwardRef,
+  Logger,
 } from '@nestjs/common';
 import {
   BusinessLogicException,
@@ -25,9 +26,12 @@ import {
   DeactivateCenterAccessEvent,
 } from '../events/access-control.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
-export class AccessControlService {
+export class AccessControlService extends BaseService {
+  private readonly logger: Logger;
+
   constructor(
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
@@ -35,7 +39,11 @@ export class AccessControlService {
     private readonly centerAccessRepository: CenterAccessRepository,
     private readonly branchAccessRepository: BranchAccessRepository,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-  ) {}
+  ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   async grantUserAccess(body: UserAccessDto): Promise<void> {
     await this.userAccessRepository.grantUserAccess(body);
@@ -122,6 +130,11 @@ export class AccessControlService {
       });
 
     if (!IHaveAccessToGranterUser) {
+      this.logger.warn('Revoke user access failed - no access to granter user', {
+        granterUserProfileId: body.granterUserProfileId,
+        actorId: actor.userProfileId,
+        centerId,
+      });
       throw new InsufficientPermissionsException(
         'You do not have access to granter user',
       );
@@ -135,6 +148,11 @@ export class AccessControlService {
       });
 
     if (!IHaveAccessToTargetUser) {
+      this.logger.warn('Revoke user access failed - no access to target user', {
+        targetUserProfileId: body.targetUserProfileId,
+        actorId: actor.userProfileId,
+        centerId,
+      });
       throw new InsufficientPermissionsException(
         'You do not have access to target user',
       );
@@ -217,8 +235,9 @@ export class AccessControlService {
     if (!centerAccess) {
       throw new ResourceNotFoundException('Center access not found');
     }
-    if (centerAccess.deletedAt)
+    if (centerAccess.deletedAt) {
       throw new BusinessLogicException('Center access already deleted');
+    }
 
     await this.centerAccessRepository.softRemove(centerAccess.id);
   }
@@ -234,8 +253,9 @@ export class AccessControlService {
     if (!centerAccess) {
       throw new ResourceNotFoundException('Center access not found');
     }
-    if (!centerAccess.deletedAt)
+    if (!centerAccess.deletedAt) {
       throw new BusinessLogicException('Center access not deleted');
+    }
     await this.centerAccessRepository.restore(centerAccess.id);
   }
 

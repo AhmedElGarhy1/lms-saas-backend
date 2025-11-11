@@ -1,15 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
-import { LoggerService } from '../../../shared/services/logger.service';
 import {
   QrCodeGenerationFailedException,
   TwoFactorGenerationFailedException,
 } from '@/shared/common/exceptions/custom.exceptions';
+import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
-export class TwoFactorService {
-  constructor(private readonly logger: LoggerService) {}
+export class TwoFactorService extends BaseService {
+  private readonly logger: Logger;
+
+  constructor() {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   /**
    * Generate a new 2FA secret for a user
@@ -95,7 +101,7 @@ export class TwoFactorService {
     const { secret, otpauthUrl } = this.generateSecret(userEmail, serviceName);
     const qrCodeUrl = await this.generateQRCode(otpauthUrl);
 
-    this.logger.log(`2FA setup initiated for user: ${userEmail}`);
+    // Routine operation - no log needed
 
     return {
       secret,

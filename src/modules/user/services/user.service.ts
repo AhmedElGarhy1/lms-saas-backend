@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import {
   ResourceNotFoundException,
   InsufficientPermissionsException,
@@ -12,7 +12,7 @@ import { RolesService } from '@/modules/access-control/services/roles.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { UserInfoService } from './user-info.service';
 import { UserProfileService } from './user-profile.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import {
   ChangePasswordParams,
@@ -23,7 +23,6 @@ import { CentersService } from '@/modules/centers/services/centers.service';
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { PasswordChangedEvent } from '@/modules/auth/events/auth.events';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
@@ -31,7 +30,6 @@ import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto'
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { UserEvents } from '@/shared/events/user.events.enum';
 import {
-  UserCreatedEvent,
   UserUpdatedEvent,
   UserDeletedEvent,
   UserRestoredEvent,
@@ -39,7 +37,9 @@ import {
 } from '../events/user.events';
 
 @Injectable()
-export class UserService {
+export class UserService extends BaseService {
+  private readonly logger: Logger;
+
   constructor(
     private readonly userRepository: UserRepository,
     private readonly accessControlService: AccessControlService,
@@ -47,11 +47,14 @@ export class UserService {
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly userInfoService: UserInfoService,
     private readonly userProfileService: UserProfileService,
-    private readonly logger: LoggerService,
     private readonly centersService: CentersService,
     private readonly activityLogService: ActivityLogService,
     private readonly eventEmitter: TypeSafeEventEmitter,
-  ) {}
+  ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   async changePassword(
     params: ChangePasswordParams,
@@ -82,11 +85,10 @@ export class UserService {
       new PasswordChangedEvent(userId, { id: userId } as ActorUser),
     );
 
-    this.logger.log(`Password changed for user: ${userId}`);
     return { message: 'Password changed successfully', success: true };
   }
 
-  async createUser(dto: CreateUserDto, actor: ActorUser): Promise<User> {
+  async createUser(dto: CreateUserDto, _actor: ActorUser): Promise<User> {
     // Check for existing user by email if email is provided
     if (dto.email) {
       const existingUser = await this.userRepository.findByEmail(dto.email);
@@ -212,8 +214,6 @@ export class UserService {
     }
     await this.userRepository.softRemove(userId);
 
-    this.logger.log(`User deleted: ${userId} by ${actor.userProfileId}`);
-
     // Emit event after work is done
     await this.eventEmitter.emitAsync(
       UserEvents.DELETED,
@@ -278,10 +278,6 @@ export class UserService {
 
     // Update global activation status
     await this.userRepository.update(userId, { isActive });
-
-    this.logger.log(
-      `User activation status updated: ${userId} to ${isActive} by ${actor.userProfileId}`,
-    );
 
     // Emit event after work is done
     await this.eventEmitter.emitAsync(

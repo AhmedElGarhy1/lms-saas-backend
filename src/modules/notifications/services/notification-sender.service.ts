@@ -14,7 +14,6 @@ import { NotificationTemplateService } from './notification-template.service';
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
 import { NotificationLog } from '../entities/notification-log.entity';
 import { NotificationStatus } from '../enums/notification-status.enum';
-import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationMetricsService } from './notification-metrics.service';
 import pLimit from 'p-limit';
 import { NotificationConfig } from '../config/notification.config';
@@ -27,6 +26,8 @@ import {
 } from '../types/notification-payload.interface';
 import { buildStandardizedMetadata } from '../utils/metadata-builder.util';
 import { RenderedNotification } from '../manifests/types/manifest.types';
+import { BaseService } from '@/shared/common/services/base.service';
+import { Logger } from '@nestjs/common';
 
 /**
  * Type guard to check if payload is EmailNotificationPayload
@@ -64,7 +65,8 @@ interface ChannelResult {
  * @see ERROR_HANDLING_CONFIG for channel-specific error handling strategies
  */
 @Injectable()
-export class NotificationSenderService {
+export class NotificationSenderService extends BaseService {
+  private readonly logger: Logger;
   private adapterRegistry: Map<NotificationChannel, NotificationAdapter>;
   private readonly sendMultipleConcurrency: number;
 
@@ -75,13 +77,15 @@ export class NotificationSenderService {
     private readonly inAppAdapter: InAppAdapter,
     private readonly templateService: NotificationTemplateService,
     private readonly logRepository: NotificationLogRepository,
-    private readonly logger: LoggerService,
     private readonly metricsService: NotificationMetricsService,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly idempotencyCache?: NotificationIdempotencyCacheService,
     private readonly circuitBreaker?: NotificationCircuitBreakerService,
   ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
     // Initialize adapter registry
     this.adapterRegistry = new Map<NotificationChannel, NotificationAdapter>([
       [NotificationChannel.EMAIL, emailAdapter],
@@ -113,11 +117,9 @@ export class NotificationSenderService {
 
     if (!adapter) {
       const error = `No adapter found for channel: ${payload.channel}`;
-      this.logger.error('No adapter found for channel', 'NotificationSenderService', {
-        channel: payload.channel,
-        correlationId,
-        error,
-      });
+      this.logger.error(
+        `No adapter found for channel: ${payload.channel}, correlationId: ${correlationId}`,
+      );
       results.push({
         channel: payload.channel,
         success: false,
@@ -169,33 +171,17 @@ export class NotificationSenderService {
         const jobId = isRecord(payload.data)
           ? getStringProperty(payload.data, 'jobId')
           : undefined;
-        if (error instanceof Error) {
-          this.logger.error(
-            `Failed to send in-app notification: ${payload.type}`,
-            error,
-            'NotificationSenderService',
-            {
-              channel: payload.channel,
-              type: payload.type,
-              userId: payload.userId,
-              correlationId,
-              jobId,
-            },
-          );
-        } else {
-          this.logger.error(
-            `Failed to send in-app notification: ${payload.type}`,
-            'NotificationSenderService',
-            {
-              channel: payload.channel,
-              type: payload.type,
-              userId: payload.userId,
-              correlationId,
-              jobId,
-              error: String(error),
-            },
-          );
-        }
+        this.logger.error(
+          `Failed to send in-app notification: ${payload.type}`,
+          error,
+          {
+            channel: payload.channel,
+            type: payload.type,
+            userId: payload.userId,
+            correlationId,
+            jobId,
+          },
+        );
         results.push({
           channel: payload.channel,
           success: false,
@@ -224,14 +210,7 @@ export class NotificationSenderService {
         if (!isRecord(payload.data)) {
           const errorMessage = `Invalid payload data format for ${payload.type}:${payload.channel}. Expected object.`;
           this.logger.error(
-            errorMessage,
-            'NotificationSenderService',
-            {
-              channel: payload.channel,
-              type: payload.type,
-              userId: payload.userId,
-              correlationId,
-            },
+            `${errorMessage} - channel: ${payload.channel}, type: ${payload.type}, userId: ${payload.userId}, correlationId: ${correlationId}`,
           );
           return [
             {
@@ -248,14 +227,7 @@ export class NotificationSenderService {
         if (!renderedContent) {
           const errorMessage = `Missing pre-rendered content for ${payload.type}:${payload.channel}. Manifest system should provide rendered content.`;
           this.logger.error(
-            errorMessage,
-            'NotificationSenderService',
-            {
-              channel: payload.channel,
-              type: payload.type,
-              userId: payload.userId,
-              correlationId,
-            },
+            `${errorMessage} - channel: ${payload.channel}, type: ${payload.type}, userId: ${payload.userId}, correlationId: ${correlationId}`,
           );
           return [
             {
@@ -528,39 +500,20 @@ export class NotificationSenderService {
           payload.type,
         );
 
-        if (error instanceof Error) {
-          this.logger.error(
-            `Failed to send notification: ${payload.type} via ${payload.channel}`,
-            error,
-            'NotificationSenderService',
-            {
-              channel: payload.channel,
-              type: payload.type,
-              recipient: payload.recipient,
-              userId: payload.userId,
-              correlationId: payload.correlationId,
-              jobId: isRecord(payload.data)
-                ? getStringProperty(payload.data, 'jobId')
-                : undefined,
-            },
-          );
-        } else {
-          this.logger.error(
-            `Failed to send notification: ${payload.type} via ${payload.channel}`,
-            'NotificationSenderService',
-            {
-              channel: payload.channel,
-              type: payload.type,
-              recipient: payload.recipient,
-              userId: payload.userId,
-              correlationId: payload.correlationId,
-              jobId: isRecord(payload.data)
-                ? getStringProperty(payload.data, 'jobId')
-                : undefined,
-              error: errorMessage,
-            },
-          );
-        }
+        this.logger.error(
+          `Failed to send notification: ${payload.type} via ${payload.channel}`,
+          error,
+          {
+            channel: payload.channel,
+            type: payload.type,
+            recipient: payload.recipient,
+            userId: payload.userId,
+            correlationId: payload.correlationId,
+            jobId: isRecord(payload.data)
+              ? getStringProperty(payload.data, 'jobId')
+              : undefined,
+          },
+        );
 
         return [
           {
@@ -600,31 +553,16 @@ export class NotificationSenderService {
             const errorMessage =
               error instanceof Error ? error.message : String(error);
             const correlationId = this.getCorrelationId(payload);
-            if (error instanceof Error) {
-              this.logger.error(
-                `Unexpected error in sendMultiple for channel ${payload.channel}`,
-                error,
-                'NotificationSenderService',
-                {
-                  channel: payload.channel,
-                  type: payload.type,
-                  userId: payload.userId,
-                  correlationId,
-                },
-              );
-            } else {
-              this.logger.error(
-                `Unexpected error in sendMultiple for channel ${payload.channel}`,
-                'NotificationSenderService',
-                {
-                  channel: payload.channel,
-                  type: payload.type,
-                  userId: payload.userId,
-                  correlationId,
-                  error: String(error),
-                },
-              );
-            }
+            this.logger.error(
+              `Unexpected error in sendMultiple for channel ${payload.channel}`,
+              error,
+              {
+                channel: payload.channel,
+                type: payload.type,
+                userId: payload.userId,
+                correlationId,
+              },
+            );
             return [
               {
                 channel: payload.channel,

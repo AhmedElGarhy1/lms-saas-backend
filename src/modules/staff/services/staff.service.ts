@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { StaffRepository } from '../repositories/staff.repository';
 import { UserService } from '@/modules/user/services/user.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
@@ -12,16 +12,26 @@ import { Staff } from '../entities/staff.entity';
 import { CreateStaffEvent } from '@/modules/staff/events/staff.events';
 import { StaffEvents } from '@/shared/events/staff.events.enum';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
-import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
+import {
+  InsufficientPermissionsException,
+  ResourceNotFoundException,
+} from '@/shared/common/exceptions/custom.exceptions';
+import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
-export class StaffService {
+export class StaffService extends BaseService {
+  private readonly logger: Logger;
+
   constructor(
     private readonly staffRepository: StaffRepository,
     private readonly userService: UserService,
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-  ) {}
+  ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   async createStaff(dto: CreateStaffDto, actor: ActorUser): Promise<void> {
     // Create staff entity
@@ -70,7 +80,7 @@ export class StaffService {
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new Error('Access denied');
+      throw new InsufficientPermissionsException('Access denied');
     }
 
     await this.userService.restoreUser(userId, actor);
@@ -80,10 +90,11 @@ export class StaffService {
     userProfileId: string,
     actor: ActorUser,
   ): Promise<void> {
-    if (!actor.centerId)
+    if (!actor.centerId) {
       throw new ForbiddenException(
         'You are not authorized to delete this staff access',
       );
+    }
 
     // Note: deleteCenterAccess is not a user command, so no user event emission here
     await this.userService.deleteCenterAccess(
@@ -99,10 +110,11 @@ export class StaffService {
     userProfileId: string,
     actor: ActorUser,
   ): Promise<void> {
-    if (!actor.centerId)
+    if (!actor.centerId) {
       throw new ForbiddenException(
         'You are not authorized to restore this staff access',
       );
+    }
     // Note: restoreCenterAccess is not a user command, so no user event emission here
     await this.userService.restoreCenterAccess(
       {
@@ -124,7 +136,7 @@ export class StaffService {
   async findOne(userId: string): Promise<User> {
     const user = await this.userService.findOne(userId);
     if (!user) {
-      throw new Error('User not found');
+      throw new ResourceNotFoundException('User not found');
     }
     return user;
   }

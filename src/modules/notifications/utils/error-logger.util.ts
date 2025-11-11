@@ -1,4 +1,4 @@
-import { LoggerService } from '@/shared/services/logger.service';
+import { Logger } from '@nestjs/common';
 
 /**
  * Context interface for error logging
@@ -20,53 +20,42 @@ export class NotificationErrorLogger {
    * Log error with standardized format
    */
   static logError(
-    logger: LoggerService,
+    logger: Logger,
     error: unknown,
     message: string,
     service: string,
     context: ErrorLogContext,
   ): void {
-    if (error instanceof Error) {
-      logger.error(message, error, service, {
-        ...context,
-        timestamp: new Date().toISOString(),
-      });
-    } else {
-      logger.error(message, service, {
-        ...context,
-        error: String(error),
-        timestamp: new Date().toISOString(),
-      });
-    }
+    const contextStr = JSON.stringify({ ...context, service, timestamp: new Date().toISOString() });
+    logger.error(
+      `${message} - ${contextStr}`,
+      error instanceof Error ? error.stack : String(error),
+    );
   }
 
   /**
    * Log warning with standardized format
    */
   static logWarning(
-    logger: LoggerService,
+    logger: Logger,
     message: string,
     service: string,
     context: ErrorLogContext,
   ): void {
-    logger.warn(message, service, {
-      ...context,
-      timestamp: new Date().toISOString(),
-    });
+    const contextStr = JSON.stringify({ ...context, service, timestamp: new Date().toISOString() });
+    logger.warn(`${message} - ${contextStr}`);
   }
 
   /**
    * Log debug message with standardized format
    */
   static logDebug(
-    logger: LoggerService,
+    logger: Logger,
     message: string,
     service: string,
     context: ErrorLogContext,
   ): void {
-    logger.debug(message, service, {
-      ...context,
-      timestamp: new Date().toISOString(),
-    });
+    const contextStr = JSON.stringify({ ...context, service, timestamp: new Date().toISOString() });
+    logger.debug(`${message} - ${contextStr}`);
   }
 }

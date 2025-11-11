@@ -1,8 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { UserAccess } from '../entities/user-access.entity';
-import { LoggerService } from '../../../shared/services/logger.service';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
@@ -10,10 +8,9 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 @Injectable()
 export class UserAccessRepository extends BaseRepository<UserAccess> {
   constructor(
-    protected readonly logger: LoggerService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    super(logger, txHost);
+    super(txHost);
   }
 
   protected getEntityClass(): typeof UserAccess {

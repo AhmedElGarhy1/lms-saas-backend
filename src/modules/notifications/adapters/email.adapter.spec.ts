@@ -1,12 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EmailAdapter } from './email.adapter';
-import { LoggerService } from '@/shared/services/logger.service';
 import { TimeoutConfigService } from '../config/timeout.config';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationType } from '../enums/notification-type.enum';
 import {
   createMockEmailPayload,
-  createMockLoggerService,
   flushPromises,
 } from '../test/helpers';
 import { TestEnvGuard } from '../test/helpers/test-env-guard';
@@ -23,14 +21,11 @@ jest.mock('nodemailer', () => ({
 describe('EmailAdapter', () => {
   let adapter: EmailAdapter;
   let mockTransporter: jest.Mocked<nodemailer.Transporter>;
-  let mockLogger: LoggerService;
   let mockTimeoutConfig: jest.Mocked<TimeoutConfigService>;
 
   beforeEach(async () => {
     // Ensure test environment
     TestEnvGuard.setupTestEnvironment({ throwOnError: false });
-
-    mockLogger = createMockLoggerService();
 
     mockTransporter = {
       sendMail: jest.fn().mockResolvedValue({
@@ -48,10 +43,6 @@ describe('EmailAdapter', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EmailAdapter,
-        {
-          provide: LoggerService,
-          useValue: mockLogger,
-        },
         {
           provide: TimeoutConfigService,
           useValue: mockTimeoutConfig,

@@ -1,11 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationLogRepository } from './notification-log.repository';
-import { LoggerService } from '@/shared/services/logger.service';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationType } from '../enums/notification-type.enum';
-import { createMockLoggerService } from '../test/helpers';
 import { TestEnvGuard } from '../test/helpers/test-env-guard';
 import { createMockNotificationLog } from '../test/helpers/mock-entities';
 import { faker } from '@faker-js/faker';
@@ -24,14 +22,12 @@ const mockBaseRepository = {
 
 describe('NotificationLogRepository', () => {
   let repository: NotificationLogRepository;
-  let mockLogger: LoggerService;
   let mockTxHost: jest.Mocked<TransactionHost<any>>;
 
   beforeEach(async () => {
     // Ensure test environment
     TestEnvGuard.setupTestEnvironment({ throwOnError: false });
 
-    mockLogger = createMockLoggerService();
     mockTxHost = {
       tx: {
         withTransaction: jest.fn(),
@@ -41,10 +37,6 @@ describe('NotificationLogRepository', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationLogRepository,
-        {
-          provide: LoggerService,
-          useValue: mockLogger,
-        },
         {
           provide: TransactionHost,
           useValue: mockTxHost,

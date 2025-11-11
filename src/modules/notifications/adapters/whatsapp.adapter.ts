@@ -1,8 +1,7 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
 import { WhatsAppNotificationPayload } from '../types/notification-payload.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { TimeoutConfigService } from '../config/timeout.config';
 import { WhatsAppProvider } from './providers/whatsapp-provider.interface';
@@ -20,14 +19,18 @@ export class WhatsAppAdapter
   implements NotificationAdapter<WhatsAppNotificationPayload>, OnModuleInit
 {
   private provider: WhatsAppProvider | null = null;
+  private readonly logger: Logger;
 
   constructor(
-    private readonly logger: LoggerService,
     private readonly metricsService: NotificationMetricsService,
     private readonly timeoutConfig: TimeoutConfigService,
     private readonly twilioProvider: TwilioWhatsAppProvider,
     private readonly metaProvider: MetaWhatsAppProvider,
-  ) {}
+  ) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   onModuleInit() {
     this.initializeProvider();
@@ -38,17 +41,12 @@ export class WhatsAppAdapter
     // Prefer Meta Business API if configured
     if (this.metaProvider.isConfigured()) {
       this.provider = this.metaProvider;
-      this.logger.debug(
-        'Using WhatsApp Business API (Meta) provider',
-        'WhatsAppAdapter',
-      );
       return;
     }
 
     // Fallback to Twilio if configured
     if (this.twilioProvider.isConfigured()) {
       this.provider = this.twilioProvider;
-      this.logger.debug('Using Twilio WhatsApp provider', 'WhatsAppAdapter');
       return;
     }
 
@@ -56,7 +54,6 @@ export class WhatsAppAdapter
     this.provider = null;
     this.logger.warn(
       'No WhatsApp provider configured. WhatsApp adapter will log messages only.',
-      'WhatsAppAdapter',
     );
   }
 
@@ -70,8 +67,6 @@ export class WhatsAppAdapter
     if (isProduction && !this.provider) {
       this.logger.error(
         'CRITICAL: WhatsApp provider is not configured in production/staging environment. Notifications will fail silently.',
-        undefined,
-        'WhatsAppAdapter',
       );
       // Don't throw - allow app to start, but log critical error
     }
@@ -90,19 +85,8 @@ export class WhatsAppAdapter
       );
     }
 
-    // If no provider is configured, log and return (don't throw)
+    // If no provider is configured, return (don't throw)
     if (!this.provider) {
-      this.logger.log(
-        `WhatsApp message would be sent to ${phoneNumber}: ${message.substring(0, 100)}...`,
-        'WhatsAppAdapter',
-        {
-          channel: NotificationChannel.WHATSAPP,
-          type: payload.type,
-          recipient: phoneNumber,
-          status: 'failed',
-          messageLength: message.length,
-        },
-      );
       // Track as failed metric (no provider configured)
       await this.metricsService.incrementFailed(
         NotificationChannel.WHATSAPP,
@@ -133,18 +117,7 @@ export class WhatsAppAdapter
         latency,
       );
 
-      this.logger.debug(
-        `WhatsApp message sent successfully via ${this.provider.getProviderName()} (${latency}ms)`,
-        'WhatsAppAdapter',
-        {
-          channel: NotificationChannel.WHATSAPP,
-          type: payload.type,
-          recipient: phoneNumber,
-          status: 'sent',
-          provider: this.provider.getProviderName(),
-          latency,
-        },
-      );
+      // Debug log removed - routine operation
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);

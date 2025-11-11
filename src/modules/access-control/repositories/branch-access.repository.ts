@@ -1,8 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
 import { BranchAccess } from '../entities/branch-access.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { LoggerService } from '@/shared/services/logger.service';
 import { BranchAccessDto } from '../dto/branch-access.dto';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { TransactionHost } from '@nestjs-cls/transactional';
@@ -11,10 +9,9 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 @Injectable()
 export class BranchAccessRepository extends BaseRepository<BranchAccess> {
   constructor(
-    protected readonly logger: LoggerService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    super(logger, txHost);
+    super(txHost);
   }
 
   protected getEntityClass(): typeof BranchAccess {

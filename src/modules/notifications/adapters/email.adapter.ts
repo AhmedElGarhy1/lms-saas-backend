@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import * as nodemailer from 'nodemailer';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
 import { EmailNotificationPayload } from '../types/notification-payload.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { LoggerService } from '@/shared/services/logger.service';
 import { TimeoutConfigService } from '../config/timeout.config';
 import pTimeout from 'p-timeout';
 import { Config } from '@/shared/config/config';
@@ -13,11 +13,15 @@ export class EmailAdapter
   implements NotificationAdapter<EmailNotificationPayload>
 {
   private transporter: nodemailer.Transporter;
+  private readonly logger: Logger;
 
   constructor(
-    private readonly logger: LoggerService,
+    private readonly moduleRef: ModuleRef,
     private readonly timeoutConfig: TimeoutConfigService,
   ) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
     this.transporter = nodemailer.createTransport({
       host: Config.email.host,
       port: Config.email.port,

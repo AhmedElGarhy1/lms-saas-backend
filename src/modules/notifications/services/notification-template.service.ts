@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { readFile } from 'fs/promises';
 import * as Handlebars from 'handlebars';
 import { z } from 'zod';
-import { LoggerService } from '@/shared/services/logger.service';
 import { RedisTemplateCacheService } from './redis-template-cache.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { TemplateRenderingException } from '../exceptions/notification.exceptions';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import {
@@ -13,11 +13,16 @@ import {
 import { resolveTemplatePathWithFallback } from '../utils/template-path.util';
 
 @Injectable()
-export class NotificationTemplateService {
+export class NotificationTemplateService extends BaseService {
+  private readonly logger: Logger;
+
   constructor(
-    private readonly logger: LoggerService,
     private readonly redisCache: RedisTemplateCacheService,
-  ) {}
+  ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   /**
    * Schema for validating IN_APP JSON templates
@@ -67,8 +72,7 @@ export class NotificationTemplateService {
         error instanceof Error ? error.message : String(error);
       this.logger.error(
         `Failed to load template: ${templatePath}`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationTemplateService',
+        error instanceof Error ? error : undefined,
         {
           templateName,
           locale,
@@ -170,8 +174,7 @@ export class NotificationTemplateService {
         error instanceof Error ? error.message : String(error);
       this.logger.error(
         `Failed to render JSON template: ${errorMessage}`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationTemplateService',
+        error instanceof Error ? error : undefined,
         {
           error: errorMessage,
           content: content.substring(0, 200), // Log first 200 chars
@@ -230,8 +233,7 @@ export class NotificationTemplateService {
           error instanceof Error ? error.message : String(error);
         this.logger.error(
           `Failed to render Handlebars template: ${templateName}`,
-          error instanceof Error ? error.stack : undefined,
-          'NotificationTemplateService',
+          error instanceof Error ? error : undefined,
           {
             templateName,
             locale,

@@ -7,18 +7,22 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateActivityLogsDto } from '../dto/paginate-activity-logs.dto';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { AuthenticationFailedException } from '@/shared/common/exceptions/custom.exceptions';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
-export class ActivityLogService {
-  constructor(
-    private readonly activityLogRepository: ActivityLogRepository,
-    private readonly logger: LoggerService,
-  ) {}
+export class ActivityLogService extends BaseService {
+  private readonly logger: Logger;
+
+  constructor(private readonly activityLogRepository: ActivityLogRepository) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   private async createActivityLog(
     dto: CreateActivityLogDto,
-  ): Promise<ActivityLog> {
+  ): Promise<ActivityLog | null> {
     try {
       // Get current request context for automatic actor and center ID assignment
       const requestContext = RequestContext.get();
@@ -42,81 +46,38 @@ export class ActivityLogService {
         userAgent,
       });
 
-      // Logger is fault-tolerant, no try-catch needed
-      this.logger.info(`Activity logged: ${dto.type}`, 'ActivityLogService', {
-        activityId: activityLog.id,
-        actorId,
-        centerId,
-        requestId: requestContext?.requestId,
-        ipAddress,
-      });
-
       return activityLog;
     } catch (error: unknown) {
-      // Logger is fault-tolerant, no try-catch needed
-      if (error instanceof Error) {
-        this.logger.error(
-          'Failed to create activity log',
-          error,
-          'ActivityLogService',
-          {
-            type: dto.type,
-          },
-        );
-      } else {
-        this.logger.error(
-          'Failed to create activity log',
-          'ActivityLogService',
-          {
-            type: dto.type,
-            error: String(error),
-          },
-        );
-      }
-      throw error;
+      // Activity logging should never break application flow
+      this.logger.error(
+        `Failed to create activity log - type: ${dto.type}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      return null;
     }
   }
 
   /**
    * Simple log method - single method that handles everything
+   * Fault-tolerant: never throws errors, returns null on failure
    */
   async log(
     type: string,
     metadata?: Record<string, any>,
     actor?: ActorUser,
-  ): Promise<ActivityLog> {
-    try {
-      if (actor && actor.id) {
-        return await this.createActivityLog({
-          type,
-          metadata,
-          actorId: actor.id,
-          centerId: actor.centerId,
-        });
-      } else {
-        return await this.createActivityLog({
-          type,
-          metadata,
-        });
-      }
-    } catch (error: unknown) {
-      // Logger is fault-tolerant, no try-catch needed
-      if (error instanceof Error) {
-        this.logger.error(
-          'Failed to log activity',
-          error,
-          'ActivityLogService',
-          {
-            type,
-          },
-        );
-      } else {
-        this.logger.error('Failed to log activity', 'ActivityLogService', {
-          type,
-          error: String(error),
-        });
-      }
-      throw error;
+  ): Promise<ActivityLog | null> {
+    if (actor && actor.id) {
+      return await this.createActivityLog({
+        type,
+        metadata,
+        actorId: actor.id,
+        centerId: actor.centerId,
+      });
+    } else {
+      return await this.createActivityLog({
+        type,
+        metadata,
+      });
     }
   }
 

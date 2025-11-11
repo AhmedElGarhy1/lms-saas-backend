@@ -4,9 +4,10 @@ import {
   BadRequestException,
   Inject,
   forwardRef,
+  Logger,
 } from '@nestjs/common';
 import { VerificationTokenRepository } from '../repositories/verification-token.repository';
-import { LoggerService } from '../../../shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { Config } from '@/shared/config/config';
 import { UserService } from '../../user/services/user.service';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
@@ -33,14 +34,19 @@ export interface CreateVerificationTokenData {
 }
 
 @Injectable()
-export class VerificationService {
+export class VerificationService extends BaseService {
+  private readonly logger: Logger;
+
   constructor(
     private readonly verificationTokenRepository: VerificationTokenRepository,
-    private readonly logger: LoggerService,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-  ) {}
+  ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   /**
    * Generate a random OTP code (6 digits)
@@ -122,17 +128,6 @@ export class VerificationService {
         expiresAt,
       });
 
-    this.logger.log(
-      `Verification token created for user: ${data.userId}, type: ${data.type}, channel: ${data.channel}`,
-      'VerificationService',
-      {
-        userId: data.userId,
-        type: data.type,
-        channel: data.channel,
-        expiresAt,
-      },
-    );
-
     return verificationToken;
   }
 
@@ -202,15 +197,6 @@ export class VerificationService {
       throw new NotFoundException('User not found');
     }
 
-    this.logger.log(
-      `Verification token verified for user: ${verificationToken.userId}, type: ${verificationToken.type}`,
-      'VerificationService',
-      {
-        userId: verificationToken.userId,
-        type: verificationToken.type,
-      },
-    );
-
     return {
       userId: verificationToken.userId,
       email: user.email || undefined,
@@ -247,16 +233,6 @@ export class VerificationService {
       throw new NotFoundException('User not found');
     }
 
-    this.logger.log(
-      `Verification code verified for user: ${verificationToken.userId}, type: ${type}`,
-      'VerificationService',
-      {
-        userId: verificationToken.userId,
-        type,
-        channel,
-      },
-    );
-
     return {
       userId: verificationToken.userId,
       email: user.email || undefined,
@@ -286,17 +262,6 @@ export class VerificationService {
       existingToken.expiresAt > new Date() &&
       !existingToken.verifiedAt
     ) {
-      this.logger.log(
-        `Reusing existing non-expired verification token for user: ${data.userId}, type: ${data.type}`,
-        'VerificationService',
-        {
-          userId: data.userId,
-          type: data.type,
-          channel: data.channel,
-          tokenId: existingToken.id,
-          expiresAt: existingToken.expiresAt,
-        },
-      );
       return existingToken;
     }
 
@@ -351,18 +316,6 @@ export class VerificationService {
         phone,
       ),
     );
-
-    this.logger.log(
-      `Phone verification OTP sent to: ${phone}${remainingMinutes > 0 ? ` (reused existing token, expires in ${remainingMinutes} minutes)` : ''}`,
-      'VerificationService',
-      {
-        userId,
-        phone,
-        tokenId: verificationToken.id,
-        expiresAt: verificationToken.expiresAt,
-        remainingMinutes,
-      },
-    );
   }
 
   /**
@@ -402,18 +355,6 @@ export class VerificationService {
         link,
         name,
       ),
-    );
-
-    this.logger.log(
-      `Email verification event emitted to: ${email}${remainingHours > 0 ? ` (reused existing token, expires in ${remainingHours} hours)` : ''}`,
-      'VerificationService',
-      {
-        userId,
-        email,
-        tokenId: verificationToken.id,
-        expiresAt: verificationToken.expiresAt,
-        remainingHours,
-      },
     );
   }
 
@@ -505,19 +446,6 @@ export class VerificationService {
         ),
       );
     }
-
-    this.logger.log(
-      `Password reset event emitted via ${channel} to: ${recipient}${remainingHours > 0 ? ` (reused existing token, expires in ${remainingHours} hours)` : ''}`,
-      'VerificationService',
-      {
-        userId,
-        channel,
-        recipient,
-        tokenId: verificationToken.id,
-        expiresAt: verificationToken.expiresAt,
-        remainingHours,
-      },
-    );
   }
 
   /**
@@ -541,14 +469,6 @@ export class VerificationService {
 
     // Delete the reset token
     await this.deleteToken(token);
-
-    this.logger.log(
-      `Password reset completed for user: ${verificationToken.userId}`,
-      'VerificationService',
-      {
-        userId: verificationToken.userId,
-      },
-    );
   }
 
   /**
@@ -577,14 +497,6 @@ export class VerificationService {
 
     // Delete the reset token
     await this.deleteToken(verificationToken.token);
-
-    this.logger.log(
-      `Password reset completed for user: ${verificationToken.userId} using code`,
-      'VerificationService',
-      {
-        userId: verificationToken.userId,
-      },
-    );
   }
 
   /**
@@ -599,11 +511,6 @@ export class VerificationService {
    */
   async cleanupExpiredTokens(): Promise<void> {
     await this.verificationTokenRepository.deleteExpiredTokens();
-
-    this.logger.log(
-      `Cleaned up expired verification tokens`,
-      'VerificationService',
-    );
   }
 
   /**

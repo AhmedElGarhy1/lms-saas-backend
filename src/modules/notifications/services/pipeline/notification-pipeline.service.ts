@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { NotificationChannel } from '../../enums/notification-channel.enum';
 import { NotificationType } from '../../enums/notification-type.enum';
 import { NotificationManifest } from '../../manifests/types/manifest.types';
@@ -9,7 +9,7 @@ import { AudienceId } from '../../types/audience.types';
 import { NotificationTemplateData } from '../../types/template-data.types';
 import { ChannelSelectionService } from '../channel-selection.service';
 import { NotificationManifestResolver } from '../../manifests/registry/notification-manifest-resolver.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 
 /**
  * Context object passed through the notification processing pipeline
@@ -46,12 +46,17 @@ export interface NotificationProcessingContext {
  * Handles: event data extraction, channel determination, channel selection, template data preparation
  */
 @Injectable()
-export class NotificationPipelineService {
+export class NotificationPipelineService extends BaseService {
+  private readonly logger: Logger;
+
   constructor(
     private readonly channelSelectionService: ChannelSelectionService,
     private readonly manifestResolver: NotificationManifestResolver,
-    private readonly logger: LoggerService,
-  ) {}
+  ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   /**
    * Process notification through the pipeline
@@ -67,7 +72,6 @@ export class NotificationPipelineService {
     if (context.enabledChannels && context.enabledChannels.length === 0) {
       this.logger.debug(
         `No enabled channels for ${context.eventName}, skipping`,
-        'NotificationPipelineService',
         { userId: recipientInfo.userId, eventName: context.eventName },
       );
       return context;
@@ -120,7 +124,7 @@ export class NotificationPipelineService {
     if (!manifest) {
       this.logger.warn(
         `No manifest found for ${context.eventName}`,
-        'NotificationPipelineService',
+        { eventName: context.eventName },
       );
       context.enabledChannels = [];
       return;
@@ -192,7 +196,6 @@ export class NotificationPipelineService {
     if (invalidChannels.length > 0) {
       this.logger.warn(
         `Invalid channels requested for ${manifest.type}:${audience || 'default'}: ${invalidChannels.join(', ')}. Available channels: ${manifestChannels.join(', ')}`,
-        'NotificationPipelineService',
         {
           eventName: manifest.type,
           audience,
@@ -207,7 +210,6 @@ export class NotificationPipelineService {
     if (validChannels.length === 0 && requestedChannels.length > 0) {
       this.logger.warn(
         `All requested channels are invalid for ${manifest.type}:${audience || 'default'}. Using manifest channels instead.`,
-        'NotificationPipelineService',
         {
           eventName: manifest.type,
           audience,
@@ -243,7 +245,6 @@ export class NotificationPipelineService {
         if (finalChannels.length === 0) {
           this.logger.debug(
             `No optimal channels selected for user ${userId} and event ${manifest.type}`,
-            'NotificationPipelineService',
             {
               userId,
               eventName: manifest.type,
@@ -254,16 +255,15 @@ export class NotificationPipelineService {
 
         context.finalChannels = finalChannels;
       } catch (error) {
-        this.logger.error(
-          `Failed to select optimal channels for user ${userId}`,
-          error instanceof Error ? error.stack : undefined,
-          'NotificationPipelineService',
-          {
-            userId,
-            eventName: manifest.type,
-            error: error instanceof Error ? error.message : String(error),
-          },
-        );
+          this.logger.error(
+            `Failed to select optimal channels for user ${userId}`,
+            error instanceof Error ? error : undefined,
+            {
+              userId,
+              eventName: manifest.type,
+              error: error instanceof Error ? error.message : String(error),
+            },
+          );
         // Fallback to enabled channels on error
         context.finalChannels = enabledChannels;
       }

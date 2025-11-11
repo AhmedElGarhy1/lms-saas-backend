@@ -2,11 +2,12 @@ import {
   Injectable,
   OnModuleInit,
   OnModuleDestroy,
+  Logger,
 } from '@nestjs/common';
 import { watch, FSWatcher } from 'fs';
 import { join } from 'path';
 import { RedisTemplateCacheService } from './redis-template-cache.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { Config } from '@/shared/config/config';
 
 /**
@@ -15,14 +16,18 @@ import { Config } from '@/shared/config/config';
  * Only active in development environment
  */
 @Injectable()
-export class TemplateHotReloadService implements OnModuleInit, OnModuleDestroy {
+export class TemplateHotReloadService
+  extends BaseService
+  implements OnModuleInit, OnModuleDestroy
+{
+  private readonly logger: Logger;
   private watcher?: FSWatcher;
   private readonly templateDir: string;
 
-  constructor(
-    private readonly redisCache: RedisTemplateCacheService,
-    private readonly logger: LoggerService,
-  ) {
+  constructor(private readonly redisCache: RedisTemplateCacheService) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
     this.templateDir = join(process.cwd(), 'src/i18n/notifications');
   }
 
@@ -32,10 +37,8 @@ export class TemplateHotReloadService implements OnModuleInit, OnModuleDestroy {
   onModuleInit(): void {
     if (Config.app.nodeEnv === 'development') {
       this.watchTemplates();
-      this.logger.info(
-        'Template hot reload enabled',
-        'TemplateHotReloadService',
-        { templateDir: this.templateDir },
+      this.logger.log(
+        `Template hot reload enabled - templateDir: ${this.templateDir}`,
       );
     }
   }
@@ -58,34 +61,10 @@ export class TemplateHotReloadService implements OnModuleInit, OnModuleDestroy {
       );
 
       this.watcher.on('error', (error) => {
-        if (error instanceof Error) {
-          this.logger.error(
-            'Template watcher error',
-            error,
-            'TemplateHotReloadService',
-          );
-        } else {
-          this.logger.error(
-            'Template watcher error',
-            'TemplateHotReloadService',
-            { error: String(error) },
-          );
-        }
+        this.logger.error('Template watcher error', error);
       });
     } catch (error) {
-      if (error instanceof Error) {
-        this.logger.error(
-          'Failed to initialize template watcher',
-          error,
-          'TemplateHotReloadService',
-        );
-      } else {
-        this.logger.error(
-          'Failed to initialize template watcher',
-          'TemplateHotReloadService',
-          { error: String(error) },
-        );
-      }
+      this.logger.error('Failed to initialize template watcher', error);
     }
   }
 
@@ -102,25 +81,10 @@ export class TemplateHotReloadService implements OnModuleInit, OnModuleDestroy {
       // Clear cache for this specific template
       await this.redisCache.clearTemplateCache(relativePath);
     } catch (error) {
-      if (error instanceof Error) {
-        this.logger.warn(
-          'Failed to reload template',
-          'TemplateHotReloadService',
-          {
-            filePath,
-            error: error.message,
-          },
-        );
-      } else {
-        this.logger.warn(
-          'Failed to reload template',
-          'TemplateHotReloadService',
-          {
-            filePath,
-            error: String(error),
-          },
-        );
-      }
+      this.logger.warn('Failed to reload template', {
+        filePath,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

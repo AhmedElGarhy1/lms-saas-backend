@@ -4,7 +4,7 @@ import {
   CircuitState,
 } from '../notification-circuit-breaker.service';
 import { RedisService } from '@/shared/modules/redis/redis.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { Logger } from '@nestjs/common';
 import { NotificationChannel } from '../../enums/notification-channel.enum';
 import { FakeRedis } from '../../test/fakes/fake-redis';
 import {
@@ -17,7 +17,7 @@ import { TestEnvGuard } from '../../test/helpers/test-env-guard';
 describe('NotificationCircuitBreakerService - Contract Tests', () => {
   let service: NotificationCircuitBreakerService;
   let fakeRedis: FakeRedis;
-  let mockLogger: LoggerService;
+  let mockLogger: Logger;
   let mockRedisService: jest.Mocked<RedisService>;
   let zsets: Map<string, Map<string, number>>;
 
@@ -106,7 +106,7 @@ describe('NotificationCircuitBreakerService - Contract Tests', () => {
 
     mockRedisService = {
       getClient: jest.fn().mockReturnValue(mockRedisClient),
-    } as jest.Mocked<Partial<RedisService>>;
+    } as any;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -116,7 +116,7 @@ describe('NotificationCircuitBreakerService - Contract Tests', () => {
           useValue: mockRedisService,
         },
         {
-          provide: LoggerService,
+          provide: Logger,
           useValue: mockLogger,
         },
       ],

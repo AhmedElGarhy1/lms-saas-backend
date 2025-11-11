@@ -22,6 +22,7 @@ export class BranchAccessListener {
 
     // TODO: Implement branch access granting when the service method is available
     // For now, just log the activity
+    // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.BRANCH_ACCESS_GRANTED,
       {
@@ -40,6 +41,7 @@ export class BranchAccessListener {
 
     // TODO: Implement branch access revoking when the service method is available
     // For now, just log the activity
+    // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.BRANCH_ACCESS_REVOKED,
       {

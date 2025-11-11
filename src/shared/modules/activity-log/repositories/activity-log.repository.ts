@@ -1,10 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ActivityLog } from '../entities/activity-log.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { Pagination } from 'nestjs-typeorm-paginate';
-import { LoggerService } from '../../../../shared/services/logger.service';
 import { PaginateActivityLogsDto } from '../dto/paginate-activity-logs.dto';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { TransactionHost } from '@nestjs-cls/transactional';
@@ -13,12 +10,11 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 @Injectable()
 export class ActivityLogRepository extends BaseRepository<ActivityLog> {
   constructor(
-    protected readonly logger: LoggerService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
   ) {
-    super(logger, txHost);
+    super(txHost);
   }
 
   protected getEntityClass(): typeof ActivityLog {

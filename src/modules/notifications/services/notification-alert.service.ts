@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { LoggerService } from '@/shared/services/logger.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { BaseService } from '@/shared/common/services/base.service';
 import { NotificationConfig } from '../config/notification.config';
 
 /**
@@ -7,12 +7,16 @@ import { NotificationConfig } from '../config/notification.config';
  * Supports multiple alert channels (email, Slack, etc.)
  */
 @Injectable()
-export class NotificationAlertService {
+export class NotificationAlertService extends BaseService {
+  private readonly logger: Logger;
   private readonly enabled: boolean;
   private readonly alertThrottleMinutes: number;
   private readonly lastAlertTime = new Map<string, number>();
 
-  constructor(private readonly logger: LoggerService) {
+  constructor() {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
     this.enabled = NotificationConfig.alerts.enabled;
     this.alertThrottleMinutes = NotificationConfig.alerts.throttleMinutes;
   }
@@ -42,7 +46,6 @@ export class NotificationAlertService {
     if (now - lastSent < throttleMs) {
       this.logger.debug(
         `Alert throttled: ${message} (last sent ${Math.round((now - lastSent) / 1000 / 60)} minutes ago)`,
-        'NotificationAlertService',
         { level, message, context },
       );
       return;
@@ -53,18 +56,13 @@ export class NotificationAlertService {
 
     // Log alert (in production, this could send to email/Slack/etc.)
     if (level === 'critical') {
-      this.logger.error(
-        `🚨 CRITICAL ALERT: ${message}`,
-        undefined,
-        'NotificationAlertService',
-        {
-          level,
-          message,
-          ...context,
-        },
-      );
+      this.logger.error(`🚨 CRITICAL ALERT: ${message}`, {
+        level,
+        message,
+        ...context,
+      });
     } else {
-      this.logger.warn(`⚠️ WARNING: ${message}`, 'NotificationAlertService', {
+      this.logger.warn(`⚠️ WARNING: ${message}`, {
         level,
         message,
         ...context,

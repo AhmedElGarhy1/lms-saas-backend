@@ -12,7 +12,7 @@ import { NotificationRenderer } from '../renderer/notification-renderer.service'
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { NotificationIdempotencyCacheService } from '../services/notification-idempotency-cache.service';
 import { ChannelRetryStrategyService } from '../services/channel-retry-strategy.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { Logger } from '@nestjs/common';
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { FakeQueue } from './fakes/fake-queue';
@@ -108,7 +108,7 @@ describe('Load Simulation', () => {
           },
         },
         {
-          provide: LoggerService,
+          provide: Logger,
           useValue: createMockLoggerService(),
         },
         {

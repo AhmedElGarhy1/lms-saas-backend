@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AdminRepository } from '../repositories/admin.repository';
 import { UserService } from '@/modules/user/services/user.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
@@ -10,15 +10,26 @@ import { User } from '@/modules/user/entities/user.entity';
 import { CreateAdminEvent } from '@/modules/admin/events/admin.events';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { BaseService } from '@/shared/common/services/base.service';
+import {
+  InsufficientPermissionsException,
+  ResourceNotFoundException,
+} from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
-export class AdminService {
+export class AdminService extends BaseService {
+  private readonly logger: Logger;
+
   constructor(
     private readonly adminRepository: AdminRepository,
     private readonly userService: UserService,
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-  ) {}
+  ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   async createAdmin(dto: CreateAdminDto, actor: ActorUser): Promise<void> {
     // Create admin entity
@@ -59,7 +70,7 @@ export class AdminService {
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new Error('Access denied');
+      throw new InsufficientPermissionsException('Access denied');
     }
 
     const userProfile = await this.userService.findUserByProfileId(
@@ -67,7 +78,7 @@ export class AdminService {
       actor,
     );
     if (!userProfile) {
-      throw new Error('User profile not found');
+      throw new ResourceNotFoundException('User profile not found');
     }
     await this.userService.deleteUser(userProfile.id, actor);
   }
@@ -77,7 +88,7 @@ export class AdminService {
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new Error('Access denied');
+      throw new InsufficientPermissionsException('Access denied');
     }
 
     const userProfile = await this.userService.findUserByProfileId(
@@ -85,7 +96,7 @@ export class AdminService {
       actor,
     );
     if (!userProfile) {
-      throw new Error('User profile not found');
+      throw new ResourceNotFoundException('User profile not found');
     }
     await this.userService.restoreUser(userProfile.id, actor);
   }
@@ -109,7 +120,7 @@ export class AdminService {
       actor,
     );
     if (!user) {
-      throw new Error('User not found');
+      throw new ResourceNotFoundException('User not found');
     }
     return user;
   }

@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { OnEvent } from '@nestjs/event-emitter';
 import { NotificationService } from '../services/notification.service';
-import { LoggerService } from '@/shared/services/logger.service';
 import { CenterEvents } from '@/shared/events/center.events.enum';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import {
@@ -25,13 +25,19 @@ import { NotificationEvent } from '../types/notification-event.types';
 
 @Injectable()
 export class NotificationListener {
+  private readonly logger: Logger;
+
   constructor(
     private readonly notificationService: NotificationService,
-    private readonly logger: LoggerService,
+    private readonly moduleRef: ModuleRef,
     private readonly userService: UserService,
     private readonly centersService: CentersService,
     private readonly manifestResolver: NotificationManifestResolver,
-  ) {}
+  ) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   /**
    * Validate that event data contains all required template variables
@@ -84,7 +90,6 @@ export class NotificationListener {
       // If manifest resolution fails, return empty (will be caught later)
       this.logger.warn(
         `Failed to validate event data for ${notificationType}:${audience}`,
-        'NotificationListener',
         {
           notificationType,
           audience,
@@ -121,8 +126,6 @@ export class NotificationListener {
     if (missingVariables.length > 0) {
       this.logger.error(
         `${notificationType} notification will fail - Missing required template variables: ${missingVariables.join(', ')}`,
-        undefined,
-        'NotificationListener',
         {
           notificationType,
           audience,
@@ -147,8 +150,7 @@ export class NotificationListener {
 
       this.logger.error(
         `Failed to send ${notificationType} notification${extractedMissing ? ` - Missing variables: ${extractedMissing.join(', ')}` : ''}`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationListener',
+        error,
         {
           notificationType,
           audience,
@@ -186,7 +188,6 @@ export class NotificationListener {
       if (!r.phone) {
         this.logger.warn(
           `Recipient ${r.userId} missing required phone, skipping`,
-          'NotificationListener',
           { userId: r.userId, notificationType },
         );
         return false;
@@ -194,7 +195,6 @@ export class NotificationListener {
       if (!r.locale) {
         this.logger.warn(
           `Recipient ${r.userId} missing required locale, skipping`,
-          'NotificationListener',
           { userId: r.userId, notificationType },
         );
         return false;
@@ -290,7 +290,6 @@ export class NotificationListener {
     } catch (error) {
       this.logger.warn(
         `Center ${centerId} not found for CENTER_UPDATED notification`,
-        'NotificationListener',
         {
           centerId,
           userId: actor.id,
@@ -352,7 +351,6 @@ export class NotificationListener {
     if (!event.userId) {
       this.logger.warn(
         'Password reset event missing userId, skipping notification',
-        'NotificationListener',
       );
       return;
     }
@@ -362,7 +360,6 @@ export class NotificationListener {
     if (!user) {
       this.logger.warn(
         `User ${event.userId} not found for password reset notification`,
-        'NotificationListener',
       );
       return;
     }
@@ -409,7 +406,6 @@ export class NotificationListener {
     if (!event.userId) {
       this.logger.warn(
         'Email verification event missing userId, skipping notification',
-        'NotificationListener',
       );
       return;
     }
@@ -419,7 +415,6 @@ export class NotificationListener {
     if (!user) {
       this.logger.warn(
         `User ${event.userId} not found for email verification notification`,
-        'NotificationListener',
       );
       return;
     }
@@ -462,7 +457,6 @@ export class NotificationListener {
     if (!event.userId) {
       this.logger.warn(
         'OTP event missing userId, skipping notification',
-        'NotificationListener',
       );
       return;
     }
@@ -472,7 +466,6 @@ export class NotificationListener {
     if (!user) {
       this.logger.warn(
         `User ${event.userId} not found for OTP notification`,
-        'NotificationListener',
       );
       return;
     }
@@ -518,7 +511,6 @@ export class NotificationListener {
     if (!event.userId) {
       this.logger.warn(
         'Phone verified event missing userId, skipping notification',
-        'NotificationListener',
       );
       return;
     }
@@ -528,7 +520,6 @@ export class NotificationListener {
     if (!user) {
       this.logger.warn(
         `User ${event.userId} not found for phone verified notification`,
-        'NotificationListener',
       );
       return;
     }

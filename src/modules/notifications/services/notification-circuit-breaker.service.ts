@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { notificationKeys } from '../utils/notification-redis-key-builder';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationConfig } from '../config/notification.config';
 
@@ -20,15 +20,16 @@ export enum CircuitState {
  * instead of total failure count
  */
 @Injectable()
-export class NotificationCircuitBreakerService {
+export class NotificationCircuitBreakerService extends BaseService {
+  private readonly logger: Logger;
   private readonly errorThreshold: number;
   private readonly windowSeconds: number;
   private readonly resetTimeoutSeconds: number;
 
-  constructor(
-    private readonly redisService: RedisService,
-    private readonly logger: LoggerService,
-  ) {
+  constructor(private readonly redisService: RedisService) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
     this.errorThreshold = NotificationConfig.circuitBreaker.errorThreshold;
     this.windowSeconds = NotificationConfig.circuitBreaker.windowSeconds;
     this.resetTimeoutSeconds =
@@ -68,8 +69,7 @@ export class NotificationCircuitBreakerService {
     } catch (error) {
       this.logger.error(
         `Failed to record circuit breaker failure for ${channel}`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationCircuitBreakerService',
+        error,
         { channel },
       );
     }
@@ -90,8 +90,7 @@ export class NotificationCircuitBreakerService {
     } catch (error) {
       this.logger.error(
         `Failed to record circuit breaker success for ${channel}`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationCircuitBreakerService',
+        error,
         { channel },
       );
     }
@@ -147,9 +146,7 @@ export class NotificationCircuitBreakerService {
       // On Redis error, fail closed (allow requests) - safer than blocking
       this.logger.error(
         `Circuit breaker check failed for ${channel}`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationCircuitBreakerService',
-        { channel },
+        error instanceof Error ? error.stack : String(error),
       );
       return false; // Fail closed - allow requests
     }
@@ -179,11 +176,7 @@ export class NotificationCircuitBreakerService {
       // Get failure count in window
       const now = Date.now();
       const windowStart = now - this.windowSeconds * 1000;
-      const failures = await client.zrangebyscore(
-        failureKey,
-        windowStart,
-        now,
-      );
+      const failures = await client.zrangebyscore(failureKey, windowStart, now);
 
       const lastFailure =
         failures.length > 0
@@ -239,11 +232,6 @@ export class NotificationCircuitBreakerService {
               'EX',
               this.resetTimeoutSeconds,
             );
-            this.logger.info(
-              `Circuit breaker entering HALF_OPEN state for ${channel}`,
-              'NotificationCircuitBreakerService',
-              { channel, timeSinceOpen },
-            );
             return CircuitState.HALF_OPEN;
           }
           return CircuitState.OPEN;
@@ -261,7 +249,6 @@ export class NotificationCircuitBreakerService {
           );
           this.logger.warn(
             `Circuit breaker OPENED for ${channel} (failures exceeded threshold)`,
-            'NotificationCircuitBreakerService',
             {
               channel,
               threshold: this.errorThreshold,
@@ -277,11 +264,6 @@ export class NotificationCircuitBreakerService {
           // Circuit was open/half-open but failures cleared - close it
           await client.del(stateKey);
           await client.del(`${stateKey}:timestamp`);
-          this.logger.info(
-            `Circuit breaker CLOSED for ${channel} (failures cleared)`,
-            'NotificationCircuitBreakerService',
-            { channel },
-          );
         }
         return CircuitState.CLOSED;
       }
@@ -289,9 +271,7 @@ export class NotificationCircuitBreakerService {
       // On error, fail closed (allow requests)
       this.logger.error(
         `Failed to get circuit state for ${channel}`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationCircuitBreakerService',
-        { channel },
+        error instanceof Error ? error.stack : String(error),
       );
       return CircuitState.CLOSED;
     }
@@ -314,11 +294,10 @@ export class NotificationCircuitBreakerService {
       const error = new Error(
         `Circuit breaker is OPEN for channel ${channel}. Requests are blocked.`,
       );
-      this.logger.warn(
-        `Request blocked by circuit breaker: ${channel}`,
-        'NotificationCircuitBreakerService',
-        { channel, state },
-      );
+      this.logger.warn(`Request blocked by circuit breaker: ${channel}`, {
+        channel,
+        state,
+      });
       throw error;
     }
 
@@ -329,11 +308,6 @@ export class NotificationCircuitBreakerService {
       // Success - if in HALF_OPEN, record success and close circuit
       if (state === CircuitState.HALF_OPEN) {
         await this.recordSuccess(channel);
-        this.logger.info(
-          `Circuit breaker recovered (HALF_OPEN → CLOSED) for ${channel}`,
-          'NotificationCircuitBreakerService',
-          { channel },
-        );
       }
 
       return result;
@@ -354,7 +328,6 @@ export class NotificationCircuitBreakerService {
         );
         this.logger.warn(
           `Circuit breaker re-opened for ${channel} (failure in HALF_OPEN state)`,
-          'NotificationCircuitBreakerService',
           { channel },
         );
       }
@@ -379,11 +352,7 @@ export class NotificationCircuitBreakerService {
       const count = await client.zcard(failureKey);
       return count;
     } catch (error) {
-      this.logger.error(
-        `Failed to get failure count for ${channel}`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationCircuitBreakerService',
-      );
+      this.logger.error(`Failed to get failure count for ${channel}`, error);
       return 0;
     }
   }
@@ -400,16 +369,10 @@ export class NotificationCircuitBreakerService {
       await client.del(failureKey);
       await client.del(stateKey);
       await client.del(`${stateKey}:timestamp`);
-      this.logger.info(
-        `Circuit breaker manually reset for ${channel}`,
-        'NotificationCircuitBreakerService',
-        { channel },
-      );
     } catch (error) {
       this.logger.error(
         `Failed to reset circuit breaker for ${channel}`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationCircuitBreakerService',
+        error,
         { channel },
       );
     }

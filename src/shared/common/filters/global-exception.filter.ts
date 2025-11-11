@@ -4,15 +4,22 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { Request, Response } from 'express';
 import { EnhancedErrorResponse } from '../exceptions/custom.exceptions';
 import { ErrorCode } from '../enums/error-codes.enum';
-import { LoggerService } from '@/shared/services/logger.service';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  constructor(private readonly logger: LoggerService) {}
+  private readonly logger: Logger;
+
+  constructor(private readonly moduleRef: ModuleRef) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
@@ -200,15 +207,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     };
 
     if (exception instanceof HttpException) {
-      this.logger.warn('HTTP Exception occurred', 'GlobalExceptionFilter', errorContext);
+      this.logger.warn(
+        `HTTP Exception occurred - ${JSON.stringify(errorContext)}`,
+      );
     } else {
       if (exception instanceof Error) {
-        this.logger.error('Unexpected error occurred', exception, 'GlobalExceptionFilter', errorContext);
+        this.logger.error(
+          `Unexpected error occurred - ${JSON.stringify(errorContext)}`,
+          exception instanceof Error ? exception.stack : String(exception),
+        );
       } else {
-        this.logger.error('Unexpected error occurred', 'GlobalExceptionFilter', {
-          ...errorContext,
-          error: String(exception),
-        });
+        this.logger.error(
+          `Unexpected error occurred - ${JSON.stringify({ ...errorContext, error: String(exception) })}`,
+        );
       }
     }
   }

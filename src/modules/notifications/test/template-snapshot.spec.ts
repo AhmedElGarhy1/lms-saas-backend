@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationTemplateService } from '../services/notification-template.service';
 import { RedisTemplateCacheService } from '../services/redis-template-cache.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { Logger } from '@nestjs/common';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { createMockLoggerService } from './helpers';
 import { TestEnvGuard } from './helpers/test-env-guard';
@@ -27,7 +27,7 @@ jest.mock('../utils/template-path.util', () => ({
 describe('Template Snapshot Tests', () => {
   let service: NotificationTemplateService;
   let mockRedisCache: jest.Mocked<RedisTemplateCacheService>;
-  let mockLogger: LoggerService;
+  let mockLogger: Logger;
   let mockReadFile: jest.MockedFunction<typeof readFile>;
   let mockHandlebarsCompile: jest.MockedFunction<typeof Handlebars.compile>;
 
@@ -41,7 +41,7 @@ describe('Template Snapshot Tests', () => {
       getCompiledTemplate: jest.fn().mockImplementation(async (key, loader) => loader()),
       setTemplateSource: jest.fn().mockResolvedValue(undefined),
       clearTemplateCache: jest.fn().mockResolvedValue(undefined),
-    } as jest.Mocked<RedisTemplateCacheService>;
+    } as unknown as jest.Mocked<RedisTemplateCacheService>;
 
     mockReadFile = readFile as jest.MockedFunction<typeof readFile>;
     mockHandlebarsCompile = Handlebars.compile as jest.MockedFunction<typeof Handlebars.compile>;
@@ -54,7 +54,7 @@ describe('Template Snapshot Tests', () => {
           useValue: mockRedisCache,
         },
         {
-          provide: LoggerService,
+          provide: Logger,
           useValue: mockLogger,
         },
       ],

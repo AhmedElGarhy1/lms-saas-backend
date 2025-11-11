@@ -16,7 +16,7 @@ import { NotificationIdempotencyCacheService } from '../services/notification-id
 import { NotificationDlqCleanupJob } from '../jobs/notification-dlq-cleanup.job';
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
 import { RedisService } from '@/shared/modules/redis/redis.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { Logger } from '@nestjs/common';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationStatus } from '../enums/notification-status.enum';
@@ -147,7 +147,7 @@ describe('Runtime Validation - Integration Tests', () => {
           useValue: mockRedisService,
         },
         {
-          provide: LoggerService,
+          provide: Logger,
           useValue: createMockLoggerService(),
         },
         {

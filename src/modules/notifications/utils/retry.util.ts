@@ -1,4 +1,4 @@
-import { LoggerService } from '@/shared/services/logger.service';
+import { Logger } from '@nestjs/common';
 
 /**
  * Retryable Redis error codes
@@ -54,7 +54,7 @@ export async function retryOperation<T>(
     maxAttempts: number;
     baseDelayMs: number;
     operationName: string;
-    logger?: LoggerService;
+    logger?: Logger;
     context?: Record<string, unknown>;
     abortSignal?: AbortSignal;
   },
@@ -95,15 +95,7 @@ export async function retryOperation<T>(
       const delayMs = baseDelayMs * Math.pow(2, attempt);
 
       logger?.warn(
-        `${operationName} failed (attempt ${attempt + 1}/${maxAttempts}), retrying in ${delayMs}ms`,
-        'RetryUtil',
-        {
-          attempt: attempt + 1,
-          maxAttempts,
-          delayMs,
-          error: lastError.message,
-          ...context,
-        },
+        `${operationName} failed (attempt ${attempt + 1}/${maxAttempts}), retrying in ${delayMs}ms - ${JSON.stringify({ attempt: attempt + 1, maxAttempts, delayMs, error: lastError.message, ...context })}`,
       );
 
       // Wait with abort support

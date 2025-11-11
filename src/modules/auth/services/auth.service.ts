@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import {
   AuthenticationFailedException,
@@ -19,7 +20,7 @@ import { ForgotPasswordRequestDto } from '../dto/forgot-password.dto';
 import { ResetPasswordRequestDto } from '../dto/reset-password.dto';
 import { VerifyEmailRequestDto } from '../dto/verify-email.dto';
 import { TwoFactorRequest } from '../dto/2fa.dto';
-import { LoggerService } from '../../../shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { User } from '../../user/entities/user.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { I18nService } from 'nestjs-i18n';
@@ -39,16 +40,21 @@ import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 
 @Injectable()
-export class AuthService {
+export class AuthService extends BaseService {
+  private readonly logger: Logger;
+
   constructor(
     private readonly userService: UserService,
     private readonly verificationService: VerificationService,
     // private readonly twoFactorService: TwoFactorService,
     private readonly jwtService: JwtService,
-    private readonly logger: LoggerService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-  ) {}
+  ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   async validateUser(
     emailOrPhone: string,
@@ -75,16 +81,12 @@ export class AuthService {
   async login(dto: LoginRequestDto) {
     const user = await this.validateUser(dto.emailOrPhone, dto.password);
     if (!user) {
-      this.logger.warn(
-        `Failed login attempt for email/phone: ${dto.emailOrPhone}`,
-      );
       throw new AuthenticationFailedException('Invalid credentials');
     }
 
     if (!user.id || user.id.trim() === '') {
       this.logger.error(
         `User object missing or invalid ID for email/phone: ${dto.emailOrPhone}`,
-        'AuthService',
       );
       throw new AuthenticationFailedException('User data is invalid');
     }
@@ -100,7 +102,6 @@ export class AuthService {
     // }
 
     if (!user.isActive) {
-      this.logger.warn(`Login attempt for inactive user: ${dto.emailOrPhone}`);
       throw new BusinessLogicException(
         'Account is deactivated',
         'Your account has been deactivated',
@@ -110,7 +111,6 @@ export class AuthService {
 
     // Check if user is locked out
     if (user.lockoutUntil && user.lockoutUntil > new Date()) {
-      this.logger.warn(`Login attempt for locked user: ${dto.emailOrPhone}`);
       throw new BusinessLogicException(
         'Account is temporarily locked',
         'Your account is temporarily locked due to multiple failed login attempts',
@@ -133,7 +133,6 @@ export class AuthService {
       // );
       const twoFactorCode = 'DISABLED';
       // In a real implementation, you would send this via SMS or email
-      this.logger.log(`2FA code for ${dto.emailOrPhone}: ${twoFactorCode}`);
 
       return {
         requiresTwoFactor: true,
@@ -151,16 +150,6 @@ export class AuthService {
     // Hash and store refresh token in database
     const hashedRt = await bcrypt.hash(tokens.refreshToken, 10);
     await this.userService.update(user.id, { hashedRt });
-
-    this.logger.log(
-      `Creating refresh token for user: ${user.email} (ID: ${user.id})`,
-      'AuthService',
-    );
-
-    this.logger.log(`User logged in: ${user.email}`, 'AuthService', {
-      userId: user.id,
-      email: user.email,
-    });
 
     // Emit login event for activity logging
     await this.typeSafeEventEmitter.emitAsync(
@@ -205,6 +194,10 @@ export class AuthService {
     const isValid = true; // Temporarily disabled
 
     if (!isValid) {
+      this.logger.error('Invalid 2FA code provided', {
+        userId: user.id,
+        email: dto.email,
+      });
       throw new AuthenticationFailedException('Invalid 2FA code');
     }
 
@@ -214,11 +207,6 @@ export class AuthService {
     // Hash and store refresh token in database
     const hashedRt = await bcrypt.hash(tokens.refreshToken, 10);
     await this.userService.update(user.id, { hashedRt });
-
-    this.logger.log(`2FA verified for user: ${user.email}`, 'AuthService', {
-      userId: user.id,
-      email: user.email,
-    });
 
     return {
       accessToken: tokens.accessToken,
@@ -234,17 +222,23 @@ export class AuthService {
   }
 
   async verifyEmail(dto: VerifyEmailRequestDto) {
-    const { userId, email } = await this.verificationService.verifyToken(
-      dto.token,
-    );
+    let userId: string;
+    let email: string | undefined;
+    try {
+      const result = await this.verificationService.verifyToken(dto.token);
+      userId = result.userId;
+      email = result.email;
+    } catch (error: unknown) {
+      this.logger.error(
+        'Email verification failed - invalid or expired token',
+        error,
+        { token: dto.token.substring(0, 10) + '...' },
+      );
+      throw error;
+    }
 
     // Update user emailVerified flag
     await this.userService.update(userId, { emailVerified: true });
-
-    this.logger.log(`Email verified for user: ${email}`, 'AuthService', {
-      userId,
-      email,
-    });
 
     return {
       message: 'Email verified successfully',
@@ -319,13 +313,23 @@ export class AuthService {
   }
 
   async verifyPhone(code: string, userId: string): Promise<void> {
-    const { userId: verifiedUserId } =
-      await this.verificationService.verifyCode(
+    let verifiedUserId: string;
+    try {
+      const result = await this.verificationService.verifyCode(
         code,
         VerificationType.PHONE_VERIFICATION,
         NotificationChannel.SMS,
         userId,
       );
+      verifiedUserId = result.userId;
+    } catch (error: unknown) {
+      this.logger.error(
+        'Phone verification failed - invalid or expired code',
+        error,
+        { userId },
+      );
+      throw error;
+    }
 
     // Get user to get phone and create actor
     const user = await this.userService.findOne(verifiedUserId);
@@ -349,14 +353,6 @@ export class AuthService {
       AuthEvents.PHONE_VERIFIED,
       new PhoneVerifiedEvent(verifiedUserId, user.getPhone(), actor),
     );
-
-    this.logger.log(
-      `Phone verified for user: ${verifiedUserId}`,
-      'AuthService',
-      {
-        userId: verifiedUserId,
-      },
-    );
   }
 
   async forgotPassword(dto: ForgotPasswordRequestDto, actor: ActorUser) {
@@ -372,10 +368,6 @@ export class AuthService {
 
     if (!user) {
       // Don't reveal if user exists or not for security
-      this.logger.warn(
-        `Password reset requested for non-existent user`,
-        'AuthService',
-      );
       return {
         message: 'If an account exists, a password reset link has been sent.',
       };
@@ -406,16 +398,30 @@ export class AuthService {
   async resetPassword(dto: ResetPasswordRequestDto) {
     // Use newPassword from the DTO
     // Check if it's a token or code
-    if (dto.token) {
-      await this.verificationService.resetPassword(dto.token, dto.newPassword);
-    } else if (dto.code) {
-      await this.verificationService.resetPasswordByCode(
-        dto.code,
-        dto.newPassword,
-        dto.userId,
+    try {
+      if (dto.token) {
+        await this.verificationService.resetPassword(
+          dto.token,
+          dto.newPassword,
+        );
+      } else if (dto.code) {
+        await this.verificationService.resetPasswordByCode(
+          dto.code,
+          dto.newPassword,
+          dto.userId,
+        );
+      } else {
+        this.logger.error(
+          'Password reset failed - neither token nor code provided',
+        );
+        throw new Error('Either token or code is required');
+      }
+    } catch (error: unknown) {
+      this.logger.error(
+        `Password reset failed - userId: ${dto.userId}, hasToken: ${!!dto.token}, hasCode: ${!!dto.code}`,
+        error instanceof Error ? error.stack : String(error),
       );
-    } else {
-      throw new Error('Either token or code is required');
+      throw error;
     }
 
     return {
@@ -454,15 +460,6 @@ export class AuthService {
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.TWO_FA_SETUP,
       new TwoFactorSetupEvent(userId, actor),
-    );
-
-    this.logger.log(
-      `2FA setup initiated for user: ${user.email}`,
-      'AuthService',
-      {
-        userId: user.id,
-        email: user.email,
-      },
     );
 
     return {
@@ -512,11 +509,6 @@ export class AuthService {
       true,
     );
 
-    this.logger.log(`2FA enabled for user: ${user.email}`, 'AuthService', {
-      userId: user.id,
-      email: user.email,
-    });
-
     // Emit event after work is done
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.TWO_FA_ENABLED,
@@ -551,16 +543,15 @@ export class AuthService {
     // );
     const isValid = true; // Temporarily disabled
     if (!isValid) {
+      this.logger.error('Invalid 2FA verification code for disable', {
+        userId: user.id,
+        email: user.email,
+      });
       throw new AuthenticationFailedException('Invalid 2FA verification code');
     }
 
     // Disable 2FA
     await this.userService.updateUserTwoFactor(userId, null, false);
-
-    this.logger.log(`2FA disabled for user: ${user.email}`, 'AuthService', {
-      userId: user.id,
-      email: user.email,
-    });
 
     // Emit event after work is done
     await this.typeSafeEventEmitter.emitAsync(
@@ -574,10 +565,6 @@ export class AuthService {
   async logout(actor: ActorUser) {
     // Clear hashed refresh token from database
     await this.userService.update(actor.id, { hashedRt: null });
-
-    this.logger.log(`User ${actor.id} logged out`, 'AuthService', {
-      userId: actor.id,
-    });
 
     // Emit event after work is done
     await this.typeSafeEventEmitter.emitAsync(

@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
 import { NotificationStatus } from '../enums/notification-status.enum';
-import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationConfig } from '../config/notification.config';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { notificationKeys } from '../utils/notification-redis-key-builder';
@@ -16,12 +16,16 @@ import { notificationKeys } from '../utils/notification-redis-key-builder';
 @Injectable()
 export class NotificationDlqCleanupJob {
   private readonly retentionDays: number;
+  private readonly logger: Logger;
 
   constructor(
     private readonly logRepository: NotificationLogRepository,
-    private readonly logger: LoggerService,
+    private readonly moduleRef: ModuleRef,
     private readonly redisService: RedisService,
   ) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
     this.retentionDays = NotificationConfig.dlq.retentionDays;
   }
 
@@ -32,11 +36,6 @@ export class NotificationDlqCleanupJob {
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async cleanupOldFailedJobs(): Promise<void> {
     const startTime = Date.now();
-    this.logger.info(
-      'Starting DLQ cleanup job',
-      'NotificationDlqCleanupJob',
-      { retentionDays: this.retentionDays },
-    );
 
     try {
       // Calculate cutoff date
@@ -59,15 +58,6 @@ export class NotificationDlqCleanupJob {
         oldEntries.length > 0 ? oldEntries[0].createdAt : null;
 
       if (countToDelete === 0) {
-        this.logger.info(
-          'No old failed notifications to clean up',
-          'NotificationDlqCleanupJob',
-          {
-            retentionDays: this.retentionDays,
-            cutoffDate: cutoffDate.toISOString(),
-            totalFailed: totalFailed.length,
-          },
-        );
         return;
       }
 
@@ -80,54 +70,27 @@ export class NotificationDlqCleanupJob {
 
       const duration = Date.now() - startTime;
 
-      this.logger.info(
-        'DLQ cleanup completed',
-        'NotificationDlqCleanupJob',
-        {
-          deletedCount,
-          retentionDays: this.retentionDays,
-          cutoffDate: cutoffDate.toISOString(),
-          oldestEntryDate: oldestEntry?.toISOString(),
-          totalFailed: totalFailed.length,
-          duration,
-        },
-      );
+      this.logger.log('DLQ cleanup completed', {
+        deletedCount,
+        retentionDays: this.retentionDays,
+        cutoffDate: cutoffDate.toISOString(),
+        oldestEntryDate: oldestEntry?.toISOString(),
+        totalFailed: totalFailed.length,
+        duration,
+      });
 
       // Log warning if cleanup took too long
       if (duration > 60000) {
         // More than 1 minute
         this.logger.warn(
-          'DLQ cleanup took too long - consider optimizing or running during lower traffic periods',
-          'NotificationDlqCleanupJob',
-          {
-            duration,
-            deletedCount,
-            durationSeconds: Math.round(duration / 1000),
-          },
+          `DLQ cleanup took too long - consider optimizing or running during lower traffic periods - duration: ${duration}, deletedCount: ${deletedCount}, durationSeconds: ${Math.round(duration / 1000)}`,
         );
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.logger.error(
-          'DLQ cleanup job failed',
-          error,
-          'NotificationDlqCleanupJob',
-          {
-            retentionDays: this.retentionDays,
-            duration: Date.now() - startTime,
-          },
-        );
-      } else {
-        this.logger.error(
-          'DLQ cleanup job failed',
-          'NotificationDlqCleanupJob',
-          {
-            retentionDays: this.retentionDays,
-            duration: Date.now() - startTime,
-            error: String(error),
-          },
-        );
-      }
+      this.logger.error(
+        `DLQ cleanup job failed - retentionDays: ${this.retentionDays}, duration: ${Date.now() - startTime}`,
+        error instanceof Error ? error.stack : String(error),
+      );
     }
   }
 

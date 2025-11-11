@@ -19,10 +19,13 @@ import {
  */
 @Injectable()
 export class UserActivityListener {
-  constructor(private readonly activityLogService: ActivityLogService) {}
+  constructor(
+    private readonly activityLogService: ActivityLogService,
+  ) {}
 
   @OnEvent(UserEvents.CREATED)
   async handleUserCreated(event: UserCreatedEvent) {
+    // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       UserActivityType.USER_CREATED,
       {
@@ -38,6 +41,7 @@ export class UserActivityListener {
 
   @OnEvent(UserEvents.UPDATED)
   async handleUserUpdated(event: UserUpdatedEvent) {
+    // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       UserActivityType.USER_UPDATED,
       {
@@ -50,6 +54,7 @@ export class UserActivityListener {
 
   @OnEvent(UserEvents.DELETED)
   async handleUserDeleted(event: UserDeletedEvent) {
+    // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       UserActivityType.USER_DELETED,
       {
@@ -61,6 +66,7 @@ export class UserActivityListener {
 
   @OnEvent(UserEvents.RESTORED)
   async handleUserRestored(event: UserRestoredEvent) {
+    // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       UserActivityType.USER_RESTORED,
       {
@@ -72,6 +78,7 @@ export class UserActivityListener {
 
   @OnEvent(UserEvents.ACTIVATED)
   async handleUserActivated(event: UserActivatedEvent) {
+    // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       event.isActive
         ? UserActivityType.USER_ACTIVATED

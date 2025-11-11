@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { NotificationLog } from '../entities/notification-log.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { LoggerService } from '@/shared/services/logger.service';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { NotificationStatus } from '../enums/notification-status.enum';
@@ -15,10 +13,9 @@ import { In } from 'typeorm';
 @Injectable()
 export class NotificationLogRepository extends BaseRepository<NotificationLog> {
   constructor(
-    protected readonly logger: LoggerService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    super(logger, txHost);
+    super(txHost);
   }
 
   protected getEntityClass(): typeof NotificationLog {

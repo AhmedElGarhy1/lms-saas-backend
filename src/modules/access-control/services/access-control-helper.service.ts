@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   InsufficientPermissionsException,
   AdminScopeAccessDeniedException,
@@ -22,9 +22,12 @@ import { PermissionScope } from '../constants/permissions';
 import { RolesService } from './roles.service';
 import { CentersService } from '@/modules/centers/services/centers.service';
 import { CenterAccess } from '../entities/center-access.entity';
+import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
-export class AccessControlHelperService {
+export class AccessControlHelperService extends BaseService {
+  private readonly logger: Logger;
+
   constructor(
     private readonly profileRoleRepository: ProfileRoleRepository,
     private readonly userAccessRepository: UserAccessRepository,
@@ -33,7 +36,11 @@ export class AccessControlHelperService {
     private readonly centersService: CentersService,
     private readonly rolesService: RolesService,
     private readonly userProfileService: UserProfileService,
-  ) {}
+  ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   /**
    * Validate if the user has admin or super admin access or center access
@@ -77,6 +84,7 @@ export class AccessControlHelperService {
     if (haveAdminRole) {
       return;
     }
+    this.logger.warn('Admin access validation failed', { userProfileId });
     throw new AdminScopeAccessDeniedException(
       'You do not have access to admin scope. Please select a center to access center-specific resources.',
     );
@@ -204,6 +212,11 @@ export class AccessControlHelperService {
   async validateUserAccess(data: UserAccessDto): Promise<void> {
     const userAccess = await this.canUserAccess(data);
     if (!userAccess) {
+      this.logger.warn('User access validation failed', {
+        granterUserProfileId: data.granterUserProfileId,
+        targetUserProfileId: data.targetUserProfileId,
+        centerId: data.centerId,
+      });
       throw new InsufficientPermissionsException(
         'You do not have access to target user',
       );
@@ -244,6 +257,10 @@ export class AccessControlHelperService {
     const center = await this.centersService.findCenterById(data.centerId);
 
     if (!center.isActive) {
+      this.logger.warn('Center access validation failed - center is inactive', {
+        userProfileId: data.userProfileId,
+        centerId: data.centerId,
+      });
       throw new InactiveCenterException();
     }
 
@@ -251,6 +268,10 @@ export class AccessControlHelperService {
 
     const canAccess = await this.canCenterAccess(data, config.includeDeleted);
     if (!canAccess) {
+      this.logger.warn('Center access validation failed', {
+        userProfileId: data.userProfileId,
+        centerId: data.centerId,
+      });
       throw new CenterAccessDeniedException();
     }
     const centerAccess = await this.findCenterAccess(data);
@@ -258,6 +279,10 @@ export class AccessControlHelperService {
 
     // Check if the user's access to the center is active
     if (!centerAccess.isActive && !config.includeInactive) {
+      this.logger.warn('Center access validation failed - access is inactive', {
+        userProfileId: data.userProfileId,
+        centerId: data.centerId,
+      });
       throw new CenterAccessInactiveException();
     }
   }
@@ -281,6 +306,11 @@ export class AccessControlHelperService {
   async validateBranchAccess(data: BranchAccessDto): Promise<void> {
     const branchAccess = await this.canBranchAccess(data);
     if (!branchAccess) {
+      this.logger.warn('Branch access validation failed', {
+        userProfileId: data.userProfileId,
+        centerId: data.centerId,
+        branchId: data.branchId,
+      });
       throw new BranchAccessDeniedException();
     }
   }

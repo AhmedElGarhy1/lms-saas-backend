@@ -77,11 +77,6 @@
 [x] (frontend) Data flow: ⚠️ Needs standardization (28 violations)
 [x] notifications register user connection first when he opens (there is a problem in sending notifications because of redis not found user connection)
 
-[x] implement DLQ for Queue
-[x] clear correlationId from all events
-[x] remove command related code
-[x] standrize redis keys for easy mantainnce
-[x] optimize notifications history meta filed it talkes tooooo much
-[-] fix frontend build issue
-
 [] (later if size is big) Bulk notification insertion - Batch insert DB writes for IN_APP channel - ⚙️ Medium–High - If DB write latency increases
+
+[ ] clean up notficiation service from testing (doesn't work) and from usless services and monitoring or metrics

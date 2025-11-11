@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { NotificationManifestResolver } from '../manifests/registry/notification-manifest-resolver.service';
 import { NotificationManifest } from '../manifests/types/manifest.types';
 import { NotificationRenderer } from '../renderer/notification-renderer.service';
@@ -27,17 +27,20 @@ import { NotificationRouterService } from './routing/notification-router.service
 import { BulkNotificationResult } from '../types/bulk-notification-result.interface';
 
 @Injectable()
-export class NotificationService {
+export class NotificationService extends BaseService {
+  private readonly logger: Logger;
   private readonly concurrencyLimit: number;
 
   constructor(
-    private readonly logger: LoggerService,
     private readonly manifestResolver: NotificationManifestResolver,
     private readonly renderer: NotificationRenderer,
     private readonly pipelineService: NotificationPipelineService,
     private readonly routerService: NotificationRouterService,
     private readonly multiRecipientProcessor: MultiRecipientProcessor,
   ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
     this.concurrencyLimit = this.multiRecipientProcessor.getConcurrencyLimit();
   }
 
@@ -170,7 +173,6 @@ export class NotificationService {
       if (uniqueRecipients.length === 0) {
         this.logger.warn(
           `No valid recipients after deduplication for notification: ${type}`,
-          'NotificationService',
           {
             notificationType: type,
             audience,
@@ -452,7 +454,6 @@ export class NotificationService {
         } catch (error) {
           this.logger.warn(
             `Failed to pre-render template for group: ${group.templateDataHash}`,
-            'NotificationService',
             {
               error: error instanceof Error ? error.message : String(error),
               channel,

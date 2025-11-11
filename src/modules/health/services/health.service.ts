@@ -1,9 +1,7 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import * as os from 'os';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 
 export interface HealthStatus {
   status: 'healthy' | 'unhealthy' | 'degraded';
@@ -97,15 +95,17 @@ export interface ExternalHealth {
 }
 
 @Injectable()
-export class HealthService {
+export class HealthService extends BaseService {
+  private readonly logger: Logger;
   private readonly startTime = Date.now();
   private readonly version = process.env.npm_package_version || '1.0.0';
   private readonly environment = process.env.NODE_ENV || 'development';
 
-  constructor(
-    private readonly dataSource: DataSource,
-    private readonly logger: LoggerService,
-  ) {}
+  constructor(@Inject(DataSource) private readonly dataSource: DataSource) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   async getHealthStatus(): Promise<HealthStatus> {
     const startTime = Date.now();
@@ -138,21 +138,7 @@ export class HealthService {
 
       const responseTime = Date.now() - startTime;
 
-      this.logger.debug('Health check completed', 'HealthService', {
-        status: overallStatus,
-        responseTime,
-        checks: {
-          database: databaseHealth.status,
-          memory: memoryHealth.status,
-          disk: diskHealth.status,
-          cpu: cpuHealth.status,
-          cache: cacheHealth.status,
-          external: externalHealth.map((h) => ({
-            name: h.name,
-            status: h.status,
-          })),
-        },
-      });
+      // Debug log removed - routine operation
 
       return {
         status: overallStatus,
@@ -170,13 +156,7 @@ export class HealthService {
         },
       };
     } catch (error) {
-      if (error instanceof Error) {
-        this.logger.error('Health check failed', error, 'HealthService', {});
-      } else {
-        this.logger.error('Health check failed', 'HealthService', {
-          error: String(error),
-        });
-      }
+      this.logger.error('Health check failed', error);
 
       return {
         status: 'unhealthy',

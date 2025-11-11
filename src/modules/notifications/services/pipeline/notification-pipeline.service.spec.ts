@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationPipelineService } from './notification-pipeline.service';
 import { ChannelSelectionService } from '../channel-selection.service';
 import { NotificationManifestResolver } from '../../manifests/registry/notification-manifest-resolver.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { Logger } from '@nestjs/common';
 import { NotificationChannel } from '../../enums/notification-channel.enum';
 import { NotificationType } from '../../enums/notification-type.enum';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
@@ -19,7 +19,7 @@ describe('NotificationPipelineService', () => {
   let service: NotificationPipelineService;
   let mockChannelSelection: jest.Mocked<ChannelSelectionService>;
   let mockManifestResolver: jest.Mocked<NotificationManifestResolver>;
-  let mockLogger: LoggerService;
+  let mockLogger: Logger;
 
   beforeEach(async () => {
     // Ensure test environment
@@ -56,7 +56,7 @@ describe('NotificationPipelineService', () => {
           useValue: mockManifestResolver,
         },
         {
-          provide: LoggerService,
+          provide: Logger,
           useValue: mockLogger,
         },
       ],
@@ -289,11 +289,6 @@ describe('NotificationPipelineService', () => {
       await service.process(context, recipient);
 
       expect(mockChannelSelection.selectOptimalChannels).not.toHaveBeenCalled();
-      expect(mockLogger.debug).toHaveBeenCalledWith(
-        expect.stringContaining('No enabled channels'),
-        'NotificationPipelineService',
-        expect.any(Object),
-      );
     });
   });
 
@@ -431,10 +426,6 @@ describe('NotificationPipelineService', () => {
       service.determineChannels(context);
 
       expect(context.enabledChannels).toEqual([]);
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('No manifest found'),
-        'NotificationPipelineService',
-      );
     });
 
     it('should validate requested channels against manifest', () => {

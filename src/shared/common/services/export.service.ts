@@ -1,13 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Response } from 'express';
 import { ExportResponseDto } from '../dto/export-response.dto';
 import {
   ExportFormatNotSupportedException,
   ExportDataUnavailableException,
-  ExportFailedException,
 } from '../exceptions/custom.exceptions';
 import { ExportFormat } from '../dto';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from './base.service';
 
 export interface ExportOptions {
   filename: string;
@@ -22,8 +21,8 @@ export interface ExportMapper<T, R extends Record<string, any>> {
 }
 
 @Injectable()
-export class ExportService {
-  constructor(private readonly logger: LoggerService) {}
+export class ExportService extends BaseService {
+  private readonly logger: Logger = new Logger(ExportService.name);
 
   /**
    * Export data to CSV format
@@ -46,8 +45,6 @@ export class ExportService {
       );
       res.send(csvData);
 
-      this.logger.info('CSV export completed', 'ExportService', { filename: `${filename}.csv` });
-
       return {
         success: true,
         message: 'CSV export completed successfully',
@@ -58,11 +55,10 @@ export class ExportService {
         exportedAt: new Date().toISOString(),
       };
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        this.logger.error('CSV export failed', error, 'ExportService', { filename });
-      } else {
-        this.logger.error('CSV export failed', 'ExportService', { filename, error: String(error) });
-      }
+      this.logger.error(
+        `CSV export failed - filename: ${filename}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       throw error;
     }
   }
@@ -91,8 +87,6 @@ export class ExportService {
       );
       res.send(xlsxData);
 
-      this.logger.info('XLSX export completed', 'ExportService', { filename: `${filename}.xlsx` });
-
       return {
         success: true,
         message: 'XLSX export completed successfully',
@@ -103,11 +97,10 @@ export class ExportService {
         exportedAt: new Date().toISOString(),
       };
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        this.logger.error('XLSX export failed', error, 'ExportService', { filename });
-      } else {
-        this.logger.error('XLSX export failed', 'ExportService', { filename, error: String(error) });
-      }
+      this.logger.error(
+        `XLSX export failed - filename: ${filename}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       throw error;
     }
   }
@@ -133,8 +126,6 @@ export class ExportService {
       );
       res.json(jsonData);
 
-      this.logger.info('JSON export completed', 'ExportService', { filename: `${filename}.json` });
-
       return {
         success: true,
         message: 'JSON export completed successfully',
@@ -145,11 +136,10 @@ export class ExportService {
         exportedAt: new Date().toISOString(),
       };
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        this.logger.error('JSON export failed', error, 'ExportService', { filename });
-      } else {
-        this.logger.error('JSON export failed', 'ExportService', { filename, error: String(error) });
-      }
+      this.logger.error(
+        `JSON export failed - filename: ${filename}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       throw error;
     }
   }

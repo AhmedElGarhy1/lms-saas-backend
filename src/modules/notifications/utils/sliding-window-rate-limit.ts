@@ -1,16 +1,21 @@
+import { Logger } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { notificationKeys } from './notification-redis-key-builder';
-import { LoggerService } from '@/shared/services/logger.service';
 
 /**
  * Sliding window rate limiter using Redis sorted sets
  * Provides smoother rate limiting compared to fixed window counters
  */
 export class SlidingWindowRateLimiter {
+  private readonly logger: Logger;
+
   constructor(
     private readonly redisService: RedisService,
-    private readonly logger: LoggerService,
-  ) {}
+  ) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   /**
    * Check if request is within rate limit using sliding window algorithm
@@ -70,14 +75,8 @@ export class SlidingWindowRateLimiter {
     } catch (error) {
       // On Redis error, allow the request (fail open)
       this.logger.error(
-        `Sliding window rate limit check failed for key ${key}`,
-        error instanceof Error ? error.stack : undefined,
-        'SlidingWindowRateLimiter',
-        {
-          key,
-          limit,
-          windowSeconds,
-        },
+        `Sliding window rate limit check failed for key ${key} - limit: ${limit}, windowSeconds: ${windowSeconds}`,
+        error instanceof Error ? error.stack : String(error),
       );
       return true; // Fail open - allow request
     }
@@ -103,8 +102,7 @@ export class SlidingWindowRateLimiter {
     } catch (error) {
       this.logger.error(
         `Failed to get current count for key ${key}`,
-        error instanceof Error ? error.stack : undefined,
-        'SlidingWindowRateLimiter',
+        error instanceof Error ? error.stack : String(error),
       );
       return 0;
     }

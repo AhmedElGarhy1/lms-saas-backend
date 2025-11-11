@@ -93,9 +93,11 @@ describe('PayloadBuilderService', () => {
       );
 
       const rendered = {
+        type: NotificationType.OTP,
+        channel: NotificationChannel.EMAIL,
         subject: 'Test Subject',
         content: '<p>Test Content</p>',
-        metadata: { template: 'test-template' },
+        metadata: { template: 'test-template', locale: 'en' },
       };
 
       const payload = service.buildPayload(
@@ -126,8 +128,10 @@ describe('PayloadBuilderService', () => {
       );
 
       const rendered = {
+        type: NotificationType.OTP,
+        channel: NotificationChannel.EMAIL,
         content: '<p>Test Content</p>',
-        metadata: { template: 'test-template' },
+        metadata: { template: 'test-template', locale: 'en' },
       };
 
       const payload = service.buildPayload(
@@ -155,8 +159,10 @@ describe('PayloadBuilderService', () => {
       );
 
       const rendered = {
+        type: NotificationType.OTP,
+        channel: NotificationChannel.SMS,
         content: 'Your OTP is 123456',
-        metadata: { template: 'otp-template' },
+        metadata: { template: 'otp-template', locale: 'en' },
       };
 
       const payload = service.buildPayload(
@@ -186,8 +192,10 @@ describe('PayloadBuilderService', () => {
       );
 
       const rendered = {
+        type: NotificationType.OTP,
+        channel: NotificationChannel.WHATSAPP,
         content: 'Your OTP is 123456',
-        metadata: { template: 'otp-template' },
+        metadata: { template: 'otp-template', locale: 'en' },
       };
 
       const payload = service.buildPayload(
@@ -216,12 +224,14 @@ describe('PayloadBuilderService', () => {
       );
 
       const rendered = {
+        type: NotificationType.OTP,
+        channel: NotificationChannel.IN_APP,
         content: {
           title: 'Test Title',
           message: 'Test Message',
           expiresAt: new Date(),
         },
-        metadata: { template: 'inapp-template' },
+        metadata: { template: 'inapp-template', locale: 'en' },
       };
 
       const templateData = {
@@ -255,10 +265,12 @@ describe('PayloadBuilderService', () => {
       );
 
       const rendered = {
+        type: NotificationType.OTP,
+        channel: NotificationChannel.IN_APP,
         content: {
           message: 'Test Message',
         },
-        metadata: { template: 'inapp-template' },
+        metadata: { template: 'inapp-template', locale: 'en' },
       };
 
       const templateData = {
@@ -291,12 +303,14 @@ describe('PayloadBuilderService', () => {
       );
 
       const rendered = {
+        type: NotificationType.OTP,
+        channel: NotificationChannel.PUSH,
         content: {
           title: 'Push Title',
           message: 'Push Message',
           data: { key: 'value' },
         },
-        metadata: { template: 'push-template' },
+        metadata: { template: 'push-template', locale: 'en' },
       };
 
       const templateData = {
@@ -330,8 +344,10 @@ describe('PayloadBuilderService', () => {
       );
 
       const rendered = {
+        type: NotificationType.OTP,
+        channel: 'UNKNOWN' as NotificationChannel,
         content: 'test',
-        metadata: { template: 'test' },
+        metadata: { template: 'test', locale: 'en' },
       };
 
       const payload = service.buildPayload(
@@ -348,9 +364,11 @@ describe('PayloadBuilderService', () => {
   describe('buildCompletePayload', () => {
     it('should build complete payload in one call', () => {
       const rendered = {
+        type: NotificationType.OTP,
+        channel: NotificationChannel.EMAIL,
         subject: 'Test Subject',
         content: '<p>Test Content</p>',
-        metadata: { template: 'test-template' },
+        metadata: { template: 'test-template', locale: 'en' },
       };
 
       const payload = service.buildCompletePayload(

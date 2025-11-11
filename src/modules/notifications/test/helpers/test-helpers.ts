@@ -13,7 +13,7 @@ import {
   InAppNotificationPayload,
   NotificationPayload,
 } from '../../types/notification-payload.interface';
-import { LoggerService } from '@/shared/services/logger.service';
+import { Logger } from '@nestjs/common';
 import { NotificationMetricsService } from '../../services/notification-metrics.service';
 import { DataSource } from 'typeorm';
 import { NotificationProcessingContext } from '../../services/pipeline/notification-pipeline.service';
@@ -174,9 +174,9 @@ export function createMockNotificationManifest(
 }
 
 /**
- * Creates a mock LoggerService for testing
+ * Creates a mock Logger for testing
  */
-export function createMockLoggerService(): LoggerService {
+export function createMockLogger(): Logger {
   return {
     log: jest.fn(),
     info: jest.fn(),
@@ -184,7 +184,12 @@ export function createMockLoggerService(): LoggerService {
     warn: jest.fn(),
     debug: jest.fn(),
     verbose: jest.fn(),
-  } as unknown as LoggerService;
+  } as unknown as Logger;
+}
+
+// Deprecated: Use createMockLogger instead
+export function createMockLoggerService(): Logger {
+  return createMockLogger();
 }
 
 /**

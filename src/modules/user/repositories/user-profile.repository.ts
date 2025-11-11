@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { LoggerService } from '@/shared/services/logger.service';
 import { UserProfile } from '../entities/user-profile.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Admin } from '@/modules/admin/entities/admin.entity';
@@ -15,10 +12,9 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 @Injectable()
 export class UserProfileRepository extends BaseRepository<UserProfile> {
   constructor(
-    protected readonly logger: LoggerService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    super(logger, txHost);
+    super(txHost);
   }
 
   protected getEntityClass(): typeof UserProfile {

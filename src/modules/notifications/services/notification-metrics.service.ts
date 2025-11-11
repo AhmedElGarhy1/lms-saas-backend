@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { notificationKeys } from '../utils/notification-redis-key-builder';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { MetricsBatchService } from './metrics-batch.service';
@@ -21,14 +21,15 @@ import { NotificationConfig } from '../config/notification.config';
  * @see ERROR_HANDLING_CONFIG.METRICS
  */
 @Injectable()
-export class NotificationMetricsService {
+export class NotificationMetricsService extends BaseService {
   private readonly METRIC_TTL = METRICS_CONSTANTS.METRIC_TTL_SECONDS;
 
   constructor(
     private readonly redisService: RedisService,
-    private readonly logger: LoggerService,
     private readonly batchService: MetricsBatchService,
-  ) {}
+  ) {
+    super();
+  }
 
   /**
    * Increment counter for sent notifications (batched)
@@ -220,7 +221,6 @@ export class NotificationMetricsService {
 
     if (keysToDelete.length > 0) {
       await this.redisService.getClient().del(...keysToDelete);
-      this.logger.debug(`Reset ${keysToDelete.length} metric keys`);
     }
   }
 

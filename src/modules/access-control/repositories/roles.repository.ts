@@ -1,7 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Role } from '../entities/role.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { LoggerService } from '@/shared/services/logger.service';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { AccessControlHelperService } from '../services/access-control-helper.service';
 import { RoleResponseDto } from '../dto/role-response.dto';
@@ -18,13 +17,12 @@ import { RolePermission } from '../entities/role-permission.entity';
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> {
   constructor(
+    protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
     private readonly rolePermissionRepository: RolePermissionRepository,
-    protected readonly logger: LoggerService,
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
-    protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    super(logger, txHost);
+    super(txHost);
   }
 
   protected getEntityClass(): typeof Role {

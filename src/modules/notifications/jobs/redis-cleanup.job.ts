@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { notificationKeys } from '../utils/notification-redis-key-builder';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
-import { LoggerService } from '@/shared/services/logger.service';
 import { REDIS_CONSTANTS } from '../constants/notification.constants';
 
 /**
@@ -22,12 +22,17 @@ import { REDIS_CONSTANTS } from '../constants/notification.constants';
 @Injectable()
 export class RedisCleanupJob {
   private readonly staleTTLThreshold: number = REDIS_CONSTANTS.STALE_TTL_THRESHOLD_SECONDS;
+  private readonly logger: Logger;
 
   constructor(
     private readonly redisService: RedisService,
     private readonly metricsService: NotificationMetricsService,
-    private readonly logger: LoggerService,
-  ) {}
+    private readonly moduleRef: ModuleRef,
+  ) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   /**
    * Cleanup stale socket connections every hour
@@ -36,7 +41,19 @@ export class RedisCleanupJob {
    */
   @Cron(CronExpression.EVERY_HOUR)
   async cleanupStaleConnections(): Promise<void> {
-    const client = this.redisService.getClient();
+    let client;
+    try {
+      client = this.redisService.getClient();
+      if (!client) {
+        throw new Error('Redis client is not available');
+      }
+    } catch (error) {
+      this.logger.error(
+        'Redis connection failed during cleanup job initialization',
+        error instanceof Error ? error.stack : String(error),
+      );
+      return;
+    }
     const pattern = notificationKeys.connectionPattern();
 
     const stats = {
@@ -116,9 +133,7 @@ export class RedisCleanupJob {
             stats.keysCleaned++;
             stats.staleKeysRemoved++;
             this.logger.warn(
-              'Removed stale connection key with low TTL',
-              'RedisCleanupJob',
-              { key, ttl },
+              `Removed stale connection key with low TTL - key: ${key}, ttl: ${ttl}`,
             );
             continue;
           }
@@ -127,14 +142,7 @@ export class RedisCleanupJob {
           if (socketIds.length > REDIS_CONSTANTS.HIGH_CONNECTION_COUNT_THRESHOLD) {
             stats.warnings++;
             this.logger.warn(
-              'High connection count detected for user - potential leak',
-              'RedisCleanupJob',
-              {
-                userId,
-                connectionCount: socketIds.length,
-                key,
-                ttl,
-              },
+              `High connection count detected for user - potential leak - userId: ${userId}, connectionCount: ${socketIds.length}, key: ${key}, ttl: ${ttl}`,
             );
           }
         }
@@ -142,44 +150,18 @@ export class RedisCleanupJob {
 
       // Log cleanup results only if cleanup happened or warnings occurred
       if (stats.keysCleaned > 0 || stats.warnings > 0) {
-        this.logger.info(
-          'Redis cleanup job completed',
-          'RedisCleanupJob',
-          {
-            keysScanned: stats.keysScanned,
-            keysCleaned: stats.keysCleaned,
-            emptyKeysRemoved: stats.emptyKeysRemoved,
-            staleKeysRemoved: stats.staleKeysRemoved,
-            totalConnections: stats.totalConnections,
-            warnings: stats.warnings,
-          },
+        this.logger.log(
+          `Redis cleanup job completed - keysScanned: ${stats.keysScanned}, keysCleaned: ${stats.keysCleaned}, emptyKeysRemoved: ${stats.emptyKeysRemoved}, staleKeysRemoved: ${stats.staleKeysRemoved}, totalConnections: ${stats.totalConnections}, warnings: ${stats.warnings}`,
         );
       }
 
       // Optional: Track metrics for monitoring (if metrics service supports it)
       // This could be added to NotificationMetricsService if needed
     } catch (error) {
-      if (error instanceof Error) {
-        this.logger.error(
-          'Failed to cleanup stale Redis connections',
-          error,
-          'RedisCleanupJob',
-          {
-            pattern,
-            keysScanned: stats.keysScanned,
-          },
-        );
-      } else {
-        this.logger.error(
-          'Failed to cleanup stale Redis connections',
-          'RedisCleanupJob',
-          {
-            pattern,
-            keysScanned: stats.keysScanned,
-            error: String(error),
-          },
-        );
-      }
+      this.logger.error(
+        `Failed to cleanup stale Redis connections - pattern: ${pattern}, keysScanned: ${stats.keysScanned}`,
+        error instanceof Error ? error.stack : String(error),
+      );
     }
   }
 
@@ -265,13 +247,8 @@ export class RedisCleanupJob {
         }
       } while (cursor !== '0');
 
-      this.logger.info(
-        'Manual Redis cleanup completed',
-        'RedisCleanupJob',
-        {
-          ...stats,
-          cleanedCount: cleaned.length,
-        },
+      this.logger.log(
+        `Manual Redis cleanup completed - cleanedCount: ${cleaned.length}, keysScanned: ${stats.keysScanned}, emptyKeysRemoved: ${stats.emptyKeysRemoved}, staleKeysRemoved: ${stats.staleKeysRemoved}`,
       );
 
       return {
@@ -280,19 +257,10 @@ export class RedisCleanupJob {
         stats,
       };
     } catch (error) {
-      if (error instanceof Error) {
-        this.logger.error(
-          'Manual Redis cleanup failed',
-          error,
-          'RedisCleanupJob',
-        );
-      } else {
-        this.logger.error(
-          'Manual Redis cleanup failed',
-          'RedisCleanupJob',
-          { error: String(error) },
-        );
-      }
+      this.logger.error(
+        'Manual Redis cleanup failed',
+        error instanceof Error ? error.stack : String(error),
+      );
       throw error;
     }
   }

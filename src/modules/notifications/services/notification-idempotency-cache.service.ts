@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { notificationKeys } from '../utils/notification-redis-key-builder';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { STRING_CONSTANTS } from '../constants/notification.constants';
@@ -21,15 +21,18 @@ import { NotificationConfig } from '../config/notification.config';
  * @see ERROR_HANDLING_CONFIG.IDEMPOTENCY
  */
 @Injectable()
-export class NotificationIdempotencyCacheService {
+export class NotificationIdempotencyCacheService extends BaseService {
+  private readonly logger: Logger;
   private readonly defaultTtlSeconds: number;
   private readonly lockTtlSeconds: number;
   private readonly lockTimeoutMs: number;
 
   constructor(
     private readonly redisService: RedisService,
-    private readonly logger: LoggerService,
   ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
     this.defaultTtlSeconds = NotificationConfig.idempotency.cacheTtlSeconds;
     this.lockTtlSeconds = NotificationConfig.idempotency.lockTtlSeconds;
     this.lockTimeoutMs = NotificationConfig.idempotency.lockTimeoutMs;
@@ -71,7 +74,6 @@ export class NotificationIdempotencyCacheService {
       // Lock already exists or timeout
       this.logger.debug(
         `Could not acquire lock for ${correlationId}:${type}:${channel} (already locked or timeout)`,
-        'NotificationIdempotencyCacheService',
         {
           correlationId,
           type,
@@ -85,8 +87,7 @@ export class NotificationIdempotencyCacheService {
       // This ensures system continues to work even if Redis is down
       this.logger.error(
         `Lock acquisition failed for ${correlationId}:${type}:${channel}`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationIdempotencyCacheService',
+        error,
         {
           correlationId,
           type,
@@ -116,7 +117,6 @@ export class NotificationIdempotencyCacheService {
       // Log error but don't throw - lock will expire automatically
       this.logger.warn(
         `Failed to release lock: ${correlationId}:${type}:${channel}`,
-        'NotificationIdempotencyCacheService',
         {
           correlationId,
           type,
@@ -159,8 +159,7 @@ export class NotificationIdempotencyCacheService {
       // This ensures system continues to work even if Redis is down
       this.logger.error(
         `Idempotency cache check failed for ${correlationId}:${type}:${channel}`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationIdempotencyCacheService',
+        error,
         {
           correlationId,
           type,
@@ -196,7 +195,6 @@ export class NotificationIdempotencyCacheService {
       // Log error but don't throw - marking as sent is best-effort
       this.logger.warn(
         `Failed to mark notification as sent in cache: ${correlationId}:${type}:${channel}`,
-        'NotificationIdempotencyCacheService',
         {
           correlationId,
           type,
@@ -224,8 +222,7 @@ export class NotificationIdempotencyCacheService {
     } catch (error) {
       this.logger.warn(
         `Failed to clear idempotency cache: ${correlationId}:${type}:${channel}`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationIdempotencyCacheService',
+        { error: error instanceof Error ? error.message : String(error) },
       );
     }
   }
@@ -261,11 +258,9 @@ export class NotificationIdempotencyCacheService {
         ttlSeconds: this.defaultTtlSeconds,
       };
     } catch (error) {
-      this.logger.warn(
-        'Failed to get idempotency cache stats',
-        error instanceof Error ? error.stack : undefined,
-        'NotificationIdempotencyCacheService',
-      );
+      this.logger.warn('Failed to get idempotency cache stats', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return {
         keyCount: 0,
         ttlSeconds: this.defaultTtlSeconds,

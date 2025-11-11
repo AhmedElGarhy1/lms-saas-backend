@@ -1,4 +1,5 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { Request, Response, NextFunction } from 'express';
 import {
   MissingRequiredHeaderException,
@@ -6,11 +7,16 @@ import {
   RequestBodyTooLargeException,
   UnsupportedContentTypeException,
 } from '../exceptions/custom.exceptions';
-import { LoggerService } from '@/shared/services/logger.service';
 
 @Injectable()
 export class RequestValidationMiddleware implements NestMiddleware {
-  constructor(private readonly logger: LoggerService) {}
+  private readonly logger: Logger;
+
+  constructor(private readonly moduleRef: ModuleRef) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   use(req: Request, res: Response, next: NextFunction): void {
     try {
@@ -28,22 +34,10 @@ export class RequestValidationMiddleware implements NestMiddleware {
 
       next();
     } catch (error) {
-      if (error instanceof Error) {
-        this.logger.error('Request validation failed', error, 'RequestValidationMiddleware', {
-          url: req.url,
-          method: req.method,
-          ip: req.ip,
-          userAgent: req.get('User-Agent'),
-        });
-      } else {
-        this.logger.error('Request validation failed', 'RequestValidationMiddleware', {
-          url: req.url,
-          method: req.method,
-          ip: req.ip,
-          userAgent: req.get('User-Agent'),
-          error: String(error),
-        });
-      }
+      this.logger.error(
+        `Request validation failed - url: ${req.url}, method: ${req.method}, ip: ${req.ip}, userAgent: ${req.get('User-Agent')}`,
+        error instanceof Error ? error.stack : String(error),
+      );
 
       res.status(400).json({
         error: 'Invalid request',
@@ -91,12 +85,7 @@ export class RequestValidationMiddleware implements NestMiddleware {
   }
 
   private logRequest(req: Request): void {
-    this.logger.info('Request received', 'RequestValidationMiddleware', {
-      method: req.method,
-      url: req.url,
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      timestamp: new Date().toISOString(),
-    });
+    // Request logging handled by PerformanceInterceptor
   }
 }
+

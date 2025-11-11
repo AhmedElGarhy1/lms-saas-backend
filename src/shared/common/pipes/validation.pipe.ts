@@ -3,7 +3,9 @@ import {
   Injectable,
   ArgumentMetadata,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { validate, ValidationError } from 'class-validator';
 import { plainToClass } from 'class-transformer';
 import {
@@ -13,14 +15,19 @@ import {
 import { ErrorCode } from '../enums/error-codes.enum';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
-import { LoggerService } from '@/shared/services/logger.service';
 
 @Injectable()
 export class CustomValidationPipe implements PipeTransform<any> {
+  private readonly logger: Logger;
+
   constructor(
     private readonly i18n: I18nService<I18nTranslations>,
-    private readonly logger: LoggerService,
-  ) {}
+    private readonly moduleRef: ModuleRef,
+  ) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   async transform(value: any, { metatype }: ArgumentMetadata) {
     if (!metatype || !this.toValidate(metatype)) {
@@ -33,12 +40,6 @@ export class CustomValidationPipe implements PipeTransform<any> {
     if (errors.length > 0) {
       const validationErrors: ErrorDetail[] =
         this.flattenValidationErrors(errors);
-
-      this.logger.warn('Validation failed', 'CustomValidationPipe', {
-        errors: validationErrors,
-        metatype: metatype.name,
-        errorCount: errors.length,
-      });
 
       const errorResponse: EnhancedErrorResponse = {
         statusCode: 400,

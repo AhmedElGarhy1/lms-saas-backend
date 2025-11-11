@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { User } from '../entities/user.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { LoggerService } from '../../../shared/services/logger.service';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { USER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
@@ -24,11 +23,10 @@ import * as _ from 'lodash';
 @Injectable()
 export class UserRepository extends BaseRepository<User> {
   constructor(
-    protected readonly logger: LoggerService,
-    private readonly accessControlHelperService: AccessControlHelperService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    private readonly accessControlHelperService: AccessControlHelperService,
   ) {
-    super(logger, txHost);
+    super(txHost);
   }
 
   protected getEntityClass(): typeof User {

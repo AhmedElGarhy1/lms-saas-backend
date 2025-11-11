@@ -14,14 +14,17 @@ import {
 } from '@/modules/centers/events/branch.events';
 import { BranchEvents } from '@/shared/events/branch.events.enum';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
-export class BranchesService {
+export class BranchesService extends BaseService {
   constructor(
     private readonly branchesRepository: BranchesRepository,
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-  ) {}
+  ) {
+    super();
+  }
 
   async paginateBranches(
     paginateDto: PaginateBranchesDto,

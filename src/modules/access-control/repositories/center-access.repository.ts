@@ -1,5 +1,3 @@
-import { LoggerService } from '@/shared/services/logger.service';
-import { Repository } from 'typeorm';
 import {
   ConflictException,
   Injectable,
@@ -14,10 +12,9 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 @Injectable()
 export class CenterAccessRepository extends BaseRepository<CenterAccess> {
   constructor(
-    protected readonly logger: LoggerService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    super(logger, txHost);
+    super(txHost);
   }
 
   protected getEntityClass(): typeof CenterAccess {

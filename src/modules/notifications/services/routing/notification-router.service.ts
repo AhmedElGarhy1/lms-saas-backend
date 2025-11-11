@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Queue, Job } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { NotificationChannel } from '../../enums/notification-channel.enum';
@@ -24,7 +24,7 @@ import { NotificationMetricsService } from '../notification-metrics.service';
 import { ChannelRetryStrategyService } from '../channel-retry-strategy.service';
 import { RecipientValidationService } from '../recipient-validation.service';
 import { PayloadBuilderService } from '../payload-builder.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import {
   QUEUE_CONSTANTS,
@@ -37,7 +37,9 @@ import { NotificationProcessingContext } from '../pipeline/notification-pipeline
  * Handles: recipient validation, idempotency checks, template rendering, payload building, sending/enqueueing
  */
 @Injectable()
-export class NotificationRouterService {
+export class NotificationRouterService extends BaseService {
+  private readonly logger: Logger;
+
   constructor(
     @InjectQueue('notifications') private readonly queue: Queue,
     private readonly senderService: NotificationSenderService,
@@ -47,10 +49,13 @@ export class NotificationRouterService {
     private readonly retryStrategyService: ChannelRetryStrategyService,
     private readonly recipientValidator: RecipientValidationService,
     private readonly payloadBuilder: PayloadBuilderService,
-    private readonly logger: LoggerService,
     private readonly idempotencyCache?: NotificationIdempotencyCacheService,
     private readonly metricsService?: NotificationMetricsService,
-  ) {}
+  ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   /**
    * Route notifications to channels
@@ -111,8 +116,6 @@ export class NotificationRouterService {
         } catch {
           this.logger.error(
             `Channel ${channel} not supported for audience ${audience} in notification type ${mapping.type}`,
-            undefined,
-            'NotificationRouterService',
             {
               notificationType: mapping.type,
               channel,
@@ -130,8 +133,6 @@ export class NotificationRouterService {
         if (!hasChannel) {
           this.logger.error(
             `Channel ${channel} not supported for notification type ${mapping.type}`,
-            undefined,
-            'NotificationRouterService',
             {
               notificationType: mapping.type,
               channel,
@@ -155,7 +156,6 @@ export class NotificationRouterService {
         if (channel === NotificationChannel.EMAIL && !recipient?.includes('@')) {
           this.logger.debug(
             `Skipping EMAIL channel: no email for user ${userId}`,
-            'NotificationRouterService',
             { userId, eventName },
           );
         } else if (
@@ -165,13 +165,11 @@ export class NotificationRouterService {
         ) {
           this.logger.warn(
             `Skipping ${channel} channel: no phone for user ${userId}`,
-            'NotificationRouterService',
             { userId, eventName, channel },
           );
         } else {
           this.logger.debug(
             `Skipping ${channel} channel: invalid recipient format`,
-            'NotificationRouterService',
             { userId, eventName, channel },
           );
         }
@@ -225,7 +223,6 @@ export class NotificationRouterService {
         rendered = preRenderedCache.get(cacheKey)!;
         this.logger.debug(
           `Using pre-rendered template from cache: ${cacheKey}`,
-          'NotificationRouterService',
           {
             notificationType: mapping.type,
             channel,
@@ -260,8 +257,6 @@ export class NotificationRouterService {
         if (channel === NotificationChannel.EMAIL && !rendered.subject) {
           this.logger.error(
             `Missing subject for EMAIL notification: ${mapping.type}`,
-            undefined,
-            'NotificationRouterService',
             {
               notificationType: mapping.type,
               channel,
@@ -271,7 +266,6 @@ export class NotificationRouterService {
         } else {
           this.logger.warn(
             `Failed to build payload for ${channel} channel`,
-            'NotificationRouterService',
             {
               notificationType: mapping.type,
               channel,
@@ -334,7 +328,6 @@ export class NotificationRouterService {
         await this.enqueueNotifications(payloadsToEnqueue, priority);
         this.logger.debug(
           `Bulk enqueued ${payloadsToEnqueue.length} notification(s) for user ${userId}`,
-          'NotificationRouterService',
           {
             eventName,
             userId,
@@ -360,8 +353,7 @@ export class NotificationRouterService {
       } catch (error) {
         this.logger.error(
           `Failed to bulk enqueue notifications: ${error instanceof Error ? error.message : String(error)}`,
-          error instanceof Error ? error.stack : undefined,
-          'NotificationRouterService',
+          error instanceof Error ? error : undefined,
           {
             eventName,
             userId,
@@ -413,7 +405,6 @@ export class NotificationRouterService {
       if (!lockAcquired) {
         this.logger.debug(
           `Skipping notification (lock not acquired): ${notificationType}:${channel}`,
-          'NotificationRouterService',
           {
             correlationId,
             type: notificationType,
@@ -443,7 +434,6 @@ export class NotificationRouterService {
         );
         this.logger.debug(
           `Skipping duplicate notification (idempotency): ${notificationType}:${channel}`,
-          'NotificationRouterService',
           {
             correlationId,
             type: notificationType,
@@ -469,7 +459,6 @@ export class NotificationRouterService {
       }
       this.logger.warn(
         `Idempotency check failed, proceeding anyway: ${notificationType}:${channel}`,
-        'NotificationRouterService',
         {
           correlationId,
           type: notificationType,
@@ -502,7 +491,6 @@ export class NotificationRouterService {
           this.inAppNotificationService.getRateLimitConfig();
         this.logger.warn(
           `User ${userId} exceeded rate limit (${rateLimitConfig.limit}/${rateLimitConfig.windowSeconds}s) for IN_APP notification, skipping delivery`,
-          'NotificationRouterService',
           {
             userId,
             eventName,
@@ -519,7 +507,6 @@ export class NotificationRouterService {
         await this.senderService.send(payload);
         this.logger.debug(
           `IN_APP notification sent directly: ${eventName} to user ${userId}`,
-          'NotificationRouterService',
           {
             userId,
             eventName,
@@ -529,8 +516,7 @@ export class NotificationRouterService {
       } catch (error) {
         this.logger.error(
           `Failed to send IN_APP notification directly: ${error instanceof Error ? error.message : String(error)}`,
-          error instanceof Error ? error.stack : undefined,
-          'NotificationRouterService',
+          error instanceof Error ? error : undefined,
           {
             userId,
             eventName,

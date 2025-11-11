@@ -5,11 +5,11 @@ import {
   OnGatewayDisconnect,
   SubscribeMessage,
 } from '@nestjs/websockets';
+import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { notificationKeys } from '../utils/notification-redis-key-builder';
 import { Notification } from '../entities/notification.entity';
-import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { SlidingWindowRateLimiter } from '../utils/sliding-window-rate-limit';
@@ -47,12 +47,16 @@ export class NotificationGateway
   private readonly removeSocketScript: string;
   private readonly connectionsCounterKey: string;
   private readonly rateLimiter: SlidingWindowRateLimiter;
+  private readonly loggerService: Logger;
 
   constructor(
     private readonly redisService: RedisService,
-    private readonly loggerService: LoggerService,
     private readonly metricsService: NotificationMetricsService,
   ) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.loggerService = new Logger(context);
+
     // Load configuration from factory
     this.config = notificationGatewayConfig();
 
@@ -62,7 +66,6 @@ export class NotificationGateway
     // Initialize sliding window rate limiter
     this.rateLimiter = new SlidingWindowRateLimiter(
       this.redisService,
-      this.loggerService,
     );
 
     // Lua script for atomic socket removal: SREM + SCARD + DEL if empty
@@ -80,7 +83,7 @@ export class NotificationGateway
     const socketData = client.data as SocketData;
     const userId = socketData.userId;
     if (!userId || typeof userId !== 'string') {
-      this.loggerService.warn('Connection attempt without userId', 'NotificationGateway');
+      this.loggerService.warn('Connection attempt without userId');
       client.disconnect();
       return;
     }
@@ -97,27 +100,10 @@ export class NotificationGateway
       void this.updateActiveConnectionsMetric();
     } catch (error: unknown) {
       const socketDataError = client.data as SocketData;
-      if (error instanceof Error) {
-        this.loggerService.error(
-          'Failed to handle WebSocket connection',
-          error,
-          'NotificationGateway',
-          {
-            userId: socketDataError.userId,
-            socketId: client.id,
-          },
-        );
-      } else {
-        this.loggerService.error(
-          'Failed to handle WebSocket connection',
-          'NotificationGateway',
-          {
-            userId: socketDataError.userId,
-            socketId: client.id,
-            error: String(error),
-          },
-        );
-      }
+      this.loggerService.error(
+        `Failed to handle WebSocket connection - userId: ${socketDataError.userId}, socketId: ${client.id}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       client.disconnect();
       // Don't throw - already handled by disconnect
     }
@@ -138,27 +124,10 @@ export class NotificationGateway
       void this.updateActiveConnectionsMetric();
     } catch (error) {
       const socketDataError = client.data as SocketData;
-      if (error instanceof Error) {
-        this.loggerService.error(
-          'Failed to handle WebSocket disconnect',
-          error,
-          'NotificationGateway',
-          {
-            userId: socketDataError.userId,
-            socketId: client.id,
-          },
-        );
-      } else {
-        this.loggerService.error(
-          'Failed to handle WebSocket disconnect',
-          'NotificationGateway',
-          {
-            userId: socketDataError.userId,
-            socketId: client.id,
-            error: String(error),
-          },
-        );
-      }
+      this.loggerService.error(
+        `Failed to handle WebSocket disconnect - userId: ${socketDataError.userId}, socketId: ${client.id}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       // Don't throw - graceful degradation
     }
   }
@@ -180,9 +149,7 @@ export class NotificationGateway
 
       if (socketIds.length === 0) {
         this.loggerService.debug(
-          'No active connections for user, notification will be available on next fetch',
-          'NotificationGateway',
-          { userId },
+          `No active connections for user, notification will be available on next fetch - userId: ${userId}`,
         );
         return;
       }
@@ -209,40 +176,19 @@ export class NotificationGateway
           // Don't fail on metrics error
           if (metricsError instanceof Error) {
             this.loggerService.warn(
-              'Failed to track delivery metrics',
-              'NotificationGateway',
-              { error: metricsError.message },
+              `Failed to track delivery metrics - error: ${metricsError.message}`,
             );
           } else {
             this.loggerService.warn(
-              'Failed to track delivery metrics',
-              'NotificationGateway',
-              { error: String(metricsError) },
+              `Failed to track delivery metrics - error: ${String(metricsError)}`,
             );
           }
         });
 
-      if (error instanceof Error) {
-        this.loggerService.error(
-          'Failed to send WebSocket notification',
-          error,
-          'NotificationGateway',
-          {
-            userId,
-            notificationId: notification.id,
-          },
-        );
-      } else {
-        this.loggerService.error(
-          'Failed to send WebSocket notification',
-          'NotificationGateway',
-          {
-            userId,
-            notificationId: notification.id,
-            error: String(error),
-          },
-        );
-      }
+      this.loggerService.error(
+        `Failed to send WebSocket notification - userId: ${userId}, notificationId: ${notification.id}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       // Don't throw - graceful failure
     }
   }
@@ -299,13 +245,7 @@ export class NotificationGateway
     const limit = this.config.rateLimit.user;
 
     this.loggerService.warn(
-      'Rate limit exceeded for user, skipping notification delivery',
-      'NotificationGateway',
-      {
-        userId,
-        limit,
-        window: '1 minute',
-      },
+      `Rate limit exceeded for user, skipping notification delivery - userId: ${userId}, limit: ${limit}, window: 1 minute`,
     );
 
     // Emit throttled event to client for debugging/monitoring (optional - debug-only)
@@ -436,32 +376,18 @@ export class NotificationGateway
         void this.reconcileActiveConnectionsMetric();
       }
     } catch (error) {
-      if (error instanceof Error) {
-        this.loggerService.warn(
-          'Failed to update active connections metric',
-          'NotificationGateway',
-          { error: error.message },
-        );
-      } else {
-        this.loggerService.warn(
-          'Failed to update active connections metric',
-          'NotificationGateway',
-          { error: String(error) },
-        );
-      }
+      this.loggerService.warn(
+        `Failed to update active connections metric - error: ${error instanceof Error ? error.message : String(error)}`,
+      );
       // Fallback to scanning on error (non-blocking)
       void this.reconcileActiveConnectionsMetric().catch((reconcileError) => {
         if (reconcileError instanceof Error) {
           this.loggerService.warn(
-            'Failed to reconcile active connections metric',
-            'NotificationGateway',
-            { error: reconcileError.message },
+            `Failed to reconcile active connections metric - error: ${reconcileError.message}`,
           );
         } else {
           this.loggerService.warn(
-            'Failed to reconcile active connections metric',
-            'NotificationGateway',
-            { error: String(reconcileError) },
+            `Failed to reconcile active connections metric - error: ${String(reconcileError)}`,
           );
         }
       });
@@ -508,7 +434,6 @@ export class NotificationGateway
               if (connectionsProcessed >= MAX_RECONCILE_CONNECTIONS) {
                 this.loggerService.warn(
                   'Reconciliation limit reached, stopping scan',
-                  'NotificationGateway',
                   { connectionsProcessed },
                 );
                 cursor = '0'; // Force exit
@@ -532,14 +457,8 @@ export class NotificationGateway
 
     // Only log reconciliation if it processed significant data or found issues
     if (keysProcessed > 0 || totalConnections > 0) {
-      this.loggerService.info(
-        'Reconciled active connections',
-        'NotificationGateway',
-        {
-          totalConnections,
-          keysProcessed,
-          connectionsProcessed,
-        },
+      this.loggerService.log(
+        `Reconciled active connections - totalConnections: ${totalConnections}, keysProcessed: ${keysProcessed}, connectionsProcessed: ${connectionsProcessed}`,
       );
     }
   }

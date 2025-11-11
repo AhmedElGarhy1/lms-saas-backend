@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { RedisService } from '@/shared/modules/redis/redis.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { SlidingWindowRateLimiter } from '../utils/sliding-window-rate-limit';
 import { CONCURRENCY_CONSTANTS } from '../constants/notification.constants';
 import { NotificationConfig } from '../config/notification.config';
@@ -24,7 +24,7 @@ interface ChannelRateLimitConfig {
  * @see ERROR_HANDLING_CONFIG.RATE_LIMITING
  */
 @Injectable()
-export class ChannelRateLimitService {
+export class ChannelRateLimitService extends BaseService {
   private readonly rateLimiter: SlidingWindowRateLimiter;
   private readonly channelLimits: Map<
     NotificationChannel,
@@ -34,12 +34,11 @@ export class ChannelRateLimitService {
 
   constructor(
     private readonly redisService: RedisService,
-    private readonly logger: LoggerService,
   ) {
+    super();
     // Initialize sliding window rate limiter
     this.rateLimiter = new SlidingWindowRateLimiter(
       this.redisService,
-      this.logger,
     );
 
     // Default rate limit (fallback)

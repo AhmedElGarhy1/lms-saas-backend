@@ -2,7 +2,6 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Center } from '../entities/center.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { Pagination } from 'nestjs-typeorm-paginate';
-import { LoggerService } from '../../../shared/services/logger.service';
 import { CENTER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { CenterResponseDto } from '../dto/center-response.dto';
@@ -15,12 +14,11 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 @Injectable()
 export class CentersRepository extends BaseRepository<Center> {
   constructor(
-    protected readonly logger: LoggerService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
   ) {
-    super(logger, txHost);
+    super(txHost);
   }
 
   protected getEntityClass(): typeof Center {

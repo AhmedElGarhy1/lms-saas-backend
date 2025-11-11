@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationTemplateService } from './notification-template.service';
 import { RedisTemplateCacheService } from './redis-template-cache.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { Logger } from '@nestjs/common';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import {
   createMockLoggerService,
@@ -29,7 +29,7 @@ jest.mock('../utils/template-path.util', () => ({
 describe('NotificationTemplateService', () => {
   let service: NotificationTemplateService;
   let mockRedisCache: jest.Mocked<RedisTemplateCacheService>;
-  let mockLogger: LoggerService;
+  let mockLogger: Logger;
   let mockReadFile: jest.MockedFunction<typeof readFile>;
   let mockHandlebarsCompile: jest.MockedFunction<typeof Handlebars.compile>;
 
@@ -56,7 +56,7 @@ describe('NotificationTemplateService', () => {
           useValue: mockRedisCache,
         },
         {
-          provide: LoggerService,
+          provide: Logger,
           useValue: mockLogger,
         },
       ],
@@ -202,7 +202,7 @@ describe('NotificationTemplateService', () => {
   describe('getTemplatePath()', () => {
     it('should return correct template path', async () => {
       mockReadFile.mockResolvedValue('template content');
-      const path = await (service as NotificationTemplateServiceTest).loadTemplateContent(
+      const path = await (service as any).loadTemplateContent(
         'test-template',
         'en',
         NotificationChannel.EMAIL,

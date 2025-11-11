@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Branch } from '../entities/branch.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { LoggerService } from '@/shared/services/logger.service';
 import { PaginateBranchesDto } from '../dto/paginate-branches.dto';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
@@ -12,10 +9,9 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 @Injectable()
 export class BranchesRepository extends BaseRepository<Branch> {
   constructor(
-    protected readonly logger: LoggerService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    super(logger, txHost);
+    super(txHost);
   }
 
   protected getEntityClass(): typeof Branch {

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { VerificationToken } from '../entities/verification-token.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { LoggerService } from '@/shared/services/logger.service';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { VerificationType } from '../enums/verification-type.enum';
@@ -10,10 +9,9 @@ import { NotificationChannel } from '../../notifications/enums/notification-chan
 @Injectable()
 export class VerificationTokenRepository extends BaseRepository<VerificationToken> {
   constructor(
-    protected readonly logger: LoggerService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    super(logger, txHost);
+    super(txHost);
   }
 
   protected getEntityClass(): typeof VerificationToken {

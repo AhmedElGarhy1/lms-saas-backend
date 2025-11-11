@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { UserInfo } from '../entities/user-info.entity';
-import { LoggerService } from 'src/shared/services/logger.service';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { Transactional, Propagation } from '@nestjs-cls/transactional';
 import { UserInfoRepository } from '../repositories/user-info.repository';
+import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
-export class UserInfoService {
+export class UserInfoService extends BaseService {
   constructor(
-    private readonly logger: LoggerService,
     private readonly userInfoRepository: UserInfoRepository,
-  ) {}
+  ) {
+    super();
+  }
 
   // User info CRUD methods
   async findUserInfoByUserId(userId: string): Promise<UserInfo | null> {

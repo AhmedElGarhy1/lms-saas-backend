@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { notificationKeys } from '../utils/notification-redis-key-builder';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { CACHE_CONSTANTS, REDIS_CONSTANTS } from '../constants/notification.constants';
 import { NotificationConfig } from '../config/notification.config';
 import * as Handlebars from 'handlebars';
@@ -30,7 +30,8 @@ import * as Handlebars from 'handlebars';
  * @see ERROR_HANDLING_CONFIG.TEMPLATE_CACHE
  */
 @Injectable()
-export class RedisTemplateCacheService {
+export class RedisTemplateCacheService extends BaseService {
+  private readonly logger: Logger;
   private readonly CACHE_TTL: number;
 
   // In-memory cache for compiled templates (per-instance)
@@ -41,8 +42,10 @@ export class RedisTemplateCacheService {
 
   constructor(
     private readonly redisService: RedisService,
-    private readonly logger: LoggerService,
   ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
     // Get TTL from NotificationConfig
     this.CACHE_TTL = NotificationConfig.templateCacheTtlSeconds;
   }
@@ -64,12 +67,10 @@ export class RedisTemplateCacheService {
       // Try to get from Redis cache
       const cached = await client.get(redisKey);
       if (cached) {
-        this.logger.debug(`Template source cache hit: ${cacheKey}`);
         return cached;
       }
 
       // Cache miss - load and store
-      this.logger.debug(`Template source cache miss, loading: ${cacheKey}`);
       const source = await loadFn();
 
       // Store in Redis with TTL
@@ -80,7 +81,6 @@ export class RedisTemplateCacheService {
       // Fail-open: if Redis fails, load anyway
       this.logger.warn(
         `Redis template cache failed, loading without cache: ${cacheKey}`,
-        'RedisTemplateCacheService',
         {
           error: error instanceof Error ? error.message : String(error),
           cacheKey,
@@ -105,12 +105,10 @@ export class RedisTemplateCacheService {
   ): Promise<HandlebarsTemplateDelegate> {
     // Check in-memory cache first (fastest)
     if (this.compiledCache.has(cacheKey)) {
-      this.logger.debug(`Compiled template cache hit (memory): ${cacheKey}`);
       return this.compiledCache.get(cacheKey)!;
     }
 
     // Compile template (compileFn will get source from Redis cache)
-    this.logger.debug(`Compiling template: ${cacheKey}`);
     const compiled = await compileFn();
 
     // Store in in-memory cache (with size limit)
@@ -167,16 +165,10 @@ export class RedisTemplateCacheService {
         this.compiledCache.clear();
       }
 
-      this.logger.debug(
-        `Cleared template cache: ${deletedCount} Redis keys, ${templatePath ? 'specific template' : 'all templates'}`,
-        'RedisTemplateCacheService',
-      );
     } catch (error) {
       this.logger.error(
-        `Failed to clear template cache`,
-        error instanceof Error ? error.stack : undefined,
-        'RedisTemplateCacheService',
-        { templatePath },
+        `Failed to clear template cache - templatePath: ${templatePath}`,
+        error instanceof Error ? error.stack : String(error),
       );
     }
   }
@@ -216,7 +208,6 @@ export class RedisTemplateCacheService {
     } catch (error) {
       this.logger.warn(
         `Failed to get cache stats`,
-        'RedisTemplateCacheService',
         { error: error instanceof Error ? error.message : String(error) },
       );
       return {

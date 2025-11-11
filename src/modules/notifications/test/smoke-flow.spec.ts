@@ -13,7 +13,7 @@ import { NotificationMetricsService } from '../services/notification-metrics.ser
 import { NotificationIdempotencyCacheService } from '../services/notification-idempotency-cache.service';
 import { ChannelRetryStrategyService } from '../services/channel-retry-strategy.service';
 import { MultiRecipientProcessor } from '../services/multi-recipient-processor.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { Logger } from '@nestjs/common';
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { FakeQueue } from './fakes/fake-queue';
@@ -25,12 +25,13 @@ import {
   createMockLoggerService,
   createMockMetricsService,
 } from './helpers';
+import { RecipientInfo } from '../types/recipient-info.interface';
 import { TestEnvGuard } from './helpers/test-env-guard';
 import { RenderedNotification } from '../manifests/types/manifest.types';
 
 /**
  * Smoke Flow Integration Test
- * 
+ *
  * Tests the complete end-to-end flow from trigger to delivery
  * This is a high-level integration test that verifies all components work together
  */
@@ -106,9 +107,11 @@ describe('Smoke Flow - End-to-End Integration', () => {
     } as any;
 
     mockSenderService = {
-      send: jest.fn().mockResolvedValue([
-        { channel: NotificationChannel.EMAIL, success: true },
-      ]),
+      send: jest
+        .fn()
+        .mockResolvedValue([
+          { channel: NotificationChannel.EMAIL, success: true },
+        ]),
     } as any;
 
     mockRouterService = {
@@ -137,10 +140,12 @@ describe('Smoke Flow - End-to-End Integration', () => {
         {
           provide: ChannelSelectionService,
           useValue: {
-            selectOptimalChannels: jest.fn().mockResolvedValue([
-              NotificationChannel.EMAIL,
-              NotificationChannel.IN_APP,
-            ]),
+            selectOptimalChannels: jest
+              .fn()
+              .mockResolvedValue([
+                NotificationChannel.EMAIL,
+                NotificationChannel.IN_APP,
+              ]),
           },
         },
         {
@@ -155,7 +160,7 @@ describe('Smoke Flow - End-to-End Integration', () => {
           },
         },
         {
-          provide: LoggerService,
+          provide: Logger,
           useValue: createMockLoggerService(),
         },
         {
@@ -195,16 +200,21 @@ describe('Smoke Flow - End-to-End Integration', () => {
         {
           provide: MultiRecipientProcessor,
           useValue: {
-            processRecipients: jest.fn().mockImplementation(async (recipients, processor) => {
-              const results = await Promise.allSettled(
-                recipients.map((r) => processor(r)),
-              );
-              return results.map((result, index) => ({
-                recipient: recipients[index],
-                result: result.status === 'fulfilled' ? result.value : new Error(String(result.reason)),
-                success: result.status === 'fulfilled',
-              }));
-            }),
+            processRecipients: jest
+              .fn()
+              .mockImplementation(async (recipients, processor) => {
+                const results = await Promise.allSettled(
+                  recipients.map((r: RecipientInfo) => processor(r)),
+                );
+                return results.map((result, index) => ({
+                  recipient: recipients[index],
+                  result:
+                    result.status === 'fulfilled'
+                      ? result.value
+                      : new Error(String(result.reason)),
+                  success: result.status === 'fulfilled',
+                }));
+              }),
             getConcurrencyLimit: jest.fn().mockReturnValue(10),
           },
         },
@@ -272,9 +282,7 @@ describe('Smoke Flow - End-to-End Integration', () => {
       });
 
       expect(result.total).toBe(1);
-      expect(mockRenderer.render).toHaveBeenCalledTimes(
-        expect.any(Number),
-      );
+      expect(mockRenderer.render).toHaveBeenCalledTimes(expect.any(Number));
     });
 
     it('should handle batch notification flow', async () => {
@@ -333,9 +341,15 @@ describe('Smoke Flow - End-to-End Integration', () => {
     });
 
     it('should handle flow with send error gracefully', async () => {
-      mockSenderService.send = jest.fn().mockResolvedValue([
-        { channel: NotificationChannel.EMAIL, success: false, error: 'Send failed' },
-      ]);
+      mockSenderService.send = jest
+        .fn()
+        .mockResolvedValue([
+          {
+            channel: NotificationChannel.EMAIL,
+            success: false,
+            error: 'Send failed',
+          },
+        ]);
 
       const recipient = createMockRecipientInfo();
       const event = createMockNotificationEvent();
@@ -362,7 +376,8 @@ describe('Smoke Flow - End-to-End Integration', () => {
       });
 
       // Verify call order (pipeline -> render -> route)
-      const pipelineCall = mockPipelineService.process.mock.invocationCallOrder[0];
+      const pipelineCall =
+        mockPipelineService.process.mock.invocationCallOrder[0];
       const renderCall = mockRenderer.render.mock.invocationCallOrder[0];
       const routeCall = mockRouterService.route.mock.invocationCallOrder[0];
 
@@ -394,5 +409,3 @@ describe('Smoke Flow - End-to-End Integration', () => {
     });
   });
 });
-
-

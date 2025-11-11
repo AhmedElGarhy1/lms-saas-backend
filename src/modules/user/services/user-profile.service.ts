@@ -1,7 +1,7 @@
-import { forwardRef, Inject, Injectable, Optional } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Optional, Logger } from '@nestjs/common';
 import { UserProfile } from '../entities/user-profile.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import {
   ResourceNotFoundException,
   ValidationFailedException,
@@ -19,7 +19,9 @@ import { Role } from '@/modules/access-control/entities/role.entity';
 import { InAppNotificationService } from '@/modules/notifications/services/in-app-notification.service';
 
 @Injectable()
-export class UserProfileService {
+export class UserProfileService extends BaseService {
+  private readonly logger: Logger;
+
   constructor(
     private readonly userProfileRepository: UserProfileRepository,
     @Inject(forwardRef(() => UserService))
@@ -27,11 +29,14 @@ export class UserProfileService {
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly centerService: CentersService,
-    private readonly logger: LoggerService,
     @Optional()
     @Inject(forwardRef(() => InAppNotificationService))
     private readonly inAppNotificationService?: InAppNotificationService,
-  ) {}
+  ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   async listProfiles(actorUser: ActorUser): Promise<UserProfile[]> {
     return this.userProfileRepository.findMany({
@@ -45,8 +50,6 @@ export class UserProfileService {
     if (!user) {
       throw new ResourceNotFoundException('User not found');
     }
-
-    this.logger.log(`Found user: ${user.id} - ${user.name}`);
 
     // Determine context based on centerId
     const returnData: ProfileResponseDto = {
@@ -104,12 +107,9 @@ export class UserProfileService {
       } catch (error) {
         this.logger.warn(
           `Failed to get unread notification count: ${error instanceof Error ? error.message : String(error)}`,
-          'UserProfileService',
         );
       }
     }
-
-    this.logger.log(`Returning profile for user: ${actor.id}`);
 
     return returnData;
   }
@@ -170,17 +170,6 @@ export class UserProfileService {
       profileRefId,
     });
 
-    this.logger.log(
-      `User profile created for user: ${userId}`,
-      'UserProfileService',
-      {
-        userId,
-        userProfileId: userProfile.id,
-        profileType,
-        profileRefId,
-      },
-    );
-
     return userProfile;
   }
 
@@ -213,15 +202,6 @@ export class UserProfileService {
     for (const profile of userProfiles) {
       await this.deleteUserProfile(profile.id);
     }
-
-    this.logger.log(
-      `All user profiles deleted for user: ${userId}`,
-      'UserProfileService',
-      {
-        userId,
-        deletedCount: userProfiles.length,
-      },
-    );
   }
 
   async isAdmin(userProfileId: string) {

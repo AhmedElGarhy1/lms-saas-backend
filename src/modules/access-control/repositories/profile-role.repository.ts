@@ -7,7 +7,6 @@ import { In, IsNull } from 'typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { ProfileRole } from '../entities/profile-role.entity';
 import { Role } from '../entities/role.entity';
-import { LoggerService } from '@/shared/services/logger.service';
 import { DefaultRoles } from '../constants/roles';
 import { AssignRoleDto } from '../dto/assign-role.dto';
 import { Permission } from '../entities/permission.entity';
@@ -19,11 +18,10 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 @Injectable()
 export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
   constructor(
-    protected readonly logger: LoggerService,
-    private readonly permissionRepository: PermissionRepository,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    private readonly permissionRepository: PermissionRepository,
   ) {
-    super(logger, txHost);
+    super(txHost);
   }
 
   protected getEntityClass(): typeof ProfileRole {

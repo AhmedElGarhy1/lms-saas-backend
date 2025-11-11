@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
 import { UserInfo } from '@/modules/user/entities/user-info.entity';
@@ -12,19 +13,22 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
 import { SeederException } from '@/shared/common/exceptions/custom.exceptions';
-import { LoggerService } from '@/shared/services/logger.service';
 
 @Injectable()
 export class DatabaseSeeder {
+  private readonly logger: Logger;
+
   constructor(
     private readonly dataSource: DataSource,
     private readonly activityLogService: ActivityLogService,
-    private readonly logger: LoggerService,
-  ) {}
+    private readonly moduleRef: ModuleRef,
+  ) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   async seed(): Promise<void> {
-    this.logger.info('Starting database seeding...', 'DatabaseSeeder');
-
     try {
       // Reset database completely for clean seeding
       await this.resetDatabase();
@@ -56,19 +60,14 @@ export class DatabaseSeeder {
         systemUser.id,
       );
 
-      this.logger.info('Database seeding completed successfully!', 'DatabaseSeeder');
     } catch (error) {
-      if (error instanceof Error) {
-        this.logger.error('Error during seeding', error, 'DatabaseSeeder');
-      } else {
-        this.logger.error('Error during seeding', 'DatabaseSeeder', { error: String(error) });
-      }
+      this.logger.error('Error during seeding', error);
       throw error;
     }
   }
 
   private async createSystemUser(): Promise<User> {
-    this.logger.info('Creating system user...', 'DatabaseSeeder');
+    this.logger.log('Creating system user...');
 
     // Check if system user already exists
     let systemUser = await this.dataSource.getRepository(User).findOne({
@@ -76,7 +75,6 @@ export class DatabaseSeeder {
     });
 
     if (systemUser) {
-      this.logger.info('System user already exists, using existing user', 'DatabaseSeeder');
       return systemUser;
     }
 
@@ -141,12 +139,11 @@ export class DatabaseSeeder {
       },
     );
 
-    this.logger.info('System user created successfully', 'DatabaseSeeder');
     return systemUser;
   }
 
   private async createSuperAdminUser(createdBy: string): Promise<User> {
-    this.logger.info('Creating superadmin user...', 'DatabaseSeeder');
+    this.logger.log('Creating superadmin user...');
 
     const hashedPassword = await bcrypt.hash('password123', 10);
 
@@ -216,31 +213,26 @@ export class DatabaseSeeder {
       },
     );
 
-    this.logger.info('Superadmin user created successfully', 'DatabaseSeeder');
     return superAdminUser;
   }
 
   private async resetDatabase(): Promise<void> {
-    this.logger.info('Resetting database...', 'DatabaseSeeder');
+    this.logger.log('Resetting database...');
 
     try {
       // Drop all tables and recreate them
       await this.dataSource.dropDatabase();
       await this.dataSource.synchronize();
 
-      this.logger.info('Database reset successfully', 'DatabaseSeeder');
+      this.logger.log('Database reset successfully');
     } catch (error) {
-      if (error instanceof Error) {
-        this.logger.error('Error resetting database', error, 'DatabaseSeeder');
-      } else {
-        this.logger.error('Error resetting database', 'DatabaseSeeder', { error: String(error) });
-      }
+      this.logger.error('Error resetting database', error);
       throw error;
     }
   }
 
   private async createPermissions(): Promise<void> {
-    this.logger.info('Creating permissions...', 'DatabaseSeeder');
+    this.logger.log('Creating permissions...');
 
     const permissionEntities = ALL_PERMISSIONS.map((permission) => ({
       name: (permission as any).name,
@@ -256,11 +248,11 @@ export class DatabaseSeeder {
       .values(permissionEntities)
       .execute();
 
-    this.logger.info(`Created ${permissionEntities.length} permissions`, 'DatabaseSeeder');
+    this.logger.log(`Created ${permissionEntities.length} permissions`);
   }
 
   private async createGlobalRoles(createdBy: string): Promise<void> {
-    this.logger.info('Creating global roles...', 'DatabaseSeeder');
+    this.logger.log('Creating global roles...');
 
     // Create only essential global roles
     const globalRoles = [
@@ -285,11 +277,11 @@ export class DatabaseSeeder {
       .values(roleEntities)
       .execute();
 
-    this.logger.info(`Created ${roleEntities.length} global roles`, 'DatabaseSeeder');
+    this.logger.log(`Created ${roleEntities.length} global roles`);
   }
 
   private async createUserProfilesAndStaff(users: User[]): Promise<void> {
-    this.logger.info('Creating user profiles and staff records...', 'DatabaseSeeder');
+    this.logger.log('Creating user profiles and staff records...');
 
     for (const user of users) {
       // Create both admin and user profile in a single transaction
@@ -330,17 +322,17 @@ export class DatabaseSeeder {
         );
       });
 
-      this.logger.info(`Created staff profile for user: ${user.email}`, 'DatabaseSeeder');
+      // Routine operation - no log needed
     }
 
-    this.logger.info(`Created ${users.length} staff profiles`, 'DatabaseSeeder');
+    this.logger.log(`Created ${users.length} staff profiles`);
   }
 
   private async assignRolesAndPermissions(
     users: User[],
     createdBy: string,
   ): Promise<void> {
-    this.logger.info('Assigning roles and permissions...', 'DatabaseSeeder');
+    this.logger.log('Assigning roles and permissions...');
 
     // Get all roles
     const allRoles = await this.dataSource.getRepository(Role).find();
@@ -367,9 +359,8 @@ export class DatabaseSeeder {
         roleId: superAdminRole.id,
         createdBy,
       });
-      this.logger.info(
+      this.logger.log(
         `Assigned Super Administrator role to ${systemUser.email}`,
-        'DatabaseSeeder',
       );
     }
 
@@ -386,20 +377,19 @@ export class DatabaseSeeder {
         roleId: superAdminRole.id,
         createdBy,
       });
-      this.logger.info(
+      this.logger.log(
         `Assigned Super Administrator role to ${superAdminUser.email}`,
-        'DatabaseSeeder',
       );
     }
 
-    this.logger.info('Roles and permissions assigned successfully', 'DatabaseSeeder');
+    this.logger.log('Roles and permissions assigned successfully');
   }
 
   private async createActivityLogs(
     users: User[],
     createdBy: string,
   ): Promise<void> {
-    this.logger.info('Creating activity logs...', 'DatabaseSeeder');
+    this.logger.log('Creating activity logs...');
 
     const systemUser = users.find((u) => u.email === 'system@lms.com');
     const superAdmin = users.find((u) => u.email === 'superadmin@lms.com');
@@ -438,6 +428,5 @@ export class DatabaseSeeder {
       });
     }
 
-    this.logger.info('Activity logs created successfully', 'DatabaseSeeder');
   }
 }

@@ -8,9 +8,8 @@ import {
   FindOneOptions,
   FindOptionsWhere,
 } from 'typeorm';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Pagination, paginate } from 'nestjs-typeorm-paginate';
-import { LoggerService } from '@/shared/services/logger.service';
 import { BasePaginationDto } from '../dto/base-pagination.dto';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
@@ -55,10 +54,15 @@ export interface PaginateOptions<T> {
 
 @Injectable()
 export abstract class BaseRepository<T extends ObjectLiteral> {
+  protected readonly logger: Logger;
+
   constructor(
-    protected readonly logger: LoggerService,
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
-  ) {}
+  ) {
+    // Use class name as context (e.g., 'UserRepository', 'CenterRepository')
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   /**
    * Get the entity class for this repository
@@ -70,6 +74,13 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    * Get the active repository - always from transaction context
    */
   protected getRepository(): Repository<T> {
+    if (!this.txHost?.tx) {
+      this.logger.error(
+        `Repository transaction context is missing - entity: ${this.getEntityClass().name}`,
+        new Error('Transaction context not available'),
+      );
+      throw new Error('Transaction context is not available');
+    }
     return this.txHost.tx.getRepository(this.getEntityClass());
   }
 
@@ -77,6 +88,13 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    * Get the active entity manager - always from transaction context
    */
   protected getEntityManager(): EntityManager {
+    if (!this.txHost?.tx) {
+      this.logger.error(
+        `Entity manager transaction context is missing - entity: ${this.getEntityClass().name}`,
+        new Error('Transaction context not available'),
+      );
+      throw new Error('Transaction context is not available');
+    }
     return this.txHost.tx;
   }
 
@@ -84,6 +102,13 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    * Get the active entity manager - public access for external use
    */
   public getManager(): EntityManager {
+    if (!this.txHost?.tx) {
+      this.logger.error(
+        `Entity manager transaction context is missing - entity: ${this.getEntityClass().name}`,
+        new Error('Transaction context not available'),
+      );
+      throw new Error('Transaction context is not available');
+    }
     return this.txHost.tx;
   }
 
@@ -112,27 +137,15 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
           onProgress(totalProcessed, total);
         }
       } catch (error) {
-        if (error instanceof Error) {
-          this.logger.error(
-            `Bulk insert batch failed: ${error.message}`,
-            error,
-            this.getRepository().metadata.name,
-            {
-              totalProcessed,
-              total,
-            },
-          );
-        } else {
-          this.logger.error(
-            `Bulk insert batch failed`,
-            this.getRepository().metadata.name,
-            {
-              totalProcessed,
-              total,
-              error: String(error),
-            },
-          );
-        }
+        this.logger.error(
+          `Bulk insert batch failed: ${error instanceof Error ? error.message : String(error)}`,
+          error,
+          {
+            entity: this.getRepository().metadata.name,
+            totalProcessed,
+            total,
+          },
+        );
         throw error;
       }
     }
@@ -178,43 +191,21 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         totalAffected += affected;
         totalProcessed += batch.length;
 
-        this.logger.debug('Bulk update batch completed', repo.metadata.name, {
-          batchNumber,
-          batchSize: batch.length,
-          affected,
-          totalProcessed,
-          total,
-        });
-
         if (onProgress) {
           onProgress(totalProcessed, total);
         }
       } catch (error) {
-        if (error instanceof Error) {
-          this.logger.error(
-            `Bulk update batch failed: ${error.message}`,
-            error,
-            repo.metadata.name,
-            {
-              batchNumber,
-              batchSize: batch.length,
-              totalProcessed,
-              total,
-            },
-          );
-        } else {
-          this.logger.error(
-            `Bulk update batch failed`,
-            repo.metadata.name,
-            {
-              batchNumber,
-              batchSize: batch.length,
-              totalProcessed,
-              total,
-              error: String(error),
-            },
-          );
-        }
+        this.logger.error(
+          `Bulk update batch failed: ${error instanceof Error ? error.message : String(error)}`,
+          error,
+          {
+            entity: repo.metadata.name,
+            batchNumber,
+            batchSize: batch.length,
+            totalProcessed,
+            total,
+          },
+        );
         throw error;
       }
     }
@@ -251,43 +242,21 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         totalAffected += affected;
         totalProcessed += batch.length;
 
-        this.logger.debug('Bulk delete batch completed', repo.metadata.name, {
-          batchNumber,
-          batchSize: batch.length,
-          affected,
-          totalProcessed,
-          total,
-        });
-
         if (onProgress) {
           onProgress(totalProcessed, total);
         }
       } catch (error) {
-        if (error instanceof Error) {
-          this.logger.error(
-            `Bulk delete batch failed: ${error.message}`,
-            error,
-            repo.metadata.name,
-            {
-              batchNumber,
-              batchSize: batch.length,
-              totalProcessed,
-              total,
-            },
-          );
-        } else {
-          this.logger.error(
-            `Bulk delete batch failed`,
-            repo.metadata.name,
-            {
-              batchNumber,
-              batchSize: batch.length,
-              totalProcessed,
-              total,
-              error: String(error),
-            },
-          );
-        }
+        this.logger.error(
+          `Bulk delete batch failed: ${error instanceof Error ? error.message : String(error)}`,
+          error,
+          {
+            entity: repo.metadata.name,
+            batchNumber,
+            batchSize: batch.length,
+            totalProcessed,
+            total,
+          },
+        );
         throw error;
       }
     }
@@ -310,13 +279,6 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const count = await queryBuilder.getCount();
     const duration = Date.now() - startTime;
 
-    this.logger.debug('Enhanced count query executed', repo.metadata.name, {
-      entity: repo.metadata.name,
-      duration,
-      count,
-      where: where ? JSON.stringify(where) : 'none',
-    });
-
     return count;
   }
 
@@ -334,13 +296,6 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const result = await queryBuilder.getRawOne();
     const exists = !!result;
     const duration = Date.now() - startTime;
-
-    this.logger.debug('Enhanced exists query executed', this.getRepository().metadata.name, {
-      entity: repo.metadata.name,
-      duration,
-      exists,
-      where: JSON.stringify(where),
-    });
 
     return exists;
   }

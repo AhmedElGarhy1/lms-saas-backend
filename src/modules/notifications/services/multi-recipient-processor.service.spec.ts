@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MultiRecipientProcessor } from './multi-recipient-processor.service';
 import { RecipientInfo } from '../types/recipient-info.interface';
 import { NotificationConfig } from '../config/notification.config';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 describe('MultiRecipientProcessor', () => {
   let service: MultiRecipientProcessor;
@@ -23,7 +24,11 @@ describe('MultiRecipientProcessor', () => {
     it('should process single recipient', async () => {
       const recipient: RecipientInfo = {
         userId: 'user-1',
+        profileId: 'profile-1',
         email: 'test@example.com',
+        phone: '',
+        locale: 'en',
+        profileType: ProfileType.ADMIN,
       };
 
       const results = await service.processRecipients(
@@ -40,7 +45,11 @@ describe('MultiRecipientProcessor', () => {
     it('should process multiple recipients with concurrency control', async () => {
       const recipients: RecipientInfo[] = Array.from({ length: 5 }, (_, i) => ({
         userId: `user-${i}`,
+        profileId: `profile-${i}`,
         email: `user${i}@example.com`,
+        phone: '',
+        locale: 'en',
+        profileType: ProfileType.ADMIN,
       }));
 
       const results = await service.processRecipients(
@@ -65,9 +74,9 @@ describe('MultiRecipientProcessor', () => {
 
     it('should handle errors gracefully', async () => {
       const recipients: RecipientInfo[] = [
-        { userId: 'user-1', email: 'user1@example.com' },
-        { userId: 'user-2', email: 'user2@example.com' },
-        { userId: 'user-3', email: 'user3@example.com' },
+        { userId: 'user-1', profileId: 'profile-1', email: 'user1@example.com', phone: '', locale: 'en', profileType: ProfileType.ADMIN },
+        { userId: 'user-2', profileId: 'profile-2', email: 'user2@example.com', phone: '', locale: 'en', profileType: ProfileType.ADMIN },
+        { userId: 'user-3', profileId: 'profile-3', email: 'user3@example.com', phone: '', locale: 'en', profileType: ProfileType.ADMIN },
       ];
 
       const results = await service.processRecipients(
@@ -94,7 +103,11 @@ describe('MultiRecipientProcessor', () => {
         { length: concurrencyLimit * 2 },
         (_, i) => ({
           userId: `user-${i}`,
+          profileId: `profile-${i}`,
           email: `user${i}@example.com`,
+          phone: '',
+          locale: 'en',
+          profileType: ProfileType.ADMIN,
         }),
       );
 
@@ -121,7 +134,11 @@ describe('MultiRecipientProcessor', () => {
     it('should process recipients in batches', async () => {
       const recipients: RecipientInfo[] = Array.from({ length: 25 }, (_, i) => ({
         userId: `user-${i}`,
+        profileId: `profile-${i}`,
         email: `user${i}@example.com`,
+        phone: '',
+        locale: 'en',
+        profileType: ProfileType.ADMIN,
       }));
 
       const batchSize = 10;

@@ -13,7 +13,8 @@ import { NotificationMetricsService } from './notification-metrics.service';
 import { NotificationIdempotencyCacheService } from './notification-idempotency-cache.service';
 import { ChannelRetryStrategyService } from './channel-retry-strategy.service';
 import { MultiRecipientProcessor } from './multi-recipient-processor.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { RecipientInfo } from '../types/recipient-info.interface';
+import { Logger } from '@nestjs/common';
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { FakeQueue } from '../test/fakes/fake-queue';
@@ -121,7 +122,7 @@ describe('Edge Cases and Error Scenarios', () => {
           },
         },
         {
-          provide: LoggerService,
+          provide: Logger,
           useValue: createMockLoggerService(),
         },
         {
@@ -163,7 +164,7 @@ describe('Edge Cases and Error Scenarios', () => {
           useValue: {
             processRecipients: jest.fn().mockImplementation(async (recipients, processor) => {
               const results = await Promise.allSettled(
-                recipients.map((r) => processor(r)),
+                recipients.map((r: RecipientInfo) => processor(r)),
               );
               return results.map((result, index) => ({
                 recipient: recipients[index],

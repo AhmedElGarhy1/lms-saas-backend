@@ -1,17 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PermissionRepository } from '../repositories/permission.repository';
 import { Permission } from '../entities/permission.entity';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { FindOptionsWhere, In } from 'typeorm';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PermissionScope } from '../constants/permissions';
 
 @Injectable()
-export class PermissionService {
-  constructor(
-    private readonly permissionRepository: PermissionRepository,
-    private readonly logger: LoggerService,
-  ) {}
+export class PermissionService extends BaseService {
+  private readonly logger: Logger;
+
+  constructor(private readonly permissionRepository: PermissionRepository) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   /**
    * Get all permissions from database
@@ -49,7 +52,7 @@ export class PermissionService {
     } catch (error) {
       this.logger.error(
         `Failed to fetch permission by action: ${action}`,
-        error,
+        error instanceof Error ? error.stack : String(error),
       );
       throw error;
     }

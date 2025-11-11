@@ -1,7 +1,7 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, Logger } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { notificationKeys } from '../utils/notification-redis-key-builder';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationConfig } from '../config/notification.config';
 
@@ -31,7 +31,11 @@ interface AvgLatencyEntry {
  * Accumulates increments and flushes them periodically or when batch size is reached
  */
 @Injectable()
-export class MetricsBatchService implements OnModuleDestroy {
+export class MetricsBatchService
+  extends BaseService
+  implements OnModuleDestroy
+{
+  private readonly logger: Logger;
   private readonly METRIC_TTL = 30 * 24 * 60 * 60; // 30 days
   private readonly batchSize: number;
   private readonly flushIntervalMs: number;
@@ -45,10 +49,10 @@ export class MetricsBatchService implements OnModuleDestroy {
 
   private flushTimer?: NodeJS.Timeout;
 
-  constructor(
-    private readonly redisService: RedisService,
-    private readonly logger: LoggerService,
-  ) {
+  constructor(private readonly redisService: RedisService) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
     this.batchSize = NotificationConfig.metricsBatchSize;
     this.flushIntervalMs = NotificationConfig.metricsFlushIntervalMs;
 
@@ -152,21 +156,10 @@ export class MetricsBatchService implements OnModuleDestroy {
       this.counterBatch.clear();
       this.latencyBatch = [];
       this.avgLatencyBatch.clear();
-
-      this.logger.debug(
-        `Flushed metrics batch to Redis`,
-        'MetricsBatchService',
-      );
     } catch (error) {
       this.logger.error(
-        `Failed to flush metrics batch`,
-        error instanceof Error ? error.stack : undefined,
-        'MetricsBatchService',
-        {
-          counterBatchSize: this.counterBatch.size,
-          latencyBatchSize: this.latencyBatch.length,
-          avgLatencyBatchSize: this.avgLatencyBatch.size,
-        },
+        `Failed to flush metrics batch - counterBatchSize: ${this.counterBatch.size}, latencyBatchSize: ${this.latencyBatch.length}, avgLatencyBatchSize: ${this.avgLatencyBatch.size}`,
+        error instanceof Error ? error.stack : String(error),
       );
       // Don't clear batches on error - allow retry on next flush
     }
@@ -193,11 +186,7 @@ export class MetricsBatchService implements OnModuleDestroy {
       await pipeline.exec();
       this.gaugeUpdates.clear();
     } catch (error) {
-      this.logger.error(
-        `Failed to flush gauge updates`,
-        error instanceof Error ? error.stack : undefined,
-        'MetricsBatchService',
-      );
+      this.logger.error(`Failed to flush gauge updates`, error);
     }
   }
 
@@ -207,11 +196,7 @@ export class MetricsBatchService implements OnModuleDestroy {
   private startPeriodicFlush(): void {
     this.flushTimer = setInterval(() => {
       this.flush().catch((error) => {
-        this.logger.error(
-          `Periodic flush failed`,
-          error instanceof Error ? error.stack : undefined,
-          'MetricsBatchService',
-        );
+        this.logger.error(`Periodic flush failed`, error);
       });
     }, this.flushIntervalMs);
   }
@@ -225,11 +210,7 @@ export class MetricsBatchService implements OnModuleDestroy {
     }
     // Flush any remaining metrics before shutdown
     this.flush().catch((error) => {
-      this.logger.error(
-        `Final flush failed on shutdown`,
-        error instanceof Error ? error.stack : undefined,
-        'MetricsBatchService',
-      );
+      this.logger.error(`Final flush failed on shutdown`, error);
     });
   }
 

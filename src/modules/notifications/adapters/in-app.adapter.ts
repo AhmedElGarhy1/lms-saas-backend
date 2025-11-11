@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
 import { NotificationConfig } from '../config/notification.config';
@@ -11,7 +12,6 @@ import { NotificationRepository } from '../repositories/notification.repository'
 import { Notification } from '../entities/notification.entity';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationGateway } from '../gateways/notification.gateway';
-import { LoggerService } from '@/shared/services/logger.service';
 import { NotificationEvents } from '@/shared/events/notification.events.enum';
 import {
   NotificationCreatedEvent,
@@ -46,15 +46,19 @@ export class InAppAdapter
 {
   private readonly maxRetries: number;
   private readonly maxRetryDelayMs: number;
+  private readonly logger: Logger;
 
   constructor(
     private readonly notificationRepository: NotificationRepository,
     private readonly notificationGateway: NotificationGateway,
-    private readonly logger: LoggerService,
+    private readonly moduleRef: ModuleRef,
     private readonly eventEmitter: EventEmitter2,
     private readonly logRepository: NotificationLogRepository,
     private readonly metricsService: NotificationMetricsService,
   ) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
     // Load retry configuration from Config (IN_APP-specific for WebSocket delivery)
     this.maxRetries = NotificationConfig.inAppRetry.maxAttempts;
     this.maxRetryDelayMs = NotificationConfig.inAppRetry.maxDelayMs;
@@ -232,31 +236,10 @@ export class InAppAdapter
         const latency = Date.now() - deliveryStartTime;
 
         if (attempt >= this.maxRetries) {
-          if (error instanceof Error) {
-            this.logger.error(
-              `Failed to deliver notification via WebSocket after ${this.maxRetries} attempts (total latency: ${latency}ms)`,
-              error,
-              'InAppAdapter',
-              {
-                notificationId: notification.id,
-                userId,
-                attempts: this.maxRetries,
-                latency,
-              },
-            );
-          } else {
-            this.logger.error(
-              `Failed to deliver notification via WebSocket after ${this.maxRetries} attempts (total latency: ${latency}ms)`,
-              'InAppAdapter',
-              {
-                notificationId: notification.id,
-                userId,
-                attempts: this.maxRetries,
-                latency,
-                error: String(error),
-              },
-            );
-          }
+          this.logger.error(
+            `Failed to deliver notification via WebSocket after ${this.maxRetries} attempts (total latency: ${latency}ms) - notificationId: ${notification.id}, userId: ${userId}`,
+            error instanceof Error ? error.stack : String(error),
+          );
           // Track retry metric for failed attempts
           await this.metricsService.incrementRetry(NotificationChannel.IN_APP);
         } else {
@@ -264,15 +247,7 @@ export class InAppAdapter
           const delay = this.calculateRetryDelay(attempt);
           await new Promise((resolve) => setTimeout(resolve, delay));
           this.logger.warn(
-            `Retrying WebSocket delivery (attempt ${attempt}/${this.maxRetries}, delay: ${delay}ms)`,
-            'InAppAdapter',
-            {
-              notificationId: notification.id,
-              userId,
-              attempt,
-              delay,
-              latency,
-            },
+            `Retrying WebSocket delivery (attempt ${attempt}/${this.maxRetries}, delay: ${delay}ms) - notificationId: ${notification.id}, userId: ${userId}`,
           );
           // Track retry attempt
           await this.metricsService.incrementRetry(NotificationChannel.IN_APP);
@@ -390,19 +365,11 @@ export class InAppAdapter
       });
     } catch (logError) {
       // Don't fail notification delivery if logging fails
-      // Logger is fault-tolerant, no try-catch needed
-      if (logError instanceof Error) {
-        this.logger.error('Failed to create NotificationLog for IN_APP notification', logError, 'InAppAdapter', {
-          notificationId: notification.id,
-          userId: payload.userId,
-        });
-      } else {
-        this.logger.error('Failed to create NotificationLog for IN_APP notification', 'InAppAdapter', {
-          notificationId: notification.id,
-          userId: payload.userId,
-          error: String(logError),
-        });
-      }
+      // Logger is fault-tolerant, but we still log the NotificationLog creation failure
+      this.logger.error(
+        `Failed to create NotificationLog for IN_APP notification - notificationId: ${notification.id}, userId: ${payload.userId}`,
+        logError instanceof Error ? logError.stack : String(logError),
+      );
     }
   }
 
@@ -490,18 +457,6 @@ export class InAppAdapter
     deliveryResult: DeliveryResult,
     startTime: number,
   ): void {
-    const totalLatency = Date.now() - startTime;
-    this.logger.debug(
-      `In-app notification ${deliveryResult.delivered ? 'delivered' : 'failed'}: ${notification.id} to user ${payload.userId} (${deliveryResult.attempts} attempt(s), ${totalLatency}ms)`,
-      'InAppAdapter',
-      {
-        notificationId: notification.id,
-        userId: payload.userId,
-        status: notification.status,
-        attempts: deliveryResult.attempts,
-        latency: totalLatency,
-        delivered: deliveryResult.delivered,
-      },
-    );
+    // Debug log removed - only log failures
   }
 }

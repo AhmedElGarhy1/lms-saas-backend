@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   InsufficientPermissionsException,
   ResourceNotFoundException,
@@ -19,16 +19,23 @@ import {
   DeleteRoleEvent,
   RestoreRoleEvent,
 } from '../events/role.events';
+import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
-export class RolesService {
+export class RolesService extends BaseService {
+  private readonly logger: Logger;
+
   constructor(
     private readonly rolesRepository: RolesRepository,
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlerHelperService: AccessControlHelperService,
     private readonly profileRoleRepository: ProfileRoleRepository,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-  ) {}
+  ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   async getMyPermissions(actor: ActorUser) {
     return this.profileRoleRepository.getProfilePermissions(
@@ -69,6 +76,11 @@ export class RolesService {
       throw new ResourceNotFoundException('Role not found');
     }
     if (!role.isSameScope(actor.centerId)) {
+      this.logger.warn('Role update failed - insufficient permissions', {
+        roleId,
+        actorId: actor.userProfileId,
+        centerId: actor.centerId,
+      });
       throw new InsufficientPermissionsException(
         'You are not authorized to update this role',
       );
@@ -95,6 +107,11 @@ export class RolesService {
       throw new ResourceNotFoundException('Role not found');
     }
     if (!role?.isSameScope(actor.centerId)) {
+      this.logger.warn('Role deletion failed - insufficient permissions', {
+        roleId,
+        actorId: actor.userProfileId,
+        centerId: actor.centerId,
+      });
       throw new InsufficientPermissionsException(
         'You are not authorized to delete this role',
       );

@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { LoggerService } from '@/shared/services/logger.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { WhatsAppProvider } from './whatsapp-provider.interface';
 import { Config } from '@/shared/config/config';
 
@@ -7,16 +7,16 @@ import { Config } from '@/shared/config/config';
 export class MetaWhatsAppProvider implements WhatsAppProvider {
   private readonly accessToken: string | null;
   private readonly phoneNumberId: string | null;
+  private readonly logger: Logger;
 
-  constructor(private readonly logger: LoggerService) {
+  constructor(private readonly moduleRef: ModuleRef) {
+    // Use class name as context
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
     this.accessToken = Config.whatsapp.accessToken || null;
     this.phoneNumberId = Config.whatsapp.phoneNumberId || null;
 
     if (this.isConfigured()) {
-      this.logger.debug(
-        'WhatsApp Business API (Meta) provider initialized',
-        'MetaWhatsAppProvider',
-      );
     }
   }
 
@@ -65,30 +65,15 @@ export class MetaWhatsAppProvider implements WhatsAppProvider {
       }
 
       const latency = Date.now() - startTime;
-      this.logger.debug(
-        `WhatsApp message sent successfully via Business API (${latency}ms)`,
-        'MetaWhatsAppProvider',
-        {
-          recipient: phoneNumber,
-          provider: 'Meta WhatsApp Business API',
-          latency,
-        },
-      );
+      // Debug log removed - routine operation
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       const latency = Date.now() - startTime;
 
       this.logger.error(
-        `Failed to send WhatsApp message via Business API (${latency}ms): ${errorMessage}`,
-        error instanceof Error ? error.stack : undefined,
-        'MetaWhatsAppProvider',
-        {
-          recipient: phoneNumber,
-          provider: 'Meta WhatsApp Business API',
-          error: errorMessage,
-          latency,
-        },
+        `Failed to send WhatsApp message via Business API (${latency}ms): ${errorMessage} - recipient: ${phoneNumber}, provider: Meta WhatsApp Business API`,
+        error instanceof Error ? error.stack : String(error),
       );
 
       // Throw error for BullMQ to handle retry

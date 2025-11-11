@@ -1,5 +1,5 @@
 import { Public } from '@/shared/common/decorators/public.decorator';
-import { Controller, Get, Query, Req } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -13,7 +13,6 @@ import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { LocaleService } from '../services/locale.service';
 import { RequestContext } from '@/shared/common/context/request.context';
-import { Locale } from '@/shared/common/enums/locale.enum';
 
 @ApiBearerAuth()
 @ApiTags('Locale')

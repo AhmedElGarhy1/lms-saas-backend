@@ -1,4 +1,4 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Inject, forwardRef, Logger } from '@nestjs/common';
 import {
   ResourceNotFoundException,
   BusinessLogicException,
@@ -9,7 +9,7 @@ import { CreateCenterDto } from '../dto/create-center.dto';
 import { UpdateCenterRequestDto } from '../dto/update-center.dto';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
-import { LoggerService } from '@/shared/services/logger.service';
+import { BaseService } from '@/shared/common/services/base.service';
 import { UserService } from '@/modules/user/services/user.service';
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
@@ -34,18 +34,23 @@ export interface SeederCenterData {
 }
 
 @Injectable()
-export class CentersService {
+export class CentersService extends BaseService {
+  private readonly logger: Logger;
+
   constructor(
     private readonly centersRepository: CentersRepository,
     private readonly accessControlService: AccessControlService,
-    private readonly logger: LoggerService,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly rolesService: RolesService,
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-  ) {}
+  ) {
+    super();
+    const context = this.constructor.name;
+    this.logger = new Logger(context);
+  }
 
   async findCenterById(centerId: string): Promise<Center> {
     const center = await this.centersRepository.findOne(centerId);
@@ -84,10 +89,6 @@ export class CentersService {
     dto: UpdateCenterRequestDto,
     actor: ActorUser,
   ): Promise<Center> {
-    this.logger.info(
-      `Updating center: ${centerId} by user profile: ${actor.userProfileId}`,
-    );
-
     const center = await this.findCenterById(centerId);
     if (!center) {
       throw new ResourceNotFoundException(
@@ -124,10 +125,6 @@ export class CentersService {
   }
 
   async deleteCenter(centerId: string, actor: ActorUser): Promise<void> {
-    this.logger.info(
-      `Deleting center: ${centerId} by user profile: ${actor.userProfileId}`,
-    );
-
     await this.findCenterById(centerId);
     // Permission check should be in controller
 
@@ -141,16 +138,7 @@ export class CentersService {
   }
 
   async restoreCenter(centerId: string, actor: ActorUser): Promise<Center> {
-    this.logger.info(
-      `Restoring center: ${centerId} by user profile: ${actor.userProfileId}`,
-    );
-
-    const center = await this.findCenterById(centerId);
-    if (!center) {
-      throw new ResourceNotFoundException(
-        `Center with ID '${centerId}' not found`,
-      );
-    }
+    await this.findCenterById(centerId);
 
     await this.centersRepository.restore(centerId);
     const restoredCenter = await this.findCenterById(centerId);
@@ -171,16 +159,11 @@ export class CentersService {
   ): Promise<void> {
     try {
       await this.centersRepository.updateCenterActivation(centerId, isActive);
-
-      this.logger.info(
-        `Center ${centerId} activation updated to ${isActive} by ${updatedBy}`,
-      );
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
       this.logger.error(
-        `Error updating center activation for center ${centerId}:`,
-        errorMessage,
+        `Error updating center activation for center ${centerId}`,
+        error,
+        { centerId, isActive, updatedBy },
       );
       throw error;
     }
@@ -188,17 +171,13 @@ export class CentersService {
 
   // Seeder methods
   async clearAllCenters(): Promise<void> {
-    this.logger.info('Clearing all centers for seeding...');
     await this.centersRepository.clearAllCenters();
   }
 
   async createCenterForSeeder(centerData: SeederCenterData): Promise<Center> {
-    this.logger.info(`Creating center '${centerData.name}' for seeding`);
-
     // Create the center without user validation for seeding
     const savedCenter = await this.centersRepository.create(centerData);
 
-    this.logger.info(`Center created for seeding: ${savedCenter.id}`);
     return savedCenter;
   }
 

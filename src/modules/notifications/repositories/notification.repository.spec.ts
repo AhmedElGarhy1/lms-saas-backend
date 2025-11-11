@@ -1,16 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationRepository } from './notification.repository';
-import { LoggerService } from '@/shared/services/logger.service';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { NotificationType } from '../enums/notification-type.enum';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { createMockLoggerService } from '../test/helpers';
 import { TestEnvGuard } from '../test/helpers/test-env-guard';
 import { createMockNotification } from '../test/helpers/mock-entities';
 import { faker } from '@faker-js/faker';
 import { GetInAppNotificationsDto } from '../dto/in-app-notification.dto';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
-import { In } from 'typeorm';
+import { In, IsNull } from 'typeorm';
 
 // Mock BaseRepository methods
 const mockBaseRepository = {
@@ -24,14 +22,12 @@ const mockBaseRepository = {
 
 describe('NotificationRepository', () => {
   let repository: NotificationRepository;
-  let mockLogger: LoggerService;
   let mockTxHost: jest.Mocked<TransactionHost<any>>;
 
   beforeEach(async () => {
     // Ensure test environment
     TestEnvGuard.setupTestEnvironment({ throwOnError: false });
 
-    mockLogger = createMockLoggerService();
     mockTxHost = {
       tx: {
         withTransaction: jest.fn(),
@@ -41,10 +37,6 @@ describe('NotificationRepository', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationRepository,
-        {
-          provide: LoggerService,
-          useValue: mockLogger,
-        },
         {
           provide: TransactionHost,
           useValue: mockTxHost,
@@ -68,7 +60,10 @@ describe('NotificationRepository', () => {
   describe('createNotification', () => {
     it('should create a notification', async () => {
       const notificationData = createMockNotification();
-      const createdNotification = { ...notificationData, id: faker.string.uuid() };
+      const createdNotification = {
+        ...notificationData,
+        id: faker.string.uuid(),
+      };
 
       mockBaseRepository.create.mockResolvedValue(createdNotification);
 
@@ -118,7 +113,7 @@ describe('NotificationRepository', () => {
       });
 
       await repository.findByUserId(userId, {
-        where: { readAt: null },
+        where: { readAt: IsNull() },
       });
 
       expect(queryBuilder.andWhere).toHaveBeenCalledWith(
@@ -243,16 +238,15 @@ describe('NotificationRepository', () => {
 
       await repository.markAllAsRead(userId);
 
-      expect(mockBaseRepository.getRepository().createQueryBuilder).toHaveBeenCalled();
+      expect(
+        mockBaseRepository.getRepository().createQueryBuilder,
+      ).toHaveBeenCalled();
     });
   });
 
   describe('markMultipleAsRead', () => {
     it('should mark multiple notifications as read', async () => {
-      const notificationIds = [
-        faker.string.uuid(),
-        faker.string.uuid(),
-      ];
+      const notificationIds = [faker.string.uuid(), faker.string.uuid()];
       const userId = faker.string.uuid();
 
       mockBaseRepository.getRepository.mockReturnValue({
@@ -330,7 +324,9 @@ describe('NotificationRepository', () => {
 
       await repository.archiveOld(userId, days);
 
-      expect(mockBaseRepository.getRepository().createQueryBuilder).toHaveBeenCalled();
+      expect(
+        mockBaseRepository.getRepository().createQueryBuilder,
+      ).toHaveBeenCalled();
     });
   });
 
@@ -347,7 +343,9 @@ describe('NotificationRepository', () => {
 
       await repository.deleteExpired();
 
-      expect(mockBaseRepository.getRepository().createQueryBuilder).toHaveBeenCalled();
+      expect(
+        mockBaseRepository.getRepository().createQueryBuilder,
+      ).toHaveBeenCalled();
     });
   });
 
@@ -381,11 +379,13 @@ describe('NotificationRepository', () => {
       });
       mockBaseRepository.paginate.mockResolvedValue(mockPagination);
 
-      const result = await repository.getUserNotificationsWithFilters(userId, query);
+      const result = await repository.getUserNotificationsWithFilters(
+        userId,
+        query,
+      );
 
       expect(mockBaseRepository.paginate).toHaveBeenCalled();
       expect(result).toEqual(mockPagination);
     });
   });
 });
-
