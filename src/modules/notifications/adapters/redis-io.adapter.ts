@@ -3,7 +3,7 @@ import { Server, ServerOptions } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { notificationKeys } from '../utils/notification-redis-key-builder';
-import { INestApplicationContext, Logger } from '@nestjs/common';
+import { INestApplicationContext } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '@/modules/user/services/user.service';
@@ -11,6 +11,7 @@ import { JwtPayload } from '@/modules/auth/strategies/jwt.strategy';
 import { RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible';
 import { notificationGatewayConfig } from '../config/notification-gateway.config';
 import { Config } from '@/shared/config/config';
+import { LoggerService } from '@/shared/services/logger.service';
 
 /**
  * Custom Socket.IO adapter that integrates Redis for horizontal scaling
@@ -18,8 +19,8 @@ import { Config } from '@/shared/config/config';
  * Also adds global WebSocket authentication middleware
  */
 export class RedisIoAdapter extends IoAdapter {
-  private readonly logger = new Logger(RedisIoAdapter.name);
   private readonly app: INestApplicationContext;
+  private logger: LoggerService;
   private jwtService: JwtService;
   private userService: UserService;
   private ipRateLimiter?: RateLimiterRedis;
@@ -36,13 +37,12 @@ export class RedisIoAdapter extends IoAdapter {
     this.app = app;
     // Get services from app context (will be available after app is initialized)
     try {
+      this.logger = app.get(LoggerService, { strict: false });
       this.jwtService = app.get(JwtService, { strict: false });
       this.userService = app.get(UserService, { strict: false });
     } catch {
       // Services might not be available yet, will be resolved in createIOServer
-      this.logger.warn(
-        'Could not resolve services in constructor, will resolve in createIOServer',
-      );
+      // Logger not available yet, will be resolved in createIOServer
     }
   }
 
@@ -51,15 +51,27 @@ export class RedisIoAdapter extends IoAdapter {
     const server = super.createIOServer(port, options) as Server;
 
     // Resolve services if not already resolved
-    if (!this.jwtService || !this.userService) {
+    if (!this.logger || !this.jwtService || !this.userService) {
       try {
+        this.logger = this.app.get(LoggerService, { strict: false });
         this.jwtService = this.app.get(JwtService, { strict: false });
         this.userService = this.app.get(UserService, { strict: false });
       } catch (error) {
-        this.logger.error(
-          'Failed to resolve services for WebSocket authentication',
-          error instanceof Error ? error.stack : undefined,
-        );
+        if (this.logger) {
+          if (error instanceof Error) {
+            this.logger.error(
+              'Failed to resolve services for WebSocket authentication',
+              error,
+              'RedisIoAdapter',
+            );
+          } else {
+            this.logger.error(
+              'Failed to resolve services for WebSocket authentication',
+              'RedisIoAdapter',
+              { error: String(error) },
+            );
+          }
+        }
       }
     }
 
@@ -70,9 +82,12 @@ export class RedisIoAdapter extends IoAdapter {
     if (this.jwtService && this.userService) {
       this.setupAuthenticationMiddleware(server);
     } else {
-      this.logger.warn(
-        'WebSocket authentication middleware not configured - services unavailable',
-      );
+      if (this.logger) {
+        this.logger.warn(
+          'WebSocket authentication middleware not configured - services unavailable',
+          'RedisIoAdapter',
+        );
+      }
     }
 
     try {
@@ -84,18 +99,34 @@ export class RedisIoAdapter extends IoAdapter {
       const adapter = createAdapter(pubClient, subClient);
       server.adapter(adapter);
 
-      this.logger.log('Socket.IO Redis adapter configured successfully');
+      if (this.logger) {
+        this.logger.info(
+          'Socket.IO Redis adapter configured successfully',
+          'RedisIoAdapter',
+        );
+      }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      this.logger.error(
-        `Failed to initialize Redis adapter: ${errorMessage}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-      // Continue without adapter - server will work in single-instance mode
-      this.logger.warn(
-        'Socket.IO server will run without Redis adapter (single-instance mode)',
-      );
+      if (this.logger) {
+        if (error instanceof Error) {
+          this.logger.error(
+            'Failed to initialize Redis adapter',
+            error,
+            'RedisIoAdapter',
+            { errorMessage: error.message },
+          );
+        } else {
+          this.logger.error(
+            'Failed to initialize Redis adapter',
+            'RedisIoAdapter',
+            { error: String(error) },
+          );
+        }
+        // Continue without adapter - server will work in single-instance mode
+        this.logger.warn(
+          'Socket.IO server will run without Redis adapter (single-instance mode)',
+          'RedisIoAdapter',
+        );
+      }
     }
 
     return server;
@@ -153,11 +184,15 @@ export class RedisIoAdapter extends IoAdapter {
             ) {
               // Rate limit exceeded - reject connection
               const clientIP = this.extractClientIp(socket);
-              this.logger.warn(
-                `Connection rate limit exceeded for IP: ${clientIP} (socketId: ${socket.id}, namespace: ${socket.nsp.name})`,
-              );
+              if (this.logger) {
+                this.logger.warn(
+                  `Connection rate limit exceeded for IP: ${clientIP}`,
+                  'RedisIoAdapter',
+                  { socketId: socket.id, namespace: socket.nsp.name, clientIP },
+                );
+              }
               // Track rate limit hit metric (non-blocking)
-              void this.trackRateLimitHit('ip', clientIP);
+              void this.trackRateLimitHit('ip');
               return next(
                 new Error(
                   'Too many connection attempts from this IP. Please try again later.',
@@ -166,12 +201,22 @@ export class RedisIoAdapter extends IoAdapter {
             }
 
             // All other exceptions are Redis/network errors (not rate limit violations)
-            this.logger.error(
-              `IP rate limit check failed (Redis/network error) (socketId: ${socket.id})`,
-              ipRateLimitError instanceof Error
-                ? ipRateLimitError.stack
-                : undefined,
-            );
+            if (this.logger) {
+              if (ipRateLimitError instanceof Error) {
+                this.logger.error(
+                  'IP rate limit check failed (Redis/network error)',
+                  ipRateLimitError,
+                  'RedisIoAdapter',
+                  { socketId: socket.id },
+                );
+              } else {
+                this.logger.error(
+                  'IP rate limit check failed (Redis/network error)',
+                  'RedisIoAdapter',
+                  { socketId: socket.id, error: String(ipRateLimitError) },
+                );
+              }
+            }
 
             if (this.connectionRateLimitConfig.failClosed) {
               return next(
@@ -189,9 +234,13 @@ export class RedisIoAdapter extends IoAdapter {
         const token = this.extractToken(socket);
 
         if (!token) {
-          this.logger.warn(
-            `WebSocket connection rejected: No token provided (socketId: ${socket.id}, namespace: ${socket.nsp.name})`,
-          );
+          if (this.logger) {
+            this.logger.warn(
+              'WebSocket connection rejected: No token provided',
+              'RedisIoAdapter',
+              { socketId: socket.id, namespace: socket.nsp.name },
+            );
+          }
           throw new Error('Unauthorized: No token provided');
         }
 
@@ -202,25 +251,49 @@ export class RedisIoAdapter extends IoAdapter {
         });
 
         if (payload.type !== 'access') {
-          this.logger.warn(
-            `WebSocket connection rejected: Invalid token type (socketId: ${socket.id}, namespace: ${socket.nsp.name}, tokenType: ${payload.type})`,
-          );
+          if (this.logger) {
+            this.logger.warn(
+              'WebSocket connection rejected: Invalid token type',
+              'RedisIoAdapter',
+              {
+                socketId: socket.id,
+                namespace: socket.nsp.name,
+                tokenType: payload.type,
+              },
+            );
+          }
           throw new Error('Unauthorized: Invalid token type');
         }
 
         // Verify user exists and is active
         const user = await this.userService.findOne(payload.sub);
         if (!user) {
-          this.logger.warn(
-            `WebSocket connection rejected: User not found (socketId: ${socket.id}, namespace: ${socket.nsp.name}, userId: ${payload.sub})`,
-          );
+          if (this.logger) {
+            this.logger.warn(
+              'WebSocket connection rejected: User not found',
+              'RedisIoAdapter',
+              {
+                socketId: socket.id,
+                namespace: socket.nsp.name,
+                userId: payload.sub,
+              },
+            );
+          }
           throw new Error('Unauthorized: User not found');
         }
 
         if (!user.isActive) {
-          this.logger.warn(
-            `WebSocket connection rejected: User account is inactive (socketId: ${socket.id}, namespace: ${socket.nsp.name}, userId: ${payload.sub})`,
-          );
+          if (this.logger) {
+            this.logger.warn(
+              'WebSocket connection rejected: User account is inactive',
+              'RedisIoAdapter',
+              {
+                socketId: socket.id,
+                namespace: socket.nsp.name,
+                userId: payload.sub,
+              },
+            );
+          }
           throw new Error('Unauthorized: User account is inactive');
         }
 
@@ -239,11 +312,19 @@ export class RedisIoAdapter extends IoAdapter {
                 userRateLimitError.remainingPoints === 0)
             ) {
               // Rate limit exceeded - reject connection
-              this.logger.warn(
-                `User connection rate limit exceeded: ${payload.sub} (socketId: ${socket.id}, namespace: ${socket.nsp.name})`,
-              );
+              if (this.logger) {
+                this.logger.warn(
+                  'User connection rate limit exceeded',
+                  'RedisIoAdapter',
+                  {
+                    userId: payload.sub,
+                    socketId: socket.id,
+                    namespace: socket.nsp.name,
+                  },
+                );
+              }
               // Track rate limit hit metric (non-blocking)
-              void this.trackRateLimitHit('user', payload.sub);
+              void this.trackRateLimitHit('user');
               // Use return next() instead of throw for proper Socket.IO error handling
               return next(
                 new Error(
@@ -253,12 +334,26 @@ export class RedisIoAdapter extends IoAdapter {
             }
 
             // All other exceptions are Redis/network errors (not rate limit violations)
-            this.logger.error(
-              `User rate limit check failed (Redis/network error) for user ${payload.sub} (socketId: ${socket.id})`,
-              userRateLimitError instanceof Error
-                ? userRateLimitError.stack
-                : undefined,
-            );
+            if (this.logger) {
+              if (userRateLimitError instanceof Error) {
+                this.logger.error(
+                  'User rate limit check failed (Redis/network error)',
+                  userRateLimitError,
+                  'RedisIoAdapter',
+                  { userId: payload.sub, socketId: socket.id },
+                );
+              } else {
+                this.logger.error(
+                  'User rate limit check failed (Redis/network error)',
+                  'RedisIoAdapter',
+                  {
+                    userId: payload.sub,
+                    socketId: socket.id,
+                    error: String(userRateLimitError),
+                  },
+                );
+              }
+            }
 
             if (this.connectionRateLimitConfig.failClosed) {
               return next(
@@ -276,10 +371,6 @@ export class RedisIoAdapter extends IoAdapter {
           payload.sub;
         (socket.data as { userId?: string; user?: unknown }).user = user;
 
-        this.logger.debug(
-          `WebSocket authentication successful (socketId: ${socket.id}, namespace: ${socket.nsp.name}, userId: ${payload.sub})`,
-        );
-
         // Allow connection to proceed
         next();
       } catch (error) {
@@ -287,9 +378,13 @@ export class RedisIoAdapter extends IoAdapter {
           error instanceof Error ? error.message : String(error);
 
         // Log authentication failure
-        this.logger.warn(
-          `WebSocket connection rejected: ${errorMessage} (socketId: ${socket.id}, namespace: ${socket.nsp.name})`,
-        );
+        if (this.logger) {
+          this.logger.warn(
+            `WebSocket connection rejected: ${errorMessage}`,
+            'RedisIoAdapter',
+            { socketId: socket.id, namespace: socket.nsp.name },
+          );
+        }
 
         // Pass error to next() - Socket.IO will handle rejection
         // If error already has 'Unauthorized' message, use it; otherwise create a generic one
@@ -324,14 +419,8 @@ export class RedisIoAdapter extends IoAdapter {
           authMiddleware,
         );
         namespacesWithMiddleware.add(namespaceName);
-        this.logger.debug(
-          `Authentication middleware applied to namespace: ${namespaceName}`,
-        );
-      } catch (error) {
+      } catch {
         // Middleware might already be attached, ignore error
-        this.logger.debug(
-          `Middleware already attached to namespace ${namespaceName}, skipping`,
-        );
       }
     };
 
@@ -349,9 +438,12 @@ export class RedisIoAdapter extends IoAdapter {
       return namespace;
     };
 
-    this.logger.log(
-      'WebSocket authentication middleware configured for all namespaces',
-    );
+    if (this.logger) {
+      this.logger.info(
+        'WebSocket authentication middleware configured for all namespaces',
+        'RedisIoAdapter',
+      );
+    }
   }
 
   /**
@@ -366,12 +458,8 @@ export class RedisIoAdapter extends IoAdapter {
    * These counters can be exported to Prometheus for alerting/monitoring
    *
    * @param type - 'ip' or 'user'
-   * @param identifier - IP address or user ID
    */
-  private async trackRateLimitHit(
-    type: 'ip' | 'user',
-    identifier: string,
-  ): Promise<void> {
+  private async trackRateLimitHit(type: 'ip' | 'user'): Promise<void> {
     try {
       const client = this.redisService.getClient();
       const metricKey = notificationKeys.connectionRateLimitMetric(type);
@@ -380,16 +468,8 @@ export class RedisIoAdapter extends IoAdapter {
       // Increment counter and set TTL
       await client.incr(metricKey);
       await client.expire(metricKey, METRIC_TTL);
-
-      // Optional: Log for structured logging systems (SIEM, etc.)
-      this.logger.debug(
-        `Rate limit hit tracked: type=${type}, identifier=${identifier}`,
-      );
-    } catch (error) {
-      // Don't fail on metrics error - rate limiting itself is more important
-      this.logger.warn(
-        `Failed to track rate limit hit metric: ${error instanceof Error ? error.message : String(error)}`,
-      );
+    } catch {
+      // Metrics are best-effort, don't spam logs with failures
     }
   }
 
@@ -445,12 +525,28 @@ export class RedisIoAdapter extends IoAdapter {
         duration: config.connectionRateLimit.user.windowSeconds,
       });
 
-      this.logger.log('Connection rate limiters initialized successfully');
+      if (this.logger) {
+        this.logger.info(
+          'Connection rate limiters initialized successfully',
+          'RedisIoAdapter',
+        );
+      }
     } catch (error) {
-      this.logger.error(
-        'Failed to initialize connection rate limiters',
-        error instanceof Error ? error.stack : undefined,
-      );
+      if (this.logger) {
+        if (error instanceof Error) {
+          this.logger.error(
+            'Failed to initialize connection rate limiters',
+            error,
+            'RedisIoAdapter',
+          );
+        } else {
+          this.logger.error(
+            'Failed to initialize connection rate limiters',
+            'RedisIoAdapter',
+            { error: String(error) },
+          );
+        }
+      }
     }
   }
 
@@ -498,9 +594,13 @@ export class RedisIoAdapter extends IoAdapter {
     }
 
     if (!ip) {
-      this.logger.warn(
-        `Unable to extract IP address for socket ${socket.id}, using 'unknown'`,
-      );
+      if (this.logger) {
+        this.logger.warn(
+          "Unable to extract IP address for socket, using 'unknown'",
+          'RedisIoAdapter',
+          { socketId: socket.id },
+        );
+      }
       return 'unknown';
     }
 

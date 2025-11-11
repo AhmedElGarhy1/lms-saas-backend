@@ -21,6 +21,7 @@ export interface NotificationMetrics {
 
 /**
  * Log notification processing start with standardized format
+ * Only logs for large batches to avoid spam
  * @param logger - LoggerService instance
  * @param metrics - Notification metrics to log
  */
@@ -28,21 +29,25 @@ export function logNotificationStart(
   logger: LoggerService,
   metrics: NotificationMetrics,
 ): void {
-  logger.info(
-    `Starting multi-recipient processing: ${metrics.recipientCount} recipients (concurrency limit: ${metrics.concurrencyLimit})`,
-    'NotificationService',
-    {
-      eventName: metrics.eventName,
-      correlationId: metrics.correlationId,
-      recipientCount: metrics.recipientCount,
-      concurrencyLimit: metrics.concurrencyLimit,
-      centerId: metrics.centerId,
-    },
-  );
+  // Only log start for large batches (>10 recipients) to avoid log spam
+  if ((metrics.recipientCount || 0) > 10) {
+    logger.info(
+      `Starting multi-recipient processing: ${metrics.recipientCount} recipients (concurrency limit: ${metrics.concurrencyLimit})`,
+      'NotificationService',
+      {
+        eventName: metrics.eventName,
+        correlationId: metrics.correlationId,
+        recipientCount: metrics.recipientCount,
+        concurrencyLimit: metrics.concurrencyLimit,
+        centerId: metrics.centerId,
+      },
+    );
+  }
 }
 
 /**
  * Log notification processing completion with standardized format
+ * Only logs if there were failures or for large batches to avoid spam
  * @param logger - LoggerService instance
  * @param metrics - Notification metrics to log
  */
@@ -50,19 +55,25 @@ export function logNotificationComplete(
   logger: LoggerService,
   metrics: NotificationMetrics,
 ): void {
-  logger.info(
-    `Multi-recipient processing completed in ${metrics.duration}ms: ${metrics.successCount} succeeded, ${metrics.failureCount} failed`,
-    'NotificationService',
-    {
-      eventName: metrics.eventName,
-      correlationId: metrics.correlationId,
-      duration: metrics.duration,
-      successCount: metrics.successCount,
-      failureCount: metrics.failureCount,
-      recipientCount: metrics.recipientCount,
-      concurrencyLimit: metrics.concurrencyLimit,
-    },
-  );
+  // Only log completion if there were failures or for large batches (>10 recipients)
+  const hasFailures = (metrics.failureCount || 0) > 0;
+  const isLargeBatch = (metrics.recipientCount || 0) > 10;
+  
+  if (hasFailures || isLargeBatch) {
+    logger.info(
+      `Multi-recipient processing completed in ${metrics.duration}ms: ${metrics.successCount} succeeded, ${metrics.failureCount} failed`,
+      'NotificationService',
+      {
+        eventName: metrics.eventName,
+        correlationId: metrics.correlationId,
+        duration: metrics.duration,
+        successCount: metrics.successCount,
+        failureCount: metrics.failureCount,
+        recipientCount: metrics.recipientCount,
+        concurrencyLimit: metrics.concurrencyLimit,
+      },
+    );
+  }
 }
 
 /**
@@ -78,12 +89,22 @@ export function logNotificationError(
   error?: Error,
 ): void {
   const errorMessage = `Failed to process notification for recipient: userId=${metrics.recipientId}${metrics.profileId ? `, profileId=${metrics.profileId}` : ''}${metrics.profileType ? `, profileType=${metrics.profileType}` : ''}`;
-  logger.error(errorMessage, error?.stack, 'NotificationService', {
-    eventName: metrics.eventName,
-    correlationId: metrics.correlationId,
-    recipientId: metrics.recipientId,
-    profileId: metrics.profileId,
-    profileType: metrics.profileType,
-    error: metrics.error || error?.message,
-  });
+  if (error) {
+    logger.error(errorMessage, error, 'NotificationService', {
+      eventName: metrics.eventName,
+      correlationId: metrics.correlationId,
+      recipientId: metrics.recipientId,
+      profileId: metrics.profileId,
+      profileType: metrics.profileType,
+    });
+  } else {
+    logger.error(errorMessage, 'NotificationService', {
+      eventName: metrics.eventName,
+      correlationId: metrics.correlationId,
+      recipientId: metrics.recipientId,
+      profileId: metrics.profileId,
+      profileType: metrics.profileType,
+      error: metrics.error,
+    });
+  }
 }

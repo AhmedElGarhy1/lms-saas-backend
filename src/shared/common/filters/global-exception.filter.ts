@@ -4,15 +4,15 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { EnhancedErrorResponse } from '../exceptions/custom.exceptions';
 import { ErrorCode } from '../enums/error-codes.enum';
+import { LoggerService } from '@/shared/services/logger.service';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(GlobalExceptionFilter.name);
+  constructor(private readonly logger: LoggerService) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
@@ -200,12 +200,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     };
 
     if (exception instanceof HttpException) {
-      this.logger.warn('HTTP Exception occurred', errorContext);
+      this.logger.warn('HTTP Exception occurred', 'GlobalExceptionFilter', errorContext);
     } else {
-      this.logger.error('Unexpected error occurred', {
-        ...errorContext,
-        stack: exception instanceof Error ? exception.stack : undefined,
-      });
+      if (exception instanceof Error) {
+        this.logger.error('Unexpected error occurred', exception, 'GlobalExceptionFilter', errorContext);
+      } else {
+        this.logger.error('Unexpected error occurred', 'GlobalExceptionFilter', {
+          ...errorContext,
+          error: String(exception),
+        });
+      }
     }
   }
 }

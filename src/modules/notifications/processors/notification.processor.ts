@@ -125,20 +125,7 @@ export class NotificationProcessor extends WorkerHost {
           // Check if any channel succeeded
           const hasSuccess = results.some((r) => r.success);
 
-          if (hasSuccess) {
-            this.logger.debug(
-              `Notification sent successfully: ${jobId}, type: ${type}`,
-              'NotificationProcessor',
-              {
-                jobId,
-                type,
-                channel,
-                userId,
-                attempt,
-                correlationId,
-              },
-            );
-          } else {
+          if (!hasSuccess) {
             // All channels failed - log individual channel failures
             const failedChannels = results.filter((r) => !r.success);
             const errors = failedChannels

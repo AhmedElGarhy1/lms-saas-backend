@@ -1,25 +1,30 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { DatabaseSeeder } from './seeder';
-import { Logger } from '@nestjs/common';
+import { LoggerService } from '@/shared/services/logger.service';
 
 async function bootstrap() {
-  const logger = new Logger('SeedScript');
+  const app = await NestFactory.createApplicationContext(AppModule);
+  const logger = app.get(LoggerService);
 
   try {
-    logger.log('Starting database seeding process...');
+    logger.info('Starting database seeding process...', 'SeedScript');
 
-    const app = await NestFactory.createApplicationContext(AppModule);
     const seeder = app.get(DatabaseSeeder);
 
     await seeder.seed();
 
-    logger.log('Database seeding completed successfully!');
+    logger.info('Database seeding completed successfully!', 'SeedScript');
     await app.close();
 
     process.exit(0);
   } catch (error) {
-    logger.error('Error during seeding:', error);
+    if (error instanceof Error) {
+      logger.error('Error during seeding', error, 'SeedScript');
+    } else {
+      logger.error('Error during seeding', 'SeedScript', { error: String(error) });
+    }
+    await app.close();
     process.exit(1);
   }
 }

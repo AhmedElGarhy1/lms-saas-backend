@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationRegistry } from '../manifests/registry/notification-registry';
@@ -6,6 +6,7 @@ import { NotificationManifestResolver } from '../manifests/registry/notification
 import { templateExists, getTemplatePath } from '../utils/template-path.util';
 import { NotificationTemplatePath } from '../types/templates.generated';
 import { Locale } from '@/shared/common/enums/locale.enum';
+import { LoggerService } from '@/shared/services/logger.service';
 
 // Test environment detection - check NODE_ENV first (set by test-setup.ts)
 // This is the most reliable indicator since test-setup.ts runs before any tests
@@ -27,11 +28,11 @@ interface ValidationResult {
  */
 @Injectable()
 export class NotificationValidator implements OnModuleInit {
-  private readonly logger = new Logger(NotificationValidator.name);
   private readonly isCI: boolean;
 
   constructor(
     private readonly manifestResolver?: NotificationManifestResolver,
+    private readonly logger?: LoggerService,
   ) {
     // Detect CI environment - but skip if we're in test mode
     const isTestEnv = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
@@ -69,51 +70,59 @@ export class NotificationValidator implements OnModuleInit {
    * Fail-open in local dev, strict in CI
    */
   validateManifests(): void {
-    this.logger.log('Validating notification manifests...');
+    if (this.logger) {
+      this.logger.info('Validating notification manifests...', 'NotificationValidator');
+    }
 
     const result = this.performValidation();
 
     if (!result.isValid) {
       if (this.isCI) {
         // Fail in CI
-        this.logger.error(
-          '❌ Manifest validation failed in CI!',
-          'NotificationValidator',
-        );
-        this.logger.error(
-          `Errors: ${result.errors.join('; ')}`,
-          'NotificationValidator',
-        );
-        if (result.warnings.length > 0) {
-          this.logger.warn(
-            `Warnings: ${result.warnings.join('; ')}`,
+        if (this.logger) {
+          this.logger.error(
+            'Manifest validation failed in CI',
             'NotificationValidator',
+            { errors: result.errors },
           );
+          if (result.warnings.length > 0) {
+            this.logger.warn(
+              'Manifest validation warnings',
+              'NotificationValidator',
+              { warnings: result.warnings },
+            );
+          }
         }
         throw new Error(
           `Manifest validation failed: ${result.errors.join('; ')}`,
         );
       } else {
         // Warn-only in local dev
-        this.logger.warn(
-          '⚠️ Manifest validation found issues (warn-only in dev):',
-          'NotificationValidator',
-        );
-        if (result.errors.length > 0) {
-          this.logger.error(
-            `Errors: ${result.errors.join('; ')}`,
-            'NotificationValidator',
-          );
-        }
-        if (result.warnings.length > 0) {
+        if (this.logger) {
           this.logger.warn(
-            `Warnings: ${result.warnings.join('; ')}`,
+            'Manifest validation found issues (warn-only in dev)',
             'NotificationValidator',
           );
+          if (result.errors.length > 0) {
+            this.logger.error(
+              'Manifest validation errors',
+              'NotificationValidator',
+              { errors: result.errors },
+            );
+          }
+          if (result.warnings.length > 0) {
+            this.logger.warn(
+              'Manifest validation warnings',
+              'NotificationValidator',
+              { warnings: result.warnings },
+            );
+          }
         }
       }
     } else {
-      this.logger.log('✓ All notification manifests validated successfully');
+      if (this.logger) {
+        this.logger.info('All notification manifests validated successfully', 'NotificationValidator');
+      }
     }
   }
 

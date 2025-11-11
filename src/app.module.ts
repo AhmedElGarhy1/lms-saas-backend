@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { WinstonModule } from 'nest-winston';
+import { utilities as nestWinstonModuleUtilities } from 'nest-winston';
 import * as winston from 'winston';
 import { APP_INTERCEPTOR, APP_FILTER, APP_PIPE, APP_GUARD } from '@nestjs/core';
 import { Reflector } from '@nestjs/core';
@@ -64,13 +65,35 @@ import { ScheduleModule } from '@nestjs/schedule';
       validate: validateEnv,
     }),
     WinstonModule.forRoot({
+      level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.errors({ stack: true }),
+        process.env.NODE_ENV === 'production'
+          ? winston.format.json() // Structured JSON for production (ELK stack ready)
+          : nestWinstonModuleUtilities.format.nestLike('LMS', {
+              prettyPrint: true,
+              colors: true,
+            }),
+      ),
       transports: [
-        new winston.transports.Console({
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.simple(),
-          ),
-        }),
+        new winston.transports.Console(),
+        // File transport for production
+        ...(process.env.NODE_ENV === 'production'
+          ? [
+              new winston.transports.File({
+                filename: 'logs/error.log',
+                level: 'error',
+                maxsize: 5242880, // 5MB
+                maxFiles: 5,
+              }),
+              new winston.transports.File({
+                filename: 'logs/combined.log',
+                maxsize: 5242880, // 5MB
+                maxFiles: 5,
+              }),
+            ]
+          : []),
       ],
     }),
     DatabaseModule,

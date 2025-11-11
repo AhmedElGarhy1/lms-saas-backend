@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
 import { NotificationStatus } from '../enums/notification-status.enum';
@@ -15,12 +15,11 @@ import { notificationKeys } from '../utils/notification-redis-key-builder';
  */
 @Injectable()
 export class NotificationDlqCleanupJob {
-  private readonly logger = new Logger(NotificationDlqCleanupJob.name);
   private readonly retentionDays: number;
 
   constructor(
     private readonly logRepository: NotificationLogRepository,
-    private readonly loggerService: LoggerService,
+    private readonly logger: LoggerService,
     private readonly redisService: RedisService,
   ) {
     this.retentionDays = NotificationConfig.dlq.retentionDays;
@@ -33,9 +32,10 @@ export class NotificationDlqCleanupJob {
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async cleanupOldFailedJobs(): Promise<void> {
     const startTime = Date.now();
-    this.logger.log(
-      `Starting DLQ cleanup job (retention: ${this.retentionDays} days)`,
+    this.logger.info(
+      'Starting DLQ cleanup job',
       'NotificationDlqCleanupJob',
+      { retentionDays: this.retentionDays },
     );
 
     try {
@@ -59,7 +59,7 @@ export class NotificationDlqCleanupJob {
         oldEntries.length > 0 ? oldEntries[0].createdAt : null;
 
       if (countToDelete === 0) {
-        this.logger.log(
+        this.logger.info(
           'No old failed notifications to clean up',
           'NotificationDlqCleanupJob',
           {
@@ -80,8 +80,8 @@ export class NotificationDlqCleanupJob {
 
       const duration = Date.now() - startTime;
 
-      this.logger.log(
-        `DLQ cleanup completed: ${deletedCount} entries deleted`,
+      this.logger.info(
+        'DLQ cleanup completed',
         'NotificationDlqCleanupJob',
         {
           deletedCount,
@@ -89,7 +89,7 @@ export class NotificationDlqCleanupJob {
           cutoffDate: cutoffDate.toISOString(),
           oldestEntryDate: oldestEntry?.toISOString(),
           totalFailed: totalFailed.length,
-          duration: `${duration}ms`,
+          duration,
         },
       );
 
@@ -97,26 +97,37 @@ export class NotificationDlqCleanupJob {
       if (duration > 60000) {
         // More than 1 minute
         this.logger.warn(
-          `DLQ cleanup took ${duration}ms (${Math.round(duration / 1000)}s) - consider optimizing or running during lower traffic periods`,
+          'DLQ cleanup took too long - consider optimizing or running during lower traffic periods',
           'NotificationDlqCleanupJob',
           {
             duration,
             deletedCount,
+            durationSeconds: Math.round(duration / 1000),
           },
         );
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      this.logger.error(
-        `DLQ cleanup job failed: ${errorMessage}`,
-        error instanceof Error ? error.stack : undefined,
-        'NotificationDlqCleanupJob',
-        {
-          retentionDays: this.retentionDays,
-          duration: `${Date.now() - startTime}ms`,
-        },
-      );
+      if (error instanceof Error) {
+        this.logger.error(
+          'DLQ cleanup job failed',
+          error,
+          'NotificationDlqCleanupJob',
+          {
+            retentionDays: this.retentionDays,
+            duration: Date.now() - startTime,
+          },
+        );
+      } else {
+        this.logger.error(
+          'DLQ cleanup job failed',
+          'NotificationDlqCleanupJob',
+          {
+            retentionDays: this.retentionDays,
+            duration: Date.now() - startTime,
+            error: String(error),
+          },
+        );
+      }
     }
   }
 
@@ -197,10 +208,7 @@ export class NotificationDlqCleanupJob {
       }
       return null;
     } catch (error) {
-      this.logger.warn(
-        'Failed to get last cleanup run timestamp',
-        'NotificationDlqCleanupJob',
-      );
+      // Non-critical - doesn't affect functionality
       return null;
     }
   }
@@ -214,10 +222,7 @@ export class NotificationDlqCleanupJob {
       const key = notificationKeys.dlqLastCleanup();
       await client.set(key, Date.now().toString(), 'EX', 7 * 24 * 60 * 60); // 7 days TTL
     } catch (error) {
-      this.logger.warn(
-        'Failed to persist cleanup run timestamp',
-        'NotificationDlqCleanupJob',
-      );
+      // Non-critical - doesn't affect functionality
     }
   }
 }

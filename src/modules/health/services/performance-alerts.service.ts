@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 // eslint-disable-next-line no-restricted-imports
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { LoggerService } from '@/shared/services/logger.service';
 
 export interface PerformanceAlert {
   id: string;
@@ -18,7 +19,6 @@ export interface PerformanceAlert {
 
 @Injectable()
 export class PerformanceAlertsService {
-  private readonly logger = new Logger(PerformanceAlertsService.name);
   private readonly alerts: Map<string, PerformanceAlert> = new Map();
   private readonly alertThresholds = {
     slowTransaction: 2000, // 2 seconds
@@ -27,7 +27,10 @@ export class PerformanceAlertsService {
     connectionPool: 0.9, // 90% connection pool usage
   };
 
-  constructor(private readonly eventEmitter: EventEmitter2) {}
+  constructor(
+    private readonly eventEmitter: EventEmitter2,
+    private readonly logger: LoggerService,
+  ) {}
 
   /**
    * Check for slow transactions and create alerts
@@ -126,9 +129,17 @@ export class PerformanceAlertsService {
 
     // Log the alert
     if (alert.severity === 'critical') {
-      this.logger.error(`CRITICAL ALERT: ${alert.message}`, alert.metrics);
+      this.logger.error(
+        `CRITICAL ALERT: ${alert.message}`,
+        'PerformanceAlertsService',
+        alert.metrics,
+      );
     } else {
-      this.logger.warn(`WARNING: ${alert.message}`, alert.metrics);
+      this.logger.warn(
+        `WARNING: ${alert.message}`,
+        'PerformanceAlertsService',
+        alert.metrics,
+      );
     }
 
     // Emit event for external monitoring systems
@@ -152,7 +163,10 @@ export class PerformanceAlertsService {
     const alert = this.alerts.get(alertId);
     if (alert) {
       alert.resolved = true;
-      this.logger.log(`Alert resolved: ${alert.message}`);
+      this.logger.info(
+        `Alert resolved: ${alert.message}`,
+        'PerformanceAlertsService',
+      );
       await this.eventEmitter.emitAsync('performance.alert.resolved', alert);
     }
   }
@@ -191,6 +205,10 @@ export class PerformanceAlertsService {
    */
   updateThresholds(thresholds: Partial<typeof this.alertThresholds>): void {
     Object.assign(this.alertThresholds, thresholds);
-    this.logger.log('Alert thresholds updated', this.alertThresholds);
+    this.logger.info(
+      'Alert thresholds updated',
+      'PerformanceAlertsService',
+      this.alertThresholds,
+    );
   }
 }

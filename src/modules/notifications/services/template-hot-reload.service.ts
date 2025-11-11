@@ -2,7 +2,6 @@ import {
   Injectable,
   OnModuleInit,
   OnModuleDestroy,
-  Logger,
 } from '@nestjs/common';
 import { watch, FSWatcher } from 'fs';
 import { join } from 'path';
@@ -17,13 +16,12 @@ import { Config } from '@/shared/config/config';
  */
 @Injectable()
 export class TemplateHotReloadService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(TemplateHotReloadService.name);
   private watcher?: FSWatcher;
   private readonly templateDir: string;
 
   constructor(
     private readonly redisCache: RedisTemplateCacheService,
-    private readonly loggerService: LoggerService,
+    private readonly logger: LoggerService,
   ) {
     this.templateDir = join(process.cwd(), 'src/i18n/notifications');
   }
@@ -34,12 +32,10 @@ export class TemplateHotReloadService implements OnModuleInit, OnModuleDestroy {
   onModuleInit(): void {
     if (Config.app.nodeEnv === 'development') {
       this.watchTemplates();
-      this.logger.log(
-        `Template hot reload enabled. Watching: ${this.templateDir}`,
-      );
-    } else {
-      this.logger.debug(
-        'Template hot reload disabled (not in development mode)',
+      this.logger.info(
+        'Template hot reload enabled',
+        'TemplateHotReloadService',
+        { templateDir: this.templateDir },
       );
     }
   }
@@ -62,18 +58,34 @@ export class TemplateHotReloadService implements OnModuleInit, OnModuleDestroy {
       );
 
       this.watcher.on('error', (error) => {
-        this.logger.error(
-          `Template watcher error: ${error.message}`,
-          error.stack,
-          'TemplateHotReloadService',
-        );
+        if (error instanceof Error) {
+          this.logger.error(
+            'Template watcher error',
+            error,
+            'TemplateHotReloadService',
+          );
+        } else {
+          this.logger.error(
+            'Template watcher error',
+            'TemplateHotReloadService',
+            { error: String(error) },
+          );
+        }
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to initialize template watcher: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error.stack : undefined,
-        'TemplateHotReloadService',
-      );
+      if (error instanceof Error) {
+        this.logger.error(
+          'Failed to initialize template watcher',
+          error,
+          'TemplateHotReloadService',
+        );
+      } else {
+        this.logger.error(
+          'Failed to initialize template watcher',
+          'TemplateHotReloadService',
+          { error: String(error) },
+        );
+      }
     }
   }
 
@@ -89,21 +101,26 @@ export class TemplateHotReloadService implements OnModuleInit, OnModuleDestroy {
 
       // Clear cache for this specific template
       await this.redisCache.clearTemplateCache(relativePath);
-
-      this.logger.debug(
-        `Template hot reloaded: ${relativePath}`,
-        'TemplateHotReloadService',
-        { filePath: relativePath },
-      );
     } catch (error) {
-      this.logger.warn(
-        `Failed to reload template: ${filePath}`,
-        'TemplateHotReloadService',
-        {
-          filePath,
-          error: error instanceof Error ? error.message : String(error),
-        },
-      );
+      if (error instanceof Error) {
+        this.logger.warn(
+          'Failed to reload template',
+          'TemplateHotReloadService',
+          {
+            filePath,
+            error: error.message,
+          },
+        );
+      } else {
+        this.logger.warn(
+          'Failed to reload template',
+          'TemplateHotReloadService',
+          {
+            filePath,
+            error: String(error),
+          },
+        );
+      }
     }
   }
 
@@ -113,7 +130,6 @@ export class TemplateHotReloadService implements OnModuleInit, OnModuleDestroy {
   onModuleDestroy(): void {
     if (this.watcher) {
       this.watcher.close();
-      this.logger.debug('Template watcher closed', 'TemplateHotReloadService');
     }
   }
 }

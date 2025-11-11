@@ -138,7 +138,7 @@ export class HealthService {
 
       const responseTime = Date.now() - startTime;
 
-      this.logger.debug('Health check completed', undefined, {
+      this.logger.debug('Health check completed', 'HealthService', {
         status: overallStatus,
         responseTime,
         checks: {
@@ -170,10 +170,13 @@ export class HealthService {
         },
       };
     } catch (error) {
-      this.logger.error('Health check failed', undefined, {
-        error: error.message,
-        stack: error.stack,
-      } as any);
+      if (error instanceof Error) {
+        this.logger.error('Health check failed', error, 'HealthService', {});
+      } else {
+        this.logger.error('Health check failed', 'HealthService', {
+          error: String(error),
+        });
+      }
 
       return {
         status: 'unhealthy',

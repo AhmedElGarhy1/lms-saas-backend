@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ActivityLog } from '../entities/activity-log.entity';
 import { CreateActivityLogDto } from '../dto/create-activity-log.dto';
 import { ActivityLogRepository } from '../repositories/activity-log.repository';
@@ -7,12 +7,14 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateActivityLogsDto } from '../dto/paginate-activity-logs.dto';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { AuthenticationFailedException } from '@/shared/common/exceptions/custom.exceptions';
+import { LoggerService } from '@/shared/services/logger.service';
 
 @Injectable()
 export class ActivityLogService {
-  private readonly logger = new Logger(ActivityLogService.name);
-
-  constructor(private readonly activityLogRepository: ActivityLogRepository) {}
+  constructor(
+    private readonly activityLogRepository: ActivityLogRepository,
+    private readonly logger: LoggerService,
+  ) {}
 
   private async createActivityLog(
     dto: CreateActivityLogDto,
@@ -40,38 +42,36 @@ export class ActivityLogService {
         userAgent,
       });
 
-      try {
-        this.logger.log(`Activity logged: ${dto.type}`, {
-          activityId: activityLog.id,
-          actorId,
-          centerId,
-          requestId: requestContext?.requestId,
-          ipAddress,
-        });
-      } catch {
-        // Fallback to console if logger fails
-        console.log(`Activity logged: ${dto.type}`, {
-          activityId: activityLog.id,
-          actorId,
-          centerId,
-          requestId: requestContext?.requestId,
-          ipAddress,
-        });
-      }
+      // Logger is fault-tolerant, no try-catch needed
+      this.logger.info(`Activity logged: ${dto.type}`, 'ActivityLogService', {
+        activityId: activityLog.id,
+        actorId,
+        centerId,
+        requestId: requestContext?.requestId,
+        ipAddress,
+      });
 
       return activityLog;
     } catch (error: unknown) {
-      try {
-        this.logger.error('Failed to create activity log', {
-          error: error instanceof Error ? error.message : String(error),
-          dto,
-        });
-      } catch {
-        // Fallback to console if logger fails
-        console.error('Failed to create activity log', {
-          error: error instanceof Error ? error.message : String(error),
-          dto,
-        });
+      // Logger is fault-tolerant, no try-catch needed
+      if (error instanceof Error) {
+        this.logger.error(
+          'Failed to create activity log',
+          error,
+          'ActivityLogService',
+          {
+            type: dto.type,
+          },
+        );
+      } else {
+        this.logger.error(
+          'Failed to create activity log',
+          'ActivityLogService',
+          {
+            type: dto.type,
+            error: String(error),
+          },
+        );
       }
       throw error;
     }
@@ -100,10 +100,22 @@ export class ActivityLogService {
         });
       }
     } catch (error: unknown) {
-      this.logger.error('Failed to log activity', {
-        type,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      // Logger is fault-tolerant, no try-catch needed
+      if (error instanceof Error) {
+        this.logger.error(
+          'Failed to log activity',
+          error,
+          'ActivityLogService',
+          {
+            type,
+          },
+        );
+      } else {
+        this.logger.error('Failed to log activity', 'ActivityLogService', {
+          type,
+          error: String(error),
+        });
+      }
       throw error;
     }
   }

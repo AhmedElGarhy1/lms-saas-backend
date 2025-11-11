@@ -26,14 +26,18 @@ export class NotificationErrorLogger {
     service: string,
     context: ErrorLogContext,
   ): void {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const stack = error instanceof Error ? error.stack : undefined;
-
-    logger.error(message, stack, service, {
-      ...context,
-      error: errorMessage,
-      timestamp: new Date().toISOString(),
-    });
+    if (error instanceof Error) {
+      logger.error(message, error, service, {
+        ...context,
+        timestamp: new Date().toISOString(),
+      });
+    } else {
+      logger.error(message, service, {
+        ...context,
+        error: String(error),
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 
   /**

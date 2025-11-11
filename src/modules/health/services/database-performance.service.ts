@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { Config } from '@/shared/config/config';
+import { LoggerService } from '@/shared/services/logger.service';
 
 export interface QueryPerformanceMetrics {
   query: string;
@@ -13,7 +14,6 @@ export interface QueryPerformanceMetrics {
 
 @Injectable()
 export class DatabasePerformanceService {
-  private readonly logger = new Logger(DatabasePerformanceService.name);
   private readonly slowQueryThreshold = 1000; // 1 second
   private readonly queryMetrics: QueryPerformanceMetrics[] = [];
   private readonly enableQueryLogging: boolean;
@@ -21,6 +21,7 @@ export class DatabasePerformanceService {
   constructor(
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    private readonly logger: LoggerService,
   ) {
     // Only enable query logging if explicitly enabled via environment variable
     // Default: false (respects base config which only logs errors/warnings)
@@ -36,8 +37,9 @@ export class DatabasePerformanceService {
         logging: ['query', 'error', 'warn'],
         logger: 'advanced-console',
       });
-      this.logger.log(
+      this.logger.info(
         'Database query logging enabled via DB_ENABLE_QUERY_LOGGING',
+        'DatabasePerformanceService',
       );
     }
 
@@ -86,12 +88,16 @@ export class DatabasePerformanceService {
 
     // Log slow queries
     if (metrics.duration > this.slowQueryThreshold) {
-      this.logger.warn(`SLOW QUERY DETECTED: ${metrics.duration}ms`, {
-        query: this.sanitizeQuery(metrics.query),
-        duration: metrics.duration,
-        parameters: metrics.parameters,
-        error: metrics.error,
-      });
+      this.logger.warn(
+        'Slow query detected',
+        'DatabasePerformanceService',
+        {
+          query: this.sanitizeQuery(metrics.query),
+          duration: metrics.duration,
+          parameters: metrics.parameters,
+          error: metrics.error,
+        },
+      );
     }
   }
 

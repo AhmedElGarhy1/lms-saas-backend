@@ -112,16 +112,27 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
           onProgress(totalProcessed, total);
         }
       } catch (error) {
-        this.logger.error(
-          `Bulk insert batch failed: ${error.message}`,
-          error.stack,
-          undefined,
-          {
-            entity: this.getRepository().metadata.name,
-            totalProcessed,
-            total,
-          },
-        );
+        if (error instanceof Error) {
+          this.logger.error(
+            `Bulk insert batch failed: ${error.message}`,
+            error,
+            this.getRepository().metadata.name,
+            {
+              totalProcessed,
+              total,
+            },
+          );
+        } else {
+          this.logger.error(
+            `Bulk insert batch failed`,
+            this.getRepository().metadata.name,
+            {
+              totalProcessed,
+              total,
+              error: String(error),
+            },
+          );
+        }
         throw error;
       }
     }
@@ -167,8 +178,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         totalAffected += affected;
         totalProcessed += batch.length;
 
-        this.logger.debug('Bulk update batch completed', undefined, {
-          entity: repo.metadata.name,
+        this.logger.debug('Bulk update batch completed', repo.metadata.name, {
           batchNumber,
           batchSize: batch.length,
           affected,
@@ -180,18 +190,31 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
           onProgress(totalProcessed, total);
         }
       } catch (error) {
-        this.logger.error(
-          `Bulk update batch failed: ${error.message}`,
-          error.stack,
-          undefined,
-          {
-            entity: repo.metadata.name,
-            batchNumber,
-            batchSize: batch.length,
-            totalProcessed,
-            total,
-          },
-        );
+        if (error instanceof Error) {
+          this.logger.error(
+            `Bulk update batch failed: ${error.message}`,
+            error,
+            repo.metadata.name,
+            {
+              batchNumber,
+              batchSize: batch.length,
+              totalProcessed,
+              total,
+            },
+          );
+        } else {
+          this.logger.error(
+            `Bulk update batch failed`,
+            repo.metadata.name,
+            {
+              batchNumber,
+              batchSize: batch.length,
+              totalProcessed,
+              total,
+              error: String(error),
+            },
+          );
+        }
         throw error;
       }
     }
@@ -228,8 +251,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         totalAffected += affected;
         totalProcessed += batch.length;
 
-        this.logger.debug('Bulk delete batch completed', undefined, {
-          entity: repo.metadata.name,
+        this.logger.debug('Bulk delete batch completed', repo.metadata.name, {
           batchNumber,
           batchSize: batch.length,
           affected,
@@ -241,18 +263,31 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
           onProgress(totalProcessed, total);
         }
       } catch (error) {
-        this.logger.error(
-          `Bulk delete batch failed: ${error.message}`,
-          error.stack,
-          undefined,
-          {
-            entity: repo.metadata.name,
-            batchNumber,
-            batchSize: batch.length,
-            totalProcessed,
-            total,
-          },
-        );
+        if (error instanceof Error) {
+          this.logger.error(
+            `Bulk delete batch failed: ${error.message}`,
+            error,
+            repo.metadata.name,
+            {
+              batchNumber,
+              batchSize: batch.length,
+              totalProcessed,
+              total,
+            },
+          );
+        } else {
+          this.logger.error(
+            `Bulk delete batch failed`,
+            repo.metadata.name,
+            {
+              batchNumber,
+              batchSize: batch.length,
+              totalProcessed,
+              total,
+              error: String(error),
+            },
+          );
+        }
         throw error;
       }
     }
@@ -275,7 +310,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const count = await queryBuilder.getCount();
     const duration = Date.now() - startTime;
 
-    this.logger.debug('Enhanced count query executed', undefined, {
+    this.logger.debug('Enhanced count query executed', repo.metadata.name, {
       entity: repo.metadata.name,
       duration,
       count,
@@ -300,7 +335,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const exists = !!result;
     const duration = Date.now() - startTime;
 
-    this.logger.debug('Enhanced exists query executed', undefined, {
+    this.logger.debug('Enhanced exists query executed', this.getRepository().metadata.name, {
       entity: repo.metadata.name,
       duration,
       exists,

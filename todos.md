@@ -70,15 +70,9 @@
 [ ] consider using prisma instead of typeorm
 [ ] check create user optionality
 [ ] fix actor is required in all activity logs conside made system activities
+[ ] add rate limit module
 
-[ ] disable center actions in case of inactive
-Caching in RecipientResolverService - Cache frequent center queries (centerId + profileType) for a few minutes -⚙️ Medium - When centers have 1k+ users
-[] Template existence validation - Ensure template files exist before dispatching - ⚙️ Low When template library grows
-[] Dynamic concurrency scaling - Adjust concurrency automatically based on system load - ⚙️ Low - Under heavy background queue load
-[] Bulk notification insertion - Batch insert DB writes for IN_APP channel - ⚙️ Medium–High - If DB write latency increases
-[] NotificationPolicyService - Central config for “who gets notified for what” - ⚙️ High When event count > 10 types
-
-[ ] see who we handle and what is hte diffrence between logs and activity_logs and notifications
+[ ] see who we handle and what is hte diffrence between logs and activity_logs and notification_logs
 [ ] update notifications to cover all existing modules events
 [x] (frontend) Data flow: ⚠️ Needs standardization (28 violations)
 [x] notifications register user connection first when he opens (there is a problem in sending notifications because of redis not found user connection)
@@ -89,3 +83,5 @@ Caching in RecipientResolverService - Cache frequent center queries (centerId + 
 [x] standrize redis keys for easy mantainnce
 [x] optimize notifications history meta filed it talkes tooooo much
 [-] fix frontend build issue
+
+[] (later if size is big) Bulk notification insertion - Batch insert DB writes for IN_APP channel - ⚙️ Medium–High - If DB write latency increases

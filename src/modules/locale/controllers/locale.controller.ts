@@ -38,10 +38,7 @@ export class LocaleController {
   })
   getTranslations(@Query('lang') lang?: string) {
     const translations = this.localeService.getTranslations(lang);
-    return ControllerResponse.success(
-      translations,
-      this.i18n.translate('api.success.dataRetrieved'),
-    );
+    return translations;
   }
 
   @Get('me')
@@ -52,6 +49,7 @@ export class LocaleController {
   })
   getUserLocale() {
     const userLocale = RequestContext.get().locale;
+
     return ControllerResponse.success(
       userLocale,
       this.i18n.translate('api.success.dataRetrieved'),
