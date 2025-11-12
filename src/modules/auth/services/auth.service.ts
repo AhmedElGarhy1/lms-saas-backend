@@ -41,7 +41,7 @@ import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.
 
 @Injectable()
 export class AuthService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(AuthService.name);
 
   constructor(
     private readonly userService: UserService,
@@ -52,8 +52,6 @@ export class AuthService extends BaseService {
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   async validateUser(

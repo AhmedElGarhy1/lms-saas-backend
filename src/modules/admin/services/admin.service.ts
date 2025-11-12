@@ -18,7 +18,7 @@ import {
 
 @Injectable()
 export class AdminService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(AdminService.name);
 
   constructor(
     private readonly adminRepository: AdminRepository,
@@ -27,8 +27,6 @@ export class AdminService extends BaseService {
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   async createAdmin(dto: CreateAdminDto, actor: ActorUser): Promise<void> {

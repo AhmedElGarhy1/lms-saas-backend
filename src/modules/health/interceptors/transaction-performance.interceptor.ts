@@ -16,15 +16,12 @@ export class TransactionPerformanceInterceptor implements NestInterceptor {
     string,
     { success: number; error: number }
   >();
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(TransactionPerformanceInterceptor.name);
 
   constructor(
     private readonly alertsService: PerformanceAlertsService,
     private readonly moduleRef: ModuleRef,
   ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {

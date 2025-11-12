@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
 import { NotificationStatus } from '../enums/notification-status.enum';
@@ -16,16 +15,12 @@ import { notificationKeys } from '../utils/notification-redis-key-builder';
 @Injectable()
 export class NotificationDlqCleanupJob {
   private readonly retentionDays: number;
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(NotificationDlqCleanupJob.name);
 
   constructor(
     private readonly logRepository: NotificationLogRepository,
-    private readonly moduleRef: ModuleRef,
     private readonly redisService: RedisService,
   ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     this.retentionDays = NotificationConfig.dlq.retentionDays;
   }
 

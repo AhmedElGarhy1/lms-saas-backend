@@ -96,15 +96,13 @@ export interface ExternalHealth {
 
 @Injectable()
 export class HealthService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(HealthService.name);
   private readonly startTime = Date.now();
   private readonly version = process.env.npm_package_version || '1.0.0';
   private readonly environment = process.env.NODE_ENV || 'development';
 
   constructor(@Inject(DataSource) private readonly dataSource: DataSource) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   async getHealthStatus(): Promise<HealthStatus> {

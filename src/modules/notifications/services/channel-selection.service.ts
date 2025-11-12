@@ -32,7 +32,7 @@ interface EventContext {
 
 @Injectable()
 export class ChannelSelectionService extends BaseService implements OnModuleDestroy {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(ChannelSelectionService.name);
   private readonly activityCache = new Map<
     string,
     { isActive: boolean; timestamp: number }
@@ -45,8 +45,6 @@ export class ChannelSelectionService extends BaseService implements OnModuleDest
     private readonly userRepository: UserRepository,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     // Cache TTL: 1 hour (in milliseconds)
     this.cacheTTL = CACHE_CONSTANTS.ACTIVITY_CACHE_TTL_MS;
     // Inactivity threshold from config

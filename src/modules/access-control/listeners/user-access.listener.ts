@@ -12,16 +12,13 @@ import { AccessControlEvents } from '@/shared/events/access-control.events.enum'
 
 @Injectable()
 export class UserAccessListener {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(UserAccessListener.name);
 
   constructor(
     private readonly moduleRef: ModuleRef,
     private readonly accessControlService: AccessControlService,
     private readonly activityLogService: ActivityLogService,
   ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   @OnEvent(AccessControlEvents.GRANT_USER_ACCESS)

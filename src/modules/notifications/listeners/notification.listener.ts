@@ -25,7 +25,7 @@ import { NotificationEvent } from '../types/notification-event.types';
 
 @Injectable()
 export class NotificationListener {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(NotificationListener.name);
 
   constructor(
     private readonly notificationService: NotificationService,
@@ -34,9 +34,6 @@ export class NotificationListener {
     private readonly centersService: CentersService,
     private readonly manifestResolver: NotificationManifestResolver,
   ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   /**

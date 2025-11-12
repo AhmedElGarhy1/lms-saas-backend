@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import * as nodemailer from 'nodemailer';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
 import { EmailNotificationPayload } from '../types/notification-payload.interface';
@@ -13,15 +12,11 @@ export class EmailAdapter
   implements NotificationAdapter<EmailNotificationPayload>
 {
   private transporter: nodemailer.Transporter;
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(EmailAdapter.name);
 
   constructor(
-    private readonly moduleRef: ModuleRef,
     private readonly timeoutConfig: TimeoutConfigService,
   ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     this.transporter = nodemailer.createTransport({
       host: Config.email.host,
       port: Config.email.port,

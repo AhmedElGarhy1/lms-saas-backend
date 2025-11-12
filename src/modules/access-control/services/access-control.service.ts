@@ -30,7 +30,7 @@ import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
 export class AccessControlService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(AccessControlService.name);
 
   constructor(
     @Inject(forwardRef(() => AccessControlHelperService))
@@ -41,8 +41,6 @@ export class AccessControlService extends BaseService {
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   async grantUserAccess(body: UserAccessDto): Promise<void> {

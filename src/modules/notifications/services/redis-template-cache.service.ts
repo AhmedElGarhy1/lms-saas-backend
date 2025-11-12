@@ -31,7 +31,7 @@ import * as Handlebars from 'handlebars';
  */
 @Injectable()
 export class RedisTemplateCacheService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(RedisTemplateCacheService.name);
   private readonly CACHE_TTL: number;
 
   // In-memory cache for compiled templates (per-instance)
@@ -44,8 +44,6 @@ export class RedisTemplateCacheService extends BaseService {
     private readonly redisService: RedisService,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     // Get TTL from NotificationConfig
     this.CACHE_TTL = NotificationConfig.templateCacheTtlSeconds;
   }

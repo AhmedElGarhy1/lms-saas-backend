@@ -46,7 +46,7 @@ export class InAppAdapter
 {
   private readonly maxRetries: number;
   private readonly maxRetryDelayMs: number;
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(InAppAdapter.name);
 
   constructor(
     private readonly notificationRepository: NotificationRepository,
@@ -56,9 +56,6 @@ export class InAppAdapter
     private readonly logRepository: NotificationLogRepository,
     private readonly metricsService: NotificationMetricsService,
   ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     // Load retry configuration from Config (IN_APP-specific for WebSocket delivery)
     this.maxRetries = NotificationConfig.inAppRetry.maxAttempts;
     this.maxRetryDelayMs = NotificationConfig.inAppRetry.maxDelayMs;

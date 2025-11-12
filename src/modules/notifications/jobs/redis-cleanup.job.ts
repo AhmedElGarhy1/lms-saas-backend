@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { notificationKeys } from '../utils/notification-redis-key-builder';
@@ -21,18 +20,14 @@ import { REDIS_CONSTANTS } from '../constants/notification.constants';
  */
 @Injectable()
 export class RedisCleanupJob {
-  private readonly staleTTLThreshold: number = REDIS_CONSTANTS.STALE_TTL_THRESHOLD_SECONDS;
-  private readonly logger: Logger;
+  private readonly staleTTLThreshold: number =
+    REDIS_CONSTANTS.STALE_TTL_THRESHOLD_SECONDS;
+  private readonly logger: Logger = new Logger(RedisCleanupJob.name);
 
   constructor(
     private readonly redisService: RedisService,
     private readonly metricsService: NotificationMetricsService,
-    private readonly moduleRef: ModuleRef,
-  ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
-  }
+  ) {}
 
   /**
    * Cleanup stale socket connections every hour
@@ -139,7 +134,9 @@ export class RedisCleanupJob {
           }
 
           // Log connection stats for monitoring
-          if (socketIds.length > REDIS_CONSTANTS.HIGH_CONNECTION_COUNT_THRESHOLD) {
+          if (
+            socketIds.length > REDIS_CONSTANTS.HIGH_CONNECTION_COUNT_THRESHOLD
+          ) {
             stats.warnings++;
             this.logger.warn(
               `High connection count detected for user - potential leak - userId: ${userId}, connectionCount: ${socketIds.length}, key: ${key}, ttl: ${ttl}`,

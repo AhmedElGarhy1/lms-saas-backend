@@ -38,7 +38,7 @@ import {
 
 @Injectable()
 export class UserService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(UserService.name);
 
   constructor(
     private readonly userRepository: UserRepository,
@@ -52,8 +52,6 @@ export class UserService extends BaseService {
     private readonly eventEmitter: TypeSafeEventEmitter,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   async changePassword(

@@ -8,12 +8,9 @@ import { Config } from '@/shared/config/config';
 export class TwilioWhatsAppProvider implements WhatsAppProvider {
   private twilioClient: twilio.Twilio | null = null;
   private readonly fromNumber: string | null;
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(TwilioWhatsAppProvider.name);
 
   constructor(private readonly moduleRef: ModuleRef) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     const accountSid = Config.twilio.accountSid;
     const authToken = Config.twilio.authToken;
     this.fromNumber = Config.twilio.whatsappNumber || null;

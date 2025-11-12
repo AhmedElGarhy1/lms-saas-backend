@@ -21,15 +21,13 @@ export enum CircuitState {
  */
 @Injectable()
 export class NotificationCircuitBreakerService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(NotificationCircuitBreakerService.name);
   private readonly errorThreshold: number;
   private readonly windowSeconds: number;
   private readonly resetTimeoutSeconds: number;
 
   constructor(private readonly redisService: RedisService) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     this.errorThreshold = NotificationConfig.circuitBreaker.errorThreshold;
     this.windowSeconds = NotificationConfig.circuitBreaker.windowSeconds;
     this.resetTimeoutSeconds =

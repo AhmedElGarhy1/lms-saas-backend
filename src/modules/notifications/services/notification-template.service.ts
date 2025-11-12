@@ -14,14 +14,12 @@ import { resolveTemplatePathWithFallback } from '../utils/template-path.util';
 
 @Injectable()
 export class NotificationTemplateService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(NotificationTemplateService.name);
 
   constructor(
     private readonly redisCache: RedisTemplateCacheService,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   /**

@@ -66,7 +66,7 @@ interface ChannelResult {
  */
 @Injectable()
 export class NotificationSenderService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(NotificationSenderService.name);
   private adapterRegistry: Map<NotificationChannel, NotificationAdapter>;
   private readonly sendMultipleConcurrency: number;
 
@@ -84,8 +84,6 @@ export class NotificationSenderService extends BaseService {
     private readonly circuitBreaker?: NotificationCircuitBreakerService,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     // Initialize adapter registry
     this.adapterRegistry = new Map<NotificationChannel, NotificationAdapter>([
       [NotificationChannel.EMAIL, emailAdapter],

@@ -23,7 +23,7 @@ import { RolesRepository } from '../repositories/roles.repository';
 
 @Injectable()
 export class RoleListener {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(RoleListener.name);
 
   constructor(
     private readonly moduleRef: ModuleRef,
@@ -32,9 +32,6 @@ export class RoleListener {
     private readonly profileRoleRepository: ProfileRoleRepository,
     private readonly rolesRepository: RolesRepository,
   ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   @OnEvent(AccessControlEvents.ASSIGN_ROLE)

@@ -25,15 +25,13 @@ import { AudienceId } from '../types/audience.types';
  */
 @Injectable()
 export class NotificationRenderer extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(NotificationRenderer.name);
 
   constructor(
     private readonly manifestResolver: NotificationManifestResolver,
     private readonly templateService: NotificationTemplateService,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   /**

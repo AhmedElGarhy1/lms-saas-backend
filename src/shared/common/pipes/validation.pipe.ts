@@ -18,16 +18,12 @@ import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class CustomValidationPipe implements PipeTransform<any> {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(CustomValidationPipe.name);
 
   constructor(
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly moduleRef: ModuleRef,
-  ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
-  }
+  ) {}
 
   async transform(value: any, { metatype }: ArgumentMetadata) {
     if (!metatype || !this.toValidate(metatype)) {

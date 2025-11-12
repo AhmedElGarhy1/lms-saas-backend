@@ -47,15 +47,13 @@ export interface NotificationProcessingContext {
  */
 @Injectable()
 export class NotificationPipelineService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(NotificationPipelineService.name);
 
   constructor(
     private readonly channelSelectionService: ChannelSelectionService,
     private readonly manifestResolver: NotificationManifestResolver,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   /**

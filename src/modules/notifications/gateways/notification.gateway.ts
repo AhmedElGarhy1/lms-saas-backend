@@ -47,15 +47,12 @@ export class NotificationGateway
   private readonly removeSocketScript: string;
   private readonly connectionsCounterKey: string;
   private readonly rateLimiter: SlidingWindowRateLimiter;
-  private readonly loggerService: Logger;
+  private readonly loggerService: Logger = new Logger(NotificationGateway.name);
 
   constructor(
     private readonly redisService: RedisService,
     private readonly metricsService: NotificationMetricsService,
   ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.loggerService = new Logger(context);
 
     // Load configuration from factory
     this.config = notificationGatewayConfig();

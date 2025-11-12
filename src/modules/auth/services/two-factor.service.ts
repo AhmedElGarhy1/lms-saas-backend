@@ -9,12 +9,10 @@ import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
 export class TwoFactorService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(TwoFactorService.name);
 
   constructor() {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   /**

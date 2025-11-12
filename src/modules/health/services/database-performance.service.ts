@@ -14,7 +14,7 @@ export interface QueryPerformanceMetrics {
 
 @Injectable()
 export class DatabasePerformanceService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(DatabasePerformanceService.name);
   private readonly slowQueryThreshold = 1000; // 1 second
   private readonly queryMetrics: QueryPerformanceMetrics[] = [];
   private readonly enableQueryLogging: boolean;
@@ -24,8 +24,6 @@ export class DatabasePerformanceService extends BaseService {
     private readonly dataSource: DataSource,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     // Only enable query logging if explicitly enabled via environment variable
     // Default: false (respects base config which only logs errors/warnings)
     this.enableQueryLogging = Config.database.enableQueryLogging;

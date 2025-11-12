@@ -20,14 +20,12 @@ export class TemplateHotReloadService
   extends BaseService
   implements OnModuleInit, OnModuleDestroy
 {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(TemplateHotReloadService.name);
   private watcher?: FSWatcher;
   private readonly templateDir: string;
 
   constructor(private readonly redisCache: RedisTemplateCacheService) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     this.templateDir = join(process.cwd(), 'src/i18n/notifications');
   }
 

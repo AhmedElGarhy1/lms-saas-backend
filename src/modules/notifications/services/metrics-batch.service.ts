@@ -35,7 +35,7 @@ export class MetricsBatchService
   extends BaseService
   implements OnModuleDestroy
 {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(MetricsBatchService.name);
   private readonly METRIC_TTL = 30 * 24 * 60 * 60; // 30 days
   private readonly batchSize: number;
   private readonly flushIntervalMs: number;
@@ -51,8 +51,6 @@ export class MetricsBatchService
 
   constructor(private readonly redisService: RedisService) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     this.batchSize = NotificationConfig.metricsBatchSize;
     this.flushIntervalMs = NotificationConfig.metricsFlushIntervalMs;
 

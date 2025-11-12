@@ -26,7 +26,7 @@ import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
 export class AccessControlHelperService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(AccessControlHelperService.name);
 
   constructor(
     private readonly profileRoleRepository: ProfileRoleRepository,
@@ -38,8 +38,6 @@ export class AccessControlHelperService extends BaseService {
     private readonly userProfileService: UserProfileService,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   /**

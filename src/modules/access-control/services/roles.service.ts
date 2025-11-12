@@ -23,7 +23,7 @@ import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
 export class RolesService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(RolesService.name);
 
   constructor(
     private readonly rolesRepository: RolesRepository,
@@ -33,8 +33,6 @@ export class RolesService extends BaseService {
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   async getMyPermissions(actor: ActorUser) {

@@ -6,7 +6,6 @@ import { NotificationSenderService } from '../services/notification-sender.servi
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { ChannelRetryStrategyService } from '../services/channel-retry-strategy.service';
-import { NotificationAlertService } from '../services/notification-alert.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationStatus } from '../enums/notification-status.enum';
@@ -27,7 +26,6 @@ describe('NotificationProcessor', () => {
   let mockMetrics: NotificationMetricsService;
   let mockRetryStrategy: jest.Mocked<ChannelRetryStrategyService>;
   let fakeQueue: FakeQueue;
-  let mockAlertService: jest.Mocked<NotificationAlertService>;
 
   beforeEach(async () => {
     // Ensure test environment
@@ -65,10 +63,6 @@ describe('NotificationProcessor', () => {
       }),
     } as any;
 
-    mockAlertService = {
-      checkQueueHealth: jest.fn().mockResolvedValue(undefined),
-    } as any;
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationProcessor,
@@ -91,10 +85,6 @@ describe('NotificationProcessor', () => {
         {
           provide: getQueueToken('notifications'),
           useValue: fakeQueue,
-        },
-        {
-          provide: NotificationAlertService,
-          useValue: mockAlertService,
         },
       ],
     }).compile();

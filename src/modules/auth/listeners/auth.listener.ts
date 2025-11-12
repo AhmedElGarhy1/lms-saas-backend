@@ -11,16 +11,13 @@ import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 @Injectable()
 export class AuthListener {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(AuthListener.name);
 
   constructor(
     private readonly moduleRef: ModuleRef,
     private readonly activityLogService: ActivityLogService,
     private readonly userService: UserService,
   ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   @OnEvent(AuthEvents.USER_LOGGED_OUT)

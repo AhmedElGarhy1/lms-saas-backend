@@ -20,7 +20,7 @@ import { InAppNotificationService } from '@/modules/notifications/services/in-ap
 
 @Injectable()
 export class UserProfileService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(UserProfileService.name);
 
   constructor(
     private readonly userProfileRepository: UserProfileRepository,
@@ -34,8 +34,6 @@ export class UserProfileService extends BaseService {
     private readonly inAppNotificationService?: InAppNotificationService,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   async listProfiles(actorUser: ActorUser): Promise<UserProfile[]> {

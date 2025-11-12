@@ -12,12 +12,10 @@ import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class ActivityLogService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(ActivityLogService.name);
 
   constructor(private readonly activityLogRepository: ActivityLogRepository) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   private async createActivityLog(

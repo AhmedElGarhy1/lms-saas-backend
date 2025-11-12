@@ -8,12 +8,10 @@ import { PermissionScope } from '../constants/permissions';
 
 @Injectable()
 export class PermissionService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(PermissionService.name);
 
   constructor(private readonly permissionRepository: PermissionRepository) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   /**

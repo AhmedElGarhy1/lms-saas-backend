@@ -60,6 +60,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
     // Use class name as context (e.g., 'UserRepository', 'CenterRepository')
+    // Note: Cannot use ClassName.name for abstract class, must use this.constructor.name
     const context = this.constructor.name;
     this.logger = new Logger(context);
   }

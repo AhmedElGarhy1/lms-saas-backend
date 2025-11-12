@@ -38,7 +38,7 @@ import { NotificationProcessingContext } from '../pipeline/notification-pipeline
  */
 @Injectable()
 export class NotificationRouterService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(NotificationRouterService.name);
 
   constructor(
     @InjectQueue('notifications') private readonly queue: Queue,
@@ -53,8 +53,6 @@ export class NotificationRouterService extends BaseService {
     private readonly metricsService?: NotificationMetricsService,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   /**

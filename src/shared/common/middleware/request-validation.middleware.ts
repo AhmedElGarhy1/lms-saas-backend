@@ -10,12 +10,9 @@ import {
 
 @Injectable()
 export class RequestValidationMiddleware implements NestMiddleware {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(RequestValidationMiddleware.name);
 
   constructor(private readonly moduleRef: ModuleRef) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   use(req: Request, res: Response, next: NextFunction): void {

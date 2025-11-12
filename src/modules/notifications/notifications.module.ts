@@ -43,7 +43,6 @@ import { NotificationIdempotencyCacheService } from './services/notification-ide
 import { NotificationCircuitBreakerService } from './services/notification-circuit-breaker.service';
 import { TimeoutConfigService } from './config/timeout.config';
 import { NotificationDlqCleanupJob } from './jobs/notification-dlq-cleanup.job';
-import { NotificationAlertService } from './services/notification-alert.service';
 import { QUEUE_CONSTANTS } from './constants/notification.constants';
 import { TemplateHotReloadService } from './services/template-hot-reload.service';
 import { NotificationPipelineService } from './services/pipeline/notification-pipeline.service';
@@ -112,7 +111,6 @@ import { PayloadBuilderService } from './services/payload-builder.service';
     NotificationIdempotencyCacheService, // Idempotency cache for preventing duplicate sends
     NotificationCircuitBreakerService, // Circuit breaker with sliding window for preventing false positives
     TimeoutConfigService, // Provider-specific timeout configuration
-    NotificationAlertService, // Alert service for queue backlog and system health
     TemplateHotReloadService, // Hot reload templates in development
     NotificationPipelineService, // Pipeline service for processing steps
     NotificationRouterService, // Router service for channel routing

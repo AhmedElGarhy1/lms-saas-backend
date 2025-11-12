@@ -13,12 +13,9 @@ import { ErrorCode } from '../enums/error-codes.enum';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(GlobalExceptionFilter.name);
 
   constructor(private readonly moduleRef: ModuleRef) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   catch(exception: unknown, host: ArgumentsHost): void {

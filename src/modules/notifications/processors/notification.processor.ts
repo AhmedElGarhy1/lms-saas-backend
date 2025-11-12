@@ -4,7 +4,6 @@ import { Job } from 'bullmq';
 import { NotificationJobData } from '../types/notification-job-data.interface';
 import { NotificationSenderService } from '../services/notification-sender.service';
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
-import { NotificationLog } from '../entities/notification-log.entity';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationPayload } from '../types/notification-payload.interface';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
@@ -14,7 +13,6 @@ import { ChannelRetryStrategyService } from '../services/channel-retry-strategy.
 import { NotificationConfig } from '../config/notification.config';
 import { NotificationSendingFailedException } from '../exceptions/notification.exceptions';
 import { randomUUID } from 'crypto';
-import { NotificationAlertService } from '../services/notification-alert.service';
 import {
   isNotificationJobData,
   isRecord,
@@ -33,7 +31,7 @@ const PROCESSOR_CONCURRENCY = NotificationConfig.concurrency.processor;
 @Injectable()
 export class NotificationProcessor extends WorkerHost {
   private readonly retryThreshold: number;
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(NotificationProcessor.name);
 
   constructor(
     private readonly senderService: NotificationSenderService,
@@ -41,12 +39,8 @@ export class NotificationProcessor extends WorkerHost {
     private readonly metricsService: NotificationMetricsService,
     private readonly retryStrategyService: ChannelRetryStrategyService,
     @InjectQueue('notifications') private readonly queue: Queue,
-    private readonly alertService?: NotificationAlertService,
   ) {
     super();
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     this.retryThreshold = NotificationConfig.retryThreshold;
   }
 
@@ -220,45 +214,11 @@ export class NotificationProcessor extends WorkerHost {
       this.logger.error(`Invalid job data in onCompleted: ${job.id}`);
       return;
     }
-    const jobData = job.data;
-    const { channel, type, userId } = jobData;
-    const jobId = job.id || 'unknown';
-
     // Update queue backlog metrics (metrics are already tracked in senderService.send())
     const queueSize = await this.queue.getWaitingCount();
     await this.metricsService.setQueueBacklog(queueSize);
 
-    // Check queue backlog and send alerts if needed
-    if (this.alertService) {
-      const warningThreshold = NotificationConfig.queue.warningThreshold;
-      const criticalThreshold = NotificationConfig.queue.criticalThreshold;
-
-      if (queueSize >= criticalThreshold) {
-        await this.alertService.sendAlert(
-          'critical',
-          `Notification queue backlog is critical: ${queueSize} jobs waiting`,
-          {
-            queueSize,
-            threshold: criticalThreshold,
-            jobId,
-            type,
-            channel,
-          },
-        );
-      } else if (queueSize >= warningThreshold) {
-        await this.alertService.sendAlert(
-          'warning',
-          `Notification queue backlog is high: ${queueSize} jobs waiting`,
-          {
-            queueSize,
-            threshold: warningThreshold,
-            jobId,
-            type,
-            channel,
-          },
-        );
-      }
-    }
+    // TODO: Queue backlog alerts will be handled by Sentry in the future
   }
 
   @OnWorkerEvent('failed')
@@ -277,37 +237,7 @@ export class NotificationProcessor extends WorkerHost {
     const queueSize = await this.queue.getWaitingCount();
     await this.metricsService.setQueueBacklog(queueSize);
 
-    // Check queue backlog and send alerts if needed
-    if (this.alertService) {
-      const warningThreshold = NotificationConfig.queue.warningThreshold;
-      const criticalThreshold = NotificationConfig.queue.criticalThreshold;
-
-      if (queueSize >= criticalThreshold) {
-        await this.alertService.sendAlert(
-          'critical',
-          `Notification queue backlog is critical: ${queueSize} jobs waiting`,
-          {
-            queueSize,
-            threshold: criticalThreshold,
-            jobId,
-            type,
-            channel,
-          },
-        );
-      } else if (queueSize >= warningThreshold) {
-        await this.alertService.sendAlert(
-          'warning',
-          `Notification queue backlog is high: ${queueSize} jobs waiting`,
-          {
-            queueSize,
-            threshold: warningThreshold,
-            jobId,
-            type,
-            channel,
-          },
-        );
-      }
-    }
+    // TODO: Queue backlog alerts will be handled by Sentry in the future
 
     this.logger.error(
       `Notification job failed permanently: ${jobId} - type: ${type}, channel: ${channel}, userId: ${userId}, retryCount: ${retryCount}, retryable: ${retryable}`,

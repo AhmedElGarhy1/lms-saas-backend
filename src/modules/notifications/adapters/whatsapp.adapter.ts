@@ -19,7 +19,7 @@ export class WhatsAppAdapter
   implements NotificationAdapter<WhatsAppNotificationPayload>, OnModuleInit
 {
   private provider: WhatsAppProvider | null = null;
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(WhatsAppAdapter.name);
 
   constructor(
     private readonly metricsService: NotificationMetricsService,
@@ -27,9 +27,6 @@ export class WhatsAppAdapter
     private readonly twilioProvider: TwilioWhatsAppProvider,
     private readonly metaProvider: MetaWhatsAppProvider,
   ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   onModuleInit() {

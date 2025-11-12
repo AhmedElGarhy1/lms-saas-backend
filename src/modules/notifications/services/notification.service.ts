@@ -28,7 +28,7 @@ import { BulkNotificationResult } from '../types/bulk-notification-result.interf
 
 @Injectable()
 export class NotificationService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(NotificationService.name);
   private readonly concurrencyLimit: number;
 
   constructor(
@@ -39,8 +39,6 @@ export class NotificationService extends BaseService {
     private readonly multiRecipientProcessor: MultiRecipientProcessor,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     this.concurrencyLimit = this.multiRecipientProcessor.getConcurrencyLimit();
   }
 

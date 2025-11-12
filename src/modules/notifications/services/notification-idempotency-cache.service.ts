@@ -22,7 +22,7 @@ import { NotificationConfig } from '../config/notification.config';
  */
 @Injectable()
 export class NotificationIdempotencyCacheService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(NotificationIdempotencyCacheService.name);
   private readonly defaultTtlSeconds: number;
   private readonly lockTtlSeconds: number;
   private readonly lockTimeoutMs: number;
@@ -31,8 +31,6 @@ export class NotificationIdempotencyCacheService extends BaseService {
     private readonly redisService: RedisService,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     this.defaultTtlSeconds = NotificationConfig.idempotency.cacheTtlSeconds;
     this.lockTtlSeconds = NotificationConfig.idempotency.lockTtlSeconds;
     this.lockTimeoutMs = NotificationConfig.idempotency.lockTimeoutMs;

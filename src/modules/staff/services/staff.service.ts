@@ -20,7 +20,7 @@ import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
 export class StaffService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(StaffService.name);
 
   constructor(
     private readonly staffRepository: StaffRepository,
@@ -29,8 +29,6 @@ export class StaffService extends BaseService {
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   async createStaff(dto: CreateStaffDto, actor: ActorUser): Promise<void> {

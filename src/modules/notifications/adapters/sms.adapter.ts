@@ -18,15 +18,12 @@ export class SmsAdapter
 {
   private twilioClient: twilio.Twilio | null = null;
   private readonly fromNumber: string | null;
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(SmsAdapter.name);
 
   constructor(
     private readonly metricsService: NotificationMetricsService,
     private readonly timeoutConfig: TimeoutConfigService,
   ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     this.fromNumber = Config.twilio.phoneNumber || null;
   }
 

@@ -19,7 +19,7 @@ export interface PerformanceAlert {
 
 @Injectable()
 export class PerformanceAlertsService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(PerformanceAlertsService.name);
   private readonly alerts: Map<string, PerformanceAlert> = new Map();
   private readonly alertThresholds = {
     slowTransaction: 2000, // 2 seconds
@@ -32,8 +32,6 @@ export class PerformanceAlertsService extends BaseService {
     private readonly eventEmitter: EventEmitter2,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   /**

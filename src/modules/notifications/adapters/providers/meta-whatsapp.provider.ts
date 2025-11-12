@@ -7,12 +7,9 @@ import { Config } from '@/shared/config/config';
 export class MetaWhatsAppProvider implements WhatsAppProvider {
   private readonly accessToken: string | null;
   private readonly phoneNumberId: string | null;
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(MetaWhatsAppProvider.name);
 
   constructor(private readonly moduleRef: ModuleRef) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
     this.accessToken = Config.whatsapp.accessToken || null;
     this.phoneNumberId = Config.whatsapp.phoneNumberId || null;
 

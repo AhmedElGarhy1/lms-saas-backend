@@ -16,16 +16,13 @@ import { SeederException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
 export class DatabaseSeeder {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(DatabaseSeeder.name);
 
   constructor(
     private readonly dataSource: DataSource,
     private readonly activityLogService: ActivityLogService,
     private readonly moduleRef: ModuleRef,
   ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   async seed(): Promise<void> {

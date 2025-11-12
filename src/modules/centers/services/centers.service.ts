@@ -35,7 +35,7 @@ export interface SeederCenterData {
 
 @Injectable()
 export class CentersService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(CentersService.name);
 
   constructor(
     private readonly centersRepository: CentersRepository,
@@ -48,8 +48,6 @@ export class CentersService extends BaseService {
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   async findCenterById(centerId: string): Promise<Center> {

@@ -35,7 +35,7 @@ export interface CreateVerificationTokenData {
 
 @Injectable()
 export class VerificationService extends BaseService {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(VerificationService.name);
 
   constructor(
     private readonly verificationTokenRepository: VerificationTokenRepository,
@@ -44,8 +44,6 @@ export class VerificationService extends BaseService {
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   /**

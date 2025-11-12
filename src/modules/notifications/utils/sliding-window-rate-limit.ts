@@ -7,14 +7,11 @@ import { notificationKeys } from './notification-redis-key-builder';
  * Provides smoother rate limiting compared to fixed window counters
  */
 export class SlidingWindowRateLimiter {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(SlidingWindowRateLimiter.name);
 
   constructor(
     private readonly redisService: RedisService,
   ) {
-    // Use class name as context
-    const context = this.constructor.name;
-    this.logger = new Logger(context);
   }
 
   /**

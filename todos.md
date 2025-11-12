@@ -72,7 +72,8 @@
 [ ] fix actor is required in all activity logs conside made system activities
 [ ] add rate limit module
 
-[ ] see who we handle and what is hte diffrence between logs and activity_logs and notification_logs
+[x] refactor logs and add only required not spam of logs
+[ ] add missing activity logs for users
 [ ] update notifications to cover all existing modules events
 [x] (frontend) Data flow: ⚠️ Needs standardization (28 violations)
 [x] notifications register user connection first when he opens (there is a problem in sending notifications because of redis not found user connection)

@@ -49,12 +49,11 @@ export class RedisIoAdapter extends IoAdapter {
     // Create the base Socket.IO server
     const server = super.createIOServer(port, options) as Server;
 
-    // Resolve services if not already resolved
-    if (!this.logger || !this.jwtService || !this.userService) {
-      try {
-        // Create NestJS Logger with context
-        const context = this.constructor.name;
-        this.logger = new Logger(context);
+        // Resolve services if not already resolved
+        if (!this.logger || !this.jwtService || !this.userService) {
+          try {
+            // Create NestJS Logger with context
+            this.logger = new Logger(RedisIoAdapter.name);
 
         this.jwtService = this.app.get(JwtService, { strict: false });
         this.userService = this.app.get(UserService, { strict: false });
