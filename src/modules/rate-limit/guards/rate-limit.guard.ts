@@ -53,9 +53,7 @@ export class RateLimitGuard implements CanActivate {
 
     // Get limit and window from config
     const limit = config.limit;
-    const windowSeconds = config.windowSeconds
-      ? config.windowSeconds / 1000
-      : undefined; // Convert milliseconds to seconds if needed
+    const windowSeconds = config.windowSeconds;
 
     if (!limit || !windowSeconds) {
       this.logger.warn(
