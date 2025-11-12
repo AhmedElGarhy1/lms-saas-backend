@@ -76,14 +76,14 @@ import { StaffEvents } from '@/shared/events/staff.events.enum';
  * Uses enum values for type safety - ensures all keys match the enum definitions.
  */
 export type EventTypeMap = {
-  // User Events (Phase 2 - Completed)
+  // User Events
   [UserEvents.CREATED]: UserCreatedEvent;
   [UserEvents.UPDATED]: UserUpdatedEvent;
   [UserEvents.DELETED]: UserDeletedEvent;
   [UserEvents.RESTORED]: UserRestoredEvent;
   [UserEvents.ACTIVATED]: UserActivatedEvent;
 
-  // Auth Events (Phase 2 - Completed)
+  // Auth Events
   [AuthEvents.USER_LOGGED_IN]: UserLoggedInEvent;
   [AuthEvents.USER_LOGGED_OUT]: UserLoggedOutEvent;
   [AuthEvents.TOKEN_REFRESHED]: TokenRefreshedEvent;
@@ -93,13 +93,13 @@ export type EventTypeMap = {
   [AuthEvents.TWO_FA_ENABLED]: TwoFactorEnabledEvent;
   [AuthEvents.TWO_FA_DISABLED]: TwoFactorDisabledEvent;
 
-  // Role Events (Phase 2 - Completed)
+  // Role Events
   [RoleEvents.CREATED]: CreateRoleEvent;
   [RoleEvents.UPDATED]: UpdateRoleEvent;
   [RoleEvents.DELETED]: DeleteRoleEvent;
   [RoleEvents.RESTORED]: RestoreRoleEvent;
 
-  // Center Events (Phase 2 - Completed)
+  // Center Events
   [CenterEvents.CREATED]: CreateCenterEvent;
   [CenterEvents.UPDATED]: UpdateCenterEvent;
   [CenterEvents.DELETED]: DeleteCenterEvent;
