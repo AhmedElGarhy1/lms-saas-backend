@@ -10,6 +10,10 @@ import {
   PushNotificationPayload,
 } from '../types/notification-payload.interface';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { NotificationManifest } from '../manifests/types/manifest.types';
+import { NotificationGroup } from '../enums/notification-group.enum';
+import { NotificationTemplateData } from '../types/template-data.types';
+import { RenderedNotification } from '../manifests/types/manifest.types';
 
 describe('PayloadBuilderService', () => {
   let service: PayloadBuilderService;
@@ -24,9 +28,11 @@ describe('PayloadBuilderService', () => {
 
   describe('buildBasePayload', () => {
     it('should build base payload with all fields', () => {
-      const manifest = {
-        group: 'test-group',
-      } as any;
+      const manifest: NotificationManifest = {
+        type: NotificationType.OTP,
+        group: NotificationGroup.SECURITY,
+        audiences: {},
+      };
 
       const basePayload = service.buildBasePayload(
         'test@example.com',
@@ -44,7 +50,7 @@ describe('PayloadBuilderService', () => {
       expect(basePayload.recipient).toBe('test@example.com');
       expect(basePayload.channel).toBe(NotificationChannel.EMAIL);
       expect(basePayload.type).toBe(NotificationType.OTP);
-      expect(basePayload.group).toBe('test-group');
+      expect(basePayload.group).toBe(NotificationGroup.SECURITY);
       expect(basePayload.locale).toBe('en');
       expect(basePayload.centerId).toBe('center-123');
       expect(basePayload.userId).toBeDefined();
@@ -54,9 +60,11 @@ describe('PayloadBuilderService', () => {
     });
 
     it('should handle optional fields', () => {
-      const manifest = {
-        group: 'test-group',
-      } as any;
+      const manifest: NotificationManifest = {
+        type: NotificationType.OTP,
+        group: NotificationGroup.SECURITY,
+        audiences: {},
+      };
 
       const basePayload = service.buildBasePayload(
         'test@example.com',
@@ -79,11 +87,17 @@ describe('PayloadBuilderService', () => {
 
   describe('buildPayload', () => {
     it('should build EMAIL payload', () => {
+      const manifest: NotificationManifest = {
+        type: NotificationType.OTP,
+        group: NotificationGroup.SECURITY,
+        audiences: {},
+      };
+
       const basePayload = service.buildBasePayload(
         'test@example.com',
         NotificationChannel.EMAIL,
         NotificationType.OTP,
-        { group: 'test' } as any,
+        manifest,
         'en',
         undefined,
         'user-123',
@@ -92,7 +106,7 @@ describe('PayloadBuilderService', () => {
         'correlation-123',
       );
 
-      const rendered = {
+      const rendered: RenderedNotification = {
         type: NotificationType.OTP,
         channel: NotificationChannel.EMAIL,
         subject: 'Test Subject',
@@ -100,25 +114,39 @@ describe('PayloadBuilderService', () => {
         metadata: { template: 'test-template', locale: 'en' },
       };
 
+      const templateData: NotificationTemplateData = {};
+
       const payload = service.buildPayload(
         NotificationChannel.EMAIL,
         basePayload,
         rendered,
-        {} as any,
+        templateData,
       );
 
       expect(payload).not.toBeNull();
-      expect((payload as EmailNotificationPayload).subject).toBe('Test Subject');
-      expect((payload as EmailNotificationPayload).data.html).toBe('<p>Test Content</p>');
-      expect((payload as EmailNotificationPayload).data.template).toBe('test-template');
+      expect((payload as EmailNotificationPayload).subject).toBe(
+        'Test Subject',
+      );
+      expect((payload as EmailNotificationPayload).data.html).toBe(
+        '<p>Test Content</p>',
+      );
+      expect((payload as EmailNotificationPayload).data.template).toBe(
+        'test-template',
+      );
     });
 
     it('should return null for EMAIL if subject is missing', () => {
+      const manifest: NotificationManifest = {
+        type: NotificationType.OTP,
+        group: NotificationGroup.SECURITY,
+        audiences: {},
+      };
+
       const basePayload = service.buildBasePayload(
         'test@example.com',
         NotificationChannel.EMAIL,
         NotificationType.OTP,
-        { group: 'test' } as any,
+        manifest,
         'en',
         undefined,
         'user-123',
@@ -127,29 +155,37 @@ describe('PayloadBuilderService', () => {
         'correlation-123',
       );
 
-      const rendered = {
+      const rendered: RenderedNotification = {
         type: NotificationType.OTP,
         channel: NotificationChannel.EMAIL,
         content: '<p>Test Content</p>',
         metadata: { template: 'test-template', locale: 'en' },
       };
 
+      const templateData: NotificationTemplateData = {};
+
       const payload = service.buildPayload(
         NotificationChannel.EMAIL,
         basePayload,
         rendered,
-        {} as any,
+        templateData,
       );
 
       expect(payload).toBeNull();
     });
 
     it('should build SMS payload', () => {
+      const manifest: NotificationManifest = {
+        type: NotificationType.OTP,
+        group: NotificationGroup.SECURITY,
+        audiences: {},
+      };
+
       const basePayload = service.buildBasePayload(
         '+1234567890',
         NotificationChannel.SMS,
         NotificationType.OTP,
-        { group: 'test' } as any,
+        manifest,
         'en',
         undefined,
         'user-123',
@@ -158,31 +194,43 @@ describe('PayloadBuilderService', () => {
         'correlation-123',
       );
 
-      const rendered = {
+      const rendered: RenderedNotification = {
         type: NotificationType.OTP,
         channel: NotificationChannel.SMS,
         content: 'Your OTP is 123456',
         metadata: { template: 'otp-template', locale: 'en' },
       };
 
+      const templateData: NotificationTemplateData = {};
+
       const payload = service.buildPayload(
         NotificationChannel.SMS,
         basePayload,
         rendered,
-        {} as any,
+        templateData,
       );
 
       expect(payload).not.toBeNull();
-      expect((payload as SmsNotificationPayload).data.content).toBe('Your OTP is 123456');
-      expect((payload as SmsNotificationPayload).data.template).toBe('otp-template');
+      expect((payload as SmsNotificationPayload).data.content).toBe(
+        'Your OTP is 123456',
+      );
+      expect((payload as SmsNotificationPayload).data.template).toBe(
+        'otp-template',
+      );
     });
 
     it('should build WHATSAPP payload', () => {
+      const manifest: NotificationManifest = {
+        type: NotificationType.OTP,
+        group: NotificationGroup.SECURITY,
+        audiences: {},
+      };
+
       const basePayload = service.buildBasePayload(
         '+1234567890',
         NotificationChannel.WHATSAPP,
         NotificationType.OTP,
-        { group: 'test' } as any,
+        manifest,
         'en',
         undefined,
         'user-123',
@@ -191,30 +239,40 @@ describe('PayloadBuilderService', () => {
         'correlation-123',
       );
 
-      const rendered = {
+      const rendered: RenderedNotification = {
         type: NotificationType.OTP,
         channel: NotificationChannel.WHATSAPP,
         content: 'Your OTP is 123456',
         metadata: { template: 'otp-template', locale: 'en' },
       };
 
+      const templateData: NotificationTemplateData = {};
+
       const payload = service.buildPayload(
         NotificationChannel.WHATSAPP,
         basePayload,
         rendered,
-        {} as any,
+        templateData,
       );
 
       expect(payload).not.toBeNull();
-      expect((payload as WhatsAppNotificationPayload).data.content).toBe('Your OTP is 123456');
+      expect((payload as WhatsAppNotificationPayload).data.content).toBe(
+        'Your OTP is 123456',
+      );
     });
 
     it('should build IN_APP payload', () => {
+      const manifest: NotificationManifest = {
+        type: NotificationType.OTP,
+        group: NotificationGroup.SECURITY,
+        audiences: {},
+      };
+
       const basePayload = service.buildBasePayload(
         'user-123',
         NotificationChannel.IN_APP,
         NotificationType.OTP,
-        { group: 'test' } as any,
+        manifest,
         'en',
         undefined,
         'user-123',
@@ -223,7 +281,7 @@ describe('PayloadBuilderService', () => {
         'correlation-123',
       );
 
-      const rendered = {
+      const rendered: RenderedNotification = {
         type: NotificationType.OTP,
         channel: NotificationChannel.IN_APP,
         content: {
@@ -234,9 +292,9 @@ describe('PayloadBuilderService', () => {
         metadata: { template: 'inapp-template', locale: 'en' },
       };
 
-      const templateData = {
+      const templateData: NotificationTemplateData = {
         title: 'Fallback Title',
-      } as any;
+      };
 
       const payload = service.buildPayload(
         NotificationChannel.IN_APP,
@@ -247,15 +305,23 @@ describe('PayloadBuilderService', () => {
 
       expect(payload).not.toBeNull();
       expect((payload as InAppNotificationPayload).title).toBe('Test Title');
-      expect((payload as InAppNotificationPayload).data.message).toBe('Test Message');
+      expect((payload as InAppNotificationPayload).data.message).toBe(
+        'Test Message',
+      );
     });
 
     it('should use fallback title for IN_APP if not in content', () => {
+      const manifest: NotificationManifest = {
+        type: NotificationType.OTP,
+        group: NotificationGroup.SECURITY,
+        audiences: {},
+      };
+
       const basePayload = service.buildBasePayload(
         'user-123',
         NotificationChannel.IN_APP,
         NotificationType.OTP,
-        { group: 'test' } as any,
+        manifest,
         'en',
         undefined,
         'user-123',
@@ -264,7 +330,7 @@ describe('PayloadBuilderService', () => {
         'correlation-123',
       );
 
-      const rendered = {
+      const rendered: RenderedNotification = {
         type: NotificationType.OTP,
         channel: NotificationChannel.IN_APP,
         content: {
@@ -273,9 +339,9 @@ describe('PayloadBuilderService', () => {
         metadata: { template: 'inapp-template', locale: 'en' },
       };
 
-      const templateData = {
+      const templateData: NotificationTemplateData = {
         title: 'Fallback Title',
-      } as any;
+      };
 
       const payload = service.buildPayload(
         NotificationChannel.IN_APP,
@@ -285,15 +351,23 @@ describe('PayloadBuilderService', () => {
       );
 
       expect(payload).not.toBeNull();
-      expect((payload as InAppNotificationPayload).title).toBe('Fallback Title');
+      expect((payload as InAppNotificationPayload).title).toBe(
+        'Fallback Title',
+      );
     });
 
     it('should build PUSH payload', () => {
+      const manifest: NotificationManifest = {
+        type: NotificationType.OTP,
+        group: NotificationGroup.SECURITY,
+        audiences: {},
+      };
+
       const basePayload = service.buildBasePayload(
         'user-123',
         NotificationChannel.PUSH,
         NotificationType.OTP,
-        { group: 'test' } as any,
+        manifest,
         'en',
         undefined,
         'user-123',
@@ -302,7 +376,7 @@ describe('PayloadBuilderService', () => {
         'correlation-123',
       );
 
-      const rendered = {
+      const rendered: RenderedNotification = {
         type: NotificationType.OTP,
         channel: NotificationChannel.PUSH,
         content: {
@@ -313,9 +387,9 @@ describe('PayloadBuilderService', () => {
         metadata: { template: 'push-template', locale: 'en' },
       };
 
-      const templateData = {
+      const templateData: NotificationTemplateData = {
         title: 'Fallback Title',
-      } as any;
+      };
 
       const payload = service.buildPayload(
         NotificationChannel.PUSH,
@@ -326,15 +400,23 @@ describe('PayloadBuilderService', () => {
 
       expect(payload).not.toBeNull();
       expect((payload as PushNotificationPayload).title).toBe('Push Title');
-      expect((payload as PushNotificationPayload).data.message).toBe('Push Message');
+      expect((payload as PushNotificationPayload).data.message).toBe(
+        'Push Message',
+      );
     });
 
     it('should return null for unknown channel', () => {
+      const manifest: NotificationManifest = {
+        type: NotificationType.OTP,
+        group: NotificationGroup.SECURITY,
+        audiences: {},
+      };
+
       const basePayload = service.buildBasePayload(
         'test@example.com',
         'UNKNOWN' as NotificationChannel,
         NotificationType.OTP,
-        { group: 'test' } as any,
+        manifest,
         'en',
         undefined,
         'user-123',
@@ -343,18 +425,20 @@ describe('PayloadBuilderService', () => {
         'correlation-123',
       );
 
-      const rendered = {
+      const rendered: RenderedNotification = {
         type: NotificationType.OTP,
         channel: 'UNKNOWN' as NotificationChannel,
         content: 'test',
         metadata: { template: 'test', locale: 'en' },
       };
 
+      const templateData: NotificationTemplateData = {};
+
       const payload = service.buildPayload(
         'UNKNOWN' as NotificationChannel,
         basePayload,
         rendered,
-        {} as any,
+        templateData,
       );
 
       expect(payload).toBeNull();
@@ -363,7 +447,13 @@ describe('PayloadBuilderService', () => {
 
   describe('buildCompletePayload', () => {
     it('should build complete payload in one call', () => {
-      const rendered = {
+      const manifest: NotificationManifest = {
+        type: NotificationType.OTP,
+        group: NotificationGroup.SECURITY,
+        audiences: {},
+      };
+
+      const rendered: RenderedNotification = {
         type: NotificationType.OTP,
         channel: NotificationChannel.EMAIL,
         subject: 'Test Subject',
@@ -371,11 +461,13 @@ describe('PayloadBuilderService', () => {
         metadata: { template: 'test-template', locale: 'en' },
       };
 
+      const templateData: NotificationTemplateData = {};
+
       const payload = service.buildCompletePayload(
         'test@example.com',
         NotificationChannel.EMAIL,
         NotificationType.OTP,
-        { group: 'test' } as any,
+        manifest,
         'en',
         undefined,
         'user-123',
@@ -383,13 +475,16 @@ describe('PayloadBuilderService', () => {
         undefined,
         'correlation-123',
         rendered,
-        {} as any,
+        templateData,
       );
 
       expect(payload).not.toBeNull();
-      expect((payload as EmailNotificationPayload).subject).toBe('Test Subject');
-      expect((payload as EmailNotificationPayload).recipient).toBe('test@example.com');
+      expect((payload as EmailNotificationPayload).subject).toBe(
+        'Test Subject',
+      );
+      expect((payload as EmailNotificationPayload).recipient).toBe(
+        'test@example.com',
+      );
     });
   });
 });
-

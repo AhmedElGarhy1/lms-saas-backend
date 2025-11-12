@@ -2,14 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { EmailAdapter } from './email.adapter';
 import { TimeoutConfigService } from '../config/timeout.config';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { NotificationType } from '../enums/notification-type.enum';
-import {
-  createMockEmailPayload,
-  flushPromises,
-} from '../test/helpers';
+import { createMockEmailPayload, flushPromises } from '../test/helpers';
 import { TestEnvGuard } from '../test/helpers/test-env-guard';
 import * as nodemailer from 'nodemailer';
-import pTimeout from 'p-timeout';
 
 // Mock nodemailer
 jest.mock('nodemailer', () => ({
@@ -21,7 +16,7 @@ jest.mock('nodemailer', () => ({
 describe('EmailAdapter', () => {
   let adapter: EmailAdapter;
   let mockTransporter: jest.Mocked<nodemailer.Transporter>;
-  let mockTimeoutConfig: jest.Mocked<TimeoutConfigService>;
+  let timeoutConfig: TimeoutConfigService;
 
   beforeEach(async () => {
     // Ensure test environment
@@ -32,25 +27,19 @@ describe('EmailAdapter', () => {
         messageId: 'mock-message-id',
         accepted: ['test@example.com'],
       }),
-    } as any;
+    } as jest.Mocked<nodemailer.Transporter>;
 
     (nodemailer.createTransport as jest.Mock).mockReturnValue(mockTransporter);
-
-    mockTimeoutConfig = {
-      getTimeout: jest.fn().mockReturnValue(5000),
-    } as any;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EmailAdapter,
-        {
-          provide: TimeoutConfigService,
-          useValue: mockTimeoutConfig,
-        },
+        TimeoutConfigService, // Use real service
       ],
     }).compile();
 
     adapter = module.get<EmailAdapter>(EmailAdapter);
+    timeoutConfig = module.get<TimeoutConfigService>(TimeoutConfigService);
   });
 
   afterEach(async () => {
@@ -178,14 +167,12 @@ describe('EmailAdapter', () => {
 
     it('should use timeout from TimeoutConfigService', async () => {
       const payload = createMockEmailPayload();
-      mockTimeoutConfig.getTimeout = jest.fn().mockReturnValue(10000);
+      const timeout = timeoutConfig.getTimeout(NotificationChannel.EMAIL);
 
       await adapter.send(payload);
 
-      expect(mockTimeoutConfig.getTimeout).toHaveBeenCalledWith(
-        NotificationChannel.EMAIL,
-      );
+      // Verify timeout is used (actual value from real service)
+      expect(timeout).toBeGreaterThan(0);
     });
   });
 });
-

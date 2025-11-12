@@ -27,9 +27,9 @@ describe('Async Helpers', () => {
     });
 
     it('should throw error when condition times out', async () => {
-      await expect(
-        waitFor(() => false, { timeout: 100 }),
-      ).rejects.toThrow('timed out');
+      await expect(waitFor(() => false, { timeout: 100 })).rejects.toThrow(
+        'timed out',
+      );
     });
 
     it('should use custom error message on timeout', async () => {
@@ -92,9 +92,9 @@ describe('Async Helpers', () => {
     });
 
     it('should throw error when condition never becomes truthy', async () => {
-      await expect(
-        waitForValue(() => null, { timeout: 100 }),
-      ).rejects.toThrow('timed out');
+      await expect(waitForValue(() => null, { timeout: 100 })).rejects.toThrow(
+        'timed out',
+      );
     });
 
     it('should handle async value resolution', async () => {
@@ -174,13 +174,11 @@ describe('Async Helpers', () => {
     });
 
     it('should throw error after max attempts', async () => {
-      const operation = jest
-        .fn()
-        .mockRejectedValue(new Error('Always fails'));
+      const operation = jest.fn().mockRejectedValue(new Error('Always fails'));
 
-      await expect(
-        retry(operation, { maxAttempts: 3 }),
-      ).rejects.toThrow('failed after 3 attempts');
+      await expect(retry(operation, { maxAttempts: 3 })).rejects.toThrow(
+        'failed after 3 attempts',
+      );
       expect(operation).toHaveBeenCalledTimes(3);
     });
 
@@ -242,4 +240,3 @@ describe('Async Helpers', () => {
     });
   });
 });
-

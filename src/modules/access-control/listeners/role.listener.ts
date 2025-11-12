@@ -31,8 +31,7 @@ export class RoleListener {
     private readonly activityLogService: ActivityLogService,
     private readonly profileRoleRepository: ProfileRoleRepository,
     private readonly rolesRepository: RolesRepository,
-  ) {
-  }
+  ) {}
 
   @OnEvent(AccessControlEvents.ASSIGN_ROLE)
   async handleAssignRole(event: AssignRoleEvent) {

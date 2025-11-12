@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { RedisService } from '@/shared/modules/redis/redis.service';
 import { BaseService } from '@/shared/common/services/base.service';
-import { SlidingWindowRateLimiter } from '../utils/sliding-window-rate-limit';
+import { RateLimitService } from '@/modules/rate-limit/services/rate-limit.service';
 import { CONCURRENCY_CONSTANTS } from '../constants/notification.constants';
 import { NotificationConfig } from '../config/notification.config';
 
@@ -25,21 +24,14 @@ interface ChannelRateLimitConfig {
  */
 @Injectable()
 export class ChannelRateLimitService extends BaseService {
-  private readonly rateLimiter: SlidingWindowRateLimiter;
   private readonly channelLimits: Map<
     NotificationChannel,
     ChannelRateLimitConfig
   >;
   private readonly defaultLimit: ChannelRateLimitConfig;
 
-  constructor(
-    private readonly redisService: RedisService,
-  ) {
+  constructor(private readonly rateLimitService: RateLimitService) {
     super();
-    // Initialize sliding window rate limiter
-    this.rateLimiter = new SlidingWindowRateLimiter(
-      this.redisService,
-    );
 
     // Default rate limit (fallback)
     this.defaultLimit = {
@@ -110,11 +102,17 @@ export class ChannelRateLimitService extends BaseService {
     const config = this.channelLimits.get(channel) || this.defaultLimit;
     const key = `channel:${channel}:user:${userId}`;
 
-    return this.rateLimiter.checkRateLimit(
+    const result = await this.rateLimitService.checkLimit(
       key,
       config.limit,
       config.windowSeconds,
+      {
+        context: 'notification',
+        identifier: userId,
+      },
     );
+
+    return result.allowed;
   }
 
   /**

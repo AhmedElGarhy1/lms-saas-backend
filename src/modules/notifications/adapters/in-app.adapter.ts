@@ -308,7 +308,8 @@ export class InAppAdapter
 
       // Extract template path and rendered content
       const templatePath = (payload.data.template as string) || '';
-      const renderedContent = notification.message || (payload.data.message as string) || '';
+      const renderedContent =
+        notification.message || payload.data.message || '';
 
       // Create a RenderedNotification object for metadata building
       const rendered: RenderedNotification = {

@@ -33,8 +33,7 @@ export class NotificationListener {
     private readonly userService: UserService,
     private readonly centersService: CentersService,
     private readonly manifestResolver: NotificationManifestResolver,
-  ) {
-  }
+  ) {}
 
   /**
    * Validate that event data contains all required template variables
@@ -452,18 +451,14 @@ export class NotificationListener {
   async handleOtp(event: ValidateEvent<OtpEvent, AuthEvents.OTP>) {
     // Fetch user to get phone and locale
     if (!event.userId) {
-      this.logger.warn(
-        'OTP event missing userId, skipping notification',
-      );
+      this.logger.warn('OTP event missing userId, skipping notification');
       return;
     }
 
     const user = await this.userService.findOne(event.userId);
 
     if (!user) {
-      this.logger.warn(
-        `User ${event.userId} not found for OTP notification`,
-      );
+      this.logger.warn(`User ${event.userId} not found for OTP notification`);
       return;
     }
 

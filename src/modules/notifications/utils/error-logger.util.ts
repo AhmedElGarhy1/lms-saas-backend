@@ -26,7 +26,11 @@ export class NotificationErrorLogger {
     service: string,
     context: ErrorLogContext,
   ): void {
-    const contextStr = JSON.stringify({ ...context, service, timestamp: new Date().toISOString() });
+    const contextStr = JSON.stringify({
+      ...context,
+      service,
+      timestamp: new Date().toISOString(),
+    });
     logger.error(
       `${message} - ${contextStr}`,
       error instanceof Error ? error.stack : String(error),
@@ -42,7 +46,11 @@ export class NotificationErrorLogger {
     service: string,
     context: ErrorLogContext,
   ): void {
-    const contextStr = JSON.stringify({ ...context, service, timestamp: new Date().toISOString() });
+    const contextStr = JSON.stringify({
+      ...context,
+      service,
+      timestamp: new Date().toISOString(),
+    });
     logger.warn(`${message} - ${contextStr}`);
   }
 
@@ -55,7 +63,11 @@ export class NotificationErrorLogger {
     service: string,
     context: ErrorLogContext,
   ): void {
-    const contextStr = JSON.stringify({ ...context, service, timestamp: new Date().toISOString() });
+    const contextStr = JSON.stringify({
+      ...context,
+      service,
+      timestamp: new Date().toISOString(),
+    });
     logger.debug(`${message} - ${contextStr}`);
   }
 }

@@ -359,7 +359,7 @@ describe('NotificationCircuitBreakerService - Contract Tests', () => {
 
       // Check if del was called (either by recordSuccess or by getCircuitState cleanup)
       const delCalls = delMock.mock.calls;
-      
+
       // Wait for state to be cleared
       await waitFor(
         async () => {
@@ -409,7 +409,7 @@ describe('NotificationCircuitBreakerService - Contract Tests', () => {
       // Should transition back to OPEN
       // Wait for async operations to complete (set operations are async)
       await flushPromises(2);
-      
+
       // Wait for the state to be set to OPEN
       await waitFor(
         async () => {

@@ -14,9 +14,7 @@ export class EmailAdapter
   private transporter: nodemailer.Transporter;
   private readonly logger: Logger = new Logger(EmailAdapter.name);
 
-  constructor(
-    private readonly timeoutConfig: TimeoutConfigService,
-  ) {
+  constructor(private readonly timeoutConfig: TimeoutConfigService) {
     this.transporter = nodemailer.createTransport({
       host: Config.email.host,
       port: Config.email.port,

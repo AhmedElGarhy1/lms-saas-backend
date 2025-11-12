@@ -42,6 +42,3 @@ export const testEvents = {
     expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
   },
 };
-
-
-

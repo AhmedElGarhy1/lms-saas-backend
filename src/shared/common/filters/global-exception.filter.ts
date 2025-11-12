@@ -15,8 +15,7 @@ import { ErrorCode } from '../enums/error-codes.enum';
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger: Logger = new Logger(GlobalExceptionFilter.name);
 
-  constructor(private readonly moduleRef: ModuleRef) {
-  }
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();

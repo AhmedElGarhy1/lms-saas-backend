@@ -84,17 +84,19 @@ describe('Load Simulation', () => {
         {
           provide: NotificationSenderService,
           useValue: {
-            send: jest.fn().mockResolvedValue([
-              { channel: NotificationChannel.EMAIL, success: true },
-            ]),
+            send: jest
+              .fn()
+              .mockResolvedValue([
+                { channel: NotificationChannel.EMAIL, success: true },
+              ]),
           },
         },
         {
           provide: ChannelSelectionService,
           useValue: {
-            selectOptimalChannels: jest.fn().mockResolvedValue([
-              NotificationChannel.EMAIL,
-            ]),
+            selectOptimalChannels: jest
+              .fn()
+              .mockResolvedValue([NotificationChannel.EMAIL]),
           },
         },
         {
@@ -124,7 +126,9 @@ describe('Load Simulation', () => {
         {
           provide: NotificationManifestResolver,
           useValue: {
-            getManifest: jest.fn().mockReturnValue(createMockNotificationManifest()),
+            getManifest: jest
+              .fn()
+              .mockReturnValue(createMockNotificationManifest()),
             getAudienceConfig: jest.fn().mockReturnValue({
               channels: {
                 [NotificationChannel.EMAIL]: {},
@@ -220,9 +224,7 @@ describe('Load Simulation', () => {
 
       // Check that each recipient was processed once
       const processedUserIds = new Set(
-        mockPipelineService.process.mock.calls.map(
-          (call) => call[1].userId,
-        ),
+        mockPipelineService.process.mock.calls.map((call) => call[1].userId),
       );
       expect(processedUserIds.size).toBe(20);
     });
@@ -304,13 +306,15 @@ describe('Load Simulation', () => {
 
       let concurrentCount = 0;
       let maxConcurrent = 0;
-      mockPipelineService.process = jest.fn().mockImplementation(async (context, recipientInfo) => {
-        concurrentCount++;
-        maxConcurrent = Math.max(maxConcurrent, concurrentCount);
-        await new Promise((resolve) => setTimeout(resolve, 5));
-        concurrentCount--;
-        return context;
-      });
+      mockPipelineService.process = jest
+        .fn()
+        .mockImplementation(async (context, recipientInfo) => {
+          concurrentCount++;
+          maxConcurrent = Math.max(maxConcurrent, concurrentCount);
+          await new Promise((resolve) => setTimeout(resolve, 5));
+          concurrentCount--;
+          return context;
+        });
 
       await service.trigger(NotificationType.CENTER_CREATED, {
         audience: 'OWNER',
@@ -380,5 +384,3 @@ describe('Load Simulation', () => {
     });
   });
 });
-
-

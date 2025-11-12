@@ -128,11 +128,14 @@ export class AccessControlService extends BaseService {
       });
 
     if (!IHaveAccessToGranterUser) {
-      this.logger.warn('Revoke user access failed - no access to granter user', {
-        granterUserProfileId: body.granterUserProfileId,
-        actorId: actor.userProfileId,
-        centerId,
-      });
+      this.logger.warn(
+        'Revoke user access failed - no access to granter user',
+        {
+          granterUserProfileId: body.granterUserProfileId,
+          actorId: actor.userProfileId,
+          centerId,
+        },
+      );
       throw new InsufficientPermissionsException(
         'You do not have access to granter user',
       );

@@ -232,7 +232,7 @@ export class NotificationValidator implements OnModuleInit {
             // This is mainly for documentation - TypeScript already enforces it at compile time
             // Runtime validation: template existence is already checked above
             // Type safety is enforced by TypeScript when using NotificationTemplatePath
-            void (channelConfig.template as NotificationTemplatePath);
+            void channelConfig.template;
           }
 
           // Check EMAIL has subject

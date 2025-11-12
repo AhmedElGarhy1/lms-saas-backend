@@ -119,4 +119,3 @@ export function shouldFailOpen(
     ERROR_HANDLING_CONFIG[service as keyof typeof ERROR_HANDLING_CONFIG];
   return strategy === ErrorHandlingStrategy.FAIL_OPEN;
 }
-

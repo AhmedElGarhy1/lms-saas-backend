@@ -5,7 +5,10 @@ import { BaseService } from '@/shared/common/services/base.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { MetricsBatchService } from './metrics-batch.service';
-import { METRICS_CONSTANTS, REDIS_CONSTANTS } from '../constants/notification.constants';
+import {
+  METRICS_CONSTANTS,
+  REDIS_CONSTANTS,
+} from '../constants/notification.constants';
 import { NotificationConfig } from '../config/notification.config';
 
 /**
@@ -214,7 +217,13 @@ export class NotificationMetricsService extends BaseService {
     do {
       const [nextCursor, keys] = await this.redisService
         .getClient()
-        .scan(cursor, 'MATCH', pattern, 'COUNT', REDIS_CONSTANTS.SCAN_BATCH_SIZE);
+        .scan(
+          cursor,
+          'MATCH',
+          pattern,
+          'COUNT',
+          REDIS_CONSTANTS.SCAN_BATCH_SIZE,
+        );
       cursor = nextCursor;
       keysToDelete.push(...keys);
     } while (cursor !== '0');

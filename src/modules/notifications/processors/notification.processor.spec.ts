@@ -35,9 +35,11 @@ describe('NotificationProcessor', () => {
     mockMetrics = createMockMetricsService();
 
     mockSenderService = {
-      send: jest.fn().mockResolvedValue([
-        { channel: NotificationChannel.EMAIL, success: true },
-      ]),
+      send: jest
+        .fn()
+        .mockResolvedValue([
+          { channel: NotificationChannel.EMAIL, success: true },
+        ]),
     } as any;
 
     const mockNotificationLog = createMockNotificationLog({
@@ -221,7 +223,11 @@ describe('NotificationProcessor', () => {
       };
 
       mockSenderService.send = jest.fn().mockResolvedValue([
-        { channel: NotificationChannel.EMAIL, success: false, error: 'SMTP error' },
+        {
+          channel: NotificationChannel.EMAIL,
+          success: false,
+          error: 'SMTP error',
+        },
       ]);
 
       const job = {
@@ -334,13 +340,15 @@ describe('NotificationProcessor', () => {
         retryable: false,
       };
 
-      mockSenderService.send = jest.fn().mockRejectedValue(
-        new NotificationSendingFailedException(
-          NotificationChannel.EMAIL,
-          'Non-retryable error',
-          'user-123',
-        ),
-      );
+      mockSenderService.send = jest
+        .fn()
+        .mockRejectedValue(
+          new NotificationSendingFailedException(
+            NotificationChannel.EMAIL,
+            'Non-retryable error',
+            'user-123',
+          ),
+        );
 
       const job = {
         id: 'job-123',
@@ -359,9 +367,9 @@ describe('NotificationProcessor', () => {
         userId: 'user-123' as any,
       };
 
-      mockSenderService.send = jest.fn().mockRejectedValue(
-        new Error('Temporary error'),
-      );
+      mockSenderService.send = jest
+        .fn()
+        .mockRejectedValue(new Error('Temporary error'));
 
       const job = {
         id: 'job-123',
@@ -398,9 +406,9 @@ describe('NotificationProcessor', () => {
         backoffDelay: 2000,
       });
 
-      mockSenderService.send = jest.fn().mockRejectedValue(
-        new Error('Persistent error'),
-      );
+      mockSenderService.send = jest
+        .fn()
+        .mockRejectedValue(new Error('Persistent error'));
 
       const job = {
         id: 'job-123',
@@ -442,9 +450,9 @@ describe('NotificationProcessor', () => {
         jobId: 'job-123' as any,
       };
 
-      mockSenderService.send = jest.fn().mockRejectedValue(
-        new Error('Adapter error'),
-      );
+      mockSenderService.send = jest
+        .fn()
+        .mockRejectedValue(new Error('Adapter error'));
 
       const job = {
         id: 'job-123',
@@ -474,9 +482,11 @@ describe('NotificationProcessor', () => {
       } as Job<NotificationJobData>;
 
       // Should still process even if log update fails
-      mockSenderService.send = jest.fn().mockResolvedValue([
-        { channel: NotificationChannel.EMAIL, success: true },
-      ]);
+      mockSenderService.send = jest
+        .fn()
+        .mockResolvedValue([
+          { channel: NotificationChannel.EMAIL, success: true },
+        ]);
 
       await processor.process(job);
 
@@ -490,9 +500,9 @@ describe('NotificationProcessor', () => {
         jobId: 'job-123' as any,
       };
 
-      mockSenderService.send = jest.fn().mockRejectedValue(
-        new Error('Test error'),
-      );
+      mockSenderService.send = jest
+        .fn()
+        .mockRejectedValue(new Error('Test error'));
 
       const job = {
         id: 'job-123',
@@ -517,7 +527,11 @@ describe('NotificationProcessor', () => {
       };
 
       mockSenderService.send = jest.fn().mockResolvedValue([
-        { channel: NotificationChannel.EMAIL, success: false, error: 'Error 1' },
+        {
+          channel: NotificationChannel.EMAIL,
+          success: false,
+          error: 'Error 1',
+        },
         { channel: NotificationChannel.SMS, success: false, error: 'Error 2' },
       ]);
 
@@ -573,9 +587,9 @@ describe('NotificationProcessor', () => {
         userId: 'user-123' as any,
       };
 
-      mockSenderService.send = jest.fn().mockRejectedValue(
-        new Error('Temporary error'),
-      );
+      mockSenderService.send = jest
+        .fn()
+        .mockRejectedValue(new Error('Temporary error'));
 
       const job = {
         id: 'job-123',
@@ -601,4 +615,3 @@ describe('NotificationProcessor', () => {
     });
   });
 });
-

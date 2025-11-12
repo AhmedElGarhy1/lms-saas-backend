@@ -47,6 +47,8 @@ import { RedisModule } from './shared/modules/redis/redis.module';
 import { RedisService } from './shared/modules/redis/redis.service';
 import { validateEnv } from './shared/config/env.validation';
 import { ScheduleModule } from '@nestjs/schedule';
+import { RateLimitModule } from './modules/rate-limit/rate-limit.module';
+import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limit-config.interface';
 
 @Module({
   imports: [
@@ -107,6 +109,42 @@ import { ScheduleModule } from '@nestjs/schedule';
     LocaleModule,
     HealthModule,
     NotificationModule,
+    RateLimitModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: () => ({
+        default: {
+          strategy: RateLimitStrategyType.SLIDING_WINDOW,
+          limit: 50,
+          windowSeconds: 60,
+          failOpen: true,
+          consumePoints: 1,
+        },
+        contexts: {
+          http: {
+            strategy: RateLimitStrategyType.FIXED_WINDOW,
+            limit: 50,
+            windowSeconds: 60,
+            failOpen: true,
+            consumePoints: 1,
+          },
+          websocket: {
+            strategy: RateLimitStrategyType.SLIDING_WINDOW,
+            limit: 100,
+            windowSeconds: 60,
+            failOpen: true,
+            consumePoints: 1,
+          },
+          notification: {
+            strategy: RateLimitStrategyType.SLIDING_WINDOW,
+            limit: 100,
+            windowSeconds: 60,
+            failOpen: true,
+            consumePoints: 1,
+          },
+        },
+      }),
+      inject: [],
+    }),
   ],
   controllers: [],
   providers: [

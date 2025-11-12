@@ -35,6 +35,7 @@ import {
   TwoFactorEnabledEvent,
   TwoFactorDisabledEvent,
   PhoneVerifiedEvent,
+  EmailVerifiedEvent,
 } from '@/modules/auth/events/auth.events';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
@@ -237,6 +238,26 @@ export class AuthService extends BaseService {
 
     // Update user emailVerified flag
     await this.userService.update(userId, { emailVerified: true });
+
+    // Get user to create actor
+    const user = await this.userService.findOne(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Create actor from user (the user themselves is the actor)
+    const actor: ActorUser = {
+      ...user,
+      userProfileId: user.id,
+      profileType: 'USER' as any,
+      centerId: undefined,
+    } as ActorUser;
+
+    // Emit email verified event
+    await this.typeSafeEventEmitter.emitAsync(
+      AuthEvents.EMAIL_VERIFIED,
+      new EmailVerifiedEvent(userId, actor),
+    );
 
     return {
       message: 'Email verified successfully',

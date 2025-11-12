@@ -19,7 +19,9 @@ export class InvalidRecipientException extends InvalidOperationException {
    */
   static fromZodError(error: unknown): InvalidRecipientException {
     if (error && typeof error === 'object' && 'issues' in error) {
-      const zodError = error as { issues: Array<{ path: (string | number)[]; message: string }> };
+      const zodError = error as {
+        issues: Array<{ path: (string | number)[]; message: string }>;
+      };
       const validationErrors = zodError.issues.map((issue) => ({
         field: issue.path.join('.'),
         message: issue.message,
@@ -37,4 +39,3 @@ export class InvalidRecipientException extends InvalidOperationException {
     );
   }
 }
-

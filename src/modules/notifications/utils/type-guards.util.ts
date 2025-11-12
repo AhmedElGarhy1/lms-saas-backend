@@ -7,7 +7,9 @@ import { NotificationType } from '../enums/notification-type.enum';
  * Type guard to check if data is a NotificationPayload
  * Validates required fields for notification payload
  */
-export function isNotificationPayload(data: unknown): data is NotificationPayload {
+export function isNotificationPayload(
+  data: unknown,
+): data is NotificationPayload {
   return (
     typeof data === 'object' &&
     data !== null &&
@@ -24,13 +26,15 @@ export function isNotificationPayload(data: unknown): data is NotificationPayloa
  * Type guard to check if data is a NotificationJobData
  * NotificationJobData extends NotificationPayload with retryCount
  */
-export function isNotificationJobData(data: unknown): data is NotificationJobData {
+export function isNotificationJobData(
+  data: unknown,
+): data is NotificationJobData {
   if (!isNotificationPayload(data)) {
     return false;
   }
   // NotificationPayload is a discriminated union, so we need to check it differently
   // We'll check if it has the required fields and retryCount
-  const payload = data as NotificationPayload;
+  const payload = data;
   return (
     'retryCount' in payload &&
     (typeof (payload as NotificationJobData).retryCount === 'number' ||
@@ -61,7 +65,9 @@ export function isString(value: unknown): value is string {
 /**
  * Type guard to check if value is a valid NotificationChannel
  */
-export function isNotificationChannel(value: unknown): value is NotificationChannel {
+export function isNotificationChannel(
+  value: unknown,
+): value is NotificationChannel {
   return (
     typeof value === 'string' &&
     Object.values(NotificationChannel).includes(value as NotificationChannel)
@@ -101,4 +107,3 @@ export function getNumberProperty(
   const value = record[key];
   return typeof value === 'number' ? value : undefined;
 }
-

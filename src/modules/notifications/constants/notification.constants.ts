@@ -158,4 +158,3 @@ export const PRIORITY_CONSTANTS = {
   /** Critical event priority threshold */
   CRITICAL_PRIORITY_THRESHOLD: 8,
 } as const;
-

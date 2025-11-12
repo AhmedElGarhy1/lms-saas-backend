@@ -3,9 +3,7 @@ import { NotificationTemplateService } from './notification-template.service';
 import { RedisTemplateCacheService } from './redis-template-cache.service';
 import { Logger } from '@nestjs/common';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import {
-  createMockLoggerService,
-} from '../test/helpers';
+import { createMockLoggerService } from '../test/helpers';
 import { TestEnvGuard } from '../test/helpers/test-env-guard';
 import { TemplateRenderingException } from '../exceptions/notification.exceptions';
 import * as Handlebars from 'handlebars';
@@ -23,7 +21,9 @@ jest.mock('handlebars', () => ({
 
 // Mock template path utility
 jest.mock('../utils/template-path.util', () => ({
-  resolveTemplatePathWithFallback: jest.fn().mockReturnValue('/mock/template/path.hbs'),
+  resolveTemplatePathWithFallback: jest
+    .fn()
+    .mockReturnValue('/mock/template/path.hbs'),
 }));
 
 describe('NotificationTemplateService', () => {
@@ -39,14 +39,20 @@ describe('NotificationTemplateService', () => {
 
     mockLogger = createMockLoggerService();
     mockRedisCache = {
-      getTemplateSource: jest.fn().mockImplementation(async (key, loader) => loader()),
-      getCompiledTemplate: jest.fn().mockImplementation(async (key, loader) => loader()),
+      getTemplateSource: jest
+        .fn()
+        .mockImplementation(async (key, loader) => loader()),
+      getCompiledTemplate: jest
+        .fn()
+        .mockImplementation(async (key, loader) => loader()),
       setTemplateSource: jest.fn().mockResolvedValue(undefined),
       clearTemplateCache: jest.fn().mockResolvedValue(undefined),
     } as any;
 
     mockReadFile = readFile as jest.MockedFunction<typeof readFile>;
-    mockHandlebarsCompile = Handlebars.compile as jest.MockedFunction<typeof Handlebars.compile>;
+    mockHandlebarsCompile = Handlebars.compile as jest.MockedFunction<
+      typeof Handlebars.compile
+    >;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -62,7 +68,9 @@ describe('NotificationTemplateService', () => {
       ],
     }).compile();
 
-    service = module.get<NotificationTemplateService>(NotificationTemplateService);
+    service = module.get<NotificationTemplateService>(
+      NotificationTemplateService,
+    );
   });
 
   afterEach(() => {
@@ -74,7 +82,9 @@ describe('NotificationTemplateService', () => {
       const templateContent = '<p>Hello {{name}}</p>';
       mockReadFile.mockResolvedValue(templateContent);
       const compiledTemplate = jest.fn().mockReturnValue('<p>Hello John</p>');
-      mockHandlebarsCompile.mockReturnValue(compiledTemplate as Handlebars.TemplateDelegate);
+      mockHandlebarsCompile.mockReturnValue(
+        compiledTemplate as Handlebars.TemplateDelegate,
+      );
 
       const result = await service.loadTemplateWithChannel(
         'test-template',
@@ -122,7 +132,9 @@ describe('NotificationTemplateService', () => {
       const templateContent = '<p>Hello {{name}}</p>';
       mockReadFile.mockResolvedValue(templateContent);
       const compiledTemplate = jest.fn().mockReturnValue('<p>Hello John</p>');
-      mockHandlebarsCompile.mockReturnValue(compiledTemplate as Handlebars.TemplateDelegate);
+      mockHandlebarsCompile.mockReturnValue(
+        compiledTemplate as Handlebars.TemplateDelegate,
+      );
 
       const result = await service.renderTemplateWithChannel(
         'test-template',
@@ -145,7 +157,9 @@ describe('NotificationTemplateService', () => {
         title: 'Test Title',
         message: 'Test Message',
       });
-      mockHandlebarsCompile.mockReturnValue(compiledTemplate as Handlebars.TemplateDelegate);
+      mockHandlebarsCompile.mockReturnValue(
+        compiledTemplate as Handlebars.TemplateDelegate,
+      );
 
       const result = await service.renderTemplateWithChannel(
         'inapp-template',
@@ -186,7 +200,9 @@ describe('NotificationTemplateService', () => {
       const compiledTemplate = jest.fn().mockImplementation(() => {
         throw new Error('Rendering error');
       });
-      mockHandlebarsCompile.mockReturnValue(compiledTemplate as Handlebars.TemplateDelegate);
+      mockHandlebarsCompile.mockReturnValue(
+        compiledTemplate as Handlebars.TemplateDelegate,
+      );
 
       await expect(
         service.renderTemplateWithChannel(
@@ -247,4 +263,3 @@ describe('NotificationTemplateService', () => {
     });
   });
 });
-

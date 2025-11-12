@@ -8,7 +8,7 @@ import { Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '@/modules/user/services/user.service';
 import { JwtPayload } from '@/modules/auth/strategies/jwt.strategy';
-import { RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible';
+import { RateLimitService } from '@/modules/rate-limit/services/rate-limit.service';
 import { notificationGatewayConfig } from '../config/notification-gateway.config';
 import { Config } from '@/shared/config/config';
 
@@ -22,8 +22,6 @@ export class RedisIoAdapter extends IoAdapter {
   private logger: Logger;
   private jwtService: JwtService;
   private userService: UserService;
-  private ipRateLimiter?: RateLimiterRedis;
-  private userRateLimiter?: RateLimiterRedis;
   private connectionRateLimitConfig?: ReturnType<
     typeof notificationGatewayConfig
   >['connectionRateLimit'];
@@ -31,6 +29,7 @@ export class RedisIoAdapter extends IoAdapter {
   constructor(
     private readonly redisService: RedisService,
     app: INestApplicationContext,
+    private readonly rateLimitService: RateLimitService,
   ) {
     super(app);
     this.app = app;
@@ -49,11 +48,11 @@ export class RedisIoAdapter extends IoAdapter {
     // Create the base Socket.IO server
     const server = super.createIOServer(port, options) as Server;
 
-        // Resolve services if not already resolved
-        if (!this.logger || !this.jwtService || !this.userService) {
-          try {
-            // Create NestJS Logger with context
-            this.logger = new Logger(RedisIoAdapter.name);
+    // Resolve services if not already resolved
+    if (!this.logger || !this.jwtService || !this.userService) {
+      try {
+        // Create NestJS Logger with context
+        this.logger = new Logger(RedisIoAdapter.name);
 
         this.jwtService = this.app.get(JwtService, { strict: false });
         this.userService = this.app.get(UserService, { strict: false });
@@ -142,26 +141,21 @@ export class RedisIoAdapter extends IoAdapter {
       try {
         // Step 1: IP-based rate limiting (BEFORE authentication) - Line 120-163
         // This runs before any expensive JWT/DB operations for early rejection
-        if (this.ipRateLimiter && this.connectionRateLimitConfig) {
+        if (this.connectionRateLimitConfig) {
           try {
             const clientIP = this.extractClientIp(socket);
-            await this.ipRateLimiter.consume(`ip:${clientIP}`);
+            const result = await this.rateLimitService.checkLimit(
+              `ip:${clientIP}`,
+              this.connectionRateLimitConfig.ip.limit,
+              this.connectionRateLimitConfig.ip.windowSeconds,
+              {
+                context: 'websocket',
+                identifier: clientIP,
+              },
+            );
 
-            // If consume succeeds, continue with authentication
-          } catch (ipRateLimitError: unknown) {
-            // IMPORTANT: Distinguish between rate limit exceeded and Redis/network errors
-            if (
-              ipRateLimitError instanceof RateLimiterRes ||
-              (typeof ipRateLimitError === 'object' &&
-                ipRateLimitError !== null &&
-                'remainingPoints' in ipRateLimitError &&
-                (ipRateLimitError as { remainingPoints?: number })
-                  .remainingPoints !== undefined &&
-                (ipRateLimitError as { remainingPoints?: number })
-                  .remainingPoints === 0)
-            ) {
+            if (!result.allowed) {
               // Rate limit exceeded - reject connection
-              const clientIP = this.extractClientIp(socket);
               if (this.logger) {
                 this.logger.warn(
                   `Connection rate limit exceeded for IP: ${clientIP} - socketId: ${socket.id}, namespace: ${socket.nsp.name}`,
@@ -175,22 +169,22 @@ export class RedisIoAdapter extends IoAdapter {
                 ),
               );
             }
-
+          } catch (error: unknown) {
             // All other exceptions are Redis/network errors (not rate limit violations)
             if (this.logger) {
-              if (ipRateLimitError instanceof Error) {
+              if (error instanceof Error) {
                 this.logger.error(
                   `IP rate limit check failed (Redis/network error) - socketId: ${socket.id}`,
-                  ipRateLimitError.stack || ipRateLimitError.message,
+                  error.stack || error.message,
                 );
               } else {
                 this.logger.error(
-                  `IP rate limit check failed (Redis/network error) - socketId: ${socket.id}, error: ${String(ipRateLimitError)}`,
+                  `IP rate limit check failed (Redis/network error) - socketId: ${socket.id}, error: ${String(error)}`,
                 );
               }
             }
 
-            if (this.connectionRateLimitConfig.failClosed) {
+            if (this.connectionRateLimitConfig?.failClosed) {
               return next(
                 new Error(
                   'Rate limit check unavailable. Please try again later.',
@@ -251,23 +245,19 @@ export class RedisIoAdapter extends IoAdapter {
 
         // Step 3: User-based rate limiting (AFTER authentication) - Line 205-245
         // This runs after authentication to prevent authenticated abuse
-        if (this.userRateLimiter && this.connectionRateLimitConfig) {
+        if (this.connectionRateLimitConfig) {
           try {
-            await this.userRateLimiter.consume(`user:${payload.sub}`);
+            const result = await this.rateLimitService.checkLimit(
+              `user:${payload.sub}`,
+              this.connectionRateLimitConfig.user.limit,
+              this.connectionRateLimitConfig.user.windowSeconds,
+              {
+                context: 'websocket',
+                identifier: payload.sub,
+              },
+            );
 
-            // If consume succeeds, continue with connection
-          } catch (userRateLimitError: unknown) {
-            // IMPORTANT: Distinguish between rate limit exceeded and Redis/network errors
-            if (
-              userRateLimitError instanceof RateLimiterRes ||
-              (typeof userRateLimitError === 'object' &&
-                userRateLimitError !== null &&
-                'remainingPoints' in userRateLimitError &&
-                (userRateLimitError as { remainingPoints?: number })
-                  .remainingPoints !== undefined &&
-                (userRateLimitError as { remainingPoints?: number })
-                  .remainingPoints === 0)
-            ) {
+            if (!result.allowed) {
               // Rate limit exceeded - reject connection
               if (this.logger) {
                 this.logger.warn(
@@ -283,17 +273,17 @@ export class RedisIoAdapter extends IoAdapter {
                 ),
               );
             }
-
+          } catch (error: unknown) {
             // All other exceptions are Redis/network errors (not rate limit violations)
             if (this.logger) {
-              if (userRateLimitError instanceof Error) {
+              if (error instanceof Error) {
                 this.logger.error(
                   `User rate limit check failed (Redis/network error) - userId: ${payload.sub}, socketId: ${socket.id}`,
-                  userRateLimitError.stack || userRateLimitError.message,
+                  error.stack || error.message,
                 );
               } else {
                 this.logger.error(
-                  `User rate limit check failed (Redis/network error) - userId: ${payload.sub}, socketId: ${socket.id}, error: ${String(userRateLimitError)}`,
+                  `User rate limit check failed (Redis/network error) - userId: ${payload.sub}, socketId: ${socket.id}, error: ${String(error)}`,
                 );
               }
             }
@@ -414,60 +404,17 @@ export class RedisIoAdapter extends IoAdapter {
   }
 
   /**
-   * Initialize rate limiters for connection rate limiting
-   * Reuses existing Redis client from RedisService
-   *
-   * Rate limiter configuration:
-   * - IP limiter: Limits connection attempts per IP address
-   * - User limiter: Limits connection attempts per authenticated user
-   *
-   * Redis key structure:
-   * - IP: ${prefix}:connection:rate:ip:ip:${ipAddress}
-   * - User: ${prefix}:connection:rate:user:user:${userId}
-   *
-   * TTL behavior:
-   * - Keys automatically expire after `duration` seconds (windowSeconds)
-   * - rate-limiter-flexible handles TTL renewal on each consume() call
-   * - Edge case: If TTL expires mid-window, next consume() will reset the window
-   *   This is acceptable as it only affects very high-frequency connections
-   *   and the window will reset correctly on the next request
-   *
-   * Distributed rate limiting:
-   * - All server instances share the same Redis backend
-   * - Rate limits are enforced globally across all instances
-   * - Testing: Verify with multiple concurrent server instances connecting
-   *   to the same Redis to ensure limits are shared correctly
+   * Initialize rate limit configuration for connection rate limiting
+   * Rate limiting is now handled by RateLimitService
    */
   private initializeRateLimiters(): void {
     try {
       const config = notificationGatewayConfig();
       this.connectionRateLimitConfig = config.connectionRateLimit;
-
-      const redisClient = this.redisService.getClient();
-
-      // Note: rate-limiter-flexible requires a keyPrefix string, not individual keys
-      // We'll use a pattern that matches our key builder structure
-      // The library will append the actual identifier (IP/user ID) to the prefix
-      const ipKeyPrefix = notificationKeys.connectionRateLimitIp('');
-      const userKeyPrefix = notificationKeys.connectionRateLimitUser('');
-
-      this.ipRateLimiter = new RateLimiterRedis({
-        storeClient: redisClient,
-        keyPrefix: ipKeyPrefix.replace(/:[^:]*$/, ':'), // Remove trailing identifier, keep prefix pattern
-        points: config.connectionRateLimit.ip.limit,
-        duration: config.connectionRateLimit.ip.windowSeconds,
-      });
-
-      this.userRateLimiter = new RateLimiterRedis({
-        storeClient: redisClient,
-        keyPrefix: userKeyPrefix.replace(/:[^:]*$/, ':'), // Remove trailing identifier, keep prefix pattern
-        points: config.connectionRateLimit.user.limit,
-        duration: config.connectionRateLimit.user.windowSeconds,
-      });
     } catch (error) {
       if (this.logger) {
         this.logger.error(
-          'Failed to initialize connection rate limiters',
+          'Failed to initialize connection rate limit configuration',
           error instanceof Error ? error.stack : String(error),
         );
       }

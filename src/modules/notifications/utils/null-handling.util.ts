@@ -81,5 +81,3 @@ export function getValueOrDefault<T>(
 ): T {
   return value ?? defaultValue;
 }
-
-

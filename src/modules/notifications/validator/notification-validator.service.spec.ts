@@ -4,9 +4,7 @@ import { NotificationManifestResolver } from '../manifests/registry/notification
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationRegistry } from '../manifests/registry/notification-registry';
-import {
-  createMockNotificationManifest,
-} from '../test/helpers';
+import { createMockNotificationManifest } from '../test/helpers';
 import { TestEnvGuard } from '../test/helpers/test-env-guard';
 
 // Mock template-path.util
@@ -277,7 +275,7 @@ describe('NotificationValidator', () => {
       // stack traces, which makes it difficult to test in a Jest environment.
       // Instead, we test that validateManifests can be called directly and works correctly.
       // The onModuleInit behavior is tested by verifying it skips in test mode (above test).
-      
+
       // Call validateManifests directly (bypassing onModuleInit's test detection)
       validator.validateManifests();
 

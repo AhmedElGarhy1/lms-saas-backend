@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { notificationKeys } from '../utils/notification-redis-key-builder';
 import { BaseService } from '@/shared/common/services/base.service';
-import { CACHE_CONSTANTS, REDIS_CONSTANTS } from '../constants/notification.constants';
+import {
+  CACHE_CONSTANTS,
+  REDIS_CONSTANTS,
+} from '../constants/notification.constants';
 import { NotificationConfig } from '../config/notification.config';
 import * as Handlebars from 'handlebars';
 
@@ -38,11 +41,10 @@ export class RedisTemplateCacheService extends BaseService {
   // This is a small optimization to avoid recompiling within the same instance
   private readonly compiledCache: Map<string, HandlebarsTemplateDelegate> =
     new Map();
-  private readonly MAX_COMPILED_CACHE_SIZE = CACHE_CONSTANTS.MAX_COMPILED_CACHE_SIZE;
+  private readonly MAX_COMPILED_CACHE_SIZE =
+    CACHE_CONSTANTS.MAX_COMPILED_CACHE_SIZE;
 
-  constructor(
-    private readonly redisService: RedisService,
-  ) {
+  constructor(private readonly redisService: RedisService) {
     super();
     // Get TTL from NotificationConfig
     this.CACHE_TTL = NotificationConfig.templateCacheTtlSeconds;
@@ -162,7 +164,6 @@ export class RedisTemplateCacheService extends BaseService {
         // Clear all in-memory cache
         this.compiledCache.clear();
       }
-
     } catch (error) {
       this.logger.error(
         `Failed to clear template cache - templatePath: ${templatePath}`,
@@ -204,10 +205,9 @@ export class RedisTemplateCacheService extends BaseService {
         ttl: this.CACHE_TTL,
       };
     } catch (error) {
-      this.logger.warn(
-        `Failed to get cache stats`,
-        { error: error instanceof Error ? error.message : String(error) },
-      );
+      this.logger.warn(`Failed to get cache stats`, {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return {
         redisKeys: 0,
         memoryCacheSize: this.compiledCache.size,

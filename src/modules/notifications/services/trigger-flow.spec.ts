@@ -191,16 +191,21 @@ describe('Trigger Flow', () => {
         {
           provide: MultiRecipientProcessor,
           useValue: {
-            processRecipients: jest.fn().mockImplementation(async (recipients, processor) => {
-              const results = await Promise.allSettled(
-                recipients.map((r: RecipientInfo) => processor(r)),
-              );
-              return results.map((result, index) => ({
-                recipient: recipients[index],
-                result: result.status === 'fulfilled' ? result.value : new Error(String(result.reason)),
-                success: result.status === 'fulfilled',
-              }));
-            }),
+            processRecipients: jest
+              .fn()
+              .mockImplementation(async (recipients, processor) => {
+                const results = await Promise.allSettled(
+                  recipients.map((r: RecipientInfo) => processor(r)),
+                );
+                return results.map((result, index) => ({
+                  recipient: recipients[index],
+                  result:
+                    result.status === 'fulfilled'
+                      ? result.value
+                      : new Error(String(result.reason)),
+                  success: result.status === 'fulfilled',
+                }));
+              }),
             getConcurrencyLimit: jest.fn().mockReturnValue(10),
           },
         },
@@ -295,17 +300,14 @@ describe('Trigger Flow', () => {
     });
 
     it('should generate correlation ID for each notification', async () => {
-          const recipient = createMockRecipientInfo();
-          const event = createMockNotificationEvent();
+      const recipient = createMockRecipientInfo();
+      const event = createMockNotificationEvent();
 
-          const result = await service.trigger(
-            NotificationType.CENTER_CREATED,
-            {
-              audience: 'OWNER',
-              event,
-              recipients: [recipient],
-            },
-          );
+      const result = await service.trigger(NotificationType.CENTER_CREATED, {
+        audience: 'OWNER',
+        event,
+        recipients: [recipient],
+      });
 
       // correlationId is now generated internally, not from RequestContext
       expect(result.correlationId).toBeDefined();

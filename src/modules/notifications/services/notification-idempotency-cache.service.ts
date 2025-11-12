@@ -22,14 +22,14 @@ import { NotificationConfig } from '../config/notification.config';
  */
 @Injectable()
 export class NotificationIdempotencyCacheService extends BaseService {
-  private readonly logger: Logger = new Logger(NotificationIdempotencyCacheService.name);
+  private readonly logger: Logger = new Logger(
+    NotificationIdempotencyCacheService.name,
+  );
   private readonly defaultTtlSeconds: number;
   private readonly lockTtlSeconds: number;
   private readonly lockTimeoutMs: number;
 
-  constructor(
-    private readonly redisService: RedisService,
-  ) {
+  constructor(private readonly redisService: RedisService) {
     super();
     this.defaultTtlSeconds = NotificationConfig.idempotency.cacheTtlSeconds;
     this.lockTtlSeconds = NotificationConfig.idempotency.lockTtlSeconds;
@@ -46,7 +46,12 @@ export class NotificationIdempotencyCacheService extends BaseService {
     channel: NotificationChannel,
     recipient: string,
   ): Promise<boolean> {
-    const lockKey = notificationKeys.lock(correlationId, type, channel, recipient);
+    const lockKey = notificationKeys.lock(
+      correlationId,
+      type,
+      channel,
+      recipient,
+    );
     const client = this.redisService.getClient();
 
     try {
@@ -76,7 +81,10 @@ export class NotificationIdempotencyCacheService extends BaseService {
           correlationId,
           type,
           channel,
-          recipient: recipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH),
+          recipient: recipient.substring(
+            0,
+            STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
+          ),
         },
       );
       return false;
@@ -90,7 +98,10 @@ export class NotificationIdempotencyCacheService extends BaseService {
           correlationId,
           type,
           channel,
-          recipient: recipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH),
+          recipient: recipient.substring(
+            0,
+            STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
+          ),
         },
       );
       return false; // Fail open - allow notification
@@ -106,7 +117,12 @@ export class NotificationIdempotencyCacheService extends BaseService {
     channel: NotificationChannel,
     recipient: string,
   ): Promise<void> {
-    const lockKey = notificationKeys.lock(correlationId, type, channel, recipient);
+    const lockKey = notificationKeys.lock(
+      correlationId,
+      type,
+      channel,
+      recipient,
+    );
     const client = this.redisService.getClient();
 
     try {
@@ -135,7 +151,12 @@ export class NotificationIdempotencyCacheService extends BaseService {
     channel: NotificationChannel,
     recipient: string,
   ): Promise<boolean> {
-    const key = notificationKeys.idempotency(correlationId, type, channel, recipient);
+    const key = notificationKeys.idempotency(
+      correlationId,
+      type,
+      channel,
+      recipient,
+    );
     const client = this.redisService.getClient();
 
     try {
@@ -162,7 +183,10 @@ export class NotificationIdempotencyCacheService extends BaseService {
           correlationId,
           type,
           channel,
-          recipient: recipient.substring(0, STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH), // Log first 20 chars for debugging
+          recipient: recipient.substring(
+            0,
+            STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
+          ), // Log first 20 chars for debugging
         },
       );
       return false; // Fail open - allow notification
@@ -178,7 +202,12 @@ export class NotificationIdempotencyCacheService extends BaseService {
     channel: NotificationChannel,
     recipient: string,
   ): Promise<void> {
-    const key = notificationKeys.idempotency(correlationId, type, channel, recipient);
+    const key = notificationKeys.idempotency(
+      correlationId,
+      type,
+      channel,
+      recipient,
+    );
     const client = this.redisService.getClient();
 
     try {
@@ -212,7 +241,12 @@ export class NotificationIdempotencyCacheService extends BaseService {
     channel: NotificationChannel,
     recipient: string,
   ): Promise<void> {
-    const key = notificationKeys.idempotency(correlationId, type, channel, recipient);
+    const key = notificationKeys.idempotency(
+      correlationId,
+      type,
+      channel,
+      recipient,
+    );
     const client = this.redisService.getClient();
 
     try {

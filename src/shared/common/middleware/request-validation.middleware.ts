@@ -10,10 +10,11 @@ import {
 
 @Injectable()
 export class RequestValidationMiddleware implements NestMiddleware {
-  private readonly logger: Logger = new Logger(RequestValidationMiddleware.name);
+  private readonly logger: Logger = new Logger(
+    RequestValidationMiddleware.name,
+  );
 
-  constructor(private readonly moduleRef: ModuleRef) {
-  }
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   use(req: Request, res: Response, next: NextFunction): void {
     try {
@@ -85,4 +86,3 @@ export class RequestValidationMiddleware implements NestMiddleware {
     // Request logging handled by PerformanceInterceptor
   }
 }
-

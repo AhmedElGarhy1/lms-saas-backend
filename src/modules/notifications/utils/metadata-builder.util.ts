@@ -15,20 +15,34 @@ export function extractRenderedContent(
 
   if (channel === NotificationChannel.EMAIL) {
     // For email, prefer html, then content, then message
-    const data = payload.data as { html?: string; content?: string; message?: string };
+    const data = payload.data as {
+      html?: string;
+      content?: string;
+      message?: string;
+    };
     return data.html || data.content || data.message || '';
   }
 
-  if (channel === NotificationChannel.SMS || channel === NotificationChannel.WHATSAPP) {
+  if (
+    channel === NotificationChannel.SMS ||
+    channel === NotificationChannel.WHATSAPP
+  ) {
     // For SMS/WhatsApp, prefer content, then message
-    const data = payload.data as { content?: string; message?: string; html?: string };
+    const data = payload.data as {
+      content?: string;
+      message?: string;
+      html?: string;
+    };
     return data.content || data.message || data.html || '';
   }
 
   if (channel === NotificationChannel.IN_APP) {
     // For IN_APP, prefer message, then content
     // Content can be string or object, so handle both cases
-    const data = payload.data as { message?: string; content?: string | object };
+    const data = payload.data as {
+      message?: string;
+      content?: string | object;
+    };
     if (data.message) {
       return typeof data.message === 'string' ? data.message : '';
     }
@@ -97,7 +111,10 @@ export function buildStandardizedMetadata(
 
   // Add channel-specific fields
   if (channel === NotificationChannel.EMAIL) {
-    const emailPayload = payload as { subject?: string; data?: { html?: string } };
+    const emailPayload = payload as {
+      subject?: string;
+      data?: { html?: string };
+    };
     if (emailPayload.subject) {
       metadata.subject = emailPayload.subject;
     }
@@ -117,7 +134,11 @@ export function buildStandardizedMetadata(
     }
   }
 
-  if (channel === NotificationChannel.IN_APP || channel === NotificationChannel.SMS || channel === NotificationChannel.WHATSAPP) {
+  if (
+    channel === NotificationChannel.IN_APP ||
+    channel === NotificationChannel.SMS ||
+    channel === NotificationChannel.WHATSAPP
+  ) {
     const data = payload.data as { message?: string };
     if (data.message) {
       metadata.message = data.message;
@@ -148,4 +169,3 @@ export function buildStandardizedMetadata(
 
   return metadata;
 }
-

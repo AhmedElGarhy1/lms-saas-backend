@@ -18,9 +18,7 @@ import {
  */
 @Injectable()
 export class CenterActivityListener {
-  constructor(
-    private readonly activityLogService: ActivityLogService,
-  ) {}
+  constructor(private readonly activityLogService: ActivityLogService) {}
 
   @OnEvent(CenterEvents.CREATED)
   async handleCenterCreated(event: CreateCenterEvent) {

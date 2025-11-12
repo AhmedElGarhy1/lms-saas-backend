@@ -81,6 +81,3 @@ export const testManifests = {
     },
   } as NotificationManifest,
 };
-
-
-

@@ -21,7 +21,9 @@ jest.mock('handlebars', () => ({
 
 // Mock template path utility
 jest.mock('../utils/template-path.util', () => ({
-  resolveTemplatePathWithFallback: jest.fn().mockReturnValue('/mock/path/to/template.hbs'),
+  resolveTemplatePathWithFallback: jest
+    .fn()
+    .mockReturnValue('/mock/path/to/template.hbs'),
 }));
 
 describe('Template Snapshot Tests', () => {
@@ -37,14 +39,20 @@ describe('Template Snapshot Tests', () => {
 
     mockLogger = createMockLoggerService();
     mockRedisCache = {
-      getTemplateSource: jest.fn().mockImplementation(async (key, loader) => loader()),
-      getCompiledTemplate: jest.fn().mockImplementation(async (key, loader) => loader()),
+      getTemplateSource: jest
+        .fn()
+        .mockImplementation(async (key, loader) => loader()),
+      getCompiledTemplate: jest
+        .fn()
+        .mockImplementation(async (key, loader) => loader()),
       setTemplateSource: jest.fn().mockResolvedValue(undefined),
       clearTemplateCache: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<RedisTemplateCacheService>;
 
     mockReadFile = readFile as jest.MockedFunction<typeof readFile>;
-    mockHandlebarsCompile = Handlebars.compile as jest.MockedFunction<typeof Handlebars.compile>;
+    mockHandlebarsCompile = Handlebars.compile as jest.MockedFunction<
+      typeof Handlebars.compile
+    >;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -60,7 +68,9 @@ describe('Template Snapshot Tests', () => {
       ],
     }).compile();
 
-    service = module.get<NotificationTemplateService>(NotificationTemplateService);
+    service = module.get<NotificationTemplateService>(
+      NotificationTemplateService,
+    );
   });
 
   afterEach(() => {
@@ -80,7 +90,9 @@ describe('Template Snapshot Tests', () => {
         <p>Your verification code is: <strong>123456</strong></p>
         <p>This code expires in 10 minutes.</p>
       `);
-      mockHandlebarsCompile.mockReturnValue(compiledTemplate as Handlebars.TemplateDelegate);
+      mockHandlebarsCompile.mockReturnValue(
+        compiledTemplate as Handlebars.TemplateDelegate,
+      );
 
       const result = await service.renderTemplateWithChannel(
         'welcome-email',
@@ -118,7 +130,9 @@ describe('Template Snapshot Tests', () => {
           </ul>
         </div>
       `);
-      mockHandlebarsCompile.mockReturnValue(compiledTemplate as Handlebars.TemplateDelegate);
+      mockHandlebarsCompile.mockReturnValue(
+        compiledTemplate as Handlebars.TemplateDelegate,
+      );
 
       const result = await service.renderTemplateWithChannel(
         'complex-email',
@@ -138,12 +152,17 @@ describe('Template Snapshot Tests', () => {
 
   describe('SMS Template Snapshots', () => {
     it('should render SMS template with consistent output', async () => {
-      const templateContent = 'Hello {{name}}, your OTP is {{otpCode}}. Expires in {{expiresIn}} minutes.';
+      const templateContent =
+        'Hello {{name}}, your OTP is {{otpCode}}. Expires in {{expiresIn}} minutes.';
       mockReadFile.mockResolvedValue(templateContent);
-      const compiledTemplate = jest.fn().mockReturnValue(
-        'Hello John Doe, your OTP is 123456. Expires in 10 minutes.',
+      const compiledTemplate = jest
+        .fn()
+        .mockReturnValue(
+          'Hello John Doe, your OTP is 123456. Expires in 10 minutes.',
+        );
+      mockHandlebarsCompile.mockReturnValue(
+        compiledTemplate as Handlebars.TemplateDelegate,
       );
-      mockHandlebarsCompile.mockReturnValue(compiledTemplate as Handlebars.TemplateDelegate);
 
       const result = await service.renderTemplateWithChannel(
         'otp-sms',
@@ -169,7 +188,9 @@ describe('Template Snapshot Tests', () => {
         message: 'You have a new notification',
         expiresAt: '2024-12-31T23:59:59Z',
       });
-      mockHandlebarsCompile.mockReturnValue(compiledTemplate as Handlebars.TemplateDelegate);
+      mockHandlebarsCompile.mockReturnValue(
+        compiledTemplate as Handlebars.TemplateDelegate,
+      );
 
       const result = await service.renderTemplateWithChannel(
         'inapp-notification',
@@ -195,7 +216,9 @@ describe('Template Snapshot Tests', () => {
         title: 'Test Title',
         message: 'Test Message',
       });
-      mockHandlebarsCompile.mockReturnValue(compiledTemplate as Handlebars.TemplateDelegate);
+      mockHandlebarsCompile.mockReturnValue(
+        compiledTemplate as Handlebars.TemplateDelegate,
+      );
 
       const result = await service.renderTemplateWithChannel(
         'inapp-simple',
@@ -216,8 +239,12 @@ describe('Template Snapshot Tests', () => {
     it('should render English template correctly', async () => {
       const templateContent = 'Hello {{name}}, welcome!';
       mockReadFile.mockResolvedValue(templateContent);
-      const compiledTemplate = jest.fn().mockReturnValue('Hello John, welcome!');
-      mockHandlebarsCompile.mockReturnValue(compiledTemplate as Handlebars.TemplateDelegate);
+      const compiledTemplate = jest
+        .fn()
+        .mockReturnValue('Hello John, welcome!');
+      mockHandlebarsCompile.mockReturnValue(
+        compiledTemplate as Handlebars.TemplateDelegate,
+      );
 
       const result = await service.renderTemplateWithChannel(
         'welcome',
@@ -233,7 +260,9 @@ describe('Template Snapshot Tests', () => {
       const templateContent = 'مرحبا {{name}}، أهلا بك!';
       mockReadFile.mockResolvedValue(templateContent);
       const compiledTemplate = jest.fn().mockReturnValue('مرحبا جون، أهلا بك!');
-      mockHandlebarsCompile.mockReturnValue(compiledTemplate as Handlebars.TemplateDelegate);
+      mockHandlebarsCompile.mockReturnValue(
+        compiledTemplate as Handlebars.TemplateDelegate,
+      );
 
       const result = await service.renderTemplateWithChannel(
         'welcome',
@@ -246,5 +275,3 @@ describe('Template Snapshot Tests', () => {
     });
   });
 });
-
-

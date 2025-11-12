@@ -29,8 +29,7 @@ export class MultiRecipientProcessor {
   constructor() {
     // Get concurrency limit from config
     // Default to 10 if not configured
-    const limit =
-      NotificationConfig.concurrency?.maxRecipientsPerBatch || 10;
+    const limit = NotificationConfig.concurrency?.maxRecipientsPerBatch || 10;
     this.concurrencyLimit = pLimit(limit);
   }
 
@@ -79,9 +78,10 @@ export class MultiRecipientProcessor {
       } else {
         return {
           recipient,
-          result: result.reason instanceof Error
-            ? result.reason
-            : new Error(String(result.reason)),
+          result:
+            result.reason instanceof Error
+              ? result.reason
+              : new Error(String(result.reason)),
           success: false,
         };
       }
@@ -123,9 +123,7 @@ export class MultiRecipientProcessor {
   /**
    * Get statistics about processing results
    */
-  getProcessingStats<T>(
-    results: RecipientProcessResult<T>[],
-  ): {
+  getProcessingStats<T>(results: RecipientProcessResult<T>[]): {
     total: number;
     successful: number;
     failed: number;
@@ -144,4 +142,3 @@ export class MultiRecipientProcessor {
     };
   }
 }
-

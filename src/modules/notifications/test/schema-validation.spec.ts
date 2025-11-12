@@ -88,9 +88,18 @@ describe('Schema Validation Tests', () => {
 
     it('should validate notification configuration schema', () => {
       const notificationSchema = {
-        NOTIFICATION_CONCURRENCY: num({ desc: 'Concurrency limit', default: 20 }),
-        NOTIFICATION_RETRY_THRESHOLD: num({ desc: 'Retry threshold', default: 3 }),
-        NOTIFICATION_IDEMPOTENCY_TTL: num({ desc: 'Idempotency TTL', default: 3600 }),
+        NOTIFICATION_CONCURRENCY: num({
+          desc: 'Concurrency limit',
+          default: 20,
+        }),
+        NOTIFICATION_RETRY_THRESHOLD: num({
+          desc: 'Retry threshold',
+          default: 3,
+        }),
+        NOTIFICATION_IDEMPOTENCY_TTL: num({
+          desc: 'Idempotency TTL',
+          default: 3600,
+        }),
         NOTIFICATION_CIRCUIT_BREAKER_THRESHOLD: num({
           desc: 'Circuit breaker threshold',
           default: 5,
@@ -113,7 +122,9 @@ describe('Schema Validation Tests', () => {
       expect(NotificationConfig).toBeDefined();
       expect(NotificationConfig.concurrency).toBeDefined();
       expect(NotificationConfig.concurrency.processor).toBeGreaterThan(0);
-      expect(NotificationConfig.concurrency.maxRecipientsPerBatch).toBeGreaterThan(0);
+      expect(
+        NotificationConfig.concurrency.maxRecipientsPerBatch,
+      ).toBeGreaterThan(0);
       expect(NotificationConfig.retryThreshold).toBeGreaterThan(0);
       expect(NotificationConfig.idempotency).toBeDefined();
       expect(NotificationConfig.circuitBreaker).toBeDefined();
@@ -126,9 +137,15 @@ describe('Schema Validation Tests', () => {
     });
 
     it('should validate circuit breaker config structure', () => {
-      expect(NotificationConfig.circuitBreaker.errorThreshold).toBeGreaterThan(0);
-      expect(NotificationConfig.circuitBreaker.windowSeconds).toBeGreaterThan(0);
-      expect(NotificationConfig.circuitBreaker.resetTimeoutSeconds).toBeGreaterThan(0);
+      expect(NotificationConfig.circuitBreaker.errorThreshold).toBeGreaterThan(
+        0,
+      );
+      expect(NotificationConfig.circuitBreaker.windowSeconds).toBeGreaterThan(
+        0,
+      );
+      expect(
+        NotificationConfig.circuitBreaker.resetTimeoutSeconds,
+      ).toBeGreaterThan(0);
     });
 
     it('should validate Config structure', () => {
@@ -160,4 +177,3 @@ describe('Schema Validation Tests', () => {
     });
   });
 });
-

@@ -341,15 +341,13 @@ describe('Smoke Flow - End-to-End Integration', () => {
     });
 
     it('should handle flow with send error gracefully', async () => {
-      mockSenderService.send = jest
-        .fn()
-        .mockResolvedValue([
-          {
-            channel: NotificationChannel.EMAIL,
-            success: false,
-            error: 'Send failed',
-          },
-        ]);
+      mockSenderService.send = jest.fn().mockResolvedValue([
+        {
+          channel: NotificationChannel.EMAIL,
+          success: false,
+          error: 'Send failed',
+        },
+      ]);
 
       const recipient = createMockRecipientInfo();
       const event = createMockNotificationEvent();

@@ -1,9 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import {
-  EventName,
-  EventPayload,
-} from '../events/event-type-map';
+import { EventName, EventPayload } from '../events/event-type-map';
 
 /**
  * Type-safe event emitter wrapper around EventEmitter2.
@@ -47,10 +44,7 @@ export class TypeSafeEventEmitter {
    * @param payload - The payload matching the event name's type
    * @returns True if event had listeners, false otherwise
    */
-  emit<T extends EventName>(
-    eventName: T,
-    payload: EventPayload<T>,
-  ): boolean {
+  emit<T extends EventName>(eventName: T, payload: EventPayload<T>): boolean {
     return this.eventEmitter.emit(eventName, payload);
   }
 

@@ -14,11 +14,11 @@ import { resolveTemplatePathWithFallback } from '../utils/template-path.util';
 
 @Injectable()
 export class NotificationTemplateService extends BaseService {
-  private readonly logger: Logger = new Logger(NotificationTemplateService.name);
+  private readonly logger: Logger = new Logger(
+    NotificationTemplateService.name,
+  );
 
-  constructor(
-    private readonly redisCache: RedisTemplateCacheService,
-  ) {
+  constructor(private readonly redisCache: RedisTemplateCacheService) {
     super();
   }
 
@@ -225,7 +225,7 @@ export class NotificationTemplateService extends BaseService {
         channel,
       );
       try {
-      return template(data);
+        return template(data);
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);

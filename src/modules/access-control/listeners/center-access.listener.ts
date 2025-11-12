@@ -20,8 +20,7 @@ export class CenterAccessListener {
     private readonly moduleRef: ModuleRef,
     private readonly accessControlService: AccessControlService,
     private readonly activityLogService: ActivityLogService,
-  ) {
-  }
+  ) {}
 
   @OnEvent(AccessControlEvents.GRANT_CENTER_ACCESS)
   async handleGrantCenterAccess(event: GrantCenterAccessEvent) {

@@ -98,17 +98,19 @@ describe('Batch Processing', () => {
         {
           provide: NotificationSenderService,
           useValue: {
-            send: jest.fn().mockResolvedValue([
-              { channel: NotificationChannel.EMAIL, success: true },
-            ]),
+            send: jest
+              .fn()
+              .mockResolvedValue([
+                { channel: NotificationChannel.EMAIL, success: true },
+              ]),
           },
         },
         {
           provide: ChannelSelectionService,
           useValue: {
-            selectOptimalChannels: jest.fn().mockResolvedValue([
-              NotificationChannel.EMAIL,
-            ]),
+            selectOptimalChannels: jest
+              .fn()
+              .mockResolvedValue([NotificationChannel.EMAIL]),
           },
         },
         {
@@ -165,16 +167,21 @@ describe('Batch Processing', () => {
         {
           provide: MultiRecipientProcessor,
           useValue: {
-            processRecipients: jest.fn().mockImplementation(async (recipients, processor) => {
-              const results = await Promise.allSettled(
-                recipients.map((r: RecipientInfo) => processor(r)),
-              );
-              return results.map((result, index) => ({
-                recipient: recipients[index],
-                result: result.status === 'fulfilled' ? result.value : new Error(String(result.reason)),
-                success: result.status === 'fulfilled',
-              }));
-            }),
+            processRecipients: jest
+              .fn()
+              .mockImplementation(async (recipients, processor) => {
+                const results = await Promise.allSettled(
+                  recipients.map((r: RecipientInfo) => processor(r)),
+                );
+                return results.map((result, index) => ({
+                  recipient: recipients[index],
+                  result:
+                    result.status === 'fulfilled'
+                      ? result.value
+                      : new Error(String(result.reason)),
+                  success: result.status === 'fulfilled',
+                }));
+              }),
             getConcurrencyLimit: jest.fn().mockReturnValue(10),
           },
         },
@@ -216,13 +223,15 @@ describe('Batch Processing', () => {
 
       let concurrentCount = 0;
       let maxConcurrent = 0;
-      mockPipelineService.process = jest.fn().mockImplementation(async (context, recipientInfo) => {
-        concurrentCount++;
-        maxConcurrent = Math.max(maxConcurrent, concurrentCount);
-        await new Promise((resolve) => setTimeout(resolve, 10));
-        concurrentCount--;
-        return context;
-      });
+      mockPipelineService.process = jest
+        .fn()
+        .mockImplementation(async (context, recipientInfo) => {
+          concurrentCount++;
+          maxConcurrent = Math.max(maxConcurrent, concurrentCount);
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          concurrentCount--;
+          return context;
+        });
 
       await service.trigger(NotificationType.CENTER_CREATED, {
         audience: 'OWNER',
@@ -249,9 +258,7 @@ describe('Batch Processing', () => {
       });
 
       // Each recipient should get their own template rendering
-      expect(mockRenderer.render).toHaveBeenCalledTimes(
-        expect.any(Number),
-      );
+      expect(mockRenderer.render).toHaveBeenCalledTimes(expect.any(Number));
     });
 
     it('should use bulk enqueue for multiple notifications', async () => {
@@ -278,13 +285,15 @@ describe('Batch Processing', () => {
 
       // Make some pipeline calls fail
       let callCount = 0;
-      mockPipelineService.process = jest.fn().mockImplementation(async (context, recipientInfo) => {
-        callCount++;
-        if (callCount % 3 === 0) {
-          throw new Error('Processing failed');
-        }
-        return context;
-      });
+      mockPipelineService.process = jest
+        .fn()
+        .mockImplementation(async (context, recipientInfo) => {
+          callCount++;
+          if (callCount % 3 === 0) {
+            throw new Error('Processing failed');
+          }
+          return context;
+        });
 
       const result = await service.trigger(NotificationType.CENTER_CREATED, {
         audience: 'OWNER',
@@ -402,7 +411,7 @@ describe('Batch Processing', () => {
       // Should use bulk enqueue
       const enqueueCalls = mockRouterService.enqueueNotifications.mock.calls;
       expect(enqueueCalls.length).toBeGreaterThan(0);
-      
+
       // Each call should have multiple contexts
       enqueueCalls.forEach((call) => {
         const contexts = call[0];
@@ -430,5 +439,3 @@ describe('Batch Processing', () => {
     });
   });
 });
-
-

@@ -168,9 +168,9 @@ describe('NotificationIdempotencyCacheService - Contract Tests', () => {
 
       await service.checkAndSet(correlationId, type, channel, recipient);
 
-      const cacheKey = fakeRedis.getAllKeys().find((k) =>
-        k.includes('idempotency'),
-      );
+      const cacheKey = fakeRedis
+        .getAllKeys()
+        .find((k) => k.includes('idempotency'));
       expect(cacheKey).toBeDefined();
       // Value is timestamp, not 'sent'
       expect(fakeRedis.getValue(cacheKey!)).toBeDefined();
@@ -184,9 +184,9 @@ describe('NotificationIdempotencyCacheService - Contract Tests', () => {
 
       await service.checkAndSet(correlationId, type, channel, recipient);
 
-      const cacheKey = fakeRedis.getAllKeys().find((k) =>
-        k.includes('idempotency'),
-      );
+      const cacheKey = fakeRedis
+        .getAllKeys()
+        .find((k) => k.includes('idempotency'));
       expect(cacheKey).toContain(correlationId);
       expect(cacheKey).toContain(type);
       expect(cacheKey).toContain(channel);
@@ -273,9 +273,9 @@ describe('NotificationIdempotencyCacheService - Contract Tests', () => {
 
       await service.markSent(correlationId, type, channel, recipient);
 
-      const cacheKey = fakeRedis.getAllKeys().find((k) =>
-        k.includes('idempotency'),
-      );
+      const cacheKey = fakeRedis
+        .getAllKeys()
+        .find((k) => k.includes('idempotency'));
       expect(cacheKey).toBeDefined();
       // Value is timestamp, not 'sent'
       expect(fakeRedis.getValue(cacheKey!)).toBeDefined();
@@ -289,9 +289,9 @@ describe('NotificationIdempotencyCacheService - Contract Tests', () => {
 
       await service.markSent(correlationId, type, channel, recipient);
 
-      const cacheKey = fakeRedis.getAllKeys().find((k) =>
-        k.includes('idempotency'),
-      );
+      const cacheKey = fakeRedis
+        .getAllKeys()
+        .find((k) => k.includes('idempotency'));
       expect(cacheKey).toBeDefined();
       // Key should exist (expiration is set)
     });
@@ -322,9 +322,9 @@ describe('NotificationIdempotencyCacheService - Contract Tests', () => {
       await service.checkAndSet(correlationId, type, channel, recipient);
       await service.checkAndSet(correlationId, type, channel, recipient);
 
-      const keys = fakeRedis.getAllKeys().filter((k) =>
-        k.includes('idempotency'),
-      );
+      const keys = fakeRedis
+        .getAllKeys()
+        .filter((k) => k.includes('idempotency'));
       expect(keys.length).toBe(1); // Same key used both times
     });
 
@@ -336,9 +336,9 @@ describe('NotificationIdempotencyCacheService - Contract Tests', () => {
 
       await service.checkAndSet(correlationId, type, channel, recipient);
 
-      const cacheKey = fakeRedis.getAllKeys().find((k) =>
-        k.includes('idempotency'),
-      );
+      const cacheKey = fakeRedis
+        .getAllKeys()
+        .find((k) => k.includes('idempotency'));
       expect(cacheKey).toContain(correlationId);
       expect(cacheKey).toContain(type);
       expect(cacheKey).toContain(channel);
@@ -352,12 +352,10 @@ describe('NotificationIdempotencyCacheService - Contract Tests', () => {
 
       await service.checkAndSet(correlationId, type, channel, recipient);
 
-      const cacheKey = fakeRedis.getAllKeys().find((k) =>
-        k.includes('idempotency'),
-      );
+      const cacheKey = fakeRedis
+        .getAllKeys()
+        .find((k) => k.includes('idempotency'));
       expect(cacheKey).toBeDefined();
     });
   });
 });
-
-

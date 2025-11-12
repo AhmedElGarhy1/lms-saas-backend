@@ -28,9 +28,7 @@ export class PerformanceAlertsService extends BaseService {
     connectionPool: 0.9, // 90% connection pool usage
   };
 
-  constructor(
-    private readonly eventEmitter: EventEmitter2,
-  ) {
+  constructor(private readonly eventEmitter: EventEmitter2) {
     super();
   }
 
@@ -200,6 +198,8 @@ export class PerformanceAlertsService extends BaseService {
    */
   updateThresholds(thresholds: Partial<typeof this.alertThresholds>): void {
     Object.assign(this.alertThresholds, thresholds);
-    this.logger.log(`Alert thresholds updated - ${JSON.stringify(this.alertThresholds)}`);
+    this.logger.log(
+      `Alert thresholds updated - ${JSON.stringify(this.alertThresholds)}`,
+    );
   }
 }

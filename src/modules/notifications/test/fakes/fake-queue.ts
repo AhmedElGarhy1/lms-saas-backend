@@ -68,6 +68,3 @@ export class FakeQueue {
     this.jobCounter = 0;
   }
 }
-
-
-

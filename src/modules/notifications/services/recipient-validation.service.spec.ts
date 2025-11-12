@@ -10,7 +10,9 @@ describe('RecipientValidationService', () => {
       providers: [RecipientValidationService],
     }).compile();
 
-    service = module.get<RecipientValidationService>(RecipientValidationService);
+    service = module.get<RecipientValidationService>(
+      RecipientValidationService,
+    );
   });
 
   describe('determineAndValidateRecipient', () => {
@@ -162,23 +164,54 @@ describe('RecipientValidationService', () => {
 
   describe('isValidRecipientForChannel', () => {
     it('should validate email for EMAIL channel', () => {
-      expect(service.isValidRecipientForChannel(NotificationChannel.EMAIL, 'test@example.com')).toBe(true);
-      expect(service.isValidRecipientForChannel(NotificationChannel.EMAIL, 'invalid')).toBe(false);
+      expect(
+        service.isValidRecipientForChannel(
+          NotificationChannel.EMAIL,
+          'test@example.com',
+        ),
+      ).toBe(true);
+      expect(
+        service.isValidRecipientForChannel(
+          NotificationChannel.EMAIL,
+          'invalid',
+        ),
+      ).toBe(false);
     });
 
     it('should validate phone for SMS channel', () => {
-      expect(service.isValidRecipientForChannel(NotificationChannel.SMS, '+1234567890')).toBe(true);
-      expect(service.isValidRecipientForChannel(NotificationChannel.SMS, 'invalid')).toBe(false);
+      expect(
+        service.isValidRecipientForChannel(
+          NotificationChannel.SMS,
+          '+1234567890',
+        ),
+      ).toBe(true);
+      expect(
+        service.isValidRecipientForChannel(NotificationChannel.SMS, 'invalid'),
+      ).toBe(false);
     });
 
     it('should validate phone for WHATSAPP channel', () => {
-      expect(service.isValidRecipientForChannel(NotificationChannel.WHATSAPP, '+1234567890')).toBe(true);
+      expect(
+        service.isValidRecipientForChannel(
+          NotificationChannel.WHATSAPP,
+          '+1234567890',
+        ),
+      ).toBe(true);
     });
 
     it('should return true for IN_APP and PUSH (no format validation)', () => {
-      expect(service.isValidRecipientForChannel(NotificationChannel.IN_APP, 'any-value')).toBe(true);
-      expect(service.isValidRecipientForChannel(NotificationChannel.PUSH, 'any-value')).toBe(true);
+      expect(
+        service.isValidRecipientForChannel(
+          NotificationChannel.IN_APP,
+          'any-value',
+        ),
+      ).toBe(true);
+      expect(
+        service.isValidRecipientForChannel(
+          NotificationChannel.PUSH,
+          'any-value',
+        ),
+      ).toBe(true);
     });
   });
 });
-

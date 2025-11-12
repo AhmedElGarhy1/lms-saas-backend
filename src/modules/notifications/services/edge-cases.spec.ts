@@ -98,17 +98,19 @@ describe('Edge Cases and Error Scenarios', () => {
         {
           provide: NotificationSenderService,
           useValue: {
-            send: jest.fn().mockResolvedValue([
-              { channel: NotificationChannel.EMAIL, success: true },
-            ]),
+            send: jest
+              .fn()
+              .mockResolvedValue([
+                { channel: NotificationChannel.EMAIL, success: true },
+              ]),
           },
         },
         {
           provide: ChannelSelectionService,
           useValue: {
-            selectOptimalChannels: jest.fn().mockResolvedValue([
-              NotificationChannel.EMAIL,
-            ]),
+            selectOptimalChannels: jest
+              .fn()
+              .mockResolvedValue([NotificationChannel.EMAIL]),
           },
         },
         {
@@ -162,16 +164,21 @@ describe('Edge Cases and Error Scenarios', () => {
         {
           provide: MultiRecipientProcessor,
           useValue: {
-            processRecipients: jest.fn().mockImplementation(async (recipients, processor) => {
-              const results = await Promise.allSettled(
-                recipients.map((r: RecipientInfo) => processor(r)),
-              );
-              return results.map((result, index) => ({
-                recipient: recipients[index],
-                result: result.status === 'fulfilled' ? result.value : new Error(String(result.reason)),
-                success: result.status === 'fulfilled',
-              }));
-            }),
+            processRecipients: jest
+              .fn()
+              .mockImplementation(async (recipients, processor) => {
+                const results = await Promise.allSettled(
+                  recipients.map((r: RecipientInfo) => processor(r)),
+                );
+                return results.map((result, index) => ({
+                  recipient: recipients[index],
+                  result:
+                    result.status === 'fulfilled'
+                      ? result.value
+                      : new Error(String(result.reason)),
+                  success: result.status === 'fulfilled',
+                }));
+              }),
             getConcurrencyLimit: jest.fn().mockReturnValue(10),
           },
         },
@@ -299,11 +306,13 @@ describe('Edge Cases and Error Scenarios', () => {
 
   describe('Channel Selection Edge Cases', () => {
     it('should handle no channels available for recipient', async () => {
-      mockPipelineService.process = jest.fn().mockImplementation(async (context) => {
-        context.enabledChannels = [];
-        context.finalChannels = [];
-        return context;
-      });
+      mockPipelineService.process = jest
+        .fn()
+        .mockImplementation(async (context) => {
+          context.enabledChannels = [];
+          context.finalChannels = [];
+          return context;
+        });
 
       const recipient = createMockRecipientInfo();
       const event = createMockNotificationEvent();
@@ -427,5 +436,3 @@ describe('Edge Cases and Error Scenarios', () => {
     });
   });
 });
-
-

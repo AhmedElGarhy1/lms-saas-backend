@@ -83,6 +83,3 @@ export const testRecipients = {
     profileType: ProfileType.ADMIN,
   } as RecipientInfo,
 };
-
-
-

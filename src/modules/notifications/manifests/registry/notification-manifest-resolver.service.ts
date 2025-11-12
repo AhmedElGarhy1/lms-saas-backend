@@ -171,7 +171,11 @@ export class NotificationManifestResolver {
     }
 
     // Resolve template path
-    const resolvedTemplate = this.resolveTemplatePath(manifest, channel, config);
+    const resolvedTemplate = this.resolveTemplatePath(
+      manifest,
+      channel,
+      config,
+    );
 
     return {
       ...config,

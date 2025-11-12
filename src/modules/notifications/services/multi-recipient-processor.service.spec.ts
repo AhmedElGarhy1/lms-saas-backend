@@ -52,14 +52,11 @@ describe('MultiRecipientProcessor', () => {
         profileType: ProfileType.ADMIN,
       }));
 
-      const results = await service.processRecipients(
-        recipients,
-        async (r) => {
-          // Simulate async work
-          await new Promise((resolve) => setTimeout(resolve, 10));
-          return `processed-${r.userId}`;
-        },
-      );
+      const results = await service.processRecipients(recipients, async (r) => {
+        // Simulate async work
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        return `processed-${r.userId}`;
+      });
 
       expect(results).toHaveLength(5);
       expect(results.every((r) => r.success)).toBe(true);
@@ -74,20 +71,38 @@ describe('MultiRecipientProcessor', () => {
 
     it('should handle errors gracefully', async () => {
       const recipients: RecipientInfo[] = [
-        { userId: 'user-1', profileId: 'profile-1', email: 'user1@example.com', phone: '', locale: 'en', profileType: ProfileType.ADMIN },
-        { userId: 'user-2', profileId: 'profile-2', email: 'user2@example.com', phone: '', locale: 'en', profileType: ProfileType.ADMIN },
-        { userId: 'user-3', profileId: 'profile-3', email: 'user3@example.com', phone: '', locale: 'en', profileType: ProfileType.ADMIN },
+        {
+          userId: 'user-1',
+          profileId: 'profile-1',
+          email: 'user1@example.com',
+          phone: '',
+          locale: 'en',
+          profileType: ProfileType.ADMIN,
+        },
+        {
+          userId: 'user-2',
+          profileId: 'profile-2',
+          email: 'user2@example.com',
+          phone: '',
+          locale: 'en',
+          profileType: ProfileType.ADMIN,
+        },
+        {
+          userId: 'user-3',
+          profileId: 'profile-3',
+          email: 'user3@example.com',
+          phone: '',
+          locale: 'en',
+          profileType: ProfileType.ADMIN,
+        },
       ];
 
-      const results = await service.processRecipients(
-        recipients,
-        async (r) => {
-          if (r.userId === 'user-2') {
-            throw new Error('Processing failed');
-          }
-          return `processed-${r.userId}`;
-        },
-      );
+      const results = await service.processRecipients(recipients, async (r) => {
+        if (r.userId === 'user-2') {
+          throw new Error('Processing failed');
+        }
+        return `processed-${r.userId}`;
+      });
 
       expect(results).toHaveLength(3);
       expect(results[0].success).toBe(true);
@@ -98,7 +113,8 @@ describe('MultiRecipientProcessor', () => {
     });
 
     it('should respect concurrency limit', async () => {
-      const concurrencyLimit = NotificationConfig.concurrency.maxRecipientsPerBatch;
+      const concurrencyLimit =
+        NotificationConfig.concurrency.maxRecipientsPerBatch;
       const recipients: RecipientInfo[] = Array.from(
         { length: concurrencyLimit * 2 },
         (_, i) => ({
@@ -132,14 +148,17 @@ describe('MultiRecipientProcessor', () => {
 
   describe('processRecipientsInBatches', () => {
     it('should process recipients in batches', async () => {
-      const recipients: RecipientInfo[] = Array.from({ length: 25 }, (_, i) => ({
-        userId: `user-${i}`,
-        profileId: `profile-${i}`,
-        email: `user${i}@example.com`,
-        phone: '',
-        locale: 'en',
-        profileType: ProfileType.ADMIN,
-      }));
+      const recipients: RecipientInfo[] = Array.from(
+        { length: 25 },
+        (_, i) => ({
+          userId: `user-${i}`,
+          profileId: `profile-${i}`,
+          email: `user${i}@example.com`,
+          phone: '',
+          locale: 'en',
+          profileType: ProfileType.ADMIN,
+        }),
+      );
 
       const batchSize = 10;
       const results = await service.processRecipientsInBatches(
@@ -165,9 +184,21 @@ describe('MultiRecipientProcessor', () => {
   describe('getProcessingStats', () => {
     it('should calculate correct statistics', () => {
       const results = [
-        { recipient: { userId: '1' } as RecipientInfo, result: 'success', success: true },
-        { recipient: { userId: '2' } as RecipientInfo, result: 'success', success: true },
-        { recipient: { userId: '3' } as RecipientInfo, result: new Error('fail'), success: false },
+        {
+          recipient: { userId: '1' } as RecipientInfo,
+          result: 'success',
+          success: true,
+        },
+        {
+          recipient: { userId: '2' } as RecipientInfo,
+          result: 'success',
+          success: true,
+        },
+        {
+          recipient: { userId: '3' } as RecipientInfo,
+          result: new Error('fail'),
+          success: false,
+        },
       ];
 
       const stats = service.getProcessingStats(results);
@@ -188,8 +219,16 @@ describe('MultiRecipientProcessor', () => {
 
     it('should calculate 100% success rate', () => {
       const results = [
-        { recipient: { userId: '1' } as RecipientInfo, result: 'success', success: true },
-        { recipient: { userId: '2' } as RecipientInfo, result: 'success', success: true },
+        {
+          recipient: { userId: '1' } as RecipientInfo,
+          result: 'success',
+          success: true,
+        },
+        {
+          recipient: { userId: '2' } as RecipientInfo,
+          result: 'success',
+          success: true,
+        },
       ];
 
       const stats = service.getProcessingStats(results);
@@ -205,4 +244,3 @@ describe('MultiRecipientProcessor', () => {
     });
   });
 });
-

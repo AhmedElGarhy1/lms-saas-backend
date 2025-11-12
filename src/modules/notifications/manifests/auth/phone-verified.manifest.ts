@@ -28,4 +28,3 @@ export const phoneVerifiedManifest: NotificationManifest = {
     },
   },
 } as const;
-

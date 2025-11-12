@@ -126,13 +126,11 @@ describe('NotificationDlqCleanupJob', () => {
       ];
 
       mockLogRepository.findMany.mockResolvedValue(oldLogs as any);
-      mockLogRepository.deleteOldFailedLogs.mockImplementation(
-        async () => {
-          // Simulate slow operation
-          await new Promise((resolve) => setTimeout(resolve, 100));
-          return 1;
-        },
-      );
+      mockLogRepository.deleteOldFailedLogs.mockImplementation(async () => {
+        // Simulate slow operation
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        return 1;
+      });
 
       await job.cleanupOldFailedJobs();
 
@@ -184,4 +182,3 @@ describe('NotificationDlqCleanupJob', () => {
     });
   });
 });
-

@@ -47,7 +47,9 @@ export interface NotificationProcessingContext {
  */
 @Injectable()
 export class NotificationPipelineService extends BaseService {
-  private readonly logger: Logger = new Logger(NotificationPipelineService.name);
+  private readonly logger: Logger = new Logger(
+    NotificationPipelineService.name,
+  );
 
   constructor(
     private readonly channelSelectionService: ChannelSelectionService,
@@ -120,10 +122,9 @@ export class NotificationPipelineService extends BaseService {
     const { manifest, audience, requestedChannels } = context;
 
     if (!manifest) {
-      this.logger.warn(
-        `No manifest found for ${context.eventName}`,
-        { eventName: context.eventName },
-      );
+      this.logger.warn(`No manifest found for ${context.eventName}`, {
+        eventName: context.eventName,
+      });
       context.enabledChannels = [];
       return;
     }
@@ -253,15 +254,15 @@ export class NotificationPipelineService extends BaseService {
 
         context.finalChannels = finalChannels;
       } catch (error) {
-          this.logger.error(
-            `Failed to select optimal channels for user ${userId}`,
-            error instanceof Error ? error : undefined,
-            {
-              userId,
-              eventName: manifest.type,
-              error: error instanceof Error ? error.message : String(error),
-            },
-          );
+        this.logger.error(
+          `Failed to select optimal channels for user ${userId}`,
+          error instanceof Error ? error : undefined,
+          {
+            userId,
+            eventName: manifest.type,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        );
         // Fallback to enabled channels on error
         context.finalChannels = enabledChannels;
       }

@@ -354,4 +354,3 @@ export function getWebSocketConfig() {
     // and accessed via Config in the adapters
   };
 }
-

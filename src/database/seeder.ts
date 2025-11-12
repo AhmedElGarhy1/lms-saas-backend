@@ -22,8 +22,7 @@ export class DatabaseSeeder {
     private readonly dataSource: DataSource,
     private readonly activityLogService: ActivityLogService,
     private readonly moduleRef: ModuleRef,
-  ) {
-  }
+  ) {}
 
   async seed(): Promise<void> {
     try {
@@ -56,7 +55,6 @@ export class DatabaseSeeder {
         [systemUser, superAdminUser],
         systemUser.id,
       );
-
     } catch (error) {
       this.logger.error('Error during seeding', error);
       throw error;
@@ -424,6 +422,5 @@ export class DatabaseSeeder {
         seeder: true,
       });
     }
-
   }
 }

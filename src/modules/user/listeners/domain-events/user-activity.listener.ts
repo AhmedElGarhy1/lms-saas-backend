@@ -19,9 +19,7 @@ import {
  */
 @Injectable()
 export class UserActivityListener {
-  constructor(
-    private readonly activityLogService: ActivityLogService,
-  ) {}
+  constructor(private readonly activityLogService: ActivityLogService) {}
 
   @OnEvent(UserEvents.CREATED)
   async handleUserCreated(event: UserCreatedEvent) {

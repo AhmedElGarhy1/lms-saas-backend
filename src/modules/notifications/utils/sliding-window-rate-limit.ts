@@ -9,10 +9,7 @@ import { notificationKeys } from './notification-redis-key-builder';
 export class SlidingWindowRateLimiter {
   private readonly logger: Logger = new Logger(SlidingWindowRateLimiter.name);
 
-  constructor(
-    private readonly redisService: RedisService,
-  ) {
-  }
+  constructor(private readonly redisService: RedisService) {}
 
   /**
    * Check if request is within rate limit using sliding window algorithm

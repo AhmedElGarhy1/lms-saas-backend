@@ -26,8 +26,7 @@ export class WhatsAppAdapter
     private readonly timeoutConfig: TimeoutConfigService,
     private readonly twilioProvider: TwilioWhatsAppProvider,
     private readonly metaProvider: MetaWhatsAppProvider,
-  ) {
-  }
+  ) {}
 
   onModuleInit() {
     this.initializeProvider();

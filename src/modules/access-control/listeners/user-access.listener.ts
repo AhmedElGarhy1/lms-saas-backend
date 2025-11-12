@@ -18,8 +18,7 @@ export class UserAccessListener {
     private readonly moduleRef: ModuleRef,
     private readonly accessControlService: AccessControlService,
     private readonly activityLogService: ActivityLogService,
-  ) {
-  }
+  ) {}
 
   @OnEvent(AccessControlEvents.GRANT_USER_ACCESS)
   async handleGrantUserAccess(event: GrantUserAccessEvent) {

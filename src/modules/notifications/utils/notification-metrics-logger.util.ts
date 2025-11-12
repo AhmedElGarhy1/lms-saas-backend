@@ -31,9 +31,9 @@ export function logNotificationStart(
 ): void {
   // Only log start for large batches (>10 recipients) to avoid log spam
   if ((metrics.recipientCount || 0) > 10) {
-      logger.log(
+    logger.log(
       `Starting multi-recipient processing: ${metrics.recipientCount} recipients (concurrency limit: ${metrics.concurrencyLimit}) - ${JSON.stringify({ eventName: metrics.eventName, correlationId: metrics.correlationId, recipientCount: metrics.recipientCount, concurrencyLimit: metrics.concurrencyLimit, centerId: metrics.centerId })}`,
-  );
+    );
   }
 }
 
@@ -50,11 +50,11 @@ export function logNotificationComplete(
   // Only log completion if there were failures or for large batches (>10 recipients)
   const hasFailures = (metrics.failureCount || 0) > 0;
   const isLargeBatch = (metrics.recipientCount || 0) > 10;
-  
+
   if (hasFailures || isLargeBatch) {
-      logger.log(
+    logger.log(
       `Multi-recipient processing completed in ${metrics.duration}ms: ${metrics.successCount} succeeded, ${metrics.failureCount} failed - ${JSON.stringify({ eventName: metrics.eventName, correlationId: metrics.correlationId, duration: metrics.duration, successCount: metrics.successCount, failureCount: metrics.failureCount, recipientCount: metrics.recipientCount, concurrencyLimit: metrics.concurrencyLimit })}`,
-  );
+    );
   }
 }
 

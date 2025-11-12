@@ -9,6 +9,7 @@ import { UserService } from './modules/user/services/user.service';
 import { TransactionPerformanceInterceptor } from './modules/health';
 import { RedisIoAdapter } from './modules/notifications/adapters/redis-io.adapter';
 import { RedisService } from './shared/modules/redis/redis.service';
+import { RateLimitService } from './modules/rate-limit/services/rate-limit.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -79,7 +80,10 @@ async function bootstrap() {
 
   // Configure Redis adapter for Socket.IO (horizontal scaling)
   const redisService = app.get(RedisService);
-  app.useWebSocketAdapter(new RedisIoAdapter(redisService, app));
+  const rateLimitService = app.get(RateLimitService);
+  app.useWebSocketAdapter(
+    new RedisIoAdapter(redisService, app, rateLimitService),
+  );
 
   await app.listen(3000);
   console.log(`🚀 App running on: ${await app.getUrl()}`);

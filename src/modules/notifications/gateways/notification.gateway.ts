@@ -12,7 +12,7 @@ import { notificationKeys } from '../utils/notification-redis-key-builder';
 import { Notification } from '../entities/notification.entity';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { SlidingWindowRateLimiter } from '../utils/sliding-window-rate-limit';
+import { RateLimitService } from '@/modules/rate-limit/services/rate-limit.service';
 import {
   notificationGatewayConfig,
   NotificationGatewayConfig,
@@ -46,24 +46,18 @@ export class NotificationGateway
   private readonly config: NotificationGatewayConfig;
   private readonly removeSocketScript: string;
   private readonly connectionsCounterKey: string;
-  private readonly rateLimiter: SlidingWindowRateLimiter;
   private readonly loggerService: Logger = new Logger(NotificationGateway.name);
 
   constructor(
     private readonly redisService: RedisService,
     private readonly metricsService: NotificationMetricsService,
+    private readonly rateLimitService: RateLimitService,
   ) {
-
     // Load configuration from factory
     this.config = notificationGatewayConfig();
 
     // Counter key for active connections
     this.connectionsCounterKey = notificationKeys.connectionCounterActive();
-
-    // Initialize sliding window rate limiter
-    this.rateLimiter = new SlidingWindowRateLimiter(
-      this.redisService,
-    );
 
     // Lua script for atomic socket removal: SREM + SCARD + DEL if empty
     this.removeSocketScript = `
@@ -254,7 +248,6 @@ export class NotificationGateway
     });
   }
 
-
   /**
    * Add socket to Redis SET for user (atomic operation)
    */
@@ -345,11 +338,17 @@ export class NotificationGateway
    * Check if user has exceeded rate limit using sliding window algorithm
    */
   private async checkUserRateLimit(userId: string): Promise<boolean> {
-    return this.rateLimiter.checkRateLimit(
+    const result = await this.rateLimitService.checkLimit(
       `user:${userId}`,
       this.config.rateLimit.user,
       this.config.rateLimit.ttl,
+      {
+        context: 'websocket',
+        identifier: userId,
+      },
     );
+
+    return result.allowed;
   }
 
   /**

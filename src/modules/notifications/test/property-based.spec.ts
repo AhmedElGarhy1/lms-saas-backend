@@ -1,9 +1,9 @@
 /**
  * Property-Based Tests for Notifications Module
- * 
+ *
  * These tests use property-based testing principles to validate
  * invariants and edge cases that might be missed in unit tests.
- * 
+ *
  * Note: For full property-based testing, consider adding fast-check:
  * npm install --save-dev fast-check
  */
@@ -231,4 +231,3 @@ describe('Property-Based Tests', () => {
     });
   });
 });
-

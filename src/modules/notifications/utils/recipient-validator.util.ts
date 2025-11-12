@@ -39,12 +39,13 @@ export function isValidE164(phone: string): boolean {
   // Minimum: 7 digits total (realistic minimum for a complete phone number)
   // Maximum: 15 digits total (E.164 maximum)
   const trimmed = phone.trim();
-  
+
   // Check length first (including +)
-  if (trimmed.length < 8 || trimmed.length > 16) { // +1 + 6 digits minimum = 8 chars
+  if (trimmed.length < 8 || trimmed.length > 16) {
+    // +1 + 6 digits minimum = 8 chars
     return false;
   }
-  
+
   // E.164 format: + followed by country code (1-3 digits, not starting with 0) + subscriber number
   const e164Regex = /^\+[1-9]\d{6,14}$/; // At least 7 digits after + (1 country + 6 subscriber minimum)
 

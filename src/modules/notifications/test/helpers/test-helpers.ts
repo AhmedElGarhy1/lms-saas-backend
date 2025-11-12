@@ -209,11 +209,13 @@ export function createMockMetricsService(): NotificationMetricsService {
  */
 export function createMockDataSource(): Partial<DataSource> {
   return {
-    transaction: jest.fn().mockImplementation(
-      async (runInTransaction: (entityManager: any) => Promise<any>) => {
-        return runInTransaction({} as any);
-      },
-    ) as any,
+    transaction: jest
+      .fn()
+      .mockImplementation(
+        async (runInTransaction: (entityManager: any) => Promise<any>) => {
+          return runInTransaction({} as any);
+        },
+      ) as any,
     getRepository: jest.fn(),
   } as Partial<DataSource>;
 }
@@ -258,4 +260,3 @@ export function createMockNotificationContext(
     ...overrides,
   };
 }
-

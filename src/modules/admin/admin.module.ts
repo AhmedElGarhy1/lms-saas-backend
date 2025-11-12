@@ -11,6 +11,7 @@ import { AdminActionsController } from './controllers/admin-actions.controller';
 import { AdminService } from './services/admin.service';
 import { AdminRepository } from './repositories/admin.repository';
 import { AdminListener } from './listeners/admin.listener';
+import { AdminActivityListener } from './listeners/admin-activity.listener';
 
 @Module({
   imports: [
@@ -22,7 +23,12 @@ import { AdminListener } from './listeners/admin.listener';
     ActivityLogModule,
   ],
   controllers: [AdminController, AdminActionsController],
-  providers: [AdminService, AdminRepository, AdminListener],
+  providers: [
+    AdminService,
+    AdminRepository,
+    AdminListener,
+    AdminActivityListener,
+  ],
   exports: [AdminService, AdminRepository],
 })
 export class AdminModule {}

@@ -148,9 +148,7 @@ export class PayloadBuilderService {
         (templateData.title as string) ||
         'Notification';
       const message =
-        (pushContent.message as string) ||
-        (pushContent.body as string) ||
-        '';
+        (pushContent.message as string) || (pushContent.body as string) || '';
 
       return {
         ...basePayload,
@@ -203,4 +201,3 @@ export class PayloadBuilderService {
     return this.buildPayload(channel, basePayload, rendered, templateData);
   }
 }
-

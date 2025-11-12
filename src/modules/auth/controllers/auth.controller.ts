@@ -14,7 +14,7 @@ import {
 } from '../dto/2fa.dto';
 import { Public } from '@/shared/common/decorators/public.decorator';
 import { Transactional } from '@nestjs-cls/transactional';
-import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
+import { RateLimit } from '@/modules/rate-limit/decorators/rate-limit.decorator';
 import { ApiTags, ApiBody } from '@nestjs/swagger';
 import {
   CreateApiResponses,
@@ -50,8 +50,7 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
+  @RateLimit({ limit: 5, windowSeconds: 60 }) // 5 attempts per minute
   @ReadApiResponses('User login')
   @ApiBody({ type: LoginRequestDto })
   @Transactional()
@@ -66,8 +65,7 @@ export class AuthController {
 
   @Public()
   @Post('signup')
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 3, ttl: 300000 } }) // 3 attempts per 5 minutes
+  @RateLimit({ limit: 3, windowSeconds: 300 }) // 3 attempts per 5 minutes
   @CreateApiResponses('User registration')
   @Transactional()
   signup(): never {

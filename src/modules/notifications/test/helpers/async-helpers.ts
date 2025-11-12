@@ -60,11 +60,7 @@ export async function waitFor<T = void>(
   condition: () => boolean | Promise<boolean>,
   options: WaitForOptions = {},
 ): Promise<T> {
-  const {
-    timeout = 5000,
-    interval = 50,
-    errorMessage,
-  } = options;
+  const { timeout = 5000, interval = 50, errorMessage } = options;
 
   const start = Date.now();
   let lastError: Error | undefined;
@@ -127,11 +123,7 @@ export async function waitForValue<T>(
   condition: () => T | Promise<T>,
   options: WaitForOptions = {},
 ): Promise<T> {
-  const {
-    timeout = 5000,
-    interval = 50,
-    errorMessage,
-  } = options;
+  const { timeout = 5000, interval = 50, errorMessage } = options;
 
   const start = Date.now();
   let lastError: Error | undefined;
@@ -183,9 +175,7 @@ export async function waitForValue<T>(
  * await flushPromises(3);
  * ```
  */
-export async function flushPromises(
-  iterations: number = 2,
-): Promise<void> {
+export async function flushPromises(iterations: number = 2): Promise<void> {
   for (let i = 0; i < iterations; i++) {
     await new Promise<void>((resolve) => setImmediate(resolve));
   }
@@ -300,4 +290,3 @@ export async function retry<T>(
   error.message = `Operation failed after ${maxAttempts} attempts: ${error.message}`;
   throw error;
 }
-

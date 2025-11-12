@@ -142,16 +142,20 @@ export class NotificationRouterService extends BaseService {
       }
 
       // Determine and validate recipient for this channel (pure service)
-      const channelRecipient = this.recipientValidator.determineAndValidateRecipient(
-        channel,
-        recipient,
-        phone,
-        userId,
-      );
+      const channelRecipient =
+        this.recipientValidator.determineAndValidateRecipient(
+          channel,
+          recipient,
+          phone,
+          userId,
+        );
 
       if (!channelRecipient) {
         // Log why recipient validation failed
-        if (channel === NotificationChannel.EMAIL && !recipient?.includes('@')) {
+        if (
+          channel === NotificationChannel.EMAIL &&
+          !recipient?.includes('@')
+        ) {
           this.logger.debug(
             `Skipping EMAIL channel: no email for user ${userId}`,
             { userId, eventName },
@@ -262,14 +266,11 @@ export class NotificationRouterService extends BaseService {
             },
           );
         } else {
-          this.logger.warn(
-            `Failed to build payload for ${channel} channel`,
-            {
-              notificationType: mapping.type,
-              channel,
-              userId,
-            },
-          );
+          this.logger.warn(`Failed to build payload for ${channel} channel`, {
+            notificationType: mapping.type,
+            channel,
+            userId,
+          });
         }
         continue; // Payload building failed (e.g., missing subject for email)
       }
@@ -377,7 +378,6 @@ export class NotificationRouterService extends BaseService {
     }
   }
 
-
   /**
    * Check idempotency with distributed lock
    */
@@ -467,7 +467,6 @@ export class NotificationRouterService extends BaseService {
       return { shouldProceed: true, lockAcquired: false };
     }
   }
-
 
   /**
    * Send notification directly (IN_APP) or enqueue for async processing

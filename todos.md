@@ -73,7 +73,7 @@
 [ ] add rate limit module
 
 [x] refactor logs and add only required not spam of logs
-[ ] add missing activity logs for users
+[x] add missing activity logs for users
 [ ] update notifications to cover all existing modules events
 [x] (frontend) Data flow: ⚠️ Needs standardization (28 violations)
 [x] notifications register user connection first when he opens (there is a problem in sending notifications because of redis not found user connection)

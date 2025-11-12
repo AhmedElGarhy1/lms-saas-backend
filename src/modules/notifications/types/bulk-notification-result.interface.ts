@@ -24,5 +24,3 @@ export interface BulkNotificationResult {
   /** Correlation ID for tracing */
   correlationId: string;
 }
-
-

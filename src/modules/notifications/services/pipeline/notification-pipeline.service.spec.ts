@@ -27,11 +27,13 @@ describe('NotificationPipelineService', () => {
 
     mockLogger = createMockLoggerService();
     mockChannelSelection = {
-      selectOptimalChannels: jest.fn().mockResolvedValue([
-        NotificationChannel.EMAIL,
-        NotificationChannel.IN_APP,
-      ]),
-    } as any;
+      selectOptimalChannels: jest
+        .fn()
+        .mockResolvedValue([
+          NotificationChannel.EMAIL,
+          NotificationChannel.IN_APP,
+        ]),
+    } as jest.Mocked<ChannelSelectionService>;
 
     mockManifestResolver = {
       getManifest: jest.fn().mockReturnValue(createMockNotificationManifest()),
@@ -42,7 +44,7 @@ describe('NotificationPipelineService', () => {
         },
       }),
       getChannelConfig: jest.fn().mockReturnValue({}),
-    } as any;
+    } as jest.Mocked<NotificationManifestResolver>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -87,7 +89,7 @@ describe('NotificationPipelineService', () => {
         recipient: recipient.email || recipient.phone || '',
         enabledChannels: [],
         finalChannels: [],
-        templateData: {} as any,
+        templateData: {},
         locale: 'en',
       };
 
@@ -118,7 +120,7 @@ describe('NotificationPipelineService', () => {
         recipient: recipient.email || recipient.phone || '',
         enabledChannels: [NotificationChannel.EMAIL],
         finalChannels: [],
-        templateData: {} as any,
+        templateData: {},
         locale: 'en',
       };
 
@@ -153,7 +155,7 @@ describe('NotificationPipelineService', () => {
         recipient: recipient.email || recipient.phone || '',
         enabledChannels: [],
         finalChannels: [],
-        templateData: {} as any,
+        templateData: {},
         locale: 'en',
       };
 
@@ -185,10 +187,13 @@ describe('NotificationPipelineService', () => {
         audience: 'OWNER',
         correlationId: 'test-corr-id',
         recipient: recipient.email || recipient.phone || '',
-        requestedChannels: [NotificationChannel.EMAIL, NotificationChannel.IN_APP],
+        requestedChannels: [
+          NotificationChannel.EMAIL,
+          NotificationChannel.IN_APP,
+        ],
         enabledChannels: [],
         finalChannels: [],
-        templateData: {} as any,
+        templateData: {},
         locale: 'en',
       };
 
@@ -215,7 +220,7 @@ describe('NotificationPipelineService', () => {
           NotificationChannel.IN_APP,
         ],
         finalChannels: [],
-        templateData: {} as any,
+        templateData: {},
         locale: 'en',
       };
 
@@ -252,7 +257,7 @@ describe('NotificationPipelineService', () => {
         recipient: recipient.email || recipient.phone || '',
         enabledChannels: [NotificationChannel.EMAIL],
         finalChannels: [],
-        templateData: {} as any,
+        templateData: {},
         locale: 'en',
       };
 
@@ -260,8 +265,8 @@ describe('NotificationPipelineService', () => {
 
       expect(context.templateData.userId).toBe('user-789');
       expect(context.templateData.email).toBe('template@example.com');
-      expect((context.templateData as any).centerName).toBe('Test Center');
-      expect((context.templateData as any).creatorName).toBe('Admin');
+      expect(context.templateData.centerName).toBe('Test Center');
+      expect(context.templateData.creatorName).toBe('Admin');
     });
 
     it('should skip processing if no enabled channels', async () => {
@@ -282,7 +287,7 @@ describe('NotificationPipelineService', () => {
         recipient: recipient.email || recipient.phone || '',
         enabledChannels: [],
         finalChannels: [],
-        templateData: {} as any,
+        templateData: {},
         locale: 'en',
       };
 
@@ -313,7 +318,7 @@ describe('NotificationPipelineService', () => {
         recipient: recipient.email || recipient.phone || '',
         enabledChannels: [],
         finalChannels: [],
-        templateData: {} as any,
+        templateData: {},
         locale: 'en',
       };
 
@@ -343,7 +348,7 @@ describe('NotificationPipelineService', () => {
         recipient: recipient.email || recipient.phone || '',
         enabledChannels: [],
         finalChannels: [],
-        templateData: {} as any,
+        templateData: {},
         locale: 'en',
       };
 
@@ -366,7 +371,7 @@ describe('NotificationPipelineService', () => {
         recipient: recipient.email || recipient.phone || '',
         enabledChannels: [],
         finalChannels: [],
-        templateData: {} as any,
+        templateData: {},
         locale: 'en',
       };
 
@@ -399,7 +404,7 @@ describe('NotificationPipelineService', () => {
         recipient: 'test@example.com',
         enabledChannels: [],
         finalChannels: [],
-        templateData: {} as any,
+        templateData: {},
         locale: 'en',
       };
 
@@ -419,7 +424,7 @@ describe('NotificationPipelineService', () => {
         recipient: 'test@example.com',
         enabledChannels: [],
         finalChannels: [],
-        templateData: {} as any,
+        templateData: {},
         locale: 'en',
       };
 
@@ -454,7 +459,7 @@ describe('NotificationPipelineService', () => {
         ],
         enabledChannels: [],
         finalChannels: [],
-        templateData: {} as any,
+        templateData: {},
         locale: 'en',
       };
 
@@ -465,4 +470,3 @@ describe('NotificationPipelineService', () => {
     });
   });
 });
-

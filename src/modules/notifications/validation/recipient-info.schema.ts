@@ -43,13 +43,10 @@ export const RecipientInfoSchema = z
       .optional()
       .or(z.literal(null)),
   })
-  .refine(
-    (data) => data.email || data.phone,
-    {
-      message: 'Either email or phone must be provided',
-      path: ['email'], // Error will be attached to email field
-    },
-  );
+  .refine((data) => data.email || data.phone, {
+    message: 'Either email or phone must be provided',
+    path: ['email'], // Error will be attached to email field
+  });
 
 /**
  * Type-safe RecipientInfo after validation
@@ -70,9 +67,7 @@ export function validateRecipientInfo(
  * Validate multiple recipients
  * Returns validated recipients and errors
  */
-export function validateRecipients(
-  recipients: unknown[],
-): {
+export function validateRecipients(recipients: unknown[]): {
   valid: ValidatedRecipientInfo[];
   errors: Array<{ index: number; errors: z.ZodError }>;
 } {
@@ -90,5 +85,3 @@ export function validateRecipients(
 
   return { valid, errors };
 }
-
-

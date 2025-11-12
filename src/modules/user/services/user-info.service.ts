@@ -7,9 +7,7 @@ import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
 export class UserInfoService extends BaseService {
-  constructor(
-    private readonly userInfoRepository: UserInfoRepository,
-  ) {
+  constructor(private readonly userInfoRepository: UserInfoRepository) {
     super();
   }
 

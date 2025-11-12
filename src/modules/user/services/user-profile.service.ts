@@ -1,4 +1,10 @@
-import { forwardRef, Inject, Injectable, Optional, Logger } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  Optional,
+  Logger,
+} from '@nestjs/common';
 import { UserProfile } from '../entities/user-profile.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { BaseService } from '@/shared/common/services/base.service';

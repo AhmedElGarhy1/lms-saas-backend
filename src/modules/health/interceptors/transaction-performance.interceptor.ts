@@ -16,13 +16,14 @@ export class TransactionPerformanceInterceptor implements NestInterceptor {
     string,
     { success: number; error: number }
   >();
-  private readonly logger: Logger = new Logger(TransactionPerformanceInterceptor.name);
+  private readonly logger: Logger = new Logger(
+    TransactionPerformanceInterceptor.name,
+  );
 
   constructor(
     private readonly alertsService: PerformanceAlertsService,
     private readonly moduleRef: ModuleRef,
-  ) {
-  }
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const startTime = Date.now();

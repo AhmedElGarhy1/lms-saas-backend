@@ -43,7 +43,9 @@ describe('NotificationRenderer', () => {
     } as any;
 
     mockTemplateService = {
-      renderTemplateWithChannel: jest.fn().mockResolvedValue('<p>Rendered HTML</p>'),
+      renderTemplateWithChannel: jest
+        .fn()
+        .mockResolvedValue('<p>Rendered HTML</p>'),
       loadTemplateWithChannel: jest.fn().mockResolvedValue({
         compile: jest.fn().mockReturnValue(() => '<p>Rendered HTML</p>'),
       } as any),
@@ -93,7 +95,9 @@ describe('NotificationRenderer', () => {
       expect(mockManifestResolver.getManifest).toHaveBeenCalledWith(
         NotificationType.CENTER_CREATED,
       );
-      expect(mockTemplateService.renderTemplateWithChannel).toHaveBeenCalledWith(
+      expect(
+        mockTemplateService.renderTemplateWithChannel,
+      ).toHaveBeenCalledWith(
         'center-created',
         eventData,
         'en',
@@ -190,7 +194,9 @@ describe('NotificationRenderer', () => {
         'ar',
       );
 
-      expect(mockTemplateService.renderTemplateWithChannel).toHaveBeenCalledWith(
+      expect(
+        mockTemplateService.renderTemplateWithChannel,
+      ).toHaveBeenCalledWith(
         expect.any(String),
         eventData,
         'ar',
@@ -211,7 +217,9 @@ describe('NotificationRenderer', () => {
         'en',
       );
 
-      expect(mockTemplateService.renderTemplateWithChannel).toHaveBeenCalledWith(
+      expect(
+        mockTemplateService.renderTemplateWithChannel,
+      ).toHaveBeenCalledWith(
         expect.any(String),
         eventData,
         'en',
@@ -272,5 +280,3 @@ describe('NotificationRenderer', () => {
     });
   });
 });
-
-

@@ -4,7 +4,10 @@ import { BaseService } from '@/shared/common/services/base.service';
 import { UserService } from '@/modules/user/services/user.service';
 import { UserRepository } from '@/modules/user/repositories/user.repository';
 import { In } from 'typeorm';
-import { CACHE_CONSTANTS, TIME_CONSTANTS_MS } from '../constants/notification.constants';
+import {
+  CACHE_CONSTANTS,
+  TIME_CONSTANTS_MS,
+} from '../constants/notification.constants';
 import { NotificationConfig } from '../config/notification.config';
 
 /**
@@ -31,7 +34,10 @@ interface EventContext {
 }
 
 @Injectable()
-export class ChannelSelectionService extends BaseService implements OnModuleDestroy {
+export class ChannelSelectionService
+  extends BaseService
+  implements OnModuleDestroy
+{
   private readonly logger: Logger = new Logger(ChannelSelectionService.name);
   private readonly activityCache = new Map<
     string,
@@ -48,8 +54,7 @@ export class ChannelSelectionService extends BaseService implements OnModuleDest
     // Cache TTL: 1 hour (in milliseconds)
     this.cacheTTL = CACHE_CONSTANTS.ACTIVITY_CACHE_TTL_MS;
     // Inactivity threshold from config
-    this.inactivityThresholdHours =
-      NotificationConfig.inactivityThresholdHours;
+    this.inactivityThresholdHours = NotificationConfig.inactivityThresholdHours;
   }
 
   /**
@@ -157,7 +162,8 @@ export class ChannelSelectionService extends BaseService implements OnModuleDest
       }
 
       const hoursSinceActivity =
-        (Date.now() - new Date(lastActivity).getTime()) / TIME_CONSTANTS_MS.ONE_HOUR_MS;
+        (Date.now() - new Date(lastActivity).getTime()) /
+        TIME_CONSTANTS_MS.ONE_HOUR_MS;
       const isActive = hoursSinceActivity < threshold;
 
       // Cache result
@@ -168,11 +174,9 @@ export class ChannelSelectionService extends BaseService implements OnModuleDest
 
       return isActive;
     } catch (error) {
-      this.logger.error(
-        `Failed to check user activity for ${userId}`,
-        error,
-        { userId },
-      );
+      this.logger.error(`Failed to check user activity for ${userId}`, error, {
+        userId,
+      });
 
       // On error, assume inactive (safer for critical notifications)
       return false;
@@ -202,7 +206,8 @@ export class ChannelSelectionService extends BaseService implements OnModuleDest
     if (uncachedUserIds.length > 0) {
       try {
         const now = Date.now();
-        const thresholdMs = this.inactivityThresholdHours * TIME_CONSTANTS_MS.ONE_HOUR_MS;
+        const thresholdMs =
+          this.inactivityThresholdHours * TIME_CONSTANTS_MS.ONE_HOUR_MS;
 
         // Fetch users in batch using repository
         const users = await this.userRepository.findMany({
@@ -237,10 +242,7 @@ export class ChannelSelectionService extends BaseService implements OnModuleDest
           }
         }
       } catch (error) {
-        this.logger.error(
-          `Failed to batch check user activity`,
-          error,
-        );
+        this.logger.error(`Failed to batch check user activity`, error);
 
         // On error, assume all uncached users are inactive
         for (const userId of uncachedUserIds) {

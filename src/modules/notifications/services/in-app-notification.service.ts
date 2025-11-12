@@ -7,7 +7,7 @@ import { RedisService } from '@/shared/modules/redis/redis.service';
 import { BaseService } from '@/shared/common/services/base.service';
 import { NotificationEvents } from '@/shared/events/notification.events.enum';
 import { NotificationReadEvent } from '../events/notification.events';
-import { SlidingWindowRateLimiter } from '../utils/sliding-window-rate-limit';
+import { RateLimitService } from '@/modules/rate-limit/services/rate-limit.service';
 import { ChannelRateLimitService } from './channel-rate-limit.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { Pagination } from 'nestjs-typeorm-paginate';
@@ -24,22 +24,17 @@ export class InAppNotificationService extends BaseService {
   private readonly redisKeyPrefix: string;
   private readonly rateLimitUser: number;
   private readonly rateLimitTTL: number = 60; // 1 minute in seconds
-  private readonly rateLimiter: SlidingWindowRateLimiter;
 
   constructor(
     private readonly notificationRepository: NotificationRepository,
     private readonly redisService: RedisService,
     private readonly eventEmitter: EventEmitter2,
     private readonly channelRateLimitService: ChannelRateLimitService,
+    private readonly rateLimitService: RateLimitService,
   ) {
     super();
     this.redisKeyPrefix = Config.redis.keyPrefix;
     this.rateLimitUser = WebSocketConfig.rateLimit.user;
-
-    // Initialize sliding window rate limiter
-    this.rateLimiter = new SlidingWindowRateLimiter(
-      this.redisService,
-    );
   }
 
   async create(payload: Partial<Notification>): Promise<Notification> {

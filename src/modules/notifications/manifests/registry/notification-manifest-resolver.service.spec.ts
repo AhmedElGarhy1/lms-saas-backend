@@ -144,11 +144,7 @@ describe('NotificationManifestResolver', () => {
       });
 
       expect(() =>
-        resolver.getChannelConfig(
-          manifest,
-          'DEFAULT',
-          NotificationChannel.SMS,
-        ),
+        resolver.getChannelConfig(manifest, 'DEFAULT', NotificationChannel.SMS),
       ).toThrow('Channel SMS not supported');
     });
 
@@ -205,9 +201,8 @@ describe('NotificationManifestResolver', () => {
         },
       });
 
-      const config = manifest.audiences.DEFAULT.channels[
-        NotificationChannel.SMS
-      ]!;
+      const config =
+        manifest.audiences.DEFAULT.channels[NotificationChannel.SMS]!;
 
       const resolvedPath = (resolver as any).resolveTemplatePath(
         manifest,
@@ -233,9 +228,8 @@ describe('NotificationManifestResolver', () => {
         },
       });
 
-      const config = manifest.audiences.DEFAULT.channels[
-        NotificationChannel.EMAIL
-      ]!;
+      const config =
+        manifest.audiences.DEFAULT.channels[NotificationChannel.EMAIL]!;
 
       const resolvedPath = (resolver as any).resolveTemplatePath(
         manifest,
@@ -247,4 +241,3 @@ describe('NotificationManifestResolver', () => {
     });
   });
 });
-

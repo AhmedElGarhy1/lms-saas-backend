@@ -21,7 +21,9 @@ export enum CircuitState {
  */
 @Injectable()
 export class NotificationCircuitBreakerService extends BaseService {
-  private readonly logger: Logger = new Logger(NotificationCircuitBreakerService.name);
+  private readonly logger: Logger = new Logger(
+    NotificationCircuitBreakerService.name,
+  );
   private readonly errorThreshold: number;
   private readonly windowSeconds: number;
   private readonly resetTimeoutSeconds: number;
@@ -178,7 +180,7 @@ export class NotificationCircuitBreakerService extends BaseService {
 
       const lastFailure =
         failures.length > 0
-          ? new Date(parseInt(failures[failures.length - 1] as string))
+          ? new Date(parseInt(failures[failures.length - 1]))
           : null;
 
       status[channel] = {

@@ -12,13 +12,7 @@ import { TestEnvGuard } from '../test/helpers/test-env-guard';
 import { createMockNotification } from '../test/helpers/mock-entities';
 import { faker } from '@faker-js/faker';
 import { FakeRedis } from '../test/fakes/fake-redis';
-
-// Mock SlidingWindowRateLimiter
-jest.mock('../utils/sliding-window-rate-limit', () => ({
-  SlidingWindowRateLimiter: jest.fn().mockImplementation(() => ({
-    checkRateLimit: jest.fn().mockResolvedValue(true),
-  })),
-}));
+import { RateLimitService } from '@/modules/rate-limit/services/rate-limit.service';
 
 // Mock retry.util
 jest.mock('../utils/retry.util', () => ({
@@ -30,6 +24,7 @@ describe('NotificationGateway', () => {
   let mockRedisService: jest.Mocked<RedisService>;
   let mockLogger: Logger;
   let mockMetrics: jest.Mocked<NotificationMetricsService>;
+  let mockRateLimitService: jest.Mocked<RateLimitService>;
   let mockServer: jest.Mocked<Server>;
   let fakeRedis: FakeRedis;
   let redisSets: Map<string, Set<string>>;
@@ -45,9 +40,20 @@ describe('NotificationGateway', () => {
       incrementFailed: jest.fn().mockResolvedValue(undefined),
     } as any;
 
+    mockRateLimitService = {
+      checkLimit: jest.fn().mockResolvedValue({
+        allowed: true,
+        remaining: 100,
+        limit: 100,
+        resetTime: Date.now() + 60000,
+      }),
+      getCurrentCount: jest.fn().mockResolvedValue(0),
+      reset: jest.fn().mockResolvedValue(undefined),
+    } as any;
+
     // Use a simple in-memory store for Redis SET operations
     redisSets = new Map();
-    
+
     const mockRedisClient = {
       sadd: jest.fn().mockImplementation(async (key, value) => {
         if (!redisSets.has(key)) {
@@ -75,18 +81,20 @@ describe('NotificationGateway', () => {
         const set = redisSets.get(key);
         return set ? set.size : 0;
       }),
-      eval: jest.fn().mockImplementation(async (script, numKeys, key, socketId) => {
-        const set = redisSets.get(key);
-        const removed = set && set.has(socketId) ? 1 : 0;
-        if (set) {
-          set.delete(socketId);
-          if (set.size === 0) {
-            redisSets.delete(key);
+      eval: jest
+        .fn()
+        .mockImplementation(async (script, numKeys, key, socketId) => {
+          const set = redisSets.get(key);
+          const removed = set && set.has(socketId) ? 1 : 0;
+          if (set) {
+            set.delete(socketId);
+            if (set.size === 0) {
+              redisSets.delete(key);
+            }
           }
-        }
-        const count = set ? set.size : 0;
-        return [removed, count];
-      }),
+          const count = set ? set.size : 0;
+          return [removed, count];
+        }),
       expire: jest.fn().mockResolvedValue(1),
       incr: jest.fn().mockResolvedValue(1),
       decr: jest.fn().mockResolvedValue(0),
@@ -103,12 +111,13 @@ describe('NotificationGateway', () => {
         const matchIndex = args.indexOf('MATCH');
         const pattern = matchIndex >= 0 ? args[matchIndex + 1] : '*';
         const allKeys = fakeRedis.getAllKeys();
-        const matchedKeys = pattern === '*' 
-          ? allKeys 
-          : allKeys.filter(key => {
-              const regex = new RegExp(pattern.replace(/\*/g, '.*'));
-              return regex.test(key);
-            });
+        const matchedKeys =
+          pattern === '*'
+            ? allKeys
+            : allKeys.filter((key) => {
+                const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+                return regex.test(key);
+              });
         return ['0', matchedKeys];
       }),
       pipeline: jest.fn().mockReturnValue({
@@ -116,7 +125,10 @@ describe('NotificationGateway', () => {
         expire: jest.fn().mockReturnThis(),
         incr: jest.fn().mockReturnThis(),
         decr: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue([[null, 1], [null, 1]]),
+        exec: jest.fn().mockResolvedValue([
+          [null, 1],
+          [null, 1],
+        ]),
       }),
     };
 
@@ -144,6 +156,10 @@ describe('NotificationGateway', () => {
         {
           provide: NotificationMetricsService,
           useValue: mockMetrics,
+        },
+        {
+          provide: RateLimitService,
+          useValue: mockRateLimitService,
         },
       ],
     }).compile();
@@ -217,7 +233,10 @@ describe('NotificationGateway', () => {
       const socketId = faker.string.uuid();
 
       // First add socket
-      await fakeRedis.set(`lms:notification:connections:${userId}:${socketId}`, '1');
+      await fakeRedis.set(
+        `lms:notification:connections:${userId}:${socketId}`,
+        '1',
+      );
 
       const mockSocket = {
         id: socketId,
@@ -290,14 +309,20 @@ describe('NotificationGateway', () => {
         type: NotificationType.OTP,
       });
 
-      // Mock rate limiter to return false
-      const { SlidingWindowRateLimiter } = require('../utils/sliding-window-rate-limit');
-      const mockRateLimiter = {
-        checkRateLimit: jest.fn().mockResolvedValue(false),
-      };
-      SlidingWindowRateLimiter.mockImplementation(() => mockRateLimiter);
+      // Mock rate limit service to return rate limit exceeded
+      const blockedRateLimitService = {
+        checkLimit: jest.fn().mockResolvedValue({
+          allowed: false,
+          remaining: 0,
+          limit: 100,
+          resetTime: Date.now() + 60000,
+          retryAfter: 60000,
+        }),
+        getCurrentCount: jest.fn().mockResolvedValue(100),
+        reset: jest.fn().mockResolvedValue(undefined),
+      } as any;
 
-      // Recreate gateway with new rate limiter
+      // Recreate gateway with blocked rate limiter
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           NotificationGateway,
@@ -313,6 +338,10 @@ describe('NotificationGateway', () => {
             provide: NotificationMetricsService,
             useValue: mockMetrics,
           },
+          {
+            provide: RateLimitService,
+            useValue: blockedRateLimitService,
+          },
         ],
       }).compile();
 
@@ -322,6 +351,7 @@ describe('NotificationGateway', () => {
       await newGateway.sendToUser(userId, notification as Notification);
 
       expect(mockServer.to).not.toHaveBeenCalled();
+      expect(blockedRateLimitService.checkLimit).toHaveBeenCalled();
     });
 
     it('should handle send errors gracefully', async () => {
@@ -331,9 +361,9 @@ describe('NotificationGateway', () => {
         type: NotificationType.OTP,
       });
 
-      (mockRedisService.getClient().smembers as jest.Mock).mockRejectedValueOnce(
-        new Error('Redis error'),
-      );
+      (
+        mockRedisService.getClient().smembers as jest.Mock
+      ).mockRejectedValueOnce(new Error('Redis error'));
 
       await gateway.sendToUser(userId, notification as Notification);
 
@@ -374,4 +404,3 @@ describe('NotificationGateway', () => {
     });
   });
 });
-
