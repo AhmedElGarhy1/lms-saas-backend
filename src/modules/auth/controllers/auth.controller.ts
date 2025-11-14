@@ -5,7 +5,6 @@ import { ForgotPasswordRequestDto } from '../dto/forgot-password.dto';
 import { ResetPasswordRequestDto } from '../dto/reset-password.dto';
 import { VerifyEmailRequestDto } from '../dto/verify-email.dto';
 import { VerifyPhoneRequestDto } from '../dto/verify-phone.dto';
-import { RequestEmailVerificationRequestDto } from '../dto/request-email-verification.dto';
 import { RequestPhoneVerificationRequestDto } from '../dto/request-phone-verification.dto';
 import {
   TwoFASetupRequestDto,
@@ -106,13 +105,10 @@ export class AuthController {
 
   @Post('request-email-verification')
   @UpdateApiResponses('Request email verification')
-  @ApiBody({ type: RequestEmailVerificationRequestDto })
   @NoProfile()
   @NoContext()
-  async requestEmailVerification(
-    @Body() dto: RequestEmailVerificationRequestDto,
-  ) {
-    await this.authService.requestEmailVerification(dto.userId, dto.email);
+  async requestEmailVerification(@GetUser() actor: ActorUser) {
+    await this.authService.requestEmailVerification(actor);
 
     return ControllerResponse.success(
       { message: 'Email verification request sent' },

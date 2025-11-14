@@ -1,5 +1,6 @@
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { BaseEvent } from '@/shared/common/base/base-event';
+import { SystemEvent } from '@/shared/common/base/system-event';
 
 export class UserLoggedInEvent extends BaseEvent {
   constructor(
@@ -57,42 +58,37 @@ export class PhoneVerifiedEvent extends BaseEvent {
   }
 }
 
-export class PasswordResetRequestedEvent extends BaseEvent {
+export class PasswordResetRequestedEvent extends SystemEvent {
   constructor(
-    actor: ActorUser,
     public readonly email: string,
     public readonly userId?: string,
     public readonly name?: string,
     public readonly token?: string,
     public readonly link?: string,
   ) {
-    super(actor);
+    super();
   }
 }
 
 export class EmailVerificationRequestedEvent extends BaseEvent {
   constructor(
     actor: ActorUser,
-    public readonly userId: string,
-    public readonly email: string,
     public readonly token: string,
     public readonly link: string,
-    public readonly name?: string,
   ) {
     super(actor);
   }
 }
 
-export class OtpEvent extends BaseEvent {
+export class OtpEvent extends SystemEvent {
   constructor(
-    actor: ActorUser,
     public readonly userId: string,
     public readonly otpCode: string,
     public readonly expiresIn: number, // in minutes
     public readonly email?: string,
     public readonly phone?: string,
   ) {
-    super(actor);
+    super();
   }
 }
 

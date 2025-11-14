@@ -268,35 +268,12 @@ export class AuthService extends BaseService {
     };
   }
 
-  async requestEmailVerification(
-    userId?: string,
-    email?: string,
-  ): Promise<void> {
-    let user;
-
-    // Find user by userId or email
-    if (userId) {
-      user = await this.userService.findOne(userId);
-    } else if (email) {
-      user = await this.userService.findUserByEmail(email);
-    } else {
-      throw new BadRequestException('Either userId or email is required');
-    }
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    if (!user.email) {
+  async requestEmailVerification(actor: ActorUser): Promise<void> {
+    if (!actor.email) {
       throw new BadRequestException('User does not have an email address');
     }
 
-    // Use user's stored email
-    await this.verificationService.sendEmailVerification(
-      user.id || '',
-      user.email,
-      user.name,
-    );
+    await this.verificationService.sendEmailVerification(actor);
   }
 
   async requestPhoneVerification(

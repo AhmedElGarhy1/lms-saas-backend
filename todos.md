@@ -70,8 +70,7 @@
 [ ] consider using prisma instead of typeorm
 [ ] check create user optionality
 [ ] fix actor is required in all activity logs conside made system activities
-[ ] add rate limit module
-
+[ ] verify rate limit module is working
 [x] refactor logs and add only required not spam of logs
 [x] add missing activity logs for users
 [ ] update notifications to cover all existing modules events

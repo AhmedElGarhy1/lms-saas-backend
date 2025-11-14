@@ -23,6 +23,7 @@ import { VerificationToken } from '../entities/verification-token.entity';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { Transactional } from '@nestjs-cls/transactional';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 export interface CreateVerificationTokenData {
   userId: string;
@@ -306,7 +307,6 @@ export class VerificationService extends BaseService {
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.OTP,
       new OtpEvent(
-        null as any,
         userId,
         verificationToken.code!,
         remainingMinutes || expiresInMinutes,
@@ -320,39 +320,20 @@ export class VerificationService extends BaseService {
    * Send email verification
    * Reuses existing non-expired token if available
    */
-  async sendEmailVerification(
-    userId: string,
-    email: string,
-    name?: string,
-  ): Promise<void> {
+  async sendEmailVerification(actor: ActorUser): Promise<void> {
     // Get or create verification token (reuses existing non-expired token)
     const verificationToken = await this.getOrCreateVerificationToken({
-      userId,
+      userId: actor.id,
       type: VerificationType.EMAIL_VERIFICATION,
       channel: NotificationChannel.EMAIL,
     });
 
     const link = `${Config.app.frontendUrl}/verify-email?token=${verificationToken.token}`;
 
-    // Calculate remaining time for existing token
-    const now = new Date();
-    const expiresAt = verificationToken.expiresAt;
-    const remainingHours = Math.max(
-      0,
-      Math.floor((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60)),
-    );
-
-    // Emit event for notification system
+    // Emit event for notification system (endpoint requires authentication)
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.EMAIL_VERIFICATION_REQUESTED,
-      new EmailVerificationRequestedEvent(
-        null as any,
-        userId,
-        email,
-        verificationToken.token,
-        link,
-        name,
-      ),
+      new EmailVerificationRequestedEvent(actor, verificationToken.token, link),
     );
   }
 
@@ -415,7 +396,6 @@ export class VerificationService extends BaseService {
       await this.typeSafeEventEmitter.emitAsync(
         AuthEvents.PASSWORD_RESET_REQUESTED,
         new PasswordResetRequestedEvent(
-          null as any,
           recipient,
           userId,
           user.name,
@@ -435,7 +415,6 @@ export class VerificationService extends BaseService {
       await this.typeSafeEventEmitter.emitAsync(
         AuthEvents.OTP,
         new OtpEvent(
-          null as any,
           userId,
           verificationToken.code!,
           expiresInMinutes,
@@ -525,15 +504,11 @@ export class VerificationService extends BaseService {
     await this.verificationTokenRepository.deleteByUserIdAndType(userId, type);
 
     // Send new verification
+    // Note: Email verification is not supported here as it requires an authenticated actor.
+    // Use requestEmailVerification endpoint instead.
     if (type === VerificationType.EMAIL_VERIFICATION) {
-      const user = await this.userService.findOne(userId);
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
-      await this.sendEmailVerification(
-        userId,
-        email || user.email || '',
-        user.name,
+      throw new BadRequestException(
+        'Email verification must be requested through the authenticated endpoint',
       );
     } else if (type === VerificationType.PASSWORD_RESET) {
       await this.sendPasswordReset(userId, channel);

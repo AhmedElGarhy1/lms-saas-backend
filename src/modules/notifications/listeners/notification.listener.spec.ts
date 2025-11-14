@@ -108,7 +108,6 @@ describe('NotificationListener', () => {
       mockUserService.findOne.mockResolvedValue(mockUser as any);
 
       const event = new OtpEvent(
-        { id: userId } as any,
         userId,
         '123456',
         5,
@@ -139,7 +138,6 @@ describe('NotificationListener', () => {
 
     it('should skip notification if userId is missing', async () => {
       const event = new OtpEvent(
-        { id: 'test' } as any,
         undefined as any,
         '123456',
         5,
@@ -158,7 +156,6 @@ describe('NotificationListener', () => {
       mockUserService.findOne.mockResolvedValue(null);
 
       const event = new OtpEvent(
-        { id: userId } as any,
         userId,
         '123456',
         5,
@@ -183,7 +180,6 @@ describe('NotificationListener', () => {
       mockUserService.findOne.mockResolvedValue(mockUser as any);
 
       const event = new OtpEvent(
-        { id: userId } as any,
         userId,
         '123456',
         5,
@@ -213,7 +209,6 @@ describe('NotificationListener', () => {
       mockUserService.findOne.mockResolvedValue(mockUser as any);
 
       const event = new PasswordResetRequestedEvent(
-        { id: userId } as any,
         email,
         userId,
         undefined,
@@ -241,7 +236,6 @@ describe('NotificationListener', () => {
 
     it('should skip notification if userId is missing', async () => {
       const event = new PasswordResetRequestedEvent(
-        { id: 'test' } as any,
         faker.internet.email(),
         undefined,
         undefined,
@@ -555,7 +549,6 @@ describe('NotificationListener', () => {
       );
 
       const event = new OtpEvent(
-        { id: userId } as any,
         userId,
         '123456',
         5,

@@ -398,30 +398,14 @@ export class NotificationListener {
       AuthEvents.EMAIL_VERIFICATION_REQUESTED
     >,
   ) {
-    // Fetch user to get phone and locale
-    if (!event.userId) {
-      this.logger.warn(
-        'Email verification event missing userId, skipping notification',
-      );
-      return;
-    }
-
-    const user = await this.userService.findOne(event.userId);
-
-    if (!user) {
-      this.logger.warn(
-        `User ${event.userId} not found for email verification notification`,
-      );
-      return;
-    }
-
+    const { actor } = event;
     const recipient: RecipientInfo = {
-      userId: user.id,
+      userId: actor.id,
       profileId: null,
       profileType: null,
-      phone: user.getPhone(),
-      email: event.email,
-      locale: user.userInfo.locale,
+      phone: actor.getPhone(),
+      email: actor.email || null,
+      locale: actor.userInfo.locale,
       centerId: undefined,
     };
 
@@ -441,7 +425,7 @@ export class NotificationListener {
       validRecipients,
       {
         context: {
-          userId: user.id,
+          userId: actor.id,
         },
       },
     );
