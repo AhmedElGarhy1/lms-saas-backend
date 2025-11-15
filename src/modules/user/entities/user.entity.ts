@@ -2,7 +2,7 @@ import { Entity, Column, OneToMany, OneToOne, Index } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { VerificationToken } from '@/modules/auth/entities/verification-token.entity';
-import { UserProfile } from './user-profile.entity';
+import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { UserInfo } from './user-info.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 

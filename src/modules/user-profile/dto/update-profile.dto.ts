@@ -42,3 +42,4 @@ export class UpdateProfileRequestDto {
 
 // Alias for backward compatibility
 export class UpdateProfileDto extends UpdateProfileRequestDto {}
+

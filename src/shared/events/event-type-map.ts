@@ -33,6 +33,7 @@ import {
   UpdateCenterEvent,
   DeleteCenterEvent,
   RestoreCenterEvent,
+  CreateCenterOwnerEvent,
   AssignCenterOwnerEvent,
   CreateCenterBranchEvent,
 } from '@/modules/centers/events/center.events';
@@ -49,11 +50,19 @@ import {
   ActivateCenterAccessEvent,
   DeactivateCenterAccessEvent,
 } from '@/modules/access-control/events/access-control.events';
-import { CreateAdminEvent } from '@/modules/admin/events/admin.events';
-import { CreateStaffEvent } from '@/modules/staff/events/staff.events';
+import {
+  CreateAdminEvent,
+  AdminCreatedEvent,
+} from '@/modules/admin/events/admin.events';
+import {
+  CreateStaffEvent,
+  StaffCreatedEvent,
+} from '@/modules/staff/events/staff.events';
 import {
   PasswordResetRequestedEvent,
   EmailVerificationRequestedEvent,
+  RequestEmailVerificationEvent,
+  RequestPhoneVerificationEvent,
   OtpEvent,
   PhoneVerifiedEvent,
 } from '@/modules/auth/events/auth.events';
@@ -104,6 +113,7 @@ export type EventTypeMap = {
   [CenterEvents.UPDATED]: UpdateCenterEvent;
   [CenterEvents.DELETED]: DeleteCenterEvent;
   [CenterEvents.RESTORED]: RestoreCenterEvent;
+  [CenterEvents.CREATE_OWNER]: CreateCenterOwnerEvent;
   [CenterEvents.ASSIGN_OWNER]: AssignCenterOwnerEvent;
   [CenterEvents.CREATE_BRANCH]: CreateCenterBranchEvent;
 
@@ -122,13 +132,17 @@ export type EventTypeMap = {
 
   // Admin Events
   [AdminEvents.CREATE]: CreateAdminEvent;
+  [AdminEvents.CREATED]: AdminCreatedEvent;
 
   // Staff Events
   [StaffEvents.CREATE]: CreateStaffEvent;
+  [StaffEvents.CREATED]: StaffCreatedEvent;
 
   // Additional Auth Events
   [AuthEvents.PASSWORD_RESET_REQUESTED]: PasswordResetRequestedEvent;
   [AuthEvents.EMAIL_VERIFICATION_REQUESTED]: EmailVerificationRequestedEvent;
+  [AuthEvents.EMAIL_VERIFICATION_SEND_REQUESTED]: RequestEmailVerificationEvent;
+  [AuthEvents.PHONE_VERIFICATION_SEND_REQUESTED]: RequestPhoneVerificationEvent;
   [AuthEvents.OTP]: OtpEvent;
   [AuthEvents.PHONE_VERIFIED]: PhoneVerifiedEvent;
 };

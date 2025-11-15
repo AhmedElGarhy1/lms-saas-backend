@@ -11,7 +11,7 @@ import { AccessControlService } from '@/modules/access-control/services/access-c
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { UserInfoService } from './user-info.service';
-import { UserProfileService } from './user-profile.service';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 import { BaseService } from '@/shared/common/services/base.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import {

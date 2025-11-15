@@ -1,11 +1,26 @@
 import { Staff } from '@/modules/staff/entities/staff.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { CreateStaffDto } from '@/modules/staff/dto/create-staff.dto';
+import { User } from '@/modules/user/entities/user.entity';
+import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 
 export class CreateStaffEvent {
   constructor(
-    public readonly dto: CreateStaffDto,
+    public readonly user: User,
+    public readonly userProfile: UserProfile,
     public readonly actor: ActorUser,
     public readonly staff: Staff,
+    public readonly centerId?: string,
+    public readonly roleId?: string,
+  ) {}
+}
+
+export class StaffCreatedEvent {
+  constructor(
+    public readonly user: User,
+    public readonly userProfile: UserProfile,
+    public readonly actor: ActorUser,
+    public readonly staff: Staff,
+    public readonly centerId?: string,
+    public readonly roleId?: string,
   ) {}
 }

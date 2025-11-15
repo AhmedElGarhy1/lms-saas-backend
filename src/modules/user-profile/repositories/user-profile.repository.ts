@@ -73,4 +73,61 @@ export class UserProfileRepository extends BaseRepository<UserProfile> {
       where: { id: userProfileId, profileType: ProfileType.STAFF },
     });
   }
+
+  /**
+   * Gets a profile reference entity by ID and type
+   * @param profileRefId The ID of the profile reference entity
+   * @param profileType The type of profile
+   * @returns The profile reference entity
+   */
+  async getProfileRefEntity(
+    profileRefId: string,
+    profileType: ProfileType,
+  ): Promise<Staff | Admin | Teacher | Student> {
+    const manager = this.getEntityManager();
+    const repository = this.getProfileTypeRepository(profileType);
+    const entity = await repository.findOne({ where: { id: profileRefId } });
+
+    if (!entity) {
+      throw new Error(
+        `${profileType} entity with id ${profileRefId} not found`,
+      );
+    }
+
+    return entity;
+  }
+
+  /**
+   * Creates an empty profile reference entity based on profile type
+   * @param profileType The type of profile to create
+   * @returns The created entity ID
+   */
+  async createProfileRefEntity(profileType: ProfileType): Promise<string> {
+    const manager = this.getEntityManager();
+    let entity: Staff | Admin | Teacher | Student;
+
+    switch (profileType) {
+      case ProfileType.STAFF:
+        entity = manager.create(Staff, {});
+        break;
+      case ProfileType.ADMIN:
+        entity = manager.create(Admin, {});
+        break;
+      case ProfileType.TEACHER:
+        entity = manager.create(Teacher, {});
+        break;
+      case ProfileType.STUDENT:
+        entity = manager.create(Student, {});
+        break;
+      case ProfileType.PARENT:
+        // TODO: Implement when Parent entity is created
+        throw new Error('Parent profile type is not yet implemented');
+      default:
+        throw new Error(`Unknown profile type: ${String(profileType)}`);
+    }
+
+    const savedEntity = await manager.save(entity);
+    return savedEntity.id;
+  }
 }
+

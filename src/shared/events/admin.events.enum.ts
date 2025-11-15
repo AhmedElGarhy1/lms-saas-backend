@@ -1,3 +1,4 @@
 export enum AdminEvents {
-  CREATE = 'admin.created',
+  CREATE = 'admin.create',
+  CREATED = 'admin.created',
 }

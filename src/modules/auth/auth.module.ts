@@ -18,6 +18,7 @@ import { UserModule } from '../user/user.module';
 import { UserRepository } from '../user/repositories/user.repository';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { AuthListener } from './listeners/auth.listener';
+import { VerificationListener } from './listeners/verification.listener';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { AuthListener } from './listeners/auth.listener';
     AccessJwtGuard,
     RefreshJwtGuard,
     AuthListener,
+    VerificationListener,
   ],
   exports: [
     AuthService,

@@ -76,6 +76,7 @@
 [ ] update notifications to cover all existing modules events
 [x] (frontend) Data flow: ⚠️ Needs standardization (28 violations)
 [x] notifications register user connection first when he opens (there is a problem in sending notifications because of redis not found user connection)
+[ ] remove all api reqeust transformation and middle functions that do nothing except transform request schema must be the same as reqeust payload
 
 [] (later if size is big) Bulk notification insertion - Batch insert DB writes for IN_APP channel - ⚙️ Medium–High - If DB write latency increases
 

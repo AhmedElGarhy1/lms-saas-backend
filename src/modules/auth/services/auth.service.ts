@@ -38,6 +38,7 @@ import {
   EmailVerifiedEvent,
 } from '@/modules/auth/events/auth.events';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
+import { RequestEmailVerificationEvent } from '../events/auth.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 
 @Injectable()
@@ -273,7 +274,11 @@ export class AuthService extends BaseService {
       throw new BadRequestException('User does not have an email address');
     }
 
-    await this.verificationService.sendEmailVerification(actor);
+    // Emit event for email verification (event-driven)
+    await this.typeSafeEventEmitter.emitAsync(
+      AuthEvents.EMAIL_VERIFICATION_SEND_REQUESTED,
+      new RequestEmailVerificationEvent(actor, actor.id, actor.email),
+    );
   }
 
   async requestPhoneVerification(

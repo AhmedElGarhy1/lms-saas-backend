@@ -36,11 +36,11 @@ import { join } from 'path';
 import { UserLocaleResolver } from './shared/resolvers/user-locale.resolver';
 import { Locale } from './shared/common/enums/locale.enum';
 import { HealthModule } from './modules/health';
-import { UserProfileService } from './modules/user/services/user-profile.service';
+import { UserProfileModule } from './modules/user-profile/user-profile.module';
 import { StaffModule } from './modules/staff/staff.module';
 import { AdminModule } from './modules/admin/admin.module';
-import { ProfilesModule } from './modules/profiles/profiles.module';
 import { ProfileGuard } from './shared/common/guards/profile.guard';
+import { UserProfileService } from './modules/user-profile/services/user-profile.service';
 import { NotificationModule } from './modules/notifications/notifications.module';
 import { BullModule } from '@nestjs/bullmq';
 import { RedisModule } from './shared/modules/redis/redis.module';
@@ -99,9 +99,9 @@ import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limi
     }),
     AuthModule,
     UserModule,
+    UserProfileModule,
     StaffModule,
     AdminModule,
-    ProfilesModule,
     AccessControlModule,
     CentersModule,
     ActivityLogModule,

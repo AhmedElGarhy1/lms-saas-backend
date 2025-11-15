@@ -1,3 +1,4 @@
 export enum StaffEvents {
-  CREATE = 'staff.created',
+  CREATE = 'staff.create',
+  CREATED = 'staff.created',
 }

@@ -71,3 +71,4 @@ export class PaginateProfilesDto {
   @IsString()
   sortOrder?: 'ASC' | 'DESC';
 }
+

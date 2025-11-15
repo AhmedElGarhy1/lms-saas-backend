@@ -1,10 +1,4 @@
-import {
-  forwardRef,
-  Inject,
-  Injectable,
-  Optional,
-  Logger,
-} from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserProfile } from '../entities/user-profile.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { BaseService } from '@/shared/common/services/base.service';
@@ -13,16 +7,23 @@ import {
   ValidationFailedException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { ProfileResponseDto } from '@/modules/profiles/dto/profile-response.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
+import { ProfileResponseDto } from '../dto/profile-response.dto';
+import { UserProfileMeResponseDto } from '../dto/user-profile-me-response.dto';
+import { UpdateUserDto } from '@/modules/user/dto/update-user.dto';
 import { UpdateUserProfileDto } from '../dto/update-user-profile.dto';
-import { UserService } from './user.service';
+import { CreateUserProfileDto } from '../dto/create-user-profile.dto';
+import { UserService } from '@/modules/user/services/user.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { Admin } from '@/modules/admin/entities/admin.entity';
 import { UserProfileRepository } from '../repositories/user-profile.repository';
 import { CentersService } from '@/modules/centers/services/centers.service';
 import { Role } from '@/modules/access-control/entities/role.entity';
-import { InAppNotificationService } from '@/modules/notifications/services/in-app-notification.service';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { StaffEvents } from '@/shared/events/staff.events.enum';
+import { AdminEvents } from '@/shared/events/admin.events.enum';
+import { CreateStaffEvent } from '@/modules/staff/events/staff.events';
+import { CreateAdminEvent } from '@/modules/admin/events/admin.events';
+import { Staff } from '@/modules/staff/entities/staff.entity';
+import { Admin } from '@/modules/admin/entities/admin.entity';
 
 @Injectable()
 export class UserProfileService extends BaseService {
@@ -35,9 +36,7 @@ export class UserProfileService extends BaseService {
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly centerService: CentersService,
-    @Optional()
-    @Inject(forwardRef(() => InAppNotificationService))
-    private readonly inAppNotificationService?: InAppNotificationService,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
   }
@@ -60,7 +59,6 @@ export class UserProfileService extends BaseService {
       ...user,
       profileType: actor.profileType,
       profile: null,
-      unreadNotificationCount: undefined, // Will be set below if InAppNotificationService is available
     };
 
     if (!actor.userProfileId) return returnData;
@@ -99,21 +97,55 @@ export class UserProfileService extends BaseService {
     returnData.profile = profile;
     returnData.profileType = actor.profileType;
 
-    // Add unread notification count if service is available
-    if (this.inAppNotificationService) {
-      try {
-        returnData.unreadNotificationCount =
-          await this.inAppNotificationService.getUnreadCount(
-            actor.id,
-            actor.profileType,
-            actor.userProfileId,
-          );
-      } catch (error) {
-        this.logger.warn(
-          `Failed to get unread notification count: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
+    return returnData;
+  }
+
+  async getCurrentUserProfileData(
+    actor: ActorUser,
+  ): Promise<UserProfileMeResponseDto> {
+    const returnData: UserProfileMeResponseDto = {
+      profileType: actor.profileType,
+      profile: null,
+      role: null,
+      center: null,
+    };
+
+    const userProfile = await this.findOne(actor.userProfileId);
+    if (!userProfile) {
+      throw new ResourceNotFoundException('User profile not found');
     }
+
+    actor.userProfileId = userProfile.id;
+    actor.profileType = userProfile.profileType;
+
+    if (actor.centerId) {
+      const profileRole = await this.accessControlHelperService.getProfileRole(
+        actor.userProfileId,
+        actor.centerId,
+      );
+      returnData.role = profileRole?.role as Role;
+      returnData.center = await this.centerService.findCenterById(
+        actor.centerId,
+      );
+    }
+
+    if (!returnData.role) {
+      const profileRole = await this.accessControlHelperService.getProfileRole(
+        actor.userProfileId,
+      );
+      returnData.role = profileRole?.role as Role;
+    }
+
+    const profile = await this.userProfileRepository.getTargetProfile(
+      actor.userProfileId,
+      actor.profileType,
+    );
+    if (!profile) {
+      throw new ResourceNotFoundException('Profile not found');
+    }
+
+    returnData.profile = profile;
+    returnData.profileType = actor.profileType;
 
     return returnData;
   }
@@ -128,20 +160,51 @@ export class UserProfileService extends BaseService {
     return userProfile;
   }
 
-  async updateUserProfile(actor: ActorUser, updateData: UpdateUserProfileDto) {
-    // Convert profile update data to user update format
+  /**
+   * Updates a user profile's basic information
+   * @param userProfileId The profile ID to update
+   * @param dto Update data
+   * @param actor The user performing the action
+   * @returns The updated User entity
+   */
+  async updateProfile(
+    userProfileId: string,
+    dto: UpdateUserProfileDto,
+    actor: ActorUser,
+  ) {
+    // 1. Validate access (can actor manage this profile?)
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: userProfileId,
+    });
+
+    // 2. Get the user profile to find the userId
+    const userProfile = await this.findOne(userProfileId);
+    if (!userProfile) {
+      throw new ResourceNotFoundException('User profile not found');
+    }
+
+    // 3. Convert profile update data to user update format
     const userUpdateData: UpdateUserDto = {
-      name: updateData.name!,
-      phone: updateData.phone!,
+      name: dto.name,
+      phone: dto.phone,
+      email: dto.email,
+      isActive: dto.isActive,
       userInfo: {
-        address: updateData.address,
-        dateOfBirth: updateData.dateOfBirth
-          ? new Date(updateData.dateOfBirth)
+        address: dto.userInfo?.address,
+        dateOfBirth: dto.userInfo?.dateOfBirth
+          ? new Date(dto.userInfo.dateOfBirth)
           : undefined,
+        locale: dto.userInfo?.locale,
       },
     };
 
-    return this.userService.updateUser(actor.id, userUpdateData, actor);
+    // 4. Update User entity (this will emit UserUpdatedEvent)
+    return await this.userService.updateUser(
+      userProfile.userId,
+      userUpdateData,
+      actor,
+    );
   }
 
   async findForUser(userId: string, userProfileId: string) {
@@ -223,5 +286,74 @@ export class UserProfileService extends BaseService {
       profileType: userProfile?.profileType,
       targetProfileType: targetProfile?.profileType,
     };
+  }
+
+  /**
+   * Creates a new user profile with all associated entities and access control
+   * @param dto Profile creation data
+   * @param actor The user performing the action
+   * @param existingProfileRefId Optional: Use existing profileRefId instead of creating new entity
+   * @returns The created UserProfile
+   */
+  async createProfile(
+    dto: CreateUserProfileDto,
+    actor: ActorUser,
+  ): Promise<UserProfile> {
+    // 1. Create User entity (includes UserInfo creation)
+    const createdUser = await this.userService.createUser(dto, actor);
+
+    // 2. Get or create profileRefEntity (Staff/Admin/Teacher) based on profileType
+    // Use existing profileRefId if provided, otherwise create new one
+    const profileRefId =
+      await this.userProfileRepository.createProfileRefEntity(dto.profileType);
+
+    // 3. Create UserProfile linking User to profileRefEntity
+    const userProfile = await this.createUserProfile(
+      createdUser.id,
+      dto.profileType,
+      profileRefId,
+    );
+
+    // 4. Emit domain events for STAFF and ADMIN profiles
+    // Access control, UserCreatedEvent, and phone verification are handled by listeners
+    if (dto.profileType === ProfileType.STAFF) {
+      // Get the Staff entity
+      const staff = (await this.userProfileRepository.getProfileRefEntity(
+        profileRefId,
+        ProfileType.STAFF,
+      )) as Staff;
+
+      const centerId = dto.centerId ?? actor.centerId;
+      await this.typeSafeEventEmitter.emitAsync(
+        StaffEvents.CREATE,
+        new CreateStaffEvent(
+          createdUser,
+          userProfile,
+          actor,
+          staff,
+          centerId,
+          dto.roleId,
+        ),
+      );
+    } else if (dto.profileType === ProfileType.ADMIN) {
+      // Get the Admin entity
+      const admin = (await this.userProfileRepository.getProfileRefEntity(
+        profileRefId,
+        ProfileType.ADMIN,
+      )) as Admin;
+
+      await this.typeSafeEventEmitter.emitAsync(
+        AdminEvents.CREATE,
+        new CreateAdminEvent(
+          createdUser,
+          userProfile,
+          actor,
+          admin,
+          dto.roleId,
+        ),
+      );
+    }
+
+    return userProfile;
   }
 }

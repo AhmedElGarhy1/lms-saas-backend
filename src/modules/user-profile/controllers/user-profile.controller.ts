@@ -1,6 +1,8 @@
 import {
   Controller,
   Get,
+  Post,
+  Put,
   Param,
   Patch,
   Body,
@@ -9,10 +11,12 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiParam, ApiBody } from '@nestjs/swagger';
 import {
+  CreateApiResponses,
   ReadApiResponses,
   UpdateApiResponses,
   DeleteApiResponses,
 } from '@/shared/common/decorators';
+import { SerializeOptions } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
@@ -21,11 +25,16 @@ import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
-import { UserProfileService } from '@/modules/user/services/user-profile.service';
+import { UserProfileService } from '../services/user-profile.service';
 import { UserService } from '@/modules/user/services/user.service';
-import { UpdateUserProfileStatusDto } from '@/modules/user/dto/update-user-profile-status.dto';
+import { UpdateUserProfileStatusDto } from '../dto/update-user-profile-status.dto';
+import { CreateUserProfileDto } from '../dto/create-user-profile.dto';
+import { UpdateUserProfileDto } from '../dto/update-user-profile.dto';
+import { UserResponseDto } from '@/modules/user/dto/user-response.dto';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
+import { ProfileResponseDto } from '../dto/profile-response.dto';
+import { UserProfileMeResponseDto } from '../dto/user-profile-me-response.dto';
 
 @ApiTags('User Profiles')
 @Controller('user-profiles')
@@ -35,6 +44,41 @@ export class UserProfileController {
     private readonly userService: UserService,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
+
+  @Post()
+  @CreateApiResponses('Create a new user profile')
+  @ApiBody({ type: CreateUserProfileDto })
+  @Permissions(PERMISSIONS.ADMIN.CREATE)
+  @Transactional()
+  async createProfile(
+    @Body() dto: CreateUserProfileDto,
+    @GetUser() actorUser: ActorUser,
+  ) {
+    await this.userProfileService.createProfile(dto, actorUser);
+
+    return ControllerResponse.success(
+      null,
+      this.i18n.translate('success.create', {
+        args: { resource: this.i18n.translate('common.resources.profile') },
+      }),
+    );
+  }
+
+  @Get('me')
+  @ReadApiResponses('Get current user profile data')
+  @SerializeOptions({ type: UserProfileMeResponseDto })
+  @NoContext()
+  async getCurrentProfile(@GetUser() actor: ActorUser) {
+    const profileData =
+      await this.userProfileService.getCurrentUserProfileData(actor);
+
+    return ControllerResponse.success(
+      profileData,
+      this.i18n.translate('success.found', {
+        args: { resource: this.i18n.translate('common.resources.profile') },
+      }),
+    );
+  }
 
   @Get()
   @ReadApiResponses('List user profiles with pagination and filtering')
@@ -65,6 +109,36 @@ export class UserProfileController {
     return ControllerResponse.success(
       profile,
       this.i18n.translate('success.found', {
+        args: { resource: this.i18n.translate('common.resources.profile') },
+      }),
+    );
+  }
+
+  @Put(':id')
+  @UpdateApiResponses('Update user profile information')
+  @ApiParam({
+    name: 'id',
+    description: 'User Profile ID',
+    type: String,
+  })
+  @ApiBody({ type: UpdateUserProfileDto })
+  @Permissions(PERMISSIONS.ADMIN.UPDATE)
+  @SerializeOptions({ type: UserResponseDto })
+  @Transactional()
+  async updateProfile(
+    @Param('id', ParseUUIDPipe) userProfileId: string,
+    @Body() dto: UpdateUserProfileDto,
+    @GetUser() actorUser: ActorUser,
+  ) {
+    const user = await this.userProfileService.updateProfile(
+      userProfileId,
+      dto,
+      actorUser,
+    );
+
+    return ControllerResponse.success(
+      user,
+      this.i18n.translate('success.update', {
         args: { resource: this.i18n.translate('common.resources.profile') },
       }),
     );

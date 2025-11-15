@@ -92,6 +92,34 @@ export class OtpEvent extends SystemEvent {
   }
 }
 
+/**
+ * Event to request phone verification for a user
+ * Can be emitted from any module to trigger phone verification
+ */
+export class RequestPhoneVerificationEvent extends SystemEvent {
+  constructor(
+    public readonly userId: string,
+    public readonly phone: string,
+  ) {
+    super();
+  }
+}
+
+/**
+ * Event to request email verification for a user
+ * Can be emitted from any module to trigger email verification
+ * Note: This is different from EmailVerificationRequestedEvent (which is emitted AFTER token creation)
+ */
+export class RequestEmailVerificationEvent extends BaseEvent {
+  constructor(
+    actor: ActorUser,
+    public readonly userId: string,
+    public readonly email: string,
+  ) {
+    super(actor);
+  }
+}
+
 export class TwoFactorSetupEvent extends BaseEvent {
   constructor(
     public readonly userId: string,

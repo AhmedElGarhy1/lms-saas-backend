@@ -1,7 +1,7 @@
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { BaseEvent } from '@/shared/common/base/base-event';
 import { User } from '../entities/user.entity';
-import { UserProfile } from '../entities/user-profile.entity';
+import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 
 /**
  * Event (result-focused, output-oriented)

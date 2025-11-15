@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { UserActivityType } from '../../enums/user-activity-type.enum';
+import { UserActivityType } from '../enums/user-activity-type.enum';
 import { UserEvents } from '@/shared/events/user.events.enum';
 import {
   UserCreatedEvent,
@@ -9,7 +9,7 @@ import {
   UserDeletedEvent,
   UserRestoredEvent,
   UserActivatedEvent,
-} from '../../events/user.events';
+} from '../events/user.events';
 
 /**
  * Domain Event Listener for User Activity Logging

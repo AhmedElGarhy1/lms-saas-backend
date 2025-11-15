@@ -13,7 +13,7 @@ import {
   InactiveProfileException,
   ProfileSelectionRequiredException,
 } from '../exceptions/custom.exceptions';
-import { UserProfileService } from '@/modules/user/services/user-profile.service';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 
 @Injectable()
 export class ProfileGuard implements CanActivate {

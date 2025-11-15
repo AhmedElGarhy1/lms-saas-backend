@@ -3,17 +3,11 @@ import { StaffRepository } from '../repositories/staff.repository';
 import { UserService } from '@/modules/user/services/user.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { CreateStaffDto } from '../dto/create-staff.dto';
-import { UpdateStaffDto } from '../dto/update-staff.dto';
 import { PaginateStaffDto } from '../dto/paginate-staff.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { User } from '@/modules/user/entities/user.entity';
 import { Staff } from '../entities/staff.entity';
-import { CreateStaffEvent } from '@/modules/staff/events/staff.events';
-import { StaffEvents } from '@/shared/events/staff.events.enum';
-import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import {
-  InsufficientPermissionsException,
   ResourceNotFoundException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
@@ -26,62 +20,14 @@ export class StaffService extends BaseService {
     private readonly staffRepository: StaffRepository,
     private readonly userService: UserService,
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
-  }
-
-  async createStaff(dto: CreateStaffDto, actor: ActorUser): Promise<void> {
-    // Create staff entity
-    const staff = await this.staffRepository.create({});
-
-    await this.typeSafeEventEmitter.emitAsync(
-      StaffEvents.CREATE,
-      new CreateStaffEvent(dto, actor, staff),
-    );
   }
 
   async paginateStaff(params: PaginateStaffDto, actor: ActorUser) {
     const centerId = params.centerId ?? actor.centerId;
     params.centerId = centerId;
     return this.userService.paginateStaff(params, actor);
-  }
-
-  async updateStaff(
-    userId: string,
-    updateData: UpdateStaffDto,
-    actor: ActorUser,
-  ): Promise<User> {
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: actor.userProfileId,
-    });
-
-    return await this.userService.updateUser(userId, updateData, actor);
-  }
-
-  async deleteStaff(userId: string, actor: ActorUser): Promise<void> {
-    const isAdmin = await this.accessControlHelperService.isAdmin(
-      actor.userProfileId,
-    );
-    if (!isAdmin) {
-      throw new ForbiddenException(
-        'You are not authorized to delete this staff',
-      );
-    }
-
-    await this.userService.deleteUser(userId, actor);
-  }
-
-  async restoreStaff(userId: string, actor: ActorUser): Promise<void> {
-    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
-      actor.userProfileId,
-    );
-    if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException('Access denied');
-    }
-
-    await this.userService.restoreUser(userId, actor);
   }
 
   async deleteStaffAccess(
@@ -121,14 +67,6 @@ export class StaffService extends BaseService {
       },
       actor,
     );
-  }
-
-  async toggleStaffStatus(
-    userProfileId: string,
-    isActive: boolean,
-    actor: ActorUser,
-  ): Promise<void> {
-    await this.userService.activateCenterAccess(userProfileId, isActive, actor);
   }
 
   async findOne(userId: string): Promise<User> {

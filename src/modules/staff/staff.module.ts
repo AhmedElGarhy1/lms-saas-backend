@@ -13,6 +13,7 @@ import { StaffRepository } from './repositories/staff.repository';
 import { StaffListener } from './listeners/staff.listener';
 import { CenterListener } from './listeners/center.listener';
 import { StaffActivityListener } from './listeners/staff-activity.listener';
+import { UserProfileModule } from '../user-profile/user-profile.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { StaffActivityListener } from './listeners/staff-activity.listener';
     forwardRef(() => UserModule),
     forwardRef(() => AccessControlModule),
     forwardRef(() => AuthModule),
+    UserProfileModule,
     SharedModule,
     ActivityLogModule,
   ],

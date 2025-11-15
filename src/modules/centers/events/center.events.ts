@@ -1,5 +1,5 @@
 import { Center } from '@/modules/centers/entities/center.entity';
-import { UserProfile } from '@/modules/user/entities/user-profile.entity';
+import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { CreateUserDto } from '@/modules/user/dto/create-user.dto';
 import { UpdateCenterRequestDto } from '@/modules/centers/dto/update-center.dto';
@@ -69,10 +69,23 @@ export class RestoreCenterEvent extends BaseEvent {
   }
 }
 
-export class AssignCenterOwnerEvent {
+export class CreateCenterOwnerEvent extends BaseEvent {
   constructor(
     public readonly center: Center,
+    public readonly userData: CreateUserDto,
+    public readonly roleId: string,
+    actor: ActorUser,
+  ) {
+    super(actor);
+  }
+}
+
+export class AssignCenterOwnerEvent extends BaseEvent {
+  constructor(
+    public readonly center: Center,
+    public readonly actor: ActorUser,
     public readonly userProfile?: UserProfile,
-    public readonly actor?: ActorUser,
-  ) {}
+  ) {
+    super(actor);
+  }
 }

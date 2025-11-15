@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { CreateAdminEvent } from '../events/admin.events';
+import { CreateAdminEvent, AdminCreatedEvent } from '../events/admin.events';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
 import { UserEvents } from '@/shared/events/user.events.enum';
 import {
@@ -9,34 +8,18 @@ import {
   GrantUserAccessEvent,
 } from '@/modules/access-control/events/access-control.events';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
-import { UserService } from '@/modules/user/services/user.service';
-import { UserProfileService } from '@/modules/user/services/user-profile.service';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { UserCreatedEvent } from '@/modules/user/events/user.events';
-import { VerificationService } from '@/modules/auth/services/verification.service';
+import { AuthEvents } from '@/shared/events/auth.events.enum';
+import { RequestPhoneVerificationEvent } from '@/modules/auth/events/auth.events';
 
 @Injectable()
 export class AdminListener {
-  constructor(
-    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-    private readonly userService: UserService,
-    private readonly userProfileService: UserProfileService,
-    private readonly verificationService: VerificationService,
-  ) {}
+  constructor(private readonly typeSafeEventEmitter: TypeSafeEventEmitter) {}
 
   @OnEvent(AdminEvents.CREATE)
   async handleCreateAdmin(event: CreateAdminEvent) {
-    const { dto, actor, admin } = event;
-
-    // Create user directly - service will emit UserCreatedEvent
-    const createdUser = await this.userService.createUser(dto, actor);
-
-    // Create admin profile for the user
-    const userProfile = await this.userProfileService.createUserProfile(
-      createdUser.id,
-      ProfileType.ADMIN,
-      admin.id,
-    );
+    const { user, userProfile, actor, admin, roleId } = event;
 
     // Grant user access
     await this.typeSafeEventEmitter.emitAsync(
@@ -50,34 +33,36 @@ export class AdminListener {
     );
 
     // Assign role if specified (admin roles are global, no center required)
-    if (dto.roleId) {
+    if (roleId) {
       await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.ASSIGN_ROLE,
-        new AssignRoleEvent(userProfile.id, dto.roleId, actor),
+        new AssignRoleEvent(userProfile.id, roleId, actor),
       );
     }
 
     // Emit event after work is done
     await this.typeSafeEventEmitter.emitAsync(
       UserEvents.CREATED,
-      new UserCreatedEvent(createdUser, userProfile, actor),
+      new UserCreatedEvent(user, userProfile, actor),
     );
 
-    // Send phone verification OTP directly (if user has phone)
-    if (createdUser.phone && createdUser.id) {
+    // Emit profile creation event for activity logging
+    await this.typeSafeEventEmitter.emitAsync(
+      AdminEvents.CREATED,
+      new AdminCreatedEvent(user, userProfile, actor, admin, roleId),
+    );
+
+    // Send phone verification OTP via event (if user has phone)
+    if (user.phone && user.id) {
       try {
-        await this.verificationService.sendPhoneVerification(
-          createdUser.id,
-          createdUser.getPhone(),
+        await this.typeSafeEventEmitter.emitAsync(
+          AuthEvents.PHONE_VERIFICATION_SEND_REQUESTED,
+          new RequestPhoneVerificationEvent(user.id, user.getPhone()),
         );
-      } catch (error) {
-        console.error(error);
+      } catch {
         // Log error but don't fail user creation
-        // Verification failures are logged by VerificationService
+        // Verification failures are logged by VerificationListener
       }
     }
-
-    // Note: Activity logging is now handled by UserActivityListener listening to UserEvents.CREATED
-    // No need to manually log here as the domain event will trigger the activity log
   }
 }

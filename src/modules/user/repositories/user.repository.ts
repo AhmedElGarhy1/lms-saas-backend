@@ -5,7 +5,7 @@ import { Pagination } from 'nestjs-typeorm-paginate';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { USER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 import { UserResponseDto } from '../dto/user-response.dto';
-import { UserProfile } from '../entities/user-profile.entity';
+import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import {
   AccessibleUsersEnum,
   PaginateUsersDto,

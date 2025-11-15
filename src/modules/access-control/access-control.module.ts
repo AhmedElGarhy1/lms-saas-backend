@@ -30,6 +30,7 @@ import { UserAccessListener } from './listeners/user-access.listener';
 import { CenterAccessListener } from './listeners/center-access.listener';
 import { BranchAccessListener } from './listeners/branch-access.listener';
 import { RoleListener } from './listeners/role.listener';
+import { UserProfileModule } from '../user-profile/user-profile.module';
 
 @Global()
 @Module({
@@ -45,6 +46,7 @@ import { RoleListener } from './listeners/role.listener';
     ]),
     forwardRef(() => UserModule),
     forwardRef(() => CentersModule),
+    forwardRef(() => UserProfileModule),
     ActivityLogModule,
   ],
   controllers: [RoleAssignController, RolesActionsController, RolesController],

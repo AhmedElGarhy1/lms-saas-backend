@@ -3,7 +3,7 @@ import { ModuleRef } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
 import { UserInfo } from '@/modules/user/entities/user-info.entity';
-import { UserProfile } from '@/modules/user/entities/user-profile.entity';
+import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
 import { ALL_PERMISSIONS } from '@/modules/access-control/constants/permissions';

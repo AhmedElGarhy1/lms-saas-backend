@@ -6,7 +6,7 @@ import {
   Index,
   OneToMany,
 } from 'typeorm';
-import { User } from './user.entity';
+import { User } from '@/modules/user/entities/user.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
@@ -50,3 +50,4 @@ export class UserProfile extends BaseEntity {
   @OneToMany(() => ProfileRole, (profileRole) => profileRole.userProfile)
   profileRoles: ProfileRole[];
 }
+
