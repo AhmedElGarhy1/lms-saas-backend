@@ -34,7 +34,6 @@ import { UserResponseDto } from '@/modules/user/dto/user-response.dto';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 import { ProfileResponseDto } from '../dto/profile-response.dto';
-import { UserProfileMeResponseDto } from '../dto/user-profile-me-response.dto';
 
 @ApiTags('User Profiles')
 @Controller('user-profiles')
@@ -65,15 +64,15 @@ export class UserProfileController {
   }
 
   @Get('me')
-  @ReadApiResponses('Get current user profile data')
-  @SerializeOptions({ type: UserProfileMeResponseDto })
+  @ReadApiResponses('Get current user profile')
+  @SerializeOptions({ type: ProfileResponseDto })
   @NoContext()
+  @NoProfile()
   async getCurrentProfile(@GetUser() actor: ActorUser) {
-    const profileData =
-      await this.userProfileService.getCurrentUserProfileData(actor);
+    const profile = await this.userProfileService.getCurrentUserProfile(actor);
 
     return ControllerResponse.success(
-      profileData,
+      profile,
       this.i18n.translate('success.found', {
         args: { resource: this.i18n.translate('common.resources.profile') },
       }),

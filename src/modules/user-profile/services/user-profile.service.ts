@@ -8,7 +8,6 @@ import {
 } from '@/shared/common/exceptions/custom.exceptions';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ProfileResponseDto } from '../dto/profile-response.dto';
-import { UserProfileMeResponseDto } from '../dto/user-profile-me-response.dto';
 import { UpdateUserDto } from '@/modules/user/dto/update-user.dto';
 import { UpdateUserProfileDto } from '../dto/update-user-profile.dto';
 import { CreateUserProfileDto } from '../dto/create-user-profile.dto';
@@ -79,56 +78,6 @@ export class UserProfileService extends BaseService {
         actor.centerId,
       );
     }
-    if (!returnData.role) {
-      const profileRole = await this.accessControlHelperService.getProfileRole(
-        actor.userProfileId,
-      );
-      returnData.role = profileRole?.role as Role;
-    }
-
-    const profile = await this.userProfileRepository.getTargetProfile(
-      actor.userProfileId,
-      actor.profileType,
-    );
-    if (!profile) {
-      throw new ResourceNotFoundException('Profile not found');
-    }
-
-    returnData.profile = profile;
-    returnData.profileType = actor.profileType;
-
-    return returnData;
-  }
-
-  async getCurrentUserProfileData(
-    actor: ActorUser,
-  ): Promise<UserProfileMeResponseDto> {
-    const returnData: UserProfileMeResponseDto = {
-      profileType: actor.profileType,
-      profile: null,
-      role: null,
-      center: null,
-    };
-
-    const userProfile = await this.findOne(actor.userProfileId);
-    if (!userProfile) {
-      throw new ResourceNotFoundException('User profile not found');
-    }
-
-    actor.userProfileId = userProfile.id;
-    actor.profileType = userProfile.profileType;
-
-    if (actor.centerId) {
-      const profileRole = await this.accessControlHelperService.getProfileRole(
-        actor.userProfileId,
-        actor.centerId,
-      );
-      returnData.role = profileRole?.role as Role;
-      returnData.center = await this.centerService.findCenterById(
-        actor.centerId,
-      );
-    }
-
     if (!returnData.role) {
       const profileRole = await this.accessControlHelperService.getProfileRole(
         actor.userProfileId,

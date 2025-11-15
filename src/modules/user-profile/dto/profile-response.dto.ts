@@ -119,4 +119,12 @@ export class ProfileResponseDto {
     required: false,
   })
   profile: Admin | Staff | Teacher | Student | null;
+
+  @ApiProperty({
+    description: 'Unread notification count',
+    example: 5,
+    required: false,
+  })
+  unreadNotificationCount?: number;
 }
+
