@@ -1,14 +1,6 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  ParseUUIDPipe,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiParam, ApiQuery } from '@nestjs/swagger';
-import {
-  ReadApiResponses,
-} from '@/shared/common/decorators';
+import { ReadApiResponses } from '@/shared/common/decorators';
 import { SerializeOptions } from '@nestjs/common';
 import { PaginateAdminDto } from '../dto/paginate-admin.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
@@ -21,9 +13,7 @@ import { UserResponseDto } from '@/modules/user/dto/user-response.dto';
 @ApiTags('Admin')
 @Controller('admin')
 export class AdminController {
-  constructor(
-    private readonly adminService: AdminService,
-  ) {}
+  constructor(private readonly adminService: AdminService) {}
 
   @Get()
   @ReadApiResponses('List admin users with pagination and filtering')
@@ -51,5 +41,4 @@ export class AdminController {
   ) {
     return this.adminService.findOne(userProfileId, actor);
   }
-
 }

@@ -24,6 +24,7 @@ export class ExistsConstraint implements ValidatorConstraintInterface {
 
     try {
       const repo = this.dataSource.getRepository(entityClass);
+
       const exists = await repo.exists({ where: { [column]: value } });
       return !!exists;
     } catch (error) {

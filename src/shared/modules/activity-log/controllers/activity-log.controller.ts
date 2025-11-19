@@ -13,6 +13,10 @@ import { ExportFormat } from '@/shared/common/dto';
 import { SystemActivityType } from '../enums/system-activity-type.enum';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { ReadApiResponses } from '@/shared/common/decorators';
+import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { ActivityLogTypesResponseDto } from '../dto/activity-log-types-response.dto';
+import { SerializeOptions } from '@nestjs/common';
 
 @ApiTags('Activity Logs')
 @Controller('activity-logs')
@@ -32,7 +36,7 @@ export class ActivityLogController {
     @Query() query: PaginateActivityLogsDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.activityLogService.getActivityLogs(query);
+    const result = await this.activityLogService.getActivityLogs(query, actor);
 
     // Log activity for viewing activity logs
     await this.activityLogService.log(
@@ -70,8 +74,10 @@ export class ActivityLogController {
     const format = query.format || ExportFormat.CSV;
 
     // Get data using the same pagination logic
-    const paginationResult =
-      await this.activityLogService.getActivityLogs(query);
+    const paginationResult = await this.activityLogService.getActivityLogs(
+      query,
+      actor,
+    );
     const activityLogs = paginationResult.items;
 
     // Create mapper
@@ -107,5 +113,20 @@ export class ActivityLogController {
     );
 
     return data;
+  }
+
+  @Get('types')
+  @ApiOperation({ summary: 'Get all activity log types from all modules' })
+  @ReadApiResponses('Get all activity log types')
+  @SerializeOptions({ type: ActivityLogTypesResponseDto })
+  async getActivityLogTypes(): Promise<
+    ControllerResponse<ActivityLogTypesResponseDto>
+  > {
+    const types = this.activityLogService.getAllActivityLogTypes();
+
+    return ControllerResponse.success(
+      types,
+      'Activity log types retrieved successfully',
+    );
   }
 }

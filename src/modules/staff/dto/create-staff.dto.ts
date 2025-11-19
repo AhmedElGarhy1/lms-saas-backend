@@ -16,7 +16,7 @@ export class CreateStaffDto extends CreateUserDto {
   @Validate(
     (object: CreateStaffDto, value: any) => {
       // If roleId is provided, centerId must also be provided
-      return !value || object.centerId;
+      return object.centerId && !value;
     },
     {
       message: 'roleId can only be provided when centerId is also provided',

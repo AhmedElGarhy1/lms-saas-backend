@@ -6,6 +6,7 @@ import { PaginateActivityLogsDto } from '../dto/paginate-activity-logs.dto';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @Injectable()
 export class ActivityLogRepository extends BaseRepository<ActivityLog> {
@@ -24,25 +25,28 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
   // Single consolidated pagination method
   async paginateActivityLogs(
     query: PaginateActivityLogsDto,
-    actorId: string,
+    actor: ActorUser,
   ): Promise<Pagination<ActivityLog>> {
     const { centerId, userId, type } = query;
 
     // Create queryBuilder with relations
     const queryBuilder = this.getRepository()
       .createQueryBuilder('activityLog')
-      .leftJoinAndSelect('activityLog.actor', 'actor')
-      .leftJoinAndSelect('activityLog.center', 'center');
+      .leftJoinAndSelect('activityLog.user', 'user')
+      .leftJoinAndSelect('activityLog.center', 'center')
+      .addSelect('user.name', 'userName')
+      .addSelect('center.name', 'centerName');
 
-    const isSuperAdmin =
-      await this.accessControlHelperService.isSuperAdmin(actorId);
+    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+      actor.userProfileId,
+    );
 
     // apply center access
     if (!isSuperAdmin && !centerId) {
       queryBuilder.andWhere(
-        'activityLog.centerId IN (SELECT centerId FROM center_access WHERE userId = :actorId AND global = true)',
+        'activityLog."centerId" IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :userProfileId)',
         {
-          actorId,
+          userProfileId: actor.userProfileId,
         },
       );
     }
@@ -50,14 +54,14 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
     // apply user access
     const bypassUserAccess =
       await this.accessControlHelperService.bypassCenterInternalAccess(
-        actorId,
+        actor.userProfileId,
         centerId,
       );
     if (!bypassUserAccess) {
       queryBuilder.andWhere(
-        `activityLog.userId IN (SELECT userId FROM user_access WHERE ${centerId ? 'centerId = :centerId AND' : ''} granterUserId = :actorId)`,
+        `activityLog.userId IN (SELECT "userId" FROM user_access WHERE ${centerId ? '"centerId" = :centerId AND' : ''} "granterUserId" = :userProfileId)`,
         {
-          actorId,
+          userProfileId: actor.userProfileId,
           centerId,
         },
       );
@@ -80,7 +84,7 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
       queryBuilder.andWhere('activityLog.type = :type', { type: type });
     }
 
-    return this.paginate(
+    const results = await this.paginate(
       query,
       {
         searchableColumns: ['action', 'description'],
@@ -90,5 +94,8 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
       '/activity-logs',
       queryBuilder,
     );
+
+    console.log(results);
+    return results;
   }
 }

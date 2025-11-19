@@ -35,6 +35,8 @@ import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 import { ProfileResponseDto } from '../dto/profile-response.dto';
 
+// TODO: add dymanic permissions for each profile
+
 @ApiTags('User Profiles')
 @Controller('user-profiles')
 export class UserProfileController {
