@@ -80,3 +80,4 @@
 
 [ ] clean up notficiation service from testing (doesn't work) and from usless services and monitoring or metrics
 [ ] add users endpoint for modules like activity logs search for user
+[x] responsive frontend
