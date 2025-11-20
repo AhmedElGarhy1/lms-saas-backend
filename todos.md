@@ -81,3 +81,4 @@
 [] (later if size is big) Bulk notification insertion - Batch insert DB writes for IN_APP channel - ⚙️ Medium–High - If DB write latency increases
 
 [ ] clean up notficiation service from testing (doesn't work) and from usless services and monitoring or metrics
+[ ] add users endpoint for modules like activity logs search for user

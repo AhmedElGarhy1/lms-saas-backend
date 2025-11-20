@@ -38,24 +38,6 @@ export class ActivityLogController {
   ) {
     const result = await this.activityLogService.getActivityLogs(query, actor);
 
-    // Log activity for viewing activity logs
-    await this.activityLogService.log(
-      SystemActivityType.ACTIVITY_LOG_VIEWED,
-      {
-        filters: {
-          centerId: query.centerId,
-          userId: query.userId,
-          type: query.type,
-          page: query.page,
-          limit: query.limit,
-          search: query.search,
-        },
-        resultCount: result.items.length,
-        totalCount: result.meta.totalItems,
-      },
-      actor,
-    );
-
     return result;
   }
 
@@ -119,9 +101,7 @@ export class ActivityLogController {
   @ApiOperation({ summary: 'Get all activity log types from all modules' })
   @ReadApiResponses('Get all activity log types')
   @SerializeOptions({ type: ActivityLogTypesResponseDto })
-  async getActivityLogTypes(): Promise<
-    ControllerResponse<ActivityLogTypesResponseDto>
-  > {
+  getActivityLogTypes() {
     const types = this.activityLogService.getAllActivityLogTypes();
 
     return ControllerResponse.success(
