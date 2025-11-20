@@ -53,23 +53,21 @@
 [x] check the overall app language and exceptions
 [x] check if whatsapp and email and all channels are working or not
 
+[ ] add permission checks for userprofile module ass it have many profile type and permission
 [ ] implement import user (or diffrent name) to import user from another center (internal center prespective)
-[ ] make final decigion about will we have endpoint for each profile or shared endpoint for all profiles with custom permissions
 [ ] update activity logs to cover more logs
 [ ] update permissions to cover more permissions
 [ ] double check permissions in all over the application (+ canActivate)
 [ ] when i display tables data I should disply myself also
 [ ] frontend invalidate language when profile update
-[ ] activity logs on frontend
+[x] activity logs on frontend
 [ ] multi profile for parents
 [ ] view modals in all modules
-[ ] integrate twilio for some verifications
+[x] integrate twilio for some verifications
 [ ] import functioanlity
 [ ] builk operations
 [ ] implement access all resources permission
 [ ] consider using prisma instead of typeorm
-[ ] check create user optionality
-[ ] fix actor is required in all activity logs conside made system activities
 [ ] verify rate limit module is working
 [x] refactor logs and add only required not spam of logs
 [x] add missing activity logs for users
