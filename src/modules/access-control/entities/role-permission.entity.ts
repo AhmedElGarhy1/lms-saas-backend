@@ -27,8 +27,8 @@ export class RolePermission {
   permissionId: string;
 
   @Column({
-    type: 'enum',
-    enum: PermissionScope,
+    type: 'varchar',
+    length: 20,
     default: PermissionScope.CENTER,
   })
   permissionScope: PermissionScope;

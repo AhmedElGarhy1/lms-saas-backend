@@ -15,7 +15,7 @@ export class UserInfo extends BaseEntity {
   @Column({ nullable: true })
   dateOfBirth?: Date;
 
-  @Column({ type: 'enum', enum: Locale, default: Locale.AR })
+  @Column({ type: 'varchar', length: 10, default: Locale.AR })
   locale: Locale;
 
   @OneToOne(() => User, (user) => user.userInfo)

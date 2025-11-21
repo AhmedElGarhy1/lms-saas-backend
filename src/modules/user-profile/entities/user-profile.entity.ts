@@ -22,7 +22,7 @@ export class UserProfile extends BaseEntity {
   @Column({ type: 'uuid' })
   userId: string;
 
-  @Column({ type: 'enum', enum: ProfileType })
+  @Column({ type: 'varchar', length: 20 })
   profileType: ProfileType;
 
   @Column({ type: 'uuid' })

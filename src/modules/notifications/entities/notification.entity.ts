@@ -50,22 +50,22 @@ export class Notification {
   @Column({ type: 'timestamp', nullable: true })
   expiresAt?: Date;
 
-  @Column({ type: 'enum', enum: ProfileType, nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   profileType?: ProfileType | null;
 
   @Column({ type: 'uuid', nullable: true })
   profileId?: string | null;
 
   @Column({
-    type: 'enum',
-    enum: NotificationChannel,
+    type: 'varchar',
+    length: 20,
     default: NotificationChannel.IN_APP,
   })
   channel: NotificationChannel;
 
   @Column({
-    type: 'enum',
-    enum: NotificationStatus,
+    type: 'varchar',
+    length: 20,
     default: NotificationStatus.PENDING,
   })
   status: NotificationStatus;

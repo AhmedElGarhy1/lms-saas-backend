@@ -309,7 +309,7 @@ export class AuthService extends BaseService {
     try {
       const result = await this.verificationService.verifyCode(
         code,
-        VerificationType.PHONE_VERIFICATION,
+        VerificationType.OTP_VERIFICATION,
         NotificationChannel.SMS,
         userId,
       );

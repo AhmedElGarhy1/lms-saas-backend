@@ -49,7 +49,6 @@ export class CentersAccessController {
     type: String,
   })
   @ApiBody({ type: ToggleUserStatusRequestDto })
-  @Permissions(PERMISSIONS.STAFF.UPDATE)
   async toggleCenterAccessStatus(
     @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
     @Body() dto: ToggleUserStatusRequestDto,
@@ -197,7 +196,7 @@ export class CentersAccessController {
 
     if (!userProfile) {
       throw new BusinessLogicException('Target user profile not found');
-    }
+      }
 
     if (
       userProfile.profileType !== ProfileType.STAFF &&

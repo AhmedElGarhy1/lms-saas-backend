@@ -99,4 +99,12 @@ export class VerificationTokenRepository extends BaseRepository<VerificationToke
   ): Promise<void> {
     await this.getRepository().delete({ userId, type });
   }
+
+  async deleteByUserIdTypeAndChannel(
+    userId: string,
+    type: VerificationType,
+    channel: NotificationChannel,
+  ): Promise<void> {
+    await this.getRepository().delete({ userId, type, channel });
+  }
 }

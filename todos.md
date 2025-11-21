@@ -82,3 +82,4 @@
 [ ] add users endpoint for modules like activity logs search for user
 [x] responsive frontend
 [ ] user can update his center (throw settings)
+[ ] think about removing restrictions and permissions for diffrent profile types it's we already have restrictions you can only access users in your user_access

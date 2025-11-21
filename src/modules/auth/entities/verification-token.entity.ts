@@ -18,6 +18,7 @@ import { NotificationChannel } from '../../notifications/enums/notification-chan
 @Index(['channel'])
 @Index(['expiresAt'])
 @Index(['userId', 'type'])
+@Index(['userId', 'type', 'channel'], { unique: true })
 export class VerificationToken {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -26,14 +27,14 @@ export class VerificationToken {
   userId: string;
 
   @Column({
-    type: 'enum',
-    enum: VerificationType,
+    type: 'varchar',
+    length: 50,
   })
   type: VerificationType;
 
   @Column({
-    type: 'enum',
-    enum: NotificationChannel,
+    type: 'varchar',
+    length: 20,
   })
   channel: NotificationChannel;
 

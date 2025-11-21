@@ -227,6 +227,16 @@ export class AccessControlService extends BaseService {
   }
 
   async assignProfileToBranch(data: BranchAccessDto, actor: ActorUser) {
+    const centerId = data.centerId ?? actor.centerId ?? '';
+
+    // Validate profile-type permission: Check if actor has permission to grant branch access for this profile type
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      targetUserProfileId: data.userProfileId,
+      operation: 'grant-branch-access',
+      centerId,
+    });
+
     const canAccess =
       await this.accessControlHelperService.canBranchAccess(data);
     if (canAccess) {
@@ -241,6 +251,16 @@ export class AccessControlService extends BaseService {
   }
 
   async removeUserFromBranch(data: BranchAccessDto, actor: ActorUser) {
+    const centerId = data.centerId ?? actor.centerId ?? '';
+
+    // Validate profile-type permission: Check if actor has permission to revoke branch access for this profile type
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      targetUserProfileId: data.userProfileId,
+      operation: 'revoke-branch-access',
+      centerId,
+    });
+
     await this.accessControlHelperService.validateBranchAccess(data);
 
     const result = await this.branchAccessRepository.revokeBranchAccess(data);
@@ -252,6 +272,16 @@ export class AccessControlService extends BaseService {
     body: CenterAccessDto,
     actor: ActorUser,
   ): Promise<void> {
+    const centerId = body.centerId ?? actor.centerId ?? '';
+
+    // Validate profile-type permission: Check if actor has permission to delete center access for this profile type
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      targetUserProfileId: body.userProfileId,
+      operation: 'delete',
+      centerId,
+    });
+
     const centerAccess =
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
@@ -268,6 +298,16 @@ export class AccessControlService extends BaseService {
     body: CenterAccessDto,
     actor: ActorUser,
   ): Promise<void> {
+    const centerId = body.centerId ?? actor.centerId ?? '';
+
+    // Validate profile-type permission: Check if actor has permission to restore center access for this profile type
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      targetUserProfileId: body.userProfileId,
+      operation: 'restore',
+      centerId,
+    });
+
     const centerAccess = await this.accessControlHelperService.findCenterAccess(
       body,
       true,
@@ -286,6 +326,16 @@ export class AccessControlService extends BaseService {
     isActive: boolean,
     actor: ActorUser,
   ): Promise<void> {
+    const centerId = body.centerId ?? actor.centerId ?? '';
+
+    // Validate profile-type permission: Check if actor has permission to activate/deactivate center access for this profile type
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      targetUserProfileId: body.userProfileId,
+      operation: 'activate',
+      centerId,
+    });
+
     const centerAccess =
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {

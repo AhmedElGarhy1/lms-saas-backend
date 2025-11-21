@@ -25,8 +25,8 @@ export class Permission {
   description: string;
 
   @Column({
-    type: 'enum',
-    enum: PermissionScope,
+    type: 'varchar',
+    length: 20,
     default: PermissionScope.CENTER,
   })
   scope: PermissionScope;

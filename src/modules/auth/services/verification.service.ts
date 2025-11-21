@@ -78,9 +78,9 @@ export class VerificationService extends BaseService {
   }
 
   /**
-   * Get default expiration time for phone verification (OTP)
+   * Get default expiration time for OTP codes (used for phone verification, user import, etc.)
    */
-  private getPhoneVerificationExpiration(): Date {
+  private getDefaultOtpExpiration(): Date {
     const expirationMinutes = Config.auth.phoneVerificationExpiresMinutes;
     return new Date(Date.now() + expirationMinutes * 60 * 1000);
   }
@@ -103,8 +103,8 @@ export class VerificationService extends BaseService {
         case VerificationType.PASSWORD_RESET:
           expiresAt = this.getPasswordResetExpiration();
           break;
-        case VerificationType.PHONE_VERIFICATION:
-          expiresAt = this.getPhoneVerificationExpiration();
+        case VerificationType.OTP_VERIFICATION:
+          expiresAt = this.getDefaultOtpExpiration();
           break;
         default:
           expiresAt = this.getEmailVerificationExpiration();
@@ -112,9 +112,10 @@ export class VerificationService extends BaseService {
     }
 
     // Delete any existing verification tokens of the same type and channel for this user
-    await this.verificationTokenRepository.deleteByUserIdAndType(
+    await this.verificationTokenRepository.deleteByUserIdTypeAndChannel(
       data.userId,
       data.type,
+      data.channel,
     );
 
     const verificationToken =
@@ -123,7 +124,7 @@ export class VerificationService extends BaseService {
         type: data.type,
         channel: data.channel,
         token,
-        code: data.type === VerificationType.PHONE_VERIFICATION ? code : null,
+        code: data.type === VerificationType.OTP_VERIFICATION ? code : null,
         expiresAt,
       });
 
@@ -267,9 +268,10 @@ export class VerificationService extends BaseService {
     // If token doesn't exist, is expired, or already verified, create a new one
     // Delete any existing tokens of the same type and channel for this user first
     if (existingToken) {
-      await this.verificationTokenRepository.deleteByUserIdAndType(
+      await this.verificationTokenRepository.deleteByUserIdTypeAndChannel(
         data.userId,
         data.type,
+        data.channel,
       );
     }
 
@@ -289,7 +291,7 @@ export class VerificationService extends BaseService {
     // Get or create verification token (reuses existing non-expired token)
     const verificationToken = await this.getOrCreateVerificationToken({
       userId,
-      type: VerificationType.PHONE_VERIFICATION,
+      type: VerificationType.OTP_VERIFICATION,
       channel: NotificationChannel.SMS,
     });
 
@@ -500,8 +502,12 @@ export class VerificationService extends BaseService {
     email?: string,
     phone?: string,
   ): Promise<void> {
-    // Delete existing tokens of this type
-    await this.verificationTokenRepository.deleteByUserIdAndType(userId, type);
+    // Delete existing tokens of this type and channel
+    await this.verificationTokenRepository.deleteByUserIdTypeAndChannel(
+      userId,
+      type,
+      channel,
+    );
 
     // Send new verification
     // Note: Email verification is not supported here as it requires an authenticated actor.
@@ -512,7 +518,7 @@ export class VerificationService extends BaseService {
       );
     } else if (type === VerificationType.PASSWORD_RESET) {
       await this.sendPasswordReset(userId, channel);
-    } else if (type === VerificationType.PHONE_VERIFICATION) {
+    } else if (type === VerificationType.OTP_VERIFICATION) {
       const user = await this.userService.findOne(userId);
       if (!user) {
         throw new NotFoundException('User not found');

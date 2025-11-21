@@ -400,11 +400,11 @@ export class DatabaseSeeder {
       await this.activityLogService.log(
         UserActivityType.USER_CREATED,
         {
-          targetProfileId: systemUserProfile?.id,
-          userEmail: systemUser.email,
-          userName: systemUser.name,
-          createdBy,
-          seeder: true,
+        targetProfileId: systemUserProfile?.id,
+        userEmail: systemUser.email,
+        userName: systemUser.name,
+        createdBy,
+        seeder: true,
         },
         systemUser.id,
       );
@@ -421,11 +421,11 @@ export class DatabaseSeeder {
       await this.activityLogService.log(
         UserActivityType.USER_CREATED,
         {
-          targetProfileId: superAdminProfile?.id,
-          userEmail: superAdmin.email,
-          userName: superAdmin.name,
-          createdBy,
-          seeder: true,
+        targetProfileId: superAdminProfile?.id,
+        userEmail: superAdmin.email,
+        userName: superAdmin.name,
+        createdBy,
+        seeder: true,
         },
         superAdmin.id,
       );

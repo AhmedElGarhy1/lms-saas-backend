@@ -33,12 +33,12 @@ export class NotificationLog {
   @Column({ type: 'varchar', length: 100 })
   type: NotificationType;
 
-  @Column({ type: 'enum', enum: NotificationChannel })
+  @Column({ type: 'varchar', length: 20 })
   channel: NotificationChannel;
 
   @Column({
-    type: 'enum',
-    enum: NotificationStatus,
+    type: 'varchar',
+    length: 20,
     default: NotificationStatus.PENDING,
   })
   status: NotificationStatus;
@@ -55,7 +55,7 @@ export class NotificationLog {
   @Column({ type: 'uuid', nullable: true })
   centerId?: string;
 
-  @Column({ type: 'enum', enum: ProfileType, nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   profileType?: ProfileType | null;
 
   @Column({ type: 'uuid', nullable: true })

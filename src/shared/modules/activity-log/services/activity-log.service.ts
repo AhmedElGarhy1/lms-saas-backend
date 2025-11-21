@@ -83,9 +83,9 @@ export class ActivityLogService extends BaseService {
     metadata?: Record<string, any>,
     targetUserId?: string | null,
   ): Promise<ActivityLog | null> {
-    return await this.createActivityLog({
-      type,
-      metadata,
+      return await this.createActivityLog({
+        type,
+        metadata,
       targetUserId: targetUserId ?? null,
       // userId and centerId come from RequestContext automatically
     });

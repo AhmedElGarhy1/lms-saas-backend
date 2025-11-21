@@ -26,7 +26,6 @@ export class BranchesAccessController {
     status: 404,
     description: 'User or branch not found',
   })
-  @Permissions(PERMISSIONS.CENTER.UPDATE)
   async assignUserToBranch(
     @Body() branchAccessDto: BranchAccessDto,
     @GetUser() actor: ActorUser,
@@ -48,7 +47,6 @@ export class BranchesAccessController {
     status: 404,
     description: 'User assignment not found',
   })
-  @Permissions(PERMISSIONS.CENTER.UPDATE)
   async removeUserFromBranch(
     @Body() branchAccessDto: BranchAccessDto,
     @GetUser() actor: ActorUser,

@@ -36,6 +36,7 @@ export class ActivityLogTypesResponseDto {
       'USER_DEACTIVATED',
       'USER_ACCESS_GRANTED',
       'USER_ACCESS_REVOKED',
+      'USER_IMPORTED',
     ],
   })
   user: string[];

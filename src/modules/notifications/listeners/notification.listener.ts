@@ -464,10 +464,20 @@ export class NotificationListener {
       return;
     }
 
+    // Spread event to ensure all properties are accessible
+    const eventData = {
+      userId: event.userId,
+      otpCode: event.otpCode,
+      expiresIn: event.expiresIn,
+      email: event.email,
+      phone: event.phone,
+      timestamp: event.timestamp,
+    };
+
     await this.validateAndTriggerNotification(
       NotificationType.OTP,
       'DEFAULT',
-      event,
+      eventData,
       validRecipients,
       {
         channels: [NotificationChannel.SMS],
