@@ -35,7 +35,7 @@ export class AuthListener {
         userId,
         phone: actor.phone,
       },
-      actor,
+      userId,
     );
   }
 
@@ -50,7 +50,7 @@ export class AuthListener {
         userId,
         phone: actor.phone,
       },
-      actor,
+      userId,
     );
   }
 
@@ -65,7 +65,7 @@ export class AuthListener {
         userId,
         phone: actor.phone,
       },
-      actor,
+      userId,
     );
   }
 
@@ -80,7 +80,7 @@ export class AuthListener {
         userId,
         phone: actor.phone,
       },
-      actor,
+      userId,
     );
   }
 
@@ -95,7 +95,7 @@ export class AuthListener {
         userId,
         phone: actor.phone,
       },
-      actor,
+      userId,
     );
   }
 
@@ -110,7 +110,7 @@ export class AuthListener {
         userId,
         phone: phone || actor.phone,
       },
-      actor,
+      userId,
     );
   }
 
@@ -125,7 +125,7 @@ export class AuthListener {
         userId,
         phone: actor.phone,
       },
-      actor,
+      userId,
     );
   }
 
@@ -140,7 +140,7 @@ export class AuthListener {
         userId,
         phone: actor.phone,
       },
-      actor,
+      userId,
     );
   }
 }

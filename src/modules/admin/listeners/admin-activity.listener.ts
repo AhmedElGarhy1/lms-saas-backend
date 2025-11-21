@@ -27,7 +27,7 @@ export class AdminActivityListener {
         phone: user.phone,
         roleId: roleId,
       },
-      actor,
+      user.id,
     );
   }
 }

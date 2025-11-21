@@ -8,17 +8,23 @@ import {
   RevokeBranchAccessEvent,
 } from '../events/access-control.events';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 
 @Injectable()
 export class BranchAccessListener {
   constructor(
     private readonly accessControlService: AccessControlService,
     private readonly activityLogService: ActivityLogService,
+    private readonly userProfileService: UserProfileService,
   ) {}
 
   @OnEvent(AccessControlEvents.GRANT_BRANCH_ACCESS)
   async handleGrantBranchAccess(event: GrantBranchAccessEvent) {
     const { userProfileId, branchId, centerId, actor } = event;
+
+    // Get userId from userProfileId
+    const userProfile = await this.userProfileService.findOne(userProfileId);
+    const targetUserId = userProfile?.userId ?? null;
 
     // TODO: Implement branch access granting when the service method is available
     // For now, just log the activity
@@ -31,13 +37,17 @@ export class BranchAccessListener {
         centerId,
         accessType: 'BRANCH',
       },
-      actor,
+      targetUserId,
     );
   }
 
   @OnEvent(AccessControlEvents.REVOKE_BRANCH_ACCESS)
   async handleRevokeBranchAccess(event: RevokeBranchAccessEvent) {
     const { userProfileId, branchId, centerId, actor } = event;
+
+    // Get userId from userProfileId
+    const userProfile = await this.userProfileService.findOne(userProfileId);
+    const targetUserId = userProfile?.userId ?? null;
 
     // TODO: Implement branch access revoking when the service method is available
     // For now, just log the activity
@@ -50,7 +60,7 @@ export class BranchAccessListener {
         centerId,
         accessType: 'BRANCH',
       },
-      actor,
+      targetUserId,
     );
   }
 }

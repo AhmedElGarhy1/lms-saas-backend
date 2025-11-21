@@ -31,6 +31,7 @@ export class BranchListener {
     const { branch, actor } = event;
 
     // Log activity for branch creation
+    // Target user is the center owner (actor who created the branch)
     await this.activityLogService.log(
       CenterActivityType.BRANCH_CREATED,
       {
@@ -40,7 +41,7 @@ export class BranchListener {
         address: branch.address,
         email: branch.email,
       },
-      actor,
+      actor.id,
     );
   }
 }

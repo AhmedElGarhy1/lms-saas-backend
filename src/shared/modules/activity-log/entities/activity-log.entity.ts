@@ -15,10 +15,12 @@ import { Center } from '@/modules/centers/entities/center.entity';
 
 @Entity('activity_logs')
 @Index(['type'])
+@Index(['actorId'])
 @Index(['userId'])
 @Index(['centerId'])
 @Index(['createdAt'])
 @Index(['userId', 'centerId', 'type', 'createdAt'])
+@Index(['actorId', 'centerId', 'type', 'createdAt'])
 export class ActivityLog {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -28,6 +30,9 @@ export class ActivityLog {
 
   @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, any>;
+
+  @Column({ type: 'uuid', nullable: true })
+  actorId: string | null;
 
   @Column({ type: 'uuid', nullable: true })
   userId: string | null;
@@ -40,6 +45,10 @@ export class ActivityLog {
 
   @Column({ type: 'text', nullable: true })
   userAgent: string;
+
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'actorId' })
+  actor: User;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'userId' })

@@ -32,9 +32,10 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
     // Create queryBuilder with relations
     const queryBuilder = this.getRepository()
       .createQueryBuilder('activityLog')
+      .leftJoin('activityLog.actor', 'actor')
       .leftJoin('activityLog.user', 'user')
       .leftJoin('activityLog.center', 'center')
-      .addSelect(['user.name', 'center.name']);
+      .addSelect(['actor.name', 'user.name', 'center.name']);
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,

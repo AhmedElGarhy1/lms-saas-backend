@@ -33,7 +33,7 @@ export class UserActivityListener {
         profileType: event.profile.profileType,
         createdBy: event.actor?.id,
       },
-      event.actor,
+      event.user.id,
     );
   }
 
@@ -46,7 +46,7 @@ export class UserActivityListener {
         targetUserId: event.user.id,
         updatedFields: event.updatedFields,
       },
-      event.actor,
+      event.user.id,
     );
   }
 
@@ -58,7 +58,7 @@ export class UserActivityListener {
       {
         targetUserId: event.userId,
       },
-      event.actor,
+      event.userId,
     );
   }
 
@@ -70,7 +70,7 @@ export class UserActivityListener {
       {
         targetUserId: event.userId,
       },
-      event.actor,
+      event.userId,
     );
   }
 
@@ -85,7 +85,7 @@ export class UserActivityListener {
         targetUserId: event.userId,
         isActive: event.isActive,
       },
-      event.actor,
+      event.userId,
     );
   }
 }

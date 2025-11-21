@@ -4,7 +4,7 @@ export interface CreateActivityLogDto {
   type: string;
   description?: string;
   metadata?: Record<string, any>;
-  actorId?: string | null;
+  userId?: string | null;
   centerId?: string | null;
   ipAddress?: string;
   userAgent?: string;

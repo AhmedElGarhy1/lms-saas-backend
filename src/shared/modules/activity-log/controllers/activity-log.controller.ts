@@ -77,7 +77,7 @@ export class ActivityLogController {
       res,
     );
 
-    // Log activity for exporting activity logs
+    // Log activity for exporting activity logs (system-level action, no specific target user)
     await this.activityLogService.log(
       SystemActivityType.ACTIVITY_LOG_EXPORTED,
       {
@@ -91,7 +91,7 @@ export class ActivityLogController {
           search: query.search,
         },
       },
-      actor,
+      null,
     );
 
     return data;

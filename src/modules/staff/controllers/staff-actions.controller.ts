@@ -63,7 +63,7 @@ export class StaffActionsController {
       res,
     );
 
-    // Log activity
+    // Log activity (system-level action, no specific target user)
     await this.activityLogService.log(
       SystemActivityType.DATA_EXPORTED,
       {
@@ -77,7 +77,7 @@ export class StaffActionsController {
           centerId: query.centerId,
         },
       },
-      actor,
+      null,
     );
 
     return data;

@@ -397,13 +397,17 @@ export class DatabaseSeeder {
           where: { userId: systemUser.id, profileType: ProfileType.ADMIN },
         });
 
-      await this.activityLogService.log(UserActivityType.USER_CREATED, {
-        targetProfileId: systemUserProfile?.id,
-        userEmail: systemUser.email,
-        userName: systemUser.name,
-        createdBy,
-        seeder: true,
-      });
+      await this.activityLogService.log(
+        UserActivityType.USER_CREATED,
+        {
+          targetProfileId: systemUserProfile?.id,
+          userEmail: systemUser.email,
+          userName: systemUser.name,
+          createdBy,
+          seeder: true,
+        },
+        systemUser.id,
+      );
     }
 
     // Log superadmin user creation activity
@@ -414,13 +418,17 @@ export class DatabaseSeeder {
           where: { userId: superAdmin.id, profileType: ProfileType.ADMIN },
         });
 
-      await this.activityLogService.log(UserActivityType.USER_CREATED, {
-        targetProfileId: superAdminProfile?.id,
-        userEmail: superAdmin.email,
-        userName: superAdmin.name,
-        createdBy,
-        seeder: true,
-      });
+      await this.activityLogService.log(
+        UserActivityType.USER_CREATED,
+        {
+          targetProfileId: superAdminProfile?.id,
+          userEmail: superAdmin.email,
+          userName: superAdmin.name,
+          createdBy,
+          seeder: true,
+        },
+        superAdmin.id,
+      );
     }
   }
 }

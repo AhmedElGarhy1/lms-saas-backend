@@ -9,6 +9,7 @@ import {
   RevokeUserAccessEvent,
 } from '../events/access-control.events';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 
 @Injectable()
 export class UserAccessListener {
@@ -18,6 +19,7 @@ export class UserAccessListener {
     private readonly moduleRef: ModuleRef,
     private readonly accessControlService: AccessControlService,
     private readonly activityLogService: ActivityLogService,
+    private readonly userProfileService: UserProfileService,
   ) {}
 
   @OnEvent(AccessControlEvents.GRANT_USER_ACCESS)
@@ -40,6 +42,12 @@ export class UserAccessListener {
       return;
     }
 
+    // Get userId from targetUserProfileId
+    const targetUserProfile = await this.userProfileService.findOne(
+      targetUserProfileId,
+    );
+    const targetUserId = targetUserProfile?.userId ?? null;
+
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       UserActivityType.USER_ACCESS_GRANTED,
@@ -49,7 +57,7 @@ export class UserAccessListener {
         centerId,
         accessType: 'USER',
       },
-      actor,
+      targetUserId,
     );
   }
 
@@ -73,6 +81,12 @@ export class UserAccessListener {
       return;
     }
 
+    // Get userId from targetUserProfileId
+    const targetUserProfile = await this.userProfileService.findOne(
+      targetUserProfileId,
+    );
+    const targetUserId = targetUserProfile?.userId ?? null;
+
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       UserActivityType.USER_ACCESS_REVOKED,
@@ -82,7 +96,7 @@ export class UserAccessListener {
         centerId,
         accessType: 'USER',
       },
-      actor,
+      targetUserId,
     );
   }
 }

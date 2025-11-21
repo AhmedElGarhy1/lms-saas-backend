@@ -29,7 +29,7 @@ export class StaffActivityListener {
         centerId: centerId,
         roleId: roleId,
       },
-      actor,
+      user.id,
     );
   }
 }

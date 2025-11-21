@@ -20,6 +20,7 @@ import { CenterEvents } from '@/shared/events/center.events.enum';
 import { createOwnerRoleData } from '../constants/roles';
 import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { RolesRepository } from '../repositories/roles.repository';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 
 @Injectable()
 export class RoleListener {
@@ -31,6 +32,7 @@ export class RoleListener {
     private readonly activityLogService: ActivityLogService,
     private readonly profileRoleRepository: ProfileRoleRepository,
     private readonly rolesRepository: RolesRepository,
+    private readonly userProfileService: UserProfileService,
   ) {}
 
   @OnEvent(AccessControlEvents.ASSIGN_ROLE)
@@ -58,6 +60,10 @@ export class RoleListener {
       return;
     }
 
+    // Get userId from userProfileId
+    const userProfile = await this.userProfileService.findOne(userProfileId);
+    const targetUserId = userProfile?.userId ?? null;
+
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       RoleActivityType.ROLE_ASSIGNED,
@@ -66,7 +72,7 @@ export class RoleListener {
         roleId,
         centerId,
       },
-      actor,
+      targetUserId,
     );
   }
 
@@ -95,6 +101,10 @@ export class RoleListener {
       return;
     }
 
+    // Get userId from userProfileId
+    const userProfile = await this.userProfileService.findOne(userProfileId);
+    const targetUserId = userProfile?.userId ?? null;
+
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       RoleActivityType.ROLE_REMOVED,
@@ -102,12 +112,13 @@ export class RoleListener {
         userProfileId,
         centerId,
       },
-      actor,
+      targetUserId,
     );
   }
 
   @OnEvent(RoleEvents.CREATED)
   async handleRoleCreated(event: CreateRoleEvent) {
+    // Role creation doesn't have a specific target user, pass null
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       RoleActivityType.ROLE_CREATED,
@@ -116,7 +127,7 @@ export class RoleListener {
         roleName: event.role.name,
         centerId: event.role.centerId,
       },
-      event.actor,
+      null,
     );
   }
 
@@ -159,6 +170,7 @@ export class RoleListener {
 
   @OnEvent(RoleEvents.UPDATED)
   async handleRoleUpdated(event: UpdateRoleEvent) {
+    // Role update doesn't have a specific target user, pass null
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       RoleActivityType.ROLE_UPDATED,
@@ -166,7 +178,7 @@ export class RoleListener {
         roleId: event.roleId,
         updatedFields: Object.keys(event.updates),
       },
-      event.actor,
+      null,
     );
   }
 
@@ -203,13 +215,14 @@ export class RoleListener {
       return;
     }
 
+    // Role deletion doesn't have a specific target user, pass null
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       RoleActivityType.ROLE_DELETED,
       {
         roleId: event.roleId,
       },
-      event.actor,
+      null,
     );
   }
 }

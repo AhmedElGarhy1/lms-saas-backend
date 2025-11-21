@@ -63,7 +63,7 @@ export class AdminActionsController {
       res,
     );
 
-    // Log activity
+    // Log activity (system-level action, no specific target user)
     await this.activityLogService.log(
       SystemActivityType.DATA_EXPORTED,
       {
@@ -76,7 +76,7 @@ export class AdminActionsController {
           isActive: query.isActive,
         },
       },
-      actor,
+      null,
     );
 
     return data;

@@ -6,7 +6,6 @@ import { RequestContext } from '@/shared/common/context/request.context';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateActivityLogsDto } from '../dto/paginate-activity-logs.dto';
 import { Pagination } from 'nestjs-typeorm-paginate';
-import { AuthenticationFailedException } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Logger } from '@nestjs/common';
 import { ActivityLogTypesResponseDto } from '../dto/activity-log-types-response.dto';
@@ -33,9 +32,13 @@ export class ActivityLogService extends BaseService {
       // Get current request context for automatic actor and center ID assignment
       const requestContext = RequestContext.get();
 
-      // Auto-assign actorId and centerId from context if not provided
-      const actorId =
-        dto.actorId !== undefined ? dto.actorId : requestContext?.userId;
+      // Actor is ALWAYS from RequestContext (never passed as parameter)
+      // If not in context, it's a system event (null is okay)
+      const actorId = requestContext?.userId ?? null;
+
+      // Target user is who the action was performed on (explicitly provided)
+      const userId = dto.userId ?? null;
+
       const centerId =
         dto.centerId !== undefined ? dto.centerId : requestContext?.centerId;
 
@@ -46,7 +49,8 @@ export class ActivityLogService extends BaseService {
       const activityLog = await this.activityLogRepository.create({
         type: dto.type,
         metadata: dto.metadata,
-        userId: actorId,
+        actorId,
+        userId,
         centerId,
         ipAddress,
         userAgent,
@@ -66,25 +70,23 @@ export class ActivityLogService extends BaseService {
   /**
    * Simple log method - single method that handles everything
    * Fault-tolerant: never throws errors, returns null on failure
+   *
+   * @param type - Activity type
+   * @param metadata - Optional metadata
+   * @param userId - Target user ID (who the action was performed on). If not provided, defaults to null.
+   *                 For self-actions, pass the same user ID as the actor (from RequestContext).
    */
   async log(
     type: string,
     metadata?: Record<string, any>,
-    actor?: ActorUser,
+    userId?: string | null,
   ): Promise<ActivityLog | null> {
-    if (actor && actor.id) {
-      return await this.createActivityLog({
-        type,
-        metadata,
-        actorId: actor.id,
-        centerId: actor.centerId,
-      });
-    } else {
-      return await this.createActivityLog({
-        type,
-        metadata,
-      });
-    }
+    return await this.createActivityLog({
+      type,
+      metadata,
+      userId: userId ?? null,
+      // actorId and centerId come from RequestContext automatically
+    });
   }
 
   /**

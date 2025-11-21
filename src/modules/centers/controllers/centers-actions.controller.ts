@@ -68,7 +68,7 @@ export class CentersActionsController {
       res,
     );
 
-    // Log activity
+    // Log activity (system-level action, no specific target user)
     await this.activityLogService.log(
       SystemActivityType.DATA_EXPORTED,
       {
@@ -81,7 +81,7 @@ export class CentersActionsController {
           isActive: query.isActive,
         },
       },
-      actor,
+      null,
     );
 
     return data;
