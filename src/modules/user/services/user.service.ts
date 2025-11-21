@@ -395,6 +395,15 @@ export class UserService extends BaseService {
     );
   }
 
+  async setLockoutUntil(userId: string, minutes: number): Promise<void> {
+    const lockoutUntil = new Date(Date.now() + minutes * 60 * 1000);
+    await this.userRepository.setLockoutUntil(userId, lockoutUntil);
+  }
+
+  async resetFailedLoginAttemptsForUser(userId: string): Promise<void> {
+    await this.userRepository.resetFailedLoginAttempts(userId);
+  }
+
   async updateLockoutUntil(
     userProfileId: string,
     lockoutUntil: Date | null,

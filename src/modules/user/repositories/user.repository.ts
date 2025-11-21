@@ -447,6 +447,12 @@ export class UserRepository extends BaseRepository<User> {
     });
   }
 
+  async setLockoutUntil(userId: string, lockoutUntil: Date): Promise<void> {
+    await this.getRepository().update(userId, {
+      lockoutUntil,
+    });
+  }
+
   async clearAllUsers(): Promise<void> {
     await this.getRepository().createQueryBuilder().delete().execute();
   }

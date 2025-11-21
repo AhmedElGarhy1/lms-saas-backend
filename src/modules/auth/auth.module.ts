@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { Config } from '@/shared/config/config';
@@ -19,6 +19,7 @@ import { UserRepository } from '../user/repositories/user.repository';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { AuthListener } from './listeners/auth.listener';
 import { VerificationListener } from './listeners/verification.listener';
+import { FailedLoginAttemptService } from './services/failed-login-attempt.service';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { VerificationListener } from './listeners/verification.listener';
     RefreshJwtGuard,
     AuthListener,
     VerificationListener,
+    FailedLoginAttemptService,
   ],
   exports: [
     AuthService,

@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserRepository } from '@/modules/user/repositories/user.repository';
 import { Config } from '@/shared/config/config';
+import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
 
 export interface JwtPayload {
   sub: string;
@@ -32,6 +33,17 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
     if (!user.isActive) {
       throw new UnauthorizedException('User account is inactive');
+    }
+    if (!user.phoneVerified) {
+      throw new BusinessLogicException('User phone is not verified');
+    }
+
+    if (user.lockoutUntil && user.lockoutUntil > new Date()) {
+      throw new BusinessLogicException(
+        'User account is locked',
+        'Your account is locked due to multiple failed login attempts',
+        'Please try again later or contact support',
+      );
     }
 
     return user;

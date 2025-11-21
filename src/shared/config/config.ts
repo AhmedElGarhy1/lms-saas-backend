@@ -58,6 +58,9 @@ export const Config = {
     passwordResetExpiresHours: env.PASSWORD_RESET_EXPIRES_HOURS,
     emailVerificationExpiresHours: env.EMAIL_VERIFICATION_EXPIRES_HOURS,
     phoneVerificationExpiresMinutes: env.PHONE_VERIFICATION_EXPIRES_MINUTES,
+    maxFailedLoginAttempts: 5,
+    lockoutDurationMinutes: 5,
+    failedAttemptsResetHours: 1, // Auto-reset window
   },
 
   notification: {

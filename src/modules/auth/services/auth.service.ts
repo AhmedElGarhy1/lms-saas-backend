@@ -36,10 +36,12 @@ import {
   TwoFactorDisabledEvent,
   PhoneVerifiedEvent,
   EmailVerifiedEvent,
+  UserLoginFailedEvent,
 } from '@/modules/auth/events/auth.events';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { RequestEmailVerificationEvent } from '../events/auth.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { FailedLoginAttemptService } from './failed-login-attempt.service';
 
 @Injectable()
 export class AuthService extends BaseService {
@@ -52,6 +54,7 @@ export class AuthService extends BaseService {
     private readonly jwtService: JwtService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly failedLoginAttemptService: FailedLoginAttemptService,
   ) {
     super();
   }
@@ -78,87 +81,128 @@ export class AuthService extends BaseService {
     return user;
   }
 
+  /**
+   * Handle failed login attempt
+   * Increments failed attempts in Redis and emits event
+   */
+  private async handleFailedLogin(
+    user: User,
+    emailOrPhone: string,
+  ): Promise<void> {
+    await this.failedLoginAttemptService.incrementFailedAttempts(user.id);
+
+    // Lockout is automatically set in database by FailedLoginAttemptService
+    // if threshold is reached
+
+    await this.typeSafeEventEmitter.emitAsync(
+      AuthEvents.USER_LOGIN_FAILED,
+      new UserLoginFailedEvent(emailOrPhone, user.id, 'Invalid password'),
+    );
+  }
+
   async login(dto: LoginRequestDto) {
-    const user = await this.validateUser(dto.emailOrPhone, dto.password);
-    if (!user) {
-      throw new AuthenticationFailedException('Invalid credentials');
-    }
+    // Find user first (before password validation) to check lockout
+    // Redis TTL automatically handles expiration, no need to check manually
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dto.emailOrPhone);
+    const user = isEmail
+      ? await this.userService.findUserByEmail(dto.emailOrPhone, true)
+      : await this.userService.findUserByPhone(dto.emailOrPhone, true);
 
-    if (!user.id || user.id.trim() === '') {
-      this.logger.error(
-        `User object missing or invalid ID for email/phone: ${dto.emailOrPhone}`,
-      );
-      throw new AuthenticationFailedException('User data is invalid');
-    }
+    // If user exists, check lockout
+    if (user) {
+      if (!user.isActive) {
+        throw new BusinessLogicException(
+          'Account is deactivated',
+          'Your account has been deactivated',
+          'Please contact an administrator to reactivate your account',
+        );
+      }
 
+      // Check if user is locked out (lockout is stored in database)
+      if (user.lockoutUntil && user.lockoutUntil > new Date()) {
+        throw new BusinessLogicException(
+          'Account is temporarily locked',
+          'Your account is temporarily locked due to multiple failed login attempts',
+          'Please try again later or contact support',
+        );
+      }
 
-    if (!user.isActive) {
-      throw new BusinessLogicException(
-        'Account is deactivated',
-        'Your account has been deactivated',
-        'Please contact an administrator to reactivate your account',
-      );
-    }
+      // Validate password
+      const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
-    // Check if user is locked out
-    if (user.lockoutUntil && user.lockoutUntil > new Date()) {
-      throw new BusinessLogicException(
-        'Account is temporarily locked',
-        'Your account is temporarily locked due to multiple failed login attempts',
-        'Please try again later or contact support',
-      );
-    }
+      if (!isPasswordValid) {
+        // Handle failed login (increments Redis counter, sets lockout if needed)
+        await this.handleFailedLogin(user, dto.emailOrPhone);
+        throw new AuthenticationFailedException('Invalid credentials');
+      }
 
-    // Reset failed login attempts on successful login
-    if (user.failedLoginAttempts > 0) {
-      await this.userService.updateFailedLoginAttempts(user.id, 0);
+      // Password is valid, continue with login
+      if (!user.id || user.id.trim() === '') {
+        this.logger.error(
+          `User object missing or invalid ID for email/phone: ${dto.emailOrPhone}`,
+        );
+        throw new AuthenticationFailedException('User data is invalid');
+      }
+
+      // Reset failed login attempts on successful login (clear Redis and DB lockout)
+      await this.failedLoginAttemptService.resetFailedAttempts(user.id);
       await this.userService.updateLockoutUntil(user.id, null);
-    }
 
-    // Check if 2FA is enabled
-    if (user.twoFactorEnabled) {
-      // Generate and send 2FA code
-      // TODO: Re-enable 2FA functionality when TwoFactorService is fixed
-      // const twoFactorCode = this.twoFactorService.generateToken(
-      //   user.twoFactorSecret,
-      // );
-      const twoFactorCode = 'DISABLED';
-      // In a real implementation, you would send this via SMS or email
+      // Use user for rest of login flow
+      const userForLogin = user;
+
+      // Check if 2FA is enabled
+      if (userForLogin.twoFactorEnabled) {
+        // Generate and send 2FA code
+        // TODO: Re-enable 2FA functionality when TwoFactorService is fixed
+        // const twoFactorCode = this.twoFactorService.generateToken(
+        //   userForLogin.twoFactorSecret,
+        // );
+        const twoFactorCode = 'DISABLED';
+        // In a real implementation, you would send this via SMS or email
+
+        return {
+          requiresTwoFactor: true,
+          message: 'Two-factor authentication required',
+          tempToken: this.jwtService.sign(
+            { sub: userForLogin.id, email: userForLogin.email, temp: true },
+            { expiresIn: '5m' },
+          ),
+        };
+      }
+
+      // Generate tokens
+      const tokens = this.generateTokens(userForLogin);
+
+      // Hash and store refresh token in database
+      const hashedRt = await bcrypt.hash(tokens.refreshToken, 10);
+      await this.userService.update(userForLogin.id, { hashedRt });
+
+      // Emit login event for activity logging
+      await this.typeSafeEventEmitter.emitAsync(
+        AuthEvents.USER_LOGGED_IN,
+        new UserLoggedInEvent(
+          userForLogin.id || '',
+          userForLogin.email || '',
+          null as any,
+        ),
+      );
 
       return {
-        requiresTwoFactor: true,
-        message: 'Two-factor authentication required',
-        tempToken: this.jwtService.sign(
-          { sub: user.id, email: user.email, temp: true },
-          { expiresIn: '5m' },
-        ),
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        user: {
+          id: userForLogin.id,
+          email: userForLogin.email,
+          name: userForLogin.name,
+          isActive: userForLogin.isActive,
+          twoFactorEnabled: userForLogin.twoFactorEnabled,
+        },
       };
+    } else {
+      // User doesn't exist - return same error message to prevent enumeration
+      throw new AuthenticationFailedException('Invalid credentials');
     }
-
-    // Generate tokens
-    const tokens = this.generateTokens(user);
-
-    // Hash and store refresh token in database
-    const hashedRt = await bcrypt.hash(tokens.refreshToken, 10);
-    await this.userService.update(user.id, { hashedRt });
-
-    // Emit login event for activity logging
-    await this.typeSafeEventEmitter.emitAsync(
-      AuthEvents.USER_LOGGED_IN,
-      new UserLoggedInEvent(user.id || '', user.email || '', null as any),
-    );
-
-    return {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        isActive: user.isActive,
-        twoFactorEnabled: user.twoFactorEnabled,
-      },
-    };
   }
 
   async verify2FA(dto: TwoFactorRequest) {
@@ -330,7 +374,9 @@ export class AuthService extends BaseService {
     }
 
     // Update user phoneVerified date
-    await this.userService.update(verifiedUserId, { phoneVerified: new Date() });
+    await this.userService.update(verifiedUserId, {
+      phoneVerified: new Date(),
+    });
 
     // Create actor from user (the user themselves is the actor)
     const actor: ActorUser = {
