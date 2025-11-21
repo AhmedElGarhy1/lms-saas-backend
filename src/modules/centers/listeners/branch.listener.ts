@@ -5,7 +5,12 @@ import { ActivityLogService } from '@/shared/modules/activity-log/services/activ
 import { CenterActivityType } from '../enums/center-activity-type.enum';
 import { CreateCenterBranchEvent } from '../events/center.events';
 import { CenterEvents } from '@/shared/events/center.events.enum';
-import { BranchCreatedEvent } from '../events/branch.events';
+import {
+  BranchCreatedEvent,
+  BranchUpdatedEvent,
+  BranchDeletedEvent,
+  BranchRestoredEvent,
+} from '../events/branch.events';
 import { BranchEvents } from '@/shared/events/branch.events.enum';
 
 @Injectable()
@@ -31,7 +36,7 @@ export class BranchListener {
     const { branch, actor } = event;
 
     // Log activity for branch creation
-    // Target user is the center owner (actor who created the branch)
+    // Object action (on branch), no specific user affected
     await this.activityLogService.log(
       CenterActivityType.BRANCH_CREATED,
       {
@@ -41,7 +46,56 @@ export class BranchListener {
         address: branch.address,
         email: branch.email,
       },
-      actor.id,
+      null, // Object action, no target user
+    );
+  }
+
+  @OnEvent(BranchEvents.UPDATED)
+  async handleBranchUpdated(event: BranchUpdatedEvent) {
+    const { branchId, centerId } = event;
+
+    // ActivityLogService is fault-tolerant, no try-catch needed
+    // Object action (on branch), no specific user affected
+    await this.activityLogService.log(
+      CenterActivityType.BRANCH_UPDATED,
+      {
+        branchId,
+        centerId,
+        updatedFields: Object.keys(event.updates),
+      },
+      null, // Object action, no target user
+    );
+  }
+
+  @OnEvent(BranchEvents.DELETED)
+  async handleBranchDeleted(event: BranchDeletedEvent) {
+    const { branchId, centerId } = event;
+
+    // ActivityLogService is fault-tolerant, no try-catch needed
+    // Object action (on branch), no specific user affected
+    await this.activityLogService.log(
+      CenterActivityType.BRANCH_DELETED,
+      {
+        branchId,
+        centerId,
+      },
+      null, // Object action, no target user
+    );
+  }
+
+  @OnEvent(BranchEvents.RESTORED)
+  async handleBranchRestored(event: BranchRestoredEvent) {
+    const { branchId, centerId } = event;
+
+    // ActivityLogService is fault-tolerant, no try-catch needed
+    // Object action (on branch), no specific user affected
+    await this.activityLogService.log(
+      CenterActivityType.BRANCH_RESTORED,
+      {
+        branchId,
+        centerId,
+      },
+      null, // Object action, no target user
     );
   }
 }

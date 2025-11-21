@@ -1,0 +1,22 @@
+{
+  "centerSelection": {
+    "title": "Select Center",
+    "description": "Please select a center to continue",
+    "searchPlaceholder": "Search centers...",
+    "globalScope": "Global Scope (Admin)",
+    "noCentersFound": "No centers found"
+  },
+  "profileSelection": {
+    "title": "Select Profile",
+    "description": "Please select a profile to continue",
+    "noProfilesFound": "No profiles found"
+  },
+  "phoneVerification": {
+    "title": "Phone Verification Required",
+    "description": "Please verify your phone number to continue",
+    "enterOtpHint": "Enter the 6-digit code sent to your phone",
+    "resendOtp": "Resend OTP",
+    "resendCooldown": "Resend available in {seconds}s",
+    "securityNotice": "This verification is required for security. You won't be able to access the application until verified."
+  }
+}

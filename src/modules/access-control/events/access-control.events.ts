@@ -6,6 +6,7 @@ export class GrantCenterAccessEvent {
     public readonly userProfileId: string,
     public readonly centerId: string,
     public readonly actor: ActorUser,
+    public readonly targetUserId?: string, // Who was affected (the user getting access)
   ) {}
 }
 
@@ -14,6 +15,7 @@ export class RevokeCenterAccessEvent {
     public readonly userProfileId: string,
     public readonly centerId: string,
     public readonly actor: ActorUser,
+    public readonly targetUserId?: string, // Who was affected (the user losing access)
   ) {}
 }
 
@@ -23,6 +25,7 @@ export class ActivateCenterAccessEvent {
     public readonly centerId: string,
     public readonly isActive: boolean,
     public readonly actor: ActorUser,
+    public readonly targetUserId?: string, // Who was affected
   ) {}
 }
 
@@ -32,6 +35,7 @@ export class DeactivateCenterAccessEvent {
     public readonly centerId: string,
     public readonly isActive: boolean,
     public readonly actor: ActorUser,
+    public readonly targetUserId?: string, // Who was affected
   ) {}
 }
 
@@ -41,6 +45,7 @@ export class GrantUserAccessEvent {
     public readonly targetUserProfileId: string,
     public readonly actor: ActorUser,
     public readonly centerId?: string,
+    public readonly targetUserId?: string,
   ) {}
 }
 
@@ -50,6 +55,7 @@ export class RevokeUserAccessEvent {
     public readonly targetUserProfileId: string,
     public readonly actor: ActorUser,
     public readonly centerId?: string,
+    public readonly targetUserId?: string,
   ) {}
 }
 
@@ -59,6 +65,7 @@ export class GrantBranchAccessEvent {
     public readonly branchId: string,
     public readonly centerId: string,
     public readonly actor: ActorUser,
+    public readonly targetUserId?: string, // Who was affected (the user getting access)
   ) {}
 }
 
@@ -68,6 +75,7 @@ export class RevokeBranchAccessEvent {
     public readonly branchId: string,
     public readonly actor: ActorUser,
     public readonly centerId: string,
+    public readonly targetUserId?: string, // Who was affected (the user losing access)
   ) {}
 }
 
@@ -77,6 +85,7 @@ export class AssignRoleEvent {
     public readonly roleId: string,
     public readonly actor: ActorUser,
     public readonly centerId?: string,
+    public readonly targetUserId?: string, // Who was affected (the user getting the role)
   ) {}
 }
 
@@ -86,5 +95,6 @@ export class RevokeRoleEvent {
     public readonly roleId: string,
     public readonly actor: ActorUser,
     public readonly centerId?: string,
+    public readonly targetUserId?: string, // Who was affected (the user losing the role)
   ) {}
 }

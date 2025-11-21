@@ -15,10 +15,21 @@
     "updated": "تم التحديث",
     "actions": "الإجراءات",
     "type": "النوع",
+    "user": "المستخدم",
+    "center": "المركز",
+    "ipAddress": "عنوان IP",
+    "userAgent": "وكيل المستخدم",
+    "metadata": "البيانات الوصفية",
     "description": "الوصف",
     "location": "الموقع",
     "address": "العنوان",
-    "avatar": "الصورة الشخصية"
+    "avatar": "الصورة الشخصية",
+    "title": "العنوان",
+    "message": "الرسالة",
+    "priority": "الأولوية",
+    "recipient": "المستلم",
+    "channel": "القناة",
+    "error": "خطأ"
   },
   "actions": {
     "deleteSelected": "حذف المحدد",
@@ -38,7 +49,9 @@
     "saveChanges": "حفظ التغييرات",
     "changePassword": "تغيير كلمة المرور",
     "activate": "تفعيل",
-    "deactivate": "إلغاء التفعيل"
+    "deactivate": "إلغاء التفعيل",
+    "markAsRead": "وضع علامة كمقروء",
+    "archive": "أرشفة"
   },
   "filters": {
     "status": "الحالة"

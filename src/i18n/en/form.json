@@ -1,4 +1,8 @@
 {
+  "name": {
+    "label": "Name",
+    "placeholder": "Enter your name"
+  },
   "email": {
     "label": "Email",
     "placeholder": "Enter your email"
@@ -6,5 +10,12 @@
   "password": {
     "label": "Password",
     "placeholder": "Enter your password"
+  },
+  "confirmPassword": {
+    "label": "Confirm Password",
+    "placeholder": "Confirm your password"
+  },
+  "terms": {
+    "label": "I agree to the terms and conditions"
   }
 }

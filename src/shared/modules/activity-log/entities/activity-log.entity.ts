@@ -15,12 +15,12 @@ import { Center } from '@/modules/centers/entities/center.entity';
 
 @Entity('activity_logs')
 @Index(['type'])
-@Index(['actorId'])
 @Index(['userId'])
+@Index(['targetUserId'])
 @Index(['centerId'])
 @Index(['createdAt'])
+@Index(['targetUserId', 'centerId', 'type', 'createdAt'])
 @Index(['userId', 'centerId', 'type', 'createdAt'])
-@Index(['actorId', 'centerId', 'type', 'createdAt'])
 export class ActivityLog {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -32,10 +32,10 @@ export class ActivityLog {
   metadata: Record<string, any>;
 
   @Column({ type: 'uuid', nullable: true })
-  actorId: string | null;
+  userId: string | null; // Who performed the action (from RequestContext)
 
   @Column({ type: 'uuid', nullable: true })
-  userId: string | null;
+  targetUserId: string | null; // Who was affected by the action (optional)
 
   @Column({ type: 'uuid', nullable: true })
   centerId: string | null;
@@ -47,12 +47,12 @@ export class ActivityLog {
   userAgent: string;
 
   @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'actorId' })
-  actor: User;
+  @JoinColumn({ name: 'userId' })
+  user: User; // Who performed the action
 
   @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'userId' })
-  user: User;
+  @JoinColumn({ name: 'targetUserId' })
+  targetUser: User; // Who was affected
 
   @ManyToOne(() => Center, { nullable: true })
   @JoinColumn({ name: 'centerId' })

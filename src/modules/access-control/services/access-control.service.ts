@@ -294,6 +294,7 @@ export class AccessControlService extends BaseService {
     await this.centerAccessRepository.update(centerAccess.id, { isActive });
 
     // Emit event for activity logging
+    // Note: targetUserId is not available here, listener will fetch it if needed
     if (isActive) {
       await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.ACTIVATE_CENTER_ACCESS,
@@ -302,6 +303,7 @@ export class AccessControlService extends BaseService {
           body.centerId,
           isActive,
           actor,
+          undefined, // targetUserId not available, listener will fetch if needed
         ),
       );
     } else {
@@ -312,6 +314,7 @@ export class AccessControlService extends BaseService {
           body.centerId,
           isActive,
           actor,
+          undefined, // targetUserId not available, listener will fetch if needed
         ),
       );
     }

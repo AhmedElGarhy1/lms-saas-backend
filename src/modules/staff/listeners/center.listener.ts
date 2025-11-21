@@ -31,7 +31,12 @@ export class CenterListener {
     // Grant actor center access
     await this.typeSafeEventEmitter.emitAsync(
       AccessControlEvents.GRANT_CENTER_ACCESS,
-      new GrantCenterAccessEvent(actor.userProfileId, center.id, actor),
+      new GrantCenterAccessEvent(
+        actor.userProfileId,
+        center.id,
+        actor,
+        actor.id,
+      ),
     );
 
     // create owner role

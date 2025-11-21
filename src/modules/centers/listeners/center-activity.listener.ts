@@ -9,7 +9,6 @@ import {
   DeleteCenterEvent,
   RestoreCenterEvent,
 } from '../events/center.events';
-import { CentersRepository } from '../repositories/centers.repository';
 
 /**
  * Domain Event Listener for Center Activity Logging
@@ -19,10 +18,7 @@ import { CentersRepository } from '../repositories/centers.repository';
  */
 @Injectable()
 export class CenterActivityListener {
-  constructor(
-    private readonly activityLogService: ActivityLogService,
-    private readonly centersRepository: CentersRepository,
-  ) {}
+  constructor(private readonly activityLogService: ActivityLogService) {}
 
   @OnEvent(CenterEvents.CREATED)
   async handleCenterCreated(event: CreateCenterEvent) {
@@ -43,51 +39,41 @@ export class CenterActivityListener {
 
   @OnEvent(CenterEvents.UPDATED)
   async handleCenterUpdated(event: UpdateCenterEvent) {
-    // Get center to find the creator (target user)
-    const center = await this.centersRepository.findOne(event.centerId);
-    const targetUserId = center?.createdBy ?? null;
-
     // ActivityLogService is fault-tolerant, no try-catch needed
+    // Object action (on center), no specific user affected
     await this.activityLogService.log(
       CenterActivityType.CENTER_UPDATED,
       {
         centerId: event.centerId,
         updatedFields: Object.keys(event.updates),
       },
-      targetUserId,
+      null, // Object action, no target user
     );
   }
 
   @OnEvent(CenterEvents.DELETED)
   async handleCenterDeleted(event: DeleteCenterEvent) {
-    // Get center to find the creator (target user)
-    // Note: findOne should work with soft-deleted entities via BaseRepository
-    const center = await this.centersRepository.findOne(event.centerId);
-    const targetUserId = center?.createdBy ?? null;
-
     // ActivityLogService is fault-tolerant, no try-catch needed
+    // Object action (on center), no specific user affected
     await this.activityLogService.log(
       CenterActivityType.CENTER_DELETED,
       {
         centerId: event.centerId,
       },
-      targetUserId,
+      null, // Object action, no target user
     );
   }
 
   @OnEvent(CenterEvents.RESTORED)
   async handleCenterRestored(event: RestoreCenterEvent) {
-    // Get center to find the creator (target user)
-    const center = await this.centersRepository.findOne(event.centerId);
-    const targetUserId = center?.createdBy ?? null;
-
     // ActivityLogService is fault-tolerant, no try-catch needed
+    // Object action (on center), no specific user affected
     await this.activityLogService.log(
       CenterActivityType.CENTER_RESTORED,
       {
         centerId: event.centerId,
       },
-      targetUserId,
+      null, // Object action, no target user
     );
   }
 }

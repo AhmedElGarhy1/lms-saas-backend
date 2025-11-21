@@ -6,13 +6,13 @@ import { AuthActivityType } from '../enums/auth-activity-type.enum';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import {
   UserLoggedInEvent,
-  UserLoggedOutEvent,
-  TokenRefreshedEvent,
   PasswordChangedEvent,
   EmailVerifiedEvent,
   PhoneVerifiedEvent,
   TwoFactorEnabledEvent,
   TwoFactorDisabledEvent,
+  UserLoginFailedEvent,
+  PasswordResetRequestedEvent,
 } from '../events/auth.events';
 
 @Injectable()
@@ -23,36 +23,6 @@ export class AuthListener {
     private readonly moduleRef: ModuleRef,
     private readonly activityLogService: ActivityLogService,
   ) {}
-
-  @OnEvent(AuthEvents.USER_LOGGED_OUT)
-  async handleUserLoggedOut(event: UserLoggedOutEvent) {
-    const { userId, actor } = event;
-
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      AuthActivityType.USER_LOGOUT,
-      {
-        userId,
-        phone: actor.phone,
-      },
-      userId,
-    );
-  }
-
-  @OnEvent(AuthEvents.TOKEN_REFRESHED)
-  async handleTokenRefreshed(event: TokenRefreshedEvent) {
-    const { userId, actor } = event;
-
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      AuthActivityType.TOKEN_REFRESHED,
-      {
-        userId,
-        phone: actor.phone,
-      },
-      userId,
-    );
-  }
 
   @OnEvent(AuthEvents.USER_LOGGED_IN)
   async handleUserLoggedIn(event: UserLoggedInEvent) {
@@ -141,6 +111,32 @@ export class AuthListener {
         phone: actor.phone,
       },
       userId,
+    );
+  }
+
+  @OnEvent(AuthEvents.USER_LOGIN_FAILED)
+  async handleUserLoginFailed(event: UserLoginFailedEvent) {
+    // ActivityLogService is fault-tolerant, no try-catch needed
+    await this.activityLogService.log(
+      AuthActivityType.USER_LOGIN_FAILED,
+      {
+        emailOrPhone: event.emailOrPhone,
+        reason: event.reason,
+      },
+      event.userId ?? null,
+    );
+  }
+
+  @OnEvent(AuthEvents.PASSWORD_RESET_REQUESTED)
+  async handlePasswordResetRequested(event: PasswordResetRequestedEvent) {
+    // ActivityLogService is fault-tolerant, no try-catch needed
+    await this.activityLogService.log(
+      AuthActivityType.PASSWORD_RESET_REQUESTED,
+      {
+        email: event.email,
+        name: event.name,
+      },
+      event.userId ?? null,
     );
   }
 }

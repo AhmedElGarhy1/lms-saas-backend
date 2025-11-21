@@ -1,6 +1,7 @@
 export enum AuthEvents {
   USER_LOGGED_IN = 'user.logged.in',
   USER_LOGGED_OUT = 'user.logged.out',
+  USER_LOGIN_FAILED = 'user.login.failed',
   TOKEN_REFRESHED = 'token.refreshed',
   PASSWORD_CHANGED = 'password.changed',
   EMAIL_VERIFIED = 'email.verified',

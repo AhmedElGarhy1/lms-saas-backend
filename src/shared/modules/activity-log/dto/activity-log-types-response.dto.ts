@@ -14,13 +14,10 @@ export class ActivityLogTypesResponseDto {
     example: [
       'USER_LOGIN',
       'USER_LOGIN_FAILED',
-      'USER_SIGNUP',
-      'USER_LOGOUT',
-      'TOKEN_REFRESHED',
       'PASSWORD_CHANGED',
+      'PASSWORD_RESET_REQUESTED',
       'EMAIL_VERIFIED',
       'PHONE_VERIFIED',
-      'TWO_FA_SETUP',
       'TWO_FA_ENABLED',
       'TWO_FA_DISABLED',
     ],
@@ -58,6 +55,7 @@ export class ActivityLogTypesResponseDto {
       'BRANCH_CREATED',
       'BRANCH_UPDATED',
       'BRANCH_DELETED',
+      'BRANCH_RESTORED',
       'BRANCH_ACCESS_GRANTED',
       'BRANCH_ACCESS_REVOKED',
     ],
@@ -74,9 +72,6 @@ export class ActivityLogTypesResponseDto {
       'ROLE_RESTORED',
       'ROLE_ASSIGNED',
       'ROLE_REMOVED',
-      'PERMISSION_ADDED_TO_ROLE',
-      'PERMISSION_REMOVED_FROM_ROLE',
-      'PERMISSION_SCOPE_CHANGED',
     ],
   })
   role: string[];

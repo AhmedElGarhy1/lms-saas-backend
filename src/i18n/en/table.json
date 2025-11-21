@@ -15,10 +15,21 @@
     "updated": "Updated",
     "actions": "Actions",
     "type": "Type",
+    "user": "User",
+    "center": "Center",
+    "ipAddress": "IP Address",
+    "userAgent": "User Agent",
+    "metadata": "Metadata",
     "description": "Description",
     "location": "Location",
     "address": "Address",
-    "avatar": "Avatar"
+    "avatar": "Avatar",
+    "title": "Title",
+    "message": "Message",
+    "priority": "Priority",
+    "recipient": "Recipient",
+    "channel": "Channel",
+    "error": "Error"
   },
   "actions": {
     "deleteSelected": "Delete Selected",
@@ -38,7 +49,9 @@
     "saveChanges": "Save Changes",
     "changePassword": "Change Password",
     "activate": "Activate",
-    "deactivate": "Deactivate"
+    "deactivate": "Deactivate",
+    "markAsRead": "Mark as Read",
+    "archive": "Archive"
   },
   "filters": {
     "status": "Status"

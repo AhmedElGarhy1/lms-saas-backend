@@ -29,15 +29,15 @@ export class ActivityLogService extends BaseService {
     dto: CreateActivityLogDto,
   ): Promise<ActivityLog | null> {
     try {
-      // Get current request context for automatic actor and center ID assignment
+      // Get current request context for automatic userId and center ID assignment
       const requestContext = RequestContext.get();
 
-      // Actor is ALWAYS from RequestContext (never passed as parameter)
+      // userId (who performed the action) is ALWAYS from RequestContext (never passed as parameter)
       // If not in context, it's a system event (null is okay)
-      const actorId = requestContext?.userId ?? null;
+      const userId = requestContext?.userId ?? null;
 
-      // Target user is who the action was performed on (explicitly provided)
-      const userId = dto.userId ?? null;
+      // targetUserId (who was affected) is explicitly provided
+      const targetUserId = dto.targetUserId ?? null;
 
       const centerId =
         dto.centerId !== undefined ? dto.centerId : requestContext?.centerId;
@@ -49,8 +49,8 @@ export class ActivityLogService extends BaseService {
       const activityLog = await this.activityLogRepository.create({
         type: dto.type,
         metadata: dto.metadata,
-        actorId,
         userId,
+        targetUserId,
         centerId,
         ipAddress,
         userAgent,
@@ -73,19 +73,21 @@ export class ActivityLogService extends BaseService {
    *
    * @param type - Activity type
    * @param metadata - Optional metadata
-   * @param userId - Target user ID (who the action was performed on). If not provided, defaults to null.
-   *                 For self-actions, pass the same user ID as the actor (from RequestContext).
+   * @param targetUserId - Target user ID (who was affected by the action). If not provided, defaults to null.
+   *                       For self-actions, pass the same user ID as the actor (from RequestContext).
+   *                       For object-actions (centers, branches, etc.), pass null.
+   * @note userId (who performed the action) is automatically captured from RequestContext
    */
   async log(
     type: string,
     metadata?: Record<string, any>,
-    userId?: string | null,
+    targetUserId?: string | null,
   ): Promise<ActivityLog | null> {
     return await this.createActivityLog({
       type,
       metadata,
-      userId: userId ?? null,
-      // actorId and centerId come from RequestContext automatically
+      targetUserId: targetUserId ?? null,
+      // userId and centerId come from RequestContext automatically
     });
   }
 

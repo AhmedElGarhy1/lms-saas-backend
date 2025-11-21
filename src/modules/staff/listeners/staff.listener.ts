@@ -26,7 +26,7 @@ export class StaffListener {
     if (centerId) {
       await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.GRANT_CENTER_ACCESS,
-        new GrantCenterAccessEvent(userProfile.id, centerId, actor),
+        new GrantCenterAccessEvent(userProfile.id, centerId, actor, user.id),
       );
       await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.GRANT_USER_ACCESS,
@@ -35,12 +35,19 @@ export class StaffListener {
           userProfile.id,
           actor,
           centerId,
+          user.id,
         ),
       );
       if (roleId) {
         await this.typeSafeEventEmitter.emitAsync(
           AccessControlEvents.ASSIGN_ROLE,
-          new AssignRoleEvent(userProfile.id, roleId, actor, centerId),
+          new AssignRoleEvent(
+            userProfile.id,
+            roleId,
+            actor,
+            centerId,
+            user.id,
+          ),
         );
       }
     }

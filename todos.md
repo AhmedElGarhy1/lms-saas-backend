@@ -53,11 +53,11 @@
 [x] check the overall app language and exceptions
 [x] check if whatsapp and email and all channels are working or not
 
-[ ] add permission checks for userprofile module ass it have many profile type and permission
+[-] add permission checks for userprofile module ass it have many profile type and permission (improve later)
 [ ] implement import user (or diffrent name) to import user from another center (internal center prespective)
-[ ] update activity logs to cover more logs
-[ ] update permissions to cover more permissions
-[ ] double check permissions in all over the application (+ canActivate)
+[x] update activity logs to cover more logs
+[x] update permissions to cover more permissions
+[ ] double check permissions in all over the application
 [ ] when i display tables data I should disply myself also
 [ ] frontend invalidate language when profile update
 [x] activity logs on frontend
@@ -81,3 +81,4 @@
 [ ] clean up notficiation service from testing (doesn't work) and from usless services and monitoring or metrics
 [ ] add users endpoint for modules like activity logs search for user
 [x] responsive frontend
+[ ] user can update his center (throw settings)

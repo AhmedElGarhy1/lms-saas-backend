@@ -66,10 +66,25 @@ export class RedisCleanupJob {
     const client = this.redisService.getClient();
     const staleSocketIds: string[] = [];
 
+    // Get the namespace for /notifications (since gateway uses namespace)
+    const namespace = this.notificationGateway.server.of('/notifications');
+    const socketsMap =
+      namespace?.sockets || this.notificationGateway.server.sockets?.sockets;
+
+    if (!socketsMap) {
+      this.logger.warn(
+        `Cannot validate sockets - sockets map not available - userId: ${userId}`,
+      );
+      return {
+        staleRemoved: 0,
+        activeRemaining: socketIds.length,
+        validationTimeMs: 0,
+      };
+    }
+
     // Check each socket ID against active Socket.IO server
     for (const socketId of socketIds) {
-      const isActive =
-        this.notificationGateway.server.sockets.sockets.has(socketId);
+      const isActive = socketsMap.has(socketId);
       if (isActive) {
         activeRemaining++;
       } else {

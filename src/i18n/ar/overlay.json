@@ -1,0 +1,22 @@
+{
+  "centerSelection": {
+    "title": "اختر المركز",
+    "description": "يرجى اختيار مركز للمتابعة",
+    "searchPlaceholder": "البحث عن المراكز...",
+    "globalScope": "النطاق العام (مدير)",
+    "noCentersFound": "لم يتم العثور على مراكز"
+  },
+  "profileSelection": {
+    "title": "اختر الملف الشخصي",
+    "description": "يرجى اختيار ملف شخصي للمتابعة",
+    "noProfilesFound": "لم يتم العثور على ملفات شخصية"
+  },
+  "phoneVerification": {
+    "title": "التحقق من الهاتف مطلوب",
+    "description": "يرجى التحقق من رقم هاتفك للمتابعة",
+    "enterOtpHint": "أدخل الرمز المكون من 6 أرقام المرسل إلى هاتفك",
+    "resendOtp": "إعادة إرسال رمز التحقق",
+    "resendCooldown": "إعادة الإرسال متاحة خلال {seconds} ثانية",
+    "securityNotice": "التحقق مطلوب للأمان. لن تتمكن من الوصول إلى التطبيق حتى يتم التحقق."
+  }
+}

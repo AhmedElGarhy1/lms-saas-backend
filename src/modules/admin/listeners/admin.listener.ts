@@ -29,6 +29,7 @@ export class AdminListener {
         userProfile.id,
         actor,
         actor.centerId,
+        user.id,
       ),
     );
 
@@ -36,7 +37,7 @@ export class AdminListener {
     if (roleId) {
       await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.ASSIGN_ROLE,
-        new AssignRoleEvent(userProfile.id, roleId, actor),
+        new AssignRoleEvent(userProfile.id, roleId, actor, undefined, user.id),
       );
     }
 

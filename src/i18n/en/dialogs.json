@@ -1,4 +1,15 @@
 {
+  "createAdmin": {
+    "title": "Create Admin",
+    "description": "Create a new admin account with appropriate permissions"
+  },
+  "editAdmin": {
+    "title": "Edit Admin",
+    "description": "Update admin information and settings"
+  },
+  "viewAdmin": {
+    "title": "Admin Details"
+  },
   "createUser": {
     "title": "Create User",
     "description": "Create a new user account with appropriate permissions"
@@ -16,7 +27,7 @@
   },
   "deleteUser": {
     "title": "Delete User",
-    "message": "Are you sure you want to delete {{userName}}? This will permanently remove the user and all associated data.",
+    "message": "Are you sure you want to delete {userName}? This will permanently remove the user and all associated data.",
     "cannotUndo": "This action cannot be undone.",
     "deactivateAccount": "User account will be deactivated",
     "removeData": "All user data will be removed",
@@ -35,19 +46,19 @@
   },
   "deleteStaff": {
     "title": "Delete Staff",
-    "description": "Are you sure you want to delete {{userName}}? This will permanently remove the staff member and all associated data."
+    "description": "Are you sure you want to delete {userName}? This will permanently remove the staff member and all associated data."
   },
   "activateStaff": {
     "title": "Activate Staff",
-    "description": "Are you sure you want to activate {{userName}}? This will restore their access to the system."
+    "description": "Are you sure you want to activate {userName}? This will restore their access to the system."
   },
   "deactivateStaff": {
     "title": "Deactivate Staff",
-    "description": "Are you sure you want to deactivate {{userName}}? This will revoke their access to the system."
+    "description": "Are you sure you want to deactivate {userName}? This will revoke their access to the system."
   },
   "restoreStaff": {
     "title": "Restore Staff",
-    "description": "Are you sure you want to restore {{userName}}? This will reactivate their account and restore their access."
+    "description": "Are you sure you want to restore {userName}? This will reactivate their account and restore their access."
   },
   "createRole": {
     "title": "Create New Role"
@@ -55,12 +66,15 @@
   "editRole": {
     "title": "Edit Role"
   },
+  "scopes": {
+    "label": "Scopes:"
+  },
   "viewRole": {
     "title": "Role Details"
   },
   "deleteRole": {
     "title": "Delete Role",
-    "message": "Are you sure you want to delete the role {{roleName}}? This will permanently remove the role and all associated permissions.",
+    "message": "Are you sure you want to delete the role {roleName}? This will permanently remove the role and all associated permissions.",
     "cannotUndo": "This action cannot be undone.",
     "thisActionWill": "This action will",
     "removeRole": "Remove the role from the system",
@@ -79,7 +93,7 @@
   },
   "deleteCenter": {
     "title": "Delete Center",
-    "message": "Are you sure you want to delete the center {{centerName}}? This will permanently remove the center and all associated data.",
+    "message": "Are you sure you want to delete the center {centerName}? This will permanently remove the center and all associated data.",
     "cannotUndo": "This action cannot be undone.",
     "thisActionWill": "This action will",
     "removeCenter": "Remove the center from the system",
@@ -87,25 +101,25 @@
     "removeData": "Remove all center-specific data"
   },
   "manageUsers": {
-    "title": "Manage Users - {{centerName}}",
+    "title": "Manage Users - {centerName}",
     "description": "Manage user access for this center. Use the Grant/Revoke buttons to control which users can access this center.",
     "allUsers": "All Users"
   },
   "manageAdmins": {
-    "title": "Manage Admins - {{centerName}}",
+    "title": "Manage Admins - {centerName}",
     "description": "Manage admin access for this center. Use the Grant/Revoke buttons to control which admins can manage this center."
   },
   "manageAccess": {
-    "title": "User Access - {{userName}}",
-    "description": "Showing users that {{userName}} can access based on their roles and permissions. Use the Grant/Revoke buttons to manage access."
+    "title": "User Access - {userName}",
+    "description": "Showing users that {userName} can access based on their roles and permissions. Use the Grant/Revoke buttons to manage access."
   },
   "manageCenterAccess": {
-    "title": "Center Access - {{userName}}",
+    "title": "Center Access - {userName}",
     "description": "Manage center access for this user. Use the Grant/Revoke buttons to control access to different centers.",
     "allCenters": "All Centers"
   },
   "manageRoleUsers": {
-    "title": "Manage Role Users - {{roleName}}",
+    "title": "Manage Role Users - {roleName}",
     "description": "Manage user assignments for this role. Use the Grant/Revoke buttons to control which users have this role assigned.",
     "searchPlaceholder": "Search users...",
     "allUsers": "All Users",
@@ -113,17 +127,23 @@
     "adminScope": "Admin Scope",
     "centerScope": "Center Scope"
   },
+  "notifications": {
+    "title": "Notifications",
+    "all": "All",
+    "unread": "Unread",
+    "archived": "Archived"
+  },
   "manageAdminRoles": {
     "title": "Manage Admin Roles",
-    "description": "Showing admin roles available for {{userName}} in the system. Use the Assign/Remove buttons to manage admin role assignments."
+    "description": "Showing admin roles available for {userName} in the system. Use the Assign/Remove buttons to manage admin role assignments."
   },
   "manageRoles": {
     "title": "Manage Roles",
-    "description": "Showing roles available for {{userName}} in your center. Use the Assign/Remove buttons to manage role assignments."
+    "description": "Showing roles available for {userName} in your center. Use the Assign/Remove buttons to manage role assignments."
   },
   "rolesForCenter": {
-    "title": "Roles for {{centerName}}",
-    "description": "Showing roles available for {{userName}} in {{centerName}}. Use the Assign/Remove buttons to manage role assignments."
+    "title": "Roles for {centerName}",
+    "description": "Showing roles available for {userName} in {centerName}. Use the Assign/Remove buttons to manage role assignments."
   },
   "createProducts": {
     "title": "Create New Products",
@@ -140,7 +160,7 @@
   "deleteProducts": {
     "title": "Delete Products",
     "cannotUndo": "This action cannot be undone.",
-    "message": "Are you sure you want to delete {{productsName}}? This will permanently remove the products and all associated data.",
+    "message": "Are you sure you want to delete {productsName}? This will permanently remove the products and all associated data.",
     "thisActionWill": "This action will:",
     "removeProducts": "Remove the products from the system",
     "removeData": "Remove all associated data"
@@ -155,19 +175,28 @@
   },
   "viewBranch": {
     "title": "Branch Details",
-    "description": "View detailed information about this branch"
+    "description": "View detailed information about this branch",
+    "basicInformation": "Basic Information",
+    "location": "Location",
+    "address": "Address",
+    "status": "Status",
+    "contactInformation": "Contact Information",
+    "email": "Email",
+    "timestamps": "Timestamps",
+    "createdAt": "Created At",
+    "lastUpdated": "Last Updated"
   },
   "deleteBranch": {
     "title": "Delete Branch",
     "cannotUndo": "This action cannot be undone.",
-    "message": "Are you sure you want to delete {{branchName}}? This will permanently remove the branch and all associated data.",
+    "message": "Are you sure you want to delete {branchName}? This will permanently remove the branch and all associated data.",
     "thisActionWill": "This action will:",
     "removeBranch": "Remove the branch from the system",
     "removeData": "Remove all associated data"
   },
   "manageBranchAccess": {
-    "title": "Manage Branch Access - {{branchName}}",
-    "description": "Manage user access for the branch {{branchName}}. Use the Grant/Revoke buttons to control which users can access this branch."
+    "title": "Manage Branch Access - {branchName}",
+    "description": "Manage user access for the branch {branchName}. Use the Grant/Revoke buttons to control which users can access this branch."
   },
   "createTestModule": {
     "title": "Create New TestModule",
@@ -184,9 +213,15 @@
   "deleteTestModule": {
     "title": "Delete TestModule",
     "cannotUndo": "This action cannot be undone.",
-    "message": "Are you sure you want to delete {{test-moduleName}}? This will permanently remove the test-module and all associated data.",
+    "message": "Are you sure you want to delete {test-moduleName}? This will permanently remove the test-module and all associated data.",
     "thisActionWill": "This action will:",
     "removeTestModule": "Remove the test-module from the system",
     "removeData": "Remove all associated data"
+  },
+  "verifyPhone": {
+    "title": "Verify Phone Number",
+    "description": "Verify the phone number for {userName}",
+    "enterOtpHint": "Enter the 6-digit code sent to the phone number",
+    "resendCooldown": "Resend available in {seconds}s"
   }
 }

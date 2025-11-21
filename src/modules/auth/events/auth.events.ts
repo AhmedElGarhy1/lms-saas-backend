@@ -58,6 +58,16 @@ export class PhoneVerifiedEvent extends BaseEvent {
   }
 }
 
+export class UserLoginFailedEvent extends SystemEvent {
+  constructor(
+    public readonly emailOrPhone: string,
+    public readonly userId?: string,
+    public readonly reason?: string,
+  ) {
+    super();
+  }
+}
+
 export class PasswordResetRequestedEvent extends SystemEvent {
   constructor(
     public readonly email: string,

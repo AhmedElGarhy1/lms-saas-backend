@@ -25,6 +25,22 @@
   "ENTITY_NOT_FOUND": "Entity not found",
   "SEEDER_ERROR": "Database seeding error",
   "EXPORT_FORMAT_NOT_SUPPORTED": "Export format not supported",
+  "centerInactive": {
+    "title": "Center Inactive",
+    "description": "The selected center is currently inactive and cannot be accessed. Please select a different center to continue."
+  },
+  "profileInactive": {
+    "title": "Profile Inactive",
+    "description": "Your selected profile is currently inactive and cannot be accessed. Please select a different profile to continue."
+  },
+  "centerAccessDenied": {
+    "title": "Center Access Denied",
+    "description": "You do not have access to this center. Please contact your administrator to request center access."
+  },
+  "centerAccessInactive": {
+    "title": "Center Access Inactive",
+    "description": "Your access to this center is currently inactive. Please contact the center administrator for more information."
+  },
   "EXPORT_DATA_UNAVAILABLE": "Export data unavailable",
   "EXPORT_FAILED": "Export operation failed",
   "TWO_FACTOR_GENERATION_FAILED": "Two-factor authentication setup failed",

@@ -13,6 +13,7 @@ import {
   CreateRoleEvent,
   UpdateRoleEvent,
   DeleteRoleEvent,
+  RestoreRoleEvent,
 } from '../events/role.events';
 import { RoleEvents } from '@/shared/events/role.events.enum';
 import { AssignCenterOwnerEvent } from '@/modules/centers/events/center.events';
@@ -20,7 +21,6 @@ import { CenterEvents } from '@/shared/events/center.events.enum';
 import { createOwnerRoleData } from '../constants/roles';
 import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { RolesRepository } from '../repositories/roles.repository';
-import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 
 @Injectable()
 export class RoleListener {
@@ -32,7 +32,6 @@ export class RoleListener {
     private readonly activityLogService: ActivityLogService,
     private readonly profileRoleRepository: ProfileRoleRepository,
     private readonly rolesRepository: RolesRepository,
-    private readonly userProfileService: UserProfileService,
   ) {}
 
   @OnEvent(AccessControlEvents.ASSIGN_ROLE)
@@ -60,10 +59,6 @@ export class RoleListener {
       return;
     }
 
-    // Get userId from userProfileId
-    const userProfile = await this.userProfileService.findOne(userProfileId);
-    const targetUserId = userProfile?.userId ?? null;
-
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       RoleActivityType.ROLE_ASSIGNED,
@@ -72,7 +67,7 @@ export class RoleListener {
         roleId,
         centerId,
       },
-      targetUserId,
+      event.targetUserId ?? null,
     );
   }
 
@@ -101,10 +96,6 @@ export class RoleListener {
       return;
     }
 
-    // Get userId from userProfileId
-    const userProfile = await this.userProfileService.findOne(userProfileId);
-    const targetUserId = userProfile?.userId ?? null;
-
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       RoleActivityType.ROLE_REMOVED,
@@ -112,7 +103,7 @@ export class RoleListener {
         userProfileId,
         centerId,
       },
-      targetUserId,
+      event.targetUserId ?? null,
     );
   }
 
@@ -151,7 +142,13 @@ export class RoleListener {
       // Only assign role to userProfile if userProfile is provided
       if (userProfile) {
         await this.handleAssignRole(
-          new AssignRoleEvent(userProfile.id, role.id, actor, center.id),
+          new AssignRoleEvent(
+            userProfile.id,
+            role.id,
+            actor,
+            center.id,
+            userProfile.userId,
+          ),
         );
       }
     } catch (error) {
@@ -219,6 +216,19 @@ export class RoleListener {
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       RoleActivityType.ROLE_DELETED,
+      {
+        roleId: event.roleId,
+      },
+      null,
+    );
+  }
+
+  @OnEvent(RoleEvents.RESTORED)
+  async handleRoleRestored(event: RestoreRoleEvent) {
+    // Role restore doesn't have a specific target user, pass null
+    // ActivityLogService is fault-tolerant, no try-catch needed
+    await this.activityLogService.log(
+      RoleActivityType.ROLE_RESTORED,
       {
         roleId: event.roleId,
       },

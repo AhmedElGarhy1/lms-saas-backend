@@ -11,7 +11,6 @@ import {
   DeactivateCenterAccessEvent,
 } from '../events/access-control.events';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
-import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 
 @Injectable()
 export class CenterAccessListener {
@@ -21,7 +20,6 @@ export class CenterAccessListener {
     private readonly moduleRef: ModuleRef,
     private readonly accessControlService: AccessControlService,
     private readonly activityLogService: ActivityLogService,
-    private readonly userProfileService: UserProfileService,
   ) {}
 
   @OnEvent(AccessControlEvents.GRANT_CENTER_ACCESS)
@@ -42,10 +40,6 @@ export class CenterAccessListener {
       return;
     }
 
-    // Get userId from userProfileId
-    const userProfile = await this.userProfileService.findOne(userProfileId);
-    const targetUserId = userProfile?.userId ?? null;
-
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.CENTER_ACCESS_GRANTED,
@@ -54,7 +48,7 @@ export class CenterAccessListener {
         centerId,
         accessType: 'CENTER',
       },
-      targetUserId,
+      event.targetUserId ?? null,
     );
   }
 
@@ -76,10 +70,6 @@ export class CenterAccessListener {
       return;
     }
 
-    // Get userId from userProfileId
-    const userProfile = await this.userProfileService.findOne(userProfileId);
-    const targetUserId = userProfile?.userId ?? null;
-
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.CENTER_ACCESS_REVOKED,
@@ -88,49 +78,37 @@ export class CenterAccessListener {
         centerId,
         accessType: 'CENTER',
       },
-      targetUserId,
+      event.targetUserId ?? null,
     );
   }
 
   @OnEvent(AccessControlEvents.ACTIVATE_CENTER_ACCESS)
   async handleActivateCenterAccess(event: ActivateCenterAccessEvent) {
-    const { userProfileId, centerId, isActive, actor } = event;
-
-    // Get userId from userProfileId
-    const userProfile = await this.userProfileService.findOne(userProfileId);
-    const targetUserId = userProfile?.userId ?? null;
-
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.CENTER_ACCESS_ACTIVATED,
       {
-        userProfileId,
-        centerId,
-        isActive,
+        userProfileId: event.userProfileId,
+        centerId: event.centerId,
+        isActive: event.isActive,
         accessType: 'CENTER',
       },
-      targetUserId,
+      event.targetUserId ?? null,
     );
   }
 
   @OnEvent(AccessControlEvents.DEACTIVATE_CENTER_ACCESS)
   async handleDeactivateCenterAccess(event: DeactivateCenterAccessEvent) {
-    const { userProfileId, centerId, isActive, actor } = event;
-
-    // Get userId from userProfileId
-    const userProfile = await this.userProfileService.findOne(userProfileId);
-    const targetUserId = userProfile?.userId ?? null;
-
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.CENTER_ACCESS_DEACTIVATED,
       {
-        userProfileId,
-        centerId,
-        isActive,
+        userProfileId: event.userProfileId,
+        centerId: event.centerId,
+        isActive: event.isActive,
         accessType: 'CENTER',
       },
-      targetUserId,
+      event.targetUserId ?? null,
     );
   }
 }

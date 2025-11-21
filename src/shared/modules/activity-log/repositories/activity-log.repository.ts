@@ -32,10 +32,10 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
     // Create queryBuilder with relations
     const queryBuilder = this.getRepository()
       .createQueryBuilder('activityLog')
-      .leftJoin('activityLog.actor', 'actor')
-      .leftJoin('activityLog.user', 'user')
+      .leftJoin('activityLog.user', 'user') // Who performed the action
+      .leftJoin('activityLog.targetUser', 'targetUser') // Who was affected
       .leftJoin('activityLog.center', 'center')
-      .addSelect(['actor.name', 'user.name', 'center.name']);
+      .addSelect(['user.name', 'targetUser.name', 'center.name']);
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
@@ -51,7 +51,7 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
       );
     }
 
-    // apply user access
+    // apply user access (filter by targetUserId - who was affected)
     const bypassUserAccess =
       await this.accessControlHelperService.bypassCenterInternalAccess(
         actor.userProfileId,
@@ -59,7 +59,7 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
       );
     if (!bypassUserAccess) {
       queryBuilder.andWhere(
-        `activityLog.userId IN (SELECT "userId" FROM user_access WHERE ${centerId ? '"centerId" = :centerId AND' : ''} "granterUserId" = :userProfileId)`,
+        `activityLog."targetUserId" IN (SELECT "userId" FROM user_access WHERE ${centerId ? '"centerId" = :centerId AND' : ''} "granterUserId" = :userProfileId)`,
         {
           userProfileId: actor.userProfileId,
           centerId,
@@ -75,8 +75,9 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
     }
 
     if (userId) {
-      queryBuilder.andWhere('activityLog.userId = :userId', {
-        userId: userId,
+      // Filter by targetUserId (who was affected)
+      queryBuilder.andWhere('activityLog.targetUserId = :targetUserId', {
+        targetUserId: userId,
       });
     }
 
