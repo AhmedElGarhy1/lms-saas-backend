@@ -1,6 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from '@/modules/user/entities/user.entity';
-import { Role } from '@/modules/access-control/entities/role.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { Admin } from '@/modules/admin/entities/admin.entity';
 import { Staff } from '@/modules/staff/entities/staff.entity';
@@ -92,7 +90,7 @@ export class ProfileResponseDto {
     type: 'object',
     additionalProperties: true,
   })
-  role?: Role | null;
+  role?: string | null;
 
   @ApiProperty({
     description: 'Center context',

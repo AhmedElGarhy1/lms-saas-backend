@@ -294,7 +294,11 @@ export class UserService extends BaseService {
       targetUserProfileId: actor.userProfileId,
     });
 
-    await this.userProfileService.activateProfileUser(userProfileId, isActive);
+    await this.userProfileService.activateProfileUser(
+      userProfileId,
+      isActive,
+      actor,
+    );
 
     // Get userId from profile for command emission
     const profile = await this.userProfileService.findOne(userProfileId);

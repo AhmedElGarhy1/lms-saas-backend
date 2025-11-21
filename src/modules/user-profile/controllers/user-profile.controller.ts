@@ -35,8 +35,6 @@ import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 import { ProfileResponseDto } from '../dto/profile-response.dto';
 
-// TODO: add dymanic permissions for each profile
-
 @ApiTags('User Profiles')
 @Controller('user-profiles')
 export class UserProfileController {
@@ -49,7 +47,6 @@ export class UserProfileController {
   @Post()
   @CreateApiResponses('Create a new user profile')
   @ApiBody({ type: CreateUserProfileDto })
-  @Permissions(PERMISSIONS.ADMIN.CREATE)
   @Transactional()
   async createProfile(
     @Body() dto: CreateUserProfileDto,
@@ -104,7 +101,7 @@ export class UserProfileController {
   @Permissions(PERMISSIONS.ADMIN.READ)
   async getProfile(
     @Param('id', ParseUUIDPipe) userProfileId: string,
-    @GetUser() _actor: ActorUser,
+    @GetUser() _actorUser: ActorUser, // eslint-disable-line @typescript-eslint/no-unused-vars
   ) {
     const profile = await this.userProfileService.findOne(userProfileId);
     return ControllerResponse.success(
@@ -123,7 +120,6 @@ export class UserProfileController {
     type: String,
   })
   @ApiBody({ type: UpdateUserProfileDto })
-  @Permissions(PERMISSIONS.ADMIN.UPDATE)
   @SerializeOptions({ type: UserResponseDto })
   @Transactional()
   async updateProfile(
@@ -148,7 +144,6 @@ export class UserProfileController {
   @Patch(':id/status')
   @UpdateApiResponses('Update user profile status (activate/deactivate)')
   @ApiBody({ type: UpdateUserProfileStatusDto })
-  @Permissions(PERMISSIONS.ADMIN.UPDATE)
   @Transactional()
   async updateStatus(
     @Param('id', ParseUUIDPipe) userProfileId: string,
@@ -173,13 +168,12 @@ export class UserProfileController {
   @Delete(':id')
   @DeleteApiResponses('Soft delete user profile')
   @ApiParam({ name: 'id', description: 'User Profile ID', type: String })
-  @Permissions(PERMISSIONS.ADMIN.DELETE)
   @Transactional()
   async deleteProfile(
     @Param('id', ParseUUIDPipe) userProfileId: string,
-    @GetUser() _actor: ActorUser,
+    @GetUser() actorUser: ActorUser,
   ) {
-    await this.userProfileService.deleteUserProfile(userProfileId);
+    await this.userProfileService.deleteUserProfile(userProfileId, actorUser);
     // Note: Activity logging should be handled by event listeners if UserProfileService emits events
     return ControllerResponse.success(
       { id: userProfileId },
@@ -192,13 +186,12 @@ export class UserProfileController {
   @Patch(':id/restore')
   @UpdateApiResponses('Restore soft-deleted user profile')
   @ApiParam({ name: 'id', description: 'User Profile ID', type: String })
-  @Permissions(PERMISSIONS.ADMIN.UPDATE)
   @Transactional()
   async restoreProfile(
     @Param('id', ParseUUIDPipe) userProfileId: string,
-    @GetUser() _actor: ActorUser,
+    @GetUser() actorUser: ActorUser,
   ) {
-    await this.userProfileService.restoreUserProfile(userProfileId);
+    await this.userProfileService.restoreUserProfile(userProfileId, actorUser);
     // Note: Activity logging should be handled by event listeners if UserProfileService emits events
     return ControllerResponse.success(
       { id: userProfileId },

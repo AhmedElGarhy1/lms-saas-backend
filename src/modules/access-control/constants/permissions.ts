@@ -34,6 +34,11 @@ export const PERMISSIONS = {
       name: 'Restore Staff',
       scope: PermissionScope.CENTER,
     },
+    ACTIVATE: {
+      action: 'staff:activate',
+      name: 'Activate/Deactivate Staff',
+      scope: PermissionScope.CENTER,
+    },
     GRANT_USER_ACCESS: {
       action: 'staff:grant-user-access',
       name: 'Grant User Access',
@@ -93,6 +98,11 @@ export const PERMISSIONS = {
       name: 'Restore Admin',
       scope: PermissionScope.ADMIN,
     },
+    ACTIVATE: {
+      action: 'admin:activate',
+      name: 'Activate/Deactivate Admin',
+      scope: PermissionScope.ADMIN,
+    },
     GRANT_ADMIN_ACCESS: {
       action: 'admin:grant-admin-access',
       name: 'Grant Admin Access',
@@ -140,6 +150,11 @@ export const PERMISSIONS = {
     RESTORE: {
       action: 'center:restore',
       name: 'Restore Centers',
+      scope: PermissionScope.ADMIN,
+    },
+    ACTIVATE: {
+      action: 'center:activate',
+      name: 'Activate/Deactivate Centers',
       scope: PermissionScope.ADMIN,
     },
     READ_ALL: {
@@ -218,6 +233,11 @@ export const PERMISSIONS = {
     RESTORE: {
       action: 'branches:restore',
       name: 'Restore Branches',
+      scope: PermissionScope.CENTER,
+    },
+    ACTIVATE: {
+      action: 'branches:activate',
+      name: 'Activate/Deactivate Branches',
       scope: PermissionScope.CENTER,
     },
     IMPORT: {

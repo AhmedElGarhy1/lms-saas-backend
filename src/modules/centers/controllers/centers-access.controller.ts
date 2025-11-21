@@ -22,12 +22,10 @@ import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
-import {
-  BusinessLogicException,
-  InsufficientPermissionsException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { ProfileTypePermissionService } from '@/modules/access-control/services/profile-type-permission.service';
 import {
   ToggleUserStatusRequestDto,
   ToggleUserStatusResponseDto,
@@ -40,6 +38,7 @@ export class CentersAccessController {
   constructor(
     private readonly accessControlService: AccessControlService,
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly profileTypePermissionService: ProfileTypePermissionService,
   ) {}
 
   @Patch(':userProfileId/status')
@@ -196,36 +195,24 @@ export class CentersAccessController {
       dto.userProfileId,
     );
 
-    if (userProfile?.profileType === ProfileType.STAFF) {
-      const hasStaffCenterAccessPermission =
-        await this.accessControlHelperService.hasPermission(
-          actor.userProfileId,
-          PERMISSIONS.STAFF.GRANT_CENTER_ACCESS.action,
-          PERMISSIONS.STAFF.GRANT_CENTER_ACCESS.scope,
-          dto.centerId ?? actor.centerId,
-        );
-      if (!hasStaffCenterAccessPermission) {
-        throw new InsufficientPermissionsException(
-          'You do not have permission to grant staff center access',
-        );
-      }
-    } else if (userProfile?.profileType === ProfileType.ADMIN) {
-      const hasAdminCenterAccessPermission =
-        await this.accessControlHelperService.hasPermission(
-          actor.userProfileId,
-          PERMISSIONS.ADMIN.GRANT_CENTER_ACCESS.action,
-          PERMISSIONS.ADMIN.GRANT_CENTER_ACCESS.scope,
-          dto.centerId ?? actor.centerId,
-        );
-      if (!hasAdminCenterAccessPermission) {
-        throw new InsufficientPermissionsException(
-          'You do not have permission to grant admin center access',
-        );
-      }
-    } else {
+    if (!userProfile) {
+      throw new BusinessLogicException('Target user profile not found');
+    }
+
+    if (
+      userProfile.profileType !== ProfileType.STAFF &&
+      userProfile.profileType !== ProfileType.ADMIN
+    ) {
       throw new BusinessLogicException(
         'Target user must have an admin or staff profile to grant center access',
       );
     }
+
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      targetUserProfileId: dto.userProfileId,
+      operation: 'grant-center-access',
+      centerId: dto.centerId ?? actor.centerId,
+    });
   }
 }

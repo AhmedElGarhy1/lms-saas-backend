@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -27,6 +26,7 @@ import {
 } from '../events/access-control.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { BaseService } from '@/shared/common/services/base.service';
+import { ProfileTypePermissionService } from './profile-type-permission.service';
 
 @Injectable()
 export class AccessControlService extends BaseService {
@@ -39,6 +39,8 @@ export class AccessControlService extends BaseService {
     private readonly centerAccessRepository: CenterAccessRepository,
     private readonly branchAccessRepository: BranchAccessRepository,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    @Inject(forwardRef(() => ProfileTypePermissionService))
+    private readonly profileTypePermissionService: ProfileTypePermissionService,
   ) {
     super();
   }
@@ -59,8 +61,17 @@ export class AccessControlService extends BaseService {
     body: UserAccessDto,
     actor: ActorUser,
   ): Promise<void> {
-    const centerId = body.centerId ?? actor.centerId;
+    const centerId = body.centerId ?? actor.centerId ?? '';
     body.centerId = centerId;
+
+    // Validate profile-type permission: Check if actor has permission to grant access for this profile type
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      targetUserProfileId: body.granterUserProfileId,
+      operation: 'grant-center-access',
+      centerId,
+    });
+
     // Check user already have access
     const IHaveAccessToGranterUser =
       await this.accessControlHelperService.canUserAccess({
@@ -117,8 +128,18 @@ export class AccessControlService extends BaseService {
     body: UserAccessDto,
     actor: ActorUser,
   ): Promise<void> {
-    const centerId = body.centerId ?? actor.centerId;
+    const centerId = body.centerId ?? actor.centerId ?? '';
     body.centerId = centerId;
+
+    // Validate profile-type permission: Check if actor has permission to grant access for this profile type
+    // (revoke uses the same permission as grant)
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      targetUserProfileId: body.granterUserProfileId,
+      operation: 'grant-center-access',
+      centerId,
+    });
+
     // Check user already have access
     const IHaveAccessToGranterUser =
       await this.accessControlHelperService.canUserAccess({

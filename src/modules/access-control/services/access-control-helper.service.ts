@@ -373,10 +373,4 @@ export class AccessControlHelperService extends BaseService {
     );
   }
 
-  async doesProfilesMatch(userProfileId: string, targetProfileId: string) {
-    return this.userProfileService.doesProfilesMatch(
-      userProfileId,
-      targetProfileId,
-    );
-  }
 }

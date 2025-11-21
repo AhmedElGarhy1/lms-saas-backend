@@ -42,6 +42,7 @@ export class CenterListener {
 
     // Emit CREATE_OWNER event if userData is provided
     // This will trigger handleCreateCenterOwner() which creates the staff profile
+    console.log('userData', userData);
     if (userData) {
       await this.typeSafeEventEmitter.emitAsync(
         CenterEvents.CREATE_OWNER,

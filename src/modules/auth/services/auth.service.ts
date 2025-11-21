@@ -91,15 +91,6 @@ export class AuthService extends BaseService {
       throw new AuthenticationFailedException('User data is invalid');
     }
 
-    // Check if phone is verified (if required)
-    // TODO: Make this configurable via environment variable
-    // For now, phone verification is optional for login
-    // if (!user.phoneVerified) {
-    //   throw new BusinessLogicException(
-    //     'Phone not verified',
-    //     'Please verify your phone number before logging in',
-    //   );
-    // }
 
     if (!user.isActive) {
       throw new BusinessLogicException(
@@ -237,8 +228,8 @@ export class AuthService extends BaseService {
       throw error;
     }
 
-    // Update user emailVerified flag
-    await this.userService.update(userId, { emailVerified: true });
+    // Update user emailVerified date
+    await this.userService.update(userId, { emailVerified: new Date() });
 
     // Get user to create actor
     const user = await this.userService.findOne(userId);
@@ -338,8 +329,8 @@ export class AuthService extends BaseService {
       throw new NotFoundException('User not found');
     }
 
-    // Update user phoneVerified flag
-    await this.userService.update(verifiedUserId, { phoneVerified: true });
+    // Update user phoneVerified date
+    await this.userService.update(verifiedUserId, { phoneVerified: new Date() });
 
     // Create actor from user (the user themselves is the actor)
     const actor: ActorUser = {

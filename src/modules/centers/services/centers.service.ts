@@ -69,10 +69,9 @@ export class CentersService extends BaseService {
       isActive: dto.isActive,
     });
 
-    // Emit event after work is done
     await this.typeSafeEventEmitter.emitAsync(
       CenterEvents.CREATED,
-      new CreateCenterEvent(center, actor),
+      new CreateCenterEvent(center, actor, dto.user, dto.branch),
     );
 
     return center;

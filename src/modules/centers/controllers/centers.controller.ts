@@ -135,7 +135,7 @@ export class CentersController {
   @ApiBody({
     schema: { type: 'object', properties: { isActive: { type: 'boolean' } } },
   })
-  @Permissions(PERMISSIONS.CENTER.UPDATE)
+  @Permissions(PERMISSIONS.CENTER.ACTIVATE)
   @Transactional()
   async toggleCenterStatus(
     @Param('id', ParseUUIDPipe) id: string,

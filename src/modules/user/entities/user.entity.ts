@@ -44,11 +44,11 @@ export class User extends BaseEntity {
   @Exclude()
   hashedRt: string | null;
 
-  @Column({ type: 'boolean', default: false })
-  phoneVerified: boolean;
+  @Column({ type: 'timestamp', nullable: true })
+  phoneVerified: Date | null;
 
-  @Column({ type: 'boolean', default: false })
-  emailVerified: boolean;
+  @Column({ type: 'timestamp', nullable: true })
+  emailVerified: Date | null;
 
   // Relations
   @OneToMany(() => Center, (center) => center.creator)

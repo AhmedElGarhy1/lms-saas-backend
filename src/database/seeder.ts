@@ -96,8 +96,8 @@ export class DatabaseSeeder {
 
         // Insert user first
         await transactionalEntityManager.query(
-          `INSERT INTO users (id, email, password, name, "isActive", "createdBy", "phone", "createdAt", "updatedAt") 
-           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
+          `INSERT INTO users (id, email, password, name, "isActive", "createdBy", "phone", "phoneVerified", "emailVerified", "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), NOW(), NOW())`,
           [
             userUuid,
             'system@lms.com',
@@ -163,8 +163,8 @@ export class DatabaseSeeder {
 
         // Insert user first
         await transactionalEntityManager.query(
-          `INSERT INTO users (id, email, password, name, "isActive", "createdBy", "phone", "createdAt", "updatedAt") 
-           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
+          `INSERT INTO users (id, email, password, name, "isActive", "createdBy", "phone", "phoneVerified", "emailVerified", "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), NOW(), NOW())`,
           [
             userUuid,
             'superadmin@lms.com',

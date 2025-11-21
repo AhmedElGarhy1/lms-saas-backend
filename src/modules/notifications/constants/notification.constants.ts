@@ -109,6 +109,8 @@ export const REDIS_CONSTANTS = {
   NEAR_EXPIRATION_TTL_SECONDS: 60,
   /** Threshold for warning about high connection count */
   HIGH_CONNECTION_COUNT_THRESHOLD: 10,
+  /** Threshold for aggressive cleanup (immediate validation and removal) */
+  AGGRESSIVE_CLEANUP_THRESHOLD: 15,
 } as const;
 
 /**

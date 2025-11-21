@@ -13,6 +13,7 @@ import { UpdateUserProfileDto } from '../dto/update-user-profile.dto';
 import { CreateUserProfileDto } from '../dto/create-user-profile.dto';
 import { UserService } from '@/modules/user/services/user.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { ProfileTypePermissionService } from '@/modules/access-control/services/profile-type-permission.service';
 import { UserProfileRepository } from '../repositories/user-profile.repository';
 import { CentersService } from '@/modules/centers/services/centers.service';
 import { Role } from '@/modules/access-control/entities/role.entity';
@@ -34,6 +35,7 @@ export class UserProfileService extends BaseService {
     private readonly userService: UserService,
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly profileTypePermissionService: ProfileTypePermissionService,
     private readonly centerService: CentersService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
@@ -73,7 +75,7 @@ export class UserProfileService extends BaseService {
         actor.userProfileId,
         actor.centerId,
       );
-      returnData.role = profileRole?.role as Role;
+      returnData.role = profileRole?.role?.name ?? null ;
       returnData.center = await this.centerService.findCenterById(
         actor.centerId,
       );
@@ -82,7 +84,7 @@ export class UserProfileService extends BaseService {
       const profileRole = await this.accessControlHelperService.getProfileRole(
         actor.userProfileId,
       );
-      returnData.role = profileRole?.role as Role;
+      returnData.role = profileRole?.role?.name ?? null;
     }
 
     const profile = await this.userProfileRepository.getTargetProfile(
@@ -99,7 +101,19 @@ export class UserProfileService extends BaseService {
     return returnData;
   }
 
-  async activateProfileUser(userProfileId: string, isActive: boolean) {
+  async activateProfileUser(
+    userProfileId: string,
+    isActive: boolean,
+    actor: ActorUser,
+  ) {
+    // Validate that actor has permission to activate/deactivate this profile type
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      targetUserProfileId: userProfileId, // Fetches profileType from DB
+      operation: 'activate',
+      centerId: actor.centerId,
+    });
+
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException('User profile not found');
@@ -121,19 +135,27 @@ export class UserProfileService extends BaseService {
     dto: UpdateUserProfileDto,
     actor: ActorUser,
   ) {
-    // 1. Validate access (can actor manage this profile?)
+    // 1. Validate that actor has permission to update this profile type
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      targetUserProfileId: userProfileId, // Fetches profileType from DB
+      operation: 'update',
+      centerId: actor.centerId,
+    });
+
+    // 2. Validate access (can actor manage this profile?)
     await this.accessControlHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,
       targetUserProfileId: userProfileId,
     });
 
-    // 2. Get the user profile to find the userId
+    // 3. Get the user profile to find the userId
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException('User profile not found');
     }
 
-    // 3. Convert profile update data to user update format
+    // 4. Convert profile update data to user update format
     const userUpdateData: UpdateUserDto = {
       name: dto.name,
       phone: dto.phone,
@@ -148,7 +170,7 @@ export class UserProfileService extends BaseService {
       },
     };
 
-    // 4. Update User entity (this will emit UserUpdatedEvent)
+    // 5. Update User entity (this will emit UserUpdatedEvent)
     return await this.userService.updateUser(
       userProfile.userId,
       userUpdateData,
@@ -205,19 +227,34 @@ export class UserProfileService extends BaseService {
     );
   }
 
-  async deleteUserProfile(userProfileId: string): Promise<void> {
+  async deleteUserProfile(
+    userProfileId: string,
+    actor: ActorUser,
+  ): Promise<void> {
+    // Validate that actor has permission to delete this profile type
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      targetUserProfileId: userProfileId, // Fetches profileType from DB
+      operation: 'delete',
+      centerId: actor.centerId,
+    });
+
     await this.userProfileRepository.softRemove(userProfileId);
   }
 
-  async restoreUserProfile(userProfileId: string): Promise<void> {
-    await this.userProfileRepository.restore(userProfileId);
-  }
+  async restoreUserProfile(
+    userProfileId: string,
+    actor: ActorUser,
+  ): Promise<void> {
+    // Validate that actor has permission to restore this profile type
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      targetUserProfileId: userProfileId, // Fetches profileType from DB
+      operation: 'restore',
+      centerId: actor.centerId,
+    });
 
-  async deleteUserProfilesByUserId(userId: string): Promise<void> {
-    const userProfiles = await this.findUserProfilesByUserId(userId);
-    for (const profile of userProfiles) {
-      await this.deleteUserProfile(profile.id);
-    }
+    await this.userProfileRepository.restore(userProfileId);
   }
 
   async isAdmin(userProfileId: string) {
@@ -248,22 +285,30 @@ export class UserProfileService extends BaseService {
     dto: CreateUserProfileDto,
     actor: ActorUser,
   ): Promise<UserProfile> {
-    // 1. Create User entity (includes UserInfo creation)
+    // 1. Validate that actor has permission to create this profile type
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      profileType: dto.profileType, // From DTO
+      operation: 'create',
+      centerId: actor.centerId,
+    });
+
+    // 2. Create User entity (includes UserInfo creation)
     const createdUser = await this.userService.createUser(dto, actor);
 
-    // 2. Get or create profileRefEntity (Staff/Admin/Teacher) based on profileType
+    // 3. Get or create profileRefEntity (Staff/Admin/Teacher) based on profileType
     // Use existing profileRefId if provided, otherwise create new one
     const profileRefId =
       await this.userProfileRepository.createProfileRefEntity(dto.profileType);
 
-    // 3. Create UserProfile linking User to profileRefEntity
+    // 4. Create UserProfile linking User to profileRefEntity
     const userProfile = await this.createUserProfile(
       createdUser.id,
       dto.profileType,
       profileRefId,
     );
 
-    // 4. Emit domain events for STAFF and ADMIN profiles
+    // 5. Emit domain events for STAFF and ADMIN profiles
     // Access control, UserCreatedEvent, and phone verification are handled by listeners
     if (dto.profileType === ProfileType.STAFF) {
       // Get the Staff entity

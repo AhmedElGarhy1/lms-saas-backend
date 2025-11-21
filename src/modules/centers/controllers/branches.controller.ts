@@ -129,7 +129,7 @@ export class BranchesController {
     status: 404,
     description: 'Branch not found',
   })
-  @Permissions(PERMISSIONS.BRANCHES.UPDATE)
+  @Permissions(PERMISSIONS.BRANCHES.ACTIVATE)
   @Transactional()
   async toggleBranchStatus(
     @Param('branchId', ParseUUIDPipe) branchId: string,
