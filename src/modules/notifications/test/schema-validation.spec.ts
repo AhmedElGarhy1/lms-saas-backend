@@ -1,6 +1,6 @@
 import { cleanEnv, str, num, bool, url } from 'envalid';
 import { Config } from '@/shared/config/config';
-import { NotificationConfig } from '../config/notification.config';
+import { NotificationConfig } from '../../config/notification.config';
 
 describe('Schema Validation Tests', () => {
   describe('Environment Variables', () => {

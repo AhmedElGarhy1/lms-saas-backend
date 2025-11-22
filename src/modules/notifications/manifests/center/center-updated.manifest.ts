@@ -9,7 +9,7 @@ import { NotificationGroup } from '../../enums/notification-group.enum';
  * Sent when a center's information is updated
  * Supports IN_APP and WhatsApp channels
  */
-export const centerUpdatedManifest: NotificationManifest = {
+export const centerUpdatedManifest = {
   type: NotificationType.CENTER_UPDATED,
   group: NotificationGroup.MANAGEMENT,
   priority: 2,
@@ -33,4 +33,4 @@ export const centerUpdatedManifest: NotificationManifest = {
       },
     },
   },
-} as const;
+} as const satisfies NotificationManifest;

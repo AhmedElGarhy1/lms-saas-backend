@@ -41,7 +41,6 @@ export interface SmsNotificationPayload extends BaseNotificationPayload {
   data: {
     content: string;
     message?: string;
-    html?: string;
     [key: string]: unknown;
   };
 }
@@ -76,7 +75,6 @@ export interface InAppNotificationPayload extends BaseNotificationPayload {
   data: {
     message: string;
     content?: string;
-    html?: string;
     priority?: number;
     expiresAt?: Date;
     [key: string]: unknown;

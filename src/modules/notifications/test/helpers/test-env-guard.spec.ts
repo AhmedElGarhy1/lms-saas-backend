@@ -4,7 +4,7 @@
  * Tests for TestEnvGuard utility to ensure environment validation works correctly.
  */
 
-import { TestEnvGuard, type TestEnvConfig } from './test-env-guard';
+import { TestEnvGuard, type TestEnvConfig } from '../../adapters/test-env-guard';
 
 describe('TestEnvGuard', () => {
   const originalEnv = TestEnvGuard.captureEnvironment();

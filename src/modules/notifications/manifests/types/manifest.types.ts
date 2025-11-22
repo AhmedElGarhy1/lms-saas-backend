@@ -27,16 +27,14 @@ export interface ChannelManifest {
 /**
  * Configuration for a single audience
  * Defines channels and configurations specific to this audience
+ *
+ * Note: Using Record<string, ChannelManifest> allows manifests to define only
+ * the channels they actually use. The `as const` assertion on manifest objects
+ * preserves the exact channel keys for type inference.
  */
 export interface AudienceManifest {
   /** Channel-specific configurations for this audience */
-  channels: {
-    [NotificationChannel.EMAIL]?: ChannelManifest;
-    [NotificationChannel.SMS]?: ChannelManifest;
-    [NotificationChannel.WHATSAPP]?: ChannelManifest;
-    [NotificationChannel.IN_APP]?: ChannelManifest;
-    [NotificationChannel.PUSH]?: ChannelManifest;
-  };
+  channels: Record<string, ChannelManifest>;
 }
 
 /**
@@ -56,10 +54,6 @@ export interface NotificationManifest {
   requiredVariables: readonly string[];
   /** Priority level (1-10, higher = more urgent) */
   priority?: number;
-  /** Whether to use i18n localization */
-  localized?: boolean;
-  /** Whether this notification requires audit logging */
-  requiresAudit?: boolean;
   /** Audience-specific configurations */
   audiences: {
     [audienceId: string]: AudienceManifest;

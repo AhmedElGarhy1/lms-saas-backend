@@ -9,11 +9,10 @@ import { NotificationGroup } from '../../enums/notification-group.enum';
  * Sent when a user's phone number is successfully verified
  * Supports SMS and In-App channels only
  */
-export const phoneVerifiedManifest: NotificationManifest = {
+export const phoneVerifiedManifest = {
   type: NotificationType.PHONE_VERIFIED,
   group: NotificationGroup.SECURITY,
   priority: 3,
-  requiresAudit: true,
   requiredVariables: ['phone'],
   audiences: {
     DEFAULT: {
@@ -27,4 +26,4 @@ export const phoneVerifiedManifest: NotificationManifest = {
       },
     },
   },
-} as const;
+} as const satisfies NotificationManifest;

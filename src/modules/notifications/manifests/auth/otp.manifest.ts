@@ -9,11 +9,10 @@ import { NotificationGroup } from '../../enums/notification-group.enum';
  * Sent when a one-time password is generated for verification
  * Supports SMS, WhatsApp, Email, and In-App channels
  */
-export const otpManifest: NotificationManifest = {
+export const otpManifest = {
   type: NotificationType.OTP,
   group: NotificationGroup.SECURITY,
   priority: 4,
-  requiresAudit: true,
   requiredVariables: ['otpCode', 'expiresIn'],
   audiences: {
     DEFAULT: {
@@ -21,14 +20,10 @@ export const otpManifest: NotificationManifest = {
         [NotificationChannel.SMS]: {
           template: 'sms/auth/otp',
         },
-        [NotificationChannel.EMAIL]: {
-          template: 'email/auth/otp',
-          subject: 'Your Verification Code',
-        },
         [NotificationChannel.IN_APP]: {
           template: 'in-app/auth/otp',
         },
       },
     },
   },
-} as const;
+} as const satisfies NotificationManifest;

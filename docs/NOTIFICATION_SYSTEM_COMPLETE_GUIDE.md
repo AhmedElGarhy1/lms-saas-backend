@@ -353,7 +353,6 @@ export const yourNewEventManifest: NotificationManifest = {
   type: NotificationType.YOUR_NEW_EVENT, // Add to enum first
   group: NotificationGroup.USER, // Choose appropriate group
   priority: 3, // 1-10, higher = more urgent
-  requiresAudit: false, // Set true for security events
   templateBase: 'your-module/your-new-event', // ✅ Type-safe - must exist in TemplateBasePath
   channels: {
     [NotificationChannel.EMAIL]: {
@@ -602,10 +601,7 @@ this.eventEmitter.emit(
    - Medium priority (3-5) → Use 2-3 channels
    - Low priority (1-2) → Use 1 channel
 
-4. Consider requiresAudit:
-   - If requiresAudit → Prefer EMAIL (for audit trail)
-
-5. Return optimal channels
+4. Return optimal channels
 ```
 
 ### Idempotency System
@@ -858,17 +854,7 @@ priority: 2;
 priority: 1;
 ```
 
-### 6. Mark Security Events for Audit
-
-```typescript
-// ✅ Good
-requiresAudit: true; // For OTP, password reset, email verification
-
-// ✅ Good
-requiresAudit: false; // For routine notifications
-```
-
-### 7. Handle Missing Properties Gracefully
+### 6. Handle Missing Properties Gracefully
 
 ```typescript
 // In ensureTemplateData()

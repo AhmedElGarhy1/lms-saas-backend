@@ -505,7 +505,6 @@ export const NotificationEventsMap: Partial<
     template: 'user-registered',
     group: NotificationGroup.USER,
     priority: 5,
-    localized: true,
     profileScoped: false,
   },
   // ... more mappings
@@ -519,7 +518,6 @@ export const NotificationEventsMap: Partial<
 - `template`: Template name (without extension)
 - `group`: NotificationGroup enum value
 - `priority`: 1-10 (higher = more urgent)
-- `localized`: Use i18n templates
 - `profileScoped`: Profile-specific channels
 - `actionType`: Action type for IN_APP notifications
 - `defaultChannels`: Fallback channels
@@ -672,7 +670,6 @@ export const NotificationEventsMap: Partial<
     template: 'your-template-name',
     group: NotificationGroup.SYSTEM,
     priority: 7,
-    localized: true,
     profileScoped: false,
   },
 };

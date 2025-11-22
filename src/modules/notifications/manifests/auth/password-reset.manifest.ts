@@ -9,11 +9,10 @@ import { NotificationGroup } from '../../enums/notification-group.enum';
  * Sent when a user requests a password reset
  * Supports Email, SMS, and WhatsApp channels
  */
-export const passwordResetManifest: NotificationManifest = {
+export const passwordResetManifest = {
   type: NotificationType.PASSWORD_RESET,
   group: NotificationGroup.SECURITY,
   priority: 3,
-  requiresAudit: true,
   requiredVariables: ['link', 'expiresIn', 'name'],
   audiences: {
     DEFAULT: {
@@ -31,4 +30,4 @@ export const passwordResetManifest: NotificationManifest = {
       },
     },
   },
-} as const;
+} as const satisfies NotificationManifest;

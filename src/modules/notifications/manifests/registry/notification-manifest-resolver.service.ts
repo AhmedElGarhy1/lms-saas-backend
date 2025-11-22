@@ -90,7 +90,6 @@ export class NotificationManifestResolver {
     return Object.keys(manifest.audiences);
   }
 
-
   /**
    * Get channel configuration for a specific audience
    * This is the main method used by the notification service

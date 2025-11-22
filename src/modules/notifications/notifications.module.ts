@@ -9,6 +9,7 @@ import { NotificationTemplateService } from './services/notification-template.se
 import { NotificationProcessor } from './processors/notification.processor';
 import { NotificationLogRepository } from './repositories/notification-log.repository';
 import { NotificationListener } from './listeners/notification.listener';
+import { NotificationListenerHelper } from './listeners/helpers/notification-listener.helper';
 import {
   EmailAdapter,
   SmsAdapter,
@@ -115,6 +116,7 @@ import { RawBodyMiddleware } from './middleware/raw-body.middleware';
     NotificationProcessor,
     NotificationLogRepository,
     NotificationRepository,
+    NotificationListenerHelper, // Helper service for notification listener operations
     NotificationListener,
     EmailAdapter,
     SmsAdapter,

@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotificationTemplateService } from '../services/notification-template.service';
-import { RedisTemplateCacheService } from '../services/redis-template-cache.service';
+import { NotificationTemplateService } from '../../services/notification-template.service';
+import { RedisTemplateCacheService } from '../../services/redis-template-cache.service';
 import { Logger } from '@nestjs/common';
-import { NotificationChannel } from '../enums/notification-channel.enum';
-import { createMockLoggerService } from './helpers';
-import { TestEnvGuard } from './helpers/test-env-guard';
+import { NotificationChannel } from '../../enums/notification-channel.enum';
+import { createMockLoggerService } from '../../adapters/helpers';
+import { TestEnvGuard } from '../../adapters/helpers/test-env-guard';
 import { readFile } from 'fs/promises';
 import * as Handlebars from 'handlebars';
 import * as templatePathUtil from '../utils/template-path.util';

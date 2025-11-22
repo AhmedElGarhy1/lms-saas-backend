@@ -16,13 +16,10 @@ import { centerCreatedManifest } from '../center/center-created.manifest';
  * - Verification notifications (OTP, PASSWORD_RESET, EMAIL_VERIFICATION)
  * - Center notifications (CENTER_CREATED, CENTER_UPDATED)
  *
- * Using Record<NotificationType, NotificationManifest> ensures all types are required at compile time.
+ * Using `satisfies` ensures all types are required at compile time while preserving literal types.
  * TypeScript will error if any NotificationType is missing a manifest.
  */
-export const NotificationRegistry: Record<
-  NotificationType,
-  NotificationManifest
-> = {
+export const NotificationRegistry = {
   // Verification notifications
   [NotificationType.OTP]: otpManifest,
   [NotificationType.PASSWORD_RESET]: passwordResetManifest,
@@ -32,4 +29,4 @@ export const NotificationRegistry: Record<
   // Center notifications
   [NotificationType.CENTER_CREATED]: centerCreatedManifest,
   [NotificationType.CENTER_UPDATED]: centerUpdatedManifest,
-} as const;
+} as const satisfies Record<NotificationType, NotificationManifest>;

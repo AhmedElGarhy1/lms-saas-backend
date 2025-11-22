@@ -14,11 +14,10 @@ import { NotificationGroup } from '../../enums/notification-group.enum';
  * All required variables: creatorName, centerName, ownerName
  * Each audience uses only the variables it needs
  */
-export const centerCreatedManifest: NotificationManifest = {
+export const centerCreatedManifest = {
   type: NotificationType.CENTER_CREATED,
   group: NotificationGroup.MANAGEMENT,
   priority: 3,
-  requiresAudit: true,
   requiredVariables: ['creatorName', 'centerName', 'ownerName'],
   audiences: {
     ADMIN: {
@@ -40,4 +39,4 @@ export const centerCreatedManifest: NotificationManifest = {
       },
     },
   },
-} as const;
+} as const satisfies NotificationManifest;

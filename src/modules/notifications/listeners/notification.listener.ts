@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { OnEvent } from '@nestjs/event-emitter';
-import { NotificationService } from '../services/notification.service';
 import { CenterEvents } from '@/shared/events/center.events.enum';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import {
@@ -20,177 +18,17 @@ import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationType } from '../enums/notification-type.enum';
 import { UserService } from '@/modules/user/services/user.service';
 import { CentersService } from '@/modules/centers/services/centers.service';
-import { NotificationManifestResolver } from '../manifests/registry/notification-manifest-resolver.service';
-import { NotificationEvent } from '../types/notification-event.types';
+import { NotificationListenerHelper } from './helpers/notification-listener.helper';
 
 @Injectable()
 export class NotificationListener {
   private readonly logger: Logger = new Logger(NotificationListener.name);
 
   constructor(
-    private readonly notificationService: NotificationService,
-    private readonly moduleRef: ModuleRef,
+    private readonly helper: NotificationListenerHelper,
     private readonly userService: UserService,
     private readonly centersService: CentersService,
-    private readonly manifestResolver: NotificationManifestResolver,
   ) {}
-
-  /**
-   * Validate that event data contains all required template variables
-   * This provides early detection of missing data before rendering
-   * @param notificationType - Notification type
-   * @param audience - Audience identifier
-   * @param eventData - Event data to validate
-   * @returns Array of missing variable names (format: "channel:variable"), empty if all present
-   */
-  private validateEventData(
-    notificationType: NotificationType,
-    audience: string,
-    eventData: NotificationEvent | Record<string, unknown>,
-  ): string[] {
-    try {
-      const manifest = this.manifestResolver.getManifest(notificationType);
-      const audienceConfig = this.manifestResolver.getAudienceConfig(
-        manifest,
-        audience,
-      );
-
-      if (!audienceConfig) {
-        return [];
-      }
-
-      const missing: string[] = [];
-
-      // Check manifest-level required variables (all variables needed by any audience)
-      const requiredVariables = manifest.requiredVariables || [];
-      for (const variable of requiredVariables) {
-        const eventObj = eventData as Record<string, unknown>;
-        if (
-          !(variable in eventObj) ||
-          eventObj[variable] === null ||
-          eventObj[variable] === undefined
-        ) {
-          missing.push(variable);
-        }
-      }
-
-      return missing;
-    } catch (error) {
-      // If manifest resolution fails, return empty (will be caught later)
-      this.logger.warn(
-        `Failed to validate event data for ${notificationType}:${audience}`,
-        {
-          notificationType,
-          audience,
-          error: error instanceof Error ? error.message : String(error),
-        },
-      );
-      return [];
-    }
-  }
-
-  /**
-   * Validate event data and trigger notification with comprehensive error handling
-   * This helper method centralizes validation, logging, and error handling logic
-   */
-  private async validateAndTriggerNotification(
-    notificationType: NotificationType,
-    audience: string,
-    event: NotificationEvent | Record<string, unknown>,
-    recipients: RecipientInfo[],
-    options?: {
-      channels?: NotificationChannel[];
-      context?: Record<string, unknown>;
-    },
-  ): Promise<void> {
-    const { channels, context = {} } = options || {};
-
-    // Early validation: Check if required template variables are present
-    const missingVariables = this.validateEventData(
-      notificationType,
-      audience,
-      event,
-    );
-
-    if (missingVariables.length > 0) {
-      this.logger.error(
-        `${notificationType} notification will fail - Missing required template variables: ${missingVariables.join(', ')}`,
-        {
-          notificationType,
-          audience,
-          missingVariables,
-          eventDataKeys: Object.keys(event).join(', '),
-          ...context,
-        },
-      );
-    }
-
-    try {
-      await this.notificationService.trigger(notificationType, {
-        audience,
-        event,
-        recipients,
-        channels,
-      });
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      const extractedMissing = this.extractMissingVariables(errorMessage);
-
-      this.logger.error(
-        `Failed to send ${notificationType} notification${extractedMissing ? ` - Missing variables: ${extractedMissing.join(', ')}` : ''}`,
-        error,
-        {
-          notificationType,
-          audience,
-          error: errorMessage,
-          missingVariables: extractedMissing || missingVariables,
-          eventDataKeys: Object.keys(event).join(', '),
-          ...context,
-        },
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Extract missing variables from error message
-   */
-  private extractMissingVariables(errorMessage: string): string[] | undefined {
-    const match = errorMessage.match(
-      /Missing required template variables.*?: (.+)$/,
-    );
-    return match ? match[1].split(', ').map((v) => v.trim()) : undefined;
-  }
-
-  /**
-   * Validate recipients - phone and locale are always required
-   * @param recipients - Array of recipients to validate
-   * @param notificationType - Notification type for logging context
-   * @returns Array of valid recipients
-   */
-  private validateRecipients(
-    recipients: RecipientInfo[],
-    notificationType: NotificationType,
-  ): RecipientInfo[] {
-    return recipients.filter((r) => {
-      if (!r.phone) {
-        this.logger.warn(
-          `Recipient ${r.userId} missing required phone, skipping`,
-          { userId: r.userId, notificationType },
-        );
-        return false;
-      }
-      if (!r.locale) {
-        this.logger.warn(
-          `Recipient ${r.userId} missing required locale, skipping`,
-          { userId: r.userId, notificationType },
-        );
-        return false;
-      }
-      return true;
-    });
-  }
 
   @OnEvent(CenterEvents.CREATED)
   async handleCenterCreated(
@@ -222,7 +60,7 @@ export class NotificationListener {
     };
 
     // Send to owner audience
-    await this.validateAndTriggerNotification(
+    await this.helper.validateAndTriggerNotification(
       NotificationType.CENTER_CREATED,
       'OWNER',
       event,
@@ -235,7 +73,7 @@ export class NotificationListener {
     );
 
     // Send to admin audience
-    await this.validateAndTriggerNotification(
+    await this.helper.validateAndTriggerNotification(
       NotificationType.CENTER_CREATED,
       'ADMIN',
       event,
@@ -298,7 +136,7 @@ export class NotificationListener {
       centerId: centerId,
     };
 
-    const validRecipients = this.validateRecipients(
+    const validRecipients = this.helper.validateRecipients(
       [recipient],
       NotificationType.CENTER_UPDATED,
     );
@@ -314,7 +152,7 @@ export class NotificationListener {
     };
 
     // Use helper method for validation and triggering
-    await this.validateAndTriggerNotification(
+    await this.helper.validateAndTriggerNotification(
       NotificationType.CENTER_UPDATED,
       'DEFAULT',
       eventWithCenter,
@@ -362,7 +200,7 @@ export class NotificationListener {
       locale: user.userInfo.locale,
     };
 
-    const validRecipients = this.validateRecipients(
+    const validRecipients = this.helper.validateRecipients(
       [recipient],
       NotificationType.PASSWORD_RESET,
     );
@@ -371,7 +209,7 @@ export class NotificationListener {
       return;
     }
 
-    await this.validateAndTriggerNotification(
+    await this.helper.validateAndTriggerNotification(
       NotificationType.PASSWORD_RESET,
       'DEFAULT',
       event,
@@ -402,7 +240,7 @@ export class NotificationListener {
       centerId: undefined,
     };
 
-    const validRecipients = this.validateRecipients(
+    const validRecipients = this.helper.validateRecipients(
       [recipient],
       NotificationType.EMAIL_VERIFICATION,
     );
@@ -411,7 +249,7 @@ export class NotificationListener {
       return;
     }
 
-    await this.validateAndTriggerNotification(
+    await this.helper.validateAndTriggerNotification(
       NotificationType.EMAIL_VERIFICATION,
       'DEFAULT',
       event,
@@ -448,7 +286,7 @@ export class NotificationListener {
       locale: user.userInfo.locale,
     };
 
-    const validRecipients = this.validateRecipients(
+    const validRecipients = this.helper.validateRecipients(
       [recipient],
       NotificationType.OTP,
     );
@@ -467,7 +305,7 @@ export class NotificationListener {
       timestamp: event.timestamp,
     };
 
-    await this.validateAndTriggerNotification(
+    await this.helper.validateAndTriggerNotification(
       NotificationType.OTP,
       'DEFAULT',
       eventData,
@@ -513,7 +351,7 @@ export class NotificationListener {
       centerId: undefined,
     };
 
-    const validRecipients = this.validateRecipients(
+    const validRecipients = this.helper.validateRecipients(
       [recipient],
       NotificationType.PHONE_VERIFIED,
     );
@@ -522,7 +360,7 @@ export class NotificationListener {
       return;
     }
 
-    await this.validateAndTriggerNotification(
+    await this.helper.validateAndTriggerNotification(
       NotificationType.PHONE_VERIFIED,
       'DEFAULT',
       event,

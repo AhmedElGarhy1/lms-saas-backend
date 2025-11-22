@@ -83,3 +83,4 @@
 [x] responsive frontend
 [ ] user can update his center (throw settings)
 [ ] think about removing restrictions and permissions for diffrent profile types it's we already have restrictions you can only access users in your user_access
+[ ] back to translations and update translations correctly and update in app notifications translations and refactor the overcomplicated reaseon, actionRequired, retible, and all htese useless files that frontend doesn't use

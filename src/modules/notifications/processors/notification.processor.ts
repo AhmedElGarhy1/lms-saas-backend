@@ -179,16 +179,48 @@ export class NotificationProcessor extends WorkerHost {
 
         if (logs.length > 0) {
           const log = logs[0];
-          // Use configurable retry threshold instead of hardcoded value
-          await this.logRepository.update(log.id, {
-            status:
-              retryCount < this.retryThreshold
-                ? NotificationStatus.RETRYING
-                : NotificationStatus.FAILED,
-            error: errorMessage,
-            retryCount,
-            lastAttemptAt: new Date(),
-          });
+          try {
+            // Use configurable retry threshold instead of hardcoded value
+            await this.logRepository.update(log.id, {
+              status:
+                retryCount < this.retryThreshold
+                  ? NotificationStatus.RETRYING
+                  : NotificationStatus.FAILED,
+              error: errorMessage,
+              retryCount,
+              lastAttemptAt: new Date(),
+            });
+          } catch (updateError) {
+            // Log but don't fail - error already logged above
+            // This prevents losing error information if update fails
+            this.logger.error(
+              `Failed to update notification log in processor: ${log.id}`,
+              updateError,
+              {
+                originalError: errorMessage,
+                jobId,
+                userId,
+                type,
+                channel,
+                retryCount,
+                correlationId: ctxCorrelationId,
+              },
+            );
+          }
+        } else {
+          // Log was never created - this shouldn't happen but log it for debugging
+          this.logger.warn(
+            `Notification log not found for failed notification: ${jobId}`,
+            {
+              jobId,
+              userId,
+              type,
+              channel,
+              retryCount,
+              correlationId: ctxCorrelationId,
+              error: errorMessage,
+            },
+          );
         }
       }
 
@@ -272,12 +304,41 @@ export class NotificationProcessor extends WorkerHost {
 
       if (logs.length > 0) {
         const log = logs[0];
-        await this.logRepository.update(log.id, {
-          status: NotificationStatus.FAILED,
-          error: errorMessage,
-          retryCount,
-          lastAttemptAt: new Date(),
-        });
+        try {
+          await this.logRepository.update(log.id, {
+            status: NotificationStatus.FAILED,
+            error: errorMessage,
+            retryCount,
+            lastAttemptAt: new Date(),
+          });
+        } catch (updateError) {
+          // Log but don't fail - error already logged above
+          this.logger.error(
+            `Failed to update notification log in onFailed handler: ${log.id}`,
+            updateError,
+            {
+              originalError: errorMessage,
+              jobId,
+              userId,
+              type,
+              channel,
+              retryCount,
+            },
+          );
+        }
+      } else {
+        // Log was never created - this shouldn't happen but log it for debugging
+        this.logger.warn(
+          `Notification log not found in onFailed handler: ${jobId}`,
+          {
+            jobId,
+            userId,
+            type,
+            channel,
+            retryCount,
+            error: errorMessage,
+          },
+        );
       }
     }
   }

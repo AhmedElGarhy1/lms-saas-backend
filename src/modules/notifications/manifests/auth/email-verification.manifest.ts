@@ -9,11 +9,10 @@ import { NotificationGroup } from '../../enums/notification-group.enum';
  * Sent when a user needs to verify their email address
  * Supports Email channel only
  */
-export const emailVerificationManifest: NotificationManifest = {
+export const emailVerificationManifest = {
   type: NotificationType.EMAIL_VERIFICATION,
   group: NotificationGroup.SECURITY,
   priority: 3,
-  requiresAudit: true,
   requiredVariables: ['link', 'expiresIn', 'name'],
   audiences: {
     DEFAULT: {
@@ -34,4 +33,4 @@ export const emailVerificationManifest: NotificationManifest = {
       },
     },
   },
-} as const;
+} as const satisfies NotificationManifest;

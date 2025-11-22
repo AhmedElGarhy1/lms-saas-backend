@@ -84,7 +84,7 @@ export class SmsAdapter
     // Type system ensures channel is SMS, no runtime check needed
     const phoneNumber = payload.recipient;
     const message =
-      payload.data.content || payload.data.html || payload.data.message || '';
+      payload.data.content || payload.data.message || '';
 
     if (!message) {
       throw new MissingNotificationContentException(

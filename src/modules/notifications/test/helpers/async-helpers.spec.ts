@@ -12,7 +12,7 @@ import {
   retry,
   type WaitForOptions,
   type RetryOptions,
-} from './async-helpers';
+} from '../../adapters/async-helpers';
 
 describe('Async Helpers', () => {
   describe('waitFor', () => {

@@ -56,8 +56,6 @@ interface NotificationManifest {
   type: NotificationType; // Notification type enum
   group: NotificationGroup; // Notification group enum
   priority?: number; // 1-10 (higher = more urgent)
-  localized?: boolean; // Use i18n templates
-  requiresAudit?: boolean; // For security events
   channels: {
     [NotificationChannel.EMAIL]?: ChannelManifest;
     [NotificationChannel.SMS]?: ChannelManifest;
@@ -94,7 +92,6 @@ export const yourTypeManifest: NotificationManifest = {
   type: NotificationType.YOUR_TYPE, // Replace with your type
   group: NotificationGroup.YOUR_GROUP, // Replace with your group
   priority: 3, // Optional: 1-10 (higher = more urgent)
-  requiresAudit: false, // Optional: true for security events
 
   channels: {
     // EMAIL channel (required subject)
@@ -198,17 +195,7 @@ priority: 2;
 priority: 1;
 ```
 
-### 5. **Mark Security Events for Audit**
-
-```typescript
-// ✅ Good
-requiresAudit: true, // For OTP, password reset, email verification
-
-// ✅ Good
-requiresAudit: false, // For routine notifications
-```
-
-### 6. **Use Consistent Locale Defaults**
+### 5. **Use Consistent Locale Defaults**
 
 ```typescript
 // ✅ Good - always specify defaultLocale
@@ -477,7 +464,6 @@ export const otpManifest: NotificationManifest = {
   type: NotificationType.OTP,
   group: NotificationGroup.SECURITY,
   priority: 4,
-  requiresAudit: true,
   audiences: {
     DEFAULT: {
   channels: {
@@ -505,7 +491,6 @@ export const centerCreatedManifest: NotificationManifest = {
   type: NotificationType.CENTER_CREATED,
   group: NotificationGroup.MANAGEMENT,
   priority: 3,
-  requiresAudit: true,
   channels: {
     [NotificationChannel.EMAIL]: {
       template: 'center-created',
@@ -533,7 +518,7 @@ When migrating an existing notification type:
 - [ ] Check template file to see what variables it uses (e.g., `{{otpCode}}`, `{{link}}`)
 - [ ] Set `requiredVariables` to match template variable names exactly
 - [ ] Remember that `ensureTemplateData` handles transformations (use transformed names)
-- [ ] Set appropriate `priority` and `requiresAudit` flags
+- [ ] Set appropriate `priority` flag
 - [ ] Add manifest to `NotificationRegistry`
 - [ ] Create/verify template file exists
 - [ ] Run `npm run validate:notification-manifests`

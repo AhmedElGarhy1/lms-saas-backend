@@ -11,18 +11,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
   NotificationCircuitBreakerService,
   CircuitState,
-} from '../services/notification-circuit-breaker.service';
-import { NotificationIdempotencyCacheService } from '../services/notification-idempotency-cache.service';
-import { NotificationDlqCleanupJob } from '../jobs/notification-dlq-cleanup.job';
-import { NotificationLogRepository } from '../repositories/notification-log.repository';
+} from '../../services/notification-circuit-breaker.service';
+import { NotificationIdempotencyCacheService } from '../../services/notification-idempotency-cache.service';
+import { NotificationDlqCleanupJob } from '../../jobs/notification-dlq-cleanup.job';
+import { NotificationLogRepository } from '../../repositories/notification-log.repository';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { Logger } from '@nestjs/common';
-import { NotificationChannel } from '../enums/notification-channel.enum';
-import { NotificationType } from '../enums/notification-type.enum';
-import { NotificationStatus } from '../enums/notification-status.enum';
-import { FakeRedis } from './fakes/fake-redis';
-import { createMockLoggerService } from './helpers';
-import { TestEnvGuard } from './helpers/test-env-guard';
+import { NotificationChannel } from '../../enums/notification-channel.enum';
+import { NotificationType } from '../../enums/notification-type.enum';
+import { NotificationStatus } from '../../enums/notification-status.enum';
+import { FakeRedis } from '../../adapters/fakes/fake-redis';
+import { createMockLoggerService } from '../../adapters/helpers';
+import { TestEnvGuard } from '../../adapters/helpers/test-env-guard';
 import { Config } from '@/shared/config/config';
 
 describe('Runtime Validation - Integration Tests', () => {

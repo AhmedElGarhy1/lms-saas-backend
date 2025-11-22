@@ -65,7 +65,6 @@ export class ChannelSelectionService
     baseChannels: NotificationChannel[],
     eventContext: EventContext,
     priority?: number,
-    requiresAudit?: boolean,
   ): Promise<NotificationChannel[]> {
     try {
       // Start with base channels

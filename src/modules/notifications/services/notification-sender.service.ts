@@ -24,6 +24,7 @@ import {
   EmailNotificationPayload,
   PushNotificationPayload,
 } from '../types/notification-payload.interface';
+import { isWhatsAppPayload } from '../types/type-guards';
 import { buildStandardizedMetadata } from '../utils/metadata-builder.util';
 import { RenderedNotification } from '../manifests/types/manifest.types';
 import { BaseService } from '@/shared/common/services/base.service';
@@ -220,20 +221,44 @@ export class NotificationSenderService extends BaseService {
         }
 
         const dataObj = payload.data;
-        const renderedContent = getStringProperty(dataObj, 'content');
 
-        if (!renderedContent) {
-          const errorMessage = `Missing pre-rendered content for ${payload.type}:${payload.channel}. Manifest system should provide rendered content.`;
-          this.logger.error(
-            `${errorMessage} - channel: ${payload.channel}, type: ${payload.type}, userId: ${payload.userId}, correlationId: ${correlationId}`,
-          );
-          return [
-            {
-              channel: payload.channel,
-              success: false,
-              error: errorMessage,
-            },
-          ];
+        // WhatsApp uses template messages, not rendered content
+        let renderedContent: string | undefined;
+        if (isWhatsAppPayload(payload)) {
+          // Validate WhatsApp-specific fields
+          const templateName = getStringProperty(dataObj, 'templateName');
+          if (!templateName) {
+            const errorMessage = `Missing templateName for ${payload.type}:${payload.channel}. WhatsApp requires templateName.`;
+            this.logger.error(
+              `${errorMessage} - channel: ${payload.channel}, type: ${payload.type}, userId: ${payload.userId}, correlationId: ${correlationId}`,
+            );
+            return [
+              {
+                channel: payload.channel,
+                success: false,
+                error: errorMessage,
+              },
+            ];
+          }
+          // WhatsApp payload is valid, continue processing
+          // Note: WhatsApp doesn't use rendered content, so renderedContent stays undefined
+        } else {
+          // For other channels (SMS, EMAIL, IN_APP), require content
+          renderedContent = getStringProperty(dataObj, 'content');
+
+          if (!renderedContent) {
+            const errorMessage = `Missing pre-rendered content for ${payload.type}:${payload.channel}. Manifest system should provide rendered content.`;
+            this.logger.error(
+              `${errorMessage} - channel: ${payload.channel}, type: ${payload.type}, userId: ${payload.userId}, correlationId: ${correlationId}`,
+            );
+            return [
+              {
+                channel: payload.channel,
+                success: false,
+                error: errorMessage,
+              },
+            ];
+          }
         }
 
         // Extract jobId from payload data if available (for retries)
@@ -268,29 +293,52 @@ export class NotificationSenderService extends BaseService {
         const templatePath = getStringProperty(dataObj, 'template') || '';
 
         // Create a minimal RenderedNotification object for metadata building
-        rendered = {
-          type: payload.type,
-          channel: payload.channel,
-          content: renderedContent,
-          metadata: {
-            template: templatePath,
-            locale: payload.locale || 'en',
-          },
-        };
+        // WhatsApp uses templateName instead of rendered content
+        if (isWhatsAppPayload(payload)) {
+          const templateName = getStringProperty(dataObj, 'templateName') || '';
+          rendered = {
+            type: payload.type,
+            channel: payload.channel,
+            content: '', // WhatsApp doesn't use rendered content
+            metadata: {
+              template: templateName,
+              locale: payload.locale || 'en',
+            },
+          };
+        } else {
+          rendered = {
+            type: payload.type,
+            channel: payload.channel,
+            content: renderedContent || '',
+            metadata: {
+              template: templatePath,
+              locale: payload.locale || 'en',
+            },
+          };
+        }
 
         // Create new log entry only if we didn't find an existing one
         // Use minimal metadata initially, will be updated after successful send
-        if (!notificationLog && rendered) {
+        // Always create log if it doesn't exist (even if rendered is missing, use fallback)
+        if (!notificationLog) {
+          const metadata = rendered
+            ? buildStandardizedMetadata(payload, rendered, {
+                jobId: jobId,
+                correlationId: correlationIdForMetadata,
+                retryCount: 0,
+              })
+            : {
+                jobId: jobId,
+                correlationId: correlationIdForMetadata,
+                retryCount: 0,
+              };
+
           notificationLog = await logRepo.save({
             type: payload.type,
             channel: payload.channel,
             status: NotificationStatus.PENDING,
             recipient: payload.recipient,
-            metadata: buildStandardizedMetadata(payload, rendered, {
-              jobId: jobId,
-              correlationId: correlationIdForMetadata,
-              retryCount: 0,
-            }),
+            metadata,
             userId: payload.userId,
             centerId: payload.centerId,
             profileType: payload.profileType,
@@ -321,7 +369,7 @@ export class NotificationSenderService extends BaseService {
         if (channel === NotificationChannel.EMAIL) {
           const subject = isEmailPayload(payload)
             ? payload.subject
-              : 'Notification';
+            : 'Notification';
           sendPayload = {
             ...commonFields,
             channel: NotificationChannel.EMAIL,
@@ -333,10 +381,7 @@ export class NotificationSenderService extends BaseService {
               ...dataObj,
             },
           } as EmailNotificationPayload;
-        } else if (
-          channel === NotificationChannel.SMS ||
-          channel === NotificationChannel.WHATSAPP
-        ) {
+        } else if (channel === NotificationChannel.SMS) {
           sendPayload = {
             ...commonFields,
             channel: channel,
@@ -348,6 +393,10 @@ export class NotificationSenderService extends BaseService {
               ...dataObj,
             },
           } as NotificationPayload;
+        } else if (channel === NotificationChannel.WHATSAPP) {
+          // WhatsApp payload already has the correct structure (templateName, templateLanguage, templateParameters)
+          // Use the payload directly without modifying it
+          sendPayload = payload as NotificationPayload;
         } else if (channel === NotificationChannel.PUSH) {
           const title = isPushPayload(payload) ? payload.title : 'Notification';
           sendPayload = {
@@ -395,11 +444,11 @@ export class NotificationSenderService extends BaseService {
         }
         // TypeScript now knows sendPayload is not null
         const finalPayload = sendPayload;
-        
+
         // Capture WhatsApp message ID immediately after send (before any async operations)
         // This ensures messageId is available for webhook correlation even if webhook arrives quickly
         let whatsappMessageId: string | undefined;
-        
+
         await (this.circuitBreaker
           ? this.circuitBreaker.executeWithCircuitBreaker(
               payload.channel,
@@ -408,7 +457,7 @@ export class NotificationSenderService extends BaseService {
               },
             )
           : adapter.send(finalPayload)); // Fallback if circuit breaker not available
-        
+
         // Capture messageId immediately after send (adapter sets it on payload)
         if (
           payload.channel === NotificationChannel.WHATSAPP &&
@@ -416,7 +465,6 @@ export class NotificationSenderService extends BaseService {
         ) {
           whatsappMessageId = (finalPayload as any).whatsappMessageId;
         }
-        
         const latency = Date.now() - startTime;
 
         // Update log as success with standardized metadata (within transaction)
@@ -487,36 +535,67 @@ export class NotificationSenderService extends BaseService {
           error instanceof Error ? error.message : String(error);
 
         // Update log as failed with standardized metadata (within transaction)
+        // Wrap in try-catch to prevent transaction rollback if update fails
         if (notificationLog) {
-          // Build standardized metadata even for failed sends (for consistency)
-          // Use sendPayload if available (created before send), otherwise use original payload
-          const payloadForMetadata = sendPayload || payload;
-          if (rendered) {
-            const standardizedMetadata = buildStandardizedMetadata(
-              payloadForMetadata,
-              rendered,
+          try {
+            // Build standardized metadata even for failed sends (for consistency)
+            // Use sendPayload if available (created before send), otherwise use original payload
+            const payloadForMetadata = sendPayload || payload;
+            if (rendered) {
+              const standardizedMetadata = buildStandardizedMetadata(
+                payloadForMetadata,
+                rendered,
+                {
+                  jobId: jobId,
+                  correlationId: correlationIdForMetadata,
+                  retryCount: notificationLog.retryCount || 0,
+                  latencyMs: Date.now() - startTime,
+                },
+              );
+
+              await logRepo.update(notificationLog.id, {
+                status: NotificationStatus.FAILED,
+                error: errorMessage,
+                metadata: standardizedMetadata,
+                lastAttemptAt: new Date(),
+              });
+            } else {
+              // Fallback if rendered not available
+              await logRepo.update(notificationLog.id, {
+                status: NotificationStatus.FAILED,
+                error: errorMessage,
+                lastAttemptAt: new Date(),
+              });
+            }
+          } catch (updateError) {
+            // Log but don't fail - error already logged above
+            // This prevents transaction rollback which would lose the log entry
+            this.logger.error(
+              `Failed to update notification log status: ${notificationLog.id}`,
+              updateError,
               {
-                jobId: jobId,
+                originalError: errorMessage,
+                channel: payload.channel,
+                type: payload.type,
+                userId: payload.userId,
                 correlationId: correlationIdForMetadata,
-                retryCount: notificationLog.retryCount || 0,
-                latencyMs: Date.now() - startTime,
+                jobId: jobId,
               },
             );
-
-            await logRepo.update(notificationLog.id, {
-              status: NotificationStatus.FAILED,
-              error: errorMessage,
-              metadata: standardizedMetadata,
-              lastAttemptAt: new Date(),
-            });
-          } else {
-            // Fallback if rendered not available
-            await logRepo.update(notificationLog.id, {
-              status: NotificationStatus.FAILED,
-              error: errorMessage,
-              lastAttemptAt: new Date(),
-            });
           }
+        } else {
+          // Log was never created - this shouldn't happen but log it for debugging
+          this.logger.warn(
+            `Notification log was never created for failed notification: ${payload.type}:${payload.channel}`,
+            {
+              channel: payload.channel,
+              type: payload.type,
+              userId: payload.userId,
+              correlationId: correlationIdForMetadata,
+              jobId: jobId,
+              error: errorMessage,
+            },
+          );
         }
         // Track metrics (outside transaction - these are non-critical)
         await this.metricsService.incrementFailed(

@@ -5,6 +5,7 @@ import { NotificationRegistry } from '../manifests/registry/notification-registr
 import { NotificationManifestResolver } from '../manifests/registry/notification-manifest-resolver.service';
 import { templateExists, getTemplatePath } from '../utils/template-path.util';
 import { Locale } from '@/shared/common/enums/locale.enum';
+import { ChannelManifest } from '../manifests/types/manifest.types';
 
 // Test environment detection - check NODE_ENV first (set by test-setup.ts)
 // This is the most reliable indicator since test-setup.ts runs before any tests
@@ -171,11 +172,14 @@ export class NotificationValidator implements OnModuleInit {
         )) {
           if (!channelConfig) continue;
 
+          // Type assertion: channelConfig is ChannelManifest from Record<string, ChannelManifest>
+          const config = channelConfig as ChannelManifest;
+
           // Convert channel key to NotificationChannel enum
           const channel = channelKey as NotificationChannel;
 
           // Validate template is provided (required field)
-          if (!channelConfig.template) {
+          if (!config.template) {
             errors.push(
               `Missing template for ${type}:${audienceId}:${channel}. Template is required for all channels.`,
             );
@@ -194,30 +198,30 @@ export class NotificationValidator implements OnModuleInit {
           const supportedLocales = Object.values(Locale);
           for (const locale of supportedLocales) {
             const templatePath = getTemplatePath(
-              channelConfig.template,
+              config.template,
               locale,
               channel,
             );
 
-            if (!templateExists(channelConfig.template, locale, channel)) {
+            if (!templateExists(config.template, locale, channel)) {
               errors.push(
-                `Missing template: ${type}:${audienceId}:${channel} (${channelConfig.template}) for locale ${locale} - Path: ${templatePath}`,
+                `Missing template: ${type}:${audienceId}:${channel} (${config.template}) for locale ${locale} - Path: ${templatePath}`,
               );
             }
           }
 
           // Validate template path against generated type (if using explicit template)
           // TypeScript already enforces this at compile time, but add runtime check for safety
-          if (channelConfig.template) {
+          if (config.template) {
             // If explicit template is provided, it should be in NotificationTemplatePath type
             // This is mainly for documentation - TypeScript already enforces it at compile time
             // Runtime validation: template existence is already checked above
             // Type safety is enforced by TypeScript when using NotificationTemplatePath
-            void channelConfig.template;
+            void config.template;
           }
 
           // Check EMAIL has subject
-          if (channel === NotificationChannel.EMAIL && !channelConfig.subject) {
+          if (channel === NotificationChannel.EMAIL && !config.subject) {
             warnings.push(
               `EMAIL channel missing subject: ${type}:${audienceId}:${channel}`,
             );
