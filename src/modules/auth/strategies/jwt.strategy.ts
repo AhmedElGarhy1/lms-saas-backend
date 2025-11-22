@@ -4,6 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserRepository } from '@/modules/user/repositories/user.repository';
 import { Config } from '@/shared/config/config';
 import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import { FailedLoginAttemptService } from '../services/failed-login-attempt.service';
 
 export interface JwtPayload {
   sub: string;
@@ -16,7 +17,10 @@ export interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(private readonly userRepository: UserRepository) {
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly failedLoginAttemptService: FailedLoginAttemptService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -38,7 +42,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new BusinessLogicException('User phone is not verified');
     }
 
-    if (user.lockoutUntil && user.lockoutUntil > new Date()) {
+    // Check lockout from Redis
+    const isLocked = await this.failedLoginAttemptService.isLockedOut(user.id);
+    if (isLocked) {
       throw new BusinessLogicException(
         'User account is locked',
         'Your account is locked due to multiple failed login attempts',

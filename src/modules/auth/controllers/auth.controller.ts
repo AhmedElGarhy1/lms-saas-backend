@@ -89,6 +89,7 @@ export class AuthController {
   }
 
   @Post('verify-email')
+  @RateLimit({ limit: 5, windowSeconds: 60 }) // 5 attempts per minute
   @UpdateApiResponses('Verify email address')
   @ApiBody({ type: VerifyEmailRequestDto })
   @Transactional()
@@ -104,6 +105,7 @@ export class AuthController {
   }
 
   @Post('request-email-verification')
+  @RateLimit({ limit: 1, windowSeconds: 60 }) // 1 request per minute
   @UpdateApiResponses('Request email verification')
   @NoProfile()
   @NoContext()
@@ -117,6 +119,7 @@ export class AuthController {
   }
 
   @Post('request-phone-verification')
+  @RateLimit({ limit: 1, windowSeconds: 60 }) // 1 request per minute
   @UpdateApiResponses('Request phone verification')
   @ApiBody({ type: RequestPhoneVerificationRequestDto })
   @NoProfile()
@@ -133,6 +136,7 @@ export class AuthController {
   }
 
   @Post('verify-phone')
+  @RateLimit({ limit: 5, windowSeconds: 60 }) // 5 attempts per minute
   @UpdateApiResponses('Verify phone number with OTP code')
   @ApiBody({ type: VerifyPhoneRequestDto })
   @NoProfile()

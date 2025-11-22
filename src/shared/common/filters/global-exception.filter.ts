@@ -69,8 +69,35 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         ? exceptionResponse
         : (exceptionResponse as any)?.message || 'An error occurred';
 
-    const userMessage = this.getUserFriendlyMessage(status, message);
-    const actionRequired = this.getActionRequired(status, message);
+    // Extract retryAfter for rate limit errors
+    // Calculate dynamically from resetTime if available (most accurate)
+    // RateLimitGuard always passes resetTime, so this should always work
+    let retryAfter: number | undefined;
+    if (
+      status === HttpStatus.TOO_MANY_REQUESTS &&
+      typeof exceptionResponse === 'object' &&
+      exceptionResponse !== null
+    ) {
+      const response = exceptionResponse as any;
+
+      // Calculate dynamically from resetTime if available (most accurate)
+      if (response.resetTime) {
+        const now = Date.now();
+        const remainingMs = response.resetTime - now;
+        retryAfter = Math.max(1, Math.round(remainingMs / 1000));
+      } else if (response.retryAfter) {
+        // Fallback to static retryAfter
+        retryAfter = response.retryAfter;
+      }
+      // If neither is available, retryAfter remains undefined and will use fallback message
+    }
+
+    const userMessage = this.getUserFriendlyMessage(
+      status,
+      message,
+      retryAfter,
+    );
+    const actionRequired = this.getActionRequired(status, message, retryAfter);
 
     return {
       statusCode: status,
@@ -104,7 +131,38 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     };
   }
 
-  private getUserFriendlyMessage(status: number, message: string): string {
+  /**
+   * Format exact remaining time for rate limit
+   * Returns format like "30 seconds", "1 minute 30 seconds", "2 minutes 15 seconds"
+   * Always shows seconds when less than a minute, or minutes + seconds when more
+   */
+  private formatExactRemainingTime(seconds: number): string {
+    if (seconds < 60) {
+      return `${seconds} ${seconds === 1 ? 'second' : 'seconds'}`;
+    }
+
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    if (remainingSeconds === 0) {
+      return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
+    }
+
+    const minutesStr = `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
+    const secondsStr = `${remainingSeconds} ${remainingSeconds === 1 ? 'second' : 'seconds'}`;
+    return `${minutesStr} ${secondsStr}`;
+  }
+
+  private getUserFriendlyMessage(
+    status: number,
+    message: string,
+    retryAfter?: number,
+  ): string {
+    if (status === HttpStatus.TOO_MANY_REQUESTS && retryAfter) {
+      const remainingTime = this.formatExactRemainingTime(retryAfter);
+      return `Too many requests. Please try again in ${remainingTime}`;
+    }
+
     const friendlyMessages: Record<number, string> = {
       [HttpStatus.BAD_REQUEST]: 'Please check your input and try again',
       [HttpStatus.UNAUTHORIZED]: 'Please log in to continue',
@@ -124,7 +182,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     return friendlyMessages[status] || 'An error occurred';
   }
 
-  private getActionRequired(status: number, message: string): string {
+  private getActionRequired(
+    status: number,
+    message: string,
+    retryAfter?: number,
+  ): string {
+    if (status === HttpStatus.TOO_MANY_REQUESTS && retryAfter) {
+      const remainingTime = this.formatExactRemainingTime(retryAfter);
+      return `Please wait ${remainingTime} before making another request`;
+    }
+
     const actions: Record<number, string> = {
       [HttpStatus.BAD_REQUEST]: 'Fix the highlighted errors and try again',
       [HttpStatus.UNAUTHORIZED]: 'Please provide valid credentials',

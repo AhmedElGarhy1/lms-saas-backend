@@ -59,25 +59,30 @@ export class FixedWindowStrategy
         -- Increment counter
         local count = redis.call('INCR', key)
         
+        -- Get TTL to check if key needs expiration AND to calculate reset time
+        local ttl = redis.call('TTL', key)
+        
         -- Set TTL only if key is new (count == 1) or doesn't have TTL
-        if count == consumePoints or redis.call('TTL', key) == -1 then
+        if count == consumePoints or ttl == -1 then
           redis.call('EXPIRE', key, windowSeconds)
+          ttl = windowSeconds  -- Update TTL since we just set it
         end
+        
+        -- Get current time to calculate exact reset time
+        local resetTime = redis.call('TIME')
+        local resetTimestamp = tonumber(resetTime[1]) * 1000 + math.floor(tonumber(resetTime[2]) / 1000)
+        local actualResetTime = resetTimestamp + (ttl * 1000)
         
         -- Check if within limit
         if count <= limit then
           if not dryRun then
             -- Already incremented above
           end
-          local resetTime = redis.call('TIME')
-          local resetTimestamp = tonumber(resetTime[1]) * 1000 + math.floor(tonumber(resetTime[2]) / 1000)
-          return {1, count, resetTimestamp + windowSeconds * 1000}
+          return {1, count, actualResetTime}
         else
           -- Rate limit exceeded
-          local resetTime = redis.call('TIME')
-          local resetTimestamp = tonumber(resetTime[1]) * 1000 + math.floor(tonumber(resetTime[2]) / 1000)
-          local retryAfter = (resetTimestamp + windowSeconds * 1000) - (resetTimestamp)
-          return {0, count, resetTimestamp + windowSeconds * 1000, retryAfter}
+          local remainingMs = actualResetTime - resetTimestamp
+          return {0, count, actualResetTime, remainingMs}
         end
       `;
 

@@ -3,26 +3,23 @@ import { RedisService } from '@/shared/modules/redis/redis.service';
 import { Config } from '@/shared/config/config';
 import { BaseService } from '@/shared/common/services/base.service';
 import { AuthRedisKeyBuilder } from '../utils/auth-redis-key-builder';
-import { UserService } from '@/modules/user/services/user.service';
 
 /**
  * Service for managing failed login attempts using Redis
- * Uses Redis TTL for automatic expiration after 1 hour
+ * Uses Redis TTL for automatic expiration (lockoutDurationMinutes)
+ * Single source of truth: lockoutDurationMinutes controls both lockout duration and counter reset
  */
 @Injectable()
 export class FailedLoginAttemptService extends BaseService {
   private readonly logger: Logger = new Logger(FailedLoginAttemptService.name);
 
-  constructor(
-    private readonly redisService: RedisService,
-    private readonly userService: UserService,
-  ) {
+  constructor(private readonly redisService: RedisService) {
     super();
   }
 
   /**
    * Increment failed login attempts counter atomically
-   * Sets TTL to 1 hour on first attempt
+   * Sets TTL to lockoutDurationMinutes on first attempt
    * @param userId - User ID
    * @returns Current attempt count and whether lockout threshold reached
    */
@@ -32,7 +29,7 @@ export class FailedLoginAttemptService extends BaseService {
     const redisKey = AuthRedisKeyBuilder.failedLoginAttempts(userId);
     const client = this.redisService.getClient();
     const maxAttempts = Config.auth.maxFailedLoginAttempts;
-    const ttlSeconds = Config.auth.failedAttemptsResetHours * 3600; // Convert hours to seconds
+    const ttlSeconds = Config.auth.lockoutDurationMinutes * 60; // Convert minutes to seconds
 
     try {
       // Lua script for atomic INCR + EXPIRE
@@ -64,11 +61,6 @@ export class FailedLoginAttemptService extends BaseService {
       const [attempts, isLockedFlag] = result;
       const isLocked = isLockedFlag === 1;
 
-      // If lockout threshold reached, set lockout in database
-      if (isLocked) {
-        await this.setLockoutInDatabase(userId);
-      }
-
       return { attempts, isLocked };
     } catch (error) {
       // Fail-open: if Redis fails, log error but don't block login
@@ -78,6 +70,32 @@ export class FailedLoginAttemptService extends BaseService {
       );
       // Return safe defaults
       return { attempts: 0, isLocked: false };
+    }
+  }
+
+  /**
+   * Check if user is locked out
+   * @param userId - User ID
+   * @returns true if attempts >= maxAttempts, false otherwise
+   */
+  async isLockedOut(userId: string): Promise<boolean> {
+    const redisKey = AuthRedisKeyBuilder.failedLoginAttempts(userId);
+    const client = this.redisService.getClient();
+    const maxAttempts = Config.auth.maxFailedLoginAttempts;
+
+    try {
+      const count = await client.get(redisKey);
+      if (!count) return false;
+
+      const attempts = parseInt(count, 10);
+      return attempts >= maxAttempts;
+    } catch (error) {
+      // Fail-open: if Redis fails, return false (allow login)
+      this.logger.error(
+        `Failed to check lockout status in Redis for user ${userId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      return false;
     }
   }
 
@@ -121,22 +139,4 @@ export class FailedLoginAttemptService extends BaseService {
       );
     }
   }
-
-  /**
-   * Set lockout in database when threshold is reached
-   * @param userId - User ID
-   */
-  private async setLockoutInDatabase(userId: string): Promise<void> {
-    try {
-      const lockoutDurationMinutes = Config.auth.lockoutDurationMinutes;
-      await this.userService.setLockoutUntil(userId, lockoutDurationMinutes);
-    } catch (error) {
-      this.logger.error(
-        `Failed to set lockout in database for user ${userId}`,
-        error instanceof Error ? error.stack : String(error),
-      );
-      // Don't throw - lockout is a security feature, but we don't want to break login flow
-    }
-  }
 }
-

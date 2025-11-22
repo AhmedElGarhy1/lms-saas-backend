@@ -23,6 +23,7 @@ export type NotificationTemplatePath =
   | 'sms/center-created'
   | 'sms/center-updated'
   | 'sms/default'
+  | 'whatsapp/auth/account-locked'
   | 'whatsapp/auth/email-verification'
   | 'whatsapp/auth/otp'
   | 'whatsapp/auth/password-reset'
@@ -31,6 +32,7 @@ export type NotificationTemplatePath =
   | 'whatsapp/default';
 
 export type TemplateBasePath =
+  | 'auth/account-locked'
   | 'auth/email-verification'
   | 'auth/otp'
   | 'auth/password-reset'

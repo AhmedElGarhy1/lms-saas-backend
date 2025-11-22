@@ -380,45 +380,6 @@ export class UserService extends BaseService {
     return this.userRepository.findOne(userProfile.userId);
   }
 
-  async updateFailedLoginAttempts(
-    userProfileId: string,
-    attempts: number,
-  ): Promise<void> {
-    // Find user by profileId
-    const userProfile = await this.userProfileService.findOne(userProfileId);
-    if (!userProfile) {
-      throw new ResourceNotFoundException('User profile not found');
-    }
-    await this.userRepository.updateFailedLoginAttempts(
-      userProfile.userId,
-      attempts,
-    );
-  }
-
-  async setLockoutUntil(userId: string, minutes: number): Promise<void> {
-    const lockoutUntil = new Date(Date.now() + minutes * 60 * 1000);
-    await this.userRepository.setLockoutUntil(userId, lockoutUntil);
-  }
-
-  async resetFailedLoginAttemptsForUser(userId: string): Promise<void> {
-    await this.userRepository.resetFailedLoginAttempts(userId);
-  }
-
-  async updateLockoutUntil(
-    userProfileId: string,
-    lockoutUntil: Date | null,
-  ): Promise<void> {
-    // Find user by profileId
-    const userProfile = await this.userProfileService.findOne(userProfileId);
-    if (!userProfile) {
-      throw new ResourceNotFoundException('User profile not found');
-    }
-    await this.userRepository.updateFailedLoginAttempts(
-      userProfile.userId,
-      0,
-      lockoutUntil || undefined,
-    );
-  }
 
   async updateUserTwoFactor(
     userProfileId: string,

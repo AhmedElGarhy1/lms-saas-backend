@@ -156,3 +156,13 @@ export class TwoFactorDisabledEvent extends BaseEvent {
     super(actor);
   }
 }
+
+export class AccountLockedEvent extends SystemEvent {
+  constructor(
+    public readonly userId: string,
+    public readonly phone: string,
+    public readonly lockoutDurationMinutes: number,
+  ) {
+    super();
+  }
+}

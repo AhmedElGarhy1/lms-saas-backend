@@ -15,10 +15,6 @@ export class UserFactory {
       password: 'password123', // Will be hashed in seeder
       isActive: faker.datatype.boolean({ probability: 0.8 }), // 80% active
       twoFactorEnabled: faker.datatype.boolean({ probability: 0.2 }), // 20% have 2FA
-      failedLoginAttempts: faker.number.int({ min: 0, max: 3 }),
-      lockoutUntil: faker.datatype.boolean({ probability: 0.05 })
-        ? faker.date.future()
-        : undefined,
       userInfo: this.createUserInfo() as any,
       ...overrides,
     };
@@ -38,8 +34,6 @@ export class UserFactory {
       password: 'system123',
       isActive: true,
       twoFactorEnabled: false,
-      failedLoginAttempts: 0,
-      lockoutUntil: undefined,
       ...overrides,
     });
   }
@@ -51,8 +45,6 @@ export class UserFactory {
       password: 'admin123',
       isActive: true,
       twoFactorEnabled: true,
-      failedLoginAttempts: 0,
-      lockoutUntil: undefined,
       ...overrides,
     });
   }
@@ -64,8 +56,6 @@ export class UserFactory {
       password: 'admin123',
       isActive: true,
       twoFactorEnabled: faker.datatype.boolean({ probability: 0.5 }),
-      failedLoginAttempts: 0,
-      lockoutUntil: undefined,
       ...overrides,
     });
   }
@@ -84,8 +74,6 @@ export class UserFactory {
       password: 'owner123',
       isActive: true,
       twoFactorEnabled: faker.datatype.boolean({ probability: 0.7 }),
-      failedLoginAttempts: 0,
-      lockoutUntil: undefined,
       ...overrides,
     });
   }
@@ -97,8 +85,6 @@ export class UserFactory {
       password: 'teacher123',
       isActive: faker.datatype.boolean({ probability: 0.9 }),
       twoFactorEnabled: faker.datatype.boolean({ probability: 0.3 }),
-      failedLoginAttempts: faker.number.int({ min: 0, max: 2 }),
-      lockoutUntil: undefined,
       ...overrides,
     });
   }
@@ -110,8 +96,6 @@ export class UserFactory {
       password: 'student123',
       isActive: faker.datatype.boolean({ probability: 0.95 }),
       twoFactorEnabled: faker.datatype.boolean({ probability: 0.1 }),
-      failedLoginAttempts: faker.number.int({ min: 0, max: 1 }),
-      lockoutUntil: undefined,
       ...overrides,
     });
   }
@@ -123,8 +107,6 @@ export class UserFactory {
       password: 'parent123',
       isActive: faker.datatype.boolean({ probability: 0.85 }),
       twoFactorEnabled: faker.datatype.boolean({ probability: 0.2 }),
-      failedLoginAttempts: faker.number.int({ min: 0, max: 1 }),
-      lockoutUntil: undefined,
       ...overrides,
     });
   }
@@ -136,8 +118,6 @@ export class UserFactory {
       password: 'staff123',
       isActive: faker.datatype.boolean({ probability: 0.8 }),
       twoFactorEnabled: faker.datatype.boolean({ probability: 0.2 }),
-      failedLoginAttempts: faker.number.int({ min: 0, max: 2 }),
-      lockoutUntil: undefined,
       ...overrides,
     });
   }

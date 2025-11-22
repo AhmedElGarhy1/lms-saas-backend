@@ -20,15 +20,6 @@ export class UserResponseDto {
   @Expose()
   name: string;
 
-  @ApiProperty({ description: 'Number of failed login attempts' })
-  @Expose()
-  failedLoginAttempts: number;
-
-  @ApiProperty({ description: 'Lockout until date', required: false })
-  @Expose()
-  @Type(() => Date)
-  lockoutUntil?: Date;
-
   @ApiProperty({
     description: 'Two-factor authentication secret',
     required: false,

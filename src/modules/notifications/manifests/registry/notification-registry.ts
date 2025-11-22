@@ -6,6 +6,7 @@ import { otpManifest } from '../auth/otp.manifest';
 import { passwordResetManifest } from '../auth/password-reset.manifest';
 import { emailVerificationManifest } from '../auth/email-verification.manifest';
 import { phoneVerifiedManifest } from '../auth/phone-verified.manifest';
+import { accountLockedManifest } from '../auth/account-locked.manifest';
 import { centerUpdatedManifest } from '../center/center-updated.manifest';
 import { centerCreatedManifest } from '../center/center-created.manifest';
 
@@ -28,6 +29,7 @@ export const NotificationRegistry: Record<
   [NotificationType.PASSWORD_RESET]: passwordResetManifest,
   [NotificationType.EMAIL_VERIFICATION]: emailVerificationManifest,
   [NotificationType.PHONE_VERIFIED]: phoneVerifiedManifest,
+  [NotificationType.ACCOUNT_LOCKED]: accountLockedManifest,
 
   // Center notifications
   [NotificationType.CENTER_CREATED]: centerCreatedManifest,

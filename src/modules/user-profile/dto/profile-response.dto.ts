@@ -38,12 +38,6 @@ export class ProfileResponseDto {
   isActive: boolean;
 
   @ApiProperty({
-    description: 'Failed login attempts',
-    example: 0,
-  })
-  failedLoginAttempts: number;
-
-  @ApiProperty({
     description: 'Two factor enabled',
     example: false,
   })

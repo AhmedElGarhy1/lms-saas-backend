@@ -79,17 +79,30 @@ export class RateLimitGuard implements CanActivate {
 
       if (!result.allowed) {
         // Rate limit exceeded
-        const retryAfter = result.retryAfter
-          ? Math.ceil(result.retryAfter / 1000)
-          : windowSeconds;
+        // Calculate exact remaining time from resetTime (most accurate)
+        // retryAfter is in milliseconds, but resetTime gives exact timestamp
+        let retryAfterSeconds: number;
+        if (result.resetTime) {
+          const now = Date.now();
+          const remainingMs = result.resetTime - now;
+          retryAfterSeconds = Math.max(1, Math.round(remainingMs / 1000));
+        } else if (result.retryAfter) {
+          // Fallback to retryAfter if resetTime not available
+          retryAfterSeconds = Math.max(1, Math.round(result.retryAfter / 1000));
+        } else {
+          // Last resort: use window size
+          retryAfterSeconds = windowSeconds;
+        }
 
-        response.setHeader(RETRY_AFTER, retryAfter.toString());
+        // Set Retry-After header (RFC 7231 requires seconds)
+        response.setHeader(RETRY_AFTER, retryAfterSeconds.toString());
 
         throw new HttpException(
           {
             statusCode: HttpStatus.TOO_MANY_REQUESTS,
             message: 'Too many requests, please try again later',
-            retryAfter,
+            retryAfter: retryAfterSeconds,
+            resetTime: result.resetTime, // Pass resetTime for dynamic calculation
           },
           HttpStatus.TOO_MANY_REQUESTS,
         );

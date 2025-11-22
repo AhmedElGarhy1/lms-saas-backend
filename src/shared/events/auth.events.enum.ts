@@ -14,4 +14,5 @@ export enum AuthEvents {
   TWO_FA_SETUP = 'two.fa.setup',
   TWO_FA_ENABLED = 'two.fa.enabled',
   TWO_FA_DISABLED = 'two.fa.disabled',
+  ACCOUNT_LOCKED = 'account.locked',
 }

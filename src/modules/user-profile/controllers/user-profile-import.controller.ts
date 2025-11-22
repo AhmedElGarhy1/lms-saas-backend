@@ -8,6 +8,7 @@ import { VerifyUserImportDto } from '../dto/verify-user-import.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
+import { RateLimit } from '@/modules/rate-limit/decorators/rate-limit.decorator';
 
 @ApiTags('User Profile Import')
 @Controller('user-profiles/import')
@@ -18,6 +19,7 @@ export class UserProfileImportController {
   ) {}
 
   @Post('request-otp')
+  @RateLimit({ limit: 1, windowSeconds: 60 }) // 1 request per minute
   @ApiOperation({ summary: 'Request OTP for user import' })
   @ApiResponse({
     status: 200,
@@ -47,6 +49,7 @@ export class UserProfileImportController {
   }
 
   @Post('verify')
+  @RateLimit({ limit: 5, windowSeconds: 60 }) // 5 attempts per minute
   @ApiOperation({ summary: 'Verify OTP and import user' })
   @ApiResponse({
     status: 200,

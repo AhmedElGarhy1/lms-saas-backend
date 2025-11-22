@@ -182,15 +182,6 @@ export class UserProfileResponseDto {
   @Expose()
   twoFactorEnabled: boolean;
 
-  @ApiProperty({ description: 'Failed login attempts' })
-  @Expose()
-  failedLoginAttempts: number;
-
-  @ApiProperty({ description: 'Lockout until date', required: false })
-  @Expose()
-  @Type(() => Date)
-  lockoutUntil?: Date;
-
   @ApiProperty({ description: 'Creation date' })
   @Expose()
   @Type(() => Date)

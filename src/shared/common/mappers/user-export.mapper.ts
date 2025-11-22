@@ -11,7 +11,6 @@ export interface UserExportData {
   createdAt: string;
   updatedAt: string;
   profileType: string;
-  failedLoginAttempts: number;
 }
 
 export class UserExportMapper implements ExportMapper<User, UserExportData> {
@@ -27,7 +26,6 @@ export class UserExportMapper implements ExportMapper<User, UserExportData> {
       updatedAt: user.updatedAt?.toISOString() || '',
       profileType:
         user.userProfiles?.map((p) => p.profileType).join(', ') || '',
-      failedLoginAttempts: user.failedLoginAttempts,
     };
   }
 

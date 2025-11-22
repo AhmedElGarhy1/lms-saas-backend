@@ -13,6 +13,7 @@ import {
   EmailVerificationRequestedEvent,
   OtpEvent,
   PhoneVerifiedEvent,
+  AccountLockedEvent,
 } from '@/modules/auth/events/auth.events';
 import { ValidateEvent } from '../types/event-notification-mapping.types';
 import { RecipientInfo } from '../types/recipient-info.interface';
@@ -536,6 +537,76 @@ export class NotificationListener {
       validRecipients,
       {
         channels: [NotificationChannel.SMS, NotificationChannel.IN_APP],
+        context: {
+          userId: user.id,
+        },
+      },
+    );
+  }
+
+  @OnEvent(AuthEvents.ACCOUNT_LOCKED)
+  async handleAccountLocked(
+    event: ValidateEvent<AccountLockedEvent, AuthEvents.ACCOUNT_LOCKED>,
+  ) {
+    // Fetch user to get locale and ensure user exists
+    if (!event.userId) {
+      this.logger.warn(
+        'Account locked event missing userId, skipping notification',
+      );
+      return;
+    }
+
+    const user = await this.userService.findOne(event.userId);
+
+    if (!user) {
+      this.logger.warn(
+        `User ${event.userId} not found for account locked notification`,
+      );
+      return;
+    }
+
+    const recipient: RecipientInfo = {
+      userId: user.id,
+      profileId: null,
+      profileType: null,
+      phone: event.phone || user.getPhone(),
+      email: null,
+      locale: user.userInfo.locale,
+      centerId: undefined,
+    };
+
+    const validRecipients = this.validateRecipients(
+      [recipient],
+      NotificationType.ACCOUNT_LOCKED,
+    );
+
+    if (validRecipients.length === 0) {
+      return;
+    }
+
+    // Format lockout duration based on locale
+    const lockoutDurationMinutes = event.lockoutDurationMinutes;
+    const lockoutDuration =
+      user.userInfo.locale === 'ar'
+        ? `${lockoutDurationMinutes} دقيقة`
+        : `${lockoutDurationMinutes} ${lockoutDurationMinutes === 1 ? 'minute' : 'minutes'}`;
+
+    // Prepare event data with formatted duration
+    const eventData = {
+      userId: event.userId,
+      phone: event.phone,
+      lockoutDurationMinutes: event.lockoutDurationMinutes,
+      lockoutDuration,
+      timestamp: event.timestamp,
+    };
+
+    await this.validateAndTriggerNotification(
+      NotificationType.ACCOUNT_LOCKED,
+      'DEFAULT',
+      eventData,
+      validRecipients,
+      {
+        channels: [NotificationChannel.WHATSAPP],
         context: {
           userId: user.id,
         },

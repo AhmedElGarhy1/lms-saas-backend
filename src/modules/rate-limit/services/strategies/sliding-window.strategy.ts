@@ -82,14 +82,16 @@ export class SlidingWindowStrategy
           -- Get oldest entry to calculate retry-after
           local oldest = redis.call('ZRANGE', key, 0, 0, 'WITHSCORES')
           local retryAfter = 0
+          local actualResetTime = now + windowSeconds * 1000  -- Fallback
           if #oldest > 0 then
             local oldestTime = tonumber(oldest[2])
-            retryAfter = (oldestTime + windowSeconds * 1000) - now
+            actualResetTime = oldestTime + windowSeconds * 1000
+            retryAfter = actualResetTime - now
             if retryAfter < 0 then
               retryAfter = 0
             end
           end
-          return {0, count, now + windowSeconds * 1000, retryAfter}
+          return {0, count, actualResetTime, retryAfter}
         end
       `;
 

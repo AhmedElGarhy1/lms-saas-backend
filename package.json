@@ -55,6 +55,7 @@
     "bcrypt": "^6.0.0",
     "bullmq": "^5.56.4",
     "class-transformer": "^0.5.1",
+    "date-fns": "^4.1.0",
     "envalid": "^8.1.0",
     "eventemitter2": "^6.4.9",
     "g": "^2.0.1",

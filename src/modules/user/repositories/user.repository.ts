@@ -426,32 +426,6 @@ export class UserRepository extends BaseRepository<User> {
     });
   }
 
-  async updateFailedLoginAttempts(
-    userId: string,
-    failedAttempts: number,
-    lockoutUntil?: Date,
-  ): Promise<void> {
-    const updateData: Partial<User> = {
-      failedLoginAttempts: failedAttempts,
-    };
-    if (lockoutUntil) {
-      updateData.lockoutUntil = lockoutUntil;
-    }
-    await this.getRepository().update(userId, updateData);
-  }
-
-  async resetFailedLoginAttempts(userId: string): Promise<void> {
-    await this.getRepository().update(userId, {
-      failedLoginAttempts: 0,
-      lockoutUntil: undefined,
-    });
-  }
-
-  async setLockoutUntil(userId: string, lockoutUntil: Date): Promise<void> {
-    await this.getRepository().update(userId, {
-      lockoutUntil,
-    });
-  }
 
   async clearAllUsers(): Promise<void> {
     await this.getRepository().createQueryBuilder().delete().execute();

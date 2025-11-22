@@ -44,6 +44,7 @@ const enumToEventMap: Record<string, string> = {
   'AuthEvents.PASSWORD_RESET_REQUESTED': AuthEvents.PASSWORD_RESET_REQUESTED,
   'AuthEvents.EMAIL_VERIFICATION_REQUESTED':
     AuthEvents.EMAIL_VERIFICATION_REQUESTED,
+  'AuthEvents.PHONE_VERIFIED': AuthEvents.PHONE_VERIFIED,
   // CenterEvents
   'CenterEvents.CREATED': CenterEvents.CREATED,
   'CenterEvents.UPDATED': CenterEvents.UPDATED,

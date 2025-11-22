@@ -1,6 +1,5 @@
 import { Entity, Column, OneToMany, OneToOne, Index } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { Center } from '@/modules/centers/entities/center.entity';
 import { VerificationToken } from '@/modules/auth/entities/verification-token.entity';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { UserInfo } from './user-info.entity';
@@ -24,12 +23,6 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
-  @Column({ default: 0 })
-  failedLoginAttempts: number;
-
-  @Column({ nullable: true })
-  lockoutUntil: Date;
-
   @Column({ type: 'varchar', length: 255, nullable: true, select: false })
   @Exclude()
   twoFactorSecret: string;
@@ -49,10 +42,6 @@ export class User extends BaseEntity {
 
   @Column({ type: 'timestamp', nullable: true })
   emailVerified: Date | null;
-
-  // Relations
-  @OneToMany(() => Center, (center) => center.creator)
-  centersCreated: Center[];
 
   @OneToMany(() => VerificationToken, (token) => token.user)
   verificationTokens: VerificationToken[];

@@ -1,6 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_INTERCEPTOR, APP_FILTER, APP_PIPE, APP_GUARD } from '@nestjs/core';
 import { Reflector } from '@nestjs/core';
 import {
@@ -64,14 +63,6 @@ import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limi
       validate: validateEnv,
     }),
     DatabaseModule,
-    ThrottlerModule.forRoot({
-      throttlers: [
-        {
-          ttl: 60000,
-          limit: 50,
-        },
-      ],
-    }),
     I18nModule.forRoot({
       fallbackLanguage: Locale.AR,
       loader: I18nJsonLoader,
@@ -196,10 +187,6 @@ import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limi
         accessControlHelperService: AccessControlHelperService,
       ) => new ContextGuard(reflector, accessControlHelperService),
       inject: [Reflector, AccessControlHelperService],
-    },
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
     },
     {
       provide: APP_GUARD,
