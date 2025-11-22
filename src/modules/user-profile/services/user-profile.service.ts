@@ -5,6 +5,7 @@ import { BaseService } from '@/shared/common/services/base.service';
 import {
   ResourceNotFoundException,
   ValidationFailedException,
+  BusinessLogicException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ProfileResponseDto } from '../dto/profile-response.dto';
@@ -16,7 +17,6 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { ProfileTypePermissionService } from '@/modules/access-control/services/profile-type-permission.service';
 import { UserProfileRepository } from '../repositories/user-profile.repository';
 import { CentersService } from '@/modules/centers/services/centers.service';
-import { Role } from '@/modules/access-control/entities/role.entity';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { StaffEvents } from '@/shared/events/staff.events.enum';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
@@ -75,7 +75,7 @@ export class UserProfileService extends BaseService {
         actor.userProfileId,
         actor.centerId,
       );
-      returnData.role = profileRole?.role?.name ?? null ;
+      returnData.role = profileRole?.role?.name ?? null;
       returnData.center = await this.centerService.findCenterById(
         actor.centerId,
       );
@@ -246,10 +246,23 @@ export class UserProfileService extends BaseService {
     userProfileId: string,
     actor: ActorUser,
   ): Promise<void> {
+    // First, fetch the soft-deleted profile to get its profileType
+    const deletedProfile =
+      await this.userProfileRepository.findOneSoftDeletedById(userProfileId);
+
+    if (!deletedProfile) {
+      throw new ResourceNotFoundException('User profile not found');
+    }
+
+    if (!deletedProfile.deletedAt) {
+      throw new BusinessLogicException('User profile is not deleted');
+    }
+
     // Validate that actor has permission to restore this profile type
+    // Pass profileType directly to avoid the lookup that excludes soft-deleted records
     await this.profileTypePermissionService.validateProfileTypePermission({
       actorUserProfileId: actor.userProfileId,
-      targetUserProfileId: userProfileId, // Fetches profileType from DB
+      profileType: deletedProfile.profileType, // Pass directly instead of targetUserProfileId
       operation: 'restore',
       centerId: actor.centerId,
     });
