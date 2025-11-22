@@ -14,15 +14,15 @@ export const phoneVerifiedManifest: NotificationManifest = {
   group: NotificationGroup.SECURITY,
   priority: 3,
   requiresAudit: true,
-  templateBase: 'auth/phone-verified',
+  requiredVariables: ['phone'],
   audiences: {
     DEFAULT: {
       channels: {
         [NotificationChannel.SMS]: {
-          requiredVariables: ['phone'],
+          template: 'sms/auth/phone-verified',
         },
         [NotificationChannel.IN_APP]: {
-          requiredVariables: ['phone'],
+          template: 'in-app/auth/phone-verified',
         },
       },
     },

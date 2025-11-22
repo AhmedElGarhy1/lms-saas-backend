@@ -66,10 +66,11 @@ export class RedisCleanupJob {
     const client = this.redisService.getClient();
     const staleSocketIds: string[] = [];
 
-    // Get the namespace for /notifications (since gateway uses namespace)
-    const namespace = this.notificationGateway.server.of('/notifications');
-    const socketsMap =
-      namespace?.sockets || this.notificationGateway.server.sockets?.sockets;
+    // Since @WebSocketGateway uses namespace: '/notifications',
+    // this.server is already the namespace server, not the main server
+    // server.sockets is a Map<string, Socket> of all connected sockets
+    const socketsMap = this.notificationGateway.server
+      .sockets as unknown as Map<string, any>;
 
     if (!socketsMap) {
       this.logger.warn(

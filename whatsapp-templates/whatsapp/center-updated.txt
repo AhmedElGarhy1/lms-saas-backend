@@ -1,0 +1,6 @@
+📝 Center Information Updated
+
+Your center information has been successfully updated.
+
+Center: {{center.name}}
+

@@ -46,20 +46,19 @@ export const Config = {
     accountSid: env.TWILIO_ACCOUNT_SID,
     authToken: env.TWILIO_AUTH_TOKEN,
     phoneNumber: env.TWILIO_PHONE_NUMBER,
-    whatsappNumber: env.TWILIO_WHATSAPP_NUMBER,
   },
 
   whatsapp: {
     accessToken: env.WHATSAPP_ACCESS_TOKEN,
     phoneNumberId: env.WHATSAPP_PHONE_NUMBER_ID,
+    webhookVerifyToken: env.WHATSAPP_WEBHOOK_VERIFY_TOKEN,
+    webhookAppSecret: env.WHATSAPP_WEBHOOK_APP_SECRET,
   },
 
   auth: {
     passwordResetExpiresHours: env.PASSWORD_RESET_EXPIRES_HOURS,
     emailVerificationExpiresHours: env.EMAIL_VERIFICATION_EXPIRES_HOURS,
     phoneVerificationExpiresMinutes: env.PHONE_VERIFICATION_EXPIRES_MINUTES,
-    maxFailedLoginAttempts: 15,
-    lockoutDurationMinutes: 30, // Single source of truth: lockout duration and counter reset
   },
 
   notification: {

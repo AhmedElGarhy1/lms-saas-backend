@@ -5,19 +5,17 @@ import { NotificationChannel } from '../../enums/notification-channel.enum';
 import { NotificationManifest } from '../../manifests/types/manifest.types';
 import { NotificationGroup } from '../../enums/notification-group.enum';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { TemplateBasePath } from '../../types/templates.generated';
 import {
   EmailNotificationPayload,
   SmsNotificationPayload,
   WhatsAppNotificationPayload,
   InAppNotificationPayload,
-  NotificationPayload,
 } from '../../types/notification-payload.interface';
 import { Logger } from '@nestjs/common';
 import { NotificationMetricsService } from '../../services/notification-metrics.service';
 import { DataSource } from 'typeorm';
 import { NotificationProcessingContext } from '../../services/pipeline/notification-pipeline.service';
-import { createUserId, createCorrelationId } from '../../types/branded-types';
+import { createUserId } from '../../types/branded-types';
 
 /**
  * Creates a mock RecipientInfo for testing
@@ -111,7 +109,12 @@ export function createMockWhatsAppPayload(
     locale: 'en',
     userId: createUserId('user-123'),
     data: {
-      content: 'Test WhatsApp content',
+      templateName: 'test_template',
+      templateLanguage: 'en',
+      templateParameters: [
+        { type: 'text', text: 'param1' },
+        { type: 'text', text: 'param2' },
+      ],
     },
     ...overrides,
   };
@@ -148,23 +151,23 @@ export function createMockNotificationManifest(
     type: NotificationType.CENTER_CREATED,
     group: NotificationGroup.MANAGEMENT,
     priority: 3,
-    templateBase: 'center-created' as TemplateBasePath,
+    requiredVariables: ['centerName'],
     audiences: {
       ADMIN: {
         channels: {
           [NotificationChannel.IN_APP]: {
-            requiredVariables: ['centerName'],
+            template: 'in-app/center-created',
           },
         },
       },
       OWNER: {
         channels: {
           [NotificationChannel.EMAIL]: {
+            template: 'email/center-created',
             subject: 'Test Subject',
-            requiredVariables: ['centerName'],
           },
           [NotificationChannel.SMS]: {
-            requiredVariables: ['centerName'],
+            template: 'sms/center-created',
           },
         },
       },
@@ -212,10 +215,12 @@ export function createMockDataSource(): Partial<DataSource> {
     transaction: jest
       .fn()
       .mockImplementation(
-        async (runInTransaction: (entityManager: any) => Promise<any>) => {
-          return runInTransaction({} as any);
+        async (
+          runInTransaction: (entityManager: unknown) => Promise<unknown>,
+        ) => {
+          return runInTransaction({} as never);
         },
-      ) as any,
+      ) as never,
     getRepository: jest.fn(),
   } as Partial<DataSource>;
 }
@@ -256,7 +261,7 @@ export function createMockNotificationContext(
       centerId: recipientInfo.centerId ?? undefined,
       profileType: recipientInfo.profileType,
       profileId: recipientInfo.profileId,
-    } as any,
+    } as Record<string, unknown>,
     ...overrides,
   };
 }

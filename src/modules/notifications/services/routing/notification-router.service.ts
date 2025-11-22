@@ -210,8 +210,26 @@ export class NotificationRouterService extends BaseService {
         correlationId,
       );
 
+      // Get channel config for WhatsApp (needed for template name)
+      const channelConfig = audience
+        ? this.manifestResolver.getChannelConfig(manifest, audience, channel)
+        : Object.values(manifest.audiences)[0]?.channels[channel];
+
       // Render template and build payload (use cache if available for bulk optimization)
+      // Skip rendering for WhatsApp - it uses template messages, not rendered content
       let rendered: RenderedNotification;
+      if (channel === NotificationChannel.WHATSAPP) {
+        // Create minimal rendered notification for WhatsApp (not used, but required for type)
+        rendered = {
+          type: mapping.type,
+          channel,
+          content: '',
+          metadata: {
+            template: channelConfig?.template || '',
+            locale,
+          },
+        };
+      } else {
       const cacheKey = this.getTemplateCacheKey(
         mapping.type,
         channel,
@@ -243,15 +261,19 @@ export class NotificationRouterService extends BaseService {
         // Store in cache if provided
         if (preRenderedCache) {
           preRenderedCache.set(cacheKey, rendered);
+          }
         }
       }
 
       // Build channel-specific payload (pure service)
+      // Pass manifest for requiredVariables and channelConfig for template
       const payload = this.payloadBuilder.buildPayload(
         channel,
         basePayload,
         rendered,
         templateData,
+        manifest,
+        channelConfig,
       );
 
       if (!payload) {

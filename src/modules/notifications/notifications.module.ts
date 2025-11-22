@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 import { NotificationLog } from './entities/notification-log.entity';
@@ -15,7 +15,6 @@ import {
   WhatsAppAdapter,
   InAppAdapter,
 } from './adapters';
-import { TwilioWhatsAppProvider } from './adapters/providers/twilio-whatsapp.provider';
 import { MetaWhatsAppProvider } from './adapters/providers/meta-whatsapp.provider';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { RedisModule } from '@/shared/modules/redis/redis.module';
@@ -50,6 +49,14 @@ import { NotificationRouterService } from './services/routing/notification-route
 import { MultiRecipientProcessor } from './services/multi-recipient-processor.service';
 import { RecipientValidationService } from './services/recipient-validation.service';
 import { PayloadBuilderService } from './services/payload-builder.service';
+import { WhatsAppWebhookController } from './controllers/whatsapp-webhook.controller';
+import { WhatsAppWebhookService } from './services/webhooks/whatsapp-webhook.service';
+import { WhatsAppWebhookSignatureService } from './services/webhooks/whatsapp-webhook-signature.service';
+import { WhatsAppWebhookIdempotencyService } from './services/webhooks/whatsapp-webhook-idempotency.service';
+import { WhatsAppWebhookMetricsService } from './services/webhooks/whatsapp-webhook-metrics.service';
+import { WhatsAppWebhookProcessor } from './processors/whatsapp-webhook.processor';
+import { TIME_CONSTANTS } from './constants/notification.constants';
+import { RawBodyMiddleware } from './middleware/raw-body.middleware';
 
 @Module({
   imports: [
@@ -79,6 +86,27 @@ import { PayloadBuilderService } from './services/payload-builder.service';
       }),
       inject: [RedisService],
     }),
+    BullModule.registerQueueAsync({
+      name: 'whatsapp-webhooks',
+      imports: [RedisModule],
+      useFactory: (redisService: RedisService) => ({
+        connection: redisService.getClient(),
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 2000,
+          },
+          removeOnComplete: {
+            age: TIME_CONSTANTS.SEVEN_DAYS_SECONDS,
+          },
+          removeOnFail: {
+            age: TIME_CONSTANTS.THIRTY_DAYS_SECONDS,
+          },
+        },
+      }),
+      inject: [RedisService],
+    }),
   ],
   providers: [
     NotificationService,
@@ -92,7 +120,6 @@ import { PayloadBuilderService } from './services/payload-builder.service';
     SmsAdapter,
     WhatsAppAdapter,
     InAppAdapter,
-    TwilioWhatsAppProvider,
     MetaWhatsAppProvider,
     InAppNotificationService,
     NotificationGateway,
@@ -117,8 +144,18 @@ import { PayloadBuilderService } from './services/payload-builder.service';
     MultiRecipientProcessor, // Multi-recipient processing with concurrency control
     RecipientValidationService, // Pure service for recipient validation
     PayloadBuilderService, // Pure service for payload building
+    // WhatsApp Webhook Services
+    WhatsAppWebhookService, // Service for processing webhook events
+    WhatsAppWebhookSignatureService, // Service for signature verification
+    WhatsAppWebhookIdempotencyService, // Service for idempotency checks
+    WhatsAppWebhookMetricsService, // Service for webhook metrics
+    WhatsAppWebhookProcessor, // BullMQ processor for webhook events
   ],
-  controllers: [NotificationHistoryController, InAppNotificationController],
+  controllers: [
+    NotificationHistoryController,
+    InAppNotificationController,
+    WhatsAppWebhookController,
+  ],
   exports: [
     NotificationService,
     InAppNotificationService, // Export for use in UserProfileService
@@ -126,4 +163,10 @@ import { PayloadBuilderService } from './services/payload-builder.service';
     NotificationRenderer, // Export for use in other modules
   ],
 })
-export class NotificationModule {}
+export class NotificationModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(RawBodyMiddleware)
+      .forRoutes('notifications/webhooks/whatsapp');
+  }
+}

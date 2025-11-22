@@ -14,23 +14,39 @@ import {
  * @param locale - Locale code (default: 'en')
  * @param channel - Notification channel (required for channel-specific paths)
  * @returns Full path to template file
+ * @note For WhatsApp channel, templates are reference-only and located in whatsapp-templates/ at project root
  */
 export function getTemplatePath(
   template: NotificationTemplatePath | string,
   locale: string = 'en',
   channel?: NotificationChannel,
 ): string {
+  // WhatsApp templates are reference-only and located at project root
+  if (channel === NotificationChannel.WHATSAPP) {
+    const extension = getChannelExtension(channel);
+    const templateStr =
+      typeof template === 'string' ? template : String(template);
+    return join(
+      process.cwd(),
+      'whatsapp-templates',
+      locale,
+      `${templateStr}${extension}`,
+    );
+  }
+
   // If template already includes channel prefix (e.g., 'email/auth/otp-sent'), use it directly
   if (channel) {
     const channelFolder = getChannelFolder(channel);
     const extension = getChannelExtension(channel);
+    const templateStr =
+      typeof template === 'string' ? template : String(template);
     // Check if template already has channel prefix
-    if (template.startsWith(`${channelFolder}/`)) {
+    if (templateStr.startsWith(`${channelFolder}/`)) {
       return join(
         process.cwd(),
         'src/i18n/notifications',
         locale,
-        `${template}${extension}`,
+        `${templateStr}${extension}`,
       );
     }
     // Otherwise, construct path with channel folder
@@ -39,16 +55,18 @@ export function getTemplatePath(
       'src/i18n/notifications',
       locale,
       channelFolder,
-      `${template}${extension}`,
+      `${templateStr}${extension}`,
     );
   }
 
   // Fallback: assume .hbs extension if no channel specified
+  const templateStr =
+    typeof template === 'string' ? template : String(template);
   return join(
     process.cwd(),
     'src/i18n/notifications',
     locale,
-    `${template}.hbs`,
+    `${templateStr}.hbs`,
   );
 }
 
@@ -64,7 +82,13 @@ export function templateExists(
   locale: string = 'en',
   channel?: NotificationChannel,
 ): boolean {
-  return existsSync(getTemplatePath(template, locale, channel));
+  // WhatsApp templates are reference-only, not used for rendering
+  if (channel === NotificationChannel.WHATSAPP) {
+    return false;
+  }
+
+  const templatePath: string = getTemplatePath(template, locale, channel);
+  return existsSync(templatePath);
 }
 
 /**
@@ -80,8 +104,13 @@ export function resolveTemplatePathWithFallback(
   template: string,
   locale: string = 'en',
   channel: NotificationChannel,
-  strategy: TemplateFallbackStrategy = TemplateFallbackStrategy.CHANNEL_OR_WHATSAPP,
+  _strategy: TemplateFallbackStrategy = TemplateFallbackStrategy.CHANNEL_OR_WHATSAPP,
 ): string | null {
+  // WhatsApp templates are reference-only, not used for rendering
+  if (channel === NotificationChannel.WHATSAPP) {
+    return null;
+  }
+
   // Level 1: Try primary template (channel-specific)
   const primaryPath = getTemplatePath(template, locale, channel);
   if (existsSync(primaryPath)) {

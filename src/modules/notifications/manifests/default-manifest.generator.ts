@@ -33,14 +33,14 @@ export function generateDefaultManifest(
 
   // Default channels: IN_APP only (safest fallback)
   const defaultChannelConfig: ChannelManifest = {
-    requiredVariables: [],
+    template: 'in-app/default',
   };
 
   return {
     type: notificationType,
     group,
     priority: 1, // Lowest priority
-    templateBase: 'default', // Use default template
+    requiredVariables: [], // No required variables for default template
     audiences: {
       DEFAULT: {
         channels: {

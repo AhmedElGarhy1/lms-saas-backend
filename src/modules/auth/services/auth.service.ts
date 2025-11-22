@@ -37,12 +37,10 @@ import {
   PhoneVerifiedEvent,
   EmailVerifiedEvent,
   UserLoginFailedEvent,
-  AccountLockedEvent,
 } from '@/modules/auth/events/auth.events';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { RequestEmailVerificationEvent } from '../events/auth.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
-import { FailedLoginAttemptService } from './failed-login-attempt.service';
 
 @Injectable()
 export class AuthService extends BaseService {
@@ -55,7 +53,6 @@ export class AuthService extends BaseService {
     private readonly jwtService: JwtService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-    private readonly failedLoginAttemptService: FailedLoginAttemptService,
   ) {
     super();
   }
@@ -83,14 +80,12 @@ export class AuthService extends BaseService {
   }
 
   async login(dto: LoginRequestDto) {
-    // Find user first (before password validation) to check lockout
-    // Redis TTL automatically handles expiration, no need to check manually
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dto.emailOrPhone);
     const user = isEmail
       ? await this.userService.findUserByEmail(dto.emailOrPhone, true)
       : await this.userService.findUserByPhone(dto.emailOrPhone, true);
 
-    // If user exists, check lockout
+    // If user exists, validate account status
     if (user) {
       if (!user.isActive) {
         throw new BusinessLogicException(
@@ -100,45 +95,11 @@ export class AuthService extends BaseService {
         );
       }
 
-      // Check if user is locked out (check Redis)
-      const isLocked = await this.failedLoginAttemptService.isLockedOut(
-        user.id,
-      );
-      if (isLocked) {
-        throw new BusinessLogicException(
-          'Account is temporarily locked',
-          'Your account is temporarily locked due to multiple failed login attempts',
-          'Please try again later or contact support',
-        );
-      }
-
       // Validate password
       const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
       if (!isPasswordValid) {
-        // Handle failed login (increments Redis counter)
-        const result =
-          await this.failedLoginAttemptService.incrementFailedAttempts(user.id);
-
-        // If lockout threshold just reached, emit lockout event and throw error
-        if (result.isLocked) {
-          // Emit lockout event with full duration (not remaining time)
-          await this.typeSafeEventEmitter.emitAsync(
-            AuthEvents.ACCOUNT_LOCKED,
-            new AccountLockedEvent(
-              user.id,
-              user.getPhone(),
-              Config.auth.lockoutDurationMinutes,
-            ),
-          );
-
-          throw new BusinessLogicException(
-            'Account is temporarily locked',
-            'Your account is temporarily locked due to multiple failed login attempts',
-            'Please try again later or contact support',
-          );
-        }
-
+        // Emit failed login event for activity logging
         await this.typeSafeEventEmitter.emitAsync(
           AuthEvents.USER_LOGIN_FAILED,
           new UserLoginFailedEvent(
@@ -158,9 +119,6 @@ export class AuthService extends BaseService {
         );
         throw new AuthenticationFailedException('User data is invalid');
       }
-
-      // Reset failed login attempts on successful login (clear Redis)
-      await this.failedLoginAttemptService.resetFailedAttempts(user.id);
 
       // Use user for rest of login flow
       const userForLogin = user;

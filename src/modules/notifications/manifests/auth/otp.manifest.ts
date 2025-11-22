@@ -14,22 +14,19 @@ export const otpManifest: NotificationManifest = {
   group: NotificationGroup.SECURITY,
   priority: 4,
   requiresAudit: true,
-  templateBase: 'auth/otp',
+  requiredVariables: ['otpCode', 'expiresIn'],
   audiences: {
     DEFAULT: {
       channels: {
         [NotificationChannel.SMS]: {
-          requiredVariables: ['otpCode', 'expiresIn'],
-        },
-        [NotificationChannel.WHATSAPP]: {
-          requiredVariables: ['otpCode', 'expiresIn'],
+          template: 'sms/auth/otp',
         },
         [NotificationChannel.EMAIL]: {
+          template: 'email/auth/otp',
           subject: 'Your Verification Code',
-          requiredVariables: ['otpCode', 'expiresIn'],
         },
         [NotificationChannel.IN_APP]: {
-          requiredVariables: ['otpCode', 'expiresIn'],
+          template: 'in-app/auth/otp',
         },
       },
     },

@@ -14,19 +14,19 @@ export const passwordResetManifest: NotificationManifest = {
   group: NotificationGroup.SECURITY,
   priority: 3,
   requiresAudit: true,
-  templateBase: 'auth/password-reset',
+  requiredVariables: ['link', 'expiresIn', 'name'],
   audiences: {
     DEFAULT: {
       channels: {
         [NotificationChannel.EMAIL]: {
+          template: 'email/auth/password-reset',
           subject: 'Password Reset Request',
-          requiredVariables: ['link', 'expiresIn', 'name'],
         },
         [NotificationChannel.SMS]: {
-          requiredVariables: ['link', 'expiresIn', 'name'],
+          template: 'sms/auth/password-reset',
         },
         [NotificationChannel.WHATSAPP]: {
-          requiredVariables: ['link', 'expiresIn', 'name'],
+          template: 'password_reset',
         },
       },
     },

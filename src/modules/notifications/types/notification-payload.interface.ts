@@ -48,15 +48,21 @@ export interface SmsNotificationPayload extends BaseNotificationPayload {
 
 /**
  * WhatsApp-specific notification payload
+ * Uses WhatsApp Business API template messages (not free text)
  */
 export interface WhatsAppNotificationPayload extends BaseNotificationPayload {
   channel: NotificationChannel.WHATSAPP;
-  recipient: string; // phone number
+  recipient: string; // phone number (E.164 format)
   data: {
-    content: string;
-    message?: string;
-    html?: string;
-    [key: string]: unknown;
+    /** Pre-approved WhatsApp Business API template name */
+    templateName: string;
+    /** Template language code (e.g., 'en', 'ar') */
+    templateLanguage: string;
+    /** Template parameters extracted from event data */
+    templateParameters: Array<{
+      type: 'text';
+      text: string;
+    }>;
   };
 }
 

@@ -72,17 +72,18 @@ export const env = cleanEnv(process.env, {
     desc: 'Twilio Phone Number for SMS',
   }),
 
-  // Twilio WhatsApp (Required for WhatsApp notifications)
-  TWILIO_WHATSAPP_NUMBER: str({
-    desc: 'Twilio WhatsApp Number',
-  }),
-
   // WhatsApp Business API (Optional - alternative to Twilio)
   WHATSAPP_ACCESS_TOKEN: str({
     desc: 'WhatsApp Business API Access Token',
   }),
   WHATSAPP_PHONE_NUMBER_ID: str({
     desc: 'WhatsApp Business API Phone Number ID',
+  }),
+  WHATSAPP_WEBHOOK_VERIFY_TOKEN: str({
+    desc: 'WhatsApp Webhook Verify Token for webhook verification',
+  }),
+  WHATSAPP_WEBHOOK_APP_SECRET: str({
+    desc: 'WhatsApp Webhook App Secret for signature verification',
   }),
 
   DB_ENABLE_QUERY_LOGGING: bool({

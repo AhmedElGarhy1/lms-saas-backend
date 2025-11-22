@@ -22,7 +22,6 @@ import {
   PasswordChangedEvent,
   EmailVerifiedEvent,
   UserLoginFailedEvent,
-  AccountLockedEvent,
 } from '@/modules/auth/events/auth.events';
 import {
   CreateRoleEvent,
@@ -104,7 +103,6 @@ export type EventTypeMap = {
   [AuthEvents.TWO_FA_SETUP]: TwoFactorSetupEvent;
   [AuthEvents.TWO_FA_ENABLED]: TwoFactorEnabledEvent;
   [AuthEvents.TWO_FA_DISABLED]: TwoFactorDisabledEvent;
-  [AuthEvents.ACCOUNT_LOCKED]: AccountLockedEvent;
 
   // Role Events
   [RoleEvents.CREATED]: CreateRoleEvent;

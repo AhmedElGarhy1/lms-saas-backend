@@ -10,7 +10,10 @@ import {
   PushNotificationPayload,
 } from '../types/notification-payload.interface';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { NotificationManifest } from '../manifests/types/manifest.types';
+import {
+  NotificationManifest,
+  ChannelManifest,
+} from '../manifests/types/manifest.types';
 import { NotificationGroup } from '../enums/notification-group.enum';
 import { NotificationTemplateData } from '../types/template-data.types';
 import { RenderedNotification } from '../manifests/types/manifest.types';
@@ -219,7 +222,7 @@ describe('PayloadBuilderService', () => {
       );
     });
 
-    it('should build WHATSAPP payload', () => {
+    it('should build WHATSAPP payload with template structure', () => {
       const manifest: NotificationManifest = {
         type: NotificationType.OTP,
         group: NotificationGroup.SECURITY,
@@ -242,23 +245,84 @@ describe('PayloadBuilderService', () => {
       const rendered: RenderedNotification = {
         type: NotificationType.OTP,
         channel: NotificationChannel.WHATSAPP,
-        content: 'Your OTP is 123456',
-        metadata: { template: 'otp-template', locale: 'en' },
+        content: '', // Not used for WhatsApp
+        metadata: { template: 'auth/otp', locale: 'en' },
       };
 
-      const templateData: NotificationTemplateData = {};
+      const templateData: NotificationTemplateData = {
+        otpCode: '123456',
+        expiresIn: '10',
+      };
+
+      const channelConfig: ChannelManifest = {
+        whatsappTemplateName: 'otp_verification',
+        requiredVariables: ['otpCode', 'expiresIn'],
+      };
 
       const payload = service.buildPayload(
         NotificationChannel.WHATSAPP,
         basePayload,
         rendered,
         templateData,
+        channelConfig,
       );
 
       expect(payload).not.toBeNull();
-      expect((payload as WhatsAppNotificationPayload).data.content).toBe(
-        'Your OTP is 123456',
+      const whatsappPayload = payload as WhatsAppNotificationPayload;
+      expect(whatsappPayload.data.templateName).toBe('otp_verification');
+      expect(whatsappPayload.data.templateLanguage).toBe('en');
+      expect(whatsappPayload.data.templateParameters).toEqual([
+        { type: 'text', text: '123456' },
+        { type: 'text', text: '10' },
+      ]);
+    });
+
+    it('should return null for WHATSAPP payload if template name missing', () => {
+      const manifest: NotificationManifest = {
+        type: NotificationType.OTP,
+        group: NotificationGroup.SECURITY,
+        audiences: {},
+      };
+
+      const basePayload = service.buildBasePayload(
+        '+1234567890',
+        NotificationChannel.WHATSAPP,
+        NotificationType.OTP,
+        manifest,
+        'en',
+        undefined,
+        'user-123',
+        undefined,
+        undefined,
+        'correlation-123',
       );
+
+      const rendered: RenderedNotification = {
+        type: NotificationType.OTP,
+        channel: NotificationChannel.WHATSAPP,
+        content: '',
+        metadata: { template: 'auth/otp', locale: 'en' },
+      };
+
+      const templateData: NotificationTemplateData = {
+        otpCode: '123456',
+        expiresIn: '10',
+      };
+
+      const channelConfig: ChannelManifest = {
+        // Missing whatsappTemplateName
+        requiredVariables: ['otpCode', 'expiresIn'],
+      };
+
+      const payload = service.buildPayload(
+        NotificationChannel.WHATSAPP,
+        basePayload,
+        rendered,
+        templateData,
+        channelConfig,
+      );
+
+      expect(payload).toBeNull();
     });
 
     it('should build IN_APP payload', () => {

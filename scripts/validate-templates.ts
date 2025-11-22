@@ -73,6 +73,24 @@ async function validateTemplates(): Promise<ValidationResult> {
         audienceConfig.channels,
       )) {
         const channel = channelKey as NotificationChannel;
+        
+        // Skip WhatsApp - templates are reference-only, not used for rendering
+        // WhatsApp uses pre-approved template names from WhatsApp Business API
+        if (channel === NotificationChannel.WHATSAPP) {
+          // Validate WhatsApp template name is provided
+          if (!channelConfig.whatsappTemplateName) {
+            errors.push({
+              type,
+              audience: audienceId,
+              channel,
+              locale: 'N/A',
+              template: 'N/A',
+              message: `Missing whatsappTemplateName for ${type}:${audienceId}:${channel}. WhatsApp channel requires whatsappTemplateName field.`,
+            });
+          }
+          continue; // Skip template file validation for WhatsApp
+        }
+
         if (!channelConfig?.template) {
           continue;
         }

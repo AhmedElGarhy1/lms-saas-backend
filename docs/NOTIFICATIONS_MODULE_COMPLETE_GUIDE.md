@@ -383,7 +383,7 @@ For each recipient, `NotificationPipelineService`:
 | ------------ | ----------- | ------------ | ----------------------------------------------- |
 | **EMAIL**    | ✅ Active   | SendGrid     | Email notifications with HTML/text support      |
 | **SMS**      | ✅ Active   | Twilio       | SMS notifications via Twilio API                |
-| **WHATSAPP** | ✅ Active   | Twilio/Meta  | WhatsApp notifications via Twilio or Meta API   |
+| **WHATSAPP** | ✅ Active   | Meta Business API | WhatsApp template messages via Meta Business API (pre-approved templates only) |
 | **IN_APP**   | ✅ Active   | WebSocket    | Real-time in-app notifications via Socket.IO    |
 | **PUSH**     | 🔄 Reserved | FCM (Future) | Mobile push notifications (reserved for future) |
 
@@ -410,11 +410,13 @@ For each recipient, `NotificationPipelineService`:
 #### WHATSAPP Channel
 
 - **Recipient**: Must be a valid E.164 phone number
-- **Payload**: Text content only
-- **Provider**: Twilio or Meta
+- **Payload**: Template message structure (templateName, templateLanguage, templateParameters)
+- **Provider**: Meta Business API
 - **Rate Limit**: 30 per minute per user
 - **Retry**: 2 attempts with exponential backoff
 - **Timeout**: 45 seconds
+- **Template Requirements**: Templates must be pre-approved by WhatsApp Business API. Template names in manifests must match approved names exactly.
+- **Template Files**: Reference-only, located in `whatsapp-templates/` at project root
 
 #### IN_APP Channel
 

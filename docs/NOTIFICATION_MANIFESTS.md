@@ -180,6 +180,8 @@ requiredVariables: ['otp', 'expiresIn']; // Template uses {{otpCode}}, not {{otp
 
 **Note:** Event data transformations (e.g., `resetUrl` → `link`, `verificationUrl` → `link`) are handled by `ensureTemplateData` before rendering. Use the final variable names that templates expect.
 
+**For WhatsApp:** Variables are extracted directly from event data (no template rendering). The order in `requiredVariables` determines the order of template parameters sent to WhatsApp Business API.
+
 ### 4. **Set Appropriate Priority Levels**
 
 ```typescript
@@ -340,16 +342,23 @@ requiredVariables: ['link', 'expiresIn', 'name']; // Use 'link', not 'resetUrl'
 
 **Required:**
 
-- `template`: Template path
+- `whatsappTemplateName`: Pre-approved WhatsApp Business API template name
+- `requiredVariables`: Variables that will be extracted from event data as template parameters
 
-**Note:** WhatsApp templates must be pre-approved by WhatsApp Business API.
+**Important Notes:**
+
+- WhatsApp uses **template messages** (not free text) - templates must be pre-approved by WhatsApp Business API
+- Template names in `whatsappTemplateName` must match exactly what is approved in your WhatsApp Business account
+- Template files are **reference-only** and located in `whatsapp-templates/` at project root
+- Variables are extracted from event data and sent as template parameters in the order defined by `requiredVariables`
+- The `template` field is optional and only used for reference (not rendered)
 
 **Example:**
 
 ```typescript
 [NotificationChannel.WHATSAPP]: {
-  template: 'auth/otp',
-  requiredVariables: ['otp', 'expiresIn'],
+  whatsappTemplateName: 'otp_verification', // Must match approved template name
+  requiredVariables: ['otpCode', 'expiresIn'], // Variables in order
   defaultLocale: 'en',
 }
 ```
@@ -424,6 +433,8 @@ export const NotificationRegistry = {
 3. Remember that `ensureTemplateData` handles transformations (e.g., `resetUrl` → `link`)
 4. Use the transformed variable names in `requiredVariables` (e.g., use `link`, not `resetUrl`)
 
+**For WhatsApp:** Variables are extracted directly from event data. Ensure all variables in `requiredVariables` exist in the event data. The order matters - it determines the order of template parameters sent to WhatsApp.
+
 ### Error: "Channel X not supported for type Y"
 
 **Solution:** Add the channel configuration to the manifest:
@@ -467,17 +478,21 @@ export const otpManifest: NotificationManifest = {
   group: NotificationGroup.SECURITY,
   priority: 4,
   requiresAudit: true,
+  audiences: {
+    DEFAULT: {
   channels: {
     [NotificationChannel.SMS]: {
-      template: 'auth/otp',
       requiredVariables: ['otpCode', 'expiresIn'], // Template uses {{otpCode}}
-      defaultLocale: 'en',
+        },
+        [NotificationChannel.WHATSAPP]: {
+          whatsappTemplateName: 'otp_verification', // Pre-approved template name
+          requiredVariables: ['otpCode', 'expiresIn'], // Variables in order
     },
     [NotificationChannel.EMAIL]: {
-      template: 'auth/otp',
       subject: 'Your Verification Code',
       requiredVariables: ['otpCode', 'expiresIn'], // Must match template exactly
-      defaultLocale: 'en',
+        },
+      },
     },
   },
 } as const;

@@ -8,35 +8,34 @@ import { NotificationGroup } from '../../enums/notification-group.enum';
  *
  * Sent when a new learning center is created
  * Multi-audience support:
- * - ADMIN: Receives in-app notification
- * - OWNER: Receives email and in-app notification
+ * - ADMIN: Receives in-app notification (uses creatorName, centerName)
+ * - OWNER: Receives email and in-app notification (uses centerName, ownerName)
  *
- * Template variables:
- * - ADMIN: creatorName, centerName
- * - OWNER: centerName, ownerName
+ * All required variables: creatorName, centerName, ownerName
+ * Each audience uses only the variables it needs
  */
 export const centerCreatedManifest: NotificationManifest = {
   type: NotificationType.CENTER_CREATED,
   group: NotificationGroup.MANAGEMENT,
   priority: 3,
   requiresAudit: true,
-  templateBase: 'center-created',
+  requiredVariables: ['creatorName', 'centerName', 'ownerName'],
   audiences: {
     ADMIN: {
       channels: {
         [NotificationChannel.IN_APP]: {
-          requiredVariables: ['creatorName', 'centerName'],
+          template: 'in-app/center-created',
         },
       },
     },
     OWNER: {
       channels: {
         [NotificationChannel.EMAIL]: {
+          template: 'email/center-created',
           subject: 'Your new center is ready!',
-          requiredVariables: ['centerName', 'ownerName'],
         },
         [NotificationChannel.IN_APP]: {
-          requiredVariables: ['centerName'],
+          template: 'in-app/center-created',
         },
       },
     },

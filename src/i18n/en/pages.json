@@ -58,7 +58,6 @@
       "securityAlertsDescription": "Recent security activity on your account",
       "lastLogin": "Last Login",
       "failedAttempts": "Failed Login Attempts",
-      "lockoutUntil": "Account Locked Until",
       "changePassword": "Change Password",
       "personalInfoDescription": "Update your personal information and contact details",
       "security": "Security Settings",

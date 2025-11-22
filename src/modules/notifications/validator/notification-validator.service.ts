@@ -4,7 +4,6 @@ import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationRegistry } from '../manifests/registry/notification-registry';
 import { NotificationManifestResolver } from '../manifests/registry/notification-manifest-resolver.service';
 import { templateExists, getTemplatePath } from '../utils/template-path.util';
-import { NotificationTemplatePath } from '../types/templates.generated';
 import { Locale } from '@/shared/common/enums/locale.enum';
 
 // Test environment detection - check NODE_ENV first (set by test-setup.ts)
@@ -175,36 +174,18 @@ export class NotificationValidator implements OnModuleInit {
           // Convert channel key to NotificationChannel enum
           const channel = channelKey as NotificationChannel;
 
-          // Resolve template path (handles templateBase derivation)
-          let resolvedTemplate: string;
-          try {
-            if (this.manifestResolver) {
-              const resolvedConfig = this.manifestResolver.getChannelConfig(
-                manifest,
-                audienceId,
-                channel,
-              );
-              resolvedTemplate = resolvedConfig.template!;
-            } else {
-              // Fallback: use explicit template or derive from templateBase
-              const channelFolder = channel.toLowerCase().replace('_', '-');
-              resolvedTemplate =
-                channelConfig.template ||
-                (manifest.templateBase
-                  ? `${channelFolder}/${manifest.templateBase}`
-                  : '');
-            }
-          } catch (error) {
+          // Validate template is provided (required field)
+          if (!channelConfig.template) {
             errors.push(
-              `Failed to resolve template for ${type}:${audienceId}:${channel}: ${error instanceof Error ? error.message : String(error)}`,
+              `Missing template for ${type}:${audienceId}:${channel}. Template is required for all channels.`,
             );
             continue;
           }
 
-          if (!resolvedTemplate) {
-            errors.push(
-              `Missing template path for ${type}:${audienceId}:${channel}. Either provide templateBase in manifest or explicit template in channel config.`,
-            );
+          // Skip template file validation for WhatsApp - templates are reference-only
+          // WhatsApp uses pre-approved template names from WhatsApp Business API
+          if (channel === NotificationChannel.WHATSAPP) {
+            // Skip template file existence check - WhatsApp templates are reference-only
             continue;
           }
 
@@ -213,14 +194,14 @@ export class NotificationValidator implements OnModuleInit {
           const supportedLocales = Object.values(Locale);
           for (const locale of supportedLocales) {
             const templatePath = getTemplatePath(
-              resolvedTemplate,
+              channelConfig.template,
               locale,
               channel,
             );
 
-            if (!templateExists(resolvedTemplate, locale, channel)) {
+            if (!templateExists(channelConfig.template, locale, channel)) {
               errors.push(
-                `Missing template: ${type}:${audienceId}:${channel} (${resolvedTemplate}) for locale ${locale} - Path: ${templatePath}`,
+                `Missing template: ${type}:${audienceId}:${channel} (${channelConfig.template}) for locale ${locale} - Path: ${templatePath}`,
               );
             }
           }

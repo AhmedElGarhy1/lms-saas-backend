@@ -14,22 +14,22 @@ export const emailVerificationManifest: NotificationManifest = {
   group: NotificationGroup.SECURITY,
   priority: 3,
   requiresAudit: true,
-  templateBase: 'auth/email-verification',
+  requiredVariables: ['link', 'expiresIn', 'name'],
   audiences: {
     DEFAULT: {
       channels: {
         [NotificationChannel.EMAIL]: {
+          template: 'email/auth/email-verification',
           subject: 'Verify Your Email',
-          requiredVariables: ['link', 'expiresIn', 'name'],
         },
         [NotificationChannel.SMS]: {
-          requiredVariables: ['link', 'expiresIn', 'name'],
+          template: 'sms/auth/email-verification',
         },
         [NotificationChannel.WHATSAPP]: {
-          requiredVariables: ['link', 'expiresIn', 'name'],
+          template: 'email_verification',
         },
         [NotificationChannel.IN_APP]: {
-          requiredVariables: ['link', 'expiresIn', 'name'],
+          template: 'in-app/auth/email-verification',
         },
       },
     },

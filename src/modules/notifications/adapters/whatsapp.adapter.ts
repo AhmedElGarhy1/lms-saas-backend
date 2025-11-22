@@ -4,8 +4,10 @@ import { WhatsAppNotificationPayload } from '../types/notification-payload.inter
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { TimeoutConfigService } from '../config/timeout.config';
-import { WhatsAppProvider } from './providers/whatsapp-provider.interface';
-import { TwilioWhatsAppProvider } from './providers/twilio-whatsapp.provider';
+import {
+  WhatsAppProvider,
+  WhatsAppTemplateMessage,
+} from './providers/whatsapp-provider.interface';
 import { MetaWhatsAppProvider } from './providers/meta-whatsapp.provider';
 import pTimeout from 'p-timeout';
 import { Config } from '@/shared/config/config';
@@ -24,7 +26,6 @@ export class WhatsAppAdapter
   constructor(
     private readonly metricsService: NotificationMetricsService,
     private readonly timeoutConfig: TimeoutConfigService,
-    private readonly twilioProvider: TwilioWhatsAppProvider,
     private readonly metaProvider: MetaWhatsAppProvider,
   ) {}
 
@@ -34,15 +35,8 @@ export class WhatsAppAdapter
   }
 
   private initializeProvider(): void {
-    // Prefer Meta Business API if configured
     if (this.metaProvider.isConfigured()) {
       this.provider = this.metaProvider;
-      return;
-    }
-
-    // Fallback to Twilio if configured
-    if (this.twilioProvider.isConfigured()) {
-      this.provider = this.twilioProvider;
       return;
     }
 
@@ -71,13 +65,14 @@ export class WhatsAppAdapter
   async send(payload: WhatsAppNotificationPayload): Promise<void> {
     // Type system ensures channel is WHATSAPP, no runtime check needed
     const phoneNumber = payload.recipient;
-    const message =
-      payload.data.content || payload.data.html || payload.data.message || '';
+    const { templateName, templateLanguage, templateParameters } =
+      payload.data;
 
-    if (!message) {
+    // Validate template structure
+    if (!templateName || !templateLanguage || !templateParameters) {
       throw new MissingNotificationContentException(
         NotificationChannel.WHATSAPP,
-        'content',
+        'templateName, templateLanguage, or templateParameters',
       );
     }
 
@@ -93,15 +88,29 @@ export class WhatsAppAdapter
 
     const startTime = Date.now();
     try {
+      // Build template message structure
+      const templateMessage: WhatsAppTemplateMessage = {
+        templateName,
+        templateLanguage,
+        templateParameters,
+      };
+
       // Wrap provider API call with timeout guard
       const timeoutMs = this.timeoutConfig.getTimeout(
         NotificationChannel.WHATSAPP,
       );
-      await pTimeout(this.provider.sendMessage(phoneNumber, message), {
+      const result = await pTimeout(
+        this.provider.sendMessage(phoneNumber, templateMessage),
+        {
         milliseconds: timeoutMs,
         message: `WhatsApp send timeout after ${timeoutMs}ms`,
-      });
+        },
+      );
       const latency = Date.now() - startTime;
+
+      // Store message ID in result (will be used by notification sender service)
+      // The message ID will be stored in notification log metadata by the sender service
+      (payload as any).whatsappMessageId = result.messageId;
 
       // Track metrics
       await this.metricsService.incrementSent(

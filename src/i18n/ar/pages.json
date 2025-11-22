@@ -58,7 +58,6 @@
       "securityAlertsDescription": "النشاط الأمني الأخير على حسابك",
       "lastLogin": "آخر تسجيل دخول",
       "failedAttempts": "محاولات تسجيل الدخول الفاشلة",
-      "lockoutUntil": "الحساب مقفل حتى",
       "changePassword": "تغيير كلمة المرور",
       "personalInfoDescription": "تحديث معلوماتك الشخصية وتفاصيل الاتصال",
       "security": "إعدادات الأمان",

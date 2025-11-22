@@ -159,9 +159,9 @@ export const NotificationConfig = {
 
     /**
      * Lock timeout in milliseconds
-     * Default: 100ms
+     * Default: 500ms
      */
-    lockTimeoutMs: 100,
+    lockTimeoutMs: 500,
   },
 
   /**

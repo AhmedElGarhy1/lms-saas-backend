@@ -7,8 +7,6 @@ import {
   AudienceManifest,
 } from '../types/manifest.types';
 import { NotificationRegistry } from './notification-registry';
-import { getChannelFolder } from '../../config/template-format.config';
-import { NotificationTemplatePath } from '../../types/templates.generated';
 import { AudienceId } from '../../types/audience.types';
 
 /**
@@ -60,12 +58,11 @@ export class NotificationManifestResolver {
 
   /**
    * Get channel configuration for a specific audience
-   * Resolves template path from templateBase if not explicitly provided
    * @param manifest - Notification manifest
    * @param audience - Audience identifier
    * @param channel - Notification channel
-   * @returns Channel manifest configuration with resolved template path
-   * @throws Error if channel is not supported or template path cannot be resolved
+   * @returns Channel manifest configuration
+   * @throws Error if channel is not supported
    */
   getChannelConfigForAudience(
     manifest: NotificationManifest,
@@ -81,8 +78,7 @@ export class NotificationManifestResolver {
       );
     }
 
-    // Resolve template path
-    return this.resolveChannelTemplate(manifest, config);
+    return config;
   }
 
   /**
@@ -94,67 +90,15 @@ export class NotificationManifestResolver {
     return Object.keys(manifest.audiences);
   }
 
-  /**
-   * Resolve channel template path
-   * Helper method to resolve template from config or templateBase
-   * @param manifest - Notification manifest
-   * @param config - Channel manifest configuration
-   * @returns Channel manifest with resolved template path
-   */
-  private resolveChannelTemplate(
-    manifest: NotificationManifest,
-    config: ChannelManifest,
-  ): ChannelManifest {
-    // If template is already provided, use it
-    if (config.template) {
-      return config;
-    }
-
-    // If templateBase is provided, derive template path
-    if (manifest.templateBase) {
-      // This will be resolved per-channel when we know the channel
-      // For now, return config as-is - template resolution happens in getChannelConfigForAudience
-      return config;
-    }
-
-    throw new Error(
-      `Template path not specified for ${manifest.type}. Either provide templateBase in manifest or explicit template in channel config.`,
-    );
-  }
 
   /**
-   * Resolve template path for a specific channel
-   * @param manifest - Notification manifest
-   * @param channel - Notification channel
-   * @param config - Channel manifest configuration
-   * @returns Resolved template path
-   */
-  resolveTemplatePath(
-    manifest: NotificationManifest,
-    channel: NotificationChannel,
-    config: ChannelManifest,
-  ): string {
-    if (config.template) {
-      return config.template;
-    }
-
-    if (manifest.templateBase) {
-      const channelFolder = getChannelFolder(channel);
-      return `${channelFolder}/${manifest.templateBase}`;
-    }
-
-    throw new Error(
-      `Template path not specified for ${manifest.type}:${channel}. Either provide templateBase in manifest or explicit template in channel config.`,
-    );
-  }
-
-  /**
-   * Get channel configuration for a specific audience (with resolved template)
+   * Get channel configuration for a specific audience
    * This is the main method used by the notification service
    * @param manifest - Notification manifest
    * @param audience - Audience identifier
    * @param channel - Notification channel
-   * @returns Channel manifest configuration with resolved template path
+   * @returns Channel manifest configuration
+   * @throws Error if channel is not supported
    */
   getChannelConfig(
     manifest: NotificationManifest,
@@ -170,16 +114,6 @@ export class NotificationManifestResolver {
       );
     }
 
-    // Resolve template path
-    const resolvedTemplate = this.resolveTemplatePath(
-      manifest,
-      channel,
-      config,
-    );
-
-    return {
-      ...config,
-      template: resolvedTemplate as NotificationTemplatePath,
-    };
+    return config;
   }
 }

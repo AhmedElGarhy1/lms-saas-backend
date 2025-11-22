@@ -321,8 +321,6 @@ export class NotificationSenderService extends BaseService {
         if (channel === NotificationChannel.EMAIL) {
           const subject = isEmailPayload(payload)
             ? payload.subject
-            : typeof dataObj.subject === 'string'
-              ? dataObj.subject
               : 'Notification';
           sendPayload = {
             ...commonFields,
@@ -397,6 +395,11 @@ export class NotificationSenderService extends BaseService {
         }
         // TypeScript now knows sendPayload is not null
         const finalPayload = sendPayload;
+        
+        // Capture WhatsApp message ID immediately after send (before any async operations)
+        // This ensures messageId is available for webhook correlation even if webhook arrives quickly
+        let whatsappMessageId: string | undefined;
+        
         await (this.circuitBreaker
           ? this.circuitBreaker.executeWithCircuitBreaker(
               payload.channel,
@@ -405,9 +408,19 @@ export class NotificationSenderService extends BaseService {
               },
             )
           : adapter.send(finalPayload)); // Fallback if circuit breaker not available
+        
+        // Capture messageId immediately after send (adapter sets it on payload)
+        if (
+          payload.channel === NotificationChannel.WHATSAPP &&
+          (finalPayload as any).whatsappMessageId
+        ) {
+          whatsappMessageId = (finalPayload as any).whatsappMessageId;
+        }
+        
         const latency = Date.now() - startTime;
 
         // Update log as success with standardized metadata (within transaction)
+        // Store messageId atomically with status update to prevent race condition
         if (notificationLog) {
           // Build standardized metadata with rendered content and performance metrics
           if (sendPayload && rendered) {
@@ -420,6 +433,11 @@ export class NotificationSenderService extends BaseService {
                 retryCount: notificationLog.retryCount || 0,
                 latencyMs: latency,
                 deliveredAt: new Date(),
+                // Store WhatsApp message ID atomically with status update
+                ...(whatsappMessageId && {
+                  whatsappMessageId,
+                  provider: 'meta',
+                }),
               },
             );
 
@@ -430,8 +448,16 @@ export class NotificationSenderService extends BaseService {
             });
           } else {
             // Fallback if sendPayload or rendered not available
+            // Still try to store WhatsApp message ID if available
+            const metadata: Record<string, any> = {};
+            if (whatsappMessageId) {
+              metadata.whatsappMessageId = whatsappMessageId;
+              metadata.provider = 'meta';
+            }
+
             await logRepo.update(notificationLog.id, {
               status: NotificationStatus.SENT,
+              metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
               lastAttemptAt: new Date(),
             });
           }

@@ -9,7 +9,10 @@ import {
   InAppNotificationPayload,
   PushNotificationPayload,
 } from '../types/notification-payload.interface';
-import { NotificationManifest } from '../manifests/types/manifest.types';
+import {
+  NotificationManifest,
+  ChannelManifest,
+} from '../manifests/types/manifest.types';
 import { NotificationTemplateData } from '../types/template-data.types';
 import { RenderedNotification } from '../manifests/types/manifest.types';
 import { createUserId, createCorrelationId } from '../types/branded-types';
@@ -73,8 +76,10 @@ export class PayloadBuilderService {
    *
    * @param channel - Notification channel
    * @param basePayload - Base payload structure
-   * @param rendered - Rendered notification content
+   * @param rendered - Rendered notification content (not used for WhatsApp)
    * @param templateData - Template data used for rendering
+   * @param manifest - Notification manifest (for requiredVariables)
+   * @param channelConfig - Optional channel configuration (required for WhatsApp)
    * @returns Channel-specific payload or null if invalid
    */
   buildPayload(
@@ -82,6 +87,8 @@ export class PayloadBuilderService {
     basePayload: BasePayloadData,
     rendered: RenderedNotification,
     templateData: NotificationTemplateData,
+    manifest: NotificationManifest,
+    channelConfig?: ChannelManifest,
   ): NotificationPayload | null {
     if (channel === NotificationChannel.EMAIL) {
       if (!rendered.subject) {
@@ -99,23 +106,58 @@ export class PayloadBuilderService {
       } as EmailNotificationPayload;
     }
 
-    if (
-      channel === NotificationChannel.SMS ||
-      channel === NotificationChannel.WHATSAPP
-    ) {
-      const payload = {
+    if (channel === NotificationChannel.SMS) {
+      return {
         ...basePayload,
         data: {
           content: rendered.content as string,
           template: rendered.metadata?.template || '',
         },
-      };
+      } as SmsNotificationPayload;
+    }
 
-      if (channel === NotificationChannel.SMS) {
-        return payload as SmsNotificationPayload;
-      } else {
-        return payload as WhatsAppNotificationPayload;
+    if (channel === NotificationChannel.WHATSAPP) {
+      // WhatsApp uses template messages, not rendered content
+      if (!channelConfig?.template) {
+        return null; // Missing WhatsApp template name - invalid payload
       }
+
+      // Extract template parameters from templateData based on manifest requiredVariables
+      const requiredVariables = manifest.requiredVariables || [];
+      const templateParameters = requiredVariables.map((varName) => {
+        const value = templateData[varName];
+        // Convert value to string, handling various types
+        let textValue: string;
+        if (value === undefined || value === null) {
+          textValue = '';
+        } else if (typeof value === 'string') {
+          textValue = value;
+        } else if (typeof value === 'number' || typeof value === 'boolean') {
+          textValue = String(value);
+        } else if (typeof value === 'object') {
+          try {
+            textValue = JSON.stringify(value);
+          } catch {
+            textValue = '[object]';
+          }
+        } else {
+          textValue = String(value);
+        }
+
+        return {
+          type: 'text' as const,
+          text: textValue,
+        };
+      });
+
+      return {
+        ...basePayload,
+        data: {
+          templateName: channelConfig.template, // Unified template field
+          templateLanguage: basePayload.locale,
+          templateParameters,
+        },
+      } as WhatsAppNotificationPayload;
     }
 
     if (channel === NotificationChannel.IN_APP) {
@@ -184,6 +226,7 @@ export class PayloadBuilderService {
     correlationId: string,
     rendered: RenderedNotification,
     templateData: NotificationTemplateData,
+    channelConfig?: ChannelManifest,
   ): NotificationPayload | null {
     const basePayload = this.buildBasePayload(
       recipient,
@@ -198,6 +241,13 @@ export class PayloadBuilderService {
       correlationId,
     );
 
-    return this.buildPayload(channel, basePayload, rendered, templateData);
+    return this.buildPayload(
+      channel,
+      basePayload,
+      rendered,
+      templateData,
+      manifest,
+      channelConfig,
+    );
   }
 }

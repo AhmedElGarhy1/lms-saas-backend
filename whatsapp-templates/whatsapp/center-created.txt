@@ -1,0 +1,8 @@
+🎓 Center Created Successfully
+
+Your learning center has been successfully created!
+
+Center: {{center.name}}
+
+You can now start managing your center, adding branches, staff, and students.
+

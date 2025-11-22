@@ -64,7 +64,7 @@ export class NotificationRenderer extends BaseService {
 
     // 3. Validate required variables (variables must match template exactly)
     this.validateRequiredVariables(
-      config.requiredVariables || [],
+      manifest.requiredVariables || [],
       eventData,
       notificationType,
       channel,

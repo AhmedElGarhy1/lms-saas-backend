@@ -224,4 +224,62 @@ export class NotificationLogRepository extends BaseRepository<NotificationLog> {
       ),
     );
   }
+
+  /**
+   * Find notification log by WhatsApp message ID
+   * @param messageId WhatsApp message ID from Meta
+   * @returns NotificationLog or null if not found
+   */
+  async findByWhatsAppMessageId(
+    messageId: string,
+  ): Promise<NotificationLog | null> {
+    const repo = this.getRepository();
+    const log = await repo
+      .createQueryBuilder('log')
+      .where('log.channel = :channel', {
+        channel: NotificationChannel.WHATSAPP,
+      })
+      .andWhere("log.metadata->>'whatsappMessageId' = :messageId", {
+        messageId,
+      })
+      .orderBy('log.createdAt', 'DESC')
+      .getOne();
+
+    return log || null;
+  }
+
+  /**
+   * Update notification log status and metadata atomically
+   * Uses getRepository() which automatically handles transactions
+   * @param id Notification log ID
+   * @param status New status
+   * @param error Optional error message
+   * @param metadata Optional metadata to merge
+   */
+  async updateStatusWithMetadata(
+    id: string,
+    status: NotificationStatus,
+    error?: string,
+    metadata?: Record<string, any>,
+  ): Promise<void> {
+    const repo = this.getRepository();
+    const log = await repo.findOne({ where: { id } });
+
+    if (!log) {
+      throw new Error(`Notification log not found: ${id}`);
+    }
+
+    // Merge metadata if provided
+    const updatedMetadata = metadata
+      ? { ...(log.metadata || {}), ...metadata }
+      : log.metadata;
+
+    // Update using repository (automatically uses transaction context if available)
+    await repo.update(id, {
+      status,
+      error: error || log.error,
+      metadata: updatedMetadata,
+      updatedAt: new Date(),
+    });
+  }
 }

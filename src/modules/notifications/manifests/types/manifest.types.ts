@@ -1,31 +1,27 @@
 import { NotificationType } from '../../enums/notification-type.enum';
 import { NotificationChannel } from '../../enums/notification-channel.enum';
 import { NotificationGroup } from '../../enums/notification-group.enum';
-import {
-  NotificationTemplatePath,
-  TemplateBasePath,
-} from '../../types/templates.generated';
+import { NotificationTemplatePath } from '../../types/templates.generated';
 import { AudienceId } from '../../types/audience.types';
 
 /**
  * Configuration for a single notification channel
- * Defines template and required variables
+ * Defines template path/name for the channel
  *
- * Note: Variables must match exactly what the template expects.
- * Events should use template-friendly property names directly (e.g., `link` instead of `resetUrl`).
+ * Note: For EMAIL, SMS, IN_APP: template is a file path (e.g., 'email/auth/otp')
+ * Note: For WHATSAPP: template is a Meta template name (e.g., 'otp_verification')
  */
 export interface ChannelManifest {
   /**
-   * Template path relative to src/i18n/notifications/{locale}/{channel}/ (without extension)
-   * Should be from generated NotificationTemplatePath type for type safety.
-   * If not provided, will be derived from NotificationManifest.templateBase (resolved at runtime as string)
-   * Note: When explicitly set, use NotificationTemplatePath. When derived from templateBase, it's a string.
+   * Template configuration:
+   * - For EMAIL, SMS, IN_APP: File path relative to src/i18n/notifications/{locale}/{channel}/
+   *   Should be from generated NotificationTemplatePath type for type safety.
+   * - For WHATSAPP: Meta Business API template name (pre-approved template name)
+   *   Must match exactly what is approved in your WhatsApp Business account.
    */
-  template?: NotificationTemplatePath;
+  template: NotificationTemplatePath | string;
   /** Email subject (required for EMAIL channel) */
   subject?: string;
-  /** Required template variables that must be present in event data */
-  requiredVariables?: readonly string[];
 }
 
 /**
@@ -53,17 +49,11 @@ export interface NotificationManifest {
   /** Notification group for categorization */
   group: NotificationGroup;
   /**
-   * Base template path (without channel prefix or extension)
-   * Must be from generated TemplateBasePath type for type safety.
-   * Example: 'auth/otp' will resolve to:
-   * - email/auth/otp.hbs (for EMAIL)
-   * - sms/auth/otp.txt (for SMS)
-   * - whatsapp/auth/otp.txt (for WHATSAPP)
-   * - in-app/auth/otp.json (for IN_APP)
-   *
-   * If not provided, each channel must specify its own template path
+   * All required template variables needed by ANY audience in this manifest
+   * TypeScript ensures all variables are provided in event data
+   * Each audience/channel uses only the variables it needs
    */
-  templateBase?: TemplateBasePath;
+  requiredVariables: readonly string[];
   /** Priority level (1-10, higher = more urgent) */
   priority?: number;
   /** Whether to use i18n localization */

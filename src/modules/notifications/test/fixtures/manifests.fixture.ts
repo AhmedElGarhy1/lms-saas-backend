@@ -14,12 +14,12 @@ export const testManifests = {
     type: NotificationType.CENTER_CREATED,
     group: NotificationGroup.MANAGEMENT,
     priority: 3,
-    templateBase: 'center-created' as any,
+    requiredVariables: ['centerName'],
     audiences: {
       ADMIN: {
         channels: {
           [NotificationChannel.IN_APP]: {
-            requiredVariables: ['centerName'],
+            template: 'in-app/center-created',
           },
         },
       },
@@ -33,19 +33,19 @@ export const testManifests = {
     type: NotificationType.CENTER_CREATED,
     group: NotificationGroup.MANAGEMENT,
     priority: 3,
-    templateBase: 'center-created' as any,
+    requiredVariables: ['centerName', 'ownerName'],
     audiences: {
       OWNER: {
         channels: {
           [NotificationChannel.EMAIL]: {
+            template: 'email/center-created',
             subject: 'Your new center is ready!',
-            requiredVariables: ['centerName', 'ownerName'],
           },
           [NotificationChannel.SMS]: {
-            requiredVariables: ['centerName'],
+            template: 'sms/center-created',
           },
           [NotificationChannel.IN_APP]: {
-            requiredVariables: ['centerName'],
+            template: 'in-app/center-created',
           },
         },
       },
@@ -59,22 +59,22 @@ export const testManifests = {
     type: NotificationType.CENTER_CREATED,
     group: NotificationGroup.MANAGEMENT,
     priority: 3,
-    templateBase: 'center-created' as any,
+    requiredVariables: ['centerName'],
     audiences: {
       OWNER: {
         channels: {
           [NotificationChannel.EMAIL]: {
+            template: 'email/center-created',
             subject: 'Test Subject',
-            requiredVariables: ['centerName'],
           },
           [NotificationChannel.SMS]: {
-            requiredVariables: ['centerName'],
+            template: 'sms/center-created',
           },
           [NotificationChannel.WHATSAPP]: {
-            requiredVariables: ['centerName'],
+            template: 'center_created',
           },
           [NotificationChannel.IN_APP]: {
-            requiredVariables: ['centerName'],
+            template: 'in-app/center-created',
           },
         },
       },

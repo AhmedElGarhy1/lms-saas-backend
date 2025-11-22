@@ -38,7 +38,7 @@ export class NotificationIdempotencyCacheService extends BaseService {
 
   /**
    * Acquire distributed lock to prevent race conditions
-   * Returns true if lock acquired, false if already locked or timeout
+   * Returns true if lock acquired or timeout (fail-open), false if already locked
    */
   async acquireLock(
     correlationId: string,
@@ -57,6 +57,14 @@ export class NotificationIdempotencyCacheService extends BaseService {
     try {
       // Use SET with NX (only if not exists) and EX (expire) for atomic lock acquisition
       // Returns 'OK' if lock acquired, null if already locked
+      let timedOut = false;
+      const timeoutPromise = new Promise<null>((resolve) => {
+        setTimeout(() => {
+          timedOut = true;
+          resolve(null);
+        }, this.lockTimeoutMs);
+      });
+
       const result = await Promise.race([
         client.set(
           lockKey,
@@ -65,18 +73,36 @@ export class NotificationIdempotencyCacheService extends BaseService {
           this.lockTtlSeconds,
           'NX',
         ),
-        new Promise<null>((resolve) =>
-          setTimeout(() => resolve(null), this.lockTimeoutMs),
-        ),
+        timeoutPromise,
       ]);
 
+      // If timeout occurred, fail-open (allow notification to proceed)
+      // This prevents Redis latency from blocking notifications
+      if (timedOut) {
+        this.logger.warn(
+          `Lock acquisition timeout for ${correlationId}:${type}:${channel} - allowing notification (fail-open)`,
+          {
+            correlationId,
+            type,
+            channel,
+            recipient: recipient.substring(
+              0,
+              STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
+            ),
+          },
+        );
+        return true; // Fail-open: allow notification on timeout
+      }
+
+      // If result is 'OK', lock was acquired successfully
       if (result === 'OK') {
         return true; // Lock acquired
       }
 
-      // Lock already exists or timeout
+      // If result is null (and not timeout), lock already exists (Redis SET NX returned null)
+      // This means another process is currently processing this notification
       this.logger.debug(
-        `Could not acquire lock for ${correlationId}:${type}:${channel} (already locked or timeout)`,
+        `Lock already exists for ${correlationId}:${type}:${channel} - skipping duplicate`,
         {
           correlationId,
           type,
@@ -87,7 +113,7 @@ export class NotificationIdempotencyCacheService extends BaseService {
           ),
         },
       );
-      return false;
+      return false; // Lock exists: skip notification to prevent duplicate
     } catch (error) {
       // On Redis error, fail open (allow notification to proceed)
       // This ensures system continues to work even if Redis is down
@@ -104,7 +130,7 @@ export class NotificationIdempotencyCacheService extends BaseService {
           ),
         },
       );
-      return false; // Fail open - allow notification
+      return true; // Fail-open: allow notification on error
     }
   }
 

@@ -769,15 +769,18 @@ ensureTemplateData() transforms:
 
 ### WhatsApp Adapter
 
-**Provider**: Twilio or Meta
+**Provider**: Meta Business API
 
-**Configuration**: Provider-specific credentials
+**Configuration**: Meta WhatsApp Business API credentials (accessToken, phoneNumberId)
 
 **Features**:
 
-- Template message support
+- Template message support (pre-approved templates only)
 - E.164 phone number validation
 - Timeout protection
+- Template parameter extraction from event data
+
+**Important**: WhatsApp uses template messages, not free text. Templates must be pre-approved by WhatsApp Business API. Template names in manifests must match approved template names exactly.
 
 ### In-App Adapter
 
