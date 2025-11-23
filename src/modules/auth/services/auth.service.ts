@@ -326,7 +326,6 @@ export class AuthService extends BaseService {
       const result = await this.verificationService.verifyCode(
         code,
         VerificationType.OTP_VERIFICATION,
-        NotificationChannel.SMS,
         userId,
       );
       verifiedUserId = result.userId;

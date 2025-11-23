@@ -28,7 +28,6 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 export interface CreateVerificationTokenData {
   userId: string;
   type: VerificationType;
-  channel: NotificationChannel;
   token?: string;
   code?: string;
   expiresAt?: Date;
@@ -111,18 +110,16 @@ export class VerificationService extends BaseService {
       }
     }
 
-    // Delete any existing verification tokens of the same type and channel for this user
-    await this.verificationTokenRepository.deleteByUserIdTypeAndChannel(
+    // Delete any existing verification tokens of the same type for this user
+    await this.verificationTokenRepository.deleteByUserIdAndType(
       data.userId,
       data.type,
-      data.channel,
     );
 
     const verificationToken =
       await this.verificationTokenRepository.createVerificationToken({
         userId: data.userId,
         type: data.type,
-        channel: data.channel,
         token,
         code: data.type === VerificationType.OTP_VERIFICATION ? code : null,
         expiresAt,
@@ -156,13 +153,11 @@ export class VerificationService extends BaseService {
   async findByCode(
     code: string,
     type: VerificationType,
-    channel: NotificationChannel,
     userId?: string,
   ): Promise<VerificationToken> {
     const verificationToken = await this.verificationTokenRepository.findByCode(
       code,
       type,
-      channel,
       userId,
     );
 
@@ -210,15 +205,9 @@ export class VerificationService extends BaseService {
   async verifyCode(
     code: string,
     type: VerificationType,
-    channel: NotificationChannel,
     userId?: string,
   ): Promise<{ userId: string; email?: string; phone?: string }> {
-    const verificationToken = await this.findByCode(
-      code,
-      type,
-      channel,
-      userId,
-    );
+    const verificationToken = await this.findByCode(code, type, userId);
 
     // Mark as verified
     await this.verificationTokenRepository.markAsVerified(
@@ -250,10 +239,9 @@ export class VerificationService extends BaseService {
   ): Promise<VerificationToken> {
     // Check for existing non-expired token
     const existingToken =
-      await this.verificationTokenRepository.findByUserIdTypeAndChannel(
+      await this.verificationTokenRepository.findByUserIdAndType(
         data.userId,
         data.type,
-        data.channel,
       );
 
     // If token exists and is not expired and not verified, reuse it
@@ -266,12 +254,11 @@ export class VerificationService extends BaseService {
     }
 
     // If token doesn't exist, is expired, or already verified, create a new one
-    // Delete any existing tokens of the same type and channel for this user first
+    // Delete any existing tokens of the same type for this user first
     if (existingToken) {
-      await this.verificationTokenRepository.deleteByUserIdTypeAndChannel(
+      await this.verificationTokenRepository.deleteByUserIdAndType(
         data.userId,
         data.type,
-        data.channel,
       );
     }
 
@@ -292,7 +279,6 @@ export class VerificationService extends BaseService {
     const verificationToken = await this.getOrCreateVerificationToken({
       userId,
       type: VerificationType.OTP_VERIFICATION,
-      channel: NotificationChannel.SMS,
     });
 
     const expiresInMinutes = Config.auth.phoneVerificationExpiresMinutes;
@@ -327,7 +313,6 @@ export class VerificationService extends BaseService {
     const verificationToken = await this.getOrCreateVerificationToken({
       userId: actor.id,
       type: VerificationType.EMAIL_VERIFICATION,
-      channel: NotificationChannel.EMAIL,
     });
 
     const link = `${Config.app.frontendUrl}/verify-email?token=${verificationToken.token}`;
@@ -380,7 +365,6 @@ export class VerificationService extends BaseService {
     const verificationToken = await this.getOrCreateVerificationToken({
       userId,
       type: VerificationType.PASSWORD_RESET,
-      channel,
     });
 
     const link = `${Config.app.frontendUrl}/reset-password?token=${verificationToken.token}`;
@@ -462,7 +446,6 @@ export class VerificationService extends BaseService {
     const verificationToken = await this.findByCode(
       code,
       VerificationType.PASSWORD_RESET,
-      NotificationChannel.SMS, // Could be SMS or WhatsApp
       userId,
     );
 
@@ -502,12 +485,8 @@ export class VerificationService extends BaseService {
     email?: string,
     phone?: string,
   ): Promise<void> {
-    // Delete existing tokens of this type and channel
-    await this.verificationTokenRepository.deleteByUserIdTypeAndChannel(
-      userId,
-      type,
-      channel,
-    );
+    // Delete existing tokens of this type
+    await this.verificationTokenRepository.deleteByUserIdAndType(userId, type);
 
     // Send new verification
     // Note: Email verification is not supported here as it requires an authenticated actor.

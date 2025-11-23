@@ -18,10 +18,8 @@ import { AccessControlService } from '@/modules/access-control/services/access-c
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { VerificationType } from '@/modules/auth/enums/verification-type.enum';
-import { NotificationChannel } from '@/modules/notifications/enums/notification-channel.enum';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { VerifyUserImportDto } from '../dto/verify-user-import.dto';
-import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
 import { Config } from '@/shared/config/config';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
@@ -59,7 +57,6 @@ export class UserProfileImportService extends BaseService {
       await this.verificationService.getOrCreateVerificationToken({
         userId: user.id,
         type: VerificationType.OTP_VERIFICATION,
-        channel: NotificationChannel.SMS,
       });
 
     const expiresInMinutes = Config.auth.phoneVerificationExpiresMinutes;
@@ -90,31 +87,100 @@ export class UserProfileImportService extends BaseService {
    */
   async verifyAndImportUser(dto: VerifyUserImportDto, actor: ActorUser) {
     const user = await this.findUserByPhone(dto.phone);
-    await this.verifyOtpCode(dto.code, dto.phone, user.id);
+    await this.verifyOtpCode(dto.code, user.id);
 
     const centerId = dto.centerId ?? actor.centerId;
-    const userProfile = await this.getOrCreateUserProfile(
+
+    // Check if user already has profile of the requested type
+    const existingProfile = await this.userProfileService.findUserProfileByType(
       user.id,
       dto.profileType,
     );
 
     if (centerId) {
-      await this.ensureCenterAccessNotExists(userProfile.id, centerId);
+      // Case 1: centerId is provided
+      return await this.handleImportWithCenterId(
+        user.id,
+        dto.profileType,
+        centerId,
+        existingProfile,
+        actor,
+      );
+    } else {
+      // Case 2: centerId is NOT provided (global access scenario)
+      // This method throws an error, so we don't need to return
+      this.handleImportWithoutCenterId(
+        user.id,
+        dto.profileType,
+        existingProfile,
+      );
+    }
+  }
+
+  /**
+   * Handle import when centerId is provided
+   * @private
+   */
+  private async handleImportWithCenterId(
+    userId: string,
+    profileType: ProfileType,
+    centerId: string,
+    existingProfile: UserProfile | null,
+    actor: ActorUser,
+  ) {
+    // Check if user has center access (only if profile exists)
+    let hasCenterAccess = false;
+    if (existingProfile) {
+      hasCenterAccess = await this.accessControlHelperService.canCenterAccess({
+        userProfileId: existingProfile.id,
+        centerId,
+      });
     }
 
-    if (centerId) {
-      await this.accessControlService.grantCenterAccess(
-        { userProfileId: userProfile.id, centerId },
-        actor,
+    // If user has BOTH profile AND center access → throw error
+    if (existingProfile && hasCenterAccess) {
+      throw new ConflictException(
+        'User already has a profile and access to this center',
       );
     }
 
-    await this.logUserImportActivity(
-      user.id,
-      dto.profileType,
-      centerId,
-      actor.id,
+    // Get or create user profile
+    const userProfile = await this.getOrCreateUserProfile(userId, profileType);
+
+    // Grant center access if it doesn't exist
+    const centerAccess = await this.accessControlService.grantCenterAccess(
+      { userProfileId: userProfile.id, centerId },
+      actor,
     );
+
+    await this.logUserImportActivity(userId, profileType, centerId, actor.id);
+
+    return {
+      userProfileId: userProfile.id,
+      centerAccessId: centerAccess.id,
+    };
+  }
+
+  /**
+   * Handle import when centerId is NOT provided (global access scenario)
+   * @private
+   */
+  private handleImportWithoutCenterId(
+    userId: string,
+    profileType: ProfileType,
+    existingProfile: UserProfile | null,
+  ): never {
+    // If no centerId provided and user has profile → throw error
+    // (because no centerId means global access, and they already have a profile)
+    if (existingProfile) {
+      throw new ConflictException(
+        'User already has a profile. Cannot import without center access',
+      );
+    }
+
+    // If no centerId and no profile, we can't proceed
+    // (need centerId to grant access)
+    throw new ConflictException('Center ID is required for user import');
   }
 
   /**
@@ -133,15 +199,10 @@ export class UserProfileImportService extends BaseService {
    * Verify OTP code for user import
    * @private
    */
-  private async verifyOtpCode(
-    code: string,
-    phone: string,
-    userId: string,
-  ): Promise<void> {
+  private async verifyOtpCode(code: string, userId: string): Promise<void> {
     await this.verificationService.verifyCode(
       code,
       VerificationType.OTP_VERIFICATION,
-      NotificationChannel.SMS,
       userId,
     );
   }
@@ -171,45 +232,6 @@ export class UserProfileImportService extends BaseService {
       profileType,
       profileRefId,
     );
-  }
-
-  /**
-   * Ensure user doesn't already have access to the center
-   * @private
-   */
-  private async ensureCenterAccessNotExists(
-    userProfileId: string,
-    centerId: string,
-  ): Promise<void> {
-    const centerAccess = await this.accessControlHelperService.findCenterAccess(
-      {
-        userProfileId,
-        centerId,
-      },
-    );
-
-    if (centerAccess && !centerAccess.deletedAt) {
-      throw new ConflictException('User already has access to this center');
-    }
-  }
-
-  /**
-   * Grant center access to user profile
-   * @private
-   */
-  private async grantCenterAccessToProfile(
-    userProfileId: string,
-    centerId: string | undefined,
-    actor: ActorUser,
-  ) {
-    // Use provided centerId or actor's centerId
-    // Let grantCenterAccess handle validation if centerId is missing
-    const finalCenterId = centerId ?? actor.centerId;
-
-    const centerAccessDto: CenterAccessDto = {
-      userProfileId,
-      centerId: finalCenterId as string,
-    };
   }
 
   /**

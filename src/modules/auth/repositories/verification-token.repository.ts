@@ -4,7 +4,6 @@ import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { VerificationType } from '../enums/verification-type.enum';
-import { NotificationChannel } from '../../notifications/enums/notification-channel.enum';
 
 @Injectable()
 export class VerificationTokenRepository extends BaseRepository<VerificationToken> {
@@ -21,7 +20,6 @@ export class VerificationTokenRepository extends BaseRepository<VerificationToke
   async createVerificationToken(data: {
     userId: string;
     type: VerificationType;
-    channel: NotificationChannel;
     token: string;
     code?: string | null;
     expiresAt: Date;
@@ -40,10 +38,12 @@ export class VerificationTokenRepository extends BaseRepository<VerificationToke
   async findByCode(
     code: string,
     type: VerificationType,
-    channel: NotificationChannel,
     userId?: string,
   ): Promise<VerificationToken | null> {
-    const where: any = { code, type, channel };
+    const where: { code: string; type: VerificationType; userId?: string } = {
+      code,
+      type,
+    };
     if (userId) {
       where.userId = userId;
     }
@@ -57,21 +57,9 @@ export class VerificationTokenRepository extends BaseRepository<VerificationToke
   async findByUserIdAndType(
     userId: string,
     type: VerificationType,
-  ): Promise<VerificationToken[]> {
-    return this.getRepository().find({
-      where: { userId, type },
-      relations: { user: true },
-      order: { createdAt: 'DESC' },
-    });
-  }
-
-  async findByUserIdTypeAndChannel(
-    userId: string,
-    type: VerificationType,
-    channel: NotificationChannel,
   ): Promise<VerificationToken | null> {
     return this.getRepository().findOne({
-      where: { userId, type, channel },
+      where: { userId, type },
       relations: { user: true },
       order: { createdAt: 'DESC' },
     });
@@ -98,13 +86,5 @@ export class VerificationTokenRepository extends BaseRepository<VerificationToke
     type: VerificationType,
   ): Promise<void> {
     await this.getRepository().delete({ userId, type });
-  }
-
-  async deleteByUserIdTypeAndChannel(
-    userId: string,
-    type: VerificationType,
-    channel: NotificationChannel,
-  ): Promise<void> {
-    await this.getRepository().delete({ userId, type, channel });
   }
 }
