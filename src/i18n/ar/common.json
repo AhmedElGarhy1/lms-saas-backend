@@ -119,7 +119,9 @@
     "sendOtp": "إرسال رمز التحقق",
     "sending": "جاري الإرسال...",
     "verifyPhone": "التحقق من الهاتف",
-    "autoRefresh": "{refresh} تلقائي"
+    "autoRefresh": "{refresh} تلقائي",
+    "importUser": "استيراد مستخدم",
+    "importing": "جاري الاستيراد..."
   },
   "labels": {
     "name": "الاسم",
@@ -304,7 +306,8 @@
     "otpCode": "رمز التحقق",
     "notProvided": "غير متوفر",
     "profileAvatar": "صورة الملف الشخصي",
-    "channel": "القناة"
+    "channel": "القناة",
+    "profileType": "نوع الملف الشخصي"
   },
   "status": {
     "active": "نشط",
@@ -314,6 +317,13 @@
     "failed": "فشل",
     "retrying": "إعادة المحاولة",
     "delivered": "تم التسليم"
+  },
+  "profileTypes": {
+    "teacher": "معلم",
+    "staff": "موظف",
+    "parent": "ولي أمر",
+    "student": "طالب",
+    "admin": "مدير"
   },
   "channels": {
     "email": "البريد الإلكتروني",
@@ -530,6 +540,7 @@
     "searchAndSelectRole": "البحث واختيار دور",
     "selectCenterFirst": "اختر مركزاً أولاً",
     "selectCenterFirstToChooseRole": "يرجى اختيار مركز أولاً لاختيار دور",
+    "selectProfileType": "اختر نوع الملف الشخصي",
     "alreadyHaveAccount": "هل لديك حساب بالفعل؟",
     "processing": "جاري المعالجة...",
     "loadingCenters": "جاري تحميل المراكز...",

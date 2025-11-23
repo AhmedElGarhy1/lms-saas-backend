@@ -223,5 +223,23 @@
     "description": "Verify the phone number for {userName}",
     "enterOtpHint": "Enter the 6-digit code sent to the phone number",
     "resendCooldown": "Resend available in {seconds}s"
+  },
+  "importUser": {
+    "title": "Import User from Another Center",
+    "step1": "Request OTP",
+    "step2": "Verify & Import",
+    "step1Description": "Enter the phone number of the user you want to import. An OTP will be sent to verify the user exists.",
+    "step2Description": "Enter the OTP code received via SMS and select the profile type to import the user.",
+    "sendOtp": "Send OTP",
+    "verifyAndImport": "Verify & Import",
+    "phoneHint": "Enter an 11-digit Egyptian mobile number (e.g., 01234567890)",
+    "otpHint": "Enter the 6-digit code sent to the phone number",
+    "phoneLocked": "Phone number is locked for this import session",
+    "otpSent": "OTP sent successfully",
+    "userNotFound": "User with this phone number doesn't exist",
+    "userNotFoundTitle": "User Not Found",
+    "userNotFoundDescription": "No user found with phone number {phone}. Would you like to create a new user instead?",
+    "createUserInstead": "Create User Instead",
+    "importSuccess": "User imported successfully"
   }
 }

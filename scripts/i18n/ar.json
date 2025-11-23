@@ -167,7 +167,9 @@
       "sendOtp": "إرسال رمز التحقق",
       "sending": "جاري الإرسال...",
       "verifyPhone": "التحقق من الهاتف",
-      "autoRefresh": "{refresh} تلقائي"
+      "autoRefresh": "{refresh} تلقائي",
+      "importUser": "استيراد مستخدم",
+      "importing": "جاري الاستيراد..."
     },
     "labels": {
       "name": "الاسم",
@@ -352,7 +354,8 @@
       "otpCode": "رمز التحقق",
       "notProvided": "غير متوفر",
       "profileAvatar": "صورة الملف الشخصي",
-      "channel": "القناة"
+      "channel": "القناة",
+      "profileType": "نوع الملف الشخصي"
     },
     "status": {
       "active": "نشط",
@@ -362,6 +365,13 @@
       "failed": "فشل",
       "retrying": "إعادة المحاولة",
       "delivered": "تم التسليم"
+    },
+    "profileTypes": {
+      "teacher": "معلم",
+      "staff": "موظف",
+      "parent": "ولي أمر",
+      "student": "طالب",
+      "admin": "مدير"
     },
     "channels": {
       "email": "البريد الإلكتروني",
@@ -578,6 +588,7 @@
       "searchAndSelectRole": "البحث واختيار دور",
       "selectCenterFirst": "اختر مركزاً أولاً",
       "selectCenterFirstToChooseRole": "يرجى اختيار مركز أولاً لاختيار دور",
+      "selectProfileType": "اختر نوع الملف الشخصي",
       "alreadyHaveAccount": "هل لديك حساب بالفعل؟",
       "processing": "جاري المعالجة...",
       "loadingCenters": "جاري تحميل المراكز...",
@@ -956,6 +967,24 @@
       "description": "التحقق من رقم الهاتف لـ {userName}",
       "enterOtpHint": "أدخل الرمز المكون من 6 أرقام المرسل إلى رقم الهاتف",
       "resendCooldown": "إعادة الإرسال متاحة خلال {seconds} ثانية"
+    },
+    "importUser": {
+      "title": "استيراد مستخدم من مركز آخر",
+      "step1": "طلب رمز التحقق",
+      "step2": "التحقق والاستيراد",
+      "step1Description": "أدخل رقم الهاتف للمستخدم الذي تريد استيراده. سيتم إرسال رمز تحقق للتحقق من وجود المستخدم.",
+      "step2Description": "أدخل رمز التحقق المستلم عبر الرسائل النصية واختر نوع الملف الشخصي لاستيراد المستخدم.",
+      "sendOtp": "إرسال رمز التحقق",
+      "verifyAndImport": "التحقق والاستيراد",
+      "phoneHint": "أدخل رقم هاتف مصري مكون من 11 رقم (مثال: 01234567890)",
+      "otpHint": "أدخل الرمز المكون من 6 أرقام المرسل إلى رقم الهاتف",
+      "phoneLocked": "رقم الهاتف مقفل لهذه الجلسة",
+      "otpSent": "تم إرسال رمز التحقق بنجاح",
+      "userNotFound": "المستخدم بهذا الرقم غير موجود",
+      "userNotFoundTitle": "المستخدم غير موجود",
+      "userNotFoundDescription": "لم يتم العثور على مستخدم برقم الهاتف {phone}. هل تريد إنشاء مستخدم جديد بدلاً من ذلك؟",
+      "createUserInstead": "إنشاء مستخدم بدلاً من ذلك",
+      "importSuccess": "تم استيراد المستخدم بنجاح"
     }
   },
   "errors": {

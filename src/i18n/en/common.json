@@ -117,7 +117,9 @@
     "sendOtp": "Send OTP",
     "sending": "Sending...",
     "verifyPhone": "Verify Phone",
-    "autoRefresh": "{refresh} Auto"
+    "autoRefresh": "{refresh} Auto",
+    "importUser": "Import User",
+    "importing": "Importing..."
   },
   "labels": {
     "name": "Name",
@@ -300,7 +302,8 @@
     "otpCode": "OTP Code",
     "notProvided": "Not provided",
     "profileAvatar": "Profile avatar",
-    "channel": "Channel"
+    "channel": "Channel",
+    "profileType": "Profile Type"
   },
   "status": {
     "active": "Active",
@@ -317,6 +320,13 @@
     "whatsapp": "WhatsApp",
     "inApp": "In-App",
     "push": "Push"
+  },
+  "profileTypes": {
+    "teacher": "Teacher",
+    "staff": "Staff",
+    "parent": "Parent",
+    "student": "Student",
+    "admin": "Admin"
   },
   "resources": {
     "resource": "Resource",
@@ -525,6 +535,7 @@
     "searchAndSelectRole": "Search and select a role",
     "selectCenterFirst": "Select a center first",
     "selectCenterFirstToChooseRole": "Please select a center first to choose a role",
+    "selectProfileType": "Select a profile type",
     "alreadyHaveAccount": "Already have an account?",
     "processing": "Processing...",
     "loadingCenters": "Loading centers...",
