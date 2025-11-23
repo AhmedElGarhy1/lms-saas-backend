@@ -57,17 +57,8 @@ export class ErrorApiResponse {
   @ApiProperty({ description: 'Whether the request was successful' })
   success: false;
 
-  @ApiProperty({ description: 'Error message' })
+  @ApiProperty({ description: 'Error message (translated)' })
   message: string;
-
-  @ApiProperty({ description: 'User-friendly error message' })
-  userMessage: string;
-
-  @ApiProperty({ description: 'Action required from the user' })
-  actionRequired: string;
-
-  @ApiProperty({ description: 'Whether the error is retryable' })
-  retryable: boolean;
 
   @ApiProperty({ description: 'Error details for debugging' })
   details?: Record<string, any>;
@@ -129,18 +120,12 @@ export class ApiResponseBuilder {
 
   static error(
     message: string,
-    userMessage: string,
-    actionRequired: string,
-    retryable: boolean = false,
     details?: Record<string, any>,
     requestId?: string,
   ): ErrorApiResponse {
     return {
       success: false,
       message,
-      userMessage,
-      actionRequired,
-      retryable,
       details,
       meta: {
         timestamp: new Date().toISOString(),

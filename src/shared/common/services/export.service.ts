@@ -7,6 +7,8 @@ import {
 } from '../exceptions/custom.exceptions';
 import { ExportFormat } from '../dto';
 import { BaseService } from './base.service';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 export interface ExportOptions {
   filename: string;
@@ -23,6 +25,10 @@ export interface ExportMapper<T, R extends Record<string, any>> {
 @Injectable()
 export class ExportService extends BaseService {
   private readonly logger: Logger = new Logger(ExportService.name);
+
+  constructor(private readonly i18n: I18nService<I18nTranslations>) {
+    super();
+  }
 
   /**
    * Export data to CSV format
@@ -47,7 +53,9 @@ export class ExportService extends BaseService {
 
       return {
         success: true,
-        message: 'CSV export completed successfully',
+        message: this.i18n.translate('success.export', {
+          args: { resource: 'CSV' },
+        }),
         filename: `${filename}.csv`,
         format: 'csv',
         recordCount: data.length,
@@ -89,7 +97,9 @@ export class ExportService extends BaseService {
 
       return {
         success: true,
-        message: 'XLSX export completed successfully',
+        message: this.i18n.translate('success.export', {
+          args: { resource: 'XLSX' },
+        }),
         filename: `${filename}.xlsx`,
         format: 'xlsx',
         recordCount: data.length,
@@ -128,7 +138,9 @@ export class ExportService extends BaseService {
 
       return {
         success: true,
-        message: 'JSON export completed successfully',
+        message: this.i18n.translate('success.export', {
+          args: { resource: 'JSON' },
+        }),
         filename: `${filename}.json`,
         format: 'json',
         recordCount: data.length,

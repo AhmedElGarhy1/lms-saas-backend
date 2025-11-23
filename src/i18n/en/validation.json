@@ -144,5 +144,26 @@
   "licenseInvalid": "Invalid license format",
   "copyrightInvalid": "Invalid copyright format",
   "trademarkInvalid": "Invalid trademark format",
-  "patentInvalid": "Invalid patent format"
+  "patentInvalid": "Invalid patent format",
+  "email": {
+    "suggestion": "Please enter a valid email address for {field}"
+  },
+  "required": {
+    "suggestion": "Please provide a value for {field}"
+  },
+  "minLength": {
+    "suggestion": "Please ensure {field} meets the minimum length requirement"
+  },
+  "maxLength": {
+    "suggestion": "Please shorten {field} to meet the maximum length requirement"
+  },
+  "phone": {
+    "suggestion": "Please enter a valid phone number for {field}"
+  },
+  "password": {
+    "suggestion": "Please ensure {field} meets the password strength requirements"
+  },
+  "default": {
+    "suggestion": "Please check {field} and try again"
+  }
 }

@@ -6,12 +6,14 @@ import {
   TwoFactorGenerationFailedException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class TwoFactorService extends BaseService {
   private readonly logger: Logger = new Logger(TwoFactorService.name);
 
-  constructor() {
+  constructor(private readonly i18n: I18nService<I18nTranslations>) {
     super();
   }
 
@@ -47,7 +49,9 @@ export class TwoFactorService extends BaseService {
       return await QRCode.toDataURL(otpauthUrl);
     } catch (error) {
       this.logger.error('Failed to generate QR code', error);
-      throw new QrCodeGenerationFailedException('Failed to generate QR code');
+      throw new QrCodeGenerationFailedException(
+        this.i18n.translate('errors.QR_CODE_GENERATION_FAILED'),
+      );
     }
   }
 

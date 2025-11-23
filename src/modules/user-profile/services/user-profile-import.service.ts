@@ -25,6 +25,8 @@ import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { OtpEvent } from '@/modules/auth/events/auth.events';
 import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class UserProfileImportService extends BaseService {
@@ -41,6 +43,7 @@ export class UserProfileImportService extends BaseService {
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly activityLogService: ActivityLogService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
   }
@@ -174,13 +177,15 @@ export class UserProfileImportService extends BaseService {
     // (because no centerId means global access, and they already have a profile)
     if (existingProfile) {
       throw new ConflictException(
-        'User already has a profile. Cannot import without center access',
+        this.i18n.translate('errors.userAlreadyHasProfileCannotImport'),
       );
     }
 
     // If no centerId and no profile, we can't proceed
     // (need centerId to grant access)
-    throw new ConflictException('Center ID is required for user import');
+    throw new ConflictException(
+      this.i18n.translate('errors.centerIdRequired'),
+    );
   }
 
   /**
@@ -190,7 +195,7 @@ export class UserProfileImportService extends BaseService {
   private async findUserByPhone(phone: string): Promise<User> {
     const user = await this.userService.findUserByPhone(phone);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(this.i18n.translate('errors.userNotFound'));
     }
     return user;
   }

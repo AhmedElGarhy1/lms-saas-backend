@@ -66,7 +66,11 @@ export class RolesController {
   @Get('permissions/me')
   @ReadApiResponses('Get my permissions')
   async getMyPermissions(@GetUser() actor: ActorUser) {
-    return this.rolesService.getMyPermissions(actor);
+    const result = await this.rolesService.getMyPermissions(actor);
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.permissionsRetrieved'),
+    );
   }
 
   @Get('permissions')
@@ -112,7 +116,11 @@ export class RolesController {
     @Query() query: PaginateRolesDto,
     @GetUser() actor: ActorUser,
   ) {
-    return this.rolesService.paginateRoles(query, actor);
+    const result = await this.rolesService.paginateRoles(query, actor);
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Get(':roleId')
@@ -177,7 +185,11 @@ export class RolesController {
   ) {
     await this.rolesService.restoreRole(roleId, user);
 
-    return ControllerResponse.message('Role restored successfully');
+    return ControllerResponse.message(
+      this.i18n.translate('success.restore', {
+        args: { resource: this.i18n.translate('common.resources.role') },
+      }),
+    );
   }
 
   // ===== EXPORT FUNCTIONALITY =====

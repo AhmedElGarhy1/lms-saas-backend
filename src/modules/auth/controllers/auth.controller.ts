@@ -113,8 +113,8 @@ export class AuthController {
     await this.authService.requestEmailVerification(actor);
 
     return ControllerResponse.success(
-      { message: 'Email verification request sent' },
-      this.i18n.translate('success.emailVerified'),
+      null,
+      this.i18n.translate('success.emailVerificationRequestSent'),
     );
   }
 
@@ -130,8 +130,8 @@ export class AuthController {
     await this.authService.requestPhoneVerification(dto.userId, dto.phone);
 
     return ControllerResponse.success(
-      { message: 'Phone verification request sent' },
-      this.i18n.translate('success.emailVerified'), // Use existing translation key
+      null,
+      this.i18n.translate('success.phoneVerificationRequestSent'),
     );
   }
 
@@ -149,8 +149,8 @@ export class AuthController {
     await this.authService.verifyPhone(dto.code, dto.userId || user.id);
 
     return ControllerResponse.success(
-      { message: 'Phone verified successfully' },
-      this.i18n.translate('success.emailVerified'), // Use existing translation key
+      null,
+      this.i18n.translate('success.phoneVerified'),
     );
   }
 

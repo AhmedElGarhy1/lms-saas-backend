@@ -27,6 +27,8 @@ import {
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ProfileTypePermissionService } from './profile-type-permission.service';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class AccessControlService extends BaseService {
@@ -41,6 +43,7 @@ export class AccessControlService extends BaseService {
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     @Inject(forwardRef(() => ProfileTypePermissionService))
     private readonly profileTypePermissionService: ProfileTypePermissionService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
   }
@@ -118,7 +121,9 @@ export class AccessControlService extends BaseService {
     });
 
     if (canAccess) {
-      throw new BusinessLogicException('User already has access');
+      throw new BusinessLogicException(
+        this.i18n.translate('errors.userAlreadyHasAccess'),
+      );
     }
 
     await this.grantUserAccess(body);
@@ -184,7 +189,9 @@ export class AccessControlService extends BaseService {
     const canAccess = await this.accessControlHelperService.canUserAccess(body);
 
     if (!canAccess) {
-      throw new InsufficientPermissionsException('User does not have access');
+      throw new InsufficientPermissionsException(
+        this.i18n.translate('errors.userDoesNotHaveAccess'),
+      );
     }
 
     await this.revokeUserAccess(body);
@@ -240,7 +247,9 @@ export class AccessControlService extends BaseService {
     const canAccess =
       await this.accessControlHelperService.canBranchAccess(data);
     if (canAccess) {
-      throw new ConflictException('Profile already assigned to branch');
+      throw new ConflictException(
+        this.i18n.translate('errors.profileAlreadyAssignedToBranch'),
+      );
     }
 
     // Create new assignment
@@ -285,10 +294,14 @@ export class AccessControlService extends BaseService {
     const centerAccess =
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
-      throw new ResourceNotFoundException('Center access not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.centerAccessNotFound'),
+      );
     }
     if (centerAccess.deletedAt) {
-      throw new BusinessLogicException('Center access already deleted');
+      throw new BusinessLogicException(
+        this.i18n.translate('errors.centerAccessAlreadyDeleted'),
+      );
     }
 
     await this.centerAccessRepository.softRemove(centerAccess.id);
@@ -313,10 +326,14 @@ export class AccessControlService extends BaseService {
       true,
     );
     if (!centerAccess) {
-      throw new ResourceNotFoundException('Center access not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.centerAccessNotFound'),
+      );
     }
     if (!centerAccess.deletedAt) {
-      throw new BusinessLogicException('Center access not deleted');
+      throw new BusinessLogicException(
+        this.i18n.translate('errors.centerAccessNotDeleted'),
+      );
     }
     await this.centerAccessRepository.restore(centerAccess.id);
   }
@@ -339,7 +356,9 @@ export class AccessControlService extends BaseService {
     const centerAccess =
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
-      throw new ResourceNotFoundException('Center access not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.centerAccessNotFound'),
+      );
     }
     await this.centerAccessRepository.update(centerAccess.id, { isActive });
 

@@ -89,9 +89,7 @@ export class AuthService extends BaseService {
     if (user) {
       if (!user.isActive) {
         throw new BusinessLogicException(
-          'Account is deactivated',
-          'Your account has been deactivated',
-          'Please contact an administrator to reactivate your account',
+          this.i18n.translate('errors.businessLogicError'),
         );
       }
 
@@ -109,7 +107,9 @@ export class AuthService extends BaseService {
           ),
         );
 
-        throw new AuthenticationFailedException('Invalid credentials');
+        throw new AuthenticationFailedException(
+          this.i18n.translate('errors.invalidCredentials'),
+        );
       }
 
       // Password is valid, continue with login
@@ -117,7 +117,9 @@ export class AuthService extends BaseService {
         this.logger.error(
           `User object missing or invalid ID for email/phone: ${dto.emailOrPhone}`,
         );
-        throw new AuthenticationFailedException('User data is invalid');
+        throw new AuthenticationFailedException(
+          this.i18n.translate('errors.authenticationFailed'),
+        );
       }
 
       // Use user for rest of login flow
@@ -173,7 +175,9 @@ export class AuthService extends BaseService {
       };
     } else {
       // User doesn't exist - return same error message to prevent enumeration
-      throw new AuthenticationFailedException('Invalid credentials');
+      throw new AuthenticationFailedException(
+        this.i18n.translate('errors.invalidCredentials'),
+      );
     }
   }
 
@@ -182,14 +186,14 @@ export class AuthService extends BaseService {
     const user = await this.userService.findUserByEmail(dto.email);
 
     if (!user) {
-      throw new ResourceNotFoundException('User not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.userNotFound'),
+      );
     }
 
     if (!user.twoFactorEnabled) {
       throw new BusinessLogicException(
-        'Two-factor authentication is not enabled',
-        '2FA is not set up for this account',
-        'Please set up two-factor authentication first',
+        this.i18n.translate('errors.businessLogicError'),
       );
     }
 
@@ -205,7 +209,9 @@ export class AuthService extends BaseService {
         userId: user.id,
         email: dto.email,
       });
-      throw new AuthenticationFailedException('Invalid 2FA code');
+      throw new AuthenticationFailedException(
+        this.i18n.translate('errors.authenticationFailed'),
+      );
     }
 
     // Generate final tokens
@@ -250,7 +256,7 @@ export class AuthService extends BaseService {
     // Get user to create actor
     const user = await this.userService.findOne(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(this.i18n.translate('errors.userNotFound'));
     }
 
     // Create actor from user (the user themselves is the actor)
@@ -268,7 +274,7 @@ export class AuthService extends BaseService {
     );
 
     return {
-      message: 'Email verified successfully',
+      message: this.i18n.translate('success.emailVerified'),
       user: {
         id: userId,
         email,
@@ -278,7 +284,9 @@ export class AuthService extends BaseService {
 
   async requestEmailVerification(actor: ActorUser): Promise<void> {
     if (!actor.email) {
-      throw new BadRequestException('User does not have an email address');
+      throw new BadRequestException(
+        this.i18n.translate('errors.badRequest'),
+      );
     }
 
     // Emit event for email verification (event-driven)
@@ -300,17 +308,21 @@ export class AuthService extends BaseService {
     } else if (phone) {
       user = await this.userService.findUserByPhone(phone);
     } else {
-      throw new BadRequestException('Either userId or phone is required');
+      throw new BadRequestException(
+        this.i18n.translate('errors.badRequest'),
+      );
     }
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(this.i18n.translate('errors.userNotFound'));
     }
 
     // Use provided phone or user's stored phone (formatted correctly)
     const phoneToUse = phone || user.getPhone();
     if (!phoneToUse) {
-      throw new BadRequestException('User does not have a phone number');
+      throw new BadRequestException(
+        this.i18n.translate('errors.badRequest'),
+      );
     }
 
     // Send phone verification OTP
@@ -341,7 +353,7 @@ export class AuthService extends BaseService {
     // Get user to get phone and create actor
     const user = await this.userService.findOne(verifiedUserId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(this.i18n.translate('errors.userNotFound'));
     }
 
     // Update user phoneVerified date
@@ -391,7 +403,9 @@ export class AuthService extends BaseService {
       } else if (dto.phone) {
         channel = NotificationChannel.SMS; // Default to SMS for phone
       } else {
-        throw new BadRequestException('Either email or phone is required');
+        throw new BadRequestException(
+          this.i18n.translate('errors.badRequest'),
+        );
       }
     }
 
@@ -443,12 +457,14 @@ export class AuthService extends BaseService {
     const user = await this.userService.findOne(userId, true);
 
     if (!user) {
-      throw new ResourceNotFoundException('User not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.userNotFound'),
+      );
     }
 
     if (user.twoFactorEnabled) {
       throw new BusinessLogicException(
-        'Two-factor authentication is already enabled',
+        this.i18n.translate('errors.businessLogicError'),
       );
     }
 
@@ -487,17 +503,21 @@ export class AuthService extends BaseService {
     const user = await this.userService.findOne(userId, true);
 
     if (!user) {
-      throw new ResourceNotFoundException('User not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.userNotFound'),
+      );
     }
 
     if (user.twoFactorEnabled) {
       throw new BusinessLogicException(
-        'Two-factor authentication is already enabled',
+        this.i18n.translate('errors.businessLogicError'),
       );
     }
 
     if (!user.twoFactorSecret) {
-      throw new BusinessLogicException('Please setup 2FA first');
+      throw new BusinessLogicException(
+        this.i18n.translate('errors.businessLogicError'),
+      );
     }
 
     // TODO: Re-enable 2FA functionality when TwoFactorService is fixed
@@ -508,7 +528,9 @@ export class AuthService extends BaseService {
     // );
     const isValid = true; // Temporarily disabled
     if (!isValid) {
-      throw new AuthenticationFailedException('Invalid 2FA verification code');
+      throw new AuthenticationFailedException(
+        this.i18n.translate('errors.authenticationFailed'),
+      );
     }
 
     // Enable 2FA
@@ -524,7 +546,7 @@ export class AuthService extends BaseService {
       new TwoFactorEnabledEvent(userId, actor),
     );
 
-    return { message: 'Two-factor authentication enabled successfully' };
+    return { message: this.i18n.translate('success.twoFactorEnabled') };
   }
 
   async disableTwoFactor(
@@ -535,12 +557,14 @@ export class AuthService extends BaseService {
     const user = await this.userService.findOne(userId, true);
 
     if (!user) {
-      throw new ResourceNotFoundException('User not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.userNotFound'),
+      );
     }
 
     if (!user.twoFactorEnabled) {
       throw new BusinessLogicException(
-        'Two-factor authentication is not enabled',
+        this.i18n.translate('errors.businessLogicError'),
       );
     }
 
@@ -556,7 +580,9 @@ export class AuthService extends BaseService {
         userId: user.id,
         email: user.email,
       });
-      throw new AuthenticationFailedException('Invalid 2FA verification code');
+      throw new AuthenticationFailedException(
+        this.i18n.translate('errors.authenticationFailed'),
+      );
     }
 
     // Disable 2FA
@@ -568,7 +594,7 @@ export class AuthService extends BaseService {
       new TwoFactorDisabledEvent(userId, actor),
     );
 
-    return { message: 'Two-factor authentication disabled successfully' };
+    return { message: this.i18n.translate('success.twoFactorDisabled') };
   }
 
   async logout(actor: ActorUser) {
@@ -581,7 +607,7 @@ export class AuthService extends BaseService {
       new UserLoggedOutEvent(actor.id, actor),
     );
 
-    return { message: 'Logged out successfully' };
+    return { message: this.i18n.translate('success.logout') };
   }
 
   private generateTokens(user: User) {
@@ -618,7 +644,9 @@ export class AuthService extends BaseService {
     // Get user (validation already done by strategy)
     const user = await this.userService.findOne(userId, true);
     if (!user) {
-      throw new AuthenticationFailedException('User not found');
+      throw new AuthenticationFailedException(
+        this.i18n.translate('errors.userNotFound'),
+      );
     }
 
     // Generate new tokens

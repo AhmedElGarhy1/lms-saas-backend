@@ -15,6 +15,8 @@ import {
   ResourceNotFoundException,
   ValidationFailedException,
 } from '@/shared/common/exceptions/custom.exceptions';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 /**
  * Base options for profile type permission validation
@@ -74,6 +76,7 @@ export class ProfileTypePermissionService {
     @Inject(forwardRef(() => UserProfileService))
     private readonly userProfileService: UserProfileService,
     private readonly permissionService: PermissionService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   /**
@@ -143,14 +146,16 @@ export class ProfileTypePermissionService {
       );
 
       if (!targetProfile) {
-        throw new ResourceNotFoundException('User profile not found');
+        throw new ResourceNotFoundException(
+          this.i18n.translate('errors.userProfileNotFound'),
+        );
       }
 
       return targetProfile.profileType;
     }
 
     throw new ValidationFailedException(
-      'Either targetUserProfileId or profileType must be provided',
+      this.i18n.translate('errors.eitherTargetUserProfileIdOrProfileTypeRequired' as any),
     );
   }
 

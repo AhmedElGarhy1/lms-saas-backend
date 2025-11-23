@@ -6,6 +6,7 @@ import {
   AcceptLanguageResolver,
   I18nJsonLoader,
   I18nModule,
+  I18nService,
   QueryResolver,
 } from 'nestjs-i18n';
 import { AuthModule } from '@/modules/auth/auth.module';
@@ -48,6 +49,7 @@ import { validateEnv } from './shared/config/env.validation';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RateLimitModule } from './modules/rate-limit/rate-limit.module';
 import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limit-config.interface';
+import { I18nTranslations } from './generated/i18n.generated';
 
 @Module({
   imports: [
@@ -71,7 +73,7 @@ import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limi
         watch: true,
         includeSubfolders: false,
       },
-      typesOutputPath: join(__dirname, '../../src/generated/i18n.generated.ts'),
+      typesOutputPath: join(__dirname, '../src/generated/i18n.generated.ts'),
       resolvers: [
         { use: QueryResolver, options: ['lang'] },
         UserLocaleResolver,
@@ -169,30 +171,54 @@ import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limi
     },
     {
       provide: APP_GUARD,
-      useFactory: (reflector: Reflector) => new JwtAuthGuard(reflector),
-      inject: [Reflector],
+      useFactory: (reflector: Reflector, i18n: I18nService) =>
+        new JwtAuthGuard(
+          reflector,
+          i18n as unknown as I18nService<I18nTranslations>,
+        ),
+      inject: [Reflector, I18nService],
     },
     {
       provide: APP_GUARD,
       useFactory: (
         reflector: Reflector,
         userProfileService: UserProfileService,
-      ) => new ProfileGuard(reflector, userProfileService),
-      inject: [Reflector, UserProfileService],
+        i18n: I18nService,
+      ) =>
+        new ProfileGuard(
+          reflector,
+          userProfileService,
+          i18n as unknown as I18nService<I18nTranslations>,
+        ),
+      inject: [Reflector, UserProfileService, I18nService],
     },
     {
       provide: APP_GUARD,
       useFactory: (
         reflector: Reflector,
         accessControlHelperService: AccessControlHelperService,
-      ) => new ContextGuard(reflector, accessControlHelperService),
-      inject: [Reflector, AccessControlHelperService],
+        i18n: I18nService,
+      ) =>
+        new ContextGuard(
+          reflector,
+          accessControlHelperService,
+          i18n as unknown as I18nService<I18nTranslations>,
+        ),
+      inject: [Reflector, AccessControlHelperService, I18nService],
     },
     {
       provide: APP_GUARD,
-      useFactory: (reflector: Reflector, rolesService: RolesService) =>
-        new PermissionsGuard(reflector, rolesService),
-      inject: [Reflector, RolesService],
+      useFactory: (
+        reflector: Reflector,
+        rolesService: RolesService,
+        i18n: I18nService,
+      ) =>
+        new PermissionsGuard(
+          reflector,
+          rolesService,
+          i18n as unknown as I18nService<I18nTranslations>,
+        ),
+      inject: [Reflector, RolesService, I18nService],
     },
   ],
 })

@@ -21,11 +21,16 @@ import { GetUser } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UpdateApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @ApiTags('Centers - Branches')
 @Controller('centers/branches')
 export class BranchesController {
-  constructor(private readonly branchesService: BranchesService) {}
+  constructor(
+    private readonly branchesService: BranchesService,
+    private readonly i18n: I18nService<I18nTranslations>,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all branches for a center with pagination' })
@@ -37,7 +42,11 @@ export class BranchesController {
     @Query() paginateDto: PaginateBranchesDto,
     @GetUser() actor: ActorUser,
   ) {
-    return this.branchesService.paginateBranches(paginateDto, actor);
+    const result = await this.branchesService.paginateBranches(paginateDto, actor);
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Get(':branchId')
@@ -55,7 +64,11 @@ export class BranchesController {
     @Param('branchId', ParseUUIDPipe) branchId: string,
     @GetUser() actor: ActorUser,
   ) {
-    return this.branchesService.getBranch(branchId, actor);
+    const result = await this.branchesService.getBranch(branchId, actor);
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Post()
@@ -74,7 +87,15 @@ export class BranchesController {
     @Body() createBranchDto: CreateBranchDto,
     @GetUser() actor: ActorUser,
   ) {
-    return this.branchesService.createBranch(createBranchDto, actor);
+    const result = await this.branchesService.createBranch(createBranchDto, actor);
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.create', {
+        args: {
+          resource: this.i18n.translate('common.resources.branch'),
+        },
+      }),
+    );
   }
 
   @Put(':branchId')
@@ -95,7 +116,15 @@ export class BranchesController {
     @Body() data: CreateBranchDto,
     @GetUser() actor: ActorUser,
   ) {
-    return this.branchesService.updateBranch(branchId, data, actor);
+    const result = await this.branchesService.updateBranch(branchId, data, actor);
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('success.update', {
+        args: {
+          resource: this.i18n.translate('common.resources.branch'),
+        },
+      }),
+    );
   }
 
   @Delete(':branchId')
@@ -115,7 +144,14 @@ export class BranchesController {
     @Param('branchId', ParseUUIDPipe) branchId: string,
     @GetUser() actor: ActorUser,
   ) {
-    return this.branchesService.deleteBranch(branchId, actor);
+    await this.branchesService.deleteBranch(branchId, actor);
+    return ControllerResponse.message(
+      this.i18n.translate('success.delete', {
+        args: {
+          resource: this.i18n.translate('common.resources.branch'),
+        },
+      }),
+    );
   }
 
   @Patch(':branchId/status')
@@ -136,10 +172,17 @@ export class BranchesController {
     @Body() body: { isActive: boolean },
     @GetUser() actor: ActorUser,
   ) {
-    return this.branchesService.toggleBranchStatus(
+    await this.branchesService.toggleBranchStatus(
       branchId,
       body.isActive,
       actor,
+    );
+    return ControllerResponse.message(
+      this.i18n.translate('success.update', {
+        args: {
+          resource: this.i18n.translate('common.resources.branch'),
+        },
+      }),
     );
   }
 
@@ -153,6 +196,12 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.branchesService.restoreBranch(branchId, actor);
-    return ControllerResponse.message('Branch restored successfully');
+    return ControllerResponse.message(
+      this.i18n.translate('success.restore', {
+        args: {
+          resource: this.i18n.translate('common.resources.branch'),
+        },
+      }),
+    );
   }
 }

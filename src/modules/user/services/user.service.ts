@@ -35,6 +35,8 @@ import {
   UserRestoredEvent,
   UserActivatedEvent,
 } from '../events/user.events';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class UserService extends BaseService {
@@ -50,6 +52,7 @@ export class UserService extends BaseService {
     private readonly centersService: CentersService,
     private readonly activityLogService: ActivityLogService,
     private readonly eventEmitter: TypeSafeEventEmitter,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
   }
@@ -60,7 +63,9 @@ export class UserService extends BaseService {
     const { userId, dto } = params;
     const user = await this.userRepository.findOne(userId);
     if (!user) {
-      throw new ResourceNotFoundException('User not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.userNotFound'),
+      );
     }
 
     // Verify current password
@@ -69,7 +74,9 @@ export class UserService extends BaseService {
       user.password,
     );
     if (!isCurrentPasswordValid) {
-      throw new ValidationFailedException('Current password is incorrect');
+      throw new ValidationFailedException(
+        this.i18n.translate('errors.currentPasswordIncorrect'),
+      );
     }
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, 12);
@@ -83,7 +90,10 @@ export class UserService extends BaseService {
       new PasswordChangedEvent(userId, { id: userId } as ActorUser),
     );
 
-    return { message: 'Password changed successfully', success: true };
+    return {
+      message: this.i18n.translate('success.passwordChange'),
+      success: true,
+    };
   }
 
   async createUser(dto: CreateUserDto, _actor: ActorUser): Promise<User> {
@@ -201,14 +211,18 @@ export class UserService extends BaseService {
     // First check if the user exists
     const user = await this.userRepository.findOne(userId);
     if (!user) {
-      throw new ResourceNotFoundException('User not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.userNotFound'),
+      );
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException('Access denied to this user');
+      throw new InsufficientPermissionsException(
+        this.i18n.translate('errors.accessDeniedToUser'),
+      );
     }
     await this.userRepository.softRemove(userId);
 
@@ -223,14 +237,18 @@ export class UserService extends BaseService {
     // First check if the user exists
     const user = await this.userRepository.findOneSoftDeletedById(userId);
     if (!user) {
-      throw new ResourceNotFoundException('User not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.userNotFound'),
+      );
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException('Access denied to this user');
+      throw new InsufficientPermissionsException(
+        this.i18n.translate('errors.accessDeniedToUser'),
+      );
     }
 
     // Restore user
@@ -265,7 +283,9 @@ export class UserService extends BaseService {
     // First check if the user exists
     const user = await this.userRepository.findOne(userId);
     if (!user) {
-      throw new ResourceNotFoundException('User not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.userNotFound'),
+      );
     }
 
     // Then check if current user can activate/deactivate the target user
@@ -303,7 +323,9 @@ export class UserService extends BaseService {
     // Get userId from profile for command emission
     const profile = await this.userProfileService.findOne(userProfileId);
     if (!profile) {
-      throw new ResourceNotFoundException('User profile not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.resourceNotFound'),
+      );
     }
 
     // Emit event after work is done
@@ -375,7 +397,9 @@ export class UserService extends BaseService {
     // Find user by profileId - need to get user from profile
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('User profile not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.resourceNotFound'),
+      );
     }
     return this.userRepository.findOne(userProfile.userId);
   }
@@ -389,7 +413,9 @@ export class UserService extends BaseService {
     // Find user by profileId
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('User profile not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.resourceNotFound'),
+      );
     }
     await this.userRepository.updateUserTwoFactor(
       userProfile.userId,
@@ -444,7 +470,9 @@ export class UserService extends BaseService {
     // Find user by profileId
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('User profile not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.resourceNotFound'),
+      );
     }
 
     // Call updateUser which will handle the work and emit event
@@ -458,14 +486,18 @@ export class UserService extends BaseService {
     // Find user by profileId
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('User profile not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.resourceNotFound'),
+      );
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException('Access denied to this user');
+      throw new InsufficientPermissionsException(
+        this.i18n.translate('errors.accessDeniedToUser'),
+      );
     }
 
     await this.userRepository.softRemove(userProfile.userId);
@@ -478,14 +510,18 @@ export class UserService extends BaseService {
     // Find user by profileId
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('User profile not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.resourceNotFound'),
+      );
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException('Access denied to this user');
+      throw new InsufficientPermissionsException(
+        this.i18n.translate('errors.accessDeniedToUser'),
+      );
     }
 
     await this.userRepository.restore(userProfile.userId);

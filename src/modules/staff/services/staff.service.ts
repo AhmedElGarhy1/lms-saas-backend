@@ -11,6 +11,8 @@ import {
   ResourceNotFoundException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class StaffService extends BaseService {
@@ -20,6 +22,7 @@ export class StaffService extends BaseService {
     private readonly staffRepository: StaffRepository,
     private readonly userService: UserService,
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
   }
@@ -72,7 +75,9 @@ export class StaffService extends BaseService {
   async findOne(userId: string): Promise<User> {
     const user = await this.userService.findOne(userId);
     if (!user) {
-      throw new ResourceNotFoundException('User not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.userNotFound'),
+      );
     }
     return user;
   }

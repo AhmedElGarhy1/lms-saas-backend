@@ -6,16 +6,17 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { Request, Response } from 'express';
 import { EnhancedErrorResponse } from '../exceptions/custom.exceptions';
 import { ErrorCode } from '../enums/error-codes.enum';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations, I18nPath } from '@/generated/i18n.generated';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger: Logger = new Logger(GlobalExceptionFilter.name);
 
-  constructor(private readonly moduleRef: ModuleRef) {}
+  constructor(private readonly i18n: I18nService<I18nTranslations>) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
@@ -29,10 +30,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
-      // If it's already our custom exception format, use it
+      // If it's already our custom exception format, use it as-is (already translated)
       if (
         typeof exceptionResponse === 'object' &&
-        'userMessage' in exceptionResponse
+        'code' in exceptionResponse &&
+        'message' in exceptionResponse
       ) {
         errorResponse = exceptionResponse as EnhancedErrorResponse;
       } else {
@@ -64,7 +66,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     exceptionResponse: string | object,
     request: Request,
   ): EnhancedErrorResponse {
-    const message =
+    const rawMessage =
       typeof exceptionResponse === 'string'
         ? exceptionResponse
         : (exceptionResponse as any)?.message || 'An error occurred';
@@ -92,12 +94,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       // If neither is available, retryAfter remains undefined and will use fallback message
     }
 
-    const userMessage = this.getUserFriendlyMessage(
+    // Translate the message for user-facing response
+    const message = this.translateMessage(
+      rawMessage,
       status,
-      message,
+      request,
       retryAfter,
     );
-    const actionRequired = this.getActionRequired(status, message, retryAfter);
 
     return {
       statusCode: status,
@@ -107,9 +110,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
-      userMessage,
-      actionRequired,
-      retryable: this.isRetryable(status),
     };
   }
 
@@ -117,17 +117,24 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     request: Request,
     exception: unknown,
   ): EnhancedErrorResponse {
+    // Log the exception for debugging (system log - stays in English)
+    if (exception instanceof Error) {
+      this.logger.error('Internal server error', exception.stack);
+    }
+    const message = this.translateMessage(
+      'Internal server error',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      request,
+    );
+
     return {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      message: 'Internal server error',
+      message,
       error: 'Internal Server Error',
       code: ErrorCode.INTERNAL_SERVER_ERROR,
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
-      userMessage: 'An unexpected error occurred',
-      actionRequired: 'Please try again later or contact support',
-      retryable: true,
     };
   }
 
@@ -153,60 +160,46 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     return `${minutesStr} ${secondsStr}`;
   }
 
-  private getUserFriendlyMessage(
+  private translateMessage(
+    rawMessage: string,
     status: number,
-    message: string,
+    request: Request,
     retryAfter?: number,
   ): string {
+    try {
+      // Handle rate limit with retry after
     if (status === HttpStatus.TOO_MANY_REQUESTS && retryAfter) {
       const remainingTime = this.formatExactRemainingTime(retryAfter);
-      return `Too many requests. Please try again in ${remainingTime}`;
+        return this.i18n.translate('errors.tooManyRequestsWithTime', {
+          args: { time: remainingTime },
+        });
     }
 
-    const friendlyMessages: Record<number, string> = {
-      [HttpStatus.BAD_REQUEST]: 'Please check your input and try again',
-      [HttpStatus.UNAUTHORIZED]: 'Please log in to continue',
-      [HttpStatus.FORBIDDEN]:
-        'You do not have permission to perform this action',
-      [HttpStatus.NOT_FOUND]: 'The requested resource was not found',
-      [HttpStatus.CONFLICT]: 'This action conflicts with existing data',
-      [HttpStatus.UNPROCESSABLE_ENTITY]:
-        'The provided data could not be processed',
-      [HttpStatus.TOO_MANY_REQUESTS]:
-        'Too many requests. Please try again later',
-      [HttpStatus.INTERNAL_SERVER_ERROR]: 'An unexpected error occurred',
-      [HttpStatus.SERVICE_UNAVAILABLE]:
-        'The service is temporarily unavailable',
+      // Map by status code only (no message mapping needed)
+      const statusKeyMap: Record<number, string> = {
+        [HttpStatus.BAD_REQUEST]: 'errors.badRequest',
+        [HttpStatus.UNAUTHORIZED]: 'errors.unauthorized',
+        [HttpStatus.FORBIDDEN]: 'errors.forbidden',
+        [HttpStatus.NOT_FOUND]: 'errors.notFound',
+        [HttpStatus.CONFLICT]: 'errors.conflict',
+        [HttpStatus.UNPROCESSABLE_ENTITY]: 'errors.unprocessableEntity',
+        [HttpStatus.TOO_MANY_REQUESTS]: 'errors.tooManyRequests',
+        [HttpStatus.INTERNAL_SERVER_ERROR]: 'errors.internalServerError',
+        [HttpStatus.SERVICE_UNAVAILABLE]: 'errors.serviceUnavailable',
     };
 
-    return friendlyMessages[status] || 'An error occurred';
-  }
+      const statusKey = statusKeyMap[status];
+      if (statusKey) {
+        return this.i18n.translate(statusKey as I18nPath);
+      }
 
-  private getActionRequired(
-    status: number,
-    message: string,
-    retryAfter?: number,
-  ): string {
-    if (status === HttpStatus.TOO_MANY_REQUESTS && retryAfter) {
-      const remainingTime = this.formatExactRemainingTime(retryAfter);
-      return `Please wait ${remainingTime} before making another request`;
+      // Fallback to generic error
+      return this.i18n.translate('errors.genericError');
+    } catch (error) {
+      // If translation fails, return original message (shouldn't happen)
+      this.logger.warn('Translation failed, using original message', error);
+      return rawMessage;
     }
-
-    const actions: Record<number, string> = {
-      [HttpStatus.BAD_REQUEST]: 'Fix the highlighted errors and try again',
-      [HttpStatus.UNAUTHORIZED]: 'Please provide valid credentials',
-      [HttpStatus.FORBIDDEN]: 'Contact an administrator for access',
-      [HttpStatus.NOT_FOUND]: 'Check the resource ID and try again',
-      [HttpStatus.CONFLICT]:
-        'Use different information or update existing data',
-      [HttpStatus.UNPROCESSABLE_ENTITY]:
-        'Check your input format and try again',
-      [HttpStatus.TOO_MANY_REQUESTS]: 'Wait before making another request',
-      [HttpStatus.INTERNAL_SERVER_ERROR]: 'Try again later or contact support',
-      [HttpStatus.SERVICE_UNAVAILABLE]: 'Try again later',
-    };
-
-    return actions[status] || 'Please try again';
   }
 
   private getErrorType(status: number): string {
@@ -239,20 +232,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     };
 
     return errorCodes[status] || ErrorCode.UNKNOWN_ERROR;
-  }
-
-  private isRetryable(status: number): boolean {
-    const retryableStatuses = [
-      HttpStatus.BAD_REQUEST,
-      HttpStatus.UNAUTHORIZED,
-      HttpStatus.CONFLICT,
-      HttpStatus.UNPROCESSABLE_ENTITY,
-      HttpStatus.TOO_MANY_REQUESTS,
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      HttpStatus.SERVICE_UNAVAILABLE,
-    ];
-
-    return retryableStatuses.includes(status);
   }
 
   private logError(

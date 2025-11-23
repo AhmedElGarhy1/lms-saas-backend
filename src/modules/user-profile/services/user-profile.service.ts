@@ -24,6 +24,8 @@ import { CreateStaffEvent } from '@/modules/staff/events/staff.events';
 import { CreateAdminEvent } from '@/modules/admin/events/admin.events';
 import { Staff } from '@/modules/staff/entities/staff.entity';
 import { Admin } from '@/modules/admin/entities/admin.entity';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class UserProfileService extends BaseService {
@@ -38,6 +40,7 @@ export class UserProfileService extends BaseService {
     private readonly profileTypePermissionService: ProfileTypePermissionService,
     private readonly centerService: CentersService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
   }
@@ -52,7 +55,9 @@ export class UserProfileService extends BaseService {
     // Get user with profile
     const user = await this.userService.findOne(actor.id);
     if (!user) {
-      throw new ResourceNotFoundException('User not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.userNotFound'),
+      );
     }
 
     // Determine context based on centerId
@@ -65,7 +70,9 @@ export class UserProfileService extends BaseService {
     if (!actor.userProfileId) return returnData;
     const userProfile = await this.findOne(actor.userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('User profile not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.userProfileNotFound'),
+      );
     }
     actor.userProfileId = userProfile.id;
     actor.profileType = userProfile.profileType;
@@ -92,7 +99,9 @@ export class UserProfileService extends BaseService {
       actor.profileType,
     );
     if (!profile) {
-      throw new ResourceNotFoundException('Profile not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.resourceNotFound'),
+      );
     }
 
     returnData.profile = profile;
@@ -198,7 +207,9 @@ export class UserProfileService extends BaseService {
     );
     if (existingProfile) {
       throw new ValidationFailedException(
-        `User already has a ${profileType} profile`,
+        this.i18n.translate('errors.userAlreadyHasProfile', {
+          args: { profileType },
+        }),
       );
     }
 
@@ -255,7 +266,9 @@ export class UserProfileService extends BaseService {
     }
 
     if (!deletedProfile.deletedAt) {
-      throw new BusinessLogicException('User profile is not deleted');
+      throw new BusinessLogicException(
+        this.i18n.translate('errors.profileNotDeleted'),
+      );
     }
 
     // Validate that actor has permission to restore this profile type

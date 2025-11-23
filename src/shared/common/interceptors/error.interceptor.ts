@@ -13,11 +13,12 @@ import {
   EnhancedErrorResponse,
 } from '../exceptions/custom.exceptions';
 import { ErrorCode } from '../enums/error-codes.enum';
-import { ModuleRef } from '@nestjs/core';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class ErrorInterceptor implements NestInterceptor {
-  constructor(private readonly moduleRef: ModuleRef) {}
+  constructor(private readonly i18n: I18nService<I18nTranslations>) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
@@ -48,17 +49,18 @@ export class ErrorInterceptor implements NestInterceptor {
             },
           ];
 
+          const message = this.i18n.translate('errors.duplicateField', {
+            args: { field },
+          });
+
           const httpError = new HttpException(
             {
               statusCode: HttpStatus.CONFLICT,
-              message: `${field} already exists`,
+              message,
               error: 'Conflict',
               timestamp: new Date().toISOString(),
               path: url,
               method,
-              userMessage: `This ${field} is already in use. Please choose a different one.`,
-              actionRequired: `Please use a different ${field}.`,
-              retryable: false,
               details,
             } as EnhancedErrorResponse,
             HttpStatus.CONFLICT,
@@ -78,17 +80,16 @@ export class ErrorInterceptor implements NestInterceptor {
             },
           ];
 
+          const message = this.i18n.translate('errors.foreignKeyViolation');
+
           const httpError = new HttpException(
             {
               statusCode: HttpStatus.BAD_REQUEST,
-              message: 'Referenced record does not exist',
+              message,
               error: 'Bad Request',
               timestamp: new Date().toISOString(),
               path: url,
               method,
-              userMessage: 'One or more referenced items do not exist.',
-              actionRequired: 'Please check your selection and try again.',
-              retryable: false,
               details,
             } as EnhancedErrorResponse,
             HttpStatus.BAD_REQUEST,
@@ -108,17 +109,16 @@ export class ErrorInterceptor implements NestInterceptor {
             },
           ];
 
+          const message = this.i18n.translate('errors.databaseConfigurationError');
+
           const httpError = new HttpException(
             {
               statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-              message: 'Database configuration error',
+              message,
               error: 'Internal Server Error',
               timestamp: new Date().toISOString(),
               path: url,
               method,
-              userMessage: 'A system error occurred. Please try again later.',
-              actionRequired: 'If the problem persists, contact support.',
-              retryable: true,
               details,
             } as EnhancedErrorResponse,
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -139,18 +139,16 @@ export class ErrorInterceptor implements NestInterceptor {
             },
           ];
 
+          const message = this.i18n.translate('errors.databaseOperationFailed');
+
           const httpError = new HttpException(
             {
               statusCode: HttpStatus.BAD_REQUEST,
-              message: 'Database operation failed',
+              message,
               error: 'Bad Request',
               timestamp: new Date().toISOString(),
               path: url,
               method,
-              userMessage:
-                'The operation could not be completed. Please try again.',
-              actionRequired: 'If the problem persists, contact support.',
-              retryable: true,
               details,
             } as EnhancedErrorResponse,
             HttpStatus.BAD_REQUEST,
@@ -170,17 +168,16 @@ export class ErrorInterceptor implements NestInterceptor {
             },
           ];
 
+          const message = this.i18n.translate('errors.recordNotFound');
+
           const httpError = new HttpException(
             {
               statusCode: HttpStatus.NOT_FOUND,
-              message: 'Record not found',
+              message,
               error: 'Not Found',
               timestamp: new Date().toISOString(),
               path: url,
               method,
-              userMessage: 'The requested item could not be found.',
-              actionRequired: 'Please check the ID or try refreshing the page.',
-              retryable: false,
               details,
             } as EnhancedErrorResponse,
             HttpStatus.NOT_FOUND,
@@ -200,17 +197,16 @@ export class ErrorInterceptor implements NestInterceptor {
           },
         ];
 
+        const message = this.i18n.translate('errors.internalServerError');
+
         const httpError = new HttpException(
           {
             statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-            message: 'Internal server error',
+            message,
             error: 'Internal Server Error',
             timestamp: new Date().toISOString(),
             path: url,
             method,
-            userMessage: 'Something went wrong. Please try again.',
-            actionRequired: 'If the problem persists, contact support.',
-            retryable: true,
             details,
           } as EnhancedErrorResponse,
           HttpStatus.INTERNAL_SERVER_ERROR,

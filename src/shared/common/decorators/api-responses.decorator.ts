@@ -83,15 +83,6 @@ export function StandardApiResponses(options: ApiResponsesOptions = {}) {
             message: { type: 'string', example: 'Validation failed' },
             error: { type: 'string', example: 'Bad Request' },
             timestamp: { type: 'string', format: 'date-time' },
-            userMessage: {
-              type: 'string',
-              example: 'Please check your input and try again',
-            },
-            actionRequired: {
-              type: 'string',
-              example: 'Fix the highlighted errors below',
-            },
-            retryable: { type: 'boolean', example: true },
             details: {
               type: 'array',
               items: {
@@ -123,15 +114,6 @@ export function StandardApiResponses(options: ApiResponsesOptions = {}) {
             message: { type: 'string', example: 'Authentication failed' },
             error: { type: 'string', example: 'Unauthorized' },
             timestamp: { type: 'string', format: 'date-time' },
-            userMessage: {
-              type: 'string',
-              example: 'Please log in to continue',
-            },
-            actionRequired: {
-              type: 'string',
-              example: 'Please provide valid credentials',
-            },
-            retryable: { type: 'boolean', example: true },
           },
         },
       }),
@@ -150,15 +132,6 @@ export function StandardApiResponses(options: ApiResponsesOptions = {}) {
             message: { type: 'string', example: 'Access denied' },
             error: { type: 'string', example: 'Forbidden' },
             timestamp: { type: 'string', format: 'date-time' },
-            userMessage: {
-              type: 'string',
-              example: 'You do not have permission to perform this action',
-            },
-            actionRequired: {
-              type: 'string',
-              example: 'Contact an administrator for access',
-            },
-            retryable: { type: 'boolean', example: false },
           },
         },
       }),
@@ -177,15 +150,6 @@ export function StandardApiResponses(options: ApiResponsesOptions = {}) {
             message: { type: 'string', example: 'Resource not found' },
             error: { type: 'string', example: 'Not Found' },
             timestamp: { type: 'string', format: 'date-time' },
-            userMessage: {
-              type: 'string',
-              example: 'The requested resource was not found',
-            },
-            actionRequired: {
-              type: 'string',
-              example: 'Check the resource ID and try again',
-            },
-            retryable: { type: 'boolean', example: false },
           },
         },
       }),
@@ -204,15 +168,6 @@ export function StandardApiResponses(options: ApiResponsesOptions = {}) {
             message: { type: 'string', example: 'Resource conflict' },
             error: { type: 'string', example: 'Conflict' },
             timestamp: { type: 'string', format: 'date-time' },
-            userMessage: {
-              type: 'string',
-              example: 'This action conflicts with existing data',
-            },
-            actionRequired: {
-              type: 'string',
-              example: 'Use different information or update existing data',
-            },
-            retryable: { type: 'boolean', example: false },
           },
         },
       }),
@@ -231,15 +186,6 @@ export function StandardApiResponses(options: ApiResponsesOptions = {}) {
             message: { type: 'string', example: 'Too many requests' },
             error: { type: 'string', example: 'Too Many Requests' },
             timestamp: { type: 'string', format: 'date-time' },
-            userMessage: {
-              type: 'string',
-              example: 'Too many requests. Please try again later',
-            },
-            actionRequired: {
-              type: 'string',
-              example: 'Wait before making another request',
-            },
-            retryable: { type: 'boolean', example: true },
           },
         },
       }),
@@ -257,15 +203,6 @@ export function StandardApiResponses(options: ApiResponsesOptions = {}) {
           message: { type: 'string', example: 'Internal server error' },
           error: { type: 'string', example: 'Internal Server Error' },
           timestamp: { type: 'string', format: 'date-time' },
-          userMessage: {
-            type: 'string',
-            example: 'An unexpected error occurred',
-          },
-          actionRequired: {
-            type: 'string',
-            example: 'Try again later or contact support',
-          },
-          retryable: { type: 'boolean', example: true },
         },
       },
     }),

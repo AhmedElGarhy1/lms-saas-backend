@@ -26,6 +26,8 @@ import { BusinessLogicException } from '@/shared/common/exceptions/custom.except
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ProfileTypePermissionService } from '@/modules/access-control/services/profile-type-permission.service';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 import {
   ToggleUserStatusRequestDto,
   ToggleUserStatusResponseDto,
@@ -39,6 +41,7 @@ export class CentersAccessController {
     private readonly accessControlService: AccessControlService,
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly profileTypePermissionService: ProfileTypePermissionService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Patch(':userProfileId/status')
@@ -70,9 +73,9 @@ export class CentersAccessController {
 
     return {
       id: userProfileId,
-      message: dto.isActive
-        ? 'success.userActivated'
-        : 'success.userDeactivated',
+      message: this.i18n.translate(
+        dto.isActive ? 'success.userActivated' : 'success.userDeactivated',
+      ),
       isActive: dto.isActive,
     };
   }
@@ -94,7 +97,7 @@ export class CentersAccessController {
 
     return ControllerResponse.success(
       result,
-      'Center access granted successfully',
+      this.i18n.translate('success.centerAccessGranted'),
     );
   }
 
@@ -116,7 +119,7 @@ export class CentersAccessController {
 
     return ControllerResponse.success(
       result,
-      'Center access revoked successfully',
+      this.i18n.translate('success.centerAccessRevoked'),
     );
   }
 
@@ -152,7 +155,7 @@ export class CentersAccessController {
 
     return ControllerResponse.success(
       result,
-      'Center access soft deleted successfully',
+      this.i18n.translate('success.centerAccessDeleted'),
     );
   }
 
@@ -182,7 +185,7 @@ export class CentersAccessController {
 
     return ControllerResponse.success(
       result,
-      'Center access restored successfully',
+      this.i18n.translate('success.centerAccessRestored'),
     );
   }
 
@@ -195,15 +198,17 @@ export class CentersAccessController {
     );
 
     if (!userProfile) {
-      throw new BusinessLogicException('Target user profile not found');
-      }
+      throw new BusinessLogicException(
+        this.i18n.translate('errors.targetUserProfileNotFound'),
+      );
+    }
 
     if (
       userProfile.profileType !== ProfileType.STAFF &&
       userProfile.profileType !== ProfileType.ADMIN
     ) {
       throw new BusinessLogicException(
-        'Target user must have an admin or staff profile to grant center access',
+        this.i18n.translate('errors.targetUserMustHaveAdminOrStaffProfile'),
       );
     }
 

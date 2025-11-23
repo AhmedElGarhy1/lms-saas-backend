@@ -18,11 +18,7 @@ export class NotificationSendingFailedException extends ServiceUnavailableExcept
  */
 export class TemplateRenderingException extends BusinessLogicException {
   constructor(templateName: string, error: string) {
-    super(
-      `Failed to render template ${templateName}: ${error}`,
-      'Template processing error',
-      'Please contact support',
-    );
+    super(`Failed to render template ${templateName}: ${error}`);
   }
 }
 

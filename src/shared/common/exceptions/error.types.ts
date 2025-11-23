@@ -14,7 +14,4 @@ export interface EnhancedErrorResponse {
   path?: string;
   method?: string;
   details?: ErrorDetail[] | Record<string, any>;
-  userMessage?: string;
-  actionRequired?: string;
-  retryable?: boolean;
 }

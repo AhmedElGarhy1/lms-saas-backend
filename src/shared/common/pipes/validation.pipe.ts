@@ -14,7 +14,7 @@ import {
 } from '../exceptions/custom.exceptions';
 import { ErrorCode } from '../enums/error-codes.enum';
 import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
+import { I18nTranslations, I18nPath } from '@/generated/i18n.generated';
 
 @Injectable()
 export class CustomValidationPipe implements PipeTransform<any> {
@@ -39,13 +39,10 @@ export class CustomValidationPipe implements PipeTransform<any> {
 
       const errorResponse: EnhancedErrorResponse = {
         statusCode: 400,
-        message: this.i18n.translate('errors.VALIDATION_FAILED'),
+        message: this.i18n.translate('errors.validationFailed'),
         error: 'Bad Request',
         code: ErrorCode.VALIDATION_FAILED,
         timestamp: new Date().toISOString(),
-        userMessage: this.i18n.translate('userMessages.validationFailed'),
-        actionRequired: this.i18n.translate('actions.fixErrors'),
-        retryable: true,
         details: validationErrors,
       };
 
@@ -118,7 +115,7 @@ export class CustomValidationPipe implements PipeTransform<any> {
     ];
 
     if (validConstraintKeys.includes(constraintKey)) {
-      return this.i18n.translate(`validation.${constraintKey}` as any);
+      return this.i18n.translate(`validation.${constraintKey}` as I18nPath);
     }
 
     // Fallback for unknown constraint keys
@@ -133,41 +130,45 @@ export class CustomValidationPipe implements PipeTransform<any> {
 
     // Try to get translated suggestion first
     const suggestionKey = `validation.${field}.${constraintKey}.suggestion`;
-    const translatedSuggestion = this.i18n.translate(suggestionKey as any, {
-      args: { field },
-    });
-    if (translatedSuggestion && translatedSuggestion !== suggestionKey) {
+    const translatedSuggestion = this.i18n.translate(
+      suggestionKey as I18nPath,
+      {
+        args: { field },
+      },
+    );
+    if (
+      translatedSuggestion &&
+      typeof translatedSuggestion === 'string' &&
+      translatedSuggestion !== suggestionKey
+    ) {
       return translatedSuggestion;
     }
 
     // Fallback to common validation suggestions
     const suggestions: Record<string, string> = {
-      isEmail: this.i18n.translate('validation.email.suggestion' as any, {
+      isEmail: this.i18n.translate('validation.email.suggestion', {
         args: { field },
       }),
-      isNotEmpty: this.i18n.translate('validation.required.suggestion' as any, {
+      isNotEmpty: this.i18n.translate('validation.required.suggestion', {
         args: { field },
       }),
-      minLength: this.i18n.translate('validation.minLength.suggestion' as any, {
+      minLength: this.i18n.translate('validation.minLength.suggestion', {
         args: { field },
       }),
-      maxLength: this.i18n.translate('validation.maxLength.suggestion' as any, {
+      maxLength: this.i18n.translate('validation.maxLength.suggestion', {
         args: { field },
       }),
-      isPhoneNumber: this.i18n.translate('validation.phone.suggestion' as any, {
+      isPhoneNumber: this.i18n.translate('validation.phone.suggestion', {
         args: { field },
       }),
-      isStrongPassword: this.i18n.translate(
-        'validation.password.suggestion' as any,
-        {
-          args: { field },
-        },
-      ),
+      isStrongPassword: this.i18n.translate('validation.password.suggestion', {
+        args: { field },
+      }),
     };
 
     return (
       suggestions[constraintKey] ||
-      this.i18n.translate('validation.default.suggestion' as any, {
+      this.i18n.translate('validation.default.suggestion', {
         args: { field },
       })
     );

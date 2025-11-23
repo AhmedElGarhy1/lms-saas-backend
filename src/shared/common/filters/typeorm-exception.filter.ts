@@ -67,9 +67,7 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
         case 'ER_NO_REFERENCED_ROW_2':
         case 1452:
           const businessException = new BusinessLogicException(
-            'Related entity is missing or invalid',
-            'Please check the referenced data and try again',
-            'Please verify all referenced data exists',
+            'Related entity is missing or invalid. Please check the referenced data and try again',
           );
           return res
             .status(businessException.getStatus())

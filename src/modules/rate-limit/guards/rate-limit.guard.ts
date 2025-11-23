@@ -17,6 +17,8 @@ import {
   RETRY_AFTER,
 } from '../constants/rate-limit.constants';
 import { RATE_LIMIT_METADATA } from '../decorators/rate-limit.decorator';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 /**
  * Rate limit guard for HTTP endpoints
@@ -29,6 +31,7 @@ export class RateLimitGuard implements CanActivate {
   constructor(
     private readonly rateLimitService: RateLimitService,
     private readonly reflector: Reflector,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -100,7 +103,7 @@ export class RateLimitGuard implements CanActivate {
         throw new HttpException(
           {
             statusCode: HttpStatus.TOO_MANY_REQUESTS,
-            message: 'Too many requests, please try again later',
+            message: this.i18n.translate('errors.tooManyRequests'),
             retryAfter: retryAfterSeconds,
             resetTime: result.resetTime, // Pass resetTime for dynamic calculation
           },

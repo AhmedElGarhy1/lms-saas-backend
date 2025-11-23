@@ -20,6 +20,8 @@ import {
   RestoreRoleEvent,
 } from '../events/role.events';
 import { BaseService } from '@/shared/common/services/base.service';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class RolesService extends BaseService {
@@ -31,6 +33,7 @@ export class RolesService extends BaseService {
     private readonly accessControlerHelperService: AccessControlHelperService,
     private readonly profileRoleRepository: ProfileRoleRepository,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
   }
@@ -71,7 +74,9 @@ export class RolesService extends BaseService {
   ) {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
-      throw new ResourceNotFoundException('Role not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.roleNotFound'),
+      );
     }
     if (!role.isSameScope(actor.centerId)) {
       this.logger.warn('Role update failed - insufficient permissions', {
@@ -102,7 +107,9 @@ export class RolesService extends BaseService {
   async deleteRole(roleId: string, actor: ActorUser) {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
-      throw new ResourceNotFoundException('Role not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.roleNotFound'),
+      );
     }
     if (!role?.isSameScope(actor.centerId)) {
       this.logger.warn('Role deletion failed - insufficient permissions', {

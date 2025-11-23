@@ -32,5 +32,17 @@
   "twoFactorVerified": "تم التحقق من المصادقة الثنائية بنجاح",
   "userRegistered": "تم تسجيل المستخدم بنجاح",
   "userActivated": "تم تفعيل المستخدم بنجاح",
-  "userDeactivated": "تم إلغاء تفعيل المستخدم بنجاح"
+  "userDeactivated": "تم إلغاء تفعيل المستخدم بنجاح",
+  "otpSent": "تم إرسال رمز التحقق بنجاح",
+  "userImported": "تم استيراد المستخدم بنجاح",
+  "emailVerificationRequestSent": "تم إرسال طلب التحقق من البريد الإلكتروني",
+  "phoneVerificationRequestSent": "تم إرسال طلب التحقق من رقم الهاتف",
+  "phoneVerified": "تم التحقق من رقم الهاتف بنجاح",
+  "centerAccessGranted": "تم منح صلاحية الوصول للمركز بنجاح",
+  "centerAccessRevoked": "تم إلغاء صلاحية الوصول للمركز بنجاح",
+  "centerAccessDeleted": "تم حذف صلاحية الوصول للمركز بنجاح",
+  "centerAccessRestored": "تم استعادة صلاحية الوصول للمركز بنجاح",
+  "twoFactorEnabled": "تم تفعيل المصادقة الثنائية بنجاح",
+  "twoFactorDisabled": "تم إلغاء تفعيل المصادقة الثنائية بنجاح",
+  "operation": "تمت العملية بنجاح"
 }

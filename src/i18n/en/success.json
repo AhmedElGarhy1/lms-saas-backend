@@ -33,5 +33,16 @@
   "userRegistered": "User registered successfully",
   "userActivated": "User activated successfully",
   "userDeactivated": "User deactivated successfully",
-  "found": "{resource} found successfully"
+  "found": "{resource} found successfully",
+  "otpSent": "OTP sent successfully",
+  "userImported": "User imported successfully",
+  "emailVerificationRequestSent": "Email verification request sent",
+  "phoneVerificationRequestSent": "Phone verification request sent",
+  "phoneVerified": "Phone verified successfully",
+  "centerAccessGranted": "Center access granted successfully",
+  "centerAccessRevoked": "Center access revoked successfully",
+  "centerAccessDeleted": "Center access soft deleted successfully",
+  "centerAccessRestored": "Center access restored successfully",
+  "twoFactorEnabled": "Two-factor authentication enabled successfully",
+  "twoFactorDisabled": "Two-factor authentication disabled successfully"
 }

@@ -17,12 +17,16 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { StaffService } from '../services/staff.service';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { UserResponseDto } from '@/modules/user/dto/user-response.dto';
+import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @ApiTags('Staff')
 @Controller('staff')
 export class StaffController {
   constructor(
     private readonly staffService: StaffService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Get()
@@ -33,7 +37,12 @@ export class StaffController {
     @Query() query: PaginateStaffDto,
     @GetUser() actorUser: ActorUser,
   ) {
-    return this.staffService.paginateStaff(query, actorUser);
+    const result = await this.staffService.paginateStaff(query, actorUser);
+    // Wrap in ControllerResponse for consistent messaging
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Get(':userProfileId')
@@ -49,7 +58,11 @@ export class StaffController {
     @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
     @GetUser() actor: ActorUser,
   ) {
-    return this.staffService.findOne(userProfileId);
+    const result = await this.staffService.findOne(userProfileId);
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
 }

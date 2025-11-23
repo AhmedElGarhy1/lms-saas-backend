@@ -9,11 +9,17 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { AdminService } from '../services/admin.service';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { UserResponseDto } from '@/modules/user/dto/user-response.dto';
+import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @ApiTags('Admin')
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly i18n: I18nService<I18nTranslations>,
+  ) {}
 
   @Get()
   @ReadApiResponses('List admin users with pagination and filtering')
@@ -23,7 +29,11 @@ export class AdminController {
     @Query() query: PaginateAdminDto,
     @GetUser() actorUser: ActorUser,
   ) {
-    return this.adminService.paginateAdmins(query, actorUser);
+    const result = await this.adminService.paginateAdmins(query, actorUser);
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Get(':userProfileId')
@@ -39,6 +49,10 @@ export class AdminController {
     @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
     @GetUser() actor: ActorUser,
   ) {
-    return this.adminService.findOne(userProfileId, actor);
+    const result = await this.adminService.findOne(userProfileId, actor);
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 }

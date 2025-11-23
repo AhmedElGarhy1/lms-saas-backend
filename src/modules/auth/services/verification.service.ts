@@ -24,6 +24,8 @@ import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { Transactional } from '@nestjs-cls/transactional';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 export interface CreateVerificationTokenData {
   userId: string;
@@ -42,6 +44,7 @@ export class VerificationService extends BaseService {
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
   }
@@ -136,12 +139,16 @@ export class VerificationService extends BaseService {
       await this.verificationTokenRepository.findByToken(token);
 
     if (!verificationToken) {
-      throw new NotFoundException('Verification token not found');
+      throw new NotFoundException(
+        this.i18n.translate('errors.verificationTokenNotFound'),
+      );
     }
 
     if (verificationToken.expiresAt < new Date()) {
       await this.deleteToken(token);
-      throw new BadRequestException('Verification token has expired');
+      throw new BadRequestException(
+        this.i18n.translate('errors.verificationTokenExpired'),
+      );
     }
 
     return verificationToken;
@@ -162,12 +169,16 @@ export class VerificationService extends BaseService {
     );
 
     if (!verificationToken) {
-      throw new NotFoundException('Verification code not found');
+      throw new NotFoundException(
+        this.i18n.translate('errors.verificationCodeNotFound'),
+      );
     }
 
     if (verificationToken.expiresAt < new Date()) {
       await this.deleteToken(verificationToken.token);
-      throw new BadRequestException('Verification code has expired');
+      throw new BadRequestException(
+        this.i18n.translate('errors.verificationCodeExpired'),
+      );
     }
 
     return verificationToken;
@@ -189,7 +200,7 @@ export class VerificationService extends BaseService {
 
     const user = await this.userService.findOne(verificationToken.userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(this.i18n.translate('errors.userNotFound'));
     }
 
     return {
@@ -219,7 +230,7 @@ export class VerificationService extends BaseService {
 
     const user = await this.userService.findOne(verificationToken.userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(this.i18n.translate('errors.userNotFound'));
     }
 
     return {
@@ -344,7 +355,7 @@ export class VerificationService extends BaseService {
       recipient = user.email || '';
       if (!recipient) {
         throw new BadRequestException(
-          'User does not have an email address. Please use SMS or WhatsApp channel.',
+          this.i18n.translate('errors.userHasNoEmail'),
         );
       }
     } else if (
@@ -354,11 +365,13 @@ export class VerificationService extends BaseService {
       recipient = user.getPhone();
       if (!recipient) {
         throw new BadRequestException(
-          'User does not have a phone number. Please use EMAIL channel.',
+          this.i18n.translate('errors.userHasNoPhone'),
         );
       }
     } else {
-      throw new BadRequestException(`Unsupported channel for password reset`);
+      throw new BadRequestException(
+        this.i18n.translate('errors.unsupportedChannel'),
+      );
     }
 
     // Get or create verification token (reuses existing non-expired token)
@@ -419,7 +432,9 @@ export class VerificationService extends BaseService {
     const verificationToken = await this.findByToken(token);
 
     if (verificationToken.type !== VerificationType.PASSWORD_RESET) {
-      throw new BadRequestException('Invalid token type for password reset');
+      throw new BadRequestException(
+        this.i18n.translate('errors.invalidTokenType'),
+      );
     }
 
     // Hash the new password
@@ -493,7 +508,7 @@ export class VerificationService extends BaseService {
     // Use requestEmailVerification endpoint instead.
     if (type === VerificationType.EMAIL_VERIFICATION) {
       throw new BadRequestException(
-        'Email verification must be requested through the authenticated endpoint',
+        this.i18n.translate('errors.emailVerificationMustBeAuthenticated'),
       );
     } else if (type === VerificationType.PASSWORD_RESET) {
       await this.sendPasswordReset(userId, channel);

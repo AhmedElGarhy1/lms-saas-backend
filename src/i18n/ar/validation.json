@@ -144,5 +144,26 @@
   "licenseInvalid": "تنسيق الترخيص غير صحيح",
   "copyrightInvalid": "تنسيق حقوق الطبع والنشر غير صحيح",
   "trademarkInvalid": "تنسيق العلامة التجارية غير صحيح",
-  "patentInvalid": "تنسيق البراءة غير صحيح"
+  "patentInvalid": "تنسيق البراءة غير صحيح",
+  "email": {
+    "suggestion": "يرجى إدخال عنوان بريد إلكتروني صحيح لـ {field}"
+  },
+  "required": {
+    "suggestion": "يرجى تقديم قيمة لـ {field}"
+  },
+  "minLength": {
+    "suggestion": "يرجى التأكد من أن {field} يلبي الحد الأدنى لمتطلبات الطول"
+  },
+  "maxLength": {
+    "suggestion": "يرجى تقصير {field} للوفاء بمتطلبات الحد الأقصى للطول"
+  },
+  "phone": {
+    "suggestion": "يرجى إدخال رقم هاتف صحيح لـ {field}"
+  },
+  "password": {
+    "suggestion": "يرجى التأكد من أن {field} يلبي متطلبات قوة كلمة المرور"
+  },
+  "default": {
+    "suggestion": "يرجى التحقق من {field} والمحاولة مرة أخرى"
+  }
 }

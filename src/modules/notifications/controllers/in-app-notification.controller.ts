@@ -13,6 +13,9 @@ import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { Notification } from '../entities/notification.entity';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
+import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @ApiTags('In-App Notifications')
 @Controller('notifications/in-app')
@@ -21,6 +24,7 @@ import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 export class InAppNotificationController {
   constructor(
     private readonly inAppNotificationService: InAppNotificationService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Get()
@@ -29,7 +33,11 @@ export class InAppNotificationController {
     @GetUser() actor: ActorUser,
     @Query() query: GetInAppNotificationsDto,
   ): Promise<Pagination<Notification>> {
-    return this.inAppNotificationService.getUserNotifications(actor.id, query);
+    const result = await this.inAppNotificationService.getUserNotifications(actor.id, query);
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    ) as any;
   }
 
   @Get('unread')
@@ -46,7 +54,10 @@ export class InAppNotificationController {
         profileId,
       );
 
-    return notifications;
+    return ControllerResponse.success(
+      notifications,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Get('unread/count')
@@ -62,11 +73,14 @@ export class InAppNotificationController {
       profileId,
     );
 
-    return {
-      count,
-      profileType: profileType ?? null,
-      profileId: profileId ?? null,
-    };
+    return ControllerResponse.success(
+      {
+        count,
+        profileType: profileType ?? null,
+        profileId: profileId ?? null,
+      },
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Put('read')
@@ -74,12 +88,16 @@ export class InAppNotificationController {
   async markAsRead(
     @GetUser() actor: ActorUser,
     @Body() dto: MarkAsReadDto,
-  ): Promise<{ success: boolean }> {
+  ) {
     await this.inAppNotificationService.markMultipleAsRead(
       dto.notificationIds,
       actor.id,
     );
-    return { success: true };
+    return ControllerResponse.message(
+      this.i18n.translate('success.update', {
+        args: { resource: this.i18n.translate('common.resources.notification' as any) },
+      }),
+    );
   }
 
   @Put('read-all')
@@ -88,13 +106,17 @@ export class InAppNotificationController {
     @GetUser() actor: ActorUser,
     @Query('profileType') profileType?: ProfileType,
     @Query('profileId') profileId?: string,
-  ): Promise<{ success: boolean }> {
+  ) {
     await this.inAppNotificationService.markAllAsRead(
       actor.id,
       profileType,
       profileId,
     );
-    return { success: true };
+    return ControllerResponse.message(
+      this.i18n.translate('success.update', {
+        args: { resource: this.i18n.translate('common.resources.notification' as any) },
+      }),
+    );
   }
 
   @Put(':id/archive')
@@ -102,9 +124,13 @@ export class InAppNotificationController {
   async archive(
     @GetUser() actor: ActorUser,
     @Param('id') notificationId: string,
-  ): Promise<{ success: boolean }> {
+  ) {
     await this.inAppNotificationService.archive(actor.id, notificationId);
-    return { success: true };
+    return ControllerResponse.message(
+      this.i18n.translate('success.archive', {
+        args: { resource: this.i18n.translate('common.resources.notification' as any) },
+      }),
+    );
   }
 
   @Get('archived')

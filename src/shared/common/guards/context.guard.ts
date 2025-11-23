@@ -15,12 +15,15 @@ import {
   CenterSelectionRequiredException,
   ProfileSelectionRequiredException,
 } from '../exceptions/custom.exceptions';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class ContextGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -49,7 +52,9 @@ export class ContextGuard implements CanActivate {
 
     const user = request.user;
     if (!user) {
-      throw new ForbiddenException('User not authenticated');
+      throw new ForbiddenException(
+        this.i18n.translate('errors.userNotAuthenticated'),
+      );
     }
     user.centerId = centerId;
 
@@ -64,7 +69,9 @@ export class ContextGuard implements CanActivate {
       throw new ProfileSelectionRequiredException();
     }
     if (!userProfileType) {
-      throw new InternalServerErrorException('Profile type not found');
+      throw new InternalServerErrorException(
+        this.i18n.translate('errors.profileTypeNotFound'),
+      );
     }
 
     await this.accessControlHelperService.validateAdminAndCenterAccess({

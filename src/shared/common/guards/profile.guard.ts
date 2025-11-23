@@ -14,12 +14,15 @@ import {
   ProfileSelectionRequiredException,
 } from '../exceptions/custom.exceptions';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class ProfileGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly userProfileService: UserProfileService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -47,7 +50,9 @@ export class ProfileGuard implements CanActivate {
 
     const user = request.user;
     if (!user) {
-      throw new ForbiddenException('User not authenticated');
+      throw new ForbiddenException(
+        this.i18n.translate('errors.userNotAuthenticated'),
+      );
     }
 
     user.userProfileId = userProfileId;
@@ -69,7 +74,9 @@ export class ProfileGuard implements CanActivate {
       throw new ProfileSelectionRequiredException();
     }
     if (!profile.isActive) {
-      throw new InactiveProfileException('Profile is inactive');
+      throw new InactiveProfileException(
+        this.i18n.translate('errors.profileInactive'),
+      );
     }
 
     user.profileType = profile.profileType;

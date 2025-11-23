@@ -66,8 +66,12 @@ export class CentersController {
   @ReadApiResponses('List centers with pagination, search, and filtering')
   @SerializeOptions({ type: CenterResponseDto })
   @NoContext()
-  listCenters(@Query() query: PaginateCentersDto, @GetUser() actor: ActorUser) {
-    return this.centersService.paginateCenters(query, actor);
+  async listCenters(@Query() query: PaginateCentersDto, @GetUser() actor: ActorUser) {
+    const result = await this.centersService.paginateCenters(query, actor);
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Get(':id')
@@ -126,7 +130,13 @@ export class CentersController {
   async restoreCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
     await this.centersService.restoreCenter(id, actor);
 
-    return ControllerResponse.message('Center restored successfully');
+    return ControllerResponse.message(
+      this.i18n.translate('success.restore', {
+        args: {
+          resource: this.i18n.translate('common.resources.center'),
+        },
+      }),
+    );
   }
 
   @Patch(':id/status')

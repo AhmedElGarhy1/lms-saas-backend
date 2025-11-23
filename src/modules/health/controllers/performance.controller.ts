@@ -4,6 +4,9 @@ import { DatabasePerformanceService } from '../services/database-performance.ser
 import { TransactionPerformanceInterceptor } from '../interceptors/transaction-performance.interceptor';
 import { PerformanceAlertsService } from '../services/performance-alerts.service';
 import { Public } from '@/shared/common/decorators/public.decorator';
+import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @ApiTags('Health - Performance Monitoring')
 @Controller('health/performance')
@@ -13,6 +16,7 @@ export class PerformanceController {
     private readonly databasePerformanceService: DatabasePerformanceService,
     private readonly alertsService: PerformanceAlertsService,
     private readonly transactionInterceptor: TransactionPerformanceInterceptor,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Get('database')
@@ -22,7 +26,11 @@ export class PerformanceController {
     description: 'Database performance metrics retrieved successfully',
   })
   getDatabasePerformance() {
-    return this.databasePerformanceService.getPerformanceStats();
+    const result = this.databasePerformanceService.getPerformanceStats();
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Get('transactions')
@@ -32,7 +40,11 @@ export class PerformanceController {
     description: 'Transaction performance metrics retrieved successfully',
   })
   getTransactionPerformance() {
-    return this.databasePerformanceService.getTransactionMetrics();
+    const result = this.databasePerformanceService.getTransactionMetrics();
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Get('health')
@@ -46,7 +58,7 @@ export class PerformanceController {
     const alertStats = this.alertsService.getAlertStats();
     const transactionStats = this.transactionInterceptor.getPerformanceStats();
 
-    return {
+    const result = {
       status:
         alertStats.critical > 0
           ? 'critical'
@@ -67,6 +79,10 @@ export class PerformanceController {
       },
       alerts: alertStats,
     };
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Get('alerts')
@@ -76,7 +92,11 @@ export class PerformanceController {
     description: 'Active alerts retrieved successfully',
   })
   getActiveAlerts() {
-    return this.alertsService.getActiveAlerts();
+    const result = this.alertsService.getActiveAlerts();
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Get('stats')
@@ -86,7 +106,7 @@ export class PerformanceController {
     description: 'Performance statistics retrieved successfully',
   })
   getPerformanceStats() {
-    return {
+    const result = {
       database: this.databasePerformanceService.getPerformanceStats(),
       transactions: this.transactionInterceptor.getPerformanceStats(),
       alerts: this.alertsService.getAlertStats(),
@@ -96,6 +116,10 @@ export class PerformanceController {
         nodeVersion: process.version,
       },
     };
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('api.success.dataRetrieved'),
+    );
   }
 
   @Post('alerts/resolve/:alertId')
@@ -105,8 +129,14 @@ export class PerformanceController {
     description: 'Alert resolved successfully',
   })
   resolveAlert(@Body('alertId') alertId: string) {
-    this.alertsService.resolveAlert(alertId);
-    return { message: 'Alert resolved successfully' };
+    void this.alertsService.resolveAlert(alertId);
+    return ControllerResponse.message(
+      this.i18n.translate('success.update', {
+        args: {
+          resource: this.i18n.translate('common.labels.alert'),
+        },
+      }),
+    );
   }
 
   private calculateOverallErrorRate(
