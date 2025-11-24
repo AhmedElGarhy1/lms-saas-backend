@@ -283,7 +283,9 @@ export class VerificationService extends BaseService {
   async sendPhoneVerification(userId: string, phone: string): Promise<void> {
     const user = await this.userService.findOne(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(
+        this.i18n.translate('errors.userNotFound'),
+      );
     }
 
     // Get or create verification token (reuses existing non-expired token)
@@ -346,7 +348,9 @@ export class VerificationService extends BaseService {
   ): Promise<void> {
     const user = await this.userService.findOne(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(
+        this.i18n.translate('errors.userNotFound'),
+      );
     }
 
     // Determine recipient based on channel - use user's stored email/phone
@@ -515,7 +519,9 @@ export class VerificationService extends BaseService {
     } else if (type === VerificationType.OTP_VERIFICATION) {
       const user = await this.userService.findOne(userId);
       if (!user) {
-        throw new NotFoundException('User not found');
+        throw new NotFoundException(
+        this.i18n.translate('errors.userNotFound'),
+      );
       }
       await this.sendPhoneVerification(userId, phone || user.getPhone());
     }

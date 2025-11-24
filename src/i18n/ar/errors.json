@@ -101,6 +101,10 @@
   "tokenNotActiveYet": "الرمز غير نشط بعد",
   "tokenValidationFailed": "فشل التحقق من الرمز",
   "eitherTargetUserProfileIdOrProfileTypeRequired": "يجب توفير إما targetUserProfileId أو profileType",
+  "userInfoNotFound": "معلومات المستخدم غير موجودة",
+  "accessAlreadyExists": "الصلاحية موجودة بالفعل",
+  "accessNotFound": "الصلاحية غير موجودة",
+  "permissionScopeDoesNotMatch": "نطاق الصلاحية غير متطابق",
   "centerInactive": {
     "title": "المركز غير نشط",
     "description": "المركز المحدد غير نشط حالياً. يرجى اختيار مركز آخر أو الاتصال بالمدير."

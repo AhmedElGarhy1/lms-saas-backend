@@ -177,7 +177,9 @@ export class RolesService extends BaseService {
     // First check if the role exists
     const role = await this.rolesRepository.findOneSoftDeleted({ id: roleId });
     if (!role) {
-      throw new ResourceNotFoundException('Role not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.roleNotFound'),
+      );
     }
 
     // Check if the role is already active (not deleted)

@@ -33,9 +33,7 @@ export class WhatsAppWebhookSignatureService {
     }
 
     if (!this.appSecret) {
-      this.logger.error(
-        'Cannot verify signature: app secret not configured',
-      );
+      this.logger.error('Cannot verify signature: app secret not configured');
       return false;
     }
 
@@ -91,4 +89,3 @@ export class WhatsAppWebhookSignatureService {
     return result === 0;
   }
 }
-

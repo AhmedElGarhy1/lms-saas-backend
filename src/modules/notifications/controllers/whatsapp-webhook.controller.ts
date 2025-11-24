@@ -24,7 +24,6 @@ import {
 import { WhatsAppWebhookService } from '../services/webhooks/whatsapp-webhook.service';
 import { WhatsAppWebhookSignatureService } from '../services/webhooks/whatsapp-webhook-signature.service';
 import { WhatsAppWebhookEvent } from '../types/whatsapp-webhook.types';
-import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 
@@ -116,7 +115,9 @@ export class WhatsAppWebhookController {
       const isValid = this.signatureService.verifySignature(rawBody, signature);
       if (!isValid) {
         this.logger.warn('Webhook signature verification failed');
-        throw new UnauthorizedException('Invalid signature');
+        throw new UnauthorizedException(
+          this.i18n.translate('errors.invalidSignature'),
+        );
       }
 
       // Enqueue webhook event for async processing

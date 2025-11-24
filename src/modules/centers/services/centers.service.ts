@@ -56,7 +56,9 @@ export class CentersService extends BaseService {
   async findCenterById(centerId: string): Promise<Center> {
     const center = await this.centersRepository.findOne(centerId);
     if (!center) {
-      throw new ResourceNotFoundException('Center not found');
+      throw new ResourceNotFoundException(
+        this.i18n.translate('errors.resourceNotFound'),
+      );
     }
     return center;
   }

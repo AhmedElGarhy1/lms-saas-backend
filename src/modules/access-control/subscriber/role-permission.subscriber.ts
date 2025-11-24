@@ -11,6 +11,8 @@ import { PermissionRepository } from '../repositories/permission.repository';
 import { PermissionScope } from '../constants/permissions';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { RequestContext } from '@/shared/common/context/request.context';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @EventSubscriber()
 export class RolePermissionSubscriber
@@ -19,6 +21,7 @@ export class RolePermissionSubscriber
   constructor(
     private readonly permissionRepository: PermissionRepository,
     @InjectDataSource() private readonly dataSource: DataSource,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     this.dataSource.subscribers.push(this);
   }
@@ -44,7 +47,10 @@ export class RolePermissionSubscriber
       const permission = await this.permissionRepository.findOne(
         rolePermission.permissionId,
       );
-      if (!permission) throw new BadRequestException('Permission not found');
+      if (!permission)
+        throw new BadRequestException(
+          this.i18n.translate('errors.permissionNotFound'),
+        );
 
       if (centerId) {
         if (
@@ -62,7 +68,9 @@ export class RolePermissionSubscriber
         permission.scope !== rolePermission.permissionScope &&
         permission.scope !== PermissionScope.BOTH
       ) {
-        throw new BadRequestException('Permission scope does not match');
+        throw new BadRequestException(
+          this.i18n.translate('errors.permissionScopeDoesNotMatch'),
+        );
       }
     }
   }

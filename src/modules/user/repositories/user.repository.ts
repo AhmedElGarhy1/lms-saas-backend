@@ -19,12 +19,15 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 import { PaginateStaffDto } from '@/modules/staff/dto/paginate-staff.dto';
 import { PaginateAdminDto } from '@/modules/admin/dto/paginate-admin.dto';
 import * as _ from 'lodash';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class UserRepository extends BaseRepository<User> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super(txHost);
   }
@@ -196,7 +199,9 @@ export class UserRepository extends BaseRepository<User> {
             { userProfileId: actor.userProfileId, centerId },
           );
       } else {
-        throw new BadRequestException('Access denied to this user');
+        throw new BadRequestException(
+          this.i18n.translate('errors.accessDeniedToUser'),
+        );
       }
     }
 
@@ -322,7 +327,10 @@ export class UserRepository extends BaseRepository<User> {
       actor.userProfileId,
     );
 
-    if (!isAdmin) throw new BadRequestException('Access denied to this user');
+    if (!isAdmin)
+      throw new BadRequestException(
+        this.i18n.translate('errors.accessDeniedToUser'),
+      );
     if (isSuperAdmin) {
       // do nothing
     } else {

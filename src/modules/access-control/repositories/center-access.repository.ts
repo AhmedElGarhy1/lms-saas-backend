@@ -8,11 +8,14 @@ import { CenterAccess } from '../entities/center-access.entity';
 import { CenterAccessDto } from '../dto/center-access.dto';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class CenterAccessRepository extends BaseRepository<CenterAccess> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super(txHost);
   }
@@ -35,7 +38,9 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
     // Check if access already exists
     const existingAccess = await this.findCenterAccess(data);
     if (existingAccess) {
-      throw new ConflictException('Access already exists');
+      throw new ConflictException(
+        this.i18n.translate('errors.accessAlreadyExists'),
+      );
     }
 
     return this.create(data);
@@ -44,7 +49,9 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
   async revokeCenterAccess(data: CenterAccessDto) {
     const existingAccess = await this.findCenterAccess(data);
     if (!existingAccess) {
-      throw new NotFoundException('Access not found');
+      throw new NotFoundException(
+        this.i18n.translate('errors.accessNotFound'),
+      );
     }
 
     return this.getRepository().remove(existingAccess);

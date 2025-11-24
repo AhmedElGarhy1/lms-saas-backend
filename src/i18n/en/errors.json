@@ -116,5 +116,9 @@
   "invalidRefreshToken": "Invalid refresh token",
   "tokenNotActiveYet": "Token not active yet",
   "tokenValidationFailed": "Token validation failed",
-  "eitherTargetUserProfileIdOrProfileTypeRequired": "Either targetUserProfileId or profileType must be provided"
+  "eitherTargetUserProfileIdOrProfileTypeRequired": "Either targetUserProfileId or profileType must be provided",
+  "userInfoNotFound": "User info not found",
+  "accessAlreadyExists": "Access already exists",
+  "accessNotFound": "Access not found",
+  "permissionScopeDoesNotMatch": "Permission scope does not match"
 }

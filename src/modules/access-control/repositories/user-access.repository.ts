@@ -4,11 +4,14 @@ import { UserAccess } from '../entities/user-access.entity';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class UserAccessRepository extends BaseRepository<UserAccess> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super(txHost);
   }
@@ -42,7 +45,10 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
         ...(body.centerId && { centerId: body.centerId }),
       },
     });
-    if (!userAccess) throw new NotFoundException('User access not found');
+    if (!userAccess)
+      throw new NotFoundException(
+        this.i18n.translate('errors.userAccessNotFound'),
+      );
     await this.getRepository().remove(userAccess);
   }
 
