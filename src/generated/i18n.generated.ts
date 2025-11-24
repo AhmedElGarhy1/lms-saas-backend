@@ -1100,6 +1100,10 @@ export type I18nTranslations = {
         "tokenNotActiveYet": string;
         "tokenValidationFailed": string;
         "eitherTargetUserProfileIdOrProfileTypeRequired": string;
+        "userInfoNotFound": string;
+        "accessAlreadyExists": string;
+        "accessNotFound": string;
+        "permissionScopeDoesNotMatch": string;
         "centerInactive": {
             "title": string;
             "description": string;
