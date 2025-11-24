@@ -15,6 +15,7 @@ import {
   ReadApiResponses,
   UpdateApiResponses,
   DeleteApiResponses,
+  NoPhoneVerification,
 } from '@/shared/common/decorators';
 import { SerializeOptions } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
@@ -67,6 +68,7 @@ export class UserProfileController {
   @SerializeOptions({ type: ProfileResponseDto })
   @NoContext()
   @NoProfile()
+  @NoPhoneVerification()
   async getCurrentProfile(@GetUser() actor: ActorUser) {
     const profile = await this.userProfileService.getCurrentUserProfile(actor);
 

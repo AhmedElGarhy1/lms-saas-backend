@@ -75,7 +75,7 @@ export class RefreshJwtStrategy extends PassportStrategy(
       const rtMatches = await bcrypt.compare(refreshToken, user.hashedRt);
       if (!rtMatches) {
         throw new UnauthorizedException(
-          this.i18n.translate('t.errors.invalidOrExpiredToken' as any),
+          this.i18n.translate('t.errors.invalidOrExpiredToken'),
         );
       }
 

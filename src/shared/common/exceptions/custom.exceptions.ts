@@ -200,6 +200,20 @@ export class BusinessLogicException extends HttpException {
   }
 }
 
+export class PhoneNotVerifiedException extends HttpException {
+  constructor(message: string) {
+    super(
+      {
+        statusCode: HttpStatus.FORBIDDEN,
+        message,
+        code: ErrorCode.PHONE_NOT_VERIFIED,
+        timestamp: new Date().toISOString(),
+      } as EnhancedErrorResponse,
+      HttpStatus.FORBIDDEN,
+    );
+  }
+}
+
 export class ServiceUnavailableException extends HttpException {
   constructor(message: string = 'Service temporarily unavailable') {
     super(

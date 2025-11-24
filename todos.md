@@ -85,6 +85,6 @@
 [ ] think about removing restrictions and permissions for diffrent profile types it's we already have restrictions you can only access users in your user_access
 [x] back to translations and update translations correctly and update in app notifications translations and refactor the overcomplicated reaseon, actionRequired, retible, and all htese useless files that frontend doesn't use
 [x] make consistant response in all endpoints
-[ ] arabic ltr translation animation in sidebar looks bad
+[ ] arabic ltr translation animation in sidebar looks bad so check others also
 [ ] fix local is not consistant between backend and frontend
 [ ] remove all emails for now make the primary think is phone and remove email at all not needed for now (big task)

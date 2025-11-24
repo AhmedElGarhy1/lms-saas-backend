@@ -40,6 +40,7 @@ import { UserProfileModule } from './modules/user-profile/user-profile.module';
 import { StaffModule } from './modules/staff/staff.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ProfileGuard } from './shared/common/guards/profile.guard';
+import { PhoneVerificationGuard } from './shared/common/guards/phone-verification.guard';
 import { UserProfileService } from './modules/user-profile/services/user-profile.service';
 import { NotificationModule } from './modules/notifications/notifications.module';
 import { BullModule } from '@nestjs/bullmq';
@@ -173,6 +174,15 @@ import { I18nTranslations } from './generated/i18n.generated';
       provide: APP_GUARD,
       useFactory: (reflector: Reflector, i18n: I18nService) =>
         new JwtAuthGuard(
+          reflector,
+          i18n as unknown as I18nService<I18nTranslations>,
+        ),
+      inject: [Reflector, I18nService],
+    },
+    {
+      provide: APP_GUARD,
+      useFactory: (reflector: Reflector, i18n: I18nService) =>
+        new PhoneVerificationGuard(
           reflector,
           i18n as unknown as I18nService<I18nTranslations>,
         ),
