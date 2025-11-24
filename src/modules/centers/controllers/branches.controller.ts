@@ -42,10 +42,13 @@ export class BranchesController {
     @Query() paginateDto: PaginateBranchesDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.branchesService.paginateBranches(paginateDto, actor);
+    const result = await this.branchesService.paginateBranches(
+      paginateDto,
+      actor,
+    );
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -67,7 +70,7 @@ export class BranchesController {
     const result = await this.branchesService.getBranch(branchId, actor);
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -87,12 +90,15 @@ export class BranchesController {
     @Body() createBranchDto: CreateBranchDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.branchesService.createBranch(createBranchDto, actor);
+    const result = await this.branchesService.createBranch(
+      createBranchDto,
+      actor,
+    );
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.create', {
+      this.i18n.translate('t.success.create', {
         args: {
-          resource: this.i18n.translate('common.resources.branch'),
+          resource: this.i18n.translate('t.common.resources.branch'),
         },
       }),
     );
@@ -116,12 +122,16 @@ export class BranchesController {
     @Body() data: CreateBranchDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.branchesService.updateBranch(branchId, data, actor);
+    const result = await this.branchesService.updateBranch(
+      branchId,
+      data,
+      actor,
+    );
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.update', {
+      this.i18n.translate('t.success.update', {
         args: {
-          resource: this.i18n.translate('common.resources.branch'),
+          resource: this.i18n.translate('t.common.resources.branch'),
         },
       }),
     );
@@ -146,9 +156,9 @@ export class BranchesController {
   ) {
     await this.branchesService.deleteBranch(branchId, actor);
     return ControllerResponse.message(
-      this.i18n.translate('success.delete', {
+      this.i18n.translate('t.success.delete', {
         args: {
-          resource: this.i18n.translate('common.resources.branch'),
+          resource: this.i18n.translate('t.common.resources.branch'),
         },
       }),
     );
@@ -178,9 +188,9 @@ export class BranchesController {
       actor,
     );
     return ControllerResponse.message(
-      this.i18n.translate('success.update', {
+      this.i18n.translate('t.success.update', {
         args: {
-          resource: this.i18n.translate('common.resources.branch'),
+          resource: this.i18n.translate('t.common.resources.branch'),
         },
       }),
     );
@@ -197,9 +207,9 @@ export class BranchesController {
   ) {
     await this.branchesService.restoreBranch(branchId, actor);
     return ControllerResponse.message(
-      this.i18n.translate('success.restore', {
+      this.i18n.translate('t.success.restore', {
         args: {
-          resource: this.i18n.translate('common.resources.branch'),
+          resource: this.i18n.translate('t.common.resources.branch'),
         },
       }),
     );

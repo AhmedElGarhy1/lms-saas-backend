@@ -33,7 +33,7 @@ export class RoleAssignController {
     const result = await this.rolesService.assignRoleValidate(dto, user);
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.roleAssigned'),
+      this.i18n.translate('t.success.roleAssigned'),
     );
   }
 
@@ -46,7 +46,7 @@ export class RoleAssignController {
     const result = await this.rolesService.removeUserRoleValidate(dto, user);
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.roleRemoved'),
+      this.i18n.translate('t.success.roleRemoved'),
     );
   }
 }

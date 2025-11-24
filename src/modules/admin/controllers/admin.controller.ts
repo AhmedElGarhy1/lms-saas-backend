@@ -32,7 +32,7 @@ export class AdminController {
     const result = await this.adminService.paginateAdmins(query, actorUser);
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -52,7 +52,7 @@ export class AdminController {
     const result = await this.adminService.findOne(userProfileId, actor);
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 }

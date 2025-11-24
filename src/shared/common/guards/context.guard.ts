@@ -53,7 +53,7 @@ export class ContextGuard implements CanActivate {
     const user = request.user;
     if (!user) {
       throw new ForbiddenException(
-        this.i18n.translate('errors.userNotAuthenticated'),
+        this.i18n.translate('t.errors.userNotAuthenticated'),
       );
     }
     user.centerId = centerId;
@@ -70,7 +70,7 @@ export class ContextGuard implements CanActivate {
     }
     if (!userProfileType) {
       throw new InternalServerErrorException(
-        this.i18n.translate('errors.profileTypeNotFound'),
+        this.i18n.translate('t.errors.profileTypeNotFound'),
       );
     }
 

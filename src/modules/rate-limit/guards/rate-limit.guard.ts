@@ -103,7 +103,7 @@ export class RateLimitGuard implements CanActivate {
         throw new HttpException(
           {
             statusCode: HttpStatus.TOO_MANY_REQUESTS,
-            message: this.i18n.translate('errors.tooManyRequests'),
+            message: this.i18n.translate('t.errors.tooManyRequests'),
             retryAfter: retryAfterSeconds,
             resetTime: result.resetTime, // Pass resetTime for dynamic calculation
           },

@@ -56,7 +56,7 @@ export class UserProfileService extends BaseService {
     const user = await this.userService.findOne(actor.id);
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userNotFound'),
+        this.i18n.translate('t.errors.userNotFound'),
       );
     }
 
@@ -71,7 +71,7 @@ export class UserProfileService extends BaseService {
     const userProfile = await this.findOne(actor.userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userProfileNotFound'),
+        this.i18n.translate('t.errors.userProfileNotFound'),
       );
     }
     actor.userProfileId = userProfile.id;
@@ -100,7 +100,7 @@ export class UserProfileService extends BaseService {
     );
     if (!profile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.resourceNotFound'),
+        this.i18n.translate('t.errors.resourceNotFound'),
       );
     }
 
@@ -126,7 +126,7 @@ export class UserProfileService extends BaseService {
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userProfileNotFound'),
+        this.i18n.translate('t.errors.userProfileNotFound'),
       );
     }
     await this.userProfileRepository.update(userProfileId, { isActive });
@@ -164,7 +164,7 @@ export class UserProfileService extends BaseService {
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userProfileNotFound'),
+        this.i18n.translate('t.errors.userProfileNotFound'),
       );
     }
 
@@ -211,7 +211,7 @@ export class UserProfileService extends BaseService {
     );
     if (existingProfile) {
       throw new ValidationFailedException(
-        this.i18n.translate('errors.userAlreadyHasProfile', {
+        this.i18n.translate('t.errors.userAlreadyHasProfile', {
           args: { profileType },
         }),
       );
@@ -267,13 +267,13 @@ export class UserProfileService extends BaseService {
 
     if (!deletedProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userProfileNotFound'),
+        this.i18n.translate('t.errors.userProfileNotFound'),
       );
     }
 
     if (!deletedProfile.deletedAt) {
       throw new BusinessLogicException(
-        this.i18n.translate('errors.profileNotDeleted'),
+        this.i18n.translate('t.errors.profileNotDeleted'),
       );
     }
 

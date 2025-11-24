@@ -6,9 +6,7 @@ import { PaginateAdminDto } from '../dto/paginate-admin.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { User } from '@/modules/user/entities/user.entity';
 import { BaseService } from '@/shared/common/services/base.service';
-import {
-  ResourceNotFoundException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 
@@ -38,7 +36,7 @@ export class AdminService extends BaseService {
     );
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userNotFound'),
+        this.i18n.translate('t.errors.userNotFound'),
       );
     }
     return user;

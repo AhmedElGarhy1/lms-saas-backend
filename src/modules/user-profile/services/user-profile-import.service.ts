@@ -177,14 +177,14 @@ export class UserProfileImportService extends BaseService {
     // (because no centerId means global access, and they already have a profile)
     if (existingProfile) {
       throw new ConflictException(
-        this.i18n.translate('errors.userAlreadyHasProfileCannotImport'),
+        this.i18n.translate('t.errors.userAlreadyHasProfileCannotImport'),
       );
     }
 
     // If no centerId and no profile, we can't proceed
     // (need centerId to grant access)
     throw new ConflictException(
-      this.i18n.translate('errors.centerIdRequired'),
+      this.i18n.translate('t.errors.centerIdRequired'),
     );
   }
 
@@ -195,7 +195,7 @@ export class UserProfileImportService extends BaseService {
   private async findUserByPhone(phone: string): Promise<User> {
     const user = await this.userService.findUserByPhone(phone);
     if (!user) {
-      throw new NotFoundException(this.i18n.translate('errors.userNotFound'));
+      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
     }
     return user;
   }

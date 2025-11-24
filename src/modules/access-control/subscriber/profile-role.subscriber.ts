@@ -47,7 +47,7 @@ export class ProfileRoleSubscriber
       const role = await this.rolesRepository.findOne(profileRole.roleId);
       if (!role)
         throw new BusinessLogicException(
-          this.i18n.translate('errors.roleNotFound'),
+          this.i18n.translate('t.errors.roleNotFound'),
         );
 
       const profile = await this.accessControlHelperService.findUserProfile(
@@ -55,7 +55,7 @@ export class ProfileRoleSubscriber
       );
       if (!profile)
         throw new BusinessLogicException(
-          this.i18n.translate('errors.userProfileNotFound'),
+          this.i18n.translate('t.errors.userProfileNotFound'),
         );
 
       if (profileRole.centerId) {

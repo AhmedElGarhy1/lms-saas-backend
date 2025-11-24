@@ -69,7 +69,7 @@ export class RolesController {
     const result = await this.rolesService.getMyPermissions(actor);
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.permissionsRetrieved'),
+      this.i18n.translate('t.success.permissionsRetrieved'),
     );
   }
 
@@ -83,7 +83,7 @@ export class RolesController {
     const result = await this.permissionService.getPermissions(actor, scope);
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -100,8 +100,8 @@ export class RolesController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.create', {
-        args: { resource: this.i18n.translate('common.resources.role') },
+      this.i18n.translate('t.success.create', {
+        args: { resource: this.i18n.translate('t.common.resources.role') },
       }),
     );
   }
@@ -119,7 +119,7 @@ export class RolesController {
     const result = await this.rolesService.paginateRoles(query, actor);
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -131,7 +131,7 @@ export class RolesController {
     const result = await this.rolesService.findById(roleId);
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -149,8 +149,8 @@ export class RolesController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.update', {
-        args: { resource: this.i18n.translate('common.resources.role') },
+      this.i18n.translate('t.success.update', {
+        args: { resource: this.i18n.translate('t.common.resources.role') },
       }),
     );
   }
@@ -168,8 +168,8 @@ export class RolesController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.delete', {
-        args: { resource: this.i18n.translate('common.resources.role') },
+      this.i18n.translate('t.success.delete', {
+        args: { resource: this.i18n.translate('t.common.resources.role') },
       }),
     );
   }
@@ -186,8 +186,8 @@ export class RolesController {
     await this.rolesService.restoreRole(roleId, user);
 
     return ControllerResponse.message(
-      this.i18n.translate('success.restore', {
-        args: { resource: this.i18n.translate('common.resources.role') },
+      this.i18n.translate('t.success.restore', {
+        args: { resource: this.i18n.translate('t.common.resources.role') },
       }),
     );
   }

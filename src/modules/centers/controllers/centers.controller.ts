@@ -54,9 +54,9 @@ export class CentersController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.create', {
+      this.i18n.translate('t.success.create', {
         args: {
-          resource: this.i18n.translate('common.resources.center'),
+          resource: this.i18n.translate('t.common.resources.center'),
         },
       }),
     );
@@ -66,11 +66,14 @@ export class CentersController {
   @ReadApiResponses('List centers with pagination, search, and filtering')
   @SerializeOptions({ type: CenterResponseDto })
   @NoContext()
-  async listCenters(@Query() query: PaginateCentersDto, @GetUser() actor: ActorUser) {
+  async listCenters(
+    @Query() query: PaginateCentersDto,
+    @GetUser() actor: ActorUser,
+  ) {
     const result = await this.centersService.paginateCenters(query, actor);
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -81,7 +84,7 @@ export class CentersController {
     const result = await this.centersService.findCenterById(id);
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -99,9 +102,9 @@ export class CentersController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.update', {
+      this.i18n.translate('t.success.update', {
         args: {
-          resource: this.i18n.translate('common.resources.center'),
+          resource: this.i18n.translate('t.common.resources.center'),
         },
       }),
     );
@@ -115,9 +118,9 @@ export class CentersController {
     await this.centersService.deleteCenter(id, actor);
 
     return ControllerResponse.message(
-      this.i18n.translate('success.delete', {
+      this.i18n.translate('t.success.delete', {
         args: {
-          resource: this.i18n.translate('common.resources.center'),
+          resource: this.i18n.translate('t.common.resources.center'),
         },
       }),
     );
@@ -131,9 +134,9 @@ export class CentersController {
     await this.centersService.restoreCenter(id, actor);
 
     return ControllerResponse.message(
-      this.i18n.translate('success.restore', {
+      this.i18n.translate('t.success.restore', {
         args: {
-          resource: this.i18n.translate('common.resources.center'),
+          resource: this.i18n.translate('t.common.resources.center'),
         },
       }),
     );
@@ -155,8 +158,8 @@ export class CentersController {
     await this.centersService.toggleCenterStatus(id, body.isActive, actor);
 
     return ControllerResponse.message(
-      this.i18n.translate('success.update', {
-        args: { resource: this.i18n.translate('common.resources.center') },
+      this.i18n.translate('t.success.update', {
+        args: { resource: this.i18n.translate('t.common.resources.center') },
       }),
     );
   }

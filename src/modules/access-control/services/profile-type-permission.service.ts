@@ -147,7 +147,7 @@ export class ProfileTypePermissionService {
 
       if (!targetProfile) {
         throw new ResourceNotFoundException(
-          this.i18n.translate('errors.userProfileNotFound'),
+          this.i18n.translate('t.errors.userProfileNotFound'),
         );
       }
 
@@ -155,7 +155,9 @@ export class ProfileTypePermissionService {
     }
 
     throw new ValidationFailedException(
-      this.i18n.translate('errors.eitherTargetUserProfileIdOrProfileTypeRequired' as any),
+      this.i18n.translate(
+        't.errors.eitherTargetUserProfileIdOrProfileTypeRequired' as any,
+      ),
     );
   }
 

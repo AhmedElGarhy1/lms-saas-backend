@@ -33,7 +33,7 @@ export class UserAccessController {
     await this.accessControlService.grantUserAccessValidate(dto, actor);
 
     return ControllerResponse.message(
-      this.i18n.translate('success.roleAssigned'),
+      this.i18n.translate('t.success.roleAssigned'),
     );
   }
 
@@ -49,7 +49,7 @@ export class UserAccessController {
     await this.accessControlService.revokeUserAccessValidate(dto, actor);
 
     return ControllerResponse.message(
-      this.i18n.translate('success.roleRemoved'),
+      this.i18n.translate('t.success.roleRemoved'),
     );
   }
 }

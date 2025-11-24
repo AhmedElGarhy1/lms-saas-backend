@@ -49,7 +49,7 @@ export class RolePermissionSubscriber
       );
       if (!permission)
         throw new BadRequestException(
-          this.i18n.translate('errors.permissionNotFound'),
+          this.i18n.translate('t.errors.permissionNotFound'),
         );
 
       if (centerId) {
@@ -69,7 +69,7 @@ export class RolePermissionSubscriber
         permission.scope !== PermissionScope.BOTH
       ) {
         throw new BadRequestException(
-          this.i18n.translate('errors.permissionScopeDoesNotMatch'),
+          this.i18n.translate('t.errors.permissionScopeDoesNotMatch'),
         );
       }
     }

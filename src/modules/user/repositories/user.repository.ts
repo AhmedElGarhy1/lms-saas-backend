@@ -200,7 +200,7 @@ export class UserRepository extends BaseRepository<User> {
           );
       } else {
         throw new BadRequestException(
-          this.i18n.translate('errors.accessDeniedToUser'),
+          this.i18n.translate('t.errors.accessDeniedToUser'),
         );
       }
     }
@@ -329,7 +329,7 @@ export class UserRepository extends BaseRepository<User> {
 
     if (!isAdmin)
       throw new BadRequestException(
-        this.i18n.translate('errors.accessDeniedToUser'),
+        this.i18n.translate('t.errors.accessDeniedToUser'),
       );
     if (isSuperAdmin) {
       // do nothing
@@ -433,7 +433,6 @@ export class UserRepository extends BaseRepository<User> {
       twoFactorEnabled,
     });
   }
-
 
   async clearAllUsers(): Promise<void> {
     await this.getRepository().createQueryBuilder().delete().execute();

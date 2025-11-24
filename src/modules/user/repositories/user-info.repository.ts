@@ -35,7 +35,7 @@ export class UserInfoRepository extends BaseRepository<UserInfo> {
     });
     if (!userInfo) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userInfoNotFound'),
+        this.i18n.translate('t.errors.userInfoNotFound'),
       );
     }
 

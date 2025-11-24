@@ -49,7 +49,7 @@ export class ErrorInterceptor implements NestInterceptor {
             },
           ];
 
-          const message = this.i18n.translate('errors.duplicateField', {
+          const message = this.i18n.translate('t.errors.duplicateField', {
             args: { field },
           });
 
@@ -80,7 +80,7 @@ export class ErrorInterceptor implements NestInterceptor {
             },
           ];
 
-          const message = this.i18n.translate('errors.foreignKeyViolation');
+          const message = this.i18n.translate('t.errors.foreignKeyViolation');
 
           const httpError = new HttpException(
             {
@@ -109,7 +109,9 @@ export class ErrorInterceptor implements NestInterceptor {
             },
           ];
 
-          const message = this.i18n.translate('errors.databaseConfigurationError');
+          const message = this.i18n.translate(
+            't.errors.databaseConfigurationError',
+          );
 
           const httpError = new HttpException(
             {
@@ -139,7 +141,9 @@ export class ErrorInterceptor implements NestInterceptor {
             },
           ];
 
-          const message = this.i18n.translate('errors.databaseOperationFailed');
+          const message = this.i18n.translate(
+            't.errors.databaseOperationFailed',
+          );
 
           const httpError = new HttpException(
             {
@@ -168,7 +172,7 @@ export class ErrorInterceptor implements NestInterceptor {
             },
           ];
 
-          const message = this.i18n.translate('errors.recordNotFound');
+          const message = this.i18n.translate('t.errors.recordNotFound');
 
           const httpError = new HttpException(
             {
@@ -197,7 +201,7 @@ export class ErrorInterceptor implements NestInterceptor {
           },
         ];
 
-        const message = this.i18n.translate('errors.internalServerError');
+        const message = this.i18n.translate('t.errors.internalServerError');
 
         const httpError = new HttpException(
           {

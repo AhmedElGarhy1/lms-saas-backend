@@ -1,6 +1,0 @@
-{
-  "selectedRows": "{selected} of {total} row(s) selected",
-  "showingResults": "Showing {start} to {end} of {total} results",
-  "rowsPerPage": "Rows per page",
-  "pageOf": "Page {current} of {total}"
-}

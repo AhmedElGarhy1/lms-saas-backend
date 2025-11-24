@@ -140,14 +140,14 @@ export class VerificationService extends BaseService {
 
     if (!verificationToken) {
       throw new NotFoundException(
-        this.i18n.translate('errors.verificationTokenNotFound'),
+        this.i18n.translate('t.errors.verificationTokenNotFound'),
       );
     }
 
     if (verificationToken.expiresAt < new Date()) {
       await this.deleteToken(token);
       throw new BadRequestException(
-        this.i18n.translate('errors.verificationTokenExpired'),
+        this.i18n.translate('t.errors.verificationTokenExpired'),
       );
     }
 
@@ -170,14 +170,14 @@ export class VerificationService extends BaseService {
 
     if (!verificationToken) {
       throw new NotFoundException(
-        this.i18n.translate('errors.verificationCodeNotFound'),
+        this.i18n.translate('t.errors.verificationCodeNotFound'),
       );
     }
 
     if (verificationToken.expiresAt < new Date()) {
       await this.deleteToken(verificationToken.token);
       throw new BadRequestException(
-        this.i18n.translate('errors.verificationCodeExpired'),
+        this.i18n.translate('t.errors.verificationCodeExpired'),
       );
     }
 
@@ -200,7 +200,7 @@ export class VerificationService extends BaseService {
 
     const user = await this.userService.findOne(verificationToken.userId);
     if (!user) {
-      throw new NotFoundException(this.i18n.translate('errors.userNotFound'));
+      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
     }
 
     return {
@@ -230,7 +230,7 @@ export class VerificationService extends BaseService {
 
     const user = await this.userService.findOne(verificationToken.userId);
     if (!user) {
-      throw new NotFoundException(this.i18n.translate('errors.userNotFound'));
+      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
     }
 
     return {
@@ -283,9 +283,7 @@ export class VerificationService extends BaseService {
   async sendPhoneVerification(userId: string, phone: string): Promise<void> {
     const user = await this.userService.findOne(userId);
     if (!user) {
-      throw new NotFoundException(
-        this.i18n.translate('errors.userNotFound'),
-      );
+      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
     }
 
     // Get or create verification token (reuses existing non-expired token)
@@ -348,9 +346,7 @@ export class VerificationService extends BaseService {
   ): Promise<void> {
     const user = await this.userService.findOne(userId);
     if (!user) {
-      throw new NotFoundException(
-        this.i18n.translate('errors.userNotFound'),
-      );
+      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
     }
 
     // Determine recipient based on channel - use user's stored email/phone
@@ -359,7 +355,7 @@ export class VerificationService extends BaseService {
       recipient = user.email || '';
       if (!recipient) {
         throw new BadRequestException(
-          this.i18n.translate('errors.userHasNoEmail'),
+          this.i18n.translate('t.errors.userHasNoEmail'),
         );
       }
     } else if (
@@ -369,12 +365,12 @@ export class VerificationService extends BaseService {
       recipient = user.getPhone();
       if (!recipient) {
         throw new BadRequestException(
-          this.i18n.translate('errors.userHasNoPhone'),
+          this.i18n.translate('t.errors.userHasNoPhone'),
         );
       }
     } else {
       throw new BadRequestException(
-        this.i18n.translate('errors.unsupportedChannel'),
+        this.i18n.translate('t.errors.unsupportedChannel'),
       );
     }
 
@@ -437,7 +433,7 @@ export class VerificationService extends BaseService {
 
     if (verificationToken.type !== VerificationType.PASSWORD_RESET) {
       throw new BadRequestException(
-        this.i18n.translate('errors.invalidTokenType'),
+        this.i18n.translate('t.errors.invalidTokenType'),
       );
     }
 
@@ -512,7 +508,7 @@ export class VerificationService extends BaseService {
     // Use requestEmailVerification endpoint instead.
     if (type === VerificationType.EMAIL_VERIFICATION) {
       throw new BadRequestException(
-        this.i18n.translate('errors.emailVerificationMustBeAuthenticated'),
+        this.i18n.translate('t.errors.emailVerificationMustBeAuthenticated'),
       );
     } else if (type === VerificationType.PASSWORD_RESET) {
       await this.sendPasswordReset(userId, channel);
@@ -520,8 +516,8 @@ export class VerificationService extends BaseService {
       const user = await this.userService.findOne(userId);
       if (!user) {
         throw new NotFoundException(
-        this.i18n.translate('errors.userNotFound'),
-      );
+          this.i18n.translate('t.errors.userNotFound'),
+        );
       }
       await this.sendPhoneVerification(userId, phone || user.getPhone());
     }

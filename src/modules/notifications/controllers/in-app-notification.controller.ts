@@ -33,10 +33,13 @@ export class InAppNotificationController {
     @GetUser() actor: ActorUser,
     @Query() query: GetInAppNotificationsDto,
   ): Promise<Pagination<Notification>> {
-    const result = await this.inAppNotificationService.getUserNotifications(actor.id, query);
+    const result = await this.inAppNotificationService.getUserNotifications(
+      actor.id,
+      query,
+    );
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     ) as any;
   }
 
@@ -56,7 +59,7 @@ export class InAppNotificationController {
 
     return ControllerResponse.success(
       notifications,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -79,23 +82,24 @@ export class InAppNotificationController {
         profileType: profileType ?? null,
         profileId: profileId ?? null,
       },
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
   @Put('read')
   @ApiOperation({ summary: 'Mark notifications as read' })
-  async markAsRead(
-    @GetUser() actor: ActorUser,
-    @Body() dto: MarkAsReadDto,
-  ) {
+  async markAsRead(@GetUser() actor: ActorUser, @Body() dto: MarkAsReadDto) {
     await this.inAppNotificationService.markMultipleAsRead(
       dto.notificationIds,
       actor.id,
     );
     return ControllerResponse.message(
-      this.i18n.translate('success.update', {
-        args: { resource: this.i18n.translate('common.resources.notification' as any) },
+      this.i18n.translate('t.success.update', {
+        args: {
+          resource: this.i18n.translate(
+            't.common.resources.notification' as any,
+          ),
+        },
       }),
     );
   }
@@ -113,8 +117,12 @@ export class InAppNotificationController {
       profileId,
     );
     return ControllerResponse.message(
-      this.i18n.translate('success.update', {
-        args: { resource: this.i18n.translate('common.resources.notification' as any) },
+      this.i18n.translate('t.success.update', {
+        args: {
+          resource: this.i18n.translate(
+            't.common.resources.notification' as any,
+          ),
+        },
       }),
     );
   }
@@ -127,8 +135,12 @@ export class InAppNotificationController {
   ) {
     await this.inAppNotificationService.archive(actor.id, notificationId);
     return ControllerResponse.message(
-      this.i18n.translate('success.archive', {
-        args: { resource: this.i18n.translate('common.resources.notification' as any) },
+      this.i18n.translate('t.success.archive', {
+        args: {
+          resource: this.i18n.translate(
+            't.common.resources.notification' as any,
+          ),
+        },
       }),
     );
   }

@@ -1,14 +1,6 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  ParseUUIDPipe,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiParam, ApiQuery } from '@nestjs/swagger';
-import {
-  ReadApiResponses,
-} from '@/shared/common/decorators';
+import { ReadApiResponses } from '@/shared/common/decorators';
 import { SerializeOptions } from '@nestjs/common';
 import { PaginateStaffDto } from '../dto/paginate-staff.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
@@ -41,7 +33,7 @@ export class StaffController {
     // Wrap in ControllerResponse for consistent messaging
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -61,8 +53,7 @@ export class StaffController {
     const result = await this.staffService.findOne(userProfileId);
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
-
 }

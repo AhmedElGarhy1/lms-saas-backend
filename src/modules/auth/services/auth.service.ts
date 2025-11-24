@@ -89,7 +89,7 @@ export class AuthService extends BaseService {
     if (user) {
       if (!user.isActive) {
         throw new BusinessLogicException(
-          this.i18n.translate('errors.businessLogicError'),
+          this.i18n.translate('t.errors.businessLogicError'),
         );
       }
 
@@ -108,7 +108,7 @@ export class AuthService extends BaseService {
         );
 
         throw new AuthenticationFailedException(
-          this.i18n.translate('errors.invalidCredentials'),
+          this.i18n.translate('t.errors.invalidCredentials'),
         );
       }
 
@@ -118,7 +118,7 @@ export class AuthService extends BaseService {
           `User object missing or invalid ID for email/phone: ${dto.emailOrPhone}`,
         );
         throw new AuthenticationFailedException(
-          this.i18n.translate('errors.authenticationFailed'),
+          this.i18n.translate('t.errors.authenticationFailed'),
         );
       }
 
@@ -176,7 +176,7 @@ export class AuthService extends BaseService {
     } else {
       // User doesn't exist - return same error message to prevent enumeration
       throw new AuthenticationFailedException(
-        this.i18n.translate('errors.invalidCredentials'),
+        this.i18n.translate('t.errors.invalidCredentials'),
       );
     }
   }
@@ -187,13 +187,13 @@ export class AuthService extends BaseService {
 
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userNotFound'),
+        this.i18n.translate('t.errors.userNotFound'),
       );
     }
 
     if (!user.twoFactorEnabled) {
       throw new BusinessLogicException(
-        this.i18n.translate('errors.businessLogicError'),
+        this.i18n.translate('t.errors.businessLogicError'),
       );
     }
 
@@ -210,7 +210,7 @@ export class AuthService extends BaseService {
         email: dto.email,
       });
       throw new AuthenticationFailedException(
-        this.i18n.translate('errors.authenticationFailed'),
+        this.i18n.translate('t.errors.authenticationFailed'),
       );
     }
 
@@ -256,7 +256,7 @@ export class AuthService extends BaseService {
     // Get user to create actor
     const user = await this.userService.findOne(userId);
     if (!user) {
-      throw new NotFoundException(this.i18n.translate('errors.userNotFound'));
+      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
     }
 
     // Create actor from user (the user themselves is the actor)
@@ -274,7 +274,7 @@ export class AuthService extends BaseService {
     );
 
     return {
-      message: this.i18n.translate('success.emailVerified'),
+      message: this.i18n.translate('t.success.emailVerified'),
       user: {
         id: userId,
         email,
@@ -284,9 +284,7 @@ export class AuthService extends BaseService {
 
   async requestEmailVerification(actor: ActorUser): Promise<void> {
     if (!actor.email) {
-      throw new BadRequestException(
-        this.i18n.translate('errors.badRequest'),
-      );
+      throw new BadRequestException(this.i18n.translate('t.errors.badRequest'));
     }
 
     // Emit event for email verification (event-driven)
@@ -308,21 +306,17 @@ export class AuthService extends BaseService {
     } else if (phone) {
       user = await this.userService.findUserByPhone(phone);
     } else {
-      throw new BadRequestException(
-        this.i18n.translate('errors.badRequest'),
-      );
+      throw new BadRequestException(this.i18n.translate('t.errors.badRequest'));
     }
 
     if (!user) {
-      throw new NotFoundException(this.i18n.translate('errors.userNotFound'));
+      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
     }
 
     // Use provided phone or user's stored phone (formatted correctly)
     const phoneToUse = phone || user.getPhone();
     if (!phoneToUse) {
-      throw new BadRequestException(
-        this.i18n.translate('errors.badRequest'),
-      );
+      throw new BadRequestException(this.i18n.translate('t.errors.badRequest'));
     }
 
     // Send phone verification OTP
@@ -353,7 +347,7 @@ export class AuthService extends BaseService {
     // Get user to get phone and create actor
     const user = await this.userService.findOne(verifiedUserId);
     if (!user) {
-      throw new NotFoundException(this.i18n.translate('errors.userNotFound'));
+      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
     }
 
     // Update user phoneVerified date
@@ -404,7 +398,7 @@ export class AuthService extends BaseService {
         channel = NotificationChannel.SMS; // Default to SMS for phone
       } else {
         throw new BadRequestException(
-          this.i18n.translate('errors.badRequest'),
+          this.i18n.translate('t.errors.badRequest'),
         );
       }
     }
@@ -449,7 +443,7 @@ export class AuthService extends BaseService {
 
     return {
       success: true,
-      message: this.i18n.translate('success.passwordReset'),
+      message: this.i18n.translate('t.success.passwordReset'),
     };
   }
 
@@ -458,13 +452,13 @@ export class AuthService extends BaseService {
 
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userNotFound'),
+        this.i18n.translate('t.errors.userNotFound'),
       );
     }
 
     if (user.twoFactorEnabled) {
       throw new BusinessLogicException(
-        this.i18n.translate('errors.businessLogicError'),
+        this.i18n.translate('t.errors.businessLogicError'),
       );
     }
 
@@ -504,19 +498,19 @@ export class AuthService extends BaseService {
 
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userNotFound'),
+        this.i18n.translate('t.errors.userNotFound'),
       );
     }
 
     if (user.twoFactorEnabled) {
       throw new BusinessLogicException(
-        this.i18n.translate('errors.businessLogicError'),
+        this.i18n.translate('t.errors.businessLogicError'),
       );
     }
 
     if (!user.twoFactorSecret) {
       throw new BusinessLogicException(
-        this.i18n.translate('errors.businessLogicError'),
+        this.i18n.translate('t.errors.businessLogicError'),
       );
     }
 
@@ -529,7 +523,7 @@ export class AuthService extends BaseService {
     const isValid = true; // Temporarily disabled
     if (!isValid) {
       throw new AuthenticationFailedException(
-        this.i18n.translate('errors.authenticationFailed'),
+        this.i18n.translate('t.errors.authenticationFailed'),
       );
     }
 
@@ -546,7 +540,7 @@ export class AuthService extends BaseService {
       new TwoFactorEnabledEvent(userId, actor),
     );
 
-    return { message: this.i18n.translate('success.twoFactorEnabled') };
+    return { message: this.i18n.translate('t.success.twoFactorEnabled') };
   }
 
   async disableTwoFactor(
@@ -558,13 +552,13 @@ export class AuthService extends BaseService {
 
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userNotFound'),
+        this.i18n.translate('t.errors.userNotFound'),
       );
     }
 
     if (!user.twoFactorEnabled) {
       throw new BusinessLogicException(
-        this.i18n.translate('errors.businessLogicError'),
+        this.i18n.translate('t.errors.businessLogicError'),
       );
     }
 
@@ -581,7 +575,7 @@ export class AuthService extends BaseService {
         email: user.email,
       });
       throw new AuthenticationFailedException(
-        this.i18n.translate('errors.authenticationFailed'),
+        this.i18n.translate('t.errors.authenticationFailed'),
       );
     }
 
@@ -594,7 +588,7 @@ export class AuthService extends BaseService {
       new TwoFactorDisabledEvent(userId, actor),
     );
 
-    return { message: this.i18n.translate('success.twoFactorDisabled') };
+    return { message: this.i18n.translate('t.success.twoFactorDisabled') };
   }
 
   async logout(actor: ActorUser) {
@@ -607,7 +601,7 @@ export class AuthService extends BaseService {
       new UserLoggedOutEvent(actor.id, actor),
     );
 
-    return { message: this.i18n.translate('success.logout') };
+    return { message: this.i18n.translate('t.success.logout') };
   }
 
   private generateTokens(user: User) {
@@ -645,7 +639,7 @@ export class AuthService extends BaseService {
     const user = await this.userService.findOne(userId, true);
     if (!user) {
       throw new AuthenticationFailedException(
-        this.i18n.translate('errors.userNotFound'),
+        this.i18n.translate('t.errors.userNotFound'),
       );
     }
 

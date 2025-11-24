@@ -7,9 +7,7 @@ import { PaginateStaffDto } from '../dto/paginate-staff.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { User } from '@/modules/user/entities/user.entity';
 import { Staff } from '../entities/staff.entity';
-import {
-  ResourceNotFoundException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
@@ -76,7 +74,7 @@ export class StaffService extends BaseService {
     const user = await this.userService.findOne(userId);
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userNotFound'),
+        this.i18n.translate('t.errors.userNotFound'),
       );
     }
     return user;

@@ -5,8 +5,9 @@
 **Status:** ⚠️ **Partially Implemented** - Many areas still use hardcoded English messages
 
 **Translation Coverage:**
+
 - ✅ Controllers: ~70% using translations
-- ⚠️ Services: ~30% using translations  
+- ⚠️ Services: ~30% using translations
 - ❌ Exception Messages: ~10% using translations
 - ✅ Validation Messages: 100% using translations
 - ⚠️ Response Messages: ~60% using translations
@@ -18,27 +19,31 @@
 ### ✅ **Areas WITH Translation Support**
 
 #### 1. **Controllers (Mostly Good)**
+
 - ✅ Most controllers use `ControllerResponse` with `i18n.translate()`
 - ✅ Controllers have `I18nService` injected
 - ✅ Success messages use translation keys like `success.create`, `success.update`, etc.
 
 **Examples:**
+
 ```typescript
 // ✅ Good - Uses translations
 return ControllerResponse.success(
   result,
-  this.i18n.translate('success.create', {
-    args: { resource: this.i18n.translate('common.resources.center') },
+  this.i18n.translate('t.success.create', {
+    args: { resource: this.i18n.translate('t.common.resources.center') },
   }),
 );
 ```
 
 #### 2. **Validation Pipe**
+
 - ✅ 100% using translations
 - ✅ Uses `i18n.translate()` for all validation errors
 - ✅ Field-specific validation messages are translated
 
 #### 3. **Custom Exceptions (User Messages)**
+
 - ✅ All custom exceptions have `userMessage` fields
 - ✅ User messages are translated in exception classes
 
@@ -49,6 +54,7 @@ return ControllerResponse.success(
 #### 1. **Controller Hardcoded Messages** (8 instances)
 
 **File: `user-profile-import.controller.ts`**
+
 ```typescript
 // ❌ Line 48
 return ControllerResponse.success(null, 'OTP sent successfully');
@@ -58,32 +64,41 @@ return ControllerResponse.success(result, 'User imported successfully');
 ```
 
 **File: `auth.controller.ts`**
+
 ```typescript
 // ❌ Line 116 - Hardcoded in data object
-{ message: 'Email verification request sent' }
+{
+  message: 'Email verification request sent';
+}
 
 // ❌ Line 133 - Hardcoded in data object
-{ message: 'Phone verification request sent' }
+{
+  message: 'Phone verification request sent';
+}
 
 // ❌ Line 152 - Hardcoded in data object
-{ message: 'Phone verified successfully' }
+{
+  message: 'Phone verified successfully';
+}
 ```
 
 **File: `centers-access.controller.ts`**
+
 ```typescript
 // ❌ Lines 97, 119, 155, 185 - Hardcoded messages
-'Center access granted successfully'
-'Center access revoked successfully'
-'Center access soft deleted successfully'
-'Center access restored successfully'
+'Center access granted successfully';
+'Center access revoked successfully';
+'Center access soft deleted successfully';
+'Center access restored successfully';
 ```
 
 #### 2. **Service Layer Hardcoded Messages** (15+ instances)
 
 **File: `auth.service.ts`**
+
 ```typescript
 // ❌ Line 269
-message: 'Email verified successfully'
+message: 'Email verified successfully';
 
 // ❌ Line 525
 return { message: 'Two-factor authentication enabled successfully' };
@@ -96,6 +111,7 @@ return { message: 'Logged out successfully' };
 ```
 
 **File: `user.service.ts`**
+
 ```typescript
 // ❌ Line 86
 return { message: 'Password changed successfully', success: true };
@@ -115,6 +131,7 @@ throw new BadRequestException('Invalid request');
 ```
 
 **Files with hardcoded exception messages:**
+
 - `auth.service.ts` - 20+ instances
 - `user.service.ts` - 15+ instances
 - `access-control.service.ts` - 10+ instances
@@ -129,6 +146,7 @@ throw new BadRequestException('Invalid request');
 #### 4. **Global Exception Filter** ❌ NO TRANSLATIONS
 
 **File: `global-exception.filter.ts`**
+
 - ❌ **Does NOT use I18nService** - No translation support
 - ❌ Line 119 - Hardcoded: `message: 'Internal server error'`
 - ❌ Line 125 - Hardcoded: `userMessage: 'An unexpected error occurred'`
@@ -140,6 +158,7 @@ throw new BadRequestException('Invalid request');
 #### 5. **Error Interceptor** ❌ NO TRANSLATIONS
 
 **File: `error.interceptor.ts`**
+
 - ❌ **Does NOT use I18nService** - No translation support
 - ❌ All error messages are hardcoded English:
   - `'Referenced record does not exist'`
@@ -154,6 +173,7 @@ throw new BadRequestException('Invalid request');
 #### 6. **Response Interceptor** ✅ USES TRANSLATIONS
 
 **File: `response.interceptor.ts`**
+
 - ✅ **Uses I18nService** - Has translation support
 - ✅ Uses `i18n.translate()` for all default messages
 - ✅ Translation keys exist and are used correctly
@@ -163,6 +183,7 @@ throw new BadRequestException('Invalid request');
 #### 7. **Rate Limit Guard** ❌ NO TRANSLATIONS
 
 **File: `rate-limit.guard.ts`**
+
 - ❌ **Does NOT use I18nService** - No translation support
 - ❌ Line 103 - Hardcoded: `message: 'Too many requests, please try again later'`
 
@@ -171,6 +192,7 @@ throw new BadRequestException('Invalid request');
 #### 8. **Export Service** ❌ NO TRANSLATIONS
 
 **File: `export.service.ts`**
+
 - ❌ **Does NOT use I18nService** - No translation support
 - ❌ Lines 50, 92, 131 - Hardcoded messages:
   - `'CSV export completed successfully'`
@@ -186,6 +208,7 @@ throw new BadRequestException('Invalid request');
 ### ✅ **Existing Translation Keys**
 
 **Success Messages (`success.json`):**
+
 - ✅ `success.create`, `success.update`, `success.delete`
 - ✅ `success.restore`, `success.archive`
 - ✅ `success.login`, `success.logout`
@@ -194,14 +217,17 @@ throw new BadRequestException('Invalid request');
 - ✅ `success.passwordReset`, `success.passwordChange`
 
 **Error Messages (`errors.json`):**
+
 - ✅ All error codes have translations
 
 **User Messages (`userMessages.json`):**
+
 - ✅ All user-facing error messages
 
 ### ❌ **Missing Translation Keys**
 
 **Success Messages Needed:**
+
 - ❌ `success.otpSent` - "OTP sent successfully"
 - ❌ `success.userImported` - "User imported successfully"
 - ❌ `success.emailVerificationRequestSent` - "Email verification request sent"
@@ -219,6 +245,7 @@ throw new BadRequestException('Invalid request');
 - ❌ `success.branchRemoved` - "User removed from branch successfully"
 
 **Exception Messages Needed:**
+
 - ❌ All exception messages need translation keys
 - Currently using hardcoded English strings in exception constructors
 
@@ -324,12 +351,14 @@ These components **DO NOT** have `I18nService` injected and need it:
 The application has **partial translation support** (~40% coverage):
 
 ### ✅ **What's Working:**
+
 - ✅ Controllers mostly use translations (70% coverage)
 - ✅ Validation messages fully translated (100% coverage)
 - ✅ Response interceptor uses translations
 - ✅ Custom exceptions have `userMessage` fields (though messages are hardcoded)
 
 ### ❌ **What's NOT Working:**
+
 - ❌ Exception messages mostly hardcoded (100+ instances)
 - ❌ Service return messages mostly hardcoded (15+ instances)
 - ❌ System error messages mostly hardcoded (GlobalExceptionFilter, ErrorInterceptor)
@@ -337,14 +366,15 @@ The application has **partial translation support** (~40% coverage):
 - ❌ Export service messages hardcoded
 
 ### 🎯 **Critical Issues:**
+
 1. **GlobalExceptionFilter** - All error messages are hardcoded English
 2. **ErrorInterceptor** - All database error messages are hardcoded English
 3. **Exception Constructors** - 100+ instances use hardcoded English messages
 4. **Service Return Messages** - 15+ instances use hardcoded English
 
-**Recommendation:** 
+**Recommendation:**
+
 1. **Priority 1:** Fix user-facing controller messages (8 instances)
 2. **Priority 2:** Add I18nService to GlobalExceptionFilter and ErrorInterceptor
 3. **Priority 3:** Update exception constructors to use translations
 4. **Priority 4:** Update service return messages
-

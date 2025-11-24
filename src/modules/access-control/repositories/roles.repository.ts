@@ -39,7 +39,7 @@ export class RolesRepository extends BaseRepository<Role> {
     });
     if (!role) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.roleNotFound'),
+        this.i18n.translate('t.errors.roleNotFound'),
       );
     }
     return role;
@@ -68,7 +68,7 @@ export class RolesRepository extends BaseRepository<Role> {
     const role = await this.update(roleId, roleData);
     if (!role) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.roleNotFound'),
+        this.i18n.translate('t.errors.roleNotFound'),
       );
     }
     const existingRolePermissions =

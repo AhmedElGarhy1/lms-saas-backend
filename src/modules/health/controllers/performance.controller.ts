@@ -29,7 +29,7 @@ export class PerformanceController {
     const result = this.databasePerformanceService.getPerformanceStats();
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -43,7 +43,7 @@ export class PerformanceController {
     const result = this.databasePerformanceService.getTransactionMetrics();
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -81,7 +81,7 @@ export class PerformanceController {
     };
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -95,7 +95,7 @@ export class PerformanceController {
     const result = this.alertsService.getActiveAlerts();
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -118,7 +118,7 @@ export class PerformanceController {
     };
     return ControllerResponse.success(
       result,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -131,9 +131,9 @@ export class PerformanceController {
   resolveAlert(@Body('alertId') alertId: string) {
     void this.alertsService.resolveAlert(alertId);
     return ControllerResponse.message(
-      this.i18n.translate('success.update', {
+      this.i18n.translate('t.success.update', {
         args: {
-          resource: this.i18n.translate('common.labels.alert'),
+          resource: this.i18n.translate('t.common.labels.alert'),
         },
       }),
     );

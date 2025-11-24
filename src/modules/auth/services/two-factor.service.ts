@@ -50,7 +50,7 @@ export class TwoFactorService extends BaseService {
     } catch (error) {
       this.logger.error('Failed to generate QR code', error);
       throw new QrCodeGenerationFailedException(
-        this.i18n.translate('errors.QR_CODE_GENERATION_FAILED'),
+        this.i18n.translate('t.errors.qrCodeGenerationFailed'),
       );
     }
   }

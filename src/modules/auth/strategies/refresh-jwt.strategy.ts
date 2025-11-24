@@ -52,14 +52,14 @@ export class RefreshJwtStrategy extends PassportStrategy(
 
       if (!refreshToken) {
         throw new UnauthorizedException(
-          this.i18n.translate('errors.refreshTokenNotFound' as any),
+          this.i18n.translate('t.errors.refreshTokenNotFound' as any),
         );
       }
 
       // Validate that this is a refresh token
       if (payload.type !== 'refresh') {
         throw new UnauthorizedException(
-          this.i18n.translate('errors.invalidTokenType'),
+          this.i18n.translate('t.errors.invalidTokenType'),
         );
       }
 
@@ -67,7 +67,7 @@ export class RefreshJwtStrategy extends PassportStrategy(
       const user = await this.userService.findOne(payload.sub, true);
       if (!user || !user.hashedRt) {
         throw new UnauthorizedException(
-          this.i18n.translate('errors.accessDenied'),
+          this.i18n.translate('t.errors.accessDenied'),
         );
       }
 
@@ -75,7 +75,7 @@ export class RefreshJwtStrategy extends PassportStrategy(
       const rtMatches = await bcrypt.compare(refreshToken, user.hashedRt);
       if (!rtMatches) {
         throw new UnauthorizedException(
-          this.i18n.translate('errors.invalidOrExpiredToken' as any),
+          this.i18n.translate('t.errors.invalidOrExpiredToken' as any),
         );
       }
 
@@ -88,21 +88,21 @@ export class RefreshJwtStrategy extends PassportStrategy(
       const jwtError = error as JwtError;
       if (jwtError?.name === 'TokenExpiredError') {
         throw new UnauthorizedException(
-          this.i18n.translate('errors.refreshTokenExpired' as any),
+          this.i18n.translate('t.errors.refreshTokenExpired' as any),
         );
       } else if (jwtError?.name === 'JsonWebTokenError') {
         throw new UnauthorizedException(
-          this.i18n.translate('errors.invalidRefreshToken' as any),
+          this.i18n.translate('t.errors.invalidRefreshToken' as any),
         );
       } else if (jwtError?.name === 'NotBeforeError') {
         throw new UnauthorizedException(
-          this.i18n.translate('errors.tokenNotActiveYet' as any),
+          this.i18n.translate('t.errors.tokenNotActiveYet' as any),
         );
       } else if (error instanceof UnauthorizedException) {
         throw error;
       } else {
         throw new UnauthorizedException(
-          this.i18n.translate('errors.tokenValidationFailed' as any),
+          this.i18n.translate('t.errors.tokenValidationFailed' as any),
         );
       }
     }

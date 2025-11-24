@@ -37,10 +37,9 @@ export class UserController {
 
     return ControllerResponse.success(
       user,
-      this.i18n.translate('success.update', {
-        args: { resource: this.i18n.translate('common.resources.user') },
+      this.i18n.translate('t.success.update', {
+        args: { resource: this.i18n.translate('t.common.resources.user') },
       }),
     );
   }
 }
-

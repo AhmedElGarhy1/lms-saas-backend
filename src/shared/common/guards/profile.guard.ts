@@ -51,7 +51,7 @@ export class ProfileGuard implements CanActivate {
     const user = request.user;
     if (!user) {
       throw new ForbiddenException(
-        this.i18n.translate('errors.userNotAuthenticated'),
+        this.i18n.translate('t.errors.userNotAuthenticated'),
       );
     }
 
@@ -75,7 +75,7 @@ export class ProfileGuard implements CanActivate {
     }
     if (!profile.isActive) {
       throw new InactiveProfileException(
-        this.i18n.translate('errors.profileInactive'),
+        this.i18n.translate('t.errors.profileInactive'),
       );
     }
 

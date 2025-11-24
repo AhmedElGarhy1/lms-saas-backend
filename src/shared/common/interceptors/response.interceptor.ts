@@ -85,73 +85,73 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
 
     // If data is null/undefined (common for DELETE operations), provide appropriate message
     if (!data) {
-      const resourceName = this.i18n.translate('common.resources.resource');
+      const resourceName = this.i18n.translate('t.common.resources.resource');
       const messages: Record<string, string> = {
-        DELETE: this.i18n.translate('success.delete', {
+        DELETE: this.i18n.translate('t.success.delete', {
           args: { resource: resourceName },
         }),
-        PATCH: this.i18n.translate('success.update', {
+        PATCH: this.i18n.translate('t.success.update', {
           args: { resource: resourceName },
         }),
-        PUT: this.i18n.translate('success.update', {
+        PUT: this.i18n.translate('t.success.update', {
           args: { resource: resourceName },
         }),
-        POST: this.i18n.translate('success.create', {
+        POST: this.i18n.translate('t.success.create', {
           args: { resource: resourceName },
         }),
       };
-      return messages[method] || this.i18n.translate('api.success.operation');
+      return messages[method] || this.i18n.translate('t.success.operation');
     }
 
     // For arrays, provide count-specific message
     if (Array.isArray(data)) {
-      return this.i18n.translate('success.dataRetrieved', {
+      return this.i18n.translate('t.success.dataRetrieved', {
         args: { count: data.length },
       });
     }
 
     // For objects with ID (created resources)
     if (method === 'POST' && data && data.id) {
-      const resourceName = this.i18n.translate('common.resources.resource');
-      return this.i18n.translate('success.create', {
+      const resourceName = this.i18n.translate('t.common.resources.resource');
+      return this.i18n.translate('t.success.create', {
         args: { resource: resourceName },
       });
     }
 
     // For update operations
     if ((method === 'PUT' || method === 'PATCH') && data) {
-      const resourceName = this.i18n.translate('common.resources.resource');
-      return this.i18n.translate('success.update', {
+      const resourceName = this.i18n.translate('t.common.resources.resource');
+      return this.i18n.translate('t.success.update', {
         args: { resource: resourceName },
       });
     }
 
     // For delete operations
     if (method === 'DELETE') {
-      const resourceName = this.i18n.translate('common.resources.resource');
-      return this.i18n.translate('success.delete', {
+      const resourceName = this.i18n.translate('t.common.resources.resource');
+      return this.i18n.translate('t.success.delete', {
         args: { resource: resourceName },
       });
     }
 
     // Default messages by method
-    const resourceName = this.i18n.translate('common.resources.resource');
+    const resourceName = this.i18n.translate('t.common.resources.resource');
     const messages: Record<string, string> = {
-      GET: this.i18n.translate('success.dataRetrieved'),
-      POST: this.i18n.translate('success.create', {
+      GET: this.i18n.translate('t.success.dataRetrieved'),
+      POST: this.i18n.translate('t.success.create', {
         args: { resource: resourceName },
       }),
-      PUT: this.i18n.translate('success.update', {
+      PUT: this.i18n.translate('t.success.update', {
         args: { resource: resourceName },
       }),
-      PATCH: this.i18n.translate('success.update', {
+      PATCH: this.i18n.translate('t.success.update', {
         args: { resource: resourceName },
       }),
-      DELETE: this.i18n.translate('success.delete', {
+      DELETE: this.i18n.translate('t.success.delete', {
         args: { resource: resourceName },
       }),
     };
 
-    return messages[method] || this.i18n.translate('api.success.operation');
+    return messages[method] || this.i18n.translate('t.success.operation');
   }
 }

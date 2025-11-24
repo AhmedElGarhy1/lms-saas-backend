@@ -116,7 +116,7 @@ export class WhatsAppWebhookController {
       if (!isValid) {
         this.logger.warn('Webhook signature verification failed');
         throw new UnauthorizedException(
-          this.i18n.translate('errors.invalidSignature'),
+          this.i18n.translate('t.errors.invalidSignature'),
         );
       }
 

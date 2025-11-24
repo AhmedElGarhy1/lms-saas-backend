@@ -29,7 +29,7 @@ export class BranchAccessRepository extends BaseRepository<BranchAccess> {
     const existingAccess = await this.findBranchAccess(data);
     if (existingAccess) {
       throw new ConflictException(
-        this.i18n.translate('errors.accessAlreadyExists'),
+        this.i18n.translate('t.errors.accessAlreadyExists'),
       );
     }
 
@@ -40,7 +40,7 @@ export class BranchAccessRepository extends BaseRepository<BranchAccess> {
     const existingAccess = await this.findBranchAccess(data);
     if (!existingAccess) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.branchAccessNotFound'),
+        this.i18n.translate('t.errors.branchAccessNotFound'),
       );
     }
 

@@ -64,7 +64,7 @@ export class UserService extends BaseService {
     const user = await this.userRepository.findOne(userId);
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userNotFound'),
+        this.i18n.translate('t.errors.userNotFound'),
       );
     }
 
@@ -75,7 +75,7 @@ export class UserService extends BaseService {
     );
     if (!isCurrentPasswordValid) {
       throw new ValidationFailedException(
-        this.i18n.translate('errors.currentPasswordIncorrect'),
+        this.i18n.translate('t.errors.currentPasswordIncorrect'),
       );
     }
 
@@ -91,7 +91,7 @@ export class UserService extends BaseService {
     );
 
     return {
-      message: this.i18n.translate('success.passwordChange'),
+      message: this.i18n.translate('t.success.passwordChange'),
       success: true,
     };
   }
@@ -212,7 +212,7 @@ export class UserService extends BaseService {
     const user = await this.userRepository.findOne(userId);
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userNotFound'),
+        this.i18n.translate('t.errors.userNotFound'),
       );
     }
 
@@ -221,7 +221,7 @@ export class UserService extends BaseService {
     );
     if (!isSuperAdmin) {
       throw new InsufficientPermissionsException(
-        this.i18n.translate('errors.accessDeniedToUser'),
+        this.i18n.translate('t.errors.accessDeniedToUser'),
       );
     }
     await this.userRepository.softRemove(userId);
@@ -238,7 +238,7 @@ export class UserService extends BaseService {
     const user = await this.userRepository.findOneSoftDeletedById(userId);
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userNotFound'),
+        this.i18n.translate('t.errors.userNotFound'),
       );
     }
 
@@ -247,7 +247,7 @@ export class UserService extends BaseService {
     );
     if (!isSuperAdmin) {
       throw new InsufficientPermissionsException(
-        this.i18n.translate('errors.accessDeniedToUser'),
+        this.i18n.translate('t.errors.accessDeniedToUser'),
       );
     }
 
@@ -284,7 +284,7 @@ export class UserService extends BaseService {
     const user = await this.userRepository.findOne(userId);
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.userNotFound'),
+        this.i18n.translate('t.errors.userNotFound'),
       );
     }
 
@@ -324,7 +324,7 @@ export class UserService extends BaseService {
     const profile = await this.userProfileService.findOne(userProfileId);
     if (!profile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.resourceNotFound'),
+        this.i18n.translate('t.errors.resourceNotFound'),
       );
     }
 
@@ -398,12 +398,11 @@ export class UserService extends BaseService {
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.resourceNotFound'),
+        this.i18n.translate('t.errors.resourceNotFound'),
       );
     }
     return this.userRepository.findOne(userProfile.userId);
   }
-
 
   async updateUserTwoFactor(
     userProfileId: string,
@@ -414,7 +413,7 @@ export class UserService extends BaseService {
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.resourceNotFound'),
+        this.i18n.translate('t.errors.resourceNotFound'),
       );
     }
     await this.userRepository.updateUserTwoFactor(
@@ -471,7 +470,7 @@ export class UserService extends BaseService {
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.resourceNotFound'),
+        this.i18n.translate('t.errors.resourceNotFound'),
       );
     }
 
@@ -487,7 +486,7 @@ export class UserService extends BaseService {
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.resourceNotFound'),
+        this.i18n.translate('t.errors.resourceNotFound'),
       );
     }
 
@@ -496,7 +495,7 @@ export class UserService extends BaseService {
     );
     if (!isSuperAdmin) {
       throw new InsufficientPermissionsException(
-        this.i18n.translate('errors.accessDeniedToUser'),
+        this.i18n.translate('t.errors.accessDeniedToUser'),
       );
     }
 
@@ -511,7 +510,7 @@ export class UserService extends BaseService {
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.resourceNotFound'),
+        this.i18n.translate('t.errors.resourceNotFound'),
       );
     }
 
@@ -520,7 +519,7 @@ export class UserService extends BaseService {
     );
     if (!isSuperAdmin) {
       throw new InsufficientPermissionsException(
-        this.i18n.translate('errors.accessDeniedToUser'),
+        this.i18n.translate('t.errors.accessDeniedToUser'),
       );
     }
 

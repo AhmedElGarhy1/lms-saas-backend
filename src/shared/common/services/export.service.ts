@@ -53,7 +53,7 @@ export class ExportService extends BaseService {
 
       return {
         success: true,
-        message: this.i18n.translate('success.export', {
+        message: this.i18n.translate('t.success.export', {
           args: { resource: 'CSV' },
         }),
         filename: `${filename}.csv`,
@@ -97,7 +97,7 @@ export class ExportService extends BaseService {
 
       return {
         success: true,
-        message: this.i18n.translate('success.export', {
+        message: this.i18n.translate('t.success.export', {
           args: { resource: 'XLSX' },
         }),
         filename: `${filename}.xlsx`,
@@ -138,7 +138,7 @@ export class ExportService extends BaseService {
 
       return {
         success: true,
-        message: this.i18n.translate('success.export', {
+        message: this.i18n.translate('t.success.export', {
           args: { resource: 'JSON' },
         }),
         filename: `${filename}.json`,

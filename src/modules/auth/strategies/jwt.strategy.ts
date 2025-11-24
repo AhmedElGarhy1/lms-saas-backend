@@ -34,18 +34,18 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
     if (!user) {
       throw new UnauthorizedException(
-        this.i18n.translate('errors.userNotFound'),
+        this.i18n.translate('t.errors.userNotFound'),
       );
     }
 
     if (!user.isActive) {
       throw new UnauthorizedException(
-        this.i18n.translate('errors.userAccountInactive'),
+        this.i18n.translate('t.errors.userAccountInactive'),
       );
     }
     if (!user.phoneVerified) {
       throw new BusinessLogicException(
-        this.i18n.translate('errors.userPhoneNotVerified'),
+        this.i18n.translate('t.errors.userPhoneNotVerified'),
       );
     }
 

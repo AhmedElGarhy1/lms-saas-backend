@@ -122,7 +122,7 @@ export class AccessControlService extends BaseService {
 
     if (canAccess) {
       throw new BusinessLogicException(
-        this.i18n.translate('errors.userAlreadyHasAccess'),
+        this.i18n.translate('t.errors.userAlreadyHasAccess'),
       );
     }
 
@@ -190,7 +190,7 @@ export class AccessControlService extends BaseService {
 
     if (!canAccess) {
       throw new InsufficientPermissionsException(
-        this.i18n.translate('errors.userDoesNotHaveAccess'),
+        this.i18n.translate('t.errors.userDoesNotHaveAccess'),
       );
     }
 
@@ -248,7 +248,7 @@ export class AccessControlService extends BaseService {
       await this.accessControlHelperService.canBranchAccess(data);
     if (canAccess) {
       throw new ConflictException(
-        this.i18n.translate('errors.profileAlreadyAssignedToBranch'),
+        this.i18n.translate('t.errors.profileAlreadyAssignedToBranch'),
       );
     }
 
@@ -295,12 +295,12 @@ export class AccessControlService extends BaseService {
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.centerAccessNotFound'),
+        this.i18n.translate('t.errors.centerAccessNotFound'),
       );
     }
     if (centerAccess.deletedAt) {
       throw new BusinessLogicException(
-        this.i18n.translate('errors.centerAccessAlreadyDeleted'),
+        this.i18n.translate('t.errors.centerAccessAlreadyDeleted'),
       );
     }
 
@@ -327,12 +327,12 @@ export class AccessControlService extends BaseService {
     );
     if (!centerAccess) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.centerAccessNotFound'),
+        this.i18n.translate('t.errors.centerAccessNotFound'),
       );
     }
     if (!centerAccess.deletedAt) {
       throw new BusinessLogicException(
-        this.i18n.translate('errors.centerAccessNotDeleted'),
+        this.i18n.translate('t.errors.centerAccessNotDeleted'),
       );
     }
     await this.centerAccessRepository.restore(centerAccess.id);
@@ -357,7 +357,7 @@ export class AccessControlService extends BaseService {
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.centerAccessNotFound'),
+        this.i18n.translate('t.errors.centerAccessNotFound'),
       );
     }
     await this.centerAccessRepository.update(centerAccess.id, { isActive });

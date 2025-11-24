@@ -47,7 +47,7 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
     });
     if (!userAccess)
       throw new NotFoundException(
-        this.i18n.translate('errors.userAccessNotFound'),
+        this.i18n.translate('t.errors.userAccessNotFound'),
       );
     await this.getRepository().remove(userAccess);
   }

@@ -51,7 +51,7 @@ export class LocaleController {
 
     return ControllerResponse.success(
       userLocale,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 
@@ -65,7 +65,7 @@ export class LocaleController {
     const languages = this.localeService.getAvailableLanguages();
     return ControllerResponse.success(
       languages,
-      this.i18n.translate('api.success.dataRetrieved'),
+      this.i18n.translate('t.success.dataRetrieved'),
     );
   }
 }

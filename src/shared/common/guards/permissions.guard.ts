@@ -34,7 +34,7 @@ export class PermissionsGuard implements CanActivate {
 
     if (!user) {
       throw new ForbiddenException(
-        this.i18n.translate('errors.userNotAuthenticated'),
+        this.i18n.translate('t.errors.userNotAuthenticated'),
       );
     }
 

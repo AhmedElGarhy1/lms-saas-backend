@@ -58,7 +58,7 @@ export class AuthController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.login'),
+      this.i18n.translate('t.success.login'),
     );
   }
 
@@ -84,7 +84,7 @@ export class AuthController {
     const result = await this.authService.refresh(userId);
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.tokenRefreshed'),
+      this.i18n.translate('t.success.tokenRefreshed'),
     );
   }
 
@@ -100,7 +100,7 @@ export class AuthController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.emailVerified'),
+      this.i18n.translate('t.success.emailVerified'),
     );
   }
 
@@ -114,7 +114,7 @@ export class AuthController {
 
     return ControllerResponse.success(
       null,
-      this.i18n.translate('success.emailVerificationRequestSent'),
+      this.i18n.translate('t.success.emailVerificationRequestSent'),
     );
   }
 
@@ -131,7 +131,7 @@ export class AuthController {
 
     return ControllerResponse.success(
       null,
-      this.i18n.translate('success.phoneVerificationRequestSent'),
+      this.i18n.translate('t.success.phoneVerificationRequestSent'),
     );
   }
 
@@ -150,7 +150,7 @@ export class AuthController {
 
     return ControllerResponse.success(
       null,
-      this.i18n.translate('success.phoneVerified'),
+      this.i18n.translate('t.success.phoneVerified'),
     );
   }
 
@@ -166,7 +166,7 @@ export class AuthController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.passwordResetSent'),
+      this.i18n.translate('t.success.passwordResetSent'),
     );
   }
 
@@ -180,7 +180,7 @@ export class AuthController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.passwordReset'),
+      this.i18n.translate('t.success.passwordReset'),
     );
   }
 
@@ -198,7 +198,7 @@ export class AuthController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.twoFactorSetup'),
+      this.i18n.translate('t.success.twoFactorSetup'),
     );
   }
 
@@ -213,7 +213,7 @@ export class AuthController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.twoFactorVerified'),
+      this.i18n.translate('t.success.twoFactorVerified'),
     );
   }
 
@@ -227,7 +227,7 @@ export class AuthController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.logout'),
+      this.i18n.translate('t.success.logout'),
     );
   }
 }

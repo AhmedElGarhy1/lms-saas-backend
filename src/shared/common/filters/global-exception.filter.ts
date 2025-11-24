@@ -168,12 +168,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   ): string {
     try {
       // Handle rate limit with retry after
-    if (status === HttpStatus.TOO_MANY_REQUESTS && retryAfter) {
-      const remainingTime = this.formatExactRemainingTime(retryAfter);
-        return this.i18n.translate('errors.tooManyRequestsWithTime', {
+      if (status === HttpStatus.TOO_MANY_REQUESTS && retryAfter) {
+        const remainingTime = this.formatExactRemainingTime(retryAfter);
+        return this.i18n.translate('t.errors.tooManyRequestsWithTime', {
           args: { time: remainingTime },
         });
-    }
+      }
 
       // Map by status code only (no message mapping needed)
       const statusKeyMap: Record<number, string> = {
@@ -186,7 +186,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         [HttpStatus.TOO_MANY_REQUESTS]: 'errors.tooManyRequests',
         [HttpStatus.INTERNAL_SERVER_ERROR]: 'errors.internalServerError',
         [HttpStatus.SERVICE_UNAVAILABLE]: 'errors.serviceUnavailable',
-    };
+      };
 
       const statusKey = statusKeyMap[status];
       if (statusKey) {
@@ -194,7 +194,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
 
       // Fallback to generic error
-      return this.i18n.translate('errors.genericError');
+      return this.i18n.translate('t.errors.genericError');
     } catch (error) {
       // If translation fails, return original message (shouldn't happen)
       this.logger.warn('Translation failed, using original message', error);

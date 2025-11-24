@@ -74,7 +74,7 @@ export class CentersAccessController {
     return {
       id: userProfileId,
       message: this.i18n.translate(
-        dto.isActive ? 'success.userActivated' : 'success.userDeactivated',
+        dto.isActive ? 't.success.userActivated' : 't.success.userDeactivated',
       ),
       isActive: dto.isActive,
     };
@@ -97,7 +97,7 @@ export class CentersAccessController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.centerAccessGranted'),
+      this.i18n.translate('t.success.centerAccessGranted'),
     );
   }
 
@@ -119,7 +119,7 @@ export class CentersAccessController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.centerAccessRevoked'),
+      this.i18n.translate('t.success.centerAccessRevoked'),
     );
   }
 
@@ -155,7 +155,7 @@ export class CentersAccessController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.centerAccessDeleted'),
+      this.i18n.translate('t.success.centerAccessDeleted'),
     );
   }
 
@@ -185,7 +185,7 @@ export class CentersAccessController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.centerAccessRestored'),
+      this.i18n.translate('t.success.centerAccessRestored'),
     );
   }
 
@@ -199,7 +199,7 @@ export class CentersAccessController {
 
     if (!userProfile) {
       throw new BusinessLogicException(
-        this.i18n.translate('errors.targetUserProfileNotFound'),
+        this.i18n.translate('t.errors.targetUserProfileNotFound'),
       );
     }
 
@@ -208,7 +208,7 @@ export class CentersAccessController {
       userProfile.profileType !== ProfileType.ADMIN
     ) {
       throw new BusinessLogicException(
-        this.i18n.translate('errors.targetUserMustHaveAdminOrStaffProfile'),
+        this.i18n.translate('t.errors.targetUserMustHaveAdminOrStaffProfile'),
       );
     }
 

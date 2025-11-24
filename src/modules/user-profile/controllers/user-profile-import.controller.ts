@@ -47,7 +47,7 @@ export class UserProfileImportController {
 
     return ControllerResponse.success(
       null,
-      this.i18n.translate('success.otpSent'),
+      this.i18n.translate('t.success.otpSent'),
     );
   }
 
@@ -95,7 +95,7 @@ export class UserProfileImportController {
 
     return ControllerResponse.success(
       result,
-      this.i18n.translate('success.userImported'),
+      this.i18n.translate('t.success.userImported'),
     );
   }
 }

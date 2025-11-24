@@ -57,7 +57,7 @@ export class CentersService extends BaseService {
     const center = await this.centersRepository.findOne(centerId);
     if (!center) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.resourceNotFound'),
+        this.i18n.translate('t.errors.resourceNotFound'),
       );
     }
     return center;
@@ -94,7 +94,7 @@ export class CentersService extends BaseService {
     const center = await this.findCenterById(centerId);
     if (!center) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.resourceNotFound'),
+        this.i18n.translate('t.errors.resourceNotFound'),
       );
     }
 
@@ -102,7 +102,7 @@ export class CentersService extends BaseService {
       const existingCenter = await this.centersRepository.findByName(dto.name);
       if (existingCenter) {
         throw new BusinessLogicException(
-          this.i18n.translate('errors.centerAlreadyExists', {
+          this.i18n.translate('t.errors.centerAlreadyExists', {
             args: { name: dto.name },
           }),
         );
@@ -115,7 +115,7 @@ export class CentersService extends BaseService {
     );
     if (!updatedCenter) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.resourceNotFound'),
+        this.i18n.translate('t.errors.resourceNotFound'),
       );
     }
 

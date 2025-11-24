@@ -56,8 +56,8 @@ export class UserProfileController {
 
     return ControllerResponse.success(
       null,
-      this.i18n.translate('success.create', {
-        args: { resource: this.i18n.translate('common.resources.profile') },
+      this.i18n.translate('t.success.create', {
+        args: { resource: this.i18n.translate('t.common.resources.profile') },
       }),
     );
   }
@@ -72,8 +72,8 @@ export class UserProfileController {
 
     return ControllerResponse.success(
       profile,
-      this.i18n.translate('success.found', {
-        args: { resource: this.i18n.translate('common.resources.profile') },
+      this.i18n.translate('t.success.found', {
+        args: { resource: this.i18n.translate('t.common.resources.profile') },
       }),
     );
   }
@@ -89,8 +89,8 @@ export class UserProfileController {
 
     return ControllerResponse.success(
       profiles,
-      this.i18n.translate('success.found', {
-        args: { resource: this.i18n.translate('common.resources.profiles') },
+      this.i18n.translate('t.success.found', {
+        args: { resource: this.i18n.translate('t.common.resources.profiles') },
       }),
     );
   }
@@ -106,8 +106,8 @@ export class UserProfileController {
     const profile = await this.userProfileService.findOne(userProfileId);
     return ControllerResponse.success(
       profile,
-      this.i18n.translate('success.found', {
-        args: { resource: this.i18n.translate('common.resources.profile') },
+      this.i18n.translate('t.success.found', {
+        args: { resource: this.i18n.translate('t.common.resources.profile') },
       }),
     );
   }
@@ -135,8 +135,8 @@ export class UserProfileController {
 
     return ControllerResponse.success(
       user,
-      this.i18n.translate('success.update', {
-        args: { resource: this.i18n.translate('common.resources.profile') },
+      this.i18n.translate('t.success.update', {
+        args: { resource: this.i18n.translate('t.common.resources.profile') },
       }),
     );
   }
@@ -159,8 +159,8 @@ export class UserProfileController {
 
     return ControllerResponse.success(
       { id: userProfileId, isActive: dto.isActive },
-      this.i18n.translate('success.update', {
-        args: { resource: this.i18n.translate('common.resources.profile') },
+      this.i18n.translate('t.success.update', {
+        args: { resource: this.i18n.translate('t.common.resources.profile') },
       }),
     );
   }
@@ -177,8 +177,8 @@ export class UserProfileController {
     // Note: Activity logging should be handled by event listeners if UserProfileService emits events
     return ControllerResponse.success(
       { id: userProfileId },
-      this.i18n.translate('success.delete', {
-        args: { resource: this.i18n.translate('common.resources.profile') },
+      this.i18n.translate('t.success.delete', {
+        args: { resource: this.i18n.translate('t.common.resources.profile') },
       }),
     );
   }
@@ -195,8 +195,8 @@ export class UserProfileController {
     // Note: Activity logging should be handled by event listeners if UserProfileService emits events
     return ControllerResponse.success(
       { id: userProfileId },
-      this.i18n.translate('success.restore', {
-        args: { resource: this.i18n.translate('common.resources.profile') },
+      this.i18n.translate('t.success.restore', {
+        args: { resource: this.i18n.translate('t.common.resources.profile') },
       }),
     );
   }

@@ -39,7 +39,7 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
     const existingAccess = await this.findCenterAccess(data);
     if (existingAccess) {
       throw new ConflictException(
-        this.i18n.translate('errors.accessAlreadyExists'),
+        this.i18n.translate('t.errors.accessAlreadyExists'),
       );
     }
 
@@ -50,7 +50,7 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
     const existingAccess = await this.findCenterAccess(data);
     if (!existingAccess) {
       throw new NotFoundException(
-        this.i18n.translate('errors.accessNotFound'),
+        this.i18n.translate('t.errors.accessNotFound'),
       );
     }
 

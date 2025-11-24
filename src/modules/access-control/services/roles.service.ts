@@ -75,7 +75,7 @@ export class RolesService extends BaseService {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.roleNotFound'),
+        this.i18n.translate('t.errors.roleNotFound'),
       );
     }
     if (!role.isSameScope(actor.centerId)) {
@@ -108,7 +108,7 @@ export class RolesService extends BaseService {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.roleNotFound'),
+        this.i18n.translate('t.errors.roleNotFound'),
       );
     }
     if (!role?.isSameScope(actor.centerId)) {
@@ -178,7 +178,7 @@ export class RolesService extends BaseService {
     const role = await this.rolesRepository.findOneSoftDeleted({ id: roleId });
     if (!role) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('errors.roleNotFound'),
+        this.i18n.translate('t.errors.roleNotFound'),
       );
     }
 
