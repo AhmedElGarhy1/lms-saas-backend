@@ -40,7 +40,6 @@ export class CustomValidationPipe implements PipeTransform<any> {
       const errorResponse: EnhancedErrorResponse = {
         statusCode: 400,
         message: this.i18n.translate('t.errors.validationFailed'),
-        error: 'Bad Request',
         code: ErrorCode.VALIDATION_FAILED,
         timestamp: new Date().toISOString(),
         details: validationErrors,

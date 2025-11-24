@@ -57,7 +57,7 @@ export class ErrorInterceptor implements NestInterceptor {
             {
               statusCode: HttpStatus.CONFLICT,
               message,
-              error: 'Conflict',
+              code: ErrorCode.CONFLICT,
               timestamp: new Date().toISOString(),
               path: url,
               method,
@@ -86,7 +86,7 @@ export class ErrorInterceptor implements NestInterceptor {
             {
               statusCode: HttpStatus.BAD_REQUEST,
               message,
-              error: 'Bad Request',
+              code: ErrorCode.BAD_REQUEST,
               timestamp: new Date().toISOString(),
               path: url,
               method,
@@ -117,7 +117,7 @@ export class ErrorInterceptor implements NestInterceptor {
             {
               statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
               message,
-              error: 'Internal Server Error',
+              code: ErrorCode.INTERNAL_SERVER_ERROR,
               timestamp: new Date().toISOString(),
               path: url,
               method,
@@ -149,7 +149,7 @@ export class ErrorInterceptor implements NestInterceptor {
             {
               statusCode: HttpStatus.BAD_REQUEST,
               message,
-              error: 'Bad Request',
+              code: ErrorCode.BAD_REQUEST,
               timestamp: new Date().toISOString(),
               path: url,
               method,
@@ -178,7 +178,7 @@ export class ErrorInterceptor implements NestInterceptor {
             {
               statusCode: HttpStatus.NOT_FOUND,
               message,
-              error: 'Not Found',
+              code: ErrorCode.NOT_FOUND,
               timestamp: new Date().toISOString(),
               path: url,
               method,
@@ -207,7 +207,7 @@ export class ErrorInterceptor implements NestInterceptor {
           {
             statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
             message,
-            error: 'Internal Server Error',
+            code: ErrorCode.INTERNAL_SERVER_ERROR,
             timestamp: new Date().toISOString(),
             path: url,
             method,

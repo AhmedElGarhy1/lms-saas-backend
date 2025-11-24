@@ -19,7 +19,7 @@ export class UserProfileImportController {
   ) {}
 
   @Post('request-otp')
-  @RateLimit({ limit: 1, windowSeconds: 60 }) // 1 request per minute
+  @RateLimit({ limit: 3, windowSeconds: 60 }) // 3 requests per minute
   @ApiOperation({ summary: 'Request OTP for user import' })
   @ApiResponse({
     status: 200,
@@ -35,15 +35,19 @@ export class UserProfileImportController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Invalid phone number format',
+    description: 'Invalid phone number format or center ID required',
   })
   @ApiResponse({
     status: 404,
     description: 'User not found',
   })
+  @ApiResponse({
+    status: 409,
+    description: 'User already has profile or center access',
+  })
   async requestOtp(@Body() dto: RequestImportOtpDto) {
     // This endpoint doesn't require authentication as per plan
-    await this.userProfileImportService.sendImportOtp(dto.phone);
+    await this.userProfileImportService.sendImportOtp(dto);
 
     return ControllerResponse.success(
       null,

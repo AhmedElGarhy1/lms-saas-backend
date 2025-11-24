@@ -54,7 +54,7 @@
 [x] check if whatsapp and email and all channels are working or not
 
 [-] add permission checks for userprofile module ass it have many profile type and permission (improve later)
-[ ] implement import user (or diffrent name) to import user from another center (internal center prespective)
+[x] implement import user (or diffrent name) to import user from another center (internal center prespective)
 [x] update activity logs to cover more logs
 [x] update permissions to cover more permissions
 [ ] double check permissions in all over the application
@@ -83,5 +83,8 @@
 [x] responsive frontend
 [ ] user can update his center (throw settings)
 [ ] think about removing restrictions and permissions for diffrent profile types it's we already have restrictions you can only access users in your user_access
-[ ] back to translations and update translations correctly and update in app notifications translations and refactor the overcomplicated reaseon, actionRequired, retible, and all htese useless files that frontend doesn't use
-[ ] make consistant response in all endpoints
+[x] back to translations and update translations correctly and update in app notifications translations and refactor the overcomplicated reaseon, actionRequired, retible, and all htese useless files that frontend doesn't use
+[x] make consistant response in all endpoints
+[ ] arabic ltr translation animation in sidebar looks bad
+[ ] fix local is not consistant between backend and frontend
+[ ] remove all emails for now make the primary think is phone and remove email at all not needed for now (big task)

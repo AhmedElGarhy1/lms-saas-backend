@@ -18,7 +18,7 @@ export class LocaleService {
     const i18nTranslations = (this.i18nService as any).translations;
 
     if (i18nTranslations && i18nTranslations[lang]) {
-      return i18nTranslations[lang] as Record<string, any>;
+      return i18nTranslations[lang].t as Record<string, any>;
     }
     return {};
   }

@@ -991,6 +991,12 @@ export type I18nTranslations = {
             "internalServerError": string;
             "businessLogicError": string;
             "badRequest": string;
+            "unauthorized": string;
+            "forbidden": string;
+            "notFound": string;
+            "conflict": string;
+            "unprocessableEntity": string;
+            "serviceUnavailable": string;
             "verificationTokenNotFound": string;
             "verificationTokenExpired": string;
             "verificationCodeNotFound": string;

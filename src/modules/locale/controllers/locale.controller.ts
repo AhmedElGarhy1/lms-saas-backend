@@ -37,6 +37,7 @@ export class LocaleController {
   })
   getTranslations(@Query('lang') lang?: string) {
     const translations = this.localeService.getTranslations(lang);
+
     return translations;
   }
 

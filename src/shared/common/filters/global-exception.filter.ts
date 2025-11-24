@@ -11,6 +11,7 @@ import { EnhancedErrorResponse } from '../exceptions/custom.exceptions';
 import { ErrorCode } from '../enums/error-codes.enum';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations, I18nPath } from '@/generated/i18n.generated';
+import { formatRemainingTime } from '@/modules/rate-limit/utils/rate-limit-time-formatter';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -69,29 +70,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const rawMessage =
       typeof exceptionResponse === 'string'
         ? exceptionResponse
-        : (exceptionResponse as any)?.message || 'An error occurred';
+        : (exceptionResponse as { message?: string })?.message ||
+          'An error occurred';
 
-    // Extract retryAfter for rate limit errors
-    // Calculate dynamically from resetTime if available (most accurate)
-    // RateLimitGuard always passes resetTime, so this should always work
+    // Extract retryAfter from rate limit exception (if present)
+    // Rate limit guard already provides retryAfter in the exception response
     let retryAfter: number | undefined;
     if (
       status === HttpStatus.TOO_MANY_REQUESTS &&
       typeof exceptionResponse === 'object' &&
       exceptionResponse !== null
     ) {
-      const response = exceptionResponse as any;
-
-      // Calculate dynamically from resetTime if available (most accurate)
-      if (response.resetTime) {
-        const now = Date.now();
-        const remainingMs = response.resetTime - now;
-        retryAfter = Math.max(1, Math.round(remainingMs / 1000));
-      } else if (response.retryAfter) {
-        // Fallback to static retryAfter
-        retryAfter = response.retryAfter;
-      }
-      // If neither is available, retryAfter remains undefined and will use fallback message
+      retryAfter = (exceptionResponse as { retryAfter?: number })?.retryAfter;
     }
 
     // Translate the message for user-facing response
@@ -105,7 +95,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     return {
       statusCode: status,
       message,
-      error: this.getErrorType(status),
       code: this.getErrorCode(status),
       timestamp: new Date().toISOString(),
       path: request.url,
@@ -130,34 +119,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     return {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       message,
-      error: 'Internal Server Error',
       code: ErrorCode.INTERNAL_SERVER_ERROR,
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
     };
-  }
-
-  /**
-   * Format exact remaining time for rate limit
-   * Returns format like "30 seconds", "1 minute 30 seconds", "2 minutes 15 seconds"
-   * Always shows seconds when less than a minute, or minutes + seconds when more
-   */
-  private formatExactRemainingTime(seconds: number): string {
-    if (seconds < 60) {
-      return `${seconds} ${seconds === 1 ? 'second' : 'seconds'}`;
-    }
-
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-
-    if (remainingSeconds === 0) {
-      return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
-    }
-
-    const minutesStr = `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
-    const secondsStr = `${remainingSeconds} ${remainingSeconds === 1 ? 'second' : 'seconds'}`;
-    return `${minutesStr} ${secondsStr}`;
   }
 
   private translateMessage(
@@ -166,56 +132,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     request: Request,
     retryAfter?: number,
   ): string {
-    try {
-      // Handle rate limit with retry after
-      if (status === HttpStatus.TOO_MANY_REQUESTS && retryAfter) {
-        const remainingTime = this.formatExactRemainingTime(retryAfter);
-        return this.i18n.translate('t.errors.tooManyRequestsWithTime', {
-          args: { time: remainingTime },
-        });
-      }
-
-      // Map by status code only (no message mapping needed)
-      const statusKeyMap: Record<number, string> = {
-        [HttpStatus.BAD_REQUEST]: 'errors.badRequest',
-        [HttpStatus.UNAUTHORIZED]: 'errors.unauthorized',
-        [HttpStatus.FORBIDDEN]: 'errors.forbidden',
-        [HttpStatus.NOT_FOUND]: 'errors.notFound',
-        [HttpStatus.CONFLICT]: 'errors.conflict',
-        [HttpStatus.UNPROCESSABLE_ENTITY]: 'errors.unprocessableEntity',
-        [HttpStatus.TOO_MANY_REQUESTS]: 'errors.tooManyRequests',
-        [HttpStatus.INTERNAL_SERVER_ERROR]: 'errors.internalServerError',
-        [HttpStatus.SERVICE_UNAVAILABLE]: 'errors.serviceUnavailable',
-      };
-
-      const statusKey = statusKeyMap[status];
-      if (statusKey) {
-        return this.i18n.translate(statusKey as I18nPath);
-      }
-
-      // Fallback to generic error
-      return this.i18n.translate('t.errors.genericError');
-    } catch (error) {
-      // If translation fails, return original message (shouldn't happen)
-      this.logger.warn('Translation failed, using original message', error);
-      return rawMessage;
+    // Handle rate limit with retry after (special case)
+    if (status === HttpStatus.TOO_MANY_REQUESTS && retryAfter) {
+      const remainingTime = formatRemainingTime(retryAfter);
+      return this.i18n.translate('t.errors.tooManyRequestsWithTime', {
+        args: { time: remainingTime },
+      });
     }
-  }
 
-  private getErrorType(status: number): string {
-    const errorTypes: Record<number, string> = {
-      [HttpStatus.BAD_REQUEST]: 'Bad Request',
-      [HttpStatus.UNAUTHORIZED]: 'Unauthorized',
-      [HttpStatus.FORBIDDEN]: 'Forbidden',
-      [HttpStatus.NOT_FOUND]: 'Not Found',
-      [HttpStatus.CONFLICT]: 'Conflict',
-      [HttpStatus.UNPROCESSABLE_ENTITY]: 'Unprocessable Entity',
-      [HttpStatus.TOO_MANY_REQUESTS]: 'Too Many Requests',
-      [HttpStatus.INTERNAL_SERVER_ERROR]: 'Internal Server Error',
-      [HttpStatus.SERVICE_UNAVAILABLE]: 'Service Unavailable',
-    };
-
-    return errorTypes[status] || 'Error';
+    // Try to translate (will fail if not a valid key, that's okay)
+    return this.i18n.translate(rawMessage as I18nPath);
   }
 
   private getErrorCode(status: number): ErrorCode {

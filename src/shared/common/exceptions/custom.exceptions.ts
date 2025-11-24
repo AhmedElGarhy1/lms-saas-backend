@@ -12,7 +12,6 @@ export interface ErrorDetail {
 export interface EnhancedErrorResponse {
   statusCode: number;
   message: string;
-  error: string;
   code: ErrorCode;
   timestamp: string;
   path?: string;
