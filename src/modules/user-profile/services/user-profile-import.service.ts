@@ -144,21 +144,15 @@ export class UserProfileImportService extends BaseService {
       });
 
     const expiresInMinutes = Config.auth.phoneVerificationExpiresMinutes;
-    const now = new Date();
-    const expiresAt = verificationToken.expiresAt;
-    const remainingMinutes = Math.max(
-      0,
-      Math.floor((expiresAt.getTime() - now.getTime()) / (1000 * 60)),
-    );
 
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.OTP,
       new OtpEvent(
         user.id,
         verificationToken.code!,
-        remainingMinutes || expiresInMinutes,
+        expiresInMinutes,
         undefined,
-        user.getPhone(),
+        phone,
       ),
     );
   }
