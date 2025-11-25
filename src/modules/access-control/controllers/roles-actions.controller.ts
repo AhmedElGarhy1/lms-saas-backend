@@ -1,5 +1,4 @@
 import { Controller, Get, Query, Res } from '@nestjs/common';
-import { Transactional } from '@nestjs-cls/transactional';
 import { Response } from 'express';
 import {
   ApiTags,
@@ -17,9 +16,9 @@ import { ExportService } from '@/shared/common/services/export.service';
 import { RoleResponseExportMapper } from '@/shared/common/mappers/role-response-export.mapper';
 import { ExportRolesDto } from '../dto/export-roles.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
-import { ExportFormat } from '@/shared/common/dto';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { SystemActivityType } from '@/shared/modules/activity-log/enums/system-activity-type.enum';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { RoleEvents } from '@/shared/events/role.events.enum';
+import { RoleExportedEvent } from '../events/role.events';
 
 @ApiTags('Roles')
 @Controller('roles/actions')
@@ -28,7 +27,7 @@ export class RolesActionsController {
   constructor(
     private readonly rolesService: RolesService,
     private readonly exportService: ExportService,
-    private readonly activityLogService: ActivityLogService,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   @Get('export')
@@ -68,20 +67,10 @@ export class RolesActionsController {
       res,
     );
 
-    // Log activity (system-level action, no specific target user)
-    await this.activityLogService.log(
-      SystemActivityType.DATA_EXPORTED,
-      {
-        resourceType: 'roles',
-        format,
-        filename: baseFilename,
-        recordCount: roles.length,
-        filters: {
-          search: query.search,
-          centerId: query.centerId,
-        },
-      },
-      null,
+    // Emit event for activity logging
+    await this.typeSafeEventEmitter.emitAsync(
+      RoleEvents.EXPORTED,
+      new RoleExportedEvent(format, baseFilename, roles.length, query, actor),
     );
 
     return data;

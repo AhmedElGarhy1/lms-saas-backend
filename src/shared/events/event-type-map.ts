@@ -11,6 +11,7 @@ import {
   UserDeletedEvent,
   UserRestoredEvent,
   UserActivatedEvent,
+  UserImportedEvent,
 } from '@/modules/user/events/user.events';
 import {
   UserLoggedInEvent,
@@ -27,6 +28,7 @@ import {
   UpdateRoleEvent,
   DeleteRoleEvent,
   RestoreRoleEvent,
+  RoleExportedEvent,
 } from '@/modules/access-control/events/role.events';
 import {
   CreateCenterEvent,
@@ -36,6 +38,7 @@ import {
   CreateCenterOwnerEvent,
   AssignCenterOwnerEvent,
   CreateCenterBranchEvent,
+  CenterExportedEvent,
 } from '@/modules/centers/events/center.events';
 import {
   BranchCreatedEvent,
@@ -53,10 +56,12 @@ import {
 import {
   CreateAdminEvent,
   AdminCreatedEvent,
+  AdminExportedEvent,
 } from '@/modules/admin/events/admin.events';
 import {
   CreateStaffEvent,
   StaffCreatedEvent,
+  StaffExportedEvent,
 } from '@/modules/staff/events/staff.events';
 import {
   PasswordResetRequestedEvent,
@@ -89,6 +94,7 @@ export type EventTypeMap = {
   [UserEvents.DELETED]: UserDeletedEvent;
   [UserEvents.RESTORED]: UserRestoredEvent;
   [UserEvents.ACTIVATED]: UserActivatedEvent;
+  [UserEvents.IMPORTED]: UserImportedEvent;
 
   // Auth Events
   [AuthEvents.USER_LOGGED_IN]: UserLoggedInEvent;
@@ -105,6 +111,7 @@ export type EventTypeMap = {
   [RoleEvents.UPDATED]: UpdateRoleEvent;
   [RoleEvents.DELETED]: DeleteRoleEvent;
   [RoleEvents.RESTORED]: RestoreRoleEvent;
+  [RoleEvents.EXPORTED]: RoleExportedEvent;
 
   // Center Events
   [CenterEvents.CREATED]: CreateCenterEvent;
@@ -114,6 +121,7 @@ export type EventTypeMap = {
   [CenterEvents.CREATE_OWNER]: CreateCenterOwnerEvent;
   [CenterEvents.ASSIGN_OWNER]: AssignCenterOwnerEvent;
   [CenterEvents.CREATE_BRANCH]: CreateCenterBranchEvent;
+  [CenterEvents.EXPORTED]: CenterExportedEvent;
 
   // Branch Events
   [BranchEvents.CREATED]: BranchCreatedEvent;
@@ -131,10 +139,12 @@ export type EventTypeMap = {
   // Admin Events
   [AdminEvents.CREATE]: CreateAdminEvent;
   [AdminEvents.CREATED]: AdminCreatedEvent;
+  [AdminEvents.EXPORTED]: AdminExportedEvent;
 
   // Staff Events
   [StaffEvents.CREATE]: CreateStaffEvent;
   [StaffEvents.CREATED]: StaffCreatedEvent;
+  [StaffEvents.EXPORTED]: StaffExportedEvent;
 
   // Additional Auth Events
   [AuthEvents.PASSWORD_RESET_REQUESTED]: PasswordResetRequestedEvent;

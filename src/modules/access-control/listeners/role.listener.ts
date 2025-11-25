@@ -14,6 +14,7 @@ import {
   UpdateRoleEvent,
   DeleteRoleEvent,
   RestoreRoleEvent,
+  RoleExportedEvent,
 } from '../events/role.events';
 import { RoleEvents } from '@/shared/events/role.events.enum';
 import { AssignCenterOwnerEvent } from '@/modules/centers/events/center.events';
@@ -231,6 +232,21 @@ export class RoleListener {
       RoleActivityType.ROLE_RESTORED,
       {
         roleId: event.roleId,
+      },
+      null,
+    );
+  }
+
+  @OnEvent(RoleEvents.EXPORTED)
+  async handleRoleExported(event: RoleExportedEvent) {
+    // ActivityLogService is fault-tolerant, no try-catch needed
+    await this.activityLogService.log(
+      RoleActivityType.ROLE_EXPORTED,
+      {
+        format: event.format,
+        filename: event.filename,
+        recordCount: event.recordCount,
+        filters: event.filters,
       },
       null,
     );

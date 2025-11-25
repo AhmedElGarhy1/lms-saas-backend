@@ -17,7 +17,6 @@ import { UserProfileRepository } from '../repositories/user-profile.repository';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ProfileTypePermissionService } from '@/modules/access-control/services/profile-type-permission.service';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { VerificationType } from '@/modules/auth/enums/verification-type.enum';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { VerifyUserImportDto } from '../dto/verify-user-import.dto';
@@ -25,7 +24,8 @@ import { Config } from '@/shared/config/config';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { OtpEvent } from '@/modules/auth/events/auth.events';
-import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
+import { UserEvents } from '@/shared/events/user.events.enum';
+import { UserImportedEvent } from '@/modules/user/events/user.events';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { RequestImportOtpDto } from '../dto/request-import-otp.dto';
@@ -44,7 +44,6 @@ export class UserProfileImportService extends BaseService {
     private readonly accessControlService: AccessControlService,
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly profileTypePermissionService: ProfileTypePermissionService,
-    private readonly activityLogService: ActivityLogService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {
@@ -220,11 +219,10 @@ export class UserProfileImportService extends BaseService {
         dto.profileType,
       );
 
-      await this.logUserImportActivity(
-        user.id,
-        dto.profileType,
-        undefined,
-        actor.id,
+      // Emit event for activity logging
+      await this.typeSafeEventEmitter.emitAsync(
+        UserEvents.IMPORTED,
+        new UserImportedEvent(user, dto.profileType, null, actor),
       );
 
       return {
@@ -255,7 +253,15 @@ export class UserProfileImportService extends BaseService {
       actor,
     );
 
-    await this.logUserImportActivity(userId, profileType, centerId, actor.id);
+    // Get user for event
+    const user = await this.userService.findOne(userId);
+    if (user) {
+      // Emit event for activity logging
+      await this.typeSafeEventEmitter.emitAsync(
+        UserEvents.IMPORTED,
+        new UserImportedEvent(user, profileType, centerId, actor),
+      );
+    }
 
     return {
       userProfileId: userProfile.id,
@@ -311,27 +317,6 @@ export class UserProfileImportService extends BaseService {
       userId,
       profileType,
       profileRefId,
-    );
-  }
-
-  /**
-   * Log user import activity
-   * @private
-   */
-  private async logUserImportActivity(
-    targetUserId: string,
-    profileType: ProfileType,
-    centerId: string | undefined | null,
-    importedBy: string,
-  ): Promise<void> {
-    await this.activityLogService.log(
-      UserActivityType.USER_IMPORTED,
-      {
-        profileType,
-        centerId,
-        importedBy,
-      },
-      targetUserId,
     );
   }
 }

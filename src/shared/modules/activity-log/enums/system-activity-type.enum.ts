@@ -1,4 +1,0 @@
-export enum SystemActivityType {
-  DATA_EXPORTED = 'DATA_EXPORTED',
-  ACTIVITY_LOG_EXPORTED = 'ACTIVITY_LOG_EXPORTED',
-}

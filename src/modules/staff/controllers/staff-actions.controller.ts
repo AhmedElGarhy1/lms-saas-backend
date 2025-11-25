@@ -12,8 +12,9 @@ import { ExportService } from '@/shared/common/services/export.service';
 import { UserResponseExportMapper } from '@/shared/common/mappers/user-response-export.mapper';
 import { ExportUsersDto } from '@/modules/user/dto/export-users.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { SystemActivityType } from '@/shared/modules/activity-log/enums/system-activity-type.enum';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { StaffEvents } from '@/shared/events/staff.events.enum';
+import { StaffExportedEvent } from '../events/staff.events';
 
 @ApiTags('Staff Actions')
 @Controller('staff/actions')
@@ -22,7 +23,7 @@ export class StaffActionsController {
     private readonly staffService: StaffService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly exportService: ExportService,
-    private readonly activityLogService: ActivityLogService,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   // ===== EXPORT FUNCTIONALITY =====
@@ -63,21 +64,10 @@ export class StaffActionsController {
       res,
     );
 
-    // Log activity (system-level action, no specific target user)
-    await this.activityLogService.log(
-      SystemActivityType.DATA_EXPORTED,
-      {
-        resourceType: 'staff',
-        format,
-        filename: baseFilename,
-        recordCount: users.length,
-        filters: {
-          search: query.search,
-          isActive: query.isActive,
-          centerId: query.centerId,
-        },
-      },
-      null,
+    // Emit event for activity logging
+    await this.typeSafeEventEmitter.emitAsync(
+      StaffEvents.EXPORTED,
+      new StaffExportedEvent(format, baseFilename, users.length, query, actor),
     );
 
     return data;

@@ -17,9 +17,9 @@ import { ExportCentersDto } from '../dto/export-centers.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { ExportFormat } from '@/shared/common/dto';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { SystemActivityType } from '@/shared/modules/activity-log/enums/system-activity-type.enum';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { CenterEvents } from '@/shared/events/center.events.enum';
+import { CenterExportedEvent } from '../events/center.events';
 
 @ApiBearerAuth()
 @ApiTags('Centers Actions')
@@ -28,7 +28,7 @@ export class CentersActionsController {
   constructor(
     private readonly centersService: CentersService,
     private readonly exportService: ExportService,
-    private readonly activityLogService: ActivityLogService,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   @Get('export')
@@ -68,20 +68,16 @@ export class CentersActionsController {
       res,
     );
 
-    // Log activity (system-level action, no specific target user)
-    await this.activityLogService.log(
-      SystemActivityType.DATA_EXPORTED,
-      {
-        resourceType: 'centers',
+    // Emit event for activity logging
+    await this.typeSafeEventEmitter.emitAsync(
+      CenterEvents.EXPORTED,
+      new CenterExportedEvent(
         format,
-        filename: baseFilename,
-        recordCount: centers.length,
-        filters: {
-          search: query.search,
-          isActive: query.isActive,
-        },
-      },
-      null,
+        baseFilename,
+        centers.length,
+        query,
+        actor,
+      ),
     );
 
     return data;

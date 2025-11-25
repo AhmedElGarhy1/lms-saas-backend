@@ -89,3 +89,19 @@ export class AssignCenterOwnerEvent extends BaseEvent {
     super(actor);
   }
 }
+
+/**
+ * Event (result-focused, output-oriented)
+ * Represents the fact that centers data was exported.
+ */
+export class CenterExportedEvent extends BaseEvent {
+  constructor(
+    public readonly format: string,
+    public readonly filename: string,
+    public readonly recordCount: number,
+    public readonly filters: Record<string, any>,
+    actor: ActorUser,
+  ) {
+    super(actor);
+  }
+}

@@ -8,6 +8,7 @@ import {
   UpdateCenterEvent,
   DeleteCenterEvent,
   RestoreCenterEvent,
+  CenterExportedEvent,
 } from '../events/center.events';
 
 /**
@@ -74,6 +75,21 @@ export class CenterActivityListener {
         centerId: event.centerId,
       },
       null, // Object action, no target user
+    );
+  }
+
+  @OnEvent(CenterEvents.EXPORTED)
+  async handleCenterExported(event: CenterExportedEvent) {
+    // ActivityLogService is fault-tolerant, no try-catch needed
+    await this.activityLogService.log(
+      CenterActivityType.CENTER_EXPORTED,
+      {
+        format: event.format,
+        filename: event.filename,
+        recordCount: event.recordCount,
+        filters: event.filters,
+      },
+      null,
     );
   }
 }

@@ -8,7 +8,7 @@ import { ActivityLogExportMapper } from '@/shared/common/mappers/activity-log-ex
 import { ExportActivityLogsDto } from '../dto/export-activity-logs.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { ExportFormat } from '@/shared/common/dto';
-import { SystemActivityType } from '../enums/system-activity-type.enum';
+import { ActivityLogActivityType } from '../enums/activity-log-activity-type.enum';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ReadApiResponses } from '@/shared/common/decorators';
@@ -77,17 +77,12 @@ export class ActivityLogController {
 
     // Log activity for exporting activity logs (system-level action, no specific target user)
     await this.activityLogService.log(
-      SystemActivityType.ACTIVITY_LOG_EXPORTED,
+      ActivityLogActivityType.ACTIVITY_LOG_EXPORTED,
       {
         format,
         filename: baseFilename,
         recordCount: activityLogs.length,
-        filters: {
-          centerId: query.centerId,
-          userId: query.userId,
-          type: query.type,
-          search: query.search,
-        },
+        filters: query,
       },
       null,
     );

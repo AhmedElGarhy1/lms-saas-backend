@@ -9,6 +9,7 @@ import {
   UserDeletedEvent,
   UserRestoredEvent,
   UserActivatedEvent,
+  UserImportedEvent,
 } from '../events/user.events';
 
 /**
@@ -86,6 +87,20 @@ export class UserActivityListener {
         isActive: event.isActive,
       },
       event.userId,
+    );
+  }
+
+  @OnEvent(UserEvents.IMPORTED)
+  async handleUserImported(event: UserImportedEvent) {
+    // ActivityLogService is fault-tolerant, no try-catch needed
+    await this.activityLogService.log(
+      UserActivityType.USER_IMPORTED,
+      {
+        profileType: event.profileType,
+        centerId: event.centerId,
+        importedBy: event.actor?.id,
+      },
+      event.user.id,
     );
   }
 }

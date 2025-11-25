@@ -9,7 +9,7 @@ import { Pagination } from 'nestjs-typeorm-paginate';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Logger } from '@nestjs/common';
 import { ActivityLogTypesResponseDto } from '../dto/activity-log-types-response.dto';
-import { SystemActivityType } from '../enums/system-activity-type.enum';
+import { ActivityLogActivityType } from '../enums/activity-log-activity-type.enum';
 import { AuthActivityType } from '@/modules/auth/enums/auth-activity-type.enum';
 import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
 import { CenterActivityType } from '@/modules/centers/enums/center-activity-type.enum';
@@ -106,7 +106,7 @@ export class ActivityLogService extends BaseService {
    */
   getAllActivityLogTypes(): ActivityLogTypesResponseDto {
     return {
-      system: Object.values(SystemActivityType),
+      activityLog: Object.values(ActivityLogActivityType),
       auth: Object.values(AuthActivityType),
       user: Object.values(UserActivityType),
       center: Object.values(CenterActivityType),

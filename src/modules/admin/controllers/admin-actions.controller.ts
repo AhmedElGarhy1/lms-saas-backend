@@ -12,8 +12,9 @@ import { ExportService } from '@/shared/common/services/export.service';
 import { UserResponseExportMapper } from '@/shared/common/mappers/user-response-export.mapper';
 import { ExportUsersDto } from '@/modules/user/dto/export-users.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { SystemActivityType } from '@/shared/modules/activity-log/enums/system-activity-type.enum';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { AdminEvents } from '@/shared/events/admin.events.enum';
+import { AdminExportedEvent } from '../events/admin.events';
 
 @ApiTags('Admin Actions')
 @Controller('admin/actions')
@@ -22,7 +23,7 @@ export class AdminActionsController {
     private readonly adminService: AdminService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly exportService: ExportService,
-    private readonly activityLogService: ActivityLogService,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   // ===== EXPORT FUNCTIONALITY =====
@@ -63,20 +64,16 @@ export class AdminActionsController {
       res,
     );
 
-    // Log activity (system-level action, no specific target user)
-    await this.activityLogService.log(
-      SystemActivityType.DATA_EXPORTED,
-      {
-        resourceType: 'admin',
+    // Emit event for activity logging
+    await this.typeSafeEventEmitter.emitAsync(
+      AdminEvents.EXPORTED,
+      new AdminExportedEvent(
         format,
-        filename: baseFilename,
-        recordCount: users.length,
-        filters: {
-          search: query.search,
-          isActive: query.isActive,
-        },
-      },
-      null,
+        baseFilename,
+        users.length,
+        query,
+        actor,
+      ),
     );
 
     return data;

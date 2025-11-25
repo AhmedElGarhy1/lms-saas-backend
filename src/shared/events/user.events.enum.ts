@@ -4,4 +4,5 @@ export enum UserEvents {
   DELETED = 'user.deleted',
   RESTORED = 'user.restored',
   ACTIVATED = 'user.activated',
+  IMPORTED = 'user.imported',
 }

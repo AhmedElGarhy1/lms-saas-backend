@@ -2,6 +2,7 @@ import { User } from '@/modules/user/entities/user.entity';
 import { Admin } from '@/modules/admin/entities/admin.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
+import { BaseEvent } from '@/shared/common/base/base-event';
 
 export class CreateAdminEvent {
   constructor(
@@ -21,4 +22,20 @@ export class AdminCreatedEvent {
     public readonly admin: Admin,
     public readonly roleId?: string,
   ) {}
+}
+
+/**
+ * Event (result-focused, output-oriented)
+ * Represents the fact that admin data was exported.
+ */
+export class AdminExportedEvent extends BaseEvent {
+  constructor(
+    public readonly format: string,
+    public readonly filename: string,
+    public readonly recordCount: number,
+    public readonly filters: Record<string, any>,
+    actor: ActorUser,
+  ) {
+    super(actor);
+  }
 }

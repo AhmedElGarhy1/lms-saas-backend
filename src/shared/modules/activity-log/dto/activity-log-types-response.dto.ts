@@ -2,11 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ActivityLogTypesResponseDto {
   @ApiProperty({
-    description: 'System activity types',
+    description: 'Activity log activity types',
     type: [String],
-    example: ['DATA_EXPORTED', 'ACTIVITY_LOG_VIEWED', 'ACTIVITY_LOG_EXPORTED'],
+    example: ['ACTIVITY_LOG_EXPORTED'],
   })
-  system: string[];
+  activityLog: string[];
 
   @ApiProperty({
     description: 'Authentication activity types',
