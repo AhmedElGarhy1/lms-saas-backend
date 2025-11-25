@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ActivityLog } from '../entities/activity-log.entity';
 import { CreateActivityLogDto } from '../dto/create-activity-log.dto';
 import { ActivityLogRepository } from '../repositories/activity-log.repository';
@@ -16,12 +16,17 @@ import { CenterActivityType } from '@/modules/centers/enums/center-activity-type
 import { RoleActivityType } from '@/modules/access-control/enums/role-activity-type.enum';
 import { StaffActivityType } from '@/modules/staff/enums/staff-activity-type.enum';
 import { AdminActivityType } from '@/modules/admin/enums/admin-activity-type.enum';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 
 @Injectable()
 export class ActivityLogService extends BaseService {
   private readonly logger: Logger = new Logger(ActivityLogService.name);
 
-  constructor(private readonly activityLogRepository: ActivityLogRepository) {
+  constructor(
+    private readonly activityLogRepository: ActivityLogRepository,
+    @Inject(forwardRef(() => AccessControlHelperService))
+    private readonly accessControlHelperService: AccessControlHelperService,
+  ) {
     super();
   }
 
@@ -36,8 +41,26 @@ export class ActivityLogService extends BaseService {
       // If not in context, it's a system event (null is okay)
       const userId = requestContext?.userId ?? null;
 
-      // targetUserId (who was affected) is explicitly provided
-      const targetUserId = dto.targetUserId ?? null;
+      // targetUserId (who was affected) - try to resolve from targetUserProfileId if not provided
+      let targetUserId = dto.targetUserId ?? null;
+
+      // If targetUserId is not provided, try to fetch it from targetUserProfileId in DTO
+      if (!targetUserId && dto.targetUserProfileId) {
+        try {
+          const userProfile =
+            await this.accessControlHelperService.findUserProfile(
+              dto.targetUserProfileId,
+            );
+          targetUserId = userProfile?.userId ?? null;
+        } catch (error) {
+          // Log error but don't break the flow - activity logging is fault-tolerant
+          this.logger.warn(
+            `Failed to fetch userId for targetUserProfileId: ${dto.targetUserProfileId}`,
+            error instanceof Error ? error.stack : String(error),
+          );
+          // Continue with targetUserId as null
+        }
+      }
 
       const centerId =
         dto.centerId !== undefined ? dto.centerId : requestContext?.centerId;
@@ -74,19 +97,24 @@ export class ActivityLogService extends BaseService {
    * @param type - Activity type
    * @param metadata - Optional metadata
    * @param targetUserId - Target user ID (who was affected by the action). If not provided, defaults to null.
+   *                       If null and targetUserProfileId is provided, will automatically fetch userId from database.
    *                       For self-actions, pass the same user ID as the actor (from RequestContext).
    *                       For object-actions (centers, branches, etc.), pass null.
+   * @param targetUserProfileId - Target user profile ID. If targetUserId is not provided, this will be used
+   *                              to automatically fetch the userId from the database.
    * @note userId (who performed the action) is automatically captured from RequestContext
    */
   async log(
     type: string,
     metadata?: Record<string, any>,
     targetUserId?: string | null,
+    targetUserProfileId?: string | null,
   ): Promise<ActivityLog | null> {
-      return await this.createActivityLog({
-        type,
-        metadata,
+    return await this.createActivityLog({
+      type,
+      metadata,
       targetUserId: targetUserId ?? null,
+      targetUserProfileId: targetUserProfileId ?? null,
       // userId and centerId come from RequestContext automatically
     });
   }

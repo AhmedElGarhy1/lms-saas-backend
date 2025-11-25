@@ -22,7 +22,6 @@ import { CenterEvents } from '@/shared/events/center.events.enum';
 import { createOwnerRoleData } from '../constants/roles';
 import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { RolesRepository } from '../repositories/roles.repository';
-
 @Injectable()
 export class RoleListener {
   private readonly logger: Logger = new Logger(RoleListener.name);
@@ -60,6 +59,7 @@ export class RoleListener {
       return;
     }
 
+    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       RoleActivityType.ROLE_ASSIGNED,
@@ -68,7 +68,8 @@ export class RoleListener {
         roleId,
         centerId,
       },
-      event.targetUserId ?? null,
+      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
+      userProfileId, // Pass as targetUserProfileId for auto-resolution
     );
   }
 
@@ -97,6 +98,7 @@ export class RoleListener {
       return;
     }
 
+    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       RoleActivityType.ROLE_REMOVED,
@@ -104,7 +106,8 @@ export class RoleListener {
         userProfileId,
         centerId,
       },
-      event.targetUserId ?? null,
+      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
+      userProfileId, // Pass as targetUserProfileId for auto-resolution
     );
   }
 

@@ -24,6 +24,7 @@ export class CenterActivityListener {
   @OnEvent(CenterEvents.CREATED)
   async handleCenterCreated(event: CreateCenterEvent) {
     // ActivityLogService is fault-tolerant, no try-catch needed
+    // Object action (on center), no specific user affected
     await this.activityLogService.log(
       CenterActivityType.CENTER_CREATED,
       {
@@ -34,7 +35,7 @@ export class CenterActivityListener {
         website: event.center.website,
         isActive: event.center.isActive,
       },
-      event.center.createdBy,
+      null, // Object action, no target user
     );
   }
 

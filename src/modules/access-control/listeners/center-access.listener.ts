@@ -40,6 +40,7 @@ export class CenterAccessListener {
       return;
     }
 
+    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.CENTER_ACCESS_GRANTED,
@@ -48,7 +49,8 @@ export class CenterAccessListener {
         centerId,
         accessType: 'CENTER',
       },
-      event.targetUserId ?? null,
+      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
+      userProfileId, // Pass as targetUserProfileId for auto-resolution
     );
   }
 
@@ -70,6 +72,7 @@ export class CenterAccessListener {
       return;
     }
 
+    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.CENTER_ACCESS_REVOKED,
@@ -78,12 +81,14 @@ export class CenterAccessListener {
         centerId,
         accessType: 'CENTER',
       },
-      event.targetUserId ?? null,
+      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
+      userProfileId, // Pass as targetUserProfileId for auto-resolution
     );
   }
 
   @OnEvent(AccessControlEvents.ACTIVATE_CENTER_ACCESS)
   async handleActivateCenterAccess(event: ActivateCenterAccessEvent) {
+    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.CENTER_ACCESS_ACTIVATED,
@@ -93,12 +98,14 @@ export class CenterAccessListener {
         isActive: event.isActive,
         accessType: 'CENTER',
       },
-      event.targetUserId ?? null,
+      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
+      event.userProfileId, // Pass as targetUserProfileId for auto-resolution
     );
   }
 
   @OnEvent(AccessControlEvents.DEACTIVATE_CENTER_ACCESS)
   async handleDeactivateCenterAccess(event: DeactivateCenterAccessEvent) {
+    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.CENTER_ACCESS_DEACTIVATED,
@@ -108,7 +115,8 @@ export class CenterAccessListener {
         isActive: event.isActive,
         accessType: 'CENTER',
       },
-      event.targetUserId ?? null,
+      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
+      event.userProfileId, // Pass as targetUserProfileId for auto-resolution
     );
   }
 }

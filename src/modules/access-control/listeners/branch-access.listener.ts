@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { AccessControlService } from '../services/access-control.service';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
@@ -11,6 +11,8 @@ import { AccessControlEvents } from '@/shared/events/access-control.events.enum'
 
 @Injectable()
 export class BranchAccessListener {
+  private readonly logger: Logger = new Logger(BranchAccessListener.name);
+
   constructor(
     private readonly accessControlService: AccessControlService,
     private readonly activityLogService: ActivityLogService,
@@ -20,6 +22,8 @@ export class BranchAccessListener {
   async handleGrantBranchAccess(event: GrantBranchAccessEvent) {
     // TODO: Implement branch access granting when the service method is available
     // For now, just log the activity
+
+    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.BRANCH_ACCESS_GRANTED,
@@ -29,7 +33,8 @@ export class BranchAccessListener {
         centerId: event.centerId,
         accessType: 'BRANCH',
       },
-      event.targetUserId ?? null,
+      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
+      event.userProfileId, // Pass as targetUserProfileId for auto-resolution
     );
   }
 
@@ -37,6 +42,8 @@ export class BranchAccessListener {
   async handleRevokeBranchAccess(event: RevokeBranchAccessEvent) {
     // TODO: Implement branch access revoking when the service method is available
     // For now, just log the activity
+
+    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       CenterActivityType.BRANCH_ACCESS_REVOKED,
@@ -46,7 +53,8 @@ export class BranchAccessListener {
         centerId: event.centerId,
         accessType: 'BRANCH',
       },
-      event.targetUserId ?? null,
+      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
+      event.userProfileId, // Pass as targetUserProfileId for auto-resolution
     );
   }
 }

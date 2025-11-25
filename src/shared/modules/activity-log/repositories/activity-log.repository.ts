@@ -32,24 +32,28 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
     // Create queryBuilder with relations
     const queryBuilder = this.getRepository()
       .createQueryBuilder('activityLog')
+      .where('activityLog.userId = :userId', { userId: actor.id })
+      .andWhere('activityLog.targetUserId = :targetUserId', {
+        targetUserId: actor.id,
+      })
       .leftJoin('activityLog.user', 'user') // Who performed the action
       .leftJoin('activityLog.targetUser', 'targetUser') // Who was affected
       .leftJoin('activityLog.center', 'center')
       .addSelect(['user.name', 'targetUser.name', 'center.name']);
 
-    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
-      actor.userProfileId,
-    );
+    // const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+    //   actor.userProfileId,
+    // );
 
-    // apply center access
-    if (!isSuperAdmin && !centerId) {
-      queryBuilder.andWhere(
-        'activityLog."centerId" IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :userProfileId)',
-        {
-          userProfileId: actor.userProfileId,
-        },
-      );
-    }
+    // // apply center access
+    // if (!isSuperAdmin && !centerId) {
+    //   queryBuilder.andWhere(
+    //     'activityLog."centerId" IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :userProfileId)',
+    //     {
+    //       userProfileId: actor.userProfileId,
+    //     },
+    //   );
+    // }
 
     // apply user access (filter by targetUserId - who was affected)
     const bypassUserAccess =

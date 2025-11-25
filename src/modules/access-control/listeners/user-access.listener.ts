@@ -22,8 +22,7 @@ export class UserAccessListener {
 
   @OnEvent(AccessControlEvents.GRANT_USER_ACCESS)
   async handleGrantUserAccess(event: GrantUserAccessEvent) {
-    const { granterUserProfileId, targetUserProfileId, centerId, actor } =
-      event;
+    const { granterUserProfileId, targetUserProfileId, centerId } = event;
 
     try {
       // Call service to grant access
@@ -40,6 +39,7 @@ export class UserAccessListener {
       return;
     }
 
+    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       UserActivityType.USER_ACCESS_GRANTED,
@@ -49,14 +49,14 @@ export class UserAccessListener {
         centerId,
         accessType: 'USER',
       },
-      event.targetUserId ?? null,
+      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
+      targetUserProfileId, // Pass as targetUserProfileId for auto-resolution
     );
   }
 
   @OnEvent(AccessControlEvents.REVOKE_USER_ACCESS)
   async handleRevokeUserAccess(event: RevokeUserAccessEvent) {
-    const { granterUserProfileId, targetUserProfileId, centerId, actor } =
-      event;
+    const { granterUserProfileId, targetUserProfileId, centerId } = event;
 
     try {
       // Call service to revoke access
@@ -73,6 +73,7 @@ export class UserAccessListener {
       return;
     }
 
+    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       UserActivityType.USER_ACCESS_REVOKED,
@@ -82,7 +83,8 @@ export class UserAccessListener {
         centerId,
         accessType: 'USER',
       },
-      event.targetUserId ?? null,
+      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
+      targetUserProfileId, // Pass as targetUserProfileId for auto-resolution
     );
   }
 }
