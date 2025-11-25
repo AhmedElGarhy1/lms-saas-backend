@@ -36,19 +36,6 @@ export class UserRepository extends BaseRepository<User> {
     return User;
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    return await this.getRepository().findOne({
-      where: { email },
-    });
-  }
-  async findByEmailWithSensitiveData(email: string): Promise<User | null> {
-    return this.getRepository()
-      .createQueryBuilder('user')
-      .addSelect(['user.password', 'user.hashedRt'])
-      .where('user.email = :email', { email })
-      .getOne();
-  }
-
   async findByPhone(phone: string): Promise<User | null> {
     return await this.getRepository().findOne({
       where: { phone },
@@ -66,7 +53,7 @@ export class UserRepository extends BaseRepository<User> {
   async findOneWithSensitiveData(id: string): Promise<User | null> {
     return this.getRepository()
       .createQueryBuilder('user')
-      .addSelect(['user.password', 'user.hashedRt', 'user.twoFactorSecret'])
+      .addSelect(['user.password', 'user.hashedRt'])
       .where('user.id = :id', { id })
       .getOne();
   }
@@ -425,11 +412,9 @@ export class UserRepository extends BaseRepository<User> {
 
   async updateUserTwoFactor(
     userId: string,
-    twoFactorSecret: string | null,
     twoFactorEnabled: boolean,
   ): Promise<void> {
     await this.getRepository().update(userId, {
-      twoFactorSecret: twoFactorSecret || undefined,
       twoFactorEnabled,
     });
   }

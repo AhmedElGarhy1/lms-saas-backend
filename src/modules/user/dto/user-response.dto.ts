@@ -8,10 +8,6 @@ export class UserResponseDto {
   @Expose()
   id: string;
 
-  @ApiProperty({ description: 'User email' })
-  @Expose()
-  email?: string;
-
   @ApiProperty({ description: 'User phone' })
   @Expose()
   phone?: string;
@@ -19,13 +15,6 @@ export class UserResponseDto {
   @ApiProperty({ description: 'User name' })
   @Expose()
   name: string;
-
-  @ApiProperty({
-    description: 'Two-factor authentication secret',
-    required: false,
-  })
-  @Expose()
-  twoFactorSecret?: string;
 
   @ApiProperty({ description: 'Whether two-factor authentication is enabled' })
   @Expose()

@@ -4,11 +4,8 @@ export enum AuthEvents {
   USER_LOGIN_FAILED = 'user.login.failed',
   TOKEN_REFRESHED = 'token.refreshed',
   PASSWORD_CHANGED = 'password.changed',
-  EMAIL_VERIFIED = 'email.verified',
   PHONE_VERIFIED = 'phone.verified',
   PASSWORD_RESET_REQUESTED = 'password.reset.requested',
-  EMAIL_VERIFICATION_REQUESTED = 'email.verification.requested',
-  EMAIL_VERIFICATION_SEND_REQUESTED = 'email.verification.send.requested', // New: Request to send email verification
   PHONE_VERIFICATION_SEND_REQUESTED = 'phone.verification.send.requested', // New: Request to send phone verification
   OTP = 'auth.otp.sent',
   TWO_FA_SETUP = 'two.fa.setup',

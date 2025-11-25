@@ -93,6 +93,7 @@ export class CentersController {
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @ApiBody({ type: UpdateCenterRequestDto })
   @Permissions(PERMISSIONS.CENTER.UPDATE)
+  @Transactional()
   async updateCenter(
     @Param('id') id: string,
     @Body() dto: UpdateCenterRequestDto,
@@ -114,6 +115,7 @@ export class CentersController {
   @DeleteApiResponses('Delete center (soft delete)')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @Permissions(PERMISSIONS.CENTER.DELETE)
+  @Transactional()
   async deleteCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
     await this.centersService.deleteCenter(id, actor);
 
@@ -130,6 +132,7 @@ export class CentersController {
   @UpdateApiResponses('Restore deleted center')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @Permissions(PERMISSIONS.CENTER.RESTORE)
+  @Transactional()
   async restoreCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
     await this.centersService.restoreCenter(id, actor);
 

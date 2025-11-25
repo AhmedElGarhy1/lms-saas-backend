@@ -58,9 +58,6 @@ export const env = cleanEnv(process.env, {
   // Password Reset
   PASSWORD_RESET_EXPIRES_HOURS: num({ default: 1 }),
 
-  // Email Verification
-  EMAIL_VERIFICATION_EXPIRES_HOURS: num({ default: 24 }),
-
   // Twilio SMS (Required for SMS notifications)
   TWILIO_ACCOUNT_SID: str({
     desc: 'Twilio Account SID for SMS',

@@ -49,8 +49,6 @@ import { ExportService } from '@/shared/common/services/export.service';
 import { RoleResponseExportMapper } from '@/shared/common/mappers/role-response-export.mapper';
 import { ExportRolesDto } from '../dto/export-roles.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
-import { ExportFormat } from '@/shared/common/dto';
-import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 
 @ApiTags('Roles')
 @Controller('roles')
@@ -126,7 +124,6 @@ export class RolesController {
   @Get(':roleId')
   @ReadApiResponses('Get role by ID')
   @ApiParam({ name: 'roleId', type: String })
-  // @Permissions(PERMISSIONS.ROLES.VIEW)
   async getRoleById(@Param('roleId', ParseUUIDPipe) roleId: string) {
     const result = await this.rolesService.findById(roleId);
     return ControllerResponse.success(
@@ -140,6 +137,7 @@ export class RolesController {
   @ApiParam({ name: 'roleId', type: String })
   @ApiBody({ type: CreateRoleRequestDto })
   @Permissions(PERMISSIONS.ROLES.UPDATE)
+  @Transactional()
   async updateRole(
     @Param('roleId', ParseUUIDPipe) roleId: string,
     @Body() dto: CreateRoleRequestDto,

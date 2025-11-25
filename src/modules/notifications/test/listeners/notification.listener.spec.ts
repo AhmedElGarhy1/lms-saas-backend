@@ -17,7 +17,6 @@ import { TestEnvGuard } from '../helpers/test-env-guard';
 import {
   OtpEvent,
   PasswordResetRequestedEvent,
-  EmailVerificationRequestedEvent,
   PhoneVerifiedEvent,
 } from '@/modules/auth/events/auth.events';
 import {
@@ -245,41 +244,6 @@ describe('NotificationListener', () => {
       await listener.handlePasswordResetRequested(event);
 
       expect(mockNotificationService.trigger).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('handleEmailVerificationRequested', () => {
-    it('should trigger email verification notification', async () => {
-      const userId = faker.string.uuid();
-      const phone = faker.phone.number();
-      const email = faker.internet.email();
-      const locale = 'en';
-
-      const mockUser = {
-        id: userId,
-        getPhone: jest.fn().mockReturnValue(phone),
-        userInfo: { locale },
-      };
-
-      mockUserService.findOne.mockResolvedValue(mockUser as any);
-
-      const event = new EmailVerificationRequestedEvent(
-        { id: userId } as any,
-        userId,
-        email,
-        'verification-token',
-        'https://example.com/verify',
-      );
-
-      await listener.handleEmailVerificationRequested(event);
-
-      expect(mockNotificationService.trigger).toHaveBeenCalledWith(
-        NotificationType.EMAIL_VERIFICATION,
-        expect.objectContaining({
-          audience: 'DEFAULT',
-          event,
-        }),
-      );
     });
   });
 

@@ -6,7 +6,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthService } from './services/auth.service';
 import { VerificationService } from './services/verification.service';
 import { VerificationTokenRepository } from './repositories/verification-token.repository';
-// import { TwoFactorService } from './services/two-factor.service';
 import { AuthController } from './controllers/auth.controller';
 import { User } from '../user/entities/user.entity';
 import { VerificationToken } from './entities/verification-token.entity';
@@ -40,7 +39,6 @@ import { VerificationListener } from './listeners/verification.listener';
     AuthService,
     VerificationService,
     VerificationTokenRepository,
-    // TwoFactorService,
     UserRepository,
     JwtStrategy,
     RefreshJwtStrategy,
@@ -53,7 +51,6 @@ import { VerificationListener } from './listeners/verification.listener';
     AuthService,
     VerificationService,
     VerificationTokenRepository,
-    // TwoFactorService,
     JwtStrategy,
     RefreshJwtStrategy,
     AccessJwtGuard,

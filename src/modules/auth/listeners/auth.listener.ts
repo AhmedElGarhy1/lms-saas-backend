@@ -7,7 +7,6 @@ import { AuthEvents } from '@/shared/events/auth.events.enum';
 import {
   UserLoggedInEvent,
   PasswordChangedEvent,
-  EmailVerifiedEvent,
   PhoneVerifiedEvent,
   TwoFactorEnabledEvent,
   TwoFactorDisabledEvent,
@@ -46,21 +45,6 @@ export class AuthListener {
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(
       AuthActivityType.PASSWORD_CHANGED,
-      {
-        userId,
-        phone: actor.phone,
-      },
-      userId,
-    );
-  }
-
-  @OnEvent(AuthEvents.EMAIL_VERIFIED)
-  async handleEmailVerified(event: EmailVerifiedEvent) {
-    const { userId, actor } = event;
-
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      AuthActivityType.EMAIL_VERIFIED,
       {
         userId,
         phone: actor.phone,
@@ -120,7 +104,7 @@ export class AuthListener {
     await this.activityLogService.log(
       AuthActivityType.USER_LOGIN_FAILED,
       {
-        emailOrPhone: event.emailOrPhone,
+        phone: event.phone,
         reason: event.reason,
       },
       event.userId ?? null,
@@ -133,7 +117,7 @@ export class AuthListener {
     await this.activityLogService.log(
       AuthActivityType.PASSWORD_RESET_REQUESTED,
       {
-        email: event.email,
+        phone: event.phone,
         name: event.name,
       },
       event.userId ?? null,

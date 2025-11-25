@@ -66,7 +66,7 @@ export class DatabaseSeeder {
 
     // Check if system user already exists
     let systemUser = await this.dataSource.getRepository(User).findOne({
-      where: { email: 'system@lms.com' },
+      where: { phone: '01000000000' },
     });
 
     if (systemUser) {
@@ -96,11 +96,10 @@ export class DatabaseSeeder {
 
         // Insert user first
         await transactionalEntityManager.query(
-          `INSERT INTO users (id, email, password, name, "isActive", "createdBy", "phone", "phoneVerified", "emailVerified", "createdAt", "updatedAt") 
-           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), NOW(), NOW())`,
+          `INSERT INTO users (id, password, name, "isActive", "createdBy", "phone", "phoneVerified", "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW(), NOW())`,
           [
             userUuid,
-            'system@lms.com',
             hashedPassword,
             'System User',
             true,
@@ -163,16 +162,15 @@ export class DatabaseSeeder {
 
         // Insert user first
         await transactionalEntityManager.query(
-          `INSERT INTO users (id, email, password, name, "isActive", "createdBy", "phone", "phoneVerified", "emailVerified", "createdAt", "updatedAt") 
-           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), NOW(), NOW())`,
+          `INSERT INTO users (id, password, name, "isActive", "createdBy", "phone", "phoneVerified", "createdAt", "updatedAt") 
+           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW(), NOW())`,
           [
             userUuid,
-            'superadmin@lms.com',
             hashedPassword,
             'Super Administrator',
             true,
             createdBy,
-            '01000000000',
+            '01000000001',
           ],
         );
 
@@ -338,8 +336,8 @@ export class DatabaseSeeder {
     );
 
     // Get users by type
-    const systemUser = users.find((u) => u.email === 'system@lms.com');
-    const superAdminUser = users.find((u) => u.email === 'superadmin@lms.com');
+    const systemUser = users.find((u) => u.phone === '01000000000');
+    const superAdminUser = users.find((u) => u.phone === '01000000001');
 
     // Assign Super Administrator role to system user
     if (systemUser && superAdminRole) {
@@ -355,7 +353,7 @@ export class DatabaseSeeder {
         createdBy,
       });
       this.logger.log(
-        `Assigned Super Administrator role to ${systemUser.email}`,
+        `Assigned Super Administrator role to ${systemUser.phone}`,
       );
     }
 
@@ -373,7 +371,7 @@ export class DatabaseSeeder {
         createdBy,
       });
       this.logger.log(
-        `Assigned Super Administrator role to ${superAdminUser.email}`,
+        `Assigned Super Administrator role to ${superAdminUser.phone}`,
       );
     }
 
@@ -386,8 +384,8 @@ export class DatabaseSeeder {
   ): Promise<void> {
     this.logger.log('Creating activity logs...');
 
-    const systemUser = users.find((u) => u.email === 'system@lms.com');
-    const superAdmin = users.find((u) => u.email === 'superadmin@lms.com');
+    const systemUser = users.find((u) => u.phone === '01000000000');
+    const superAdmin = users.find((u) => u.phone === '01000000001');
 
     // Log system user creation activity
     if (systemUser) {
@@ -400,11 +398,11 @@ export class DatabaseSeeder {
       await this.activityLogService.log(
         UserActivityType.USER_CREATED,
         {
-        targetProfileId: systemUserProfile?.id,
-        userEmail: systemUser.email,
-        userName: systemUser.name,
-        createdBy,
-        seeder: true,
+          targetProfileId: systemUserProfile?.id,
+          userPhone: systemUser.phone,
+          userName: systemUser.name,
+          createdBy,
+          seeder: true,
         },
         systemUser.id,
       );
@@ -421,11 +419,11 @@ export class DatabaseSeeder {
       await this.activityLogService.log(
         UserActivityType.USER_CREATED,
         {
-        targetProfileId: superAdminProfile?.id,
-        userEmail: superAdmin.email,
-        userName: superAdmin.name,
-        createdBy,
-        seeder: true,
+          targetProfileId: superAdminProfile?.id,
+          userPhone: superAdmin.phone,
+          userName: superAdmin.name,
+          createdBy,
+          seeder: true,
         },
         superAdmin.id,
       );

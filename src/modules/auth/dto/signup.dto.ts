@@ -1,12 +1,14 @@
-import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
+import { IsString, MinLength, IsOptional, Matches } from 'class-validator';
 
 export class SignupRequestDto {
   @IsString()
   @MinLength(2)
   name: string;
 
-  @IsEmail()
-  email: string;
+  @Matches(/^(01)[0-2,5]\d{8}$/, {
+    message: 'Phone number must be a valid Egyptian mobile number',
+  })
+  phone: string;
 
   @IsString()
   @MinLength(6)

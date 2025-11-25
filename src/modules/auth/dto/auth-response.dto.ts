@@ -10,7 +10,7 @@ export class LoginResponseDto {
   @ApiProperty({ description: 'User information' })
   user: {
     id: string;
-    email: string;
+    phone: string;
     name: string;
     isActive: boolean;
   };
@@ -20,14 +20,14 @@ export class SignupResponseDto {
   @ApiProperty({ description: 'User ID' })
   id: string;
 
-  @ApiProperty({ description: 'User email' })
-  email: string;
+  @ApiProperty({ description: 'User phone' })
+  phone: string;
 
   @ApiProperty({ description: 'User name' })
   name: string;
 
-  @ApiProperty({ description: 'Whether email verification is required' })
-  requiresEmailVerification: boolean;
+  @ApiProperty({ description: 'Whether phone verification is required' })
+  requiresPhoneVerification: boolean;
 }
 
 export class RefreshTokenResponseDto {
@@ -39,11 +39,8 @@ export class RefreshTokenResponseDto {
 }
 
 export class TwoFASetupResponseDto {
-  @ApiProperty({ description: 'QR code for 2FA setup' })
-  qrCode: string;
-
-  @ApiProperty({ description: 'Secret key for 2FA' })
-  secret: string;
+  @ApiProperty({ description: 'Message about 2FA setup' })
+  message: string;
 }
 
 export class TwoFAVerifyResponseDto {
@@ -55,7 +52,7 @@ export class TwoFAVerifyResponseDto {
 }
 
 export class ForgotPasswordResponseDto {
-  @ApiProperty({ description: 'Whether password reset email was sent' })
+  @ApiProperty({ description: 'Whether password reset was sent' })
   success: boolean;
 
   @ApiProperty({ description: 'Message about the password reset process' })
@@ -67,14 +64,6 @@ export class ResetPasswordResponseDto {
   success: boolean;
 
   @ApiProperty({ description: 'Message about the password reset' })
-  message: string;
-}
-
-export class VerifyEmailResponseDto {
-  @ApiProperty({ description: 'Whether email verification was successful' })
-  success: boolean;
-
-  @ApiProperty({ description: 'Message about the email verification' })
   message: string;
 }
 

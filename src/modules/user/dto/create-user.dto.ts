@@ -47,12 +47,6 @@ export class CreateUserDto {
   @MinLength(2)
   name: string;
 
-  @ApiProperty({ description: 'User email address', required: false })
-  @IsOptional()
-  @IsEmail()
-  @NotExists(User, 'email', { message: 'Email already exists' })
-  email?: string;
-
   @ApiProperty({ description: 'User password' })
   @IsString()
   @IsNotEmpty()

@@ -1,4 +1,5 @@
 import { Controller, Post, Body } from '@nestjs/common';
+import { Transactional } from '@nestjs-cls/transactional';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
@@ -88,6 +89,7 @@ export class UserProfileImportController {
     status: 409,
     description: 'User already has access to this center',
   })
+  @Transactional()
   async verifyAndImport(
     @Body() dto: VerifyUserImportDto,
     @GetUser() actor: ActorUser,

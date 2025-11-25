@@ -5,7 +5,7 @@ export interface ActivityLogExportData {
   id: string;
   type: string;
   userId: string;
-  userEmail: string;
+  userPhone: string;
   centerId: string;
   centerName: string;
   ipAddress: string;
@@ -22,7 +22,7 @@ export class ActivityLogExportMapper
       id: activityLog.id,
       type: activityLog.type,
       userId: activityLog.userId || '',
-      userEmail: activityLog.user?.email || '',
+      userPhone: activityLog.user?.phone || '',
       centerId: activityLog.centerId || '',
       centerName: activityLog.center?.name || '',
       ipAddress: activityLog.ipAddress || '',
@@ -37,7 +37,7 @@ export class ActivityLogExportMapper
       'ID',
       'Type',
       'User ID',
-      'User Email',
+      'User Phone',
       'Center ID',
       'Center Name',
       'IP Address',

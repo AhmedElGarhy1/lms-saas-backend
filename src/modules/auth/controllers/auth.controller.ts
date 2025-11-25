@@ -1,9 +1,9 @@
 import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
+import { UserService } from '@/modules/user/services/user.service';
 import { LoginRequestDto } from '../dto/login.dto';
 import { ForgotPasswordRequestDto } from '../dto/forgot-password.dto';
 import { ResetPasswordRequestDto } from '../dto/reset-password.dto';
-import { VerifyEmailRequestDto } from '../dto/verify-email.dto';
 import { VerifyPhoneRequestDto } from '../dto/verify-phone.dto';
 import { RequestPhoneVerificationRequestDto } from '../dto/request-phone-verification.dto';
 import {
@@ -32,7 +32,7 @@ import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 interface AuthenticatedRequest extends Request {
   user: {
     sub: string;
-    email: string;
+    phone: string;
     name: string;
     type: 'refresh';
     refreshToken: string;
@@ -44,6 +44,7 @@ interface AuthenticatedRequest extends Request {
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly userService: UserService,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
@@ -66,7 +67,6 @@ export class AuthController {
   @Post('signup')
   @RateLimit({ limit: 3, windowSeconds: 300 }) // 3 attempts per 5 minutes
   @CreateApiResponses('User registration')
-  @Transactional()
   signup(): never {
     // Signup is not implemented - users should be created through user management endpoints
     throw new Error(
@@ -85,36 +85,6 @@ export class AuthController {
     return ControllerResponse.success(
       result,
       this.i18n.translate('t.success.tokenRefreshed'),
-    );
-  }
-
-  @Post('verify-email')
-  @RateLimit({ limit: 5, windowSeconds: 60 }) // 5 attempts per minute
-  @UpdateApiResponses('Verify email address')
-  @ApiBody({ type: VerifyEmailRequestDto })
-  @Transactional()
-  @NoProfile()
-  @NoContext()
-  async verifyEmail(@Body() dto: VerifyEmailRequestDto) {
-    const result = await this.authService.verifyEmail(dto);
-
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.emailVerified'),
-    );
-  }
-
-  @Post('request-email-verification')
-  @RateLimit({ limit: 1, windowSeconds: 60 }) // 1 request per minute
-  @UpdateApiResponses('Request email verification')
-  @NoProfile()
-  @NoContext()
-  async requestEmailVerification(@GetUser() actor: ActorUser) {
-    await this.authService.requestEmailVerification(actor);
-
-    return ControllerResponse.success(
-      null,
-      this.i18n.translate('t.success.emailVerificationRequestSent'),
     );
   }
 
@@ -190,11 +160,8 @@ export class AuthController {
   @Transactional()
   @NoProfile()
   @NoContext()
-  async setup2FA(
-    @Body() dto: TwoFASetupRequestDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.authService.setupTwoFactor(dto.email, actor);
+  async setup2FA(@GetUser() actor: ActorUser) {
+    const result = await this.authService.setupTwoFactor(actor.id, actor);
 
     return ControllerResponse.success(
       result,
@@ -208,12 +175,62 @@ export class AuthController {
   @Transactional()
   @NoProfile()
   @NoContext()
-  async verify2FA(@Body() dto: TwoFactorRequest) {
-    const result = await this.authService.verify2FA(dto);
+  async verify2FA(
+    @Body() dto: TwoFAVerifyRequestDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.authService.verify2FA({
+      userId: dto.userId || actor.id,
+      code: dto.code,
+    });
 
     return ControllerResponse.success(
       result,
       this.i18n.translate('t.success.twoFactorVerified'),
+    );
+  }
+
+  @Post('enable-2fa')
+  @UpdateApiResponses('Enable two-factor authentication')
+  @ApiBody({ type: TwoFAVerifyRequestDto })
+  @Transactional()
+  @NoProfile()
+  @NoContext()
+  async enable2FA(
+    @Body() dto: TwoFAVerifyRequestDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.authService.enableTwoFactor(
+      actor.id,
+      dto.code,
+      actor,
+    );
+
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('t.success.twoFactorEnabled'),
+    );
+  }
+
+  @Post('disable-2fa')
+  @UpdateApiResponses('Disable two-factor authentication')
+  @ApiBody({ type: TwoFAVerifyRequestDto })
+  @Transactional()
+  @NoProfile()
+  @NoContext()
+  async disable2FA(
+    @Body() dto: TwoFAVerifyRequestDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.authService.disableTwoFactor(
+      actor.id,
+      dto.code,
+      actor,
+    );
+
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('t.success.twoFactorDisabled'),
     );
   }
 

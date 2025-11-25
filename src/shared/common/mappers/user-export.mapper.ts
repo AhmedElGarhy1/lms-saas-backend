@@ -3,7 +3,6 @@ import { User } from '@/modules/user/entities/user.entity';
 
 export interface UserExportData {
   id: string;
-  email: string;
   phone: string;
   name: string;
   isActive: boolean;
@@ -17,7 +16,6 @@ export class UserExportMapper implements ExportMapper<User, UserExportData> {
   mapToExport(user: User): UserExportData {
     return {
       id: user.id,
-      email: user.email || '',
       phone: user.phone || '',
       name: user.name,
       isActive: user.isActive,
@@ -32,7 +30,7 @@ export class UserExportMapper implements ExportMapper<User, UserExportData> {
   getHeaders(): string[] {
     return [
       'ID',
-      'Email',
+      'Phone',
       'Name',
       'Is Active',
       'Two Factor Enabled',

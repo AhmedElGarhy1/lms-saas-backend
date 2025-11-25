@@ -1,26 +1,22 @@
-import { IsString, IsEmail } from 'class-validator';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { User } from '@/modules/user/entities/user.entity';
+import { IsString, IsOptional, IsUUID } from 'class-validator';
 
 export class TwoFASetupRequestDto {
-  @IsEmail()
-  @Exists(User, 'email')
-  email: string;
+  // No fields - uses authenticated user from JWT token
 }
 
 export class TwoFAVerifyRequestDto {
-  @IsEmail()
-  @Exists(User, 'email')
-  email: string;
+  @IsOptional()
+  @IsUUID()
+  userId?: string; // Optional - uses authenticated user by default
 
   @IsString()
   code: string;
 }
 
 export class TwoFactorRequest {
-  @IsEmail()
-  @Exists(User, 'email')
-  email: string;
+  @IsOptional()
+  @IsUUID()
+  userId?: string; // Optional - uses authenticated user by default
 
   @IsString()
   code: string;

@@ -13,12 +13,10 @@ import { JwtService } from '@nestjs/jwt';
 import { Config } from '@/shared/config/config';
 import { UserService } from '../../user/services/user.service';
 import { VerificationService } from './verification.service';
-// import { TwoFactorService } from './two-factor.service';
 import * as bcrypt from 'bcrypt';
 import { LoginRequestDto } from '../dto/login.dto';
 import { ForgotPasswordRequestDto } from '../dto/forgot-password.dto';
 import { ResetPasswordRequestDto } from '../dto/reset-password.dto';
-import { VerifyEmailRequestDto } from '../dto/verify-email.dto';
 import { TwoFactorRequest } from '../dto/2fa.dto';
 import { BaseService } from '@/shared/common/services/base.service';
 import { User } from '../../user/entities/user.entity';
@@ -35,11 +33,9 @@ import {
   TwoFactorEnabledEvent,
   TwoFactorDisabledEvent,
   PhoneVerifiedEvent,
-  EmailVerifiedEvent,
   UserLoginFailedEvent,
 } from '@/modules/auth/events/auth.events';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
-import { RequestEmailVerificationEvent } from '../events/auth.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 
 @Injectable()
@@ -49,7 +45,6 @@ export class AuthService extends BaseService {
   constructor(
     private readonly userService: UserService,
     private readonly verificationService: VerificationService,
-    // private readonly twoFactorService: TwoFactorService,
     private readonly jwtService: JwtService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
@@ -57,15 +52,8 @@ export class AuthService extends BaseService {
     super();
   }
 
-  async validateUser(
-    emailOrPhone: string,
-    password: string,
-  ): Promise<User | null> {
-    // Determine if it's an email or phone and find user accordingly
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailOrPhone);
-    const user = isEmail
-      ? await this.userService.findUserByEmail(emailOrPhone, true)
-      : await this.userService.findUserByPhone(emailOrPhone, true);
+  async validateUser(phone: string, password: string): Promise<User | null> {
+    const user = await this.userService.findUserByPhone(phone, true);
 
     if (!user) {
       return null;
@@ -80,10 +68,7 @@ export class AuthService extends BaseService {
   }
 
   async login(dto: LoginRequestDto) {
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dto.emailOrPhone);
-    const user = isEmail
-      ? await this.userService.findUserByEmail(dto.emailOrPhone, true)
-      : await this.userService.findUserByPhone(dto.emailOrPhone, true);
+    const user = await this.userService.findUserByPhone(dto.phone, true);
 
     // If user exists, validate account status
     if (user) {
@@ -100,11 +85,7 @@ export class AuthService extends BaseService {
         // Emit failed login event for activity logging
         await this.typeSafeEventEmitter.emitAsync(
           AuthEvents.USER_LOGIN_FAILED,
-          new UserLoginFailedEvent(
-            dto.emailOrPhone,
-            user.id,
-            'Invalid password',
-          ),
+          new UserLoginFailedEvent(dto.phone, user.id, 'Invalid password'),
         );
 
         throw new AuthenticationFailedException(
@@ -115,7 +96,7 @@ export class AuthService extends BaseService {
       // Password is valid, continue with login
       if (!user.id || user.id.trim() === '') {
         this.logger.error(
-          `User object missing or invalid ID for email/phone: ${dto.emailOrPhone}`,
+          `User object missing or invalid ID for phone: ${dto.phone}`,
         );
         throw new AuthenticationFailedException(
           this.i18n.translate('t.errors.authenticationFailed'),
@@ -127,19 +108,23 @@ export class AuthService extends BaseService {
 
       // Check if 2FA is enabled
       if (userForLogin.twoFactorEnabled) {
-        // Generate and send 2FA code
-        // TODO: Re-enable 2FA functionality when TwoFactorService is fixed
-        // const twoFactorCode = this.twoFactorService.generateToken(
-        //   userForLogin.twoFactorSecret,
-        // );
-        const twoFactorCode = 'DISABLED';
-        // In a real implementation, you would send this via SMS or email
+        // Generate and send 2FA OTP via SMS
+        const phone = userForLogin.getPhone();
+        if (!phone) {
+          throw new BadRequestException(
+            this.i18n.translate('t.errors.userHasNoPhone'),
+          );
+        }
+        await this.verificationService.sendTwoFactorOTP(
+          userForLogin.id || '',
+          phone,
+        );
 
         return {
           requiresTwoFactor: true,
           message: 'Two-factor authentication required',
           tempToken: this.jwtService.sign(
-            { sub: userForLogin.id, email: userForLogin.email, temp: true },
+            { sub: userForLogin.id, phone: userForLogin.phone, temp: true },
             { expiresIn: '5m' },
           ),
         };
@@ -157,7 +142,7 @@ export class AuthService extends BaseService {
         AuthEvents.USER_LOGGED_IN,
         new UserLoggedInEvent(
           userForLogin.id || '',
-          userForLogin.email || '',
+          userForLogin.phone || '',
           null as any,
         ),
       );
@@ -167,7 +152,7 @@ export class AuthService extends BaseService {
         refreshToken: tokens.refreshToken,
         user: {
           id: userForLogin.id,
-          email: userForLogin.email,
+          phone: userForLogin.phone,
           name: userForLogin.name,
           isActive: userForLogin.isActive,
           twoFactorEnabled: userForLogin.twoFactorEnabled,
@@ -182,8 +167,12 @@ export class AuthService extends BaseService {
   }
 
   async verify2FA(dto: TwoFactorRequest) {
-    // Find user by email
-    const user = await this.userService.findUserByEmail(dto.email);
+    if (!dto.userId) {
+      throw new BadRequestException(this.i18n.translate('t.errors.badRequest'));
+    }
+
+    // Find user by userId
+    const user = await this.userService.findOne(dto.userId, true);
 
     if (!user) {
       throw new ResourceNotFoundException(
@@ -197,17 +186,18 @@ export class AuthService extends BaseService {
       );
     }
 
-    // TODO: Re-enable 2FA functionality when TwoFactorService is fixed
-    // const isValid = this.twoFactorService.verifyToken(
-    //   dto.code,
-    //   user.twoFactorSecret,
-    // );
-    const isValid = true; // Temporarily disabled
-
-    if (!isValid) {
-      this.logger.error('Invalid 2FA code provided', {
+    // Verify OTP code using VerificationService
+    try {
+      await this.verificationService.verifyCode(
+        dto.code,
+        VerificationType.TWO_FACTOR_AUTH,
+        dto.userId,
+      );
+    } catch (error) {
+      this.logger.error('Invalid 2FA OTP code provided', {
         userId: user.id,
-        email: dto.email,
+        phone: user.phone,
+        error: error instanceof Error ? error.message : String(error),
       });
       throw new AuthenticationFailedException(
         this.i18n.translate('t.errors.authenticationFailed'),
@@ -221,77 +211,23 @@ export class AuthService extends BaseService {
     const hashedRt = await bcrypt.hash(tokens.refreshToken, 10);
     await this.userService.update(user.id, { hashedRt });
 
+    // Emit login event for activity logging
+    await this.typeSafeEventEmitter.emitAsync(
+      AuthEvents.USER_LOGGED_IN,
+      new UserLoggedInEvent(user.id || '', user.phone || '', null as any),
+    );
+
     return {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
       user: {
         id: user.id,
-        email: user.email,
+        phone: user.phone,
         name: user.name,
         isActive: user.isActive,
         twoFactorEnabled: user.twoFactorEnabled,
       },
     };
-  }
-
-  async verifyEmail(dto: VerifyEmailRequestDto) {
-    let userId: string;
-    let email: string | undefined;
-    try {
-      const result = await this.verificationService.verifyToken(dto.token);
-      userId = result.userId;
-      email = result.email;
-    } catch (error: unknown) {
-      this.logger.error(
-        'Email verification failed - invalid or expired token',
-        error,
-        { token: dto.token.substring(0, 10) + '...' },
-      );
-      throw error;
-    }
-
-    // Update user emailVerified date
-    await this.userService.update(userId, { emailVerified: new Date() });
-
-    // Get user to create actor
-    const user = await this.userService.findOne(userId);
-    if (!user) {
-      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
-    }
-
-    // Create actor from user (the user themselves is the actor)
-    const actor: ActorUser = {
-      ...user,
-      userProfileId: user.id,
-      profileType: 'USER' as any,
-      centerId: undefined,
-    } as ActorUser;
-
-    // Emit email verified event
-    await this.typeSafeEventEmitter.emitAsync(
-      AuthEvents.EMAIL_VERIFIED,
-      new EmailVerifiedEvent(userId, actor),
-    );
-
-    return {
-      message: this.i18n.translate('t.success.emailVerified'),
-      user: {
-        id: userId,
-        email,
-      },
-    };
-  }
-
-  async requestEmailVerification(actor: ActorUser): Promise<void> {
-    if (!actor.email) {
-      throw new BadRequestException(this.i18n.translate('t.errors.badRequest'));
-    }
-
-    // Emit event for email verification (event-driven)
-    await this.typeSafeEventEmitter.emitAsync(
-      AuthEvents.EMAIL_VERIFICATION_SEND_REQUESTED,
-      new RequestEmailVerificationEvent(actor, actor.id, actor.email),
-    );
   }
 
   async requestPhoneVerification(
@@ -371,14 +307,14 @@ export class AuthService extends BaseService {
   }
 
   async forgotPassword(dto: ForgotPasswordRequestDto, actor: ActorUser) {
-    // Find user by email or phone
+    // Find user by phone
     let user;
     if (actor) {
       user = actor;
-    } else if (dto.email) {
-      user = await this.userService.findUserByEmail(dto.email);
     } else if (dto.phone) {
       user = await this.userService.findUserByPhone(dto.phone);
+    } else {
+      throw new BadRequestException(this.i18n.translate('t.errors.badRequest'));
     }
 
     if (!user) {
@@ -388,22 +324,11 @@ export class AuthService extends BaseService {
       };
     }
 
-    // Determine channel if not provided
-    let channel = dto.channel as NotificationChannel;
-    if (!channel) {
-      // Auto-detect channel based on input
-      if (dto.email) {
-        channel = NotificationChannel.EMAIL;
-      } else if (dto.phone) {
-        channel = NotificationChannel.SMS; // Default to SMS for phone
-      } else {
-        throw new BadRequestException(
-          this.i18n.translate('t.errors.badRequest'),
-        );
-      }
-    }
+    // Determine channel if not provided (default to SMS for phone)
+    const channel =
+      (dto.channel as NotificationChannel) || NotificationChannel.SMS;
 
-    // Send password reset via selected channel (will use user's stored email/phone)
+    // Send password reset via selected channel (will use user's stored phone)
     await this.verificationService.sendPasswordReset(user.id, channel);
 
     return {
@@ -462,18 +387,15 @@ export class AuthService extends BaseService {
       );
     }
 
-    // TODO: Re-enable 2FA functionality when TwoFactorService is fixed
-    // Generate 2FA secret and QR code
-    // const { secret, otpauthUrl, qrCodeUrl } =
-    //   await this.twoFactorService.setupTwoFactor(user.email);
-    const { secret, otpauthUrl, qrCodeUrl } = {
-      secret: 'DISABLED',
-      otpauthUrl: 'DISABLED',
-      qrCodeUrl: 'DISABLED',
-    };
+    // Send OTP via SMS to verify phone number for 2FA setup
+    const phone = user.getPhone();
+    if (!phone) {
+      throw new BadRequestException(
+        this.i18n.translate('t.errors.userHasNoPhone'),
+      );
+    }
 
-    // Store secret temporarily (not enabled yet)
-    await this.userService.updateUserTwoFactor(userId, secret, false);
+    await this.verificationService.sendTwoFactorOTP(userId, phone);
 
     // Emit event for activity logging
     await this.typeSafeEventEmitter.emitAsync(
@@ -482,10 +404,8 @@ export class AuthService extends BaseService {
     );
 
     return {
-      secret,
-      otpauthUrl,
-      qrCodeUrl,
-      message: 'Scan the QR code with your authenticator app',
+      message:
+        '2FA setup OTP sent to your phone. Verify the code to enable 2FA.',
     };
   }
 
@@ -508,31 +428,21 @@ export class AuthService extends BaseService {
       );
     }
 
-    if (!user.twoFactorSecret) {
-      throw new BusinessLogicException(
-        this.i18n.translate('t.errors.businessLogicError'),
+    // Verify the OTP code
+    try {
+      await this.verificationService.verifyCode(
+        verificationCode,
+        VerificationType.TWO_FACTOR_AUTH,
+        userId,
       );
-    }
-
-    // TODO: Re-enable 2FA functionality when TwoFactorService is fixed
-    // Verify the 2FA code
-    // const isValid = this.twoFactorService.verifyToken(
-    //   verificationCode,
-    //   user.twoFactorSecret,
-    // );
-    const isValid = true; // Temporarily disabled
-    if (!isValid) {
+    } catch (error) {
       throw new AuthenticationFailedException(
         this.i18n.translate('t.errors.authenticationFailed'),
       );
     }
 
-    // Enable 2FA
-    await this.userService.updateUserTwoFactor(
-      userId,
-      user.twoFactorSecret,
-      true,
-    );
+    // Enable 2FA (no secret needed for SMS OTP)
+    await this.userService.updateUserTwoFactor(userId, true);
 
     // Emit event after work is done
     await this.typeSafeEventEmitter.emitAsync(
@@ -562,17 +472,18 @@ export class AuthService extends BaseService {
       );
     }
 
-    // TODO: Re-enable 2FA functionality when TwoFactorService is fixed
-    // Verify the 2FA code
-    // const isValid = this.twoFactorService.verifyToken(
-    //   verificationCode,
-    //   user.twoFactorSecret,
-    // );
-    const isValid = true; // Temporarily disabled
-    if (!isValid) {
-      this.logger.error('Invalid 2FA verification code for disable', {
+    // Verify the OTP code
+    try {
+      await this.verificationService.verifyCode(
+        verificationCode,
+        VerificationType.TWO_FACTOR_AUTH,
+        userId,
+      );
+    } catch (error) {
+      this.logger.error('Invalid 2FA OTP code for disable', {
         userId: user.id,
-        email: user.email,
+        phone: user.phone,
+        error: error instanceof Error ? error.message : String(error),
       });
       throw new AuthenticationFailedException(
         this.i18n.translate('t.errors.authenticationFailed'),
@@ -580,7 +491,7 @@ export class AuthService extends BaseService {
     }
 
     // Disable 2FA
-    await this.userService.updateUserTwoFactor(userId, null, false);
+    await this.userService.updateUserTwoFactor(userId, false);
 
     // Emit event after work is done
     await this.typeSafeEventEmitter.emitAsync(
@@ -607,7 +518,7 @@ export class AuthService extends BaseService {
   private generateTokens(user: User) {
     const payload = {
       sub: user.id,
-      email: user.email,
+      phone: user.phone,
       name: user.name,
     };
 

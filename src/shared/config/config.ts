@@ -57,7 +57,6 @@ export const Config = {
 
   auth: {
     passwordResetExpiresHours: env.PASSWORD_RESET_EXPIRES_HOURS,
-    emailVerificationExpiresHours: env.EMAIL_VERIFICATION_EXPIRES_HOURS,
     phoneVerificationExpiresMinutes: env.PHONE_VERIFICATION_EXPIRES_MINUTES,
   },
 

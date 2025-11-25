@@ -97,15 +97,7 @@ export class UserService extends BaseService {
   }
 
   async createUser(dto: CreateUserDto, _actor: ActorUser): Promise<User> {
-    // Check for existing user by email if email is provided
-    if (dto.email) {
-      const existingUser = await this.userRepository.findByEmail(dto.email);
-      if (existingUser) {
-        throw new UserAlreadyExistsException(dto.email);
-      }
-    }
-
-    // Check for existing user by phone if phone is provided
+    // Check for existing user by phone
     if (dto.phone) {
       const existingUser = await this.userRepository.findByPhone(dto.phone);
       if (existingUser) {
@@ -118,7 +110,6 @@ export class UserService extends BaseService {
 
     // Create user
     const savedUser = await this.userRepository.create({
-      email: dto.email?.toLowerCase(),
       password: hashedPassword, //TODO: do it in entity level
       name: dto.name,
       isActive: dto.isActive ?? true,
@@ -356,16 +347,6 @@ export class UserService extends BaseService {
 
   // Auth-related methods
 
-  async findUserByEmail(
-    email: string,
-    withSensitiveData: boolean = false,
-  ): Promise<User | null> {
-    if (withSensitiveData) {
-      return this.userRepository.findByEmailWithSensitiveData(email);
-    }
-    return this.userRepository.findByEmail(email);
-  }
-
   async findUserByPhone(
     phone: string,
     withSensitiveData: boolean = false,
@@ -405,22 +386,10 @@ export class UserService extends BaseService {
   }
 
   async updateUserTwoFactor(
-    userProfileId: string,
-    twoFactorSecret: string | null | undefined,
+    userId: string,
     twoFactorEnabled: boolean,
   ): Promise<void> {
-    // Find user by profileId
-    const userProfile = await this.userProfileService.findOne(userProfileId);
-    if (!userProfile) {
-      throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.resourceNotFound'),
-      );
-    }
-    await this.userRepository.updateUserTwoFactor(
-      userProfile.userId,
-      twoFactorSecret || null,
-      twoFactorEnabled,
-    );
+    await this.userRepository.updateUserTwoFactor(userId, twoFactorEnabled);
   }
 
   async update(userId: string, updateData: Partial<User>): Promise<void> {

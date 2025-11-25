@@ -1,10 +1,8 @@
 import { Controller, Get, Query, Res } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { ActivityLogService } from '../services/activity-log.service';
 import { PaginateActivityLogsDto } from '../dto/paginate-activity-logs.dto';
-import { Permissions } from '@/shared/common/decorators/permissions.decorator';
-import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { ExportService } from '@/shared/common/services/export.service';
 import { ActivityLogExportMapper } from '@/shared/common/mappers/activity-log-export.mapper';
 import { ExportActivityLogsDto } from '../dto/export-activity-logs.dto';

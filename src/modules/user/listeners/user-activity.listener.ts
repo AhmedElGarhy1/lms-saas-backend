@@ -28,7 +28,7 @@ export class UserActivityListener {
       UserActivityType.USER_CREATED,
       {
         targetUserId: event.user.id,
-        email: event.user.email,
+        phone: event.user.phone,
         name: event.user.name,
         profileType: event.profile.profileType,
         createdBy: event.actor?.id,

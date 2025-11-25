@@ -11,11 +11,7 @@ import { BaseService } from '@/shared/common/services/base.service';
 import { Config } from '@/shared/config/config';
 import { UserService } from '../../user/services/user.service';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
-import {
-  PasswordResetRequestedEvent,
-  EmailVerificationRequestedEvent,
-  OtpEvent,
-} from '../events/auth.events';
+import { PasswordResetRequestedEvent, OtpEvent } from '../events/auth.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { VerificationType } from '../enums/verification-type.enum';
 import { NotificationChannel } from '../../notifications/enums/notification-channel.enum';
@@ -23,7 +19,6 @@ import { VerificationToken } from '../entities/verification-token.entity';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { Transactional } from '@nestjs-cls/transactional';
-import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 
@@ -64,14 +59,6 @@ export class VerificationService extends BaseService {
   }
 
   /**
-   * Get default expiration time for email verification
-   */
-  private getEmailVerificationExpiration(): Date {
-    const expirationHours = Config.auth.emailVerificationExpiresHours;
-    return new Date(Date.now() + expirationHours * 60 * 60 * 1000);
-  }
-
-  /**
    * Get default expiration time for password reset
    */
   private getPasswordResetExpiration(): Date {
@@ -99,17 +86,15 @@ export class VerificationService extends BaseService {
 
     if (!expiresAt) {
       switch (data.type) {
-        case VerificationType.EMAIL_VERIFICATION:
-          expiresAt = this.getEmailVerificationExpiration();
-          break;
         case VerificationType.PASSWORD_RESET:
           expiresAt = this.getPasswordResetExpiration();
           break;
         case VerificationType.OTP_VERIFICATION:
+        case VerificationType.TWO_FACTOR_AUTH:
           expiresAt = this.getDefaultOtpExpiration();
           break;
         default:
-          expiresAt = this.getEmailVerificationExpiration();
+          expiresAt = this.getDefaultOtpExpiration();
       }
     }
 
@@ -124,7 +109,11 @@ export class VerificationService extends BaseService {
         userId: data.userId,
         type: data.type,
         token,
-        code: data.type === VerificationType.OTP_VERIFICATION ? code : null,
+        code:
+          data.type === VerificationType.OTP_VERIFICATION ||
+          data.type === VerificationType.TWO_FACTOR_AUTH
+            ? code
+            : null,
         expiresAt,
       });
 
@@ -189,7 +178,7 @@ export class VerificationService extends BaseService {
    */
   async verifyToken(
     token: string,
-  ): Promise<{ userId: string; email?: string; phone?: string }> {
+  ): Promise<{ userId: string; phone?: string }> {
     const verificationToken = await this.findByToken(token);
 
     // Mark as verified
@@ -205,7 +194,6 @@ export class VerificationService extends BaseService {
 
     return {
       userId: verificationToken.userId,
-      email: user.email || undefined,
       phone: user.getPhone() || undefined,
     };
   }
@@ -217,7 +205,7 @@ export class VerificationService extends BaseService {
     code: string,
     type: VerificationType,
     userId?: string,
-  ): Promise<{ userId: string; email?: string; phone?: string }> {
+  ): Promise<{ userId: string; phone?: string }> {
     const verificationToken = await this.findByCode(code, type, userId);
 
     // Mark as verified
@@ -235,7 +223,6 @@ export class VerificationService extends BaseService {
 
     return {
       userId: verificationToken.userId,
-      email: user.email || undefined,
       phone: user.getPhone() || undefined,
     };
   }
@@ -309,29 +296,46 @@ export class VerificationService extends BaseService {
         userId,
         verificationToken.code!,
         remainingMinutes || expiresInMinutes,
-        undefined,
         phone,
       ),
     );
   }
 
   /**
-   * Send email verification
+   * Send 2FA OTP via SMS
    * Reuses existing non-expired token if available
    */
-  async sendEmailVerification(actor: ActorUser): Promise<void> {
+  async sendTwoFactorOTP(userId: string, phone: string): Promise<void> {
+    const user = await this.userService.findOne(userId);
+    if (!user) {
+      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
+    }
+
     // Get or create verification token (reuses existing non-expired token)
     const verificationToken = await this.getOrCreateVerificationToken({
-      userId: actor.id,
-      type: VerificationType.EMAIL_VERIFICATION,
+      userId,
+      type: VerificationType.TWO_FACTOR_AUTH,
     });
 
-    const link = `${Config.app.frontendUrl}/verify-email?token=${verificationToken.token}`;
+    const expiresInMinutes = Config.auth.phoneVerificationExpiresMinutes;
 
-    // Emit event for notification system (endpoint requires authentication)
+    // Calculate remaining minutes for existing token
+    const now = new Date();
+    const expiresAt = verificationToken.expiresAt;
+    const remainingMinutes = Math.max(
+      0,
+      Math.floor((expiresAt.getTime() - now.getTime()) / (1000 * 60)),
+    );
+
+    // Emit OTP event for notification system
     await this.typeSafeEventEmitter.emitAsync(
-      AuthEvents.EMAIL_VERIFICATION_REQUESTED,
-      new EmailVerificationRequestedEvent(actor, verificationToken.token, link),
+      AuthEvents.OTP,
+      new OtpEvent(
+        userId,
+        verificationToken.code!,
+        remainingMinutes || expiresInMinutes,
+        phone,
+      ),
     );
   }
 
@@ -349,26 +353,19 @@ export class VerificationService extends BaseService {
       throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
     }
 
-    // Determine recipient based on channel - use user's stored email/phone
-    let recipient: string;
-    if (channel === NotificationChannel.EMAIL) {
-      recipient = user.email || '';
-      if (!recipient) {
-        throw new BadRequestException(
-          this.i18n.translate('t.errors.userHasNoEmail'),
-        );
-      }
-    } else if (
-      channel === NotificationChannel.SMS ||
-      channel === NotificationChannel.WHATSAPP
+    // Determine recipient based on channel - use user's stored phone
+    const recipient = user.getPhone();
+    if (!recipient) {
+      throw new BadRequestException(
+        this.i18n.translate('t.errors.userHasNoPhone'),
+      );
+    }
+
+    // Only SMS and WhatsApp are supported for password reset
+    if (
+      channel !== NotificationChannel.SMS &&
+      channel !== NotificationChannel.WHATSAPP
     ) {
-      recipient = user.getPhone();
-      if (!recipient) {
-        throw new BadRequestException(
-          this.i18n.translate('t.errors.userHasNoPhone'),
-        );
-      }
-    } else {
       throw new BadRequestException(
         this.i18n.translate('t.errors.unsupportedChannel'),
       );
@@ -390,38 +387,32 @@ export class VerificationService extends BaseService {
       Math.floor((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60)),
     );
 
-    if (channel === NotificationChannel.EMAIL) {
-      // Emit PASSWORD_RESET_REQUESTED event for email
-      await this.typeSafeEventEmitter.emitAsync(
-        AuthEvents.PASSWORD_RESET_REQUESTED,
-        new PasswordResetRequestedEvent(
-          recipient,
-          userId,
-          user.name,
-          verificationToken.token,
-          link,
-        ),
-      );
-    } else if (
-      channel === NotificationChannel.SMS ||
-      channel === NotificationChannel.WHATSAPP
-    ) {
-      // Emit OTP event for SMS/WhatsApp with code
-      const expiresInMinutes =
-        remainingHours > 0
-          ? remainingHours * 60
-          : Config.auth.passwordResetExpiresHours * 60;
-      await this.typeSafeEventEmitter.emitAsync(
-        AuthEvents.OTP,
-        new OtpEvent(
-          userId,
-          verificationToken.code!,
-          expiresInMinutes,
-          undefined, // No email for SMS/WhatsApp password reset
-          recipient, // Phone number for SMS/WhatsApp
-        ),
-      );
-    }
+    // Emit PASSWORD_RESET_REQUESTED event
+    await this.typeSafeEventEmitter.emitAsync(
+      AuthEvents.PASSWORD_RESET_REQUESTED,
+      new PasswordResetRequestedEvent(
+        recipient,
+        userId,
+        user.name,
+        verificationToken.token,
+        link,
+      ),
+    );
+
+    // Also emit OTP event for SMS/WhatsApp with code
+    const expiresInMinutes =
+      remainingHours > 0
+        ? remainingHours * 60
+        : Config.auth.passwordResetExpiresHours * 60;
+    await this.typeSafeEventEmitter.emitAsync(
+      AuthEvents.OTP,
+      new OtpEvent(
+        userId,
+        verificationToken.code!,
+        expiresInMinutes,
+        recipient, // Phone number for SMS/WhatsApp
+      ),
+    );
   }
 
   /**
@@ -504,13 +495,7 @@ export class VerificationService extends BaseService {
     await this.verificationTokenRepository.deleteByUserIdAndType(userId, type);
 
     // Send new verification
-    // Note: Email verification is not supported here as it requires an authenticated actor.
-    // Use requestEmailVerification endpoint instead.
-    if (type === VerificationType.EMAIL_VERIFICATION) {
-      throw new BadRequestException(
-        this.i18n.translate('t.errors.emailVerificationMustBeAuthenticated'),
-      );
-    } else if (type === VerificationType.PASSWORD_RESET) {
+    if (type === VerificationType.PASSWORD_RESET) {
       await this.sendPasswordReset(userId, channel);
     } else if (type === VerificationType.OTP_VERIFICATION) {
       const user = await this.userService.findOne(userId);
@@ -520,6 +505,14 @@ export class VerificationService extends BaseService {
         );
       }
       await this.sendPhoneVerification(userId, phone || user.getPhone());
+    } else if (type === VerificationType.TWO_FACTOR_AUTH) {
+      const user = await this.userService.findOne(userId);
+      if (!user) {
+        throw new NotFoundException(
+          this.i18n.translate('t.errors.userNotFound'),
+        );
+      }
+      await this.sendTwoFactorOTP(userId, phone || user.getPhone());
     }
   }
 }

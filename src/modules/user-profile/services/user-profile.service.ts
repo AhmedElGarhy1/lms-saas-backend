@@ -172,7 +172,6 @@ export class UserProfileService extends BaseService {
     const userUpdateData: UpdateUserDto = {
       name: dto.name,
       phone: dto.phone,
-      email: dto.email,
       isActive: dto.isActive,
       userInfo: {
         address: dto.userInfo?.address,

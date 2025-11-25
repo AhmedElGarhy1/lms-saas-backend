@@ -1,4 +1,5 @@
 import { Controller, Get, Put, Param, Body, Query } from '@nestjs/common';
+import { Transactional } from '@nestjs-cls/transactional';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
@@ -88,6 +89,7 @@ export class InAppNotificationController {
 
   @Put('read')
   @ApiOperation({ summary: 'Mark notifications as read' })
+  @Transactional()
   async markAsRead(@GetUser() actor: ActorUser, @Body() dto: MarkAsReadDto) {
     await this.inAppNotificationService.markMultipleAsRead(
       dto.notificationIds,
@@ -106,6 +108,7 @@ export class InAppNotificationController {
 
   @Put('read-all')
   @ApiOperation({ summary: 'Mark all notifications as read' })
+  @Transactional()
   async markAllAsRead(
     @GetUser() actor: ActorUser,
     @Query('profileType') profileType?: ProfileType,
@@ -129,6 +132,7 @@ export class InAppNotificationController {
 
   @Put(':id/archive')
   @ApiOperation({ summary: 'Archive a notification' })
+  @Transactional()
   async archive(
     @GetUser() actor: ActorUser,
     @Param('id') notificationId: string,

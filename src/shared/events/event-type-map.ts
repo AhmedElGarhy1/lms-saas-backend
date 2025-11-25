@@ -20,7 +20,6 @@ import {
   TwoFactorDisabledEvent,
   TwoFactorSetupEvent,
   PasswordChangedEvent,
-  EmailVerifiedEvent,
   UserLoginFailedEvent,
 } from '@/modules/auth/events/auth.events';
 import {
@@ -61,8 +60,6 @@ import {
 } from '@/modules/staff/events/staff.events';
 import {
   PasswordResetRequestedEvent,
-  EmailVerificationRequestedEvent,
-  RequestEmailVerificationEvent,
   RequestPhoneVerificationEvent,
   OtpEvent,
   PhoneVerifiedEvent,
@@ -99,7 +96,6 @@ export type EventTypeMap = {
   [AuthEvents.USER_LOGIN_FAILED]: UserLoginFailedEvent;
   [AuthEvents.TOKEN_REFRESHED]: TokenRefreshedEvent;
   [AuthEvents.PASSWORD_CHANGED]: PasswordChangedEvent;
-  [AuthEvents.EMAIL_VERIFIED]: EmailVerifiedEvent;
   [AuthEvents.TWO_FA_SETUP]: TwoFactorSetupEvent;
   [AuthEvents.TWO_FA_ENABLED]: TwoFactorEnabledEvent;
   [AuthEvents.TWO_FA_DISABLED]: TwoFactorDisabledEvent;
@@ -142,8 +138,6 @@ export type EventTypeMap = {
 
   // Additional Auth Events
   [AuthEvents.PASSWORD_RESET_REQUESTED]: PasswordResetRequestedEvent;
-  [AuthEvents.EMAIL_VERIFICATION_REQUESTED]: EmailVerificationRequestedEvent;
-  [AuthEvents.EMAIL_VERIFICATION_SEND_REQUESTED]: RequestEmailVerificationEvent;
   [AuthEvents.PHONE_VERIFICATION_SEND_REQUESTED]: RequestPhoneVerificationEvent;
   [AuthEvents.OTP]: OtpEvent;
   [AuthEvents.PHONE_VERIFIED]: PhoneVerifiedEvent;

@@ -18,8 +18,6 @@ import {
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { Permissions } from '@/shared/common/decorators/permissions.decorator';
-import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
 import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
@@ -52,6 +50,7 @@ export class CentersAccessController {
     type: String,
   })
   @ApiBody({ type: ToggleUserStatusRequestDto })
+  @Transactional()
   async toggleCenterAccessStatus(
     @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
     @Body() dto: ToggleUserStatusRequestDto,

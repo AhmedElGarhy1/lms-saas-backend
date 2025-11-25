@@ -3,7 +3,6 @@ import { UserResponseDto } from '@/modules/user/dto/user-response.dto';
 
 export interface UserResponseExportData {
   id: string;
-  email: string;
   phone: string;
   name: string;
   isActive: boolean;
@@ -18,7 +17,6 @@ export class UserResponseExportMapper
   mapToExport(user: UserResponseDto): UserResponseExportData {
     return {
       id: user.id,
-      email: user.email || '',
       phone: user.phone || '',
       name: user.name || '',
       isActive: user.isActive,
@@ -31,7 +29,7 @@ export class UserResponseExportMapper
   getHeaders(): string[] {
     return [
       'ID',
-      'Email',
+      'Phone',
       'Name',
       'Is Active',
       'Two Factor Enabled',

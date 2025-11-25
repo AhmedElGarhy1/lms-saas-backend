@@ -1,4 +1,5 @@
 import { Controller, Post, Delete, Body } from '@nestjs/common';
+import { Transactional } from '@nestjs-cls/transactional';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -26,6 +27,8 @@ export class BranchesAccessController {
     status: 404,
     description: 'User or branch not found',
   })
+  @Permissions(PERMISSIONS.STAFF.GRANT_BRANCH_ACCESS)
+  @Transactional()
   async assignUserToBranch(
     @Body() branchAccessDto: BranchAccessDto,
     @GetUser() actor: ActorUser,
@@ -47,11 +50,13 @@ export class BranchesAccessController {
     status: 404,
     description: 'User assignment not found',
   })
+  @Permissions(PERMISSIONS.STAFF.GRANT_BRANCH_ACCESS)
+  @Transactional()
   async removeUserFromBranch(
     @Body() branchAccessDto: BranchAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    const branchAccess = await this.accessControlService.removeUserFromBranch(
+    await this.accessControlService.removeUserFromBranch(
       branchAccessDto,
       actor,
     );

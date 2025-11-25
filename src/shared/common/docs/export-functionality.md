@@ -339,7 +339,7 @@ export class ExportUsersDto extends ExportQueryDto {
   isActive?: boolean;
   profileType?: string;
   twoFactorEnabled?: boolean;
-  emailVerified?: boolean;
+  phoneVerified?: boolean;
   centerId?: string;
 }
 ```

@@ -379,36 +379,6 @@ export class ExportFailedException extends HttpException {
   }
 }
 
-export class TwoFactorGenerationFailedException extends HttpException {
-  constructor(message: string) {
-    super(
-      {
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message,
-        error: 'Two Factor Generation Failed',
-        code: ErrorCode.TWO_FACTOR_GENERATION_FAILED,
-        timestamp: new Date().toISOString(),
-      } as EnhancedErrorResponse,
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
-  }
-}
-
-export class QrCodeGenerationFailedException extends HttpException {
-  constructor(message: string) {
-    super(
-      {
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message,
-        error: 'QR Code Generation Failed',
-        code: ErrorCode.QR_CODE_GENERATION_FAILED,
-        timestamp: new Date().toISOString(),
-      } as EnhancedErrorResponse,
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
-  }
-}
-
 export class MissingRequiredHeaderException extends HttpException {
   constructor(header: string) {
     super(

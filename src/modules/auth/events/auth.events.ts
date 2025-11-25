@@ -5,7 +5,7 @@ import { SystemEvent } from '@/shared/common/base/system-event';
 export class UserLoggedInEvent extends BaseEvent {
   constructor(
     public readonly userId: string,
-    public readonly email: string,
+    public readonly phone: string,
     actor: ActorUser,
   ) {
     super(actor);
@@ -39,15 +39,6 @@ export class PasswordChangedEvent extends BaseEvent {
   }
 }
 
-export class EmailVerifiedEvent extends BaseEvent {
-  constructor(
-    public readonly userId: string,
-    actor: ActorUser,
-  ) {
-    super(actor);
-  }
-}
-
 export class PhoneVerifiedEvent extends BaseEvent {
   constructor(
     public readonly userId: string,
@@ -60,7 +51,7 @@ export class PhoneVerifiedEvent extends BaseEvent {
 
 export class UserLoginFailedEvent extends SystemEvent {
   constructor(
-    public readonly emailOrPhone: string,
+    public readonly phone: string,
     public readonly userId?: string,
     public readonly reason?: string,
   ) {
@@ -70,7 +61,7 @@ export class UserLoginFailedEvent extends SystemEvent {
 
 export class PasswordResetRequestedEvent extends SystemEvent {
   constructor(
-    public readonly email: string,
+    public readonly phone: string,
     public readonly userId?: string,
     public readonly name?: string,
     public readonly token?: string,
@@ -80,22 +71,11 @@ export class PasswordResetRequestedEvent extends SystemEvent {
   }
 }
 
-export class EmailVerificationRequestedEvent extends BaseEvent {
-  constructor(
-    actor: ActorUser,
-    public readonly token: string,
-    public readonly link: string,
-  ) {
-    super(actor);
-  }
-}
-
 export class OtpEvent extends SystemEvent {
   constructor(
     public readonly userId: string,
     public readonly otpCode: string,
     public readonly expiresIn: number, // in minutes
-    public readonly email?: string,
     public readonly phone?: string,
   ) {
     super();
@@ -112,21 +92,6 @@ export class RequestPhoneVerificationEvent extends SystemEvent {
     public readonly phone: string,
   ) {
     super();
-  }
-}
-
-/**
- * Event to request email verification for a user
- * Can be emitted from any module to trigger email verification
- * Note: This is different from EmailVerificationRequestedEvent (which is emitted AFTER token creation)
- */
-export class RequestEmailVerificationEvent extends BaseEvent {
-  constructor(
-    actor: ActorUser,
-    public readonly userId: string,
-    public readonly email: string,
-  ) {
-    super(actor);
   }
 }
 

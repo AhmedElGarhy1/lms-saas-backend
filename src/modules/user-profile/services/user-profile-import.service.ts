@@ -16,6 +16,7 @@ import { UserProfileService } from './user-profile.service';
 import { UserProfileRepository } from '../repositories/user-profile.repository';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { ProfileTypePermissionService } from '@/modules/access-control/services/profile-type-permission.service';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { VerificationType } from '@/modules/auth/enums/verification-type.enum';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
@@ -42,6 +43,7 @@ export class UserProfileImportService extends BaseService {
     @Inject(forwardRef(() => AccessControlService))
     private readonly accessControlService: AccessControlService,
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly profileTypePermissionService: ProfileTypePermissionService,
     private readonly activityLogService: ActivityLogService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly i18n: I18nService<I18nTranslations>,
@@ -147,13 +149,7 @@ export class UserProfileImportService extends BaseService {
 
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.OTP,
-      new OtpEvent(
-        user.id,
-        verificationToken.code!,
-        expiresInMinutes,
-        undefined,
-        phone,
-      ),
+      new OtpEvent(user.id, verificationToken.code!, expiresInMinutes, phone),
     );
   }
 
@@ -179,6 +175,27 @@ export class UserProfileImportService extends BaseService {
     // Resolve centerId for actual import: use dto.centerId if provided, otherwise use actor.centerId
     // centerId is optional - if not provided, we'll just create profile without center access
     const resolvedCenterId = dto.centerId ?? actor.centerId;
+
+    // Validate profile-type permission: Check if actor has permission to import this profile type
+    // We validate based on the profile type being imported (from DTO)
+    // This ensures the actor has permission before we create the profile or grant access
+    if (resolvedCenterId) {
+      // Validate permission to grant center access for this profile type
+      await this.profileTypePermissionService.validateProfileTypePermission({
+        actorUserProfileId: actor.userProfileId,
+        profileType: dto.profileType, // Use profileType from DTO for import operation
+        operation: 'grant-center-access',
+        centerId: resolvedCenterId,
+      });
+    } else {
+      // If no centerId, validate permission to create this profile type
+      // This is for creating profile without center access
+      await this.profileTypePermissionService.validateProfileTypePermission({
+        actorUserProfileId: actor.userProfileId,
+        profileType: dto.profileType,
+        operation: 'import', // Use 'import' operation for profile creation without center access
+      });
+    }
 
     // Get eligibility info using resolved centerId (for import logic)
     const { existingProfile } = await this.getImportEligibilityInfo(

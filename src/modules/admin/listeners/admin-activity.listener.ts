@@ -23,7 +23,6 @@ export class AdminActivityListener {
       AdminActivityType.ADMIN_CREATED,
       {
         adminId: admin.id,
-        email: user.email,
         phone: user.phone,
         roleId: roleId,
       },

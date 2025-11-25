@@ -3,7 +3,6 @@ import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationManifest } from '../manifests/types/manifest.types';
 import { otpManifest } from '../manifests/auth/otp.manifest';
 import { passwordResetManifest } from '../manifests/auth/password-reset.manifest';
-import { emailVerificationManifest } from '../manifests/auth/email-verification.manifest';
 import { phoneVerifiedManifest } from '../manifests/auth/phone-verified.manifest';
 import { centerCreatedManifest } from '../manifests/center/center-created.manifest';
 import { centerUpdatedManifest } from '../manifests/center/center-updated.manifest';
@@ -36,11 +35,9 @@ type ExtractChannelsFromManifestConst<TManifest extends NotificationManifest> =
 export type AvailableChannels<TType extends NotificationType> =
   TType extends NotificationType.OTP
     ? ExtractChannelsFromManifestConst<typeof otpManifest>
-    : TType extends NotificationType.PASSWORD_RESET
+    :   TType extends NotificationType.PASSWORD_RESET
       ? ExtractChannelsFromManifestConst<typeof passwordResetManifest>
-      : TType extends NotificationType.EMAIL_VERIFICATION
-        ? ExtractChannelsFromManifestConst<typeof emailVerificationManifest>
-        : TType extends NotificationType.PHONE_VERIFIED
+      : TType extends NotificationType.PHONE_VERIFIED
           ? ExtractChannelsFromManifestConst<typeof phoneVerifiedManifest>
           : TType extends NotificationType.CENTER_CREATED
             ? ExtractChannelsFromManifestConst<typeof centerCreatedManifest>

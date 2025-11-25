@@ -1027,7 +1027,6 @@ export type I18nTranslations = {
             "userHasNoEmail": string;
             "userHasNoPhone": string;
             "unsupportedChannel": string;
-            "emailVerificationMustBeAuthenticated": string;
             "userAlreadyHasProfile": string;
             "centerAlreadyExists": string;
             "userAlreadyHasProfileCannotImport": string;
@@ -1297,7 +1296,6 @@ export type I18nTranslations = {
             "upload": string;
             "download": string;
             "tokenRefreshed": string;
-            "emailVerified": string;
             "passwordResetSent": string;
             "passwordReset": string;
             "twoFactorSetup": string;
@@ -1307,7 +1305,6 @@ export type I18nTranslations = {
             "userDeactivated": string;
             "otpSent": string;
             "userImported": string;
-            "emailVerificationRequestSent": string;
             "phoneVerificationRequestSent": string;
             "phoneVerified": string;
             "centerAccessGranted": string;

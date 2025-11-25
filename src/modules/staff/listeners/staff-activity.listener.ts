@@ -24,7 +24,6 @@ export class StaffActivityListener {
       StaffActivityType.STAFF_CREATED,
       {
         staffId: staff.id,
-        email: user.email,
         phone: user.phone,
         centerId: centerId,
         roleId: roleId,

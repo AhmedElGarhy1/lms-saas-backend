@@ -8,7 +8,6 @@ import {
 } from '@/modules/centers/events/center.events';
 import {
   PasswordResetRequestedEvent,
-  EmailVerificationRequestedEvent,
   OtpEvent,
   PhoneVerifiedEvent,
 } from '@/modules/auth/events/auth.events';
@@ -43,7 +42,7 @@ export class NotificationListener {
       profileId: actor.userProfileId,
       profileType: actor.profileType,
       phone: actor.getPhone(),
-      email: center.email || actor.email || null,
+      email: center.email || null,
       locale: actor.userInfo?.locale || 'en',
       centerId: center.id,
     };
@@ -54,7 +53,7 @@ export class NotificationListener {
       profileId: actor.userProfileId,
       profileType: actor.profileType,
       phone: actor.getPhone(),
-      email: actor.email || null,
+      email: null,
       locale: actor.userInfo?.locale || 'en',
       centerId: center.id,
     };
@@ -131,7 +130,7 @@ export class NotificationListener {
       profileId: actor.userProfileId,
       profileType: actor.profileType,
       phone: actor.getPhone(),
-      email: actor.email || null,
+      email: null,
       locale: actor.userInfo?.locale || 'en',
       centerId: centerId,
     };
@@ -196,7 +195,7 @@ export class NotificationListener {
       profileId: null,
       profileType: null,
       phone: user.getPhone(),
-      email: event.email,
+      email: null,
       locale: user.userInfo.locale,
     };
 
@@ -222,46 +221,6 @@ export class NotificationListener {
     );
   }
 
-  @OnEvent(AuthEvents.EMAIL_VERIFICATION_REQUESTED)
-  async handleEmailVerificationRequested(
-    event: ValidateEvent<
-      EmailVerificationRequestedEvent,
-      AuthEvents.EMAIL_VERIFICATION_REQUESTED
-    >,
-  ) {
-    const { actor } = event;
-    const recipient: RecipientInfo = {
-      userId: actor.id,
-      profileId: null,
-      profileType: null,
-      phone: actor.getPhone(),
-      email: actor.email || null,
-      locale: actor.userInfo.locale,
-      centerId: undefined,
-    };
-
-    const validRecipients = this.helper.validateRecipients(
-      [recipient],
-      NotificationType.EMAIL_VERIFICATION,
-    );
-
-    if (validRecipients.length === 0) {
-      return;
-    }
-
-    await this.helper.validateAndTriggerNotification(
-      NotificationType.EMAIL_VERIFICATION,
-      'DEFAULT',
-      event,
-      validRecipients,
-      {
-        context: {
-          userId: actor.id,
-        },
-      },
-    );
-  }
-
   @OnEvent(AuthEvents.OTP)
   async handleOtp(event: ValidateEvent<OtpEvent, AuthEvents.OTP>) {
     // Fetch user to get phone and locale
@@ -282,7 +241,7 @@ export class NotificationListener {
       profileId: null,
       profileType: null,
       phone: user.getPhone(),
-      email: event.email || null,
+      email: null,
       locale: user.userInfo.locale,
     };
 
@@ -300,7 +259,6 @@ export class NotificationListener {
       userId: event.userId,
       otpCode: event.otpCode,
       expiresIn: event.expiresIn,
-      email: event.email,
       phone: event.phone,
       timestamp: event.timestamp,
     };

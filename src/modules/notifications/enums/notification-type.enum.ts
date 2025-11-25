@@ -2,7 +2,6 @@ export enum NotificationType {
   // Auth & Security notifications
   OTP = 'OTP',
   PASSWORD_RESET = 'PASSWORD_RESET',
-  EMAIL_VERIFICATION = 'EMAIL_VERIFICATION',
   PHONE_VERIFIED = 'PHONE_VERIFIED',
 
   // Center notifications
