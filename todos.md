@@ -76,6 +76,7 @@
 [x] fix local is not consistant between backend and frontend
 [x] translation instead of injecting i18service everywhere we can make the internal services or utils like ControllerResponse take safe translaction key string and the service call is inside these utils
 
+[ ] notification translations must be in one file notification.json for easy translation
 [ ] view modals in all modules
 [ ] builk operations
 [ ] clean up notficiation service from testing (doesn't work) and from usless services and monitoring or metrics

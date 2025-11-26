@@ -19,7 +19,7 @@ async function runValidation() {
   const warnOnly = process.env.VALIDATE_WARN_ONLY === 'true';
 
   const validator = new NotificationValidator();
-  const result = validator.performValidation();
+  const result = await validator.performValidation();
 
   if (!result.isValid) {
     logger.error('❌ Manifest validation failed!');

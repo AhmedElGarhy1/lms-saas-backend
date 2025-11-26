@@ -21,7 +21,7 @@ export const otpManifest = {
           template: 'sms/auth/otp',
         },
         [NotificationChannel.IN_APP]: {
-          template: 'in-app/auth/otp',
+          // Template not needed - uses i18n system with NotificationType enum value as key
         },
       },
     },

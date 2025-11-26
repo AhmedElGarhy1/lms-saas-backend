@@ -28,7 +28,7 @@ export const centerUpdatedManifest = {
           template: 'center_updated',
         },
         [NotificationChannel.IN_APP]: {
-          template: 'in-app/center-updated',
+          // Template not needed - uses i18n system with NotificationType enum value as key
         },
       },
     },

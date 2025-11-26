@@ -11,6 +11,7 @@ import { NotificationRegistry } from '../src/modules/notifications/manifests/reg
 import { NotificationManifestResolver } from '../src/modules/notifications/manifests/registry/notification-manifest-resolver.service';
 import { Locale } from '../src/shared/common/enums/locale.enum';
 import { ChannelManifest } from '../src/modules/notifications/manifests/types/manifest.types';
+import { extractI18nVariables } from '../src/modules/notifications/utils/notification-i18n.util';
 
 interface ValidationError {
   type: string;
@@ -94,6 +95,113 @@ async function validateTemplates(): Promise<ValidationResult> {
             });
           }
           continue; // Skip template file validation for WhatsApp
+        }
+
+        // Special handling for IN_APP channel - validate t.json structure instead of file paths
+        if (channel === NotificationChannel.IN_APP) {
+          // Use notification type enum value directly (e.g., "OTP", "PASSWORD_RESET")
+          const notificationKey = type; // type is already the enum value string
+
+          // Validate for all supported locales
+          for (const locale of Object.values(Locale)) {
+            totalTemplates++;
+
+            const notificationsJsonPath = join(
+              process.cwd(),
+              'src/i18n',
+              locale,
+              'notifications.json',
+            );
+
+            if (!existsSync(notificationsJsonPath)) {
+              missingTemplates++;
+              errors.push({
+                type,
+                audience: audienceId,
+                channel,
+                locale,
+                template: 'notifications.json',
+                message: `Missing notifications.json file for locale ${locale}`,
+              });
+              continue;
+            }
+
+            try {
+              const notificationsJsonContent = await readFile(
+                notificationsJsonPath,
+                'utf-8',
+              );
+              const notificationsJson = JSON.parse(notificationsJsonContent);
+
+              // Check if notification key exists (using enum value directly)
+              if (!notificationsJson[notificationKey]) {
+                invalidTemplates++;
+                errors.push({
+                  type,
+                  audience: audienceId,
+                  channel,
+                  locale,
+                  template: 'notifications.json',
+                  message: `Missing notification key '${notificationKey}' in ${locale}/notifications.json`,
+                });
+                continue;
+              }
+
+              const notification = notificationsJson[notificationKey];
+
+              // Validate structure
+              if (
+                !notification.title ||
+                typeof notification.title !== 'string'
+              ) {
+                invalidTemplates++;
+                errors.push({
+                  type,
+                  audience: audienceId,
+                  channel,
+                  locale,
+                  template: 'notifications.json',
+                  message: `Invalid or missing 'title' in ${notificationKey} for ${locale}`,
+                });
+                continue;
+              }
+
+              if (
+                !notification.message ||
+                typeof notification.message !== 'string'
+              ) {
+                invalidTemplates++;
+                errors.push({
+                  type,
+                  audience: audienceId,
+                  channel,
+                  locale,
+                  template: 'notifications.json',
+                  message: `Invalid or missing 'message' in ${notificationKey} for ${locale}`,
+                });
+                continue;
+              }
+
+              // For IN_APP, we only validate that translations exist and have valid structure
+              // Variable validation is done at runtime when event data is available
+              // This is because IN_APP may use different variables than other channels
+              // (e.g., {center.name} instead of {centerName})
+              // The runtime validation in NotificationRenderer will catch missing variables
+
+              validatedTemplates++;
+            } catch (error) {
+              invalidTemplates++;
+              errors.push({
+                type,
+                audience: audienceId,
+                channel,
+                locale,
+                template: 'notifications.json',
+                message: `Failed to parse or validate notifications.json for ${locale}: ${error instanceof Error ? error.message : String(error)}`,
+              });
+            }
+          }
+          continue; // Skip file-based validation for IN_APP
         }
 
         if (!config?.template) {

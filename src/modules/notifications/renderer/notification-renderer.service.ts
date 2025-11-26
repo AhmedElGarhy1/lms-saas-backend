@@ -75,10 +75,11 @@ export class NotificationRenderer extends BaseService {
 
     // 5. Extract base template path (remove channel prefix if present)
     // Template path from config may be like "email/auth/otp-sent" or just "auth/otp-sent"
-    const templatePath = config.template!;
+    // For IN_APP channel, template is optional - we use i18n system instead
+    const templatePath = config.template || 'default';
 
     // 6. Render template with channel support (supports .hbs, .txt, .json)
-    // Try primary template first, fallback to default template on error
+    // For IN_APP, we skip file loading and use i18n directly
     let renderedContent: string | object;
     let usedFallback = false;
     try {
@@ -87,6 +88,7 @@ export class NotificationRenderer extends BaseService {
         eventData,
         finalLocale,
         channel,
+        notificationType, // Pass notificationType for i18n-based JSON rendering
       );
     } catch (error) {
       const errorMessage =
@@ -110,6 +112,7 @@ export class NotificationRenderer extends BaseService {
           eventData,
           finalLocale,
           channel,
+          notificationType, // Pass notificationType for i18n-based JSON rendering
         );
         usedFallback = true;
         this.logger.warn(

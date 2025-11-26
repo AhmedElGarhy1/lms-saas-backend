@@ -23,14 +23,14 @@ export const centerCreatedManifest = {
     ADMIN: {
       channels: {
         [NotificationChannel.IN_APP]: {
-          template: 'in-app/center-created',
+          // Template not needed - uses i18n system with NotificationType enum value as key
         },
       },
     },
     OWNER: {
       channels: {
         [NotificationChannel.IN_APP]: {
-          template: 'in-app/center-created',
+          // Template not needed - uses i18n system with NotificationType enum value as key
         },
       },
     },

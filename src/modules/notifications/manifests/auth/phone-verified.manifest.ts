@@ -21,7 +21,7 @@ export const phoneVerifiedManifest = {
           template: 'sms/auth/phone-verified',
         },
         [NotificationChannel.IN_APP]: {
-          template: 'in-app/auth/phone-verified',
+          // Template not needed - uses i18n system with NotificationType enum value as key
         },
       },
     },

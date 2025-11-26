@@ -1,4 +1,7 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
+import { existsSync } from 'fs';
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationRegistry } from '../manifests/registry/notification-registry';
@@ -6,6 +9,7 @@ import { NotificationManifestResolver } from '../manifests/registry/notification
 import { templateExists, getTemplatePath } from '../utils/template-path.util';
 import { Locale } from '@/shared/common/enums/locale.enum';
 import { ChannelManifest } from '../manifests/types/manifest.types';
+import { extractI18nVariables } from '../utils/notification-i18n.util';
 
 // Test environment detection - check NODE_ENV first (set by test-setup.ts)
 // This is the most reliable indicator since test-setup.ts runs before any tests
@@ -65,19 +69,21 @@ export class NotificationValidator implements OnModuleInit {
       // Silently skip in test mode - don't log to avoid noise
       return;
     }
-    this.validateManifests();
+    // Note: onModuleInit cannot be async, so we call validateManifests without awaiting
+    // This is acceptable since validation errors will be logged and thrown if in CI
+    void this.validateManifests();
   }
 
   /**
    * Validate all manifests and log results
    * Fail-open in local dev, strict in CI
    */
-  validateManifests(): void {
+  async validateManifests(): Promise<void> {
     if (this.logger) {
       this.logger.log('Validating notification manifests...');
     }
 
-    const result = this.performValidation();
+    const result = await this.performValidation();
 
     if (!result.isValid) {
       if (this.isCI) {
@@ -124,7 +130,7 @@ export class NotificationValidator implements OnModuleInit {
    * Perform validation checks
    * @returns Validation result with errors and warnings
    */
-  performValidation(): ValidationResult {
+  async performValidation(): Promise<ValidationResult> {
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -178,10 +184,10 @@ export class NotificationValidator implements OnModuleInit {
           // Convert channel key to NotificationChannel enum
           const channel = channelKey as NotificationChannel;
 
-          // Validate template is provided (required field)
-          if (!config.template) {
+          // Validate template is provided (required for all channels except IN_APP)
+          if (!config.template && channel !== NotificationChannel.IN_APP) {
             errors.push(
-              `Missing template for ${type}:${audienceId}:${channel}. Template is required for all channels.`,
+              `Missing template for ${type}:${audienceId}:${channel}. Template is required for all channels except IN_APP.`,
             );
             continue;
           }
@@ -193,20 +199,92 @@ export class NotificationValidator implements OnModuleInit {
             continue;
           }
 
+          // Special handling for IN_APP channel - validate t.json structure instead of file paths
+          if (channel === NotificationChannel.IN_APP) {
+            // Use notification type enum value directly (e.g., "OTP", "PASSWORD_RESET")
+            const notificationKey = type; // type is already the enum value string
+            const supportedLocales = Object.values(Locale);
+
+            for (const locale of supportedLocales) {
+              const notificationsJsonPath = join(
+                process.cwd(),
+                'src/i18n',
+                locale,
+                'notifications.json',
+              );
+
+              if (!existsSync(notificationsJsonPath)) {
+                errors.push(
+                  `Missing notifications.json for locale ${locale} (required for IN_APP notifications)`,
+                );
+                continue;
+              }
+
+              try {
+                const notificationsJsonContent = await readFile(
+                  notificationsJsonPath,
+                  'utf-8',
+                );
+                const notificationsJson = JSON.parse(notificationsJsonContent);
+
+                if (!notificationsJson[notificationKey]) {
+                  errors.push(
+                    `Missing notification key '${notificationKey}' in ${locale}/notifications.json for ${type}`,
+                  );
+                } else {
+                  // Validate structure
+                  const notification = notificationsJson[notificationKey] as {
+                    title?: string;
+                    message?: string;
+                  };
+                  if (
+                    !notification.title ||
+                    typeof notification.title !== 'string'
+                  ) {
+                    errors.push(
+                      `Invalid or missing 'title' in ${notificationKey} for ${locale}`,
+                    );
+                  }
+                  if (
+                    !notification.message ||
+                    typeof notification.message !== 'string'
+                  ) {
+                    errors.push(
+                      `Invalid or missing 'message' in ${notificationKey} for ${locale}`,
+                    );
+                  }
+
+                  // For IN_APP, we only validate that translations exist and have valid structure
+                  // Variable validation is done at runtime when event data is available
+                  // This is because IN_APP may use different variables than other channels
+                  // (e.g., {center.name} instead of {centerName})
+                  // The runtime validation in NotificationRenderer will catch missing variables
+                }
+              } catch (error) {
+                errors.push(
+                  `Failed to parse notifications.json for locale ${locale}: ${error instanceof Error ? error.message : String(error)}`,
+                );
+              }
+            }
+            continue; // Skip file-based validation for IN_APP
+          }
+
           // Check template exists for all supported locales
           // This ensures templates are available for all users regardless of their locale
-          const supportedLocales = Object.values(Locale);
-          for (const locale of supportedLocales) {
-            const templatePath = getTemplatePath(
-              config.template,
-              locale,
-              channel,
-            );
-
-            if (!templateExists(config.template, locale, channel)) {
-              errors.push(
-                `Missing template: ${type}:${audienceId}:${channel} (${config.template}) for locale ${locale} - Path: ${templatePath}`,
+          if (config.template) {
+            const supportedLocales = Object.values(Locale);
+            for (const locale of supportedLocales) {
+              const templatePath = getTemplatePath(
+                config.template,
+                locale,
+                channel,
               );
+
+              if (!templateExists(config.template, locale, channel)) {
+                errors.push(
+                  `Missing template: ${type}:${audienceId}:${channel} (${config.template}) for locale ${locale} - Path: ${templatePath}`,
+                );
+              }
             }
           }
 

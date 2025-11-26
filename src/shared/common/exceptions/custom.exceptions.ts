@@ -35,14 +35,14 @@ export class ResourceNotFoundException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.NOT_FOUND,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Not Found',
         code: ErrorCode.RESOURCE_NOT_FOUND,
         timestamp: new Date().toISOString(),
@@ -58,14 +58,14 @@ export class ResourceAlreadyExistsException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.CONFLICT,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Conflict',
         code: ErrorCode.RESOURCE_ALREADY_EXISTS,
         timestamp: new Date().toISOString(),
@@ -81,14 +81,14 @@ export class InsufficientPermissionsException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Forbidden',
         code: ErrorCode.INSUFFICIENT_PERMISSIONS,
         timestamp: new Date().toISOString(),
@@ -112,7 +112,10 @@ export class ValidationFailedException extends HttpException {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Bad Request',
         code: ErrorCode.VALIDATION_FAILED,
         timestamp: new Date().toISOString(),
@@ -129,14 +132,14 @@ export class ResourceInUseException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.CONFLICT,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Conflict',
         code: ErrorCode.RESOURCE_IN_USE,
         timestamp: new Date().toISOString(),
@@ -152,14 +155,14 @@ export class InvalidOperationException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Bad Request',
         code: ErrorCode.INVALID_OPERATION,
         timestamp: new Date().toISOString(),
@@ -183,7 +186,10 @@ export class PasswordTooWeakException extends HttpException {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Bad Request',
         code: ErrorCode.PASSWORD_TOO_WEAK,
         timestamp: new Date().toISOString(),
@@ -213,7 +219,10 @@ export class UserAlreadyExistsException extends HttpException {
     super(
       {
         statusCode: HttpStatus.CONFLICT,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Conflict',
         code: ErrorCode.USER_ALREADY_EXISTS,
         timestamp: new Date().toISOString(),
@@ -237,14 +246,14 @@ export class AuthenticationFailedException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.UNAUTHORIZED,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Unauthorized',
         code: ErrorCode.AUTHENTICATION_FAILED,
         timestamp: new Date().toISOString(),
@@ -260,14 +269,14 @@ export class AccessDeniedException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Forbidden',
         code: ErrorCode.ACCESS_DENIED,
         timestamp: new Date().toISOString(),
@@ -283,14 +292,14 @@ export class BusinessLogicException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Bad Request',
         code: ErrorCode.BUSINESS_LOGIC_ERROR,
         timestamp: new Date().toISOString(),
@@ -306,14 +315,14 @@ export class PhoneNotVerifiedException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         code: ErrorCode.PHONE_NOT_VERIFIED,
         timestamp: new Date().toISOString(),
       } as EnhancedErrorResponse,
@@ -328,14 +337,14 @@ export class OtpRequiredException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.UNAUTHORIZED,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Unauthorized',
         code: ErrorCode.OTP_REQUIRED,
         timestamp: new Date().toISOString(),
@@ -351,14 +360,14 @@ export class ServiceUnavailableException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.SERVICE_UNAVAILABLE,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Service Unavailable',
         code: ErrorCode.SERVICE_UNAVAILABLE,
         timestamp: new Date().toISOString(),
@@ -374,14 +383,14 @@ export class CenterSelectionRequiredException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Center Selection Required',
         code: ErrorCode.CENTER_SELECTION_REQUIRED,
         timestamp: new Date().toISOString(),
@@ -397,14 +406,14 @@ export class AdminScopeAccessDeniedException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Admin Scope Access Denied',
         code: ErrorCode.ADMIN_SCOPE_ACCESS_DENIED,
         timestamp: new Date().toISOString(),
@@ -420,14 +429,14 @@ export class CenterAccessDeniedException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Center Access Denied',
         code: ErrorCode.CENTER_ACCESS_DENIED,
         timestamp: new Date().toISOString(),
@@ -443,14 +452,14 @@ export class CenterAccessInactiveException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Center Access Inactive',
         code: ErrorCode.CENTER_ACCESS_INACTIVE,
         timestamp: new Date().toISOString(),
@@ -466,14 +475,14 @@ export class InactiveCenterException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Inactive Center',
         code: ErrorCode.CENTER_INACTIVE,
         timestamp: new Date().toISOString(),
@@ -489,14 +498,14 @@ export class InactiveProfileException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Inactive Profile',
         code: ErrorCode.PROFILE_INACTIVE,
         timestamp: new Date().toISOString(),
@@ -512,14 +521,14 @@ export class SeederException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Seeder Error',
         code: ErrorCode.SEEDER_ERROR,
         timestamp: new Date().toISOString(),
@@ -543,7 +552,10 @@ export class ExportFormatNotSupportedException extends HttpException {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Bad Request',
         code: ErrorCode.EXPORT_FORMAT_NOT_SUPPORTED,
         timestamp: new Date().toISOString(),
@@ -559,14 +571,14 @@ export class ExportDataUnavailableException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.NOT_FOUND,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Not Found',
         code: ErrorCode.EXPORT_DATA_UNAVAILABLE,
         timestamp: new Date().toISOString(),
@@ -582,14 +594,14 @@ export class ExportFailedException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Export Failed',
         code: ErrorCode.EXPORT_FAILED,
         timestamp: new Date().toISOString(),
@@ -613,7 +625,10 @@ export class MissingRequiredHeaderException extends HttpException {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Bad Request',
         code: ErrorCode.MISSING_REQUIRED_HEADER,
         timestamp: new Date().toISOString(),
@@ -629,14 +644,14 @@ export class InvalidContentTypeException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Bad Request',
         code: ErrorCode.INVALID_CONTENT_TYPE,
         timestamp: new Date().toISOString(),
@@ -652,14 +667,14 @@ export class RequestBodyTooLargeException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.PAYLOAD_TOO_LARGE,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Payload Too Large',
         code: ErrorCode.REQUEST_BODY_TOO_LARGE,
         timestamp: new Date().toISOString(),
@@ -675,14 +690,14 @@ export class UnsupportedContentTypeException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.UNSUPPORTED_MEDIA_TYPE,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Unsupported Media Type',
         code: ErrorCode.UNSUPPORTED_CONTENT_TYPE,
         timestamp: new Date().toISOString(),
@@ -698,14 +713,14 @@ export class SystemNotReadyException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.SERVICE_UNAVAILABLE,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Service Unavailable',
         code: ErrorCode.SYSTEM_NOT_READY,
         timestamp: new Date().toISOString(),
@@ -721,14 +736,14 @@ export class BranchAccessDeniedException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Branch Access Denied',
         code: ErrorCode.BRANCH_ACCESS_DENIED,
         timestamp: new Date().toISOString(),
@@ -744,14 +759,14 @@ export class ProfileSelectionRequiredException extends HttpException {
   translationKey: I18nPath;
   translationArgs?: Record<string, any>;
 
-  constructor(
-    translationKey: I18nPath,
-    translationArgs?: Record<string, any>,
-  ) {
+  constructor(translationKey: I18nPath, translationArgs?: Record<string, any>) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
-        message: TranslationService.translateForLogging(translationKey, translationArgs),
+        message: TranslationService.translateForLogging(
+          translationKey,
+          translationArgs,
+        ),
         error: 'Profile Selection Required',
         code: ErrorCode.PROFILE_SELECTION_REQUIRED,
         timestamp: new Date().toISOString(),

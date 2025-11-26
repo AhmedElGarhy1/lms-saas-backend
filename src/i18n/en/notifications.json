@@ -1,0 +1,23 @@
+{
+  "OTP": {
+    "title": "OTP Verification",
+    "message": "Your verification code is {otpCode}. Valid for {expiresIn} minutes."
+  },
+  "PASSWORD_RESET": {
+    "title": "Password Reset Request",
+    "message": "You have requested to reset your password. Click to proceed."
+  },
+  "PHONE_VERIFIED": {
+    "title": "Phone Verified",
+    "message": "Your phone number {phone} has been successfully verified."
+  },
+  "CENTER_CREATED": {
+    "title": "Center Created Successfully",
+    "message": "Your learning center {center.name} has been successfully created! You can now start managing your center."
+  },
+  "CENTER_UPDATED": {
+    "title": "Center Information Updated",
+    "message": "Your center {center.name} information has been successfully updated."
+  }
+}
+
