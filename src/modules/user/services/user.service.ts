@@ -436,7 +436,20 @@ export class UserService extends BaseService {
       targetUserProfileId: actor.userProfileId,
     });
 
-    await this.userInfoService.updateUserInfo(userId, updateData.userInfo);
+    // Validate phone uniqueness if phone is being updated
+    if (updateData.phone) {
+      const existingUser = await this.userRepository.findByPhone(
+        updateData.phone,
+      );
+      // If phone exists and belongs to a different user, throw error
+      if (existingUser && existingUser.id !== userId) {
+        throw new UserAlreadyExistsException(updateData.phone);
+      }
+    }
+
+    if (updateData.userInfo) {
+      await this.userInfoService.updateUserInfo(userId, updateData.userInfo);
+    }
 
     const updatedUser = (await this.userRepository.update(userId, updateData))!;
 
