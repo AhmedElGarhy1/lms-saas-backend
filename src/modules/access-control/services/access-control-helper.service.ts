@@ -249,7 +249,10 @@ export class AccessControlHelperService extends BaseService {
     config: {
       includeDeleted?: boolean;
       includeInactive?: boolean;
-    } = {},
+    } = {
+      includeDeleted: false,
+      includeInactive: true,
+    },
   ): Promise<void> {
     // Check if center is active
     const center = await this.centersService.findCenterById(data.centerId);
@@ -372,5 +375,4 @@ export class AccessControlHelperService extends BaseService {
       centerId,
     );
   }
-
 }
