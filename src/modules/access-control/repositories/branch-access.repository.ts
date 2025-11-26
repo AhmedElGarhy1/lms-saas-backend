@@ -28,10 +28,7 @@ export class BranchAccessRepository extends BaseRepository<BranchAccess> {
   async grantBranchAccess(data: BranchAccessDto) {
     const existingAccess = await this.findBranchAccess(data);
     if (existingAccess) {
-      throw new ResourceAlreadyExistsException(
-        'Access already exists',
-        't.errors.accessAlreadyExists',
-      );
+      throw new ResourceAlreadyExistsException('t.errors.accessAlreadyExists');
     }
 
     return this.create({ ...data, isActive: true });
@@ -40,10 +37,7 @@ export class BranchAccessRepository extends BaseRepository<BranchAccess> {
   async revokeBranchAccess(data: BranchAccessDto) {
     const existingAccess = await this.findBranchAccess(data);
     if (!existingAccess) {
-      throw new ResourceNotFoundException(
-        'Branch access not found',
-        't.errors.branchAccessNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.branchAccessNotFound');
     }
 
     await this.remove(existingAccess.id);

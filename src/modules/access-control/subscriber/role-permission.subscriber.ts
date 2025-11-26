@@ -49,20 +49,14 @@ export class RolePermissionSubscriber
         rolePermission.permissionId,
       );
       if (!permission)
-        throw new ResourceNotFoundException(
-          'Permission not found',
-          't.errors.permissionNotFound',
-        );
+        throw new ResourceNotFoundException('t.errors.permissionNotFound');
 
       if (centerId) {
         if (
           rolePermission.permissionScope === PermissionScope.ADMIN ||
           rolePermission.permissionScope === PermissionScope.BOTH
         ) {
-          throw new BusinessLogicException(
-            'Admin scope is not allowed for center',
-            't.errors.adminScopeNotAllowedForCenter',
-          );
+          throw new BusinessLogicException('t.errors.adminScopeNotAllowedForCenter');
         }
       }
 
@@ -71,11 +65,7 @@ export class RolePermissionSubscriber
         permission.scope !== rolePermission.permissionScope &&
         permission.scope !== PermissionScope.BOTH
       ) {
-        throw new ValidationFailedException(
-          'Permission scope does not match',
-          undefined,
-          't.errors.permissionScopeDoesNotMatch',
-        );
+        throw new ValidationFailedException('t.errors.permissionScopeDoesNotMatch');
       }
     }
   }

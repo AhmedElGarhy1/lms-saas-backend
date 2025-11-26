@@ -53,10 +53,7 @@ export class CentersService extends BaseService {
   async findCenterById(centerId: string, actor?: ActorUser): Promise<Center> {
     const center = await this.centersRepository.findOne(centerId);
     if (!center) {
-      throw new ResourceNotFoundException(
-        'Resource not found',
-        't.errors.resourceNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.resourceNotFound');
     }
 
     // If actor is provided, validate center access
@@ -100,20 +97,15 @@ export class CentersService extends BaseService {
   ): Promise<Center> {
     const center = await this.findCenterById(centerId, actor);
     if (!center) {
-      throw new ResourceNotFoundException(
-        'Resource not found',
-        't.errors.resourceNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.resourceNotFound');
     }
 
     if (dto.name && dto.name !== center.name) {
       const existingCenter = await this.centersRepository.findByName(dto.name);
       if (existingCenter) {
-        throw new BusinessLogicException(
-          `Center with name '${dto.name}' already exists`,
-          't.errors.centerAlreadyExists',
-          { name: dto.name },
-        );
+        throw new BusinessLogicException('t.errors.centerAlreadyExists', {
+          name: dto.name,
+        });
       }
     }
 
@@ -122,10 +114,7 @@ export class CentersService extends BaseService {
       dto,
     );
     if (!updatedCenter) {
-      throw new ResourceNotFoundException(
-        'Resource not found',
-        't.errors.resourceNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.resourceNotFound');
     }
 
     // Emit event after work is done

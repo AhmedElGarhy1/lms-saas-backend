@@ -52,10 +52,7 @@ export class UserProfileService extends BaseService {
     // Get user with profile
     const user = await this.userService.findOne(actor.id);
     if (!user) {
-      throw new ResourceNotFoundException(
-        'User not found',
-        't.errors.userNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.userNotFound');
     }
 
     // Determine context based on centerId
@@ -68,10 +65,7 @@ export class UserProfileService extends BaseService {
     if (!actor.userProfileId) return returnData;
     const userProfile = await this.findOne(actor.userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException(
-        'User profile not found',
-        't.errors.userProfileNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.userProfileNotFound');
     }
     actor.userProfileId = userProfile.id;
     actor.profileType = userProfile.profileType;
@@ -98,10 +92,7 @@ export class UserProfileService extends BaseService {
       actor.profileType,
     );
     if (!profile) {
-      throw new ResourceNotFoundException(
-        'Resource not found',
-        't.errors.resourceNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.resourceNotFound');
     }
 
     returnData.profile = profile;
@@ -123,10 +114,7 @@ export class UserProfileService extends BaseService {
 
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException(
-        'User profile not found',
-        't.errors.userProfileNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.userProfileNotFound');
     }
     await this.userProfileRepository.update(userProfileId, { isActive });
 
@@ -154,10 +142,7 @@ export class UserProfileService extends BaseService {
     // 3. Get the user profile to find the userId
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException(
-        'User profile not found',
-        't.errors.userProfileNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.userProfileNotFound');
     }
 
     // 4. Convert profile update data to user update format
@@ -209,12 +194,9 @@ export class UserProfileService extends BaseService {
       profileType,
     );
     if (existingProfile) {
-      throw new ValidationFailedException(
-        `User already has a ${profileType} profile`,
-        undefined,
-        't.errors.userAlreadyHasProfile',
-        { profileType },
-      );
+      throw new ValidationFailedException('t.errors.userAlreadyHasProfile', undefined, {
+        profileType,
+      });
     }
 
     const userProfile = await this.userProfileRepository.create({
@@ -264,15 +246,11 @@ export class UserProfileService extends BaseService {
       await this.userProfileRepository.findOneSoftDeletedById(userProfileId);
 
     if (!deletedProfile) {
-      throw new ResourceNotFoundException(
-        'User profile not found',
-        't.errors.userProfileNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.userProfileNotFound');
     }
 
     if (!deletedProfile.deletedAt) {
       throw new BusinessLogicException(
-        'Profile is not deleted',
         't.errors.profileNotDeleted',
       );
     }

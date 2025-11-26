@@ -9,7 +9,7 @@ import {
  */
 export class NotificationSendingFailedException extends ServiceUnavailableException {
   constructor(channel: string, error: string, userId?: string) {
-    super(`Failed to send notification via ${channel}: ${error}`);
+    super('t.errors.notificationSendingFailed', { channel, error });
   }
 }
 
@@ -18,7 +18,7 @@ export class NotificationSendingFailedException extends ServiceUnavailableExcept
  */
 export class TemplateRenderingException extends BusinessLogicException {
   constructor(templateName: string, error: string) {
-    super(`Failed to render template ${templateName}: ${error}`);
+    super('t.errors.templateRenderingFailed', { templateName, error });
   }
 }
 
@@ -27,7 +27,7 @@ export class TemplateRenderingException extends BusinessLogicException {
  */
 export class ChannelAdapterException extends ServiceUnavailableException {
   constructor(channel: string, operation: string, error: string) {
-    super(`Channel adapter ${channel} failed during ${operation}: ${error}`);
+    super('t.errors.channelAdapterFailed', { channel, operation, error });
   }
 }
 
@@ -40,9 +40,7 @@ export class InvalidChannelException extends InvalidOperationException {
     expectedChannel: string,
     receivedChannel: string,
   ) {
-    super(
-      `${adapter} can only send ${expectedChannel} notifications, received ${receivedChannel}`,
-    );
+    super('t.errors.invalidChannel', { adapter, expectedChannel, receivedChannel });
   }
 }
 
@@ -51,7 +49,7 @@ export class InvalidChannelException extends InvalidOperationException {
  */
 export class MissingNotificationContentException extends InvalidOperationException {
   constructor(channel: string, contentType: string) {
-    super(`${channel} message ${contentType} is required`);
+    super('t.errors.missingNotificationContent', { channel, contentType });
   }
 }
 
@@ -64,8 +62,10 @@ export class MissingTemplateVariablesException extends InvalidOperationException
     channel: string,
     missingVariables: string[],
   ) {
-    super(
-      `Missing required template variables for ${notificationType} via ${channel}: ${missingVariables.join(', ')}`,
-    );
+    super('t.errors.missingTemplateVariables', {
+      notificationType,
+      channel,
+      missingVariables: missingVariables.join(', '),
+    });
   }
 }

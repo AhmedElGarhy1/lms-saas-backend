@@ -2,6 +2,7 @@ import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   InsufficientPermissionsException,
   ResourceNotFoundException,
+  BusinessLogicException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { RolesRepository } from '../repositories/roles.repository';
 import { AccessControlHelperService } from './access-control-helper.service';
@@ -71,10 +72,7 @@ export class RolesService extends BaseService {
   ) {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
-      throw new ResourceNotFoundException(
-        'Role not found',
-        't.errors.roleNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.roleNotFound');
     }
     if (!role.isSameScope(actor.centerId)) {
       this.logger.warn('Role update failed - insufficient permissions', {
@@ -82,9 +80,7 @@ export class RolesService extends BaseService {
         actorId: actor.userProfileId,
         centerId: actor.centerId,
       });
-      throw new InsufficientPermissionsException(
-        'You are not authorized to update this role',
-      );
+      throw new InsufficientPermissionsException('t.errors.notAuthorizedToUpdateRole');
     }
 
     const updatedRole = await this.rolesRepository.updateRole(
@@ -105,10 +101,7 @@ export class RolesService extends BaseService {
   async deleteRole(roleId: string, actor: ActorUser) {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
-      throw new ResourceNotFoundException(
-        'Role not found',
-        't.errors.roleNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.roleNotFound');
     }
     if (!role?.isSameScope(actor.centerId)) {
       this.logger.warn('Role deletion failed - insufficient permissions', {
@@ -116,9 +109,7 @@ export class RolesService extends BaseService {
         actorId: actor.userProfileId,
         centerId: actor.centerId,
       });
-      throw new InsufficientPermissionsException(
-        'You are not authorized to delete this role',
-      );
+      throw new InsufficientPermissionsException('t.errors.notAuthorizedToDeleteRole');
     }
 
     await this.rolesRepository.softRemove(roleId);
@@ -175,9 +166,7 @@ export class RolesService extends BaseService {
           actorId: actor.userProfileId,
           centerId: actor.centerId,
         });
-        throw new InsufficientPermissionsException(
-          'You are not authorized to access this role',
-        );
+        throw new InsufficientPermissionsException('t.errors.notAuthorizedToAccessRole');
       }
     }
 
@@ -192,17 +181,12 @@ export class RolesService extends BaseService {
     // First check if the role exists
     const role = await this.rolesRepository.findOneSoftDeleted({ id: roleId });
     if (!role) {
-      throw new ResourceNotFoundException(
-        'Role not found',
-        't.errors.roleNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.roleNotFound');
     }
 
     // Check if the role is already active (not deleted)
     if (!role.deletedAt) {
-      throw new ResourceNotFoundException(
-        'Role is not deleted and cannot be restored',
-      );
+      throw new BusinessLogicException('t.errors.roleNotDeletedCannotRestore');
     }
 
     // Restore the role

@@ -34,7 +34,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       const exceptionResponse = exception.getResponse();
 
       // Check if exception has translationKey property (custom exceptions)
-      const translatableException = exception as TranslatableException;
+      const translatableException = exception as unknown as TranslatableException;
       const hasTranslationKey =
         translatableException.translationKey !== undefined;
 
@@ -190,13 +190,26 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     request: Request,
     errorResponse: EnhancedErrorResponse,
   ): void {
+    let logMessage = errorResponse.message;
+
+    // If exception has translationKey, translate to English for logging
+    if (exception instanceof HttpException) {
+      const translatableException = exception as unknown as TranslatableException;
+      if (translatableException.translationKey) {
+        logMessage = TranslationService.translateForLogging(
+          translatableException.translationKey,
+          translatableException.translationArgs,
+        );
+      }
+    }
+
     const errorContext = {
       method: request.method,
       url: request.url,
       userAgent: request.get('User-Agent'),
       ip: request.ip,
       statusCode: errorResponse.statusCode,
-      message: errorResponse.message,
+      message: logMessage, // Use English translation for logging
     };
 
     if (exception instanceof HttpException) {

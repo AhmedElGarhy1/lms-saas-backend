@@ -1,34 +1,34 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
-import { NotificationService } from '../../services/notification.service';
-import { NotificationPipelineService } from '../../services/pipeline/notification-pipeline.service';
-import { NotificationRouterService } from '../../services/routing/notification-router.service';
-import { NotificationSenderService } from '../../services/notification-sender.service';
-import { ChannelSelectionService } from '../../services/channel-selection.service';
-import { NotificationTemplateService } from '../../services/notification-template.service';
-import { InAppNotificationService } from '../../services/in-app-notification.service';
-import { NotificationManifestResolver } from '../../manifests/registry/notification-manifest-resolver.service';
-import { NotificationRenderer } from '../../renderer/notification-renderer.service';
-import { NotificationMetricsService } from '../../services/notification-metrics.service';
-import { NotificationIdempotencyCacheService } from '../../services/notification-idempotency-cache.service';
-import { ChannelRetryStrategyService } from '../../services/channel-retry-strategy.service';
+import { NotificationService } from '../services/notification.service';
+import { NotificationPipelineService } from '../services/pipeline/notification-pipeline.service';
+import { NotificationRouterService } from '../services/routing/notification-router.service';
+import { NotificationSenderService } from '../services/notification-sender.service';
+import { ChannelSelectionService } from '../services/channel-selection.service';
+import { NotificationTemplateService } from '../services/notification-template.service';
+import { InAppNotificationService } from '../services/in-app-notification.service';
+import { NotificationManifestResolver } from '../manifests/registry/notification-manifest-resolver.service';
+import { NotificationRenderer } from '../renderer/notification-renderer.service';
+import { NotificationMetricsService } from '../services/notification-metrics.service';
+import { NotificationIdempotencyCacheService } from '../services/notification-idempotency-cache.service';
+import { ChannelRetryStrategyService } from '../services/channel-retry-strategy.service';
 import { Logger } from '@nestjs/common';
-import { NotificationType } from '../../enums/notification-type.enum';
-import { NotificationChannel } from '../../enums/notification-channel.enum';
-import { FakeQueue } from '../../adapters/fakes/fake-queue';
-import { FakeRedis } from '../../adapters/fakes/fake-redis';
+import { NotificationType } from '../enums/notification-type.enum';
+import { NotificationChannel } from '../enums/notification-channel.enum';
+import { FakeQueue } from '../fakes/fake-queue';
+import { FakeRedis } from '../fakes/fake-redis';
 import {
   createMockNotificationManifest,
   createMockLoggerService,
   createMockMetricsService,
-} from '../../adapters/helpers';
-import { TestEnvGuard } from '../../adapters/helpers/test-env-guard';
+} from './helpers';
+import { TestEnvGuard } from '../helpers/test-env-guard';
 import {
   generateFakeRecipients,
   simulateLoad,
   calculateMetrics,
-} from '../../adapters/load-simulation';
-import { RenderedNotification } from '../../manifests/types/manifest.types';
+} from '../load-simulation';
+import { RenderedNotification } from '../manifests/types/manifest.types';
 
 describe('Load Simulation', () => {
   let service: NotificationService;

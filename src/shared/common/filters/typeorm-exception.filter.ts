@@ -37,9 +37,7 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
 
     // Entity not found → 404 (from findOneOrFail etc.)
     if (exception instanceof EntityNotFoundError) {
-      const notFoundException = new ResourceNotFoundException(
-        'The requested resource was not found',
-      );
+      const notFoundException = new ResourceNotFoundException('t.errors.resourceNotFound');
       return res
         .status(notFoundException.getStatus())
         .json(notFoundException.getResponse());
@@ -57,7 +55,8 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
         case 'ER_DUP_ENTRY': // MySQL duplicate
         case 1062: // MySQL numeric
           const conflictException = new ResourceAlreadyExistsException(
-            `Duplicate resource${constraint ? ` (constraint: ${constraint})` : ''}`,
+            't.errors.duplicateResource',
+            constraint ? { constraint } : undefined,
           );
           return res
             .status(conflictException.getStatus())
@@ -67,7 +66,7 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
         case 'ER_NO_REFERENCED_ROW_2':
         case 1452:
           const businessException = new BusinessLogicException(
-            'Related entity is missing or invalid. Please check the referenced data and try again',
+            't.errors.relatedEntityMissingOrInvalid',
           );
           return res
             .status(businessException.getStatus())
@@ -75,7 +74,7 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
 
         case '23502': // not_null_violation (pg)
           const validationException = new ValidationFailedException(
-            'A required field is missing',
+            't.errors.requiredFieldMissing',
             [
               {
                 field: 'unknown',
@@ -94,7 +93,7 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
         case '40001': // serialization_failure (pg)
         case '40P01': // deadlock_detected (pg)
           const serviceException = new ServiceUnavailableException(
-            'Temporary database conflict occurred. Please retry.',
+            't.errors.temporaryDatabaseConflict',
           );
           return res
             .status(serviceException.getStatus())
@@ -103,7 +102,7 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
 
       // Fallback for anything else
       const fallbackException = new ServiceUnavailableException(
-        'Database operation failed. Please try again later.',
+        't.errors.databaseOperationFailed',
       );
       return res
         .status(fallbackException.getStatus())

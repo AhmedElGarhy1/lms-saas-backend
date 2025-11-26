@@ -114,10 +114,7 @@ export class WhatsAppWebhookController {
       const isValid = this.signatureService.verifySignature(rawBody, signature);
       if (!isValid) {
         this.logger.warn('Webhook signature verification failed');
-        throw new AuthenticationFailedException(
-          'Invalid signature',
-          't.errors.invalidSignature',
-        );
+        throw new AuthenticationFailedException('t.errors.invalidSignature');
       }
 
       // Enqueue webhook event for async processing

@@ -64,10 +64,7 @@ export class AccessControlService extends BaseService {
       });
 
     if (!IHaveAccessToGranterUser) {
-      throw new InsufficientPermissionsException(
-        'You do not have access to granter user',
-        't.errors.noAccessToGranterUser',
-      );
+      throw new InsufficientPermissionsException('t.errors.noAccessToGranterUser');
     }
 
     const IHaveAccessToTargetUser =
@@ -78,10 +75,7 @@ export class AccessControlService extends BaseService {
       });
 
     if (!IHaveAccessToTargetUser) {
-      throw new InsufficientPermissionsException(
-        'You do not have access to target user',
-        't.errors.noAccessToTargetUser',
-      );
+      throw new InsufficientPermissionsException('t.errors.noAccessToTargetUser');
     }
 
     // check if target user have height role
@@ -90,10 +84,7 @@ export class AccessControlService extends BaseService {
         body.granterUserProfileId,
       );
     if (isGranterSuperAdmin) {
-      throw new InsufficientPermissionsException(
-        'Granter user is a super admin and can access any user',
-        't.errors.superAdminCanAccessAnyUser',
-      );
+      throw new InsufficientPermissionsException('t.errors.superAdminCanAccessAnyUser');
     }
 
     // Check if access already exists
@@ -104,10 +95,7 @@ export class AccessControlService extends BaseService {
     });
 
     if (canAccess) {
-      throw new BusinessLogicException(
-        'User already has access',
-        't.errors.userAlreadyHasAccess',
-      );
+      throw new BusinessLogicException('t.errors.userAlreadyHasAccess');
     }
 
     await this.grantUserAccess(body);
@@ -137,10 +125,7 @@ export class AccessControlService extends BaseService {
           centerId,
         },
       );
-      throw new InsufficientPermissionsException(
-        'You do not have access to granter user',
-        't.errors.noAccessToGranterUser',
-      );
+      throw new InsufficientPermissionsException('t.errors.noAccessToGranterUser');
     }
 
     const IHaveAccessToTargetUser =
@@ -156,20 +141,14 @@ export class AccessControlService extends BaseService {
         actorId: actor.userProfileId,
         centerId,
       });
-      throw new InsufficientPermissionsException(
-        'You do not have access to target user',
-        't.errors.noAccessToTargetUser',
-      );
+      throw new InsufficientPermissionsException('t.errors.noAccessToTargetUser');
     }
 
     // Check if access exists
     const canAccess = await this.accessControlHelperService.canUserAccess(body);
 
     if (!canAccess) {
-      throw new InsufficientPermissionsException(
-        'User does not have access',
-        't.errors.userDoesNotHaveAccess',
-      );
+      throw new InsufficientPermissionsException('t.errors.userDoesNotHaveAccess');
     }
 
     await this.revokeUserAccess(body);
@@ -224,10 +203,7 @@ export class AccessControlService extends BaseService {
     const canAccess =
       await this.accessControlHelperService.canBranchAccess(data);
     if (canAccess) {
-      throw new BusinessLogicException(
-        'Profile already assigned to branch',
-        't.errors.profileAlreadyAssignedToBranch',
-      );
+      throw new BusinessLogicException('t.errors.profileAlreadyAssignedToBranch');
     }
 
     // Create new assignment
@@ -270,16 +246,10 @@ export class AccessControlService extends BaseService {
     const centerAccess =
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
-      throw new ResourceNotFoundException(
-        'Center access not found',
-        't.errors.centerAccessNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.centerAccessNotFound');
     }
     if (centerAccess.deletedAt) {
-      throw new BusinessLogicException(
-        'Center access is already deleted',
-        't.errors.centerAccessAlreadyDeleted',
-      );
+      throw new BusinessLogicException('t.errors.centerAccessAlreadyDeleted');
     }
 
     await this.centerAccessRepository.softRemove(centerAccess.id);
@@ -303,16 +273,10 @@ export class AccessControlService extends BaseService {
       true,
     );
     if (!centerAccess) {
-      throw new ResourceNotFoundException(
-        'Center access not found',
-        't.errors.centerAccessNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.centerAccessNotFound');
     }
     if (!centerAccess.deletedAt) {
-      throw new BusinessLogicException(
-        'Center access is not deleted',
-        't.errors.centerAccessNotDeleted',
-      );
+      throw new BusinessLogicException('t.errors.centerAccessNotDeleted');
     }
     await this.centerAccessRepository.restore(centerAccess.id);
   }
@@ -334,10 +298,7 @@ export class AccessControlService extends BaseService {
     const centerAccess =
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
-      throw new ResourceNotFoundException(
-        'Center access not found',
-        't.errors.centerAccessNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.centerAccessNotFound');
     }
     await this.centerAccessRepository.update(centerAccess.id, { isActive });
 

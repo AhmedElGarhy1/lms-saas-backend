@@ -87,7 +87,7 @@ export class AccessControlHelperService extends BaseService {
     }
     this.logger.warn('Admin access validation failed', { userProfileId });
     throw new AdminScopeAccessDeniedException(
-      'You do not have access to admin scope. Please select a center to access center-specific resources.',
+      't.errors.adminScopeAccessDenied',
     );
   }
 
@@ -218,9 +218,7 @@ export class AccessControlHelperService extends BaseService {
         targetUserProfileId: data.targetUserProfileId,
         centerId: data.centerId,
       });
-      throw new InsufficientPermissionsException(
-        'You do not have access to target user',
-      );
+      throw new InsufficientPermissionsException('t.errors.noAccessToTargetUser');
     }
   }
 
@@ -265,10 +263,7 @@ export class AccessControlHelperService extends BaseService {
         userProfileId: data.userProfileId,
         centerId: data.centerId,
       });
-      throw new InactiveCenterException(
-        'Center is inactive',
-        't.errors.centerInactive.description',
-      );
+      throw new InactiveCenterException('t.errors.centerInactive.description');
     }
 
     // Check if user has access to the center
@@ -279,10 +274,7 @@ export class AccessControlHelperService extends BaseService {
         userProfileId: data.userProfileId,
         centerId: data.centerId,
       });
-      throw new CenterAccessDeniedException(
-        'Center access denied',
-        't.errors.centerAccessDenied.description',
-      );
+      throw new CenterAccessDeniedException('t.errors.centerAccessDenied.description');
     }
     const centerAccess = await this.findCenterAccess(data);
     if (!centerAccess) return;
@@ -293,10 +285,7 @@ export class AccessControlHelperService extends BaseService {
         userProfileId: data.userProfileId,
         centerId: data.centerId,
       });
-      throw new CenterAccessInactiveException(
-        'Center access is inactive',
-        't.errors.centerAccessInactive.description',
-      );
+      throw new CenterAccessInactiveException('t.errors.centerAccessInactive.description');
     }
   }
 
@@ -324,10 +313,7 @@ export class AccessControlHelperService extends BaseService {
         centerId: data.centerId,
         branchId: data.branchId,
       });
-      throw new BranchAccessDeniedException(
-        'Branch access denied',
-        't.errors.branchAccessDenied',
-      );
+      throw new BranchAccessDeniedException('t.errors.branchAccessDenied');
     }
   }
 

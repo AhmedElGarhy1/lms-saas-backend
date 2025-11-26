@@ -49,7 +49,7 @@ export class RequestValidationMiddleware implements NestMiddleware {
     const requiredHeaders = ['user-agent'];
     for (const header of requiredHeaders) {
       if (!req.get(header)) {
-        throw new MissingRequiredHeaderException(header);
+        throw new MissingRequiredHeaderException(header, 't.errors.missingRequiredHeader');
       }
     }
 
@@ -57,9 +57,7 @@ export class RequestValidationMiddleware implements NestMiddleware {
     if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
       const contentType = req.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        throw new InvalidContentTypeException(
-          'Content-Type must be application/json',
-        );
+        throw new InvalidContentTypeException('t.errors.invalidContentType');
       }
     }
   }
@@ -69,7 +67,7 @@ export class RequestValidationMiddleware implements NestMiddleware {
     const maxSize = 1024 * 1024; // 1MB
 
     if (contentLength > maxSize) {
-      throw new RequestBodyTooLargeException();
+      throw new RequestBodyTooLargeException('t.errors.requestBodyTooLarge');
     }
   }
 
@@ -77,7 +75,7 @@ export class RequestValidationMiddleware implements NestMiddleware {
     if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
       const contentType = req.get('content-type');
       if (contentType && !contentType.includes('application/json')) {
-        throw new UnsupportedContentTypeException('Unsupported content type');
+        throw new UnsupportedContentTypeException('t.errors.unsupportedContentType');
       }
     }
   }

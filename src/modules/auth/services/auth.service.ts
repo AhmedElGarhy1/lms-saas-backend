@@ -65,10 +65,7 @@ export class AuthService extends BaseService {
     // If user exists, validate account status
     if (user) {
       if (!user.isActive) {
-        throw new BusinessLogicException(
-          'User account is inactive',
-          't.errors.userAccountInactive',
-        );
+        throw new BusinessLogicException('t.errors.userAccountInactive');
       }
 
       // Validate password
@@ -81,10 +78,7 @@ export class AuthService extends BaseService {
           new UserLoginFailedEvent(dto.phone, user.id, 'Invalid password'),
         );
 
-        throw new AuthenticationFailedException(
-          'Invalid credentials',
-          't.errors.invalidCredentials',
-        );
+        throw new AuthenticationFailedException('t.errors.invalidCredentials');
       }
 
       // Password is valid, continue with login
@@ -92,10 +86,7 @@ export class AuthService extends BaseService {
         this.logger.error(
           `User object missing or invalid ID for phone: ${dto.phone}`,
         );
-        throw new AuthenticationFailedException(
-          'Authentication failed',
-          't.errors.authenticationFailed',
-        );
+        throw new AuthenticationFailedException('t.errors.authenticationFailed');
       }
 
       // Check if 2FA is enabled
@@ -103,10 +94,7 @@ export class AuthService extends BaseService {
         // If OTP code not provided, send OTP and throw exception
         if (!dto.code) {
           await this.verificationService.sendLoginOTP(user.id || '');
-          throw new OtpRequiredException(
-            'OTP code required for two-factor authentication',
-            't.errors.otpCodeRequired',
-          );
+          throw new OtpRequiredException('t.errors.otpCodeRequired');
         }
 
         // OTP code provided, verify it
@@ -122,10 +110,7 @@ export class AuthService extends BaseService {
             phone: user.phone,
             error: error instanceof Error ? error.message : String(error),
           });
-          throw new AuthenticationFailedException(
-            'Authentication failed',
-            't.errors.authenticationFailed',
-          );
+          throw new AuthenticationFailedException('t.errors.authenticationFailed');
         }
       }
 
@@ -133,10 +118,7 @@ export class AuthService extends BaseService {
       return this.completeLogin(user);
     } else {
       // User doesn't exist - return same error message to prevent enumeration
-      throw new AuthenticationFailedException(
-        'Invalid credentials',
-        't.errors.invalidCredentials',
-      );
+      throw new AuthenticationFailedException('t.errors.invalidCredentials');
     }
   }
 
@@ -156,18 +138,12 @@ export class AuthService extends BaseService {
     // Validate password to ensure only the real user can request resend
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new AuthenticationFailedException(
-        'Invalid credentials',
-        't.errors.invalidCredentials',
-      );
+      throw new AuthenticationFailedException('t.errors.invalidCredentials');
     }
 
     if (!user.twoFactorEnabled) {
       // If 2FA is not enabled, no need to send OTP
-      throw new BusinessLogicException(
-        'Two-factor authentication is not enabled for this account',
-        't.errors.twoFactorNotEnabled',
-      );
+      throw new BusinessLogicException('t.errors.twoFactorNotEnabled');
     }
 
     // Send login OTP
@@ -186,18 +162,11 @@ export class AuthService extends BaseService {
     } else if (phone) {
       user = await this.userService.findUserByPhone(phone);
     } else {
-      throw new ValidationFailedException(
-        'Bad request',
-        undefined,
-        't.errors.otpCodeRequired',
-      );
+      throw new ValidationFailedException('t.errors.otpCodeRequired');
     }
 
     if (!user) {
-      throw new ResourceNotFoundException(
-        'User not found',
-        't.errors.userNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.userNotFound');
     }
 
     // Send phone verification OTP (notification system will fetch phone)
@@ -242,11 +211,7 @@ export class AuthService extends BaseService {
     } else if (dto.phone) {
       user = await this.userService.findUserByPhone(dto.phone);
     } else {
-      throw new ValidationFailedException(
-        'Bad request',
-        undefined,
-        't.errors.otpCodeRequired',
-      );
+      throw new ValidationFailedException('t.errors.otpCodeRequired');
     }
 
     if (!user) {
@@ -280,10 +245,7 @@ export class AuthService extends BaseService {
 
   async setupTwoFactor(actor: ActorUser) {
     if (actor.twoFactorEnabled) {
-      throw new BusinessLogicException(
-        'Two-factor authentication is already enabled for this account',
-        't.errors.twoFactorAlreadyEnabled',
-      );
+      throw new BusinessLogicException('t.errors.twoFactorAlreadyEnabled');
     }
 
     // Send OTP for 2FA setup (notification system will fetch phone)
@@ -305,17 +267,11 @@ export class AuthService extends BaseService {
     const user = await this.userService.findOne(actor.id, true);
 
     if (!user) {
-      throw new ResourceNotFoundException(
-        'User not found',
-        't.errors.userNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.userNotFound');
     }
 
     if (user.twoFactorEnabled) {
-      throw new BusinessLogicException(
-        'Two-factor authentication is already enabled for this account',
-        't.errors.twoFactorAlreadyEnabled',
-      );
+      throw new BusinessLogicException('t.errors.twoFactorAlreadyEnabled');
     }
 
     // Verify the OTP code
@@ -326,10 +282,7 @@ export class AuthService extends BaseService {
         actor.id,
       );
     } catch {
-      throw new AuthenticationFailedException(
-        'Authentication failed',
-        't.errors.authenticationFailed',
-      );
+      throw new AuthenticationFailedException('t.errors.authenticationFailed');
     }
 
     // Enable 2FA (no secret needed for SMS OTP)
@@ -351,26 +304,17 @@ export class AuthService extends BaseService {
     const user = await this.userService.findOne(actor.id, true);
 
     if (!user) {
-      throw new ResourceNotFoundException(
-        'User not found',
-        't.errors.userNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.userNotFound');
     }
 
     if (!user.twoFactorEnabled) {
-      throw new BusinessLogicException(
-        'Two-factor authentication is not enabled for this account',
-        't.errors.twoFactorNotEnabled',
-      );
+      throw new BusinessLogicException('t.errors.twoFactorNotEnabled');
     }
 
     // If OTP code not provided, send OTP and throw exception
     if (!verificationCode) {
       await this.verificationService.sendTwoFactorOTP(actor.id);
-      throw new OtpRequiredException(
-        'OTP code required to disable two-factor authentication',
-        't.errors.otpCodeRequired',
-      );
+      throw new OtpRequiredException('t.errors.otpCodeRequired');
     }
 
     // Verify the OTP code (code is required at this point)
@@ -385,10 +329,7 @@ export class AuthService extends BaseService {
         userId: user.id,
         phone: user.phone,
       });
-      throw new AuthenticationFailedException(
-        'Authentication failed',
-        't.errors.authenticationFailed',
-      );
+      throw new AuthenticationFailedException('t.errors.authenticationFailed');
     }
 
     // Disable 2FA
@@ -480,10 +421,7 @@ export class AuthService extends BaseService {
     // Get user (validation already done by strategy)
     const user = await this.userService.findOne(userId, true);
     if (!user) {
-      throw new AuthenticationFailedException(
-        'User not found',
-        't.errors.userNotFound',
-      );
+      throw new AuthenticationFailedException('t.errors.userNotFound');
     }
 
     // Generate new tokens

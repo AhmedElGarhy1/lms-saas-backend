@@ -31,26 +31,17 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   async validate(payload: JwtPayload) {
     // Ensure this is an access token, not a refresh token
     if (payload.type !== 'access') {
-      throw new AuthenticationFailedException(
-        'Invalid token type',
-        't.errors.invalidTokenType',
-      );
+      throw new AuthenticationFailedException('t.errors.invalidTokenType');
     }
 
     const user = await this.userRepository.findOne(payload.sub);
 
     if (!user) {
-      throw new ResourceNotFoundException(
-        'User not found',
-        't.errors.userNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.userNotFound');
     }
 
     if (!user.isActive) {
-      throw new BusinessLogicException(
-        'User account is inactive',
-        't.errors.userAccountInactive',
-      );
+      throw new BusinessLogicException('t.errors.userAccountInactive');
     }
 
     // Phone verification is now handled by PhoneVerificationGuard

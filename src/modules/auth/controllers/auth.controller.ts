@@ -175,11 +175,7 @@ export class AuthController {
     @GetUser() actor: ActorUser,
   ) {
     if (!dto.code) {
-      throw new ValidationFailedException(
-        'OTP code is required',
-        undefined,
-        't.errors.otpCodeRequired',
-      );
+      throw new ValidationFailedException('t.errors.otpCodeRequired');
     }
     const result = await this.authService.enableTwoFactor(dto.code, actor);
 

@@ -52,33 +52,24 @@ export class RefreshJwtStrategy extends PassportStrategy(
       const refreshToken = req.body?.refreshToken;
 
       if (!refreshToken) {
-        throw new AuthenticationFailedException(
-          'Refresh token not found',
-          't.errors.refreshTokenNotFound',
-        );
+        throw new AuthenticationFailedException('t.errors.refreshTokenNotFound');
       }
 
       // Validate that this is a refresh token
       if (payload.type !== 'refresh') {
-        throw new AuthenticationFailedException(
-          'Invalid token type',
-          't.errors.invalidTokenType',
-        );
+        throw new AuthenticationFailedException('t.errors.invalidTokenType');
       }
 
       // Get user and verify they have a stored refresh token
       const user = await this.userService.findOne(payload.sub, true);
       if (!user || !user.hashedRt) {
-        throw new AccessDeniedException('Access denied', 't.errors.accessDenied');
+        throw new AccessDeniedException('t.errors.accessDenied');
       }
 
       // Compare the provided token with the stored hashed token
       const rtMatches = await bcrypt.compare(refreshToken, user.hashedRt);
       if (!rtMatches) {
-        throw new AuthenticationFailedException(
-          'Invalid or expired token',
-          't.errors.invalidOrExpiredToken',
-        );
+        throw new AuthenticationFailedException('t.errors.invalidOrExpiredToken');
       }
 
       return {
@@ -89,27 +80,15 @@ export class RefreshJwtStrategy extends PassportStrategy(
       // Handle JWT-specific errors
       const jwtError = error as JwtError;
       if (jwtError?.name === 'TokenExpiredError') {
-        throw new AuthenticationFailedException(
-          'Refresh token expired',
-          't.errors.refreshTokenExpired',
-        );
+        throw new AuthenticationFailedException('t.errors.refreshTokenExpired');
       } else if (jwtError?.name === 'JsonWebTokenError') {
-        throw new AuthenticationFailedException(
-          'Invalid refresh token',
-          't.errors.invalidRefreshToken',
-        );
+        throw new AuthenticationFailedException('t.errors.invalidRefreshToken');
       } else if (jwtError?.name === 'NotBeforeError') {
-        throw new AuthenticationFailedException(
-          'Token not active yet',
-          't.errors.tokenNotActiveYet',
-        );
+        throw new AuthenticationFailedException('t.errors.tokenNotActiveYet');
       } else if (error instanceof AuthenticationFailedException) {
         throw error;
       } else {
-        throw new AuthenticationFailedException(
-          'Token validation failed',
-          't.errors.tokenValidationFailed',
-        );
+        throw new AuthenticationFailedException('t.errors.tokenValidationFailed');
       }
     }
   }

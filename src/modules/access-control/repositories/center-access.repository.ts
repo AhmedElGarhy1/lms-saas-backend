@@ -35,10 +35,7 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
     // Check if access already exists
     const existingAccess = await this.findCenterAccess(data);
     if (existingAccess) {
-      throw new ResourceAlreadyExistsException(
-        'Access already exists',
-        't.errors.accessAlreadyExists',
-      );
+      throw new ResourceAlreadyExistsException('t.errors.accessAlreadyExists');
     }
 
     return this.create(data);
@@ -47,10 +44,7 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
   async revokeCenterAccess(data: CenterAccessDto) {
     const existingAccess = await this.findCenterAccess(data);
     if (!existingAccess) {
-      throw new ResourceNotFoundException(
-        'Access not found',
-        't.errors.accessNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.accessNotFound');
     }
 
     return this.getRepository().remove(existingAccess);

@@ -64,9 +64,7 @@ export class InAppAdapter
   async send(payload: InAppNotificationPayload): Promise<void> {
     // Type system ensures channel is IN_APP, no runtime check needed
     if (!payload.userId) {
-      throw new InvalidOperationException(
-        'userId is required for in-app notifications',
-      );
+      throw new InvalidOperationException('t.errors.userIdRequiredForInAppNotifications');
     }
 
     const startTime = Date.now();

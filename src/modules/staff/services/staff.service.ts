@@ -80,10 +80,7 @@ export class StaffService extends BaseService {
       actor,
     );
     if (!user) {
-      throw new ResourceNotFoundException(
-        'User not found',
-        't.errors.userNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.userNotFound');
     }
     return user;
   }

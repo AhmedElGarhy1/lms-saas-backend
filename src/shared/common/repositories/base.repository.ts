@@ -455,10 +455,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   async updateThrow(id: string, data: DeepPartial<T>): Promise<T | null> {
     const entity = await this.update(id, data);
     if (!entity)
-      throw new ResourceNotFoundException(
-        'Entity not found',
-        't.errors.resourceNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.resourceNotFound');
     return entity;
   }
 
@@ -466,10 +463,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const repo = this.getRepository();
     const entity = await repo.findOne({ where: { id } as any });
     if (!entity)
-      throw new ResourceNotFoundException(
-        'Entity not found',
-        't.errors.resourceNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.resourceNotFound');
 
     await repo.softRemove(entity);
   }
@@ -478,10 +472,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const repo = this.getRepository();
     const entity = await repo.findOne({ where: { id } as any });
     if (!entity)
-      throw new ResourceNotFoundException(
-        'Entity not found',
-        't.errors.resourceNotFound',
-      );
+      throw new ResourceNotFoundException('t.errors.resourceNotFound');
 
     await repo.remove(entity);
   }

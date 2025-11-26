@@ -70,18 +70,18 @@
 [x] double check permissions in all over the application
 [x] verify rate limit module is working
 [x] remove all api reqeust transformation and middle functions that do nothing except transform request schema must be the same as reqeust payload
+[x] frontend invalidate language when profile update
+[x] user related functionality like 2fa, change password
+[x] think about removing restrictions and permissions for diffrent profile types it's we already have restrictions you can only access users in your user_access
+[x] fix local is not consistant between backend and frontend
+[x] translation instead of injecting i18service everywhere we can make the internal services or utils like ControllerResponse take safe translaction key string and the service call is inside these utils
 
-[ ] frontend invalidate language when profile update
-[ ] user related functionality like 2fa, change password
 [ ] view modals in all modules
 [ ] builk operations
 [ ] clean up notficiation service from testing (doesn't work) and from usless services and monitoring or metrics
 [ ] add users endpoint for modules like activity logs search for user
 [ ] user can update his center (throw settings)
-[ ] think about removing restrictions and permissions for diffrent profile types it's we already have restrictions you can only access users in your user_access
-[ ] fix local is not consistant between backend and frontend
 [ ] activity logs and each one display his own logs only
-[ ] translation instead of injecting i18service everywhere we can make the internal services or utils like ControllerResponse take safe translaction key string and the service call is inside these utils
 
 [] (later if size is big) Bulk notification insertion - Batch insert DB writes for IN_APP channel - ⚙️ Medium–High - If DB write latency increases
 [ ] update notifications to cover all existing modules events

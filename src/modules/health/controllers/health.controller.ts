@@ -262,10 +262,7 @@ export class HealthController {
     if (health.status === 'healthy') {
       return { status: 'ready', timestamp: health.timestamp };
     } else {
-      throw new SystemNotReadyException(
-        'System is not ready',
-        't.errors.systemNotReady',
-      );
+      throw new SystemNotReadyException('t.errors.systemNotReady');
     }
   }
 }

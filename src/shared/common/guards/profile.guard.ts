@@ -64,14 +64,14 @@ export class ProfileGuard implements CanActivate {
     }
 
     if (!userProfileId) {
-      throw new ProfileSelectionRequiredException();
+      throw new ProfileSelectionRequiredException('t.errors.profileSelectionRequired');
     }
     const profile = await this.userProfileService.findForUser(
       user.id,
       userProfileId,
     );
     if (!profile) {
-      throw new ProfileSelectionRequiredException();
+      throw new ProfileSelectionRequiredException('t.errors.profileSelectionRequired');
     }
     if (!profile.isActive) {
       throw new InactiveProfileException(

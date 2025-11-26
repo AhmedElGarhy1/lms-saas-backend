@@ -42,23 +42,17 @@ export class ProfileRoleSubscriber
     if (profileRole.roleId) {
       const role = await this.rolesRepository.findOne(profileRole.roleId);
       if (!role)
-        throw new BusinessLogicException('Role not found', 't.errors.roleNotFound');
+        throw new BusinessLogicException('t.errors.roleNotFound');
 
       const profile = await this.accessControlHelperService.findUserProfile(
         profileRole.userProfileId,
       );
       if (!profile)
-        throw new BusinessLogicException(
-          'User profile not found',
-          't.errors.userProfileNotFound',
-        );
+        throw new BusinessLogicException('t.errors.userProfileNotFound');
 
       if (profileRole.centerId) {
         if (profile?.profileType === ProfileType.ADMIN) {
-          throw new BusinessLogicException(
-            'Admin role cannot be associated with a center',
-            't.errors.adminRoleCannotBeAssociatedWithCenter',
-          );
+          throw new BusinessLogicException('t.errors.adminRoleCannotBeAssociatedWithCenter');
         } else if (profile?.profileType === ProfileType.STAFF) {
           // check center access
           await this.accessControlHelperService.validateCenterAccess({

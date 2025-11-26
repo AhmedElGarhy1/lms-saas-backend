@@ -93,6 +93,28 @@ export class TranslationService {
       return false;
     }
   }
+
+  /**
+   * Translate a key to English for logging purposes
+   * Always uses 'en' locale regardless of request context
+   */
+  static translateForLogging(
+    key: I18nPath | string,
+    args?: Record<string, any>,
+  ): string {
+    const i18n = I18nContext.current();
+    if (i18n) {
+      try {
+        return i18n.translate(key as I18nPath, {
+          args,
+          lang: Locale.EN, // Force English
+        });
+      } catch (error) {
+        // Fallback to key if translation fails
+      }
+    }
+    return key;
+  }
 }
 
 

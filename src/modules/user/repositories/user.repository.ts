@@ -184,10 +184,7 @@ export class UserRepository extends BaseRepository<User> {
             { userProfileId: actor.userProfileId, centerId },
           );
       } else {
-        throw new InsufficientPermissionsException(
-          'Access denied to user',
-          't.errors.accessDeniedToUser',
-        );
+        throw new InsufficientPermissionsException('t.errors.accessDeniedToUser');
       }
     }
 
@@ -314,10 +311,7 @@ export class UserRepository extends BaseRepository<User> {
     );
 
     if (!isAdmin)
-      throw new InsufficientPermissionsException(
-        'Access denied to user',
-        't.errors.accessDeniedToUser',
-      );
+      throw new InsufficientPermissionsException('t.errors.accessDeniedToUser');
     if (isSuperAdmin) {
       // do nothing
     } else {

@@ -173,7 +173,10 @@ export class ExportService extends BaseService {
       case 'json':
         return await this.exportToJson(data, mapper, options.filename, res);
       default:
-        throw new ExportFormatNotSupportedException(options.format);
+        throw new ExportFormatNotSupportedException(
+          options.format,
+          't.errors.exportFormatNotSupported',
+        );
     }
   }
 
@@ -189,12 +192,15 @@ export class ExportService extends BaseService {
   ): Promise<ExportResponseDto> {
     // Validate format
     if (!this.isValidFormat(format)) {
-      throw new ExportFormatNotSupportedException(format);
+      throw new ExportFormatNotSupportedException(
+        format,
+        't.errors.exportFormatNotSupported',
+      );
     }
 
     // Check for empty data
     if (!data || data.length === 0) {
-      throw new ExportDataUnavailableException();
+      throw new ExportDataUnavailableException('t.errors.exportDataUnavailable');
     }
 
     // Generate filename with timestamp
@@ -208,7 +214,10 @@ export class ExportService extends BaseService {
     } else if (format === 'json') {
       return await this.exportToJson(data, mapper, finalFilename, res);
     } else {
-      throw new ExportFormatNotSupportedException(format);
+      throw new ExportFormatNotSupportedException(
+        format,
+        't.errors.exportFormatNotSupported',
+      );
     }
   }
 
