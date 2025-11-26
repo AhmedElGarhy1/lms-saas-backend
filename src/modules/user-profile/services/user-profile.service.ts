@@ -310,12 +310,10 @@ export class UserProfileService extends BaseService {
     actor: ActorUser,
   ): Promise<UserProfile> {
     // 1. Validate that actor has permission to create this profile type
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
-      profileType: dto.profileType, // From DTO
-      operation: 'create',
-      centerId: actor.centerId,
-    });
+    await this.profileTypePermissionService.validateCanCreateProfile(
+      actor,
+      dto.profileType,
+    );
 
     // 2. Create User entity (includes UserInfo creation)
     const createdUser = await this.userService.createUser(dto, actor);

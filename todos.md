@@ -69,7 +69,6 @@
 
 [-] add permission checks for userprofile module ass it have many profile type and permission (improve later)
 [ ] double check permissions in all over the application
-[ ] when i display tables data I should disply myself also
 [ ] frontend invalidate language when profile update
 [ ] multi profile for parents
 [ ] view modals in all modules
@@ -90,3 +89,5 @@
 [ ] fix local is not consistant between backend and frontend
 [ ] activity logs and each one display his own logs only
 [ ] translation instead of injecting i18service everywhere we can make the internal services or utils like ControllerResponse take safe translaction key string and the service call is inside these utils
+
+[?] when i display tables data I should disply myself also

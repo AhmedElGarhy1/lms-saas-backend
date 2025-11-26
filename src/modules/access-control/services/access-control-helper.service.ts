@@ -54,10 +54,13 @@ export class AccessControlHelperService extends BaseService {
     centerId?: string;
   }) {
     if (centerId) {
-      await this.validateCenterAccess({
-        userProfileId,
-        centerId,
-      });
+      await this.validateCenterAccess(
+        {
+          userProfileId,
+          centerId,
+        },
+        { includeDeleted: false, includeInactive: false },
+      );
 
       return;
     } else {
