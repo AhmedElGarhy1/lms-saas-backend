@@ -23,27 +23,25 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
     return ActivityLog;
   }
 
-  // Single consolidated pagination method
   async paginateActivityLogs(
     query: PaginateActivityLogsDto,
     actor: ActorUser,
   ): Promise<Pagination<ActivityLog>> {
     const { centerId, userId, type } = query;
 
-    // Create queryBuilder with relations
-    const queryBuilder = this.getRepository()
+    const qb = this.getRepository()
       .createQueryBuilder('activityLog')
       .where(
         new Brackets((qb) => {
-          qb.where('activityLog.userId = :userId', {
+          qb.where(`"activityLog"."userId" = :userId`, {
             userId: actor.id,
-          }).orWhere('activityLog.targetUserId = :targetUserId', {
+          }).orWhere(`"activityLog"."targetUserId" = :targetUserId`, {
             targetUserId: actor.userProfileId,
           });
         }),
       )
-      .leftJoin('activityLog.user', 'user') // Who performed the action
-      .leftJoin('activityLog.targetUser', 'targetUser') // Who was affected
+      .leftJoin('activityLog.user', 'user')
+      .leftJoin('activityLog.targetUser', 'targetUser')
       .leftJoin('activityLog.center', 'center')
       .addSelect(['user.name', 'targetUser.name', 'center.name']);
 
@@ -54,7 +52,7 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
     // // apply center access
     // if (!isSuperAdmin && !centerId) {
     //   queryBuilder.andWhere(
-    //     'activityLog."centerId" IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :userProfileId)',
+    //     '"activityLog"."centerId" IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :userProfileId)',
     //     {
     //       userProfileId: actor.userProfileId,
     //     },
@@ -67,32 +65,40 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
         actor.userProfileId,
         centerId,
       );
+
     if (!bypassUserAccess) {
-      queryBuilder.andWhere(
-        `activityLog."targetUserId" IN (SELECT "userId" FROM user_access WHERE ${centerId ? '"centerId" = :centerId AND' : ''} "granterUserProfileId" = :userProfileId)`,
-        {
-          userProfileId: actor.userProfileId,
-          centerId,
-        },
+      qb.andWhere(
+        new Brackets((sub) => {
+          sub.where(
+            `"activityLog"."targetUserId" IN (
+                SELECT "userId"
+                FROM user_access
+                WHERE ${
+                  centerId ? `"centerId" = :centerId AND` : ''
+                } "granterUserProfileId" = :userProfileId
+              )`,
+            {
+              userProfileId: actor.userProfileId,
+              centerId,
+            },
+          );
+        }),
       );
     }
 
-    // Apply custom filters
+    // Additional filters
     if (centerId) {
-      queryBuilder.andWhere('activityLog.centerId = :centerId', {
-        centerId: centerId,
-      });
+      qb.andWhere(`"activityLog"."centerId" = :centerId`, { centerId });
     }
 
     if (userId) {
-      // Filter by targetUserId (who was affected)
-      queryBuilder.andWhere('activityLog.targetUserId = :targetUserId', {
-        targetUserId: userId,
+      qb.andWhere(`"activityLog"."targetUserId" = :filterTargetUserId`, {
+        filterTargetUserId: userId,
       });
     }
 
     if (type) {
-      queryBuilder.andWhere('activityLog.type = :type', { type: type });
+      qb.andWhere(`"activityLog"."type" = :type`, { type });
     }
 
     const results = await this.paginate(
@@ -103,10 +109,9 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
         defaultSortBy: ['createdAt', 'DESC'],
       },
       '/activity-logs',
-      queryBuilder,
+      qb,
     );
 
-    console.log(results);
     return results;
   }
 }
