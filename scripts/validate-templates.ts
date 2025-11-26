@@ -3,10 +3,14 @@ import { join, extname } from 'path';
 import { existsSync } from 'fs';
 import * as Handlebars from 'handlebars';
 import { NotificationChannel } from '../src/modules/notifications/enums/notification-channel.enum';
-import { getTemplatePath, templateExists } from '../src/modules/notifications/utils/template-path.util';
+import {
+  getTemplatePath,
+  templateExists,
+} from '../src/modules/notifications/utils/template-path.util';
 import { NotificationRegistry } from '../src/modules/notifications/manifests/registry/notification-registry';
 import { NotificationManifestResolver } from '../src/modules/notifications/manifests/registry/notification-manifest-resolver.service';
 import { Locale } from '../src/shared/common/enums/locale.enum';
+import { ChannelManifest } from '../src/modules/notifications/manifests/types/manifest.types';
 
 interface ValidationError {
   type: string;
@@ -31,15 +35,15 @@ interface ValidationResult {
 
 /**
  * Build-time template validation script
- * 
+ *
  * Validates:
  * - All templates referenced in manifests exist
  * - Templates are valid (Handlebars compiles, JSON parses, etc.)
  * - Templates exist for all supported locales
- * 
+ *
  * Usage:
  *   npm run validate:templates
- * 
+ *
  * Exit codes:
  *   0 - All templates valid
  *   1 - Validation errors found
@@ -73,29 +77,30 @@ async function validateTemplates(): Promise<ValidationResult> {
         audienceConfig.channels,
       )) {
         const channel = channelKey as NotificationChannel;
-        
+        const config = channelConfig as ChannelManifest;
+
         // Skip WhatsApp - templates are reference-only, not used for rendering
         // WhatsApp uses pre-approved template names from WhatsApp Business API
         if (channel === NotificationChannel.WHATSAPP) {
-          // Validate WhatsApp template name is provided
-          if (!channelConfig.whatsappTemplateName) {
+          // Validate WhatsApp template name is provided (stored in template field)
+          if (!config?.template) {
             errors.push({
               type,
               audience: audienceId,
               channel,
               locale: 'N/A',
               template: 'N/A',
-              message: `Missing whatsappTemplateName for ${type}:${audienceId}:${channel}. WhatsApp channel requires whatsappTemplateName field.`,
+              message: `Missing template for ${type}:${audienceId}:${channel}. WhatsApp channel requires template field with template name.`,
             });
           }
           continue; // Skip template file validation for WhatsApp
         }
 
-        if (!channelConfig?.template) {
+        if (!config?.template) {
           continue;
         }
 
-        const templatePath = channelConfig.template;
+        const templatePath = config.template;
 
         // Validate for all supported locales
         for (const locale of Object.values(Locale)) {
@@ -246,5 +251,3 @@ main().catch((error) => {
   console.error('Fatal error during template validation:', error);
   process.exit(1);
 });
-
-

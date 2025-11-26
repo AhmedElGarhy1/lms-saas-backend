@@ -26,6 +26,27 @@ try {
   process.exit(1);
 }
 
+// Dynamically build enum mapping from enum objects
+// This automatically includes all enum values without manual configuration
+const buildEnumMap = (
+  enumObject: Record<string, string>,
+  prefix: string,
+): Record<string, string> => {
+  const map: Record<string, string> = {};
+  for (const key in enumObject) {
+    if (isNaN(Number(key))) {
+      // Skip numeric keys (reverse mapping in TypeScript enums)
+      map[`${prefix}.${key}`] = enumObject[key];
+    }
+  }
+  return map;
+};
+
+const enumToEventMap: Record<string, string> = {
+  ...buildEnumMap(AuthEvents, 'AuthEvents'),
+  ...buildEnumMap(CenterEvents, 'CenterEvents'),
+};
+
 // Extract @OnEvent handlers using regex
 // Pattern matches: @OnEvent(EventName.EVENT_NAME)
 // Examples: @OnEvent(AuthEvents.OTP) or @OnEvent(CenterEvents.CREATED)
@@ -36,19 +57,6 @@ let match;
 while ((match = onEventPattern.exec(listenerFile)) !== null) {
   foundEnumRefs.push(match[1]);
 }
-
-// Map enum references to actual event string values
-const enumToEventMap: Record<string, string> = {
-  // AuthEvents
-  'AuthEvents.OTP': AuthEvents.OTP,
-  'AuthEvents.PASSWORD_RESET_REQUESTED': AuthEvents.PASSWORD_RESET_REQUESTED,
-  'AuthEvents.EMAIL_VERIFICATION_REQUESTED':
-    AuthEvents.EMAIL_VERIFICATION_REQUESTED,
-  'AuthEvents.PHONE_VERIFIED': AuthEvents.PHONE_VERIFIED,
-  // CenterEvents
-  'CenterEvents.CREATED': CenterEvents.CREATED,
-  'CenterEvents.UPDATED': CenterEvents.UPDATED,
-};
 
 // Convert enum references to event string values
 const foundEventStrings = foundEnumRefs
@@ -89,4 +97,3 @@ console.log(`   Found ${allFoundEvents.length} listener(s)`);
 allFoundEvents.forEach((listener) => {
   console.log(`   - ${listener}`);
 });
-
