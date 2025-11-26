@@ -28,6 +28,7 @@ import { I18nTranslations } from '@/generated/i18n.generated';
 import { RefreshJwtGuard } from '../guards/refresh-jwt.guard';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
+import { NoPhoneVerification } from '@/shared/common/decorators/no-phone-verification.decorator';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -94,6 +95,7 @@ export class AuthController {
   @ApiBody({ type: RequestPhoneVerificationRequestDto })
   @NoProfile()
   @NoContext()
+  @NoPhoneVerification()
   async requestPhoneVerification(
     @Body() dto: RequestPhoneVerificationRequestDto,
   ) {
@@ -112,6 +114,7 @@ export class AuthController {
   @NoProfile()
   @NoContext()
   @Transactional()
+  @NoPhoneVerification()
   async verifyPhone(
     @Body() dto: VerifyPhoneRequestDto,
     @GetUser() user: ActorUser,

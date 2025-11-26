@@ -63,7 +63,7 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
       );
     if (!bypassUserAccess) {
       queryBuilder.andWhere(
-        `activityLog."targetUserId" IN (SELECT "userId" FROM user_access WHERE ${centerId ? '"centerId" = :centerId AND' : ''} "granterUserId" = :userProfileId)`,
+        `activityLog."targetUserId" IN (SELECT "userId" FROM user_access WHERE ${centerId ? '"centerId" = :centerId AND' : ''} "granterUserProfileId" = :userProfileId)`,
         {
           userProfileId: actor.userProfileId,
           centerId,
