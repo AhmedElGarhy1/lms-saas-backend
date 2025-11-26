@@ -1261,6 +1261,8 @@
       "passwordChange": "Password changed successfully",
       "roleAssigned": "Role assigned successfully",
       "roleRemoved": "Role removed successfully",
+      "userAccessGranted": "User access granted successfully",
+      "userAccessRevoked": "User access revoked successfully",
       "permissionsRetrieved": "Permissions retrieved successfully",
       "dataRetrieved": "Data retrieved successfully",
       "dataSaved": "Data saved successfully",

@@ -1277,6 +1277,8 @@
       "passwordChange": "تم تغيير كلمة المرور بنجاح",
       "roleAssigned": "تم تعيين الدور بنجاح",
       "roleRemoved": "تم إزالة الدور بنجاح",
+      "userAccessGranted": "تم تعيين المستخدم بنجاح",
+      "userAccessRevoked": "تم إزالة المستخدم بنجاح",
       "permissionsRetrieved": "تم استرجاع الصلاحيات بنجاح",
       "dataRetrieved": "تم استرجاع البيانات بنجاح",
       "dataSaved": "تم حفظ البيانات بنجاح",

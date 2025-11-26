@@ -1286,6 +1286,8 @@ export type I18nTranslations = {
             "passwordChange": string;
             "roleAssigned": string;
             "roleRemoved": string;
+            "userAccessGranted": string;
+            "userAccessRevoked": string;
             "permissionsRetrieved": string;
             "dataRetrieved": string;
             "dataSaved": string;
