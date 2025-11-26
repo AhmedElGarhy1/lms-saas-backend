@@ -144,9 +144,10 @@ export class UserProfileImportService extends BaseService {
 
     const expiresInMinutes = Config.auth.phoneVerificationExpiresMinutes;
 
+    // Emit OTP event (notification system will fetch user and phone)
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.OTP,
-      new OtpEvent(user.id, verificationToken.code!, expiresInMinutes, phone),
+      new OtpEvent(user.id, verificationToken.code!, expiresInMinutes),
     );
   }
 

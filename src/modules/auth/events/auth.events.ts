@@ -39,13 +39,9 @@ export class PasswordChangedEvent extends BaseEvent {
   }
 }
 
-export class PhoneVerifiedEvent extends BaseEvent {
-  constructor(
-    public readonly userId: string,
-    public readonly phone: string,
-    actor: ActorUser,
-  ) {
-    super(actor);
+export class PhoneVerifiedEvent extends SystemEvent {
+  constructor(public readonly userId: string) {
+    super();
   }
 }
 
@@ -76,7 +72,6 @@ export class OtpEvent extends SystemEvent {
     public readonly userId: string,
     public readonly otpCode: string,
     public readonly expiresIn: number, // in minutes
-    public readonly phone?: string,
   ) {
     super();
   }
@@ -85,12 +80,10 @@ export class OtpEvent extends SystemEvent {
 /**
  * Event to request phone verification for a user
  * Can be emitted from any module to trigger phone verification
+ * Notification service will fetch user and phone
  */
 export class RequestPhoneVerificationEvent extends SystemEvent {
-  constructor(
-    public readonly userId: string,
-    public readonly phone: string,
-  ) {
+  constructor(public readonly userId: string) {
     super();
   }
 }

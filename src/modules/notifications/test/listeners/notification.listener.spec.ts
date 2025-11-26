@@ -9,10 +9,7 @@ import { NotificationType } from '../../enums/notification-type.enum';
 import { NotificationChannel } from '../../enums/notification-channel.enum';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { CenterEvents } from '@/shared/events/center.events.enum';
-import {
-  createMockLoggerService,
-  createMockRecipientInfo,
-} from '../helpers';
+import { createMockLoggerService, createMockRecipientInfo } from '../helpers';
 import { TestEnvGuard } from '../helpers/test-env-guard';
 import {
   OtpEvent,
@@ -106,13 +103,7 @@ describe('NotificationListener', () => {
 
       mockUserService.findOne.mockResolvedValue(mockUser as any);
 
-      const event = new OtpEvent(
-        userId,
-        '123456',
-        5,
-        email,
-        phone,
-      );
+      const event = new OtpEvent(userId, '123456', 5);
 
       await listener.handleOtp(event);
 
@@ -136,12 +127,7 @@ describe('NotificationListener', () => {
     });
 
     it('should skip notification if userId is missing', async () => {
-      const event = new OtpEvent(
-        undefined as any,
-        '123456',
-        5,
-        faker.internet.email(),
-      );
+      const event = new OtpEvent(undefined as any, '123456', 5);
 
       await listener.handleOtp(event);
 
@@ -154,12 +140,7 @@ describe('NotificationListener', () => {
       const userId = faker.string.uuid();
       mockUserService.findOne.mockResolvedValue(null);
 
-      const event = new OtpEvent(
-        userId,
-        '123456',
-        5,
-        faker.internet.email(),
-      );
+      const event = new OtpEvent(userId, '123456', 5);
 
       await listener.handleOtp(event);
 
@@ -178,12 +159,7 @@ describe('NotificationListener', () => {
 
       mockUserService.findOne.mockResolvedValue(mockUser as any);
 
-      const event = new OtpEvent(
-        userId,
-        '123456',
-        5,
-        faker.internet.email(),
-      );
+      const event = new OtpEvent(userId, '123456', 5);
 
       await listener.handleOtp(event);
 
@@ -261,9 +237,7 @@ describe('NotificationListener', () => {
 
       mockUserService.findOne.mockResolvedValue(mockUser as any);
 
-      const event = new PhoneVerifiedEvent(userId, phone, {
-        id: userId,
-      } as any);
+      const event = new PhoneVerifiedEvent(userId);
 
       await listener.handlePhoneVerified(event);
 
@@ -512,13 +486,7 @@ describe('NotificationListener', () => {
         new Error('Notification failed'),
       );
 
-      const event = new OtpEvent(
-        userId,
-        '123456',
-        5,
-        email,
-        phone,
-      );
+      const event = new OtpEvent(userId, '123456', 5);
 
       await expect(listener.handleOtp(event)).rejects.toThrow(
         'Notification failed',

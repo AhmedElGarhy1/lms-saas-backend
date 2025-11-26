@@ -10,7 +10,6 @@ import { CenterEvents } from '@/shared/events/center.events.enum';
 export const EXPECTED_LISTENER_EVENTS: readonly EventType[] = [
   // Auth events that should trigger notifications
   AuthEvents.OTP,
-  AuthEvents.PASSWORD_RESET_REQUESTED,
   AuthEvents.PHONE_VERIFIED,
 
   // Center events that should trigger notifications

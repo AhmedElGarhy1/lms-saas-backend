@@ -24,7 +24,6 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { VerificationType } from '../enums/verification-type.enum';
-import { NotificationChannel } from '../../notifications/enums/notification-channel.enum';
 import {
   UserLoggedInEvent,
   UserLoggedOutEvent,
@@ -108,17 +107,8 @@ export class AuthService extends BaseService {
 
       // Check if 2FA is enabled
       if (userForLogin.twoFactorEnabled) {
-        // Generate and send 2FA OTP via SMS
-        const phone = userForLogin.getPhone();
-        if (!phone) {
-          throw new BadRequestException(
-            this.i18n.translate('t.errors.userHasNoPhone'),
-          );
-        }
-        await this.verificationService.sendTwoFactorOTP(
-          userForLogin.id || '',
-          phone,
-        );
+        // Generate and send 2FA OTP (notification system will fetch phone)
+        await this.verificationService.sendTwoFactorOTP(userForLogin.id || '');
 
         return {
           requiresTwoFactor: true,
@@ -249,17 +239,8 @@ export class AuthService extends BaseService {
       throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
     }
 
-    // Use provided phone or user's stored phone (formatted correctly)
-    const phoneToUse = phone || user.getPhone();
-    if (!phoneToUse) {
-      throw new BadRequestException(this.i18n.translate('t.errors.badRequest'));
-    }
-
-    // Send phone verification OTP
-    await this.verificationService.sendPhoneVerification(
-      user.id || '',
-      phoneToUse,
-    );
+    // Send phone verification OTP (notification system will fetch phone)
+    await this.verificationService.sendPhoneVerification(user.id || '');
   }
 
   async verifyPhone(code: string, userId: string): Promise<void> {
@@ -280,29 +261,15 @@ export class AuthService extends BaseService {
       throw error;
     }
 
-    // Get user to get phone and create actor
-    const user = await this.userService.findOne(verifiedUserId);
-    if (!user) {
-      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
-    }
-
     // Update user phoneVerified date
     await this.userService.update(verifiedUserId, {
       phoneVerified: new Date(),
     });
 
-    // Create actor from user (the user themselves is the actor)
-    const actor: ActorUser = {
-      ...user,
-      userProfileId: user.id,
-      profileType: 'USER' as any,
-      centerId: undefined,
-    } as ActorUser;
-
-    // Emit phone verified event (target user is the verified user, not the actor)
+    // Emit phone verified event (notification system will fetch user and phone)
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.PHONE_VERIFIED,
-      new PhoneVerifiedEvent(verifiedUserId, user.getPhone(), actor),
+      new PhoneVerifiedEvent(verifiedUserId),
     );
   }
 
@@ -320,51 +287,25 @@ export class AuthService extends BaseService {
     if (!user) {
       // Don't reveal if user exists or not for security
       return {
-        message: 'If an account exists, a password reset link has been sent.',
+        message: 'If an account exists, a password reset code has been sent.',
       };
     }
 
-    // Determine channel if not provided (default to SMS for phone)
-    const channel =
-      (dto.channel as NotificationChannel) || NotificationChannel.SMS;
-
-    // Send password reset via selected channel (will use user's stored phone)
-    await this.verificationService.sendPasswordReset(user.id, channel);
+    // Send password reset OTP (channel selection handled by notification system)
+    await this.verificationService.sendPasswordReset(user.id);
 
     return {
-      message:
-        'If an account exists, a password reset link has been sent via the selected channel.',
+      message: 'If an account exists, a password reset code has been sent.',
     };
   }
 
   async resetPassword(dto: ResetPasswordRequestDto) {
-    // Use newPassword from the DTO
-    // Check if it's a token or code
-    try {
-      if (dto.token) {
-        await this.verificationService.resetPassword(
-          dto.token,
-          dto.newPassword,
-        );
-      } else if (dto.code) {
-        await this.verificationService.resetPasswordByCode(
-          dto.code,
-          dto.newPassword,
-          dto.userId,
-        );
-      } else {
-        this.logger.error(
-          'Password reset failed - neither token nor code provided',
-        );
-        throw new Error('Either token or code is required');
-      }
-    } catch (error: unknown) {
-      this.logger.error(
-        `Password reset failed - userId: ${dto.userId}, hasToken: ${!!dto.token}, hasCode: ${!!dto.code}`,
-        error instanceof Error ? error.stack : String(error),
-      );
-      throw error;
-    }
+    // Code-only password reset
+    await this.verificationService.resetPassword(
+      dto.code,
+      dto.newPassword,
+      dto.userId,
+    );
 
     return {
       success: true,
@@ -387,15 +328,8 @@ export class AuthService extends BaseService {
       );
     }
 
-    // Send OTP via SMS to verify phone number for 2FA setup
-    const phone = user.getPhone();
-    if (!phone) {
-      throw new BadRequestException(
-        this.i18n.translate('t.errors.userHasNoPhone'),
-      );
-    }
-
-    await this.verificationService.sendTwoFactorOTP(userId, phone);
+    // Send OTP for 2FA setup (notification system will fetch phone)
+    await this.verificationService.sendTwoFactorOTP(userId);
 
     // Emit event for activity logging
     await this.typeSafeEventEmitter.emitAsync(

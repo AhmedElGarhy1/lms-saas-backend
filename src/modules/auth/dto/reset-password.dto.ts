@@ -6,12 +6,7 @@ export class ResetPasswordRequestDto {
   newPassword: string;
 
   @IsString()
-  @IsOptional()
-  token?: string;
-
-  @IsString()
-  @IsOptional()
-  code?: string;
+  code: string;
 
   @IsString()
   @IsOptional()

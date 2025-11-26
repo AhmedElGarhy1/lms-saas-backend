@@ -55,14 +55,14 @@ export class AuthListener {
 
   @OnEvent(AuthEvents.PHONE_VERIFIED)
   async handlePhoneVerified(event: PhoneVerifiedEvent) {
-    const { userId, phone, actor } = event;
+    const { userId } = event;
 
     // ActivityLogService is fault-tolerant, no try-catch needed
+    // Phone will be fetched by ActivityLogService if needed
     await this.activityLogService.log(
       AuthActivityType.PHONE_VERIFIED,
       {
         userId,
-        phone: phone || actor.phone,
       },
       userId,
     );

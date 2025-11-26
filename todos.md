@@ -66,22 +66,15 @@
 [x] arabic ltr translation animation in sidebar looks bad so check others also
 [x] remove all emails for now make the primary think is phone and remove email at all not needed for now (big task)
 [x] back to translations and update translations correctly and update in app notifications translations and refactor the overcomplicated reaseon, actionRequired, retible, and all htese useless files that frontend doesn't use
+[x] add permission checks for userprofile module ass it have many profile type and permission (improve later)
+[x] double check permissions in all over the application
+[x] verify rate limit module is working
+[x] remove all api reqeust transformation and middle functions that do nothing except transform request schema must be the same as reqeust payload
 
-[-] add permission checks for userprofile module ass it have many profile type and permission (improve later)
-[ ] double check permissions in all over the application
 [ ] frontend invalidate language when profile update
-[ ] multi profile for parents
+[ ] user related functionality like 2fa, change password
 [ ] view modals in all modules
-[ ] import functioanlity
 [ ] builk operations
-[ ] implement access all resources permission
-[ ] consider using prisma instead of typeorm
-[ ] verify rate limit module is working
-[ ] update notifications to cover all existing modules events
-[ ] remove all api reqeust transformation and middle functions that do nothing except transform request schema must be the same as reqeust payload
-
-[] (later if size is big) Bulk notification insertion - Batch insert DB writes for IN_APP channel - ⚙️ Medium–High - If DB write latency increases
-
 [ ] clean up notficiation service from testing (doesn't work) and from usless services and monitoring or metrics
 [ ] add users endpoint for modules like activity logs search for user
 [ ] user can update his center (throw settings)
@@ -90,4 +83,10 @@
 [ ] activity logs and each one display his own logs only
 [ ] translation instead of injecting i18service everywhere we can make the internal services or utils like ControllerResponse take safe translaction key string and the service call is inside these utils
 
+[] (later if size is big) Bulk notification insertion - Batch insert DB writes for IN_APP channel - ⚙️ Medium–High - If DB write latency increases
+[ ] update notifications to cover all existing modules events
+[ ] consider using prisma instead of typeorm
+[ ] implement access all resources permission
+[ ] import functioanlity
+[ ] multi profile for parents
 [?] when i display tables data I should disply myself also

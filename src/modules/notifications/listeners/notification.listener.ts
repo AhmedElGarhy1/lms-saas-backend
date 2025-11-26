@@ -7,7 +7,6 @@ import {
   UpdateCenterEvent,
 } from '@/modules/centers/events/center.events';
 import {
-  PasswordResetRequestedEvent,
   OtpEvent,
   PhoneVerifiedEvent,
 } from '@/modules/auth/events/auth.events';
@@ -166,61 +165,6 @@ export class NotificationListener {
     );
   }
 
-  @OnEvent(AuthEvents.PASSWORD_RESET_REQUESTED)
-  async handlePasswordResetRequested(
-    event: ValidateEvent<
-      PasswordResetRequestedEvent,
-      AuthEvents.PASSWORD_RESET_REQUESTED
-    >,
-  ) {
-    // Fetch user to get phone and locale
-    if (!event.userId) {
-      this.logger.warn(
-        'Password reset event missing userId, skipping notification',
-      );
-      return;
-    }
-
-    const user = await this.userService.findOne(event.userId);
-
-    if (!user) {
-      this.logger.warn(
-        `User ${event.userId} not found for password reset notification`,
-      );
-      return;
-    }
-
-    const recipient: RecipientInfo = {
-      userId: user.id,
-      profileId: null,
-      profileType: null,
-      phone: user.getPhone(),
-      email: null,
-      locale: user.userInfo.locale,
-    };
-
-    const validRecipients = this.helper.validateRecipients(
-      [recipient],
-      NotificationType.PASSWORD_RESET,
-    );
-
-    if (validRecipients.length === 0) {
-      return;
-    }
-
-    await this.helper.validateAndTriggerNotification(
-      NotificationType.PASSWORD_RESET,
-      'DEFAULT',
-      event,
-      validRecipients,
-      {
-        context: {
-          userId: user.id,
-        },
-      },
-    );
-  }
-
   @OnEvent(AuthEvents.OTP)
   async handleOtp(event: ValidateEvent<OtpEvent, AuthEvents.OTP>) {
     // Fetch user to get phone and locale
@@ -259,7 +203,6 @@ export class NotificationListener {
       userId: event.userId,
       otpCode: event.otpCode,
       expiresIn: event.expiresIn,
-      phone: event.phone,
       timestamp: event.timestamp,
     };
 
@@ -303,7 +246,7 @@ export class NotificationListener {
       userId: user.id,
       profileId: null,
       profileType: null,
-      phone: event.phone || user.getPhone(),
+      phone: user.getPhone(),
       email: null,
       locale: user.userInfo.locale,
       centerId: undefined,

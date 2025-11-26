@@ -23,10 +23,7 @@ export class VerificationListener {
     event: RequestPhoneVerificationEvent,
   ): Promise<void> {
     try {
-      await this.verificationService.sendPhoneVerification(
-        event.userId,
-        event.phone,
-      );
+      await this.verificationService.sendPhoneVerification(event.userId);
       this.logger.log(`Phone verification requested for user ${event.userId}`);
     } catch (error) {
       this.logger.error(
@@ -36,5 +33,4 @@ export class VerificationListener {
       // Don't throw - let the error be logged but don't fail the event
     }
   }
-
 }

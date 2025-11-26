@@ -11,10 +11,9 @@ import { BaseService } from '@/shared/common/services/base.service';
 import { Config } from '@/shared/config/config';
 import { UserService } from '../../user/services/user.service';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
-import { PasswordResetRequestedEvent, OtpEvent } from '../events/auth.events';
+import { OtpEvent } from '../events/auth.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { VerificationType } from '../enums/verification-type.enum';
-import { NotificationChannel } from '../../notifications/enums/notification-channel.enum';
 import { VerificationToken } from '../entities/verification-token.entity';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
@@ -174,11 +173,9 @@ export class VerificationService extends BaseService {
   }
 
   /**
-   * Verify token and return user info
+   * Verify token and return user ID
    */
-  async verifyToken(
-    token: string,
-  ): Promise<{ userId: string; phone?: string }> {
+  async verifyToken(token: string): Promise<{ userId: string }> {
     const verificationToken = await this.findByToken(token);
 
     // Mark as verified
@@ -187,25 +184,19 @@ export class VerificationService extends BaseService {
     // Delete token after verification
     await this.deleteToken(token);
 
-    const user = await this.userService.findOne(verificationToken.userId);
-    if (!user) {
-      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
-    }
-
     return {
       userId: verificationToken.userId,
-      phone: user.getPhone() || undefined,
     };
   }
 
   /**
-   * Verify code and return user info
+   * Verify code and return user ID
    */
   async verifyCode(
     code: string,
     type: VerificationType,
     userId?: string,
-  ): Promise<{ userId: string; phone?: string }> {
+  ): Promise<{ userId: string }> {
     const verificationToken = await this.findByCode(code, type, userId);
 
     // Mark as verified
@@ -216,14 +207,8 @@ export class VerificationService extends BaseService {
     // Delete token after verification
     await this.deleteToken(verificationToken.token);
 
-    const user = await this.userService.findOne(verificationToken.userId);
-    if (!user) {
-      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
-    }
-
     return {
       userId: verificationToken.userId,
-      phone: user.getPhone() || undefined,
     };
   }
 
@@ -266,13 +251,9 @@ export class VerificationService extends BaseService {
   /**
    * Send phone verification OTP (for user creation)
    * Reuses existing non-expired token if available
+   * Notification system will fetch user and phone
    */
-  async sendPhoneVerification(userId: string, phone: string): Promise<void> {
-    const user = await this.userService.findOne(userId);
-    if (!user) {
-      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
-    }
-
+  async sendPhoneVerification(userId: string): Promise<void> {
     // Get or create verification token (reuses existing non-expired token)
     const verificationToken = await this.getOrCreateVerificationToken({
       userId,
@@ -289,14 +270,13 @@ export class VerificationService extends BaseService {
       Math.floor((expiresAt.getTime() - now.getTime()) / (1000 * 60)),
     );
 
-    // Emit OTP event for notification system
+    // Emit OTP event (notification system will fetch user and phone)
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.OTP,
       new OtpEvent(
         userId,
         verificationToken.code!,
         remainingMinutes || expiresInMinutes,
-        phone,
       ),
     );
   }
@@ -304,13 +284,9 @@ export class VerificationService extends BaseService {
   /**
    * Send 2FA OTP via SMS
    * Reuses existing non-expired token if available
+   * Notification system will fetch user and phone
    */
-  async sendTwoFactorOTP(userId: string, phone: string): Promise<void> {
-    const user = await this.userService.findOne(userId);
-    if (!user) {
-      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
-    }
-
+  async sendTwoFactorOTP(userId: string): Promise<void> {
     // Get or create verification token (reuses existing non-expired token)
     const verificationToken = await this.getOrCreateVerificationToken({
       userId,
@@ -327,57 +303,28 @@ export class VerificationService extends BaseService {
       Math.floor((expiresAt.getTime() - now.getTime()) / (1000 * 60)),
     );
 
-    // Emit OTP event for notification system
+    // Emit OTP event (notification system will fetch user and phone)
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.OTP,
       new OtpEvent(
         userId,
         verificationToken.code!,
         remainingMinutes || expiresInMinutes,
-        phone,
       ),
     );
   }
 
   /**
-   * Send password reset via selected channel
-   * Uses user's stored email or phone automatically based on channel
+   * Send password reset OTP
    * Reuses existing non-expired token if available
+   * Notification system will fetch user and phone
    */
-  async sendPasswordReset(
-    userId: string,
-    channel: NotificationChannel,
-  ): Promise<void> {
-    const user = await this.userService.findOne(userId);
-    if (!user) {
-      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
-    }
-
-    // Determine recipient based on channel - use user's stored phone
-    const recipient = user.getPhone();
-    if (!recipient) {
-      throw new BadRequestException(
-        this.i18n.translate('t.errors.userHasNoPhone'),
-      );
-    }
-
-    // Only SMS and WhatsApp are supported for password reset
-    if (
-      channel !== NotificationChannel.SMS &&
-      channel !== NotificationChannel.WHATSAPP
-    ) {
-      throw new BadRequestException(
-        this.i18n.translate('t.errors.unsupportedChannel'),
-      );
-    }
-
+  async sendPasswordReset(userId: string): Promise<void> {
     // Get or create verification token (reuses existing non-expired token)
     const verificationToken = await this.getOrCreateVerificationToken({
       userId,
       type: VerificationType.PASSWORD_RESET,
     });
-
-    const link = `${Config.app.frontendUrl}/reset-password?token=${verificationToken.token}`;
 
     // Calculate remaining time for existing token
     const now = new Date();
@@ -387,64 +334,22 @@ export class VerificationService extends BaseService {
       Math.floor((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60)),
     );
 
-    // Emit PASSWORD_RESET_REQUESTED event
-    await this.typeSafeEventEmitter.emitAsync(
-      AuthEvents.PASSWORD_RESET_REQUESTED,
-      new PasswordResetRequestedEvent(
-        recipient,
-        userId,
-        user.name,
-        verificationToken.token,
-        link,
-      ),
-    );
-
-    // Also emit OTP event for SMS/WhatsApp with code
+    // Emit OTP event (notification system will fetch user and phone)
     const expiresInMinutes =
       remainingHours > 0
         ? remainingHours * 60
         : Config.auth.passwordResetExpiresHours * 60;
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.OTP,
-      new OtpEvent(
-        userId,
-        verificationToken.code!,
-        expiresInMinutes,
-        recipient, // Phone number for SMS/WhatsApp
-      ),
+      new OtpEvent(userId, verificationToken.code!, expiresInMinutes),
     );
-  }
-
-  /**
-   * Reset password using token
-   */
-  @Transactional()
-  async resetPassword(token: string, newPassword: string): Promise<void> {
-    const verificationToken = await this.findByToken(token);
-
-    if (verificationToken.type !== VerificationType.PASSWORD_RESET) {
-      throw new BadRequestException(
-        this.i18n.translate('t.errors.invalidTokenType'),
-      );
-    }
-
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-
-    // Update user password
-    await this.userService.update(verificationToken.userId, {
-      password: hashedPassword,
-    });
-
-    // Delete the reset token
-    await this.deleteToken(token);
   }
 
   /**
    * Reset password using code
    */
   @Transactional()
-  async resetPasswordByCode(
+  async resetPassword(
     code: string,
     newPassword: string,
     userId?: string,
@@ -487,32 +392,17 @@ export class VerificationService extends BaseService {
   async resendVerification(
     userId: string,
     type: VerificationType,
-    channel: NotificationChannel,
-    email?: string,
-    phone?: string,
   ): Promise<void> {
     // Delete existing tokens of this type
     await this.verificationTokenRepository.deleteByUserIdAndType(userId, type);
 
     // Send new verification
     if (type === VerificationType.PASSWORD_RESET) {
-      await this.sendPasswordReset(userId, channel);
+      await this.sendPasswordReset(userId);
     } else if (type === VerificationType.OTP_VERIFICATION) {
-      const user = await this.userService.findOne(userId);
-      if (!user) {
-        throw new NotFoundException(
-          this.i18n.translate('t.errors.userNotFound'),
-        );
-      }
-      await this.sendPhoneVerification(userId, phone || user.getPhone());
+      await this.sendPhoneVerification(userId);
     } else if (type === VerificationType.TWO_FACTOR_AUTH) {
-      const user = await this.userService.findOne(userId);
-      if (!user) {
-        throw new NotFoundException(
-          this.i18n.translate('t.errors.userNotFound'),
-        );
-      }
-      await this.sendTwoFactorOTP(userId, phone || user.getPhone());
+      await this.sendTwoFactorOTP(userId);
     }
   }
 }

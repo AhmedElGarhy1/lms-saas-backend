@@ -62,12 +62,12 @@ export class AdminListener {
       new AdminCreatedEvent(user, userProfile, actor, admin, roleId),
     );
 
-    // Send phone verification OTP via event (if user has phone)
+    // Send phone verification OTP via event (notification service will fetch phone)
     if (user.phone && user.id) {
       try {
         await this.typeSafeEventEmitter.emitAsync(
           AuthEvents.PHONE_VERIFICATION_SEND_REQUESTED,
-          new RequestPhoneVerificationEvent(user.id, user.getPhone()),
+          new RequestPhoneVerificationEvent(user.id),
         );
       } catch {
         // Log error but don't fail user creation
