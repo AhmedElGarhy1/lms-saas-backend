@@ -218,7 +218,10 @@ export class RolesService extends BaseService {
           userProfileId,
           centerId,
         );
-      if (isCenterOwner && scope === PermissionScope.CENTER) {
+      if (
+        isCenterOwner &&
+        (scope === PermissionScope.CENTER || scope === PermissionScope.BOTH)
+      ) {
         return true;
       }
     }
