@@ -7,6 +7,7 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { Brackets } from 'typeorm';
 
 @Injectable()
 export class ActivityLogRepository extends BaseRepository<ActivityLog> {
@@ -32,10 +33,15 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
     // Create queryBuilder with relations
     const queryBuilder = this.getRepository()
       .createQueryBuilder('activityLog')
-      .where('activityLog.userId = :userId', { userId: actor.id })
-      .orWhere('activityLog.targetUserId = :targetUserId', {
-        targetUserId: actor.id,
-      })
+      .where(
+        new Brackets((qb) => {
+          qb.where('activityLog.userId = :userId', {
+            userId: actor.id,
+          }).orWhere('activityLog.targetUserId = :targetUserId', {
+            targetUserId: actor.userProfileId,
+          });
+        }),
+      )
       .leftJoin('activityLog.user', 'user') // Who performed the action
       .leftJoin('activityLog.targetUser', 'targetUser') // Who was affected
       .leftJoin('activityLog.center', 'center')
