@@ -8,7 +8,8 @@ export const NOTIFICATION_FIELDS = {
   MESSAGE: 'message',
 } as const;
 
-export type NotificationField = typeof NOTIFICATION_FIELDS[keyof typeof NOTIFICATION_FIELDS];
+export type NotificationField =
+  (typeof NOTIFICATION_FIELDS)[keyof typeof NOTIFICATION_FIELDS];
 
 /**
  * Build i18n key for notification translation
@@ -54,7 +55,7 @@ export function extractI18nVariables(str: string): string[] {
     if (match[1]) {
       const variable = match[1];
       matches.push(variable);
-      
+
       // If it's a nested property like "center.name", also add the base "center"
       // This allows validation to pass when "center" is required but "center.name" is used
       if (variable.includes('.')) {
@@ -68,4 +69,3 @@ export function extractI18nVariables(str: string): string[] {
 
   return matches;
 }
-
