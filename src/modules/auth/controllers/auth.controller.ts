@@ -1,12 +1,5 @@
-import {
-  Controller,
-  Post,
-  Patch,
-  Body,
-  UseGuards,
-  Req,
-  BadRequestException,
-} from '@nestjs/common';
+import { Controller, Post, Patch, Body, UseGuards, Req } from '@nestjs/common';
+import { ValidationFailedException } from '@/shared/common/exceptions/custom.exceptions';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '@/modules/user/services/user.service';
 import { LoginRequestDto } from '../dto/login.dto';
@@ -28,8 +21,6 @@ import {
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 import { RefreshJwtGuard } from '../guards/refresh-jwt.guard';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
@@ -51,7 +42,6 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UserService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Public()
@@ -63,10 +53,7 @@ export class AuthController {
   async login(@Body() loginDto: LoginRequestDto) {
     const result = await this.authService.login(loginDto);
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.login'),
-    );
+    return ControllerResponse.success(result, 't.success.login');
   }
 
   @Public()
@@ -78,10 +65,7 @@ export class AuthController {
   async resendLoginOTP(@Body() dto: LoginRequestDto) {
     await this.authService.resendLoginOTP(dto.phone, dto.password);
 
-    return ControllerResponse.success(
-      null,
-      this.i18n.translate('t.success.otpSent'),
-    );
+    return ControllerResponse.success(null, 't.success.otpSent');
   }
 
   @Public()
@@ -103,10 +87,7 @@ export class AuthController {
     const userId = req.user.sub;
 
     const result = await this.authService.refresh(userId);
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.tokenRefreshed'),
-    );
+    return ControllerResponse.success(result, 't.success.tokenRefreshed');
   }
 
   @Post('request-phone-verification')
@@ -123,7 +104,7 @@ export class AuthController {
 
     return ControllerResponse.success(
       null,
-      this.i18n.translate('t.success.phoneVerificationRequestSent'),
+      't.success.phoneVerificationRequestSent',
     );
   }
 
@@ -141,10 +122,7 @@ export class AuthController {
   ) {
     await this.authService.verifyPhone(dto.code, dto.userId || user.id);
 
-    return ControllerResponse.success(
-      null,
-      this.i18n.translate('t.success.phoneVerified'),
-    );
+    return ControllerResponse.success(null, 't.success.phoneVerified');
   }
 
   @Post('forgot-password')
@@ -158,10 +136,7 @@ export class AuthController {
   ) {
     const result = await this.authService.forgotPassword(dto, actor);
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.passwordResetSent'),
-    );
+    return ControllerResponse.success(result, 't.success.passwordResetSent');
   }
 
   @Post('reset-password')
@@ -173,10 +148,7 @@ export class AuthController {
   async resetPassword(@Body() dto: ResetPasswordRequestDto) {
     const result = await this.authService.resetPassword(dto);
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.passwordReset'),
-    );
+    return ControllerResponse.success(result, 't.success.passwordReset');
   }
 
   @Post('setup-2fa')
@@ -188,10 +160,7 @@ export class AuthController {
   async setup2FA(@GetUser() actor: ActorUser) {
     const result = await this.authService.setupTwoFactor(actor);
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.twoFactorSetup'),
-    );
+    return ControllerResponse.success(result, 't.success.twoFactorSetup');
   }
 
   @Post('enable-2fa')
@@ -206,14 +175,15 @@ export class AuthController {
     @GetUser() actor: ActorUser,
   ) {
     if (!dto.code) {
-      throw new BadRequestException('OTP code is required');
+      throw new ValidationFailedException(
+        'OTP code is required',
+        undefined,
+        't.errors.otpCodeRequired',
+      );
     }
     const result = await this.authService.enableTwoFactor(dto.code, actor);
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.twoFactorEnabled'),
-    );
+    return ControllerResponse.success(result, 't.success.twoFactorEnabled');
   }
 
   @Post('disable-2fa')
@@ -228,10 +198,7 @@ export class AuthController {
   ) {
     const result = await this.authService.disableTwoFactor(dto.code, actor);
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.twoFactorDisabled'),
-    );
+    return ControllerResponse.success(result, 't.success.twoFactorDisabled');
   }
 
   @Post('logout')
@@ -242,10 +209,7 @@ export class AuthController {
   async logout(@GetUser() user: ActorUser) {
     const result = await this.authService.logout(user);
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.logout'),
-    );
+    return ControllerResponse.success(result, 't.success.logout');
   }
 
   @Patch('change-password')
@@ -264,9 +228,6 @@ export class AuthController {
       dto,
     });
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.passwordChange'),
-    );
+    return ControllerResponse.success(result, 't.success.passwordChange');
   }
 }

@@ -30,12 +30,40 @@ export type I18nTranslations = {
             "login": {
                 "title": string;
                 "subtitle": string;
+                "otpHint": string;
+                "verifyAndLogin": string;
             };
             "register": {
                 "title": string;
                 "subtitle": string;
             };
             "noAccount": string;
+            "forgotPassword": {
+                "title": string;
+                "description": string;
+                "resetTitle": string;
+                "resetDescription": string;
+                "sendCode": string;
+                "resetPassword": string;
+                "backToLogin": string;
+                "otpSent": string;
+                "otpSentTo": string;
+                "resetSuccess": string;
+                "invalidCode": string;
+            };
+            "twoFactor": {
+                "setupSuccess": string;
+                "enableSuccess": string;
+                "disableSuccess": string;
+                "alreadyEnabled": string;
+                "notEnabled": string;
+                "invalidCode": string;
+                "enterCode": string;
+                "disableOtpRequired": string;
+                "otpRequired": string;
+                "enable": string;
+                "disable": string;
+            };
         };
         "common": {
             "actions": {
@@ -161,6 +189,8 @@ export type I18nTranslations = {
                 "autoRefresh": string;
                 "importUser": string;
                 "importing": string;
+                "resendCode": string;
+                "processing": string;
             };
             "labels": {
                 "name": string;
@@ -348,6 +378,9 @@ export type I18nTranslations = {
                 "channel": string;
                 "profileType": string;
                 "staff": string;
+            };
+            "countdown": {
+                "resendIn": string;
             };
             "status": {
                 "active": string;
@@ -991,12 +1024,6 @@ export type I18nTranslations = {
             "internalServerError": string;
             "businessLogicError": string;
             "badRequest": string;
-            "unauthorized": string;
-            "forbidden": string;
-            "notFound": string;
-            "conflict": string;
-            "unprocessableEntity": string;
-            "serviceUnavailable": string;
             "verificationTokenNotFound": string;
             "verificationTokenExpired": string;
             "verificationCodeNotFound": string;
@@ -1027,6 +1054,7 @@ export type I18nTranslations = {
             "userHasNoEmail": string;
             "userHasNoPhone": string;
             "unsupportedChannel": string;
+            "emailVerificationMustBeAuthenticated": string;
             "userAlreadyHasProfile": string;
             "centerAlreadyExists": string;
             "userAlreadyHasProfileCannotImport": string;
@@ -1063,6 +1091,23 @@ export type I18nTranslations = {
                 "title": string;
                 "description": string;
             };
+            "unauthorized": string;
+            "forbidden": string;
+            "notFound": string;
+            "conflict": string;
+            "unprocessableEntity": string;
+            "serviceUnavailable": string;
+            "phoneAlreadyExists": string;
+            "adminScopeNotAllowedForCenter": string;
+            "adminRoleCannotBeAssociatedWithCenter": string;
+            "otpCodeRequired": string;
+            "noAccessToGranterUser": string;
+            "noAccessToTargetUser": string;
+            "superAdminCanAccessAnyUser": string;
+            "branchAccessDenied": string;
+            "twoFactorNotEnabled": string;
+            "twoFactorAlreadyEnabled": string;
+            "systemNotReady": string;
         };
         "confirm": {
             "areYouSure": string;
@@ -1286,8 +1331,6 @@ export type I18nTranslations = {
             "passwordChange": string;
             "roleAssigned": string;
             "roleRemoved": string;
-            "userAccessGranted": string;
-            "userAccessRevoked": string;
             "permissionsRetrieved": string;
             "dataRetrieved": string;
             "dataSaved": string;
@@ -1298,6 +1341,7 @@ export type I18nTranslations = {
             "upload": string;
             "download": string;
             "tokenRefreshed": string;
+            "emailVerified": string;
             "passwordResetSent": string;
             "passwordReset": string;
             "twoFactorSetup": string;
@@ -1307,6 +1351,7 @@ export type I18nTranslations = {
             "userDeactivated": string;
             "otpSent": string;
             "userImported": string;
+            "emailVerificationRequestSent": string;
             "phoneVerificationRequestSent": string;
             "phoneVerified": string;
             "centerAccessGranted": string;
@@ -1321,6 +1366,8 @@ export type I18nTranslations = {
             "operation": string;
             "request": string;
             "dataProcessed": string;
+            "userAccessGranted": string;
+            "userAccessRevoked": string;
             "found": string;
         };
         "system": {
@@ -1447,6 +1494,7 @@ export type I18nTranslations = {
                 "actions": string;
                 "type": string;
                 "user": string;
+                "targetUser": string;
                 "center": string;
                 "ipAddress": string;
                 "userAgent": string;

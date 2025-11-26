@@ -12,17 +12,12 @@ import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { AssignRoleDto } from '../dto/assign-role.dto';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @ApiTags('Roles')
 @Controller('roles/assign')
 @ApiBearerAuth()
 export class RoleAssignController {
-  constructor(
-    private readonly rolesService: RolesService,
-    private readonly i18n: I18nService<I18nTranslations>,
-  ) {}
+  constructor(private readonly rolesService: RolesService) {}
 
   @Post()
   @CreateApiResponses('Assign a role to a user')
@@ -31,10 +26,7 @@ export class RoleAssignController {
   @Transactional()
   async assignRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
     const result = await this.rolesService.assignRoleValidate(dto, user);
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.roleAssigned'),
-    );
+    return ControllerResponse.success(result, 't.success.roleAssigned');
   }
 
   @Delete()
@@ -44,9 +36,6 @@ export class RoleAssignController {
   @Transactional()
   async removeRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
     const result = await this.rolesService.removeUserRoleValidate(dto, user);
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.roleRemoved'),
-    );
+    return ControllerResponse.success(result, 't.success.roleRemoved');
   }
 }

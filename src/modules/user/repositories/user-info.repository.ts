@@ -4,14 +4,11 @@ import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class UserInfoRepository extends BaseRepository<UserInfo> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super(txHost);
   }
@@ -35,7 +32,8 @@ export class UserInfoRepository extends BaseRepository<UserInfo> {
     });
     if (!userInfo) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.userInfoNotFound'),
+        'User info not found',
+        't.errors.userInfoNotFound',
       );
     }
 

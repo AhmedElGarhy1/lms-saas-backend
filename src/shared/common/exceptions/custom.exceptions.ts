@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { ErrorCode } from '../enums/error-codes.enum';
+import { I18nPath } from '@/generated/i18n.generated';
 
 export interface ErrorDetail {
   field: string;
@@ -20,8 +21,24 @@ export interface EnhancedErrorResponse {
   debug?: any;
 }
 
+/**
+ * Interface for exceptions that support translation keys
+ * This allows type-safe access to translationKey and translationArgs
+ */
+export interface TranslatableException {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+}
+
 export class ResourceNotFoundException extends HttpException {
-  constructor(message: string) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string,
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.NOT_FOUND,
@@ -32,11 +49,20 @@ export class ResourceNotFoundException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.NOT_FOUND,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class ResourceAlreadyExistsException extends HttpException {
-  constructor(message: string) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string,
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.CONFLICT,
@@ -47,11 +73,20 @@ export class ResourceAlreadyExistsException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.CONFLICT,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class InsufficientPermissionsException extends HttpException {
-  constructor(message: string) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string,
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
@@ -62,11 +97,21 @@ export class InsufficientPermissionsException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.FORBIDDEN,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class ValidationFailedException extends HttpException {
-  constructor(message: string, details?: ErrorDetail[]) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string,
+    details?: ErrorDetail[],
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -78,11 +123,20 @@ export class ValidationFailedException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.BAD_REQUEST,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class ResourceInUseException extends HttpException {
-  constructor(message: string) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string,
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.CONFLICT,
@@ -93,11 +147,20 @@ export class ResourceInUseException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.CONFLICT,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class InvalidOperationException extends HttpException {
-  constructor(message: string) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string,
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -108,11 +171,20 @@ export class InvalidOperationException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.BAD_REQUEST,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class PasswordTooWeakException extends HttpException {
-  constructor(requirements?: string[]) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    requirements?: string[],
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -129,11 +201,20 @@ export class PasswordTooWeakException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.BAD_REQUEST,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class UserAlreadyExistsException extends HttpException {
-  constructor(email: string) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    email: string,
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.CONFLICT,
@@ -152,11 +233,20 @@ export class UserAlreadyExistsException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.CONFLICT,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class AuthenticationFailedException extends HttpException {
-  constructor(message: string = 'Authentication failed') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'Authentication failed',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.UNAUTHORIZED,
@@ -167,11 +257,20 @@ export class AuthenticationFailedException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.UNAUTHORIZED,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class AccessDeniedException extends HttpException {
-  constructor(message: string = 'Access denied') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'Access denied',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
@@ -182,11 +281,20 @@ export class AccessDeniedException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.FORBIDDEN,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class BusinessLogicException extends HttpException {
-  constructor(message: string) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string,
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -197,11 +305,20 @@ export class BusinessLogicException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.BAD_REQUEST,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class PhoneNotVerifiedException extends HttpException {
-  constructor(message: string) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string,
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
@@ -211,11 +328,20 @@ export class PhoneNotVerifiedException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.FORBIDDEN,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class OtpRequiredException extends HttpException {
-  constructor(message: string = 'OTP code required for authentication') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'OTP code required for authentication',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.UNAUTHORIZED,
@@ -226,11 +352,20 @@ export class OtpRequiredException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.UNAUTHORIZED,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class ServiceUnavailableException extends HttpException {
-  constructor(message: string = 'Service temporarily unavailable') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'Service temporarily unavailable',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.SERVICE_UNAVAILABLE,
@@ -241,11 +376,20 @@ export class ServiceUnavailableException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.SERVICE_UNAVAILABLE,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class CenterSelectionRequiredException extends HttpException {
-  constructor(message: string = 'Center selection required') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'Center selection required',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -256,11 +400,20 @@ export class CenterSelectionRequiredException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.BAD_REQUEST,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class AdminScopeAccessDeniedException extends HttpException {
-  constructor(message: string = 'Admin scope access denied') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'Admin scope access denied',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
@@ -271,11 +424,20 @@ export class AdminScopeAccessDeniedException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.FORBIDDEN,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class CenterAccessDeniedException extends HttpException {
-  constructor(message: string = 'Center access denied') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'Center access denied',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
@@ -286,11 +448,20 @@ export class CenterAccessDeniedException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.FORBIDDEN,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class CenterAccessInactiveException extends HttpException {
-  constructor(message: string = 'Center access is inactive') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'Center access is inactive',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
@@ -301,11 +472,20 @@ export class CenterAccessInactiveException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.FORBIDDEN,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class InactiveCenterException extends HttpException {
-  constructor(message: string = 'Center is inactive') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'Center is inactive',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
@@ -316,11 +496,20 @@ export class InactiveCenterException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.FORBIDDEN,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class InactiveProfileException extends HttpException {
-  constructor(message: string = 'Profile is inactive') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'Profile is inactive',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
@@ -331,11 +520,20 @@ export class InactiveProfileException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.FORBIDDEN,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class SeederException extends HttpException {
-  constructor(message: string) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string,
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -346,11 +544,20 @@ export class SeederException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class ExportFormatNotSupportedException extends HttpException {
-  constructor(format: string) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    format: string,
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -361,11 +568,20 @@ export class ExportFormatNotSupportedException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.BAD_REQUEST,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class ExportDataUnavailableException extends HttpException {
-  constructor(message: string = 'No data available for export') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'No data available for export',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.NOT_FOUND,
@@ -376,11 +592,20 @@ export class ExportDataUnavailableException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.NOT_FOUND,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class ExportFailedException extends HttpException {
-  constructor(message: string) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string,
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -391,11 +616,20 @@ export class ExportFailedException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class MissingRequiredHeaderException extends HttpException {
-  constructor(header: string) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    header: string,
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -406,11 +640,20 @@ export class MissingRequiredHeaderException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.BAD_REQUEST,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class InvalidContentTypeException extends HttpException {
-  constructor(message: string) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string,
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -421,11 +664,20 @@ export class InvalidContentTypeException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.BAD_REQUEST,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class RequestBodyTooLargeException extends HttpException {
-  constructor(message: string = 'Request body too large') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'Request body too large',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.PAYLOAD_TOO_LARGE,
@@ -436,11 +688,20 @@ export class RequestBodyTooLargeException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.PAYLOAD_TOO_LARGE,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class UnsupportedContentTypeException extends HttpException {
-  constructor(message: string) {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string,
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.UNSUPPORTED_MEDIA_TYPE,
@@ -451,11 +712,20 @@ export class UnsupportedContentTypeException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.UNSUPPORTED_MEDIA_TYPE,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class SystemNotReadyException extends HttpException {
-  constructor(message: string = 'System is not ready') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'System is not ready',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.SERVICE_UNAVAILABLE,
@@ -466,11 +736,20 @@ export class SystemNotReadyException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.SERVICE_UNAVAILABLE,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class BranchAccessDeniedException extends HttpException {
-  constructor(message: string = 'Branch access denied') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'Branch access denied',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.FORBIDDEN,
@@ -481,11 +760,20 @@ export class BranchAccessDeniedException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.FORBIDDEN,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }
 
 export class ProfileSelectionRequiredException extends HttpException {
-  constructor(message: string = 'Profile selection required') {
+  translationKey?: I18nPath;
+  translationArgs?: Record<string, any>;
+
+  constructor(
+    message: string = 'Profile selection required',
+    translationKey?: I18nPath,
+    translationArgs?: Record<string, any>,
+  ) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -506,5 +794,7 @@ export class ProfileSelectionRequiredException extends HttpException {
       } as EnhancedErrorResponse,
       HttpStatus.BAD_REQUEST,
     );
+    this.translationKey = translationKey;
+    this.translationArgs = translationArgs;
   }
 }

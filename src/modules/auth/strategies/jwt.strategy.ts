@@ -1,10 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserRepository } from '@/modules/user/repositories/user.repository';
 import { Config } from '@/shared/config/config';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
+import {
+  AuthenticationFailedException,
+  ResourceNotFoundException,
+  BusinessLogicException,
+} from '@/shared/common/exceptions/custom.exceptions';
 
 export interface JwtPayload {
   sub: string;
@@ -17,10 +20,7 @@ export interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(
-    private readonly userRepository: UserRepository,
-    private readonly i18n: I18nService<I18nTranslations>,
-  ) {
+  constructor(private readonly userRepository: UserRepository) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -31,22 +31,25 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   async validate(payload: JwtPayload) {
     // Ensure this is an access token, not a refresh token
     if (payload.type !== 'access') {
-      throw new UnauthorizedException(
-        this.i18n.translate('t.errors.invalidTokenType'),
+      throw new AuthenticationFailedException(
+        'Invalid token type',
+        't.errors.invalidTokenType',
       );
     }
 
     const user = await this.userRepository.findOne(payload.sub);
 
     if (!user) {
-      throw new UnauthorizedException(
-        this.i18n.translate('t.errors.userNotFound'),
+      throw new ResourceNotFoundException(
+        'User not found',
+        't.errors.userNotFound',
       );
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException(
-        this.i18n.translate('t.errors.userAccountInactive'),
+      throw new BusinessLogicException(
+        'User account is inactive',
+        't.errors.userAccountInactive',
       );
     }
 

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Config } from '@/shared/config/config';
@@ -6,8 +6,10 @@ import { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../../user/services/user.service';
 import * as bcrypt from 'bcrypt';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
+import {
+  AuthenticationFailedException,
+  AccessDeniedException,
+} from '@/shared/common/exceptions/custom.exceptions';
 
 export interface RefreshJwtPayload {
   sub: string;
@@ -32,7 +34,6 @@ export class RefreshJwtStrategy extends PassportStrategy(
   constructor(
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromBodyField('refreshToken'),
@@ -51,31 +52,32 @@ export class RefreshJwtStrategy extends PassportStrategy(
       const refreshToken = req.body?.refreshToken;
 
       if (!refreshToken) {
-        throw new UnauthorizedException(
-          this.i18n.translate('t.errors.refreshTokenNotFound' as any),
+        throw new AuthenticationFailedException(
+          'Refresh token not found',
+          't.errors.refreshTokenNotFound',
         );
       }
 
       // Validate that this is a refresh token
       if (payload.type !== 'refresh') {
-        throw new UnauthorizedException(
-          this.i18n.translate('t.errors.invalidTokenType'),
+        throw new AuthenticationFailedException(
+          'Invalid token type',
+          't.errors.invalidTokenType',
         );
       }
 
       // Get user and verify they have a stored refresh token
       const user = await this.userService.findOne(payload.sub, true);
       if (!user || !user.hashedRt) {
-        throw new UnauthorizedException(
-          this.i18n.translate('t.errors.accessDenied'),
-        );
+        throw new AccessDeniedException('Access denied', 't.errors.accessDenied');
       }
 
       // Compare the provided token with the stored hashed token
       const rtMatches = await bcrypt.compare(refreshToken, user.hashedRt);
       if (!rtMatches) {
-        throw new UnauthorizedException(
-          this.i18n.translate('t.errors.invalidOrExpiredToken'),
+        throw new AuthenticationFailedException(
+          'Invalid or expired token',
+          't.errors.invalidOrExpiredToken',
         );
       }
 
@@ -87,22 +89,26 @@ export class RefreshJwtStrategy extends PassportStrategy(
       // Handle JWT-specific errors
       const jwtError = error as JwtError;
       if (jwtError?.name === 'TokenExpiredError') {
-        throw new UnauthorizedException(
-          this.i18n.translate('t.errors.refreshTokenExpired' as any),
+        throw new AuthenticationFailedException(
+          'Refresh token expired',
+          't.errors.refreshTokenExpired',
         );
       } else if (jwtError?.name === 'JsonWebTokenError') {
-        throw new UnauthorizedException(
-          this.i18n.translate('t.errors.invalidRefreshToken' as any),
+        throw new AuthenticationFailedException(
+          'Invalid refresh token',
+          't.errors.invalidRefreshToken',
         );
       } else if (jwtError?.name === 'NotBeforeError') {
-        throw new UnauthorizedException(
-          this.i18n.translate('t.errors.tokenNotActiveYet' as any),
+        throw new AuthenticationFailedException(
+          'Token not active yet',
+          't.errors.tokenNotActiveYet',
         );
-      } else if (error instanceof UnauthorizedException) {
+      } else if (error instanceof AuthenticationFailedException) {
         throw error;
       } else {
-        throw new UnauthorizedException(
-          this.i18n.translate('t.errors.tokenValidationFailed' as any),
+        throw new AuthenticationFailedException(
+          'Token validation failed',
+          't.errors.tokenValidationFailed',
         );
       }
     }

@@ -9,8 +9,6 @@ import {
 } from '@nestjs/swagger';
 import { Request } from 'express';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 import { LocaleService } from '../services/locale.service';
 import { RequestContext } from '@/shared/common/context/request.context';
 
@@ -19,10 +17,7 @@ import { RequestContext } from '@/shared/common/context/request.context';
 @Controller('locale')
 @Public()
 export class LocaleController {
-  constructor(
-    private readonly localeService: LocaleService,
-    private readonly i18n: I18nService<I18nTranslations>,
-  ) {}
+  constructor(private readonly localeService: LocaleService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get translations by language parameter' })
@@ -50,10 +45,7 @@ export class LocaleController {
   getUserLocale() {
     const userLocale = RequestContext.get().locale;
 
-    return ControllerResponse.success(
-      userLocale,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(userLocale, 't.success.dataRetrieved');
   }
 
   @Get('languages')
@@ -64,9 +56,6 @@ export class LocaleController {
   })
   getAvailableLanguages() {
     const languages = this.localeService.getAvailableLanguages();
-    return ControllerResponse.success(
-      languages,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(languages, 't.success.dataRetrieved');
   }
 }

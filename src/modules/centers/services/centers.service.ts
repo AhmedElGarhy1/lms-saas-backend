@@ -22,8 +22,6 @@ import {
   DeleteCenterEvent,
   RestoreCenterEvent,
 } from '../events/center.events';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 export interface SeederCenterData {
   name: string;
@@ -48,7 +46,6 @@ export class CentersService extends BaseService {
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
   }
@@ -57,7 +54,8 @@ export class CentersService extends BaseService {
     const center = await this.centersRepository.findOne(centerId);
     if (!center) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.resourceNotFound'),
+        'Resource not found',
+        't.errors.resourceNotFound',
       );
     }
 
@@ -103,7 +101,8 @@ export class CentersService extends BaseService {
     const center = await this.findCenterById(centerId, actor);
     if (!center) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.resourceNotFound'),
+        'Resource not found',
+        't.errors.resourceNotFound',
       );
     }
 
@@ -111,9 +110,9 @@ export class CentersService extends BaseService {
       const existingCenter = await this.centersRepository.findByName(dto.name);
       if (existingCenter) {
         throw new BusinessLogicException(
-          this.i18n.translate('t.errors.centerAlreadyExists', {
-            args: { name: dto.name },
-          }),
+          `Center with name '${dto.name}' already exists`,
+          't.errors.centerAlreadyExists',
+          { name: dto.name },
         );
       }
     }
@@ -124,7 +123,8 @@ export class CentersService extends BaseService {
     );
     if (!updatedCenter) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.resourceNotFound'),
+        'Resource not found',
+        't.errors.resourceNotFound',
       );
     }
 

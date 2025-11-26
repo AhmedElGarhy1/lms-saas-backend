@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 import { User } from '../entities/user.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { Pagination } from 'nestjs-typeorm-paginate';
@@ -19,15 +20,12 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 import { PaginateStaffDto } from '@/modules/staff/dto/paginate-staff.dto';
 import { PaginateAdminDto } from '@/modules/admin/dto/paginate-admin.dto';
 import * as _ from 'lodash';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class UserRepository extends BaseRepository<User> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super(txHost);
   }
@@ -186,8 +184,9 @@ export class UserRepository extends BaseRepository<User> {
             { userProfileId: actor.userProfileId, centerId },
           );
       } else {
-        throw new BadRequestException(
-          this.i18n.translate('t.errors.accessDeniedToUser'),
+        throw new InsufficientPermissionsException(
+          'Access denied to user',
+          't.errors.accessDeniedToUser',
         );
       }
     }
@@ -315,8 +314,9 @@ export class UserRepository extends BaseRepository<User> {
     );
 
     if (!isAdmin)
-      throw new BadRequestException(
-        this.i18n.translate('t.errors.accessDeniedToUser'),
+      throw new InsufficientPermissionsException(
+        'Access denied to user',
+        't.errors.accessDeniedToUser',
       );
     if (isSuperAdmin) {
       // do nothing

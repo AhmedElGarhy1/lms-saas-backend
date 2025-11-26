@@ -6,8 +6,6 @@ import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { StaffService } from '../services/staff.service';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 import { ExportService } from '@/shared/common/services/export.service';
 import { UserResponseExportMapper } from '@/shared/common/mappers/user-response-export.mapper';
 import { ExportUsersDto } from '@/modules/user/dto/export-users.dto';
@@ -21,7 +19,6 @@ import { StaffExportedEvent } from '../events/staff.events';
 export class StaffActionsController {
   constructor(
     private readonly staffService: StaffService,
-    private readonly i18n: I18nService<I18nTranslations>,
     private readonly exportService: ExportService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}

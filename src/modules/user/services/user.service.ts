@@ -37,8 +37,6 @@ import {
   UserRestoredEvent,
   UserActivatedEvent,
 } from '../events/user.events';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 import { VerificationService } from '@/modules/auth/services/verification.service';
 import { VerificationType } from '@/modules/auth/enums/verification-type.enum';
 
@@ -56,7 +54,6 @@ export class UserService extends BaseService {
     private readonly centersService: CentersService,
     private readonly activityLogService: ActivityLogService,
     private readonly eventEmitter: TypeSafeEventEmitter,
-    private readonly i18n: I18nService<I18nTranslations>,
     private readonly verificationService: VerificationService,
   ) {
     super();
@@ -69,7 +66,8 @@ export class UserService extends BaseService {
     const user = await this.findOne(userId, true);
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.userNotFound'),
+        'User not found',
+        't.errors.userNotFound',
       );
     }
 
@@ -80,7 +78,9 @@ export class UserService extends BaseService {
     );
     if (!isCurrentPasswordValid) {
       throw new ValidationFailedException(
-        this.i18n.translate('t.errors.currentPasswordIncorrect'),
+        'Current password is incorrect',
+        undefined,
+        't.errors.currentPasswordIncorrect',
       );
     }
 
@@ -91,6 +91,8 @@ export class UserService extends BaseService {
         await this.verificationService.sendTwoFactorOTP(user.id || '');
         throw new OtpRequiredException(
           'OTP code required for two-factor authentication',
+          // Translation key doesn't exist yet - using default message
+          // TODO: Add 't.errors.otpRequired' to translation files
         );
       }
 
@@ -108,7 +110,8 @@ export class UserService extends BaseService {
           error: error instanceof Error ? error.message : String(error),
         });
         throw new AuthenticationFailedException(
-          this.i18n.translate('t.errors.authenticationFailed'),
+          'Authentication failed',
+          't.errors.authenticationFailed',
         );
       }
     }
@@ -123,17 +126,21 @@ export class UserService extends BaseService {
     );
 
     return {
-      message: this.i18n.translate('t.success.passwordChange'),
+      message: 'Password changed successfully',
       success: true,
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async createUser(dto: CreateUserDto, _actor: ActorUser): Promise<User> {
     // Check for existing user by phone
     if (dto.phone) {
       const existingUser = await this.userRepository.findByPhone(dto.phone);
       if (existingUser) {
-        throw new UserAlreadyExistsException(dto.phone);
+        throw new UserAlreadyExistsException(
+          dto.phone,
+          't.errors.phoneAlreadyExists',
+        );
       }
     }
 
@@ -158,58 +165,6 @@ export class UserService extends BaseService {
     return savedUser;
   }
 
-  // // TODO: implement this method
-  // async createUserWithRole(dto: CreateUserWithRoleDto, actor: ActorUser) {
-  //   const centerId = (dto.centerId ?? actor.centerId)!;
-  //   dto.centerId = centerId;
-  //   const user = await this.createUser(dto, actor);
-
-  //   // Create user profile for the new user
-  //   const userProfile = await this.userProfileService.createUserProfile(
-  //     user.id,
-  //     ProfileType.STAFF, // Default to Staff for center users
-  //     user.id, // Use user.id as profileRefId for now
-  //   );
-
-  //   // Grant center access to the new user
-  //   if (centerId) {
-  //     await this.accessControlService.grantCenterAccess(
-  //       {
-  //         userProfileId: userProfile.id,
-  //         centerId,
-  //       },
-  //       actor,
-  //     );
-  //   }
-
-  //   // Grant user access (granter can manage the new user)
-  //   const bypassUserAccess =
-  //     await this.accessControlHelperService.bypassCenterInternalAccess(
-  //       actor.userProfileId,
-  //       centerId,
-  //     );
-  //   if (!bypassUserAccess) {
-  //     await this.accessControlService.grantUserAccessInternal({
-  //       granterUserProfileId: actor.userProfileId,
-  //       targetUserProfileId: userProfile.id,
-  //       centerId,
-  //     });
-  //   }
-
-  //   if (dto.roleId) {
-  //     await this.rolesService.assignRole(
-  //       {
-  //         userProfileId: userProfile.id,
-  //         roleId: dto.roleId,
-  //         centerId,
-  //       },
-  //       actor,
-  //     );
-  //   }
-
-  //   return user;
-  // }
-
   async paginateStaff(params: PaginateUsersDto, actor: ActorUser) {
     return this.userRepository.paginateStaff(params, actor);
   }
@@ -232,7 +187,8 @@ export class UserService extends BaseService {
     const user = await this.userRepository.findOne(userId);
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.userNotFound'),
+        'User not found',
+        't.errors.userNotFound',
       );
     }
 
@@ -241,7 +197,8 @@ export class UserService extends BaseService {
     );
     if (!isSuperAdmin) {
       throw new InsufficientPermissionsException(
-        this.i18n.translate('t.errors.accessDeniedToUser'),
+        'Access denied to user',
+        't.errors.accessDeniedToUser',
       );
     }
     await this.userRepository.softRemove(userId);
@@ -258,7 +215,8 @@ export class UserService extends BaseService {
     const user = await this.userRepository.findOneSoftDeletedById(userId);
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.userNotFound'),
+        'User not found',
+        't.errors.userNotFound',
       );
     }
 
@@ -267,7 +225,8 @@ export class UserService extends BaseService {
     );
     if (!isSuperAdmin) {
       throw new InsufficientPermissionsException(
-        this.i18n.translate('t.errors.accessDeniedToUser'),
+        'Access denied to user',
+        't.errors.accessDeniedToUser',
       );
     }
 
@@ -304,7 +263,8 @@ export class UserService extends BaseService {
     const user = await this.userRepository.findOne(userId);
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.userNotFound'),
+        'User not found',
+        't.errors.userNotFound',
       );
     }
 
@@ -344,7 +304,8 @@ export class UserService extends BaseService {
     const profile = await this.userProfileService.findOne(userProfileId);
     if (!profile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.resourceNotFound'),
+        'Resource not found',
+        't.errors.resourceNotFound',
       );
     }
 
@@ -408,7 +369,8 @@ export class UserService extends BaseService {
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.resourceNotFound'),
+        'Resource not found',
+        't.errors.resourceNotFound',
       );
     }
     return this.userRepository.findOne(userProfile.userId);
@@ -443,7 +405,10 @@ export class UserService extends BaseService {
       );
       // If phone exists and belongs to a different user, throw error
       if (existingUser && existingUser.id !== userId) {
-        throw new UserAlreadyExistsException(updateData.phone);
+        throw new UserAlreadyExistsException(
+          updateData.phone,
+          't.errors.phoneAlreadyExists',
+        );
       }
     }
 
@@ -482,7 +447,8 @@ export class UserService extends BaseService {
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.resourceNotFound'),
+        'Resource not found',
+        't.errors.resourceNotFound',
       );
     }
 
@@ -498,7 +464,8 @@ export class UserService extends BaseService {
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.resourceNotFound'),
+        'Resource not found',
+        't.errors.resourceNotFound',
       );
     }
 
@@ -507,7 +474,8 @@ export class UserService extends BaseService {
     );
     if (!isSuperAdmin) {
       throw new InsufficientPermissionsException(
-        this.i18n.translate('t.errors.accessDeniedToUser'),
+        'Access denied to user',
+        't.errors.accessDeniedToUser',
       );
     }
 
@@ -522,7 +490,8 @@ export class UserService extends BaseService {
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.resourceNotFound'),
+        'Resource not found',
+        't.errors.resourceNotFound',
       );
     }
 
@@ -531,7 +500,8 @@ export class UserService extends BaseService {
     );
     if (!isSuperAdmin) {
       throw new InsufficientPermissionsException(
-        this.i18n.translate('t.errors.accessDeniedToUser'),
+        'Access denied to user',
+        't.errors.accessDeniedToUser',
       );
     }
 

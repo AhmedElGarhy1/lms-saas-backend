@@ -8,8 +8,6 @@ import { User } from '@/modules/user/entities/user.entity';
 import { Staff } from '../entities/staff.entity';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class StaffService extends BaseService {
@@ -19,7 +17,6 @@ export class StaffService extends BaseService {
     private readonly staffRepository: StaffRepository,
     private readonly userService: UserService,
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
   }
@@ -84,7 +81,8 @@ export class StaffService extends BaseService {
     );
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.userNotFound'),
+        'User not found',
+        't.errors.userNotFound',
       );
     }
     return user;

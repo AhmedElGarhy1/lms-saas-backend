@@ -1,14 +1,10 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   AuthenticationFailedException,
   ResourceNotFoundException,
   BusinessLogicException,
   OtpRequiredException,
+  ValidationFailedException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { JwtService } from '@nestjs/jwt';
 import { Config } from '@/shared/config/config';
@@ -21,8 +17,6 @@ import { ResetPasswordRequestDto } from '../dto/reset-password.dto';
 import { BaseService } from '@/shared/common/services/base.service';
 import { User } from '../../user/entities/user.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 import { VerificationType } from '../enums/verification-type.enum';
 import {
   UserLoggedInEvent,
@@ -45,7 +39,6 @@ export class AuthService extends BaseService {
     private readonly userService: UserService,
     private readonly verificationService: VerificationService,
     private readonly jwtService: JwtService,
-    private readonly i18n: I18nService<I18nTranslations>,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
@@ -73,7 +66,8 @@ export class AuthService extends BaseService {
     if (user) {
       if (!user.isActive) {
         throw new BusinessLogicException(
-          this.i18n.translate('t.errors.businessLogicError'),
+          'User account is inactive',
+          't.errors.userAccountInactive',
         );
       }
 
@@ -88,7 +82,8 @@ export class AuthService extends BaseService {
         );
 
         throw new AuthenticationFailedException(
-          this.i18n.translate('t.errors.invalidCredentials'),
+          'Invalid credentials',
+          't.errors.invalidCredentials',
         );
       }
 
@@ -98,7 +93,8 @@ export class AuthService extends BaseService {
           `User object missing or invalid ID for phone: ${dto.phone}`,
         );
         throw new AuthenticationFailedException(
-          this.i18n.translate('t.errors.authenticationFailed'),
+          'Authentication failed',
+          't.errors.authenticationFailed',
         );
       }
 
@@ -109,6 +105,7 @@ export class AuthService extends BaseService {
           await this.verificationService.sendLoginOTP(user.id || '');
           throw new OtpRequiredException(
             'OTP code required for two-factor authentication',
+            't.errors.otpCodeRequired',
           );
         }
 
@@ -126,7 +123,8 @@ export class AuthService extends BaseService {
             error: error instanceof Error ? error.message : String(error),
           });
           throw new AuthenticationFailedException(
-            this.i18n.translate('t.errors.authenticationFailed'),
+            'Authentication failed',
+            't.errors.authenticationFailed',
           );
         }
       }
@@ -136,7 +134,8 @@ export class AuthService extends BaseService {
     } else {
       // User doesn't exist - return same error message to prevent enumeration
       throw new AuthenticationFailedException(
-        this.i18n.translate('t.errors.invalidCredentials'),
+        'Invalid credentials',
+        't.errors.invalidCredentials',
       );
     }
   }
@@ -158,14 +157,16 @@ export class AuthService extends BaseService {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new AuthenticationFailedException(
-        this.i18n.translate('t.errors.invalidCredentials'),
+        'Invalid credentials',
+        't.errors.invalidCredentials',
       );
     }
 
     if (!user.twoFactorEnabled) {
       // If 2FA is not enabled, no need to send OTP
       throw new BusinessLogicException(
-        this.i18n.translate('t.errors.businessLogicError'),
+        'Two-factor authentication is not enabled for this account',
+        't.errors.twoFactorNotEnabled',
       );
     }
 
@@ -185,11 +186,18 @@ export class AuthService extends BaseService {
     } else if (phone) {
       user = await this.userService.findUserByPhone(phone);
     } else {
-      throw new BadRequestException(this.i18n.translate('t.errors.badRequest'));
+      throw new ValidationFailedException(
+        'Bad request',
+        undefined,
+        't.errors.otpCodeRequired',
+      );
     }
 
     if (!user) {
-      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
+      throw new ResourceNotFoundException(
+        'User not found',
+        't.errors.userNotFound',
+      );
     }
 
     // Send phone verification OTP (notification system will fetch phone)
@@ -234,7 +242,11 @@ export class AuthService extends BaseService {
     } else if (dto.phone) {
       user = await this.userService.findUserByPhone(dto.phone);
     } else {
-      throw new BadRequestException(this.i18n.translate('t.errors.badRequest'));
+      throw new ValidationFailedException(
+        'Bad request',
+        undefined,
+        't.errors.otpCodeRequired',
+      );
     }
 
     if (!user) {
@@ -262,14 +274,15 @@ export class AuthService extends BaseService {
 
     return {
       success: true,
-      message: this.i18n.translate('t.success.passwordReset'),
+      message: 'Password reset successfully',
     };
   }
 
   async setupTwoFactor(actor: ActorUser) {
     if (actor.twoFactorEnabled) {
       throw new BusinessLogicException(
-        this.i18n.translate('t.errors.businessLogicError'),
+        'Two-factor authentication is already enabled for this account',
+        't.errors.twoFactorAlreadyEnabled',
       );
     }
 
@@ -293,13 +306,15 @@ export class AuthService extends BaseService {
 
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.userNotFound'),
+        'User not found',
+        't.errors.userNotFound',
       );
     }
 
     if (user.twoFactorEnabled) {
       throw new BusinessLogicException(
-        this.i18n.translate('t.errors.businessLogicError'),
+        'Two-factor authentication is already enabled for this account',
+        't.errors.twoFactorAlreadyEnabled',
       );
     }
 
@@ -310,9 +325,10 @@ export class AuthService extends BaseService {
         VerificationType.TWO_FACTOR_AUTH,
         actor.id,
       );
-    } catch (_error) {
+    } catch {
       throw new AuthenticationFailedException(
-        this.i18n.translate('t.errors.authenticationFailed'),
+        'Authentication failed',
+        't.errors.authenticationFailed',
       );
     }
 
@@ -325,7 +341,7 @@ export class AuthService extends BaseService {
       new TwoFactorEnabledEvent(actor.id, actor),
     );
 
-    return { message: this.i18n.translate('t.success.twoFactorEnabled') };
+    return { message: 'Two-factor authentication enabled successfully' };
   }
 
   async disableTwoFactor(
@@ -336,13 +352,15 @@ export class AuthService extends BaseService {
 
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.userNotFound'),
+        'User not found',
+        't.errors.userNotFound',
       );
     }
 
     if (!user.twoFactorEnabled) {
       throw new BusinessLogicException(
-        this.i18n.translate('t.errors.businessLogicError'),
+        'Two-factor authentication is not enabled for this account',
+        't.errors.twoFactorNotEnabled',
       );
     }
 
@@ -351,6 +369,7 @@ export class AuthService extends BaseService {
       await this.verificationService.sendTwoFactorOTP(actor.id);
       throw new OtpRequiredException(
         'OTP code required to disable two-factor authentication',
+        't.errors.otpCodeRequired',
       );
     }
 
@@ -361,13 +380,14 @@ export class AuthService extends BaseService {
         VerificationType.TWO_FACTOR_AUTH,
         actor.id,
       );
-    } catch (_error) {
+    } catch {
       this.logger.error('Invalid 2FA OTP code for disable', {
         userId: user.id,
         phone: user.phone,
       });
       throw new AuthenticationFailedException(
-        this.i18n.translate('t.errors.authenticationFailed'),
+        'Authentication failed',
+        't.errors.authenticationFailed',
       );
     }
 
@@ -380,7 +400,7 @@ export class AuthService extends BaseService {
       new TwoFactorDisabledEvent(actor.id, actor),
     );
 
-    return { message: this.i18n.translate('t.success.twoFactorDisabled') };
+    return { message: 'Two-factor authentication disabled successfully' };
   }
 
   async logout(actor: ActorUser) {
@@ -393,7 +413,7 @@ export class AuthService extends BaseService {
       new UserLoggedOutEvent(actor.id, actor),
     );
 
-    return { message: this.i18n.translate('t.success.logout') };
+    return { message: 'Logged out successfully' };
   }
 
   /**
@@ -461,7 +481,8 @@ export class AuthService extends BaseService {
     const user = await this.userService.findOne(userId, true);
     if (!user) {
       throw new AuthenticationFailedException(
-        this.i18n.translate('t.errors.userNotFound'),
+        'User not found',
+        't.errors.userNotFound',
       );
     }
 

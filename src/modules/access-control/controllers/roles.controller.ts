@@ -43,8 +43,6 @@ import {
 import { RoleResponseDto } from '../dto/role-response.dto';
 import { SerializeOptions } from '@nestjs/common';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 import { ExportService } from '@/shared/common/services/export.service';
 import { RoleResponseExportMapper } from '@/shared/common/mappers/role-response-export.mapper';
 import { ExportRolesDto } from '../dto/export-roles.dto';
@@ -58,17 +56,13 @@ export class RolesController {
     private readonly rolesService: RolesService,
     private readonly permissionService: PermissionService,
     private readonly exportService: ExportService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Get('permissions/me')
   @ReadApiResponses('Get my permissions')
   async getMyPermissions(@GetUser() actor: ActorUser) {
     const result = await this.rolesService.getMyPermissions(actor);
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.permissionsRetrieved'),
-    );
+    return ControllerResponse.success(result, 't.success.permissionsRetrieved');
   }
 
   @Get('permissions')
@@ -79,10 +73,7 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.permissionService.getPermissions(actor, scope);
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(result, 't.success.dataRetrieved');
   }
 
   @Post()
@@ -96,12 +87,9 @@ export class RolesController {
   ) {
     const result = await this.rolesService.createRole(dto, actor);
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.create', {
-        args: { resource: this.i18n.translate('t.common.resources.role') },
-      }),
-    );
+    return ControllerResponse.success(result, 't.success.create', {
+      resource: 't.common.resources.role',
+    });
   }
 
   @Get()
@@ -115,10 +103,7 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.rolesService.paginateRoles(query, actor);
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(result, 't.success.dataRetrieved');
   }
 
   @Get(':roleId')
@@ -129,10 +114,7 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.rolesService.findById(roleId, actor);
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(result, 't.success.dataRetrieved');
   }
 
   @Put(':roleId')
@@ -148,12 +130,9 @@ export class RolesController {
   ) {
     const result = await this.rolesService.updateRole(roleId, dto, user);
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.update', {
-        args: { resource: this.i18n.translate('t.common.resources.role') },
-      }),
-    );
+    return ControllerResponse.success(result, 't.success.update', {
+      resource: 't.common.resources.role',
+    });
   }
 
   @Delete(':roleId')
@@ -167,12 +146,9 @@ export class RolesController {
   ) {
     const result = await this.rolesService.deleteRole(roleId, user);
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.delete', {
-        args: { resource: this.i18n.translate('t.common.resources.role') },
-      }),
-    );
+    return ControllerResponse.success(result, 't.success.delete', {
+      resource: 't.common.resources.role',
+    });
   }
 
   @Patch(':roleId/restore')
@@ -186,11 +162,9 @@ export class RolesController {
   ) {
     await this.rolesService.restoreRole(roleId, user);
 
-    return ControllerResponse.message(
-      this.i18n.translate('t.success.restore', {
-        args: { resource: this.i18n.translate('t.common.resources.role') },
-      }),
-    );
+    return ControllerResponse.message('t.success.restore', {
+      resource: 't.common.resources.role',
+    });
   }
 
   // ===== EXPORT FUNCTIONALITY =====

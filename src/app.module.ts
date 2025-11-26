@@ -172,12 +172,8 @@ import { I18nTranslations } from './generated/i18n.generated';
     },
     {
       provide: APP_GUARD,
-      useFactory: (reflector: Reflector, i18n: I18nService) =>
-        new JwtAuthGuard(
-          reflector,
-          i18n as unknown as I18nService<I18nTranslations>,
-        ),
-      inject: [Reflector, I18nService],
+      useFactory: (reflector: Reflector) => new JwtAuthGuard(reflector),
+      inject: [Reflector],
     },
     {
       provide: APP_GUARD,

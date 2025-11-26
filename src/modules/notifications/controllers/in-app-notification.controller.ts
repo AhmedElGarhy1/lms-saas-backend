@@ -15,8 +15,6 @@ import { Notification } from '../entities/notification.entity';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @ApiTags('In-App Notifications')
 @Controller('notifications/in-app')
@@ -25,7 +23,6 @@ import { I18nTranslations } from '@/generated/i18n.generated';
 export class InAppNotificationController {
   constructor(
     private readonly inAppNotificationService: InAppNotificationService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Get()
@@ -38,10 +35,7 @@ export class InAppNotificationController {
       actor.id,
       query,
     );
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    ) as any;
+    return ControllerResponse.success(result, 't.success.dataRetrieved') as any;
   }
 
   @Get('unread')
@@ -58,10 +52,7 @@ export class InAppNotificationController {
         profileId,
       );
 
-    return ControllerResponse.success(
-      notifications,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(notifications, 't.success.dataRetrieved');
   }
 
   @Get('unread/count')
@@ -83,7 +74,7 @@ export class InAppNotificationController {
         profileType: profileType ?? null,
         profileId: profileId ?? null,
       },
-      this.i18n.translate('t.success.dataRetrieved'),
+      't.success.dataRetrieved',
     );
   }
 
@@ -95,15 +86,9 @@ export class InAppNotificationController {
       dto.notificationIds,
       actor.id,
     );
-    return ControllerResponse.message(
-      this.i18n.translate('t.success.update', {
-        args: {
-          resource: this.i18n.translate(
-            't.common.resources.notification' as any,
-          ),
-        },
-      }),
-    );
+    return ControllerResponse.message('t.success.update', {
+      resource: 't.common.resources.notification',
+    });
   }
 
   @Put('read-all')
@@ -119,15 +104,9 @@ export class InAppNotificationController {
       profileType,
       profileId,
     );
-    return ControllerResponse.message(
-      this.i18n.translate('t.success.update', {
-        args: {
-          resource: this.i18n.translate(
-            't.common.resources.notification' as any,
-          ),
-        },
-      }),
-    );
+    return ControllerResponse.message('t.success.update', {
+      resource: 't.common.resources.notification',
+    });
   }
 
   @Put(':id/archive')
@@ -138,15 +117,9 @@ export class InAppNotificationController {
     @Param('id') notificationId: string,
   ) {
     await this.inAppNotificationService.archive(actor.id, notificationId);
-    return ControllerResponse.message(
-      this.i18n.translate('t.success.archive', {
-        args: {
-          resource: this.i18n.translate(
-            't.common.resources.notification' as any,
-          ),
-        },
-      }),
-    );
+    return ControllerResponse.message('t.success.archive', {
+      resource: 't.common.resources.notification',
+    });
   }
 
   @Get('archived')

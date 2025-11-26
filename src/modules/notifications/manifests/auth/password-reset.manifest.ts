@@ -17,15 +17,8 @@ export const passwordResetManifest = {
   audiences: {
     DEFAULT: {
       channels: {
-        [NotificationChannel.EMAIL]: {
-          template: 'email/auth/password-reset',
-          subject: 'Password Reset Request',
-        },
         [NotificationChannel.SMS]: {
           template: 'sms/auth/password-reset',
-        },
-        [NotificationChannel.WHATSAPP]: {
-          template: 'password_reset',
         },
       },
     },

@@ -7,6 +7,7 @@ import { ActivityLogModule } from './modules/activity-log/activity-log.module';
 import { TypeOrmExceptionFilter } from './common/filters/typeorm-exception.filter';
 import { RedisModule } from './modules/redis/redis.module';
 import { TypeSafeEventEmitter } from './services/type-safe-event-emitter.service';
+import { TranslationService } from './services/translation.service';
 
 @Global()
 @Module({
@@ -17,6 +18,7 @@ import { TypeSafeEventEmitter } from './services/type-safe-event-emitter.service
     ExportService,
     TypeOrmExceptionFilter,
     TypeSafeEventEmitter,
+    TranslationService,
   ],
   exports: [
     DatabaseService,
@@ -25,6 +27,7 @@ import { TypeSafeEventEmitter } from './services/type-safe-event-emitter.service
     ConfigModule,
     RedisModule,
     TypeSafeEventEmitter,
+    TranslationService,
   ],
 })
 export class SharedModule {}

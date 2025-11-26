@@ -7,8 +7,6 @@ import { UserProfileImportService } from '../services/user-profile-import.servic
 import { RequestImportOtpDto } from '../dto/request-import-otp.dto';
 import { VerifyUserImportDto } from '../dto/verify-user-import.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 import { RateLimit } from '@/modules/rate-limit/decorators/rate-limit.decorator';
 
 @ApiTags('User Profile Import')
@@ -16,7 +14,6 @@ import { RateLimit } from '@/modules/rate-limit/decorators/rate-limit.decorator'
 export class UserProfileImportController {
   constructor(
     private readonly userProfileImportService: UserProfileImportService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Post('request-otp')
@@ -50,10 +47,7 @@ export class UserProfileImportController {
     // This endpoint doesn't require authentication as per plan
     await this.userProfileImportService.sendImportOtp(dto);
 
-    return ControllerResponse.success(
-      null,
-      this.i18n.translate('t.success.otpSent'),
-    );
+    return ControllerResponse.success(null, 't.success.otpSent');
   }
 
   @Post('verify')
@@ -99,9 +93,6 @@ export class UserProfileImportController {
       actor,
     );
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.userImported'),
-    );
+    return ControllerResponse.success(result, 't.success.userImported');
   }
 }

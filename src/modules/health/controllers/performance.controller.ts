@@ -5,8 +5,6 @@ import { TransactionPerformanceInterceptor } from '../interceptors/transaction-p
 import { PerformanceAlertsService } from '../services/performance-alerts.service';
 import { Public } from '@/shared/common/decorators/public.decorator';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @ApiTags('Health - Performance Monitoring')
 @Controller('health/performance')
@@ -16,7 +14,6 @@ export class PerformanceController {
     private readonly databasePerformanceService: DatabasePerformanceService,
     private readonly alertsService: PerformanceAlertsService,
     private readonly transactionInterceptor: TransactionPerformanceInterceptor,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Get('database')
@@ -27,10 +24,7 @@ export class PerformanceController {
   })
   getDatabasePerformance() {
     const result = this.databasePerformanceService.getPerformanceStats();
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(result, 't.success.dataRetrieved');
   }
 
   @Get('transactions')
@@ -41,10 +35,7 @@ export class PerformanceController {
   })
   getTransactionPerformance() {
     const result = this.databasePerformanceService.getTransactionMetrics();
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(result, 't.success.dataRetrieved');
   }
 
   @Get('health')
@@ -79,10 +70,7 @@ export class PerformanceController {
       },
       alerts: alertStats,
     };
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(result, 't.success.dataRetrieved');
   }
 
   @Get('alerts')
@@ -93,10 +81,7 @@ export class PerformanceController {
   })
   getActiveAlerts() {
     const result = this.alertsService.getActiveAlerts();
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(result, 't.success.dataRetrieved');
   }
 
   @Get('stats')
@@ -116,10 +101,7 @@ export class PerformanceController {
         nodeVersion: process.version,
       },
     };
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(result, 't.success.dataRetrieved');
   }
 
   @Post('alerts/resolve/:alertId')
@@ -130,13 +112,9 @@ export class PerformanceController {
   })
   resolveAlert(@Body('alertId') alertId: string) {
     void this.alertsService.resolveAlert(alertId);
-    return ControllerResponse.message(
-      this.i18n.translate('t.success.update', {
-        args: {
-          resource: this.i18n.translate('t.common.labels.alert'),
-        },
-      }),
-    );
+    return ControllerResponse.message('t.success.update', {
+      resource: 't.common.labels.alert',
+    });
   }
 
   private calculateOverallErrorRate(

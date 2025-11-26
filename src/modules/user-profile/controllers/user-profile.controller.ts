@@ -22,8 +22,6 @@ import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 import { UserProfileService } from '../services/user-profile.service';
 import { UserService } from '@/modules/user/services/user.service';
 import { UpdateUserProfileStatusDto } from '../dto/update-user-profile-status.dto';
@@ -38,7 +36,6 @@ export class UserProfileController {
   constructor(
     private readonly userProfileService: UserProfileService,
     private readonly userService: UserService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Post()
@@ -51,12 +48,9 @@ export class UserProfileController {
   ) {
     await this.userProfileService.createProfile(dto, actorUser);
 
-    return ControllerResponse.success(
-      null,
-      this.i18n.translate('t.success.create', {
-        args: { resource: this.i18n.translate('t.common.resources.profile') },
-      }),
-    );
+    return ControllerResponse.success(null, 't.success.create', {
+      resource: 't.common.resources.profile',
+    });
   }
 
   @Get('me')
@@ -68,12 +62,9 @@ export class UserProfileController {
   async getCurrentProfile(@GetUser() actor: ActorUser) {
     const profile = await this.userProfileService.getCurrentUserProfile(actor);
 
-    return ControllerResponse.success(
-      profile,
-      this.i18n.translate('t.success.found', {
-        args: { resource: this.i18n.translate('t.common.resources.profile') },
-      }),
-    );
+    return ControllerResponse.success(profile, 't.success.found', {
+      resource: 't.common.resources.profile',
+    });
   }
 
   @Get()
@@ -84,12 +75,9 @@ export class UserProfileController {
     // Currently returns the actor user's profiles; can be expanded later
     const profiles = await this.userProfileService.listProfiles(actor);
 
-    return ControllerResponse.success(
-      profiles,
-      this.i18n.translate('t.success.found', {
-        args: { resource: this.i18n.translate('t.common.resources.profiles') },
-      }),
-    );
+    return ControllerResponse.success(profiles, 't.success.found', {
+      resource: 't.common.resources.profiles',
+    });
   }
 
   @Get(':id')
@@ -103,12 +91,9 @@ export class UserProfileController {
       userProfileId,
       actorUser,
     );
-    return ControllerResponse.success(
-      profile,
-      this.i18n.translate('t.success.found', {
-        args: { resource: this.i18n.translate('t.common.resources.profile') },
-      }),
-    );
+    return ControllerResponse.success(profile, 't.success.found', {
+      resource: 't.common.resources.profile',
+    });
   }
 
   @Patch(':id/status')
@@ -129,9 +114,8 @@ export class UserProfileController {
 
     return ControllerResponse.success(
       { id: userProfileId, isActive: dto.isActive },
-      this.i18n.translate('t.success.update', {
-        args: { resource: this.i18n.translate('t.common.resources.profile') },
-      }),
+      't.success.update',
+      { resource: 't.common.resources.profile' },
     );
   }
 
@@ -147,9 +131,10 @@ export class UserProfileController {
     // Note: Activity logging should be handled by event listeners if UserProfileService emits events
     return ControllerResponse.success(
       { id: userProfileId },
-      this.i18n.translate('t.success.delete', {
-        args: { resource: this.i18n.translate('t.common.resources.profile') },
-      }),
+      't.success.delete',
+      {
+        resource: 't.common.resources.profile',
+      },
     );
   }
 
@@ -165,9 +150,10 @@ export class UserProfileController {
     // Note: Activity logging should be handled by event listeners if UserProfileService emits events
     return ControllerResponse.success(
       { id: userProfileId },
-      this.i18n.translate('t.success.restore', {
-        args: { resource: this.i18n.translate('t.common.resources.profile') },
-      }),
+      't.success.restore',
+      {
+        resource: 't.common.resources.profile',
+      },
     );
   }
 }

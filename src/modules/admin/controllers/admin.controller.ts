@@ -10,16 +10,11 @@ import { AdminService } from '../services/admin.service';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { UserResponseDto } from '@/modules/user/dto/user-response.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @ApiTags('Admin')
 @Controller('admin')
 export class AdminController {
-  constructor(
-    private readonly adminService: AdminService,
-    private readonly i18n: I18nService<I18nTranslations>,
-  ) {}
+  constructor(private readonly adminService: AdminService) {}
 
   @Get()
   @ReadApiResponses('List admin users with pagination and filtering')
@@ -30,9 +25,6 @@ export class AdminController {
     @GetUser() actorUser: ActorUser,
   ) {
     const result = await this.adminService.paginateAdmins(query, actorUser);
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(result, 't.success.dataRetrieved');
   }
 }

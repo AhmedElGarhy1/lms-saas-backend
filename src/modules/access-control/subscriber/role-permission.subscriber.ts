@@ -6,13 +6,15 @@ import {
   DataSource,
 } from 'typeorm';
 import { RolePermission } from '../entities/role-permission.entity';
-import { BadRequestException } from '@nestjs/common';
 import { PermissionRepository } from '../repositories/permission.repository';
 import { PermissionScope } from '../constants/permissions';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { RequestContext } from '@/shared/common/context/request.context';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
+import {
+  ResourceNotFoundException,
+  ValidationFailedException,
+  BusinessLogicException,
+} from '@/shared/common/exceptions/custom.exceptions';
 
 @EventSubscriber()
 export class RolePermissionSubscriber
@@ -21,7 +23,6 @@ export class RolePermissionSubscriber
   constructor(
     private readonly permissionRepository: PermissionRepository,
     @InjectDataSource() private readonly dataSource: DataSource,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     this.dataSource.subscribers.push(this);
   }
@@ -48,8 +49,9 @@ export class RolePermissionSubscriber
         rolePermission.permissionId,
       );
       if (!permission)
-        throw new BadRequestException(
-          this.i18n.translate('t.errors.permissionNotFound'),
+        throw new ResourceNotFoundException(
+          'Permission not found',
+          't.errors.permissionNotFound',
         );
 
       if (centerId) {
@@ -57,8 +59,9 @@ export class RolePermissionSubscriber
           rolePermission.permissionScope === PermissionScope.ADMIN ||
           rolePermission.permissionScope === PermissionScope.BOTH
         ) {
-          throw new BadRequestException(
+          throw new BusinessLogicException(
             'Admin scope is not allowed for center',
+            't.errors.adminScopeNotAllowedForCenter',
           );
         }
       }
@@ -68,8 +71,10 @@ export class RolePermissionSubscriber
         permission.scope !== rolePermission.permissionScope &&
         permission.scope !== PermissionScope.BOTH
       ) {
-        throw new BadRequestException(
-          this.i18n.translate('t.errors.permissionScopeDoesNotMatch'),
+        throw new ValidationFailedException(
+          'Permission scope does not match',
+          undefined,
+          't.errors.permissionScopeDoesNotMatch',
         );
       }
     }

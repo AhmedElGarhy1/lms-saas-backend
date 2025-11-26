@@ -21,12 +21,11 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 import {
   ToggleUserStatusRequestDto,
   ToggleUserStatusResponseDto,
 } from '@/modules/user/dto/toggle-user-status.dto';
+import { TranslationService } from '@/shared/services/translation.service';
 
 @ApiBearerAuth()
 @ApiTags('Centers Access')
@@ -35,7 +34,6 @@ export class CentersAccessController {
   constructor(
     private readonly accessControlService: AccessControlService,
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   @Patch(':userProfileId/status')
@@ -68,7 +66,7 @@ export class CentersAccessController {
 
     return {
       id: userProfileId,
-      message: this.i18n.translate(
+      message: TranslationService.translate(
         dto.isActive ? 't.success.userActivated' : 't.success.userDeactivated',
       ),
       isActive: dto.isActive,
@@ -88,10 +86,7 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.centerAccessGranted'),
-    );
+    return ControllerResponse.success(result, 't.success.centerAccessGranted');
   }
 
   @Delete()
@@ -108,10 +103,7 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.centerAccessRevoked'),
-    );
+    return ControllerResponse.success(result, 't.success.centerAccessRevoked');
   }
 
   @Delete(':userProfileId')
@@ -144,10 +136,7 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.centerAccessDeleted'),
-    );
+    return ControllerResponse.success(result, 't.success.centerAccessDeleted');
   }
 
   @Patch(':userProfileId/restore')
@@ -174,9 +163,6 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.centerAccessRestored'),
-    );
+    return ControllerResponse.success(result, 't.success.centerAccessRestored');
   }
 }

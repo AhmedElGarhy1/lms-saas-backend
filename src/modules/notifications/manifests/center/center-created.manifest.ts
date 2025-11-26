@@ -29,10 +29,6 @@ export const centerCreatedManifest = {
     },
     OWNER: {
       channels: {
-        [NotificationChannel.EMAIL]: {
-          template: 'email/center-created',
-          subject: 'Your new center is ready!',
-        },
         [NotificationChannel.IN_APP]: {
           template: 'in-app/center-created',
         },

@@ -12,6 +12,8 @@ import { ErrorCode } from '../enums/error-codes.enum';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations, I18nPath } from '@/generated/i18n.generated';
 import { formatRemainingTime } from '@/modules/rate-limit/utils/rate-limit-time-formatter';
+import { TranslationService } from '@/shared/services/translation.service';
+import { TranslatableException } from '../exceptions/custom.exceptions';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -31,13 +33,26 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
-      // If it's already our custom exception format, use it as-is (already translated)
+      // Check if exception has translationKey property (custom exceptions)
+      const translatableException = exception as TranslatableException;
+      const hasTranslationKey =
+        translatableException.translationKey !== undefined;
+
+      // If it's already our custom exception format, use it
       if (
         typeof exceptionResponse === 'object' &&
         'code' in exceptionResponse &&
         'message' in exceptionResponse
       ) {
         errorResponse = exceptionResponse as EnhancedErrorResponse;
+
+        // If exception has translationKey, translate the message
+        if (hasTranslationKey && translatableException.translationKey) {
+          errorResponse.message = TranslationService.translate(
+            translatableException.translationKey,
+            translatableException.translationArgs,
+          );
+        }
       } else {
         // Convert standard NestJS exceptions to our format
         errorResponse = this.convertToStandardFormat(
@@ -135,13 +150,23 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // Handle rate limit with retry after (special case)
     if (status === HttpStatus.TOO_MANY_REQUESTS && retryAfter) {
       const remainingTime = formatRemainingTime(retryAfter);
-      return this.i18n.translate('t.errors.tooManyRequestsWithTime', {
-        args: { time: remainingTime },
+      return TranslationService.translate('t.errors.tooManyRequestsWithTime', {
+        time: remainingTime,
       });
     }
 
-    // Try to translate (will fail if not a valid key, that's okay)
-    return this.i18n.translate(rawMessage as I18nPath);
+    // If message starts with 't.', it's a translation key - translate it
+    if (typeof rawMessage === 'string' && rawMessage.startsWith('t.')) {
+      return TranslationService.translate(rawMessage as I18nPath);
+    }
+
+    // Try to translate using I18nService (backward compatibility)
+    try {
+      return this.i18n.translate(rawMessage as I18nPath);
+    } catch {
+      // If translation fails, return original message
+      return rawMessage;
+    }
   }
 
   private getErrorCode(status: number): ErrorCode {

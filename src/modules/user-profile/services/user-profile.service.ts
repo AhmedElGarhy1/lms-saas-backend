@@ -24,8 +24,6 @@ import { CreateStaffEvent } from '@/modules/staff/events/staff.events';
 import { CreateAdminEvent } from '@/modules/admin/events/admin.events';
 import { Staff } from '@/modules/staff/entities/staff.entity';
 import { Admin } from '@/modules/admin/entities/admin.entity';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class UserProfileService extends BaseService {
@@ -40,7 +38,6 @@ export class UserProfileService extends BaseService {
     private readonly profileTypePermissionService: ProfileTypePermissionService,
     private readonly centerService: CentersService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
   }
@@ -56,7 +53,8 @@ export class UserProfileService extends BaseService {
     const user = await this.userService.findOne(actor.id);
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.userNotFound'),
+        'User not found',
+        't.errors.userNotFound',
       );
     }
 
@@ -71,7 +69,8 @@ export class UserProfileService extends BaseService {
     const userProfile = await this.findOne(actor.userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.userProfileNotFound'),
+        'User profile not found',
+        't.errors.userProfileNotFound',
       );
     }
     actor.userProfileId = userProfile.id;
@@ -100,7 +99,8 @@ export class UserProfileService extends BaseService {
     );
     if (!profile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.resourceNotFound'),
+        'Resource not found',
+        't.errors.resourceNotFound',
       );
     }
 
@@ -124,7 +124,8 @@ export class UserProfileService extends BaseService {
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.userProfileNotFound'),
+        'User profile not found',
+        't.errors.userProfileNotFound',
       );
     }
     await this.userProfileRepository.update(userProfileId, { isActive });
@@ -154,7 +155,8 @@ export class UserProfileService extends BaseService {
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.userProfileNotFound'),
+        'User profile not found',
+        't.errors.userProfileNotFound',
       );
     }
 
@@ -208,9 +210,10 @@ export class UserProfileService extends BaseService {
     );
     if (existingProfile) {
       throw new ValidationFailedException(
-        this.i18n.translate('t.errors.userAlreadyHasProfile', {
-          args: { profileType },
-        }),
+        `User already has a ${profileType} profile`,
+        undefined,
+        't.errors.userAlreadyHasProfile',
+        { profileType },
       );
     }
 
@@ -262,13 +265,15 @@ export class UserProfileService extends BaseService {
 
     if (!deletedProfile) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.userProfileNotFound'),
+        'User profile not found',
+        't.errors.userProfileNotFound',
       );
     }
 
     if (!deletedProfile.deletedAt) {
       throw new BusinessLogicException(
-        this.i18n.translate('t.errors.profileNotDeleted'),
+        'Profile is not deleted',
+        't.errors.profileNotDeleted',
       );
     }
 

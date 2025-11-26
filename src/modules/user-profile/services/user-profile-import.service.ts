@@ -1,11 +1,13 @@
 import {
   Injectable,
-  NotFoundException,
-  ConflictException,
   Logger,
   Inject,
   forwardRef,
 } from '@nestjs/common';
+import {
+  ResourceNotFoundException,
+  ResourceAlreadyExistsException,
+} from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { User } from '@/modules/user/entities/user.entity';
@@ -25,8 +27,6 @@ import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { OtpEvent } from '@/modules/auth/events/auth.events';
 import { UserEvents } from '@/shared/events/user.events.enum';
 import { UserImportedEvent } from '@/modules/user/events/user.events';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 import { RequestImportOtpDto } from '../dto/request-import-otp.dto';
 
 @Injectable()
@@ -43,7 +43,6 @@ export class UserProfileImportService extends BaseService {
     private readonly accessControlService: AccessControlService,
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
   }
@@ -104,8 +103,9 @@ export class UserProfileImportService extends BaseService {
       // Case 1: centerId is provided
       // If user has BOTH profile AND center access → throw error (nothing to do)
       if (existingProfile && hasCenterAccess) {
-        throw new ConflictException(
-          this.i18n.translate('t.errors.userAlreadyHasAccess'),
+        throw new ResourceAlreadyExistsException(
+          'User already has access',
+          't.errors.userAlreadyHasAccess',
         );
       }
       // Otherwise OK: will create profile and/or add center access
@@ -113,8 +113,9 @@ export class UserProfileImportService extends BaseService {
       // Case 2: centerId is NOT provided
       if (existingProfile) {
         // User already has profile → nothing to do (can't add center access without centerId)
-        throw new ConflictException(
-          this.i18n.translate('t.errors.userAlreadyHasProfileCannotImport'),
+        throw new ResourceAlreadyExistsException(
+          'User already has profile and cannot be imported',
+          't.errors.userAlreadyHasProfileCannotImport',
         );
       }
       // Otherwise OK: will create profile only (no center access)
@@ -263,7 +264,10 @@ export class UserProfileImportService extends BaseService {
   private async findUserByPhone(phone: string): Promise<User> {
     const user = await this.userService.findUserByPhone(phone);
     if (!user) {
-      throw new NotFoundException(this.i18n.translate('t.errors.userNotFound'));
+      throw new ResourceNotFoundException(
+        'User not found',
+        't.errors.userNotFound',
+      );
     }
     return user;
   }

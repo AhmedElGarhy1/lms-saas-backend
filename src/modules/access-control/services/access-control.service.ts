@@ -1,10 +1,4 @@
-import {
-  ConflictException,
-  Inject,
-  Injectable,
-  forwardRef,
-  Logger,
-} from '@nestjs/common';
+import { Inject, Injectable, forwardRef, Logger } from '@nestjs/common';
 import {
   BusinessLogicException,
   InsufficientPermissionsException,
@@ -26,8 +20,6 @@ import {
 } from '../events/access-control.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { BaseService } from '@/shared/common/services/base.service';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class AccessControlService extends BaseService {
@@ -40,7 +32,6 @@ export class AccessControlService extends BaseService {
     private readonly centerAccessRepository: CenterAccessRepository,
     private readonly branchAccessRepository: BranchAccessRepository,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
   }
@@ -75,6 +66,7 @@ export class AccessControlService extends BaseService {
     if (!IHaveAccessToGranterUser) {
       throw new InsufficientPermissionsException(
         'You do not have access to granter user',
+        't.errors.noAccessToGranterUser',
       );
     }
 
@@ -88,6 +80,7 @@ export class AccessControlService extends BaseService {
     if (!IHaveAccessToTargetUser) {
       throw new InsufficientPermissionsException(
         'You do not have access to target user',
+        't.errors.noAccessToTargetUser',
       );
     }
 
@@ -99,6 +92,7 @@ export class AccessControlService extends BaseService {
     if (isGranterSuperAdmin) {
       throw new InsufficientPermissionsException(
         'Granter user is a super admin and can access any user',
+        't.errors.superAdminCanAccessAnyUser',
       );
     }
 
@@ -111,7 +105,8 @@ export class AccessControlService extends BaseService {
 
     if (canAccess) {
       throw new BusinessLogicException(
-        this.i18n.translate('t.errors.userAlreadyHasAccess'),
+        'User already has access',
+        't.errors.userAlreadyHasAccess',
       );
     }
 
@@ -144,6 +139,7 @@ export class AccessControlService extends BaseService {
       );
       throw new InsufficientPermissionsException(
         'You do not have access to granter user',
+        't.errors.noAccessToGranterUser',
       );
     }
 
@@ -162,6 +158,7 @@ export class AccessControlService extends BaseService {
       });
       throw new InsufficientPermissionsException(
         'You do not have access to target user',
+        't.errors.noAccessToTargetUser',
       );
     }
 
@@ -170,7 +167,8 @@ export class AccessControlService extends BaseService {
 
     if (!canAccess) {
       throw new InsufficientPermissionsException(
-        this.i18n.translate('t.errors.userDoesNotHaveAccess'),
+        'User does not have access',
+        't.errors.userDoesNotHaveAccess',
       );
     }
 
@@ -226,8 +224,9 @@ export class AccessControlService extends BaseService {
     const canAccess =
       await this.accessControlHelperService.canBranchAccess(data);
     if (canAccess) {
-      throw new ConflictException(
-        this.i18n.translate('t.errors.profileAlreadyAssignedToBranch'),
+      throw new BusinessLogicException(
+        'Profile already assigned to branch',
+        't.errors.profileAlreadyAssignedToBranch',
       );
     }
 
@@ -272,12 +271,14 @@ export class AccessControlService extends BaseService {
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.centerAccessNotFound'),
+        'Center access not found',
+        't.errors.centerAccessNotFound',
       );
     }
     if (centerAccess.deletedAt) {
       throw new BusinessLogicException(
-        this.i18n.translate('t.errors.centerAccessAlreadyDeleted'),
+        'Center access is already deleted',
+        't.errors.centerAccessAlreadyDeleted',
       );
     }
 
@@ -303,12 +304,14 @@ export class AccessControlService extends BaseService {
     );
     if (!centerAccess) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.centerAccessNotFound'),
+        'Center access not found',
+        't.errors.centerAccessNotFound',
       );
     }
     if (!centerAccess.deletedAt) {
       throw new BusinessLogicException(
-        this.i18n.translate('t.errors.centerAccessNotDeleted'),
+        'Center access is not deleted',
+        't.errors.centerAccessNotDeleted',
       );
     }
     await this.centerAccessRepository.restore(centerAccess.id);
@@ -332,7 +335,8 @@ export class AccessControlService extends BaseService {
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.centerAccessNotFound'),
+        'Center access not found',
+        't.errors.centerAccessNotFound',
       );
     }
     await this.centerAccessRepository.update(centerAccess.id, { isActive });

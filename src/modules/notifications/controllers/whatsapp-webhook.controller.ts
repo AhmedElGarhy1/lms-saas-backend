@@ -9,9 +9,11 @@ import {
   Logger,
   Res,
   Req,
-  UnauthorizedException,
-  BadRequestException,
 } from '@nestjs/common';
+import {
+  AuthenticationFailedException,
+  ValidationFailedException,
+} from '@/shared/common/exceptions/custom.exceptions';
 import { Request, Response } from 'express';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { Public } from '@/shared/common/decorators/public.decorator';
@@ -24,8 +26,6 @@ import {
 import { WhatsAppWebhookService } from '../services/webhooks/whatsapp-webhook.service';
 import { WhatsAppWebhookSignatureService } from '../services/webhooks/whatsapp-webhook-signature.service';
 import { WhatsAppWebhookEvent } from '../types/whatsapp-webhook.types';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 /**
  * Extended Request interface with rawBody for signature verification
@@ -47,7 +47,6 @@ export class WhatsAppWebhookController {
   constructor(
     private readonly webhookService: WhatsAppWebhookService,
     private readonly signatureService: WhatsAppWebhookSignatureService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   /**
@@ -115,8 +114,9 @@ export class WhatsAppWebhookController {
       const isValid = this.signatureService.verifySignature(rawBody, signature);
       if (!isValid) {
         this.logger.warn('Webhook signature verification failed');
-        throw new UnauthorizedException(
-          this.i18n.translate('t.errors.invalidSignature'),
+        throw new AuthenticationFailedException(
+          'Invalid signature',
+          't.errors.invalidSignature',
         );
       }
 
@@ -151,10 +151,10 @@ export class WhatsAppWebhookController {
       );
 
       // Re-throw to return appropriate HTTP status
-      if (error instanceof UnauthorizedException) {
+      if (error instanceof AuthenticationFailedException) {
         throw error;
       }
-      if (error instanceof BadRequestException) {
+      if (error instanceof ValidationFailedException) {
         throw error;
       }
 

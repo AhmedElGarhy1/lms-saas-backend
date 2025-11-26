@@ -8,17 +8,13 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '@/shared/common/decorators/public.decorator';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
+import { TranslationService } from '@/shared/services/translation.service';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   private readonly logger = new Logger(JwtAuthGuard.name);
 
-  constructor(
-    private reflector: Reflector,
-    private readonly i18n: I18nService<I18nTranslations>,
-  ) {
+  constructor(private reflector: Reflector) {
     super();
   }
 
@@ -62,7 +58,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
       // For other errors (token expired, invalid signature, etc.), use generic message
       throw new UnauthorizedException(
-        this.i18n.translate('t.errors.invalidOrExpiredToken' as any),
+        TranslationService.translate('t.errors.invalidOrExpiredToken'),
       );
     }
 

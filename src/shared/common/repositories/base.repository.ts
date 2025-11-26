@@ -8,7 +8,8 @@ import {
   FindOneOptions,
   FindOptionsWhere,
 } from 'typeorm';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ResourceNotFoundException } from '../exceptions/custom.exceptions';
 import { Pagination, paginate } from 'nestjs-typeorm-paginate';
 import { BasePaginationDto } from '../dto/base-pagination.dto';
 import { TransactionHost } from '@nestjs-cls/transactional';
@@ -453,14 +454,22 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
 
   async updateThrow(id: string, data: DeepPartial<T>): Promise<T | null> {
     const entity = await this.update(id, data);
-    if (!entity) throw new NotFoundException('Entity not found');
+    if (!entity)
+      throw new ResourceNotFoundException(
+        'Entity not found',
+        't.errors.resourceNotFound',
+      );
     return entity;
   }
 
   async softRemove(id: string): Promise<void> {
     const repo = this.getRepository();
     const entity = await repo.findOne({ where: { id } as any });
-    if (!entity) throw new NotFoundException('Entity not found');
+    if (!entity)
+      throw new ResourceNotFoundException(
+        'Entity not found',
+        't.errors.resourceNotFound',
+      );
 
     await repo.softRemove(entity);
   }
@@ -468,7 +477,11 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   async remove(id: string): Promise<void> {
     const repo = this.getRepository();
     const entity = await repo.findOne({ where: { id } as any });
-    if (!entity) throw new NotFoundException('Entity not found');
+    if (!entity)
+      throw new ResourceNotFoundException(
+        'Entity not found',
+        't.errors.resourceNotFound',
+      );
 
     await repo.remove(entity);
   }

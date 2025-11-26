@@ -21,16 +21,11 @@ import { GetUser } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UpdateApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @ApiTags('Centers - Branches')
 @Controller('centers/branches')
 export class BranchesController {
-  constructor(
-    private readonly branchesService: BranchesService,
-    private readonly i18n: I18nService<I18nTranslations>,
-  ) {}
+  constructor(private readonly branchesService: BranchesService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all branches for a center with pagination' })
@@ -46,10 +41,7 @@ export class BranchesController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(result, 't.success.dataRetrieved');
   }
 
   @Get(':branchId')
@@ -68,10 +60,7 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.branchesService.getBranch(branchId, actor);
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(result, 't.success.dataRetrieved');
   }
 
   @Post()
@@ -94,14 +83,9 @@ export class BranchesController {
       createBranchDto,
       actor,
     );
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.create', {
-        args: {
-          resource: this.i18n.translate('t.common.resources.branch'),
-        },
-      }),
-    );
+    return ControllerResponse.success(result, 't.success.create', {
+      resource: 't.common.resources.branch',
+    });
   }
 
   @Put(':branchId')
@@ -127,14 +111,9 @@ export class BranchesController {
       data,
       actor,
     );
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.update', {
-        args: {
-          resource: this.i18n.translate('t.common.resources.branch'),
-        },
-      }),
-    );
+    return ControllerResponse.success(result, 't.success.update', {
+      resource: 't.common.resources.branch',
+    });
   }
 
   @Delete(':branchId')
@@ -155,13 +134,9 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.branchesService.deleteBranch(branchId, actor);
-    return ControllerResponse.message(
-      this.i18n.translate('t.success.delete', {
-        args: {
-          resource: this.i18n.translate('t.common.resources.branch'),
-        },
-      }),
-    );
+    return ControllerResponse.message('t.success.delete', {
+      resource: 't.common.resources.branch',
+    });
   }
 
   @Patch(':branchId/status')
@@ -187,13 +162,9 @@ export class BranchesController {
       body.isActive,
       actor,
     );
-    return ControllerResponse.message(
-      this.i18n.translate('t.success.update', {
-        args: {
-          resource: this.i18n.translate('t.common.resources.branch'),
-        },
-      }),
-    );
+    return ControllerResponse.message('t.success.update', {
+      resource: 't.common.resources.branch',
+    });
   }
 
   @Patch(':branchId/restore')
@@ -206,12 +177,8 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.branchesService.restoreBranch(branchId, actor);
-    return ControllerResponse.message(
-      this.i18n.translate('t.success.restore', {
-        args: {
-          resource: this.i18n.translate('t.common.resources.branch'),
-        },
-      }),
-    );
+    return ControllerResponse.message('t.success.restore', {
+      resource: 't.common.resources.branch',
+    });
   }
 }

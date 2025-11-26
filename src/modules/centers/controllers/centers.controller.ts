@@ -28,18 +28,13 @@ import { CreateCenterDto } from '../dto/create-center.dto';
 import { UpdateCenterRequestDto } from '../dto/update-center.dto';
 import { CenterResponseDto } from '../dto/center-response.dto';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 
 @Controller('centers')
 @ApiTags('Centers')
 @ApiBearerAuth()
 export class CentersController {
-  constructor(
-    private readonly centersService: CentersService,
-    private readonly i18n: I18nService<I18nTranslations>,
-  ) {}
+  constructor(private readonly centersService: CentersService) {}
 
   @Post()
   @CreateApiResponses('Create a new center')
@@ -52,14 +47,9 @@ export class CentersController {
   ) {
     const result = await this.centersService.createCenter(dto, actor);
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.create', {
-        args: {
-          resource: this.i18n.translate('t.common.resources.center'),
-        },
-      }),
-    );
+    return ControllerResponse.success(result, 't.success.create', {
+      resource: 't.common.resources.center',
+    });
   }
 
   @Get()
@@ -71,10 +61,7 @@ export class CentersController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.centersService.paginateCenters(query, actor);
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(result, 't.success.dataRetrieved');
   }
 
   @Get(':id')
@@ -85,10 +72,7 @@ export class CentersController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.centersService.findCenterById(id, actor);
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
+    return ControllerResponse.success(result, 't.success.dataRetrieved');
   }
 
   @Put(':id')
@@ -104,14 +88,9 @@ export class CentersController {
   ) {
     const result = await this.centersService.updateCenter(id, dto, actor);
 
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.update', {
-        args: {
-          resource: this.i18n.translate('t.common.resources.center'),
-        },
-      }),
-    );
+    return ControllerResponse.success(result, 't.success.update', {
+      resource: 't.common.resources.center',
+    });
   }
 
   @Delete(':id')
@@ -122,13 +101,9 @@ export class CentersController {
   async deleteCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
     await this.centersService.deleteCenter(id, actor);
 
-    return ControllerResponse.message(
-      this.i18n.translate('t.success.delete', {
-        args: {
-          resource: this.i18n.translate('t.common.resources.center'),
-        },
-      }),
-    );
+    return ControllerResponse.message('t.success.delete', {
+      resource: 't.common.resources.center',
+    });
   }
 
   @Patch(':id/restore')
@@ -139,13 +114,9 @@ export class CentersController {
   async restoreCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
     await this.centersService.restoreCenter(id, actor);
 
-    return ControllerResponse.message(
-      this.i18n.translate('t.success.restore', {
-        args: {
-          resource: this.i18n.translate('t.common.resources.center'),
-        },
-      }),
-    );
+    return ControllerResponse.message('t.success.restore', {
+      resource: 't.common.resources.center',
+    });
   }
 
   @Patch(':id/status')
@@ -163,10 +134,8 @@ export class CentersController {
   ) {
     await this.centersService.toggleCenterStatus(id, body.isActive, actor);
 
-    return ControllerResponse.message(
-      this.i18n.translate('t.success.update', {
-        args: { resource: this.i18n.translate('t.common.resources.center') },
-      }),
-    );
+    return ControllerResponse.message('t.success.update', {
+      resource: 't.common.resources.center',
+    });
   }
 }

@@ -7,8 +7,6 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { User } from '@/modules/user/entities/user.entity';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class AdminService extends BaseService {
@@ -18,7 +16,6 @@ export class AdminService extends BaseService {
     private readonly adminRepository: AdminRepository,
     private readonly userService: UserService,
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
   }
@@ -36,7 +33,8 @@ export class AdminService extends BaseService {
     );
     if (!user) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.userNotFound'),
+        'User not found',
+        't.errors.userNotFound',
       );
     }
     return user;

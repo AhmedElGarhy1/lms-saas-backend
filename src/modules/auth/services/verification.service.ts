@@ -1,11 +1,8 @@
+import { Injectable, Inject, forwardRef, Logger } from '@nestjs/common';
 import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Inject,
-  forwardRef,
-  Logger,
-} from '@nestjs/common';
+  ResourceNotFoundException,
+  ValidationFailedException,
+} from '@/shared/common/exceptions/custom.exceptions';
 import { VerificationTokenRepository } from '../repositories/verification-token.repository';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Config } from '@/shared/config/config';
@@ -16,8 +13,6 @@ import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.
 import { VerificationType } from '../enums/verification-type.enum';
 import { VerificationToken } from '../entities/verification-token.entity';
 import { Transactional, Propagation } from '@nestjs-cls/transactional';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 export interface CreateVerificationTokenData {
   userId: string;
@@ -35,7 +30,6 @@ export class VerificationService extends BaseService {
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
   }
@@ -120,15 +114,18 @@ export class VerificationService extends BaseService {
     );
 
     if (!verificationToken) {
-      throw new NotFoundException(
-        this.i18n.translate('t.errors.verificationCodeNotFound'),
+      throw new ResourceNotFoundException(
+        'Verification code not found',
+        't.errors.verificationCodeNotFound',
       );
     }
 
     if (verificationToken.expiresAt < new Date()) {
       await this.verificationTokenRepository.deleteById(verificationToken.id);
-      throw new BadRequestException(
-        this.i18n.translate('t.errors.verificationCodeExpired'),
+      throw new ValidationFailedException(
+        'Verification code expired',
+        undefined,
+        't.errors.verificationCodeExpired',
       );
     }
 
@@ -219,7 +216,7 @@ export class VerificationService extends BaseService {
       AuthEvents.OTP,
       new OtpEvent(
         userId,
-        verificationToken.code!,
+        verificationToken.code,
         remainingMinutes || expiresInMinutes,
       ),
     );
@@ -253,7 +250,7 @@ export class VerificationService extends BaseService {
       AuthEvents.OTP,
       new OtpEvent(
         userId,
-        verificationToken.code!,
+        verificationToken.code,
         remainingMinutes || expiresInMinutes,
       ),
     );
@@ -289,7 +286,7 @@ export class VerificationService extends BaseService {
       AuthEvents.OTP,
       new OtpEvent(
         userId,
-        verificationToken.code!,
+        verificationToken.code,
         remainingMinutes || expiresInMinutes,
       ),
     );
@@ -322,7 +319,7 @@ export class VerificationService extends BaseService {
         : Config.auth.passwordResetExpiresHours * 60;
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.OTP,
-      new OtpEvent(userId, verificationToken.code!, expiresInMinutes),
+      new OtpEvent(userId, verificationToken.code, expiresInMinutes),
     );
   }
 

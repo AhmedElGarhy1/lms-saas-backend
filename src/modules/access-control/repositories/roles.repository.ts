@@ -13,8 +13,6 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { In } from 'typeorm';
 import { RolePermission } from '../entities/role-permission.entity';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> {
@@ -23,7 +21,6 @@ export class RolesRepository extends BaseRepository<Role> {
     private readonly rolePermissionRepository: RolePermissionRepository,
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super(txHost);
   }
@@ -39,7 +36,8 @@ export class RolesRepository extends BaseRepository<Role> {
     });
     if (!role) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.roleNotFound'),
+        'Role not found',
+        't.errors.roleNotFound',
       );
     }
     return role;
@@ -68,7 +66,8 @@ export class RolesRepository extends BaseRepository<Role> {
     const role = await this.update(roleId, roleData);
     if (!role) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.roleNotFound'),
+        'Role not found',
+        't.errors.roleNotFound',
       );
     }
     const existingRolePermissions =

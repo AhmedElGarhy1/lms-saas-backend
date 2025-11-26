@@ -13,17 +13,14 @@ import {
   EnhancedErrorResponse,
 } from '../exceptions/custom.exceptions';
 import { ErrorCode } from '../enums/error-codes.enum';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations, I18nPath } from '@/generated/i18n.generated';
+import { I18nPath } from '@/generated/i18n.generated';
+import { TranslationService } from '@/shared/services/translation.service';
 
 @Injectable()
 export class CustomValidationPipe implements PipeTransform<any> {
   private readonly logger: Logger = new Logger(CustomValidationPipe.name);
 
-  constructor(
-    private readonly i18n: I18nService<I18nTranslations>,
-    private readonly moduleRef: ModuleRef,
-  ) {}
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   async transform(value: any, { metatype }: ArgumentMetadata) {
     if (!metatype || !this.toValidate(metatype)) {
@@ -39,7 +36,7 @@ export class CustomValidationPipe implements PipeTransform<any> {
 
       const errorResponse: EnhancedErrorResponse = {
         statusCode: 400,
-        message: this.i18n.translate('t.errors.validationFailed'),
+        message: TranslationService.translate('t.errors.validationFailed'),
         code: ErrorCode.VALIDATION_FAILED,
         timestamp: new Date().toISOString(),
         details: validationErrors,
@@ -120,50 +117,72 @@ export class CustomValidationPipe implements PipeTransform<any> {
 
     // Handle special cases with specific message paths
     if (mappedKey === 'email') {
-      return this.i18n.translate('t.validation.email.invalid' as I18nPath);
+      return TranslationService.translate(
+        't.validation.email.invalid' as I18nPath,
+      );
     }
 
     if (mappedKey === 'phone') {
-      return this.i18n.translate('t.validation.phone.invalid' as I18nPath);
+      return TranslationService.translate(
+        't.validation.phone.invalid' as I18nPath,
+      );
     }
 
     if (mappedKey === 'passwordMismatch') {
-      return this.i18n.translate('t.validation.password.mismatch' as I18nPath);
+      return TranslationService.translate(
+        't.validation.password.mismatch' as I18nPath,
+      );
     }
 
     // Handle dynamic patterns with field interpolation
     if (mappedKey === 'required') {
-      return this.i18n.translate('t.validation.required.message' as I18nPath, {
-        args: { field: fieldLabel },
-      });
+      return TranslationService.translate(
+        't.validation.required.message' as I18nPath,
+        {
+          field: fieldLabel,
+        },
+      );
     }
 
     if (mappedKey === 'minLength') {
       // Extract min value from constraint message or use default
-      const minValue = this.extractConstraintValue(constraints[constraintKey], 'min') || 0;
-      return this.i18n.translate('t.validation.minLength.message' as I18nPath, {
-        args: { field: fieldLabel, min: minValue },
-      });
+      const minValue =
+        this.extractConstraintValue(constraints[constraintKey], 'min') || 0;
+      return TranslationService.translate(
+        't.validation.minLength.message' as I18nPath,
+        {
+          field: fieldLabel,
+          min: minValue,
+        },
+      );
     }
 
     if (mappedKey === 'maxLength') {
       // Extract max value from constraint message or use default
-      const maxValue = this.extractConstraintValue(constraints[constraintKey], 'max') || 0;
-      return this.i18n.translate('t.validation.maxLength.message' as I18nPath, {
-        args: { field: fieldLabel, max: maxValue },
-      });
+      const maxValue =
+        this.extractConstraintValue(constraints[constraintKey], 'max') || 0;
+      return TranslationService.translate(
+        't.validation.maxLength.message' as I18nPath,
+        {
+          field: fieldLabel,
+          max: maxValue,
+        },
+      );
     }
 
     // Fallback to invalid format
-    return this.i18n.translate('t.validation.invalid.message' as I18nPath, {
-      args: { field: fieldLabel },
-    });
+    return TranslationService.translate(
+      't.validation.invalid.message' as I18nPath,
+      {
+        field: fieldLabel,
+      },
+    );
   }
 
   private getFieldLabel(field: string): string {
     // Try to get translated field label
     const labelKey = `t.common.labels.${field}` as I18nPath;
-    const translatedLabel = this.i18n.translate(labelKey);
+    const translatedLabel = TranslationService.translate(labelKey);
 
     // If translation exists and is different from the key, use it
     if (
@@ -201,11 +220,9 @@ export class CustomValidationPipe implements PipeTransform<any> {
 
     // Try to get translated suggestion first
     const suggestionKey = `validation.${field}.${constraintKey}.suggestion`;
-    const translatedSuggestion = this.i18n.translate(
+    const translatedSuggestion = TranslationService.translate(
       suggestionKey as I18nPath,
-      {
-        args: { field },
-      },
+      { field },
     );
     if (
       translatedSuggestion &&
@@ -217,33 +234,43 @@ export class CustomValidationPipe implements PipeTransform<any> {
 
     // Fallback to common validation suggestions
     const suggestions: Record<string, string> = {
-      isEmail: this.i18n.translate('t.validation.email.suggestion', {
-        args: { field },
+      isEmail: TranslationService.translate('t.validation.email.suggestion', {
+        field,
       }),
-      isNotEmpty: this.i18n.translate('t.validation.required.suggestion', {
-        args: { field },
-      }),
-      minLength: this.i18n.translate('t.validation.minLength.suggestion', {
-        args: { field },
-      }),
-      maxLength: this.i18n.translate('t.validation.maxLength.suggestion', {
-        args: { field },
-      }),
-      isPhoneNumber: this.i18n.translate('t.validation.phone.suggestion', {
-        args: { field },
-      }),
-      isStrongPassword: this.i18n.translate(
-        't.validation.password.suggestion',
+      isNotEmpty: TranslationService.translate(
+        't.validation.required.suggestion',
         {
-          args: { field },
+          field,
         },
+      ),
+      minLength: TranslationService.translate(
+        't.validation.minLength.suggestion',
+        {
+          field,
+        },
+      ),
+      maxLength: TranslationService.translate(
+        't.validation.maxLength.suggestion',
+        {
+          field,
+        },
+      ),
+      isPhoneNumber: TranslationService.translate(
+        't.validation.phone.suggestion',
+        {
+          field,
+        },
+      ),
+      isStrongPassword: TranslationService.translate(
+        't.validation.password.suggestion',
+        { field },
       ),
     };
 
     return (
       suggestions[constraintKey] ||
-      this.i18n.translate('t.validation.default.suggestion', {
-        args: { field },
+      TranslationService.translate('t.validation.default.suggestion', {
+        field,
       })
     );
   }

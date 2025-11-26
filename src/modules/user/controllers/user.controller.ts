@@ -6,8 +6,6 @@ import { Transactional } from '@nestjs-cls/transactional';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 import { UserService } from '../services/user.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
@@ -17,10 +15,7 @@ import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 @ApiTags('Users')
 @Controller('users')
 export class UserController {
-  constructor(
-    private readonly userService: UserService,
-    private readonly i18n: I18nService<I18nTranslations>,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   @Put('me')
   @UpdateApiResponses('Update current user information')
@@ -35,11 +30,8 @@ export class UserController {
   ) {
     const user = await this.userService.updateUser(actor.id, dto, actor);
 
-    return ControllerResponse.success(
-      user,
-      this.i18n.translate('t.success.update', {
-        args: { resource: this.i18n.translate('t.common.resources.user') },
-      }),
-    );
+    return ControllerResponse.success(user, 't.success.update', {
+      resource: 't.common.resources.user',
+    });
   }
 }

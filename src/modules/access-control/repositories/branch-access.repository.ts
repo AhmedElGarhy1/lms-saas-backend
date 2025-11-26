@@ -1,18 +1,18 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { BranchAccess } from '../entities/branch-access.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { BranchAccessDto } from '../dto/branch-access.dto';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import {
+  ResourceNotFoundException,
+  ResourceAlreadyExistsException,
+} from '@/shared/common/exceptions/custom.exceptions';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class BranchAccessRepository extends BaseRepository<BranchAccess> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super(txHost);
   }
@@ -28,8 +28,9 @@ export class BranchAccessRepository extends BaseRepository<BranchAccess> {
   async grantBranchAccess(data: BranchAccessDto) {
     const existingAccess = await this.findBranchAccess(data);
     if (existingAccess) {
-      throw new ConflictException(
-        this.i18n.translate('t.errors.accessAlreadyExists'),
+      throw new ResourceAlreadyExistsException(
+        'Access already exists',
+        't.errors.accessAlreadyExists',
       );
     }
 
@@ -40,7 +41,8 @@ export class BranchAccessRepository extends BaseRepository<BranchAccess> {
     const existingAccess = await this.findBranchAccess(data);
     if (!existingAccess) {
       throw new ResourceNotFoundException(
-        this.i18n.translate('t.errors.branchAccessNotFound'),
+        'Branch access not found',
+        't.errors.branchAccessNotFound',
       );
     }
 
