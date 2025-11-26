@@ -124,8 +124,11 @@ export class RolesController {
   @Get(':roleId')
   @ReadApiResponses('Get role by ID')
   @ApiParam({ name: 'roleId', type: String })
-  async getRoleById(@Param('roleId', ParseUUIDPipe) roleId: string) {
-    const result = await this.rolesService.findById(roleId);
+  async getRoleById(
+    @Param('roleId', ParseUUIDPipe) roleId: string,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.rolesService.findById(roleId, actor);
     return ControllerResponse.success(
       result,
       this.i18n.translate('t.success.dataRetrieved'),

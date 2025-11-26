@@ -115,12 +115,10 @@ export class UserProfileService extends BaseService {
     isActive: boolean,
     actor: ActorUser,
   ) {
-    // Validate that actor has permission to activate/deactivate this profile type
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
-      targetUserProfileId: userProfileId, // Fetches profileType from DB
-      operation: 'activate',
-      centerId: actor.centerId,
+    // Validate access (can actor manage this profile?)
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: userProfileId,
     });
 
     const userProfile = await this.findOne(userProfileId);
@@ -146,15 +144,7 @@ export class UserProfileService extends BaseService {
     dto: UpdateUserProfileDto,
     actor: ActorUser,
   ) {
-    // 1. Validate that actor has permission to update this profile type
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
-      targetUserProfileId: userProfileId, // Fetches profileType from DB
-      operation: 'update',
-      centerId: actor.centerId,
-    });
-
-    // 2. Validate access (can actor manage this profile?)
+    // Validate access (can actor manage this profile?)
     await this.accessControlHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,
       targetUserProfileId: userProfileId,
@@ -194,7 +184,15 @@ export class UserProfileService extends BaseService {
     return this.userProfileRepository.findForUser(userId, userProfileId);
   }
 
-  async findOne(userProfileId: string) {
+  async findOne(userProfileId: string, actor?: ActorUser) {
+    // If actor is provided, validate access
+    if (actor) {
+      await this.accessControlHelperService.validateUserAccess({
+        granterUserProfileId: actor.userProfileId,
+        targetUserProfileId: userProfileId,
+        centerId: actor.centerId,
+      });
+    }
     return this.userProfileRepository.findOne(userProfileId);
   }
 
@@ -245,12 +243,10 @@ export class UserProfileService extends BaseService {
     userProfileId: string,
     actor: ActorUser,
   ): Promise<void> {
-    // Validate that actor has permission to delete this profile type
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
-      targetUserProfileId: userProfileId, // Fetches profileType from DB
-      operation: 'delete',
-      centerId: actor.centerId,
+    // Validate access (can actor manage this profile?)
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: userProfileId,
     });
 
     await this.userProfileRepository.softRemove(userProfileId);
@@ -276,13 +272,10 @@ export class UserProfileService extends BaseService {
       );
     }
 
-    // Validate that actor has permission to restore this profile type
-    // Pass profileType directly to avoid the lookup that excludes soft-deleted records
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
-      profileType: deletedProfile.profileType, // Pass directly instead of targetUserProfileId
-      operation: 'restore',
-      centerId: actor.centerId,
+    // Validate access (can actor manage this profile?)
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: userProfileId,
     });
 
     await this.userProfileRepository.restore(userProfileId);

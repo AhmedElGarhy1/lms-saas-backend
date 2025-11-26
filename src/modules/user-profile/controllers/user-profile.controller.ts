@@ -22,7 +22,6 @@ import { Transactional } from '@nestjs-cls/transactional';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
@@ -82,7 +81,6 @@ export class UserProfileController {
 
   @Get()
   @ReadApiResponses('List user profiles with pagination and filtering')
-  @Permissions(PERMISSIONS.ADMIN.READ)
   @NoProfile()
   @NoContext()
   async listProfiles(@GetUser() actor: ActorUser) {
@@ -100,12 +98,14 @@ export class UserProfileController {
   @Get(':id')
   @ReadApiResponses('Get user profile by ID')
   @ApiParam({ name: 'id', description: 'User Profile ID', type: String })
-  @Permissions(PERMISSIONS.ADMIN.READ)
   async getProfile(
     @Param('id', ParseUUIDPipe) userProfileId: string,
-    @GetUser() _actorUser: ActorUser, // eslint-disable-line @typescript-eslint/no-unused-vars
+    @GetUser() actorUser: ActorUser,
   ) {
-    const profile = await this.userProfileService.findOne(userProfileId);
+    const profile = await this.userProfileService.findOne(
+      userProfileId,
+      actorUser,
+    );
     return ControllerResponse.success(
       profile,
       this.i18n.translate('t.success.found', {

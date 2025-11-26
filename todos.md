@@ -89,3 +89,4 @@
 [ ] think about removing restrictions and permissions for diffrent profile types it's we already have restrictions you can only access users in your user_access
 [ ] fix local is not consistant between backend and frontend
 [ ] activity logs and each one display his own logs only
+[ ] translation instead of injecting i18service everywhere we can make the internal services or utils like ControllerResponse take safe translaction key string and the service call is inside these utils

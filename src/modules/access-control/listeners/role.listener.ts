@@ -40,10 +40,11 @@ export class RoleListener {
 
     try {
       // Call service to assign role
-      await this.rolesService.assignRole(
-        { userProfileId, roleId, centerId },
-        actor,
-      );
+      await this.rolesService.assignRole({
+        userProfileId,
+        roleId,
+        centerId,
+      });
     } catch (error) {
       this.logger.error(
         `Failed to handle ${AccessControlEvents.ASSIGN_ROLE} event - userProfileId: ${userProfileId}, roleId: ${roleId}, centerId: ${centerId}, actorId: ${actor?.userProfileId || 'unknown'}`,
@@ -79,10 +80,11 @@ export class RoleListener {
 
     try {
       // Call service to revoke role
-      await this.rolesService.removeUserRole(
-        { userProfileId, roleId, centerId },
-        actor,
-      );
+      await this.rolesService.removeUserRole({
+        userProfileId,
+        roleId,
+        centerId,
+      });
     } catch (error) {
       this.logger.error(
         `Failed to handle ${AccessControlEvents.REVOKE_ROLE} event - userProfileId: ${userProfileId}, roleId: ${roleId}, centerId: ${centerId}, actorId: ${actor?.userProfileId || 'unknown'}`,
@@ -193,14 +195,11 @@ export class RoleListener {
       // can done on background job
       await Promise.all(
         profileRoles.map((pr) =>
-          this.rolesService.removeUserRole(
-            {
-              userProfileId: pr.userProfileId,
-              roleId: pr.roleId,
-              centerId: pr.centerId,
-            },
-            actor,
-          ),
+          this.rolesService.removeUserRole({
+            userProfileId: pr.userProfileId,
+            roleId: pr.roleId,
+            centerId: pr.centerId,
+          }),
         ),
       );
     } catch (error) {

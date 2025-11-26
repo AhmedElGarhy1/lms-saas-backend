@@ -1,5 +1,5 @@
-import { Controller, Get, Param, Query, ParseUUIDPipe } from '@nestjs/common';
-import { ApiTags, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Query } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { ReadApiResponses } from '@/shared/common/decorators';
 import { SerializeOptions } from '@nestjs/common';
 import { PaginateAdminDto } from '../dto/paginate-admin.dto';
@@ -30,26 +30,6 @@ export class AdminController {
     @GetUser() actorUser: ActorUser,
   ) {
     const result = await this.adminService.paginateAdmins(query, actorUser);
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.dataRetrieved'),
-    );
-  }
-
-  @Get(':userProfileId')
-  @ReadApiResponses('Get admin user by User Profile ID')
-  @ApiParam({
-    name: 'userProfileId',
-    description: 'User Profile ID',
-    type: String,
-  })
-  @ApiQuery({ name: 'centerId', required: false, type: String })
-  @Permissions(PERMISSIONS.ADMIN.READ)
-  async findOne(
-    @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.adminService.findOne(userProfileId, actor);
     return ControllerResponse.success(
       result,
       this.i18n.translate('t.success.dataRetrieved'),

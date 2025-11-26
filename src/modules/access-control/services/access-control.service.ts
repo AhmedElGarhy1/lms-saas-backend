@@ -26,7 +26,6 @@ import {
 } from '../events/access-control.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { BaseService } from '@/shared/common/services/base.service';
-import { ProfileTypePermissionService } from './profile-type-permission.service';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 
@@ -41,8 +40,6 @@ export class AccessControlService extends BaseService {
     private readonly centerAccessRepository: CenterAccessRepository,
     private readonly branchAccessRepository: BranchAccessRepository,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-    @Inject(forwardRef(() => ProfileTypePermissionService))
-    private readonly profileTypePermissionService: ProfileTypePermissionService,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {
     super();
@@ -66,14 +63,6 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
     body.centerId = centerId;
-
-    // Validate profile-type permission: Check if actor has permission to grant access for this profile type
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
-      targetUserProfileId: body.granterUserProfileId,
-      operation: 'grant-user-access',
-      centerId,
-    });
 
     // Check user already have access
     const IHaveAccessToGranterUser =
@@ -135,15 +124,6 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
     body.centerId = centerId;
-
-    // Validate profile-type permission: Check if actor has permission to grant access for this profile type
-    // (revoke uses the same permission as grant)
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
-      targetUserProfileId: body.granterUserProfileId,
-      operation: 'grant-user-access',
-      centerId,
-    });
 
     // Check user already have access
     const IHaveAccessToGranterUser =
@@ -236,11 +216,10 @@ export class AccessControlService extends BaseService {
   async assignProfileToBranch(data: BranchAccessDto, actor: ActorUser) {
     const centerId = data.centerId ?? actor.centerId ?? '';
 
-    // Validate profile-type permission: Check if actor has permission to grant branch access for this profile type
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
+    // Validate access (can actor manage this profile?)
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
       targetUserProfileId: data.userProfileId,
-      operation: 'grant-branch-access',
       centerId,
     });
 
@@ -262,11 +241,10 @@ export class AccessControlService extends BaseService {
   async removeUserFromBranch(data: BranchAccessDto, actor: ActorUser) {
     const centerId = data.centerId ?? actor.centerId ?? '';
 
-    // Validate profile-type permission: Check if actor has permission to revoke branch access for this profile type
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
+    // Validate access (can actor manage this profile?)
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
       targetUserProfileId: data.userProfileId,
-      operation: 'revoke-branch-access',
       centerId,
     });
 
@@ -283,11 +261,10 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
 
-    // Validate profile-type permission: Check if actor has permission to delete center access for this profile type
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
+    // Validate access (can actor manage this profile?)
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
       targetUserProfileId: body.userProfileId,
-      operation: 'delete',
       centerId,
     });
 
@@ -313,11 +290,10 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
 
-    // Validate profile-type permission: Check if actor has permission to restore center access for this profile type
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
+    // Validate access (can actor manage this profile?)
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
       targetUserProfileId: body.userProfileId,
-      operation: 'restore',
       centerId,
     });
 
@@ -345,11 +321,10 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
 
-    // Validate profile-type permission: Check if actor has permission to activate/deactivate center access for this profile type
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
+    // Validate access (can actor manage this profile?)
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
       targetUserProfileId: body.userProfileId,
-      operation: 'activate',
       centerId,
     });
 

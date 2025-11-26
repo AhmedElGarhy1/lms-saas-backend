@@ -140,16 +140,16 @@ export class RolesService extends BaseService {
       centerId,
     });
 
-    return this.assignRole(data, actor);
+    return this.assignRole(data);
   }
 
-  async assignRole(data: AssignRoleDto, actor?: ActorUser) {
+  async assignRole(data: AssignRoleDto) {
     const result = await this.profileRoleRepository.assignProfileRole(data);
 
     return result;
   }
 
-  async removeUserRole(data: AssignRoleDto, actor?: ActorUser) {
+  async removeUserRole(data: AssignRoleDto) {
     const result = await this.profileRoleRepository.removeProfileRole(data);
 
     return result;
@@ -162,11 +162,27 @@ export class RolesService extends BaseService {
       centerId: data.centerId,
     });
 
-    return this.removeUserRole(data, actor);
+    return this.removeUserRole(data);
   }
 
-  async findById(roleId: string) {
-    return this.rolesRepository.findRolePermissions(roleId);
+  async findById(roleId: string, actor?: ActorUser) {
+    const role = await this.rolesRepository.findRolePermissions(roleId);
+
+    // If actor is provided, validate scope access
+    if (actor) {
+      if (!role.isSameScope(actor.centerId)) {
+        this.logger.warn('Role access failed - insufficient permissions', {
+          roleId,
+          actorId: actor.userProfileId,
+          centerId: actor.centerId,
+        });
+        throw new InsufficientPermissionsException(
+          'You are not authorized to access this role',
+        );
+      }
+    }
+
+    return role;
   }
 
   async findUserRole(userProfileId: string, centerId?: string) {

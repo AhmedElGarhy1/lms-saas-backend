@@ -19,26 +19,6 @@ export const PERMISSIONS = {
       name: 'Create Staff',
       scope: PermissionScope.CENTER,
     },
-    UPDATE: {
-      action: 'staff:update',
-      name: 'Update Staff',
-      scope: PermissionScope.CENTER,
-    },
-    DELETE: {
-      action: 'staff:delete',
-      name: 'Delete Staff',
-      scope: PermissionScope.CENTER,
-    },
-    RESTORE: {
-      action: 'staff:restore',
-      name: 'Restore Staff',
-      scope: PermissionScope.CENTER,
-    },
-    ACTIVATE: {
-      action: 'staff:activate',
-      name: 'Activate/Deactivate Staff',
-      scope: PermissionScope.CENTER,
-    },
     GRANT_USER_ACCESS: {
       action: 'staff:grant-user-access',
       name: 'Grant User Access',
@@ -81,26 +61,6 @@ export const PERMISSIONS = {
     CREATE: {
       action: 'admin:create',
       name: 'Create Admin',
-      scope: PermissionScope.ADMIN,
-    },
-    UPDATE: {
-      action: 'admin:update',
-      name: 'Update Admin',
-      scope: PermissionScope.ADMIN,
-    },
-    DELETE: {
-      action: 'admin:delete',
-      name: 'Delete Admin',
-      scope: PermissionScope.ADMIN,
-    },
-    RESTORE: {
-      action: 'admin:restore',
-      name: 'Restore Admin',
-      scope: PermissionScope.ADMIN,
-    },
-    ACTIVATE: {
-      action: 'admin:activate',
-      name: 'Activate/Deactivate Admin',
       scope: PermissionScope.ADMIN,
     },
     GRANT_ADMIN_ACCESS: {

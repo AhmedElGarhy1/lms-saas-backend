@@ -80,8 +80,11 @@ export class CentersController {
   @Get(':id')
   @ReadApiResponses('Get center by ID')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
-  async getCenterById(@Param('id', ParseUUIDPipe) id: string) {
-    const result = await this.centersService.findCenterById(id);
+  async getCenterById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.centersService.findCenterById(id, actor);
     return ControllerResponse.success(
       result,
       this.i18n.translate('t.success.dataRetrieved'),

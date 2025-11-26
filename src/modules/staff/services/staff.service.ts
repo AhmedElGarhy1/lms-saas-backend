@@ -2,7 +2,6 @@ import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { StaffRepository } from '../repositories/staff.repository';
 import { UserService } from '@/modules/user/services/user.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { PaginateStaffDto } from '../dto/paginate-staff.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { User } from '@/modules/user/entities/user.entity';
@@ -70,8 +69,19 @@ export class StaffService extends BaseService {
     );
   }
 
-  async findOne(userId: string): Promise<User> {
-    const user = await this.userService.findOne(userId);
+  async findOne(userProfileId: string, actor: ActorUser): Promise<User> {
+    // Validate that actor has access to this user profile
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: userProfileId,
+      centerId: actor.centerId,
+    });
+
+    // Find user by profileId
+    const user = await this.userService.findUserByProfileId(
+      userProfileId,
+      actor,
+    );
     if (!user) {
       throw new ResourceNotFoundException(
         this.i18n.translate('t.errors.userNotFound'),

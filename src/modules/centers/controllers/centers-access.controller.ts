@@ -21,7 +21,6 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { ProfileTypePermissionService } from '@/modules/access-control/services/profile-type-permission.service';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import {
@@ -36,7 +35,6 @@ export class CentersAccessController {
   constructor(
     private readonly accessControlService: AccessControlService,
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly profileTypePermissionService: ProfileTypePermissionService,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
@@ -85,13 +83,6 @@ export class CentersAccessController {
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
-      targetUserProfileId: dto.userProfileId,
-      operation: 'grant-center-access',
-      centerId: dto.centerId ?? actor.centerId,
-    });
-
     const result = await this.accessControlService.grantCenterAccess(
       dto,
       actor,
@@ -112,13 +103,6 @@ export class CentersAccessController {
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
-      targetUserProfileId: dto.userProfileId,
-      operation: 'grant-center-access',
-      centerId: dto.centerId ?? actor.centerId,
-    });
-
     const result = await this.accessControlService.revokeCenterAccess(
       dto,
       actor,

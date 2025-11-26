@@ -53,13 +53,22 @@ export class CentersService extends BaseService {
     super();
   }
 
-  async findCenterById(centerId: string): Promise<Center> {
+  async findCenterById(centerId: string, actor?: ActorUser): Promise<Center> {
     const center = await this.centersRepository.findOne(centerId);
     if (!center) {
       throw new ResourceNotFoundException(
         this.i18n.translate('t.errors.resourceNotFound'),
       );
     }
+
+    // If actor is provided, validate center access
+    if (actor) {
+      await this.accessControlHelperService.validateCenterAccess({
+        userProfileId: actor.userProfileId,
+        centerId,
+      });
+    }
+
     return center;
   }
 
@@ -91,7 +100,7 @@ export class CentersService extends BaseService {
     dto: UpdateCenterRequestDto,
     actor: ActorUser,
   ): Promise<Center> {
-    const center = await this.findCenterById(centerId);
+    const center = await this.findCenterById(centerId, actor);
     if (!center) {
       throw new ResourceNotFoundException(
         this.i18n.translate('t.errors.resourceNotFound'),
@@ -129,7 +138,7 @@ export class CentersService extends BaseService {
   }
 
   async deleteCenter(centerId: string, actor: ActorUser): Promise<void> {
-    await this.findCenterById(centerId);
+    await this.findCenterById(centerId, actor);
     // Permission check should be in controller
 
     await this.centersRepository.softRemove(centerId);
@@ -142,10 +151,10 @@ export class CentersService extends BaseService {
   }
 
   async restoreCenter(centerId: string, actor: ActorUser): Promise<Center> {
-    await this.findCenterById(centerId);
+    await this.findCenterById(centerId, actor);
 
     await this.centersRepository.restore(centerId);
-    const restoredCenter = await this.findCenterById(centerId);
+    const restoredCenter = await this.findCenterById(centerId, actor);
 
     // Emit event after work is done
     await this.typeSafeEventEmitter.emitAsync(
@@ -190,7 +199,7 @@ export class CentersService extends BaseService {
     isActive: boolean,
     actor: ActorUser,
   ): Promise<void> {
-    await this.findCenterById(centerId);
+    await this.findCenterById(centerId, actor);
 
     await this.centersRepository.update(centerId, { isActive });
 
