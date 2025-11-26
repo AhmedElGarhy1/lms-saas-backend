@@ -1122,13 +1122,6 @@ export type I18nTranslations = {
             "requestBodyTooLarge": string;
             "branchNotFound": string;
             "notificationNotFoundOrAccessDenied": string;
-            "recipientValidationFailed": string;
-            "notificationSendingFailed": string;
-            "templateRenderingFailed": string;
-            "channelAdapterFailed": string;
-            "invalidChannel": string;
-            "missingNotificationContent": string;
-            "missingTemplateVariables": string;
             "userIdRequiredForInAppNotifications": string;
             "missingRequiredHeader": string;
             "duplicateResource": string;

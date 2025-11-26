@@ -1,19 +1,17 @@
-import { InvalidOperationException } from '@/shared/common/exceptions/custom.exceptions';
-import { I18nPath } from '@/generated/i18n.generated';
+import { InternalInvalidOperationException } from '@/shared/common/exceptions/custom.exceptions';
 
 /**
  * Exception thrown when recipient validation fails
  */
-export class InvalidRecipientException extends InvalidOperationException {
+export class InvalidRecipientException extends InternalInvalidOperationException {
   constructor(
-    translationKey: I18nPath,
+    message: string,
     public readonly validationErrors?: Array<{
       field: string;
       message: string;
     }>,
-    translationArgs?: Record<string, any>,
   ) {
-    super(translationKey, translationArgs);
+    super(`Recipient validation failed: ${message}`);
   }
 
   /**
@@ -33,15 +31,11 @@ export class InvalidRecipientException extends InvalidOperationException {
         .map((e) => `${e.field}: ${e.message}`)
         .join(', ');
 
-      return new InvalidRecipientException(
-        't.errors.recipientValidationFailed',
-        validationErrors,
-        { message },
-      );
+      return new InvalidRecipientException(message, validationErrors);
     }
 
-    return new InvalidRecipientException('t.errors.recipientValidationFailed', undefined, {
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return new InvalidRecipientException(
+      error instanceof Error ? error.message : String(error),
+    );
   }
 }

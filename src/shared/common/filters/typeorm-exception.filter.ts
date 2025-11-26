@@ -37,7 +37,9 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
 
     // Entity not found → 404 (from findOneOrFail etc.)
     if (exception instanceof EntityNotFoundError) {
-      const notFoundException = new ResourceNotFoundException('t.errors.resourceNotFound');
+      const notFoundException = new ResourceNotFoundException(
+        't.errors.resourceNotFound',
+      );
       return res
         .status(notFoundException.getStatus())
         .json(notFoundException.getResponse());

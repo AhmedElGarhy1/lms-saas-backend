@@ -772,3 +772,60 @@ export class ProfileSelectionRequiredException extends HttpException {
     this.translationArgs = translationArgs;
   }
 }
+
+/**
+ * Internal exception for invalid operations (uses plain string, not translation key)
+ * Used for background/internal errors that don't reach users
+ */
+export class InternalInvalidOperationException extends HttpException {
+  constructor(message: string) {
+    super(
+      {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message,
+        error: 'Bad Request',
+        code: ErrorCode.INVALID_OPERATION,
+        timestamp: new Date().toISOString(),
+      } as EnhancedErrorResponse,
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}
+
+/**
+ * Internal exception for service unavailable (uses plain string, not translation key)
+ * Used for background/internal errors that don't reach users
+ */
+export class InternalServiceUnavailableException extends HttpException {
+  constructor(message: string) {
+    super(
+      {
+        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+        message,
+        error: 'Service Unavailable',
+        code: ErrorCode.SERVICE_UNAVAILABLE,
+        timestamp: new Date().toISOString(),
+      } as EnhancedErrorResponse,
+      HttpStatus.SERVICE_UNAVAILABLE,
+    );
+  }
+}
+
+/**
+ * Internal exception for business logic errors (uses plain string, not translation key)
+ * Used for background/internal errors that don't reach users
+ */
+export class InternalBusinessLogicException extends HttpException {
+  constructor(message: string) {
+    super(
+      {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message,
+        error: 'Bad Request',
+        code: ErrorCode.BUSINESS_LOGIC_ERROR,
+        timestamp: new Date().toISOString(),
+      } as EnhancedErrorResponse,
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}
