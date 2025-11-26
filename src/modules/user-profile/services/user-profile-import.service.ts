@@ -139,7 +139,7 @@ export class UserProfileImportService extends BaseService {
     const verificationToken =
       await this.verificationService.getOrCreateVerificationToken({
         userId: user.id,
-        type: VerificationType.OTP_VERIFICATION,
+        type: VerificationType.IMPORT_USER_OTP,
       });
 
     const expiresInMinutes = Config.auth.phoneVerificationExpiresMinutes;
@@ -275,7 +275,7 @@ export class UserProfileImportService extends BaseService {
   private async verifyOtpCode(code: string, userId: string): Promise<void> {
     await this.verificationService.verifyCode(
       code,
-      VerificationType.OTP_VERIFICATION,
+      VerificationType.IMPORT_USER_OTP,
       userId,
     );
   }

@@ -73,7 +73,8 @@ export class DatabaseSeeder {
       return systemUser;
     }
 
-    const hashedPassword = await bcrypt.hash('system123', 10);
+    // Note: Using raw SQL, so entity hooks won't trigger - hash manually
+    const hashedPassword = await bcrypt.hash('system123', 12);
 
     // Create system user using raw SQL to avoid circular dependencies
     systemUser = await this.dataSource.transaction(
@@ -139,7 +140,8 @@ export class DatabaseSeeder {
   private async createSuperAdminUser(createdBy: string): Promise<User> {
     this.logger.log('Creating superadmin user...');
 
-    const hashedPassword = await bcrypt.hash('password123', 10);
+    // Note: Using raw SQL, so entity hooks won't trigger - hash manually
+    const hashedPassword = await bcrypt.hash('password123', 12);
 
     // Create superadmin user using raw SQL
     const superAdminUser = await this.dataSource.transaction(

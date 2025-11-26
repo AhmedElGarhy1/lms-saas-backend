@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Put,
   Param,
   Patch,
   Body,
@@ -29,8 +28,6 @@ import { UserProfileService } from '../services/user-profile.service';
 import { UserService } from '@/modules/user/services/user.service';
 import { UpdateUserProfileStatusDto } from '../dto/update-user-profile-status.dto';
 import { CreateUserProfileDto } from '../dto/create-user-profile.dto';
-import { UpdateUserProfileDto } from '../dto/update-user-profile.dto';
-import { UserResponseDto } from '@/modules/user/dto/user-response.dto';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 import { ProfileResponseDto } from '../dto/profile-response.dto';
@@ -109,35 +106,6 @@ export class UserProfileController {
     return ControllerResponse.success(
       profile,
       this.i18n.translate('t.success.found', {
-        args: { resource: this.i18n.translate('t.common.resources.profile') },
-      }),
-    );
-  }
-
-  @Put(':id')
-  @UpdateApiResponses('Update user profile information')
-  @ApiParam({
-    name: 'id',
-    description: 'User Profile ID',
-    type: String,
-  })
-  @ApiBody({ type: UpdateUserProfileDto })
-  @SerializeOptions({ type: UserResponseDto })
-  @Transactional()
-  async updateProfile(
-    @Param('id', ParseUUIDPipe) userProfileId: string,
-    @Body() dto: UpdateUserProfileDto,
-    @GetUser() actorUser: ActorUser,
-  ) {
-    const user = await this.userProfileService.updateProfile(
-      userProfileId,
-      dto,
-      actorUser,
-    );
-
-    return ControllerResponse.success(
-      user,
-      this.i18n.translate('t.success.update', {
         args: { resource: this.i18n.translate('t.common.resources.profile') },
       }),
     );

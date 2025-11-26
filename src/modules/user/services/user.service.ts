@@ -4,6 +4,8 @@ import {
   InsufficientPermissionsException,
   ValidationFailedException,
   UserAlreadyExistsException,
+  OtpRequiredException,
+  AuthenticationFailedException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import * as bcrypt from 'bcrypt';
 import { UserRepository } from '../repositories/user.repository';
@@ -37,6 +39,8 @@ import {
 } from '../events/user.events';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
+import { VerificationService } from '@/modules/auth/services/verification.service';
+import { VerificationType } from '@/modules/auth/enums/verification-type.enum';
 
 @Injectable()
 export class UserService extends BaseService {
@@ -53,6 +57,7 @@ export class UserService extends BaseService {
     private readonly activityLogService: ActivityLogService,
     private readonly eventEmitter: TypeSafeEventEmitter,
     private readonly i18n: I18nService<I18nTranslations>,
+    private readonly verificationService: VerificationService,
   ) {
     super();
   }
@@ -61,7 +66,7 @@ export class UserService extends BaseService {
     params: ChangePasswordParams,
   ): Promise<UserServiceResponse> {
     const { userId, dto } = params;
-    const user = await this.userRepository.findOne(userId);
+    const user = await this.findOne(userId, true);
     if (!user) {
       throw new ResourceNotFoundException(
         this.i18n.translate('t.errors.userNotFound'),
@@ -79,10 +84,37 @@ export class UserService extends BaseService {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(dto.newPassword, 12);
+    // Check if 2FA is enabled
+    if (user.twoFactorEnabled) {
+      // If OTP code not provided, send OTP and throw exception
+      if (!dto.code) {
+        await this.verificationService.sendTwoFactorOTP(user.id || '');
+        throw new OtpRequiredException(
+          'OTP code required for two-factor authentication',
+        );
+      }
 
-    // Update password
-    await this.userRepository.update(userId, { password: hashedPassword });
+      // OTP code provided, verify it
+      try {
+        await this.verificationService.verifyCode(
+          dto.code,
+          VerificationType.TWO_FACTOR_AUTH,
+          user.id,
+        );
+      } catch (error: unknown) {
+        this.logger.error('Invalid 2FA OTP code provided for password change', {
+          userId: user.id,
+          phone: user.phone,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw new AuthenticationFailedException(
+          this.i18n.translate('t.errors.authenticationFailed'),
+        );
+      }
+    }
+
+    // Update password (entity hook will hash it automatically via update() -> save())
+    await this.userRepository.update(userId, { password: dto.newPassword });
 
     // Emit event for activity logging
     await this.eventEmitter.emitAsync(
@@ -105,12 +137,9 @@ export class UserService extends BaseService {
       }
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    // Create user
+    // Create user (entity hook will hash password automatically)
     const savedUser = await this.userRepository.create({
-      password: hashedPassword, //TODO: do it in entity level
+      password: dto.password,
       name: dto.name,
       isActive: dto.isActive ?? true,
       phone: dto.phone,
@@ -393,6 +422,7 @@ export class UserService extends BaseService {
   }
 
   async update(userId: string, updateData: Partial<User>): Promise<void> {
+    // BaseRepository.update() uses save() internally, which triggers entity hooks
     await this.userRepository.update(userId, updateData);
   }
 

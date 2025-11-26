@@ -20,19 +20,11 @@ export class VerificationTokenRepository extends BaseRepository<VerificationToke
   async createVerificationToken(data: {
     userId: string;
     type: VerificationType;
-    token: string;
-    code?: string | null;
+    code: string;
     expiresAt: Date;
   }): Promise<VerificationToken> {
     const verificationToken = this.getRepository().create(data);
     return this.getRepository().save(verificationToken);
-  }
-
-  async findByToken(token: string): Promise<VerificationToken | null> {
-    return this.getRepository().findOne({
-      where: { token },
-      relations: { user: true },
-    });
   }
 
   async findByCode(
@@ -65,12 +57,12 @@ export class VerificationTokenRepository extends BaseRepository<VerificationToke
     });
   }
 
-  async markAsVerified(token: string): Promise<void> {
-    await this.getRepository().update({ token }, { verifiedAt: new Date() });
+  async markAsVerified(id: string): Promise<void> {
+    await this.getRepository().update({ id }, { verifiedAt: new Date() });
   }
 
-  async deleteToken(token: string): Promise<void> {
-    await this.getRepository().delete({ token });
+  async deleteById(id: string): Promise<void> {
+    await this.getRepository().delete({ id });
   }
 
   async deleteExpiredTokens(): Promise<void> {

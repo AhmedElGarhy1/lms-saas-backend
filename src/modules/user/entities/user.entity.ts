@@ -1,5 +1,14 @@
-import { Entity, Column, OneToMany, OneToOne, Index } from 'typeorm';
+import {
+  Entity,
+  Column,
+  OneToMany,
+  OneToOne,
+  Index,
+  BeforeInsert,
+  BeforeUpdate,
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
+import * as bcrypt from 'bcrypt';
 import { VerificationToken } from '@/modules/auth/entities/verification-token.entity';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { UserInfo } from './user-info.entity';
@@ -45,6 +54,33 @@ export class User extends BaseEntity {
     eager: true,
   })
   userInfo: UserInfo;
+
+  /**
+   * Hash password before inserting new user
+   */
+  @BeforeInsert()
+  async hashPasswordBeforeInsert() {
+    if (this.password && !this.isPasswordHashed(this.password)) {
+      this.password = await bcrypt.hash(this.password, 12);
+    }
+  }
+
+  /**
+   * Hash password before updating if password has changed
+   */
+  @BeforeUpdate()
+  async hashPasswordBeforeUpdate() {
+    if (this.password && !this.isPasswordHashed(this.password)) {
+      this.password = await bcrypt.hash(this.password, 12);
+    }
+  }
+
+  /**
+   * Check if password is already hashed (bcrypt hashes start with $2a$, $2b$, or $2y$)
+   */
+  private isPasswordHashed(password: string): boolean {
+    return /^\$2[ayb]\$.{56}$/.test(password);
+  }
 
   getPhone(): string {
     return `+2${this.phone}`;

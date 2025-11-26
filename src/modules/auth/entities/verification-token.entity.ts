@@ -12,7 +12,7 @@ import { VerificationType } from '../enums/verification-type.enum';
 
 @Entity('verification_tokens')
 @Index(['userId'])
-@Index(['token'])
+@Index(['code'])
 @Index(['type'])
 @Index(['expiresAt'])
 @Index(['userId', 'type'], { unique: true })
@@ -29,11 +29,8 @@ export class VerificationToken {
   })
   type: VerificationType;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
-  token: string;
-
-  @Column({ type: 'varchar', length: 10, nullable: true })
-  code: string | null; // For OTP codes
+  @Column({ type: 'varchar', length: 10 })
+  code: string; // OTP code
 
   @Column({ type: 'timestamp' })
   expiresAt: Date;

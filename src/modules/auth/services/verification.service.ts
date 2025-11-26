@@ -15,16 +15,13 @@ import { OtpEvent } from '../events/auth.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { VerificationType } from '../enums/verification-type.enum';
 import { VerificationToken } from '../entities/verification-token.entity';
-import * as crypto from 'crypto';
-import * as bcrypt from 'bcrypt';
-import { Transactional } from '@nestjs-cls/transactional';
+import { Transactional, Propagation } from '@nestjs-cls/transactional';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 
 export interface CreateVerificationTokenData {
   userId: string;
   type: VerificationType;
-  token?: string;
   code?: string;
   expiresAt?: Date;
 }
@@ -51,13 +48,6 @@ export class VerificationService extends BaseService {
   }
 
   /**
-   * Generate a secure random token
-   */
-  private generateToken(): string {
-    return crypto.randomBytes(32).toString('hex');
-  }
-
-  /**
    * Get default expiration time for password reset
    */
   private getPasswordResetExpiration(): Date {
@@ -79,7 +69,6 @@ export class VerificationService extends BaseService {
   async createVerificationToken(
     data: CreateVerificationTokenData,
   ): Promise<VerificationToken> {
-    const token = data.token || this.generateToken();
     const code = data.code || this.generateOTPCode();
     let expiresAt = data.expiresAt;
 
@@ -90,6 +79,8 @@ export class VerificationService extends BaseService {
           break;
         case VerificationType.OTP_VERIFICATION:
         case VerificationType.TWO_FACTOR_AUTH:
+        case VerificationType.LOGIN_OTP:
+        case VerificationType.IMPORT_USER_OTP:
           expiresAt = this.getDefaultOtpExpiration();
           break;
         default:
@@ -107,37 +98,9 @@ export class VerificationService extends BaseService {
       await this.verificationTokenRepository.createVerificationToken({
         userId: data.userId,
         type: data.type,
-        token,
-        code:
-          data.type === VerificationType.OTP_VERIFICATION ||
-          data.type === VerificationType.TWO_FACTOR_AUTH
-            ? code
-            : null,
+        code,
         expiresAt,
       });
-
-    return verificationToken;
-  }
-
-  /**
-   * Find verification token by token string
-   */
-  async findByToken(token: string): Promise<VerificationToken> {
-    const verificationToken =
-      await this.verificationTokenRepository.findByToken(token);
-
-    if (!verificationToken) {
-      throw new NotFoundException(
-        this.i18n.translate('t.errors.verificationTokenNotFound'),
-      );
-    }
-
-    if (verificationToken.expiresAt < new Date()) {
-      await this.deleteToken(token);
-      throw new BadRequestException(
-        this.i18n.translate('t.errors.verificationTokenExpired'),
-      );
-    }
 
     return verificationToken;
   }
@@ -163,30 +126,13 @@ export class VerificationService extends BaseService {
     }
 
     if (verificationToken.expiresAt < new Date()) {
-      await this.deleteToken(verificationToken.token);
+      await this.verificationTokenRepository.deleteById(verificationToken.id);
       throw new BadRequestException(
         this.i18n.translate('t.errors.verificationCodeExpired'),
       );
     }
 
     return verificationToken;
-  }
-
-  /**
-   * Verify token and return user ID
-   */
-  async verifyToken(token: string): Promise<{ userId: string }> {
-    const verificationToken = await this.findByToken(token);
-
-    // Mark as verified
-    await this.verificationTokenRepository.markAsVerified(token);
-
-    // Delete token after verification
-    await this.deleteToken(token);
-
-    return {
-      userId: verificationToken.userId,
-    };
   }
 
   /**
@@ -200,12 +146,10 @@ export class VerificationService extends BaseService {
     const verificationToken = await this.findByCode(code, type, userId);
 
     // Mark as verified
-    await this.verificationTokenRepository.markAsVerified(
-      verificationToken.token,
-    );
+    await this.verificationTokenRepository.markAsVerified(verificationToken.id);
 
     // Delete token after verification
-    await this.deleteToken(verificationToken.token);
+    await this.verificationTokenRepository.deleteById(verificationToken.id);
 
     return {
       userId: verificationToken.userId,
@@ -282,15 +226,52 @@ export class VerificationService extends BaseService {
   }
 
   /**
-   * Send 2FA OTP via SMS
+   * Send 2FA OTP via SMS (for setup/enable/disable)
    * Reuses existing non-expired token if available
    * Notification system will fetch user and phone
    */
+  @Transactional(Propagation.RequiresNew)
   async sendTwoFactorOTP(userId: string): Promise<void> {
     // Get or create verification token (reuses existing non-expired token)
     const verificationToken = await this.getOrCreateVerificationToken({
       userId,
       type: VerificationType.TWO_FACTOR_AUTH,
+    });
+
+    const expiresInMinutes = Config.auth.phoneVerificationExpiresMinutes;
+
+    // Calculate remaining minutes for existing token
+    const now = new Date();
+    const expiresAt = verificationToken.expiresAt;
+    const remainingMinutes = Math.max(
+      0,
+      Math.floor((expiresAt.getTime() - now.getTime()) / (1000 * 60)),
+    );
+
+    // Emit OTP event (notification system will fetch user and phone)
+    await this.typeSafeEventEmitter.emitAsync(
+      AuthEvents.OTP,
+      new OtpEvent(
+        userId,
+        verificationToken.code!,
+        remainingMinutes || expiresInMinutes,
+      ),
+    );
+  }
+
+  /**
+   * Send login OTP via SMS (for login with 2FA)
+   * Reuses existing non-expired token if available
+   * Notification system will fetch user and phone
+   * Uses REQUIRES_NEW propagation to ensure token is committed
+   * even if the calling transaction rolls back
+   */
+  @Transactional(Propagation.RequiresNew)
+  async sendLoginOTP(userId: string): Promise<void> {
+    // Get or create verification token (reuses existing non-expired token)
+    const verificationToken = await this.getOrCreateVerificationToken({
+      userId,
+      type: VerificationType.LOGIN_OTP,
     });
 
     const expiresInMinutes = Config.auth.phoneVerificationExpiresMinutes;
@@ -360,23 +341,13 @@ export class VerificationService extends BaseService {
       userId,
     );
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-
-    // Update user password
+    // Update user password (entity hook will hash it automatically)
     await this.userService.update(verificationToken.userId, {
-      password: hashedPassword,
+      password: newPassword,
     });
 
     // Delete the reset token
-    await this.deleteToken(verificationToken.token);
-  }
-
-  /**
-   * Delete verification token
-   */
-  async deleteToken(token: string): Promise<void> {
-    await this.verificationTokenRepository.deleteToken(token);
+    await this.verificationTokenRepository.deleteById(verificationToken.id);
   }
 
   /**
@@ -384,25 +355,5 @@ export class VerificationService extends BaseService {
    */
   async cleanupExpiredTokens(): Promise<void> {
     await this.verificationTokenRepository.deleteExpiredTokens();
-  }
-
-  /**
-   * Resend verification (delete old and create new)
-   */
-  async resendVerification(
-    userId: string,
-    type: VerificationType,
-  ): Promise<void> {
-    // Delete existing tokens of this type
-    await this.verificationTokenRepository.deleteByUserIdAndType(userId, type);
-
-    // Send new verification
-    if (type === VerificationType.PASSWORD_RESET) {
-      await this.sendPasswordReset(userId);
-    } else if (type === VerificationType.OTP_VERIFICATION) {
-      await this.sendPhoneVerification(userId);
-    } else if (type === VerificationType.TWO_FACTOR_AUTH) {
-      await this.sendTwoFactorOTP(userId);
-    }
   }
 }

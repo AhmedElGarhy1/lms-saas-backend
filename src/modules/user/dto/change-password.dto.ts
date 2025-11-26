@@ -1,4 +1,4 @@
-import { IsString, MinLength, IsNotEmpty } from 'class-validator';
+import { IsString, MinLength, IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ChangePasswordRequestDto {
@@ -13,4 +13,12 @@ export class ChangePasswordRequestDto {
   @IsNotEmpty()
   @MinLength(6)
   newPassword: string;
+
+  @ApiProperty({
+    description: '2FA OTP code (required if 2FA is enabled)',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  code?: string;
 }

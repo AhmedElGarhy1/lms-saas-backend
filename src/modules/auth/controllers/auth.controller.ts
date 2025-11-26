@@ -1,4 +1,12 @@
-import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Patch,
+  Body,
+  UseGuards,
+  Req,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '@/modules/user/services/user.service';
 import { LoginRequestDto } from '../dto/login.dto';
@@ -6,15 +14,12 @@ import { ForgotPasswordRequestDto } from '../dto/forgot-password.dto';
 import { ResetPasswordRequestDto } from '../dto/reset-password.dto';
 import { VerifyPhoneRequestDto } from '../dto/verify-phone.dto';
 import { RequestPhoneVerificationRequestDto } from '../dto/request-phone-verification.dto';
-import {
-  TwoFASetupRequestDto,
-  TwoFAVerifyRequestDto,
-  TwoFactorRequest,
-} from '../dto/2fa.dto';
+import { TwoFAVerifyRequestDto } from '../dto/2fa.dto';
+import { ChangePasswordRequestDto } from '@/modules/user/dto/change-password.dto';
 import { Public } from '@/shared/common/decorators/public.decorator';
 import { Transactional } from '@nestjs-cls/transactional';
 import { RateLimit } from '@/modules/rate-limit/decorators/rate-limit.decorator';
-import { ApiTags, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiBody, ApiOperation } from '@nestjs/swagger';
 import {
   CreateApiResponses,
   ReadApiResponses,
@@ -61,6 +66,21 @@ export class AuthController {
     return ControllerResponse.success(
       result,
       this.i18n.translate('t.success.login'),
+    );
+  }
+
+  @Public()
+  @Post('resend-login-otp')
+  @RateLimit({ limit: 3, windowSeconds: 60 }) // 3 resends per minute
+  @UpdateApiResponses('Resend login OTP code')
+  @ApiOperation({ summary: 'Resend login OTP code for 2FA' })
+  @ApiBody({ type: LoginRequestDto })
+  async resendLoginOTP(@Body() dto: LoginRequestDto) {
+    await this.authService.resendLoginOTP(dto.phone, dto.password);
+
+    return ControllerResponse.success(
+      null,
+      this.i18n.translate('t.success.otpSent'),
     );
   }
 
@@ -131,6 +151,7 @@ export class AuthController {
   @Public()
   @UpdateApiResponses('Request password reset')
   @ApiBody({ type: ForgotPasswordRequestDto })
+  @RateLimit({ limit: 1, windowSeconds: 60 })
   async forgotPassword(
     @Body() dto: ForgotPasswordRequestDto,
     @GetUser() actor: ActorUser,
@@ -148,6 +169,7 @@ export class AuthController {
   @UpdateApiResponses('Reset password with token')
   @ApiBody({ type: ResetPasswordRequestDto })
   @Transactional()
+  @RateLimit({ limit: 5, windowSeconds: 60 }) // 5 attempts per minute
   async resetPassword(@Body() dto: ResetPasswordRequestDto) {
     const result = await this.authService.resetPassword(dto);
 
@@ -158,13 +180,13 @@ export class AuthController {
   }
 
   @Post('setup-2fa')
+  @RateLimit({ limit: 1, windowSeconds: 60 }) // 1 attempt per minute
   @CreateApiResponses('Setup two-factor authentication')
-  @ApiBody({ type: TwoFASetupRequestDto })
   @Transactional()
   @NoProfile()
   @NoContext()
   async setup2FA(@GetUser() actor: ActorUser) {
-    const result = await this.authService.setupTwoFactor(actor.id, actor);
+    const result = await this.authService.setupTwoFactor(actor);
 
     return ControllerResponse.success(
       result,
@@ -172,28 +194,8 @@ export class AuthController {
     );
   }
 
-  @Post('verify-2fa')
-  @UpdateApiResponses('Verify two-factor authentication code')
-  @ApiBody({ type: TwoFAVerifyRequestDto })
-  @Transactional()
-  @NoProfile()
-  @NoContext()
-  async verify2FA(
-    @Body() dto: TwoFAVerifyRequestDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.authService.verify2FA({
-      userId: dto.userId || actor.id,
-      code: dto.code,
-    });
-
-    return ControllerResponse.success(
-      result,
-      this.i18n.translate('t.success.twoFactorVerified'),
-    );
-  }
-
   @Post('enable-2fa')
+  @RateLimit({ limit: 5, windowSeconds: 60 }) // 5 attempts per minute
   @UpdateApiResponses('Enable two-factor authentication')
   @ApiBody({ type: TwoFAVerifyRequestDto })
   @Transactional()
@@ -203,11 +205,10 @@ export class AuthController {
     @Body() dto: TwoFAVerifyRequestDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.authService.enableTwoFactor(
-      actor.id,
-      dto.code,
-      actor,
-    );
+    if (!dto.code) {
+      throw new BadRequestException('OTP code is required');
+    }
+    const result = await this.authService.enableTwoFactor(dto.code, actor);
 
     return ControllerResponse.success(
       result,
@@ -225,11 +226,7 @@ export class AuthController {
     @Body() dto: TwoFAVerifyRequestDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.authService.disableTwoFactor(
-      actor.id,
-      dto.code,
-      actor,
-    );
+    const result = await this.authService.disableTwoFactor(dto.code, actor);
 
     return ControllerResponse.success(
       result,
@@ -248,6 +245,28 @@ export class AuthController {
     return ControllerResponse.success(
       result,
       this.i18n.translate('t.success.logout'),
+    );
+  }
+
+  @Patch('change-password')
+  @UpdateApiResponses('Change password')
+  @ApiBody({ type: ChangePasswordRequestDto })
+  @ApiOperation({ summary: 'Change user password' })
+  @NoContext()
+  @NoProfile()
+  @Transactional()
+  async changePassword(
+    @Body() dto: ChangePasswordRequestDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.userService.changePassword({
+      userId: actor.id,
+      dto,
+    });
+
+    return ControllerResponse.success(
+      result,
+      this.i18n.translate('t.success.passwordChange'),
     );
   }
 }

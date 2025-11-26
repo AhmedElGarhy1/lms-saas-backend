@@ -1,23 +1,12 @@
-import { IsString, IsOptional, IsUUID } from 'class-validator';
-
-export class TwoFASetupRequestDto {
-  // No fields - uses authenticated user from JWT token
-}
+import { IsString, IsOptional } from 'class-validator';
 
 export class TwoFAVerifyRequestDto {
   @IsOptional()
-  @IsUUID()
-  userId?: string; // Optional - uses authenticated user by default
-
   @IsString()
-  code: string;
+  code?: string; // Optional - if not provided, OTP will be sent
 }
 
 export class TwoFactorRequest {
-  @IsOptional()
-  @IsUUID()
-  userId?: string; // Optional - uses authenticated user by default
-
   @IsString()
   code: string;
 }

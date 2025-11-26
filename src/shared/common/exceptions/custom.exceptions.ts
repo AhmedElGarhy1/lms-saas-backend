@@ -214,6 +214,21 @@ export class PhoneNotVerifiedException extends HttpException {
   }
 }
 
+export class OtpRequiredException extends HttpException {
+  constructor(message: string = 'OTP code required for authentication') {
+    super(
+      {
+        statusCode: HttpStatus.UNAUTHORIZED,
+        message,
+        error: 'Unauthorized',
+        code: ErrorCode.OTP_REQUIRED,
+        timestamp: new Date().toISOString(),
+      } as EnhancedErrorResponse,
+      HttpStatus.UNAUTHORIZED,
+    );
+  }
+}
+
 export class ServiceUnavailableException extends HttpException {
   constructor(message: string = 'Service temporarily unavailable') {
     super(
