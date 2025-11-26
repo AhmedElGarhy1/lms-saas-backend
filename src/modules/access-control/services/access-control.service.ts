@@ -71,7 +71,7 @@ export class AccessControlService extends BaseService {
     await this.profileTypePermissionService.validateProfileTypePermission({
       actorUserProfileId: actor.userProfileId,
       targetUserProfileId: body.granterUserProfileId,
-      operation: 'grant-center-access',
+      operation: 'grant-user-access',
       centerId,
     });
 
@@ -141,7 +141,7 @@ export class AccessControlService extends BaseService {
     await this.profileTypePermissionService.validateProfileTypePermission({
       actorUserProfileId: actor.userProfileId,
       targetUserProfileId: body.granterUserProfileId,
-      operation: 'grant-center-access',
+      operation: 'grant-user-access',
       centerId,
     });
 
