@@ -52,39 +52,40 @@
 [x] check all channels content in both languages
 [x] check the overall app language and exceptions
 [x] check if whatsapp and email and all channels are working or not
-
-[-] add permission checks for userprofile module ass it have many profile type and permission (improve later)
 [x] implement import user (or diffrent name) to import user from another center (internal center prespective)
 [x] update activity logs to cover more logs
 [x] update permissions to cover more permissions
+[x] activity logs on frontend
+[x] integrate twilio for some verifications
+[x] refactor logs and add only required not spam of logs
+[x] (frontend) Data flow: ⚠️ Needs standardization (28 violations)
+[x] notifications register user connection first when he opens (there is a problem in sending notifications because of redis not found user connection)
+[x] add missing activity logs for users
+[x] responsive frontend
+[x] make consistant response in all endpoints
+[x] arabic ltr translation animation in sidebar looks bad so check others also
+[x] remove all emails for now make the primary think is phone and remove email at all not needed for now (big task)
+[x] back to translations and update translations correctly and update in app notifications translations and refactor the overcomplicated reaseon, actionRequired, retible, and all htese useless files that frontend doesn't use
+
+[-] add permission checks for userprofile module ass it have many profile type and permission (improve later)
 [ ] double check permissions in all over the application
 [ ] when i display tables data I should disply myself also
 [ ] frontend invalidate language when profile update
-[x] activity logs on frontend
 [ ] multi profile for parents
 [ ] view modals in all modules
-[x] integrate twilio for some verifications
 [ ] import functioanlity
 [ ] builk operations
 [ ] implement access all resources permission
 [ ] consider using prisma instead of typeorm
 [ ] verify rate limit module is working
-[x] refactor logs and add only required not spam of logs
-[x] add missing activity logs for users
 [ ] update notifications to cover all existing modules events
-[x] (frontend) Data flow: ⚠️ Needs standardization (28 violations)
-[x] notifications register user connection first when he opens (there is a problem in sending notifications because of redis not found user connection)
 [ ] remove all api reqeust transformation and middle functions that do nothing except transform request schema must be the same as reqeust payload
 
 [] (later if size is big) Bulk notification insertion - Batch insert DB writes for IN_APP channel - ⚙️ Medium–High - If DB write latency increases
 
 [ ] clean up notficiation service from testing (doesn't work) and from usless services and monitoring or metrics
 [ ] add users endpoint for modules like activity logs search for user
-[x] responsive frontend
 [ ] user can update his center (throw settings)
 [ ] think about removing restrictions and permissions for diffrent profile types it's we already have restrictions you can only access users in your user_access
-[x] back to translations and update translations correctly and update in app notifications translations and refactor the overcomplicated reaseon, actionRequired, retible, and all htese useless files that frontend doesn't use
-[x] make consistant response in all endpoints
-[x] arabic ltr translation animation in sidebar looks bad so check others also
 [ ] fix local is not consistant between backend and frontend
-[ ] remove all emails for now make the primary think is phone and remove email at all not needed for now (big task)
+[ ] activity logs and each one display his own logs only

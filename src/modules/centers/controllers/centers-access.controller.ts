@@ -20,8 +20,6 @@ import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
-import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
-import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ProfileTypePermissionService } from '@/modules/access-control/services/profile-type-permission.service';
 import { I18nService } from 'nestjs-i18n';
@@ -87,7 +85,12 @@ export class CentersAccessController {
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.validateCenterAccessPermission(dto, actor);
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      targetUserProfileId: dto.userProfileId,
+      operation: 'grant-center-access',
+      centerId: dto.centerId ?? actor.centerId,
+    });
 
     const result = await this.accessControlService.grantCenterAccess(
       dto,
@@ -109,7 +112,12 @@ export class CentersAccessController {
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.validateCenterAccessPermission(dto, actor);
+    await this.profileTypePermissionService.validateProfileTypePermission({
+      actorUserProfileId: actor.userProfileId,
+      targetUserProfileId: dto.userProfileId,
+      operation: 'grant-center-access',
+      centerId: dto.centerId ?? actor.centerId,
+    });
 
     const result = await this.accessControlService.revokeCenterAccess(
       dto,
@@ -186,36 +194,5 @@ export class CentersAccessController {
       result,
       this.i18n.translate('t.success.centerAccessRestored'),
     );
-  }
-
-  private async validateCenterAccessPermission(
-    dto: CenterAccessDto,
-    actor: ActorUser,
-  ) {
-    const userProfile = await this.accessControlHelperService.findUserProfile(
-      dto.userProfileId,
-    );
-
-    if (!userProfile) {
-      throw new BusinessLogicException(
-        this.i18n.translate('t.errors.targetUserProfileNotFound'),
-      );
-    }
-
-    if (
-      userProfile.profileType !== ProfileType.STAFF &&
-      userProfile.profileType !== ProfileType.ADMIN
-    ) {
-      throw new BusinessLogicException(
-        this.i18n.translate('t.errors.targetUserMustHaveAdminOrStaffProfile'),
-      );
-    }
-
-    await this.profileTypePermissionService.validateProfileTypePermission({
-      actorUserProfileId: actor.userProfileId,
-      targetUserProfileId: dto.userProfileId,
-      operation: 'grant-center-access',
-      centerId: dto.centerId ?? actor.centerId,
-    });
   }
 }
