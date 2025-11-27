@@ -377,7 +377,7 @@
       "result": "النتيجة",
       "total": "الإجمالي",
       "failed": "فشل",
-      "errors": "الأخطاء",
+      "errors": "الأخطاء"
     },
     "countdown": {
       "resendIn": "إعادة إرسال الرمز خلال"
@@ -1315,6 +1315,8 @@
     "passwordChange": "تم تغيير كلمة المرور بنجاح",
     "roleAssigned": "تم تعيين الدور بنجاح",
     "roleRemoved": "تم إزالة الدور بنجاح",
+    "userAccessGranted": "تم منح صلاحية الوصول للمستخدم بنجاح",
+    "userAccessRevoked": "تم إلغاء صلاحية الوصول للمستخدم بنجاح",
     "permissionsRetrieved": "تم استرجاع الصلاحيات بنجاح",
     "dataRetrieved": "تم استرجاع البيانات بنجاح",
     "dataSaved": "تم حفظ البيانات بنجاح",
@@ -1349,7 +1351,12 @@
     "exportCompleted": "تم إكمال التصدير بنجاح",
     "operation": "تمت العملية بنجاح",
     "request": "تم معالجة الطلب بنجاح",
-    "dataProcessed": "تم معالجة البيانات بنجاح"
+    "dataProcessed": "تم معالجة البيانات بنجاح",
+    "bulkDelete": "تم إكمال الحذف المجمع بنجاح",
+    "bulkRestore": "تم إكمال الاستعادة المجمعة بنجاح",
+    "bulkAssign": "تم إكمال التعيين المجمع بنجاح",
+    "bulkRemove": "تم إكمال الإزالة المجمعة بنجاح",
+    "activityLogTypesRetrieved": "تم استرجاع أنواع سجل النشاط بنجاح"
   },
   "system": {
     "health": {

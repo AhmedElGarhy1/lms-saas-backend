@@ -399,6 +399,10 @@ export type I18nTranslations = {
                 "profileAvatar": string;
                 "channel": string;
                 "profileType": string;
+                "result": string;
+                "total": string;
+                "failed": string;
+                "errors": string;
                 "staff": string;
             };
             "countdown": {
@@ -1375,6 +1379,8 @@ export type I18nTranslations = {
             "passwordChange": string;
             "roleAssigned": string;
             "roleRemoved": string;
+            "userAccessGranted": string;
+            "userAccessRevoked": string;
             "permissionsRetrieved": string;
             "dataRetrieved": string;
             "dataSaved": string;
@@ -1410,8 +1416,11 @@ export type I18nTranslations = {
             "operation": string;
             "request": string;
             "dataProcessed": string;
-            "userAccessGranted": string;
-            "userAccessRevoked": string;
+            "bulkDelete": string;
+            "bulkRestore": string;
+            "bulkAssign": string;
+            "bulkRemove": string;
+            "activityLogTypesRetrieved": string;
             "found": string;
         };
         "system": {

@@ -339,7 +339,7 @@
       "result": "Result",
       "total": "Total",
       "failed": "Failed",
-      "errors": "Errors",
+      "errors": "Errors"
     },
     "status": {
       "active": "Active",
@@ -1078,14 +1078,12 @@
     "requestBodyTooLarge": "Request body is too large",
     "branchNotFound": "Branch with ID {branchId} not found",
     "notificationNotFoundOrAccessDenied": "Notification not found or access denied",
-    "invalidSignature": "Invalid signature",
     "userIdRequiredForInAppNotifications": "userId is required for in-app notifications",
     "missingRequiredHeader": "Missing required header: {header}",
     "duplicateResource": "Duplicate resource",
     "relatedEntityMissingOrInvalid": "Related entity is missing or invalid. Please check the referenced data and try again",
     "requiredFieldMissing": "A required field is missing",
-    "temporaryDatabaseConflict": "Temporary database conflict occurred. Please retry.",
-    "databaseOperationFailed": "Database operation failed. Please try again later."
+    "temporaryDatabaseConflict": "Temporary database conflict occurred. Please retry."
   },
   "export": {
     "formats": {
@@ -1335,7 +1333,12 @@
     "exportCompleted": "Export completed successfully",
     "operation": "Operation completed successfully",
     "request": "Request processed successfully",
-    "dataProcessed": "Data processed successfully"
+    "dataProcessed": "Data processed successfully",
+    "bulkDelete": "Bulk delete completed successfully",
+    "bulkRestore": "Bulk restore completed successfully",
+    "bulkAssign": "Bulk assign completed successfully",
+    "bulkRemove": "Bulk remove completed successfully",
+    "activityLogTypesRetrieved": "Activity log types retrieved successfully"
   },
   "system": {
     "health": {

@@ -99,7 +99,7 @@ export class ActivityLogController {
 
     return ControllerResponse.success(
       types,
-      'Activity log types retrieved successfully',
+      't.success.activityLogTypesRetrieved',
     );
   }
 }
