@@ -579,6 +579,7 @@ export type I18nTranslations = {
                 "noData": string;
                 "error": string;
                 "success": string;
+                "bulkOperationCompleted": string;
                 "forbidden": string;
                 "noResults": string;
                 "searching": string;

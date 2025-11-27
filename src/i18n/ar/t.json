@@ -245,7 +245,7 @@
       "dateFormat": "تنسيق التاريخ",
       "timeFormat": "تنسيق الوقت",
       "twoFactorAuth": "المصادقة الثنائية",
-      "sessionTimeout": "انتهاء صلاحية الجلسة",
+      "sessionTimeout": "انتهاء الجلسة",
       "loginNotifications": "إشعارات تسجيل الدخول",
       "suspiciousActivityAlerts": "تنبيهات النشاط المشبوه",
       "currency": "العملة",
@@ -370,10 +370,6 @@
       "profileAvatar": "صورة الملف الشخصي",
       "channel": "القناة",
       "profileType": "نوع الملف الشخصي",
-      "twoFactorAuth": "المصادقة الثنائية",
-      "sessionTimeout": "انتهاء الجلسة",
-      "loginNotifications": "إشعارات تسجيل الدخول",
-      "suspiciousActivityAlerts": "تنبيهات النشاط المشبوه",
       "result": "النتيجة",
       "total": "الإجمالي",
       "failed": "فشل",
@@ -550,6 +546,7 @@
       "noData": "لا توجد بيانات متاحة",
       "error": "حدث خطأ",
       "success": "نجحت العملية",
+      "bulkOperationCompleted": "نتائج العملية",
       "forbidden": "هذا الإجراء محظور",
       "noResults": "لم يتم العثور على نتائج",
       "searching": "جاري البحث...",
@@ -1664,55 +1661,133 @@
       "system": "النظام"
     },
     "staff": {
-      "read": { "name": "قراءة الموظفين" },
-      "create": { "name": "إنشاء موظف" },
-      "grantUserAccess": { "name": "منح وصول المستخدم" },
-      "grantBranchAccess": { "name": "منح وصول الفرع" },
-      "grantCenterAccess": { "name": "منح وصول المركز" },
-      "readAll": { "name": "قراءة جميع الموظفين بدون وصول الموظفين" },
-      "import": { "name": "استيراد الموظفين" },
-      "export": { "name": "تصدير الموظفين" }
+      "read": {
+        "name": "قراءة الموظفين"
+      },
+      "create": {
+        "name": "إنشاء موظف"
+      },
+      "grantUserAccess": {
+        "name": "منح وصول المستخدم"
+      },
+      "grantBranchAccess": {
+        "name": "منح وصول الفرع"
+      },
+      "grantCenterAccess": {
+        "name": "منح وصول المركز"
+      },
+      "readAll": {
+        "name": "قراءة جميع الموظفين بدون وصول الموظفين"
+      },
+      "import": {
+        "name": "استيراد الموظفين"
+      },
+      "export": {
+        "name": "تصدير الموظفين"
+      }
     },
     "admin": {
-      "read": { "name": "قراءة المدير" },
-      "create": { "name": "إنشاء مدير" },
-      "grantAdminAccess": { "name": "منح وصول المدير" },
-      "grantCenterAccess": { "name": "منح وصول المركز" },
-      "readAll": { "name": "قراءة جميع المديرين بدون وصول المدير" },
-      "import": { "name": "استيراد المديرين" },
-      "export": { "name": "تصدير المديرين" }
+      "read": {
+        "name": "قراءة المدير"
+      },
+      "create": {
+        "name": "إنشاء مدير"
+      },
+      "grantAdminAccess": {
+        "name": "منح وصول المدير"
+      },
+      "grantCenterAccess": {
+        "name": "منح وصول المركز"
+      },
+      "readAll": {
+        "name": "قراءة جميع المديرين بدون وصول المدير"
+      },
+      "import": {
+        "name": "استيراد المديرين"
+      },
+      "export": {
+        "name": "تصدير المديرين"
+      }
     },
     "center": {
-      "create": { "name": "إنشاء المراكز" },
-      "update": { "name": "تحديث المراكز" },
-      "delete": { "name": "حذف المراكز" },
-      "restore": { "name": "استعادة المراكز" },
-      "activate": { "name": "تفعيل/إلغاء تفعيل المراكز" },
-      "readAll": { "name": "قراءة جميع المراكز بدون وصول المركز" },
-      "import": { "name": "استيراد المراكز" },
-      "export": { "name": "تصدير المراكز" }
+      "create": {
+        "name": "إنشاء المراكز"
+      },
+      "update": {
+        "name": "تحديث المراكز"
+      },
+      "delete": {
+        "name": "حذف المراكز"
+      },
+      "restore": {
+        "name": "استعادة المراكز"
+      },
+      "activate": {
+        "name": "تفعيل/إلغاء تفعيل المراكز"
+      },
+      "readAll": {
+        "name": "قراءة جميع المراكز بدون وصول المركز"
+      },
+      "import": {
+        "name": "استيراد المراكز"
+      },
+      "export": {
+        "name": "تصدير المراكز"
+      }
     },
     "roles": {
-      "create": { "name": "إنشاء دور" },
-      "update": { "name": "تحديث الدور" },
-      "delete": { "name": "حذف الدور" },
-      "restore": { "name": "استعادة الدور" },
-      "assign": { "name": "تعيين الدور" },
-      "import": { "name": "استيراد الأدوار" },
-      "export": { "name": "تصدير الأدوار" }
+      "create": {
+        "name": "إنشاء دور"
+      },
+      "update": {
+        "name": "تحديث الدور"
+      },
+      "delete": {
+        "name": "حذف الدور"
+      },
+      "restore": {
+        "name": "استعادة الدور"
+      },
+      "assign": {
+        "name": "تعيين الدور"
+      },
+      "import": {
+        "name": "استيراد الأدوار"
+      },
+      "export": {
+        "name": "تصدير الأدوار"
+      }
     },
     "branches": {
-      "create": { "name": "إنشاء الفروع" },
-      "update": { "name": "تحديث الفروع" },
-      "delete": { "name": "حذف الفروع" },
-      "restore": { "name": "استعادة الفروع" },
-      "activate": { "name": "تفعيل/إلغاء تفعيل الفروع" },
-      "import": { "name": "استيراد الفروع" },
-      "export": { "name": "تصدير الفروع" },
-      "readAll": { "name": "قراءة جميع الفروع بدون وصول الفرع" }
+      "create": {
+        "name": "إنشاء الفروع"
+      },
+      "update": {
+        "name": "تحديث الفروع"
+      },
+      "delete": {
+        "name": "حذف الفروع"
+      },
+      "restore": {
+        "name": "استعادة الفروع"
+      },
+      "activate": {
+        "name": "تفعيل/إلغاء تفعيل الفروع"
+      },
+      "import": {
+        "name": "استيراد الفروع"
+      },
+      "export": {
+        "name": "تصدير الفروع"
+      },
+      "readAll": {
+        "name": "قراءة جميع الفروع بدون وصول الفرع"
+      }
     },
     "system": {
-      "healthCheck": { "name": "فحص صحة النظام" }
+      "healthCheck": {
+        "name": "فحص صحة النظام"
+      }
     }
   }
 }
