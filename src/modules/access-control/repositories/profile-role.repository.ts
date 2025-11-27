@@ -47,10 +47,13 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
             scope: In([PermissionScope.CENTER, PermissionScope.BOTH]),
           },
         });
-        return centerPermissions.map((cp) => ({
-          ...cp,
-          scope: PermissionScope.CENTER,
-        }));
+        return centerPermissions.map(
+          (cp) =>
+            ({
+              ...cp,
+              scope: PermissionScope.CENTER,
+            }) as Permission,
+        );
       }
       profileRole = await this.getRepository().findOne({
         where: { userProfileId, centerId },

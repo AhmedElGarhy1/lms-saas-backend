@@ -75,16 +75,16 @@
 [x] think about removing restrictions and permissions for diffrent profile types it's we already have restrictions you can only access users in your user_access
 [x] fix local is not consistant between backend and frontend
 [x] translation instead of injecting i18service everywhere we can make the internal services or utils like ControllerResponse take safe translaction key string and the service call is inside these utils
+[x] notification translations must be in one file notification.json for easy translation
+[x] clean up notficiation service from testing (doesn't work) and from usless services and monitoring or metrics
 
-[ ] notification translations must be in one file notification.json for easy translation
+[ ] system english names like permissions, ultimate roles, ect...
 [ ] view modals in all modules
 [ ] builk operations
-[ ] clean up notficiation service from testing (doesn't work) and from usless services and monitoring or metrics
 [ ] add users endpoint for modules like activity logs search for user
 [ ] user can update his center (throw settings)
 [ ] activity logs and each one display his own logs only
 
-[] (later if size is big) Bulk notification insertion - Batch insert DB writes for IN_APP channel - ⚙️ Medium–High - If DB write latency increases
 [ ] update notifications to cover all existing modules events
 [ ] consider using prisma instead of typeorm
 [ ] implement access all resources permission

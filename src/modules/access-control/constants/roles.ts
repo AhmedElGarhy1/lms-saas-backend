@@ -1,14 +1,14 @@
 export enum DefaultRoles {
-  SUPER_ADMIN = 'Super Administrator',
-  OWNER = 'Owner',
-  STUDENT = 'Student',
-  TEACHER = 'Teacher',
-  PARENT = 'Parent',
+  SUPER_ADMIN = 't.roles.superAdmin.name',
+  OWNER = 't.roles.owner.name',
+  // STUDENT = 'Student',
+  // TEACHER = 'Teacher',
+  // PARENT = 'Parent',
 }
 
 export const createOwnerRoleData = (centerId: string) => ({
-  name: DefaultRoles.OWNER,
-  description: 'Center Owner role',
+  name: 't.roles.owner.name',
+  description: 't.roles.owner.description',
   rolePermissions: [],
   centerId: centerId,
   readOnly: true,

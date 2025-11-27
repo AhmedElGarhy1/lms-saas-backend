@@ -6,9 +6,12 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   OneToMany,
+  AfterLoad,
 } from 'typeorm';
 import { Center } from '../../centers/entities/center.entity';
 import { PermissionScope } from '@/modules/access-control/constants/permissions';
+import { TranslationService } from '@/shared/services/translation.service';
+import { I18nPath } from '@/generated/i18n.generated';
 
 @Entity('permissions')
 export class Permission {
@@ -22,7 +25,10 @@ export class Permission {
   action: string;
 
   @Column({ nullable: true })
-  description: string;
+  description?: string;
+
+  @Column({ type: 'varchar', length: 50 })
+  group: string;
 
   @Column({
     type: 'varchar',
@@ -42,4 +48,25 @@ export class Permission {
 
   @OneToMany(() => Center, (center) => center.id, { nullable: true })
   centerId: string | null;
+
+  @AfterLoad()
+  translate() {
+    // Always translate (all permissions are system-defined)
+    this.name = TranslationService.translate(this.name as I18nPath);
+    if (this.description) {
+      this.description = TranslationService.translate(
+        this.description as I18nPath,
+      );
+    }
+    // Translate group name
+    if (this.group) {
+      const groupTranslationKey =
+        `t.permissions.groups.${this.group}` as I18nPath;
+      try {
+        this.group = TranslationService.translate(groupTranslationKey);
+      } catch {
+        // If translation fails, keep original group name
+      }
+    }
+  }
 }

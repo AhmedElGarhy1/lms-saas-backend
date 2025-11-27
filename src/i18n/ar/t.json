@@ -1630,5 +1630,76 @@
     "symbol": "ر.س",
     "format": "{amount} {currency}",
     "decimalPlaces": 2
+  },
+  "roles": {
+    "superAdmin": {
+      "name": "المدير العام",
+      "description": "مدير النظام النهائي مع وصول كامل إلى كل شيء"
+    },
+    "owner": {
+      "name": "المالك",
+      "description": "مالك المركز النهائي مع وصول كامل داخل المركز"
+    }
+  },
+  "permissions": {
+    "groups": {
+      "staff": "إدارة الموظفين",
+      "admin": "إدارة المديرين",
+      "center": "إدارة المراكز",
+      "roles": "إدارة الأدوار",
+      "branches": "إدارة الفروع",
+      "system": "النظام"
+    },
+    "staff": {
+      "read": { "name": "قراءة الموظفين" },
+      "create": { "name": "إنشاء موظف" },
+      "grantUserAccess": { "name": "منح وصول المستخدم" },
+      "grantBranchAccess": { "name": "منح وصول الفرع" },
+      "grantCenterAccess": { "name": "منح وصول المركز" },
+      "readAll": { "name": "قراءة جميع الموظفين بدون وصول الموظفين" },
+      "import": { "name": "استيراد الموظفين" },
+      "export": { "name": "تصدير الموظفين" }
+    },
+    "admin": {
+      "read": { "name": "قراءة المدير" },
+      "create": { "name": "إنشاء مدير" },
+      "grantAdminAccess": { "name": "منح وصول المدير" },
+      "grantCenterAccess": { "name": "منح وصول المركز" },
+      "readAll": { "name": "قراءة جميع المديرين بدون وصول المدير" },
+      "import": { "name": "استيراد المديرين" },
+      "export": { "name": "تصدير المديرين" }
+    },
+    "center": {
+      "create": { "name": "إنشاء المراكز" },
+      "update": { "name": "تحديث المراكز" },
+      "delete": { "name": "حذف المراكز" },
+      "restore": { "name": "استعادة المراكز" },
+      "activate": { "name": "تفعيل/إلغاء تفعيل المراكز" },
+      "readAll": { "name": "قراءة جميع المراكز بدون وصول المركز" },
+      "import": { "name": "استيراد المراكز" },
+      "export": { "name": "تصدير المراكز" }
+    },
+    "roles": {
+      "create": { "name": "إنشاء دور" },
+      "update": { "name": "تحديث الدور" },
+      "delete": { "name": "حذف الدور" },
+      "restore": { "name": "استعادة الدور" },
+      "assign": { "name": "تعيين الدور" },
+      "import": { "name": "استيراد الأدوار" },
+      "export": { "name": "تصدير الأدوار" }
+    },
+    "branches": {
+      "create": { "name": "إنشاء الفروع" },
+      "update": { "name": "تحديث الفروع" },
+      "delete": { "name": "حذف الفروع" },
+      "restore": { "name": "استعادة الفروع" },
+      "activate": { "name": "تفعيل/إلغاء تفعيل الفروع" },
+      "import": { "name": "استيراد الفروع" },
+      "export": { "name": "تصدير الفروع" },
+      "readAll": { "name": "قراءة جميع الفروع بدون وصول الفرع" }
+    },
+    "system": {
+      "healthCheck": { "name": "فحص صحة النظام" }
+    }
   }
 }

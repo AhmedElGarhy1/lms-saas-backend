@@ -1698,6 +1698,155 @@ export type I18nTranslations = {
             "format": string;
             "decimalPlaces": {};
         };
+        "roles": {
+            "superAdmin": {
+                "name": string;
+                "description": string;
+            };
+            "owner": {
+                "name": string;
+                "description": string;
+            };
+        };
+        "permissions": {
+            "groups": {
+                "staff": string;
+                "admin": string;
+                "center": string;
+                "roles": string;
+                "branches": string;
+                "system": string;
+            };
+            "staff": {
+                "read": {
+                    "name": string;
+                };
+                "create": {
+                    "name": string;
+                };
+                "grantUserAccess": {
+                    "name": string;
+                };
+                "grantBranchAccess": {
+                    "name": string;
+                };
+                "grantCenterAccess": {
+                    "name": string;
+                };
+                "readAll": {
+                    "name": string;
+                };
+                "import": {
+                    "name": string;
+                };
+                "export": {
+                    "name": string;
+                };
+            };
+            "admin": {
+                "read": {
+                    "name": string;
+                };
+                "create": {
+                    "name": string;
+                };
+                "grantAdminAccess": {
+                    "name": string;
+                };
+                "grantCenterAccess": {
+                    "name": string;
+                };
+                "readAll": {
+                    "name": string;
+                };
+                "import": {
+                    "name": string;
+                };
+                "export": {
+                    "name": string;
+                };
+            };
+            "center": {
+                "create": {
+                    "name": string;
+                };
+                "update": {
+                    "name": string;
+                };
+                "delete": {
+                    "name": string;
+                };
+                "restore": {
+                    "name": string;
+                };
+                "activate": {
+                    "name": string;
+                };
+                "readAll": {
+                    "name": string;
+                };
+                "import": {
+                    "name": string;
+                };
+                "export": {
+                    "name": string;
+                };
+            };
+            "roles": {
+                "create": {
+                    "name": string;
+                };
+                "update": {
+                    "name": string;
+                };
+                "delete": {
+                    "name": string;
+                };
+                "restore": {
+                    "name": string;
+                };
+                "assign": {
+                    "name": string;
+                };
+                "import": {
+                    "name": string;
+                };
+                "export": {
+                    "name": string;
+                };
+            };
+            "branches": {
+                "create": {
+                    "name": string;
+                };
+                "update": {
+                    "name": string;
+                };
+                "delete": {
+                    "name": string;
+                };
+                "restore": {
+                    "name": string;
+                };
+                "activate": {
+                    "name": string;
+                };
+                "import": {
+                    "name": string;
+                };
+                "export": {
+                    "name": string;
+                };
+                "readAll": {
+                    "name": string;
+                };
+            };
+            "system": {
+                "healthCheck": {
+                    "name": string;
+                };
+            };
+        };
     };
 };
 /* prettier-ignore */

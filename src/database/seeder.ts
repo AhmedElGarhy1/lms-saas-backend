@@ -12,6 +12,7 @@ import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
+import { DefaultRoles } from '@/modules/access-control/constants/roles';
 import { SeederException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
@@ -233,6 +234,7 @@ export class DatabaseSeeder {
       name: (permission as any).name,
       action: (permission as any).action,
       description: (permission as any).name,
+      group: (permission as any).group,
       scope: (permission as any).scope,
     }));
 
@@ -252,10 +254,11 @@ export class DatabaseSeeder {
     // Create only essential global roles
     const globalRoles = [
       {
-        name: 'Super Administrator',
-        description: 'Full system access with all permissions',
+        name: 't.roles.superAdmin.name',
+        description: 't.roles.superAdmin.description',
         type: 'ADMIN',
         createdBy,
+        readOnly: true,
       },
     ];
 
@@ -263,6 +266,7 @@ export class DatabaseSeeder {
       name: role.name,
       description: role.description,
       createdBy: role.createdBy,
+      readOnly: role.readOnly,
     }));
 
     await this.dataSource
@@ -334,7 +338,7 @@ export class DatabaseSeeder {
 
     // Get Super Administrator role
     const superAdminRole = allRoles.find(
-      (r) => r.name === 'Super Administrator' && !r.centerId,
+      (r) => r.name === (DefaultRoles.SUPER_ADMIN as string) && !r.centerId,
     );
 
     // Get users by type

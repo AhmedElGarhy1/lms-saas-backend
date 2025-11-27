@@ -5,7 +5,6 @@ import { UserRepository } from '@/modules/user/repositories/user.repository';
 import { Config } from '@/shared/config/config';
 import {
   AuthenticationFailedException,
-  ResourceNotFoundException,
   BusinessLogicException,
 } from '@/shared/common/exceptions/custom.exceptions';
 
@@ -37,7 +36,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     const user = await this.userRepository.findOne(payload.sub);
 
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.userNotFound');
+      // Changed from ResourceNotFoundException to AuthenticationFailedException
+      // A missing user during JWT validation is an authentication failure, not a 404
+      throw new AuthenticationFailedException('t.errors.userNotFound');
     }
 
     if (!user.isActive) {

@@ -80,7 +80,9 @@ export class RolesService extends BaseService {
         actorId: actor.userProfileId,
         centerId: actor.centerId,
       });
-      throw new InsufficientPermissionsException('t.errors.notAuthorizedToUpdateRole');
+      throw new InsufficientPermissionsException(
+        't.errors.notAuthorizedToUpdateRole',
+      );
     }
 
     const updatedRole = await this.rolesRepository.updateRole(
@@ -109,7 +111,9 @@ export class RolesService extends BaseService {
         actorId: actor.userProfileId,
         centerId: actor.centerId,
       });
-      throw new InsufficientPermissionsException('t.errors.notAuthorizedToDeleteRole');
+      throw new InsufficientPermissionsException(
+        't.errors.notAuthorizedToDeleteRole',
+      );
     }
 
     await this.rolesRepository.softRemove(roleId);
@@ -166,7 +170,9 @@ export class RolesService extends BaseService {
           actorId: actor.userProfileId,
           centerId: actor.centerId,
         });
-        throw new InsufficientPermissionsException('t.errors.notAuthorizedToAccessRole');
+        throw new InsufficientPermissionsException(
+          't.errors.notAuthorizedToAccessRole',
+        );
       }
     }
 
