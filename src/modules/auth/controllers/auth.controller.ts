@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Patch, Get, Body, UseGuards, Req } from '@nestjs/common';
 import { ValidationFailedException } from '@/shared/common/exceptions/custom.exceptions';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '@/modules/user/services/user.service';
@@ -25,6 +25,7 @@ import { RefreshJwtGuard } from '../guards/refresh-jwt.guard';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 import { NoPhoneVerification } from '@/shared/common/decorators/no-phone-verification.decorator';
+import { VerificationTokenRepository } from '../repositories/verification-token.repository';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -42,6 +43,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UserService,
+    private readonly verificationTokenRepository: VerificationTokenRepository,
   ) {}
 
   @Public()
@@ -225,5 +227,23 @@ export class AuthController {
     });
 
     return ControllerResponse.success(result, 't.success.passwordChange');
+  }
+
+  /**
+   * [TESTING ENDPOINT] Get all verification tokens
+   * This endpoint is for testing/debugging purposes only.
+   * TODO: Remove this endpoint before production deployment
+   */
+  @Public()
+  @Get('test/verification-tokens')
+  @ReadApiResponses('Get all verification tokens')
+  @ApiOperation({
+    summary: '[TESTING] Get all verification tokens - TO BE REMOVED',
+    description:
+      'Temporary endpoint for testing. Displays all verification tokens (OTP codes) in the database. This endpoint will be removed before production.',
+  })
+  async getVerificationTokens() {
+    const tokens = await this.verificationTokenRepository.findAll();
+    return ControllerResponse.success(tokens, 't.success.dataRetrieved');
   }
 }

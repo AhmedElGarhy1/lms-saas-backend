@@ -79,4 +79,16 @@ export class VerificationTokenRepository extends BaseRepository<VerificationToke
   ): Promise<void> {
     await this.getRepository().delete({ userId, type });
   }
+
+  /**
+   * Find all verification tokens
+   * Used for testing/debugging purposes only
+   * TODO: Remove this method when testing endpoint is removed
+   */
+  async findAll(): Promise<VerificationToken[]> {
+    return this.getRepository().find({
+      relations: { user: true },
+      order: { createdAt: 'DESC' },
+    });
+  }
 }
