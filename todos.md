@@ -77,10 +77,10 @@
 [x] translation instead of injecting i18service everywhere we can make the internal services or utils like ControllerResponse take safe translaction key string and the service call is inside these utils
 [x] notification translations must be in one file notification.json for easy translation
 [x] clean up notficiation service from testing (doesn't work) and from usless services and monitoring or metrics
+[x] system english names like permissions, ultimate roles, ect...
 
-[ ] system english names like permissions, ultimate roles, ect...
-[ ] view modals in all modules
 [ ] builk operations
+[ ] view modals in all modules
 [ ] add users endpoint for modules like activity logs search for user
 [ ] user can update his center (throw settings)
 [ ] activity logs and each one display his own logs only
