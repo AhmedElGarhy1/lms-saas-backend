@@ -12,6 +12,13 @@ export class BulkOperationErrorDto {
 }
 
 export class BulkOperationResultDto {
+  @ApiProperty({
+    description: 'Type indicator for bulk operation responses',
+    example: 'bulk-operation',
+    enum: ['bulk-operation'],
+  })
+  type: 'bulk-operation';
+
   @ApiProperty({ description: 'Number of successful operations' })
   success: number;
 

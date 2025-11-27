@@ -335,7 +335,11 @@
       "notProvided": "Not provided",
       "profileAvatar": "Profile avatar",
       "channel": "Channel",
-      "profileType": "Profile Type"
+      "profileType": "Profile Type",
+      "result": "Result",
+      "total": "Total",
+      "failed": "Failed",
+      "errors": "Errors",
     },
     "status": {
       "active": "Active",
@@ -1013,6 +1017,8 @@
     "userAccessNotFound": "User access not found",
     "branchAccessNotFound": "Branch access not found",
     "roleNotFound": "Role not found",
+    "cannotDeleteReadOnlyRole": "Cannot delete read-only role. System roles cannot be deleted",
+    "cannotModifyReadOnlyRole": "Cannot modify read-only role. System roles cannot be modified",
     "permissionNotFound": "Permission not found",
     "userNotAuthenticated": "User not authenticated",
     "profileTypeNotFound": "Profile type not found",

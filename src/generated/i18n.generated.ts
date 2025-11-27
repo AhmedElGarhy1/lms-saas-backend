@@ -1065,6 +1065,8 @@ export type I18nTranslations = {
             "userAccessNotFound": string;
             "branchAccessNotFound": string;
             "roleNotFound": string;
+            "cannotDeleteReadOnlyRole": string;
+            "cannotModifyReadOnlyRole": string;
             "permissionNotFound": string;
             "userNotAuthenticated": string;
             "profileInactive": string;

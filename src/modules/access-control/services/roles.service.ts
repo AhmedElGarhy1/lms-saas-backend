@@ -74,6 +74,9 @@ export class RolesService extends BaseService {
     if (!role) {
       throw new ResourceNotFoundException('t.errors.roleNotFound');
     }
+    if (role.readOnly) {
+      throw new BusinessLogicException('t.errors.cannotModifyReadOnlyRole');
+    }
     if (!role.isSameScope(actor.centerId)) {
       this.logger.warn('Role update failed - insufficient permissions', {
         roleId,
@@ -104,6 +107,9 @@ export class RolesService extends BaseService {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
       throw new ResourceNotFoundException('t.errors.roleNotFound');
+    }
+    if (role.readOnly) {
+      throw new BusinessLogicException('t.errors.cannotDeleteReadOnlyRole');
     }
     if (!role?.isSameScope(actor.centerId)) {
       this.logger.warn('Role deletion failed - insufficient permissions', {

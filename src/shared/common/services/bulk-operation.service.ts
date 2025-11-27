@@ -14,6 +14,7 @@ export interface BulkOperationError {
 }
 
 export interface BulkOperationResult {
+  type: 'bulk-operation';
   success: number;
   failed: number;
   total: number;
@@ -43,6 +44,7 @@ export class BulkOperationService extends BaseService {
     // Validate input
     if (!ids || ids.length === 0) {
       return {
+        type: 'bulk-operation',
         success: 0,
         failed: 0,
         total: 0,
@@ -88,6 +90,7 @@ export class BulkOperationService extends BaseService {
 
     // Count results from Promise.allSettled (no race condition)
     const result: BulkOperationResult = {
+      type: 'bulk-operation',
       success: 0,
       failed: 0,
       total,

@@ -373,7 +373,11 @@
       "twoFactorAuth": "المصادقة الثنائية",
       "sessionTimeout": "انتهاء الجلسة",
       "loginNotifications": "إشعارات تسجيل الدخول",
-      "suspiciousActivityAlerts": "تنبيهات النشاط المشبوه"
+      "suspiciousActivityAlerts": "تنبيهات النشاط المشبوه",
+      "result": "النتيجة",
+      "total": "الإجمالي",
+      "failed": "فشل",
+      "errors": "الأخطاء",
     },
     "countdown": {
       "resendIn": "إعادة إرسال الرمز خلال"
@@ -1036,6 +1040,8 @@
     "userAccessNotFound": "صلاحية المستخدم غير موجودة",
     "branchAccessNotFound": "صلاحية الوصول للفرع غير موجودة",
     "roleNotFound": "الدور غير موجود",
+    "cannotDeleteReadOnlyRole": "لا يمكن حذف الدور للقراءة فقط. لا يمكن حذف أدوار النظام",
+    "cannotModifyReadOnlyRole": "لا يمكن تعديل الدور للقراءة فقط. لا يمكن تعديل أدوار النظام",
     "permissionNotFound": "الصلاحية غير موجودة",
     "userNotAuthenticated": "المستخدم غير مصادق عليه",
     "profileInactive": {
