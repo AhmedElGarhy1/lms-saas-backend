@@ -190,3 +190,4 @@ After running and analyzing the notification service tests, here are the key fin
 3. Decide on metrics endpoint vs. removing metrics
 4. Remove WhatsAppWebhookMetricsService if not needed
 5. Consider adding more performance/load tests once circular dependency is fixed
+
