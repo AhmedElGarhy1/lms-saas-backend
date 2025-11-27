@@ -580,6 +580,9 @@ export type I18nTranslations = {
                 "error": string;
                 "success": string;
                 "bulkOperationCompleted": string;
+                "allOperationsSucceeded": string;
+                "allOperationsFailed": string;
+                "partialOperationsSucceeded": string;
                 "forbidden": string;
                 "noResults": string;
                 "searching": string;
@@ -1074,7 +1077,10 @@ export type I18nTranslations = {
             "cannotModifyReadOnlyRole": string;
             "permissionNotFound": string;
             "userNotAuthenticated": string;
-            "profileInactive": string;
+            "profileInactive": {
+                "title": string;
+                "description": string;
+            };
             "profileTypeNotFound": string;
             "invalidSignature": string;
             "centerIdRequired": string;

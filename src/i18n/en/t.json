@@ -22,13 +22,41 @@
   "auth": {
     "login": {
       "title": "Welcome Back",
-      "subtitle": "Sign in to your account to continue"
+      "subtitle": "Sign in to your account to continue",
+      "otpHint": "Enter the OTP code sent to your phone",
+      "verifyAndLogin": "Verify & Login"
     },
     "register": {
       "title": "Create Account",
       "subtitle": "Sign up to get started"
     },
-    "noAccount": "Don't have an account?"
+    "noAccount": "Don't have an account?",
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "description": "Enter your phone number to receive a password reset code",
+      "resetTitle": "Reset Password",
+      "resetDescription": "Enter the code sent to your phone and your new password",
+      "sendCode": "Send Reset Code",
+      "resetPassword": "Reset Password",
+      "backToLogin": "Back to Login",
+      "otpSent": "If an account exists, a password reset code has been sent.",
+      "otpSentTo": "OTP code sent to",
+      "resetSuccess": "Password reset successfully",
+      "invalidCode": "Invalid or expired code. Please request a new code."
+    },
+    "twoFactor": {
+      "setupSuccess": "2FA setup OTP sent to your phone. Verify the code to enable 2FA.",
+      "enableSuccess": "Two-factor authentication enabled successfully",
+      "disableSuccess": "Two-factor authentication disabled successfully",
+      "alreadyEnabled": "2FA is already enabled",
+      "notEnabled": "2FA is not enabled",
+      "invalidCode": "Invalid or expired code",
+      "enterCode": "Enter the OTP code sent to your phone to enable 2FA",
+      "disableOtpRequired": "Enter the OTP code sent to your phone to disable 2FA",
+      "otpRequired": "Enter the OTP code sent to your phone to disable 2FA",
+      "enable": "Enable 2FA",
+      "disable": "Disable 2FA"
+    }
   },
   "common": {
     "actions": {
@@ -151,7 +179,11 @@
       "verifyPhone": "Verify Phone",
       "autoRefresh": "{refresh} Auto",
       "importUser": "Import User",
-      "importing": "Importing..."
+      "importing": "Importing...",
+      "createProducts": "Create Products",
+      "editProducts": "Edit Products",
+      "resendCode": "Resend Code",
+      "processing": "Processing..."
     },
     "labels": {
       "name": "Name",
@@ -339,7 +371,10 @@
       "result": "Result",
       "total": "Total",
       "failed": "Failed",
-      "errors": "Errors"
+      "errors": "Errors",
+      "selectAll": "Select All",
+      "unknownProducts": "Unknown Products",
+      "unknownTestModule": "Unknown TestModule"
     },
     "status": {
       "active": "Active",
@@ -395,7 +430,11 @@
       "notifications": "notifications",
       "admin": "admin",
       "activityLog": "activity log",
-      "activityLogs": "activity logs"
+      "activityLogs": "activity logs",
+      "products": "products",
+      "productss": "productss",
+      "test-module": "test-module",
+      "test-modules": "test-modules"
     },
     "placeholders": {
       "search": "Search...",
@@ -509,6 +548,9 @@
       "error": "An error occurred",
       "success": "Operation successful",
       "bulkOperationCompleted": "Operation Results",
+      "allOperationsSucceeded": "Successfully processed {count} {item}",
+      "allOperationsFailed": "Failed to process {count} {item}",
+      "partialOperationsSucceeded": "Successfully processed {success} {item}, but {failed} {item} failed",
       "forbidden": "This action is forbidden",
       "noResults": "No results found",
       "searching": "Searching...",
@@ -711,6 +753,9 @@
       "bulkActivateSuccess": "Successfully activated: {userNames}",
       "bulkDeactivateSuccess": "Successfully deactivated: {userNames}",
       "bulkDeleteSuccess": "Successfully deleted: {userNames}"
+    },
+    "countdown": {
+      "resendIn": "Resend code in"
     }
   },
   "dashboard": {
@@ -967,7 +1012,6 @@
       "title": "Center Inactive",
       "description": "The selected center is currently inactive and cannot be accessed. Please select a different center to continue."
     },
-    "profileInactive": "Profile is inactive",
     "centerAccessDenied": {
       "title": "Center Access Denied",
       "description": "You do not have access to this center. Please contact your administrator to request center access."
@@ -1022,6 +1066,10 @@
     "cannotModifyReadOnlyRole": "Cannot modify read-only role. System roles cannot be modified",
     "permissionNotFound": "Permission not found",
     "userNotAuthenticated": "User not authenticated",
+    "profileInactive": {
+      "title": "Profile Inactive",
+      "description": "The selected profile is currently inactive. Please select another profile or contact an administrator."
+    },
     "profileTypeNotFound": "Profile type not found",
     "invalidSignature": "Invalid signature",
     "centerIdRequired": "Center ID is required",
@@ -1084,7 +1132,8 @@
     "duplicateResource": "Duplicate resource",
     "relatedEntityMissingOrInvalid": "Related entity is missing or invalid. Please check the referenced data and try again",
     "requiredFieldMissing": "A required field is missing",
-    "temporaryDatabaseConflict": "Temporary database conflict occurred. Please retry."
+    "temporaryDatabaseConflict": "Temporary database conflict occurred. Please retry.",
+    "emailVerificationMustBeAuthenticated": "Email verification must be requested from an authenticated endpoint"
   },
   "export": {
     "formats": {
@@ -1339,7 +1388,9 @@
     "bulkRestore": "Bulk restore completed successfully",
     "bulkAssign": "Bulk assign completed successfully",
     "bulkRemove": "Bulk remove completed successfully",
-    "activityLogTypesRetrieved": "Activity log types retrieved successfully"
+    "activityLogTypesRetrieved": "Activity log types retrieved successfully",
+    "emailVerified": "Email verified successfully",
+    "emailVerificationRequestSent": "Email verification request sent"
   },
   "system": {
     "health": {
@@ -1478,7 +1529,8 @@
       "priority": "Priority",
       "recipient": "Recipient",
       "channel": "Channel",
-      "error": "Error"
+      "error": "Error",
+      "targetUser": "Target User"
     },
     "actions": {
       "deleteSelected": "Delete Selected",
@@ -1774,5 +1826,14 @@
         "name": "System Health Check"
       }
     }
+  },
+  "confirm": {
+    "areYouSure": "Are you sure?",
+    "delete": "Are you sure you want to delete this item?",
+    "action": "Are you sure you want to perform this action?",
+    "disable": "Are you sure you want to disable this item?",
+    "enable": "Are you sure you want to enable this item?",
+    "restore": "Are you sure you want to restore this item?",
+    "archive": "Are you sure you want to archive this item?"
   }
 }

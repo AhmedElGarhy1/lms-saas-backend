@@ -373,7 +373,8 @@
       "result": "النتيجة",
       "total": "الإجمالي",
       "failed": "فشل",
-      "errors": "الأخطاء"
+      "errors": "الأخطاء",
+      "staff": "Staff"
     },
     "countdown": {
       "resendIn": "إعادة إرسال الرمز خلال"
@@ -433,7 +434,10 @@
       "notifications": "إشعارات",
       "admin": "مدير",
       "activityLog": "سجل نشاط",
-      "activityLogs": "سجلات النشاط"
+      "activityLogs": "سجلات النشاط",
+      "staff": "staff",
+      "profile": "profile",
+      "profiles": "profiles"
     },
     "placeholders": {
       "search": "بحث...",
@@ -547,6 +551,9 @@
       "error": "حدث خطأ",
       "success": "نجحت العملية",
       "bulkOperationCompleted": "نتائج العملية",
+      "allOperationsSucceeded": "تمت معالجة {count} {item} بنجاح",
+      "allOperationsFailed": "فشلت معالجة {count} {item}",
+      "partialOperationsSucceeded": "تمت معالجة {success} {item} بنجاح، لكن فشل {failed} {item}",
       "forbidden": "هذا الإجراء محظور",
       "noResults": "لم يتم العثور على نتائج",
       "searching": "جاري البحث...",
@@ -1089,7 +1096,44 @@
     "centerAccessInactive": {
       "title": "صلاحية الوصول للمركز غير نشطة",
       "description": "صلاحية الوصول إلى هذا المركز غير نشطة حالياً. يرجى الاتصال بمدير المركز لمزيد من المعلومات."
-    }
+    },
+    "unauthorized": "Unauthorized: Please log in to continue",
+    "forbidden": "This action is forbidden",
+    "notFound": "The requested resource was not found",
+    "conflict": "A conflict occurred with the current state of the resource",
+    "unprocessableEntity": "The request was well-formed but contains semantic errors",
+    "serviceUnavailable": "Service temporarily unavailable. Please try again later",
+    "phoneAlreadyExists": "A user with this phone number already exists",
+    "adminScopeNotAllowedForCenter": "Admin scope permissions are not allowed for center-specific roles",
+    "adminRoleCannotBeAssociatedWithCenter": "Admin role cannot be associated with a center. Admin roles are system-wide only",
+    "otpCodeRequired": "OTP code is required to complete this operation",
+    "noAccessToGranterUser": "You do not have access to the granter user",
+    "noAccessToTargetUser": "You do not have access to the target user",
+    "superAdminCanAccessAnyUser": "Super admin users can access any user and cannot be restricted",
+    "branchAccessDenied": "You do not have access to this branch",
+    "twoFactorNotEnabled": "Two-factor authentication is not enabled for this account",
+    "twoFactorAlreadyEnabled": "Two-factor authentication is already enabled for this account",
+    "systemNotReady": "System is not ready. Please try again later",
+    "adminScopeAccessDenied": "You do not have access to admin scope. Please select a center to access center-specific resources.",
+    "notAuthorizedToUpdateRole": "You are not authorized to update this role",
+    "notAuthorizedToDeleteRole": "You are not authorized to delete this role",
+    "notAuthorizedToAccessRole": "You are not authorized to access this role",
+    "roleNotDeletedCannotRestore": "Role is not deleted and cannot be restored",
+    "seederFailed": "Seeder operation failed",
+    "profileSelectionRequired": "Profile selection is required for this operation",
+    "invalidContentType": "Content-Type must be application/json",
+    "unsupportedContentType": "Unsupported content type",
+    "exportFormatNotSupported": "Export format is not supported",
+    "exportDataUnavailable": "No data available for export",
+    "requestBodyTooLarge": "Request body is too large",
+    "branchNotFound": "Branch with ID {branchId} not found",
+    "notificationNotFoundOrAccessDenied": "Notification not found or access denied",
+    "userIdRequiredForInAppNotifications": "userId is required for in-app notifications",
+    "missingRequiredHeader": "Missing required header: {header}",
+    "duplicateResource": "Duplicate resource",
+    "relatedEntityMissingOrInvalid": "Related entity is missing or invalid. Please check the referenced data and try again",
+    "requiredFieldMissing": "A required field is missing",
+    "temporaryDatabaseConflict": "Temporary database conflict occurred. Please retry."
   },
   "confirm": {
     "areYouSure": "هل أنت متأكد؟",
@@ -1252,7 +1296,8 @@
       "noProfilesAvailable": "لا توجد ملفات شخصية متاحة",
       "profileSelected": "تم اختيار الملف الشخصي بنجاح",
       "errorSelecting": "خطأ في اختيار الملف الشخصي",
-      "errorLoading": "خطأ في تحميل الملفات الشخصية"
+      "errorLoading": "خطأ في تحميل الملفات الشخصية",
+      "noResults": "No results found"
     },
     "unauthorized": {
       "title": "الوصول مرفوض",
@@ -1353,7 +1398,8 @@
     "bulkRestore": "تم إكمال الاستعادة المجمعة بنجاح",
     "bulkAssign": "تم إكمال التعيين المجمع بنجاح",
     "bulkRemove": "تم إكمال الإزالة المجمعة بنجاح",
-    "activityLogTypesRetrieved": "تم استرجاع أنواع سجل النشاط بنجاح"
+    "activityLogTypesRetrieved": "تم استرجاع أنواع سجل النشاط بنجاح",
+    "found": "{resource} found successfully"
   },
   "system": {
     "health": {
