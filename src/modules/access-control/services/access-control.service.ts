@@ -11,6 +11,7 @@ import {
   ResourceNotFoundException,
   ValidationFailedException,
 } from '@/shared/common/exceptions/custom.exceptions';
+import { I18nPath } from '@/generated/i18n.generated';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { UserAccessRepository } from '../repositories/user-access.repository';
@@ -62,12 +63,67 @@ export class AccessControlService extends BaseService {
     await this.userAccessRepository.revokeUserAccess(body);
   }
 
+  /**
+   * Validates that the actor has permission to grant/revoke user access based on target profile type
+   * @param actor The user performing the action
+   * @param targetUserProfileId The target user profile ID to check profile type
+   * @param centerId Optional center ID for permission scope
+   */
+  private async validateUserAccessPermission(
+    actor: ActorUser,
+    targetUserProfileId: string,
+    centerId?: string,
+  ): Promise<void> {
+    // Get target user profile to determine profile type
+    const targetProfile =
+      await this.userProfileService.findOne(targetUserProfileId);
+    if (!targetProfile) {
+      throw new ResourceNotFoundException('t.errors.userProfileNotFound');
+    }
+
+    // Determine which permission to check based on target profile type
+    let requiredPermission;
+    if (targetProfile.profileType === ProfileType.STAFF) {
+      requiredPermission = PERMISSIONS.STAFF.GRANT_USER_ACCESS;
+    } else if (targetProfile.profileType === ProfileType.ADMIN) {
+      // For admin profiles, use GRANT_ADMIN_ACCESS as it's the equivalent permission
+      requiredPermission = PERMISSIONS.ADMIN.GRANT_ADMIN_ACCESS;
+    } else {
+      throw new ValidationFailedException('t.errors.validationFailed');
+    }
+
+    // Check if actor has the required permission
+    const hasPermission = await this.rolesService.hasPermission(
+      actor.userProfileId,
+      requiredPermission.action,
+      requiredPermission.scope,
+      centerId ?? actor.centerId,
+    );
+
+    if (!hasPermission) {
+      throw new InsufficientPermissionsException(
+        't.errors.insufficientPermissions' as I18nPath,
+        {
+          action: requiredPermission.action,
+          profileType: targetProfile.profileType,
+        },
+      );
+    }
+  }
+
   async grantUserAccessValidate(
     body: UserAccessDto,
     actor: ActorUser,
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
     body.centerId = centerId;
+
+    // Validate that actor has permission to grant user access for the target profile type
+    await this.validateUserAccessPermission(
+      actor,
+      body.targetUserProfileId,
+      centerId,
+    );
 
     // Check user already have access
     const IHaveAccessToGranterUser =
@@ -127,6 +183,13 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
     body.centerId = centerId;
+
+    // Validate that actor has permission to revoke user access for the target profile type
+    await this.validateUserAccessPermission(
+      actor,
+      body.targetUserProfileId,
+      centerId,
+    );
 
     // Check user already have access
     const IHaveAccessToGranterUser =

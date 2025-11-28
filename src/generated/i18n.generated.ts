@@ -1436,6 +1436,8 @@ export type I18nTranslations = {
             "bulkToggleCenterAccessStatus": string;
             "bulkDeleteCenterAccess": string;
             "bulkRestoreCenterAccess": string;
+            "bulkGrantUserAccess": string;
+            "bulkRevokeUserAccess": string;
             "bulkGrantBranchAccess": string;
             "bulkRevokeBranchAccess": string;
             "activityLogTypesRetrieved": string;

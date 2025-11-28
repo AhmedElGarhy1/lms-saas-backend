@@ -1399,6 +1399,8 @@
     "bulkRestoreCenterAccess": "Bulk restore center access completed successfully",
     "bulkGrantBranchAccess": "Bulk grant branch access completed successfully",
     "bulkRevokeBranchAccess": "Bulk revoke branch access completed successfully",
+    "bulkGrantUserAccess": "Bulk grant user access completed successfully",
+    "bulkRevokeUserAccess": "Bulk revoke user access completed successfully",
     "activityLogTypesRetrieved": "Activity log types retrieved successfully",
     "emailVerified": "Email verified successfully",
     "emailVerificationRequestSent": "Email verification request sent"

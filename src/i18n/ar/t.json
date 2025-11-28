@@ -1407,6 +1407,8 @@
     "bulkToggleCenterAccessStatus": "تم إكمال تغيير حالة صلاحية الوصول للمركز بشكل مجمع بنجاح",
     "bulkDeleteCenterAccess": "تم إكمال حذف صلاحية الوصول للمركز بشكل مجمع بنجاح",
     "bulkRestoreCenterAccess": "تم إكمال استعادة صلاحية الوصول للمركز بشكل مجمع بنجاح",
+    "bulkGrantUserAccess": "تم إكمال منح صلاحية الوصول للمستخدم بشكل مجمع بنجاح",
+    "bulkRevokeUserAccess": "تم إكمال إلغاء صلاحية الوصول للمستخدم بشكل مجمع بنجاح",
     "bulkGrantBranchAccess": "تم إكمال منح صلاحية الوصول للفرع بشكل مجمع بنجاح",
     "bulkRevokeBranchAccess": "تم إكمال إلغاء صلاحية الوصول للفرع بشكل مجمع بنجاح",
     "activityLogTypesRetrieved": "تم استرجاع أنواع سجل النشاط بنجاح",
