@@ -59,7 +59,12 @@ export class AccessControlHelperService extends BaseService {
           userProfileId,
           centerId,
         },
-        { includeDeleted: false, includeInactive: false },
+        {
+          includeDeleted: false,
+          includeInactive: false,
+          includeDeletedCenter: false,
+          includeInactiveCenter: false,
+        },
       );
 
       return;
@@ -218,7 +223,9 @@ export class AccessControlHelperService extends BaseService {
         targetUserProfileId: data.targetUserProfileId,
         centerId: data.centerId,
       });
-      throw new InsufficientPermissionsException('t.errors.noAccessToTargetUser');
+      throw new InsufficientPermissionsException(
+        't.errors.noAccessToTargetUser',
+      );
     }
   }
 
@@ -250,19 +257,38 @@ export class AccessControlHelperService extends BaseService {
     config: {
       includeDeleted?: boolean;
       includeInactive?: boolean;
+      includeDeletedCenter?: boolean;
+      includeInactiveCenter?: boolean;
     } = {
       includeDeleted: false,
       includeInactive: true,
+      includeDeletedCenter: false,
+      includeInactiveCenter: true,
     },
   ): Promise<void> {
-    // Check if center is active
-    const center = await this.centersService.findCenterById(data.centerId);
+    // Check if center exists (and is active if not deleted)
+    const center = await this.centersService.findCenterById(
+      data.centerId,
+      undefined,
+      config.includeDeletedCenter,
+    );
 
-    if (!center.isActive) {
-      this.logger.warn('Center access validation failed - center is inactive', {
-        userProfileId: data.userProfileId,
-        centerId: data.centerId,
-      });
+    // Only check if center is active if:
+    // 1. Center is not deleted
+    // 2. includeInactiveCenter is false (by default allows inactive centers)
+    if (
+      !config.includeDeletedCenter &&
+      !center.isActive &&
+      !config.includeInactiveCenter
+    ) {
+      this.logger.warn(
+        'Center validation failed - the center itself is inactive',
+        {
+          userProfileId: data.userProfileId,
+          centerId: data.centerId,
+          centerName: center.name,
+        },
+      );
       throw new InactiveCenterException('t.errors.centerInactive.description');
     }
 
@@ -274,7 +300,9 @@ export class AccessControlHelperService extends BaseService {
         userProfileId: data.userProfileId,
         centerId: data.centerId,
       });
-      throw new CenterAccessDeniedException('t.errors.centerAccessDenied.description');
+      throw new CenterAccessDeniedException(
+        't.errors.centerAccessDenied.description',
+      );
     }
     const centerAccess = await this.findCenterAccess(data);
     if (!centerAccess) return;
@@ -285,7 +313,9 @@ export class AccessControlHelperService extends BaseService {
         userProfileId: data.userProfileId,
         centerId: data.centerId,
       });
-      throw new CenterAccessInactiveException('t.errors.centerAccessInactive.description');
+      throw new CenterAccessInactiveException(
+        't.errors.centerAccessInactive.description',
+      );
     }
   }
 

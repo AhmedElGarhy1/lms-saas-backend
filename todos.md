@@ -79,7 +79,19 @@
 [x] clean up notficiation service from testing (doesn't work) and from usless services and monitoring or metrics
 [x] system english names like permissions, ultimate roles, ect...
 
-[ ] builk operations
+[x] builk operations basics
+[x] builk operations roles
+[x] builk operations centers
+[x] builk operations center access
+[x] builk operations staff
+[x] builk operations admins
+[ ] builk operations branches
+
+[ ] deny softdelete/deactivate admin center access in backend
+[ ] in pagiinate admins/staff display also inActive centers
+[ ] remove the many paramenters from modules and use useActions direct it's more effcent
+[ ] think about a way for frontend to display based on permission
+
 [ ] view modals in all modules
 [ ] add users endpoint for modules like activity logs search for user
 [ ] user can update his center (throw settings)

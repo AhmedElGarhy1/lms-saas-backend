@@ -1010,7 +1010,7 @@
   "errors": {
     "centerInactive": {
       "title": "Center Inactive",
-      "description": "The selected center is currently inactive and cannot be accessed. Please select a different center to continue."
+      "description": "The center itself is currently inactive and cannot be accessed. Please select a different center or contact the administrator to activate this center."
     },
     "centerAccessDenied": {
       "title": "Center Access Denied",
@@ -1055,6 +1055,7 @@
     "centerAccessNotFound": "Center access not found",
     "centerAccessAlreadyDeleted": "Center access already deleted",
     "centerAccessNotDeleted": "Center access not deleted",
+    "centerNotDeleted": "Center is not deleted and cannot be restored",
     "currentPasswordIncorrect": "Current password is incorrect",
     "accessDeniedToUser": "Access denied to this user",
     "profileAlreadyAssignedToBranch": "Profile already assigned to branch",
@@ -1083,6 +1084,7 @@
     "userAlreadyHasProfileCannotImport": "User already has a profile. Cannot import without center access",
     "targetUserProfileNotFound": "Target user profile not found",
     "targetUserMustHaveAdminOrStaffProfile": "Target user must have an admin or staff profile to grant center access",
+    "invalidProfileTypeForCenterAccess": "Only Staff and Admin users can be granted center access",
     "refreshTokenNotFound": "Refresh token not found in request body",
     "invalidOrExpiredToken": "Invalid or expired token",
     "refreshTokenExpired": "Refresh token expired",
@@ -1388,6 +1390,11 @@
     "bulkRestore": "Bulk restore completed successfully",
     "bulkAssign": "Bulk assign completed successfully",
     "bulkRemove": "Bulk remove completed successfully",
+    "bulkGrantCenterAccess": "Bulk grant center access completed successfully",
+    "bulkRevokeCenterAccess": "Bulk revoke center access completed successfully",
+    "bulkToggleCenterAccessStatus": "Bulk toggle center access status completed successfully",
+    "bulkDeleteCenterAccess": "Bulk delete center access completed successfully",
+    "bulkRestoreCenterAccess": "Bulk restore center access completed successfully",
     "activityLogTypesRetrieved": "Activity log types retrieved successfully",
     "emailVerified": "Email verified successfully",
     "emailVerificationRequestSent": "Email verification request sent"

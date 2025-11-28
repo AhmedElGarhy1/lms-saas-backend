@@ -50,18 +50,31 @@ export class CentersService extends BaseService {
     super();
   }
 
-  async findCenterById(centerId: string, actor?: ActorUser): Promise<Center> {
-    const center = await this.centersRepository.findOne(centerId);
+  async findCenterById(
+    centerId: string,
+    actor?: ActorUser,
+    isDeleted?: boolean,
+    includeInactiveCenter?: boolean,
+  ): Promise<Center> {
+    const center = isDeleted
+      ? await this.centersRepository.findOneSoftDeletedById(centerId)
+      : await this.centersRepository.findOne(centerId);
     if (!center) {
       throw new ResourceNotFoundException('t.errors.resourceNotFound');
     }
 
     // If actor is provided, validate center access
     if (actor) {
-      await this.accessControlHelperService.validateCenterAccess({
-        userProfileId: actor.userProfileId,
-        centerId,
-      });
+      await this.accessControlHelperService.validateCenterAccess(
+        {
+          userProfileId: actor.userProfileId,
+          centerId,
+        },
+        {
+          includeDeletedCenter: isDeleted,
+          includeInactiveCenter: includeInactiveCenter ?? true,
+        },
+      );
     }
 
     return center;
@@ -95,7 +108,7 @@ export class CentersService extends BaseService {
     dto: UpdateCenterRequestDto,
     actor: ActorUser,
   ): Promise<Center> {
-    const center = await this.findCenterById(centerId, actor);
+    const center = await this.findCenterById(centerId, actor, false);
     if (!center) {
       throw new ResourceNotFoundException('t.errors.resourceNotFound');
     }
@@ -127,7 +140,7 @@ export class CentersService extends BaseService {
   }
 
   async deleteCenter(centerId: string, actor: ActorUser): Promise<void> {
-    await this.findCenterById(centerId, actor);
+    await this.findCenterById(centerId, actor, false);
     // Permission check should be in controller
 
     await this.centersRepository.softRemove(centerId);
@@ -139,19 +152,20 @@ export class CentersService extends BaseService {
     );
   }
 
-  async restoreCenter(centerId: string, actor: ActorUser): Promise<Center> {
-    await this.findCenterById(centerId, actor);
+  async restoreCenter(centerId: string, actor: ActorUser) {
+    const center = await this.findCenterById(centerId, actor, true);
+
+    if (!center.deletedAt) {
+      throw new BusinessLogicException('t.errors.centerNotDeleted');
+    }
 
     await this.centersRepository.restore(centerId);
-    const restoredCenter = await this.findCenterById(centerId, actor);
 
     // Emit event after work is done
     await this.typeSafeEventEmitter.emitAsync(
       CenterEvents.RESTORED,
       new RestoreCenterEvent(centerId, actor),
     );
-
-    return restoredCenter;
   }
 
   async updateCenterActivation(
@@ -188,7 +202,7 @@ export class CentersService extends BaseService {
     isActive: boolean,
     actor: ActorUser,
   ): Promise<void> {
-    await this.findCenterById(centerId, actor);
+    await this.findCenterById(centerId, actor, false);
 
     await this.centersRepository.update(centerId, { isActive });
 

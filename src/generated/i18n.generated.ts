@@ -1066,6 +1066,7 @@ export type I18nTranslations = {
             "centerAccessNotFound": string;
             "centerAccessAlreadyDeleted": string;
             "centerAccessNotDeleted": string;
+            "centerNotDeleted": string;
             "currentPasswordIncorrect": string;
             "accessDeniedToUser": string;
             "profileAlreadyAssignedToBranch": string;
@@ -1095,6 +1096,7 @@ export type I18nTranslations = {
             "userAlreadyHasProfileCannotImport": string;
             "targetUserProfileNotFound": string;
             "targetUserMustHaveAdminOrStaffProfile": string;
+            "invalidProfileTypeForCenterAccess": string;
             "refreshTokenNotFound": string;
             "invalidOrExpiredToken": string;
             "refreshTokenExpired": string;
@@ -1427,6 +1429,11 @@ export type I18nTranslations = {
             "bulkRestore": string;
             "bulkAssign": string;
             "bulkRemove": string;
+            "bulkGrantCenterAccess": string;
+            "bulkRevokeCenterAccess": string;
+            "bulkToggleCenterAccessStatus": string;
+            "bulkDeleteCenterAccess": string;
+            "bulkRestoreCenterAccess": string;
             "activityLogTypesRetrieved": string;
             "found": string;
         };

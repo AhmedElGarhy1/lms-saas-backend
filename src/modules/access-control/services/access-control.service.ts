@@ -1,8 +1,15 @@
-import { Inject, Injectable, forwardRef, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  forwardRef,
+  Logger,
+  ForbiddenException,
+} from '@nestjs/common';
 import {
   BusinessLogicException,
   InsufficientPermissionsException,
   ResourceNotFoundException,
+  ValidationFailedException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { AccessControlHelperService } from './access-control-helper.service';
@@ -20,6 +27,10 @@ import {
 } from '../events/access-control.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { BaseService } from '@/shared/common/services/base.service';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
+import { RolesService } from './roles.service';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { PERMISSIONS } from '../constants/permissions';
 
 @Injectable()
 export class AccessControlService extends BaseService {
@@ -32,6 +43,9 @@ export class AccessControlService extends BaseService {
     private readonly centerAccessRepository: CenterAccessRepository,
     private readonly branchAccessRepository: BranchAccessRepository,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    @Inject(forwardRef(() => UserProfileService))
+    private readonly userProfileService: UserProfileService,
+    private readonly rolesService: RolesService,
   ) {
     super();
   }
@@ -64,7 +78,9 @@ export class AccessControlService extends BaseService {
       });
 
     if (!IHaveAccessToGranterUser) {
-      throw new InsufficientPermissionsException('t.errors.noAccessToGranterUser');
+      throw new InsufficientPermissionsException(
+        't.errors.noAccessToGranterUser',
+      );
     }
 
     const IHaveAccessToTargetUser =
@@ -75,7 +91,9 @@ export class AccessControlService extends BaseService {
       });
 
     if (!IHaveAccessToTargetUser) {
-      throw new InsufficientPermissionsException('t.errors.noAccessToTargetUser');
+      throw new InsufficientPermissionsException(
+        't.errors.noAccessToTargetUser',
+      );
     }
 
     // check if target user have height role
@@ -84,7 +102,9 @@ export class AccessControlService extends BaseService {
         body.granterUserProfileId,
       );
     if (isGranterSuperAdmin) {
-      throw new InsufficientPermissionsException('t.errors.superAdminCanAccessAnyUser');
+      throw new InsufficientPermissionsException(
+        't.errors.superAdminCanAccessAnyUser',
+      );
     }
 
     // Check if access already exists
@@ -125,7 +145,9 @@ export class AccessControlService extends BaseService {
           centerId,
         },
       );
-      throw new InsufficientPermissionsException('t.errors.noAccessToGranterUser');
+      throw new InsufficientPermissionsException(
+        't.errors.noAccessToGranterUser',
+      );
     }
 
     const IHaveAccessToTargetUser =
@@ -141,14 +163,18 @@ export class AccessControlService extends BaseService {
         actorId: actor.userProfileId,
         centerId,
       });
-      throw new InsufficientPermissionsException('t.errors.noAccessToTargetUser');
+      throw new InsufficientPermissionsException(
+        't.errors.noAccessToTargetUser',
+      );
     }
 
     // Check if access exists
     const canAccess = await this.accessControlHelperService.canUserAccess(body);
 
     if (!canAccess) {
-      throw new InsufficientPermissionsException('t.errors.userDoesNotHaveAccess');
+      throw new InsufficientPermissionsException(
+        't.errors.userDoesNotHaveAccess',
+      );
     }
 
     await this.revokeUserAccess(body);
@@ -167,6 +193,46 @@ export class AccessControlService extends BaseService {
     const result = await this.centerAccessRepository.grantCenterAccess(dto);
 
     return result;
+  }
+
+  async grantCenterAccessAndValidatePermission(
+    dto: CenterAccessDto,
+    actor: ActorUser,
+  ) {
+    // Get target user profile
+    const targetProfile = await this.userProfileService.findOne(
+      dto.userProfileId,
+    );
+    if (!targetProfile) {
+      throw new ResourceNotFoundException('t.errors.userProfileNotFound');
+    }
+
+    // Determine which permission to check based on target profile type
+    let requiredPermission;
+    if (targetProfile.profileType === ProfileType.STAFF) {
+      requiredPermission = PERMISSIONS.STAFF.GRANT_CENTER_ACCESS;
+    } else if (targetProfile.profileType === ProfileType.ADMIN) {
+      requiredPermission = PERMISSIONS.ADMIN.GRANT_CENTER_ACCESS;
+    } else {
+      throw new ValidationFailedException(
+        't.errors.invalidProfileTypeForCenterAccess',
+      );
+    }
+
+    // Check if actor has the required permission
+    const hasPermission = await this.rolesService.hasPermission(
+      actor.userProfileId,
+      requiredPermission.action,
+      requiredPermission.scope,
+      dto.centerId ?? actor.centerId,
+    );
+
+    if (!hasPermission) {
+      throw new ForbiddenException('t.errors.insufficientPermissions');
+    }
+
+    // Grant center access (this will also validate user access)
+    return await this.grantCenterAccess(dto, actor);
   }
 
   async revokeCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
@@ -203,7 +269,9 @@ export class AccessControlService extends BaseService {
     const canAccess =
       await this.accessControlHelperService.canBranchAccess(data);
     if (canAccess) {
-      throw new BusinessLogicException('t.errors.profileAlreadyAssignedToBranch');
+      throw new BusinessLogicException(
+        't.errors.profileAlreadyAssignedToBranch',
+      );
     }
 
     // Create new assignment

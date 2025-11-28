@@ -14,6 +14,7 @@ import { AuthModule } from '@/modules/auth/auth.module'; // VerificationService
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module'; // ActivityLogService
 import { UserProfileController } from './controllers/user-profile.controller';
 import { UserProfileImportController } from './controllers/user-profile-import.controller';
+import { UserProfileActionsController } from './controllers/user-profile-actions.controller';
 import { UserProfileService } from './services/user-profile.service';
 import { UserProfileImportService } from './services/user-profile-import.service';
 import { UserProfileRepository } from './repositories/user-profile.repository';
@@ -29,8 +30,16 @@ import { UserProfileRepository } from './repositories/user-profile.repository';
     forwardRef(() => AuthModule), // VerificationService
     ActivityLogModule, // ActivityLogService
   ],
-  controllers: [UserProfileController, UserProfileImportController],
-  providers: [UserProfileService, UserProfileImportService, UserProfileRepository],
+  controllers: [
+    UserProfileController,
+    UserProfileImportController,
+    UserProfileActionsController,
+  ],
+  providers: [
+    UserProfileService,
+    UserProfileImportService,
+    UserProfileRepository,
+  ],
   exports: [UserProfileService, UserProfileRepository],
 })
 export class UserProfileModule {}

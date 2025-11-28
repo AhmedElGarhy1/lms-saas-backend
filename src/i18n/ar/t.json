@@ -1037,6 +1037,7 @@
     "centerAccessNotFound": "صلاحية الوصول للمركز غير موجودة",
     "centerAccessAlreadyDeleted": "صلاحية الوصول للمركز محذوفة بالفعل",
     "centerAccessNotDeleted": "صلاحية الوصول للمركز غير محذوفة",
+    "centerNotDeleted": "المركز غير محذوف ولا يمكن استعادته",
     "currentPasswordIncorrect": "كلمة المرور الحالية غير صحيحة",
     "accessDeniedToUser": "تم رفض الوصول لهذا المستخدم",
     "profileAlreadyAssignedToBranch": "الملف الشخصي معين بالفعل للفرع",
@@ -1066,6 +1067,7 @@
     "userAlreadyHasProfileCannotImport": "المستخدم لديه ملف شخصي بالفعل. لا يمكن الاستيراد بدون صلاحية الوصول للمركز",
     "targetUserProfileNotFound": "الملف الشخصي للمستخدم المستهدف غير موجود",
     "targetUserMustHaveAdminOrStaffProfile": "يجب أن يكون لدى المستخدم المستهدف ملف شخصي مدير أو موظف لمنح صلاحية الوصول للمركز",
+    "invalidProfileTypeForCenterAccess": "يمكن فقط منح صلاحية الوصول للمركز للمستخدمين من نوع موظف أو مدير",
     "refreshTokenNotFound": "رمز التحديث غير موجود في جسم الطلب",
     "invalidOrExpiredToken": "رمز غير صحيح أو منتهي الصلاحية",
     "refreshTokenExpired": "انتهت صلاحية رمز التحديث",
@@ -1087,7 +1089,7 @@
     "twoFactorGenerationFailed": "فشل إعداد المصادقة الثنائية",
     "centerInactive": {
       "title": "المركز غير نشط",
-      "description": "المركز المحدد غير نشط حالياً. يرجى اختيار مركز آخر أو الاتصال بالمدير."
+      "description": "المركز نفسه غير نشط حالياً ولا يمكن الوصول إليه. يرجى اختيار مركز آخر أو الاتصال بالمدير لتفعيل هذا المركز."
     },
     "centerAccessDenied": {
       "title": "تم رفض الوصول للمركز",
@@ -1398,6 +1400,11 @@
     "bulkRestore": "تم إكمال الاستعادة المجمعة بنجاح",
     "bulkAssign": "تم إكمال التعيين المجمع بنجاح",
     "bulkRemove": "تم إكمال الإزالة المجمعة بنجاح",
+    "bulkGrantCenterAccess": "تم إكمال منح صلاحية الوصول للمركز بشكل مجمع بنجاح",
+    "bulkRevokeCenterAccess": "تم إكمال إلغاء صلاحية الوصول للمركز بشكل مجمع بنجاح",
+    "bulkToggleCenterAccessStatus": "تم إكمال تغيير حالة صلاحية الوصول للمركز بشكل مجمع بنجاح",
+    "bulkDeleteCenterAccess": "تم إكمال حذف صلاحية الوصول للمركز بشكل مجمع بنجاح",
+    "bulkRestoreCenterAccess": "تم إكمال استعادة صلاحية الوصول للمركز بشكل مجمع بنجاح",
     "activityLogTypesRetrieved": "تم استرجاع أنواع سجل النشاط بنجاح",
     "found": "تم العثور على {resource} بنجاح"
   },

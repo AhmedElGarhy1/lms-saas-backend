@@ -14,6 +14,7 @@ import { BranchesController } from './controllers/branches.controller';
 import { CentersActionsController } from './controllers/centers-actions.controller';
 import { BranchesActionsController } from './controllers/branches-actions.controller';
 import { CentersAccessController } from './controllers/centers-access.controller';
+import { CentersAccessActionsController } from './controllers/centers-access-actions.controller';
 import { BranchesAccessController } from './controllers/branches-access.controller';
 import { BranchListener } from './listeners/branch.listener';
 import { CenterActivityListener } from './listeners/center-activity.listener';
@@ -31,6 +32,7 @@ import { CenterActivityListener } from './listeners/center-activity.listener';
     BranchesActionsController,
     CentersActionsController,
     CentersAccessController,
+    CentersAccessActionsController,
     CentersController,
   ],
   providers: [

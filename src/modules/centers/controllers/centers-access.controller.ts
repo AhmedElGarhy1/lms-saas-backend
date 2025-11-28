@@ -74,17 +74,18 @@ export class CentersAccessController {
   }
 
   @Post()
-  @CreateApiResponses('Grant staff center access to a user for this center')
+  @CreateApiResponses('Grant center access to a user')
   @ApiBody({ type: CenterAccessDto })
   @Transactional()
-  async grantStaffCenterAccess(
+  async grantCenterAccess(
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.accessControlService.grantCenterAccess(
-      dto,
-      actor,
-    );
+    const result =
+      await this.accessControlService.grantCenterAccessAndValidatePermission(
+        dto,
+        actor,
+      );
 
     return ControllerResponse.success(result, 't.success.centerAccessGranted');
   }
