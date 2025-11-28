@@ -162,6 +162,12 @@ export class UserRepository extends BaseRepository<User> {
           );
         }
       }
+    } else {
+      if (isDeleted) {
+        queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');
+      } else {
+        queryBuilder.andWhere('userProfiles.deletedAt IS NULL');
+      }
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
