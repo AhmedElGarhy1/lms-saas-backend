@@ -86,14 +86,15 @@
 [x] builk operations admins
 [x] builk operations branches
 [x] builk operations user access
+
 [x] confirmation dialog before any bulk operation and before any action
 [x] deny softdelete/deactivate admin center access in backend
 [x] in pagiinate admins/staff display also inActive centers/branches/users everything can be inactive
 [x] remove the many paramenters from modules and use useActions direct it's more effcent
 [x] think about a way for frontend to display based on permission
-[ ] add @typescript-eslint/no-floating-promises for backend and
-[ ] delete staff donsn't go to soft deleted or soft deleted doesn't display correctly
+[x] add @typescript-eslint/no-floating-promises for backend and
 
+[ ] delete staff donsn't go to soft deleted or soft deleted doesn't display correctly
 [ ] view modals in all modules
 [ ] add users endpoint for modules like activity logs search for user
 [ ] user can update his center (throw settings)

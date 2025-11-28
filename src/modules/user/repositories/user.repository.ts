@@ -95,6 +95,7 @@ export class UserRepository extends BaseRepository<User> {
     // Create query builder with proper JOINs
     const queryBuilder = this.getRepository()
       .createQueryBuilder('user')
+      .withDeleted()
       .leftJoinAndSelect('user.userProfiles', 'userProfiles')
       .where('userProfiles.profileType = :profileType', {
         profileType: ProfileType.STAFF,
