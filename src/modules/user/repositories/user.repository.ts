@@ -123,6 +123,7 @@ export class UserRepository extends BaseRepository<User> {
            ${isDeleted ? 'AND ca."deletedAt" IS NOT NULL' : 'AND ca."deletedAt" IS NULL'})`,
         { centerId },
       );
+
       if (displayDetailes) {
         queryBuilder
           .leftJoinAndSelect(
@@ -145,6 +146,20 @@ export class UserRepository extends BaseRepository<User> {
             `,
             { centerId },
           );
+      }
+      if (roleId && roleAccess !== AccessibleUsersEnum.ALL) {
+        if (displayDetailes) {
+          queryBuilder.andWhere('role.id = :roleId', { roleId });
+        } else {
+          // queryBuilder
+          //   .leftJoin('userProfiles.profileRoles', 'profileRoles')
+          //   .andWhere('profileRoles.roleId = :roleId', { roleId });
+
+          queryBuilder.andWhere(
+            `EXISTS (SELECT 1 FROM profile_roles pr WHERE pr."userProfileId" = "userProfiles".id AND pr."roleId" = :roleId AND pr."deletedAt" IS NULL)`,
+            { roleId },
+          );
+        }
       }
     }
 
@@ -184,7 +199,9 @@ export class UserRepository extends BaseRepository<User> {
             { userProfileId: actor.userProfileId, centerId },
           );
       } else {
-        throw new InsufficientPermissionsException('t.errors.accessDeniedToUser');
+        throw new InsufficientPermissionsException(
+          't.errors.accessDeniedToUser',
+        );
       }
     }
 

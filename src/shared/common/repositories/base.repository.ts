@@ -383,7 +383,12 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     // Apply search
     if (query.search && columns.searchableColumns.length > 0) {
       const searchConditions = columns.searchableColumns.map((column) => {
-        return `${mainAlias}.${column} ILIKE :search`;
+        // If column already contains a dot, it's a full path (e.g., 'userProfiles.name')
+        // Otherwise, prefix it with the main alias (e.g., 'user.name')
+        const columnPath = column.includes('.')
+          ? column
+          : `${mainAlias}.${column}`;
+        return `${columnPath} ILIKE :search`;
       });
       queryBuilder.andWhere(`(${searchConditions.join(' OR ')})`, {
         search: `%${query.search}%`,

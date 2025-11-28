@@ -11,10 +11,9 @@ interface PaginationColumns {
 
 // User module pagination columns
 export const USER_PAGINATION_COLUMNS: PaginationColumns = {
-  searchableColumns: ['name', 'email', 'phone'],
+  searchableColumns: ['name', 'phone'],
   sortableColumns: [
     'name',
-    'email',
     'isActive',
     'createdAt',
     'updatedAt',

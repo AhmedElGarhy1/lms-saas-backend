@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import pLimit from 'p-limit';
 import { BaseService } from './base.service';
+import { TranslationService } from '@/shared/services/translation.service';
+import { TranslatableException } from '../exceptions/custom.exceptions';
 
 export interface BulkOperationOptions {
   concurrency?: number; // Default: 10, minimum: 1
@@ -67,11 +69,40 @@ export class BulkOperationService extends BaseService {
             await operation(id);
             return { id, success: true };
           } catch (error: unknown) {
-            const errorMessage =
-              error instanceof Error ? error.message : String(error);
+            // Extract error message - translate if it's a translatable exception
+            let errorMessage: string; // User-facing translated message
+            let logMessage: string; // English message for logging
+
+            if (error instanceof Error) {
+              // Check if it's a translatable exception with a translationKey
+              const translatableError =
+                error as unknown as TranslatableException;
+              if (
+                translatableError.translationKey &&
+                typeof translatableError.translationKey === 'string'
+              ) {
+                // Translate for user-facing display (respects user locale)
+                errorMessage = TranslationService.translate(
+                  translatableError.translationKey,
+                  translatableError.translationArgs,
+                );
+                // Use English for logging (for developers)
+                logMessage = TranslationService.translateForLogging(
+                  translatableError.translationKey,
+                  translatableError.translationArgs,
+                );
+              } else {
+                // Use the error message as-is for non-translatable errors
+                errorMessage = error.message;
+                logMessage = error.message;
+              }
+            } else {
+              errorMessage = String(error);
+              logMessage = String(error);
+            }
 
             this.logger.warn(
-              `Bulk operation failed for ID ${id}: ${errorMessage}`,
+              `Bulk operation failed for ID ${id}: ${logMessage}`,
             );
 
             return {
@@ -114,10 +145,41 @@ export class BulkOperationService extends BaseService {
         // Handle unexpected promise rejection (shouldn't happen, but defensive coding)
         result.failed++;
         const id = uniqueIds[index];
-        const errorMessage =
-          settledResult.reason instanceof Error
-            ? settledResult.reason.message
-            : String(settledResult.reason);
+
+        // Extract error message - translate if it's a translatable exception
+        let errorMessage: string; // User-facing translated message
+        let logMessage: string; // English message for logging
+
+        if (settledResult.reason instanceof Error) {
+          // Check if it's a translatable exception with a translationKey
+          const translatableError =
+            settledResult.reason as unknown as TranslatableException;
+          if (
+            translatableError.translationKey &&
+            typeof translatableError.translationKey === 'string'
+          ) {
+            // Translate for user-facing display (respects user locale)
+            errorMessage = TranslationService.translate(
+              translatableError.translationKey,
+              translatableError.translationArgs,
+            );
+            // Use English for logging (for developers)
+            logMessage = TranslationService.translateForLogging(
+              translatableError.translationKey,
+              translatableError.translationArgs,
+            );
+          } else {
+            // Use the error message as-is for non-translatable errors
+            errorMessage = settledResult.reason.message;
+            logMessage = settledResult.reason.message;
+          }
+        } else {
+          errorMessage = String(settledResult.reason);
+          logMessage = String(settledResult.reason);
+        }
+
+        this.logger.warn(`Bulk operation failed for ID ${id}: ${logMessage}`);
+
         result.errors?.push({
           id,
           error: errorMessage,
