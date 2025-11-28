@@ -9,7 +9,7 @@ export class BulkRestoreUserProfilesDto {
   })
   @IsArray()
   @ArrayMinSize(1, { message: 'At least one user profile ID is required' })
-  @ArrayMaxSize(1000, {
+  @ArrayMaxSize(100, {
     message: 'Maximum 1000 user profile IDs allowed per request',
   })
   @IsUUID(4, {

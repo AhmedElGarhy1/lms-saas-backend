@@ -1055,6 +1055,8 @@
     "centerAccessNotFound": "Center access not found",
     "centerAccessAlreadyDeleted": "Center access already deleted",
     "centerAccessNotDeleted": "Center access not deleted",
+    "cannotDeleteAdminCenterAccess": "Cannot delete center access for admin users",
+    "cannotDeactivateAdminCenterAccess": "Cannot deactivate center access for admin users",
     "centerNotDeleted": "Center is not deleted and cannot be restored",
     "currentPasswordIncorrect": "Current password is incorrect",
     "accessDeniedToUser": "Access denied to this user",
@@ -1395,6 +1397,8 @@
     "bulkToggleCenterAccessStatus": "Bulk toggle center access status completed successfully",
     "bulkDeleteCenterAccess": "Bulk delete center access completed successfully",
     "bulkRestoreCenterAccess": "Bulk restore center access completed successfully",
+    "bulkGrantBranchAccess": "Bulk grant branch access completed successfully",
+    "bulkRevokeBranchAccess": "Bulk revoke branch access completed successfully",
     "activityLogTypesRetrieved": "Activity log types retrieved successfully",
     "emailVerified": "Email verified successfully",
     "emailVerificationRequestSent": "Email verification request sent"
@@ -1576,37 +1580,64 @@
   },
   "validation": {
     "required": {
-      "message": "{field} is required",
-      "suggestion": "Please provide a value for {field}"
+      "message": "{field} is required"
     },
     "invalid": {
       "message": "{field} is invalid",
       "format": "Invalid {field} format"
     },
     "minLength": {
-      "message": "{field} must be at least {min} characters",
-      "suggestion": "Please ensure {field} meets the minimum length requirement"
+      "message": "{field} must be at least {min} characters"
     },
     "maxLength": {
-      "message": "{field} must not exceed {max} characters",
-      "suggestion": "Please shorten {field} to meet the maximum length requirement"
+      "message": "{field} must not exceed {max} characters"
     },
     "email": {
-      "invalid": "Invalid email address",
-      "suggestion": "Please enter a valid email address for {field}"
+      "invalid": "Invalid email address"
     },
     "phone": {
-      "invalid": "Invalid phone number format",
-      "suggestion": "Please enter a valid phone number for {field}"
+      "invalid": "Invalid phone number format"
     },
     "url": "Invalid URL format",
     "password": {
       "invalid": "Password does not meet requirements",
-      "mismatch": "Passwords do not match",
-      "suggestion": "Please ensure {field} meets the password strength requirements"
+      "mismatch": "Passwords do not match"
     },
-    "default": {
-      "suggestion": "Please check {field} and try again"
+    "arrayMinSize": {
+      "message": "At least {min} {item} is required"
+    },
+    "arrayMaxSize": {
+      "message": "Maximum {max} {item} allowed per request"
+    },
+    "isUuid": {
+      "message": "Each {item} must be a valid UUID"
+    },
+    "isString": {
+      "message": "{field} must be a string"
+    },
+    "isBoolean": {
+      "message": "{field} must be a boolean value"
+    },
+    "isEnum": {
+      "message": "{field} must be one of the allowed values"
+    },
+    "isDateString": {
+      "message": "{field} must be a valid date string"
+    },
+    "isArray": {
+      "message": "{field} must be an array"
+    },
+    "isNumber": {
+      "message": "{field} must be a number"
+    },
+    "isInt": {
+      "message": "{field} must be an integer"
+    },
+    "min": {
+      "message": "{field} must be at least {min}"
+    },
+    "max": {
+      "message": "{field} must not exceed {max}"
     }
   },
   "toast": {
@@ -1711,6 +1742,18 @@
       "create": {
         "name": "Create Staff"
       },
+      "update": {
+        "name": "Update Staff"
+      },
+      "delete": {
+        "name": "Delete Staff"
+      },
+      "restore": {
+        "name": "Restore Staff"
+      },
+      "activate": {
+        "name": "Activate/Deactivate Staff"
+      },
       "grantUserAccess": {
         "name": "Grant User Access"
       },
@@ -1736,6 +1779,18 @@
       },
       "create": {
         "name": "Create Admin"
+      },
+      "update": {
+        "name": "Update Admin"
+      },
+      "delete": {
+        "name": "Delete Admin"
+      },
+      "restore": {
+        "name": "Restore Admin"
+      },
+      "activate": {
+        "name": "Activate/Deactivate Admin"
       },
       "grantAdminAccess": {
         "name": "Grant Admin Access"

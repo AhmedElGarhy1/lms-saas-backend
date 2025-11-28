@@ -78,19 +78,20 @@
 [x] notification translations must be in one file notification.json for easy translation
 [x] clean up notficiation service from testing (doesn't work) and from usless services and monitoring or metrics
 [x] system english names like permissions, ultimate roles, ect...
-
 [x] builk operations basics
 [x] builk operations roles
 [x] builk operations centers
 [x] builk operations center access
 [x] builk operations staff
 [x] builk operations admins
-[ ] builk operations branches
-
-[ ] deny softdelete/deactivate admin center access in backend
-[ ] in pagiinate admins/staff display also inActive centers
+[x] builk operations branches
+[ ] builk operations user access
+[ ] confirmation dialog before any bulk operation and before any action
+[x] deny softdelete/deactivate admin center access in backend
+[x] in pagiinate admins/staff display also inActive centers/branches/users everything can be inactive
 [ ] remove the many paramenters from modules and use useActions direct it's more effcent
 [ ] think about a way for frontend to display based on permission
+[ ] add @typescript-eslint/no-floating-promises for backend and frontend
 
 [ ] view modals in all modules
 [ ] add users endpoint for modules like activity logs search for user

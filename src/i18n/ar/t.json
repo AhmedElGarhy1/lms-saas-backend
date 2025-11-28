@@ -1037,6 +1037,8 @@
     "centerAccessNotFound": "صلاحية الوصول للمركز غير موجودة",
     "centerAccessAlreadyDeleted": "صلاحية الوصول للمركز محذوفة بالفعل",
     "centerAccessNotDeleted": "صلاحية الوصول للمركز غير محذوفة",
+    "cannotDeleteAdminCenterAccess": "لا يمكن حذف وصول المركز لمستخدمي الإدارة",
+    "cannotDeactivateAdminCenterAccess": "لا يمكن تعطيل وصول المركز لمستخدمي الإدارة",
     "centerNotDeleted": "المركز غير محذوف ولا يمكن استعادته",
     "currentPasswordIncorrect": "كلمة المرور الحالية غير صحيحة",
     "accessDeniedToUser": "تم رفض الوصول لهذا المستخدم",
@@ -1405,6 +1407,8 @@
     "bulkToggleCenterAccessStatus": "تم إكمال تغيير حالة صلاحية الوصول للمركز بشكل مجمع بنجاح",
     "bulkDeleteCenterAccess": "تم إكمال حذف صلاحية الوصول للمركز بشكل مجمع بنجاح",
     "bulkRestoreCenterAccess": "تم إكمال استعادة صلاحية الوصول للمركز بشكل مجمع بنجاح",
+    "bulkGrantBranchAccess": "تم إكمال منح صلاحية الوصول للفرع بشكل مجمع بنجاح",
+    "bulkRevokeBranchAccess": "تم إكمال إلغاء صلاحية الوصول للفرع بشكل مجمع بنجاح",
     "activityLogTypesRetrieved": "تم استرجاع أنواع سجل النشاط بنجاح",
     "found": "تم العثور على {resource} بنجاح"
   },
@@ -1585,37 +1589,64 @@
   },
   "validation": {
     "required": {
-      "message": "{field} مطلوب",
-      "suggestion": "يرجى تقديم قيمة لـ {field}"
+      "message": "{field} مطلوب"
     },
     "invalid": {
       "message": "{field} غير صحيح",
       "format": "تنسيق {field} غير صحيح"
     },
     "minLength": {
-      "message": "{field} يجب أن يكون على الأقل {min} حرف",
-      "suggestion": "يرجى التأكد من أن {field} يلبي الحد الأدنى لمتطلبات الطول"
+      "message": "{field} يجب أن يكون على الأقل {min} حرف"
     },
     "maxLength": {
-      "message": "{field} يجب ألا يتجاوز {max} حرف",
-      "suggestion": "يرجى تقصير {field} للوفاء بمتطلبات الحد الأقصى للطول"
+      "message": "{field} يجب ألا يتجاوز {max} حرف"
     },
     "email": {
-      "invalid": "عنوان بريد إلكتروني غير صحيح",
-      "suggestion": "يرجى إدخال عنوان بريد إلكتروني صحيح لـ {field}"
+      "invalid": "عنوان بريد إلكتروني غير صحيح"
     },
     "phone": {
-      "invalid": "تنسيق رقم الهاتف غير صحيح",
-      "suggestion": "يرجى إدخال رقم هاتف صحيح لـ {field}"
+      "invalid": "تنسيق رقم الهاتف غير صحيح"
     },
     "url": "تنسيق الرابط غير صحيح",
     "password": {
       "invalid": "كلمة المرور لا تلبي المتطلبات",
-      "mismatch": "كلمات المرور غير متطابقة",
-      "suggestion": "يرجى التأكد من أن {field} يلبي متطلبات قوة كلمة المرور"
+      "mismatch": "كلمات المرور غير متطابقة"
     },
-    "default": {
-      "suggestion": "يرجى التحقق من {field} والمحاولة مرة أخرى"
+    "arrayMinSize": {
+      "message": "يجب توفير {min} {item} على الأقل"
+    },
+    "arrayMaxSize": {
+      "message": "الحد الأقصى {max} {item} مسموح به في كل طلب"
+    },
+    "isUuid": {
+      "message": "يجب أن يكون كل {item} معرف UUID صالح"
+    },
+    "isString": {
+      "message": "{field} يجب أن يكون نص"
+    },
+    "isBoolean": {
+      "message": "{field} يجب أن يكون قيمة منطقية (صحيح/خطأ)"
+    },
+    "isEnum": {
+      "message": "{field} يجب أن يكون أحد القيم المسموحة"
+    },
+    "isDateString": {
+      "message": "{field} يجب أن يكون تاريخ صالح"
+    },
+    "isArray": {
+      "message": "{field} يجب أن يكون مصفوفة"
+    },
+    "isNumber": {
+      "message": "{field} يجب أن يكون رقماً"
+    },
+    "isInt": {
+      "message": "{field} يجب أن يكون عدداً صحيحاً"
+    },
+    "min": {
+      "message": "{field} يجب أن يكون على الأقل {min}"
+    },
+    "max": {
+      "message": "{field} يجب ألا يتجاوز {max}"
     }
   },
   "toast": {
@@ -1720,6 +1751,18 @@
       "create": {
         "name": "إنشاء موظف"
       },
+      "update": {
+        "name": "تحديث موظف"
+      },
+      "delete": {
+        "name": "حذف موظف"
+      },
+      "restore": {
+        "name": "استعادة موظف"
+      },
+      "activate": {
+        "name": "تفعيل/إلغاء تفعيل موظف"
+      },
       "grantUserAccess": {
         "name": "منح وصول المستخدم"
       },
@@ -1745,6 +1788,18 @@
       },
       "create": {
         "name": "إنشاء مدير"
+      },
+      "update": {
+        "name": "تحديث مدير"
+      },
+      "delete": {
+        "name": "حذف مدير"
+      },
+      "restore": {
+        "name": "استعادة مدير"
+      },
+      "activate": {
+        "name": "تفعيل/إلغاء تفعيل مدير"
       },
       "grantAdminAccess": {
         "name": "منح وصول المدير"

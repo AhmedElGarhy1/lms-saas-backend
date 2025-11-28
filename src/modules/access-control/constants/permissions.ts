@@ -21,6 +21,30 @@ export const PERMISSIONS = {
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
+    UPDATE: {
+      action: 'staff:update',
+      name: 't.permissions.staff.update.name',
+      group: 'staff',
+      scope: PermissionScope.CENTER,
+    },
+    DELETE: {
+      action: 'staff:delete',
+      name: 't.permissions.staff.delete.name',
+      group: 'staff',
+      scope: PermissionScope.CENTER,
+    },
+    RESTORE: {
+      action: 'staff:restore',
+      name: 't.permissions.staff.restore.name',
+      group: 'staff',
+      scope: PermissionScope.CENTER,
+    },
+    ACTIVATE: {
+      action: 'staff:activate',
+      name: 't.permissions.staff.activate.name',
+      group: 'staff',
+      scope: PermissionScope.CENTER,
+    },
     GRANT_USER_ACCESS: {
       action: 'staff:grant-user-access',
       name: 't.permissions.staff.grantUserAccess.name',
@@ -70,6 +94,30 @@ export const PERMISSIONS = {
     CREATE: {
       action: 'admin:create',
       name: 't.permissions.admin.create.name',
+      group: 'admin',
+      scope: PermissionScope.ADMIN,
+    },
+    UPDATE: {
+      action: 'admin:update',
+      name: 't.permissions.admin.update.name',
+      group: 'admin',
+      scope: PermissionScope.ADMIN,
+    },
+    DELETE: {
+      action: 'admin:delete',
+      name: 't.permissions.admin.delete.name',
+      group: 'admin',
+      scope: PermissionScope.ADMIN,
+    },
+    RESTORE: {
+      action: 'admin:restore',
+      name: 't.permissions.admin.restore.name',
+      group: 'admin',
+      scope: PermissionScope.ADMIN,
+    },
+    ACTIVATE: {
+      action: 'admin:activate',
+      name: 't.permissions.admin.activate.name',
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },

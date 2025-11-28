@@ -54,7 +54,6 @@ export class CentersService extends BaseService {
     centerId: string,
     actor?: ActorUser,
     isDeleted?: boolean,
-    includeInactiveCenter?: boolean,
   ): Promise<Center> {
     const center = isDeleted
       ? await this.centersRepository.findOneSoftDeletedById(centerId)
@@ -65,16 +64,10 @@ export class CentersService extends BaseService {
 
     // If actor is provided, validate center access
     if (actor) {
-      await this.accessControlHelperService.validateCenterAccess(
-        {
-          userProfileId: actor.userProfileId,
-          centerId,
-        },
-        {
-          includeDeletedCenter: isDeleted,
-          includeInactiveCenter: includeInactiveCenter ?? true,
-        },
-      );
+      await this.accessControlHelperService.validateCenterAccess({
+        userProfileId: actor.userProfileId,
+        centerId,
+      });
     }
 
     return center;
@@ -108,7 +101,7 @@ export class CentersService extends BaseService {
     dto: UpdateCenterRequestDto,
     actor: ActorUser,
   ): Promise<Center> {
-    const center = await this.findCenterById(centerId, actor, false);
+    const center = await this.findCenterById(centerId, actor);
     if (!center) {
       throw new ResourceNotFoundException('t.errors.resourceNotFound');
     }
@@ -140,7 +133,7 @@ export class CentersService extends BaseService {
   }
 
   async deleteCenter(centerId: string, actor: ActorUser): Promise<void> {
-    await this.findCenterById(centerId, actor, false);
+    await this.findCenterById(centerId, actor);
     // Permission check should be in controller
 
     await this.centersRepository.softRemove(centerId);
@@ -202,7 +195,7 @@ export class CentersService extends BaseService {
     isActive: boolean,
     actor: ActorUser,
   ): Promise<void> {
-    await this.findCenterById(centerId, actor, false);
+    await this.findCenterById(centerId, actor);
 
     await this.centersRepository.update(centerId, { isActive });
 

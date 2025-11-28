@@ -520,11 +520,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     dto: T,
     isActiveField: string,
   ): void {
-    if (!dto.applyIsActive) {
-      queryBuilder.andWhere(`${isActiveField} = :isActive`, {
-        isActive: true,
-      });
-    } else if (dto.isActive !== undefined) {
+    if (dto.isActive !== undefined && dto.isActive !== null) {
       queryBuilder.andWhere(`${isActiveField} = :isActive`, {
         isActive: dto.isActive,
       });

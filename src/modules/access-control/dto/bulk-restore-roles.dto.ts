@@ -9,7 +9,7 @@ export class BulkRestoreRolesDto {
   })
   @IsArray()
   @ArrayMinSize(1, { message: 'At least one role ID is required' })
-  @ArrayMaxSize(1000, { message: 'Maximum 1000 role IDs allowed per request' })
+  @ArrayMaxSize(100, { message: 'Maximum 100 role IDs allowed per request' })
   @IsUUID(4, { each: true, message: 'Each role ID must be a valid UUID' })
   roleIds: string[];
 }

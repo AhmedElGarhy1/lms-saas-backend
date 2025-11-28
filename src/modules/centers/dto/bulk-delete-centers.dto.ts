@@ -9,8 +9,8 @@ export class BulkDeleteCentersDto {
   })
   @IsArray()
   @ArrayMinSize(1, { message: 'At least one center ID is required' })
-  @ArrayMaxSize(1000, {
-    message: 'Maximum 1000 center IDs allowed per request',
+  @ArrayMaxSize(100, {
+    message: 'Maximum 100 center IDs allowed per request',
   })
   @IsUUID(4, { each: true, message: 'Each center ID must be a valid UUID' })
   centerIds: string[];

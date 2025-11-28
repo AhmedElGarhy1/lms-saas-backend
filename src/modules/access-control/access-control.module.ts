@@ -13,7 +13,6 @@ import { AccessControlService } from './services/access-control.service';
 import { AccessControlHelperService } from './services/access-control-helper.service';
 import { PermissionService } from './services/permission.service';
 import { RolesService } from './services/roles.service';
-import { ProfileTypePermissionService } from './services/profile-type-permission.service';
 import { PermissionRepository } from './repositories/permission.repository';
 import { UserAccessRepository } from './repositories/user-access.repository';
 import { RolesRepository } from './repositories/roles.repository';
@@ -56,7 +55,6 @@ import { UserProfileModule } from '../user-profile/user-profile.module';
     AccessControlHelperService,
     PermissionService,
     RolesService,
-    ProfileTypePermissionService,
     PermissionRepository,
     RolesRepository,
     ProfileRoleRepository,
@@ -71,11 +69,6 @@ import { UserProfileModule } from '../user-profile/user-profile.module';
     BranchAccessListener,
     RoleListener,
   ],
-  exports: [
-    AccessControlService,
-    AccessControlHelperService,
-    RolesService,
-    ProfileTypePermissionService,
-  ],
+  exports: [AccessControlService, AccessControlHelperService, RolesService],
 })
 export class AccessControlModule {}

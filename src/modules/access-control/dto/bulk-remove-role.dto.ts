@@ -26,8 +26,8 @@ export class BulkRemoveRoleDto {
   })
   @IsArray()
   @ArrayMinSize(1, { message: 'At least one user profile ID is required' })
-  @ArrayMaxSize(1000, {
-    message: 'Maximum 1000 user profile IDs allowed per request',
+  @ArrayMaxSize(100, {
+    message: 'Maximum 100 user profile IDs allowed per request',
   })
   @IsUUID(4, { each: true, message: 'Each user profile ID must be a valid UUID' })
   userProfileIds: string[];

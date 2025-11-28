@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  Inject,
-  forwardRef,
-} from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import {
   ResourceNotFoundException,
   ResourceAlreadyExistsException,
@@ -103,14 +98,18 @@ export class UserProfileImportService extends BaseService {
       // Case 1: centerId is provided
       // If user has BOTH profile AND center access → throw error (nothing to do)
       if (existingProfile && hasCenterAccess) {
-        throw new ResourceAlreadyExistsException('t.errors.userAlreadyHasAccess');
+        throw new ResourceAlreadyExistsException(
+          't.errors.userAlreadyHasAccess',
+        );
       }
       // Otherwise OK: will create profile and/or add center access
     } else {
       // Case 2: centerId is NOT provided
       if (existingProfile) {
         // User already has profile → nothing to do (can't add center access without centerId)
-        throw new ResourceAlreadyExistsException('t.errors.userAlreadyHasProfileCannotImport');
+        throw new ResourceAlreadyExistsException(
+          't.errors.userAlreadyHasProfileCannotImport',
+        );
       }
       // Otherwise OK: will create profile only (no center access)
     }

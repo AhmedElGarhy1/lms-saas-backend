@@ -106,19 +106,6 @@ export class BasePaginationDto {
   isDeleted?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Apply isActive filter (false means isActive isn"t applied)',
-    type: Boolean,
-  })
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return value as boolean;
-  })
-  applyIsActive?: boolean;
-
-  @ApiPropertyOptional({
     description: 'Filter by center active status',
     type: Boolean,
   })

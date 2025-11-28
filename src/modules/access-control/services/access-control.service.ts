@@ -304,6 +304,16 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
 
+    // Check if target user is an admin - prevent deletion of admin center access
+    const isTargetAdmin = await this.accessControlHelperService.isAdmin(
+      body.userProfileId,
+    );
+    if (isTargetAdmin) {
+      throw new BusinessLogicException(
+        't.errors.cannotDeleteAdminCenterAccess',
+      );
+    }
+
     // Validate access (can actor manage this profile?)
     await this.accessControlHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,
@@ -355,6 +365,18 @@ export class AccessControlService extends BaseService {
     actor: ActorUser,
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
+
+    // Check if target user is an admin - prevent deactivation of admin center access
+    if (!isActive) {
+      const isTargetAdmin = await this.accessControlHelperService.isAdmin(
+        body.userProfileId,
+      );
+      if (isTargetAdmin) {
+        throw new BusinessLogicException(
+          't.errors.cannotDeactivateAdminCenterAccess',
+        );
+      }
+    }
 
     // Validate access (can actor manage this profile?)
     await this.accessControlHelperService.validateUserAccess({

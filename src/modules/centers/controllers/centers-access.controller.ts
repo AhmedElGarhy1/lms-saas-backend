@@ -124,13 +124,10 @@ export class CentersAccessController {
         'You are not authorized to delete this center access',
       );
     }
-    await this.accessControlHelperService.validateCenterAccess(
-      {
-        userProfileId,
-        centerId: actor.centerId,
-      },
-      { includeInactive: true },
-    );
+    await this.accessControlHelperService.validateCenterAccess({
+      userProfileId,
+      centerId: actor.centerId,
+    });
 
     const result = await this.accessControlService.softRemoveCenterAccess(
       { userProfileId, centerId: actor.centerId },
@@ -152,13 +149,10 @@ export class CentersAccessController {
         'You are not authorized to restore this center access',
       );
     }
-    await this.accessControlHelperService.validateCenterAccess(
-      {
-        userProfileId: userProfileId,
-        centerId: actor.centerId,
-      },
-      { includeInactive: true, includeDeleted: true },
-    );
+    await this.accessControlHelperService.validateCenterAccess({
+      userProfileId: userProfileId,
+      centerId: actor.centerId,
+    });
     const result = await this.accessControlService.restoreCenterAccess(
       { userProfileId: userProfileId, centerId: actor.centerId },
       actor,

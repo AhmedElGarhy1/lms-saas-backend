@@ -6,27 +6,27 @@ import {
   ArrayMaxSize,
 } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { Center } from '@/modules/centers/entities/center.entity';
+import { Branch } from '@/modules/centers/entities/branch.entity';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 
-export class BulkDeleteCenterAccessDto {
+export class BulkRevokeBranchAccessDto {
   @ApiProperty({
-    description: 'Center ID',
-    example: 'uuid-center-id',
+    description: 'Branch ID to revoke access from',
+    example: 'uuid-branch-id',
   })
   @IsUUID()
-  @Exists(Center)
-  centerId: string;
+  @Exists(Branch)
+  branchId: string;
 
   @ApiProperty({
-    description: 'Array of user profile IDs to delete center access for',
+    description: 'Array of user profile IDs to revoke branch access from',
     type: [String],
     example: ['uuid1', 'uuid2', 'uuid3'],
   })
   @IsArray()
   @ArrayMinSize(1, { message: 'At least one user profile ID is required' })
   @ArrayMaxSize(100, {
-    message: 'Maximum 1000 user profile IDs allowed per request',
+    message: 'Maximum 100 user profile IDs allowed per request',
   })
   @IsUUID(4, {
     each: true,

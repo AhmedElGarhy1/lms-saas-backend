@@ -2,16 +2,29 @@ import { Controller, Post, Delete, Body } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+} from '@nestjs/swagger';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { BranchAccessDto } from '@/modules/access-control/dto/branch-access.dto';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
+import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
+import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
+import { BulkGrantBranchAccessDto } from '@/modules/access-control/dto/bulk-grant-branch-access.dto';
+import { BulkRevokeBranchAccessDto } from '@/modules/access-control/dto/bulk-revoke-branch-access.dto';
+import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 
 @ApiTags('Centers - Branches')
 @Controller('centers/branches/access')
 export class BranchesAccessController {
-  constructor(private readonly accessControlService: AccessControlService) {}
+  constructor(
+    private readonly accessControlService: AccessControlService,
+    private readonly bulkOperationService: BulkOperationService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Assign user to branch' })
@@ -59,6 +72,76 @@ export class BranchesAccessController {
     await this.accessControlService.removeUserFromBranch(
       branchAccessDto,
       actor,
+    );
+  }
+
+  @Post('bulk/grant')
+  @ApiOperation({ summary: 'Bulk grant branch access to multiple users' })
+  @ApiBody({ type: BulkGrantBranchAccessDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Bulk grant completed',
+    type: BulkOperationResultDto,
+  })
+  @Transactional()
+  async bulkGrantBranchAccess(
+    @Body() dto: BulkGrantBranchAccessDto,
+    @GetUser() actor: ActorUser,
+  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+    const result = await this.bulkOperationService.executeBulk(
+      dto.userProfileIds,
+      async (userProfileId: string) => {
+        const branchAccessDto: BranchAccessDto = {
+          userProfileId,
+          branchId: dto.branchId,
+          centerId: actor.centerId!,
+        };
+        await this.accessControlService.assignProfileToBranch(
+          branchAccessDto,
+          actor,
+        );
+        return { id: userProfileId };
+      },
+    );
+
+    return ControllerResponse.success(
+      result,
+      't.success.bulkGrantBranchAccess',
+    );
+  }
+
+  @Post('bulk/revoke')
+  @ApiOperation({ summary: 'Bulk revoke branch access from multiple users' })
+  @ApiBody({ type: BulkRevokeBranchAccessDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Bulk revoke completed',
+    type: BulkOperationResultDto,
+  })
+  @Transactional()
+  async bulkRevokeBranchAccess(
+    @Body() dto: BulkRevokeBranchAccessDto,
+    @GetUser() actor: ActorUser,
+  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+    const result = await this.bulkOperationService.executeBulk(
+      dto.userProfileIds,
+      async (userProfileId: string) => {
+        const branchAccessDto: BranchAccessDto = {
+          userProfileId,
+          branchId: dto.branchId,
+          centerId: actor.centerId!,
+        };
+        await this.accessControlService.removeUserFromBranch(
+          branchAccessDto,
+          actor,
+        );
+        return { id: userProfileId };
+      },
+    );
+
+    return ControllerResponse.success(
+      result,
+      't.success.bulkRevokeBranchAccess',
     );
   }
 }

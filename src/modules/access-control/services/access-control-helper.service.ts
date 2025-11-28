@@ -240,7 +240,7 @@ export class AccessControlHelperService extends BaseService {
 
   async canCenterAccess(
     data: CenterAccessDto,
-    isDeleted?: boolean,
+    isDeleted: boolean = true,
   ): Promise<boolean> {
     const { userProfileId } = data;
     const isSuperAdmin = await this.isSuperAdmin(userProfileId);
@@ -260,9 +260,9 @@ export class AccessControlHelperService extends BaseService {
       includeDeletedCenter?: boolean;
       includeInactiveCenter?: boolean;
     } = {
-      includeDeleted: false,
+      includeDeleted: true,
       includeInactive: true,
-      includeDeletedCenter: false,
+      includeDeletedCenter: true,
       includeInactiveCenter: true,
     },
   ): Promise<void> {

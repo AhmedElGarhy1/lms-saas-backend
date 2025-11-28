@@ -1066,6 +1066,8 @@ export type I18nTranslations = {
             "centerAccessNotFound": string;
             "centerAccessAlreadyDeleted": string;
             "centerAccessNotDeleted": string;
+            "cannotDeleteAdminCenterAccess": string;
+            "cannotDeactivateAdminCenterAccess": string;
             "centerNotDeleted": string;
             "currentPasswordIncorrect": string;
             "accessDeniedToUser": string;
@@ -1434,6 +1436,8 @@ export type I18nTranslations = {
             "bulkToggleCenterAccessStatus": string;
             "bulkDeleteCenterAccess": string;
             "bulkRestoreCenterAccess": string;
+            "bulkGrantBranchAccess": string;
+            "bulkRevokeBranchAccess": string;
             "activityLogTypesRetrieved": string;
             "found": string;
         };
@@ -1615,7 +1619,6 @@ export type I18nTranslations = {
         "validation": {
             "required": {
                 "message": string;
-                "suggestion": string;
             };
             "invalid": {
                 "message": string;
@@ -1623,28 +1626,56 @@ export type I18nTranslations = {
             };
             "minLength": {
                 "message": string;
-                "suggestion": string;
             };
             "maxLength": {
                 "message": string;
-                "suggestion": string;
             };
             "email": {
                 "invalid": string;
-                "suggestion": string;
             };
             "phone": {
                 "invalid": string;
-                "suggestion": string;
             };
             "url": string;
             "password": {
                 "invalid": string;
                 "mismatch": string;
-                "suggestion": string;
             };
-            "default": {
-                "suggestion": string;
+            "arrayMinSize": {
+                "message": string;
+            };
+            "arrayMaxSize": {
+                "message": string;
+            };
+            "isUuid": {
+                "message": string;
+            };
+            "isString": {
+                "message": string;
+            };
+            "isBoolean": {
+                "message": string;
+            };
+            "isEnum": {
+                "message": string;
+            };
+            "isDateString": {
+                "message": string;
+            };
+            "isArray": {
+                "message": string;
+            };
+            "isNumber": {
+                "message": string;
+            };
+            "isInt": {
+                "message": string;
+            };
+            "min": {
+                "message": string;
+            };
+            "max": {
+                "message": string;
             };
         };
         "toast": {
@@ -1749,6 +1780,18 @@ export type I18nTranslations = {
                 "create": {
                     "name": string;
                 };
+                "update": {
+                    "name": string;
+                };
+                "delete": {
+                    "name": string;
+                };
+                "restore": {
+                    "name": string;
+                };
+                "activate": {
+                    "name": string;
+                };
                 "grantUserAccess": {
                     "name": string;
                 };
@@ -1773,6 +1816,18 @@ export type I18nTranslations = {
                     "name": string;
                 };
                 "create": {
+                    "name": string;
+                };
+                "update": {
+                    "name": string;
+                };
+                "delete": {
+                    "name": string;
+                };
+                "restore": {
+                    "name": string;
+                };
+                "activate": {
                     "name": string;
                 };
                 "grantAdminAccess": {
