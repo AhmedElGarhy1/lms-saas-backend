@@ -1765,6 +1765,15 @@
       "grantCenterAccess": {
         "name": "Grant Center Access"
       },
+      "deleteCenterAccess": {
+        "name": "Delete Center Access"
+      },
+      "restoreCenterAccess": {
+        "name": "Restore Center Access"
+      },
+      "activateCenterAccess": {
+        "name": "Activate/Deactivate Center Access"
+      },
       "readAll": {
         "name": "Read All Staff without Staff Access"
       },

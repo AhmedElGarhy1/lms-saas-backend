@@ -82,6 +82,7 @@ export class UserRepository extends BaseRepository<User> {
       branchAccess,
       isDeleted,
     } = params;
+    delete params.isDeleted;
 
     const includeCenter =
       centerId &&
@@ -117,13 +118,14 @@ export class UserRepository extends BaseRepository<User> {
     }
 
     if (includeCenter) {
-      delete params.isDeleted;
-      queryBuilder.andWhere(
-        `EXISTS 
+      queryBuilder
+        .andWhere(
+          `EXISTS
           (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId
            ${isDeleted ? 'AND ca."deletedAt" IS NOT NULL' : 'AND ca."deletedAt" IS NULL'})`,
-        { centerId },
-      );
+          { centerId },
+        )
+        .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
 
       if (displayDetailes) {
         queryBuilder
@@ -165,8 +167,6 @@ export class UserRepository extends BaseRepository<User> {
     } else {
       if (isDeleted) {
         queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');
-      } else {
-        queryBuilder.andWhere('userProfiles.deletedAt IS NULL');
       }
     }
 

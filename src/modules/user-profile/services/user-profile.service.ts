@@ -312,15 +312,6 @@ export class UserProfileService extends BaseService {
   async isStaff(userProfileId: string) {
     return !!(await this.userProfileRepository.isStaff(userProfileId));
   }
-  async doesProfilesMatch(userProfileId: string, targetProfileId: string) {
-    const userProfile = await this.findOne(userProfileId);
-    const targetProfile = await this.findOne(targetProfileId);
-    return {
-      match: userProfile?.profileType === targetProfile?.profileType,
-      profileType: userProfile?.profileType,
-      targetProfileType: targetProfile?.profileType,
-    };
-  }
 
   /**
    * Validates that the actor has permission to perform an action on a profile type

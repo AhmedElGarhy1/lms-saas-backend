@@ -29,6 +29,7 @@ import { CreateUserProfileDto } from '../dto/create-user-profile.dto';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 import { ProfileResponseDto } from '../dto/profile-response.dto';
+import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 
 @ApiTags('User Profiles')
 @Controller('user-profiles')
@@ -99,6 +100,7 @@ export class UserProfileController {
   @Patch(':id/status')
   @UpdateApiResponses('Update user profile status (activate/deactivate)')
   @ApiBody({ type: UpdateUserProfileStatusDto })
+  @Permissions(PERMISSIONS.STAFF.ACTIVATE)
   @Transactional()
   async updateStatus(
     @Param('id', ParseUUIDPipe) userProfileId: string,
@@ -122,6 +124,7 @@ export class UserProfileController {
   @Delete(':id')
   @DeleteApiResponses('Soft delete user profile')
   @ApiParam({ name: 'id', description: 'User Profile ID', type: String })
+  @Permissions(PERMISSIONS.STAFF.DELETE)
   @Transactional()
   async deleteProfile(
     @Param('id', ParseUUIDPipe) userProfileId: string,
@@ -141,6 +144,7 @@ export class UserProfileController {
   @Patch(':id/restore')
   @UpdateApiResponses('Restore soft-deleted user profile')
   @ApiParam({ name: 'id', description: 'User Profile ID', type: String })
+  @Permissions(PERMISSIONS.STAFF.RESTORE)
   @Transactional()
   async restoreProfile(
     @Param('id', ParseUUIDPipe) userProfileId: string,

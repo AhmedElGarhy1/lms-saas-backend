@@ -19,6 +19,8 @@ import { BulkToggleCenterAccessStatusDto } from '@/modules/access-control/dto/bu
 import { BulkDeleteCenterAccessDto } from '@/modules/access-control/dto/bulk-delete-center-access.dto';
 import { BulkRestoreCenterAccessDto } from '@/modules/access-control/dto/bulk-restore-center-access.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { Permissions } from '@/shared/common/decorators/permissions.decorator';
+import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 
 @ApiBearerAuth()
 @ApiTags('Centers Access Actions')
@@ -107,6 +109,7 @@ export class CentersAccessActionsController {
     description: 'Bulk status toggle completed',
     type: BulkOperationResultDto,
   })
+  @Permissions(PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS)
   @Transactional()
   async bulkToggleCenterAccessStatus(
     @Body() dto: BulkToggleCenterAccessStatusDto,
@@ -141,6 +144,7 @@ export class CentersAccessActionsController {
     description: 'Bulk delete completed',
     type: BulkOperationResultDto,
   })
+  @Permissions(PERMISSIONS.STAFF.DELETE_CENTER_ACCESS)
   @Transactional()
   async bulkDeleteCenterAccess(
     @Body() dto: BulkDeleteCenterAccessDto,
@@ -174,6 +178,7 @@ export class CentersAccessActionsController {
     description: 'Bulk restore completed',
     type: BulkOperationResultDto,
   })
+  @Permissions(PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS)
   @Transactional()
   async bulkRestoreCenterAccess(
     @Body() dto: BulkRestoreCenterAccessDto,
@@ -199,4 +204,3 @@ export class CentersAccessActionsController {
     );
   }
 }
-

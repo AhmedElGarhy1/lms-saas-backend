@@ -17,6 +17,8 @@ import { BulkToggleUserProfileStatusDto } from '../dto/bulk-toggle-user-profile-
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { UserProfileService } from '../services/user-profile.service';
 import { UserService } from '@/modules/user/services/user.service';
+import { Permissions } from '@/shared/common/decorators/permissions.decorator';
+import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 
 @ApiBearerAuth()
 @ApiTags('User Profiles Actions')
@@ -36,6 +38,7 @@ export class UserProfileActionsController {
     description: 'Bulk delete completed',
     type: BulkOperationResultDto,
   })
+  @Permissions(PERMISSIONS.STAFF.DELETE)
   @Transactional()
   async bulkDelete(
     @Body() dto: BulkDeleteUserProfilesDto,
@@ -62,6 +65,7 @@ export class UserProfileActionsController {
     description: 'Bulk restore completed',
     type: BulkOperationResultDto,
   })
+  @Permissions(PERMISSIONS.STAFF.RESTORE)
   @Transactional()
   async bulkRestore(
     @Body() dto: BulkRestoreUserProfilesDto,
@@ -88,6 +92,7 @@ export class UserProfileActionsController {
     description: 'Bulk status toggle completed',
     type: BulkOperationResultDto,
   })
+  @Permissions(PERMISSIONS.STAFF.ACTIVATE)
   @Transactional()
   async bulkToggleStatus(
     @Body() dto: BulkToggleUserProfileStatusDto,

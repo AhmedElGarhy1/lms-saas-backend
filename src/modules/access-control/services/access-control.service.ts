@@ -367,6 +367,23 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
 
+    // Check permission
+    const hasPermission = await this.rolesService.hasPermission(
+      actor.userProfileId,
+      PERMISSIONS.STAFF.DELETE_CENTER_ACCESS.action,
+      PERMISSIONS.STAFF.DELETE_CENTER_ACCESS.scope,
+      centerId,
+    );
+
+    if (!hasPermission) {
+      throw new InsufficientPermissionsException(
+        't.errors.insufficientPermissions' as I18nPath,
+        {
+          action: PERMISSIONS.STAFF.DELETE_CENTER_ACCESS.action,
+        },
+      );
+    }
+
     // Check if target user is an admin - prevent deletion of admin center access
     const isTargetAdmin = await this.accessControlHelperService.isAdmin(
       body.userProfileId,
@@ -402,6 +419,23 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
 
+    // Check permission
+    const hasPermission = await this.rolesService.hasPermission(
+      actor.userProfileId,
+      PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS.action,
+      PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS.scope,
+      centerId,
+    );
+
+    if (!hasPermission) {
+      throw new InsufficientPermissionsException(
+        't.errors.insufficientPermissions' as I18nPath,
+        {
+          action: PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS.action,
+        },
+      );
+    }
+
     // Validate access (can actor manage this profile?)
     await this.accessControlHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,
@@ -428,6 +462,23 @@ export class AccessControlService extends BaseService {
     actor: ActorUser,
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
+
+    // Check permission
+    const hasPermission = await this.rolesService.hasPermission(
+      actor.userProfileId,
+      PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS.action,
+      PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS.scope,
+      centerId,
+    );
+
+    if (!hasPermission) {
+      throw new InsufficientPermissionsException(
+        't.errors.insufficientPermissions' as I18nPath,
+        {
+          action: PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS.action,
+        },
+      );
+    }
 
     // Check if target user is an admin - prevent deactivation of admin center access
     if (!isActive) {

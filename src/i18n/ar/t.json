@@ -1774,6 +1774,15 @@
       "grantCenterAccess": {
         "name": "منح وصول المركز"
       },
+      "deleteCenterAccess": {
+        "name": "حذف وصول المركز"
+      },
+      "restoreCenterAccess": {
+        "name": "استعادة وصول المركز"
+      },
+      "activateCenterAccess": {
+        "name": "تفعيل/إلغاء تفعيل وصول المركز"
+      },
       "readAll": {
         "name": "قراءة جميع الموظفين بدون وصول الموظفين"
       },

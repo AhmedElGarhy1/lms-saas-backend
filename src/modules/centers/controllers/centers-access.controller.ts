@@ -26,6 +26,8 @@ import {
   ToggleUserStatusResponseDto,
 } from '@/modules/user/dto/toggle-user-status.dto';
 import { TranslationService } from '@/shared/services/translation.service';
+import { Permissions } from '@/shared/common/decorators/permissions.decorator';
+import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 
 @ApiBearerAuth()
 @ApiTags('Centers Access')
@@ -44,6 +46,7 @@ export class CentersAccessController {
     type: String,
   })
   @ApiBody({ type: ToggleUserStatusRequestDto })
+  @Permissions(PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS)
   @Transactional()
   async toggleCenterAccessStatus(
     @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
@@ -114,6 +117,7 @@ export class CentersAccessController {
     description: 'User Profile ID',
     type: String,
   })
+  @Permissions(PERMISSIONS.STAFF.DELETE_CENTER_ACCESS)
   @Transactional()
   async deleteCenterAccess(
     @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
@@ -139,6 +143,7 @@ export class CentersAccessController {
 
   @Patch(':userProfileId/restore')
   @UpdateApiResponses('Restore center access')
+  @Permissions(PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS)
   @Transactional()
   async restoreCenterAccess(
     @Param('userProfileId', ParseUUIDPipe) userProfileId: string,

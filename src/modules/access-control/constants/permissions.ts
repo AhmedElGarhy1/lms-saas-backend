@@ -21,30 +21,7 @@ export const PERMISSIONS = {
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
-    UPDATE: {
-      action: 'staff:update',
-      name: 't.permissions.staff.update.name',
-      group: 'staff',
-      scope: PermissionScope.CENTER,
-    },
-    DELETE: {
-      action: 'staff:delete',
-      name: 't.permissions.staff.delete.name',
-      group: 'staff',
-      scope: PermissionScope.CENTER,
-    },
-    RESTORE: {
-      action: 'staff:restore',
-      name: 't.permissions.staff.restore.name',
-      group: 'staff',
-      scope: PermissionScope.CENTER,
-    },
-    ACTIVATE: {
-      action: 'staff:activate',
-      name: 't.permissions.staff.activate.name',
-      group: 'staff',
-      scope: PermissionScope.CENTER,
-    },
+
     GRANT_USER_ACCESS: {
       action: 'staff:grant-user-access',
       name: 't.permissions.staff.grantUserAccess.name',
@@ -57,11 +34,23 @@ export const PERMISSIONS = {
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
-    GRANT_CENTER_ACCESS: {
-      action: 'staff:grant-center-access',
-      name: 't.permissions.staff.grantCenterAccess.name',
+    DELETE_CENTER_ACCESS: {
+      action: 'staff:delete-center-access',
+      name: 't.permissions.staff.deleteCenterAccess.name',
       group: 'staff',
-      scope: PermissionScope.ADMIN,
+      scope: PermissionScope.CENTER,
+    },
+    RESTORE_CENTER_ACCESS: {
+      action: 'staff:restore-center-access',
+      name: 't.permissions.staff.restoreCenterAccess.name',
+      group: 'staff',
+      scope: PermissionScope.CENTER,
+    },
+    ACTIVATE_CENTER_ACCESS: {
+      action: 'staff:activate-center-access',
+      name: 't.permissions.staff.activateCenterAccess.name',
+      group: 'staff',
+      scope: PermissionScope.CENTER,
     },
     READ_ALL: {
       action: 'staff:read-all',
@@ -80,6 +69,36 @@ export const PERMISSIONS = {
       name: 't.permissions.staff.export.name',
       group: 'staff',
       scope: PermissionScope.CENTER,
+    },
+    GRANT_CENTER_ACCESS: {
+      action: 'staff:grant-center-access',
+      name: 't.permissions.staff.grantCenterAccess.name',
+      group: 'staff',
+      scope: PermissionScope.ADMIN,
+    },
+    UPDATE: {
+      action: 'staff:update',
+      name: 't.permissions.staff.update.name',
+      group: 'staff',
+      scope: PermissionScope.ADMIN,
+    },
+    DELETE: {
+      action: 'staff:delete',
+      name: 't.permissions.staff.delete.name',
+      group: 'staff',
+      scope: PermissionScope.ADMIN,
+    },
+    RESTORE: {
+      action: 'staff:restore',
+      name: 't.permissions.staff.restore.name',
+      group: 'staff',
+      scope: PermissionScope.ADMIN,
+    },
+    ACTIVATE: {
+      action: 'staff:activate',
+      name: 't.permissions.staff.activate.name',
+      group: 'staff',
+      scope: PermissionScope.ADMIN,
     },
   },
 

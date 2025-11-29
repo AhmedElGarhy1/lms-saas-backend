@@ -1803,6 +1803,15 @@ export type I18nTranslations = {
                 "grantCenterAccess": {
                     "name": string;
                 };
+                "deleteCenterAccess": {
+                    "name": string;
+                };
+                "restoreCenterAccess": {
+                    "name": string;
+                };
+                "activateCenterAccess": {
+                    "name": string;
+                };
                 "readAll": {
                     "name": string;
                 };

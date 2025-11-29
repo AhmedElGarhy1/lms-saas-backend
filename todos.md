@@ -93,8 +93,10 @@
 [x] remove the many paramenters from modules and use useActions direct it's more effcent
 [x] think about a way for frontend to display based on permission
 [x] add @typescript-eslint/no-floating-promises for backend and
+[x] staff user access doesn't work
+[x] delete staff donsn't go to soft deleted or soft deleted doesn't display correctly
 
-[ ] delete staff donsn't go to soft deleted or soft deleted doesn't display correctly
+[ ] for bulk operations don't perform the same action for user ex: active user shoun't be activated
 [ ] view modals in all modules
 [ ] add users endpoint for modules like activity logs search for user
 [ ] user can update his center (throw settings)
