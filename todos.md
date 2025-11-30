@@ -96,14 +96,14 @@
 [x] staff user access doesn't work
 [x] delete staff donsn't go to soft deleted or soft deleted doesn't display correctly
 [x] for bulk operations don't perform the same action for user ex: active user shoun't be activated
+[x] check translations keys and refactor it even more
 
-[ ] check translations keys and refactor it even more
-[ ] view modals in all modules
+[ ] make db errors more readable like duplicated kyes so you will remove the exist and notExist decorators and db will throw the errors because we are using transactions so it's safe
+[ ] move any logic from controller to service
 [ ] add users endpoint for modules like activity logs search for user
 [ ] user can update his center (throw settings)
 [ ] activity logs and each one display his own logs only
-[ ] make db errors more readable like duplicated kyes so you will remove the exist and notExist decorators and db will throw the errors because we are using transactions so it's safe
-[ ] move any logic from controller to service
+[ ] view modals in all modules
 
 [ ] don't cash notification templates in redis (usless operation it can done only on memory)
 [ ] update notifications to cover all existing modules events
