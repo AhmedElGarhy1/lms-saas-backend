@@ -122,6 +122,13 @@
       "deactivate": "إلغاء التفعيل",
       "restore": "استعادة",
       "archive": "أرشفة",
+      "toggleStatusInCenter": "تغيير الحالة في المركز",
+      "deleteFromCenter": "حذف من المركز",
+      "restoreInCenter": "استعادة في المركز",
+      "activateInCenterSelected": "تفعيل المحدد في المركز",
+      "deactivateInCenterSelected": "إلغاء تفعيل المحدد في المركز",
+      "deleteFromCenterSelected": "حذف المحدد من المركز",
+      "restoreInCenterSelected": "استعادة المحدد في المركز",
       "view": "عرض",
       "manage": "إدارة",
       "download": "تحميل",
@@ -563,7 +570,6 @@
       "confirmNewPassword": "أكد كلمة المرور الجديدة"
     },
     "messages": {
-      "loading": "جاري التحميل...",
       "noData": "لا توجد بيانات متاحة",
       "error": "حدث خطأ",
       "success": "نجحت العملية",
@@ -650,6 +656,20 @@
       "selectCenterFirst": "اختر مركزاً أولاً",
       "selectCenterFirstToChooseRole": "يرجى اختيار مركز أولاً لاختيار دور",
       "selectProfileType": "اختر نوع الملف الشخصي",
+      "allItemsAlreadyInState": "{count, plural, =0 {لا توجد عناصر} =1 {جميع # {item} المحدد {state} بالفعل} =2 {جميع # {item} المحددان {state} بالفعل} few {جميع # {item} المحددة {state} بالفعل} many {جميع # {item} المحددة {state} بالفعل} other {جميع # {item} المحددة {state} بالفعل}}",
+      "errorRefreshing": "خطأ في تحديث {item}",
+      "exportFailed": "فشل التصدير",
+      "authenticationError": "خطأ في المصادقة",
+      "somethingWentWrongAuth": "حدث خطأ أثناء المصادقة",
+      "errorSendingOtp": "خطأ في إرسال رمز التحقق",
+      "verificationFailed": "فشل التحقق",
+      "branchesError": "خطأ في الفروع",
+      "somethingWentWrongBranches": "حدث خطأ في الفروع",
+      "centersError": "خطأ في المراكز",
+      "somethingWentWrongCenters": "حدث خطأ في المراكز",
+      "passwordChangeError": "خطأ في تغيير كلمة المرور",
+      "rolesError": "خطأ في الأدوار",
+      "somethingWentWrongLoadingRoles": "حدث خطأ أثناء تحميل الأدوار",
       "alreadyHaveAccount": "هل لديك حساب بالفعل؟",
       "processing": "جاري المعالجة...",
       "pleaseWaitProcessing": "يرجى الانتظار بينما نقوم بمعالجة طلبك...",
@@ -1342,7 +1362,7 @@
   },
   "pagination": {
     "selectedRows": "{selected, plural, =0 {لا توجد صفوف} =1 {# صف} =2 {# صفان} few {# صفوف} many {# صف} other {# صف}} من {total, plural, =0 {لا شيء} =1 {# صف} =2 {# صفان} few {# صفوف} many {# صف} other {# صف}} محدد",
-    "showingResults": "عرض {start, number} إلى {end, number} من {total, number} {total, plural, =1 {نتيجة} =2 {نتيجتان} few {نتائج} many {نتيجة} other {نتيجة}}",
+    "showingResults": "عرض {start, number} إلى {end, number} من {total, plural, =0 {لا توجد نتائج} =1 {# نتيجة} =2 {# نتيجتان} few {# نتائج} many {# نتيجة} other {# نتيجة}}",
     "rowsPerPage": "صفوف في الصفحة",
     "pageOf": "صفحة {current, number} من {total, number}"
   },
@@ -1589,7 +1609,7 @@
       "status": "الحالة"
     },
     "selection": {
-      "selectedItems": "{count, plural, =0 {لا توجد عناصر} =1 {# {item} محدد} =2 {# {item} محدد} few {# {item} محدد} many {# {item} محدد} other {# {item} محدد}}",
+      "selectedItems": "{count, plural, =0 {لا توجد عناصر} =1 {# {item} محدد} =2 {# {item} محددان} few {# {item} محددات} many {# {item} محدد} other {# {item} محدد}}",
       "selectAll": "اختيار الكل ({total, number})",
       "deselectAll": "إلغاء اختيار الكل"
     },

@@ -129,6 +129,13 @@ export type I18nTranslations = {
                 "deactivate": string;
                 "restore": string;
                 "archive": string;
+                "toggleStatusInCenter": string;
+                "deleteFromCenter": string;
+                "restoreInCenter": string;
+                "activateInCenterSelected": string;
+                "deactivateInCenterSelected": string;
+                "deleteFromCenterSelected": string;
+                "restoreInCenterSelected": string;
                 "view": string;
                 "manage": string;
                 "download": string;
@@ -570,7 +577,6 @@ export type I18nTranslations = {
                 "confirmNewPassword": string;
             };
             "messages": {
-                "loading": string;
                 "noData": string;
                 "error": string;
                 "success": string;
@@ -613,6 +619,7 @@ export type I18nTranslations = {
                 "centerPermissions": string;
                 "adminPermissions": string;
                 "somethingWentWrong": string;
+                "loading": string;
                 "pleaseWaitLoading": string;
                 "errorLoading": string;
                 "somethingWentWrongWith": string;
@@ -656,6 +663,20 @@ export type I18nTranslations = {
                 "selectCenterFirst": string;
                 "selectCenterFirstToChooseRole": string;
                 "selectProfileType": string;
+                "allItemsAlreadyInState": string;
+                "errorRefreshing": string;
+                "exportFailed": string;
+                "authenticationError": string;
+                "somethingWentWrongAuth": string;
+                "errorSendingOtp": string;
+                "verificationFailed": string;
+                "branchesError": string;
+                "somethingWentWrongBranches": string;
+                "centersError": string;
+                "somethingWentWrongCenters": string;
+                "passwordChangeError": string;
+                "rolesError": string;
+                "somethingWentWrongLoadingRoles": string;
                 "alreadyHaveAccount": string;
                 "processing": string;
                 "pleaseWaitProcessing": string;
