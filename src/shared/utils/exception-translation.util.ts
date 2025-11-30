@@ -28,4 +28,3 @@ export function translateResource(
 ): string {
   return i18n.translate(`common.resources.${resource}` as any);
 }
-

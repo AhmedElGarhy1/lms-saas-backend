@@ -30,7 +30,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   async validate(payload: JwtPayload) {
     // Ensure this is an access token, not a refresh token
     if (payload.type !== 'access') {
-      throw new AuthenticationFailedException('t.errors.invalidTokenType');
+      throw new AuthenticationFailedException('t.errors.invalid.type', {
+        field: 't.common.labels.tokenType',
+      });
     }
 
     const user = await this.userRepository.findOne(payload.sub);
@@ -38,11 +40,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (!user) {
       // Changed from ResourceNotFoundException to AuthenticationFailedException
       // A missing user during JWT validation is an authentication failure, not a 404
-      throw new AuthenticationFailedException('t.errors.userNotFound');
+      throw new AuthenticationFailedException('t.errors.authenticationFailed');
     }
 
     if (!user.isActive) {
-      throw new BusinessLogicException('t.errors.userAccountInactive');
+      throw new BusinessLogicException('t.errors.already.is', {
+        resource: 't.common.labels.userAccount',
+        state: 't.common.labels.inactive',
+      });
     }
 
     // Phone verification is now handled by PhoneVerificationGuard

@@ -59,7 +59,11 @@ export class CentersService extends BaseService {
       ? await this.centersRepository.findOneSoftDeletedById(centerId)
       : await this.centersRepository.findOne(centerId);
     if (!center) {
-      throw new ResourceNotFoundException('t.errors.resourceNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.center',
+        identifier: 'ID',
+        value: centerId,
+      });
     }
 
     // If actor is provided, validate center access
@@ -103,14 +107,20 @@ export class CentersService extends BaseService {
   ): Promise<Center> {
     const center = await this.findCenterById(centerId, actor);
     if (!center) {
-      throw new ResourceNotFoundException('t.errors.resourceNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.center',
+        identifier: 'ID',
+        value: centerId,
+      });
     }
 
     if (dto.name && dto.name !== center.name) {
       const existingCenter = await this.centersRepository.findByName(dto.name);
       if (existingCenter) {
-        throw new BusinessLogicException('t.errors.centerAlreadyExists', {
-          name: dto.name,
+        throw new BusinessLogicException('t.errors.already.existsWithField', {
+          resource: 't.common.labels.center',
+          field: 'name',
+          value: dto.name,
         });
       }
     }
@@ -120,7 +130,11 @@ export class CentersService extends BaseService {
       dto,
     );
     if (!updatedCenter) {
-      throw new ResourceNotFoundException('t.errors.resourceNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.center',
+        identifier: 'ID',
+        value: centerId,
+      });
     }
 
     // Emit event after work is done
@@ -149,7 +163,11 @@ export class CentersService extends BaseService {
     const center = await this.findCenterById(centerId, actor, true);
 
     if (!center.deletedAt) {
-      throw new BusinessLogicException('t.errors.centerNotDeleted');
+      throw new BusinessLogicException('t.errors.cannot.actionReason', {
+        action: 't.common.buttons.restore',
+        resource: 't.common.labels.center',
+        reason: 't.common.messages.centerNotDeleted',
+      });
     }
 
     await this.centersRepository.restore(centerId);

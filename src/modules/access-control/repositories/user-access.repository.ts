@@ -44,7 +44,9 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
       },
     });
     if (!userAccess)
-      throw new ResourceNotFoundException('t.errors.userAccessNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.generic', {
+        resource: 't.common.labels.userAccess',
+      });
     await this.getRepository().remove(userAccess);
   }
 

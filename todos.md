@@ -97,10 +97,13 @@
 [x] delete staff donsn't go to soft deleted or soft deleted doesn't display correctly
 [x] for bulk operations don't perform the same action for user ex: active user shoun't be activated
 
+[ ] check translations keys and refactor it even more
 [ ] view modals in all modules
 [ ] add users endpoint for modules like activity logs search for user
 [ ] user can update his center (throw settings)
 [ ] activity logs and each one display his own logs only
+[ ] make db errors more readable like duplicated kyes so you will remove the exist and notExist decorators and db will throw the errors because we are using transactions so it's safe
+[ ] move any logic from controller to service
 
 [ ] don't cash notification templates in redis (usless operation it can done only on memory)
 [ ] update notifications to cover all existing modules events
@@ -109,3 +112,4 @@
 [ ] import functioanlity
 [ ] multi profile for parents
 [?] when i display tables data I should disply myself also
+[ ] auto detection for single center or single profile

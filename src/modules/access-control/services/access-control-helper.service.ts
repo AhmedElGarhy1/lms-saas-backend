@@ -91,9 +91,9 @@ export class AccessControlHelperService extends BaseService {
       return;
     }
     this.logger.warn('Admin access validation failed', { userProfileId });
-    throw new AdminScopeAccessDeniedException(
-      't.errors.adminScopeAccessDenied',
-    );
+    throw new AdminScopeAccessDeniedException('t.errors.denied.access', {
+      resource: 't.common.labels.adminScope',
+    });
   }
 
   async getProfileRole(userProfileId: string, centerId?: string) {
@@ -343,7 +343,9 @@ export class AccessControlHelperService extends BaseService {
         centerId: data.centerId,
         branchId: data.branchId,
       });
-      throw new BranchAccessDeniedException('t.errors.branchAccessDenied');
+      throw new BranchAccessDeniedException('t.errors.denied.access', {
+        resource: 't.common.labels.branch',
+      });
     }
   }
 

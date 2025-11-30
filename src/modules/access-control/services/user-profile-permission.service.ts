@@ -9,7 +9,7 @@ import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { RolesService } from './roles.service';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 import { PERMISSIONS } from '../constants/permissions';
-import { I18nPath } from '@/generated/i18n.generated';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class UserProfilePermissionService extends BaseService {
@@ -26,6 +26,14 @@ export class UserProfilePermissionService extends BaseService {
   }
 
   /**
+   * Checks if a string is a valid ProfileType enum value
+   * @private
+   */
+  private isProfileType(str: string): str is ProfileType {
+    return Object.values(ProfileType).includes(str as ProfileType);
+  }
+
+  /**
    * Resolves profileType from either direct value or by fetching from userProfileId
    * @private
    */
@@ -38,16 +46,28 @@ export class UserProfilePermissionService extends BaseService {
     }
 
     if (userProfileId) {
+      // Validate that userProfileId is actually a UUID before querying
+      if (!isUUID(userProfileId)) {
+        throw new ResourceNotFoundException('t.errors.invalid.format', {
+          field: 't.common.labels.userProfileId',
+        });
+      }
+
       const profile = await this.userProfileService.findOne(userProfileId);
       if (!profile) {
-        throw new ResourceNotFoundException('t.errors.userProfileNotFound');
+        throw new ResourceNotFoundException('t.errors.notFound.withId', {
+          resource: 't.common.labels.userProfile',
+          identifier: 'ID',
+          value: userProfileId,
+        });
       }
       return profile.profileType;
     }
 
-    throw new ResourceNotFoundException(
-      't.errors.profileTypeOrIdRequired' as I18nPath,
-    );
+    throw new ResourceNotFoundException('t.errors.required.oneOf', {
+      field1: 't.common.labels.profileType',
+      field2: 't.common.labels.userProfileId',
+    });
   }
 
   /**
@@ -75,9 +95,9 @@ export class UserProfilePermissionService extends BaseService {
     } else if (profileType === ProfileType.ADMIN) {
       requiredPermission = PERMISSIONS.ADMIN[permissionKey];
     } else {
-      throw new ResourceNotFoundException(
-        't.errors.invalidProfileType' as I18nPath,
-      );
+      throw new ResourceNotFoundException('t.errors.invalid.type', {
+        field: 't.common.labels.profileType',
+      });
     }
 
     // Check if actor has the required permission
@@ -90,7 +110,7 @@ export class UserProfilePermissionService extends BaseService {
 
     if (!hasPermission) {
       throw new InsufficientPermissionsException(
-        't.errors.insufficientPermissions' as I18nPath,
+        't.errors.insufficientPermissions',
         {
           action: requiredPermission.action,
           profileType,
@@ -101,6 +121,7 @@ export class UserProfilePermissionService extends BaseService {
 
   /**
    * Helper method to resolve profile type and check permission
+   * Safely distinguishes between ProfileType enum values and UUID strings
    * @private
    */
   private async resolveAndCheckPermission(
@@ -117,11 +138,38 @@ export class UserProfilePermissionService extends BaseService {
       | 'GRANT_CENTER_ACCESS',
     centerId?: string,
   ): Promise<void> {
-    const profileType = await this.resolveProfileType(
-      typeof profileTypeOrId === 'string' ? undefined : profileTypeOrId,
-      typeof profileTypeOrId === 'string' ? profileTypeOrId : undefined,
+    // If it's a string, check if it's a UUID or a ProfileType enum value
+    let profileType: ProfileType | undefined;
+    let userProfileId: string | undefined;
+
+    if (typeof profileTypeOrId === 'string') {
+      if (isUUID(profileTypeOrId)) {
+        // It's a valid UUID, treat as userProfileId
+        userProfileId = profileTypeOrId;
+      } else if (this.isProfileType(profileTypeOrId)) {
+        // It's a ProfileType enum value (e.g., "Staff", "Admin")
+        profileType = profileTypeOrId;
+      } else {
+        // Invalid string - neither UUID nor ProfileType
+        throw new ResourceNotFoundException('t.errors.invalid.type', {
+          field: 't.common.labels.profileType',
+        });
+      }
+    } else {
+      // It's already a ProfileType enum
+      profileType = profileTypeOrId;
+    }
+
+    const resolvedProfileType = await this.resolveProfileType(
+      profileType,
+      userProfileId,
     );
-    await this.checkPermission(actor, profileType, permissionKey, centerId);
+    await this.checkPermission(
+      actor,
+      resolvedProfileType,
+      permissionKey,
+      centerId,
+    );
   }
 
   /**

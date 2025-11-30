@@ -42,13 +42,19 @@ export class ProfileRoleSubscriber
     if (profileRole.roleId) {
       const role = await this.rolesRepository.findOne(profileRole.roleId);
       if (!role)
-        throw new BusinessLogicException('t.errors.roleNotFound');
+        throw new BusinessLogicException('t.errors.notFound.withId', {
+          resource: 't.common.labels.role',
+          identifier: 'ID',
+          value: profileRole.roleId,
+        });
 
       const profile = await this.accessControlHelperService.findUserProfile(
         profileRole.userProfileId,
       );
       if (!profile)
-        throw new BusinessLogicException('t.errors.userProfileNotFound');
+        throw new BusinessLogicException('t.errors.notFound.generic', {
+          resource: 't.common.labels.userProfile',
+        });
 
       if (profileRole.centerId) {
         if (profile?.profileType === ProfileType.ADMIN) {

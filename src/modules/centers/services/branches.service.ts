@@ -46,8 +46,10 @@ export class BranchesService extends BaseService {
     const branch = await this.branchesRepository.findOne(branchId);
 
     if (!branch) {
-      throw new ResourceNotFoundException('t.errors.branchNotFound', {
-        branchId,
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.branch',
+        identifier: 'ID',
+        value: branchId,
       });
     }
 
@@ -124,8 +126,10 @@ export class BranchesService extends BaseService {
 
     const branch = await this.branchesRepository.findOne(branchId);
     if (!branch) {
-      throw new ResourceNotFoundException('t.errors.branchNotFound', {
-        branchId,
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.branch',
+        identifier: 'ID',
+        value: branchId,
       });
     }
 
@@ -153,8 +157,10 @@ export class BranchesService extends BaseService {
     const branch =
       await this.branchesRepository.findOneSoftDeletedById(branchId);
     if (!branch) {
-      throw new ResourceNotFoundException('t.errors.branchNotFound', {
-        branchId,
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.branch',
+        identifier: 'ID',
+        value: branchId,
       });
     }
 

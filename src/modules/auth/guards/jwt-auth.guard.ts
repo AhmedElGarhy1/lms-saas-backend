@@ -58,7 +58,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
       // For other errors (token expired, invalid signature, etc.), use generic message
       throw new UnauthorizedException(
-        TranslationService.translate('t.errors.invalidOrExpiredToken'),
+        TranslationService.translate('t.errors.invalid.expired', {
+          field: 'token',
+        }),
       );
     }
 

@@ -82,7 +82,9 @@ export class InAppNotificationService extends BaseService {
     const notification =
       await this.notificationRepository.findOne(notificationId);
     if (!notification || notification.userId !== userId) {
-      throw new ResourceNotFoundException('t.errors.notificationNotFoundOrAccessDenied');
+      throw new ResourceNotFoundException('t.errors.notFound.generic', {
+        resource: 't.common.labels.notification',
+      });
     }
 
     await this.notificationRepository.markAsRead(notificationId, userId);
@@ -128,7 +130,9 @@ export class InAppNotificationService extends BaseService {
     const notification =
       await this.notificationRepository.findOne(notificationId);
     if (!notification || notification.userId !== userId) {
-      throw new ResourceNotFoundException('t.errors.notificationNotFoundOrAccessDenied');
+      throw new ResourceNotFoundException('t.errors.notFound.generic', {
+        resource: 't.common.labels.notification',
+      });
     }
     await this.notificationRepository.update(notificationId, {
       isArchived: true,

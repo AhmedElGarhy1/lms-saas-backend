@@ -57,7 +57,9 @@ export class RequestValidationMiddleware implements NestMiddleware {
     if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
       const contentType = req.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        throw new InvalidContentTypeException('t.errors.invalidContentType');
+        throw new InvalidContentTypeException('t.errors.invalid.type', {
+          field: 'Content-Type',
+        });
       }
     }
   }

@@ -7,10 +7,7 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { USER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
-import {
-  AccessibleUsersEnum,
-  PaginateUsersDto,
-} from '../dto/paginate-users.dto';
+import { AccessibleUsersEnum } from '../dto/paginate-users.dto';
 import { RoleResponseDto } from '@/modules/access-control/dto/role-response.dto';
 import { DefaultRoles } from '@/modules/access-control/constants/roles';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
@@ -207,7 +204,11 @@ export class UserRepository extends BaseRepository<User> {
           );
       } else {
         throw new InsufficientPermissionsException(
-          't.errors.accessDeniedToUser',
+          't.errors.notAuthorized.action',
+          {
+            action: 't.common.buttons.view',
+            resource: 't.common.labels.user',
+          },
         );
       }
     }
@@ -335,7 +336,13 @@ export class UserRepository extends BaseRepository<User> {
     );
 
     if (!isAdmin)
-      throw new InsufficientPermissionsException('t.errors.accessDeniedToUser');
+      throw new InsufficientPermissionsException(
+        't.errors.notAuthorized.action',
+        {
+          action: 't.common.buttons.view',
+          resource: 't.common.labels.user',
+        },
+      );
     if (isSuperAdmin) {
       // do nothing
     } else {
@@ -446,7 +453,7 @@ export class UserRepository extends BaseRepository<User> {
       const role = user.userProfiles?.[0]?.profileRoles?.[0]
         ?.role as RoleResponseDto;
       let userProfile = user.userProfiles?.[0];
-      // @ts-ignore
+      // @ts-expect-error - TypeORM relation typing issue
       userProfile.centerAccess = userProfile?.centerAccess?.[0];
 
       user = _.omit(user, ['userProfiles']) as UserResponseDto;

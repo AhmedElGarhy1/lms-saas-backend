@@ -35,7 +35,11 @@ export class RolesRepository extends BaseRepository<Role> {
       relations: ['rolePermissions', 'rolePermissions.permission'],
     });
     if (!role) {
-      throw new ResourceNotFoundException('t.errors.roleNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.role',
+        identifier: 'ID',
+        value: roleId,
+      });
     }
     return role;
   }
@@ -62,7 +66,11 @@ export class RolesRepository extends BaseRepository<Role> {
     const { rolePermissions, ...roleData } = data;
     const role = await this.update(roleId, roleData);
     if (!role) {
-      throw new ResourceNotFoundException('t.errors.roleNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.role',
+        identifier: 'ID',
+        value: roleId,
+      });
     }
     const existingRolePermissions =
       await this.rolePermissionRepository.findMany({

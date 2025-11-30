@@ -64,14 +64,18 @@ export class ProfileGuard implements CanActivate {
     }
 
     if (!userProfileId) {
-      throw new ProfileSelectionRequiredException('t.errors.profileSelectionRequired');
+      throw new ProfileSelectionRequiredException('t.errors.required.field', {
+        field: 't.common.labels.profileSelection',
+      });
     }
     const profile = await this.userProfileService.findForUser(
       user.id,
       userProfileId,
     );
     if (!profile) {
-      throw new ProfileSelectionRequiredException('t.errors.profileSelectionRequired');
+      throw new ProfileSelectionRequiredException('t.errors.required.field', {
+        field: 't.common.labels.profileSelection',
+      });
     }
     if (!profile.isActive) {
       throw new InactiveProfileException(

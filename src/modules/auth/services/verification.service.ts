@@ -114,12 +114,20 @@ export class VerificationService extends BaseService {
     );
 
     if (!verificationToken) {
-      throw new ResourceNotFoundException('t.errors.verificationCodeNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.generic', {
+        resource: 't.common.labels.verificationCode',
+      });
     }
 
     if (verificationToken.expiresAt < new Date()) {
       await this.verificationTokenRepository.deleteById(verificationToken.id);
-      throw new ValidationFailedException('t.errors.verificationCodeExpired');
+      throw new ValidationFailedException(
+        't.errors.expired.generic',
+        undefined,
+        {
+          resource: 't.common.labels.verificationCode',
+        },
+      );
     }
 
     return verificationToken;

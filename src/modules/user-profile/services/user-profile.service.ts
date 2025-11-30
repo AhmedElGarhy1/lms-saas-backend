@@ -54,7 +54,11 @@ export class UserProfileService extends BaseService {
     // Get user with profile
     const user = await this.userService.findOne(actor.id);
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.userNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.user',
+        identifier: 'ID',
+        value: actor.id,
+      });
     }
 
     // Determine context based on centerId
@@ -67,7 +71,11 @@ export class UserProfileService extends BaseService {
     if (!actor.userProfileId) return returnData;
     const userProfile = await this.findOne(actor.userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.errors.userProfileNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.userProfile',
+        identifier: 'ID',
+        value: actor.userProfileId,
+      });
     }
     actor.userProfileId = userProfile.id;
     actor.profileType = userProfile.profileType;
@@ -94,7 +102,9 @@ export class UserProfileService extends BaseService {
       actor.profileType,
     );
     if (!profile) {
-      throw new ResourceNotFoundException('t.errors.resourceNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.generic', {
+        resource: 't.common.labels.profile',
+      });
     }
 
     returnData.profile = profile;
@@ -111,7 +121,11 @@ export class UserProfileService extends BaseService {
     // Get userProfile to determine profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.errors.userProfileNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.userProfile',
+        identifier: 'ID',
+        value: userProfileId,
+      });
     }
 
     // Check permission based on profileType
@@ -143,7 +157,11 @@ export class UserProfileService extends BaseService {
     // Get the user profile to find the profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.errors.userProfileNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.userProfile',
+        identifier: 'ID',
+        value: userProfileId,
+      });
     }
 
     // Check permission based on profileType
@@ -204,13 +222,11 @@ export class UserProfileService extends BaseService {
       profileType,
     );
     if (existingProfile) {
-      throw new ValidationFailedException(
-        't.errors.userAlreadyHasProfile',
-        undefined,
-        {
-          profileType,
-        },
-      );
+      throw new ValidationFailedException('t.errors.already.has', undefined, {
+        resource: 't.common.labels.user',
+        what: `t.common.labels.${profileType.toLowerCase()}Profile`,
+        profileType,
+      });
     }
 
     const userProfile = await this.userProfileRepository.create({
@@ -245,7 +261,11 @@ export class UserProfileService extends BaseService {
     // Get userProfile to determine profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.errors.userProfileNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.userProfile',
+        identifier: 'ID',
+        value: userProfileId,
+      });
     }
 
     // Check permission based on profileType
@@ -269,11 +289,19 @@ export class UserProfileService extends BaseService {
       await this.userProfileRepository.findOneSoftDeletedById(userProfileId);
 
     if (!deletedProfile) {
-      throw new ResourceNotFoundException('t.errors.userProfileNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.userProfile',
+        identifier: 'ID',
+        value: userProfileId,
+      });
     }
 
     if (!deletedProfile.deletedAt) {
-      throw new BusinessLogicException('t.errors.profileNotDeleted');
+      throw new BusinessLogicException('t.errors.cannot.actionReason', {
+        action: 't.common.buttons.restore',
+        resource: 't.common.labels.profile',
+        reason: 't.common.messages.profileNotDeleted',
+      });
     }
 
     // Check permission based on profileType
@@ -295,7 +323,6 @@ export class UserProfileService extends BaseService {
   async isStaff(userProfileId: string) {
     return !!(await this.userProfileRepository.isStaff(userProfileId));
   }
-
 
   /**
    * Creates a new user profile with all associated entities and access control

@@ -66,11 +66,15 @@ export class ContextGuard implements CanActivate {
     }
     const { userProfileId, userProfileType } = RequestContext.get();
     if (!userProfileId) {
-      throw new ProfileSelectionRequiredException('t.errors.profileSelectionRequired');
+      throw new ProfileSelectionRequiredException('t.errors.required.field', {
+        field: 't.common.labels.profileSelection',
+      });
     }
     if (!userProfileType) {
       throw new InternalServerErrorException(
-        this.i18n.translate('t.errors.profileTypeNotFound'),
+        this.i18n.translate('t.errors.notFound.generic', {
+          args: { resource: 't.common.labels.profileType' },
+        }),
       );
     }
 

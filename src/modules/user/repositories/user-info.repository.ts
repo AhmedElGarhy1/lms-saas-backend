@@ -31,7 +31,9 @@ export class UserInfoRepository extends BaseRepository<UserInfo> {
       where: { userId },
     });
     if (!userInfo) {
-      throw new ResourceNotFoundException('t.errors.userInfoNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.generic', {
+        resource: 't.common.labels.userInfo',
+      });
     }
 
     await this.getRepository().update(userInfo.id, userInfoData);

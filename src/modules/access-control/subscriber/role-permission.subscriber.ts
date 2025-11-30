@@ -49,7 +49,9 @@ export class RolePermissionSubscriber
         rolePermission.permissionId,
       );
       if (!permission)
-        throw new ResourceNotFoundException('t.errors.permissionNotFound');
+        throw new ResourceNotFoundException('t.errors.notFound.generic', {
+          resource: 't.common.labels.permission',
+        });
 
       if (centerId) {
         if (

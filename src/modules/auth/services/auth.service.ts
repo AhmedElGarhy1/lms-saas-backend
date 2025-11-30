@@ -65,7 +65,10 @@ export class AuthService extends BaseService {
     // If user exists, validate account status
     if (user) {
       if (!user.isActive) {
-        throw new BusinessLogicException('t.errors.userAccountInactive');
+        throw new BusinessLogicException('t.errors.already.is', {
+          resource: 't.common.labels.userAccount',
+          state: 't.common.labels.inactive',
+        });
       }
 
       // Validate password
@@ -78,7 +81,9 @@ export class AuthService extends BaseService {
           new UserLoginFailedEvent(dto.phone, user.id, 'Invalid password'),
         );
 
-        throw new AuthenticationFailedException('t.errors.invalidCredentials');
+        throw new AuthenticationFailedException('t.errors.invalid.generic', {
+          field: 't.common.labels.credentials',
+        });
       }
 
       // Password is valid, continue with login
@@ -94,7 +99,9 @@ export class AuthService extends BaseService {
         // If OTP code not provided, send OTP and throw exception
         if (!dto.code) {
           await this.verificationService.sendLoginOTP(user.id || '');
-          throw new OtpRequiredException('t.errors.otpCodeRequired');
+          throw new OtpRequiredException('t.errors.required.field', {
+            field: 't.common.labels.otpCode',
+          });
         }
 
         // OTP code provided, verify it
@@ -118,7 +125,9 @@ export class AuthService extends BaseService {
       return this.completeLogin(user);
     } else {
       // User doesn't exist - return same error message to prevent enumeration
-      throw new AuthenticationFailedException('t.errors.invalidCredentials');
+      throw new AuthenticationFailedException('t.errors.invalid.generic', {
+        field: 't.common.labels.credentials',
+      });
     }
   }
 
@@ -138,7 +147,9 @@ export class AuthService extends BaseService {
     // Validate password to ensure only the real user can request resend
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new AuthenticationFailedException('t.errors.invalidCredentials');
+      throw new AuthenticationFailedException('t.errors.invalid.generic', {
+        field: 't.common.labels.credentials',
+      });
     }
 
     if (!user.twoFactorEnabled) {
@@ -162,11 +173,19 @@ export class AuthService extends BaseService {
     } else if (phone) {
       user = await this.userService.findUserByPhone(phone);
     } else {
-      throw new ValidationFailedException('t.errors.otpCodeRequired');
+      throw new ValidationFailedException(
+        't.errors.required.field',
+        undefined,
+        {
+          field: 't.common.labels.otpCode',
+        },
+      );
     }
 
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.userNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.generic', {
+        resource: 't.common.labels.user',
+      });
     }
 
     // Send phone verification OTP (notification system will fetch phone)
@@ -211,7 +230,13 @@ export class AuthService extends BaseService {
     } else if (dto.phone) {
       user = await this.userService.findUserByPhone(dto.phone);
     } else {
-      throw new ValidationFailedException('t.errors.otpCodeRequired');
+      throw new ValidationFailedException(
+        't.errors.required.field',
+        undefined,
+        {
+          field: 't.common.labels.otpCode',
+        },
+      );
     }
 
     if (!user) {
@@ -245,7 +270,10 @@ export class AuthService extends BaseService {
 
   async setupTwoFactor(actor: ActorUser) {
     if (actor.twoFactorEnabled) {
-      throw new BusinessLogicException('t.errors.twoFactorAlreadyEnabled');
+      throw new BusinessLogicException('t.errors.already.is', {
+        resource: 't.common.labels.twoFactorAuthentication',
+        state: 't.common.messages.enabled',
+      });
     }
 
     // Send OTP for 2FA setup (notification system will fetch phone)
@@ -267,11 +295,16 @@ export class AuthService extends BaseService {
     const user = await this.userService.findOne(actor.id, true);
 
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.userNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.generic', {
+        resource: 't.common.labels.user',
+      });
     }
 
     if (user.twoFactorEnabled) {
-      throw new BusinessLogicException('t.errors.twoFactorAlreadyEnabled');
+      throw new BusinessLogicException('t.errors.already.is', {
+        resource: 't.common.labels.twoFactorAuthentication',
+        state: 't.common.messages.enabled',
+      });
     }
 
     // Verify the OTP code
@@ -304,7 +337,9 @@ export class AuthService extends BaseService {
     const user = await this.userService.findOne(actor.id, true);
 
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.userNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.generic', {
+        resource: 't.common.labels.user',
+      });
     }
 
     if (!user.twoFactorEnabled) {
@@ -314,7 +349,9 @@ export class AuthService extends BaseService {
     // If OTP code not provided, send OTP and throw exception
     if (!verificationCode) {
       await this.verificationService.sendTwoFactorOTP(actor.id);
-      throw new OtpRequiredException('t.errors.otpCodeRequired');
+      throw new OtpRequiredException('t.errors.required.field', {
+        field: 't.common.labels.otpCode',
+      });
     }
 
     // Verify the OTP code (code is required at this point)
@@ -421,7 +458,7 @@ export class AuthService extends BaseService {
     // Get user (validation already done by strategy)
     const user = await this.userService.findOne(userId, true);
     if (!user) {
-      throw new AuthenticationFailedException('t.errors.userNotFound');
+      throw new AuthenticationFailedException('t.errors.authenticationFailed');
     }
 
     // Generate new tokens

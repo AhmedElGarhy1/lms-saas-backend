@@ -4,7 +4,6 @@ import {
   InsufficientPermissionsException,
   ResourceNotFoundException,
 } from '@/shared/common/exceptions/custom.exceptions';
-import { I18nPath } from '@/generated/i18n.generated';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { UserAccessRepository } from '../repositories/user-access.repository';
@@ -117,7 +116,10 @@ export class AccessControlService extends BaseService {
     });
 
     if (canAccess) {
-      throw new BusinessLogicException('t.errors.userAlreadyHasAccess');
+      throw new BusinessLogicException('t.errors.already.has', {
+        resource: 't.common.labels.user',
+        what: 't.common.labels.access',
+      });
     }
 
     await this.grantUserAccess(body);
@@ -253,9 +255,10 @@ export class AccessControlService extends BaseService {
     const canAccess =
       await this.accessControlHelperService.canBranchAccess(data);
     if (canAccess) {
-      throw new BusinessLogicException(
-        't.errors.profileAlreadyAssignedToBranch',
-      );
+      throw new BusinessLogicException('t.errors.already.is', {
+        resource: 't.common.labels.profile',
+        state: 't.common.messages.assignedToBranch',
+      });
     }
 
     // Create new assignment
@@ -298,7 +301,7 @@ export class AccessControlService extends BaseService {
 
     if (!hasPermission) {
       throw new InsufficientPermissionsException(
-        't.errors.insufficientPermissions' as I18nPath,
+        't.errors.insufficientPermissions',
         {
           action: PERMISSIONS.STAFF.DELETE_CENTER_ACCESS.action,
         },
@@ -310,9 +313,11 @@ export class AccessControlService extends BaseService {
       body.userProfileId,
     );
     if (isTargetAdmin) {
-      throw new BusinessLogicException(
-        't.errors.cannotDeleteAdminCenterAccess',
-      );
+      throw new BusinessLogicException('t.errors.cannot.actionReason', {
+        action: 't.common.buttons.delete',
+        resource: 't.common.labels.centerAccess',
+        reason: 't.common.messages.adminUsers',
+      });
     }
 
     // Validate access (can actor manage this profile?)
@@ -325,10 +330,14 @@ export class AccessControlService extends BaseService {
     const centerAccess =
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
-      throw new ResourceNotFoundException('t.errors.centerAccessNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.generic', {
+        resource: 't.common.labels.centerAccess',
+      });
     }
     if (centerAccess.deletedAt) {
-      throw new BusinessLogicException('t.errors.centerAccessAlreadyDeleted');
+      throw new BusinessLogicException('t.errors.already.deleted', {
+        resource: 't.common.labels.centerAccess',
+      });
     }
 
     await this.centerAccessRepository.softRemove(centerAccess.id);
@@ -350,7 +359,7 @@ export class AccessControlService extends BaseService {
 
     if (!hasPermission) {
       throw new InsufficientPermissionsException(
-        't.errors.insufficientPermissions' as I18nPath,
+        't.errors.insufficientPermissions',
         {
           action: PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS.action,
         },
@@ -369,10 +378,16 @@ export class AccessControlService extends BaseService {
       true,
     );
     if (!centerAccess) {
-      throw new ResourceNotFoundException('t.errors.centerAccessNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.generic', {
+        resource: 't.common.labels.centerAccess',
+      });
     }
     if (!centerAccess.deletedAt) {
-      throw new BusinessLogicException('t.errors.centerAccessNotDeleted');
+      throw new BusinessLogicException('t.errors.cannot.actionReason', {
+        action: 't.common.buttons.restore',
+        resource: 't.common.labels.centerAccess',
+        reason: 't.common.messages.centerAccessNotDeleted',
+      });
     }
     await this.centerAccessRepository.restore(centerAccess.id);
   }
@@ -394,7 +409,7 @@ export class AccessControlService extends BaseService {
 
     if (!hasPermission) {
       throw new InsufficientPermissionsException(
-        't.errors.insufficientPermissions' as I18nPath,
+        't.errors.insufficientPermissions',
         {
           action: PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS.action,
         },
@@ -407,9 +422,11 @@ export class AccessControlService extends BaseService {
         body.userProfileId,
       );
       if (isTargetAdmin) {
-        throw new BusinessLogicException(
-          't.errors.cannotDeactivateAdminCenterAccess',
-        );
+        throw new BusinessLogicException('t.errors.cannot.actionReason', {
+          action: 't.common.buttons.deactivate',
+          resource: 't.common.labels.centerAccess',
+          reason: 't.common.messages.adminUsersCannotHaveCenterAccessDeactivated',
+        });
       }
     }
 
@@ -423,7 +440,9 @@ export class AccessControlService extends BaseService {
     const centerAccess =
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
-      throw new ResourceNotFoundException('t.errors.centerAccessNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.generic', {
+        resource: 't.common.labels.centerAccess',
+      });
     }
     await this.centerAccessRepository.update(centerAccess.id, { isActive });
 

@@ -460,7 +460,11 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   async updateThrow(id: string, data: DeepPartial<T>): Promise<T | null> {
     const entity = await this.update(id, data);
     if (!entity)
-      throw new ResourceNotFoundException('t.errors.resourceNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.resource',
+        identifier: 'ID',
+        value: id,
+      });
     return entity;
   }
 
@@ -468,7 +472,11 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const repo = this.getRepository();
     const entity = await repo.findOne({ where: { id } as any });
     if (!entity)
-      throw new ResourceNotFoundException('t.errors.resourceNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.resource',
+        identifier: 'ID',
+        value: id,
+      });
 
     await repo.softRemove(entity);
   }
@@ -477,7 +485,11 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const repo = this.getRepository();
     const entity = await repo.findOne({ where: { id } as any });
     if (!entity)
-      throw new ResourceNotFoundException('t.errors.resourceNotFound');
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.labels.resource',
+        identifier: 'ID',
+        value: id,
+      });
 
     await repo.remove(entity);
   }

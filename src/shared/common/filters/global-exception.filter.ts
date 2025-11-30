@@ -150,7 +150,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // Handle rate limit with retry after (special case)
     if (status === HttpStatus.TOO_MANY_REQUESTS && retryAfter) {
       const remainingTime = formatRemainingTime(retryAfter);
-      return TranslationService.translate('t.errors.tooManyRequestsWithTime', {
+      return TranslationService.translate('t.errors.rateLimit.tooManyRequestsWithTime', {
         time: remainingTime,
       });
     }

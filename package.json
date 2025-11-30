@@ -27,7 +27,8 @@
     "validate:notification-manifests": "ts-node -r tsconfig-paths/register scripts/validate-notification-manifests.ts",
     "validate:notification-manifests:warn": "set VALIDATE_WARN_ONLY=true && ts-node -r tsconfig-paths/register scripts/validate-notification-manifests.ts",
     "validate:notification-listeners": "ts-node -r tsconfig-paths/register scripts/validate-notification-listeners.ts",
-    "validate:templates": "ts-node -r tsconfig-paths/register scripts/validate-templates.ts"
+    "validate:templates": "ts-node -r tsconfig-paths/register scripts/validate-templates.ts",
+    "validate:translations": "ts-node -r tsconfig-paths/register scripts/validate-translations.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.846.0",
