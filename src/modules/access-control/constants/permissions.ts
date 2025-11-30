@@ -9,6 +9,7 @@ export enum PermissionScope {
 export const PERMISSIONS = {
   // ===== STAFF MANAGEMENT PERMISSIONS =====
   STAFF: {
+    // center scope
     READ: {
       action: 'staff:read',
       name: 't.permissions.staff.read.name',
@@ -21,7 +22,6 @@ export const PERMISSIONS = {
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
-
     GRANT_USER_ACCESS: {
       action: 'staff:grant-user-access',
       name: 't.permissions.staff.grantUserAccess.name',
@@ -70,6 +70,13 @@ export const PERMISSIONS = {
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
+    IMPORT_PROFILE: {
+      action: 'staff:import-profile',
+      name: 't.permissions.staff.importProfile.name',
+      group: 'staff',
+      scope: PermissionScope.CENTER,
+    },
+    // admin scope
     GRANT_CENTER_ACCESS: {
       action: 'staff:grant-center-access',
       name: 't.permissions.staff.grantCenterAccess.name',
@@ -99,12 +106,6 @@ export const PERMISSIONS = {
       name: 't.permissions.staff.activate.name',
       group: 'staff',
       scope: PermissionScope.ADMIN,
-    },
-    IMPORT_PROFILE: {
-      action: 'staff:import-profile',
-      name: 't.permissions.staff.importProfile.name',
-      group: 'staff',
-      scope: PermissionScope.CENTER,
     },
   },
 
