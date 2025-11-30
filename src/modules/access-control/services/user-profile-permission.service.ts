@@ -5,6 +5,7 @@ import {
 } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { I18nPath } from '@/generated/i18n.generated';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { RolesService } from './roles.service';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
@@ -49,24 +50,24 @@ export class UserProfilePermissionService extends BaseService {
       // Validate that userProfileId is actually a UUID before querying
       if (!isUUID(userProfileId)) {
         throw new ResourceNotFoundException('t.errors.invalid.format', {
-          field: 't.common.labels.userProfileId',
+          field: 't.common.resources.profile',
         });
       }
 
       const profile = await this.userProfileService.findOne(userProfileId);
       if (!profile) {
         throw new ResourceNotFoundException('t.errors.notFound.withId', {
-          resource: 't.common.labels.userProfile',
-          identifier: 'ID',
-          value: userProfileId,
+          resource: 't.common.resources.profile',
+          identifier: 'ID' as I18nPath,
+          value: userProfileId as I18nPath | number,
         });
       }
       return profile.profileType;
     }
 
     throw new ResourceNotFoundException('t.errors.required.oneOf', {
-      field1: 't.common.labels.profileType',
-      field2: 't.common.labels.userProfileId',
+      field1: 't.common.resources.profileType',
+      field2: 't.common.resources.profile',
     });
   }
 
@@ -96,7 +97,7 @@ export class UserProfilePermissionService extends BaseService {
       requiredPermission = PERMISSIONS.ADMIN[permissionKey];
     } else {
       throw new ResourceNotFoundException('t.errors.invalid.type', {
-        field: 't.common.labels.profileType',
+        field: 't.common.resources.profileType',
       });
     }
 
@@ -109,13 +110,7 @@ export class UserProfilePermissionService extends BaseService {
     );
 
     if (!hasPermission) {
-      throw new InsufficientPermissionsException(
-        't.errors.insufficientPermissions',
-        {
-          action: requiredPermission.action,
-          profileType,
-        },
-      );
+      throw new InsufficientPermissionsException('t.errors.insufficientPermissions');
     }
   }
 
@@ -152,7 +147,7 @@ export class UserProfilePermissionService extends BaseService {
       } else {
         // Invalid string - neither UUID nor ProfileType
         throw new ResourceNotFoundException('t.errors.invalid.type', {
-          field: 't.common.labels.profileType',
+          field: 't.common.resources.profileType',
         });
       }
     } else {

@@ -10,6 +10,7 @@ import {
   AuthenticationFailedException,
   AccessDeniedException,
 } from '@/shared/common/exceptions/custom.exceptions';
+import { I18nPath } from '@/generated/i18n.generated';
 
 export interface RefreshJwtPayload {
   sub: string;
@@ -53,14 +54,14 @@ export class RefreshJwtStrategy extends PassportStrategy(
 
       if (!refreshToken) {
         throw new AuthenticationFailedException('t.errors.notFound.generic', {
-          resource: 't.common.labels.refreshToken',
+          resource: 't.common.resources.refreshToken',
         });
       }
 
       // Validate that this is a refresh token
       if (payload.type !== 'refresh') {
         throw new AuthenticationFailedException('t.errors.invalid.type', {
-          field: 't.common.labels.tokenType',
+          field: 't.common.resources.tokenType',
         });
       }
 
@@ -74,7 +75,7 @@ export class RefreshJwtStrategy extends PassportStrategy(
       const rtMatches = await bcrypt.compare(refreshToken, user.hashedRt);
       if (!rtMatches) {
         throw new AuthenticationFailedException('t.errors.invalid.expired', {
-          field: 'token',
+          field: 'token' as I18nPath,
         });
       }
 
@@ -87,11 +88,11 @@ export class RefreshJwtStrategy extends PassportStrategy(
       const jwtError = error as JwtError;
       if (jwtError?.name === 'TokenExpiredError') {
         throw new AuthenticationFailedException('t.errors.expired.generic', {
-          resource: 't.common.labels.refreshToken',
+          resource: 't.common.resources.refreshToken',
         });
       } else if (jwtError?.name === 'JsonWebTokenError') {
         throw new AuthenticationFailedException('t.errors.invalid.generic', {
-          field: 'refresh token',
+          field: 'refresh token' as I18nPath,
         });
       } else if (jwtError?.name === 'NotBeforeError') {
         throw new AuthenticationFailedException('t.errors.tokenNotActiveYet');

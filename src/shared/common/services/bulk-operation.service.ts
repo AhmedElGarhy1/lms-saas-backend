@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import pLimit from 'p-limit';
 import { BaseService } from './base.service';
-import { TranslationService } from '@/shared/services/translation.service';
 import { TranslatableException } from '../exceptions/custom.exceptions';
+import { I18nPath } from '@/generated/i18n.generated';
+import { PathArgs } from '@/generated/i18n-type-map.generated';
 
 export interface BulkOperationOptions {
   concurrency?: number; // Default: 10, minimum: 1
@@ -69,9 +70,8 @@ export class BulkOperationService extends BaseService {
             await operation(id);
             return { id, success: true };
           } catch (error: unknown) {
-            // Extract error message - translate if it's a translatable exception
-            let errorMessage: string; // User-facing translated message
-            let logMessage: string; // English message for logging
+            // Extract error message - store translation key if it's a translatable exception
+            let errorMessage: string; // Translation key or error message
 
             if (error instanceof Error) {
               // Check if it's a translatable exception with a translationKey
@@ -81,29 +81,26 @@ export class BulkOperationService extends BaseService {
                 translatableError.translationKey &&
                 typeof translatableError.translationKey === 'string'
               ) {
-                // Translate for user-facing display (respects user locale)
-                errorMessage = TranslationService.translate(
-                  translatableError.translationKey,
-                  translatableError.translationArgs,
-                );
-                // Use English for logging (for developers)
-                logMessage = TranslationService.translateForLogging(
-                  translatableError.translationKey,
-                  translatableError.translationArgs,
+                // Store translation key - TranslationResponseInterceptor will translate it
+                errorMessage = translatableError.translationKey;
+                // Log the key and args for debugging (no translation in service)
+                this.logger.warn(
+                  `Bulk operation failed for ID ${id}: ${translatableError.translationKey}`,
+                  translatableError.translationArgs || {},
                 );
               } else {
                 // Use the error message as-is for non-translatable errors
                 errorMessage = error.message;
-                logMessage = error.message;
+                this.logger.warn(
+                  `Bulk operation failed for ID ${id}: ${error.message}`,
+                );
               }
             } else {
               errorMessage = String(error);
-              logMessage = String(error);
+              this.logger.warn(
+                `Bulk operation failed for ID ${id}: ${String(error)}`,
+              );
             }
-
-            this.logger.warn(
-              `Bulk operation failed for ID ${id}: ${logMessage}`,
-            );
 
             return {
               id,
@@ -146,9 +143,8 @@ export class BulkOperationService extends BaseService {
         result.failed++;
         const id = uniqueIds[index];
 
-        // Extract error message - translate if it's a translatable exception
-        let errorMessage: string; // User-facing translated message
-        let logMessage: string; // English message for logging
+        // Extract error message - store translation key if it's a translatable exception
+        let errorMessage: string; // Translation key or error message
 
         if (settledResult.reason instanceof Error) {
           // Check if it's a translatable exception with a translationKey
@@ -158,29 +154,33 @@ export class BulkOperationService extends BaseService {
             translatableError.translationKey &&
             typeof translatableError.translationKey === 'string'
           ) {
-            // Translate for user-facing display (respects user locale)
-            errorMessage = TranslationService.translate(
-              translatableError.translationKey,
-              translatableError.translationArgs,
-            );
-            // Use English for logging (for developers)
-            logMessage = TranslationService.translateForLogging(
-              translatableError.translationKey,
-              translatableError.translationArgs,
+            // Store translation key - TranslationResponseInterceptor will translate it
+            errorMessage = translatableError.translationKey;
+            // Log the key and args for debugging (no translation in service)
+            this.logger.warn(
+              `Bulk operation failed for ID ${id}: ${translatableError.translationKey}`,
+              translatableError.translationArgs || {},
             );
           } else {
             // Use the error message as-is for non-translatable errors
             errorMessage = settledResult.reason.message;
-            logMessage = settledResult.reason.message;
+            this.logger.warn(
+              `Bulk operation failed for ID ${id}: ${settledResult.reason.message}`,
+            );
           }
         } else {
           errorMessage = String(settledResult.reason);
-          logMessage = String(settledResult.reason);
+          this.logger.warn(
+            `Bulk operation failed for ID ${id}: ${String(settledResult.reason)}`,
+          );
         }
 
-        this.logger.warn(`Bulk operation failed for ID ${id}: ${logMessage}`);
-
-        result.errors?.push({
+        const errorDetail: {
+          id: string;
+          error: string;
+          message?: string;
+          translationArgs?: PathArgs<I18nPath>;
+        } = {
           id,
           error: errorMessage,
           message:
@@ -188,7 +188,18 @@ export class BulkOperationService extends BaseService {
             settledResult.reason instanceof Error
               ? settledResult.reason.stack
               : undefined,
-        });
+        };
+
+        // Store translationArgs if it's a translatable exception
+        if (settledResult.reason instanceof Error) {
+          const translatableError =
+            settledResult.reason as unknown as TranslatableException;
+          if (translatableError.translationArgs) {
+            errorDetail.translationArgs = translatableError.translationArgs;
+          }
+        }
+
+        result.errors?.push(errorDetail);
       }
 
       // Report progress after each item

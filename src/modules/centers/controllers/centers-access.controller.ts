@@ -25,7 +25,7 @@ import {
   ToggleUserStatusRequestDto,
   ToggleUserStatusResponseDto,
 } from '@/modules/user/dto/toggle-user-status.dto';
-import { TranslationService } from '@/shared/services/translation.service';
+import { TranslationService } from '@/shared/common/services/translation.service';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 
@@ -36,6 +36,7 @@ export class CentersAccessController {
   constructor(
     private readonly accessControlService: AccessControlService,
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly translationService: TranslationService,
   ) {}
 
   @Patch(':userProfileId/status')
@@ -69,7 +70,7 @@ export class CentersAccessController {
 
     return {
       id: userProfileId,
-      message: TranslationService.translate(
+      message: this.translationService.translate(
         dto.isActive ? 't.success.userActivated' : 't.success.userDeactivated',
       ),
       isActive: dto.isActive,

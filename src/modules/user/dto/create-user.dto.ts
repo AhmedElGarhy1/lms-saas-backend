@@ -12,8 +12,6 @@ import {
   Matches,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { NotExists } from '@/shared/common/decorators/not-exists.decorator';
-import { User } from '@/modules/user/entities/user.entity';
 import { Locale } from '@/shared/common/enums/locale.enum';
 import { Type } from 'class-transformer';
 
@@ -38,7 +36,6 @@ export class CreateUserDto {
   @Matches(/^(01)[0-2,5]\d{8}$/, {
     message: 'Phone number must be a valid Egyptian mobile number',
   })
-  @NotExists(User, 'phone', { message: 'Phone number already exists' })
   phone: string;
 
   @ApiProperty({ description: 'User full name' })

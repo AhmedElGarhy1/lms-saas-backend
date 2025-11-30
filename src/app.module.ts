@@ -17,11 +17,11 @@ import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.mo
 import { SharedModule } from '@/shared/shared.module';
 import { SeederModule } from '@/database/seeder.module';
 import { LocaleModule } from '@/modules/locale/locale.module';
-import { ErrorInterceptor } from '@/shared/common/interceptors/error.interceptor';
 import { PerformanceInterceptor } from '@/shared/common/interceptors/performance.interceptor';
 import { GlobalExceptionFilter } from '@/shared/common/filters/global-exception.filter';
 import { TypeOrmExceptionFilter } from '@/shared/common/filters/typeorm-exception.filter';
 import { ResponseInterceptor } from '@/shared/common/interceptors/response.interceptor';
+import { TranslationResponseInterceptor } from '@/shared/common/interceptors/translation-response.interceptor';
 import { CustomValidationPipe } from '@/shared/common/pipes/validation.pipe';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { ContextGuard } from '@/shared/common/guards/context.guard';
@@ -144,10 +144,6 @@ import { I18nTranslations } from './generated/i18n.generated';
   providers: [
     {
       provide: APP_INTERCEPTOR,
-      useClass: ErrorInterceptor,
-    },
-    {
-      provide: APP_INTERCEPTOR,
       useClass: PerformanceInterceptor,
     },
     {
@@ -156,15 +152,19 @@ import { I18nTranslations } from './generated/i18n.generated';
     },
     {
       provide: APP_INTERCEPTOR,
+      useClass: TranslationResponseInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,
     },
     {
       provide: APP_FILTER,
-      useClass: TypeOrmExceptionFilter,
+      useClass: GlobalExceptionFilter,
     },
     {
       provide: APP_FILTER,
-      useClass: GlobalExceptionFilter,
+      useClass: TypeOrmExceptionFilter,
     },
     {
       provide: APP_PIPE,
@@ -177,54 +177,31 @@ import { I18nTranslations } from './generated/i18n.generated';
     },
     {
       provide: APP_GUARD,
-      useFactory: (reflector: Reflector, i18n: I18nService) =>
-        new PhoneVerificationGuard(
-          reflector,
-          i18n as unknown as I18nService<I18nTranslations>,
-        ),
-      inject: [Reflector, I18nService],
+      useFactory: (reflector: Reflector) =>
+        new PhoneVerificationGuard(reflector),
+      inject: [Reflector],
     },
     {
       provide: APP_GUARD,
       useFactory: (
         reflector: Reflector,
         userProfileService: UserProfileService,
-        i18n: I18nService,
-      ) =>
-        new ProfileGuard(
-          reflector,
-          userProfileService,
-          i18n as unknown as I18nService<I18nTranslations>,
-        ),
-      inject: [Reflector, UserProfileService, I18nService],
+      ) => new ProfileGuard(reflector, userProfileService),
+      inject: [Reflector, UserProfileService],
     },
     {
       provide: APP_GUARD,
       useFactory: (
         reflector: Reflector,
         accessControlHelperService: AccessControlHelperService,
-        i18n: I18nService,
-      ) =>
-        new ContextGuard(
-          reflector,
-          accessControlHelperService,
-          i18n as unknown as I18nService<I18nTranslations>,
-        ),
-      inject: [Reflector, AccessControlHelperService, I18nService],
+      ) => new ContextGuard(reflector, accessControlHelperService),
+      inject: [Reflector, AccessControlHelperService],
     },
     {
       provide: APP_GUARD,
-      useFactory: (
-        reflector: Reflector,
-        rolesService: RolesService,
-        i18n: I18nService,
-      ) =>
-        new PermissionsGuard(
-          reflector,
-          rolesService,
-          i18n as unknown as I18nService<I18nTranslations>,
-        ),
-      inject: [Reflector, RolesService, I18nService],
+      useFactory: (reflector: Reflector, rolesService: RolesService) =>
+        new PermissionsGuard(reflector, rolesService),
+      inject: [Reflector, RolesService],
     },
   ],
 })

@@ -11,6 +11,7 @@ import { RolesRepository } from '../repositories/roles.repository';
 import { AccessControlHelperService } from '../services/access-control-helper.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { InjectDataSource } from '@nestjs/typeorm';
+import { I18nPath } from '@/generated/i18n.generated';
 
 @EventSubscriber()
 export class ProfileRoleSubscriber
@@ -43,9 +44,9 @@ export class ProfileRoleSubscriber
       const role = await this.rolesRepository.findOne(profileRole.roleId);
       if (!role)
         throw new BusinessLogicException('t.errors.notFound.withId', {
-          resource: 't.common.labels.role',
-          identifier: 'ID',
-          value: profileRole.roleId,
+          resource: 't.common.resources.role',
+          identifier: 'ID' as I18nPath,
+          value: profileRole.roleId as I18nPath | number,
         });
 
       const profile = await this.accessControlHelperService.findUserProfile(
@@ -53,7 +54,7 @@ export class ProfileRoleSubscriber
       );
       if (!profile)
         throw new BusinessLogicException('t.errors.notFound.generic', {
-          resource: 't.common.labels.userProfile',
+          resource: 't.common.resources.profile',
         });
 
       if (profileRole.centerId) {

@@ -3,7 +3,6 @@ import {
   ResourceNotFoundException,
   InsufficientPermissionsException,
   ValidationFailedException,
-  UserAlreadyExistsException,
   OtpRequiredException,
   AuthenticationFailedException,
 } from '@/shared/common/exceptions/custom.exceptions';
@@ -39,6 +38,7 @@ import {
 } from '../events/user.events';
 import { VerificationService } from '@/modules/auth/services/verification.service';
 import { VerificationType } from '@/modules/auth/enums/verification-type.enum';
+import { I18nPath } from '@/generated/i18n.generated';
 
 @Injectable()
 export class UserService extends BaseService {
@@ -66,9 +66,9 @@ export class UserService extends BaseService {
     const user = await this.findOne(userId, true);
     if (!user) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.user',
-        identifier: 'ID',
-        value: userId,
+        resource: 't.common.resources.user',
+        identifier: 'ID' as I18nPath,
+        value: userId as I18nPath | number,
       });
     }
 
@@ -93,7 +93,7 @@ export class UserService extends BaseService {
       if (!dto.code) {
         await this.verificationService.sendTwoFactorOTP(user.id || '');
         throw new OtpRequiredException('t.errors.required.field', {
-          field: 'OTP code',
+          field: 'OTP code' as I18nPath,
         });
       }
 
@@ -110,7 +110,9 @@ export class UserService extends BaseService {
           phone: user.phone,
           error: error instanceof Error ? error.message : String(error),
         });
-        throw new AuthenticationFailedException('t.errors.authenticationFailed');
+        throw new AuthenticationFailedException(
+          't.errors.authenticationFailed',
+        );
       }
     }
 
@@ -131,23 +133,8 @@ export class UserService extends BaseService {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async createUser(dto: CreateUserDto, _actor: ActorUser): Promise<User> {
-    // Check for existing user by phone
-    if (dto.phone) {
-      const existingUser = await this.userRepository.findByPhone(dto.phone);
-      if (existingUser) {
-        throw new UserAlreadyExistsException(
-          dto.phone,
-          't.errors.already.existsWithField',
-          {
-            resource: 't.common.labels.user',
-            field: 't.common.labels.phone',
-            value: dto.phone,
-          },
-        );
-      }
-    }
-
     // Create user (entity hook will hash password automatically)
+    // Database unique constraint will handle phone uniqueness
     const savedUser = await this.userRepository.create({
       password: dto.password,
       name: dto.name,
@@ -190,9 +177,9 @@ export class UserService extends BaseService {
     const user = await this.userRepository.findOne(userId);
     if (!user) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.user',
-        identifier: 'ID',
-        value: userId,
+        resource: 't.common.resources.user',
+        identifier: 'ID' as I18nPath,
+        value: userId as I18nPath | number,
       });
     }
 
@@ -200,10 +187,13 @@ export class UserService extends BaseService {
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException('t.errors.notAuthorized.action', {
-        action: 't.common.buttons.delete',
-        resource: 't.common.labels.user',
-      });
+      throw new InsufficientPermissionsException(
+        't.errors.notAuthorized.action',
+        {
+          action: 't.common.buttons.delete',
+          resource: 't.common.resources.user',
+        },
+      );
     }
     await this.userRepository.softRemove(userId);
 
@@ -219,9 +209,9 @@ export class UserService extends BaseService {
     const user = await this.userRepository.findOneSoftDeletedById(userId);
     if (!user) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.user',
-        identifier: 'ID',
-        value: userId,
+        resource: 't.common.resources.user',
+        identifier: 'ID' as I18nPath,
+        value: userId as I18nPath | number,
       });
     }
 
@@ -229,10 +219,13 @@ export class UserService extends BaseService {
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException('t.errors.notAuthorized.action', {
-        action: 't.common.buttons.restore',
-        resource: 't.common.labels.user',
-      });
+      throw new InsufficientPermissionsException(
+        't.errors.notAuthorized.action',
+        {
+          action: 't.common.buttons.restore',
+          resource: 't.common.resources.user',
+        },
+      );
     }
 
     // Restore user
@@ -268,9 +261,9 @@ export class UserService extends BaseService {
     const user = await this.userRepository.findOne(userId);
     if (!user) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.user',
-        identifier: 'ID',
-        value: userId,
+        resource: 't.common.resources.user',
+        identifier: 'ID' as I18nPath,
+        value: userId as I18nPath | number,
       });
     }
 
@@ -310,7 +303,7 @@ export class UserService extends BaseService {
     const profile = await this.userProfileService.findOne(userProfileId);
     if (!profile) {
       throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.userProfile',
+        resource: 't.common.resources.profile',
       });
     }
 
@@ -374,7 +367,7 @@ export class UserService extends BaseService {
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.userProfile',
+        resource: 't.common.resources.profile',
       });
     }
     return this.userRepository.findOne(userProfile.userId);
@@ -402,25 +395,7 @@ export class UserService extends BaseService {
       targetUserProfileId: actor.userProfileId,
     });
 
-    // Validate phone uniqueness if phone is being updated
-    if (updateData.phone) {
-      const existingUser = await this.userRepository.findByPhone(
-        updateData.phone,
-      );
-      // If phone exists and belongs to a different user, throw error
-      if (existingUser && existingUser.id !== userId) {
-        throw new UserAlreadyExistsException(
-          updateData.phone,
-          't.errors.already.existsWithField',
-          {
-            resource: 't.common.labels.user',
-            field: 't.common.labels.phone',
-            value: updateData.phone,
-          },
-        );
-      }
-    }
-
+    // Database unique constraint will handle phone uniqueness
     if (updateData.userInfo) {
       await this.userInfoService.updateUserInfo(userId, updateData.userInfo);
     }
@@ -456,7 +431,7 @@ export class UserService extends BaseService {
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.userProfile',
+        resource: 't.common.resources.profile',
       });
     }
 
@@ -472,7 +447,7 @@ export class UserService extends BaseService {
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.userProfile',
+        resource: 't.common.resources.profile',
       });
     }
 
@@ -480,10 +455,13 @@ export class UserService extends BaseService {
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException('t.errors.notAuthorized.action', {
-        action: 't.common.buttons.delete',
-        resource: 't.common.labels.user',
-      });
+      throw new InsufficientPermissionsException(
+        't.errors.notAuthorized.action',
+        {
+          action: 't.common.buttons.delete',
+          resource: 't.common.resources.user',
+        },
+      );
     }
 
     await this.userRepository.softRemove(userProfile.userId);
@@ -497,7 +475,7 @@ export class UserService extends BaseService {
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.userProfile',
+        resource: 't.common.resources.profile',
       });
     }
 
@@ -505,10 +483,13 @@ export class UserService extends BaseService {
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException('t.errors.notAuthorized.action', {
-        action: 't.common.buttons.delete',
-        resource: 't.common.labels.user',
-      });
+      throw new InsufficientPermissionsException(
+        't.errors.notAuthorized.action',
+        {
+          action: 't.common.buttons.delete',
+          resource: 't.common.resources.user',
+        },
+      );
     }
 
     await this.userRepository.restore(userProfile.userId);

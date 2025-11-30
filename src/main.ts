@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
-import * as fs from 'fs';
 import { useContainer } from 'class-validator';
 import { UserMiddleware } from './shared/common/middleware/user.middleware';
 import { UserService } from './modules/user/services/user.service';
@@ -71,12 +70,12 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
-  fs.writeFileSync(
-    `${__dirname}/openapi.json`,
-    JSON.stringify(document, null, 2),
-  );
+  // fs.writeFileSync(
+  //   `${__dirname}/openapi.json`,
+  //   JSON.stringify(document, null, 2),
+  // );
 
-  console.log('OpenAPI spec exported to', `${__dirname}/openapi.json`);
+  // console.log('OpenAPI spec exported to', `${__dirname}/openapi.json`);
 
   // Configure Redis adapter for Socket.IO (horizontal scaling)
   const redisService = app.get(RedisService);

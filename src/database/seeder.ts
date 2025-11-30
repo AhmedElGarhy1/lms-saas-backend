@@ -127,9 +127,7 @@ export class DatabaseSeeder {
           where: { id: userUuid },
         });
         if (!user) {
-          throw new SeederException('t.errors.seederFailed', {
-            context: `Failed to create system user with ID: ${userUuid}`,
-          });
+          throw new SeederException('t.errors.seederFailed');
         }
         return user;
       },
@@ -201,9 +199,7 @@ export class DatabaseSeeder {
           where: { id: userUuid },
         });
         if (!user) {
-          throw new SeederException('t.errors.seederFailed', {
-            context: `Failed to create superadmin user with ID: ${userUuid}`,
-          });
+          throw new SeederException('t.errors.seederFailed');
         }
         return user;
       },

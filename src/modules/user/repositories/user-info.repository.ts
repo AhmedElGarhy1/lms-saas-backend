@@ -32,7 +32,7 @@ export class UserInfoRepository extends BaseRepository<UserInfo> {
     });
     if (!userInfo) {
       throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.userInfo',
+        resource: 't.common.resources.userInfo',
       });
     }
 

@@ -21,6 +21,7 @@ import {
   RestoreRoleEvent,
 } from '../events/role.events';
 import { BaseService } from '@/shared/common/services/base.service';
+import { I18nPath } from '@/generated/i18n.generated';
 
 @Injectable()
 export class RolesService extends BaseService {
@@ -73,15 +74,15 @@ export class RolesService extends BaseService {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.role',
-        identifier: 'ID',
-        value: roleId,
+        resource: 't.common.resources.role',
+        identifier: 'ID' as I18nPath,
+        value: roleId as I18nPath | number,
       });
     }
     if (role.readOnly) {
       throw new BusinessLogicException('t.errors.cannot.actionReason', {
         action: 't.common.buttons.update',
-        resource: 't.common.labels.role',
+        resource: 't.common.resources.role',
         reason: 't.common.messages.readOnly',
       });
     }
@@ -95,7 +96,7 @@ export class RolesService extends BaseService {
         't.errors.notAuthorized.action',
         {
           action: 't.common.buttons.update',
-          resource: 't.common.labels.role',
+          resource: 't.common.resources.role',
         },
       );
     }
@@ -119,15 +120,15 @@ export class RolesService extends BaseService {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.role',
-        identifier: 'ID',
-        value: roleId,
+        resource: 't.common.resources.role',
+        identifier: 'ID' as I18nPath,
+        value: roleId as I18nPath | number,
       });
     }
     if (role.readOnly) {
       throw new BusinessLogicException('t.errors.cannot.actionReason', {
         action: 't.common.buttons.delete',
-        resource: 't.common.labels.role',
+        resource: 't.common.resources.role',
         reason: 't.common.messages.readOnly',
       });
     }
@@ -141,7 +142,7 @@ export class RolesService extends BaseService {
         't.errors.notAuthorized.action',
         {
           action: 't.common.buttons.delete',
-          resource: 't.common.labels.role',
+          resource: 't.common.resources.role',
         },
       );
     }
@@ -204,7 +205,7 @@ export class RolesService extends BaseService {
           't.errors.notAuthorized.action',
           {
             action: 't.common.buttons.view',
-            resource: 't.common.labels.role',
+            resource: 't.common.resources.role',
           },
         );
       }
@@ -222,9 +223,9 @@ export class RolesService extends BaseService {
     const role = await this.rolesRepository.findOneSoftDeleted({ id: roleId });
     if (!role) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.role',
-        identifier: 'ID',
-        value: roleId,
+        resource: 't.common.resources.role',
+        identifier: 'ID' as I18nPath,
+        value: roleId as I18nPath | number,
       });
     }
 
@@ -232,7 +233,7 @@ export class RolesService extends BaseService {
     if (!role.deletedAt) {
       throw new BusinessLogicException('t.errors.cannot.actionReason', {
         action: 't.common.buttons.restore',
-        resource: 't.common.labels.role',
+        resource: 't.common.resources.role',
         reason: 't.common.messages.roleNotDeleted',
       });
     }

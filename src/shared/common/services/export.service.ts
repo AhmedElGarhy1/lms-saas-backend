@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Response } from 'express';
+import { I18nPath } from '@/generated/i18n.generated';
 import { ExportResponseDto } from '../dto/export-response.dto';
 import {
   ExportFormatNotSupportedException,
@@ -7,8 +8,6 @@ import {
 } from '../exceptions/custom.exceptions';
 import { ExportFormat } from '../dto';
 import { BaseService } from './base.service';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 export interface ExportOptions {
   filename: string;
@@ -26,7 +25,7 @@ export interface ExportMapper<T, R extends Record<string, any>> {
 export class ExportService extends BaseService {
   private readonly logger: Logger = new Logger(ExportService.name);
 
-  constructor(private readonly i18n: I18nService<I18nTranslations>) {
+  constructor() {
     super();
   }
 
@@ -53,15 +52,16 @@ export class ExportService extends BaseService {
 
       return {
         success: true,
-        message: this.i18n.translate('t.success.export', {
-          args: { resource: 'CSV' },
-        }),
+        message: {
+          key: 't.success.export',
+          args: { resource: 'CSV' as I18nPath },
+        },
         filename: `${filename}.csv`,
         format: 'csv',
         recordCount: data.length,
         fileSize,
         exportedAt: new Date().toISOString(),
-      };
+      } as ExportResponseDto;
     } catch (error: unknown) {
       this.logger.error(
         `CSV export failed - filename: ${filename}`,
@@ -97,15 +97,16 @@ export class ExportService extends BaseService {
 
       return {
         success: true,
-        message: this.i18n.translate('t.success.export', {
-          args: { resource: 'XLSX' },
-        }),
+        message: {
+          key: 't.success.export',
+          args: { resource: 'XLSX' as I18nPath },
+        },
         filename: `${filename}.xlsx`,
         format: 'xlsx',
         recordCount: data.length,
         fileSize,
         exportedAt: new Date().toISOString(),
-      };
+      } as ExportResponseDto;
     } catch (error: unknown) {
       this.logger.error(
         `XLSX export failed - filename: ${filename}`,
@@ -138,15 +139,16 @@ export class ExportService extends BaseService {
 
       return {
         success: true,
-        message: this.i18n.translate('t.success.export', {
-          args: { resource: 'JSON' },
-        }),
+        message: {
+          key: 't.success.export',
+          args: { resource: 'JSON' as I18nPath },
+        },
         filename: `${filename}.json`,
         format: 'json',
         recordCount: data.length,
         fileSize,
         exportedAt: new Date().toISOString(),
-      };
+      } as ExportResponseDto;
     } catch (error: unknown) {
       this.logger.error(
         `JSON export failed - filename: ${filename}`,
@@ -200,7 +202,9 @@ export class ExportService extends BaseService {
 
     // Check for empty data
     if (!data || data.length === 0) {
-      throw new ExportDataUnavailableException('t.errors.exportDataUnavailable');
+      throw new ExportDataUnavailableException(
+        't.errors.exportDataUnavailable',
+      );
     }
 
     // Generate filename with timestamp

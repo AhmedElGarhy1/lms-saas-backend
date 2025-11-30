@@ -6,6 +6,7 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { I18nPath } from '@/generated/i18n.generated';
 import {
   BranchCreatedEvent,
   BranchUpdatedEvent,
@@ -47,9 +48,9 @@ export class BranchesService extends BaseService {
 
     if (!branch) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.branch',
-        identifier: 'ID',
-        value: branchId,
+        resource: 't.common.resources.branch',
+        identifier: 'ID' as I18nPath,
+        value: branchId as I18nPath | number,
       });
     }
 
@@ -127,9 +128,9 @@ export class BranchesService extends BaseService {
     const branch = await this.branchesRepository.findOne(branchId);
     if (!branch) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.branch',
-        identifier: 'ID',
-        value: branchId,
+        resource: 't.common.resources.branch',
+        identifier: 'ID' as I18nPath,
+        value: branchId as I18nPath | number,
       });
     }
 
@@ -158,9 +159,9 @@ export class BranchesService extends BaseService {
       await this.branchesRepository.findOneSoftDeletedById(branchId);
     if (!branch) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.branch',
-        identifier: 'ID',
-        value: branchId,
+        resource: 't.common.resources.branch',
+        identifier: 'ID' as I18nPath,
+        value: branchId as I18nPath | number,
       });
     }
 

@@ -20,6 +20,7 @@ import {
 } from '../events/access-control.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { BaseService } from '@/shared/common/services/base.service';
+import { I18nPath } from '@/generated/i18n.generated';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 import { RolesService } from './roles.service';
 import { PERMISSIONS } from '../constants/permissions';
@@ -117,8 +118,8 @@ export class AccessControlService extends BaseService {
 
     if (canAccess) {
       throw new BusinessLogicException('t.errors.already.has', {
-        resource: 't.common.labels.user',
-        what: 't.common.labels.access',
+        resource: 't.common.resources.user',
+        what: 't.common.resources.access',
       });
     }
 
@@ -303,7 +304,7 @@ export class AccessControlService extends BaseService {
       throw new InsufficientPermissionsException(
         't.errors.insufficientPermissions',
         {
-          action: PERMISSIONS.STAFF.DELETE_CENTER_ACCESS.action,
+          action: PERMISSIONS.STAFF.DELETE_CENTER_ACCESS.action as I18nPath,
         },
       );
     }
@@ -315,7 +316,7 @@ export class AccessControlService extends BaseService {
     if (isTargetAdmin) {
       throw new BusinessLogicException('t.errors.cannot.actionReason', {
         action: 't.common.buttons.delete',
-        resource: 't.common.labels.centerAccess',
+        resource: 't.common.resources.centerAccess',
         reason: 't.common.messages.adminUsers',
       });
     }
@@ -331,12 +332,12 @@ export class AccessControlService extends BaseService {
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
       throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.centerAccess',
+        resource: 't.common.resources.centerAccess',
       });
     }
     if (centerAccess.deletedAt) {
       throw new BusinessLogicException('t.errors.already.deleted', {
-        resource: 't.common.labels.centerAccess',
+        resource: 't.common.resources.centerAccess',
       });
     }
 
@@ -361,7 +362,7 @@ export class AccessControlService extends BaseService {
       throw new InsufficientPermissionsException(
         't.errors.insufficientPermissions',
         {
-          action: PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS.action,
+          action: PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS.action as I18nPath,
         },
       );
     }
@@ -379,13 +380,13 @@ export class AccessControlService extends BaseService {
     );
     if (!centerAccess) {
       throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.centerAccess',
+        resource: 't.common.resources.centerAccess',
       });
     }
     if (!centerAccess.deletedAt) {
       throw new BusinessLogicException('t.errors.cannot.actionReason', {
         action: 't.common.buttons.restore',
-        resource: 't.common.labels.centerAccess',
+        resource: 't.common.resources.centerAccess',
         reason: 't.common.messages.centerAccessNotDeleted',
       });
     }
@@ -411,7 +412,7 @@ export class AccessControlService extends BaseService {
       throw new InsufficientPermissionsException(
         't.errors.insufficientPermissions',
         {
-          action: PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS.action,
+          action: PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS.action as I18nPath,
         },
       );
     }
@@ -424,8 +425,9 @@ export class AccessControlService extends BaseService {
       if (isTargetAdmin) {
         throw new BusinessLogicException('t.errors.cannot.actionReason', {
           action: 't.common.buttons.deactivate',
-          resource: 't.common.labels.centerAccess',
-          reason: 't.common.messages.adminUsersCannotHaveCenterAccessDeactivated',
+          resource: 't.common.resources.centerAccess',
+          reason:
+            't.common.messages.adminUsersCannotHaveCenterAccessDeactivated',
         });
       }
     }
@@ -441,7 +443,7 @@ export class AccessControlService extends BaseService {
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
       throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.centerAccess',
+        resource: 't.common.resources.centerAccess',
       });
     }
     await this.centerAccessRepository.update(centerAccess.id, { isActive });

@@ -43,9 +43,12 @@ export class UserProfileImportController {
     status: 409,
     description: 'User already has profile or center access',
   })
-  async requestOtp(@Body() dto: RequestImportOtpDto) {
+  async requestOtp(
+    @Body() dto: RequestImportOtpDto,
+    @GetUser() actor: ActorUser,
+  ) {
     // This endpoint doesn't require authentication as per plan
-    await this.userProfileImportService.sendImportOtp(dto);
+    await this.userProfileImportService.sendImportOtp(dto, actor);
 
     return ControllerResponse.success(null, 't.success.otpSent');
   }

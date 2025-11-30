@@ -11,19 +11,17 @@ import { IRequest } from '../interfaces/request.interface';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { RequestContext } from '../context/request.context';
 import { NO_CONTEXT_KEY } from '../decorators/no-context.decorator';
+import { I18nPath } from '@/generated/i18n.generated';
 import {
   CenterSelectionRequiredException,
   ProfileSelectionRequiredException,
 } from '../exceptions/custom.exceptions';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class ContextGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -52,9 +50,9 @@ export class ContextGuard implements CanActivate {
 
     const user = request.user;
     if (!user) {
-      throw new ForbiddenException(
-        this.i18n.translate('t.errors.userNotAuthenticated'),
-      );
+      throw new ForbiddenException({
+        message: { key: 't.errors.userNotAuthenticated' },
+      });
     }
     user.centerId = centerId;
 
@@ -67,15 +65,16 @@ export class ContextGuard implements CanActivate {
     const { userProfileId, userProfileType } = RequestContext.get();
     if (!userProfileId) {
       throw new ProfileSelectionRequiredException('t.errors.required.field', {
-        field: 't.common.labels.profileSelection',
+        field: 't.common.resources.profileSelection',
       });
     }
     if (!userProfileType) {
-      throw new InternalServerErrorException(
-        this.i18n.translate('t.errors.notFound.generic', {
-          args: { resource: 't.common.labels.profileType' },
-        }),
-      );
+      throw new InternalServerErrorException({
+        message: {
+          key: 't.errors.notFound.generic',
+          args: { resource: 't.common.resources.profileType' },
+        },
+      });
     }
 
     await this.accessControlHelperService.validateAdminAndCenterAccess({

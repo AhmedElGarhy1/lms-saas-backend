@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build": "npm run generate:i18n-args && nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -24,6 +24,7 @@
     "seed": "ts-node -r tsconfig-paths/register src/database/seed.ts",
     "lint:i18n": "eslint \"src/i18n/*.json\"",
     "generate:templates": "ts-node -r tsconfig-paths/register scripts/generate-template-types.ts",
+    "generate:i18n-args": "ts-node -r tsconfig-paths/register scripts/generate-i18n-args.ts",
     "validate:notification-manifests": "ts-node -r tsconfig-paths/register scripts/validate-notification-manifests.ts",
     "validate:notification-manifests:warn": "set VALIDATE_WARN_ONLY=true && ts-node -r tsconfig-paths/register scripts/validate-notification-manifests.ts",
     "validate:notification-listeners": "ts-node -r tsconfig-paths/register scripts/validate-notification-listeners.ts",
@@ -119,6 +120,7 @@
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "typesafe-i18n": "^5.26.2",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.20.0"
   }

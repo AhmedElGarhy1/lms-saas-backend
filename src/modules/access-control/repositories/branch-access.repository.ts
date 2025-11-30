@@ -2,10 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { BranchAccess } from '../entities/branch-access.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { BranchAccessDto } from '../dto/branch-access.dto';
-import {
-  ResourceNotFoundException,
-  ResourceAlreadyExistsException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 
@@ -26,13 +23,7 @@ export class BranchAccessRepository extends BaseRepository<BranchAccess> {
   }
 
   async grantBranchAccess(data: BranchAccessDto) {
-    const existingAccess = await this.findBranchAccess(data);
-    if (existingAccess) {
-      throw new ResourceAlreadyExistsException('t.errors.already.exists', {
-        resource: 't.common.labels.access',
-      });
-    }
-
+    // Database unique constraint will handle uniqueness
     return this.create({ ...data, isActive: true });
   }
 
@@ -40,7 +31,7 @@ export class BranchAccessRepository extends BaseRepository<BranchAccess> {
     const existingAccess = await this.findBranchAccess(data);
     if (!existingAccess) {
       throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.branchAccess',
+        resource: 't.common.resources.branchAccess',
       });
     }
 

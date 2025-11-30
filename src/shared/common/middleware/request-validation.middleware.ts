@@ -7,6 +7,7 @@ import {
   RequestBodyTooLargeException,
   UnsupportedContentTypeException,
 } from '../exceptions/custom.exceptions';
+import { I18nPath } from '@/generated/i18n.generated';
 
 @Injectable()
 export class RequestValidationMiddleware implements NestMiddleware {
@@ -49,7 +50,11 @@ export class RequestValidationMiddleware implements NestMiddleware {
     const requiredHeaders = ['user-agent'];
     for (const header of requiredHeaders) {
       if (!req.get(header)) {
-        throw new MissingRequiredHeaderException(header, 't.errors.missingRequiredHeader');
+        throw new MissingRequiredHeaderException(
+          header,
+          't.errors.missingRequiredHeader',
+          { header: header as I18nPath },
+        );
       }
     }
 
@@ -58,7 +63,7 @@ export class RequestValidationMiddleware implements NestMiddleware {
       const contentType = req.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         throw new InvalidContentTypeException('t.errors.invalid.type', {
-          field: 'Content-Type',
+          field: 'Content-Type' as I18nPath,
         });
       }
     }

@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Injectable, Logger } from '@nestjs/common';
 import { ResourceNotFoundException } from '../exceptions/custom.exceptions';
+import { I18nPath } from '@/generated/i18n.generated';
 import { Pagination, paginate } from 'nestjs-typeorm-paginate';
 import { BasePaginationDto } from '../dto/base-pagination.dto';
 import { TransactionHost } from '@nestjs-cls/transactional';
@@ -461,9 +462,9 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const entity = await this.update(id, data);
     if (!entity)
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.resource',
-        identifier: 'ID',
-        value: id,
+        resource: 't.common.resources.resource',
+        identifier: 'ID' as I18nPath,
+        value: id as I18nPath | number,
       });
     return entity;
   }
@@ -473,9 +474,9 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const entity = await repo.findOne({ where: { id } as any });
     if (!entity)
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.resource',
-        identifier: 'ID',
-        value: id,
+        resource: 't.common.resources.resource',
+        identifier: 'ID' as I18nPath,
+        value: id as I18nPath | number,
       });
 
     await repo.softRemove(entity);
@@ -486,9 +487,9 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const entity = await repo.findOne({ where: { id } as any });
     if (!entity)
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.resource',
-        identifier: 'ID',
-        value: id,
+        resource: 't.common.resources.resource',
+        identifier: 'ID' as I18nPath,
+        value: id as I18nPath | number,
       });
 
     await repo.remove(entity);

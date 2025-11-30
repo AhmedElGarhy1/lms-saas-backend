@@ -13,16 +13,14 @@ import {
   InactiveProfileException,
   ProfileSelectionRequiredException,
 } from '../exceptions/custom.exceptions';
+import { I18nPath } from '@/generated/i18n.generated';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class ProfileGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly userProfileService: UserProfileService,
-    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -50,9 +48,9 @@ export class ProfileGuard implements CanActivate {
 
     const user = request.user;
     if (!user) {
-      throw new ForbiddenException(
-        this.i18n.translate('t.errors.userNotAuthenticated'),
-      );
+      throw new ForbiddenException({
+        message: { key: 't.errors.userNotAuthenticated' },
+      });
     }
 
     user.userProfileId = userProfileId;
@@ -65,7 +63,7 @@ export class ProfileGuard implements CanActivate {
 
     if (!userProfileId) {
       throw new ProfileSelectionRequiredException('t.errors.required.field', {
-        field: 't.common.labels.profileSelection',
+        field: 't.common.resources.profileSelection',
       });
     }
     const profile = await this.userProfileService.findForUser(
@@ -74,13 +72,11 @@ export class ProfileGuard implements CanActivate {
     );
     if (!profile) {
       throw new ProfileSelectionRequiredException('t.errors.required.field', {
-        field: 't.common.labels.profileSelection',
+        field: 't.common.resources.profileSelection',
       });
     }
     if (!profile.isActive) {
-      throw new InactiveProfileException(
-        this.i18n.translate('t.errors.profileInactive'),
-      );
+      throw new InactiveProfileException('t.errors.profileInactive');
     }
 
     user.profileType = profile.profileType;

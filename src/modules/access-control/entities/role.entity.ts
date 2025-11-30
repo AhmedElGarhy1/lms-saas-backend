@@ -7,14 +7,11 @@ import {
   JoinColumn,
   BeforeInsert,
   BeforeUpdate,
-  AfterLoad,
 } from 'typeorm';
 import { ProfileRole } from './profile-role.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { RolePermission } from './role-permission.entity';
-import { TranslationService } from '@/shared/services/translation.service';
-import { I18nPath } from '@/generated/i18n.generated';
 
 @Entity('roles')
 @Index(['name', 'centerId'], { unique: true })
@@ -48,16 +45,6 @@ export class Role extends BaseEntity {
     return !!this.centerId === !!centerId;
   }
 
-  @AfterLoad()
-  translate() {
-    // Only translate if readOnly = true (system roles)
-    if (!this.readOnly) return;
-
-    this.name = TranslationService.translate(this.name as I18nPath);
-    if (this.description) {
-      this.description = TranslationService.translate(
-        this.description as I18nPath,
-      );
-    }
-  }
+  // Translation happens in TranslationResponseInterceptor
+  // Entities store translation keys as-is (e.g., name: 't.roles.admin' for system roles)
 }

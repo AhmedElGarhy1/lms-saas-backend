@@ -142,7 +142,7 @@ export class UserRepository extends BaseRepository<User> {
             'centerAccess',
             `
             "centerAccess"."centerId" = :centerId
-            AND "centerAccess"."userProfileId" = "userProfiles"."id"           
+            AND "centerAccess"."userProfileId" = "userProfiles"."id"
             `,
             { centerId },
           );

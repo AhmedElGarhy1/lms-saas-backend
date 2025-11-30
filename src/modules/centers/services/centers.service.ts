@@ -10,6 +10,7 @@ import { UpdateCenterRequestDto } from '../dto/update-center.dto';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { BaseService } from '@/shared/common/services/base.service';
+import { I18nPath } from '@/generated/i18n.generated';
 import { UserService } from '@/modules/user/services/user.service';
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
@@ -60,9 +61,9 @@ export class CentersService extends BaseService {
       : await this.centersRepository.findOne(centerId);
     if (!center) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.center',
-        identifier: 'ID',
-        value: centerId,
+        resource: 't.common.resources.center',
+        identifier: 'ID' as I18nPath,
+        value: centerId as I18nPath | number,
       });
     }
 
@@ -108,9 +109,9 @@ export class CentersService extends BaseService {
     const center = await this.findCenterById(centerId, actor);
     if (!center) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.center',
-        identifier: 'ID',
-        value: centerId,
+        resource: 't.common.resources.center',
+        identifier: 'ID' as I18nPath,
+        value: centerId as I18nPath | number,
       });
     }
 
@@ -118,9 +119,9 @@ export class CentersService extends BaseService {
       const existingCenter = await this.centersRepository.findByName(dto.name);
       if (existingCenter) {
         throw new BusinessLogicException('t.errors.already.existsWithField', {
-          resource: 't.common.labels.center',
-          field: 'name',
-          value: dto.name,
+          resource: 't.common.resources.center',
+          field: 'name' as I18nPath,
+          value: dto.name as I18nPath | number,
         });
       }
     }
@@ -131,9 +132,9 @@ export class CentersService extends BaseService {
     );
     if (!updatedCenter) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.center',
-        identifier: 'ID',
-        value: centerId,
+        resource: 't.common.resources.center',
+        identifier: 'ID' as I18nPath,
+        value: centerId as I18nPath | number,
       });
     }
 
@@ -165,7 +166,7 @@ export class CentersService extends BaseService {
     if (!center.deletedAt) {
       throw new BusinessLogicException('t.errors.cannot.actionReason', {
         action: 't.common.buttons.restore',
-        resource: 't.common.labels.center',
+        resource: 't.common.resources.center',
         reason: 't.common.messages.centerNotDeleted',
       });
     }

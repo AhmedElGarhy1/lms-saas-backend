@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { I18nService } from 'nestjs-i18n';
 import { readFile } from 'fs/promises';
 import * as Handlebars from 'handlebars';
 import { z } from 'zod';
@@ -17,6 +16,8 @@ import {
   getNotificationI18nKey,
   NOTIFICATION_FIELDS,
 } from '../utils/notification-i18n.util';
+import { TranslationService } from '@/shared/common/services/translation.service';
+import { I18nPath } from '@/generated/i18n.generated';
 
 @Injectable()
 export class NotificationTemplateService extends BaseService {
@@ -26,7 +27,7 @@ export class NotificationTemplateService extends BaseService {
 
   constructor(
     private readonly redisCache: RedisTemplateCacheService,
-    private readonly i18nService: I18nService,
+    private readonly translationService: TranslationService,
   ) {
     super();
   }
@@ -172,8 +173,11 @@ export class NotificationTemplateService extends BaseService {
   ): object {
     try {
       // Parse the JSON structure (should be minimal now, just structure)
-      const template: { title?: string; message?: string; [key: string]: unknown } =
-        JSON.parse(content);
+      const template = JSON.parse(content) as {
+        title?: string;
+        message?: string;
+        [key: string]: unknown;
+      };
 
       // Build i18n keys using notification type enum value directly
       const titleKey = getNotificationI18nKey(
@@ -185,15 +189,19 @@ export class NotificationTemplateService extends BaseService {
         NOTIFICATION_FIELDS.MESSAGE,
       );
 
-      // Use i18n service to translate (works everywhere, no context needed)
+      // Use type-safe i18n service to translate (works everywhere, no context needed)
       let translatedTitle: string;
       let translatedMessage: string;
 
       try {
-        translatedTitle = this.i18nService.translate(titleKey, {
-          lang: locale,
-          args: data,
-        });
+        // Type-safe translation with locale override
+        // Note: Notification keys are dynamically generated (notifications.{type}.{field}),
+        // so we use type assertion for I18nPath compatibility
+        translatedTitle = this.translationService.translateWithLocale(
+          titleKey as I18nPath,
+          (data || {}) as Record<string, any>,
+          locale,
+        );
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
@@ -211,10 +219,14 @@ export class NotificationTemplateService extends BaseService {
       }
 
       try {
-        translatedMessage = this.i18nService.translate(messageKey, {
-          lang: locale,
-          args: data,
-        });
+        // Type-safe translation with locale override
+        // Note: Notification keys are dynamically generated (notifications.{type}.{field}),
+        // so we use type assertion for I18nPath compatibility
+        translatedMessage = this.translationService.translateWithLocale(
+          messageKey as I18nPath,
+          (data || {}) as Record<string, any>,
+          locale,
+        );
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
@@ -232,11 +244,12 @@ export class NotificationTemplateService extends BaseService {
       }
 
       // Build result object with translated content
-      const result: { title: string; message: string; [key: string]: unknown } = {
-        ...template,
-        title: translatedTitle,
-        message: translatedMessage,
-      };
+      const result: { title: string; message: string; [key: string]: unknown } =
+        {
+          ...template,
+          title: translatedTitle,
+          message: translatedMessage,
+        };
 
       // Validate schema
       const validated = this.inAppTemplateSchema.parse(result);

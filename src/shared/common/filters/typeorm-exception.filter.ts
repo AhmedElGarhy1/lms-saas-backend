@@ -1,117 +1,125 @@
 /**
- * Global TypeORM/Nest mapping with retry hints for clients.
+ * TypeORM exception filter
+ * Converts database errors (QueryFailedError, EntityNotFoundError) to custom exceptions
+ * and re-throws them for GlobalExceptionFilter to handle.
+ *
+ * Translation and response formatting is handled by GlobalExceptionFilter.
+ * This filter only converts database-specific errors to domain exceptions.
  */
 import {
   ArgumentsHost,
   ExceptionFilter,
-  HttpStatus,
+  HttpException,
   Injectable,
   Catch,
+  Logger,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
 import { QueryFailedError, EntityNotFoundError } from 'typeorm';
+import { I18nPath } from '@/generated/i18n.generated';
 import {
   ResourceNotFoundException,
   BusinessLogicException,
   ServiceUnavailableException,
-  ValidationFailedException,
   ResourceAlreadyExistsException,
 } from '../exceptions/custom.exceptions';
-import { ErrorCode } from '../enums/error-codes.enum';
+import {
+  DATABASE_ERROR_CODES,
+  TRANSLATION_KEYS,
+  isDatabaseErrorCode,
+} from '../constants/database-errors.constants';
 
 @Injectable()
 @Catch(QueryFailedError, EntityNotFoundError)
 export class TypeOrmExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(TypeOrmExceptionFilter.name);
+
+  /**
+   * Handle TypeORM exceptions
+   * @param exception - TypeORM exception (QueryFailedError or EntityNotFoundError)
+   * @param host - NestJS execution context
+   * @throws HttpException - Re-throws converted custom exception
+   */
   catch(exception: unknown, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();
-    const res = ctx.getResponse<Response>();
-    const req = ctx.getRequest<Request>();
+    this.logger.debug(
+      `TypeOrmExceptionFilter caught: ${exception?.constructor?.name}`,
+    );
 
-    // Debug: Log what type of exception we're getting
-    console.log('TypeOrmExceptionFilter caught:', {
-      type: exception?.constructor?.name,
-      message: exception instanceof Error ? exception.message : 'Unknown',
-      isEntityNotFound: exception instanceof EntityNotFoundError,
-      isQueryFailed: exception instanceof QueryFailedError,
-    });
+    let httpException: HttpException;
 
-    // Entity not found → 404 (from findOneOrFail etc.)
     if (exception instanceof EntityNotFoundError) {
-      const notFoundException = new ResourceNotFoundException(
-        't.errors.resourceNotFound',
+      httpException = new ResourceNotFoundException(
+        TRANSLATION_KEYS.ERRORS.RESOURCE_NOT_FOUND,
       );
-      return res
-        .status(notFoundException.getStatus())
-        .json(notFoundException.getResponse());
-    }
-
-    // TypeORM query failure with vendor codes
-    if (exception instanceof QueryFailedError) {
-      const drv: any = (exception as any).driverError || {};
-      const code = drv.code || drv.errno || drv.name; // pg | mysql | generic
-      const constraint = drv.constraint; // pg
-
-      switch (code) {
-        // PostgreSQL
-        case '23505': // unique_violation
-        case 'ER_DUP_ENTRY': // MySQL duplicate
-        case 1062: // MySQL numeric
-          const conflictException = new ResourceAlreadyExistsException(
-            't.errors.duplicateResource',
-            constraint ? { constraint } : undefined,
-          );
-          return res
-            .status(conflictException.getStatus())
-            .json(conflictException.getResponse());
-
-        case '23503': // foreign_key_violation (pg)
-        case 'ER_NO_REFERENCED_ROW_2':
-        case 1452:
-          const businessException = new BusinessLogicException(
-            't.errors.relatedEntityMissingOrInvalid',
-          );
-          return res
-            .status(businessException.getStatus())
-            .json(businessException.getResponse());
-
-        case '23502': // not_null_violation (pg)
-          const validationException = new ValidationFailedException(
-            't.errors.requiredFieldMissing',
-            [
-              {
-                field: 'unknown',
-                value: '',
-                message: 'A required field is missing',
-                code: ErrorCode.REQUIRED_FIELD_MISSING,
-                suggestion: 'Please fill in all required fields',
-              },
-            ],
-          );
-          return res
-            .status(validationException.getStatus())
-            .json(validationException.getResponse());
-
-        // Transient / retryable
-        case '40001': // serialization_failure (pg)
-        case '40P01': // deadlock_detected (pg)
-          const serviceException = new ServiceUnavailableException(
-            't.errors.temporaryDatabaseConflict',
-          );
-          return res
-            .status(serviceException.getStatus())
-            .json(serviceException.getResponse());
+    } else if (exception instanceof QueryFailedError) {
+      interface PostgresDriverError {
+        code?: string;
+        errno?: number;
+        name?: string;
+        detail?: string;
+        constraint?: string;
       }
 
-      // Fallback for anything else
-      const fallbackException = new ServiceUnavailableException(
-        't.errors.databaseOperationFailed',
-      );
-      return res
-        .status(fallbackException.getStatus())
-        .json(fallbackException.getResponse());
+      const drv =
+        ((exception as QueryFailedError).driverError as PostgresDriverError) ||
+        {};
+      const code = drv.code || drv.errno || drv.name;
+
+      if (isDatabaseErrorCode(code, DATABASE_ERROR_CODES.UNIQUE_VIOLATION)) {
+        // Unique constraint violation
+        const detail = drv.detail || '';
+        const constraintName = drv.constraint || '';
+
+        let field = this.extractFieldFromConstraint(constraintName);
+        if (!field) {
+          const match = detail.match(/Key \((.+?)\)=\((.+?)\)/);
+          field = match ? match[1] : 'field';
+        }
+
+        const match = detail.match(/Key \((.+?)\)=\((.+?)\)/);
+        const value = match ? match[2] : '';
+
+        // Pass field as translation key - GlobalExceptionFilter will translate it
+        httpException = new ResourceAlreadyExistsException(
+          TRANSLATION_KEYS.ERRORS.DUPLICATE_FIELD,
+          {
+            field: `t.common.labels.${field || 'field'}` as I18nPath,
+            value: value as I18nPath | number,
+          },
+        );
+      } else if (
+        isDatabaseErrorCode(code, DATABASE_ERROR_CODES.FOREIGN_KEY_VIOLATION)
+      ) {
+        // Foreign key violation
+        httpException = new BusinessLogicException(
+          TRANSLATION_KEYS.ERRORS.RELATED_ENTITY_MISSING_OR_INVALID,
+        );
+      } else if (isDatabaseErrorCode(code, DATABASE_ERROR_CODES.DEADLOCK)) {
+        // Deadlock/transaction conflict
+        httpException = new ServiceUnavailableException(
+          TRANSLATION_KEYS.ERRORS.TEMPORARY_DATABASE_CONFLICT,
+        );
+      } else {
+        // Unknown database error
+        httpException = new BusinessLogicException(
+          TRANSLATION_KEYS.ERRORS.DATABASE_OPERATION_FAILED,
+        );
+      }
+    } else {
+      return;
     }
 
-    // If it's not a TypeORM error, let other filters handle it
-    return;
+    // Re-throw the exception - let GlobalExceptionFilter handle translation and formatting
+    throw httpException;
+  }
+
+  /**
+   * Extract field name from database constraint name
+   * @param constraintName - Database constraint name (e.g., "UQ_users_phone")
+   * @returns Field name or null if not found
+   */
+  private extractFieldFromConstraint(constraintName: string): string | null {
+    if (!constraintName) return null;
+    const match = constraintName.match(/(?:UQ|IDX)_\w+_(.+)/);
+    return match ? match[1] : null;
   }
 }

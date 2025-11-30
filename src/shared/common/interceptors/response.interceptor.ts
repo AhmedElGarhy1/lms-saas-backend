@@ -9,12 +9,12 @@ import { map } from 'rxjs/operators';
 import { Request } from 'express';
 import { ApiResponseBuilder } from '../dto/api-response.dto';
 import { ControllerResponse } from '../dto/controller-response.dto';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
+import { TranslationMessage } from '../types/translation.types';
+import { I18nPath } from '@/generated/i18n.generated';
 
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
-  constructor(private readonly i18n: I18nService<I18nTranslations>) {}
+  constructor() {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest<Request>();
@@ -30,11 +30,19 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
         }
 
         // If data is a ControllerResponse, extract data and message
+        // Check both instanceof and structure (in case it was converted to plain object by another interceptor)
         if (
-          data &&
-          typeof data === 'object' &&
-          'message' in data &&
-          data.constructor.name === 'ControllerResponse'
+          data instanceof ControllerResponse ||
+          (data &&
+            typeof data === 'object' &&
+            'data' in data &&
+            'message' in data &&
+            !('success' in data) &&
+            !('meta' in data) &&
+            (data.constructor.name === 'ControllerResponse' ||
+              (typeof (data as any).message === 'object' &&
+                (data as any).message !== null &&
+                'key' in (data as any).message)))
         ) {
           const controllerResponse = data as ControllerResponse<any>;
           return ApiResponseBuilder.success(
@@ -61,7 +69,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
               total: number;
               totalPages: number;
             },
-            'Data retrieved successfully',
+            { key: 't.success.dataRetrieved' },
             requestId,
             processingTime,
           );
@@ -77,81 +85,56 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
     );
   }
 
-  private getSuccessMessage(method: string, data: any): string {
+  private getSuccessMessage(
+    method: string,
+    data: any,
+  ): string | TranslationMessage {
     // If data already has a message, use it (for custom responses)
     if (data && typeof data === 'object' && 'message' in data) {
       return data.message;
     }
 
-    // If data is null/undefined (common for DELETE operations), provide appropriate message
+    // Store translation keys only - TranslationResponseInterceptor will translate them
+    // If data is null/undefined (common for DELETE operations), provide appropriate message key
     if (!data) {
-      const resourceName = this.i18n.translate('t.common.resources.resource');
-      const messages: Record<string, string> = {
-        DELETE: this.i18n.translate('t.success.delete', {
-          args: { resource: resourceName },
-        }),
-        PATCH: this.i18n.translate('t.success.update', {
-          args: { resource: resourceName },
-        }),
-        PUT: this.i18n.translate('t.success.update', {
-          args: { resource: resourceName },
-        }),
-        POST: this.i18n.translate('t.success.create', {
-          args: { resource: resourceName },
-        }),
+      const messages: Record<string, TranslationMessage> = {
+        DELETE: { key: 't.success.delete', args: undefined },
+        PATCH: { key: 't.success.update', args: undefined },
+        PUT: { key: 't.success.update', args: undefined },
+        POST: { key: 't.success.create', args: undefined },
       };
-      return messages[method] || this.i18n.translate('t.success.operation');
+      return messages[method] || { key: 't.success.operation', args: undefined };
     }
 
-    // For arrays, provide count-specific message
+    // For arrays, provide count-specific message key
     if (Array.isArray(data)) {
-      return this.i18n.translate('t.success.dataRetrieved', {
-        args: { count: data.length },
-      });
+      return { key: 't.success.dataRetrieved', args: undefined };
     }
 
     // For objects with ID (created resources)
     if (method === 'POST' && data && data.id) {
-      const resourceName = this.i18n.translate('t.common.resources.resource');
-      return this.i18n.translate('t.success.create', {
-        args: { resource: resourceName },
-      });
+      return { key: 't.success.create', args: undefined };
     }
 
     // For update operations
     if ((method === 'PUT' || method === 'PATCH') && data) {
-      const resourceName = this.i18n.translate('t.common.resources.resource');
-      return this.i18n.translate('t.success.update', {
-        args: { resource: resourceName },
-      });
+      return { key: 't.success.update', args: undefined };
     }
 
     // For delete operations
     if (method === 'DELETE') {
-      const resourceName = this.i18n.translate('t.common.resources.resource');
-      return this.i18n.translate('t.success.delete', {
-        args: { resource: resourceName },
-      });
+      return { key: 't.success.delete', args: undefined };
     }
 
     // Default messages by method
-    const resourceName = this.i18n.translate('t.common.resources.resource');
-    const messages: Record<string, string> = {
-      GET: this.i18n.translate('t.success.dataRetrieved'),
-      POST: this.i18n.translate('t.success.create', {
-        args: { resource: resourceName },
-      }),
-      PUT: this.i18n.translate('t.success.update', {
-        args: { resource: resourceName },
-      }),
-      PATCH: this.i18n.translate('t.success.update', {
-        args: { resource: resourceName },
-      }),
-      DELETE: this.i18n.translate('t.success.delete', {
-        args: { resource: resourceName },
-      }),
+    const messages: Record<string, TranslationMessage> = {
+      GET: { key: 't.success.dataRetrieved', args: undefined },
+      POST: { key: 't.success.create', args: undefined },
+      PUT: { key: 't.success.update', args: undefined },
+      PATCH: { key: 't.success.update', args: undefined },
+      DELETE: { key: 't.success.delete', args: undefined },
     };
 
-    return messages[method] || this.i18n.translate('t.success.operation');
+      return messages[method] || { key: 't.success.operation', args: undefined };
   }
 }

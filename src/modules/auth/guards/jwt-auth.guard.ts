@@ -8,7 +8,6 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '@/shared/common/decorators/public.decorator';
-import { TranslationService } from '@/shared/services/translation.service';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -56,12 +55,14 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         throw err;
       }
 
-      // For other errors (token expired, invalid signature, etc.), use generic message
-      throw new UnauthorizedException(
-        TranslationService.translate('t.errors.invalid.expired', {
-          field: 'token',
-        }),
-      );
+      // For other errors (token expired, invalid signature, etc.), store translation key
+      // Translation happens in TranslationResponseInterceptor
+      throw new UnauthorizedException({
+        message: {
+          key: 't.errors.invalid.expired',
+          args: { field: 'token' },
+        },
+      });
     }
 
     return user;

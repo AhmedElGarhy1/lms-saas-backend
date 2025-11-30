@@ -2,10 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { CenterAccess } from '../entities/center-access.entity';
 import { CenterAccessDto } from '../dto/center-access.dto';
-import {
-  ResourceAlreadyExistsException,
-  ResourceNotFoundException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 
@@ -32,14 +29,7 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
   }
 
   async grantCenterAccess(data: CenterAccessDto): Promise<CenterAccess> {
-    // Check if access already exists
-    const existingAccess = await this.findCenterAccess(data);
-    if (existingAccess) {
-      throw new ResourceAlreadyExistsException('t.errors.already.exists', {
-        resource: 't.common.labels.access',
-      });
-    }
-
+    // Database unique constraint will handle uniqueness
     return this.create(data);
   }
 
@@ -47,7 +37,7 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
     const existingAccess = await this.findCenterAccess(data, true);
     if (!existingAccess) {
       throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.access',
+        resource: 't.common.resources.access',
       });
     }
 

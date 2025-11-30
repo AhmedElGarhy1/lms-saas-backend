@@ -92,7 +92,7 @@ export class AccessControlHelperService extends BaseService {
     }
     this.logger.warn('Admin access validation failed', { userProfileId });
     throw new AdminScopeAccessDeniedException('t.errors.denied.access', {
-      resource: 't.common.labels.adminScope',
+      resource: 't.common.resources.adminScope',
     });
   }
 
@@ -344,7 +344,7 @@ export class AccessControlHelperService extends BaseService {
         branchId: data.branchId,
       });
       throw new BranchAccessDeniedException('t.errors.denied.access', {
-        resource: 't.common.labels.branch',
+        resource: 't.common.resources.branch',
       });
     }
   }

@@ -9,6 +9,7 @@ import { CreateRoleRequestDto } from '../dto/create-role.dto';
 import { RolePermissionRepository } from './role-permission.repository';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { I18nPath } from '@/generated/i18n.generated';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { In } from 'typeorm';
@@ -36,9 +37,9 @@ export class RolesRepository extends BaseRepository<Role> {
     });
     if (!role) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.role',
-        identifier: 'ID',
-        value: roleId,
+        resource: 't.common.resources.role',
+        identifier: 'ID' as I18nPath,
+        value: roleId as I18nPath | number,
       });
     }
     return role;
@@ -67,9 +68,9 @@ export class RolesRepository extends BaseRepository<Role> {
     const role = await this.update(roleId, roleData);
     if (!role) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.role',
-        identifier: 'ID',
-        value: roleId,
+        resource: 't.common.resources.role',
+        identifier: 'ID' as I18nPath,
+        value: roleId as I18nPath | number,
       });
     }
     const existingRolePermissions =

@@ -1,30 +1,32 @@
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
+import { I18nPath } from '@/generated/i18n.generated';
+import { TranslationService } from '@/shared/common/services/translation.service';
+import { PathArgs } from '@/generated/i18n-type-map.generated';
 
 /**
  * Type-safe translation helper for error messages
- * @param i18n - I18nService instance
- * @param key - Translation key (e.g., 'errors.userNotFound')
- * @param args - Optional arguments for translation interpolation
+ * @param translationService - TranslationService instance (type-safe)
+ * @param key - Translation key (I18nPath)
+ * @param args - Optional arguments for translation interpolation (type-safe, uses generated types)
  * @returns Translated error message
  */
-export function translateError(
-  i18n: I18nService<I18nTranslations>,
-  key: string,
-  args?: Record<string, any>,
+export function translateError<P extends I18nPath>(
+  translationService: TranslationService,
+  key: P,
+  args?: PathArgs<P>,
 ): string {
-  return i18n.translate(key as any, { args });
+  return translationService.translate(key, args);
 }
 
 /**
  * Type-safe translation helper for resource names
- * @param i18n - I18nService instance
+ * @param translationService - TranslationService instance (type-safe)
  * @param resource - Resource name (e.g., 'user', 'center', 'branch')
  * @returns Translated resource name
  */
 export function translateResource(
-  i18n: I18nService<I18nTranslations>,
+  translationService: TranslationService,
   resource: string,
 ): string {
-  return i18n.translate(`common.resources.${resource}` as any);
+  const resourceKey = `t.common.resources.${resource}` as I18nPath;
+  return translationService.translate(resourceKey);
 }

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { TranslationMessage } from '../types/translation.types';
 
 export class ExportResponseDto {
   @ApiProperty({
@@ -9,9 +10,9 @@ export class ExportResponseDto {
 
   @ApiProperty({
     description: 'Message describing the result',
-    example: 'Export completed successfully',
+    example: { key: 't.success.export', args: { resource: 'CSV' } },
   })
-  message: string;
+  message: TranslationMessage;
 
   @ApiProperty({
     description: 'Filename of the exported file',

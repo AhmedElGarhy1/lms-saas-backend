@@ -66,7 +66,7 @@ export class AuthService extends BaseService {
     if (user) {
       if (!user.isActive) {
         throw new BusinessLogicException('t.errors.already.is', {
-          resource: 't.common.labels.userAccount',
+          resource: 't.common.resources.user',
           state: 't.common.labels.inactive',
         });
       }
@@ -82,7 +82,7 @@ export class AuthService extends BaseService {
         );
 
         throw new AuthenticationFailedException('t.errors.invalid.generic', {
-          field: 't.common.labels.credentials',
+          field: 't.common.resources.credentials',
         });
       }
 
@@ -126,7 +126,7 @@ export class AuthService extends BaseService {
     } else {
       // User doesn't exist - return same error message to prevent enumeration
       throw new AuthenticationFailedException('t.errors.invalid.generic', {
-        field: 't.common.labels.credentials',
+        field: 't.common.resources.credentials',
       });
     }
   }
@@ -148,7 +148,7 @@ export class AuthService extends BaseService {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new AuthenticationFailedException('t.errors.invalid.generic', {
-        field: 't.common.labels.credentials',
+        field: 't.common.resources.credentials',
       });
     }
 
@@ -271,7 +271,7 @@ export class AuthService extends BaseService {
   async setupTwoFactor(actor: ActorUser) {
     if (actor.twoFactorEnabled) {
       throw new BusinessLogicException('t.errors.already.is', {
-        resource: 't.common.labels.twoFactorAuthentication',
+        resource: 't.common.resources.twoFactorAuthentication',
         state: 't.common.messages.enabled',
       });
     }
@@ -302,7 +302,7 @@ export class AuthService extends BaseService {
 
     if (user.twoFactorEnabled) {
       throw new BusinessLogicException('t.errors.already.is', {
-        resource: 't.common.labels.twoFactorAuthentication',
+        resource: 't.common.resources.twoFactorAuthentication',
         state: 't.common.messages.enabled',
       });
     }

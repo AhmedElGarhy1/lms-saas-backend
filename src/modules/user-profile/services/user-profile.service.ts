@@ -25,6 +25,7 @@ import { CreateStaffEvent } from '@/modules/staff/events/staff.events';
 import { CreateAdminEvent } from '@/modules/admin/events/admin.events';
 import { Staff } from '@/modules/staff/entities/staff.entity';
 import { Admin } from '@/modules/admin/entities/admin.entity';
+import { I18nPath } from '@/generated/i18n.generated';
 
 @Injectable()
 export class UserProfileService extends BaseService {
@@ -56,8 +57,8 @@ export class UserProfileService extends BaseService {
     if (!user) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.labels.user',
-        identifier: 'ID',
-        value: actor.id,
+        identifier: 'ID' as I18nPath,
+        value: actor.id as I18nPath | number,
       });
     }
 
@@ -72,9 +73,9 @@ export class UserProfileService extends BaseService {
     const userProfile = await this.findOne(actor.userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.userProfile',
-        identifier: 'ID',
-        value: actor.userProfileId,
+        resource: 't.common.resources.profile',
+        identifier: 'ID' as I18nPath,
+        value: actor.userProfileId as I18nPath | number,
       });
     }
     actor.userProfileId = userProfile.id;
@@ -122,9 +123,9 @@ export class UserProfileService extends BaseService {
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.userProfile',
-        identifier: 'ID',
-        value: userProfileId,
+        resource: 't.common.resources.profile',
+        identifier: 'ID' as I18nPath,
+        value: userProfileId as I18nPath | number,
       });
     }
 
@@ -158,9 +159,9 @@ export class UserProfileService extends BaseService {
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.userProfile',
-        identifier: 'ID',
-        value: userProfileId,
+        resource: 't.common.resources.profile',
+        identifier: 'ID' as I18nPath,
+        value: userProfileId as I18nPath | number,
       });
     }
 
@@ -224,8 +225,7 @@ export class UserProfileService extends BaseService {
     if (existingProfile) {
       throw new ValidationFailedException('t.errors.already.has', undefined, {
         resource: 't.common.labels.user',
-        what: `t.common.labels.${profileType.toLowerCase()}Profile`,
-        profileType,
+        what: `t.common.labels.${profileType.toLowerCase()}Profile` as I18nPath,
       });
     }
 
@@ -262,9 +262,9 @@ export class UserProfileService extends BaseService {
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.userProfile',
-        identifier: 'ID',
-        value: userProfileId,
+        resource: 't.common.resources.profile',
+        identifier: 'ID' as I18nPath,
+        value: userProfileId as I18nPath | number,
       });
     }
 
@@ -290,9 +290,9 @@ export class UserProfileService extends BaseService {
 
     if (!deletedProfile) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.userProfile',
-        identifier: 'ID',
-        value: userProfileId,
+        resource: 't.common.resources.profile',
+        identifier: 'ID' as I18nPath,
+        value: userProfileId as I18nPath | number,
       });
     }
 

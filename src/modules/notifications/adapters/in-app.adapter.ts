@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { I18nPath } from '@/generated/i18n.generated';
 import { ModuleRef } from '@nestjs/core';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
@@ -65,7 +66,7 @@ export class InAppAdapter
     // Type system ensures channel is IN_APP, no runtime check needed
     if (!payload.userId) {
       throw new InvalidOperationException('t.errors.required.field', {
-        field: 'userId',
+        field: 'userId' as I18nPath,
       });
     }
 

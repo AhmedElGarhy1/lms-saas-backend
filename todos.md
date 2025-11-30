@@ -100,11 +100,12 @@
 
 [ ] make db errors more readable like duplicated kyes so you will remove the exist and notExist decorators and db will throw the errors because we are using transactions so it's safe
 [ ] move any logic from controller to service
+[ ] global decorator for otp_required
 [ ] add users endpoint for modules like activity logs search for user
 [ ] user can update his center (throw settings)
 [ ] activity logs and each one display his own logs only
 [ ] view modals in all modules
-
+[ ] inconsistant in case of deleted (unclear)
 [ ] don't cash notification templates in redis (usless operation it can done only on memory)
 [ ] update notifications to cover all existing modules events
 [ ] consider using prisma instead of typeorm

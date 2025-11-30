@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { TranslationMessage } from '../types/translation.types';
 
 export class ApiResponseMeta {
   @ApiProperty({ description: 'Timestamp of the response' })
@@ -42,7 +43,7 @@ export class ApiResponse<T> {
   data: T;
 
   @ApiProperty({ description: 'Optional message for the user' })
-  message?: string;
+  message?: string | TranslationMessage;
 
   @ApiProperty({ description: 'Response metadata' })
   meta: ApiResponseMeta;
@@ -71,7 +72,7 @@ export class ErrorApiResponse {
 export class ApiResponseBuilder {
   static success<T>(
     data: T,
-    message?: string,
+    message?: string | TranslationMessage,
     requestId?: string,
     processingTime?: number,
   ): ApiResponse<T> {
@@ -96,7 +97,7 @@ export class ApiResponseBuilder {
       total: number;
       totalPages: number;
     },
-    message?: string,
+    message?: string | TranslationMessage,
     requestId?: string,
     processingTime?: number,
   ): PaginatedApiResponse<T> {

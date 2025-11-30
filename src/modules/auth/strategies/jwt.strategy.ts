@@ -31,7 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     // Ensure this is an access token, not a refresh token
     if (payload.type !== 'access') {
       throw new AuthenticationFailedException('t.errors.invalid.type', {
-        field: 't.common.labels.tokenType',
+        field: 't.common.resources.tokenType',
       });
     }
 
@@ -45,7 +45,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
     if (!user.isActive) {
       throw new BusinessLogicException('t.errors.already.is', {
-        resource: 't.common.labels.userAccount',
+        resource: 't.common.resources.user',
         state: 't.common.labels.inactive',
       });
     }

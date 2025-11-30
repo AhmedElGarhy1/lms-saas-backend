@@ -1,6 +1,7 @@
 import { Controller, Post, Patch, Get, Body, UseGuards, Req } from '@nestjs/common';
 import { ValidationFailedException } from '@/shared/common/exceptions/custom.exceptions';
 import { AuthService } from '../services/auth.service';
+import { I18nPath } from '@/generated/i18n.generated';
 import { UserService } from '@/modules/user/services/user.service';
 import { LoginRequestDto } from '../dto/login.dto';
 import { ForgotPasswordRequestDto } from '../dto/forgot-password.dto';
@@ -181,7 +182,7 @@ export class AuthController {
         't.errors.required.field',
         undefined,
         {
-          field: 'OTP code',
+          field: 'OTP code' as I18nPath,
         },
       );
     }

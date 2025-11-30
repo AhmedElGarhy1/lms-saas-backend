@@ -115,7 +115,7 @@ export class VerificationService extends BaseService {
 
     if (!verificationToken) {
       throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.verificationCode',
+        resource: 't.common.resources.verificationCode',
       });
     }
 
@@ -125,7 +125,7 @@ export class VerificationService extends BaseService {
         't.errors.expired.generic',
         undefined,
         {
-          resource: 't.common.labels.verificationCode',
+          resource: 't.common.resources.verificationCode',
         },
       );
     }

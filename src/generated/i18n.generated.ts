@@ -5,6 +5,28 @@
 import { Path } from "nestjs-i18n";
 /* prettier-ignore */
 export type I18nTranslations = {
+    "notifications": {
+        "OTP": {
+            "title": string;
+            "message": string;
+        };
+        "PASSWORD_RESET": {
+            "title": string;
+            "message": string;
+        };
+        "PHONE_VERIFIED": {
+            "title": string;
+            "message": string;
+        };
+        "CENTER_CREATED": {
+            "title": string;
+            "message": string;
+        };
+        "CENTER_UPDATED": {
+            "title": string;
+            "message": string;
+        };
+    };
     "t": {
         "actions": {
             "retry": string;

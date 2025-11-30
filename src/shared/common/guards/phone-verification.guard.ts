@@ -4,8 +4,6 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { NO_PHONE_VERIFICATION_KEY } from '../decorators/no-phone-verification.decorator';
 import { IRequest } from '../interfaces/request.interface';
 import { PhoneNotVerifiedException } from '../exceptions/custom.exceptions';
-import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '@/generated/i18n.generated';
 
 /**
  * Phone Verification Guard
@@ -14,10 +12,7 @@ import { I18nTranslations } from '@/generated/i18n.generated';
  */
 @Injectable()
 export class PhoneVerificationGuard implements CanActivate {
-  constructor(
-    private readonly reflector: Reflector,
-    private readonly i18n: I18nService<I18nTranslations>,
-  ) {}
+  constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean | Promise<boolean> {
     // Check if the endpoint is public (skip phone verification for public routes)
@@ -51,9 +46,7 @@ export class PhoneVerificationGuard implements CanActivate {
 
     // Check if user's phone is verified
     if (!user.phoneVerified) {
-      throw new PhoneNotVerifiedException(
-        this.i18n.translate('t.errors.userPhoneNotVerified'),
-      );
+      throw new PhoneNotVerifiedException('t.errors.userPhoneNotVerified');
     }
 
     return true;
