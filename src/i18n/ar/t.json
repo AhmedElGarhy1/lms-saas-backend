@@ -1765,6 +1765,9 @@
       "activate": {
         "name": "تفعيل/إلغاء تفعيل موظف"
       },
+      "importProfile": {
+        "name": "استيراد الملف الشخصي"
+      },
       "grantUserAccess": {
         "name": "منح وصول المستخدم"
       },
@@ -1812,8 +1815,11 @@
       "activate": {
         "name": "تفعيل/إلغاء تفعيل مدير"
       },
-      "grantAdminAccess": {
-        "name": "منح وصول المدير"
+      "importProfile": {
+        "name": "استيراد الملف الشخصي"
+      },
+      "grantUserAccess": {
+        "name": "منح وصول المستخدم"
       },
       "grantCenterAccess": {
         "name": "منح وصول المركز"

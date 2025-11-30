@@ -14,10 +14,8 @@ import { UpdateUserProfileDto } from '../dto/update-user-profile.dto';
 import { CreateUserProfileDto } from '../dto/create-user-profile.dto';
 import { UserService } from '@/modules/user/services/user.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { RolesService } from '@/modules/access-control/services/roles.service';
-import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
-import { I18nPath } from '@/generated/i18n.generated';
+import { UserProfilePermissionService } from '@/modules/access-control/services/user-profile-permission.service';
 import { UserProfileRepository } from '../repositories/user-profile.repository';
 import { CentersService } from '@/modules/centers/services/centers.service';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
@@ -41,6 +39,7 @@ export class UserProfileService extends BaseService {
     private readonly rolesService: RolesService,
     private readonly centerService: CentersService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly userProfilePermissionService: UserProfilePermissionService,
   ) {
     super();
   }
@@ -116,11 +115,7 @@ export class UserProfileService extends BaseService {
     }
 
     // Check permission based on profileType
-    await this.validateProfilePermission(
-      actor,
-      userProfile.profileType,
-      'ACTIVATE',
-    );
+    await this.userProfilePermissionService.canActivate(actor, userProfileId);
 
     // Validate access (can actor manage this profile?)
     await this.accessControlHelperService.validateUserAccess({
@@ -152,11 +147,7 @@ export class UserProfileService extends BaseService {
     }
 
     // Check permission based on profileType
-    await this.validateProfilePermission(
-      actor,
-      userProfile.profileType,
-      'UPDATE',
-    );
+    await this.userProfilePermissionService.canUpdate(actor, userProfileId);
 
     // Validate access (can actor manage this profile?)
     await this.accessControlHelperService.validateUserAccess({
@@ -258,11 +249,7 @@ export class UserProfileService extends BaseService {
     }
 
     // Check permission based on profileType
-    await this.validateProfilePermission(
-      actor,
-      userProfile.profileType,
-      'DELETE',
-    );
+    await this.userProfilePermissionService.canDelete(actor, userProfileId);
 
     // Validate access (can actor manage this profile?)
     await this.accessControlHelperService.validateUserAccess({
@@ -290,11 +277,7 @@ export class UserProfileService extends BaseService {
     }
 
     // Check permission based on profileType
-    await this.validateProfilePermission(
-      actor,
-      deletedProfile.profileType,
-      'RESTORE',
-    );
+    await this.userProfilePermissionService.canRestore(actor, userProfileId);
 
     // Validate access (can actor manage this profile?)
     await this.accessControlHelperService.validateUserAccess({
@@ -313,47 +296,6 @@ export class UserProfileService extends BaseService {
     return !!(await this.userProfileRepository.isStaff(userProfileId));
   }
 
-  /**
-   * Validates that the actor has permission to perform an action on a profile type
-   * @param actor The user performing the action
-   * @param profileType The type of profile being acted upon
-   * @param action The action being performed (CREATE, UPDATE, DELETE, RESTORE, ACTIVATE)
-   */
-  private async validateProfilePermission(
-    actor: ActorUser,
-    profileType: ProfileType,
-    action: 'CREATE' | 'UPDATE' | 'DELETE' | 'RESTORE' | 'ACTIVATE',
-  ): Promise<void> {
-    const permission =
-      profileType === ProfileType.STAFF
-        ? PERMISSIONS.STAFF[action]
-        : profileType === ProfileType.ADMIN
-          ? PERMISSIONS.ADMIN[action]
-          : null;
-
-    if (!permission) {
-      throw new Error(
-        `No ${action} permission defined for profile type: ${profileType}`,
-      );
-    }
-
-    const hasPermission = await this.rolesService.hasPermission(
-      actor.userProfileId,
-      permission.action,
-      permission.scope,
-      actor.centerId,
-    );
-
-    if (!hasPermission) {
-      throw new InsufficientPermissionsException(
-        't.errors.insufficientPermissions' as I18nPath,
-        {
-          action: permission.action,
-          profileType,
-        },
-      );
-    }
-  }
 
   /**
    * Creates a new user profile with all associated entities and access control
@@ -367,7 +309,7 @@ export class UserProfileService extends BaseService {
     actor: ActorUser,
   ): Promise<UserProfile> {
     // 1. Validate that actor has permission to create this profile type
-    await this.validateProfilePermission(actor, dto.profileType, 'CREATE');
+    await this.userProfilePermissionService.canCreate(actor, dto.profileType);
 
     // 2. Create User entity (includes UserInfo creation)
     const createdUser = await this.userService.createUser(dto, actor);

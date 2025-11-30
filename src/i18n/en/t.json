@@ -1756,6 +1756,9 @@
       "activate": {
         "name": "Activate/Deactivate Staff"
       },
+      "importProfile": {
+        "name": "Import Profile"
+      },
       "grantUserAccess": {
         "name": "Grant User Access"
       },
@@ -1803,8 +1806,11 @@
       "activate": {
         "name": "Activate/Deactivate Admin"
       },
-      "grantAdminAccess": {
-        "name": "Grant Admin Access"
+      "importProfile": {
+        "name": "Import Profile"
+      },
+      "grantUserAccess": {
+        "name": "Grant User Access"
       },
       "grantCenterAccess": {
         "name": "Grant Center Access"

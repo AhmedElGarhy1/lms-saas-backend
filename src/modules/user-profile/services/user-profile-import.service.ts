@@ -23,6 +23,7 @@ import { OtpEvent } from '@/modules/auth/events/auth.events';
 import { UserEvents } from '@/shared/events/user.events.enum';
 import { UserImportedEvent } from '@/modules/user/events/user.events';
 import { RequestImportOtpDto } from '../dto/request-import-otp.dto';
+import { UserProfilePermissionService } from '@/modules/access-control/services/user-profile-permission.service';
 
 @Injectable()
 export class UserProfileImportService extends BaseService {
@@ -38,6 +39,7 @@ export class UserProfileImportService extends BaseService {
     private readonly accessControlService: AccessControlService,
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly userProfilePermissionService: UserProfilePermissionService,
   ) {
     super();
   }
@@ -139,10 +141,12 @@ export class UserProfileImportService extends BaseService {
     const expiresInMinutes = Config.auth.phoneVerificationExpiresMinutes;
 
     // Emit OTP event (notification system will fetch user and phone)
-    await this.typeSafeEventEmitter.emitAsync(
-      AuthEvents.OTP,
-      new OtpEvent(user.id, verificationToken.code!, expiresInMinutes),
-    );
+    if (verificationToken.code) {
+      await this.typeSafeEventEmitter.emitAsync(
+        AuthEvents.OTP,
+        new OtpEvent(user.id, verificationToken.code, expiresInMinutes),
+      );
+    }
   }
 
   /**
@@ -156,6 +160,17 @@ export class UserProfileImportService extends BaseService {
     const user = await this.findUserByPhone(dto.phone);
     await this.verifyOtpCode(dto.code, user.id);
 
+    // Resolve centerId for actual import: use dto.centerId if provided, otherwise use actor.centerId
+    // centerId is optional - if not provided, we'll just create profile without center access
+    const resolvedCenterId = dto.centerId ?? actor.centerId;
+
+    // Validate permission to import profile of this type
+    await this.userProfilePermissionService.canImportProfile(
+      actor,
+      dto.profileType,
+      resolvedCenterId,
+    );
+
     // Validate with dto.centerId first (what was sent in request-otp)
     // This ensures validation matches what was validated in requestOtp step
     await this.validateImportEligibility(
@@ -163,10 +178,6 @@ export class UserProfileImportService extends BaseService {
       dto.profileType,
       dto.centerId,
     );
-
-    // Resolve centerId for actual import: use dto.centerId if provided, otherwise use actor.centerId
-    // centerId is optional - if not provided, we'll just create profile without center access
-    const resolvedCenterId = dto.centerId ?? actor.centerId;
 
     // Validate that actor has access to the center (if centerId is provided)
     // This is the only check needed - we don't need profile type permission checks here

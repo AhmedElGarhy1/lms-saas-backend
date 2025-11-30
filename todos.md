@@ -95,13 +95,14 @@
 [x] add @typescript-eslint/no-floating-promises for backend and
 [x] staff user access doesn't work
 [x] delete staff donsn't go to soft deleted or soft deleted doesn't display correctly
+[x] for bulk operations don't perform the same action for user ex: active user shoun't be activated
 
-[ ] for bulk operations don't perform the same action for user ex: active user shoun't be activated
 [ ] view modals in all modules
 [ ] add users endpoint for modules like activity logs search for user
 [ ] user can update his center (throw settings)
 [ ] activity logs and each one display his own logs only
 
+[ ] don't cash notification templates in redis (usless operation it can done only on memory)
 [ ] update notifications to cover all existing modules events
 [ ] consider using prisma instead of typeorm
 [ ] implement access all resources permission

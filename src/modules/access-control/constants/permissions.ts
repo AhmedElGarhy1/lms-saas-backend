@@ -100,6 +100,12 @@ export const PERMISSIONS = {
       group: 'staff',
       scope: PermissionScope.ADMIN,
     },
+    IMPORT_PROFILE: {
+      action: 'staff:import-profile',
+      name: 't.permissions.staff.importProfile.name',
+      group: 'staff',
+      scope: PermissionScope.CENTER,
+    },
   },
 
   // ===== ADMIN MANAGEMENT PERMISSIONS =====
@@ -140,9 +146,15 @@ export const PERMISSIONS = {
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },
-    GRANT_ADMIN_ACCESS: {
-      action: 'admin:grant-admin-access',
-      name: 't.permissions.admin.grantAdminAccess.name',
+    IMPORT_PROFILE: {
+      action: 'admin:import-profile',
+      name: 't.permissions.admin.importProfile.name',
+      group: 'admin',
+      scope: PermissionScope.ADMIN,
+    },
+    GRANT_USER_ACCESS: {
+      action: 'admin:grant-user-access',
+      name: 't.permissions.admin.grantUserAccess.name',
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },

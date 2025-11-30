@@ -1794,6 +1794,9 @@ export type I18nTranslations = {
                 "activate": {
                     "name": string;
                 };
+                "importProfile": {
+                    "name": string;
+                };
                 "grantUserAccess": {
                     "name": string;
                 };
@@ -1841,7 +1844,10 @@ export type I18nTranslations = {
                 "activate": {
                     "name": string;
                 };
-                "grantAdminAccess": {
+                "importProfile": {
+                    "name": string;
+                };
+                "grantUserAccess": {
                     "name": string;
                 };
                 "grantCenterAccess": {

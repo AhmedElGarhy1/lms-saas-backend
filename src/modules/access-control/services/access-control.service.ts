@@ -1,15 +1,8 @@
-import {
-  Inject,
-  Injectable,
-  forwardRef,
-  Logger,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Inject, Injectable, forwardRef, Logger } from '@nestjs/common';
 import {
   BusinessLogicException,
   InsufficientPermissionsException,
   ResourceNotFoundException,
-  ValidationFailedException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { I18nPath } from '@/generated/i18n.generated';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
@@ -30,8 +23,8 @@ import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.
 import { BaseService } from '@/shared/common/services/base.service';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 import { RolesService } from './roles.service';
-import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { PERMISSIONS } from '../constants/permissions';
+import { UserProfilePermissionService } from './user-profile-permission.service';
 
 @Injectable()
 export class AccessControlService extends BaseService {
@@ -47,6 +40,7 @@ export class AccessControlService extends BaseService {
     @Inject(forwardRef(() => UserProfileService))
     private readonly userProfileService: UserProfileService,
     private readonly rolesService: RolesService,
+    private readonly userProfilePermissionService: UserProfilePermissionService,
   ) {
     super();
   }
@@ -63,54 +57,6 @@ export class AccessControlService extends BaseService {
     await this.userAccessRepository.revokeUserAccess(body);
   }
 
-  /**
-   * Validates that the actor has permission to grant/revoke user access based on target profile type
-   * @param actor The user performing the action
-   * @param targetUserProfileId The target user profile ID to check profile type
-   * @param centerId Optional center ID for permission scope
-   */
-  private async validateUserAccessPermission(
-    actor: ActorUser,
-    targetUserProfileId: string,
-    centerId?: string,
-  ): Promise<void> {
-    // Get target user profile to determine profile type
-    const targetProfile =
-      await this.userProfileService.findOne(targetUserProfileId);
-    if (!targetProfile) {
-      throw new ResourceNotFoundException('t.errors.userProfileNotFound');
-    }
-
-    // Determine which permission to check based on target profile type
-    let requiredPermission;
-    if (targetProfile.profileType === ProfileType.STAFF) {
-      requiredPermission = PERMISSIONS.STAFF.GRANT_USER_ACCESS;
-    } else if (targetProfile.profileType === ProfileType.ADMIN) {
-      // For admin profiles, use GRANT_ADMIN_ACCESS as it's the equivalent permission
-      requiredPermission = PERMISSIONS.ADMIN.GRANT_ADMIN_ACCESS;
-    } else {
-      throw new ValidationFailedException('t.errors.validationFailed');
-    }
-
-    // Check if actor has the required permission
-    const hasPermission = await this.rolesService.hasPermission(
-      actor.userProfileId,
-      requiredPermission.action,
-      requiredPermission.scope,
-      centerId ?? actor.centerId,
-    );
-
-    if (!hasPermission) {
-      throw new InsufficientPermissionsException(
-        't.errors.insufficientPermissions' as I18nPath,
-        {
-          action: requiredPermission.action,
-          profileType: targetProfile.profileType,
-        },
-      );
-    }
-  }
-
   async grantUserAccessValidate(
     body: UserAccessDto,
     actor: ActorUser,
@@ -119,7 +65,7 @@ export class AccessControlService extends BaseService {
     body.centerId = centerId;
 
     // Validate that actor has permission to grant user access for the target profile type
-    await this.validateUserAccessPermission(
+    await this.userProfilePermissionService.canGrantUserAccess(
       actor,
       body.targetUserProfileId,
       centerId,
@@ -185,7 +131,7 @@ export class AccessControlService extends BaseService {
     body.centerId = centerId;
 
     // Validate that actor has permission to revoke user access for the target profile type
-    await this.validateUserAccessPermission(
+    await this.userProfilePermissionService.canGrantUserAccess(
       actor,
       body.targetUserProfileId,
       centerId,
@@ -262,37 +208,12 @@ export class AccessControlService extends BaseService {
     dto: CenterAccessDto,
     actor: ActorUser,
   ) {
-    // Get target user profile
-    const targetProfile = await this.userProfileService.findOne(
+    // Validate that actor has permission to grant center access for the target profile type
+    await this.userProfilePermissionService.canGrantCenterAccess(
+      actor,
       dto.userProfileId,
-    );
-    if (!targetProfile) {
-      throw new ResourceNotFoundException('t.errors.userProfileNotFound');
-    }
-
-    // Determine which permission to check based on target profile type
-    let requiredPermission;
-    if (targetProfile.profileType === ProfileType.STAFF) {
-      requiredPermission = PERMISSIONS.STAFF.GRANT_CENTER_ACCESS;
-    } else if (targetProfile.profileType === ProfileType.ADMIN) {
-      requiredPermission = PERMISSIONS.ADMIN.GRANT_CENTER_ACCESS;
-    } else {
-      throw new ValidationFailedException(
-        't.errors.invalidProfileTypeForCenterAccess',
-      );
-    }
-
-    // Check if actor has the required permission
-    const hasPermission = await this.rolesService.hasPermission(
-      actor.userProfileId,
-      requiredPermission.action,
-      requiredPermission.scope,
       dto.centerId ?? actor.centerId,
     );
-
-    if (!hasPermission) {
-      throw new ForbiddenException('t.errors.insufficientPermissions');
-    }
 
     // Grant center access (this will also validate user access)
     return await this.grantCenterAccess(dto, actor);
