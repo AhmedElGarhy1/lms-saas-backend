@@ -98,10 +98,9 @@
 [x] for bulk operations don't perform the same action for user ex: active user shoun't be activated
 [x] check translations keys and refactor it even more
 [x] make db errors more readable like duplicated kyes so you will remove the exist and notExist decorators and db will throw the errors because we are using transactions so it's safe
+[x] remove unused transalations
+[x] move any logic from controller to service
 
-[ ] remove unused transalations
-[ ] move any logic from controller to service
-[ ] global decorator for otp_required
 [ ] add users endpoint for modules like activity logs search for user
 [ ] user can update his center (throw settings)
 [ ] activity logs and each one display his own logs only
@@ -113,5 +112,7 @@
 [ ] implement access all resources permission
 [ ] import functioanlity
 [ ] multi profile for parents
-[?] when i display tables data I should disply myself also
 [ ] auto detection for single center or single profile
+
+[?] when i display tables data I should disply myself also
+[ ] global decorator for otp_required (not good)

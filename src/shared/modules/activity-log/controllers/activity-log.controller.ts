@@ -15,6 +15,8 @@ import { ReadApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { ActivityLogTypesResponseDto } from '../dto/activity-log-types-response.dto';
 import { SerializeOptions } from '@nestjs/common';
+import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
+import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 
 @ApiTags('Activity Logs')
 @Controller('activity-logs')
@@ -30,6 +32,8 @@ export class ActivityLogController {
     status: 200,
     description: 'Activity logs retrieved successfully',
   })
+  @NoProfile()
+  @NoContext()
   async getActivityLogs(
     @Query() query: PaginateActivityLogsDto,
     @GetUser() actor: ActorUser,
@@ -46,6 +50,8 @@ export class ActivityLogController {
     description: 'Export file generated successfully',
     type: ExportResponseDto,
   })
+  @NoProfile()
+  @NoContext()
   async exportActivityLogs(
     @Query() query: ExportActivityLogsDto,
     @Res() res: Response,
