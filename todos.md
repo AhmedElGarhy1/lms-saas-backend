@@ -101,11 +101,11 @@
 [x] remove unused transalations
 [x] move any logic from controller to service
 [x] activity logs and each one display his own logs only
+[x] don't cash notification templates in redis (usless operation it can done only on memory)
 
 [ ] user can update his center (throw settings)
 [ ] view modals in all modules
 [ ] inconsistant in case of deleted (unclear)
-[ ] don't cash notification templates in redis (usless operation it can done only on memory)
 [ ] update notifications to cover all existing modules events
 [ ] consider using prisma instead of typeorm
 [ ] implement access all resources permission
