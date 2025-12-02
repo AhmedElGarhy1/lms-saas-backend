@@ -1,30 +1,11 @@
 {
   "actions": {
-    "retry": "Please try again",
-    "contactSupport": "Contact support if the problem persists",
-    "checkInput": "Please check your input and try again",
-    "fixErrors": "Fix the highlighted errors below",
-    "refreshPage": "Please refresh the page and try again",
-    "loginAgain": "Please log in again",
-    "selectCenter": "Please select a center",
-    "chooseDifferentValue": "Please choose a different value",
-    "fillRequiredFields": "Please fill in all required fields",
-    "useCorrectFormat": "Please use the correct format",
-    "shortenInput": "Please shorten your input",
-    "provideMoreInfo": "Please provide more information",
-    "contactAdministrator": "Please contact an administrator",
-    "checkPermissions": "Please check your permissions",
-    "verifyCredentials": "Please verify your credentials",
-    "selectValidOption": "Please select a valid option",
-    "enterValidData": "Please enter valid data",
     "tryDifferentApproach": "Please try a different approach"
   },
   "auth": {
     "login": {
       "title": "Welcome Back",
-      "subtitle": "Sign in to your account to continue",
-      "otpHint": "Enter the OTP code sent to your phone",
-      "verifyAndLogin": "Verify & Login"
+      "subtitle": "Sign in to your account to continue"
     },
     "register": {
       "title": "Create Account",
@@ -63,65 +44,44 @@
       "switchCenter": "Switch Center"
     },
     "buttons": {
-      "save": "Save",
       "cancel": "Cancel",
       "delete": "Delete",
       "edit": "Edit",
-      "create": "Create",
       "createResource": "Create {resource}",
       "update": "Update",
       "updateResource": "Update {resource}",
       "deleteResource": "Delete {resource}",
-      "restoreResource": "Restore {resource}",
-      "activateResource": "Activate {resource}",
-      "deactivateResource": "Deactivate {resource}",
       "submit": "Submit",
       "close": "Close",
       "back": "Back",
-      "next": "Next",
-      "previous": "Previous",
       "refresh": "Refresh",
       "export": "Export",
       "import": "Import",
       "exportData": "Export Data",
       "exporting": "Exporting...",
       "assign": "Assign",
-      "revoke": "Revoke",
-      "grant": "Grant",
       "remove": "Remove",
       "manageRoles": "Manage Roles",
       "centerAccess": "Center Access",
       "activateSelected": "Activate Selected",
       "deactivateSelected": "Deactivate Selected",
-      "selectCenter": "Select Center",
       "selectProfile": "Select Profile",
       "saveChanges": "Save Changes",
       "changePassword": "Change Password",
       "deleteSelected": "Delete Selected",
       "enable": "Enable",
       "disable": "Disable",
-      "backToCenters": "Back to Centers",
-      "creating": "Creating...",
-      "updating": "Updating...",
       "deleting": "Deleting...",
-      "restoring": "Restoring...",
       "restore": "Restore",
-      "search": "Search",
       "filter": "Filter",
       "clear": "Clear",
       "reset": "Reset",
       "confirm": "Confirm",
-      "yes": "Yes",
-      "no": "No",
-      "ok": "OK",
       "login": "Login",
       "logout": "Log out",
       "register": "Sign Up",
       "forgotPassword": "Forgot password?",
-      "rememberMe": "Remember me",
-      "activate": "Activate",
       "deactivate": "Deactivate",
-      "archive": "Archive",
       "toggleStatusInCenter": "Toggle Status in Center",
       "deleteFromCenter": "Delete from Center",
       "restoreInCenter": "Restore in Center",
@@ -130,39 +90,16 @@
       "deleteFromCenterSelected": "Delete from Center Selected",
       "restoreInCenterSelected": "Restore in Center Selected",
       "view": "View",
-      "manage": "Manage",
-      "download": "Download",
-      "upload": "Upload",
-      "copy": "Copy",
-      "duplicate": "Duplicate",
-      "move": "Move",
-      "share": "Share",
-      "print": "Print",
-      "send": "Send",
-      "receive": "Receive",
-      "approve": "Approve",
-      "reject": "Reject",
-      "publish": "Publish",
-      "unpublish": "Unpublish",
-      "schedule": "Schedule",
-      "unschedule": "Unschedule",
       "clearSearch": "Clear Search",
       "tryAgain": "Try Again",
       "saving": "Saving...",
-      "editBranch": "Edit Branch",
       "toggleStatus": "Toggle Status",
       "manageAccess": "Manage Access",
-      "editTestModule": "Edit TestModule",
-      "contactAdmin": "Contact Administrator",
       "reloadPage": "Reload Page",
-      "goBack": "Go Back",
-      "resetForm": "Reset Form",
-      "reloadTable": "Reload Table",
       "deselectAll": "Deselect All",
       "markAllRead": "Mark all read",
       "viewAllNotifications": "View all notifications",
       "archiveNotification": "Archive notification",
-      "loadMore": "Load more",
       "done": "Done",
       "quickSelect": "Quick select",
       "selectPreset": "Select a preset",
@@ -176,7 +113,6 @@
       "autoRefresh": "{refresh} Auto",
       "importUser": "Import User",
       "importing": "Importing...",
-      "editProducts": "Edit Products",
       "resendCode": "Resend Code",
       "processing": "Processing..."
     },
@@ -188,8 +124,6 @@
       "status": "Status",
       "active": "Active",
       "inactive": "Inactive",
-      "enabled": "Enabled",
-      "disabled": "Disabled",
       "userId": "User ID",
       "never": "Never",
       "currentPassword": "Current Password",
@@ -200,52 +134,21 @@
       "phoneNumber": "Phone Number",
       "dateOfBirth": "Date of Birth",
       "address": "Address",
-      "bio": "Bio",
       "locale": "Locale",
       "logo": "Logo",
-      "profilePicture": "Profile Picture",
-      "characters": "characters",
-      "created": "Created",
-      "updated": "Updated",
-      "actions": "Actions",
-      "select": "Select",
-      "none": "None",
       "all": "All",
       "loading": "Loading",
       "error": "Error",
       "success": "Success",
-      "warning": "Warning",
-      "info": "Info",
       "password": "Password",
       "website": "Website",
       "role": "Role",
       "permissions": "Permissions",
       "avatar": "Avatar",
       "fullName": "Full Name",
-      "emailAddress": "Email Address",
       "center": "Center",
       "location": "Location",
       "user": "User",
-      "userEmail": "user@example.com",
-      "admin": "Admin",
-      "staff": "Staff",
-      "manager": "Manager",
-      "instructor": "Instructor",
-      "student": "Student",
-      "rolesModule": "roles module",
-      "centersSystem": "centers system",
-      "branchesSystem": "branches system",
-      "authenticationSystem": "authentication system",
-      "userManagementSection": "user management section",
-      "userTable": "user table",
-      "userForm": "user form",
-      "systemAlerts": "system alerts",
-      "otp": "OTP",
-      "verification": "verification",
-      "data": "data",
-      "form": "form",
-      "table": "table",
-      "profiles": "profiles",
       "profile": "profile",
       "language": "Language",
       "english": "English",
@@ -254,97 +157,29 @@
       "dateFormat": "Date Format",
       "timeFormat": "Time Format",
       "twoFactorAuth": "Two-Factor Authentication",
-      "sessionTimeout": "Session Timeout",
-      "loginNotifications": "Login Notifications",
-      "suspiciousActivityAlerts": "Suspicious Activity Alerts",
-      "currency": "Currency",
-      "country": "Country",
-      "city": "City",
-      "state": "State",
-      "zipCode": "ZIP Code",
-      "gender": "Gender",
-      "age": "Age",
-      "department": "Department",
-      "position": "Position",
-      "salary": "Salary",
-      "startDate": "Start Date",
-      "endDate": "End Date",
-      "duration": "Duration",
-      "priority": "Priority",
-      "category": "Category",
-      "tags": "Tags",
-      "notes": "Notes",
-      "comments": "Comments",
-      "attachments": "Attachments",
-      "version": "Version",
-      "size": "Size",
       "type": "Type",
-      "format": "Format",
-      "quality": "Quality",
-      "rating": "Rating",
-      "score": "Score",
-      "progress": "Progress",
-      "completion": "Completion",
-      "deadline": "Deadline",
-      "reminder": "Reminder",
       "notification": "Notification",
       "alert": "Alert",
-      "tip": "Tip",
-      "help": "Help",
-      "support": "Support",
-      "feedback": "Feedback",
-      "report": "Report",
-      "analytics": "Analytics",
       "statistics": "Statistics",
-      "metrics": "Metrics",
-      "performance": "Performance",
-      "efficiency": "Efficiency",
-      "productivity": "Productivity",
-      "capacity": "Capacity",
-      "availability": "Availability",
-      "reliability": "Reliability",
-      "security": "Security",
-      "privacy": "Privacy",
-      "confidentiality": "Confidentiality",
-      "compliance": "Compliance",
-      "regulation": "Regulation",
-      "policy": "Policy",
-      "terms": "Terms",
-      "conditions": "Conditions",
-      "agreement": "Agreement",
-      "contract": "Contract",
-      "license": "License",
-      "copyright": "Copyright",
-      "trademark": "Trademark",
-      "patent": "Patent",
       "yes": "Yes",
       "no": "No",
       "current": "Current",
       "date": "Date",
-      "filename": "Filename",
       "filenameOptional": "Filename (Optional)",
-      "optional": "Optional",
       "filter": "Filter",
-      "assign": "Assign",
       "timestamps": "Timestamps",
       "basicInformation": "Basic Information",
       "roleName": "Role Name",
-      "roleType": "Role Type",
-      "totalPermissions": "Total Permissions",
-      "permissionsAssigned": "permissions assigned",
       "createdAt": "Created At",
       "lastUpdated": "Last Updated",
       "updatedAt": "Updated At",
       "assignedUsers": "Assigned Users",
       "permissionsCount": "Permissions Count",
-      "systemRole": "System Role",
-      "customRole": "Custom Role",
       "unknownUser": "Unknown User",
       "contactInformation": "Contact Information",
       "show": "Show",
       "activeStatus": "Active Status",
       "adminName": "Admin Name",
-      "adminEmail": "Admin Email",
       "adminPassword": "Admin Password",
       "adminPhone": "Admin Phone",
       "adminAddress": "Admin Address",
@@ -357,8 +192,6 @@
       "lastWeek": "Last week",
       "thisMonth": "This month",
       "lastMonth": "Last month",
-      "thisQuarter": "This quarter",
-      "lastQuarter": "Last quarter",
       "thisYear": "This year",
       "lastYear": "Last year",
       "customRange": "Custom range",
@@ -368,20 +201,14 @@
       "globalDashboard": "Global Dashboard",
       "dateRange": "Date Range",
       "unknownBranch": "Unknown Branch",
-      "system": "System",
-      "scopes": "Scopes:",
       "noRendererConfigured": "No renderer configured",
       "otpCode": "OTP Code",
       "notProvided": "Not provided",
       "profileAvatar": "Profile avatar",
       "channel": "Channel",
-      "profileType": "Profile Type",
-      "result": "Result",
       "total": "Total",
       "failed": "Failed",
-      "errors": "Errors",
-      "unknownProducts": "Unknown Products",
-      "unknownTestModule": "Unknown TestModule"
+      "errors": "Errors"
     },
     "status": {
       "active": "Active",
@@ -399,13 +226,7 @@
       "inApp": "In-App",
       "push": "Push"
     },
-    "profileTypes": {
-      "teacher": "Teacher",
-      "staff": "Staff",
-      "parent": "Parent",
-      "student": "Student",
-      "admin": "Admin"
-    },
+    "profileTypes": {},
     "resources": {
       "resource": "Resource",
       "user": "User",
@@ -417,20 +238,11 @@
       "alert": "Alert",
       "data": "Data",
       "item": "Item",
-      "items": "Items",
-      "file": "File",
-      "files": "Files",
-      "record": "Record",
-      "records": "Records",
-      "entity": "Entity",
-      "entities": "Entities",
-      "users": "users",
       "roles": "roles",
       "admins": "admins",
       "staff": "staff",
       "centers": "centers",
       "access": "access",
-      "permissions": "permissions",
       "branches": "branches",
       "profile": "profile",
       "profiles": "profiles",
@@ -441,135 +253,36 @@
       "branchAccess": "Branch access",
       "centerAccess": "Center access",
       "refreshToken": "Refresh token",
-      "verificationToken": "Verification token",
       "verificationCode": "Verification code",
-      "targetUserProfile": "Target user profile",
       "adminScope": "Admin scope",
       "profileType": "Profile type",
-      "currentPassword": "Current password",
-      "otpCode": "OTP code",
       "profileSelection": "Profile selection",
       "tokenType": "Token type",
       "signature": "Signature",
       "credentials": "Credentials",
       "twoFactorAuthentication": "Two-factor authentication",
       "userInfo": "User info",
-      "activityLogs": "activity logs",
-      "products": "products",
-      "productss": "productss",
-      "test-module": "test-module",
-      "test-modules": "test-modules"
+      "activityLogs": "activity logs"
     },
     "placeholders": {
       "search": "Search...",
       "select": "Select...",
-      "enter": "Enter...",
-      "choose": "Choose...",
-      "enterName": "Enter name",
-      "enterEmail": "Enter email address",
-      "enterPhone": "Enter phone number",
-      "enterDescription": "Enter description",
-      "enterWebsite": "Enter website URL",
-      "enterPassword": "Enter password",
-      "confirmPassword": "Confirm your password",
-      "selectRole": "Select role",
-      "selectCenter": "Select center",
-      "selectPermissions": "Select permissions",
-      "enterRoleName": "Enter role name",
-      "enterRoleDescription": "Enter role description",
-      "tellAboutYourself": "Tell us about yourself",
-      "enterCountry": "Enter country",
-      "enterCity": "Enter city",
-      "enterState": "Enter state",
-      "enterLogoUrl": "Enter logo URL",
-      "enterZipCode": "Enter ZIP code",
-      "enterDepartment": "Enter department",
-      "enterPosition": "Enter position",
-      "enterSalary": "Enter salary",
-      "enterNotes": "Enter notes",
-      "enterComments": "Enter comments",
-      "selectGender": "Select gender",
-      "selectCategory": "Select category",
-      "selectPriority": "Select priority",
-      "selectFormat": "Select format",
-      "selectQuality": "Select quality",
-      "enterTags": "Enter tags (comma separated)",
-      "enterVersion": "Enter version",
-      "enterSize": "Enter size",
-      "enterType": "Enter type",
-      "enterRating": "Enter rating (1-5)",
-      "enterScore": "Enter score",
-      "enterProgress": "Enter progress (%)",
-      "enterCompletion": "Enter completion (%)",
-      "selectDeadline": "Select deadline",
-      "selectReminder": "Select reminder",
-      "enterNotification": "Enter notification",
-      "enterAlert": "Enter alert",
-      "enterWarning": "Enter warning",
-      "enterInfo": "Enter info",
-      "enterTip": "Enter tip",
-      "enterHelp": "Enter help",
-      "enterSupport": "Enter support",
-      "enterFeedback": "Enter feedback",
-      "enterReport": "Enter report",
-      "enterAnalytics": "Enter analytics",
-      "enterStatistics": "Enter statistics",
-      "enterMetrics": "Enter metrics",
-      "enterPerformance": "Enter performance",
-      "enterEfficiency": "Enter efficiency",
-      "enterProductivity": "Enter productivity",
-      "enterCapacity": "Enter capacity",
-      "enterAvailability": "Enter availability",
-      "enterReliability": "Enter reliability",
-      "enterSecurity": "Enter security",
-      "enterPrivacy": "Enter privacy",
-      "enterConfidentiality": "Enter confidentiality",
-      "enterCompliance": "Enter compliance",
-      "enterRegulation": "Enter regulation",
-      "enterPolicy": "Enter policy",
-      "enterTerms": "Enter terms",
-      "enterConditions": "Enter conditions",
-      "enterAgreement": "Enter agreement",
-      "enterContract": "Enter contract",
-      "enterLicense": "Enter license",
-      "enterCopyright": "Enter copyright",
-      "enterTrademark": "Enter trademark",
-      "enterPatent": "Enter patent",
       "filterBy": "Filter by {field}",
       "enterField": "Enter {field}",
       "selectField": "Select {field}",
       "searchField": "Search {field}",
-      "enterCenterName": "Enter center name",
-      "enterCenterDescription": "Enter center description",
-      "enterAdminName": "Enter admin full name",
-      "enterAdminEmail": "Enter admin email",
-      "enterAdminPassword": "Enter admin password",
-      "enterAdminPhone": "Enter admin phone number",
-      "enterAdminAddress": "Enter admin address",
       "pickDate": "Pick a date",
       "pickDateRange": "Pick a date range",
-      "enterFullName": "Enter full name",
-      "enterEmailAddress": "Enter email address",
-      "enterPhoneNumber": "Enter phone number",
       "searchUsers": "Search users...",
-      "searchStaff": "Search staff...",
       "searchCenters": "Search centers...",
       "searchAdmins": "Search admins...",
       "searchRoles": "Search roles...",
       "searchItems": "Search {item}...",
-      "enterAddress": "Enter address",
-      "enterBio": "Tell us about yourself",
-      "selectDateOfBirth": "Select date of birth",
-      "enterCenterId": "Enter center ID",
-      "enterLocation": "Enter location",
-      "enterCurrentPassword": "Enter current password",
-      "enterNewPassword": "Enter new password",
       "confirmNewPassword": "Confirm new password"
     },
     "messages": {
       "noData": "No data available",
       "error": "An error occurred",
-      "success": "Operation successful",
       "bulkOperationCompleted": "Operation Results",
       "allOperationsSucceeded": "{count, plural, =0 {No operations} =1 {Successfully processed # {item}} other {Successfully processed # {item}s}}",
       "allOperationsFailed": "{count, plural, =0 {No operations} =1 {Failed to process # {item}} other {Failed to process # {item}s}}",
@@ -579,24 +292,9 @@
       "searching": "Searching...",
       "startTypingToSearch": "Start typing to search...",
       "tryAgain": "Please try again",
-      "invalidUserData": "Invalid user data. Please refresh the page and try again.",
-      "contactSupport": "Contact support if the problem persists",
       "welcome": "Welcome",
-      "itemCount": "Item count",
-      "userCount": "User count",
-      "lastLogin": "Last login",
-      "balance": "Balance",
-      "percentage": "Percentage",
-      "fileSize": "File size",
-      "temperature": "Temperature",
-      "showing": "Showing",
-      "showingCount": "Showing {count, number} {count, plural, =1 {{item}} other {{item}s}}",
-      "showingRange": "Showing {start, number} to {end, number} of {total, number} {total, plural, =1 {item} other {items}}",
       "foundResults": "Found {count, number} {count, plural, =1 {result} other {results}}",
-      "to": "to",
-      "of": "of",
       "items": "items",
-      "remaining": "remaining",
       "couldNotLoadNotifications": "Could not load notifications",
       "noNotifications": "No notifications",
       "showAllItems": "Show all items",
@@ -611,30 +309,16 @@
       "somethingWentWrong": "Something went wrong",
       "loading": "Loading {resource}...",
       "pleaseWaitLoading": "Please wait while we load {resource}...",
-      "errorLoading": "Error loading {resource}",
-      "somethingWentWrongWith": "Something went wrong with {resource}. Please try again.",
-      "somethingWentWrongWhile": "Something went wrong while {action} {resource}.",
-      "errorWith": "There was an error with {resource}. Please try again.",
-      "resourceError": "{resource} Error",
-      "errorWhile": "Error while {action} {resource}",
-      "failedTo": "Failed to {action} {resource}",
-      "pleaseWaitWhile": "Please wait while we {action} {resource}...",
       "unexpectedErrorOccurred": "An unexpected error occurred while rendering this component",
       "assignedToBranch": "assigned to branch",
       "enabled": "enabled",
-      "disabled": "disabled",
-      "deleted": "deleted",
-      "systemRolesCannotBeDeleted": "System roles cannot be deleted",
-      "systemRolesCannotBeModified": "System roles cannot be modified",
       "centerAccessNotDeleted": "Center access is not deleted",
       "profileNotDeleted": "User profile is not deleted",
       "centerNotDeleted": "Center is not deleted",
       "roleNotDeleted": "Role is not deleted",
       "adminUsersCannotHaveCenterAccessDeactivated": "Admin users cannot have their center access deactivated",
-      "onlyStaffAndAdminCanHaveCenterAccess": "Only Staff and Admin users can be granted center access",
       "adminUsers": "for admin users",
       "readOnly": "read-only",
-      "notDeleted": "not deleted",
       "errorDetails": "Error Details",
       "errorDetailsDevelopment": "Error Details (Development)",
       "errorLabel": "Error:",
@@ -651,8 +335,6 @@
       "searchAndSelectCenter": "Search and select a center",
       "searchAndSelectRole": "Search and select a role",
       "selectCenterFirst": "Select a center first",
-      "selectCenterFirstToChooseRole": "Please select a center first to choose a role",
-      "selectProfileType": "Select a profile type",
       "allItemsAlreadyInState": "{count, plural, =0 {No items} =1 {All # selected {item} is already {state}} other {All # selected {item}s are already {state}}}",
       "errorRefreshing": "Error refreshing {item}",
       "exportFailed": "Export failed",
@@ -669,18 +351,11 @@
       "somethingWentWrongLoadingRoles": "Something went wrong while loading roles",
       "alreadyHaveAccount": "Already have an account?",
       "processing": "Processing...",
-      "pleaseWaitProcessing": "Please wait while we process your request...",
-      "errorDetailsDevelopmentOnly": "Error details (development only)",
-      "ifProblemPersists": "If this problem persists, please contact support.",
       "noActiveAlerts": "No active alerts at this time",
       "allSystemsOperational": "All Systems Operational",
-      "allHealthChecksPassing": "All health checks are passing",
       "allSystemsOperationalFull": "{title} - {message}",
       "systemDegraded": "System Degraded",
-      "someComponentsIssues": "Some system components are experiencing issues",
       "systemDegradedFull": "{title} - {message}",
-      "databaseConnectionIssue": "Database Connection Issue",
-      "databaseNotResponding": "Database is not responding properly",
       "databaseConnectionIssueFull": "{title} - {message}",
       "diskUsageWarning": "Disk Usage Warning",
       "diskUsageAt": "Disk usage at",
@@ -700,7 +375,6 @@
       "database": "Database",
       "databaseConnectionPerformance": "Database connection and performance",
       "responseTime": "Response Time:",
-      "ms": "ms",
       "activeConnections": "Active Connections:",
       "totalConnections": "Total Connections:",
       "systemResources": "System Resources",
@@ -713,9 +387,7 @@
       "memory": "Memory",
       "memoryUsage": "Memory: {percentage, number, percent}",
       "disk": "Disk",
-      "lastUpdated": "Last updated:",
       "lastUpdatedWithTime": "Last updated: {time, date, medium}",
-      "auto": "Auto",
       "systemInfo": "System Info",
       "overallSystemStatus": "Overall System Status",
       "healthyServices": "Healthy Services",
@@ -726,47 +398,28 @@
       "metrics": "Metrics",
       "alerts": "Alerts",
       "cpuUsageTitle": "CPU Usage",
-      "cores": "Cores:",
       "coresCount": "Cores: {count, number}",
       "memoryUsageTitle": "Memory Usage",
-      "gb": "GB",
-      "gbSlash": "GB /",
       "memoryUsageGb": "{used, number} GB / {total, number} GB",
       "diskUsageGb": "{used, number} GB / {total, number} GB",
       "diskUsageTitle": "Disk Usage",
       "databaseResponse": "Database Response",
-      "active": "Active:",
-      "idle": "Idle:",
-      "idleSeparator": "| Idle:",
       "databaseConnections": "Active: {active, number} | Idle: {idle, number}",
-      "response": "Response:",
       "responseTimeWithMs": "Response: {time, number} ms",
-      "responseTimeMs": "{time, number}ms",
-      "usage": "Usage:",
       "cpuUsagePercentage": "Usage: {percentage, number, percent}",
       "diskUsagePercentage": "Usage: {percentage, number, percent}",
       "version": "Version:",
       "versionWithValue": "Version: {version}",
       "status": "Status:",
       "uptime": "Uptime:",
-      "loadMorePrefix": "Load more (",
-      "loadMoreSuffix": "remaining)",
       "loadMore": "Load more ({count, number} remaining)",
       "globalScope": "Global Scope",
       "global": "Global",
-      "noCentersAvailable": "No centers available",
-      "noCentersAvailableForUser": "No centers are available for this user.",
-      "noRolesAvailable": "No roles available",
-      "noRolesAvailableForCenter": "No roles are available for this center.",
-      "passwordsDoNotMatch": "Passwords do not match",
       "passwordChangeSuccess": "Password changed successfully",
       "avatarUpdated": "Avatar updated successfully",
-      "accessGranted": "Access granted successfully",
-      "accessRevoked": "Access revoked successfully",
       "contactAdmin": "If you believe this is an error, please contact your administrator",
       "staffInactive": "This staff member is inactive. Please contact support to activate their account.",
       "adminInactive": "This admin is inactive. Please contact support to activate their account.",
-      "userInactive": "This user is inactive. Please contact support to activate their account.",
       "otpSent": "OTP code sent successfully",
       "phoneVerified": "Phone verified successfully",
       "invalidOtp": "Invalid OTP code",
@@ -774,8 +427,6 @@
       "bulkImportNotImplemented": "Bulk import not implemented for {item}",
       "bulkDeleteNotImplemented": "Bulk delete not implemented for {item}",
       "bulkActionNotImplemented": "Bulk action \"{action}\" not implemented for {item}",
-      "bulkActivateNotImplemented": "Bulk activate not implemented for: {items}",
-      "bulkDeactivateNotImplemented": "Bulk deactivate not implemented for: {items}",
       "exportCompleted": "Export completed successfully as {format}",
       "exportNotAvailable": "Export not available for this table",
       "badRequest": "Bad Request: Please check your input and try again.",
@@ -784,14 +435,9 @@
       "notFound": "Not Found: The requested resource does not exist.",
       "sessionExpired": "You may need to log in or your session has expired.",
       "contactAdministrator": "If you believe this is a mistake, contact your administrator.",
-      "checkUrlOrDashboard": "Try checking the URL or returning to the dashboard.",
-      "bulkActivateSuccess": "Successfully activated: {userNames}",
-      "bulkDeactivateSuccess": "Successfully deactivated: {userNames}",
-      "bulkDeleteSuccess": "Successfully deleted: {userNames}"
+      "checkUrlOrDashboard": "Try checking the URL or returning to the dashboard."
     },
-    "countdown": {
-      "resendIn": "Resend code in"
-    }
+    "countdown": {}
   },
   "dashboard": {
     "welcome": "Welcome to Vision AI",
@@ -817,10 +463,7 @@
       "title": "Edit User",
       "description": "Update user information and settings"
     },
-    "selectCenterForRoleManagement": {
-      "title": "Select Center for Role Management"
-    },
-    "centerSpecificRoleAssignment": "Center-specific role assignment",
+    "selectCenterForRoleManagement": {},
     "viewUser": {
       "title": "User Details"
     },
@@ -843,22 +486,10 @@
     "viewStaff": {
       "title": "Staff Details"
     },
-    "deleteStaff": {
-      "title": "Delete Staff",
-      "description": "Are you sure you want to delete {userName}? This will permanently remove the staff member and all associated data."
-    },
-    "activateStaff": {
-      "title": "Activate Staff",
-      "description": "Are you sure you want to activate {userName}? This will restore their access to the system."
-    },
-    "deactivateStaff": {
-      "title": "Deactivate Staff",
-      "description": "Are you sure you want to deactivate {userName}? This will revoke their access to the system."
-    },
-    "restoreStaff": {
-      "title": "Restore Staff",
-      "description": "Are you sure you want to restore {userName}? This will reactivate their account and restore their access."
-    },
+    "deleteStaff": {},
+    "activateStaff": {},
+    "deactivateStaff": {},
+    "restoreStaff": {},
     "createRole": {
       "title": "Create New Role"
     },
@@ -920,9 +551,7 @@
     "manageRoleUsers": {
       "title": "Manage Role Users - {roleName}",
       "description": "Manage user assignments for this role. Use the Grant/Revoke buttons to control which users have this role assigned.",
-      "searchPlaceholder": "Search users...",
       "allUsers": "All Users",
-      "noPermissionsFound": "No Permissions found",
       "adminScope": "Admin Scope",
       "centerScope": "Center Scope"
     },
@@ -932,49 +561,24 @@
       "unread": "Unread",
       "archived": "Archived"
     },
-    "manageAdminRoles": {
-      "title": "Manage Admin Roles",
-      "description": "Showing admin roles available for {userName} in the system. Use the Assign/Remove buttons to manage admin role assignments."
-    },
+    "manageAdminRoles": {},
     "manageRoles": {
       "title": "Manage Roles",
       "description": "Showing roles available for {userName} in your center. Use the Assign/Remove buttons to manage role assignments."
     },
-    "rolesForCenter": {
-      "title": "Roles for {centerName}",
-      "description": "Showing roles available for {userName} in {centerName}. Use the Assign/Remove buttons to manage role assignments."
-    },
-    "createProducts": {
-      "title": "Create New Products",
-      "description": "Create a new products in the system"
-    },
-    "editProducts": {
-      "title": "Edit Products",
-      "description": "Update products information and settings"
-    },
-    "viewProducts": {
-      "title": "Products Details",
-      "description": "View detailed information about this products"
-    },
-    "deleteProducts": {
-      "title": "Delete Products",
-      "cannotUndo": "This action cannot be undone.",
-      "message": "Are you sure you want to delete {productsName}? This will permanently remove the products and all associated data.",
-      "thisActionWill": "This action will:",
-      "removeProducts": "Remove the products from the system",
-      "removeData": "Remove all associated data"
-    },
+    "rolesForCenter": {},
+    "createProducts": {},
+    "editProducts": {},
+    "viewProducts": {},
+    "deleteProducts": {},
     "createBranch": {
-      "title": "Create New Branch",
-      "description": "Create a new branch in the system"
+      "title": "Create New Branch"
     },
     "editBranch": {
-      "title": "Edit Branch",
-      "description": "Update branch information and settings"
+      "title": "Edit Branch"
     },
     "viewBranch": {
       "title": "Branch Details",
-      "description": "View detailed information about this branch",
       "basicInformation": "Basic Information",
       "location": "Location",
       "address": "Address",
@@ -987,36 +591,15 @@
     },
     "deleteBranch": {
       "title": "Delete Branch",
-      "cannotUndo": "This action cannot be undone.",
-      "message": "Are you sure you want to delete {branchName}? This will permanently remove the branch and all associated data.",
-      "thisActionWill": "This action will:",
-      "removeBranch": "Remove the branch from the system",
-      "removeData": "Remove all associated data"
+      "message": "Are you sure you want to delete {branchName}? This will permanently remove the branch and all associated data."
     },
     "manageBranchAccess": {
-      "title": "Manage Branch Access - {branchName}",
-      "description": "Manage user access for the branch {branchName}. Use the Grant/Revoke buttons to control which users can access this branch."
+      "title": "Manage Branch Access - {branchName}"
     },
-    "createTestModule": {
-      "title": "Create New TestModule",
-      "description": "Create a new test-module in the system"
-    },
-    "editTestModule": {
-      "title": "Edit TestModule",
-      "description": "Update test-module information and settings"
-    },
-    "viewTestModule": {
-      "title": "TestModule Details",
-      "description": "View detailed information about this test-module"
-    },
-    "deleteTestModule": {
-      "title": "Delete TestModule",
-      "cannotUndo": "This action cannot be undone.",
-      "message": "Are you sure you want to delete {test-moduleName}? This will permanently remove the test-module and all associated data.",
-      "thisActionWill": "This action will:",
-      "removeTestModule": "Remove the test-module from the system",
-      "removeData": "Remove all associated data"
-    },
+    "createTestModule": {},
+    "editTestModule": {},
+    "viewTestModule": {},
+    "deleteTestModule": {},
     "verifyPhone": {
       "title": "Verify Phone Number",
       "description": "Verify the phone number for {userName}",
@@ -1035,11 +618,9 @@
       "otpHint": "Enter the 6-digit code sent to the phone number",
       "phoneLocked": "Phone number is locked for this import session",
       "otpSent": "OTP sent successfully",
-      "userNotFound": "User with this phone number doesn't exist",
       "userNotFoundTitle": "User Not Found",
       "userNotFoundDescription": "No user found with phone number {phone}. Would you like to create a new user instead?",
-      "createUserInstead": "Create User Instead",
-      "importSuccess": "User imported successfully"
+      "createUserInstead": "Create User Instead"
     }
   },
   "errors": {
@@ -1047,66 +628,47 @@
       "generic": "Invalid {field}",
       "format": "Invalid {field} format",
       "expired": "Invalid or expired {field}",
-      "missing": "Invalid or missing {field}",
-      "type": "Invalid {field} type",
-      "orExpired": "{field} is invalid or expired"
+      "type": "Invalid {field} type"
     },
     "cannot": {
-      "action": "Cannot {action} {resource}",
-      "actionReason": "Cannot {action} {resource}. {reason}",
-      "undo": "This action cannot be undone",
-      "reverse": "This action cannot be reversed"
+      "actionReason": "Cannot {action} {resource}. {reason}"
     },
     "notAuthorized": {
-      "action": "You are not authorized to {action} this {resource}",
-      "actionResource": "You are not authorized to {action} {resource}"
+      "action": "You are not authorized to {action} this {resource}"
     },
     "notFound": {
       "generic": "{resource} not found",
-      "withId": "{resource} with {identifier} {value} not found",
-      "withField": "{resource} with {field} '{value}' not found"
+      "withId": "{resource} with {identifier} {value} not found"
     },
     "already": {
-      "exists": "{resource} already exists",
       "existsWithField": "{resource} with {field} '{value}' already exists",
       "has": "{resource} already has {what}",
       "is": "{resource} is already {state}",
       "deleted": "{resource} is already deleted"
     },
     "expired": {
-      "generic": "{resource} has expired",
-      "orInvalid": "{resource} is invalid or expired",
-      "session": "Your session has expired. Please log in again"
+      "generic": "{resource} has expired"
     },
     "required": {
       "field": "{field} is required",
-      "fields": "{fields} are required",
-      "oneOf": "Either {field1} or {field2} must be provided",
-      "generic": "{resource} is required"
+      "oneOf": "Either {field1} or {field2} must be provided"
     },
     "incorrect": {
-      "field": "{field} is incorrect",
-      "generic": "{resource} is incorrect"
+      "field": "{field} is incorrect"
     },
     "denied": {
-      "access": "Access denied to {resource}",
-      "action": "Access denied to {action} {resource}",
-      "generic": "Access denied"
+      "access": "Access denied to {resource}"
     },
     "rateLimit": {
-      "tooManyRequests": "Too many requests. Please try again later",
       "tooManyRequestsWithTime": "Too many requests. Please try again in {time}"
     },
     "centerInactive": {
-      "title": "Center Inactive",
       "description": "The center itself is currently inactive and cannot be accessed. Please select a different center or contact the administrator to activate this center."
     },
     "centerAccessDenied": {
-      "title": "Center Access Denied",
       "description": "You do not have access to this center. Please contact your administrator to request center access."
     },
     "centerAccessInactive": {
-      "title": "Center Access Inactive",
       "description": "Your access to this center is currently inactive. Please contact the center administrator for more information."
     },
     "genericError": "An error occurred",
@@ -1115,39 +677,18 @@
     "accessDenied": "Access denied",
     "resourceNotFound": "The requested resource was not found",
     "duplicateField": "This {field} is already in use. Please choose a different one",
-    "foreignKeyViolation": "One or more referenced items do not exist",
-    "databaseConfigurationError": "A system error occurred. Please try again later",
     "databaseOperationFailed": "The operation could not be completed. Please try again",
-    "recordNotFound": "The requested item could not be found",
     "internalServerError": "An unexpected error occurred",
     "businessLogicError": "The operation could not be completed due to a business rule violation",
-    "badRequest": "Bad request",
-    "unauthorized": "Unauthorized: Please log in to continue",
-    "forbidden": "This action is forbidden",
-    "conflict": "A conflict occurred with the current state of the resource",
-    "unprocessableEntity": "The request was well-formed but contains semantic errors",
     "serviceUnavailable": "Service temporarily unavailable. Please try again later",
     "userDoesNotHaveAccess": "User does not have access",
     "userNotAuthenticated": "User not authenticated",
-    "profileInactive": {
-      "title": "Profile Inactive",
-      "description": "The selected profile is currently inactive. Please select another profile or contact an administrator."
-    },
+    "profileInactive": {},
     "userPhoneNotVerified": "User phone is not verified",
-    "userAccountInactive": "User account is inactive",
-    "userHasNoEmail": "User does not have an email address. Please use SMS or WhatsApp channel",
-    "userHasNoPhone": "User does not have a phone number. Please use EMAIL channel",
-    "unsupportedChannel": "Unsupported channel for password reset",
     "tokenNotActiveYet": "Token not active yet",
     "tokenValidationFailed": "Token validation failed",
     "permissionScopeDoesNotMatch": "Permission scope does not match",
     "operation": "Operation failed",
-    "request": "Request processing failed",
-    "dataRetrieval": "Failed to retrieve data",
-    "dataProcessing": "Failed to process data",
-    "serverError": "Internal server error",
-    "qrCodeGenerationFailed": "QR code generation failed",
-    "twoFactorGenerationFailed": "Two-factor authentication setup failed",
     "adminScopeNotAllowedForCenter": "Admin scope permissions are not allowed for center-specific roles",
     "insufficientPermissions": "You don't have sufficient permissions to perform this action",
     "adminRoleCannotBeAssociatedWithCenter": "Admin role cannot be associated with a center. Admin roles are system-wide only",
@@ -1162,11 +703,8 @@
     "exportDataUnavailable": "No data available for export",
     "requestBodyTooLarge": "Request body is too large",
     "missingRequiredHeader": "Missing required header: {header}",
-    "duplicateResource": "Duplicate resource",
     "relatedEntityMissingOrInvalid": "Related entity is missing or invalid. Please check the referenced data and try again",
-    "requiredFieldMissing": "A required field is missing",
-    "temporaryDatabaseConflict": "Temporary database conflict occurred. Please retry.",
-    "emailVerificationMustBeAuthenticated": "Email verification must be requested from an authenticated endpoint"
+    "temporaryDatabaseConflict": "Temporary database conflict occurred. Please retry."
   },
   "export": {
     "formats": {
@@ -1181,10 +719,7 @@
       "label": "Name",
       "placeholder": "Enter your name"
     },
-    "email": {
-      "label": "Email",
-      "placeholder": "Enter your email"
-    },
+    "email": {},
     "password": {
       "label": "Password",
       "placeholder": "Enter your password"
@@ -1210,10 +745,7 @@
   "overlay": {
     "centerSelection": {
       "title": "Select Center",
-      "description": "Please select a center to continue",
-      "searchPlaceholder": "Search centers...",
-      "globalScope": "Global Scope (Admin)",
-      "noCentersFound": "No centers found"
+      "description": "Please select a center to continue"
     },
     "profileSelection": {
       "title": "Select Profile",
@@ -1242,18 +774,12 @@
       "title": "Roles",
       "subtitle": "Manage system roles and permissions"
     },
-    "users": {
-      "title": "Users",
-      "subtitle": "Manage system users"
-    },
+    "users": {},
     "staff": {
       "title": "Staff",
       "subtitle": "Manage staff members and their permissions"
     },
-    "centerInactive": {
-      "title": "Center Inactive",
-      "description": "The selected center is currently inactive and cannot be accessed. Please select a different center to continue."
-    },
+    "centerInactive": {},
     "profileInactive": {
       "title": "Profile Inactive",
       "description": "Your selected profile is currently inactive and cannot be accessed. Please select a different profile to continue."
@@ -1283,13 +809,6 @@
         "twoFactorAuthDescription": "Add an extra layer of security to your account",
         "twoFactorEnabledDescription": "Your account is protected with 2FA",
         "twoFactorDisabledDescription": "Enable 2FA to secure your account",
-        "securitySettings": "Security Settings",
-        "securitySettingsDescription": "Configure your security preferences",
-        "securityAlerts": "Security Alerts",
-        "securityAlertsDescription": "Recent security activity on your account",
-        "lastLogin": "Last Login",
-        "failedAttempts": "Failed Login Attempts",
-        "lockoutUntil": "Account Locked Until",
         "changePassword": "Change Password",
         "personalInfoDescription": "Update your personal information and contact details",
         "security": "Security Settings",
@@ -1309,20 +828,7 @@
         "notificationsDescription": "Manage your notification preferences"
       }
     },
-    "selectProfile": {
-      "title": "Select Profile",
-      "subtitle": "Choose a profile to continue",
-      "searchPlaceholder": "Search profiles...",
-      "loading": "Loading profiles...",
-      "searching": "Searching...",
-      "startTypingToSearch": "Start typing to search...",
-      "noResults": "No results found",
-      "noProfilesFound": "No profiles found matching your search",
-      "noProfilesAvailable": "No profiles available",
-      "profileSelected": "Profile selected successfully",
-      "errorSelecting": "Error selecting profile",
-      "errorLoading": "Error loading profiles"
-    },
+    "selectProfile": {},
     "unauthorized": {
       "title": "Access Denied",
       "description": "You don't have permission to access this resource",
@@ -1330,18 +836,12 @@
       "goToDashboard": "Go to Dashboard",
       "goBack": "Go Back"
     },
-    "products": {
-      "title": "Products",
-      "subtitle": "Manage products and their settings"
-    },
+    "products": {},
     "branches": {
       "title": "Branches",
       "subtitle": "Manage branches and their settings"
     },
-    "test-module": {
-      "title": "TestModule",
-      "subtitle": "Manage test-module and their settings"
-    },
+    "test-module": {},
     "notifications": {
       "title": "My Notifications",
       "subtitle": "View and manage your personal notifications"
@@ -1357,27 +857,16 @@
     "rowsPerPage": "Rows per page",
     "pageOf": "Page {current, number} of {total, number}"
   },
-  "selectCenter": {
-    "title": "Select Center",
-    "description": "Choose a center to work with, or switch to global scope for admin functions.",
-    "descriptionUser": "Choose a center to work with.",
-    "searchPlaceholder": "Search centers...",
-    "globalOption": "Global Dashboard"
-  },
+  "selectCenter": {},
   "success": {
     "create": "{resource} created successfully",
     "update": "{resource} updated successfully",
     "delete": "{resource} deleted successfully",
-    "activate": "{resource} activated successfully",
-    "deactivate": "{resource} deactivated successfully",
     "restore": "{resource} restored successfully",
     "archive": "{resource} archived successfully",
     "export": "{resource} exported successfully",
-    "import": "{resource} imported successfully",
     "login": "Login successful",
     "logout": "Logout successful",
-    "register": "Registration successful",
-    "profileUpdate": "Profile updated successfully",
     "passwordChange": "Password changed successfully",
     "roleAssigned": "Role assigned successfully",
     "roleRemoved": "Role removed successfully",
@@ -1385,19 +874,11 @@
     "userAccessRevoked": "User access revoked successfully",
     "permissionsRetrieved": "Permissions retrieved successfully",
     "dataRetrieved": "Data retrieved successfully",
-    "dataSaved": "Data saved successfully",
     "dataUpdated": "Data updated successfully",
-    "dataDeleted": "Data deleted successfully",
-    "dataCreated": "Data created successfully",
-    "validationPassed": "Validation passed successfully",
-    "upload": "File uploaded successfully",
-    "download": "File downloaded successfully",
     "tokenRefreshed": "Token refreshed successfully",
     "passwordResetSent": "Password reset email sent",
     "passwordReset": "Password reset successfully",
     "twoFactorSetup": "2FA setup initiated",
-    "twoFactorVerified": "2FA verification completed",
-    "userRegistered": "User registered successfully",
     "userActivated": "User activated successfully",
     "userDeactivated": "User deactivated successfully",
     "found": "{resource} found successfully",
@@ -1411,12 +892,7 @@
     "centerAccessRestored": "Center access restored successfully",
     "twoFactorEnabled": "Two-factor authentication enabled successfully",
     "twoFactorDisabled": "Two-factor authentication disabled successfully",
-    "branchAssigned": "User assigned to branch successfully",
-    "branchRemoved": "User removed from branch successfully",
-    "exportCompleted": "Export completed successfully",
     "operation": "Operation completed successfully",
-    "request": "Request processed successfully",
-    "dataProcessed": "Data processed successfully",
     "bulkDelete": "Bulk delete completed successfully",
     "bulkRestore": "Bulk restore completed successfully",
     "bulkAssign": "Bulk assign completed successfully",
@@ -1430,115 +906,19 @@
     "bulkRevokeBranchAccess": "Bulk revoke branch access completed successfully",
     "bulkGrantUserAccess": "Bulk grant user access completed successfully",
     "bulkRevokeUserAccess": "Bulk revoke user access completed successfully",
-    "activityLogTypesRetrieved": "Activity log types retrieved successfully",
-    "emailVerified": "Email verified successfully",
-    "emailVerificationRequestSent": "Email verification request sent"
+    "activityLogTypesRetrieved": "Activity log types retrieved successfully"
   },
   "system": {
     "health": {
-      "check": "System health check",
-      "status": "System status",
-      "uptime": "System uptime",
-      "version": "System version",
-      "lastUpdate": "Last update"
+      "check": "System health check"
     },
-    "status": {
-      "online": "System online",
-      "offline": "System offline",
-      "ready": "System ready",
-      "maintenance": "System maintenance",
-      "initializing": "System initializing",
-      "shuttingDown": "System shutting down",
-      "restarting": "System restarting"
-    },
-    "monitoring": {
-      "performance": "System performance",
-      "capacity": "System capacity",
-      "load": "System load",
-      "memory": "Memory",
-      "disk": "Disk",
-      "network": "Network",
-      "database": "Database",
-      "cache": "Cache",
-      "queue": "Queue"
-    },
-    "operations": {
-      "backup": "System backup",
-      "restore": "System restore",
-      "migration": "System migration",
-      "update": "System update",
-      "configuration": "System configuration",
-      "diagnostics": "System diagnostics",
-      "logging": "System logging",
-      "audit": "System audit",
-      "security": "System security"
-    },
-    "components": {
-      "job": "Job",
-      "task": "Task",
-      "process": "Process",
-      "service": "Service",
-      "module": "Module",
-      "component": "Component",
-      "feature": "Feature",
-      "function": "Function",
-      "operation": "Operation",
-      "transaction": "Transaction",
-      "session": "Session",
-      "connection": "Connection",
-      "request": "Request",
-      "response": "Response",
-      "event": "Event",
-      "notification": "Notification",
-      "alert": "Alert",
-      "warning": "Warning",
-      "error": "Error",
-      "exception": "Exception",
-      "failure": "Failure"
-    },
-    "actions": {
-      "timeout": "Timeout",
-      "retry": "Retry",
-      "fallback": "Fallback",
-      "recovery": "Recovery",
-      "restart": "Restart",
-      "reload": "Reload",
-      "refresh": "Refresh",
-      "sync": "Sync",
-      "archive": "Archive",
-      "cleanup": "Cleanup",
-      "optimization": "Optimization",
-      "upgrade": "Upgrade",
-      "downgrade": "Downgrade",
-      "rollback": "Rollback"
-    },
-    "deployment": {
-      "deployment": "Deployment",
-      "release": "Release",
-      "build": "Build",
-      "test": "Test"
-    },
-    "processing": {
-      "validation": "Validation",
-      "verification": "Verification",
-      "authentication": "Authentication",
-      "authorization": "Authorization",
-      "encryption": "Encryption",
-      "decryption": "Decryption",
-      "compression": "Compression",
-      "decompression": "Decompression",
-      "serialization": "Serialization",
-      "deserialization": "Deserialization",
-      "parsing": "Parsing",
-      "formatting": "Formatting",
-      "encoding": "Encoding",
-      "decoding": "Decoding",
-      "transformation": "Transformation",
-      "conversion": "Conversion",
-      "translation": "Translation",
-      "localization": "Localization",
-      "internationalization": "Internationalization"
-    }
+    "status": {},
+    "monitoring": {},
+    "operations": {},
+    "components": {},
+    "actions": {},
+    "deployment": {},
+    "processing": {}
   },
   "table": {
     "columns": {
@@ -1554,7 +934,6 @@
       "createdAt": "Created At",
       "role": "Role",
       "created": "Created",
-      "updated": "Updated",
       "actions": "Actions",
       "type": "Type",
       "user": "User",
@@ -1565,7 +944,6 @@
       "description": "Description",
       "location": "Location",
       "address": "Address",
-      "avatar": "Avatar",
       "title": "Title",
       "message": "Message",
       "priority": "Priority",
@@ -1585,14 +963,7 @@
       "manageAccess": "User Access",
       "manageCenterAccess": "Center Access",
       "manageRoles": "Manage Roles",
-      "manageCenters": "Manage Centers",
-      "createAdmin": "Create Admin",
-      "editUser": "Edit User",
       "restore": "Restore",
-      "saveChanges": "Save Changes",
-      "changePassword": "Change Password",
-      "activate": "Activate",
-      "deactivate": "Deactivate",
       "markAsRead": "Mark as Read",
       "archive": "Archive"
     },
@@ -1601,8 +972,7 @@
     },
     "selection": {
       "selectedItems": "{count, plural, =0 {No items} =1 {# {item} selected} other {# {item}s selected}}",
-      "selectAll": "Select All ({total, number})",
-      "deselectAll": "Deselect All"
+      "selectAll": "Select All ({total, number})"
     },
     "trashToggle": {
       "activeItems": "Active Items",
@@ -1614,8 +984,7 @@
       "message": "{field} is required"
     },
     "invalid": {
-      "message": "{field} is invalid",
-      "format": "Invalid {field} format"
+      "message": "{field} is invalid"
     },
     "minLength": {
       "message": "{field} must be at least {min} characters"
@@ -1629,7 +998,6 @@
     "phone": {
       "invalid": "Invalid phone number format"
     },
-    "url": "Invalid URL format",
     "password": {
       "invalid": "Password does not meet requirements",
       "mismatch": "Passwords do not match"
@@ -1673,80 +1041,26 @@
   },
   "toast": {
     "success": {
-      "title": "Success",
-      "message": "Operation completed successfully",
-      "saved": "Changes saved successfully",
-      "deleted": "Item deleted successfully",
-      "created": "Item created successfully",
-      "updated": "Item updated successfully"
+      "message": "Operation completed successfully"
     },
     "error": {
-      "title": "Error",
-      "message": "An error occurred",
-      "network": "Network error. Please check your connection",
-      "server": "Server error. Please try again later",
-      "validation": "Please check your input and try again"
+      "message": "An error occurred"
     },
-    "warning": {
-      "title": "Warning",
-      "message": "Please review your action"
-    },
+    "warning": {},
     "info": {
-      "title": "Information",
       "message": "Please note"
     }
   },
-  "tooltip": {
-    "default": "Hover for more information",
-    "help": "Click for help",
-    "required": "This field is required",
-    "optional": "This field is optional",
-    "disabled": "This action is currently disabled"
-  },
-  "empty": {
-    "noData": "No data available",
-    "noResults": "No results found",
-    "noItems": "No items to display",
-    "noPermission": "You don't have permission to view this content",
-    "noCenters": "No centers available",
-    "noUsers": "No users found",
-    "noRoles": "No roles available",
-    "noBranches": "No branches available",
-    "noPermissions": "No permissions available",
-    "noNotifications": "No notifications available",
-    "noFiles": "No files available",
-    "loading": "Loading data...",
-    "error": "Failed to load data"
-  },
+  "tooltip": {},
+  "empty": {},
   "date": {
-    "formats": {
-      "short": "MM/DD/YYYY",
-      "medium": "MMM DD, YYYY",
-      "long": "MMMM DD, YYYY",
-      "full": "EEEE, MMMM DD, YYYY"
-    },
-    "relative": {
-      "now": "Just now",
-      "minutesAgo": "{count, plural, =0 {just now} =1 {# minute ago} other {# minutes ago}}",
-      "hoursAgo": "{count, plural, =0 {just now} =1 {# hour ago} other {# hours ago}}",
-      "daysAgo": "{count, plural, =0 {today} =1 {# day ago} other {# days ago}}",
-      "weeksAgo": "{count, plural, =0 {this week} =1 {# week ago} other {# weeks ago}}",
-      "monthsAgo": "{count, plural, =0 {this month} =1 {# month ago} other {# months ago}}",
-      "yearsAgo": "{count, plural, =0 {this year} =1 {# year ago} other {# years ago}}"
-    }
+    "formats": {},
+    "relative": {}
   },
   "time": {
-    "formats": {
-      "short": "HH:mm",
-      "medium": "HH:mm:ss",
-      "long": "HH:mm:ss.SSS"
-    }
+    "formats": {}
   },
-  "currency": {
-    "symbol": "$",
-    "format": "{amount} {currency}",
-    "decimalPlaces": 2
-  },
+  "currency": {},
   "roles": {
     "superAdmin": {
       "name": "Super Administrator",
@@ -1758,14 +1072,7 @@
     }
   },
   "permissions": {
-    "groups": {
-      "staff": "Staff Management",
-      "admin": "Admin Management",
-      "center": "Center Management",
-      "roles": "Role Management",
-      "branches": "Branch Management",
-      "system": "System"
-    },
+    "groups": {},
     "staff": {
       "read": {
         "name": "Read Staff"
@@ -1935,13 +1242,5 @@
       }
     }
   },
-  "confirm": {
-    "areYouSure": "Are you sure?",
-    "delete": "Are you sure you want to delete this item?",
-    "action": "Are you sure you want to perform this action?",
-    "disable": "Are you sure you want to disable this item?",
-    "enable": "Are you sure you want to enable this item?",
-    "restore": "Are you sure you want to restore this item?",
-    "archive": "Are you sure you want to archive this item?"
-  }
+  "confirm": {}
 }

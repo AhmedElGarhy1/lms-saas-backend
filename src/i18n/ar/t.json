@@ -1,30 +1,11 @@
 {
   "actions": {
-    "retry": "يرجى المحاولة مرة أخرى",
-    "contactSupport": "اتصل بالدعم إذا استمرت المشكلة",
-    "checkInput": "يرجى التحقق من المدخلات والمحاولة مرة أخرى",
-    "fixErrors": "أصلح الأخطاء المميزة أدناه",
-    "refreshPage": "يرجى تحديث الصفحة والمحاولة مرة أخرى",
-    "loginAgain": "يرجى تسجيل الدخول مرة أخرى",
-    "selectCenter": "يرجى اختيار مركز",
-    "chooseDifferentValue": "يرجى اختيار قيمة مختلفة",
-    "fillRequiredFields": "يرجى ملء جميع الحقول المطلوبة",
-    "useCorrectFormat": "يرجى استخدام التنسيق الصحيح",
-    "shortenInput": "يرجى تقصير المدخل",
-    "provideMoreInfo": "يرجى تقديم المزيد من المعلومات",
-    "contactAdministrator": "يرجى الاتصال بالمدير",
-    "checkPermissions": "يرجى التحقق من الصلاحيات",
-    "verifyCredentials": "يرجى التحقق من بيانات الاعتماد",
-    "selectValidOption": "يرجى اختيار خيار صحيح",
-    "enterValidData": "يرجى إدخال بيانات صحيحة",
     "tryDifferentApproach": "يرجى تجربة نهج مختلف"
   },
   "auth": {
     "login": {
       "title": "مرحباً بعودتك",
-      "subtitle": "سجل دخولك للمتابعة",
-      "otpHint": "أدخل رمز OTP المرسل إلى هاتفك",
-      "verifyAndLogin": "التحقق وتسجيل الدخول"
+      "subtitle": "سجل دخولك للمتابعة"
     },
     "register": {
       "title": "إنشاء حساب",
@@ -63,65 +44,44 @@
       "switchCenter": "تبديل المركز"
     },
     "buttons": {
-      "save": "حفظ",
       "cancel": "إلغاء",
       "delete": "حذف",
       "edit": "تعديل",
-      "create": "إنشاء",
       "createResource": "إنشاء {resource}",
       "update": "تحديث",
       "updateResource": "تحديث {resource}",
       "deleteResource": "حذف {resource}",
-      "restoreResource": "استعادة {resource}",
-      "activateResource": "تفعيل {resource}",
-      "deactivateResource": "إلغاء تفعيل {resource}",
       "submit": "إرسال",
       "close": "إغلاق",
       "back": "رجوع",
-      "next": "التالي",
-      "previous": "السابق",
       "refresh": "تحديث",
       "export": "تصدير",
       "import": "استيراد",
       "exportData": "تصدير البيانات",
       "exporting": "جاري التصدير...",
       "assign": "تعيين",
-      "revoke": "إلغاء",
-      "grant": "منح",
       "remove": "إزالة",
       "manageRoles": "إدارة الأدوار",
       "centerAccess": "الوصول للمركز",
       "activateSelected": "تفعيل المحدد",
       "deactivateSelected": "إلغاء تفعيل المحدد",
-      "selectCenter": "اختيار المركز",
       "selectProfile": "اختيار الملف الشخصي",
       "saveChanges": "حفظ التغييرات",
       "changePassword": "تغيير كلمة المرور",
       "deleteSelected": "حذف المحدد",
       "enable": "تفعيل",
       "disable": "إلغاء التفعيل",
-      "backToCenters": "العودة إلى المراكز",
-      "creating": "جاري الإنشاء...",
-      "updating": "جاري التحديث...",
       "deleting": "جاري الحذف...",
-      "restoring": "جاري الاستعادة...",
-      "search": "بحث",
       "filter": "تصفية",
       "clear": "مسح",
       "reset": "إعادة تعيين",
       "confirm": "تأكيد",
-      "yes": "نعم",
-      "no": "لا",
-      "ok": "موافق",
       "login": "تسجيل الدخول",
       "logout": "تسجيل الخروج",
       "register": "التسجيل",
       "forgotPassword": "نسيت كلمة المرور؟",
-      "rememberMe": "تذكرني",
-      "activate": "تفعيل",
       "deactivate": "إلغاء التفعيل",
       "restore": "استعادة",
-      "archive": "أرشفة",
       "toggleStatusInCenter": "تغيير الحالة في المركز",
       "deleteFromCenter": "حذف من المركز",
       "restoreInCenter": "استعادة في المركز",
@@ -130,40 +90,16 @@
       "deleteFromCenterSelected": "حذف المحدد من المركز",
       "restoreInCenterSelected": "استعادة المحدد في المركز",
       "view": "عرض",
-      "manage": "إدارة",
-      "download": "تحميل",
-      "upload": "رفع",
-      "copy": "نسخ",
-      "duplicate": "تكرار",
-      "move": "نقل",
-      "share": "مشاركة",
-      "print": "طباعة",
-      "send": "إرسال",
-      "receive": "استقبال",
-      "approve": "موافقة",
-      "reject": "رفض",
-      "publish": "نشر",
-      "unpublish": "إلغاء النشر",
-      "schedule": "جدولة",
-      "unschedule": "إلغاء الجدولة",
       "clearSearch": "مسح البحث",
       "tryAgain": "حاول مرة أخرى",
       "saving": "جاري الحفظ...",
-      "editProducts": "تعديل Products",
-      "editBranch": "تعديل الفرع",
       "toggleStatus": "تبديل الحالة",
       "manageAccess": "إدارة الوصول",
-      "editTestModule": "تعديل TestModule",
-      "contactAdmin": "اتصل بالمدير",
       "reloadPage": "إعادة تحميل الصفحة",
-      "goBack": "العودة",
-      "resetForm": "إعادة تعيين النموذج",
-      "reloadTable": "إعادة تحميل الجدول",
       "deselectAll": "إلغاء اختيار الكل",
       "markAllRead": "تعليم الكل كمقروء",
       "viewAllNotifications": "عرض جميع الإشعارات",
       "archiveNotification": "أرشفة الإشعار",
-      "loadMore": "تحميل المزيد",
       "done": "تم",
       "quickSelect": "اختيار سريع",
       "selectPreset": "اختر إعداداً مسبقاً",
@@ -188,8 +124,6 @@
       "status": "الحالة",
       "active": "نشط",
       "inactive": "غير نشط",
-      "enabled": "مفعل",
-      "disabled": "معطل",
       "userId": "معرف المستخدم",
       "never": "أبداً",
       "currentPassword": "كلمة المرور الحالية",
@@ -197,54 +131,24 @@
       "theme": "المظهر",
       "notifications": "الإشعارات",
       "address": "العنوان",
-      "profilePicture": "الصورة الشخصية",
       "locale": "اللغة",
       "logo": "الشعار",
-      "characters": "حرف",
-      "created": "تم الإنشاء",
-      "updated": "تم التحديث",
-      "actions": "الإجراءات",
-      "select": "اختيار",
-      "none": "لا شيء",
       "all": "الكل",
       "loading": "جاري التحميل",
       "error": "خطأ",
       "success": "نجح",
-      "warning": "تحذير",
-      "info": "معلومات",
       "password": "كلمة المرور",
       "confirmPassword": "تأكيد كلمة المرور",
       "website": "الموقع الإلكتروني",
       "role": "الدور",
       "permissions": "الصلاحيات",
       "avatar": "الصورة الشخصية",
-      "bio": "السيرة الذاتية",
       "dateOfBirth": "تاريخ الميلاد",
       "fullName": "الاسم الكامل",
-      "emailAddress": "عنوان البريد الإلكتروني",
       "phoneNumber": "رقم الهاتف",
       "center": "المركز",
       "location": "الموقع",
       "user": "المستخدم",
-      "userEmail": "user@example.com",
-      "admin": "المدير",
-      "manager": "المدير",
-      "instructor": "المدرب",
-      "student": "الطالب",
-      "rolesModule": "وحدة الأدوار",
-      "centersSystem": "نظام المراكز",
-      "branchesSystem": "نظام الفروع",
-      "authenticationSystem": "نظام المصادقة",
-      "userManagementSection": "قسم إدارة المستخدمين",
-      "userTable": "جدول المستخدمين",
-      "userForm": "نموذج المستخدم",
-      "systemAlerts": "تنبيهات النظام",
-      "otp": "رمز التحقق",
-      "verification": "التحقق",
-      "data": "البيانات",
-      "form": "النموذج",
-      "table": "الجدول",
-      "profiles": "الملفات الشخصية",
       "profile": "الملف الشخصي",
       "language": "اللغة",
       "english": "الإنجليزية",
@@ -253,97 +157,29 @@
       "dateFormat": "تنسيق التاريخ",
       "timeFormat": "تنسيق الوقت",
       "twoFactorAuth": "المصادقة الثنائية",
-      "sessionTimeout": "انتهاء الجلسة",
-      "loginNotifications": "إشعارات تسجيل الدخول",
-      "suspiciousActivityAlerts": "تنبيهات النشاط المشبوه",
-      "currency": "العملة",
-      "country": "البلد",
-      "city": "المدينة",
-      "state": "الولاية",
-      "zipCode": "الرمز البريدي",
-      "gender": "الجنس",
-      "age": "العمر",
-      "department": "القسم",
-      "position": "المنصب",
-      "salary": "الراتب",
-      "startDate": "تاريخ البداية",
-      "endDate": "تاريخ النهاية",
-      "duration": "المدة",
-      "priority": "الأولوية",
-      "category": "الفئة",
-      "tags": "العلامات",
-      "notes": "الملاحظات",
-      "comments": "التعليقات",
-      "attachments": "المرفقات",
-      "version": "الإصدار",
-      "size": "الحجم",
       "type": "النوع",
-      "format": "التنسيق",
-      "quality": "الجودة",
-      "rating": "التقييم",
-      "score": "النتيجة",
-      "progress": "التقدم",
-      "completion": "الإكمال",
-      "deadline": "الموعد النهائي",
-      "reminder": "التذكير",
       "notification": "الإشعار",
       "alert": "التنبيه",
-      "tip": "نصيحة",
-      "help": "المساعدة",
-      "support": "الدعم",
-      "feedback": "التعليقات",
-      "report": "التقرير",
-      "analytics": "التحليلات",
       "statistics": "الإحصائيات",
-      "metrics": "المقاييس",
-      "performance": "الأداء",
-      "efficiency": "الكفاءة",
-      "productivity": "الإنتاجية",
-      "capacity": "السعة",
-      "availability": "التوفر",
-      "reliability": "الموثوقية",
-      "security": "الأمان",
-      "privacy": "الخصوصية",
-      "confidentiality": "السرية",
-      "compliance": "الامتثال",
-      "regulation": "التنظيم",
-      "policy": "السياسة",
-      "terms": "الشروط",
-      "conditions": "الشروط",
-      "agreement": "الاتفاقية",
-      "contract": "العقد",
-      "license": "الترخيص",
-      "copyright": "حقوق الطبع والنشر",
-      "trademark": "العلامة التجارية",
-      "patent": "البراءة",
       "yes": "نعم",
       "no": "لا",
       "current": "الحالي",
       "date": "التاريخ",
-      "filename": "اسم الملف",
       "filenameOptional": "اسم الملف (اختياري)",
-      "optional": "اختياري",
       "filter": "تصفية",
-      "assign": "تعيين",
       "timestamps": "الطوابع الزمنية",
       "basicInformation": "المعلومات الأساسية",
       "roleName": "اسم الدور",
-      "roleType": "نوع الدور",
-      "totalPermissions": "إجمالي الصلاحيات",
-      "permissionsAssigned": "صلاحية معينة",
       "createdAt": "تم الإنشاء في",
       "lastUpdated": "آخر تحديث",
       "updatedAt": "تم التحديث في",
       "assignedUsers": "المستخدمون المعينون",
       "permissionsCount": "عدد الصلاحيات",
-      "systemRole": "دور النظام",
-      "customRole": "دور مخصص",
       "unknownUser": "مستخدم غير معروف",
       "contactInformation": "معلومات الاتصال",
       "show": "عرض",
       "activeStatus": "حالة النشاط",
       "adminName": "اسم المدير",
-      "adminEmail": "بريد المدير الإلكتروني",
       "adminPassword": "كلمة مرور المدير",
       "adminPhone": "هاتف المدير",
       "adminAddress": "عنوان المدير",
@@ -356,8 +192,6 @@
       "lastWeek": "الأسبوع الماضي",
       "thisMonth": "هذا الشهر",
       "lastMonth": "الشهر الماضي",
-      "thisQuarter": "هذا الربع",
-      "lastQuarter": "الربع الماضي",
       "thisYear": "هذا العام",
       "lastYear": "العام الماضي",
       "customRange": "نطاق مخصص",
@@ -366,26 +200,17 @@
       "include": "تضمين",
       "globalDashboard": "لوحة التحكم العامة",
       "dateRange": "نطاق التاريخ",
-      "unknownProducts": "Products غير معروف",
       "unknownBranch": "فرع غير معروف",
-      "unknownTestModule": "TestModule غير معروف",
-      "system": "النظام",
-      "scopes": "النطاقات:",
       "noRendererConfigured": "لم يتم تكوين العارض",
       "otpCode": "رمز التحقق",
       "notProvided": "غير متوفر",
       "profileAvatar": "صورة الملف الشخصي",
       "channel": "القناة",
-      "profileType": "نوع الملف الشخصي",
-      "result": "النتيجة",
       "total": "الإجمالي",
       "failed": "فشل",
-      "errors": "الأخطاء",
-      "staff": "الموظفون"
+      "errors": "الأخطاء"
     },
-    "countdown": {
-      "resendIn": "إعادة إرسال الرمز خلال"
-    },
+    "countdown": {},
     "status": {
       "active": "نشط",
       "inactive": "غير نشط",
@@ -395,13 +220,7 @@
       "retrying": "إعادة المحاولة",
       "delivered": "تم التسليم"
     },
-    "profileTypes": {
-      "teacher": "معلم",
-      "staff": "موظف",
-      "parent": "ولي أمر",
-      "student": "طالب",
-      "admin": "مدير"
-    },
+    "profileTypes": {},
     "channels": {
       "email": "البريد الإلكتروني",
       "sms": "رسالة نصية",
@@ -420,37 +239,20 @@
       "alert": "التنبيه",
       "data": "البيانات",
       "item": "العنصر",
-      "items": "العناصر",
-      "file": "الملف",
-      "files": "الملفات",
-      "record": "السجل",
-      "records": "السجلات",
-      "entity": "الكيان",
-      "entities": "الكيانات",
-      "users": "مستخدمين",
       "roles": "أدوار",
       "admins": "مديرين",
       "centers": "مراكز",
       "access": "الوصول",
-      "permissions": "الصلاحيات",
-      "products": "المنتجات",
-      "productss": "المنتجات",
       "branches": "فروع",
-      "test-module": "وحدة الاختبار",
-      "test-modules": "وحدات الاختبار",
       "notifications": "إشعارات",
       "admin": "مدير",
       "userAccess": "صلاحية المستخدم",
       "branchAccess": "صلاحية الوصول للفرع",
       "centerAccess": "صلاحية الوصول للمركز",
       "refreshToken": "رمز التحديث",
-      "verificationToken": "رمز التحقق",
       "verificationCode": "رمز التحقق",
-      "targetUserProfile": "الملف الشخصي للمستخدم المستهدف",
       "adminScope": "نطاق المدير",
       "profileType": "نوع الملف الشخصي",
-      "currentPassword": "كلمة المرور الحالية",
-      "otpCode": "رمز OTP",
       "profileSelection": "اختيار الملف الشخصي",
       "tokenType": "نوع الرمز",
       "signature": "التوقيع",
@@ -466,113 +268,22 @@
     "placeholders": {
       "search": "بحث...",
       "select": "اختيار...",
-      "enter": "إدخال...",
-      "choose": "اختيار...",
-      "enterName": "أدخل الاسم",
-      "enterEmail": "أدخل عنوان البريد الإلكتروني",
-      "enterPhone": "أدخل رقم الهاتف",
-      "enterDescription": "أدخل الوصف",
-      "enterWebsite": "أدخل رابط الموقع",
-      "enterPassword": "أدخل كلمة المرور",
-      "confirmPassword": "أكد كلمة المرور",
-      "selectRole": "اختر الدور",
-      "selectCenter": "اختر المركز",
-      "selectPermissions": "اختر الصلاحيات",
-      "enterRoleName": "أدخل اسم الدور",
-      "enterRoleDescription": "أدخل وصف الدور",
-      "tellAboutYourself": "أخبرنا عن نفسك",
-      "enterCountry": "أدخل البلد",
-      "enterCity": "أدخل المدينة",
-      "enterState": "أدخل الولاية",
-      "enterLogoUrl": "أدخل رابط الشعار",
-      "enterZipCode": "أدخل الرمز البريدي",
-      "enterDepartment": "أدخل القسم",
-      "enterPosition": "أدخل المنصب",
-      "enterSalary": "أدخل الراتب",
-      "enterNotes": "أدخل الملاحظات",
-      "enterComments": "أدخل التعليقات",
-      "selectGender": "اختر الجنس",
-      "selectCategory": "اختر الفئة",
-      "selectPriority": "اختر الأولوية",
-      "selectFormat": "اختر التنسيق",
-      "selectQuality": "اختر الجودة",
-      "enterTags": "أدخل العلامات (مفصولة بفواصل)",
-      "enterVersion": "أدخل الإصدار",
-      "enterSize": "أدخل الحجم",
-      "enterType": "أدخل النوع",
-      "enterRating": "أدخل التقييم (1-5)",
-      "enterScore": "أدخل النتيجة",
-      "enterProgress": "أدخل التقدم (%)",
-      "enterCompletion": "أدخل الإكمال (%)",
-      "selectDeadline": "اختر الموعد النهائي",
-      "selectReminder": "اختر التذكير",
-      "enterNotification": "أدخل الإشعار",
-      "enterAlert": "أدخل التنبيه",
-      "enterWarning": "أدخل التحذير",
-      "enterInfo": "أدخل المعلومات",
-      "enterTip": "أدخل النصيحة",
-      "enterHelp": "أدخل المساعدة",
-      "enterSupport": "أدخل الدعم",
-      "enterFeedback": "أدخل التعليقات",
-      "enterReport": "أدخل التقرير",
-      "enterAnalytics": "أدخل التحليلات",
-      "enterStatistics": "أدخل الإحصائيات",
-      "enterMetrics": "أدخل المقاييس",
-      "enterPerformance": "أدخل الأداء",
-      "enterEfficiency": "أدخل الكفاءة",
-      "enterProductivity": "أدخل الإنتاجية",
-      "enterCapacity": "أدخل السعة",
-      "enterAvailability": "أدخل التوفر",
-      "enterReliability": "أدخل الموثوقية",
-      "enterSecurity": "أدخل الأمان",
-      "enterPrivacy": "أدخل الخصوصية",
-      "enterConfidentiality": "أدخل السرية",
-      "enterCompliance": "أدخل الامتثال",
-      "enterRegulation": "أدخل التنظيم",
-      "enterPolicy": "أدخل السياسة",
-      "enterTerms": "أدخل الشروط",
-      "enterConditions": "أدخل الشروط",
-      "enterAgreement": "أدخل الاتفاقية",
-      "enterContract": "أدخل العقد",
-      "enterLicense": "أدخل الترخيص",
-      "enterCopyright": "أدخل حقوق الطبع والنشر",
-      "enterTrademark": "أدخل العلامة التجارية",
-      "enterPatent": "أدخل البراءة",
       "filterBy": "تصفية حسب {field}",
       "enterField": "أدخل {field}",
       "selectField": "اختر {field}",
       "searchField": "ابحث عن {field}",
-      "enterCenterName": "أدخل اسم المركز",
-      "enterCenterDescription": "أدخل وصف المركز",
-      "enterAdminName": "أدخل اسم المدير الكامل",
-      "enterAdminEmail": "أدخل بريد المدير الإلكتروني",
-      "enterAdminPassword": "أدخل كلمة مرور المدير",
-      "enterAdminPhone": "أدخل رقم هاتف المدير",
-      "enterAdminAddress": "أدخل عنوان المدير",
       "pickDate": "اختر تاريخ",
       "pickDateRange": "اختر نطاق التاريخ",
-      "enterFullName": "أدخل الاسم الكامل",
-      "enterEmailAddress": "أدخل عنوان البريد الإلكتروني",
-      "enterPhoneNumber": "أدخل رقم الهاتف",
       "searchUsers": "البحث في المستخدمين...",
-      "searchStaff": "البحث في الموظفين...",
       "searchCenters": "البحث في المراكز...",
       "searchAdmins": "البحث في المدراء...",
       "searchRoles": "البحث في الأدوار...",
       "searchItems": "البحث في {item}...",
-      "enterAddress": "أدخل العنوان",
-      "enterBio": "أخبرنا عن نفسك",
-      "selectDateOfBirth": "اختر تاريخ الميلاد",
-      "enterCenterId": "أدخل معرف المركز",
-      "enterLocation": "أدخل الموقع",
-      "enterCurrentPassword": "أدخل كلمة المرور الحالية",
-      "enterNewPassword": "أدخل كلمة المرور الجديدة",
       "confirmNewPassword": "أكد كلمة المرور الجديدة"
     },
     "messages": {
       "noData": "لا توجد بيانات متاحة",
       "error": "حدث خطأ",
-      "success": "نجحت العملية",
       "bulkOperationCompleted": "نتائج العملية",
       "allOperationsSucceeded": "{count, plural, =0 {لا توجد عمليات} =1 {تمت معالجة # {item} بنجاح} =2 {تمت معالجة # {item} بنجاح} few {تمت معالجة # {item} بنجاح} many {تمت معالجة # {item} بنجاح} other {تمت معالجة # {item} بنجاح}}",
       "allOperationsFailed": "{count, plural, =0 {لا توجد عمليات} =1 {فشلت معالجة # {item}} =2 {فشلت معالجة # {item}} few {فشلت معالجة # {item}} many {فشلت معالجة # {item}} other {فشلت معالجة # {item}}}",
@@ -582,24 +293,9 @@
       "searching": "جاري البحث...",
       "startTypingToSearch": "ابدأ الكتابة للبحث...",
       "tryAgain": "يرجى المحاولة مرة أخرى",
-      "invalidUserData": "بيانات المستخدم غير صحيحة. يرجى تحديث الصفحة والمحاولة مرة أخرى.",
-      "contactSupport": "اتصل بالدعم إذا استمرت المشكلة",
       "welcome": "مرحباً",
-      "itemCount": "عدد العناصر",
-      "userCount": "عدد المستخدمين",
-      "lastLogin": "آخر تسجيل دخول",
-      "balance": "الرصيد",
-      "percentage": "النسبة المئوية",
-      "fileSize": "حجم الملف",
-      "temperature": "درجة الحرارة",
-      "showing": "عرض",
-      "showingCount": "عرض {count, number} {count, plural, =1 {{item}} =2 {{item}} few {{item}} many {{item}} other {{item}}}",
-      "showingRange": "عرض {start, number} إلى {end, number} من {total, number} {total, plural, =1 {عنصر} =2 {عنصران} few {عناصر} many {عنصر} other {عنصر}}",
       "foundResults": "تم العثور على {count, number} {count, plural, =1 {نتيجة} =2 {نتيجتان} few {نتائج} many {نتيجة} other {نتيجة}}",
-      "to": "إلى",
-      "of": "من",
       "items": "عناصر",
-      "remaining": "متبقي",
       "couldNotLoadNotifications": "تعذر تحميل الإشعارات",
       "noNotifications": "لا توجد إشعارات",
       "showAllItems": "عرض جميع العناصر",
@@ -614,30 +310,16 @@
       "somethingWentWrong": "حدث خطأ ما",
       "loading": "جاري تحميل {resource}...",
       "pleaseWaitLoading": "يرجى الانتظار بينما نقوم بتحميل {resource}...",
-      "errorLoading": "خطأ في تحميل {resource}",
-      "somethingWentWrongWith": "حدث خطأ في {resource}. يرجى المحاولة مرة أخرى.",
-      "somethingWentWrongWhile": "حدث خطأ أثناء {action} {resource}.",
-      "errorWith": "حدث خطأ في {resource}. يرجى المحاولة مرة أخرى.",
-      "resourceError": "خطأ في {resource}",
-      "errorWhile": "خطأ أثناء {action} {resource}",
-      "failedTo": "فشل في {action} {resource}",
-      "pleaseWaitWhile": "يرجى الانتظار بينما نقوم بـ {action} {resource}...",
       "unexpectedErrorOccurred": "حدث خطأ غير متوقع أثناء عرض هذا المكون",
       "assignedToBranch": "معين للفرع",
       "enabled": "مفعل",
-      "disabled": "معطل",
-      "deleted": "محذوف",
-      "systemRolesCannotBeDeleted": "لا يمكن حذف أدوار النظام",
-      "systemRolesCannotBeModified": "لا يمكن تعديل أدوار النظام",
       "centerAccessNotDeleted": "صلاحية الوصول للمركز غير محذوفة",
       "profileNotDeleted": "الملف الشخصي للمستخدم غير محذوف",
       "centerNotDeleted": "المركز غير محذوف",
       "roleNotDeleted": "الدور غير محذوف",
       "adminUsersCannotHaveCenterAccessDeactivated": "لا يمكن تعطيل صلاحية الوصول للمركز لمستخدمي المدير",
-      "onlyStaffAndAdminCanHaveCenterAccess": "يمكن فقط منح صلاحية الوصول للمركز للمستخدمين من نوع موظف أو مدير",
       "adminUsers": "لمستخدمي المدير",
       "readOnly": "للقراءة فقط",
-      "notDeleted": "غير محذوف",
       "errorDetails": "تفاصيل الخطأ",
       "errorDetailsDevelopment": "تفاصيل الخطأ (للتطوير فقط)",
       "errorLabel": "خطأ:",
@@ -654,8 +336,6 @@
       "searchAndSelectCenter": "البحث واختيار مركز",
       "searchAndSelectRole": "البحث واختيار دور",
       "selectCenterFirst": "اختر مركزاً أولاً",
-      "selectCenterFirstToChooseRole": "يرجى اختيار مركز أولاً لاختيار دور",
-      "selectProfileType": "اختر نوع الملف الشخصي",
       "allItemsAlreadyInState": "{count, plural, =0 {لا توجد عناصر} =1 {جميع # {item} المحدد {state} بالفعل} =2 {جميع # {item} المحددان {state} بالفعل} few {جميع # {item} المحددة {state} بالفعل} many {جميع # {item} المحددة {state} بالفعل} other {جميع # {item} المحددة {state} بالفعل}}",
       "errorRefreshing": "خطأ في تحديث {item}",
       "exportFailed": "فشل التصدير",
@@ -672,18 +352,11 @@
       "somethingWentWrongLoadingRoles": "حدث خطأ أثناء تحميل الأدوار",
       "alreadyHaveAccount": "هل لديك حساب بالفعل؟",
       "processing": "جاري المعالجة...",
-      "pleaseWaitProcessing": "يرجى الانتظار بينما نقوم بمعالجة طلبك...",
-      "errorDetailsDevelopmentOnly": "تفاصيل الخطأ (للتطوير فقط)",
-      "ifProblemPersists": "إذا استمرت هذه المشكلة، يرجى الاتصال بالدعم.",
       "noActiveAlerts": "لا توجد تنبيهات نشطة في هذا الوقت",
       "allSystemsOperational": "جميع الأنظمة تعمل",
-      "allHealthChecksPassing": "جميع فحوصات الصحة تمر بنجاح",
       "allSystemsOperationalFull": "{title} - {message}",
       "systemDegraded": "تدهور النظام",
-      "someComponentsIssues": "بعض مكونات النظام تواجه مشاكل",
       "systemDegradedFull": "{title} - {message}",
-      "databaseConnectionIssue": "مشكلة في اتصال قاعدة البيانات",
-      "databaseNotResponding": "قاعدة البيانات لا تستجيب بشكل صحيح",
       "databaseConnectionIssueFull": "{title} - {message}",
       "diskUsageWarning": "تحذير استخدام القرص",
       "diskUsageAt": "استخدام القرص عند",
@@ -703,7 +376,6 @@
       "database": "قاعدة البيانات",
       "databaseConnectionPerformance": "اتصال وأداء قاعدة البيانات",
       "responseTime": "وقت الاستجابة:",
-      "ms": "مللي ثانية",
       "activeConnections": "الاتصالات النشطة:",
       "totalConnections": "إجمالي الاتصالات:",
       "systemResources": "موارد النظام",
@@ -716,9 +388,7 @@
       "memory": "الذاكرة",
       "memoryUsage": "الذاكرة: {percentage, number, percent}",
       "disk": "القرص",
-      "lastUpdated": "آخر تحديث:",
       "lastUpdatedWithTime": "آخر تحديث: {time, date, medium}",
-      "auto": "تلقائي",
       "systemInfo": "معلومات النظام",
       "overallSystemStatus": "حالة النظام العامة",
       "healthyServices": "خدمات صحية",
@@ -729,47 +399,28 @@
       "metrics": "المقاييس",
       "alerts": "التنبيهات",
       "cpuUsageTitle": "استخدام المعالج",
-      "cores": "النوى:",
       "coresCount": "النوى: {count, number}",
       "memoryUsageTitle": "استخدام الذاكرة",
-      "gb": "جيجابايت",
-      "gbSlash": "جيجابايت /",
       "memoryUsageGb": "{used, number} جيجابايت / {total, number} جيجابايت",
       "diskUsageGb": "{used, number} جيجابايت / {total, number} جيجابايت",
       "diskUsageTitle": "استخدام القرص",
       "databaseResponse": "استجابة قاعدة البيانات",
-      "active": "نشط:",
-      "idle": "خامل:",
-      "idleSeparator": "| خامل:",
       "databaseConnections": "نشط: {active, number} | خامل: {idle, number}",
-      "response": "الاستجابة:",
       "responseTimeWithMs": "الاستجابة: {time, number} مللي ثانية",
-      "responseTimeMs": "{time, number}مللي ثانية",
-      "usage": "الاستخدام:",
       "cpuUsagePercentage": "الاستخدام: {percentage, number, percent}",
       "diskUsagePercentage": "الاستخدام: {percentage, number, percent}",
       "version": "الإصدار:",
       "versionWithValue": "الإصدار: {version}",
       "status": "الحالة:",
       "uptime": "وقت التشغيل:",
-      "loadMorePrefix": "تحميل المزيد (",
-      "loadMoreSuffix": "متبقي)",
       "loadMore": "تحميل المزيد ({count, number} متبقي)",
       "globalScope": "النطاق العام",
       "global": "عام",
-      "noCentersAvailable": "لا توجد مراكز متاحة",
-      "noCentersAvailableForUser": "لا توجد مراكز متاحة لهذا المستخدم.",
-      "noRolesAvailable": "لا توجد أدوار متاحة",
-      "noRolesAvailableForCenter": "لا توجد أدوار متاحة لهذا المركز.",
-      "passwordsDoNotMatch": "كلمات المرور غير متطابقة",
       "passwordChangeSuccess": "تم تغيير كلمة المرور بنجاح",
       "avatarUpdated": "تم تحديث الصورة الشخصية بنجاح",
-      "accessGranted": "تم منح الوصول بنجاح",
-      "accessRevoked": "تم إلغاء الوصول بنجاح",
       "contactAdmin": "إذا كنت تعتقد أن هذا خطأ، يرجى الاتصال بالمدير",
       "staffInactive": "هذا الموظف غير نشط. يرجى الاتصال بالدعم لتفعيل حسابه.",
       "adminInactive": "هذا المدير غير نشط. يرجى الاتصال بالدعم لتفعيل حسابه.",
-      "userInactive": "هذا المستخدم غير نشط. يرجى الاتصال بالدعم لتفعيل حسابه.",
       "otpSent": "تم إرسال رمز التحقق بنجاح",
       "phoneVerified": "تم التحقق من الهاتف بنجاح",
       "invalidOtp": "رمز التحقق غير صحيح",
@@ -777,8 +428,6 @@
       "bulkImportNotImplemented": "استيراد المجموعة غير متاح لـ {item}",
       "bulkDeleteNotImplemented": "حذف المجموعة غير متاح لـ {item}",
       "bulkActionNotImplemented": "إجراء المجموعة \"{action}\" غير متاح لـ {item}",
-      "bulkActivateNotImplemented": "تفعيل المجموعة غير متاح لـ: {items}",
-      "bulkDeactivateNotImplemented": "إلغاء تفعيل المجموعة غير متاح لـ: {items}",
       "exportCompleted": "تم التصدير بنجاح كـ {format}",
       "exportNotAvailable": "التصدير غير متاح لهذا الجدول",
       "badRequest": "طلب سيء: يرجى التحقق من المدخلات والمحاولة مرة أخرى.",
@@ -787,10 +436,7 @@
       "notFound": "غير موجود: المورد المطلوب غير موجود.",
       "sessionExpired": "قد تحتاج إلى تسجيل الدخول أو انتهت صلاحية جلستك.",
       "contactAdministrator": "إذا كنت تعتقد أن هذا خطأ، اتصل بالمدير.",
-      "checkUrlOrDashboard": "حاول التحقق من الرابط أو العودة إلى لوحة التحكم.",
-      "bulkActivateSuccess": "تم التفعيل بنجاح: {userNames}",
-      "bulkDeactivateSuccess": "تم إلغاء التفعيل بنجاح: {userNames}",
-      "bulkDeleteSuccess": "تم الحذف بنجاح: {userNames}"
+      "checkUrlOrDashboard": "حاول التحقق من الرابط أو العودة إلى لوحة التحكم."
     }
   },
   "dashboard": {
@@ -817,10 +463,7 @@
       "title": "تعديل المستخدم",
       "description": "تحديث معلومات وإعدادات المستخدم"
     },
-    "selectCenterForRoleManagement": {
-      "title": "اختر المركز لإدارة الأدوار"
-    },
-    "centerSpecificRoleAssignment": "تعيين الأدوار الخاصة بالمركز",
+    "selectCenterForRoleManagement": {},
     "viewUser": {
       "title": "تفاصيل المستخدم"
     },
@@ -843,22 +486,10 @@
     "viewStaff": {
       "title": "تفاصيل الموظف"
     },
-    "deleteStaff": {
-      "title": "حذف الموظف",
-      "description": "هل أنت متأكد من حذف {userName}؟ سيتم حذف الموظف وجميع البيانات المرتبطة به نهائياً."
-    },
-    "activateStaff": {
-      "title": "تفعيل الموظف",
-      "description": "هل أنت متأكد من تفعيل {userName}؟ سيتم استعادة وصوله إلى النظام."
-    },
-    "deactivateStaff": {
-      "title": "إلغاء تفعيل الموظف",
-      "description": "هل أنت متأكد من إلغاء تفعيل {userName}؟ سيتم سحب وصوله إلى النظام."
-    },
-    "restoreStaff": {
-      "title": "استعادة الموظف",
-      "description": "هل أنت متأكد من استعادة {userName}؟ سيتم إعادة تفعيل حسابه واستعادة وصوله."
-    },
+    "deleteStaff": {},
+    "activateStaff": {},
+    "deactivateStaff": {},
+    "restoreStaff": {},
     "createRole": {
       "title": "إنشاء دور جديد"
     },
@@ -920,9 +551,7 @@
     "manageRoleUsers": {
       "title": "إدارة مستخدمي الدور - {roleName}",
       "description": "إدارة تعيينات المستخدمين لهذا الدور. استخدم أزرار منح/إلغاء للتحكم في المستخدمين الذين لديهم هذا الدور معين.",
-      "searchPlaceholder": "البحث في المستخدمين...",
       "allUsers": "جميع المستخدمين",
-      "noPermissionsFound": "لم يتم العثور على صلاحيات",
       "adminScope": "نطاق المدير",
       "centerScope": "نطاق المركز"
     },
@@ -932,49 +561,24 @@
       "unread": "غير مقروء",
       "archived": "مؤرشف"
     },
-    "manageAdminRoles": {
-      "title": "إدارة أدوار المدير",
-      "description": "عرض أدوار المدير المتاحة لـ {userName} في النظام. استخدم أزرار تعيين/إزالة لإدارة تعيينات أدوار المدير."
-    },
+    "manageAdminRoles": {},
     "manageRoles": {
       "title": "إدارة الأدوار",
       "description": "عرض الأدوار المتاحة لـ {userName} في مركزك. استخدم أزرار تعيين/إزالة لإدارة تعيينات الأدوار."
     },
-    "rolesForCenter": {
-      "title": "أدوار {centerName}",
-      "description": "عرض الأدوار المتاحة لـ {userName} في {centerName}. استخدم أزرار تعيين/إزالة لإدارة تعيينات الأدوار."
-    },
-    "createProducts": {
-      "title": "إنشاء Products جديد",
-      "description": "إنشاء products جديد في النظام"
-    },
-    "editProducts": {
-      "title": "تعديل Products",
-      "description": "تحديث معلومات وإعدادات products"
-    },
-    "viewProducts": {
-      "title": "تفاصيل Products",
-      "description": "عرض معلومات مفصلة حول هذا products"
-    },
-    "deleteProducts": {
-      "title": "حذف Products",
-      "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
-      "message": "هل أنت متأكد من أنك تريد حذف {productsName}؟ سيتم حذف products وجميع البيانات المرتبطة به نهائياً.",
-      "thisActionWill": "سيؤدي هذا الإجراء إلى:",
-      "removeProducts": "إزالة products من النظام",
-      "removeData": "إزالة جميع البيانات المرتبطة"
-    },
+    "rolesForCenter": {},
+    "createProducts": {},
+    "editProducts": {},
+    "viewProducts": {},
+    "deleteProducts": {},
     "createBranch": {
-      "title": "إنشاء فرع جديد",
-      "description": "إنشاء فرع جديد في النظام"
+      "title": "إنشاء فرع جديد"
     },
     "editBranch": {
-      "title": "تعديل الفرع",
-      "description": "تحديث معلومات وإعدادات الفرع"
+      "title": "تعديل الفرع"
     },
     "viewBranch": {
       "title": "تفاصيل الفرع",
-      "description": "عرض معلومات مفصلة حول هذا الفرع",
       "basicInformation": "المعلومات الأساسية",
       "location": "الموقع",
       "address": "العنوان",
@@ -987,36 +591,15 @@
     },
     "deleteBranch": {
       "title": "حذف الفرع",
-      "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
-      "message": "هل أنت متأكد من أنك تريد حذف {branchName}؟ سيتم حذف الفرع وجميع البيانات المرتبطة به نهائياً.",
-      "thisActionWill": "سيؤدي هذا الإجراء إلى:",
-      "removeBranch": "إزالة الفرع من النظام",
-      "removeData": "إزالة جميع البيانات المرتبطة"
+      "message": "هل أنت متأكد من أنك تريد حذف {branchName}؟ سيتم حذف الفرع وجميع البيانات المرتبطة به نهائياً."
     },
     "manageBranchAccess": {
-      "title": "إدارة وصول الفرع - {branchName}",
-      "description": "إدارة وصول المستخدمين للفرع {branchName}. استخدم أزرار منح/إلغاء للتحكم في المستخدمين الذين يمكنهم الوصول لهذا الفرع."
+      "title": "إدارة وصول الفرع - {branchName}"
     },
-    "createTestModule": {
-      "title": "إنشاء TestModule جديد",
-      "description": "إنشاء test-module جديد في النظام"
-    },
-    "editTestModule": {
-      "title": "تعديل TestModule",
-      "description": "تحديث معلومات وإعدادات test-module"
-    },
-    "viewTestModule": {
-      "title": "تفاصيل TestModule",
-      "description": "عرض معلومات مفصلة حول هذا test-module"
-    },
-    "deleteTestModule": {
-      "title": "حذف TestModule",
-      "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
-      "message": "هل أنت متأكد من أنك تريد حذف {test-moduleName}؟ سيتم حذف test-module وجميع البيانات المرتبطة به نهائياً.",
-      "thisActionWill": "سيؤدي هذا الإجراء إلى:",
-      "removeTestModule": "إزالة test-module من النظام",
-      "removeData": "إزالة جميع البيانات المرتبطة"
-    },
+    "createTestModule": {},
+    "editTestModule": {},
+    "viewTestModule": {},
+    "deleteTestModule": {},
     "verifyPhone": {
       "title": "التحقق من رقم الهاتف",
       "description": "التحقق من رقم الهاتف لـ {userName}",
@@ -1035,11 +618,9 @@
       "otpHint": "أدخل الرمز المكون من 6 أرقام المرسل إلى رقم الهاتف",
       "phoneLocked": "رقم الهاتف مقفل لهذه الجلسة",
       "otpSent": "تم إرسال رمز التحقق بنجاح",
-      "userNotFound": "المستخدم بهذا الرقم غير موجود",
       "userNotFoundTitle": "المستخدم غير موجود",
       "userNotFoundDescription": "لم يتم العثور على مستخدم برقم الهاتف {phone}. هل تريد إنشاء مستخدم جديد بدلاً من ذلك؟",
-      "createUserInstead": "إنشاء مستخدم بدلاً من ذلك",
-      "importSuccess": "تم استيراد المستخدم بنجاح"
+      "createUserInstead": "إنشاء مستخدم بدلاً من ذلك"
     }
   },
   "errors": {
@@ -1047,54 +628,38 @@
       "generic": "{field} غير صحيح",
       "format": "تنسيق {field} غير صحيح",
       "expired": "{field} غير صحيح أو منتهي الصلاحية",
-      "missing": "{field} غير صحيح أو مفقود",
-      "type": "نوع {field} غير صحيح",
-      "orExpired": "{field} غير صحيح أو منتهي الصلاحية"
+      "type": "نوع {field} غير صحيح"
     },
     "cannot": {
-      "action": "لا يمكن {action} {resource}",
-      "actionReason": "لا يمكن {action} {resource}. {reason}",
-      "undo": "لا يمكن التراجع عن هذا الإجراء",
-      "reverse": "لا يمكن عكس هذا الإجراء"
+      "actionReason": "لا يمكن {action} {resource}. {reason}"
     },
     "notAuthorized": {
-      "action": "غير مصرح لك بـ {action} هذا {resource}",
-      "actionResource": "غير مصرح لك بـ {action} {resource}"
+      "action": "غير مصرح لك بـ {action} هذا {resource}"
     },
     "notFound": {
       "generic": "{resource} غير موجود",
-      "withId": "{resource} مع {identifier} {value} غير موجود",
-      "withField": "{resource} مع {field} '{value}' غير موجود"
+      "withId": "{resource} مع {identifier} {value} غير موجود"
     },
     "already": {
-      "exists": "{resource} موجود بالفعل",
       "existsWithField": "{resource} مع {field} '{value}' موجود بالفعل",
       "has": "{resource} لديه {what} بالفعل",
       "is": "{resource} {state} بالفعل",
       "deleted": "{resource} محذوف بالفعل"
     },
     "expired": {
-      "generic": "{resource} منتهي الصلاحية",
-      "orInvalid": "{resource} غير صحيح أو منتهي الصلاحية",
-      "session": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى"
+      "generic": "{resource} منتهي الصلاحية"
     },
     "required": {
       "field": "{field} مطلوب",
-      "fields": "{fields} مطلوبة",
-      "oneOf": "يجب توفير إما {field1} أو {field2}",
-      "generic": "{resource} مطلوب"
+      "oneOf": "يجب توفير إما {field1} أو {field2}"
     },
     "incorrect": {
-      "field": "{field} غير صحيح",
-      "generic": "{resource} غير صحيح"
+      "field": "{field} غير صحيح"
     },
     "denied": {
-      "access": "تم رفض الوصول إلى {resource}",
-      "action": "تم رفض الوصول إلى {action} {resource}",
-      "generic": "تم رفض الوصول"
+      "access": "تم رفض الوصول إلى {resource}"
     },
     "rateLimit": {
-      "tooManyRequests": "طلبات كثيرة جداً. يرجى المحاولة مرة أخرى لاحقاً",
       "tooManyRequestsWithTime": "طلبات كثيرة جداً. يرجى المحاولة مرة أخرى خلال {time}"
     },
     "genericError": "حدث خطأ",
@@ -1103,51 +668,26 @@
     "accessDenied": "تم رفض الوصول",
     "resourceNotFound": "لم يتم العثور على المورد المطلوب",
     "duplicateField": "هذا {field} مستخدم بالفعل. يرجى اختيار آخر",
-    "foreignKeyViolation": "واحد أو أكثر من العناصر المشار إليها غير موجود",
-    "databaseConfigurationError": "حدث خطأ في النظام. يرجى المحاولة مرة أخرى لاحقاً",
     "databaseOperationFailed": "تعذر إكمال العملية. يرجى المحاولة مرة أخرى",
-    "recordNotFound": "تعذر العثور على العنصر المطلوب",
     "internalServerError": "حدث خطأ غير متوقع",
     "businessLogicError": "تعذر إكمال العملية بسبب انتهاك قاعدة عمل",
-    "badRequest": "طلب سيء",
     "userDoesNotHaveAccess": "المستخدم ليس لديه صلاحية",
     "userNotAuthenticated": "المستخدم غير مصادق عليه",
-    "profileInactive": {
-      "title": "الملف الشخصي غير نشط",
-      "description": "الملف الشخصي المحدد غير نشط حالياً. يرجى اختيار ملف شخصي آخر أو الاتصال بالمدير."
-    },
+    "profileInactive": {},
     "userPhoneNotVerified": "هاتف المستخدم غير مفعّل",
-    "userAccountInactive": "حساب المستخدم غير نشط",
-    "userHasNoEmail": "المستخدم ليس لديه عنوان بريد إلكتروني. يرجى استخدام قناة SMS أو WhatsApp",
-    "userHasNoPhone": "المستخدم ليس لديه رقم هاتف. يرجى استخدام قناة EMAIL",
-    "unsupportedChannel": "قناة غير مدعومة لإعادة تعيين كلمة المرور",
-    "emailVerificationMustBeAuthenticated": "يجب طلب التحقق من البريد الإلكتروني من خلال نقطة النهاية المصادق عليها",
     "tokenNotActiveYet": "الرمز غير نشط بعد",
     "tokenValidationFailed": "فشل التحقق من الرمز",
     "permissionScopeDoesNotMatch": "نطاق الصلاحية غير متطابق",
     "operation": "فشلت العملية",
-    "request": "فشل في معالجة الطلب",
-    "dataRetrieval": "فشل في استرجاع البيانات",
-    "dataProcessing": "فشل في معالجة البيانات",
-    "serverError": "خطأ في الخادم",
-    "qrCodeGenerationFailed": "فشل إنشاء رمز QR",
-    "twoFactorGenerationFailed": "فشل إعداد المصادقة الثنائية",
     "centerInactive": {
-      "title": "المركز غير نشط",
       "description": "المركز نفسه غير نشط حالياً ولا يمكن الوصول إليه. يرجى اختيار مركز آخر أو الاتصال بالمدير لتفعيل هذا المركز."
     },
     "centerAccessDenied": {
-      "title": "تم رفض الوصول للمركز",
       "description": "ليس لديك صلاحية للوصول إلى هذا المركز. يرجى الاتصال بالمدير لطلب صلاحية الوصول."
     },
     "centerAccessInactive": {
-      "title": "صلاحية الوصول للمركز غير نشطة",
       "description": "صلاحية الوصول إلى هذا المركز غير نشطة حالياً. يرجى الاتصال بمدير المركز لمزيد من المعلومات."
     },
-    "unauthorized": "غير مصرح: يرجى تسجيل الدخول للمتابعة.",
-    "forbidden": "هذا الإجراء محظور",
-    "conflict": "حدث تعارض مع الحالة الحالية للمورد",
-    "unprocessableEntity": "كان الطلب صحيحاً ولكن يحتوي على أخطاء دلالية",
     "serviceUnavailable": "الخدمة غير متاحة مؤقتاً. يرجى المحاولة مرة أخرى لاحقاً",
     "adminScopeNotAllowedForCenter": "صلاحيات نطاق المدير غير مسموحة للأدوار الخاصة بالمركز",
     "insufficientPermissions": "ليس لديك صلاحيات كافية لتنفيذ هذا الإجراء",
@@ -1163,20 +703,10 @@
     "exportDataUnavailable": "لا توجد بيانات متاحة للتصدير",
     "requestBodyTooLarge": "جسم الطلب كبير جداً",
     "missingRequiredHeader": "رأس مطلوب مفقود: {header}",
-    "duplicateResource": "مورد مكرر",
     "relatedEntityMissingOrInvalid": "الكيان المرتبط مفقود أو غير صالح. يرجى التحقق من البيانات المشار إليها والمحاولة مرة أخرى",
-    "requiredFieldMissing": "حقل مطلوب مفقود",
     "temporaryDatabaseConflict": "حدث تعارض مؤقت في قاعدة البيانات. يرجى إعادة المحاولة."
   },
-  "confirm": {
-    "areYouSure": "هل أنت متأكد؟",
-    "delete": "هل أنت متأكد من حذف هذا العنصر؟",
-    "action": "هل أنت متأكد من تنفيذ هذا الإجراء؟",
-    "disable": "هل أنت متأكد من إلغاء تفعيل هذا العنصر؟",
-    "enable": "هل أنت متأكد من تفعيل هذا العنصر؟",
-    "restore": "هل أنت متأكد من استعادة هذا العنصر؟",
-    "archive": "هل أنت متأكد من أرشفة هذا العنصر؟"
-  },
+  "confirm": {},
   "export": {
     "formats": {
       "csv": "CSV",
@@ -1190,10 +720,7 @@
       "label": "الاسم",
       "placeholder": "أدخل اسمك"
     },
-    "email": {
-      "label": "البريد الإلكتروني",
-      "placeholder": "أدخل بريدك الإلكتروني"
-    },
+    "email": {},
     "password": {
       "label": "كلمة المرور",
       "placeholder": "أدخل كلمة المرور"
@@ -1219,10 +746,7 @@
   "overlay": {
     "centerSelection": {
       "title": "اختر المركز",
-      "description": "يرجى اختيار مركز للمتابعة",
-      "searchPlaceholder": "البحث عن المراكز...",
-      "globalScope": "النطاق العام (مدير)",
-      "noCentersFound": "لم يتم العثور على مراكز"
+      "description": "يرجى اختيار مركز للمتابعة"
     },
     "profileSelection": {
       "title": "اختر الملف الشخصي",
@@ -1251,18 +775,12 @@
       "title": "الأدوار",
       "subtitle": "إدارة أدوار وصلاحيات النظام"
     },
-    "users": {
-      "title": "المستخدمون",
-      "subtitle": "إدارة مستخدمي النظام"
-    },
+    "users": {},
     "staff": {
       "title": "الموظفون",
       "subtitle": "إدارة الموظفين وصلاحياتهم"
     },
-    "centerInactive": {
-      "title": "المركز غير نشط",
-      "description": "المركز المحدد غير نشط حالياً ولا يمكن الوصول إليه. يرجى اختيار مركز مختلف للمتابعة."
-    },
+    "centerInactive": {},
     "profileInactive": {
       "title": "الملف الشخصي غير نشط",
       "description": "الملف الشخصي المحدد غير نشط حالياً ولا يمكن الوصول إليه. يرجى اختيار ملف شخصي مختلف للمتابعة."
@@ -1292,13 +810,6 @@
         "twoFactorAuthDescription": "أضف طبقة إضافية من الأمان لحسابك",
         "twoFactorEnabledDescription": "حسابك محمي بالمصادقة الثنائية",
         "twoFactorDisabledDescription": "فعّل المصادقة الثنائية لتأمين حسابك",
-        "securitySettings": "إعدادات الأمان",
-        "securitySettingsDescription": "تكوين تفضيلات الأمان الخاصة بك",
-        "securityAlerts": "تنبيهات الأمان",
-        "securityAlertsDescription": "النشاط الأمني الأخير على حسابك",
-        "lastLogin": "آخر تسجيل دخول",
-        "failedAttempts": "محاولات تسجيل الدخول الفاشلة",
-        "lockoutUntil": "الحساب مقفل حتى",
         "changePassword": "تغيير كلمة المرور",
         "personalInfoDescription": "تحديث معلوماتك الشخصية وتفاصيل الاتصال",
         "security": "إعدادات الأمان",
@@ -1318,20 +829,7 @@
         "notificationsDescription": "إدارة تفضيلات الإشعارات"
       }
     },
-    "selectProfile": {
-      "title": "اختر الملف الشخصي",
-      "subtitle": "اختر ملف شخصي للمتابعة",
-      "searchPlaceholder": "البحث في الملفات الشخصية...",
-      "loading": "جاري تحميل الملفات الشخصية...",
-      "searching": "جاري البحث...",
-      "startTypingToSearch": "ابدأ الكتابة للبحث...",
-      "noProfilesFound": "لم يتم العثور على ملفات شخصية تطابق بحثك",
-      "noProfilesAvailable": "لا توجد ملفات شخصية متاحة",
-      "profileSelected": "تم اختيار الملف الشخصي بنجاح",
-      "errorSelecting": "خطأ في اختيار الملف الشخصي",
-      "errorLoading": "خطأ في تحميل الملفات الشخصية",
-      "noResults": "لم يتم العثور على نتائج"
-    },
+    "selectProfile": {},
     "unauthorized": {
       "title": "الوصول مرفوض",
       "description": "ليس لديك صلاحية للوصول إلى هذا المورد",
@@ -1339,18 +837,12 @@
       "goToDashboard": "الذهاب إلى لوحة التحكم",
       "goBack": "العودة"
     },
-    "products": {
-      "title": "Products",
-      "subtitle": "إدارة products وإعداداتها"
-    },
+    "products": {},
     "branches": {
       "title": "الفروع",
       "subtitle": "إدارة الفروع وإعداداتها"
     },
-    "test-module": {
-      "title": "TestModule",
-      "subtitle": "إدارة test-module وإعداداتها"
-    },
+    "test-module": {},
     "notifications": {
       "title": "إشعاراتي",
       "subtitle": "عرض وإدارة إشعاراتك الشخصية"
@@ -1366,27 +858,16 @@
     "rowsPerPage": "صفوف في الصفحة",
     "pageOf": "صفحة {current, number} من {total, number}"
   },
-  "selectCenter": {
-    "title": "اختيار المركز",
-    "description": "اختر مركزاً للعمل معه، أو انتقل إلى النطاق العام لوظائف المدير.",
-    "descriptionUser": "اختر مركزاً للعمل معه.",
-    "searchPlaceholder": "البحث في المراكز...",
-    "globalOption": "لوحة التحكم العامة"
-  },
+  "selectCenter": {},
   "success": {
     "create": "تم إنشاء {resource} بنجاح",
     "update": "تم تحديث {resource} بنجاح",
     "delete": "تم حذف {resource} بنجاح",
-    "activate": "تم تفعيل {resource} بنجاح",
-    "deactivate": "تم إلغاء تفعيل {resource} بنجاح",
     "restore": "تم استعادة {resource} بنجاح",
     "archive": "تم أرشفة {resource} بنجاح",
     "export": "تم تصدير {resource} بنجاح",
-    "import": "تم استيراد {resource} بنجاح",
     "login": "تم تسجيل الدخول بنجاح",
     "logout": "تم تسجيل الخروج بنجاح",
-    "register": "تم التسجيل بنجاح",
-    "profileUpdate": "تم تحديث الملف الشخصي بنجاح",
     "passwordChange": "تم تغيير كلمة المرور بنجاح",
     "roleAssigned": "تم تعيين الدور بنجاح",
     "roleRemoved": "تم إزالة الدور بنجاح",
@@ -1394,25 +875,15 @@
     "userAccessRevoked": "تم إلغاء صلاحية الوصول للمستخدم بنجاح",
     "permissionsRetrieved": "تم استرجاع الصلاحيات بنجاح",
     "dataRetrieved": "تم استرجاع البيانات بنجاح",
-    "dataSaved": "تم حفظ البيانات بنجاح",
     "dataUpdated": "تم تحديث البيانات بنجاح",
-    "dataDeleted": "تم حذف البيانات بنجاح",
-    "dataCreated": "تم إنشاء البيانات بنجاح",
-    "validationPassed": "تم اجتياز التحقق بنجاح",
-    "upload": "تم رفع الملف بنجاح",
-    "download": "تم تحميل الملف بنجاح",
     "tokenRefreshed": "تم تحديث الرمز المميز بنجاح",
-    "emailVerified": "تم التحقق من البريد الإلكتروني بنجاح",
     "passwordResetSent": "تم إرسال بريد إعادة تعيين كلمة المرور",
     "passwordReset": "تم إعادة تعيين كلمة المرور بنجاح",
     "twoFactorSetup": "تم بدء إعداد المصادقة الثنائية",
-    "twoFactorVerified": "تم التحقق من المصادقة الثنائية بنجاح",
-    "userRegistered": "تم تسجيل المستخدم بنجاح",
     "userActivated": "تم تفعيل المستخدم بنجاح",
     "userDeactivated": "تم إلغاء تفعيل المستخدم بنجاح",
     "otpSent": "تم إرسال رمز التحقق بنجاح",
     "userImported": "تم استيراد المستخدم بنجاح",
-    "emailVerificationRequestSent": "تم إرسال طلب التحقق من البريد الإلكتروني",
     "phoneVerificationRequestSent": "تم إرسال طلب التحقق من رقم الهاتف",
     "phoneVerified": "تم التحقق من رقم الهاتف بنجاح",
     "centerAccessGranted": "تم منح صلاحية الوصول للمركز بنجاح",
@@ -1421,12 +892,7 @@
     "centerAccessRestored": "تم استعادة صلاحية الوصول للمركز بنجاح",
     "twoFactorEnabled": "تم تفعيل المصادقة الثنائية بنجاح",
     "twoFactorDisabled": "تم إلغاء تفعيل المصادقة الثنائية بنجاح",
-    "branchAssigned": "تم تعيين المستخدم للفرع بنجاح",
-    "branchRemoved": "تم إزالة المستخدم من الفرع بنجاح",
-    "exportCompleted": "تم إكمال التصدير بنجاح",
     "operation": "تمت العملية بنجاح",
-    "request": "تم معالجة الطلب بنجاح",
-    "dataProcessed": "تم معالجة البيانات بنجاح",
     "bulkDelete": "تم إكمال الحذف المجمع بنجاح",
     "bulkRestore": "تم إكمال الاستعادة المجمعة بنجاح",
     "bulkAssign": "تم إكمال التعيين المجمع بنجاح",
@@ -1445,109 +911,15 @@
   },
   "system": {
     "health": {
-      "check": "فحص صحة النظام",
-      "status": "حالة النظام",
-      "uptime": "وقت التشغيل",
-      "version": "إصدار النظام",
-      "lastUpdate": "آخر تحديث"
+      "check": "فحص صحة النظام"
     },
-    "status": {
-      "online": "النظام متصل",
-      "offline": "النظام غير متصل",
-      "ready": "النظام جاهز",
-      "maintenance": "صيانة النظام",
-      "initializing": "النظام قيد التهيئة",
-      "shuttingDown": "النظام قيد الإغلاق",
-      "restarting": "النظام قيد إعادة التشغيل"
-    },
-    "monitoring": {
-      "performance": "أداء النظام",
-      "capacity": "سعة النظام",
-      "load": "حمولة النظام",
-      "memory": "الذاكرة",
-      "disk": "القرص",
-      "network": "الشبكة",
-      "database": "قاعدة البيانات",
-      "cache": "التخزين المؤقت",
-      "queue": "الطابور"
-    },
-    "operations": {
-      "backup": "نسخ احتياطي للنظام",
-      "restore": "استعادة النظام",
-      "migration": "ترحيل النظام",
-      "update": "تحديث النظام",
-      "configuration": "إعدادات النظام",
-      "diagnostics": "تشخيص النظام",
-      "logging": "تسجيل النظام",
-      "audit": "تدقيق النظام",
-      "security": "أمان النظام"
-    },
-    "components": {
-      "job": "المهمة",
-      "task": "المهمة",
-      "process": "العملية",
-      "service": "الخدمة",
-      "module": "الوحدة",
-      "component": "المكون",
-      "feature": "الميزة",
-      "function": "الوظيفة",
-      "operation": "العملية",
-      "transaction": "المعاملة",
-      "session": "الجلسة",
-      "connection": "الاتصال",
-      "request": "الطلب",
-      "response": "الاستجابة",
-      "event": "الحدث",
-      "notification": "الإشعار",
-      "alert": "التنبيه",
-      "warning": "التحذير",
-      "error": "الخطأ",
-      "exception": "الاستثناء",
-      "failure": "الفشل"
-    },
-    "actions": {
-      "timeout": "انتهاء الوقت",
-      "retry": "إعادة المحاولة",
-      "fallback": "البديل",
-      "recovery": "الاسترداد",
-      "restart": "إعادة التشغيل",
-      "reload": "إعادة التحميل",
-      "refresh": "التحديث",
-      "sync": "المزامنة",
-      "archive": "الأرشفة",
-      "cleanup": "التنظيف",
-      "optimization": "التحسين",
-      "upgrade": "الترقية",
-      "downgrade": "التخفيض",
-      "rollback": "التراجع"
-    },
-    "deployment": {
-      "deployment": "النشر",
-      "release": "الإصدار",
-      "build": "البناء",
-      "test": "الاختبار"
-    },
-    "processing": {
-      "validation": "التحقق",
-      "verification": "التحقق",
-      "authentication": "المصادقة",
-      "authorization": "الترخيص",
-      "encryption": "التشفير",
-      "decryption": "فك التشفير",
-      "compression": "الضغط",
-      "decompression": "فك الضغط",
-      "serialization": "التسلسل",
-      "deserialization": "فك التسلسل",
-      "parsing": "التحليل",
-      "formatting": "التنسيق",
-      "encoding": "الترميز",
-      "decoding": "فك الترميز",
-      "transformation": "التحويل",
-      "conversion": "التحويل",
-      "translation": "الترجمة",
-      "localization": "التوطين",
-      "internationalization": "العولمة"
-    }
+    "status": {},
+    "monitoring": {},
+    "operations": {},
+    "components": {},
+    "actions": {},
+    "deployment": {},
+    "processing": {}
   },
   "table": {
     "columns": {
@@ -1563,7 +935,6 @@
       "createdAt": "تاريخ الإنشاء",
       "role": "الدور",
       "created": "تم الإنشاء",
-      "updated": "تم التحديث",
       "actions": "الإجراءات",
       "type": "النوع",
       "user": "المستخدم",
@@ -1575,7 +946,6 @@
       "description": "الوصف",
       "location": "الموقع",
       "address": "العنوان",
-      "avatar": "الصورة الشخصية",
       "title": "العنوان",
       "message": "الرسالة",
       "priority": "الأولوية",
@@ -1594,14 +964,7 @@
       "manageAccess": "وصول المستخدم",
       "manageCenterAccess": "وصول المركز",
       "manageRoles": "إدارة الأدوار",
-      "manageCenters": "إدارة المراكز",
-      "createAdmin": "إنشاء مدير",
-      "editUser": "تعديل المستخدم",
       "restore": "استعادة",
-      "saveChanges": "حفظ التغييرات",
-      "changePassword": "تغيير كلمة المرور",
-      "activate": "تفعيل",
-      "deactivate": "إلغاء التفعيل",
       "markAsRead": "وضع علامة كمقروء",
       "archive": "أرشفة"
     },
@@ -1610,8 +973,7 @@
     },
     "selection": {
       "selectedItems": "{count, plural, =0 {لا توجد عناصر} =1 {# {item} محدد} =2 {# {item} محددان} few {# {item} محددات} many {# {item} محدد} other {# {item} محدد}}",
-      "selectAll": "اختيار الكل ({total, number})",
-      "deselectAll": "إلغاء اختيار الكل"
+      "selectAll": "اختيار الكل ({total, number})"
     },
     "trashToggle": {
       "activeItems": "العناصر النشطة",
@@ -1623,8 +985,7 @@
       "message": "{field} مطلوب"
     },
     "invalid": {
-      "message": "{field} غير صحيح",
-      "format": "تنسيق {field} غير صحيح"
+      "message": "{field} غير صحيح"
     },
     "minLength": {
       "message": "{field} يجب أن يكون على الأقل {min} حرف"
@@ -1638,7 +999,6 @@
     "phone": {
       "invalid": "تنسيق رقم الهاتف غير صحيح"
     },
-    "url": "تنسيق الرابط غير صحيح",
     "password": {
       "invalid": "كلمة المرور لا تلبي المتطلبات",
       "mismatch": "كلمات المرور غير متطابقة"
@@ -1682,80 +1042,26 @@
   },
   "toast": {
     "success": {
-      "title": "نجاح",
-      "message": "تمت العملية بنجاح",
-      "saved": "تم حفظ التغييرات بنجاح",
-      "deleted": "تم حذف العنصر بنجاح",
-      "created": "تم إنشاء العنصر بنجاح",
-      "updated": "تم تحديث العنصر بنجاح"
+      "message": "تمت العملية بنجاح"
     },
     "error": {
-      "title": "خطأ",
-      "message": "حدث خطأ",
-      "network": "خطأ في الشبكة. يرجى التحقق من اتصالك",
-      "server": "خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً",
-      "validation": "يرجى التحقق من المدخلات والمحاولة مرة أخرى"
+      "message": "حدث خطأ"
     },
-    "warning": {
-      "title": "تحذير",
-      "message": "يرجى مراجعة إجراءك"
-    },
+    "warning": {},
     "info": {
-      "title": "معلومات",
       "message": "يرجى الملاحظة"
     }
   },
-  "tooltip": {
-    "default": "مرر الماوس لمزيد من المعلومات",
-    "help": "انقر للحصول على المساعدة",
-    "required": "هذا الحقل مطلوب",
-    "optional": "هذا الحقل اختياري",
-    "disabled": "هذا الإجراء معطل حالياً"
-  },
-  "empty": {
-    "noData": "لا توجد بيانات متاحة",
-    "noResults": "لم يتم العثور على نتائج",
-    "noItems": "لا توجد عناصر للعرض",
-    "noPermission": "ليس لديك صلاحية لعرض هذا المحتوى",
-    "noCenters": "لا توجد مراكز متاحة",
-    "noUsers": "لم يتم العثور على مستخدمين",
-    "noRoles": "لا توجد أدوار متاحة",
-    "noBranches": "لا توجد فروع متاحة",
-    "noPermissions": "لا توجد صلاحيات متاحة",
-    "noNotifications": "لا توجد إشعارات متاحة",
-    "noFiles": "لا توجد ملفات متاحة",
-    "loading": "جاري تحميل البيانات...",
-    "error": "فشل تحميل البيانات"
-  },
+  "tooltip": {},
+  "empty": {},
   "date": {
-    "formats": {
-      "short": "DD/MM/YYYY",
-      "medium": "DD MMM YYYY",
-      "long": "DD MMMM YYYY",
-      "full": "EEEE، DD MMMM YYYY"
-    },
-    "relative": {
-      "now": "الآن",
-      "minutesAgo": "{count, plural, =0 {الآن} =1 {منذ # دقيقة} =2 {منذ # دقيقتين} few {منذ # دقائق} many {منذ # دقيقة} other {منذ # دقيقة}}",
-      "hoursAgo": "{count, plural, =0 {الآن} =1 {منذ # ساعة} =2 {منذ # ساعتين} few {منذ # ساعات} many {منذ # ساعة} other {منذ # ساعة}}",
-      "daysAgo": "{count, plural, =0 {اليوم} =1 {منذ # يوم} =2 {منذ # يومين} few {منذ # أيام} many {منذ # يوم} other {منذ # يوم}}",
-      "weeksAgo": "{count, plural, =0 {هذا الأسبوع} =1 {منذ # أسبوع} =2 {منذ # أسبوعين} few {منذ # أسابيع} many {منذ # أسبوع} other {منذ # أسبوع}}",
-      "monthsAgo": "{count, plural, =0 {هذا الشهر} =1 {منذ # شهر} =2 {منذ # شهرين} few {منذ # أشهر} many {منذ # شهر} other {منذ # شهر}}",
-      "yearsAgo": "{count, plural, =0 {هذا العام} =1 {منذ # سنة} =2 {منذ # سنتين} few {منذ # سنوات} many {منذ # سنة} other {منذ # سنة}}"
-    }
+    "formats": {},
+    "relative": {}
   },
   "time": {
-    "formats": {
-      "short": "HH:mm",
-      "medium": "HH:mm:ss",
-      "long": "HH:mm:ss.SSS"
-    }
+    "formats": {}
   },
-  "currency": {
-    "symbol": "ر.س",
-    "format": "{amount} {currency}",
-    "decimalPlaces": 2
-  },
+  "currency": {},
   "roles": {
     "superAdmin": {
       "name": "المدير العام",
@@ -1767,14 +1073,7 @@
     }
   },
   "permissions": {
-    "groups": {
-      "staff": "إدارة الموظفين",
-      "admin": "إدارة المديرين",
-      "center": "إدارة المراكز",
-      "roles": "إدارة الأدوار",
-      "branches": "إدارة الفروع",
-      "system": "النظام"
-    },
+    "groups": {},
     "staff": {
       "read": {
         "name": "قراءة الموظفين"

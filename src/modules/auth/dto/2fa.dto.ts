@@ -1,9 +1,8 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString } from 'class-validator';
 
 export class TwoFAVerifyRequestDto {
-  @IsOptional()
   @IsString()
-  code?: string; // Optional - if not provided, OTP will be sent
+  code: string;
 }
 
 export class TwoFactorRequest {
