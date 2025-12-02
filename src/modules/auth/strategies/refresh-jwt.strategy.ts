@@ -75,7 +75,7 @@ export class RefreshJwtStrategy extends PassportStrategy(
       const rtMatches = await bcrypt.compare(refreshToken, user.hashedRt);
       if (!rtMatches) {
         throw new AuthenticationFailedException('t.errors.invalid.expired', {
-          field: 'token' as I18nPath,
+          field: 'token',
         });
       }
 
@@ -92,7 +92,7 @@ export class RefreshJwtStrategy extends PassportStrategy(
         });
       } else if (jwtError?.name === 'JsonWebTokenError') {
         throw new AuthenticationFailedException('t.errors.invalid.generic', {
-          field: 'refresh token' as I18nPath,
+          field: 'refresh token',
         });
       } else if (jwtError?.name === 'NotBeforeError') {
         throw new AuthenticationFailedException('t.errors.tokenNotActiveYet');

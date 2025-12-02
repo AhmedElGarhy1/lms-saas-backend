@@ -67,8 +67,8 @@ export class UserService extends BaseService {
     if (!user) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.user',
-        identifier: 'ID' as I18nPath,
-        value: userId as I18nPath | number,
+        identifier: 'ID',
+        value: userId,
       });
     }
 
@@ -93,7 +93,7 @@ export class UserService extends BaseService {
       if (!dto.code) {
         await this.verificationService.sendTwoFactorOTP(user.id || '');
         throw new OtpRequiredException('t.errors.required.field', {
-          field: 'OTP code' as I18nPath,
+          field: 'OTP code',
         });
       }
 
@@ -178,8 +178,8 @@ export class UserService extends BaseService {
     if (!user) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.user',
-        identifier: 'ID' as I18nPath,
-        value: userId as I18nPath | number,
+        identifier: 'ID',
+        value: userId,
       });
     }
 
@@ -210,8 +210,8 @@ export class UserService extends BaseService {
     if (!user) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.user',
-        identifier: 'ID' as I18nPath,
-        value: userId as I18nPath | number,
+        identifier: 'ID',
+        value: userId,
       });
     }
 
@@ -262,8 +262,8 @@ export class UserService extends BaseService {
     if (!user) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.user',
-        identifier: 'ID' as I18nPath,
-        value: userId as I18nPath | number,
+        identifier: 'ID',
+        value: userId,
       });
     }
 

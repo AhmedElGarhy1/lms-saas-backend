@@ -75,8 +75,8 @@ export class RolesService extends BaseService {
     if (!role) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.role',
-        identifier: 'ID' as I18nPath,
-        value: roleId as I18nPath | number,
+        identifier: 'ID',
+        value: roleId,
       });
     }
     if (role.readOnly) {
@@ -121,8 +121,8 @@ export class RolesService extends BaseService {
     if (!role) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.role',
-        identifier: 'ID' as I18nPath,
-        value: roleId as I18nPath | number,
+        identifier: 'ID',
+        value: roleId,
       });
     }
     if (role.readOnly) {
@@ -224,8 +224,8 @@ export class RolesService extends BaseService {
     if (!role) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.role',
-        identifier: 'ID' as I18nPath,
-        value: roleId as I18nPath | number,
+        identifier: 'ID',
+        value: roleId,
       });
     }
 

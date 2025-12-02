@@ -45,8 +45,8 @@ export class ProfileRoleSubscriber
       if (!role)
         throw new BusinessLogicException('t.errors.notFound.withId', {
           resource: 't.common.resources.role',
-          identifier: 'ID' as I18nPath,
-          value: profileRole.roleId as I18nPath | number,
+          identifier: 'ID',
+          value: profileRole.roleId,
         });
 
       const profile = await this.accessControlHelperService.findUserProfile(

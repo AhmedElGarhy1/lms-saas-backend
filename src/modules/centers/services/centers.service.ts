@@ -10,7 +10,6 @@ import { UpdateCenterRequestDto } from '../dto/update-center.dto';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { BaseService } from '@/shared/common/services/base.service';
-import { I18nPath } from '@/generated/i18n.generated';
 import { UserService } from '@/modules/user/services/user.service';
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
@@ -62,8 +61,8 @@ export class CentersService extends BaseService {
     if (!center) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.center',
-        identifier: 'ID' as I18nPath,
-        value: centerId as I18nPath | number,
+        identifier: 'ID',
+        value: centerId,
       });
     }
 
@@ -110,8 +109,8 @@ export class CentersService extends BaseService {
     if (!center) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.center',
-        identifier: 'ID' as I18nPath,
-        value: centerId as I18nPath | number,
+        identifier: 'ID',
+        value: centerId,
       });
     }
 
@@ -120,8 +119,8 @@ export class CentersService extends BaseService {
       if (existingCenter) {
         throw new BusinessLogicException('t.errors.already.existsWithField', {
           resource: 't.common.resources.center',
-          field: 'name' as I18nPath,
-          value: dto.name as I18nPath | number,
+          field: 'name',
+          value: dto.name,
         });
       }
     }
@@ -133,8 +132,8 @@ export class CentersService extends BaseService {
     if (!updatedCenter) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.center',
-        identifier: 'ID' as I18nPath,
-        value: centerId as I18nPath | number,
+        identifier: 'ID',
+        value: centerId,
       });
     }
 

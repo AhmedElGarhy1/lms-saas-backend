@@ -20,7 +20,6 @@ import {
 } from '../events/access-control.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { BaseService } from '@/shared/common/services/base.service';
-import { I18nPath } from '@/generated/i18n.generated';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 import { RolesService } from './roles.service';
 import { PERMISSIONS } from '../constants/permissions';
@@ -304,7 +303,7 @@ export class AccessControlService extends BaseService {
       throw new InsufficientPermissionsException(
         't.errors.insufficientPermissions',
         {
-          action: PERMISSIONS.STAFF.DELETE_CENTER_ACCESS.action as I18nPath,
+          action: PERMISSIONS.STAFF.DELETE_CENTER_ACCESS.action,
         },
       );
     }
@@ -362,7 +361,7 @@ export class AccessControlService extends BaseService {
       throw new InsufficientPermissionsException(
         't.errors.insufficientPermissions',
         {
-          action: PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS.action as I18nPath,
+          action: PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS.action,
         },
       );
     }
@@ -412,7 +411,7 @@ export class AccessControlService extends BaseService {
       throw new InsufficientPermissionsException(
         't.errors.insufficientPermissions',
         {
-          action: PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS.action as I18nPath,
+          action: PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS.action,
         },
       );
     }

@@ -27,17 +27,17 @@ export function isDatabaseErrorCode(
  */
 export const TRANSLATION_KEYS = {
   ERRORS: {
-    DUPLICATE_FIELD: 't.errors.duplicateField' as I18nPath,
-    RESOURCE_NOT_FOUND: 't.errors.resourceNotFound' as I18nPath,
+    DUPLICATE_FIELD: 't.errors.duplicateField',
+    RESOURCE_NOT_FOUND: 't.errors.resourceNotFound',
     RELATED_ENTITY_MISSING_OR_INVALID:
-      't.errors.relatedEntityMissingOrInvalid' as I18nPath,
+      't.errors.relatedEntityMissingOrInvalid',
     TEMPORARY_DATABASE_CONFLICT:
-      't.errors.temporaryDatabaseConflict' as I18nPath,
-    DATABASE_OPERATION_FAILED: 't.errors.databaseOperationFailed' as I18nPath,
-    GENERIC_ERROR: 't.errors.genericError' as I18nPath,
-    INTERNAL_SERVER_ERROR: 't.errors.internalServerError' as I18nPath,
-    SERVICE_UNAVAILABLE: 't.errors.serviceUnavailable' as I18nPath,
-    BUSINESS_LOGIC_ERROR: 't.errors.businessLogicError' as I18nPath,
-    REQUIRED_FIELD: 't.errors.required.field' as I18nPath,
+      't.errors.temporaryDatabaseConflict',
+    DATABASE_OPERATION_FAILED: 't.errors.databaseOperationFailed',
+    GENERIC_ERROR: 't.errors.genericError',
+    INTERNAL_SERVER_ERROR: 't.errors.internalServerError',
+    SERVICE_UNAVAILABLE: 't.errors.serviceUnavailable',
+    BUSINESS_LOGIC_ERROR: 't.errors.businessLogicError',
+    REQUIRED_FIELD: 't.errors.required.field',
   },
-};
+} as const;

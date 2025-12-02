@@ -182,7 +182,7 @@ export class AuthController {
         't.errors.required.field',
         undefined,
         {
-          field: 'OTP code' as I18nPath,
+          field: 'OTP code',
         },
       );
     }

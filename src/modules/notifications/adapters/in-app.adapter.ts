@@ -66,7 +66,7 @@ export class InAppAdapter
     // Type system ensures channel is IN_APP, no runtime check needed
     if (!payload.userId) {
       throw new InvalidOperationException('t.errors.required.field', {
-        field: 'userId' as I18nPath,
+        field: 'userId',
       });
     }
 

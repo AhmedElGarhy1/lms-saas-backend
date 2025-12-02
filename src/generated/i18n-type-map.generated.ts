@@ -6,24 +6,39 @@ import { TranslationArgs, TranslationKey } from './i18n-args.generated';
 import { I18nPath } from './i18n.generated';
 
 /**
- * Type for translatable arguments - all string arguments must be translation keys (I18nPath)
- *
- * For non-translation values (like format names, IDs, etc.), cast them as I18nPath
- * to maintain type safety while allowing necessary exceptions.
+ * Branded type for raw text strings that are NOT translation keys
+ * Use this for non-translatable values like format names, IDs, etc.
+ * Regular strings are automatically compatible with this type.
+ * 
+ * @example
+ * ```ts
+ * // ✅ Regular string works automatically (treated as RawText)
+ * resource: 'CSV'
+ * 
+ * // ✅ Translation key - full IntelliSense
+ * resource: 't.common.resources.user'
+ * ```
+ */
+export type RawText = string & { __rawText?: never };
+
+/**
+ * Type for translatable arguments - can be either a translation key or raw text
+ * Regular strings are automatically compatible (treated as RawText),
+ * while translation keys get full IntelliSense support.
  *
  * @example
  * ```ts
  * // ✅ Translation key - full IntelliSense
- * resource: 't.common.labels.user'
+ * resource: 't.common.resources.user'
  *
- * // ✅ Non-translation value - explicit casting required
- * resource: 'CSV' as I18nPath
- *
- * // ❌ Accidental raw string - type error
- * resource: 'User'
+ * // ✅ Regular string - works automatically (no cast needed)
+ * resource: 'CSV'
+ * 
+ * // ✅ Number - works as-is
+ * count: 5
  * ```
  */
-export type TranslatableArg = I18nPath;
+export type TranslatableArg = I18nPath | RawText;
 
 /**
  * Type mapping that maps translation keys to their argument types
@@ -40,7 +55,7 @@ export type KeyArgs<K extends TranslationKey> = K extends keyof TranslationArgs
  */
 export type PathArgs<P extends I18nPath> = P extends keyof TranslationArgs
   ? TranslationArgs[P]
-  : Record<string, TranslatableArg | number>; // Flexible type for keys not in TranslationArgs
+  : Record<string, TranslatableArg | number>; // Flexible type for keys not in TranslationArgs (TranslatableArg = I18nPath | RawText)
 
 /**
  * Helper type to check if PathArgs is empty (no arguments needed)
@@ -62,7 +77,7 @@ type IsEmptyArgs<T> = [keyof T] extends [never] ? true : false;
  * OptionalArgs<'t.success.roleAssigned'> // Record<string, never> | undefined
  *
  * // Key with args - OptionalArgs requires the args
- * OptionalArgs<'t.errors.notFound.generic'> // { resource: I18nPath | number } (required)
+ * OptionalArgs<'t.errors.notFound.generic'> // { resource: TranslatableArg | number } (required)
  * ```
  */
 export type OptionalArgs<P extends I18nPath> =

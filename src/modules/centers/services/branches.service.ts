@@ -49,8 +49,8 @@ export class BranchesService extends BaseService {
     if (!branch) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.branch',
-        identifier: 'ID' as I18nPath,
-        value: branchId as I18nPath | number,
+        identifier: 'ID',
+        value: branchId,
       });
     }
 
@@ -129,8 +129,8 @@ export class BranchesService extends BaseService {
     if (!branch) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.branch',
-        identifier: 'ID' as I18nPath,
-        value: branchId as I18nPath | number,
+        identifier: 'ID',
+        value: branchId,
       });
     }
 
@@ -160,8 +160,8 @@ export class BranchesService extends BaseService {
     if (!branch) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.branch',
-        identifier: 'ID' as I18nPath,
-        value: branchId as I18nPath | number,
+        identifier: 'ID',
+        value: branchId,
       });
     }
 

@@ -12,7 +12,7 @@ import {
 } from '../exceptions/custom.exceptions';
 import { ErrorCode } from '../enums/error-codes.enum';
 import { I18nPath } from '@/generated/i18n.generated';
-import { PathArgs } from '@/generated/i18n-type-map.generated';
+import { PathArgs, TranslatableArg } from '@/generated/i18n-type-map.generated';
 
 @Injectable()
 export class CustomValidationPipe implements PipeTransform<any> {
@@ -78,7 +78,7 @@ export class CustomValidationPipe implements PipeTransform<any> {
           field: error.property,
           value: error.value,
           message: {
-            key: translatedMessage as I18nPath,
+            key: translatedMessage,
             args: args as PathArgs<I18nPath>,
           },
         };
@@ -141,7 +141,7 @@ export class CustomValidationPipe implements PipeTransform<any> {
     const fieldLabelKey = `t.common.labels.${field}`;
 
     // Map constraint keys to their required args
-    const argsMap: Record<string, () => Record<string, I18nPath | number>> = {
+    const argsMap: Record<string, () => Record<string, TranslatableArg | number>> = {
       isNotEmpty: () => ({ field: fieldLabelKey as I18nPath }),
       minLength: () => ({
         field: fieldLabelKey as I18nPath,
@@ -166,13 +166,13 @@ export class CustomValidationPipe implements PipeTransform<any> {
         const itemLabelKey = `t.common.labels.${baseField}`;
         return { item: itemLabelKey as I18nPath };
       },
-      isString: () => ({ field: fieldLabelKey as I18nPath }),
-      isBoolean: () => ({ field: fieldLabelKey as I18nPath }),
-      isEnum: () => ({ field: fieldLabelKey as I18nPath }),
-      isDateString: () => ({ field: fieldLabelKey as I18nPath }),
-      isArray: () => ({ field: fieldLabelKey as I18nPath }),
-      isNumber: () => ({ field: fieldLabelKey as I18nPath }),
-      isInt: () => ({ field: fieldLabelKey as I18nPath }),
+      isString: () => ({ field: fieldLabelKey }),
+      isBoolean: () => ({ field: fieldLabelKey }),
+      isEnum: () => ({ field: fieldLabelKey }),
+      isDateString: () => ({ field: fieldLabelKey }),
+      isArray: () => ({ field: fieldLabelKey }),
+      isNumber: () => ({ field: fieldLabelKey }),
+      isInt: () => ({ field: fieldLabelKey }),
       min: () => ({
         field: fieldLabelKey as I18nPath,
         min: constraintValue || 0,

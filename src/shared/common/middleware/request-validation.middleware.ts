@@ -53,7 +53,7 @@ export class RequestValidationMiddleware implements NestMiddleware {
         throw new MissingRequiredHeaderException(
           header,
           't.errors.missingRequiredHeader',
-          { header: header as I18nPath },
+          { header },
         );
       }
     }
@@ -63,7 +63,7 @@ export class RequestValidationMiddleware implements NestMiddleware {
       const contentType = req.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         throw new InvalidContentTypeException('t.errors.invalid.type', {
-          field: 'Content-Type' as I18nPath,
+          field: 'Content-Type',
         });
       }
     }

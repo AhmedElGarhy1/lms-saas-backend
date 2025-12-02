@@ -54,7 +54,7 @@ export class ExportService extends BaseService {
         success: true,
         message: {
           key: 't.success.export',
-          args: { resource: 'CSV' as I18nPath },
+          args: { resource: 'CSV' },
         },
         filename: `${filename}.csv`,
         format: 'csv',
@@ -99,7 +99,7 @@ export class ExportService extends BaseService {
         success: true,
         message: {
           key: 't.success.export',
-          args: { resource: 'XLSX' as I18nPath },
+          args: { resource: 'XLSX' },
         },
         filename: `${filename}.xlsx`,
         format: 'xlsx',
@@ -141,7 +141,7 @@ export class ExportService extends BaseService {
         success: true,
         message: {
           key: 't.success.export',
-          args: { resource: 'JSON' as I18nPath },
+          args: { resource: 'JSON' },
         },
         filename: `${filename}.json`,
         format: 'json',

@@ -29,31 +29,12 @@ export type I18nTranslations = {
     };
     "t": {
         "actions": {
-            "retry": string;
-            "contactSupport": string;
-            "checkInput": string;
-            "fixErrors": string;
-            "refreshPage": string;
-            "loginAgain": string;
-            "selectCenter": string;
-            "chooseDifferentValue": string;
-            "fillRequiredFields": string;
-            "useCorrectFormat": string;
-            "shortenInput": string;
-            "provideMoreInfo": string;
-            "contactAdministrator": string;
-            "checkPermissions": string;
-            "verifyCredentials": string;
-            "selectValidOption": string;
-            "enterValidData": string;
             "tryDifferentApproach": string;
         };
         "auth": {
             "login": {
                 "title": string;
                 "subtitle": string;
-                "otpHint": string;
-                "verifyAndLogin": string;
             };
             "register": {
                 "title": string;
@@ -92,65 +73,44 @@ export type I18nTranslations = {
                 "switchCenter": string;
             };
             "buttons": {
-                "save": string;
                 "cancel": string;
                 "delete": string;
                 "edit": string;
-                "create": string;
                 "createResource": string;
                 "update": string;
                 "updateResource": string;
                 "deleteResource": string;
-                "restoreResource": string;
-                "activateResource": string;
-                "deactivateResource": string;
                 "submit": string;
                 "close": string;
                 "back": string;
-                "next": string;
-                "previous": string;
                 "refresh": string;
                 "export": string;
                 "import": string;
                 "exportData": string;
                 "exporting": string;
                 "assign": string;
-                "revoke": string;
-                "grant": string;
                 "remove": string;
                 "manageRoles": string;
                 "centerAccess": string;
                 "activateSelected": string;
                 "deactivateSelected": string;
-                "selectCenter": string;
                 "selectProfile": string;
                 "saveChanges": string;
                 "changePassword": string;
                 "deleteSelected": string;
                 "enable": string;
                 "disable": string;
-                "backToCenters": string;
-                "creating": string;
-                "updating": string;
                 "deleting": string;
-                "restoring": string;
-                "search": string;
                 "filter": string;
                 "clear": string;
                 "reset": string;
                 "confirm": string;
-                "yes": string;
-                "no": string;
-                "ok": string;
                 "login": string;
                 "logout": string;
                 "register": string;
                 "forgotPassword": string;
-                "rememberMe": string;
-                "activate": string;
                 "deactivate": string;
                 "restore": string;
-                "archive": string;
                 "toggleStatusInCenter": string;
                 "deleteFromCenter": string;
                 "restoreInCenter": string;
@@ -159,40 +119,16 @@ export type I18nTranslations = {
                 "deleteFromCenterSelected": string;
                 "restoreInCenterSelected": string;
                 "view": string;
-                "manage": string;
-                "download": string;
-                "upload": string;
-                "copy": string;
-                "duplicate": string;
-                "move": string;
-                "share": string;
-                "print": string;
-                "send": string;
-                "receive": string;
-                "approve": string;
-                "reject": string;
-                "publish": string;
-                "unpublish": string;
-                "schedule": string;
-                "unschedule": string;
                 "clearSearch": string;
                 "tryAgain": string;
                 "saving": string;
-                "editProducts": string;
-                "editBranch": string;
                 "toggleStatus": string;
                 "manageAccess": string;
-                "editTestModule": string;
-                "contactAdmin": string;
                 "reloadPage": string;
-                "goBack": string;
-                "resetForm": string;
-                "reloadTable": string;
                 "deselectAll": string;
                 "markAllRead": string;
                 "viewAllNotifications": string;
                 "archiveNotification": string;
-                "loadMore": string;
                 "done": string;
                 "quickSelect": string;
                 "selectPreset": string;
@@ -217,8 +153,6 @@ export type I18nTranslations = {
                 "status": string;
                 "active": string;
                 "inactive": string;
-                "enabled": string;
-                "disabled": string;
                 "userId": string;
                 "never": string;
                 "currentPassword": string;
@@ -226,54 +160,24 @@ export type I18nTranslations = {
                 "theme": string;
                 "notifications": string;
                 "address": string;
-                "profilePicture": string;
                 "locale": string;
                 "logo": string;
-                "characters": string;
-                "created": string;
-                "updated": string;
-                "actions": string;
-                "select": string;
-                "none": string;
                 "all": string;
                 "loading": string;
                 "error": string;
                 "success": string;
-                "warning": string;
-                "info": string;
                 "password": string;
                 "confirmPassword": string;
                 "website": string;
                 "role": string;
                 "permissions": string;
                 "avatar": string;
-                "bio": string;
                 "dateOfBirth": string;
                 "fullName": string;
-                "emailAddress": string;
                 "phoneNumber": string;
                 "center": string;
                 "location": string;
                 "user": string;
-                "userEmail": string;
-                "admin": string;
-                "manager": string;
-                "instructor": string;
-                "student": string;
-                "rolesModule": string;
-                "centersSystem": string;
-                "branchesSystem": string;
-                "authenticationSystem": string;
-                "userManagementSection": string;
-                "userTable": string;
-                "userForm": string;
-                "systemAlerts": string;
-                "otp": string;
-                "verification": string;
-                "data": string;
-                "form": string;
-                "table": string;
-                "profiles": string;
                 "profile": string;
                 "language": string;
                 "english": string;
@@ -282,97 +186,29 @@ export type I18nTranslations = {
                 "dateFormat": string;
                 "timeFormat": string;
                 "twoFactorAuth": string;
-                "sessionTimeout": string;
-                "loginNotifications": string;
-                "suspiciousActivityAlerts": string;
-                "currency": string;
-                "country": string;
-                "city": string;
-                "state": string;
-                "zipCode": string;
-                "gender": string;
-                "age": string;
-                "department": string;
-                "position": string;
-                "salary": string;
-                "startDate": string;
-                "endDate": string;
-                "duration": string;
-                "priority": string;
-                "category": string;
-                "tags": string;
-                "notes": string;
-                "comments": string;
-                "attachments": string;
-                "version": string;
-                "size": string;
                 "type": string;
-                "format": string;
-                "quality": string;
-                "rating": string;
-                "score": string;
-                "progress": string;
-                "completion": string;
-                "deadline": string;
-                "reminder": string;
                 "notification": string;
                 "alert": string;
-                "tip": string;
-                "help": string;
-                "support": string;
-                "feedback": string;
-                "report": string;
-                "analytics": string;
                 "statistics": string;
-                "metrics": string;
-                "performance": string;
-                "efficiency": string;
-                "productivity": string;
-                "capacity": string;
-                "availability": string;
-                "reliability": string;
-                "security": string;
-                "privacy": string;
-                "confidentiality": string;
-                "compliance": string;
-                "regulation": string;
-                "policy": string;
-                "terms": string;
-                "conditions": string;
-                "agreement": string;
-                "contract": string;
-                "license": string;
-                "copyright": string;
-                "trademark": string;
-                "patent": string;
                 "yes": string;
                 "no": string;
                 "current": string;
                 "date": string;
-                "filename": string;
                 "filenameOptional": string;
-                "optional": string;
                 "filter": string;
-                "assign": string;
                 "timestamps": string;
                 "basicInformation": string;
                 "roleName": string;
-                "roleType": string;
-                "totalPermissions": string;
-                "permissionsAssigned": string;
                 "createdAt": string;
                 "lastUpdated": string;
                 "updatedAt": string;
                 "assignedUsers": string;
                 "permissionsCount": string;
-                "systemRole": string;
-                "customRole": string;
                 "unknownUser": string;
                 "contactInformation": string;
                 "show": string;
                 "activeStatus": string;
                 "adminName": string;
-                "adminEmail": string;
                 "adminPassword": string;
                 "adminPhone": string;
                 "adminAddress": string;
@@ -385,8 +221,6 @@ export type I18nTranslations = {
                 "lastWeek": string;
                 "thisMonth": string;
                 "lastMonth": string;
-                "thisQuarter": string;
-                "lastQuarter": string;
                 "thisYear": string;
                 "lastYear": string;
                 "customRange": string;
@@ -395,26 +229,17 @@ export type I18nTranslations = {
                 "include": string;
                 "globalDashboard": string;
                 "dateRange": string;
-                "unknownProducts": string;
                 "unknownBranch": string;
-                "unknownTestModule": string;
-                "system": string;
-                "scopes": string;
                 "noRendererConfigured": string;
                 "otpCode": string;
                 "notProvided": string;
                 "profileAvatar": string;
                 "channel": string;
-                "profileType": string;
-                "result": string;
                 "total": string;
                 "failed": string;
                 "errors": string;
-                "staff": string;
             };
-            "countdown": {
-                "resendIn": string;
-            };
+            "countdown": {};
             "status": {
                 "active": string;
                 "inactive": string;
@@ -424,13 +249,7 @@ export type I18nTranslations = {
                 "retrying": string;
                 "delivered": string;
             };
-            "profileTypes": {
-                "teacher": string;
-                "staff": string;
-                "parent": string;
-                "student": string;
-                "admin": string;
-            };
+            "profileTypes": {};
             "channels": {
                 "email": string;
                 "sms": string;
@@ -449,37 +268,20 @@ export type I18nTranslations = {
                 "alert": string;
                 "data": string;
                 "item": string;
-                "items": string;
-                "file": string;
-                "files": string;
-                "record": string;
-                "records": string;
-                "entity": string;
-                "entities": string;
-                "users": string;
                 "roles": string;
                 "admins": string;
                 "centers": string;
                 "access": string;
-                "permissions": string;
-                "products": string;
-                "productss": string;
                 "branches": string;
-                "test-module": string;
-                "test-modules": string;
                 "notifications": string;
                 "admin": string;
                 "userAccess": string;
                 "branchAccess": string;
                 "centerAccess": string;
                 "refreshToken": string;
-                "verificationToken": string;
                 "verificationCode": string;
-                "targetUserProfile": string;
                 "adminScope": string;
                 "profileType": string;
-                "currentPassword": string;
-                "otpCode": string;
                 "profileSelection": string;
                 "tokenType": string;
                 "signature": string;
@@ -495,113 +297,22 @@ export type I18nTranslations = {
             "placeholders": {
                 "search": string;
                 "select": string;
-                "enter": string;
-                "choose": string;
-                "enterName": string;
-                "enterEmail": string;
-                "enterPhone": string;
-                "enterDescription": string;
-                "enterWebsite": string;
-                "enterPassword": string;
-                "confirmPassword": string;
-                "selectRole": string;
-                "selectCenter": string;
-                "selectPermissions": string;
-                "enterRoleName": string;
-                "enterRoleDescription": string;
-                "tellAboutYourself": string;
-                "enterCountry": string;
-                "enterCity": string;
-                "enterState": string;
-                "enterLogoUrl": string;
-                "enterZipCode": string;
-                "enterDepartment": string;
-                "enterPosition": string;
-                "enterSalary": string;
-                "enterNotes": string;
-                "enterComments": string;
-                "selectGender": string;
-                "selectCategory": string;
-                "selectPriority": string;
-                "selectFormat": string;
-                "selectQuality": string;
-                "enterTags": string;
-                "enterVersion": string;
-                "enterSize": string;
-                "enterType": string;
-                "enterRating": string;
-                "enterScore": string;
-                "enterProgress": string;
-                "enterCompletion": string;
-                "selectDeadline": string;
-                "selectReminder": string;
-                "enterNotification": string;
-                "enterAlert": string;
-                "enterWarning": string;
-                "enterInfo": string;
-                "enterTip": string;
-                "enterHelp": string;
-                "enterSupport": string;
-                "enterFeedback": string;
-                "enterReport": string;
-                "enterAnalytics": string;
-                "enterStatistics": string;
-                "enterMetrics": string;
-                "enterPerformance": string;
-                "enterEfficiency": string;
-                "enterProductivity": string;
-                "enterCapacity": string;
-                "enterAvailability": string;
-                "enterReliability": string;
-                "enterSecurity": string;
-                "enterPrivacy": string;
-                "enterConfidentiality": string;
-                "enterCompliance": string;
-                "enterRegulation": string;
-                "enterPolicy": string;
-                "enterTerms": string;
-                "enterConditions": string;
-                "enterAgreement": string;
-                "enterContract": string;
-                "enterLicense": string;
-                "enterCopyright": string;
-                "enterTrademark": string;
-                "enterPatent": string;
                 "filterBy": string;
                 "enterField": string;
                 "selectField": string;
                 "searchField": string;
-                "enterCenterName": string;
-                "enterCenterDescription": string;
-                "enterAdminName": string;
-                "enterAdminEmail": string;
-                "enterAdminPassword": string;
-                "enterAdminPhone": string;
-                "enterAdminAddress": string;
                 "pickDate": string;
                 "pickDateRange": string;
-                "enterFullName": string;
-                "enterEmailAddress": string;
-                "enterPhoneNumber": string;
                 "searchUsers": string;
-                "searchStaff": string;
                 "searchCenters": string;
                 "searchAdmins": string;
                 "searchRoles": string;
                 "searchItems": string;
-                "enterAddress": string;
-                "enterBio": string;
-                "selectDateOfBirth": string;
-                "enterCenterId": string;
-                "enterLocation": string;
-                "enterCurrentPassword": string;
-                "enterNewPassword": string;
                 "confirmNewPassword": string;
             };
             "messages": {
                 "noData": string;
                 "error": string;
-                "success": string;
                 "bulkOperationCompleted": string;
                 "allOperationsSucceeded": string;
                 "allOperationsFailed": string;
@@ -611,24 +322,9 @@ export type I18nTranslations = {
                 "searching": string;
                 "startTypingToSearch": string;
                 "tryAgain": string;
-                "invalidUserData": string;
-                "contactSupport": string;
                 "welcome": string;
-                "itemCount": string;
-                "userCount": string;
-                "lastLogin": string;
-                "balance": string;
-                "percentage": string;
-                "fileSize": string;
-                "temperature": string;
-                "showing": string;
-                "showingCount": string;
-                "showingRange": string;
                 "foundResults": string;
-                "to": string;
-                "of": string;
                 "items": string;
-                "remaining": string;
                 "couldNotLoadNotifications": string;
                 "noNotifications": string;
                 "showAllItems": string;
@@ -643,30 +339,16 @@ export type I18nTranslations = {
                 "somethingWentWrong": string;
                 "loading": string;
                 "pleaseWaitLoading": string;
-                "errorLoading": string;
-                "somethingWentWrongWith": string;
-                "somethingWentWrongWhile": string;
-                "errorWith": string;
-                "resourceError": string;
-                "errorWhile": string;
-                "failedTo": string;
-                "pleaseWaitWhile": string;
                 "unexpectedErrorOccurred": string;
                 "assignedToBranch": string;
                 "enabled": string;
-                "disabled": string;
-                "deleted": string;
-                "systemRolesCannotBeDeleted": string;
-                "systemRolesCannotBeModified": string;
                 "centerAccessNotDeleted": string;
                 "profileNotDeleted": string;
                 "centerNotDeleted": string;
                 "roleNotDeleted": string;
                 "adminUsersCannotHaveCenterAccessDeactivated": string;
-                "onlyStaffAndAdminCanHaveCenterAccess": string;
                 "adminUsers": string;
                 "readOnly": string;
-                "notDeleted": string;
                 "errorDetails": string;
                 "errorDetailsDevelopment": string;
                 "errorLabel": string;
@@ -683,8 +365,6 @@ export type I18nTranslations = {
                 "searchAndSelectCenter": string;
                 "searchAndSelectRole": string;
                 "selectCenterFirst": string;
-                "selectCenterFirstToChooseRole": string;
-                "selectProfileType": string;
                 "allItemsAlreadyInState": string;
                 "errorRefreshing": string;
                 "exportFailed": string;
@@ -701,18 +381,11 @@ export type I18nTranslations = {
                 "somethingWentWrongLoadingRoles": string;
                 "alreadyHaveAccount": string;
                 "processing": string;
-                "pleaseWaitProcessing": string;
-                "errorDetailsDevelopmentOnly": string;
-                "ifProblemPersists": string;
                 "noActiveAlerts": string;
                 "allSystemsOperational": string;
-                "allHealthChecksPassing": string;
                 "allSystemsOperationalFull": string;
                 "systemDegraded": string;
-                "someComponentsIssues": string;
                 "systemDegradedFull": string;
-                "databaseConnectionIssue": string;
-                "databaseNotResponding": string;
                 "databaseConnectionIssueFull": string;
                 "diskUsageWarning": string;
                 "diskUsageAt": string;
@@ -732,7 +405,6 @@ export type I18nTranslations = {
                 "database": string;
                 "databaseConnectionPerformance": string;
                 "responseTime": string;
-                "ms": string;
                 "activeConnections": string;
                 "totalConnections": string;
                 "systemResources": string;
@@ -745,9 +417,7 @@ export type I18nTranslations = {
                 "memory": string;
                 "memoryUsage": string;
                 "disk": string;
-                "lastUpdated": string;
                 "lastUpdatedWithTime": string;
-                "auto": string;
                 "systemInfo": string;
                 "overallSystemStatus": string;
                 "healthyServices": string;
@@ -758,47 +428,28 @@ export type I18nTranslations = {
                 "metrics": string;
                 "alerts": string;
                 "cpuUsageTitle": string;
-                "cores": string;
                 "coresCount": string;
                 "memoryUsageTitle": string;
-                "gb": string;
-                "gbSlash": string;
                 "memoryUsageGb": string;
                 "diskUsageGb": string;
                 "diskUsageTitle": string;
                 "databaseResponse": string;
-                "active": string;
-                "idle": string;
-                "idleSeparator": string;
                 "databaseConnections": string;
-                "response": string;
                 "responseTimeWithMs": string;
-                "responseTimeMs": string;
-                "usage": string;
                 "cpuUsagePercentage": string;
                 "diskUsagePercentage": string;
                 "version": string;
                 "versionWithValue": string;
                 "status": string;
                 "uptime": string;
-                "loadMorePrefix": string;
-                "loadMoreSuffix": string;
                 "loadMore": string;
                 "globalScope": string;
                 "global": string;
-                "noCentersAvailable": string;
-                "noCentersAvailableForUser": string;
-                "noRolesAvailable": string;
-                "noRolesAvailableForCenter": string;
-                "passwordsDoNotMatch": string;
                 "passwordChangeSuccess": string;
                 "avatarUpdated": string;
-                "accessGranted": string;
-                "accessRevoked": string;
                 "contactAdmin": string;
                 "staffInactive": string;
                 "adminInactive": string;
-                "userInactive": string;
                 "otpSent": string;
                 "phoneVerified": string;
                 "invalidOtp": string;
@@ -806,8 +457,6 @@ export type I18nTranslations = {
                 "bulkImportNotImplemented": string;
                 "bulkDeleteNotImplemented": string;
                 "bulkActionNotImplemented": string;
-                "bulkActivateNotImplemented": string;
-                "bulkDeactivateNotImplemented": string;
                 "exportCompleted": string;
                 "exportNotAvailable": string;
                 "badRequest": string;
@@ -817,9 +466,6 @@ export type I18nTranslations = {
                 "sessionExpired": string;
                 "contactAdministrator": string;
                 "checkUrlOrDashboard": string;
-                "bulkActivateSuccess": string;
-                "bulkDeactivateSuccess": string;
-                "bulkDeleteSuccess": string;
             };
         };
         "dashboard": {
@@ -846,10 +492,7 @@ export type I18nTranslations = {
                 "title": string;
                 "description": string;
             };
-            "selectCenterForRoleManagement": {
-                "title": string;
-            };
-            "centerSpecificRoleAssignment": string;
+            "selectCenterForRoleManagement": {};
             "viewUser": {
                 "title": string;
             };
@@ -872,22 +515,10 @@ export type I18nTranslations = {
             "viewStaff": {
                 "title": string;
             };
-            "deleteStaff": {
-                "title": string;
-                "description": string;
-            };
-            "activateStaff": {
-                "title": string;
-                "description": string;
-            };
-            "deactivateStaff": {
-                "title": string;
-                "description": string;
-            };
-            "restoreStaff": {
-                "title": string;
-                "description": string;
-            };
+            "deleteStaff": {};
+            "activateStaff": {};
+            "deactivateStaff": {};
+            "restoreStaff": {};
             "createRole": {
                 "title": string;
             };
@@ -949,9 +580,7 @@ export type I18nTranslations = {
             "manageRoleUsers": {
                 "title": string;
                 "description": string;
-                "searchPlaceholder": string;
                 "allUsers": string;
-                "noPermissionsFound": string;
                 "adminScope": string;
                 "centerScope": string;
             };
@@ -961,49 +590,24 @@ export type I18nTranslations = {
                 "unread": string;
                 "archived": string;
             };
-            "manageAdminRoles": {
-                "title": string;
-                "description": string;
-            };
+            "manageAdminRoles": {};
             "manageRoles": {
                 "title": string;
                 "description": string;
             };
-            "rolesForCenter": {
-                "title": string;
-                "description": string;
-            };
-            "createProducts": {
-                "title": string;
-                "description": string;
-            };
-            "editProducts": {
-                "title": string;
-                "description": string;
-            };
-            "viewProducts": {
-                "title": string;
-                "description": string;
-            };
-            "deleteProducts": {
-                "title": string;
-                "cannotUndo": string;
-                "message": string;
-                "thisActionWill": string;
-                "removeProducts": string;
-                "removeData": string;
-            };
+            "rolesForCenter": {};
+            "createProducts": {};
+            "editProducts": {};
+            "viewProducts": {};
+            "deleteProducts": {};
             "createBranch": {
                 "title": string;
-                "description": string;
             };
             "editBranch": {
                 "title": string;
-                "description": string;
             };
             "viewBranch": {
                 "title": string;
-                "description": string;
                 "basicInformation": string;
                 "location": string;
                 "address": string;
@@ -1016,36 +620,15 @@ export type I18nTranslations = {
             };
             "deleteBranch": {
                 "title": string;
-                "cannotUndo": string;
                 "message": string;
-                "thisActionWill": string;
-                "removeBranch": string;
-                "removeData": string;
             };
             "manageBranchAccess": {
                 "title": string;
-                "description": string;
             };
-            "createTestModule": {
-                "title": string;
-                "description": string;
-            };
-            "editTestModule": {
-                "title": string;
-                "description": string;
-            };
-            "viewTestModule": {
-                "title": string;
-                "description": string;
-            };
-            "deleteTestModule": {
-                "title": string;
-                "cannotUndo": string;
-                "message": string;
-                "thisActionWill": string;
-                "removeTestModule": string;
-                "removeData": string;
-            };
+            "createTestModule": {};
+            "editTestModule": {};
+            "viewTestModule": {};
+            "deleteTestModule": {};
             "verifyPhone": {
                 "title": string;
                 "description": string;
@@ -1064,11 +647,9 @@ export type I18nTranslations = {
                 "otpHint": string;
                 "phoneLocked": string;
                 "otpSent": string;
-                "userNotFound": string;
                 "userNotFoundTitle": string;
                 "userNotFoundDescription": string;
                 "createUserInstead": string;
-                "importSuccess": string;
             };
         };
         "errors": {
@@ -1076,27 +657,19 @@ export type I18nTranslations = {
                 "generic": string;
                 "format": string;
                 "expired": string;
-                "missing": string;
                 "type": string;
-                "orExpired": string;
             };
             "cannot": {
-                "action": string;
                 "actionReason": string;
-                "undo": string;
-                "reverse": string;
             };
             "notAuthorized": {
                 "action": string;
-                "actionResource": string;
             };
             "notFound": {
                 "generic": string;
                 "withId": string;
-                "withField": string;
             };
             "already": {
-                "exists": string;
                 "existsWithField": string;
                 "has": string;
                 "is": string;
@@ -1104,26 +677,18 @@ export type I18nTranslations = {
             };
             "expired": {
                 "generic": string;
-                "orInvalid": string;
-                "session": string;
             };
             "required": {
                 "field": string;
-                "fields": string;
                 "oneOf": string;
-                "generic": string;
             };
             "incorrect": {
                 "field": string;
-                "generic": string;
             };
             "denied": {
                 "access": string;
-                "action": string;
-                "generic": string;
             };
             "rateLimit": {
-                "tooManyRequests": string;
                 "tooManyRequestsWithTime": string;
             };
             "genericError": string;
@@ -1132,51 +697,26 @@ export type I18nTranslations = {
             "accessDenied": string;
             "resourceNotFound": string;
             "duplicateField": string;
-            "foreignKeyViolation": string;
-            "databaseConfigurationError": string;
             "databaseOperationFailed": string;
-            "recordNotFound": string;
             "internalServerError": string;
             "businessLogicError": string;
-            "badRequest": string;
             "userDoesNotHaveAccess": string;
             "userNotAuthenticated": string;
-            "profileInactive": {
-                "title": string;
-                "description": string;
-            };
+            "profileInactive": {};
             "userPhoneNotVerified": string;
-            "userAccountInactive": string;
-            "userHasNoEmail": string;
-            "userHasNoPhone": string;
-            "unsupportedChannel": string;
-            "emailVerificationMustBeAuthenticated": string;
             "tokenNotActiveYet": string;
             "tokenValidationFailed": string;
             "permissionScopeDoesNotMatch": string;
             "operation": string;
-            "request": string;
-            "dataRetrieval": string;
-            "dataProcessing": string;
-            "serverError": string;
-            "qrCodeGenerationFailed": string;
-            "twoFactorGenerationFailed": string;
             "centerInactive": {
-                "title": string;
                 "description": string;
             };
             "centerAccessDenied": {
-                "title": string;
                 "description": string;
             };
             "centerAccessInactive": {
-                "title": string;
                 "description": string;
             };
-            "unauthorized": string;
-            "forbidden": string;
-            "conflict": string;
-            "unprocessableEntity": string;
             "serviceUnavailable": string;
             "adminScopeNotAllowedForCenter": string;
             "insufficientPermissions": string;
@@ -1192,20 +732,10 @@ export type I18nTranslations = {
             "exportDataUnavailable": string;
             "requestBodyTooLarge": string;
             "missingRequiredHeader": string;
-            "duplicateResource": string;
             "relatedEntityMissingOrInvalid": string;
-            "requiredFieldMissing": string;
             "temporaryDatabaseConflict": string;
         };
-        "confirm": {
-            "areYouSure": string;
-            "delete": string;
-            "action": string;
-            "disable": string;
-            "enable": string;
-            "restore": string;
-            "archive": string;
-        };
+        "confirm": {};
         "export": {
             "formats": {
                 "csv": string;
@@ -1219,10 +749,7 @@ export type I18nTranslations = {
                 "label": string;
                 "placeholder": string;
             };
-            "email": {
-                "label": string;
-                "placeholder": string;
-            };
+            "email": {};
             "password": {
                 "label": string;
                 "placeholder": string;
@@ -1249,9 +776,6 @@ export type I18nTranslations = {
             "centerSelection": {
                 "title": string;
                 "description": string;
-                "searchPlaceholder": string;
-                "globalScope": string;
-                "noCentersFound": string;
             };
             "profileSelection": {
                 "title": string;
@@ -1280,18 +804,12 @@ export type I18nTranslations = {
                 "title": string;
                 "subtitle": string;
             };
-            "users": {
-                "title": string;
-                "subtitle": string;
-            };
+            "users": {};
             "staff": {
                 "title": string;
                 "subtitle": string;
             };
-            "centerInactive": {
-                "title": string;
-                "description": string;
-            };
+            "centerInactive": {};
             "profileInactive": {
                 "title": string;
                 "description": string;
@@ -1321,13 +839,6 @@ export type I18nTranslations = {
                     "twoFactorAuthDescription": string;
                     "twoFactorEnabledDescription": string;
                     "twoFactorDisabledDescription": string;
-                    "securitySettings": string;
-                    "securitySettingsDescription": string;
-                    "securityAlerts": string;
-                    "securityAlertsDescription": string;
-                    "lastLogin": string;
-                    "failedAttempts": string;
-                    "lockoutUntil": string;
                     "changePassword": string;
                     "personalInfoDescription": string;
                     "security": string;
@@ -1347,20 +858,7 @@ export type I18nTranslations = {
                     "notificationsDescription": string;
                 };
             };
-            "selectProfile": {
-                "title": string;
-                "subtitle": string;
-                "searchPlaceholder": string;
-                "loading": string;
-                "searching": string;
-                "startTypingToSearch": string;
-                "noProfilesFound": string;
-                "noProfilesAvailable": string;
-                "profileSelected": string;
-                "errorSelecting": string;
-                "errorLoading": string;
-                "noResults": string;
-            };
+            "selectProfile": {};
             "unauthorized": {
                 "title": string;
                 "description": string;
@@ -1368,18 +866,12 @@ export type I18nTranslations = {
                 "goToDashboard": string;
                 "goBack": string;
             };
-            "products": {
-                "title": string;
-                "subtitle": string;
-            };
+            "products": {};
             "branches": {
                 "title": string;
                 "subtitle": string;
             };
-            "test-module": {
-                "title": string;
-                "subtitle": string;
-            };
+            "test-module": {};
             "notifications": {
                 "title": string;
                 "subtitle": string;
@@ -1395,27 +887,16 @@ export type I18nTranslations = {
             "rowsPerPage": string;
             "pageOf": string;
         };
-        "selectCenter": {
-            "title": string;
-            "description": string;
-            "descriptionUser": string;
-            "searchPlaceholder": string;
-            "globalOption": string;
-        };
+        "selectCenter": {};
         "success": {
             "create": string;
             "update": string;
             "delete": string;
-            "activate": string;
-            "deactivate": string;
             "restore": string;
             "archive": string;
             "export": string;
-            "import": string;
             "login": string;
             "logout": string;
-            "register": string;
-            "profileUpdate": string;
             "passwordChange": string;
             "roleAssigned": string;
             "roleRemoved": string;
@@ -1423,25 +904,15 @@ export type I18nTranslations = {
             "userAccessRevoked": string;
             "permissionsRetrieved": string;
             "dataRetrieved": string;
-            "dataSaved": string;
             "dataUpdated": string;
-            "dataDeleted": string;
-            "dataCreated": string;
-            "validationPassed": string;
-            "upload": string;
-            "download": string;
             "tokenRefreshed": string;
-            "emailVerified": string;
             "passwordResetSent": string;
             "passwordReset": string;
             "twoFactorSetup": string;
-            "twoFactorVerified": string;
-            "userRegistered": string;
             "userActivated": string;
             "userDeactivated": string;
             "otpSent": string;
             "userImported": string;
-            "emailVerificationRequestSent": string;
             "phoneVerificationRequestSent": string;
             "phoneVerified": string;
             "centerAccessGranted": string;
@@ -1450,12 +921,7 @@ export type I18nTranslations = {
             "centerAccessRestored": string;
             "twoFactorEnabled": string;
             "twoFactorDisabled": string;
-            "branchAssigned": string;
-            "branchRemoved": string;
-            "exportCompleted": string;
             "operation": string;
-            "request": string;
-            "dataProcessed": string;
             "bulkDelete": string;
             "bulkRestore": string;
             "bulkAssign": string;
@@ -1475,108 +941,14 @@ export type I18nTranslations = {
         "system": {
             "health": {
                 "check": string;
-                "status": string;
-                "uptime": string;
-                "version": string;
-                "lastUpdate": string;
             };
-            "status": {
-                "online": string;
-                "offline": string;
-                "ready": string;
-                "maintenance": string;
-                "initializing": string;
-                "shuttingDown": string;
-                "restarting": string;
-            };
-            "monitoring": {
-                "performance": string;
-                "capacity": string;
-                "load": string;
-                "memory": string;
-                "disk": string;
-                "network": string;
-                "database": string;
-                "cache": string;
-                "queue": string;
-            };
-            "operations": {
-                "backup": string;
-                "restore": string;
-                "migration": string;
-                "update": string;
-                "configuration": string;
-                "diagnostics": string;
-                "logging": string;
-                "audit": string;
-                "security": string;
-            };
-            "components": {
-                "job": string;
-                "task": string;
-                "process": string;
-                "service": string;
-                "module": string;
-                "component": string;
-                "feature": string;
-                "function": string;
-                "operation": string;
-                "transaction": string;
-                "session": string;
-                "connection": string;
-                "request": string;
-                "response": string;
-                "event": string;
-                "notification": string;
-                "alert": string;
-                "warning": string;
-                "error": string;
-                "exception": string;
-                "failure": string;
-            };
-            "actions": {
-                "timeout": string;
-                "retry": string;
-                "fallback": string;
-                "recovery": string;
-                "restart": string;
-                "reload": string;
-                "refresh": string;
-                "sync": string;
-                "archive": string;
-                "cleanup": string;
-                "optimization": string;
-                "upgrade": string;
-                "downgrade": string;
-                "rollback": string;
-            };
-            "deployment": {
-                "deployment": string;
-                "release": string;
-                "build": string;
-                "test": string;
-            };
-            "processing": {
-                "validation": string;
-                "verification": string;
-                "authentication": string;
-                "authorization": string;
-                "encryption": string;
-                "decryption": string;
-                "compression": string;
-                "decompression": string;
-                "serialization": string;
-                "deserialization": string;
-                "parsing": string;
-                "formatting": string;
-                "encoding": string;
-                "decoding": string;
-                "transformation": string;
-                "conversion": string;
-                "translation": string;
-                "localization": string;
-                "internationalization": string;
-            };
+            "status": {};
+            "monitoring": {};
+            "operations": {};
+            "components": {};
+            "actions": {};
+            "deployment": {};
+            "processing": {};
         };
         "table": {
             "columns": {
@@ -1592,7 +964,6 @@ export type I18nTranslations = {
                 "createdAt": string;
                 "role": string;
                 "created": string;
-                "updated": string;
                 "actions": string;
                 "type": string;
                 "user": string;
@@ -1604,7 +975,6 @@ export type I18nTranslations = {
                 "description": string;
                 "location": string;
                 "address": string;
-                "avatar": string;
                 "title": string;
                 "message": string;
                 "priority": string;
@@ -1623,14 +993,7 @@ export type I18nTranslations = {
                 "manageAccess": string;
                 "manageCenterAccess": string;
                 "manageRoles": string;
-                "manageCenters": string;
-                "createAdmin": string;
-                "editUser": string;
                 "restore": string;
-                "saveChanges": string;
-                "changePassword": string;
-                "activate": string;
-                "deactivate": string;
                 "markAsRead": string;
                 "archive": string;
             };
@@ -1640,7 +1003,6 @@ export type I18nTranslations = {
             "selection": {
                 "selectedItems": string;
                 "selectAll": string;
-                "deselectAll": string;
             };
             "trashToggle": {
                 "activeItems": string;
@@ -1653,7 +1015,6 @@ export type I18nTranslations = {
             };
             "invalid": {
                 "message": string;
-                "format": string;
             };
             "minLength": {
                 "message": string;
@@ -1667,7 +1028,6 @@ export type I18nTranslations = {
             "phone": {
                 "invalid": string;
             };
-            "url": string;
             "password": {
                 "invalid": string;
                 "mismatch": string;
@@ -1711,80 +1071,26 @@ export type I18nTranslations = {
         };
         "toast": {
             "success": {
-                "title": string;
                 "message": string;
-                "saved": string;
-                "deleted": string;
-                "created": string;
-                "updated": string;
             };
             "error": {
-                "title": string;
-                "message": string;
-                "network": string;
-                "server": string;
-                "validation": string;
-            };
-            "warning": {
-                "title": string;
                 "message": string;
             };
+            "warning": {};
             "info": {
-                "title": string;
                 "message": string;
             };
         };
-        "tooltip": {
-            "default": string;
-            "help": string;
-            "required": string;
-            "optional": string;
-            "disabled": string;
-        };
-        "empty": {
-            "noData": string;
-            "noResults": string;
-            "noItems": string;
-            "noPermission": string;
-            "noCenters": string;
-            "noUsers": string;
-            "noRoles": string;
-            "noBranches": string;
-            "noPermissions": string;
-            "noNotifications": string;
-            "noFiles": string;
-            "loading": string;
-            "error": string;
-        };
+        "tooltip": {};
+        "empty": {};
         "date": {
-            "formats": {
-                "short": string;
-                "medium": string;
-                "long": string;
-                "full": string;
-            };
-            "relative": {
-                "now": string;
-                "minutesAgo": string;
-                "hoursAgo": string;
-                "daysAgo": string;
-                "weeksAgo": string;
-                "monthsAgo": string;
-                "yearsAgo": string;
-            };
+            "formats": {};
+            "relative": {};
         };
         "time": {
-            "formats": {
-                "short": string;
-                "medium": string;
-                "long": string;
-            };
+            "formats": {};
         };
-        "currency": {
-            "symbol": string;
-            "format": string;
-            "decimalPlaces": {};
-        };
+        "currency": {};
         "roles": {
             "superAdmin": {
                 "name": string;
@@ -1796,14 +1102,7 @@ export type I18nTranslations = {
             };
         };
         "permissions": {
-            "groups": {
-                "staff": string;
-                "admin": string;
-                "center": string;
-                "roles": string;
-                "branches": string;
-                "system": string;
-            };
+            "groups": {};
             "staff": {
                 "read": {
                     "name": string;

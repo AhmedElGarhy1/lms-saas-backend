@@ -57,8 +57,8 @@ export class UserProfileService extends BaseService {
     if (!user) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.labels.user',
-        identifier: 'ID' as I18nPath,
-        value: actor.id as I18nPath | number,
+        identifier: 'ID',
+        value: actor.id,
       });
     }
 
@@ -74,8 +74,8 @@ export class UserProfileService extends BaseService {
     if (!userProfile) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.profile',
-        identifier: 'ID' as I18nPath,
-        value: actor.userProfileId as I18nPath | number,
+        identifier: 'ID',
+        value: actor.userProfileId,
       });
     }
     actor.userProfileId = userProfile.id;
@@ -124,8 +124,8 @@ export class UserProfileService extends BaseService {
     if (!userProfile) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.profile',
-        identifier: 'ID' as I18nPath,
-        value: userProfileId as I18nPath | number,
+        identifier: 'ID',
+        value: userProfileId,
       });
     }
 
@@ -160,8 +160,8 @@ export class UserProfileService extends BaseService {
     if (!userProfile) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.profile',
-        identifier: 'ID' as I18nPath,
-        value: userProfileId as I18nPath | number,
+        identifier: 'ID',
+        value: userProfileId,
       });
     }
 
@@ -225,7 +225,7 @@ export class UserProfileService extends BaseService {
     if (existingProfile) {
       throw new ValidationFailedException('t.errors.already.has', undefined, {
         resource: 't.common.labels.user',
-        what: `t.common.labels.${profileType.toLowerCase()}Profile` as I18nPath,
+        what: `t.common.labels.${profileType.toLowerCase()}Profile`,
       });
     }
 
@@ -263,8 +263,8 @@ export class UserProfileService extends BaseService {
     if (!userProfile) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.profile',
-        identifier: 'ID' as I18nPath,
-        value: userProfileId as I18nPath | number,
+        identifier: 'ID',
+        value: userProfileId,
       });
     }
 
@@ -291,8 +291,8 @@ export class UserProfileService extends BaseService {
     if (!deletedProfile) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.profile',
-        identifier: 'ID' as I18nPath,
-        value: userProfileId as I18nPath | number,
+        identifier: 'ID',
+        value: userProfileId,
       });
     }
 

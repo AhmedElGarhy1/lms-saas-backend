@@ -82,8 +82,7 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
         httpException = new ResourceAlreadyExistsException(
           TRANSLATION_KEYS.ERRORS.DUPLICATE_FIELD,
           {
-            field: `t.common.labels.${field || 'field'}` as I18nPath,
-            value: value as I18nPath | number,
+            field: `t.common.labels.${field || 'field'}`,
           },
         );
       } else if (

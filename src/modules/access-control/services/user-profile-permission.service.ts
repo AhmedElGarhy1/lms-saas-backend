@@ -58,8 +58,8 @@ export class UserProfilePermissionService extends BaseService {
       if (!profile) {
         throw new ResourceNotFoundException('t.errors.notFound.withId', {
           resource: 't.common.resources.profile',
-          identifier: 'ID' as I18nPath,
-          value: userProfileId as I18nPath | number,
+          identifier: 'ID',
+          value: userProfileId,
         });
       }
       return profile.profileType;

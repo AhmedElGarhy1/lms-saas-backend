@@ -38,8 +38,8 @@ export class RolesRepository extends BaseRepository<Role> {
     if (!role) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.role',
-        identifier: 'ID' as I18nPath,
-        value: roleId as I18nPath | number,
+        identifier: 'ID',
+        value: roleId,
       });
     }
     return role;
@@ -69,8 +69,8 @@ export class RolesRepository extends BaseRepository<Role> {
     if (!role) {
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.role',
-        identifier: 'ID' as I18nPath,
-        value: roleId as I18nPath | number,
+        identifier: 'ID',
+        value: roleId,
       });
     }
     const existingRolePermissions =

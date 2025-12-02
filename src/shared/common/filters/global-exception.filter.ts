@@ -229,7 +229,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       const remainingTime = formatRemainingTime(retryAfter);
       message = {
         key: 't.errors.rateLimit.tooManyRequestsWithTime',
-        args: { time: remainingTime as I18nPath | number },
+        args: { time: remainingTime },
       };
     } else if (typeof rawMessage === 'string' && rawMessage.startsWith('t.')) {
       // Already a translation key
@@ -238,7 +238,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       // Not a translation key, convert to generic error message
       message = {
         key: TRANSLATION_KEYS.ERRORS.GENERIC_ERROR,
-        args: { detail: rawMessage as I18nPath | number },
+        args: { detail: rawMessage },
       };
     }
 

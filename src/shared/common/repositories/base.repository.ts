@@ -463,8 +463,8 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     if (!entity)
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.resource',
-        identifier: 'ID' as I18nPath,
-        value: id as I18nPath | number,
+        identifier: 'ID',
+        value: id,
       });
     return entity;
   }
@@ -475,8 +475,8 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     if (!entity)
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.resource',
-        identifier: 'ID' as I18nPath,
-        value: id as I18nPath | number,
+        identifier: 'ID',
+        value: id,
       });
 
     await repo.softRemove(entity);
@@ -488,8 +488,8 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     if (!entity)
       throw new ResourceNotFoundException('t.errors.notFound.withId', {
         resource: 't.common.resources.resource',
-        identifier: 'ID' as I18nPath,
-        value: id as I18nPath | number,
+        identifier: 'ID',
+        value: id,
       });
 
     await repo.remove(entity);
