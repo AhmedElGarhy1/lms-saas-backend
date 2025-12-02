@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { watch, FSWatcher } from 'fs';
 import { join } from 'path';
-import { RedisTemplateCacheService } from './redis-template-cache.service';
+import { InMemoryTemplateCacheService } from './in-memory-template-cache.service';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Config } from '@/shared/config/config';
 
@@ -24,7 +24,7 @@ export class TemplateHotReloadService
   private watcher?: FSWatcher;
   private readonly templateDir: string;
 
-  constructor(private readonly redisCache: RedisTemplateCacheService) {
+  constructor(private readonly templateCache: InMemoryTemplateCacheService) {
     super();
     this.templateDir = join(process.cwd(), 'src/i18n/notifications');
   }
@@ -68,7 +68,7 @@ export class TemplateHotReloadService
 
   /**
    * Handle template file change
-   * Clears Redis cache for the changed template
+   * Clears in-memory cache for the changed template
    */
   private async handleTemplateChange(filePath: string): Promise<void> {
     try {
@@ -76,8 +76,8 @@ export class TemplateHotReloadService
       // Path format: src/i18n/notifications/{locale}/{channel}/{template}.{ext}
       const relativePath = filePath.replace(this.templateDir + '/', '');
 
-      // Clear cache for this specific template
-      await this.redisCache.clearTemplateCache(relativePath);
+      // Clear in-memory cache for this specific template
+      await this.templateCache.clearTemplateCache(relativePath);
     } catch (error) {
       this.logger.warn('Failed to reload template', {
         filePath,

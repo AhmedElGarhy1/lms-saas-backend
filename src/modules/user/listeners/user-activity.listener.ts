@@ -41,14 +41,10 @@ export class UserActivityListener {
   @OnEvent(UserEvents.UPDATED)
   async handleUserUpdated(event: UserUpdatedEvent) {
     // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      UserActivityType.USER_UPDATED,
-      {
-        targetUserId: event.user.id,
-        updatedFields: event.updatedFields,
-      },
-      event.user.id,
-    );
+    await this.activityLogService.log(UserActivityType.USER_UPDATED, {
+      targetUserId: event.user.id,
+      updatedFields: event.updatedFields,
+    });
   }
 
   @OnEvent(UserEvents.DELETED)

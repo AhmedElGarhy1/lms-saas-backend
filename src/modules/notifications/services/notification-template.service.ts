@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { readFile } from 'fs/promises';
 import * as Handlebars from 'handlebars';
 import { z } from 'zod';
-import { RedisTemplateCacheService } from './redis-template-cache.service';
+import { InMemoryTemplateCacheService } from './in-memory-template-cache.service';
 import { BaseService } from '@/shared/common/services/base.service';
 import { TemplateRenderingException } from '../exceptions/notification.exceptions';
 import { NotificationChannel } from '../enums/notification-channel.enum';
@@ -26,7 +26,7 @@ export class NotificationTemplateService extends BaseService {
   );
 
   constructor(
-    private readonly redisCache: RedisTemplateCacheService,
+    private readonly templateCache: InMemoryTemplateCacheService,
     private readonly translationService: TranslationService,
   ) {
     super();
@@ -70,8 +70,8 @@ export class NotificationTemplateService extends BaseService {
     }
 
     try {
-      // Use Redis cache for template source
-      return await this.redisCache.getTemplateSource(
+      // Use in-memory cache for template source
+      return await this.templateCache.getTemplateSource(
         `${locale}:${channel}:${templateName}`,
         async () => readFile(templatePath, 'utf-8'),
       );
@@ -110,8 +110,8 @@ export class NotificationTemplateService extends BaseService {
   ): Promise<HandlebarsTemplateDelegate> {
     const cacheKey = `${locale}:${channel}:${templateName}`;
 
-    // Get compiled template with Redis caching
-    return this.redisCache.getCompiledTemplate(cacheKey, async () => {
+    // Get compiled template with in-memory caching
+    return this.templateCache.getCompiledTemplate(cacheKey, async () => {
       const templateContent = await this.loadTemplateContent(
         templateName,
         locale,
@@ -322,7 +322,7 @@ export class NotificationTemplateService extends BaseService {
       );
     }
 
-    // Load template content (async - uses Redis cache)
+    // Load template content (async - uses in-memory cache)
     const templateContent = await this.loadTemplateContent(
       templateName,
       locale,

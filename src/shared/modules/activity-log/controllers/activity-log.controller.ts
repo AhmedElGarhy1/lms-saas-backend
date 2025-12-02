@@ -20,6 +20,8 @@ import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 
 @ApiTags('Activity Logs')
 @Controller('activity-logs')
+@NoProfile()
+@NoContext()
 export class ActivityLogController {
   constructor(
     private readonly activityLogService: ActivityLogService,
@@ -32,8 +34,6 @@ export class ActivityLogController {
     status: 200,
     description: 'Activity logs retrieved successfully',
   })
-  @NoProfile()
-  @NoContext()
   async getActivityLogs(
     @Query() query: PaginateActivityLogsDto,
     @GetUser() actor: ActorUser,
@@ -50,8 +50,6 @@ export class ActivityLogController {
     description: 'Export file generated successfully',
     type: ExportResponseDto,
   })
-  @NoProfile()
-  @NoContext()
   async exportActivityLogs(
     @Query() query: ExportActivityLogsDto,
     @Res() res: Response,

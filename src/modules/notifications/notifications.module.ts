@@ -29,7 +29,7 @@ import { AuthModule } from '@/modules/auth/auth.module';
 import { UserModule } from '../user/user.module';
 import { CentersModule } from '@/modules/centers/centers.module';
 import { RedisCleanupJob } from './jobs/redis-cleanup.job';
-import { RedisTemplateCacheService } from './services/redis-template-cache.service';
+import { InMemoryTemplateCacheService } from './services/in-memory-template-cache.service';
 import { NotificationMetricsService } from './services/notification-metrics.service';
 import { MetricsBatchService } from './services/metrics-batch.service';
 import { ChannelRateLimitService } from './services/channel-rate-limit.service';
@@ -127,7 +127,7 @@ import { RawBodyMiddleware } from './middleware/raw-body.middleware';
     NotificationGateway,
     RedisCleanupJob,
     NotificationDlqCleanupJob, // Cleanup job for old failed notifications
-    RedisTemplateCacheService, // Redis-based template cache
+    InMemoryTemplateCacheService, // In-memory template cache
     MetricsBatchService,
     ChannelRateLimitService,
     ChannelRetryStrategyService,

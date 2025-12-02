@@ -27,7 +27,7 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
     query: PaginateActivityLogsDto,
     actor: ActorUser,
   ): Promise<Pagination<ActivityLog>> {
-    const { centerId, userId, type } = query;
+    const { type } = query;
 
     const qb = this.getRepository()
       .createQueryBuilder('activityLog')
@@ -36,7 +36,7 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
           qb.where(`"activityLog"."userId" = :userId`, {
             userId: actor.id,
           }).orWhere(`"activityLog"."targetUserId" = :targetUserId`, {
-            targetUserId: actor.userProfileId,
+            targetUserId: actor.id,
           });
         }),
       )
@@ -44,58 +44,6 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
       .leftJoin('activityLog.targetUser', 'targetUser')
       .leftJoin('activityLog.center', 'center')
       .addSelect(['user.name', 'targetUser.name', 'center.name']);
-
-    // const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
-    //   actor.userProfileId,
-    // );
-
-    // // apply center access
-    // if (!isSuperAdmin && !centerId) {
-    //   queryBuilder.andWhere(
-    //     '"activityLog"."centerId" IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :userProfileId)',
-    //     {
-    //       userProfileId: actor.userProfileId,
-    //     },
-    //   );
-    // }
-
-    // apply user access (filter by targetUserId - who was affected)
-    const bypassUserAccess =
-      await this.accessControlHelperService.bypassCenterInternalAccess(
-        actor.userProfileId,
-        centerId,
-      );
-
-    if (!bypassUserAccess) {
-      qb.andWhere(
-        new Brackets((sub) => {
-          sub.where(
-            `"activityLog"."targetUserId" IN (
-                SELECT "userId"
-                FROM user_access
-                WHERE ${
-                  centerId ? `"centerId" = :centerId AND` : ''
-                } "granterUserProfileId" = :userProfileId
-              )`,
-            {
-              userProfileId: actor.userProfileId,
-              centerId,
-            },
-          );
-        }),
-      );
-    }
-
-    // Additional filters
-    if (centerId) {
-      qb.andWhere(`"activityLog"."centerId" = :centerId`, { centerId });
-    }
-
-    if (userId) {
-      qb.andWhere(`"activityLog"."targetUserId" = :filterTargetUserId`, {
-        filterTargetUserId: userId,
-      });
-    }
 
     if (type) {
       qb.andWhere(`"activityLog"."type" = :type`, { type });
