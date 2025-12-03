@@ -1,2 +1,0 @@
-Notification: {{#if message}}{{message}}{{else}}You have received a notification.{{/if}}{{#if link}} {{link}}{{/if}}
-

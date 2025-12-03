@@ -1,8 +1,0 @@
-🔐 OTP Verification
-
-Your verification code is: {{otpCode}}
-
-This code will expire in {{expiresIn}} minutes.
-
-⚠️ For security reasons, never share this code with anyone.
-

@@ -12,6 +12,8 @@ import {
 import { AuthModule } from '@/modules/auth/auth.module';
 import { UserModule } from '@/modules/user/user.module';
 import { CentersModule } from '@/modules/centers/centers.module';
+import { LevelsModule } from '@/modules/levels/levels.module';
+import { SubjectsModule } from '@/modules/subjects/subjects.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { SharedModule } from '@/shared/shared.module';
@@ -102,6 +104,8 @@ import { I18nTranslations } from './generated/i18n.generated';
     AdminModule,
     AccessControlModule,
     CentersModule,
+    LevelsModule,
+    SubjectsModule,
     ActivityLogModule,
     SeederModule,
     LocaleModule,

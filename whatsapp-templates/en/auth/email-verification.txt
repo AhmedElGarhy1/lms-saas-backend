@@ -1,8 +1,0 @@
-📧 Email Verification
-
-Please verify your email address by clicking the link below:
-
-{{link}}
-
-This link will expire in {{expiresIn}}.
-

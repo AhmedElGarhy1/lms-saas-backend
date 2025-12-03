@@ -115,10 +115,7 @@
       "importing": "جاري الاستيراد...",
       "resendCode": "إعادة إرسال الرمز",
       "processing": "جاري المعالجة...",
-      "grantUserAccess": "منح وصول المستخدم",
-      "columnVisibility": "إظهار الأعمدة",
-      "showAllColumns": "إظهار جميع الأعمدة",
-      "hideAllColumns": "إخفاء جميع الأعمدة"
+      "grantUserAccess": "منح وصول المستخدم"
     },
     "labels": {
       "name": "الاسم",
@@ -198,9 +195,7 @@
       "lastMonth": "الشهر الماضي",
       "thisYear": "هذا العام",
       "lastYear": "العام الماضي",
-      "lastDays": "آخر {count, plural, one {يوم} two {يومان} few {آخر {count} أيام} many {آخر {count} يوماً} other {آخر {count} يوم}}",
       "customRange": "نطاق مخصص",
-      "columnVisibility": "إظهار الأعمدة",
       "allUsers": "جميع المستخدمين",
       "allAdmins": "جميع المدراء",
       "include": "تضمين",
@@ -255,6 +250,10 @@
       "userAccess": "صلاحية المستخدم",
       "branchAccess": "صلاحية الوصول للفرع",
       "centerAccess": "صلاحية الوصول للمركز",
+      "level": "المستوى",
+      "levels": "المستويات",
+      "subject": "المادة",
+      "subjects": "المواد",
       "refreshToken": "رمز التحديث",
       "verificationCode": "رمز التحقق",
       "adminScope": "نطاق المدير",
@@ -269,7 +268,9 @@
       "activityLogs": "سجلات النشاط",
       "staff": "الموظفون",
       "profile": "الملف الشخصي",
-      "profiles": "الملفات الشخصية"
+      "profiles": "الملفات الشخصية",
+      "student": "الطالب",
+      "teacher": "المعلم"
     },
     "placeholders": {
       "search": "بحث...",

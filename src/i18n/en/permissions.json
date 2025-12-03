@@ -1,5 +1,7 @@
 {
-"staff": {
+  "permissions": {
+    "groups": {},
+    "staff": {
       "read": {
         "name": "Read Staff"
       },
@@ -250,10 +252,63 @@
         "name": "Read All Branches without Branch Access"
       }
     },
+    "levels": {
+      "read": {
+        "name": "Read Level"
+      },
+      "create": {
+        "name": "Create Level"
+      },
+      "update": {
+        "name": "Update Level"
+      },
+      "delete": {
+        "name": "Delete Level"
+      },
+      "restore": {
+        "name": "Restore Level"
+      },
+      "readAll": {
+        "name": "Read All Levels without Level Access"
+      },
+      "import": {
+        "name": "Import Levels"
+      },
+      "export": {
+        "name": "Export Levels"
+      }
+    },
+    "subjects": {
+      "read": {
+        "name": "Read Subject"
+      },
+      "create": {
+        "name": "Create Subject"
+      },
+      "update": {
+        "name": "Update Subject"
+      },
+      "delete": {
+        "name": "Delete Subject"
+      },
+      "restore": {
+        "name": "Restore Subject"
+      },
+      "readAll": {
+        "name": "Read All Subjects without Subject Access"
+      },
+      "import": {
+        "name": "Import Subjects"
+      },
+      "export": {
+        "name": "Export Subjects"
+      }
+    },
     "system": {
       "healthCheck": {
         "name": "System Health Check"
       }
     }
+  }
 }
 

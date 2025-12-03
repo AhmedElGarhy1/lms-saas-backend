@@ -102,8 +102,6 @@
       "archiveNotification": "Archive notification",
       "done": "Done",
       "quickSelect": "Quick select",
-      "selectCenter": "Select Center",
-      "contactAdmin": "Contact Admin",
       "selectPreset": "Select a preset",
       "selectDates": "Select dates",
       "openMenu": "Open menu",
@@ -117,10 +115,7 @@
       "importing": "Importing...",
       "resendCode": "Resend Code",
       "processing": "Processing...",
-      "grantUserAccess": "Grant User Access",
-      "columnVisibility": "Column Visibility",
-      "showAllColumns": "Show All Columns",
-      "hideAllColumns": "Hide All Columns"
+      "grantUserAccess": "Grant User Access"
     },
     "labels": {
       "name": "Name",
@@ -200,9 +195,7 @@
       "lastMonth": "Last month",
       "thisYear": "This year",
       "lastYear": "Last year",
-      "lastDays": "Last {count, plural, one {day} other {{count} days}}",
       "customRange": "Custom range",
-      "columnVisibility": "Column Visibility",
       "allUsers": "All Users",
       "allAdmins": "All Admins",
       "include": "Include",
@@ -249,10 +242,6 @@
       "roles": "roles",
       "admins": "admins",
       "staff": "staff",
-      "student": "student",
-      "students": "students",
-      "teacher": "teacher",
-      "teachers": "teachers",
       "centers": "centers",
       "access": "access",
       "branches": "branches",
@@ -264,6 +253,10 @@
       "userAccess": "User access",
       "branchAccess": "Branch access",
       "centerAccess": "Center access",
+      "level": "Level",
+      "levels": "Levels",
+      "subject": "Subject",
+      "subjects": "Subjects",
       "refreshToken": "Refresh token",
       "verificationCode": "Verification code",
       "adminScope": "Admin scope",
@@ -274,7 +267,9 @@
       "credentials": "Credentials",
       "twoFactorAuthentication": "Two-factor authentication",
       "userInfo": "User info",
-      "activityLogs": "activity logs"
+      "activityLogs": "activity logs",
+      "student": "Student",
+      "teacher": "Teacher"
     },
     "placeholders": {
       "search": "Search...",
@@ -368,13 +363,9 @@
       "noActiveAlerts": "No active alerts at this time",
       "allSystemsOperational": "All Systems Operational",
       "allSystemsOperationalFull": "{title} - {message}",
-      "allHealthChecksPassing": "All health checks are passing successfully",
       "systemDegraded": "System Degraded",
       "systemDegradedFull": "{title} - {message}",
-      "someComponentsIssues": "Some system components are experiencing issues",
-      "databaseConnectionIssue": "Database Connection Issue",
       "databaseConnectionIssueFull": "{title} - {message}",
-      "databaseNotResponding": "Database is not responding properly",
       "diskUsageWarning": "Disk Usage Warning",
       "diskUsageAt": "Disk usage at",
       "diskUsageWarningFull": "{title} - {message}",
@@ -437,8 +428,6 @@
       "avatarUpdated": "Avatar updated successfully",
       "contactAdmin": "If you believe this is an error, please contact your administrator",
       "staffInactive": "This staff member is inactive. Please contact support to activate their account.",
-      "studentInactive": "This student is inactive. Please contact support to activate their account.",
-      "teacherInactive": "This teacher is inactive. Please contact support to activate their account.",
       "adminInactive": "This admin is inactive. Please contact support to activate their account.",
       "otpSent": "OTP code sent successfully",
       "phoneVerified": "Phone verified successfully",
@@ -510,36 +499,6 @@
     "activateStaff": {},
     "deactivateStaff": {},
     "restoreStaff": {},
-    "createStudent": {
-      "title": "Create Student",
-      "description": "Create a new student account with appropriate permissions"
-    },
-    "editStudent": {
-      "title": "Edit Student",
-      "description": "Update student information and settings"
-    },
-    "viewStudent": {
-      "title": "Student Details"
-    },
-    "deleteStudent": {},
-    "activateStudent": {},
-    "deactivateStudent": {},
-    "restoreStudent": {},
-    "createTeacher": {
-      "title": "Create Teacher",
-      "description": "Create a new teacher account with appropriate permissions"
-    },
-    "editTeacher": {
-      "title": "Edit Teacher",
-      "description": "Update teacher information and settings"
-    },
-    "viewTeacher": {
-      "title": "Teacher Details"
-    },
-    "deleteTeacher": {},
-    "activateTeacher": {},
-    "deactivateTeacher": {},
-    "restoreTeacher": {},
     "createRole": {
       "title": "Create New Role"
     },
@@ -650,52 +609,6 @@
     "editTestModule": {},
     "viewTestModule": {},
     "deleteTestModule": {},
-    "confirmBulkOperation": {
-      "title": "Confirm Bulk Operation",
-      "cannotUndo": "This action cannot be undone."
-    },
-    "confirmIndividualAction": {
-      "delete": {
-        "title": "Delete {entityName}",
-        "message": "Are you sure you want to delete {entityName}? This action cannot be undone.",
-        "description": "This will permanently remove the item and all associated data."
-      },
-      "restore": {
-        "title": "Restore {entityName}",
-        "message": "Are you sure you want to restore {entityName}?",
-        "description": "This will restore the item to its previous state."
-      },
-      "activate": {
-        "title": "Activate {entityName}",
-        "message": "Are you sure you want to activate {entityName}?",
-        "description": "This will make the item active and available for use."
-      },
-      "deactivate": {
-        "title": "Deactivate {entityName}",
-        "message": "Are you sure you want to deactivate {entityName}?",
-        "description": "This will make the item inactive and unavailable for use."
-      },
-      "grantAccess": {
-        "title": "Grant Access to {entityName}",
-        "message": "Are you sure you want to grant access to {entityName}?",
-        "description": "This will allow access to the specified resource."
-      },
-      "revokeAccess": {
-        "title": "Revoke Access from {entityName}",
-        "message": "Are you sure you want to revoke access from {entityName}? This action cannot be undone.",
-        "description": "This will permanently remove access to the specified resource."
-      },
-      "assign": {
-        "title": "Assign {entityName}",
-        "message": "Are you sure you want to assign {entityName}?",
-        "description": "This will assign the item to the selected target."
-      },
-      "remove": {
-        "title": "Remove {entityName}",
-        "message": "Are you sure you want to remove {entityName}? This action cannot be undone.",
-        "description": "This will permanently remove the item from the current context."
-      }
-    },
     "verifyPhone": {
       "title": "Verify Phone Number",
       "description": "Verify the phone number for {userName}",
@@ -759,15 +672,12 @@
       "tooManyRequestsWithTime": "Too many requests. Please try again in {time}"
     },
     "centerInactive": {
-      "title": "Center Inactive",
       "description": "The center itself is currently inactive and cannot be accessed. Please select a different center or contact the administrator to activate this center."
     },
     "centerAccessDenied": {
-      "title": "Center Access Denied",
       "description": "You do not have access to this center. Please contact your administrator to request center access."
     },
     "centerAccessInactive": {
-      "title": "Center Access Inactive",
       "description": "Your access to this center is currently inactive. Please contact the center administrator for more information."
     },
     "genericError": "An error occurred",
@@ -836,8 +746,6 @@
     "dashboard": "Dashboard",
     "users": "Users",
     "staff": "Staff",
-    "students": "Students",
-    "teachers": "Teachers",
     "admins": "Admins",
     "centers": "Centers",
     "branches": "Branches",
@@ -881,18 +789,7 @@
       "title": "Staff",
       "subtitle": "Manage staff members and their permissions"
     },
-    "students": {
-      "title": "Students",
-      "subtitle": "Manage students and their permissions"
-    },
-    "teachers": {
-      "title": "Teachers",
-      "subtitle": "Manage teachers and their permissions"
-    },
-    "centerInactive": {
-      "title": "Center Inactive",
-      "description": "The selected center is currently inactive and cannot be accessed. Please select a different center to continue."
-    },
+    "centerInactive": {},
     "profileInactive": {
       "title": "Profile Inactive",
       "description": "Your selected profile is currently inactive and cannot be accessed. Please select a different profile to continue."
@@ -1183,5 +1080,6 @@
       "name": "Owner",
       "description": "Ultimate center owner with full access within the center"
     }
-  }
+  },
+  "confirm": {}
 }
