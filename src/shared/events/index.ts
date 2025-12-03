@@ -4,6 +4,8 @@ import { RoleEvents } from './role.events.enum';
 import { CenterEvents } from './center.events.enum';
 import { BranchEvents } from './branch.events.enum';
 import { StaffEvents } from './staff.events.enum';
+import { StudentEvents } from './student.events.enum';
+import { TeacherEvents } from './teacher.events.enum';
 import { AdminEvents } from './admin.events.enum';
 import { AccessControlEvents } from './access-control.events.enum';
 import { NotificationEvents } from './notification.events.enum';
@@ -15,6 +17,8 @@ export type EventType =
   | CenterEvents
   | BranchEvents
   | StaffEvents
+  | StudentEvents
+  | TeacherEvents
   | AdminEvents
   | AccessControlEvents
   | NotificationEvents;

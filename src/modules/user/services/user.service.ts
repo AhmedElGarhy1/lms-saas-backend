@@ -22,7 +22,10 @@ import {
 import { User } from '../entities/user.entity';
 import { CentersService } from '@/modules/centers/services/centers.service';
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
+import { PaginateTeacherDto } from '@/modules/teachers/dto/paginate-teacher.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { Pagination } from 'nestjs-typeorm-paginate';
+import { UserResponseDto } from '../dto/user-response.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { PasswordChangedEvent } from '@/modules/auth/events/auth.events';
@@ -38,7 +41,6 @@ import {
 } from '../events/user.events';
 import { VerificationService } from '@/modules/auth/services/verification.service';
 import { VerificationType } from '@/modules/auth/enums/verification-type.enum';
-import { I18nPath } from '@/generated/i18n.generated';
 
 @Injectable()
 export class UserService extends BaseService {
@@ -157,6 +159,20 @@ export class UserService extends BaseService {
 
   async paginateStaff(params: PaginateUsersDto, actor: ActorUser) {
     return this.userRepository.paginateStaff(params, actor);
+  }
+
+  async paginateStudents(params: PaginateUsersDto, actor: ActorUser) {
+    return this.userRepository.paginateStudents(params, actor);
+  }
+
+  async paginateTeachers(
+    params: PaginateUsersDto,
+    actor: ActorUser,
+  ): Promise<Pagination<UserResponseDto>> {
+    return await this.userRepository.paginateTeachers(
+      params as PaginateTeacherDto,
+      actor,
+    );
   }
 
   async paginateUsers(params: PaginateUsersDto, actor: ActorUser) {

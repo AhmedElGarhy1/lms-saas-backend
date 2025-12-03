@@ -1,6 +1,8 @@
 // Re-export event enums from shared events folder
 export { UserEvents } from './user.events.enum';
 export { StaffEvents } from './staff.events.enum';
+export { StudentEvents } from './student.events.enum';
+export { TeacherEvents } from './teacher.events.enum';
 export { AdminEvents } from './admin.events.enum';
 export { CenterEvents } from './center.events.enum';
 export { RoleEvents } from './role.events.enum';

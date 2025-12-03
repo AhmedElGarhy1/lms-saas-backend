@@ -1,0 +1,258 @@
+{
+  "staff": {
+    "read": {
+      "name": "قراءة الموظفين"
+    },
+    "create": {
+      "name": "إنشاء موظف"
+    },
+    "update": {
+      "name": "تحديث موظف"
+    },
+    "delete": {
+      "name": "حذف موظف"
+    },
+    "restore": {
+      "name": "استعادة موظف"
+    },
+    "activate": {
+      "name": "تفعيل/إلغاء تفعيل موظف"
+    },
+    "importProfile": {
+      "name": "استيراد الملف الشخصي"
+    },
+    "grantUserAccess": {
+      "name": "منح وصول المستخدم"
+    },
+    "grantBranchAccess": {
+      "name": "منح وصول الفرع"
+    },
+    "grantCenterAccess": {
+      "name": "منح وصول المركز"
+    },
+    "deleteCenterAccess": {
+      "name": "حذف وصول المركز"
+    },
+    "restoreCenterAccess": {
+      "name": "استعادة وصول المركز"
+    },
+    "activateCenterAccess": {
+      "name": "تفعيل/إلغاء تفعيل وصول المركز"
+    },
+    "readAll": {
+      "name": "قراءة جميع الموظفين بدون وصول الموظفين"
+    },
+    "import": {
+      "name": "استيراد الموظفين"
+    },
+    "export": {
+      "name": "تصدير الموظفين"
+    }
+  },
+  "student": {
+    "read": {
+      "name": "قراءة الطلاب"
+    },
+    "create": {
+      "name": "إنشاء طالب"
+    },
+    "update": {
+      "name": "تحديث طالب"
+    },
+    "delete": {
+      "name": "حذف طالب"
+    },
+    "restore": {
+      "name": "استعادة طالب"
+    },
+    "activate": {
+      "name": "تفعيل/إلغاء تفعيل طالب"
+    },
+    "importProfile": {
+      "name": "استيراد الملف الشخصي"
+    },
+    "grantCenterAccess": {
+      "name": "منح وصول المركز"
+    },
+    "deleteCenterAccess": {
+      "name": "حذف وصول المركز"
+    },
+    "restoreCenterAccess": {
+      "name": "استعادة وصول المركز"
+    },
+    "activateCenterAccess": {
+      "name": "تفعيل/إلغاء تفعيل وصول المركز"
+    },
+    "readAll": {
+      "name": "قراءة جميع الطلاب بدون وصول الطلاب"
+    },
+    "import": {
+      "name": "استيراد الطلاب"
+    },
+    "export": {
+      "name": "تصدير الطلاب"
+    }
+  },
+  "teacher": {
+    "read": {
+      "name": "قراءة المعلمين"
+    },
+    "create": {
+      "name": "إنشاء معلم"
+    },
+    "update": {
+      "name": "تحديث معلم"
+    },
+    "delete": {
+      "name": "حذف معلم"
+    },
+    "restore": {
+      "name": "استعادة معلم"
+    },
+    "activate": {
+      "name": "تفعيل/إلغاء تفعيل معلم"
+    },
+    "importProfile": {
+      "name": "استيراد الملف الشخصي"
+    },
+    "grantCenterAccess": {
+      "name": "منح وصول المركز"
+    },
+    "deleteCenterAccess": {
+      "name": "حذف وصول المركز"
+    },
+    "restoreCenterAccess": {
+      "name": "استعادة وصول المركز"
+    },
+    "activateCenterAccess": {
+      "name": "تفعيل/إلغاء تفعيل وصول المركز"
+    },
+    "readAll": {
+      "name": "قراءة جميع المعلمين بدون وصول المعلمين"
+    },
+    "import": {
+      "name": "استيراد المعلمين"
+    },
+    "export": {
+      "name": "تصدير المعلمين"
+    }
+  },
+  "admin": {
+    "read": {
+      "name": "قراءة المدير"
+    },
+    "create": {
+      "name": "إنشاء مدير"
+    },
+    "update": {
+      "name": "تحديث مدير"
+    },
+    "delete": {
+      "name": "حذف مدير"
+    },
+    "restore": {
+      "name": "استعادة مدير"
+    },
+    "activate": {
+      "name": "تفعيل/إلغاء تفعيل مدير"
+    },
+    "importProfile": {
+      "name": "استيراد الملف الشخصي"
+    },
+    "grantUserAccess": {
+      "name": "منح وصول المستخدم"
+    },
+    "grantCenterAccess": {
+      "name": "منح وصول المركز"
+    },
+    "readAll": {
+      "name": "قراءة جميع المديرين بدون وصول المدير"
+    },
+    "import": {
+      "name": "استيراد المديرين"
+    },
+    "export": {
+      "name": "تصدير المديرين"
+    }
+  },
+  "center": {
+    "create": {
+      "name": "إنشاء المراكز"
+    },
+    "update": {
+      "name": "تحديث المراكز"
+    },
+    "delete": {
+      "name": "حذف المراكز"
+    },
+    "restore": {
+      "name": "استعادة المراكز"
+    },
+    "activate": {
+      "name": "تفعيل/إلغاء تفعيل المراكز"
+    },
+    "readAll": {
+      "name": "قراءة جميع المراكز بدون وصول المركز"
+    },
+    "import": {
+      "name": "استيراد المراكز"
+    },
+    "export": {
+      "name": "تصدير المراكز"
+    }
+  },
+  "roles": {
+    "create": {
+      "name": "إنشاء دور"
+    },
+    "update": {
+      "name": "تحديث الدور"
+    },
+    "delete": {
+      "name": "حذف الدور"
+    },
+    "restore": {
+      "name": "استعادة الدور"
+    },
+    "assign": {
+      "name": "تعيين الدور"
+    },
+    "import": {
+      "name": "استيراد الأدوار"
+    },
+    "export": {
+      "name": "تصدير الأدوار"
+    }
+  },
+  "branches": {
+    "create": {
+      "name": "إنشاء الفروع"
+    },
+    "update": {
+      "name": "تحديث الفروع"
+    },
+    "delete": {
+      "name": "حذف الفروع"
+    },
+    "restore": {
+      "name": "استعادة الفروع"
+    },
+    "activate": {
+      "name": "تفعيل/إلغاء تفعيل الفروع"
+    },
+    "import": {
+      "name": "استيراد الفروع"
+    },
+    "export": {
+      "name": "تصدير الفروع"
+    },
+    "readAll": {
+      "name": "قراءة جميع الفروع بدون وصول الفرع"
+    }
+  },
+  "system": {
+    "healthCheck": {
+      "name": "فحص صحة النظام"
+    }
+  }
+}

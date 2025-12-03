@@ -15,6 +15,8 @@ import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { PaginateStaffDto } from '@/modules/staff/dto/paginate-staff.dto';
+import { PaginateStudentDto } from '@/modules/students/dto/paginate-student.dto';
+import { PaginateTeacherDto } from '@/modules/teachers/dto/paginate-teacher.dto';
 import { PaginateAdminDto } from '@/modules/admin/dto/paginate-admin.dto';
 import * as _ from 'lodash';
 
@@ -155,6 +157,464 @@ export class UserRepository extends BaseRepository<User> {
           //   .leftJoin('userProfiles.profileRoles', 'profileRoles')
           //   .andWhere('profileRoles.roleId = :roleId', { roleId });
 
+          queryBuilder.andWhere(
+            `EXISTS (SELECT 1 FROM profile_roles pr WHERE pr."userProfileId" = "userProfiles".id AND pr."roleId" = :roleId AND pr."deletedAt" IS NULL)`,
+            { roleId },
+          );
+        }
+      }
+    } else {
+      if (isDeleted) {
+        queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');
+      }
+    }
+
+    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+      actor.userProfileId,
+    );
+    const isAdmin = await this.accessControlHelperService.isAdmin(
+      actor.userProfileId,
+    );
+
+    if (centerId) {
+      const isCenterOwner = await this.accessControlHelperService.isCenterOwner(
+        actor.userProfileId,
+        centerId,
+      );
+      const isUser = await this.accessControlHelperService.isStaff(
+        actor.userProfileId,
+      );
+
+      if (isUser && !isCenterOwner) {
+        queryBuilder.andWhere(
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
+          { userProfileId: actor.userProfileId, centerId },
+        );
+      }
+    } else {
+      if (isSuperAdmin) {
+        // super admin users have no access control - can see all users
+      } else if (isAdmin) {
+        queryBuilder
+          .andWhere(
+            `EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = "userProfiles".id AND ca."centerId" = :centerId AND ca."deletedAt" IS NULL)`,
+            { centerId },
+          )
+          .orWhere(
+            `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
+            { userProfileId: actor.userProfileId, centerId },
+          );
+      } else {
+        throw new InsufficientPermissionsException(
+          't.errors.notAuthorized.action',
+          {
+            action: 't.common.buttons.view',
+            resource: 't.common.labels.user',
+          },
+        );
+      }
+    }
+
+    if (userProfileId) {
+      queryBuilder.andWhere('userProfiles.id != :userProfileId', {
+        userProfileId,
+      });
+      if (userAccess === AccessibleUsersEnum.INCLUDE) {
+        queryBuilder.andWhere(
+          `EXISTS (
+            SELECT 1 FROM "user_access" AS ua
+            WHERE ua."targetUserProfileId" = "userProfiles"."id"
+            AND ua."granterUserProfileId" = :granterUserProfileId
+            AND ua."deletedAt" IS NULL
+            ${centerId ? 'AND ua."centerId" = :centerId' : ''}
+          )`,
+          {
+            granterUserProfileId: userProfileId,
+            centerId,
+          },
+        );
+      }
+    }
+
+    const result = await this.paginate(
+      params,
+      USER_PAGINATION_COLUMNS,
+      '/users',
+      queryBuilder,
+    );
+
+    let filteredItems: UserResponseDto[] =
+      result.items as unknown as UserResponseDto[];
+
+    if (userProfileId && userAccess) {
+      filteredItems = await this.applyUserAccess(
+        filteredItems,
+        userProfileId,
+        userAccess,
+        centerId,
+      );
+    }
+    if (roleId && roleAccess) {
+      filteredItems = await this.applyRoleAccess(
+        filteredItems,
+        roleId,
+        roleAccess,
+        centerId,
+      );
+    }
+
+    if (centerId && centerAccess) {
+      filteredItems = await this.applyCenterAccess(
+        filteredItems,
+        centerId,
+        centerAccess,
+      );
+    }
+
+    if (branchId && branchAccess && centerId) {
+      filteredItems = await this.applyBranchAccess(
+        filteredItems,
+        branchId,
+        branchAccess,
+        centerId,
+      );
+    }
+
+    filteredItems = this.prepareUsersResponse(filteredItems);
+
+    return {
+      ...result,
+      items: filteredItems,
+    };
+  }
+
+  /**
+   * Paginate students in a specific center using JOINs for better performance
+   * @param query - Pagination query
+   * @param centerId - Center ID to filter users
+   * @param userId - User ID to filter users
+   * @param options - Options for pagination
+   * @param options.isActive - Whether to filter active users
+   * @param options.targetUserId - User ID to filter users
+   * @returns Paginated users in the specified center
+   */
+  async paginateStudents(
+    params: PaginateStudentDto,
+    actor: ActorUser,
+  ): Promise<Pagination<UserResponseDto>> {
+    const {
+      centerId,
+      userProfileId,
+      roleId,
+      userAccess,
+      roleAccess,
+      centerAccess,
+      displayDetailes,
+      branchId,
+      branchAccess,
+      isDeleted,
+    } = params;
+    delete params.isDeleted;
+
+    const includeCenter =
+      centerId &&
+      (!centerAccess || centerAccess === AccessibleUsersEnum.INCLUDE);
+
+    const includeBranch =
+      branchId &&
+      centerId &&
+      (!branchAccess || branchAccess === AccessibleUsersEnum.INCLUDE);
+
+    // Create query builder with proper JOINs
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('user')
+      .withDeleted()
+      .leftJoinAndSelect('user.userProfiles', 'userProfiles')
+      .where('userProfiles.profileType = :profileType', {
+        profileType: ProfileType.STUDENT,
+      });
+
+    this.applyIsActiveFilter(
+      queryBuilder,
+      params,
+      centerId && displayDetailes
+        ? 'centerAccess.isActive'
+        : 'userProfiles.isActive',
+    );
+
+    if (includeBranch) {
+      queryBuilder.andWhere(
+        'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = userProfiles.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId AND ba."deletedAt" IS NULL)',
+        { branchId, centerId },
+      );
+    }
+
+    if (includeCenter) {
+      queryBuilder
+        .andWhere(
+          `EXISTS
+          (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId
+           ${isDeleted ? 'AND ca."deletedAt" IS NOT NULL' : 'AND ca."deletedAt" IS NULL'})`,
+          { centerId },
+        )
+        .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
+
+      if (displayDetailes) {
+        queryBuilder
+          .leftJoinAndSelect(
+            'userProfiles.profileRoles',
+            'profileRoles',
+            'profileRoles.userProfileId = userProfiles.id AND profileRoles.centerId = :centerId',
+            { centerId },
+          )
+          .leftJoinAndSelect('profileRoles.role', 'role');
+
+        queryBuilder
+          .withDeleted()
+          .andWhere('user.deletedAt IS NULL')
+          .leftJoinAndSelect(
+            'userProfiles.centerAccess',
+            'centerAccess',
+            `
+            "centerAccess"."centerId" = :centerId
+            AND "centerAccess"."userProfileId" = "userProfiles"."id"
+            `,
+            { centerId },
+          );
+      }
+      if (roleId && roleAccess !== AccessibleUsersEnum.ALL) {
+        if (displayDetailes) {
+          queryBuilder.andWhere('role.id = :roleId', { roleId });
+        } else {
+          queryBuilder.andWhere(
+            `EXISTS (SELECT 1 FROM profile_roles pr WHERE pr."userProfileId" = "userProfiles".id AND pr."roleId" = :roleId AND pr."deletedAt" IS NULL)`,
+            { roleId },
+          );
+        }
+      }
+    } else {
+      if (isDeleted) {
+        queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');
+      }
+    }
+
+    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+      actor.userProfileId,
+    );
+    const isAdmin = await this.accessControlHelperService.isAdmin(
+      actor.userProfileId,
+    );
+
+    if (centerId) {
+      const isCenterOwner = await this.accessControlHelperService.isCenterOwner(
+        actor.userProfileId,
+        centerId,
+      );
+      const isUser = await this.accessControlHelperService.isStaff(
+        actor.userProfileId,
+      );
+
+      if (isUser && !isCenterOwner) {
+        queryBuilder.andWhere(
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
+          { userProfileId: actor.userProfileId, centerId },
+        );
+      }
+    } else {
+      if (isSuperAdmin) {
+        // super admin users have no access control - can see all users
+      } else if (isAdmin) {
+        queryBuilder
+          .andWhere(
+            `EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = "userProfiles".id AND ca."centerId" = :centerId AND ca."deletedAt" IS NULL)`,
+            { centerId },
+          )
+          .orWhere(
+            `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
+            { userProfileId: actor.userProfileId, centerId },
+          );
+      } else {
+        throw new InsufficientPermissionsException(
+          't.errors.notAuthorized.action',
+          {
+            action: 't.common.buttons.view',
+            resource: 't.common.labels.user',
+          },
+        );
+      }
+    }
+
+    if (userProfileId) {
+      queryBuilder.andWhere('userProfiles.id != :userProfileId', {
+        userProfileId,
+      });
+      if (userAccess === AccessibleUsersEnum.INCLUDE) {
+        queryBuilder.andWhere(
+          `EXISTS (
+            SELECT 1 FROM "user_access" AS ua
+            WHERE ua."targetUserProfileId" = "userProfiles"."id"
+            AND ua."granterUserProfileId" = :granterUserProfileId
+            AND ua."deletedAt" IS NULL
+            ${centerId ? 'AND ua."centerId" = :centerId' : ''}
+          )`,
+          {
+            granterUserProfileId: userProfileId,
+            centerId,
+          },
+        );
+      }
+    }
+
+    const result = await this.paginate(
+      params,
+      USER_PAGINATION_COLUMNS,
+      '/users',
+      queryBuilder,
+    );
+
+    let filteredItems: UserResponseDto[] =
+      result.items as unknown as UserResponseDto[];
+
+    if (userProfileId && userAccess) {
+      filteredItems = await this.applyUserAccess(
+        filteredItems,
+        userProfileId,
+        userAccess,
+        centerId,
+      );
+    }
+    if (roleId && roleAccess) {
+      filteredItems = await this.applyRoleAccess(
+        filteredItems,
+        roleId,
+        roleAccess,
+        centerId,
+      );
+    }
+
+    if (centerId && centerAccess) {
+      filteredItems = await this.applyCenterAccess(
+        filteredItems,
+        centerId,
+        centerAccess,
+      );
+    }
+
+    if (branchId && branchAccess && centerId) {
+      filteredItems = await this.applyBranchAccess(
+        filteredItems,
+        branchId,
+        branchAccess,
+        centerId,
+      );
+    }
+
+    filteredItems = this.prepareUsersResponse(filteredItems);
+
+    return {
+      ...result,
+      items: filteredItems,
+    };
+  }
+
+  /**
+   * Paginate teachers in a specific center using JOINs for better performance
+   * @param query - Pagination query
+   * @param centerId - Center ID to filter users
+   * @param userId - User ID to filter users
+   * @param options - Options for pagination
+   * @param options.isActive - Whether to filter active users
+   * @param options.targetUserId - User ID to filter users
+   * @returns Paginated users in the specified center
+   */
+  async paginateTeachers(
+    params: PaginateTeacherDto,
+    actor: ActorUser,
+  ): Promise<Pagination<UserResponseDto>> {
+    const {
+      centerId,
+      userProfileId,
+      roleId,
+      userAccess,
+      roleAccess,
+      centerAccess,
+      displayDetailes,
+      branchId,
+      branchAccess,
+      isDeleted,
+    } = params;
+    delete params.isDeleted;
+
+    const includeCenter =
+      centerId &&
+      (!centerAccess || centerAccess === AccessibleUsersEnum.INCLUDE);
+
+    const includeBranch =
+      branchId &&
+      centerId &&
+      (!branchAccess || branchAccess === AccessibleUsersEnum.INCLUDE);
+
+    // Create query builder with proper JOINs
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('user')
+      .withDeleted()
+      .leftJoinAndSelect('user.userProfiles', 'userProfiles')
+      .where('userProfiles.profileType = :profileType', {
+        profileType: ProfileType.TEACHER,
+      });
+
+    this.applyIsActiveFilter(
+      queryBuilder,
+      params,
+      centerId && displayDetailes
+        ? 'centerAccess.isActive'
+        : 'userProfiles.isActive',
+    );
+
+    if (includeBranch) {
+      queryBuilder.andWhere(
+        'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = userProfiles.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId AND ba."deletedAt" IS NULL)',
+        { branchId, centerId },
+      );
+    }
+
+    if (includeCenter) {
+      queryBuilder
+        .andWhere(
+          `EXISTS
+          (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId
+           ${isDeleted ? 'AND ca."deletedAt" IS NOT NULL' : 'AND ca."deletedAt" IS NULL'})`,
+          { centerId },
+        )
+        .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
+
+      if (displayDetailes) {
+        queryBuilder
+          .leftJoinAndSelect(
+            'userProfiles.profileRoles',
+            'profileRoles',
+            'profileRoles.userProfileId = userProfiles.id AND profileRoles.centerId = :centerId',
+            { centerId },
+          )
+          .leftJoinAndSelect('profileRoles.role', 'role');
+
+        queryBuilder
+          .withDeleted()
+          .andWhere('user.deletedAt IS NULL')
+          .leftJoinAndSelect(
+            'userProfiles.centerAccess',
+            'centerAccess',
+            `
+            "centerAccess"."centerId" = :centerId
+            AND "centerAccess"."userProfileId" = "userProfiles"."id"
+            `,
+            { centerId },
+          );
+      }
+      if (roleId && roleAccess !== AccessibleUsersEnum.ALL) {
+        if (displayDetailes) {
+          queryBuilder.andWhere('role.id = :roleId', { roleId });
+        } else {
           queryBuilder.andWhere(
             `EXISTS (SELECT 1 FROM profile_roles pr WHERE pr."userProfileId" = "userProfiles".id AND pr."roleId" = :roleId AND pr."deletedAt" IS NULL)`,
             { roleId },

@@ -1,3 +1,5 @@
+import { I18nPath } from '@/generated/i18n.generated';
+
 export enum PermissionScope {
   ADMIN = 'ADMIN',
   CENTER = 'CENTER',
@@ -6,105 +8,294 @@ export enum PermissionScope {
 
 // Permission constants for type safety and autocompletion
 
-export const PERMISSIONS = {
+interface ICorrectPermission {
+  action: string;
+  name: I18nPath;
+  group: string;
+  scope: PermissionScope;
+}
+
+export const PERMISSIONS: {
+  [key: string]: { [key: string]: ICorrectPermission };
+} = {
   // ===== STAFF MANAGEMENT PERMISSIONS =====
   STAFF: {
     // center scope
     READ: {
       action: 'staff:read',
-      name: 't.permissions.staff.read.name',
+      name: 'permissions.staff.read.name',
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
     CREATE: {
       action: 'staff:create',
-      name: 't.permissions.staff.create.name',
+      name: 'permissions.staff.create.name',
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
     GRANT_USER_ACCESS: {
       action: 'staff:grant-user-access',
-      name: 't.permissions.staff.grantUserAccess.name',
+      name: 'permissions.staff.grantUserAccess.name',
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
     GRANT_BRANCH_ACCESS: {
       action: 'staff:grant-branch-access',
-      name: 't.permissions.staff.grantBranchAccess.name',
+      name: 'permissions.staff.grantBranchAccess.name',
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
     DELETE_CENTER_ACCESS: {
       action: 'staff:delete-center-access',
-      name: 't.permissions.staff.deleteCenterAccess.name',
+      name: 'permissions.staff.deleteCenterAccess.name',
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
     RESTORE_CENTER_ACCESS: {
       action: 'staff:restore-center-access',
-      name: 't.permissions.staff.restoreCenterAccess.name',
+      name: 'permissions.staff.restoreCenterAccess.name',
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
     ACTIVATE_CENTER_ACCESS: {
       action: 'staff:activate-center-access',
-      name: 't.permissions.staff.activateCenterAccess.name',
+      name: 'permissions.staff.activateCenterAccess.name',
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
     READ_ALL: {
       action: 'staff:read-all',
-      name: 't.permissions.staff.readAll.name', // TODO: to implement
+      name: 'permissions.staff.readAll.name', // TODO: to implement
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
     IMPORT: {
       action: 'staff:import',
-      name: 't.permissions.staff.import.name',
+      name: 'permissions.staff.import.name',
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
     EXPORT: {
       action: 'staff:export',
-      name: 't.permissions.staff.export.name',
+      name: 'permissions.staff.export.name',
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
     IMPORT_PROFILE: {
       action: 'staff:import-profile',
-      name: 't.permissions.staff.importProfile.name',
+      name: 'permissions.staff.importProfile.name',
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
     // admin scope
     GRANT_CENTER_ACCESS: {
       action: 'staff:grant-center-access',
-      name: 't.permissions.staff.grantCenterAccess.name',
+      name: 'permissions.staff.grantCenterAccess.name',
       group: 'staff',
       scope: PermissionScope.ADMIN,
     },
     UPDATE: {
       action: 'staff:update',
-      name: 't.permissions.staff.update.name',
+      name: 'permissions.staff.update.name',
       group: 'staff',
       scope: PermissionScope.ADMIN,
     },
     DELETE: {
       action: 'staff:delete',
-      name: 't.permissions.staff.delete.name',
+      name: 'permissions.staff.delete.name',
       group: 'staff',
       scope: PermissionScope.ADMIN,
     },
     RESTORE: {
       action: 'staff:restore',
-      name: 't.permissions.staff.restore.name',
+      name: 'permissions.staff.restore.name',
       group: 'staff',
       scope: PermissionScope.ADMIN,
     },
     ACTIVATE: {
       action: 'staff:activate',
-      name: 't.permissions.staff.activate.name',
+      name: 'permissions.staff.activate.name',
       group: 'staff',
+      scope: PermissionScope.ADMIN,
+    },
+  },
+
+  // ===== STUDENT MANAGEMENT PERMISSIONS =====
+  STUDENT: {
+    // center scope
+    READ: {
+      action: 'student:read',
+      name: 'permissions.student.read.name',
+      group: 'student',
+      scope: PermissionScope.CENTER,
+    },
+    CREATE: {
+      action: 'student:create',
+      name: 'permissions.student.create.name',
+      group: 'student',
+      scope: PermissionScope.CENTER,
+    },
+    DELETE_CENTER_ACCESS: {
+      action: 'student:delete-center-access',
+      name: 'permissions.student.deleteCenterAccess.name',
+      group: 'student',
+      scope: PermissionScope.CENTER,
+    },
+    RESTORE_CENTER_ACCESS: {
+      action: 'student:restore-center-access',
+      name: 'permissions.student.restoreCenterAccess.name',
+      group: 'student',
+      scope: PermissionScope.CENTER,
+    },
+    ACTIVATE_CENTER_ACCESS: {
+      action: 'student:activate-center-access',
+      name: 'permissions.student.activateCenterAccess.name',
+      group: 'student',
+      scope: PermissionScope.CENTER,
+    },
+    READ_ALL: {
+      action: 'student:read-all',
+      name: 'permissions.student.readAll.name', // TODO: to implement
+      group: 'student',
+      scope: PermissionScope.CENTER,
+    },
+    IMPORT: {
+      action: 'student:import',
+      name: 'permissions.student.import.name',
+      group: 'student',
+      scope: PermissionScope.CENTER,
+    },
+    EXPORT: {
+      action: 'student:export',
+      name: 'permissions.student.export.name',
+      group: 'student',
+      scope: PermissionScope.CENTER,
+    },
+    IMPORT_PROFILE: {
+      action: 'student:import-profile',
+      name: 'permissions.student.importProfile.name',
+      group: 'student',
+      scope: PermissionScope.CENTER,
+    },
+    // admin scope
+    GRANT_CENTER_ACCESS: {
+      action: 'student:grant-center-access',
+      name: 'permissions.student.grantCenterAccess.name',
+      group: 'student',
+      scope: PermissionScope.ADMIN,
+    },
+    UPDATE: {
+      action: 'student:update',
+      name: 'permissions.student.update.name',
+      group: 'student',
+      scope: PermissionScope.ADMIN,
+    },
+    DELETE: {
+      action: 'student:delete',
+      name: 'permissions.student.delete.name',
+      group: 'student',
+      scope: PermissionScope.ADMIN,
+    },
+    RESTORE: {
+      action: 'student:restore',
+      name: 'permissions.student.restore.name',
+      group: 'student',
+      scope: PermissionScope.ADMIN,
+    },
+    ACTIVATE: {
+      action: 'student:activate',
+      name: 'permissions.student.activate.name',
+      group: 'student',
+      scope: PermissionScope.ADMIN,
+    },
+  },
+
+  // ===== TEACHER MANAGEMENT PERMISSIONS =====
+  TEACHER: {
+    // center scope
+    READ: {
+      action: 'teacher:read',
+      name: 'permissions.teacher.read.name',
+      group: 'teacher',
+      scope: PermissionScope.CENTER,
+    },
+    CREATE: {
+      action: 'teacher:create',
+      name: 'permissions.teacher.create.name',
+      group: 'teacher',
+      scope: PermissionScope.CENTER,
+    },
+    DELETE_CENTER_ACCESS: {
+      action: 'teacher:delete-center-access',
+      name: 'permissions.teacher.deleteCenterAccess.name',
+      group: 'teacher',
+      scope: PermissionScope.CENTER,
+    },
+    RESTORE_CENTER_ACCESS: {
+      action: 'teacher:restore-center-access',
+      name: 'permissions.teacher.restoreCenterAccess.name',
+      group: 'teacher',
+      scope: PermissionScope.CENTER,
+    },
+    ACTIVATE_CENTER_ACCESS: {
+      action: 'teacher:activate-center-access',
+      name: 'permissions.teacher.activateCenterAccess.name',
+      group: 'teacher',
+      scope: PermissionScope.CENTER,
+    },
+    READ_ALL: {
+      action: 'teacher:read-all',
+      name: 'permissions.teacher.readAll.name', // TODO: to implement
+      group: 'teacher',
+      scope: PermissionScope.CENTER,
+    },
+    IMPORT: {
+      action: 'teacher:import',
+      name: 'permissions.teacher.import.name',
+      group: 'teacher',
+      scope: PermissionScope.CENTER,
+    },
+    EXPORT: {
+      action: 'teacher:export',
+      name: 'permissions.teacher.export.name',
+      group: 'teacher',
+      scope: PermissionScope.CENTER,
+    },
+    IMPORT_PROFILE: {
+      action: 'teacher:import-profile',
+      name: 'permissions.teacher.importProfile.name',
+      group: 'teacher',
+      scope: PermissionScope.CENTER,
+    },
+    // admin scope
+    GRANT_CENTER_ACCESS: {
+      action: 'teacher:grant-center-access',
+      name: 'permissions.teacher.grantCenterAccess.name',
+      group: 'teacher',
+      scope: PermissionScope.ADMIN,
+    },
+    UPDATE: {
+      action: 'teacher:update',
+      name: 'permissions.teacher.update.name',
+      group: 'teacher',
+      scope: PermissionScope.ADMIN,
+    },
+    DELETE: {
+      action: 'teacher:delete',
+      name: 'permissions.teacher.delete.name',
+      group: 'teacher',
+      scope: PermissionScope.ADMIN,
+    },
+    RESTORE: {
+      action: 'teacher:restore',
+      name: 'permissions.teacher.restore.name',
+      group: 'teacher',
+      scope: PermissionScope.ADMIN,
+    },
+    ACTIVATE: {
+      action: 'teacher:activate',
+      name: 'permissions.teacher.activate.name',
+      group: 'teacher',
       scope: PermissionScope.ADMIN,
     },
   },
@@ -113,73 +304,73 @@ export const PERMISSIONS = {
   ADMIN: {
     READ: {
       action: 'admin:read',
-      name: 't.permissions.admin.read.name',
+      name: 'permissions.admin.read.name',
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },
     CREATE: {
       action: 'admin:create',
-      name: 't.permissions.admin.create.name',
+      name: 'permissions.admin.create.name',
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },
     UPDATE: {
       action: 'admin:update',
-      name: 't.permissions.admin.update.name',
+      name: 'permissions.admin.update.name',
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },
     DELETE: {
       action: 'admin:delete',
-      name: 't.permissions.admin.delete.name',
+      name: 'permissions.admin.delete.name',
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },
     RESTORE: {
       action: 'admin:restore',
-      name: 't.permissions.admin.restore.name',
+      name: 'permissions.admin.restore.name',
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },
     ACTIVATE: {
       action: 'admin:activate',
-      name: 't.permissions.admin.activate.name',
+      name: 'permissions.admin.activate.name',
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },
     IMPORT_PROFILE: {
       action: 'admin:import-profile',
-      name: 't.permissions.admin.importProfile.name',
+      name: 'permissions.admin.importProfile.name',
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },
     GRANT_USER_ACCESS: {
       action: 'admin:grant-user-access',
-      name: 't.permissions.admin.grantUserAccess.name',
+      name: 'permissions.admin.grantUserAccess.name',
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },
     GRANT_CENTER_ACCESS: {
       action: 'admin:grant-center-access',
-      name: 't.permissions.admin.grantCenterAccess.name',
+      name: 'permissions.admin.grantCenterAccess.name',
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },
     READ_ALL: {
       action: 'admin:read-all',
-      name: 't.permissions.admin.readAll.name', // TODO: to implement
+      name: 'permissions.admin.readAll.name', // TODO: to implement
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },
     IMPORT: {
       action: 'admin:import',
-      name: 't.permissions.admin.import.name',
+      name: 'permissions.admin.import.name',
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },
     EXPORT: {
       action: 'admin:export',
-      name: 't.permissions.admin.export.name',
+      name: 'permissions.admin.export.name',
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },
@@ -189,49 +380,49 @@ export const PERMISSIONS = {
   CENTER: {
     CREATE: {
       action: 'center:create',
-      name: 't.permissions.center.create.name',
+      name: 'permissions.center.create.name',
       group: 'center',
       scope: PermissionScope.ADMIN,
     },
     UPDATE: {
       action: 'center:update',
-      name: 't.permissions.center.update.name',
+      name: 'permissions.center.update.name',
       group: 'center',
       scope: PermissionScope.ADMIN,
     },
     DELETE: {
       action: 'center:delete',
-      name: 't.permissions.center.delete.name',
+      name: 'permissions.center.delete.name',
       group: 'center',
       scope: PermissionScope.ADMIN,
     },
     RESTORE: {
       action: 'center:restore',
-      name: 't.permissions.center.restore.name',
+      name: 'permissions.center.restore.name',
       group: 'center',
       scope: PermissionScope.ADMIN,
     },
     ACTIVATE: {
       action: 'center:activate',
-      name: 't.permissions.center.activate.name',
+      name: 'permissions.center.activate.name',
       group: 'center',
       scope: PermissionScope.ADMIN,
     },
     READ_ALL: {
       action: 'center:read-all',
-      name: 't.permissions.center.readAll.name', // TODO: to implement
+      name: 'permissions.center.readAll.name', // TODO: to implement
       group: 'center',
       scope: PermissionScope.ADMIN,
     },
     IMPORT: {
       action: 'center:import',
-      name: 't.permissions.center.import.name',
+      name: 'permissions.center.import.name',
       group: 'center',
       scope: PermissionScope.ADMIN,
     },
     EXPORT: {
       action: 'center:export',
-      name: 't.permissions.center.export.name',
+      name: 'permissions.center.export.name',
       group: 'center',
       scope: PermissionScope.ADMIN,
     },
@@ -241,43 +432,43 @@ export const PERMISSIONS = {
   ROLES: {
     CREATE: {
       action: 'roles:create',
-      name: 't.permissions.roles.create.name',
+      name: 'permissions.roles.create.name',
       group: 'roles',
       scope: PermissionScope.BOTH,
     },
     UPDATE: {
       action: 'roles:update',
-      name: 't.permissions.roles.update.name',
+      name: 'permissions.roles.update.name',
       group: 'roles',
       scope: PermissionScope.BOTH,
     },
     DELETE: {
       action: 'roles:delete',
-      name: 't.permissions.roles.delete.name',
+      name: 'permissions.roles.delete.name',
       group: 'roles',
       scope: PermissionScope.BOTH,
     },
     RESTORE: {
       action: 'roles:restore',
-      name: 't.permissions.roles.restore.name',
+      name: 'permissions.roles.restore.name',
       group: 'roles',
       scope: PermissionScope.BOTH,
     },
     ASSIGN: {
       action: 'roles:assign',
-      name: 't.permissions.roles.assign.name',
+      name: 'permissions.roles.assign.name',
       group: 'roles',
       scope: PermissionScope.BOTH,
     },
     IMPORT: {
       action: 'roles:import',
-      name: 't.permissions.roles.import.name',
+      name: 'permissions.roles.import.name',
       group: 'roles',
       scope: PermissionScope.BOTH,
     },
     EXPORT: {
       action: 'roles:export',
-      name: 't.permissions.roles.export.name',
+      name: 'permissions.roles.export.name',
       group: 'roles',
       scope: PermissionScope.BOTH,
     },
@@ -287,49 +478,49 @@ export const PERMISSIONS = {
   BRANCHES: {
     CREATE: {
       action: 'branches:create',
-      name: 't.permissions.branches.create.name',
+      name: 'permissions.branches.create.name',
       group: 'branches',
       scope: PermissionScope.CENTER,
     },
     UPDATE: {
       action: 'branches:update',
-      name: 't.permissions.branches.update.name',
+      name: 'permissions.branches.update.name',
       group: 'branches',
       scope: PermissionScope.CENTER,
     },
     DELETE: {
       action: 'branches:delete',
-      name: 't.permissions.branches.delete.name',
+      name: 'permissions.branches.delete.name',
       group: 'branches',
       scope: PermissionScope.CENTER,
     },
     RESTORE: {
       action: 'branches:restore',
-      name: 't.permissions.branches.restore.name',
+      name: 'permissions.branches.restore.name',
       group: 'branches',
       scope: PermissionScope.CENTER,
     },
     ACTIVATE: {
       action: 'branches:activate',
-      name: 't.permissions.branches.activate.name',
+      name: 'permissions.branches.activate.name',
       group: 'branches',
       scope: PermissionScope.CENTER,
     },
     IMPORT: {
       action: 'branches:import',
-      name: 't.permissions.branches.import.name',
+      name: 'permissions.branches.import.name',
       group: 'branches',
       scope: PermissionScope.CENTER,
     },
     EXPORT: {
       action: 'branches:export',
-      name: 't.permissions.branches.export.name',
+      name: 'permissions.branches.export.name',
       group: 'branches',
       scope: PermissionScope.CENTER,
     },
     READ_ALL: {
       action: 'branches:read-all',
-      name: 't.permissions.branches.readAll.name', // TODO: to implement
+      name: 'permissions.branches.readAll.name', // TODO: to implement
       group: 'branches',
       scope: PermissionScope.CENTER,
     },
@@ -339,7 +530,7 @@ export const PERMISSIONS = {
   SYSTEM: {
     HEALTH_CHECK: {
       action: 'system:health-check',
-      name: 't.permissions.system.healthCheck.name',
+      name: 'permissions.system.healthCheck.name',
       group: 'system',
       scope: PermissionScope.ADMIN,
     },

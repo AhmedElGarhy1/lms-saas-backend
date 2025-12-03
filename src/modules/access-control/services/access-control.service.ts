@@ -22,8 +22,9 @@ import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.
 import { BaseService } from '@/shared/common/services/base.service';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 import { RolesService } from './roles.service';
-import { PERMISSIONS } from '../constants/permissions';
+import { PERMISSIONS, PermissionScope } from '../constants/permissions';
 import { UserProfilePermissionService } from './user-profile-permission.service';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 @Injectable()
 export class AccessControlService extends BaseService {
@@ -252,6 +253,24 @@ export class AccessControlService extends BaseService {
       centerId,
     });
 
+    // Validate that profile type is STAFF or ADMIN
+    const profile = await this.userProfileService.findOne(data.userProfileId);
+    if (!profile) {
+      throw new ResourceNotFoundException('t.errors.notFound.generic', {
+        resource: 't.common.resources.profile',
+      });
+    }
+
+    // Positive check: must be STAFF or ADMIN
+    if (
+      profile.profileType !== ProfileType.STAFF &&
+      profile.profileType !== ProfileType.ADMIN
+    ) {
+      throw new BusinessLogicException('t.errors.onlyForStaffAndAdmin', {
+        resource: 't.common.resources.branchAccess',
+      });
+    }
+
     const canAccess =
       await this.accessControlHelperService.canBranchAccess(data);
     if (canAccess) {
@@ -291,11 +310,48 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
 
-    // Check permission
+    // Get profile type to determine which permission to check
+    const profile = await this.userProfileService.findOne(body.userProfileId);
+    if (!profile) {
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.resources.profile',
+        identifier: 'ID',
+        value: body.userProfileId,
+      });
+    }
+
+    // Check permission based on profile type
+    let requiredPermission: {
+      action: string;
+      scope: PermissionScope;
+    };
+    if (profile.profileType === ProfileType.STAFF) {
+      requiredPermission = PERMISSIONS.STAFF.DELETE_CENTER_ACCESS as {
+        action: string;
+        scope: PermissionScope;
+      };
+    } else if (profile.profileType === ProfileType.STUDENT) {
+      requiredPermission = PERMISSIONS.STUDENT.DELETE_CENTER_ACCESS as {
+        action: string;
+        scope: PermissionScope;
+      };
+    } else if (profile.profileType === ProfileType.TEACHER) {
+      requiredPermission = PERMISSIONS.TEACHER.DELETE_CENTER_ACCESS as {
+        action: string;
+        scope: PermissionScope;
+      };
+    } else {
+      throw new BusinessLogicException('t.errors.cannot.actionReason', {
+        action: 't.common.buttons.delete',
+        resource: 't.common.resources.centerAccess',
+        reason: 't.common.messages.unsupportedProfileType',
+      });
+    }
+
     const hasPermission = await this.rolesService.hasPermission(
       actor.userProfileId,
-      PERMISSIONS.STAFF.DELETE_CENTER_ACCESS.action,
-      PERMISSIONS.STAFF.DELETE_CENTER_ACCESS.scope,
+      requiredPermission.action,
+      requiredPermission.scope,
       centerId,
     );
 
@@ -303,7 +359,7 @@ export class AccessControlService extends BaseService {
       throw new InsufficientPermissionsException(
         't.errors.insufficientPermissions',
         {
-          action: PERMISSIONS.STAFF.DELETE_CENTER_ACCESS.action,
+          action: requiredPermission.action,
         },
       );
     }
@@ -349,11 +405,39 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
 
-    // Check permission
+    // Get profile type to determine which permission to check
+    const profile = await this.userProfileService.findOne(body.userProfileId);
+    if (!profile) {
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.resources.profile',
+        identifier: 'ID',
+        value: body.userProfileId,
+      });
+    }
+
+    // Check permission based on profile type
+    let requiredPermission: {
+      action: string;
+      scope: PermissionScope;
+    };
+    if (profile.profileType === ProfileType.STAFF) {
+      requiredPermission = PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS;
+    } else if (profile.profileType === ProfileType.STUDENT) {
+      requiredPermission = PERMISSIONS.STUDENT.RESTORE_CENTER_ACCESS;
+    } else if (profile.profileType === ProfileType.TEACHER) {
+      requiredPermission = PERMISSIONS.TEACHER.RESTORE_CENTER_ACCESS;
+    } else {
+      throw new BusinessLogicException('t.errors.cannot.actionReason', {
+        action: 't.common.buttons.restore',
+        resource: 't.common.resources.centerAccess',
+        reason: 't.common.messages.unsupportedProfileType',
+      });
+    }
+
     const hasPermission = await this.rolesService.hasPermission(
       actor.userProfileId,
-      PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS.action,
-      PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS.scope,
+      requiredPermission.action,
+      requiredPermission.scope,
       centerId,
     );
 
@@ -361,7 +445,7 @@ export class AccessControlService extends BaseService {
       throw new InsufficientPermissionsException(
         't.errors.insufficientPermissions',
         {
-          action: PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS.action,
+          action: requiredPermission.action,
         },
       );
     }
@@ -399,11 +483,41 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
 
-    // Check permission
+    // Get profile type to determine which permission to check
+    const profile = await this.userProfileService.findOne(body.userProfileId);
+    if (!profile) {
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.resources.profile',
+        identifier: 'ID',
+        value: body.userProfileId,
+      });
+    }
+
+    // Check permission based on profile type
+    let requiredPermission: {
+      action: string;
+      scope: PermissionScope;
+    };
+    if (profile.profileType === ProfileType.STAFF) {
+      requiredPermission = PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS;
+    } else if (profile.profileType === ProfileType.STUDENT) {
+      requiredPermission = PERMISSIONS.STUDENT.ACTIVATE_CENTER_ACCESS;
+    } else if (profile.profileType === ProfileType.TEACHER) {
+      requiredPermission = PERMISSIONS.TEACHER.ACTIVATE_CENTER_ACCESS;
+    } else {
+      throw new BusinessLogicException('t.errors.cannot.actionReason', {
+        action: isActive
+          ? 't.common.buttons.activate'
+          : 't.common.buttons.deactivate',
+        resource: 't.common.resources.centerAccess',
+        reason: 't.common.messages.unsupportedProfileType',
+      });
+    }
+
     const hasPermission = await this.rolesService.hasPermission(
       actor.userProfileId,
-      PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS.action,
-      PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS.scope,
+      requiredPermission.action,
+      requiredPermission.scope,
       centerId,
     );
 
@@ -411,7 +525,7 @@ export class AccessControlService extends BaseService {
       throw new InsufficientPermissionsException(
         't.errors.insufficientPermissions',
         {
-          action: PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS.action,
+          action: requiredPermission.action,
         },
       );
     }

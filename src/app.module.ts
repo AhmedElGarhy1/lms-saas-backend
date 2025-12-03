@@ -38,6 +38,8 @@ import { Locale } from './shared/common/enums/locale.enum';
 import { HealthModule } from './modules/health';
 import { UserProfileModule } from './modules/user-profile/user-profile.module';
 import { StaffModule } from './modules/staff/staff.module';
+import { StudentsModule } from './modules/students/students.module';
+import { TeachersModule } from './modules/teachers/teachers.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ProfileGuard } from './shared/common/guards/profile.guard';
 import { PhoneVerificationGuard } from './shared/common/guards/phone-verification.guard';
@@ -95,6 +97,8 @@ import { I18nTranslations } from './generated/i18n.generated';
     UserModule,
     UserProfileModule,
     StaffModule,
+    StudentsModule,
+    TeachersModule,
     AdminModule,
     AccessControlModule,
     CentersModule,

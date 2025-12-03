@@ -113,5 +113,6 @@
 [ ] multi profile for parents
 [ ] auto detection for single center or single profile
 
+[ ] invetation flow and update invite user flow
 [?] when i display tables data I should disply myself also
 [ ] global decorator for otp_required (not good)

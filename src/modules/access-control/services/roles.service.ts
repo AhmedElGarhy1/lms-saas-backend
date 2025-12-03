@@ -22,6 +22,7 @@ import {
 } from '../events/role.events';
 import { BaseService } from '@/shared/common/services/base.service';
 import { I18nPath } from '@/generated/i18n.generated';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 @Injectable()
 export class RolesService extends BaseService {
@@ -164,6 +165,27 @@ export class RolesService extends BaseService {
       targetUserProfileId: data.userProfileId,
       centerId,
     });
+
+    // Validate that profile type is STAFF or ADMIN
+    const profile =
+      await this.accessControlerHelperService.findUserProfile(
+        data.userProfileId,
+      );
+    if (!profile) {
+      throw new ResourceNotFoundException('t.errors.notFound.generic', {
+        resource: 't.common.resources.profile',
+      });
+    }
+
+    // Positive check: must be STAFF or ADMIN
+    if (
+      profile.profileType !== ProfileType.STAFF &&
+      profile.profileType !== ProfileType.ADMIN
+    ) {
+      throw new BusinessLogicException('t.errors.onlyForStaffAndAdmin', {
+        resource: 't.common.resources.role',
+      });
+    }
 
     return this.assignRole(data);
   }

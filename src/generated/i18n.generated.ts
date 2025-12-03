@@ -27,6 +27,264 @@ export type I18nTranslations = {
             "message": string;
         };
     };
+    "permissions": {
+        "staff": {
+            "read": {
+                "name": string;
+            };
+            "create": {
+                "name": string;
+            };
+            "update": {
+                "name": string;
+            };
+            "delete": {
+                "name": string;
+            };
+            "restore": {
+                "name": string;
+            };
+            "activate": {
+                "name": string;
+            };
+            "importProfile": {
+                "name": string;
+            };
+            "grantUserAccess": {
+                "name": string;
+            };
+            "grantBranchAccess": {
+                "name": string;
+            };
+            "grantCenterAccess": {
+                "name": string;
+            };
+            "deleteCenterAccess": {
+                "name": string;
+            };
+            "restoreCenterAccess": {
+                "name": string;
+            };
+            "activateCenterAccess": {
+                "name": string;
+            };
+            "readAll": {
+                "name": string;
+            };
+            "import": {
+                "name": string;
+            };
+            "export": {
+                "name": string;
+            };
+        };
+        "student": {
+            "read": {
+                "name": string;
+            };
+            "create": {
+                "name": string;
+            };
+            "update": {
+                "name": string;
+            };
+            "delete": {
+                "name": string;
+            };
+            "restore": {
+                "name": string;
+            };
+            "activate": {
+                "name": string;
+            };
+            "importProfile": {
+                "name": string;
+            };
+            "grantCenterAccess": {
+                "name": string;
+            };
+            "deleteCenterAccess": {
+                "name": string;
+            };
+            "restoreCenterAccess": {
+                "name": string;
+            };
+            "activateCenterAccess": {
+                "name": string;
+            };
+            "readAll": {
+                "name": string;
+            };
+            "import": {
+                "name": string;
+            };
+            "export": {
+                "name": string;
+            };
+        };
+        "teacher": {
+            "read": {
+                "name": string;
+            };
+            "create": {
+                "name": string;
+            };
+            "update": {
+                "name": string;
+            };
+            "delete": {
+                "name": string;
+            };
+            "restore": {
+                "name": string;
+            };
+            "activate": {
+                "name": string;
+            };
+            "importProfile": {
+                "name": string;
+            };
+            "grantCenterAccess": {
+                "name": string;
+            };
+            "deleteCenterAccess": {
+                "name": string;
+            };
+            "restoreCenterAccess": {
+                "name": string;
+            };
+            "activateCenterAccess": {
+                "name": string;
+            };
+            "readAll": {
+                "name": string;
+            };
+            "import": {
+                "name": string;
+            };
+            "export": {
+                "name": string;
+            };
+        };
+        "admin": {
+            "read": {
+                "name": string;
+            };
+            "create": {
+                "name": string;
+            };
+            "update": {
+                "name": string;
+            };
+            "delete": {
+                "name": string;
+            };
+            "restore": {
+                "name": string;
+            };
+            "activate": {
+                "name": string;
+            };
+            "importProfile": {
+                "name": string;
+            };
+            "grantUserAccess": {
+                "name": string;
+            };
+            "grantCenterAccess": {
+                "name": string;
+            };
+            "readAll": {
+                "name": string;
+            };
+            "import": {
+                "name": string;
+            };
+            "export": {
+                "name": string;
+            };
+        };
+        "center": {
+            "create": {
+                "name": string;
+            };
+            "update": {
+                "name": string;
+            };
+            "delete": {
+                "name": string;
+            };
+            "restore": {
+                "name": string;
+            };
+            "activate": {
+                "name": string;
+            };
+            "readAll": {
+                "name": string;
+            };
+            "import": {
+                "name": string;
+            };
+            "export": {
+                "name": string;
+            };
+        };
+        "roles": {
+            "create": {
+                "name": string;
+            };
+            "update": {
+                "name": string;
+            };
+            "delete": {
+                "name": string;
+            };
+            "restore": {
+                "name": string;
+            };
+            "assign": {
+                "name": string;
+            };
+            "import": {
+                "name": string;
+            };
+            "export": {
+                "name": string;
+            };
+        };
+        "branches": {
+            "create": {
+                "name": string;
+            };
+            "update": {
+                "name": string;
+            };
+            "delete": {
+                "name": string;
+            };
+            "restore": {
+                "name": string;
+            };
+            "activate": {
+                "name": string;
+            };
+            "import": {
+                "name": string;
+            };
+            "export": {
+                "name": string;
+            };
+            "readAll": {
+                "name": string;
+            };
+        };
+        "system": {
+            "healthCheck": {
+                "name": string;
+            };
+        };
+    };
     "t": {
         "actions": {
             "tryDifferentApproach": string;
@@ -144,6 +402,12 @@ export type I18nTranslations = {
                 "importing": string;
                 "resendCode": string;
                 "processing": string;
+                "grantUserAccess": string;
+                "columnVisibility": string;
+                "showAllColumns": string;
+                "hideAllColumns": string;
+                "selectCenter": string;
+                "contactAdmin": string;
             };
             "labels": {
                 "name": string;
@@ -223,7 +487,9 @@ export type I18nTranslations = {
                 "lastMonth": string;
                 "thisYear": string;
                 "lastYear": string;
+                "lastDays": string;
                 "customRange": string;
+                "columnVisibility": string;
                 "allUsers": string;
                 "allAdmins": string;
                 "include": string;
@@ -293,6 +559,10 @@ export type I18nTranslations = {
                 "staff": string;
                 "profile": string;
                 "profiles": string;
+                "student": string;
+                "students": string;
+                "teacher": string;
+                "teachers": string;
             };
             "placeholders": {
                 "search": string;
@@ -349,6 +619,8 @@ export type I18nTranslations = {
                 "adminUsersCannotHaveCenterAccessDeactivated": string;
                 "adminUsers": string;
                 "readOnly": string;
+                "studentCannotGrantUserAccess": string;
+                "teacherCannotGrantUserAccess": string;
                 "errorDetails": string;
                 "errorDetailsDevelopment": string;
                 "errorLabel": string;
@@ -466,6 +738,12 @@ export type I18nTranslations = {
                 "sessionExpired": string;
                 "contactAdministrator": string;
                 "checkUrlOrDashboard": string;
+                "allHealthChecksPassing": string;
+                "someComponentsIssues": string;
+                "databaseConnectionIssue": string;
+                "databaseNotResponding": string;
+                "studentInactive": string;
+                "teacherInactive": string;
             };
         };
         "dashboard": {
@@ -651,6 +929,82 @@ export type I18nTranslations = {
                 "userNotFoundDescription": string;
                 "createUserInstead": string;
             };
+            "createStudent": {
+                "title": string;
+                "description": string;
+            };
+            "editStudent": {
+                "title": string;
+                "description": string;
+            };
+            "viewStudent": {
+                "title": string;
+            };
+            "deleteStudent": {};
+            "activateStudent": {};
+            "deactivateStudent": {};
+            "restoreStudent": {};
+            "createTeacher": {
+                "title": string;
+                "description": string;
+            };
+            "editTeacher": {
+                "title": string;
+                "description": string;
+            };
+            "viewTeacher": {
+                "title": string;
+            };
+            "deleteTeacher": {};
+            "activateTeacher": {};
+            "deactivateTeacher": {};
+            "restoreTeacher": {};
+            "confirmBulkOperation": {
+                "title": string;
+                "cannotUndo": string;
+            };
+            "confirmIndividualAction": {
+                "delete": {
+                    "title": string;
+                    "message": string;
+                    "description": string;
+                };
+                "restore": {
+                    "title": string;
+                    "message": string;
+                    "description": string;
+                };
+                "activate": {
+                    "title": string;
+                    "message": string;
+                    "description": string;
+                };
+                "deactivate": {
+                    "title": string;
+                    "message": string;
+                    "description": string;
+                };
+                "grantAccess": {
+                    "title": string;
+                    "message": string;
+                    "description": string;
+                };
+                "revokeAccess": {
+                    "title": string;
+                    "message": string;
+                    "description": string;
+                };
+                "assign": {
+                    "title": string;
+                    "message": string;
+                    "description": string;
+                };
+                "remove": {
+                    "title": string;
+                    "message": string;
+                    "description": string;
+                };
+            };
         };
         "errors": {
             "invalid": {
@@ -710,17 +1064,21 @@ export type I18nTranslations = {
             "operation": string;
             "centerInactive": {
                 "description": string;
+                "title": string;
             };
             "centerAccessDenied": {
                 "description": string;
+                "title": string;
             };
             "centerAccessInactive": {
                 "description": string;
+                "title": string;
             };
             "serviceUnavailable": string;
             "adminScopeNotAllowedForCenter": string;
             "insufficientPermissions": string;
             "adminRoleCannotBeAssociatedWithCenter": string;
+            "onlyForStaffAndAdmin": string;
             "noAccessToGranterUser": string;
             "noAccessToTargetUser": string;
             "superAdminCanAccessAnyUser": string;
@@ -771,6 +1129,8 @@ export type I18nTranslations = {
             "branches": string;
             "roles": string;
             "systemHealth": string;
+            "students": string;
+            "teachers": string;
         };
         "overlay": {
             "centerSelection": {
@@ -809,7 +1169,10 @@ export type I18nTranslations = {
                 "title": string;
                 "subtitle": string;
             };
-            "centerInactive": {};
+            "centerInactive": {
+                "title": string;
+                "description": string;
+            };
             "profileInactive": {
                 "title": string;
                 "description": string;
@@ -877,6 +1240,14 @@ export type I18nTranslations = {
                 "subtitle": string;
             };
             "notificationHistory": {
+                "title": string;
+                "subtitle": string;
+            };
+            "students": {
+                "title": string;
+                "subtitle": string;
+            };
+            "teachers": {
                 "title": string;
                 "subtitle": string;
             };
@@ -1099,177 +1470,6 @@ export type I18nTranslations = {
             "owner": {
                 "name": string;
                 "description": string;
-            };
-        };
-        "permissions": {
-            "groups": {};
-            "staff": {
-                "read": {
-                    "name": string;
-                };
-                "create": {
-                    "name": string;
-                };
-                "update": {
-                    "name": string;
-                };
-                "delete": {
-                    "name": string;
-                };
-                "restore": {
-                    "name": string;
-                };
-                "activate": {
-                    "name": string;
-                };
-                "importProfile": {
-                    "name": string;
-                };
-                "grantUserAccess": {
-                    "name": string;
-                };
-                "grantBranchAccess": {
-                    "name": string;
-                };
-                "grantCenterAccess": {
-                    "name": string;
-                };
-                "deleteCenterAccess": {
-                    "name": string;
-                };
-                "restoreCenterAccess": {
-                    "name": string;
-                };
-                "activateCenterAccess": {
-                    "name": string;
-                };
-                "readAll": {
-                    "name": string;
-                };
-                "import": {
-                    "name": string;
-                };
-                "export": {
-                    "name": string;
-                };
-            };
-            "admin": {
-                "read": {
-                    "name": string;
-                };
-                "create": {
-                    "name": string;
-                };
-                "update": {
-                    "name": string;
-                };
-                "delete": {
-                    "name": string;
-                };
-                "restore": {
-                    "name": string;
-                };
-                "activate": {
-                    "name": string;
-                };
-                "importProfile": {
-                    "name": string;
-                };
-                "grantUserAccess": {
-                    "name": string;
-                };
-                "grantCenterAccess": {
-                    "name": string;
-                };
-                "readAll": {
-                    "name": string;
-                };
-                "import": {
-                    "name": string;
-                };
-                "export": {
-                    "name": string;
-                };
-            };
-            "center": {
-                "create": {
-                    "name": string;
-                };
-                "update": {
-                    "name": string;
-                };
-                "delete": {
-                    "name": string;
-                };
-                "restore": {
-                    "name": string;
-                };
-                "activate": {
-                    "name": string;
-                };
-                "readAll": {
-                    "name": string;
-                };
-                "import": {
-                    "name": string;
-                };
-                "export": {
-                    "name": string;
-                };
-            };
-            "roles": {
-                "create": {
-                    "name": string;
-                };
-                "update": {
-                    "name": string;
-                };
-                "delete": {
-                    "name": string;
-                };
-                "restore": {
-                    "name": string;
-                };
-                "assign": {
-                    "name": string;
-                };
-                "import": {
-                    "name": string;
-                };
-                "export": {
-                    "name": string;
-                };
-            };
-            "branches": {
-                "create": {
-                    "name": string;
-                };
-                "update": {
-                    "name": string;
-                };
-                "delete": {
-                    "name": string;
-                };
-                "restore": {
-                    "name": string;
-                };
-                "activate": {
-                    "name": string;
-                };
-                "import": {
-                    "name": string;
-                };
-                "export": {
-                    "name": string;
-                };
-                "readAll": {
-                    "name": string;
-                };
-            };
-            "system": {
-                "healthCheck": {
-                    "name": string;
-                };
             };
         };
     };

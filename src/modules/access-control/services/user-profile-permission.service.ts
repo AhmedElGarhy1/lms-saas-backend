@@ -5,7 +5,6 @@ import {
 } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { I18nPath } from '@/generated/i18n.generated';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { RolesService } from './roles.service';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
@@ -95,6 +94,30 @@ export class UserProfilePermissionService extends BaseService {
       requiredPermission = PERMISSIONS.STAFF[permissionKey];
     } else if (profileType === ProfileType.ADMIN) {
       requiredPermission = PERMISSIONS.ADMIN[permissionKey];
+    } else if (profileType === ProfileType.STUDENT) {
+      if (permissionKey === 'GRANT_USER_ACCESS') {
+        throw new InsufficientPermissionsException(
+          't.errors.cannot.actionReason',
+          {
+            action: 't.common.buttons.grantUserAccess',
+            resource: 't.common.resources.student',
+            reason: 't.common.messages.studentCannotGrantUserAccess',
+          },
+        );
+      }
+      requiredPermission = PERMISSIONS.STUDENT[permissionKey];
+    } else if (profileType === ProfileType.TEACHER) {
+      if (permissionKey === 'GRANT_USER_ACCESS') {
+        throw new InsufficientPermissionsException(
+          't.errors.cannot.actionReason',
+          {
+            action: 't.common.buttons.grantUserAccess',
+            resource: 't.common.resources.teacher',
+            reason: 't.common.messages.teacherCannotGrantUserAccess',
+          },
+        );
+      }
+      requiredPermission = PERMISSIONS.TEACHER[permissionKey];
     } else {
       throw new ResourceNotFoundException('t.errors.invalid.type', {
         field: 't.common.resources.profileType',
@@ -110,7 +133,9 @@ export class UserProfilePermissionService extends BaseService {
     );
 
     if (!hasPermission) {
-      throw new InsufficientPermissionsException('t.errors.insufficientPermissions');
+      throw new InsufficientPermissionsException(
+        't.errors.insufficientPermissions',
+      );
     }
   }
 

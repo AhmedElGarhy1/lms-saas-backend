@@ -64,6 +64,16 @@ import {
   StaffExportedEvent,
 } from '@/modules/staff/events/staff.events';
 import {
+  CreateStudentEvent,
+  StudentCreatedEvent,
+  StudentExportedEvent,
+} from '@/modules/students/events/student.events';
+import {
+  CreateTeacherEvent,
+  TeacherCreatedEvent,
+  TeacherExportedEvent,
+} from '@/modules/teachers/events/teacher.events';
+import {
   PasswordResetRequestedEvent,
   RequestPhoneVerificationEvent,
   OtpEvent,
@@ -79,6 +89,8 @@ import { BranchEvents } from '@/shared/events/branch.events.enum';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
 import { StaffEvents } from '@/shared/events/staff.events.enum';
+import { StudentEvents } from '@/shared/events/student.events.enum';
+import { TeacherEvents } from '@/shared/events/teacher.events.enum';
 
 /**
  * Event Type Map
@@ -145,6 +157,16 @@ export type EventTypeMap = {
   [StaffEvents.CREATE]: CreateStaffEvent;
   [StaffEvents.CREATED]: StaffCreatedEvent;
   [StaffEvents.EXPORTED]: StaffExportedEvent;
+
+  // Student Events
+  [StudentEvents.CREATE]: CreateStudentEvent;
+  [StudentEvents.CREATED]: StudentCreatedEvent;
+  [StudentEvents.EXPORTED]: StudentExportedEvent;
+
+  // Teacher Events
+  [TeacherEvents.CREATE]: CreateTeacherEvent;
+  [TeacherEvents.CREATED]: TeacherCreatedEvent;
+  [TeacherEvents.EXPORTED]: TeacherExportedEvent;
 
   // Additional Auth Events
   [AuthEvents.PASSWORD_RESET_REQUESTED]: PasswordResetRequestedEvent;

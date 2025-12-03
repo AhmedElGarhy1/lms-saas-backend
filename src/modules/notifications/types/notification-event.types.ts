@@ -6,6 +6,8 @@ import * as AccessControlEvents from '@/modules/access-control/events/access-con
 import * as RoleEvents from '@/modules/access-control/events/role.events';
 import * as AdminEvents from '@/modules/admin/events/admin.events';
 import * as StaffEvents from '@/modules/staff/events/staff.events';
+import * as StudentEvents from '@/modules/students/events/student.events';
+import * as TeacherEvents from '@/modules/teachers/events/teacher.events';
 import * as NotificationEvents from '@/modules/notifications/events/notification.events';
 
 /**
@@ -31,6 +33,8 @@ export type NotificationEvent =
   | ExtractInstanceTypes<typeof RoleEvents>
   | ExtractInstanceTypes<typeof AdminEvents>
   | ExtractInstanceTypes<typeof StaffEvents>
+  | ExtractInstanceTypes<typeof StudentEvents>
+  | ExtractInstanceTypes<typeof TeacherEvents>
   | ExtractInstanceTypes<typeof NotificationEvents>
   // Fallback for unknown events (maintains backward compatibility)
   | Record<string, unknown>;

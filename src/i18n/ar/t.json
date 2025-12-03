@@ -114,7 +114,11 @@
       "importUser": "استيراد مستخدم",
       "importing": "جاري الاستيراد...",
       "resendCode": "إعادة إرسال الرمز",
-      "processing": "جاري المعالجة..."
+      "processing": "جاري المعالجة...",
+      "grantUserAccess": "منح وصول المستخدم",
+      "columnVisibility": "إظهار الأعمدة",
+      "showAllColumns": "إظهار جميع الأعمدة",
+      "hideAllColumns": "إخفاء جميع الأعمدة"
     },
     "labels": {
       "name": "الاسم",
@@ -194,7 +198,9 @@
       "lastMonth": "الشهر الماضي",
       "thisYear": "هذا العام",
       "lastYear": "العام الماضي",
+      "lastDays": "آخر {count, plural, one {يوم} two {يومان} few {آخر {count} أيام} many {آخر {count} يوماً} other {آخر {count} يوم}}",
       "customRange": "نطاق مخصص",
+      "columnVisibility": "إظهار الأعمدة",
       "allUsers": "جميع المستخدمين",
       "allAdmins": "جميع المدراء",
       "include": "تضمين",
@@ -320,6 +326,8 @@
       "adminUsersCannotHaveCenterAccessDeactivated": "لا يمكن تعطيل صلاحية الوصول للمركز لمستخدمي المدير",
       "adminUsers": "لمستخدمي المدير",
       "readOnly": "للقراءة فقط",
+      "studentCannotGrantUserAccess": "لا يمكن للطلاب منح وصول المستخدم",
+      "teacherCannotGrantUserAccess": "لا يمكن للمعلمين منح وصول المستخدم",
       "errorDetails": "تفاصيل الخطأ",
       "errorDetailsDevelopment": "تفاصيل الخطأ (للتطوير فقط)",
       "errorLabel": "خطأ:",
@@ -692,6 +700,7 @@
     "adminScopeNotAllowedForCenter": "صلاحيات نطاق المدير غير مسموحة للأدوار الخاصة بالمركز",
     "insufficientPermissions": "ليس لديك صلاحيات كافية لتنفيذ هذا الإجراء",
     "adminRoleCannotBeAssociatedWithCenter": "لا يمكن ربط دور المدير بمركز. أدوار المدير على مستوى النظام فقط",
+    "onlyForStaffAndAdmin": "يمكن تعيين {resource} فقط لملفات تعريف الموظفين أو المسؤولين",
     "noAccessToGranterUser": "ليس لديك وصول إلى مستخدم المانح",
     "noAccessToTargetUser": "ليس لديك وصول إلى المستخدم المستهدف",
     "superAdminCanAccessAnyUser": "يمكن لمستخدمي المدير الأعلى الوصول إلى أي مستخدم ولا يمكن تقييدهم",
@@ -1070,177 +1079,6 @@
     "owner": {
       "name": "المالك",
       "description": "مالك المركز النهائي مع وصول كامل داخل المركز"
-    }
-  },
-  "permissions": {
-    "groups": {},
-    "staff": {
-      "read": {
-        "name": "قراءة الموظفين"
-      },
-      "create": {
-        "name": "إنشاء موظف"
-      },
-      "update": {
-        "name": "تحديث موظف"
-      },
-      "delete": {
-        "name": "حذف موظف"
-      },
-      "restore": {
-        "name": "استعادة موظف"
-      },
-      "activate": {
-        "name": "تفعيل/إلغاء تفعيل موظف"
-      },
-      "importProfile": {
-        "name": "استيراد الملف الشخصي"
-      },
-      "grantUserAccess": {
-        "name": "منح وصول المستخدم"
-      },
-      "grantBranchAccess": {
-        "name": "منح وصول الفرع"
-      },
-      "grantCenterAccess": {
-        "name": "منح وصول المركز"
-      },
-      "deleteCenterAccess": {
-        "name": "حذف وصول المركز"
-      },
-      "restoreCenterAccess": {
-        "name": "استعادة وصول المركز"
-      },
-      "activateCenterAccess": {
-        "name": "تفعيل/إلغاء تفعيل وصول المركز"
-      },
-      "readAll": {
-        "name": "قراءة جميع الموظفين بدون وصول الموظفين"
-      },
-      "import": {
-        "name": "استيراد الموظفين"
-      },
-      "export": {
-        "name": "تصدير الموظفين"
-      }
-    },
-    "admin": {
-      "read": {
-        "name": "قراءة المدير"
-      },
-      "create": {
-        "name": "إنشاء مدير"
-      },
-      "update": {
-        "name": "تحديث مدير"
-      },
-      "delete": {
-        "name": "حذف مدير"
-      },
-      "restore": {
-        "name": "استعادة مدير"
-      },
-      "activate": {
-        "name": "تفعيل/إلغاء تفعيل مدير"
-      },
-      "importProfile": {
-        "name": "استيراد الملف الشخصي"
-      },
-      "grantUserAccess": {
-        "name": "منح وصول المستخدم"
-      },
-      "grantCenterAccess": {
-        "name": "منح وصول المركز"
-      },
-      "readAll": {
-        "name": "قراءة جميع المديرين بدون وصول المدير"
-      },
-      "import": {
-        "name": "استيراد المديرين"
-      },
-      "export": {
-        "name": "تصدير المديرين"
-      }
-    },
-    "center": {
-      "create": {
-        "name": "إنشاء المراكز"
-      },
-      "update": {
-        "name": "تحديث المراكز"
-      },
-      "delete": {
-        "name": "حذف المراكز"
-      },
-      "restore": {
-        "name": "استعادة المراكز"
-      },
-      "activate": {
-        "name": "تفعيل/إلغاء تفعيل المراكز"
-      },
-      "readAll": {
-        "name": "قراءة جميع المراكز بدون وصول المركز"
-      },
-      "import": {
-        "name": "استيراد المراكز"
-      },
-      "export": {
-        "name": "تصدير المراكز"
-      }
-    },
-    "roles": {
-      "create": {
-        "name": "إنشاء دور"
-      },
-      "update": {
-        "name": "تحديث الدور"
-      },
-      "delete": {
-        "name": "حذف الدور"
-      },
-      "restore": {
-        "name": "استعادة الدور"
-      },
-      "assign": {
-        "name": "تعيين الدور"
-      },
-      "import": {
-        "name": "استيراد الأدوار"
-      },
-      "export": {
-        "name": "تصدير الأدوار"
-      }
-    },
-    "branches": {
-      "create": {
-        "name": "إنشاء الفروع"
-      },
-      "update": {
-        "name": "تحديث الفروع"
-      },
-      "delete": {
-        "name": "حذف الفروع"
-      },
-      "restore": {
-        "name": "استعادة الفروع"
-      },
-      "activate": {
-        "name": "تفعيل/إلغاء تفعيل الفروع"
-      },
-      "import": {
-        "name": "استيراد الفروع"
-      },
-      "export": {
-        "name": "تصدير الفروع"
-      },
-      "readAll": {
-        "name": "قراءة جميع الفروع بدون وصول الفرع"
-      }
-    },
-    "system": {
-      "healthCheck": {
-        "name": "فحص صحة النظام"
-      }
     }
   }
 }

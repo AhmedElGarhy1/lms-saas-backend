@@ -20,12 +20,17 @@ import { UserProfileRepository } from '../repositories/user-profile.repository';
 import { CentersService } from '@/modules/centers/services/centers.service';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { StaffEvents } from '@/shared/events/staff.events.enum';
+import { StudentEvents } from '@/shared/events/student.events.enum';
+import { TeacherEvents } from '@/shared/events/teacher.events.enum';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
 import { CreateStaffEvent } from '@/modules/staff/events/staff.events';
+import { CreateStudentEvent } from '@/modules/students/events/student.events';
+import { CreateTeacherEvent } from '@/modules/teachers/events/teacher.events';
 import { CreateAdminEvent } from '@/modules/admin/events/admin.events';
 import { Staff } from '@/modules/staff/entities/staff.entity';
+import { Student } from '@/modules/students/entities/student.entity';
+import { Teacher } from '@/modules/teachers/entities/teacher.entity';
 import { Admin } from '@/modules/admin/entities/admin.entity';
-import { I18nPath } from '@/generated/i18n.generated';
 
 @Injectable()
 export class UserProfileService extends BaseService {
@@ -353,7 +358,7 @@ export class UserProfileService extends BaseService {
       profileRefId,
     );
 
-    // 5. Emit domain events for STAFF and ADMIN profiles
+    // 5. Emit domain events for STAFF, STUDENT, TEACHER and ADMIN profiles
     // Access control, UserCreatedEvent, and phone verification are handled by listeners
     if (dto.profileType === ProfileType.STAFF) {
       // Get the Staff entity
@@ -372,6 +377,42 @@ export class UserProfileService extends BaseService {
           staff,
           centerId,
           dto.roleId,
+        ),
+      );
+    } else if (dto.profileType === ProfileType.STUDENT) {
+      // Get the Student entity
+      const student = (await this.userProfileRepository.getProfileRefEntity(
+        profileRefId,
+        ProfileType.STUDENT,
+      )) as Student;
+
+      const centerId = dto.centerId ?? actor.centerId;
+      await this.typeSafeEventEmitter.emitAsync(
+        StudentEvents.CREATE,
+        new CreateStudentEvent(
+          createdUser,
+          userProfile,
+          actor,
+          student,
+          centerId,
+        ),
+      );
+    } else if (dto.profileType === ProfileType.TEACHER) {
+      // Get the Teacher entity
+      const teacher = (await this.userProfileRepository.getProfileRefEntity(
+        profileRefId,
+        ProfileType.TEACHER,
+      )) as Teacher;
+
+      const centerId = dto.centerId ?? actor.centerId;
+      await this.typeSafeEventEmitter.emitAsync(
+        TeacherEvents.CREATE,
+        new CreateTeacherEvent(
+          createdUser,
+          userProfile,
+          actor,
+          teacher,
+          centerId,
         ),
       );
     } else if (dto.profileType === ProfileType.ADMIN) {

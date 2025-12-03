@@ -58,6 +58,15 @@ export type TranslationArgs = {
   't.dialogs.deleteRole.message': { roleName: TranslatableArg | number };
   't.dialogs.deleteUser.message': { userName: TranslatableArg | number };
   't.dialogs.importUser.userNotFoundDescription': { phone: TranslatableArg | number };
+  't.dialogs.invitations.resources.center.acceptedMessage': { centerName: TranslatableArg | number; userName: TranslatableArg | number };
+  't.dialogs.invitations.resources.center.declinedMessage': { centerName: TranslatableArg | number; userName: TranslatableArg | number };
+  't.dialogs.invitations.resources.center.invitationMessage': { centerName: TranslatableArg | number };
+  't.dialogs.invitations.resources.course.acceptedMessage': { courseName: TranslatableArg | number; userName: TranslatableArg | number };
+  't.dialogs.invitations.resources.course.declinedMessage': { courseName: TranslatableArg | number; userName: TranslatableArg | number };
+  't.dialogs.invitations.resources.course.invitationMessage': { courseName: TranslatableArg | number };
+  't.dialogs.invitations.resources.exam.acceptedMessage': { examName: TranslatableArg | number; userName: TranslatableArg | number };
+  't.dialogs.invitations.resources.exam.declinedMessage': { examName: TranslatableArg | number; userName: TranslatableArg | number };
+  't.dialogs.invitations.resources.exam.invitationMessage': { examName: TranslatableArg | number };
   't.dialogs.manageAccess.description': { userName: TranslatableArg | number };
   't.dialogs.manageAccess.title': { userName: TranslatableArg | number };
   't.dialogs.manageAdmins.title': { centerName: TranslatableArg | number };
