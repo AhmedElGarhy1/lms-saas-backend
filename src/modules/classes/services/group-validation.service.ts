@@ -53,7 +53,6 @@ export class GroupValidationService extends BaseService {
       classEntity.teacherUserProfileId,
       dto.scheduleItems,
       undefined,
-      centerId,
     );
 
     // Validate students
@@ -91,7 +90,6 @@ export class GroupValidationService extends BaseService {
         classEntity.teacherUserProfileId,
         dto.scheduleItems,
         groupId,
-        centerId,
       );
     }
 

@@ -136,7 +136,6 @@ export class WhatsAppAdapter
       throw new NotificationSendingFailedException(
         NotificationChannel.WHATSAPP,
         errorMessage,
-        payload.userId,
       );
     }
   }

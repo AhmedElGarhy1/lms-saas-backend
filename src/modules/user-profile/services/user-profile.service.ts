@@ -344,7 +344,7 @@ export class UserProfileService extends BaseService {
     await this.userProfilePermissionService.canCreate(actor, dto.profileType);
 
     // 2. Create User entity (includes UserInfo creation)
-    const createdUser = await this.userService.createUser(dto, actor);
+    const createdUser = await this.userService.createUser(dto);
 
     // 3. Get or create profileRefEntity (Staff/Admin/Teacher) based on profileType
     // Use existing profileRefId if provided, otherwise create new one

@@ -129,7 +129,6 @@ export class NotificationProcessor extends WorkerHost {
         throw new NotificationSendingFailedException(
           channel,
           `All notification channels failed: ${errors}`,
-          userId,
         );
       }
     } catch (error) {

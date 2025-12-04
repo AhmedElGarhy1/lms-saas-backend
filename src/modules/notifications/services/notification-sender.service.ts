@@ -20,7 +20,10 @@ import { NotificationConfig } from '../config/notification.config';
 import { NotificationIdempotencyCacheService } from './notification-idempotency-cache.service';
 import { NotificationCircuitBreakerService } from './notification-circuit-breaker.service';
 import { isRecord, getStringProperty } from '../utils/type-guards.util';
-import { EmailNotificationPayload } from '../types/notification-payload.interface';
+import {
+  EmailNotificationPayload,
+  PushNotificationPayload,
+} from '../types/notification-payload.interface';
 import { isWhatsAppPayload } from '../types/type-guards';
 import { buildStandardizedMetadata } from '../utils/metadata-builder.util';
 import { RenderedNotification } from '../manifests/types/manifest.types';

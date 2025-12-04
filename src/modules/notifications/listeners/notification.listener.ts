@@ -29,9 +29,7 @@ export class NotificationListener {
   ) {}
 
   @OnEvent(CenterEvents.CREATED)
-  async handleCenterCreated(
-    event: ValidateEvent<CreateCenterEvent, CenterEvents.CREATED>,
-  ) {
+  async handleCenterCreated(event: ValidateEvent<CreateCenterEvent>) {
     const { actor, center } = event;
 
     // For now, use actor for both audiences
@@ -86,9 +84,7 @@ export class NotificationListener {
   }
 
   @OnEvent(CenterEvents.UPDATED)
-  async handleCenterUpdated(
-    event: ValidateEvent<UpdateCenterEvent, CenterEvents.UPDATED>,
-  ) {
+  async handleCenterUpdated(event: ValidateEvent<UpdateCenterEvent>) {
     const { actor, centerId } = event;
 
     // Fetch center from database (required for template)
@@ -166,7 +162,7 @@ export class NotificationListener {
   }
 
   @OnEvent(AuthEvents.OTP)
-  async handleOtp(event: ValidateEvent<OtpEvent, AuthEvents.OTP>) {
+  async handleOtp(event: ValidateEvent<OtpEvent>) {
     // Fetch user to get phone and locale
     if (!event.userId) {
       this.logger.warn('OTP event missing userId, skipping notification');
@@ -221,9 +217,7 @@ export class NotificationListener {
   }
 
   @OnEvent(AuthEvents.PHONE_VERIFIED)
-  async handlePhoneVerified(
-    event: ValidateEvent<PhoneVerifiedEvent, AuthEvents.PHONE_VERIFIED>,
-  ) {
+  async handlePhoneVerified(event: ValidateEvent<PhoneVerifiedEvent>) {
     // Fetch user to get locale and ensure user exists
     // Note: event.userId is the target user (not actor)
     if (!event.userId) {

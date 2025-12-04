@@ -140,7 +140,6 @@ export class SmsAdapter
       throw new NotificationSendingFailedException(
         NotificationChannel.SMS,
         errorMessage,
-        payload.userId,
       );
     }
   }
