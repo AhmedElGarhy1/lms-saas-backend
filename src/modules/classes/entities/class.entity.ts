@@ -1,0 +1,95 @@
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+  OneToOne,
+  Index,
+} from 'typeorm';
+import { BaseEntity } from '@/shared/common/entities/base.entity';
+import { Level } from '@/modules/levels/entities/level.entity';
+import { Subject } from '@/modules/subjects/entities/subject.entity';
+import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
+import { Branch } from '@/modules/centers/entities/branch.entity';
+import { Center } from '@/modules/centers/entities/center.entity';
+import { Group } from './group.entity';
+import { StudentPaymentStrategy } from './student-payment-strategy.entity';
+import { TeacherPaymentStrategy } from './teacher-payment-strategy.entity';
+
+@Entity('classes')
+@Index(['centerId'])
+@Index(['branchId'])
+@Index(['levelId'])
+@Index(['subjectId'])
+@Index(['teacherUserProfileId'])
+@Index(['centerId', 'branchId'])
+export class Class extends BaseEntity {
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  name?: string;
+
+  @Column({ type: 'uuid' })
+  levelId: string;
+
+  @Column({ type: 'uuid' })
+  subjectId: string;
+
+  @Column({ type: 'uuid' })
+  teacherUserProfileId: string;
+
+  @Column({ type: 'uuid' })
+  branchId: string;
+
+  @Column({ type: 'uuid' })
+  centerId: string;
+
+  @Column({ type: 'timestamp' })
+  startDate: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  endDate?: Date;
+
+  // Relations
+  @ManyToOne(() => Level, (level) => level.classes, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'levelId' })
+  level: Level;
+
+  @ManyToOne(() => Subject, (subject) => subject.classes, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'subjectId' })
+  subject: Subject;
+
+  @ManyToOne(() => UserProfile, (userProfile) => userProfile.classesAsTeacher, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'teacherUserProfileId' })
+  teacher: UserProfile;
+
+  @ManyToOne(() => Branch, (branch) => branch.classes, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'branchId' })
+  branch: Branch;
+
+  @ManyToOne(() => Center, (center) => center.classes, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'centerId' })
+  center: Center;
+
+  @OneToMany(() => Group, (group) => group.class)
+  groups: Group[];
+
+  @OneToOne(() => StudentPaymentStrategy, (strategy) => strategy.class, {
+    cascade: true,
+  })
+  studentPaymentStrategy: StudentPaymentStrategy;
+
+  @OneToOne(() => TeacherPaymentStrategy, (strategy) => strategy.class, {
+    cascade: true,
+  })
+  teacherPaymentStrategy: TeacherPaymentStrategy;
+}

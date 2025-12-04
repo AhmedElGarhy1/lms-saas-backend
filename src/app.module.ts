@@ -6,7 +6,6 @@ import {
   AcceptLanguageResolver,
   I18nJsonLoader,
   I18nModule,
-  I18nService,
   QueryResolver,
 } from 'nestjs-i18n';
 import { AuthModule } from '@/modules/auth/auth.module';
@@ -14,6 +13,7 @@ import { UserModule } from '@/modules/user/user.module';
 import { CentersModule } from '@/modules/centers/centers.module';
 import { LevelsModule } from '@/modules/levels/levels.module';
 import { SubjectsModule } from '@/modules/subjects/subjects.module';
+import { ClassesModule } from '@/modules/classes/classes.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { SharedModule } from '@/shared/shared.module';
@@ -54,7 +54,6 @@ import { validateEnv } from './shared/config/env.validation';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RateLimitModule } from './modules/rate-limit/rate-limit.module';
 import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limit-config.interface';
-import { I18nTranslations } from './generated/i18n.generated';
 
 @Module({
   imports: [
@@ -106,6 +105,7 @@ import { I18nTranslations } from './generated/i18n.generated';
     CentersModule,
     LevelsModule,
     SubjectsModule,
+    ClassesModule,
     ActivityLogModule,
     SeederModule,
     LocaleModule,

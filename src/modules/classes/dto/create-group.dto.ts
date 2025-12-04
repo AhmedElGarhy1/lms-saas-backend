@@ -1,0 +1,51 @@
+import {
+  IsString,
+  IsUUID,
+  IsOptional,
+  IsArray,
+  MaxLength,
+  ValidateNested,
+  ArrayMinSize,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+import { ScheduleItemDto } from './schedule-item.dto';
+
+export class CreateGroupDto {
+  @ApiProperty({
+    description: 'Class ID',
+    example: 'uuid',
+  })
+  @IsUUID(4)
+  classId: string;
+
+  @ApiProperty({
+    description: 'Group name (optional)',
+    example: 'Sat 5PM Batch',
+    maxLength: 255,
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  name?: string;
+
+  @ApiProperty({
+    description: 'Schedule items',
+    type: [ScheduleItemDto],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => ScheduleItemDto)
+  scheduleItems: ScheduleItemDto[];
+
+  @ApiProperty({
+    description: 'Student user profile IDs',
+    type: [String],
+    example: ['uuid1', 'uuid2'],
+  })
+  @IsArray()
+  @IsUUID(4, { each: true })
+  studentUserProfileIds: string[];
+}

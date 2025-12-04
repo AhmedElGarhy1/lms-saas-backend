@@ -9,6 +9,8 @@ import { Branch } from './branch.entity';
 import { BranchAccess } from '../../access-control/entities/branch-access.entity';
 import { Level } from '@/modules/levels/entities/level.entity';
 import { Subject } from '@/modules/subjects/entities/subject.entity';
+import { Class } from '@/modules/classes/entities/class.entity';
+import { Group } from '@/modules/classes/entities/group.entity';
 
 @Entity('centers')
 @Index(['name'])
@@ -61,4 +63,10 @@ export class Center extends BaseEntity {
 
   @OneToMany(() => Subject, (subject) => subject.center)
   subjects: Subject[];
+
+  @OneToMany(() => Class, (classEntity) => classEntity.center)
+  classes: Class[];
+
+  @OneToMany(() => Group, (group) => group.center)
+  groups: Group[];
 }

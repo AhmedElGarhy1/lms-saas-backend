@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID, IsBoolean, IsEnum } from 'class-validator';
+import { IsUUID } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
-import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 export class CenterAccessDto {
   @ApiProperty({

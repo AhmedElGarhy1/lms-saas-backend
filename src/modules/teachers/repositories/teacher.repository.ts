@@ -18,4 +18,3 @@ export class TeacherRepository extends BaseRepository<Teacher> {
 
   // Teacher-specific repository methods can be added here as needed
 }
-

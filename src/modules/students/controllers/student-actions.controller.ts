@@ -64,10 +64,15 @@ export class StudentActionsController {
     // Emit event for activity logging
     await this.typeSafeEventEmitter.emitAsync(
       StudentEvents.EXPORTED,
-      new StudentExportedEvent(format, baseFilename, users.length, query, actor),
+      new StudentExportedEvent(
+        format,
+        baseFilename,
+        users.length,
+        query,
+        actor,
+      ),
     );
 
     return data;
   }
 }
-

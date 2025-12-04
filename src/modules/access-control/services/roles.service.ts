@@ -21,7 +21,6 @@ import {
   RestoreRoleEvent,
 } from '../events/role.events';
 import { BaseService } from '@/shared/common/services/base.service';
-import { I18nPath } from '@/generated/i18n.generated';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 @Injectable()
@@ -49,7 +48,7 @@ export class RolesService extends BaseService {
     const centerId = query.centerId ?? actor.centerId;
     query.centerId = centerId;
 
-    return this.rolesRepository.paginateRoles(query, actor);
+    return this.rolesRepository.paginateRoles(query);
   }
 
   async createRole(data: CreateRoleRequestDto, actor: ActorUser) {
@@ -102,11 +101,7 @@ export class RolesService extends BaseService {
       );
     }
 
-    const updatedRole = await this.rolesRepository.updateRole(
-      roleId,
-      data,
-      actor,
-    );
+    const updatedRole = await this.rolesRepository.updateRole(roleId, data);
 
     // Emit event after work is done
     await this.typeSafeEventEmitter.emitAsync(
@@ -167,10 +162,9 @@ export class RolesService extends BaseService {
     });
 
     // Validate that profile type is STAFF or ADMIN
-    const profile =
-      await this.accessControlerHelperService.findUserProfile(
-        data.userProfileId,
-      );
+    const profile = await this.accessControlerHelperService.findUserProfile(
+      data.userProfileId,
+    );
     if (!profile) {
       throw new ResourceNotFoundException('t.errors.notFound.generic', {
         resource: 't.common.resources.profile',

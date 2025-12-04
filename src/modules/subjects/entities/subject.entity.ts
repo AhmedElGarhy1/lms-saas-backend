@@ -4,9 +4,11 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
+  OneToMany,
 } from 'typeorm';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
+import { Class } from '@/modules/classes/entities/class.entity';
 
 @Entity('subjects')
 @Index(['centerId'])
@@ -24,5 +26,7 @@ export class Subject extends BaseEntity {
   })
   @JoinColumn({ name: 'centerId' })
   center: Center;
-}
 
+  @OneToMany(() => Class, (classEntity) => classEntity.subject)
+  classes: Class[];
+}

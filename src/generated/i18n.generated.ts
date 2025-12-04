@@ -29,7 +29,26 @@ export type I18nTranslations = {
     };
     "permissions": {
         "permissions": {
-            "groups": {};
+            "groups": {
+                "read": {
+                    "name": string;
+                };
+                "create": {
+                    "name": string;
+                };
+                "update": {
+                    "name": string;
+                };
+                "delete": {
+                    "name": string;
+                };
+                "restore": {
+                    "name": string;
+                };
+                "readAll": {
+                    "name": string;
+                };
+            };
             "staff": {
                 "read": {
                     "name": string;
@@ -333,6 +352,32 @@ export type I18nTranslations = {
                     "name": string;
                 };
             };
+            "classes": {
+                "read": {
+                    "name": string;
+                };
+                "create": {
+                    "name": string;
+                };
+                "update": {
+                    "name": string;
+                };
+                "delete": {
+                    "name": string;
+                };
+                "restore": {
+                    "name": string;
+                };
+                "readAll": {
+                    "name": string;
+                };
+                "import": {
+                    "name": string;
+                };
+                "export": {
+                    "name": string;
+                };
+            };
             "system": {
                 "healthCheck": {
                     "name": string;
@@ -458,6 +503,11 @@ export type I18nTranslations = {
                 "resendCode": string;
                 "processing": string;
                 "grantUserAccess": string;
+                "columnVisibility": string;
+                "showAllColumns": string;
+                "hideAllColumns": string;
+                "selectCenter": string;
+                "contactAdmin": string;
             };
             "labels": {
                 "name": string;
@@ -552,6 +602,10 @@ export type I18nTranslations = {
                 "total": string;
                 "failed": string;
                 "errors": string;
+                "columnVisibility": string;
+                "lastDays": string;
+                "unknownLevel": string;
+                "unknownSubject": string;
             };
             "countdown": {};
             "status": {
@@ -612,6 +666,10 @@ export type I18nTranslations = {
                 "profile": string;
                 "profiles": string;
                 "student": string;
+                "class": string;
+                "classes": string;
+                "group": string;
+                "groups": string;
                 "teacher": string;
             };
             "placeholders": {
@@ -705,9 +763,13 @@ export type I18nTranslations = {
                 "processing": string;
                 "noActiveAlerts": string;
                 "allSystemsOperational": string;
+                "allHealthChecksPassing": string;
                 "allSystemsOperationalFull": string;
                 "systemDegraded": string;
+                "someComponentsIssues": string;
                 "systemDegradedFull": string;
+                "databaseConnectionIssue": string;
+                "databaseNotResponding": string;
                 "databaseConnectionIssueFull": string;
                 "diskUsageWarning": string;
                 "diskUsageAt": string;
@@ -720,6 +782,8 @@ export type I18nTranslations = {
                 "memoryUsageWarningFull": string;
                 "systemAlerts": string;
                 "currentSystemAlerts": string;
+                "studentInactive": string;
+                "teacherInactive": string;
                 "serviceStatusOverview": string;
                 "currentStatusAllEndpoints": string;
                 "healthStatus": string;
@@ -837,6 +901,32 @@ export type I18nTranslations = {
             "viewStaff": {
                 "title": string;
             };
+            "createStudent": {
+                "title": string;
+                "description": string;
+            };
+            "editStudent": {
+                "title": string;
+                "description": string;
+            };
+            "viewStudent": {
+                "title": string;
+            };
+            "createTeacher": {
+                "title": string;
+                "description": string;
+            };
+            "editTeacher": {
+                "title": string;
+                "description": string;
+            };
+            "viewTeacher": {
+                "title": string;
+            };
+            "confirmBulkOperation": {
+                "title": string;
+                "cannotUndo": string;
+            };
             "deleteStaff": {};
             "activateStaff": {};
             "deactivateStaff": {};
@@ -947,6 +1037,48 @@ export type I18nTranslations = {
             "manageBranchAccess": {
                 "title": string;
             };
+            "createLevel": {
+                "title": string;
+            };
+            "editLevel": {
+                "title": string;
+            };
+            "viewLevel": {
+                "title": string;
+                "basicInformation": string;
+                "timestamps": string;
+                "createdAt": string;
+                "lastUpdated": string;
+            };
+            "deleteLevel": {
+                "title": string;
+                "message": string;
+                "cannotUndo": string;
+                "thisActionWill": string;
+                "removeLevel": string;
+                "removeData": string;
+            };
+            "createSubject": {
+                "title": string;
+            };
+            "editSubject": {
+                "title": string;
+            };
+            "viewSubject": {
+                "title": string;
+                "basicInformation": string;
+                "timestamps": string;
+                "createdAt": string;
+                "lastUpdated": string;
+            };
+            "deleteSubject": {
+                "title": string;
+                "message": string;
+                "cannotUndo": string;
+                "thisActionWill": string;
+                "removeSubject": string;
+                "removeData": string;
+            };
             "createTestModule": {};
             "editTestModule": {};
             "viewTestModule": {};
@@ -1031,12 +1163,15 @@ export type I18nTranslations = {
             "permissionScopeDoesNotMatch": string;
             "operation": string;
             "centerInactive": {
+                "title": string;
                 "description": string;
             };
             "centerAccessDenied": {
+                "title": string;
                 "description": string;
             };
             "centerAccessInactive": {
+                "title": string;
                 "description": string;
             };
             "serviceUnavailable": string;
@@ -1092,8 +1227,12 @@ export type I18nTranslations = {
             "admins": string;
             "centers": string;
             "branches": string;
+            "levels": string;
+            "subjects": string;
             "roles": string;
             "systemHealth": string;
+            "students": string;
+            "teachers": string;
         };
         "overlay": {
             "centerSelection": {
@@ -1129,6 +1268,14 @@ export type I18nTranslations = {
             };
             "users": {};
             "staff": {
+                "title": string;
+                "subtitle": string;
+            };
+            "students": {
+                "title": string;
+                "subtitle": string;
+            };
+            "teachers": {
                 "title": string;
                 "subtitle": string;
             };
@@ -1191,6 +1338,14 @@ export type I18nTranslations = {
             };
             "products": {};
             "branches": {
+                "title": string;
+                "subtitle": string;
+            };
+            "levels": {
+                "title": string;
+                "subtitle": string;
+            };
+            "subjects": {
                 "title": string;
                 "subtitle": string;
             };

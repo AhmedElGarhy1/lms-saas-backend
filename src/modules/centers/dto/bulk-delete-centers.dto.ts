@@ -15,4 +15,3 @@ export class BulkDeleteCentersDto {
   @IsUUID(4, { each: true, message: 'Each center ID must be a valid UUID' })
   centerIds: string[];
 }
-

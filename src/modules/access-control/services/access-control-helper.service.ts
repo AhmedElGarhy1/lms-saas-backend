@@ -328,6 +328,7 @@ export class AccessControlHelperService extends BaseService {
       data.userProfileId,
       data.centerId,
     );
+    console.log('bypassBranchAccess', bypassBranchAccess);
     if (bypassBranchAccess) {
       return true;
     }

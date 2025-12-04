@@ -6,10 +6,8 @@
  * Only secure values (API keys, secrets) should come from environment variables.
  */
 
-import { Config } from '@/shared/config/config';
 import {
   CONCURRENCY_CONSTANTS,
-  QUEUE_CONSTANTS,
   RETRY_CONSTANTS,
   TIME_CONSTANTS,
 } from '../constants/notification.constants';

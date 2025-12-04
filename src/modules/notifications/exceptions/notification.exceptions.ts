@@ -8,7 +8,7 @@ import {
  * Exception thrown when notification sending fails
  */
 export class NotificationSendingFailedException extends InternalServiceUnavailableException {
-  constructor(channel: string, error: string, userId?: string) {
+  constructor(channel: string, error: string) {
     super(`Failed to send notification via ${channel}: ${error}`);
   }
 }

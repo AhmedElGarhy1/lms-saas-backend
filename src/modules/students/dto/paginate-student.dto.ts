@@ -18,4 +18,3 @@ export class PaginateStudentDto extends PaginateUsersDto {
   })
   displayDetailes?: boolean;
 }
-

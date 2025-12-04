@@ -119,4 +119,3 @@ export class ProfileResponseDto {
   })
   unreadNotificationCount?: number;
 }
-

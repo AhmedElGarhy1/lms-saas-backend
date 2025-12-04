@@ -167,9 +167,7 @@ export class MetaWhatsAppProvider implements WhatsAppProvider {
       const messageId = response.data?.messages?.[0]?.id;
 
       if (!messageId) {
-        throw new Error(
-          'WhatsApp API response missing message ID',
-        );
+        throw new Error('WhatsApp API response missing message ID');
       }
 
       return { messageId };

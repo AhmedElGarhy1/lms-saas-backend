@@ -9,9 +9,7 @@ import { TIME_CONSTANTS } from '../../constants/notification.constants';
  */
 @Injectable()
 export class WhatsAppWebhookIdempotencyService {
-  private readonly logger = new Logger(
-    WhatsAppWebhookIdempotencyService.name,
-  );
+  private readonly logger = new Logger(WhatsAppWebhookIdempotencyService.name);
   private readonly ttlSeconds = TIME_CONSTANTS.SEVEN_DAYS_SECONDS;
 
   constructor(private readonly redisService: RedisService) {}
@@ -22,10 +20,7 @@ export class WhatsAppWebhookIdempotencyService {
    * @param status Status value (sent, delivered, read, failed)
    * @returns true if already processed, false if new
    */
-  async isProcessed(
-    messageId: string,
-    status: string,
-  ): Promise<boolean> {
+  async isProcessed(messageId: string, status: string): Promise<boolean> {
     const key = this.getKey(messageId, status);
     const client = this.redisService.getClient();
 
@@ -90,12 +85,7 @@ export class WhatsAppWebhookIdempotencyService {
     const client = this.redisService.getClient();
 
     try {
-      await client.set(
-        key,
-        Date.now().toString(),
-        'EX',
-        this.ttlSeconds,
-      );
+      await client.set(key, Date.now().toString(), 'EX', this.ttlSeconds);
     } catch (error) {
       // Fail open - log but don't throw
       this.logger.error(
@@ -116,4 +106,3 @@ export class WhatsAppWebhookIdempotencyService {
     return `${prefix}:whatsapp:status:${messageId}:${status}`;
   }
 }
-

@@ -1,13 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { I18nPath } from '@/generated/i18n.generated';
 import { ModuleRef } from '@nestjs/core';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationAdapter } from './interfaces/notification-adapter.interface';
 import { NotificationConfig } from '../config/notification.config';
-import {
-  InAppNotificationPayload,
-  NotificationPayload,
-} from '../types/notification-payload.interface';
+import { InAppNotificationPayload } from '../types/notification-payload.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationRepository } from '../repositories/notification.repository';
 import { Notification } from '../entities/notification.entity';
@@ -21,9 +17,7 @@ import {
 } from '../events/notification.events';
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
-import { NotificationType } from '../enums/notification-type.enum';
 import { InvalidOperationException } from '@/shared/common/exceptions/custom.exceptions';
-import { NotificationSendingFailedException } from '../exceptions/notification.exceptions';
 import { buildStandardizedMetadata } from '../utils/metadata-builder.util';
 import { RenderedNotification } from '../manifests/types/manifest.types';
 
@@ -108,7 +102,7 @@ export class InAppAdapter
         deliveryResult,
         startTime,
       );
-    } catch (metricsError) {
+    } catch {
       // Metrics are best-effort, don't spam logs with failures
     }
 
@@ -119,9 +113,6 @@ export class InAppAdapter
       payload,
       deliveryResult,
     );
-
-    // 10. Log final status
-    this.logFinalStatus(notification, payload, deliveryResult, startTime);
   }
 
   /**
@@ -340,7 +331,7 @@ export class InAppAdapter
         },
       );
 
-      const logEntry = await this.logRepository.create({
+      await this.logRepository.create({
         type: payload.type,
         channel: NotificationChannel.IN_APP,
         status: deliveryResult.delivered
@@ -445,17 +436,5 @@ export class InAppAdapter
         ),
       );
     }
-  }
-
-  /**
-   * Log final delivery status
-   */
-  private logFinalStatus(
-    notification: Notification,
-    payload: InAppNotificationPayload,
-    deliveryResult: DeliveryResult,
-    startTime: number,
-  ): void {
-    // Debug log removed - only log failures
   }
 }

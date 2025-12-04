@@ -15,4 +15,3 @@ export class BulkDeleteLevelsDto {
   @IsUUID(4, { each: true, message: 'Each level ID must be a valid UUID' })
   levelIds: string[];
 }
-

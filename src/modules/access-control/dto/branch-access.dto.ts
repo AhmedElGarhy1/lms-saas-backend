@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID, IsBoolean } from 'class-validator';
+import { IsUUID } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { Center } from '@/modules/centers/entities/center.entity';

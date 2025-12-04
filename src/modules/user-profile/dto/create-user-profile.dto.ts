@@ -21,7 +21,8 @@ export class CreateUserProfileDto extends CreateUserDto {
   profileType: ProfileType;
 
   @ApiProperty({
-    description: 'Center ID for the profile (required for STAFF/TEACHER, not allowed for ADMIN)',
+    description:
+      'Center ID for the profile (required for STAFF/TEACHER, not allowed for ADMIN)',
     required: false,
     nullable: true,
   })
@@ -54,16 +55,20 @@ export class CreateUserProfileDto extends CreateUserDto {
   @Validate(
     (object: CreateUserProfileDto, value: any) => {
       // If roleId is provided and profileType is STAFF/TEACHER, centerId must also be provided
-      if (value && (object.profileType === ProfileType.STAFF || object.profileType === ProfileType.TEACHER)) {
+      if (
+        value &&
+        (object.profileType === ProfileType.STAFF ||
+          object.profileType === ProfileType.TEACHER)
+      ) {
         return !!object.centerId;
       }
       // For ADMIN, roleId can be provided without centerId (global role)
       return true;
     },
     {
-      message: 'roleId can only be provided when centerId is also provided for STAFF/TEACHER profiles',
+      message:
+        'roleId can only be provided when centerId is also provided for STAFF/TEACHER profiles',
     },
   )
   roleId?: string;
 }
-

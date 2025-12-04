@@ -3,10 +3,8 @@ import {
   IsOptional,
   MinLength,
   IsArray,
-  IsEnum,
   IsUUID,
   ValidateNested,
-  Min,
 } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { Center } from '@/modules/centers/entities/center.entity';

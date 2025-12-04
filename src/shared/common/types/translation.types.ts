@@ -1,7 +1,5 @@
-import { I18nPath } from '@/generated/i18n.generated';
-import { PathArgs } from '@/generated/i18n-type-map.generated';
-
-export interface TranslationMessage<P extends I18nPath = I18nPath> {
-  key: P;
-  args?: PathArgs<P>;
-}
+/**
+ * Re-export TranslationMessage from generated types for convenience
+ * This file exists for backward compatibility - prefer importing directly from generated types
+ */
+export type { TranslationMessage } from '@/generated/i18n-type-map.generated';

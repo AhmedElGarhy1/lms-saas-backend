@@ -62,4 +62,3 @@ export function extractProfileTypeFromPermission(
   );
   return entry ? (entry[0] as ProfileType) : null;
 }
-

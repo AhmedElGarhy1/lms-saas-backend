@@ -39,4 +39,3 @@ export class SubjectsRepository extends BaseRepository<Subject> {
     );
   }
 }
-

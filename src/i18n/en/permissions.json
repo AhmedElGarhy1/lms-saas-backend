@@ -304,6 +304,52 @@
         "name": "Export Subjects"
       }
     },
+    "classes": {
+      "read": {
+        "name": "Read Classes"
+      },
+      "create": {
+        "name": "Create Classes"
+      },
+      "update": {
+        "name": "Update Classes"
+      },
+      "delete": {
+        "name": "Delete Classes"
+      },
+      "restore": {
+        "name": "Restore Classes"
+      },
+      "readAll": {
+        "name": "Read All Classes"
+      },
+      "import": {
+        "name": "Import Classes"
+      },
+      "export": {
+        "name": "Export Classes"
+      }
+    },
+    "groups": {
+      "read": {
+        "name": "Read Groups"
+      },
+      "create": {
+        "name": "Create Groups"
+      },
+      "update": {
+        "name": "Update Groups"
+      },
+      "delete": {
+        "name": "Delete Groups"
+      },
+      "restore": {
+        "name": "Restore Groups"
+      },
+      "readAll": {
+        "name": "Read All Groups"
+      }
+    },
     "system": {
       "healthCheck": {
         "name": "System Health Check"

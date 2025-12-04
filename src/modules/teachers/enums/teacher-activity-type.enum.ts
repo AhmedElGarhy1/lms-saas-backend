@@ -2,4 +2,3 @@ export enum TeacherActivityType {
   TEACHER_CREATED = 'TEACHER_CREATED',
   TEACHER_EXPORTED = 'TEACHER_EXPORTED',
 }
-

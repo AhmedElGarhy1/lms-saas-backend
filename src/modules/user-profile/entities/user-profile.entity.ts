@@ -13,6 +13,8 @@ import { UserAccess } from '@/modules/access-control/entities/user-access.entity
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
 import { BranchAccess } from '@/modules/access-control/entities/branch-access.entity';
 import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
+import { Class } from '@/modules/classes/entities/class.entity';
+import { GroupStudent } from '@/modules/classes/entities/group-student.entity';
 
 @Entity('user_profiles')
 @Index(['userId'])
@@ -49,5 +51,10 @@ export class UserProfile extends BaseEntity {
 
   @OneToMany(() => ProfileRole, (profileRole) => profileRole.userProfile)
   profileRoles: ProfileRole[];
-}
 
+  @OneToMany(() => Class, (classEntity) => classEntity.teacher)
+  classesAsTeacher: Class[];
+
+  @OneToMany(() => GroupStudent, (groupStudent) => groupStudent.student)
+  groupStudents: GroupStudent[];
+}

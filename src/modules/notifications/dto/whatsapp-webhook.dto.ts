@@ -151,5 +151,3 @@ export class WhatsAppWebhookEventDto {
   @Type(() => WhatsAppWebhookEntryDto)
   entry: WhatsAppWebhookEntryDto[];
 }
-
-

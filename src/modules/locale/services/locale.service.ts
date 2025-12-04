@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { I18nContext, I18nService } from 'nestjs-i18n';
+import { I18nService } from 'nestjs-i18n';
 import { Request } from 'express';
-import * as jwt from 'jsonwebtoken';
 import { UserService } from '@/modules/user/services/user.service';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { Locale } from '@/shared/common/enums/locale.enum';

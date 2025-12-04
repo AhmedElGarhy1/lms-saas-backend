@@ -17,7 +17,7 @@ export class AdminActivityListener {
 
   @OnEvent(AdminEvents.CREATED)
   async handleAdminCreated(event: AdminCreatedEvent) {
-    const { user, actor, admin, roleId } = event;
+    const { user, admin, roleId } = event;
 
     await this.activityLogService.log(
       AdminActivityType.ADMIN_CREATED,

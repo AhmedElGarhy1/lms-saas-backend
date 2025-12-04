@@ -77,17 +77,13 @@ function generateArgumentTypes() {
   typeDefinitions.push('/* prettier-ignore */');
   typeDefinitions.push('');
   typeDefinitions.push('import { I18nPath } from "./i18n.generated";');
-  typeDefinitions.push('import { TranslatableArg } from "./i18n-type-map.generated";');
   typeDefinitions.push('');
   typeDefinitions.push('/**');
   typeDefinitions.push(' * Argument types for translation keys');
   typeDefinitions.push(' * Maps translation key to its required arguments');
   typeDefinitions.push(' * ');
   typeDefinitions.push(
-    ' * String arguments use TranslatableArg (I18nPath | RawText) to preserve IntelliSense for translation keys.',
-  );
-  typeDefinitions.push(
-    ' * Regular strings work automatically (treated as RawText), no casting needed.',
+    ' * ESLint validates that dot-separated strings are valid I18nPath values.',
   );
   typeDefinitions.push(' */');
   typeDefinitions.push('export type TranslationArgs = {');
@@ -97,24 +93,12 @@ function generateArgumentTypes() {
 
   for (const key of sortedKeys) {
     const args = argsMap[key];
-    // Use TranslatableArg for string arguments to preserve IntelliSense for translation keys
-    // Regular strings work automatically (treated as RawText), numbers remain as number type
-    const argsType = args
-      .map((arg) => `${arg}: TranslatableArg | number`)
-      .join('; ');
+    // Use string for arguments - ESLint handles validation
+    const argsType = args.map((arg) => `${arg}: string`).join('; ');
     typeDefinitions.push(`  't.${key}': { ${argsType} };`);
   }
 
   typeDefinitions.push('};');
-  typeDefinitions.push('');
-  typeDefinitions.push('/**');
-  typeDefinitions.push(
-    ' * Union type of all translation keys that require arguments',
-  );
-  typeDefinitions.push(' */');
-  typeDefinitions.push(
-    'export type TranslationKey = keyof TranslationArgs | string;',
-  );
   typeDefinitions.push('');
 
   // Write to file

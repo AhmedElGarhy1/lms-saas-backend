@@ -29,7 +29,10 @@ export class BulkRemoveRoleDto {
   @ArrayMaxSize(100, {
     message: 'Maximum 100 user profile IDs allowed per request',
   })
-  @IsUUID(4, { each: true, message: 'Each user profile ID must be a valid UUID' })
+  @IsUUID(4, {
+    each: true,
+    message: 'Each user profile ID must be a valid UUID',
+  })
   userProfileIds: string[];
 
   @ApiProperty({
@@ -42,4 +45,3 @@ export class BulkRemoveRoleDto {
   @Exists(Center)
   centerId?: string;
 }
-

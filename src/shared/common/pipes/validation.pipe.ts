@@ -12,7 +12,7 @@ import {
 } from '../exceptions/custom.exceptions';
 import { ErrorCode } from '../enums/error-codes.enum';
 import { I18nPath } from '@/generated/i18n.generated';
-import { PathArgs, TranslatableArg } from '@/generated/i18n-type-map.generated';
+import { PathArgs } from '@/generated/i18n-type-map.generated';
 
 @Injectable()
 export class CustomValidationPipe implements PipeTransform<any> {
@@ -141,7 +141,7 @@ export class CustomValidationPipe implements PipeTransform<any> {
     const fieldLabelKey = `t.common.labels.${field}`;
 
     // Map constraint keys to their required args
-    const argsMap: Record<string, () => Record<string, TranslatableArg | number>> = {
+    const argsMap: Record<string, () => Record<string, string | number>> = {
       isNotEmpty: () => ({ field: fieldLabelKey as I18nPath }),
       minLength: () => ({
         field: fieldLabelKey as I18nPath,

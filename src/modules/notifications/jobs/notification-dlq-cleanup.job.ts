@@ -81,7 +81,7 @@ export class NotificationDlqCleanupJob {
           `DLQ cleanup took too long - consider optimizing or running during lower traffic periods - duration: ${duration}, deletedCount: ${deletedCount}, durationSeconds: ${Math.round(duration / 1000)}`,
         );
       }
-    } catch (error) {
+        } catch {
       this.logger.error(
         `DLQ cleanup job failed - retentionDays: ${this.retentionDays}, duration: ${Date.now() - startTime}`,
         error instanceof Error ? error.stack : String(error),
@@ -165,7 +165,7 @@ export class NotificationDlqCleanupJob {
         return new Date(parseInt(timestamp, 10));
       }
       return null;
-    } catch (error) {
+        } catch {
       // Non-critical - doesn't affect functionality
       return null;
     }
@@ -179,7 +179,7 @@ export class NotificationDlqCleanupJob {
       const client = this.redisService.getClient();
       const key = notificationKeys.dlqLastCleanup();
       await client.set(key, Date.now().toString(), 'EX', 7 * 24 * 60 * 60); // 7 days TTL
-    } catch (error) {
+        } catch {
       // Non-critical - doesn't affect functionality
     }
   }

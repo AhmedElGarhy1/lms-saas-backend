@@ -619,6 +619,98 @@ export const PERMISSIONS = {
     },
   },
 
+  // ===== CLASSES PERMISSIONS =====
+  CLASSES: {
+    READ: {
+      action: 'classes:read',
+      name: 't.permissions.classes.read.name',
+      group: 'classes',
+      scope: PermissionScope.CENTER,
+    },
+    CREATE: {
+      action: 'classes:create',
+      name: 't.permissions.classes.create.name',
+      group: 'classes',
+      scope: PermissionScope.CENTER,
+    },
+    UPDATE: {
+      action: 'classes:update',
+      name: 't.permissions.classes.update.name',
+      group: 'classes',
+      scope: PermissionScope.CENTER,
+    },
+    DELETE: {
+      action: 'classes:delete',
+      name: 't.permissions.classes.delete.name',
+      group: 'classes',
+      scope: PermissionScope.CENTER,
+    },
+    RESTORE: {
+      action: 'classes:restore',
+      name: 't.permissions.classes.restore.name',
+      group: 'classes',
+      scope: PermissionScope.CENTER,
+    },
+    READ_ALL: {
+      action: 'classes:read-all',
+      name: 't.permissions.classes.readAll.name',
+      group: 'classes',
+      scope: PermissionScope.CENTER,
+    },
+    IMPORT: {
+      action: 'classes:import',
+      name: 't.permissions.classes.import.name',
+      group: 'classes',
+      scope: PermissionScope.CENTER,
+    },
+    EXPORT: {
+      action: 'classes:export',
+      name: 't.permissions.classes.export.name',
+      group: 'classes',
+      scope: PermissionScope.CENTER,
+    },
+  },
+
+  // ===== GROUPS PERMISSIONS =====
+  GROUPS: {
+    READ: {
+      action: 'groups:read',
+      name: 't.permissions.groups.read.name',
+      group: 'groups',
+      scope: PermissionScope.CENTER,
+    },
+    CREATE: {
+      action: 'groups:create',
+      name: 't.permissions.groups.create.name',
+      group: 'groups',
+      scope: PermissionScope.CENTER,
+    },
+    UPDATE: {
+      action: 'groups:update',
+      name: 't.permissions.groups.update.name',
+      group: 'groups',
+      scope: PermissionScope.CENTER,
+    },
+    DELETE: {
+      action: 'groups:delete',
+      name: 't.permissions.groups.delete.name',
+      group: 'groups',
+      scope: PermissionScope.CENTER,
+    },
+    RESTORE: {
+      action: 'groups:restore',
+      name: 't.permissions.groups.restore.name',
+      group: 'groups',
+      scope: PermissionScope.CENTER,
+    },
+    READ_ALL: {
+      action: 'groups:read-all',
+      name: 't.permissions.groups.readAll.name',
+      group: 'groups',
+      scope: PermissionScope.CENTER,
+    },
+  },
+
   // ===== SYSTEM PERMISSIONS =====
   SYSTEM: {
     HEALTH_CHECK: {

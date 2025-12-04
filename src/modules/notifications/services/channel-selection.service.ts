@@ -13,19 +13,6 @@ import { NotificationConfig } from '../config/notification.config';
 /**
  * Type guard to check if user has lastLogin property
  */
-interface UserWithLastLogin {
-  lastLogin?: Date | string | null;
-  updatedAt: Date | string;
-}
-
-function hasLastLogin(user: unknown): user is UserWithLastLogin {
-  return (
-    typeof user === 'object' &&
-    user !== null &&
-    'updatedAt' in user &&
-    (user as Record<string, unknown>).updatedAt !== undefined
-  );
-}
 
 interface EventContext {
   priority?: number;

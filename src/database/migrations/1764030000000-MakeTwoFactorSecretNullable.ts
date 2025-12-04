@@ -5,9 +5,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * 2FA has been migrated from TOTP (authenticator apps) to SMS OTP
  * The twoFactorSecret field is no longer needed
  */
-export class RemoveTwoFactorSecret1764030000000
-  implements MigrationInterface
-{
+export class RemoveTwoFactorSecret1764030000000 implements MigrationInterface {
   name = 'RemoveTwoFactorSecret1764030000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -26,4 +24,3 @@ export class RemoveTwoFactorSecret1764030000000
     `);
   }
 }
-

@@ -8,7 +8,6 @@ import {
 } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { Center } from '@/modules/centers/entities/center.entity';
-import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 
 export class BulkToggleCenterAccessStatusDto {
   @ApiProperty({
@@ -42,4 +41,3 @@ export class BulkToggleCenterAccessStatusDto {
   @IsBoolean()
   isActive: boolean;
 }
-

@@ -15,4 +15,3 @@ export class BulkDeleteBranchesDto {
   @IsUUID(4, { each: true, message: 'Each branch ID must be a valid UUID' })
   branchIds: string[];
 }
-

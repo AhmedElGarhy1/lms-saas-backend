@@ -28,4 +28,3 @@ export class BulkToggleCenterStatusDto {
   @IsBoolean()
   isActive: boolean;
 }
-

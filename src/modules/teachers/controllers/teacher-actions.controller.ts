@@ -64,10 +64,15 @@ export class TeacherActionsController {
     // Emit event for activity logging
     await this.typeSafeEventEmitter.emitAsync(
       TeacherEvents.EXPORTED,
-      new TeacherExportedEvent(format, baseFilename, users.length, query, actor),
+      new TeacherExportedEvent(
+        format,
+        baseFilename,
+        users.length,
+        query,
+        actor,
+      ),
     );
 
     return data;
   }
 }
-

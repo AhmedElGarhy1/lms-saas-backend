@@ -90,7 +90,7 @@ export class NotificationPipelineService extends BaseService {
     context: NotificationProcessingContext,
     recipientInfo: RecipientInfo,
   ): void {
-    const { event, manifest, audience } = context;
+    const { event } = context;
 
     // Extract recipient information
     context.userId = recipientInfo.userId;

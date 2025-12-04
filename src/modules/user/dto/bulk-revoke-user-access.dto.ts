@@ -25,7 +25,9 @@ export class BulkRevokeUserAccessDto {
     example: ['uuid1', 'uuid2', 'uuid3'],
   })
   @IsArray()
-  @ArrayMinSize(1, { message: 'At least one target user profile ID is required' })
+  @ArrayMinSize(1, {
+    message: 'At least one target user profile ID is required',
+  })
   @ArrayMaxSize(100, {
     message: 'Maximum 100 target user profile IDs allowed per request',
   })
@@ -45,4 +47,3 @@ export class BulkRevokeUserAccessDto {
   @Exists(Center)
   centerId?: string;
 }
-

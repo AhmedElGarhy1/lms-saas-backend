@@ -58,4 +58,3 @@ export class RemoveChannelFromVerificationTokens1763857202300
     `);
   }
 }
-

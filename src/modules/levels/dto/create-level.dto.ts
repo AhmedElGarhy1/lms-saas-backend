@@ -11,4 +11,3 @@ export class CreateLevelDto {
   @MaxLength(255)
   name: string;
 }
-

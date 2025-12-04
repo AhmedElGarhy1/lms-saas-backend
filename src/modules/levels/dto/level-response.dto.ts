@@ -32,4 +32,3 @@ export class LevelResponseDto {
   @Type(() => CenterResponseDto)
   center?: CenterResponseDto;
 }
-

@@ -133,8 +133,7 @@ export class UserService extends BaseService {
     };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async createUser(dto: CreateUserDto, _actor: ActorUser): Promise<User> {
+  async createUser(dto: CreateUserDto): Promise<User> {
     // Create user (entity hook will hash password automatically)
     // Database unique constraint will handle phone uniqueness
     const savedUser = await this.userRepository.create({

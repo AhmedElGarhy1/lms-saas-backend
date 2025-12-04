@@ -1,14 +1,12 @@
 import {
   IsOptional,
   IsString,
-  IsBoolean,
   IsEnum,
   IsUUID,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { AccessibleUsersEnum } from '@/modules/user/dto/paginate-users.dto';
-import { Transform } from 'class-transformer';
 
 export class PaginateCentersDto extends BasePaginationDto {
   @ApiPropertyOptional({

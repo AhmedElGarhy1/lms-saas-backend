@@ -43,6 +43,11 @@ import { CenterActivityListener } from './listeners/center-activity.listener';
     BranchListener,
     CenterActivityListener,
   ],
-  exports: [CentersService, BranchesService],
+  exports: [
+    CentersService,
+    BranchesService,
+    CentersRepository,
+    BranchesRepository,
+  ],
 })
 export class CentersModule {}

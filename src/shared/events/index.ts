@@ -9,6 +9,8 @@ import { TeacherEvents } from './teacher.events.enum';
 import { AdminEvents } from './admin.events.enum';
 import { AccessControlEvents } from './access-control.events.enum';
 import { NotificationEvents } from './notification.events.enum';
+import { ClassEvents } from './classes.events.enum';
+import { GroupEvents } from './groups.events.enum';
 
 export type EventType =
   | AuthEvents
@@ -21,4 +23,6 @@ export type EventType =
   | TeacherEvents
   | AdminEvents
   | AccessControlEvents
-  | NotificationEvents;
+  | NotificationEvents
+  | ClassEvents
+  | GroupEvents;

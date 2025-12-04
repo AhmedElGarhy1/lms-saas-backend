@@ -6,7 +6,8 @@ import { Center } from '@/modules/centers/entities/center.entity';
 
 export class VerifyUserImportDto {
   @ApiProperty({
-    description: 'Phone number that received OTP (format: Egyptian mobile number)',
+    description:
+      'Phone number that received OTP (format: Egyptian mobile number)',
     example: '01234567890',
   })
   @IsString()
@@ -33,7 +34,8 @@ export class VerifyUserImportDto {
   profileType: ProfileType;
 
   @ApiProperty({
-    description: 'Center ID for the import (optional, defaults to actor\'s centerId)',
+    description:
+      "Center ID for the import (optional, defaults to actor's centerId)",
     required: false,
   })
   @IsOptional()
@@ -41,4 +43,3 @@ export class VerifyUserImportDto {
   @Exists(Center)
   centerId?: string;
 }
-

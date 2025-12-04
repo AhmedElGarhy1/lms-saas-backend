@@ -7,7 +7,6 @@ import {
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Request } from 'express';
-import { ClassSerializerInterceptor } from '@nestjs/common';
 
 interface RequestWithUser extends Request {
   user?: {

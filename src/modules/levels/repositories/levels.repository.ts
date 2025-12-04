@@ -39,4 +39,3 @@ export class LevelsRepository extends BaseRepository<Level> {
     );
   }
 }
-

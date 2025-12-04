@@ -17,7 +17,7 @@ export class StaffActivityListener {
 
   @OnEvent(StaffEvents.CREATED)
   async handleStaffCreated(event: StaffCreatedEvent) {
-    const { user, actor, staff, centerId, roleId } = event;
+    const { user, staff, centerId, roleId } = event;
 
     // ActivityLogService is fault-tolerant, no try-catch needed
     await this.activityLogService.log(

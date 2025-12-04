@@ -82,5 +82,3 @@ export interface WhatsAppWebhookVerification {
   'hub.verify_token': string;
   'hub.challenge': string;
 }
-
-

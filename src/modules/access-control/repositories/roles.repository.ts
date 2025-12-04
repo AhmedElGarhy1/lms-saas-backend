@@ -8,8 +8,6 @@ import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { CreateRoleRequestDto } from '../dto/create-role.dto';
 import { RolePermissionRepository } from './role-permission.repository';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
-import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { I18nPath } from '@/generated/i18n.generated';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { In } from 'typeorm';
@@ -59,11 +57,7 @@ export class RolesRepository extends BaseRepository<Role> {
     return role;
   }
 
-  async updateRole(
-    roleId: string,
-    data: CreateRoleRequestDto,
-    actor?: ActorUser,
-  ): Promise<Role> {
+  async updateRole(roleId: string, data: CreateRoleRequestDto): Promise<Role> {
     const { rolePermissions, ...roleData } = data;
     const role = await this.update(roleId, roleData);
     if (!role) {
@@ -139,7 +133,6 @@ export class RolesRepository extends BaseRepository<Role> {
 
   async paginateRoles(
     query: PaginateRolesDto,
-    actor: ActorUser,
   ): Promise<Pagination<RoleResponseDto>> {
     const { centerId, userProfileId } = query;
     const queryBuilder = this.getRepository().createQueryBuilder('role');

@@ -15,4 +15,3 @@ export class CreateStudentDto extends CreateUserDto {
   @Exists(Center)
   centerId?: string;
 }
-

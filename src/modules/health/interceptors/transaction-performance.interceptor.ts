@@ -128,7 +128,7 @@ export class TransactionPerformanceInterceptor implements NestInterceptor {
     }
 
     // Send to external monitoring systems
-    this.sendToExternalMonitoring(className, methodName, duration, status);
+    this.sendToExternalMonitoring();
 
     // You can also send metrics to external monitoring services here
     // Example: this.sendToPrometheus(className, methodName, duration, status);
@@ -208,12 +208,7 @@ export class TransactionPerformanceInterceptor implements NestInterceptor {
     return stats;
   }
 
-  private sendToExternalMonitoring(
-    className: string,
-    methodName: string,
-    duration: number,
-    status: string,
-  ): void {
+  private sendToExternalMonitoring(): void {
     // Implementation for Prometheus, DataDog, New Relic, etc.
     // Example:
     // this.metricsService.increment('transaction_count', { class: className, method: methodName, status });

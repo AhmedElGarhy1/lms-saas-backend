@@ -2,7 +2,6 @@ import { NotificationType } from '../../enums/notification-type.enum';
 import { NotificationChannel } from '../../enums/notification-channel.enum';
 import { NotificationGroup } from '../../enums/notification-group.enum';
 import { NotificationTemplatePath } from '../../types/templates.generated';
-import { AudienceId } from '../../types/audience.types';
 
 /**
  * Configuration for a single notification channel

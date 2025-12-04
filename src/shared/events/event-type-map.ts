@@ -74,6 +74,20 @@ import {
   TeacherExportedEvent,
 } from '@/modules/teachers/events/teacher.events';
 import {
+  ClassCreatedEvent,
+  ClassUpdatedEvent,
+  ClassDeletedEvent,
+  ClassRestoredEvent,
+  ClassExportedEvent,
+} from '@/modules/classes/events/class.events';
+import {
+  GroupCreatedEvent,
+  GroupUpdatedEvent,
+  GroupDeletedEvent,
+  GroupRestoredEvent,
+  GroupExportedEvent,
+} from '@/modules/classes/events/group.events';
+import {
   PasswordResetRequestedEvent,
   RequestPhoneVerificationEvent,
   OtpEvent,
@@ -91,6 +105,8 @@ import { AdminEvents } from '@/shared/events/admin.events.enum';
 import { StaffEvents } from '@/shared/events/staff.events.enum';
 import { StudentEvents } from '@/shared/events/student.events.enum';
 import { TeacherEvents } from '@/shared/events/teacher.events.enum';
+import { ClassEvents } from '@/shared/events/classes.events.enum';
+import { GroupEvents } from '@/shared/events/groups.events.enum';
 
 /**
  * Event Type Map
@@ -167,6 +183,20 @@ export type EventTypeMap = {
   [TeacherEvents.CREATE]: CreateTeacherEvent;
   [TeacherEvents.CREATED]: TeacherCreatedEvent;
   [TeacherEvents.EXPORTED]: TeacherExportedEvent;
+
+  // Class Events
+  [ClassEvents.CREATED]: ClassCreatedEvent;
+  [ClassEvents.UPDATED]: ClassUpdatedEvent;
+  [ClassEvents.DELETED]: ClassDeletedEvent;
+  [ClassEvents.RESTORED]: ClassRestoredEvent;
+  [ClassEvents.EXPORTED]: ClassExportedEvent;
+
+  // Group Events
+  [GroupEvents.CREATED]: GroupCreatedEvent;
+  [GroupEvents.UPDATED]: GroupUpdatedEvent;
+  [GroupEvents.DELETED]: GroupDeletedEvent;
+  [GroupEvents.RESTORED]: GroupRestoredEvent;
+  [GroupEvents.EXPORTED]: GroupExportedEvent;
 
   // Additional Auth Events
   [AuthEvents.PASSWORD_RESET_REQUESTED]: PasswordResetRequestedEvent;

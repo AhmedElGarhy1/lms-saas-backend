@@ -36,13 +36,13 @@ export class WhatsAppWebhookService extends BaseService {
   async enqueueWebhookEvent(event: WhatsAppWebhookEvent): Promise<void> {
     try {
       // Enqueue entire event (Meta batches are small: 1-5 items typically)
-        await this.webhookQueue.add('process-webhook', event, {
-          attempts: 3,
-          backoff: {
-            type: 'exponential',
-            delay: 2000,
-          },
-        });
+      await this.webhookQueue.add('process-webhook', event, {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 2000,
+        },
+      });
     } catch (error) {
       this.logger.error(
         'Failed to enqueue webhook event',
@@ -57,8 +57,6 @@ export class WhatsAppWebhookService extends BaseService {
    * @param event Webhook event
    */
   async processWebhookEvent(event: WhatsAppWebhookEvent): Promise<void> {
-    const startTime = Date.now();
-
     try {
       // Process all entries in the event
       for (const entry of event.entry) {
@@ -76,7 +74,6 @@ export class WhatsAppWebhookService extends BaseService {
           }
         }
       }
-
     } catch (error) {
       this.logger.error(
         'Failed to process webhook event',
@@ -156,7 +153,11 @@ export class WhatsAppWebhookService extends BaseService {
         metadata.whatsappReadAt = new Date(parseInt(status.timestamp) * 1000);
       }
 
-      if (status.status === 'failed' && status.errors && status.errors.length > 0) {
+      if (
+        status.status === 'failed' &&
+        status.errors &&
+        status.errors.length > 0
+      ) {
         const error = status.errors[0];
         metadata.whatsappErrorCode = error.code;
         metadata.whatsappErrorMessage = error.message || error.title;
@@ -225,4 +226,3 @@ export class WhatsAppWebhookService extends BaseService {
     }
   }
 }
-

@@ -19,4 +19,3 @@ import { SharedModule } from '@/shared/shared.module';
   exports: [LevelsService, LevelsRepository],
 })
 export class LevelsModule {}
-

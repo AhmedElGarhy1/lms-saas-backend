@@ -12,4 +12,3 @@ export class UpdateLevelDto {
   @MaxLength(255)
   name?: string;
 }
-

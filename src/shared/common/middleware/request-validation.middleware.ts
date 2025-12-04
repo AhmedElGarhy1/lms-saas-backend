@@ -7,7 +7,6 @@ import {
   RequestBodyTooLargeException,
   UnsupportedContentTypeException,
 } from '../exceptions/custom.exceptions';
-import { I18nPath } from '@/generated/i18n.generated';
 
 @Injectable()
 export class RequestValidationMiddleware implements NestMiddleware {
@@ -29,7 +28,7 @@ export class RequestValidationMiddleware implements NestMiddleware {
       this.validateContentType(req);
 
       // Log request for security audit
-      this.logRequest(req);
+      this.logRequest();
 
       next();
     } catch (error) {
@@ -82,12 +81,14 @@ export class RequestValidationMiddleware implements NestMiddleware {
     if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
       const contentType = req.get('content-type');
       if (contentType && !contentType.includes('application/json')) {
-        throw new UnsupportedContentTypeException('t.errors.unsupportedContentType');
+        throw new UnsupportedContentTypeException(
+          't.errors.unsupportedContentType',
+        );
       }
     }
   }
 
-  private logRequest(req: Request): void {
+  private logRequest(): void {
     // Request logging handled by PerformanceInterceptor
   }
 }

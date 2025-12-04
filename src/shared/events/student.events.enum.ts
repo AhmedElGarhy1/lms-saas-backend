@@ -3,4 +3,3 @@ export enum StudentEvents {
   CREATED = 'student.created',
   EXPORTED = 'student.exported',
 }
-

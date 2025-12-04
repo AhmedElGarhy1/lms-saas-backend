@@ -115,7 +115,12 @@
       "importing": "Importing...",
       "resendCode": "Resend Code",
       "processing": "Processing...",
-      "grantUserAccess": "Grant User Access"
+      "grantUserAccess": "Grant User Access",
+      "columnVisibility": "Column Visibility",
+      "showAllColumns": "Show All Columns",
+      "hideAllColumns": "Hide All Columns",
+      "selectCenter": "Select Center",
+      "contactAdmin": "Contact Administrator"
     },
     "labels": {
       "name": "Name",
@@ -209,7 +214,11 @@
       "channel": "Channel",
       "total": "Total",
       "failed": "Failed",
-      "errors": "Errors"
+      "errors": "Errors",
+      "columnVisibility": "Column Visibility",
+      "lastDays": "Last {count, number} days",
+      "unknownLevel": "Unknown Level",
+      "unknownSubject": "Unknown Subject"
     },
     "status": {
       "active": "Active",
@@ -239,6 +248,10 @@
       "alert": "Alert",
       "data": "Data",
       "item": "Item",
+      "class": "Class",
+      "classes": "Classes",
+      "group": "Group",
+      "groups": "Groups",
       "roles": "roles",
       "admins": "admins",
       "staff": "staff",
@@ -362,9 +375,13 @@
       "processing": "Processing...",
       "noActiveAlerts": "No active alerts at this time",
       "allSystemsOperational": "All Systems Operational",
+      "allHealthChecksPassing": "All health checks are passing",
       "allSystemsOperationalFull": "{title} - {message}",
       "systemDegraded": "System Degraded",
+      "someComponentsIssues": "Some system components are experiencing issues",
       "systemDegradedFull": "{title} - {message}",
+      "databaseConnectionIssue": "Database Connection Issue",
+      "databaseNotResponding": "Database is not responding properly",
       "databaseConnectionIssueFull": "{title} - {message}",
       "diskUsageWarning": "Disk Usage Warning",
       "diskUsageAt": "Disk usage at",
@@ -377,6 +394,8 @@
       "memoryUsageWarningFull": "{title} - {message}",
       "systemAlerts": "System Alerts",
       "currentSystemAlerts": "Current system alerts and notifications",
+      "studentInactive": "Student account is inactive",
+      "teacherInactive": "Teacher account is inactive",
       "serviceStatusOverview": "Service Status Overview",
       "currentStatusAllEndpoints": "Current status of all health endpoints",
       "healthStatus": "Health Status",
@@ -495,6 +514,32 @@
     "viewStaff": {
       "title": "Staff Details"
     },
+    "createStudent": {
+      "title": "Create Student",
+      "description": "Create a new student account"
+    },
+    "editStudent": {
+      "title": "Edit Student",
+      "description": "Update student information and settings"
+    },
+    "viewStudent": {
+      "title": "Student Details"
+    },
+    "createTeacher": {
+      "title": "Create Teacher",
+      "description": "Create a new teacher account"
+    },
+    "editTeacher": {
+      "title": "Edit Teacher",
+      "description": "Update teacher information and settings"
+    },
+    "viewTeacher": {
+      "title": "Teacher Details"
+    },
+    "confirmBulkOperation": {
+      "title": "Confirm Bulk Operation",
+      "cannotUndo": "This action cannot be undone"
+    },
     "deleteStaff": {},
     "activateStaff": {},
     "deactivateStaff": {},
@@ -605,6 +650,48 @@
     "manageBranchAccess": {
       "title": "Manage Branch Access - {branchName}"
     },
+    "createLevel": {
+      "title": "Create New Level"
+    },
+    "editLevel": {
+      "title": "Edit Level"
+    },
+    "viewLevel": {
+      "title": "Level Details",
+      "basicInformation": "Basic Information",
+      "timestamps": "Timestamps",
+      "createdAt": "Created At",
+      "lastUpdated": "Last Updated"
+    },
+    "deleteLevel": {
+      "title": "Delete Level",
+      "message": "Are you sure you want to delete the level {levelName}? This will permanently remove the level and all associated data.",
+      "cannotUndo": "This action cannot be undone.",
+      "thisActionWill": "This action will",
+      "removeLevel": "Remove the level from the system",
+      "removeData": "Remove all level-specific data"
+    },
+    "createSubject": {
+      "title": "Create New Subject"
+    },
+    "editSubject": {
+      "title": "Edit Subject"
+    },
+    "viewSubject": {
+      "title": "Subject Details",
+      "basicInformation": "Basic Information",
+      "timestamps": "Timestamps",
+      "createdAt": "Created At",
+      "lastUpdated": "Last Updated"
+    },
+    "deleteSubject": {
+      "title": "Delete Subject",
+      "message": "Are you sure you want to delete the subject {subjectName}? This will permanently remove the subject and all associated data.",
+      "cannotUndo": "This action cannot be undone.",
+      "thisActionWill": "This action will",
+      "removeSubject": "Remove the subject from the system",
+      "removeData": "Remove all subject-specific data"
+    },
     "createTestModule": {},
     "editTestModule": {},
     "viewTestModule": {},
@@ -672,12 +759,15 @@
       "tooManyRequestsWithTime": "Too many requests. Please try again in {time}"
     },
     "centerInactive": {
+      "title": "Center Inactive",
       "description": "The center itself is currently inactive and cannot be accessed. Please select a different center or contact the administrator to activate this center."
     },
     "centerAccessDenied": {
+      "title": "Center Access Denied",
       "description": "You do not have access to this center. Please contact your administrator to request center access."
     },
     "centerAccessInactive": {
+      "title": "Center Access Inactive",
       "description": "Your access to this center is currently inactive. Please contact the center administrator for more information."
     },
     "genericError": "An error occurred",
@@ -749,8 +839,12 @@
     "admins": "Admins",
     "centers": "Centers",
     "branches": "Branches",
+    "levels": "Levels",
+    "subjects": "Subjects",
     "roles": "Roles",
-    "systemHealth": "System Health"
+    "systemHealth": "System Health",
+    "students": "Students",
+    "teachers": "Teachers"
   },
   "overlay": {
     "centerSelection": {
@@ -788,6 +882,14 @@
     "staff": {
       "title": "Staff",
       "subtitle": "Manage staff members and their permissions"
+    },
+    "students": {
+      "title": "Students",
+      "subtitle": "Manage student accounts and information"
+    },
+    "teachers": {
+      "title": "Teachers",
+      "subtitle": "Manage teacher accounts and information"
     },
     "centerInactive": {},
     "profileInactive": {
@@ -850,6 +952,14 @@
     "branches": {
       "title": "Branches",
       "subtitle": "Manage branches and their settings"
+    },
+    "levels": {
+      "title": "Levels",
+      "subtitle": "Manage levels and their settings"
+    },
+    "subjects": {
+      "title": "Subjects",
+      "subtitle": "Manage subjects and their settings"
     },
     "test-module": {},
     "notifications": {

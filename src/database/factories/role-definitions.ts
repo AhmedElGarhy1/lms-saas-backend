@@ -1,5 +1,4 @@
 import { Role } from '@/modules/access-control/entities/role.entity';
-import { ALL_PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { faker } from '@faker-js/faker';
 
 // Read-only roles that cannot be changed

@@ -16,6 +16,8 @@ import { CenterActivityType } from '@/modules/centers/enums/center-activity-type
 import { RoleActivityType } from '@/modules/access-control/enums/role-activity-type.enum';
 import { StaffActivityType } from '@/modules/staff/enums/staff-activity-type.enum';
 import { AdminActivityType } from '@/modules/admin/enums/admin-activity-type.enum';
+import { ClassActivityType } from '@/modules/classes/enums/class-activity-type.enum';
+import { GroupActivityType } from '@/modules/classes/enums/group-activity-type.enum';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 
 @Injectable()
@@ -141,6 +143,8 @@ export class ActivityLogService extends BaseService {
       role: Object.values(RoleActivityType),
       staff: Object.values(StaffActivityType),
       admin: Object.values(AdminActivityType),
+      classes: Object.values(ClassActivityType),
+      groups: Object.values(GroupActivityType),
     };
   }
 }

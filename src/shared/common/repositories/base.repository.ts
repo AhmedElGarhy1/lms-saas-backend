@@ -10,7 +10,6 @@ import {
 } from 'typeorm';
 import { Injectable, Logger } from '@nestjs/common';
 import { ResourceNotFoundException } from '../exceptions/custom.exceptions';
-import { I18nPath } from '@/generated/i18n.generated';
 import { Pagination, paginate } from 'nestjs-typeorm-paginate';
 import { BasePaginationDto } from '../dto/base-pagination.dto';
 import { TransactionHost } from '@nestjs-cls/transactional';
@@ -39,7 +38,7 @@ export interface BulkOperationOptions {
   onProgress?: (processed: number, total: number) => void;
 }
 
-export interface PaginateOptions<T> {
+export interface PaginateOptions<_T> {
   page?: number;
   limit?: number;
   searchableColumns?: string[];
@@ -280,7 +279,8 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     }
 
     const count = await queryBuilder.getCount();
-    const duration = Date.now() - startTime;
+    // Duration tracking for future metrics
+    // const duration = Date.now() - startTime;
 
     return count;
   }
@@ -298,7 +298,8 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
 
     const result = await queryBuilder.getRawOne();
     const exists = !!result;
-    const duration = Date.now() - startTime;
+    // Duration tracking for future metrics
+    // const duration = Date.now() - startTime;
 
     return exists;
   }

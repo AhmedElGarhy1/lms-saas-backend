@@ -11,4 +11,3 @@ export class CreateSubjectDto {
   @MaxLength(255)
   name: string;
 }
-

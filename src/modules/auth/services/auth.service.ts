@@ -91,7 +91,9 @@ export class AuthService extends BaseService {
         this.logger.error(
           `User object missing or invalid ID for phone: ${dto.phone}`,
         );
-        throw new AuthenticationFailedException('t.errors.authenticationFailed');
+        throw new AuthenticationFailedException(
+          't.errors.authenticationFailed',
+        );
       }
 
       // Check if 2FA is enabled
@@ -117,7 +119,9 @@ export class AuthService extends BaseService {
             phone: user.phone,
             error: error instanceof Error ? error.message : String(error),
           });
-          throw new AuthenticationFailedException('t.errors.authenticationFailed');
+          throw new AuthenticationFailedException(
+            't.errors.authenticationFailed',
+          );
         }
       }
 

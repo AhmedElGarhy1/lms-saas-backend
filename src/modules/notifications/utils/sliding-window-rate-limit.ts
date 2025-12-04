@@ -64,7 +64,7 @@ export class SlidingWindowRateLimiter {
         windowSeconds.toString(),
       )) as [number, number];
 
-      const [allowed, count] = result;
+      const [allowed] = result;
       return allowed === 1;
     } catch (error) {
       // On Redis error, allow the request (fail open)

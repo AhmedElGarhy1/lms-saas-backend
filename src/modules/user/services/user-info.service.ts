@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { UserInfo } from '../entities/user-info.entity';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
-import { Transactional, Propagation } from '@nestjs-cls/transactional';
 import { UserInfoRepository } from '../repositories/user-info.repository';
 import { BaseService } from '@/shared/common/services/base.service';
 

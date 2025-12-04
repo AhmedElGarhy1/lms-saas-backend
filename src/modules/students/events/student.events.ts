@@ -39,4 +39,3 @@ export class StudentExportedEvent extends BaseEvent {
     super(actor);
   }
 }
-

@@ -5,24 +5,10 @@ import { BaseService } from '@/shared/common/services/base.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationConfig } from '../config/notification.config';
 
-interface BatchEntry {
-  key: string;
-  increment: number;
-  ttl: number;
-}
-
 interface LatencyEntry {
   key: string;
   score: number;
   member: string;
-  ttl: number;
-}
-
-interface AvgLatencyEntry {
-  key: string;
-  count: number;
-  sum: number;
-  avg: number;
   ttl: number;
 }
 

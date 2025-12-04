@@ -18,4 +18,3 @@ export class StudentRepository extends BaseRepository<Student> {
 
   // Student-specific repository methods can be added here as needed
 }
-

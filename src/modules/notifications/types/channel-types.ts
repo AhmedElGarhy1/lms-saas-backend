@@ -35,15 +35,15 @@ type ExtractChannelsFromManifestConst<TManifest extends NotificationManifest> =
 export type AvailableChannels<TType extends NotificationType> =
   TType extends NotificationType.OTP
     ? ExtractChannelsFromManifestConst<typeof otpManifest>
-    :   TType extends NotificationType.PASSWORD_RESET
+    : TType extends NotificationType.PASSWORD_RESET
       ? ExtractChannelsFromManifestConst<typeof passwordResetManifest>
       : TType extends NotificationType.PHONE_VERIFIED
-          ? ExtractChannelsFromManifestConst<typeof phoneVerifiedManifest>
-          : TType extends NotificationType.CENTER_CREATED
-            ? ExtractChannelsFromManifestConst<typeof centerCreatedManifest>
-            : TType extends NotificationType.CENTER_UPDATED
-              ? ExtractChannelsFromManifestConst<typeof centerUpdatedManifest>
-              : never;
+        ? ExtractChannelsFromManifestConst<typeof phoneVerifiedManifest>
+        : TType extends NotificationType.CENTER_CREATED
+          ? ExtractChannelsFromManifestConst<typeof centerCreatedManifest>
+          : TType extends NotificationType.CENTER_UPDATED
+            ? ExtractChannelsFromManifestConst<typeof centerUpdatedManifest>
+            : never;
 
 /**
  * Type-safe channels array for a specific notification type

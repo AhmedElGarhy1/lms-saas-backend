@@ -74,9 +74,12 @@ export class SubjectsService extends BaseService {
       centerId: actor.centerId!,
     });
 
-    const subject = await this.getSubject(subjectId, actor);
+    await this.getSubject(subjectId, actor);
 
-    const updatedSubject = await this.subjectsRepository.update(subjectId, data);
+    const updatedSubject = await this.subjectsRepository.update(
+      subjectId,
+      data,
+    );
 
     return updatedSubject;
   }
@@ -87,7 +90,7 @@ export class SubjectsService extends BaseService {
       centerId: actor.centerId!,
     });
 
-    const subject = await this.getSubject(subjectId, actor);
+    await this.getSubject(subjectId, actor);
     await this.subjectsRepository.softRemove(subjectId);
   }
 
@@ -118,4 +121,3 @@ export class SubjectsService extends BaseService {
     await this.subjectsRepository.restore(subjectId);
   }
 }
-

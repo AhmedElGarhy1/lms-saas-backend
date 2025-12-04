@@ -106,8 +106,6 @@ export class HealthService extends BaseService {
   }
 
   async getHealthStatus(): Promise<HealthStatus> {
-    const startTime = Date.now();
-
     try {
       const [
         databaseHealth,
@@ -133,8 +131,6 @@ export class HealthService extends BaseService {
         cacheHealth,
         ...externalHealth,
       ]);
-
-      const responseTime = Date.now() - startTime;
 
       // Debug log removed - routine operation
 

@@ -115,7 +115,12 @@
       "importing": "جاري الاستيراد...",
       "resendCode": "إعادة إرسال الرمز",
       "processing": "جاري المعالجة...",
-      "grantUserAccess": "منح وصول المستخدم"
+      "grantUserAccess": "منح وصول المستخدم",
+      "columnVisibility": "إظهار الأعمدة",
+      "showAllColumns": "إظهار جميع الأعمدة",
+      "hideAllColumns": "إخفاء جميع الأعمدة",
+      "selectCenter": "اختر المركز",
+      "contactAdmin": "اتصل بالمدير"
     },
     "labels": {
       "name": "الاسم",
@@ -209,7 +214,11 @@
       "channel": "القناة",
       "total": "الإجمالي",
       "failed": "فشل",
-      "errors": "الأخطاء"
+      "errors": "الأخطاء",
+      "columnVisibility": "إظهار الأعمدة",
+      "lastDays": "آخر {count, number} أيام",
+      "unknownLevel": "مستوى غير معروف",
+      "unknownSubject": "مادة غير معروفة"
     },
     "countdown": {},
     "status": {
@@ -270,6 +279,10 @@
       "profile": "الملف الشخصي",
       "profiles": "الملفات الشخصية",
       "student": "الطالب",
+      "class": "الفصل",
+      "classes": "الفصول",
+      "group": "المجموعة",
+      "groups": "المجموعات",
       "teacher": "المعلم"
     },
     "placeholders": {
@@ -363,9 +376,13 @@
       "processing": "جاري المعالجة...",
       "noActiveAlerts": "لا توجد تنبيهات نشطة في هذا الوقت",
       "allSystemsOperational": "جميع الأنظمة تعمل",
+      "allHealthChecksPassing": "جميع فحوصات الصحة تمر",
       "allSystemsOperationalFull": "{title} - {message}",
       "systemDegraded": "تدهور النظام",
+      "someComponentsIssues": "بعض مكونات النظام تواجه مشاكل",
       "systemDegradedFull": "{title} - {message}",
+      "databaseConnectionIssue": "مشكلة في اتصال قاعدة البيانات",
+      "databaseNotResponding": "قاعدة البيانات لا تستجيب بشكل صحيح",
       "databaseConnectionIssueFull": "{title} - {message}",
       "diskUsageWarning": "تحذير استخدام القرص",
       "diskUsageAt": "استخدام القرص عند",
@@ -378,6 +395,8 @@
       "memoryUsageWarningFull": "{title} - {message}",
       "systemAlerts": "تنبيهات النظام",
       "currentSystemAlerts": "تنبيهات وإشعارات النظام الحالية",
+      "studentInactive": "حساب الطالب غير نشط",
+      "teacherInactive": "حساب المعلم غير نشط",
       "serviceStatusOverview": "نظرة عامة على حالة الخدمة",
       "currentStatusAllEndpoints": "الحالة الحالية لجميع نقاط فحص الصحة",
       "healthStatus": "حالة الصحة",
@@ -495,6 +514,32 @@
     "viewStaff": {
       "title": "تفاصيل الموظف"
     },
+    "createStudent": {
+      "title": "إنشاء طالب",
+      "description": "إنشاء حساب طالب جديد"
+    },
+    "editStudent": {
+      "title": "تعديل الطالب",
+      "description": "تحديث معلومات وإعدادات الطالب"
+    },
+    "viewStudent": {
+      "title": "تفاصيل الطالب"
+    },
+    "createTeacher": {
+      "title": "إنشاء معلم",
+      "description": "إنشاء حساب معلم جديد"
+    },
+    "editTeacher": {
+      "title": "تعديل المعلم",
+      "description": "تحديث معلومات وإعدادات المعلم"
+    },
+    "viewTeacher": {
+      "title": "تفاصيل المعلم"
+    },
+    "confirmBulkOperation": {
+      "title": "تأكيد العملية المجمعة",
+      "cannotUndo": "لا يمكن التراجع عن هذا الإجراء"
+    },
     "deleteStaff": {},
     "activateStaff": {},
     "deactivateStaff": {},
@@ -605,6 +650,48 @@
     "manageBranchAccess": {
       "title": "إدارة وصول الفرع - {branchName}"
     },
+    "createLevel": {
+      "title": "إنشاء مستوى جديد"
+    },
+    "editLevel": {
+      "title": "تعديل المستوى"
+    },
+    "viewLevel": {
+      "title": "تفاصيل المستوى",
+      "basicInformation": "المعلومات الأساسية",
+      "timestamps": "الطوابع الزمنية",
+      "createdAt": "تاريخ الإنشاء",
+      "lastUpdated": "آخر تحديث"
+    },
+    "deleteLevel": {
+      "title": "حذف المستوى",
+      "message": "هل أنت متأكد من حذف المستوى {levelName}؟ سيتم حذف المستوى وجميع البيانات المرتبطة به بشكل دائم.",
+      "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
+      "thisActionWill": "سيؤدي هذا الإجراء إلى",
+      "removeLevel": "إزالة المستوى من النظام",
+      "removeData": "إزالة جميع البيانات الخاصة بالمستوى"
+    },
+    "createSubject": {
+      "title": "إنشاء مادة جديدة"
+    },
+    "editSubject": {
+      "title": "تعديل المادة"
+    },
+    "viewSubject": {
+      "title": "تفاصيل المادة",
+      "basicInformation": "المعلومات الأساسية",
+      "timestamps": "الطوابع الزمنية",
+      "createdAt": "تاريخ الإنشاء",
+      "lastUpdated": "آخر تحديث"
+    },
+    "deleteSubject": {
+      "title": "حذف المادة",
+      "message": "هل أنت متأكد من حذف المادة {subjectName}؟ سيتم حذف المادة وجميع البيانات المرتبطة بها بشكل دائم.",
+      "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
+      "thisActionWill": "سيؤدي هذا الإجراء إلى",
+      "removeSubject": "إزالة المادة من النظام",
+      "removeData": "إزالة جميع البيانات الخاصة بالمادة"
+    },
     "createTestModule": {},
     "editTestModule": {},
     "viewTestModule": {},
@@ -689,12 +776,15 @@
     "permissionScopeDoesNotMatch": "نطاق الصلاحية غير متطابق",
     "operation": "فشلت العملية",
     "centerInactive": {
+      "title": "المركز غير نشط",
       "description": "المركز نفسه غير نشط حالياً ولا يمكن الوصول إليه. يرجى اختيار مركز آخر أو الاتصال بالمدير لتفعيل هذا المركز."
     },
     "centerAccessDenied": {
+      "title": "رفض الوصول إلى المركز",
       "description": "ليس لديك صلاحية للوصول إلى هذا المركز. يرجى الاتصال بالمدير لطلب صلاحية الوصول."
     },
     "centerAccessInactive": {
+      "title": "صلاحية الوصول إلى المركز غير نشطة",
       "description": "صلاحية الوصول إلى هذا المركز غير نشطة حالياً. يرجى الاتصال بمدير المركز لمزيد من المعلومات."
     },
     "serviceUnavailable": "الخدمة غير متاحة مؤقتاً. يرجى المحاولة مرة أخرى لاحقاً",
@@ -750,8 +840,12 @@
     "admins": "المديرون",
     "centers": "المراكز",
     "branches": "الفروع",
+    "levels": "المستويات",
+    "subjects": "المواد",
     "roles": "الأدوار",
-    "systemHealth": "صحة النظام"
+    "systemHealth": "صحة النظام",
+    "students": "الطلاب",
+    "teachers": "المعلمون"
   },
   "overlay": {
     "centerSelection": {
@@ -789,6 +883,14 @@
     "staff": {
       "title": "الموظفون",
       "subtitle": "إدارة الموظفين وصلاحياتهم"
+    },
+    "students": {
+      "title": "الطلاب",
+      "subtitle": "إدارة حسابات الطلاب ومعلوماتهم"
+    },
+    "teachers": {
+      "title": "المعلمون",
+      "subtitle": "إدارة حسابات المعلمين ومعلوماتهم"
     },
     "centerInactive": {},
     "profileInactive": {
@@ -851,6 +953,14 @@
     "branches": {
       "title": "الفروع",
       "subtitle": "إدارة الفروع وإعداداتها"
+    },
+    "levels": {
+      "title": "المستويات",
+      "subtitle": "إدارة المستويات وإعداداتها"
+    },
+    "subjects": {
+      "title": "المواد",
+      "subtitle": "إدارة المواد وإعداداتها"
     },
     "test-module": {},
     "notifications": {

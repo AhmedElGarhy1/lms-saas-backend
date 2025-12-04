@@ -47,4 +47,3 @@ export class RemoveEmailFromUsers1764029400000 implements MigrationInterface {
     `);
   }
 }
-

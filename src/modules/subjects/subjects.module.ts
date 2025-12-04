@@ -19,4 +19,3 @@ import { SharedModule } from '@/shared/shared.module';
   exports: [SubjectsService, SubjectsRepository],
 })
 export class SubjectsModule {}
-

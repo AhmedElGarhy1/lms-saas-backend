@@ -8,7 +8,6 @@ import { randomUUID } from 'crypto';
 @Injectable()
 export class ContextMiddleware implements NestMiddleware {
   use(req: IRequest, res: Response, next: NextFunction) {
-    const user = req.user;
     const centerId = req.centerId;
 
     // Extract IP address (considering proxies and load balancers)

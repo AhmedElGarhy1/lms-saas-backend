@@ -15,7 +15,6 @@ import {
   Logger,
 } from '@nestjs/common';
 import { QueryFailedError, EntityNotFoundError } from 'typeorm';
-import { I18nPath } from '@/generated/i18n.generated';
 import {
   ResourceNotFoundException,
   BusinessLogicException,
@@ -36,10 +35,10 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
   /**
    * Handle TypeORM exceptions
    * @param exception - TypeORM exception (QueryFailedError or EntityNotFoundError)
-   * @param host - NestJS execution context
+   * @param _host - NestJS execution context
    * @throws HttpException - Re-throws converted custom exception
    */
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: unknown, _host: ArgumentsHost) {
     this.logger.debug(
       `TypeOrmExceptionFilter caught: ${exception?.constructor?.name}`,
     );

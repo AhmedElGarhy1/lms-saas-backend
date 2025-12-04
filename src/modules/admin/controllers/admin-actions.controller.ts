@@ -64,13 +64,7 @@ export class AdminActionsController {
     // Emit event for activity logging
     await this.typeSafeEventEmitter.emitAsync(
       AdminEvents.EXPORTED,
-      new AdminExportedEvent(
-        format,
-        baseFilename,
-        users.length,
-        query,
-        actor,
-      ),
+      new AdminExportedEvent(format, baseFilename, users.length, query, actor),
     );
 
     return data;

@@ -58,7 +58,9 @@ export class RolePermissionSubscriber
           rolePermission.permissionScope === PermissionScope.ADMIN ||
           rolePermission.permissionScope === PermissionScope.BOTH
         ) {
-          throw new BusinessLogicException('t.errors.adminScopeNotAllowedForCenter');
+          throw new BusinessLogicException(
+            't.errors.adminScopeNotAllowedForCenter',
+          );
         }
       }
 
@@ -67,7 +69,9 @@ export class RolePermissionSubscriber
         permission.scope !== rolePermission.permissionScope &&
         permission.scope !== PermissionScope.BOTH
       ) {
-        throw new ValidationFailedException('t.errors.permissionScopeDoesNotMatch');
+        throw new ValidationFailedException(
+          't.errors.permissionScopeDoesNotMatch',
+        );
       }
     }
   }

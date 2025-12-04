@@ -10,7 +10,6 @@ import { Request } from 'express';
 import { ApiResponseBuilder } from '../dto/api-response.dto';
 import { ControllerResponse } from '../dto/controller-response.dto';
 import { TranslationMessage } from '../types/translation.types';
-import { I18nPath } from '@/generated/i18n.generated';
 
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
@@ -40,9 +39,9 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
             !('success' in data) &&
             !('meta' in data) &&
             (data.constructor.name === 'ControllerResponse' ||
-              (typeof (data as any).message === 'object' &&
-                (data as any).message !== null &&
-                'key' in (data as any).message)))
+              (typeof data.message === 'object' &&
+                data.message !== null &&
+                'key' in data.message)))
         ) {
           const controllerResponse = data as ControllerResponse<any>;
           return ApiResponseBuilder.success(
@@ -103,7 +102,9 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
         PUT: { key: 't.success.update', args: undefined },
         POST: { key: 't.success.create', args: undefined },
       };
-      return messages[method] || { key: 't.success.operation', args: undefined };
+      return (
+        messages[method] || { key: 't.success.operation', args: undefined }
+      );
     }
 
     // For arrays, provide count-specific message key
@@ -135,6 +136,6 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
       DELETE: { key: 't.success.delete', args: undefined },
     };
 
-      return messages[method] || { key: 't.success.operation', args: undefined };
+    return messages[method] || { key: 't.success.operation', args: undefined };
   }
 }

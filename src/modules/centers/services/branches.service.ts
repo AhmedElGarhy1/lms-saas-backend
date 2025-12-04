@@ -6,7 +6,6 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
-import { I18nPath } from '@/generated/i18n.generated';
 import {
   BranchCreatedEvent,
   BranchUpdatedEvent,

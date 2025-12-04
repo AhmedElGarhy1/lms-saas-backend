@@ -1,5 +1,3 @@
-import { I18nPath } from '@/generated/i18n.generated';
-
 /**
  * Database error codes constants
  * Centralizes database error code definitions to avoid magic strings
@@ -29,10 +27,8 @@ export const TRANSLATION_KEYS = {
   ERRORS: {
     DUPLICATE_FIELD: 't.errors.duplicateField',
     RESOURCE_NOT_FOUND: 't.errors.resourceNotFound',
-    RELATED_ENTITY_MISSING_OR_INVALID:
-      't.errors.relatedEntityMissingOrInvalid',
-    TEMPORARY_DATABASE_CONFLICT:
-      't.errors.temporaryDatabaseConflict',
+    RELATED_ENTITY_MISSING_OR_INVALID: 't.errors.relatedEntityMissingOrInvalid',
+    TEMPORARY_DATABASE_CONFLICT: 't.errors.temporaryDatabaseConflict',
     DATABASE_OPERATION_FAILED: 't.errors.databaseOperationFailed',
     GENERIC_ERROR: 't.errors.genericError',
     INTERNAL_SERVER_ERROR: 't.errors.internalServerError',

@@ -272,18 +272,18 @@ export class NotificationValidator implements OnModuleInit {
           // Check template exists for all supported locales
           // This ensures templates are available for all users regardless of their locale
           if (config.template) {
-          const supportedLocales = Object.values(Locale);
-          for (const locale of supportedLocales) {
-            const templatePath = getTemplatePath(
-              config.template,
-              locale,
-              channel,
-            );
-
-            if (!templateExists(config.template, locale, channel)) {
-              errors.push(
-                `Missing template: ${type}:${audienceId}:${channel} (${config.template}) for locale ${locale} - Path: ${templatePath}`,
+            const supportedLocales = Object.values(Locale);
+            for (const locale of supportedLocales) {
+              const templatePath = getTemplatePath(
+                config.template,
+                locale,
+                channel,
               );
+
+              if (!templateExists(config.template, locale, channel)) {
+                errors.push(
+                  `Missing template: ${type}:${audienceId}:${channel} (${config.template}) for locale ${locale} - Path: ${templatePath}`,
+                );
               }
             }
           }

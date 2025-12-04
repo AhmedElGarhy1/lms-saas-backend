@@ -13,4 +13,3 @@ export abstract class SystemEvent {
     this.timestamp = new Date();
   }
 }
-

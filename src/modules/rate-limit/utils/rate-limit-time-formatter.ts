@@ -22,4 +22,3 @@ export function formatRemainingTime(seconds: number): string {
   const secondsStr = `${remainingSeconds} ${remainingSeconds === 1 ? 'second' : 'seconds'}`;
   return `${minutesStr} ${secondsStr}`;
 }
-

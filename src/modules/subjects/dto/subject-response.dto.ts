@@ -32,4 +32,3 @@ export class SubjectResponseDto {
   @Type(() => CenterResponseDto)
   center?: CenterResponseDto;
 }
-

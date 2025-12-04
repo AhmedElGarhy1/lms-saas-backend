@@ -7,7 +7,6 @@ import {
   IsBoolean,
   Matches,
 } from 'class-validator';
-import { Center } from '../entities/center.entity';
 
 export class UpdateCenterRequestDto {
   @ApiProperty({ description: 'Center name' })

@@ -12,4 +12,3 @@ export class UpdateUserProfileDto extends OmitType(CreateUserProfileDto, [
   'password',
   'profileType',
 ] as const) {}
-

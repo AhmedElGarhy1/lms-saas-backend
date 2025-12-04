@@ -6,4 +6,3 @@ export class UpdateUserProfileStatusDto {
   @IsBoolean()
   isActive: boolean;
 }
-

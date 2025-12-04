@@ -130,4 +130,3 @@ export class UserProfileRepository extends BaseRepository<UserProfile> {
     return savedEntity.id;
   }
 }
-

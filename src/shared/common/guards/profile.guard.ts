@@ -13,7 +13,6 @@ import {
   InactiveProfileException,
   ProfileSelectionRequiredException,
 } from '../exceptions/custom.exceptions';
-import { I18nPath } from '@/generated/i18n.generated';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 
 @Injectable()

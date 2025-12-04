@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RolePermission } from '../entities/role-permission.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { PermissionScope } from '@/modules/access-control/constants/permissions';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 

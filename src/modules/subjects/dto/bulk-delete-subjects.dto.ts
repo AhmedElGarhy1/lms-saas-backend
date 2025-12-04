@@ -15,4 +15,3 @@ export class BulkDeleteSubjectsDto {
   @IsUUID(4, { each: true, message: 'Each subject ID must be a valid UUID' })
   subjectIds: string[];
 }
-

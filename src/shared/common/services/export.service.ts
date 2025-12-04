@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Response } from 'express';
-import { I18nPath } from '@/generated/i18n.generated';
 import { ExportResponseDto } from '../dto/export-response.dto';
 import {
   ExportFormatNotSupportedException,

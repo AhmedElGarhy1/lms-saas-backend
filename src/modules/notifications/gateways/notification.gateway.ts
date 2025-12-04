@@ -3,7 +3,6 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  SubscribeMessage,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
@@ -157,9 +156,6 @@ export class NotificationGateway
         notification.type,
       );
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-
       // Track failed delivery (non-blocking)
       void this.metricsService
         .incrementFailed(NotificationChannel.IN_APP, notification.type)
@@ -189,17 +185,6 @@ export class NotificationGateway
    */
   async getUserSockets(userId: string): Promise<string[]> {
     return this.getActiveSockets(userId);
-  }
-
-  /**
-   * Handle read acknowledgment (optional - for future use)
-   */
-  @SubscribeMessage('notification:read')
-  handleReadAcknowledgment(
-    client: Socket,
-    data: { notificationId: string },
-  ): void {
-    // This is just acknowledgment - actual read status is updated via API
   }
 
   /**

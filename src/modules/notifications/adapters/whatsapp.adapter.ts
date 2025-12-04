@@ -65,8 +65,7 @@ export class WhatsAppAdapter
   async send(payload: WhatsAppNotificationPayload): Promise<void> {
     // Type system ensures channel is WHATSAPP, no runtime check needed
     const phoneNumber = payload.recipient;
-    const { templateName, templateLanguage, templateParameters } =
-      payload.data;
+    const { templateName, templateLanguage, templateParameters } = payload.data;
 
     // Validate template structure
     if (!templateName || !templateLanguage || !templateParameters) {
@@ -102,8 +101,8 @@ export class WhatsAppAdapter
       const result = await pTimeout(
         this.provider.sendMessage(phoneNumber, templateMessage),
         {
-        milliseconds: timeoutMs,
-        message: `WhatsApp send timeout after ${timeoutMs}ms`,
+          milliseconds: timeoutMs,
+          message: `WhatsApp send timeout after ${timeoutMs}ms`,
         },
       );
       const latency = Date.now() - startTime;

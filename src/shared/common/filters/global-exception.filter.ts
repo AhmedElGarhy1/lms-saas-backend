@@ -156,7 +156,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       errorResponse.message !== null &&
       'key' in errorResponse.message
     ) {
-      const translationMsg = errorResponse.message as TranslationMessage;
+      const translationMsg = errorResponse.message;
       const translatedMessage = this.translateMessage(translationMsg);
       // Convert to TranslatedErrorResponse type after translation
       const translatedResponse =
@@ -174,7 +174,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             detail.message !== null &&
             'key' in detail.message
           ) {
-            const translationMsg = detail.message as TranslationMessage;
+            const translationMsg = detail.message;
             const translatedMessage = this.translateMessage(translationMsg);
             return {
               field: detail.field,
@@ -258,7 +258,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   ): EnhancedErrorResponse {
     // Log the exception for debugging (system log - stays in English)
     if (exception instanceof Error) {
-      this.logger.error('Internal server error', exception.stack);
+      this.logger.error(
+        `Internal server error - ${exception.message}`,
+        exception.stack,
+      );
+    } else {
+      this.logger.error('Internal server error', String(exception));
     }
     // Store TranslationMessage object (translation happens in interceptor)
     const message: TranslationMessage = {
@@ -304,7 +309,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       typeof errorResponse.message === 'object' &&
       'key' in errorResponse.message
     ) {
-      const translationMsg = errorResponse.message as TranslationMessage;
+      const translationMsg = errorResponse.message;
       // If exception has translationKey, translate to English for logging
       if (exception instanceof HttpException) {
         const translatableException =
@@ -336,14 +341,36 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     };
 
     if (exception instanceof HttpException) {
-      this.logger.warn(
-        `HTTP Exception occurred - ${JSON.stringify(errorContext)}`,
-      );
+      // Check if there's an original error/stack preserved
+      const originalError = (exception as any).originalError;
+      const originalStack = (exception as any).originalStack;
+
+      if (originalStack || originalError) {
+        // Log with full stack trace if available
+        this.logger.error(
+          `HTTP Exception occurred - ${JSON.stringify(errorContext)}`,
+          originalStack ||
+            (originalError instanceof Error
+              ? originalError.stack
+              : String(originalError)),
+        );
+      } else if (exception instanceof Error && exception.stack) {
+        // Log with exception's own stack trace
+        this.logger.error(
+          `HTTP Exception occurred - ${JSON.stringify(errorContext)}`,
+          exception.stack,
+        );
+      } else {
+        // Fallback to warn if no stack trace available
+        this.logger.warn(
+          `HTTP Exception occurred - ${JSON.stringify(errorContext)}`,
+        );
+      }
     } else {
       if (exception instanceof Error) {
         this.logger.error(
           `Unexpected error occurred - ${JSON.stringify(errorContext)}`,
-          exception instanceof Error ? exception.stack : String(exception),
+          exception.stack || String(exception),
         );
       } else {
         this.logger.error(

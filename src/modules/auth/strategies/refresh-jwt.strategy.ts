@@ -10,7 +10,6 @@ import {
   AuthenticationFailedException,
   AccessDeniedException,
 } from '@/shared/common/exceptions/custom.exceptions';
-import { I18nPath } from '@/generated/i18n.generated';
 
 export interface RefreshJwtPayload {
   sub: string;
@@ -99,7 +98,9 @@ export class RefreshJwtStrategy extends PassportStrategy(
       } else if (error instanceof AuthenticationFailedException) {
         throw error;
       } else {
-        throw new AuthenticationFailedException('t.errors.tokenValidationFailed');
+        throw new AuthenticationFailedException(
+          't.errors.tokenValidationFailed',
+        );
       }
     }
   }

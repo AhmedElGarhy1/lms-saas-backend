@@ -1,13 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsArray,
-  IsUUID,
-  ArrayMinSize,
-  ArrayMaxSize,
-} from 'class-validator';
+import { IsArray, IsUUID, ArrayMinSize, ArrayMaxSize } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { Branch } from '@/modules/centers/entities/branch.entity';
-import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 
 export class BulkGrantBranchAccessDto {
   @ApiProperty({
@@ -34,4 +28,3 @@ export class BulkGrantBranchAccessDto {
   })
   userProfileIds: string[];
 }
-

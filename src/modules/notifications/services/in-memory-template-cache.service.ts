@@ -116,6 +116,4 @@ export class InMemoryTemplateCacheService extends BaseService {
       );
     }
   }
-
 }
-

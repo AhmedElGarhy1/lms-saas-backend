@@ -3,6 +3,7 @@ import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import validateTranslationKeys from './eslint-rules/validate-translation-keys.js';
 
 export default tseslint.config(
   {
@@ -25,10 +26,14 @@ export default tseslint.config(
     },
   },
   {
+    plugins: {
+      'validate-translation-keys': validateTranslationKeys,
+    },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
+      'validate-translation-keys/validate-translation-keys': 'error',
       // Prevent direct usage of EventEmitter2 - must use TypeSafeEventEmitter instead
       'no-restricted-imports': [
         'error',

@@ -11,7 +11,6 @@ import { RolesRepository } from '../repositories/roles.repository';
 import { AccessControlHelperService } from '../services/access-control-helper.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { I18nPath } from '@/generated/i18n.generated';
 
 @EventSubscriber()
 export class ProfileRoleSubscriber
@@ -59,7 +58,9 @@ export class ProfileRoleSubscriber
 
       if (profileRole.centerId) {
         if (profile?.profileType === ProfileType.ADMIN) {
-          throw new BusinessLogicException('t.errors.adminRoleCannotBeAssociatedWithCenter');
+          throw new BusinessLogicException(
+            't.errors.adminRoleCannotBeAssociatedWithCenter',
+          );
         } else if (profile?.profileType === ProfileType.STAFF) {
           // check center access
           await this.accessControlHelperService.validateCenterAccess({

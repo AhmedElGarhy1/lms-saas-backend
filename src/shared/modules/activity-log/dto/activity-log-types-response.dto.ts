@@ -90,5 +90,30 @@ export class ActivityLogTypesResponseDto {
     example: ['ADMIN_CREATED'],
   })
   admin: string[];
-}
 
+  @ApiProperty({
+    description: 'Class activity types',
+    type: [String],
+    example: [
+      'CLASS_CREATED',
+      'CLASS_UPDATED',
+      'CLASS_DELETED',
+      'CLASS_RESTORED',
+      'CLASS_EXPORTED',
+    ],
+  })
+  classes: string[];
+
+  @ApiProperty({
+    description: 'Group activity types',
+    type: [String],
+    example: [
+      'GROUP_CREATED',
+      'GROUP_UPDATED',
+      'GROUP_DELETED',
+      'GROUP_RESTORED',
+      'GROUP_EXPORTED',
+    ],
+  })
+  groups: string[];
+}

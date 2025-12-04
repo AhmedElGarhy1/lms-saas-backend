@@ -46,16 +46,38 @@ export class TranslationResponseInterceptor implements NestInterceptor {
         return this.translateResponse(data);
       }),
       catchError((error) => {
+        // Log the full error with stack trace for debugging
+        if (error instanceof Error) {
+          this.logger.error(
+            `Error intercepted in TranslationResponseInterceptor: ${error.message}`,
+            error.stack,
+          );
+        } else {
+          this.logger.error(
+            'Non-Error exception intercepted in TranslationResponseInterceptor',
+            String(error),
+          );
+        }
+
         // Translate error responses
         if (error instanceof HttpException) {
           const response = error.getResponse();
           const translated = this.translateErrorResponse(response);
+
           // Create a new HttpException with translated response
-          // Don't preserve the original exception's translationKey property
+          // Preserve the original stack trace by attaching it to the new exception
           const translatedException = new HttpException(
             translated,
             error.getStatus(),
           );
+
+          // Preserve the original stack trace for debugging
+          if (error.stack) {
+            // Attach original stack to the new exception
+            (translatedException as any).originalStack = error.stack;
+            (translatedException as any).originalError = error;
+          }
+
           return throwError(() => translatedException);
         }
         return throwError(() => error);

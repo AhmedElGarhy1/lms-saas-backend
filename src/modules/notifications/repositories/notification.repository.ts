@@ -4,7 +4,7 @@ import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { FindManyOptions, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { FindManyOptions, In, MoreThanOrEqual } from 'typeorm';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { GetInAppNotificationsDto } from '../dto/in-app-notification.dto';

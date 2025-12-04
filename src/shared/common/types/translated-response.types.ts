@@ -15,4 +15,3 @@ export interface TranslatedErrorResponse {
   details?: Array<Omit<ErrorDetail, 'message'> & { message: string }>; // Translated string
   debug?: any;
 }
-

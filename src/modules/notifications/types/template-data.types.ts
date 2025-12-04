@@ -1,5 +1,3 @@
-import { NotificationType } from '../enums/notification-type.enum';
-
 /**
  * Base template data structure
  */

@@ -28,4 +28,3 @@ export class BulkToggleBranchStatusDto {
   @IsBoolean()
   isActive: boolean;
 }
-

@@ -344,7 +344,7 @@ export class AccessControlService extends BaseService {
       throw new BusinessLogicException('t.errors.cannot.actionReason', {
         action: 't.common.buttons.delete',
         resource: 't.common.resources.centerAccess',
-        reason: 't.common.messages.unsupportedProfileType',
+        reason: 'Unsupported profile type',
       });
     }
 
@@ -430,7 +430,7 @@ export class AccessControlService extends BaseService {
       throw new BusinessLogicException('t.errors.cannot.actionReason', {
         action: 't.common.buttons.restore',
         resource: 't.common.resources.centerAccess',
-        reason: 't.common.messages.unsupportedProfileType',
+        reason: 'Unsupported profile type',
       });
     }
 
@@ -510,7 +510,7 @@ export class AccessControlService extends BaseService {
           ? 't.common.buttons.activate'
           : 't.common.buttons.deactivate',
         resource: 't.common.resources.centerAccess',
-        reason: 't.common.messages.unsupportedProfileType',
+        reason: 'Unsupported profile type',
       });
     }
 

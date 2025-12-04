@@ -33,7 +33,7 @@ export class BranchListener {
 
   @OnEvent(BranchEvents.CREATED)
   async handleBranchCreated(event: BranchCreatedEvent) {
-    const { branch, actor } = event;
+    const { branch } = event;
 
     // Log activity for branch creation
     // Object action (on branch), no specific user affected

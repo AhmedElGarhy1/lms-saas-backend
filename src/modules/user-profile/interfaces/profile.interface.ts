@@ -17,4 +17,3 @@ export interface ProfileResponse extends User {
   profileType: ProfileType;
   profile: Admin | Staff | Teacher | Student | null;
 }
-

@@ -3,4 +3,3 @@ export enum TeacherEvents {
   CREATED = 'teacher.created',
   EXPORTED = 'teacher.exported',
 }
-

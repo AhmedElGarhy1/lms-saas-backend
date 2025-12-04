@@ -3,17 +3,12 @@ import { Queue, Job } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { NotificationChannel } from '../../enums/notification-channel.enum';
 import { NotificationType } from '../../enums/notification-type.enum';
-import {
-  NotificationPayload,
-  EmailNotificationPayload,
-  SmsNotificationPayload,
-  WhatsAppNotificationPayload,
-  InAppNotificationPayload,
-  PushNotificationPayload,
-} from '../../types/notification-payload.interface';
+import { NotificationPayload } from '../../types/notification-payload.interface';
 import { NotificationJobData } from '../../types/notification-job-data.interface';
-import { NotificationManifest } from '../../manifests/types/manifest.types';
-import { RenderedNotification } from '../../manifests/types/manifest.types';
+import {
+  NotificationManifest,
+  RenderedNotification,
+} from '../../manifests/types/manifest.types';
 import { NotificationTemplateData } from '../../types/template-data.types';
 import { NotificationSenderService } from '../notification-sender.service';
 import { InAppNotificationService } from '../in-app-notification.service';
@@ -25,7 +20,6 @@ import { ChannelRetryStrategyService } from '../channel-retry-strategy.service';
 import { RecipientValidationService } from '../recipient-validation.service';
 import { PayloadBuilderService } from '../payload-builder.service';
 import { BaseService } from '@/shared/common/services/base.service';
-import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import {
   QUEUE_CONSTANTS,
   STRING_CONSTANTS,
@@ -230,37 +224,37 @@ export class NotificationRouterService extends BaseService {
           },
         };
       } else {
-      const cacheKey = this.getTemplateCacheKey(
-        mapping.type,
-        channel,
-        locale,
-        templateData as Record<string, unknown>,
-        audience,
-      );
-
-      if (preRenderedCache && preRenderedCache.has(cacheKey)) {
-        // Use pre-rendered content from cache (bulk optimization)
-        rendered = preRenderedCache.get(cacheKey)!;
-        this.logger.debug(
-          `Using pre-rendered template from cache: ${cacheKey}`,
-          {
-            notificationType: mapping.type,
-            channel,
-            locale,
-          },
-        );
-      } else {
-        // Render template (normal flow or cache miss)
-        rendered = await this.renderer.render(
+        const cacheKey = this.getTemplateCacheKey(
           mapping.type,
           channel,
-          templateData as Record<string, unknown>,
           locale,
+          templateData as Record<string, unknown>,
           audience,
         );
-        // Store in cache if provided
-        if (preRenderedCache) {
-          preRenderedCache.set(cacheKey, rendered);
+
+        if (preRenderedCache && preRenderedCache.has(cacheKey)) {
+          // Use pre-rendered content from cache (bulk optimization)
+          rendered = preRenderedCache.get(cacheKey)!;
+          this.logger.debug(
+            `Using pre-rendered template from cache: ${cacheKey}`,
+            {
+              notificationType: mapping.type,
+              channel,
+              locale,
+            },
+          );
+        } else {
+          // Render template (normal flow or cache miss)
+          rendered = await this.renderer.render(
+            mapping.type,
+            channel,
+            templateData as Record<string, unknown>,
+            locale,
+            audience,
+          );
+          // Store in cache if provided
+          if (preRenderedCache) {
+            preRenderedCache.set(cacheKey, rendered);
           }
         }
       }

@@ -5,7 +5,6 @@ import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import {
   CreateCenterEvent,
   CreateCenterOwnerEvent,
-  AssignCenterOwnerEvent,
   CreateCenterBranchEvent,
 } from '@/modules/centers/events/center.events';
 import { CenterEvents } from '@/shared/events/center.events.enum';

@@ -7,4 +7,4 @@ import { EventType } from '@/shared/events';
  * All handlers now use trigger() directly with NotificationType.
  * This type is kept for backward compatibility but is now a simple passthrough.
  */
-export type ValidateEvent<TEvent, TEventType extends EventType> = TEvent;
+export type ValidateEvent<TEvent> = TEvent;

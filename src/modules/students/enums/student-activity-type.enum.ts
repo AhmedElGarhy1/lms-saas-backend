@@ -2,4 +2,3 @@ export enum StudentActivityType {
   STUDENT_CREATED = 'STUDENT_CREATED',
   STUDENT_EXPORTED = 'STUDENT_EXPORTED',
 }
-
