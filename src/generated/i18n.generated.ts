@@ -526,6 +526,7 @@ export type I18nTranslations = {
                 "address": string;
                 "locale": string;
                 "logo": string;
+                "student": string;
                 "all": string;
                 "loading": string;
                 "error": string;
