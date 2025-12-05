@@ -14,6 +14,7 @@ import {
 } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { ValidationHelpers } from '../utils/validation-helpers';
 
 @Injectable()
 export class GroupValidationService extends BaseService {
@@ -40,23 +41,12 @@ export class GroupValidationService extends BaseService {
     // Validate schedule items are within class date range
     this.validateScheduleWithinClassDateRange(dto.scheduleItems, classEntity);
 
-    // Check for duplicate student assignments
-    const uniqueStudentIds = new Set(dto.studentUserProfileIds);
-    if (uniqueStudentIds.size !== dto.studentUserProfileIds.length) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
-        reason: 'Duplicate student assignments are not allowed',
-      });
-    }
-
     // Check for teacher schedule conflicts
     await this.scheduleService.checkTeacherScheduleConflicts(
       classEntity.teacherUserProfileId,
       dto.scheduleItems,
       undefined,
     );
-
-    // Validate students
-    await this.validateStudents(dto.studentUserProfileIds, centerId);
 
     return classEntity;
   }
@@ -93,19 +83,6 @@ export class GroupValidationService extends BaseService {
       );
     }
 
-    // Validate students if provided
-    if (dto.studentUserProfileIds) {
-      // Check for duplicate student assignments
-      const uniqueStudentIds = new Set(dto.studentUserProfileIds);
-      if (uniqueStudentIds.size !== dto.studentUserProfileIds.length) {
-        throw new BusinessLogicException('t.errors.validationFailed', {
-          reason: 'Duplicate student assignments are not allowed',
-        });
-      }
-
-      await this.validateStudents(dto.studentUserProfileIds, centerId);
-    }
-
     return classEntity;
   }
 
@@ -115,13 +92,12 @@ export class GroupValidationService extends BaseService {
   ): Promise<Class> {
     const classEntity =
       await this.classesRepository.findClassWithRelations(classId);
-    if (!classEntity || classEntity.centerId !== centerId) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.class',
-        identifier: 'ID',
-        value: classId,
-      });
-    }
+    ValidationHelpers.validateResourceExistsAndBelongsToCenter(
+      classEntity,
+      classId,
+      centerId,
+      't.common.resources.class',
+    );
     return classEntity;
   }
 

@@ -331,6 +331,8 @@
       "pleaseWaitLoading": "Please wait while we load {resource}...",
       "unexpectedErrorOccurred": "An unexpected error occurred while rendering this component",
       "assignedToBranch": "assigned to branch",
+      "assignedToGroup": "assigned to group",
+      "assignedToClass": "already assigned to a group in this class",
       "enabled": "enabled",
       "centerAccessNotDeleted": "Center access is not deleted",
       "profileNotDeleted": "User profile is not deleted",
@@ -752,6 +754,7 @@
     "incorrect": {
       "field": "{field} is incorrect"
     },
+    "studentScheduleConflict": "Student has a schedule conflict on {day} at {time}",
     "denied": {
       "access": "Access denied to {resource}"
     },
@@ -1026,6 +1029,7 @@
     "bulkRevokeBranchAccess": "Bulk revoke branch access completed successfully",
     "bulkGrantUserAccess": "Bulk grant user access completed successfully",
     "bulkRevokeUserAccess": "Bulk revoke user access completed successfully",
+    "bulkAssignStudentsToGroup": "Bulk assign students to group completed successfully",
     "activityLogTypesRetrieved": "Activity log types retrieved successfully"
   },
   "system": {

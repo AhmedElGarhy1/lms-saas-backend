@@ -1,5 +1,7 @@
 import { Group } from '../entities/group.entity';
 import { ExportMapper } from '@/shared/common/services/export.service';
+import { Class } from '../entities/class.entity';
+import { Branch } from '@/modules/centers/entities/branch.entity';
 
 export interface GroupExportData {
   id: string;
@@ -22,11 +24,14 @@ export class GroupExportMapper implements ExportMapper<Group, GroupExportData> {
             .join(', ')
         : '';
 
+    const classEntity = group.class as Class | undefined;
+    const branch = group.branch as Branch | undefined;
+
     return {
       id: group.id,
       name: group.name || '',
-      className: (group.class as any)?.name || '',
-      branchName: (group.branch as any)?.name || '',
+      className: classEntity?.name || '',
+      branchName: branch?.location || '',
       studentCount: group.groupStudents?.length || 0,
       scheduleSummary: scheduleSummary,
       createdAt: group.createdAt?.toISOString() || '',

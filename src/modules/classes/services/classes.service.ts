@@ -40,23 +40,12 @@ export class ClassesService extends BaseService {
   async getClass(classId: string, actor: ActorUser): Promise<Class> {
     const classEntity =
       await this.classesRepository.findClassWithRelations(classId);
-
-    if (!classEntity) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.class',
-        identifier: 'ID',
-        value: classId,
-      });
-    }
-
-    if (classEntity.centerId !== actor.centerId) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.class',
-        identifier: 'ID',
-        value: classId,
-      });
-    }
-
+    this.validateResourceAccess(
+      classEntity,
+      classId,
+      actor,
+      't.common.resources.class',
+    );
     return classEntity;
   }
 
@@ -112,7 +101,7 @@ export class ClassesService extends BaseService {
 
   private async loadClassWithRelationsAndEmit(
     classId: string,
-    event: ClassEvents,
+    event: ClassEvents.CREATED | ClassEvents.UPDATED,
     eventFactory: (classEntity: Class) => ClassCreatedEvent | ClassUpdatedEvent,
   ): Promise<Class> {
     const classWithRelations =
@@ -127,10 +116,20 @@ export class ClassesService extends BaseService {
     }
 
     const eventInstance = eventFactory(classWithRelations);
-    await this.typeSafeEventEmitter.emitAsync(
-      event as any,
-      eventInstance as any,
-    );
+    
+    // Type-safe event emission - TypeScript can't infer the exact mapping,
+    // but we know the eventFactory returns the correct type for the event
+    if (event === ClassEvents.CREATED) {
+      await this.typeSafeEventEmitter.emitAsync(
+        ClassEvents.CREATED,
+        eventInstance as ClassCreatedEvent,
+      );
+    } else {
+      await this.typeSafeEventEmitter.emitAsync(
+        ClassEvents.UPDATED,
+        eventInstance as ClassUpdatedEvent,
+      );
+    }
 
     return classWithRelations;
   }
@@ -211,21 +210,12 @@ export class ClassesService extends BaseService {
   async restoreClass(classId: string, actor: ActorUser): Promise<void> {
     const classEntity =
       await this.classesRepository.findOneSoftDeletedById(classId);
-    if (!classEntity) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.class',
-        identifier: 'ID',
-        value: classId,
-      });
-    }
-
-    if (classEntity.centerId !== actor.centerId) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.class',
-        identifier: 'ID',
-        value: classId,
-      });
-    }
+    this.validateResourceAccess(
+      classEntity,
+      classId,
+      actor,
+      't.common.resources.class',
+    );
 
     await this.classesRepository.restore(classId);
 
@@ -240,7 +230,7 @@ export class ClassesService extends BaseService {
 
     await this.typeSafeEventEmitter.emitAsync(
       ClassEvents.RESTORED,
-      new ClassRestoredEvent(restoredClass, actor, actor.centerId),
+      new ClassRestoredEvent(restoredClass, actor, actor.centerId!),
     );
   }
 }

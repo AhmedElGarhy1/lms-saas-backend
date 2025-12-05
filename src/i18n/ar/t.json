@@ -332,6 +332,8 @@
       "pleaseWaitLoading": "يرجى الانتظار بينما نقوم بتحميل {resource}...",
       "unexpectedErrorOccurred": "حدث خطأ غير متوقع أثناء عرض هذا المكون",
       "assignedToBranch": "معين للفرع",
+      "assignedToGroup": "معين للمجموعة",
+      "assignedToClass": "معين بالفعل لمجموعة في هذا الفصل",
       "enabled": "مفعل",
       "centerAccessNotDeleted": "صلاحية الوصول للمركز غير محذوفة",
       "profileNotDeleted": "الملف الشخصي للمستخدم غير محذوف",
@@ -752,6 +754,7 @@
     "incorrect": {
       "field": "{field} غير صحيح"
     },
+    "studentScheduleConflict": "الطالب لديه تعارض في الجدول الزمني يوم {day} في الساعة {time}",
     "denied": {
       "access": "تم رفض الوصول إلى {resource}"
     },
@@ -1026,6 +1029,7 @@
     "bulkRevokeUserAccess": "تم إكمال إلغاء صلاحية الوصول للمستخدم بشكل مجمع بنجاح",
     "bulkGrantBranchAccess": "تم إكمال منح صلاحية الوصول للفرع بشكل مجمع بنجاح",
     "bulkRevokeBranchAccess": "تم إكمال إلغاء صلاحية الوصول للفرع بشكل مجمع بنجاح",
+    "bulkAssignStudentsToGroup": "تم إكمال تعيين الطلاب للمجموعة بشكل مجمع بنجاح",
     "activityLogTypesRetrieved": "تم استرجاع أنواع سجل النشاط بنجاح",
     "found": "تم العثور على {resource} بنجاح"
   },

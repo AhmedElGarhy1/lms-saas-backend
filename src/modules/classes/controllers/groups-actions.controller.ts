@@ -17,6 +17,7 @@ import { BulkOperationService } from '@/shared/common/services/bulk-operation.se
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
 import { BulkDeleteGroupsDto } from '../dto/bulk-delete-groups.dto';
 import { BulkRestoreGroupsDto } from '../dto/bulk-restore-groups.dto';
+import { BulkAssignStudentsToGroupDto } from '../dto/bulk-assign-students-to-group.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { ExportService } from '@/shared/common/services/export.service';
 import { GroupExportMapper } from '../mappers/group-export.mapper';
@@ -134,5 +135,30 @@ export class GroupsActionsController {
     return ControllerResponse.success(result, 't.success.bulkRestore', {
       resource: 't.common.resources.group',
     });
+  }
+
+  @Post('bulk/assign-students')
+  @ApiOperation({ summary: 'Bulk assign students to a group' })
+  @ApiBody({ type: BulkAssignStudentsToGroupDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Bulk assignment completed',
+    type: BulkOperationResultDto,
+  })
+  @Permissions(PERMISSIONS.GROUPS.UPDATE)
+  @Transactional()
+  async bulkAssignStudentsToGroup(
+    @Body() dto: BulkAssignStudentsToGroupDto,
+    @GetUser() actor: ActorUser,
+  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+    const result = await this.groupsService.bulkAssignStudentsToGroup(
+      dto.groupId,
+      dto.userProfileIds,
+      actor,
+    );
+    return ControllerResponse.success(
+      result,
+      't.success.bulkAssignStudentsToGroup',
+    );
   }
 }

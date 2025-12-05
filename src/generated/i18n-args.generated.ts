@@ -90,6 +90,7 @@ export type TranslationArgs = {
   't.errors.rateLimit.tooManyRequestsWithTime': { time: string };
   't.errors.required.field': { field: string };
   't.errors.required.oneOf': { field1: string; field2: string };
+  't.errors.studentScheduleConflict': { day: string; time: string };
   't.overlay.phoneVerification.resendCooldown': { seconds: string };
   't.pagination.pageOf': { current: string; total: string };
   't.pagination.selectedRows': { selected: string; total: string };

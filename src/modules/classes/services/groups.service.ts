@@ -9,7 +9,10 @@ import { GroupStudentsRepository } from '../repositories/group-students.reposito
 import { GroupValidationService } from './group-validation.service';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import {
+  ResourceNotFoundException,
+  BusinessLogicException,
+} from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Group } from '../entities/group.entity';
 import { Class } from '../entities/class.entity';
@@ -21,6 +24,9 @@ import {
   GroupDeletedEvent,
   GroupRestoredEvent,
 } from '../events/group.events';
+import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
+import { ScheduleService } from './schedule.service';
+import { ScheduleItemDto } from '../dto/schedule-item.dto';
 
 @Injectable()
 export class GroupsService extends BaseService {
@@ -31,6 +37,8 @@ export class GroupsService extends BaseService {
     private readonly groupStudentsRepository: GroupStudentsRepository,
     private readonly groupValidationService: GroupValidationService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly bulkOperationService: BulkOperationService,
+    private readonly scheduleService: ScheduleService,
   ) {
     super();
   }
@@ -44,23 +52,12 @@ export class GroupsService extends BaseService {
 
   async getGroup(groupId: string, actor: ActorUser): Promise<Group> {
     const group = await this.groupsRepository.findGroupWithRelations(groupId);
-
-    if (!group) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.group',
-        identifier: 'ID',
-        value: groupId,
-      });
-    }
-
-    if (group.centerId !== actor.centerId) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.group',
-        identifier: 'ID',
-        value: groupId,
-      });
-    }
-
+    this.validateResourceAccess(
+      group,
+      groupId,
+      actor,
+      't.common.resources.group',
+    );
     return group;
   }
 
@@ -80,12 +77,6 @@ export class GroupsService extends BaseService {
 
     // Create schedule items
     await this.createScheduleItems(group.id, createGroupDto.scheduleItems);
-
-    // Assign students
-    await this.assignStudentsToGroup(
-      group.id,
-      createGroupDto.studentUserProfileIds,
-    );
 
     // Load group with relations and emit event
     const createdGroup = await this.getGroup(group.id, actor);
@@ -117,13 +108,122 @@ export class GroupsService extends BaseService {
     await this.scheduleItemsRepository.bulkCreate(groupId, scheduleItems);
   }
 
-  private async assignStudentsToGroup(
+  /**
+   * Assigns a student to a group with comprehensive validation.
+   * Performs the following validations:
+   * 1. Group exists and actor has access
+   * 2. Student is not already assigned to this group
+   * 3. Student profile exists and is of type STUDENT
+   * 4. Student has center access
+   * 5. Student is not already in another group of the same class
+   * 6. Student's schedule doesn't conflict with other assigned groups
+   *
+   * @param groupId - The group ID to assign the student to
+   * @param userProfileId - The student's user profile ID
+   * @param actor - The user performing the action
+   * @throws ResourceNotFoundException if group doesn't exist or actor lacks access
+   * @throws BusinessLogicException if student is already assigned, wrong profile type, or schedule conflict
+   */
+  async assignStudentToGroup(
     groupId: string,
-    studentUserProfileIds: string[],
+    userProfileId: string,
+    actor: ActorUser,
   ): Promise<void> {
-    await this.groupStudentsRepository.bulkAssign(
+    // Verify group exists and actor has access
+    const group = await this.getGroup(groupId, actor);
+
+    // Get existing students
+    const existingStudents =
+      await this.groupStudentsRepository.findByGroupId(groupId);
+    const existingStudentIds = existingStudents.map(
+      (gs) => gs.studentUserProfileId,
+    );
+
+    // Check if already assigned
+    if (existingStudentIds.includes(userProfileId)) {
+      throw new BusinessLogicException('t.errors.already.is', {
+        resource: 't.common.labels.student',
+        state: 't.common.messages.assignedToGroup',
+      });
+    }
+
+    // Validate student (with branch access)
+    await this.groupValidationService.validateStudents(
+      [userProfileId],
+      actor.centerId!,
+    );
+
+    // Check if student is already in another group of the same class
+    const classCheck =
+      await this.groupStudentsRepository.isStudentInAnotherGroupOfSameClass(
+        userProfileId,
+        group.classId,
+        undefined, // Not excluding any group (new assignment)
+      );
+
+    if (classCheck.isInAnotherGroup) {
+      throw new BusinessLogicException('t.errors.already.is', {
+        resource: 't.common.labels.student',
+        state: 't.common.messages.assignedToClass',
+      });
+    }
+
+    // Check for schedule conflicts with other groups the student is assigned to
+    if (group.scheduleItems && group.scheduleItems.length > 0) {
+      const scheduleItems: ScheduleItemDto[] = group.scheduleItems.map(
+        (item) => ({
+          day: item.day,
+          startTime: item.startTime,
+          endTime: item.endTime,
+        }),
+      );
+
+      await this.scheduleService.checkStudentScheduleConflicts(
+        userProfileId,
+        scheduleItems,
+        undefined, // Not excluding any group (new assignment)
+      );
+    }
+
+    // Create assignment
+    await this.groupStudentsRepository.create({
       groupId,
-      studentUserProfileIds,
+      studentUserProfileId: userProfileId,
+    });
+  }
+
+  /**
+   * Bulk assigns multiple students to a group.
+   * Uses BulkOperationService for consistent error handling and reporting.
+   *
+   * @param groupId - The group ID to assign students to
+   * @param userProfileIds - Array of student user profile IDs
+   * @param actor - The user performing the action
+   * @returns BulkOperationResult with success/failure details for each student
+   * @throws BusinessLogicException if userProfileIds array is empty
+   */
+  async bulkAssignStudentsToGroup(
+    groupId: string,
+    userProfileIds: string[],
+    actor: ActorUser,
+  ) {
+    // Validate input
+    if (!userProfileIds || userProfileIds.length === 0) {
+      throw new BusinessLogicException('t.errors.validationFailed', {
+        reason: 'At least one student user profile ID is required',
+      });
+    }
+
+    // Verify group exists and actor has access
+    await this.getGroup(groupId, actor);
+
+    // Use bulk operation service for consistent error handling
+    return await this.bulkOperationService.executeBulk(
+      userProfileIds,
+      async (userProfileId: string) => {
+        await this.assignStudentToGroup(groupId, userProfileId, actor);
+        return { id: userProfileId };
+      },
     );
   }
 
@@ -153,11 +253,6 @@ export class GroupsService extends BaseService {
       await this.updateScheduleItems(groupId, data.scheduleItems);
     }
 
-    // Update student assignments if provided
-    if (data.studentUserProfileIds) {
-      await this.updateStudentAssignments(groupId, data.studentUserProfileIds);
-    }
-
     // Load updated group and emit event
     const updatedGroup = await this.getGroup(groupId, actor);
 
@@ -180,16 +275,6 @@ export class GroupsService extends BaseService {
     );
   }
 
-  private async updateStudentAssignments(
-    groupId: string,
-    studentUserProfileIds: string[],
-  ): Promise<void> {
-    await this.groupStudentsRepository.bulkAssign(
-      groupId,
-      studentUserProfileIds,
-    );
-  }
-
   async deleteGroup(groupId: string, actor: ActorUser): Promise<void> {
     await this.getGroup(groupId, actor);
     await this.groupsRepository.softRemove(groupId);
@@ -202,21 +287,12 @@ export class GroupsService extends BaseService {
 
   async restoreGroup(groupId: string, actor: ActorUser): Promise<void> {
     const group = await this.groupsRepository.findOneSoftDeletedById(groupId);
-    if (!group) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.group',
-        identifier: 'ID',
-        value: groupId,
-      });
-    }
-
-    if (group.centerId !== actor.centerId) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.group',
-        identifier: 'ID',
-        value: groupId,
-      });
-    }
+    this.validateResourceAccess(
+      group,
+      groupId,
+      actor,
+      't.common.resources.group',
+    );
 
     await this.groupsRepository.restore(groupId);
 
@@ -231,47 +307,30 @@ export class GroupsService extends BaseService {
 
     await this.typeSafeEventEmitter.emitAsync(
       GroupEvents.RESTORED,
-      new GroupRestoredEvent(restoredGroup, actor, actor.centerId),
+      new GroupRestoredEvent(restoredGroup, actor, actor.centerId!),
     );
   }
 
-  async addStudentsToGroup(
-    groupId: string,
-    studentUserProfileIds: string[],
-    actor: ActorUser,
-  ): Promise<void> {
-    // Get existing students
-    const existingStudents =
-      await this.groupStudentsRepository.findByGroupId(groupId);
-    const existingStudentIds = existingStudents.map(
-      (gs) => gs.studentUserProfileId,
-    );
-
-    // Add new students (avoid duplicates)
-    const newStudentIds = studentUserProfileIds.filter(
-      (id) => !existingStudentIds.includes(id),
-    );
-
-    // Validate new students (with branch access)
-    await this.groupValidationService.validateStudents(
-      newStudentIds,
-      actor.centerId!,
-    );
-
-    // Create new assignments
-    for (const studentUserProfileId of newStudentIds) {
-      await this.groupStudentsRepository.create({
-        groupId,
-        studentUserProfileId,
-      });
-    }
-  }
-
+  /**
+   * Removes multiple students from a group.
+   *
+   * @param groupId - The group ID to remove students from
+   * @param studentUserProfileIds - Array of student user profile IDs to remove
+   * @param actor - The user performing the action
+   * @throws BusinessLogicException if studentUserProfileIds array is empty
+   */
   async removeStudentsFromGroup(
     groupId: string,
     studentUserProfileIds: string[],
     actor: ActorUser,
   ): Promise<void> {
+    // Validate input
+    if (!studentUserProfileIds || studentUserProfileIds.length === 0) {
+      throw new BusinessLogicException('t.errors.validationFailed', {
+        reason: 'At least one student user profile ID is required',
+      });
+    }
+
     await this.getGroup(groupId, actor);
 
     // Remove students

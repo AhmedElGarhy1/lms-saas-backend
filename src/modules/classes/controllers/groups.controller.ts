@@ -10,7 +10,13 @@ import {
   Query,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
 import { Transactional } from '@nestjs-cls/transactional';
 import { GroupsService } from '../services/groups.service';
 import { CreateGroupDto } from '../dto/create-group.dto';
@@ -24,8 +30,10 @@ import { UpdateApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { SerializeOptions } from '@nestjs/common';
 import { GroupResponseDto } from '../dto/group-response.dto';
-import { AddStudentsToGroupDto } from '../dto/add-students-to-group.dto';
+import { AssignStudentToGroupDto } from '../dto/assign-student-to-group.dto';
 import { RemoveStudentsFromGroupDto } from '../dto/remove-students-from-group.dto';
+import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
+import { CreateApiResponses } from '@/shared/common/decorators';
 
 @ApiTags('Groups')
 @Controller('groups')
@@ -156,23 +164,24 @@ export class GroupsController {
     });
   }
 
-  @Post(':groupId/students')
-  @ApiOperation({ summary: 'Add students to a group' })
+  @Post(':groupId/students/assign')
+  @CreateApiResponses('Assign a student to a group')
   @ApiParam({ name: 'groupId', description: 'Group ID' })
+  @ApiBody({ type: AssignStudentToGroupDto })
   @ApiResponse({
     status: 200,
-    description: 'Students added successfully',
+    description: 'Student assigned successfully',
   })
   @Permissions(PERMISSIONS.GROUPS.UPDATE)
   @Transactional()
-  async addStudentsToGroup(
+  async assignStudentToGroup(
     @Param('groupId', ParseUUIDPipe) groupId: string,
-    @Body() dto: AddStudentsToGroupDto,
+    @Body() dto: AssignStudentToGroupDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.groupsService.addStudentsToGroup(
+    await this.groupsService.assignStudentToGroup(
       groupId,
-      dto.studentUserProfileIds,
+      dto.userProfileId,
       actor,
     );
     return ControllerResponse.message('t.success.update', {

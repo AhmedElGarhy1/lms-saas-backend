@@ -13,6 +13,7 @@ import {
 } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { ValidationHelpers } from '../utils/validation-helpers';
 
 @Injectable()
 export class ClassValidationService extends BaseService {
@@ -72,37 +73,34 @@ export class ClassValidationService extends BaseService {
     // Validate level if provided
     if (dto.levelId) {
       const level = await this.levelsRepository.findOne(dto.levelId);
-      if (!level || level.centerId !== centerId) {
-        throw new ResourceNotFoundException('t.errors.notFound.withId', {
-          resource: 't.common.resources.level',
-          identifier: 'ID',
-          value: dto.levelId,
-        });
-      }
+      ValidationHelpers.validateResourceExistsAndBelongsToCenter(
+        level,
+        dto.levelId,
+        centerId,
+        't.common.resources.level',
+      );
     }
 
     // Validate subject if provided
     if (dto.subjectId) {
       const subject = await this.subjectsRepository.findOne(dto.subjectId);
-      if (!subject || subject.centerId !== centerId) {
-        throw new ResourceNotFoundException('t.errors.notFound.withId', {
-          resource: 't.common.resources.subject',
-          identifier: 'ID',
-          value: dto.subjectId,
-        });
-      }
+      ValidationHelpers.validateResourceExistsAndBelongsToCenter(
+        subject,
+        dto.subjectId,
+        centerId,
+        't.common.resources.subject',
+      );
     }
 
     // Validate branch if provided
     if (dto.branchId) {
       const branch = await this.branchesRepository.findOne(dto.branchId);
-      if (!branch || branch.centerId !== centerId) {
-        throw new ResourceNotFoundException('t.errors.notFound.withId', {
-          resource: 't.common.resources.branch',
-          identifier: 'ID',
-          value: dto.branchId,
-        });
-      }
+      ValidationHelpers.validateResourceExistsAndBelongsToCenter(
+        branch,
+        dto.branchId,
+        centerId,
+        't.common.resources.branch',
+      );
     }
   }
 

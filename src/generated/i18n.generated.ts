@@ -719,6 +719,8 @@ export type I18nTranslations = {
                 "pleaseWaitLoading": string;
                 "unexpectedErrorOccurred": string;
                 "assignedToBranch": string;
+                "assignedToGroup": string;
+                "assignedToClass": string;
                 "enabled": string;
                 "centerAccessNotDeleted": string;
                 "profileNotDeleted": string;
@@ -1139,6 +1141,7 @@ export type I18nTranslations = {
             "incorrect": {
                 "field": string;
             };
+            "studentScheduleConflict": string;
             "denied": {
                 "access": string;
             };
@@ -1413,6 +1416,7 @@ export type I18nTranslations = {
             "bulkRevokeUserAccess": string;
             "bulkGrantBranchAccess": string;
             "bulkRevokeBranchAccess": string;
+            "bulkAssignStudentsToGroup": string;
             "activityLogTypesRetrieved": string;
             "found": string;
         };

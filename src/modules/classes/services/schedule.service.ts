@@ -4,13 +4,23 @@ import { ScheduleItemDto } from '../dto/schedule-item.dto';
 import { DayOfWeek } from '../enums/day-of-week.enum';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ClassesRepository } from '../repositories/classes.repository';
+import { GroupStudentsRepository } from '../repositories/group-students.repository';
 
 @Injectable()
 export class ScheduleService extends BaseService {
-  constructor(private readonly classesRepository: ClassesRepository) {
+  constructor(
+    private readonly classesRepository: ClassesRepository,
+    private readonly groupStudentsRepository: GroupStudentsRepository,
+  ) {
     super();
   }
 
+  /**
+   * Validates schedule items for format, time ranges, and overlaps.
+   *
+   * @param items - Array of schedule items to validate
+   * @throws BusinessLogicException if items are empty, invalid format, or have overlaps
+   */
   validateScheduleItems(items: ScheduleItemDto[]): void {
     if (!items || items.length === 0) {
       throw new BusinessLogicException('t.errors.validationFailed', {
@@ -115,46 +125,72 @@ export class ScheduleService extends BaseService {
   }
 
   /**
-   * Check for teacher schedule conflicts across all groups
+   * Check for teacher schedule conflicts across all groups.
+   * Validates that a teacher's new schedule items don't overlap with existing schedules
+   * in other groups they're assigned to.
+   *
+   * @param teacherUserProfileId - The teacher's user profile ID
+   * @param scheduleItems - New schedule items to check for conflicts
+   * @param excludeGroupId - Optional group ID to exclude from conflict check (for updates)
+   * @throws BusinessLogicException if a schedule conflict is detected
    */
   async checkTeacherScheduleConflicts(
     teacherUserProfileId: string,
     scheduleItems: ScheduleItemDto[],
     excludeGroupId?: string,
   ): Promise<void> {
-    // Get all classes where this teacher is assigned
-    const classes =
-      await this.classesRepository.findClassesByTeacher(teacherUserProfileId);
+    const items = scheduleItems.map((item) => ({
+      day: item.day,
+      startTime: item.startTime,
+      endTime: item.endTime,
+    }));
 
-    // Check for conflicts
-    for (const classEntity of classes) {
-      if (classEntity.groups) {
-        for (const group of classEntity.groups) {
-          // Skip the group being updated
-          if (excludeGroupId && group.id === excludeGroupId) {
-            continue;
-          }
+    const conflict = await this.classesRepository.hasTeacherScheduleConflict(
+      teacherUserProfileId,
+      items,
+      excludeGroupId,
+    );
 
-          if (group.scheduleItems) {
-            for (const existingItem of group.scheduleItems) {
-              for (const newItem of scheduleItems) {
-                // Check if same day and overlapping times
-                if (
-                  existingItem.day === newItem.day &&
-                  this.scheduleItemsOverlap(existingItem, newItem)
-                ) {
-                  throw new BusinessLogicException(
-                    't.errors.validationFailed',
-                    {
-                      reason: `Teacher has a schedule conflict on ${newItem.day} at ${newItem.startTime}-${newItem.endTime}`,
-                    },
-                  );
-                }
-              }
-            }
-          }
-        }
-      }
+    if (conflict.hasConflict) {
+      throw new BusinessLogicException('t.errors.validationFailed', {
+        reason: `Teacher has a schedule conflict on ${conflict.conflictDay} at ${conflict.conflictTime}`,
+      });
+    }
+  }
+
+  /**
+   * Check for student schedule conflicts across all groups.
+   * Validates that a student's new schedule items don't overlap with existing schedules
+   * in other groups they're assigned to.
+   *
+   * @param studentUserProfileId - The student's user profile ID
+   * @param newGroupScheduleItems - New schedule items from the group being assigned
+   * @param excludeGroupId - Optional group ID to exclude from conflict check (for updates)
+   * @throws BusinessLogicException if a schedule conflict is detected
+   */
+  async checkStudentScheduleConflicts(
+    studentUserProfileId: string,
+    newGroupScheduleItems: ScheduleItemDto[],
+    excludeGroupId?: string,
+  ): Promise<void> {
+    const items = newGroupScheduleItems.map((item) => ({
+      day: item.day,
+      startTime: item.startTime,
+      endTime: item.endTime,
+    }));
+
+    const conflict =
+      await this.groupStudentsRepository.hasStudentScheduleConflict(
+        studentUserProfileId,
+        items,
+        excludeGroupId,
+      );
+
+    if (conflict.hasConflict) {
+      throw new BusinessLogicException('t.errors.studentScheduleConflict', {
+        day: conflict.conflictDay || 'unknown',
+        time: conflict.conflictTime || 'unknown',
+      });
     }
   }
 }

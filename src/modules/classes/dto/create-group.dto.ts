@@ -39,13 +39,4 @@ export class CreateGroupDto {
   @ValidateNested({ each: true })
   @Type(() => ScheduleItemDto)
   scheduleItems: ScheduleItemDto[];
-
-  @ApiProperty({
-    description: 'Student user profile IDs',
-    type: [String],
-    example: ['uuid1', 'uuid2'],
-  })
-  @IsArray()
-  @IsUUID(4, { each: true })
-  studentUserProfileIds: string[];
 }
