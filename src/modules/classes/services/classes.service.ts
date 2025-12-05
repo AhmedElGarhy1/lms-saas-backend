@@ -116,7 +116,7 @@ export class ClassesService extends BaseService {
     }
 
     const eventInstance = eventFactory(classWithRelations);
-    
+
     // Type-safe event emission - TypeScript can't infer the exact mapping,
     // but we know the eventFactory returns the correct type for the event
     if (event === ClassEvents.CREATED) {

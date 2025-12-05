@@ -34,13 +34,11 @@ export class ActivityLogController {
     status: 200,
     description: 'Activity logs retrieved successfully',
   })
-  async getActivityLogs(
+  getActivityLogs(
     @Query() query: PaginateActivityLogsDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.activityLogService.getActivityLogs(query, actor);
-
-    return result;
+    return this.activityLogService.getActivityLogs(query, actor);
   }
 
   @Get('export')

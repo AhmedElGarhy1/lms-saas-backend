@@ -59,7 +59,7 @@ export class ClassesActionsController {
     const baseFilename = query.filename || 'classes';
 
     // Use the simplified export method
-    const data = await this.exportService.exportData(
+    const data = this.exportService.exportData(
       classes,
       mapper,
       format,

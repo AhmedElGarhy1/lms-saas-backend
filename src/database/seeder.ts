@@ -226,11 +226,11 @@ export class DatabaseSeeder {
     this.logger.log('Creating permissions...');
 
     const permissionEntities = ALL_PERMISSIONS.map((permission) => ({
-      name: (permission as any).name,
-      action: (permission as any).action,
-      description: (permission as any).name,
-      group: (permission as any).group,
-      scope: (permission as any).scope,
+      name: permission.name,
+      action: permission.action,
+      description: permission.name,
+      group: permission.group,
+      scope: permission.scope,
     }));
 
     await this.dataSource

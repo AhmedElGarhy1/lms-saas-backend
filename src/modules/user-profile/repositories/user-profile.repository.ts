@@ -84,7 +84,6 @@ export class UserProfileRepository extends BaseRepository<UserProfile> {
     profileRefId: string,
     profileType: ProfileType,
   ): Promise<Staff | Admin | Teacher | Student> {
-    const manager = this.getEntityManager();
     const repository = this.getProfileTypeRepository(profileType);
     const entity = await repository.findOne({ where: { id: profileRefId } });
 

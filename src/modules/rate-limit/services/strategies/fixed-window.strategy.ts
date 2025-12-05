@@ -42,7 +42,6 @@ export class FixedWindowStrategy
     );
 
     const client = this.redisService.getClient();
-    const now = Date.now();
     const consumePoints =
       options?.consumePoints || this.config.consumePoints || 1;
 
@@ -128,7 +127,7 @@ export class FixedWindowStrategy
     }
   }
 
-  async getCurrentCount(key: string, windowSeconds: number): Promise<number> {
+  async getCurrentCount(key: string): Promise<number> {
     const redisKey = RateLimitKeyBuilder.buildKey(
       this.config.keyPrefix,
       undefined,

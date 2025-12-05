@@ -17,7 +17,7 @@ export function exportToXlsx<T extends Record<string, any>>(
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
-  return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+  return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
 }
 
 /**

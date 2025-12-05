@@ -5,7 +5,7 @@ import {
   ValidationArguments,
 } from 'class-validator';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityTarget, ObjectLiteral } from 'typeorm';
 
 @ValidatorConstraint({ async: true })
 @Injectable()
@@ -13,7 +13,10 @@ export class ExistsConstraint implements ValidatorConstraintInterface {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
   async validate(value: any, args: ValidationArguments): Promise<boolean> {
-    const [entityClass, column = 'id'] = args.constraints as [any, string];
+    const [entityClass, column = 'id'] = args.constraints as [
+      EntityTarget<ObjectLiteral>,
+      string,
+    ];
     if (!value) return true; // Allow empty values for optional fields
 
     // Check if dataSource is available
@@ -25,6 +28,7 @@ export class ExistsConstraint implements ValidatorConstraintInterface {
     try {
       const repo = this.dataSource.getRepository(entityClass);
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const exists = await repo.exists({ where: { [column]: value } });
       return !!exists;
     } catch (error) {
@@ -36,7 +40,10 @@ export class ExistsConstraint implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments): string {
-    const [entityClass, column = 'id'] = args.constraints as [any, string];
-    return `${entityClass.name} with ${column} "${args.value}" does not exist`;
+    const [entityClass, column = 'id'] = args.constraints as [
+      EntityTarget<ObjectLiteral>,
+      string,
+    ];
+    return `${entityClass.constructor.name} with ${column} "${args.value}" does not exist`;
   }
 }

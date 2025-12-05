@@ -12,21 +12,21 @@ export class WhatsAppWebhookMetricsService {
   /**
    * Record webhook received (simple log)
    */
-  async recordWebhookReceived(): Promise<void> {
+  recordWebhookReceived(): void {
     this.logger.debug('Webhook received');
   }
 
   /**
    * Record signature verification failure
    */
-  async recordSignatureVerificationFailure(): Promise<void> {
+  recordSignatureVerificationFailure(): void {
     this.logger.warn('Webhook signature verification failed');
   }
 
   /**
    * Record orphaned webhook (message ID not found)
    */
-  async recordOrphanedWebhook(): Promise<void> {
+  recordOrphanedWebhook(): void {
     this.logger.warn('Orphaned webhook detected');
   }
 
@@ -35,7 +35,7 @@ export class WhatsAppWebhookMetricsService {
    * @param status Status type (sent, delivered, read, failed)
    * @param success Whether processing was successful
    */
-  async recordStatusUpdate(status: string, success: boolean): Promise<void> {
+  recordStatusUpdate(status: string, success: boolean): void {
     if (!success) {
       this.logger.warn(`Status update failed: ${status}`);
     }
@@ -45,7 +45,7 @@ export class WhatsAppWebhookMetricsService {
    * Record processing error
    * @param error Error message or type
    */
-  async recordProcessingError(error: string): Promise<void> {
+  recordProcessingError(error: string): void {
     this.logger.error(`Webhook processing error: ${error}`);
   }
 
@@ -53,7 +53,7 @@ export class WhatsAppWebhookMetricsService {
    * Record processing latency (optional - logs only if high)
    * @param latencyMs Latency in milliseconds
    */
-  async recordProcessingLatency(latencyMs: number): Promise<void> {
+  recordProcessingLatency(latencyMs: number): void {
     // Log only if latency is high (>1s)
     if (latencyMs > 1000) {
       this.logger.warn(`High webhook processing latency: ${latencyMs}ms`);

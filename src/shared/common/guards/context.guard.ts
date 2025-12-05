@@ -11,10 +11,7 @@ import { IRequest } from '../interfaces/request.interface';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { RequestContext } from '../context/request.context';
 import { NO_CONTEXT_KEY } from '../decorators/no-context.decorator';
-import {
-  CenterSelectionRequiredException,
-  ProfileSelectionRequiredException,
-} from '../exceptions/custom.exceptions';
+import { ProfileSelectionRequiredException } from '../exceptions/custom.exceptions';
 
 @Injectable()
 export class ContextGuard implements CanActivate {

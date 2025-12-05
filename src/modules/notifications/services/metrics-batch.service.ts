@@ -58,7 +58,7 @@ export class MetricsBatchService
 
     // Auto-flush if batch size reached
     if (this.counterBatch.size >= this.batchSize) {
-      this.flush();
+      void this.flush();
     }
   }
 
@@ -85,7 +85,7 @@ export class MetricsBatchService
 
     // Auto-flush if batch size reached
     if (this.latencyBatch.length >= this.batchSize) {
-      this.flush();
+      void this.flush();
     }
   }
 
@@ -95,7 +95,7 @@ export class MetricsBatchService
   queueGaugeUpdate(metric: string, value: number): void {
     this.gaugeUpdates.set(metric, value);
     // Gauges are immediately updated (no batching needed for latest value)
-    this.flushGauges();
+    void this.flushGauges();
   }
 
   /**

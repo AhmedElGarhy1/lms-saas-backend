@@ -103,6 +103,12 @@
 [x] activity logs and each one display his own logs only
 [x] don't cash notification templates in redis (usless operation it can done only on memory)
 
+<!-- groups/classess -->
+
+[ ] update translations
+[ ] student assign
+[ ] add duration to class creation and groups use it
+
 [ ] user can update his center (throw settings)
 [ ] view modals in all modules
 [ ] inconsistant in case of deleted (unclear)

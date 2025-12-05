@@ -9,7 +9,6 @@ import { NotificationManifestResolver } from '../manifests/registry/notification
 import { templateExists, getTemplatePath } from '../utils/template-path.util';
 import { Locale } from '@/shared/common/enums/locale.enum';
 import { ChannelManifest } from '../manifests/types/manifest.types';
-import { extractI18nVariables } from '../utils/notification-i18n.util';
 
 // Test environment detection - check NODE_ENV first (set by test-setup.ts)
 // This is the most reliable indicator since test-setup.ts runs before any tests

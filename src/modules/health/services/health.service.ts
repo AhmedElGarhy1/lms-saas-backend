@@ -334,7 +334,7 @@ export class HealthService extends BaseService {
     };
   }
 
-  private async checkCache(): Promise<CacheHealth> {
+  private checkCache(): CacheHealth {
     // This is a placeholder - implement based on your caching solution
     // For now, we'll return a basic health status
     return {

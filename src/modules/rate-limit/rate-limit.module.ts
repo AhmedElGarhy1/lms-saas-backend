@@ -1,14 +1,10 @@
-import { DynamicModule, Global, Module, Provider } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { RedisModule } from '@/shared/modules/redis/redis.module';
 import { RateLimitService } from './services/rate-limit.service';
 import { RateLimitFactoryService } from './services/rate-limit-factory.service';
 import { RateLimitGuard } from './guards/rate-limit.guard';
-import {
-  RateLimitModuleOptions,
-  RateLimitStrategyType,
-} from './interfaces/rate-limit-config.interface';
+import { RateLimitModuleOptions } from './interfaces/rate-limit-config.interface';
 import { RATE_LIMIT_CONFIG } from './constants/rate-limit.constants';
 import {
   defaultRateLimitConfig,
@@ -93,7 +89,7 @@ export class RateLimitModule {
         ...(options.imports || []),
         // Optionally import ThrottlerModule if using THROTTLER strategy
         // This allows the ThrottlerAdapter to access ThrottlerStorage
-        ...(this.shouldImportThrottler(options.useFactory)
+        ...(this.shouldImportThrottler()
           ? [ThrottlerModule]
           : []),
       ],
@@ -107,9 +103,7 @@ export class RateLimitModule {
    * This is a simple heuristic - in practice, you might want to check
    * the actual configuration to see if THROTTLER strategy is used
    */
-  private static shouldImportThrottler(
-    useFactory: (...args: any[]) => any,
-  ): boolean {
+  private static shouldImportThrottler(): boolean {
     // For now, always import if available (optional dependency)
     // The ThrottlerAdapter will handle missing ThrottlerStorage gracefully
     return true;

@@ -47,7 +47,7 @@ export class TransactionPerformanceInterceptor implements NestInterceptor {
           this.updatePerformanceCounters(className, methodName, 'success');
 
           // Check for slow transactions
-          this.alertsService.checkSlowTransaction(
+          void this.alertsService.checkSlowTransaction(
             className,
             methodName,
             duration,
@@ -68,7 +68,7 @@ export class TransactionPerformanceInterceptor implements NestInterceptor {
           this.updatePerformanceCounters(className, methodName, 'error');
 
           // Check for slow transactions even on error
-          this.alertsService.checkSlowTransaction(
+          void this.alertsService.checkSlowTransaction(
             className,
             methodName,
             duration,
@@ -175,7 +175,7 @@ export class TransactionPerformanceInterceptor implements NestInterceptor {
     // Check for high error rates every 10 calls
     const total = counter.success + counter.error;
     if (total % 10 === 0 && total > 0) {
-      this.alertsService.checkErrorRate(
+      void this.alertsService.checkErrorRate(
         className,
         methodName,
         counter.error,

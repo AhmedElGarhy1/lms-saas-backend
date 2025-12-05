@@ -145,7 +145,7 @@ export class PerformanceAlertsService extends BaseService {
     if (alert.severity === 'warning') {
       setTimeout(
         () => {
-          this.resolveAlert(alert.id);
+          void this.resolveAlert(alert.id);
         },
         5 * 60 * 1000,
       );

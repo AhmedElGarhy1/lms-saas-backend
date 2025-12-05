@@ -69,7 +69,7 @@ export class CentersActionsController {
     const baseFilename = query.filename || 'centers';
 
     // Use the simplified export method
-    const data = await this.exportService.exportData(
+    const data = this.exportService.exportData(
       centers,
       mapper,
       format,

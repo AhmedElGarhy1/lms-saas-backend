@@ -41,7 +41,7 @@ export class RateLimitFactoryService {
       return this.cache.get(cacheKey)!;
     }
 
-    const strategy = this.createStrategy(type, config, context);
+    const strategy = this.createStrategy(type, config);
     this.cache.set(cacheKey, strategy);
 
     return strategy;
@@ -57,7 +57,6 @@ export class RateLimitFactoryService {
   private createStrategy(
     type: RateLimitStrategyType,
     config: RateLimitConfig,
-    context?: string,
   ): IRateLimitStrategy {
     switch (type) {
       case RateLimitStrategyType.SLIDING_WINDOW:

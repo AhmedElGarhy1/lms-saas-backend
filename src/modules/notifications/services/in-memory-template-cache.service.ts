@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BaseService } from '@/shared/common/services/base.service';
 import { CACHE_CONSTANTS } from '../constants/notification.constants';
-import * as Handlebars from 'handlebars';
 
 /**
  * In-memory template cache service
@@ -90,7 +89,7 @@ export class InMemoryTemplateCacheService extends BaseService {
    * Clear template cache for a specific template or all templates
    * @param templatePath - Optional template path to clear specific template
    */
-  async clearTemplateCache(templatePath?: string): Promise<void> {
+  clearTemplateCache(templatePath?: string): void {
     try {
       if (templatePath) {
         // Clear cache entries matching pattern

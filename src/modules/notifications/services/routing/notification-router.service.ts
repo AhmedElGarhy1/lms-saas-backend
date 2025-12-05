@@ -5,11 +5,7 @@ import { NotificationChannel } from '../../enums/notification-channel.enum';
 import { NotificationType } from '../../enums/notification-type.enum';
 import { NotificationPayload } from '../../types/notification-payload.interface';
 import { NotificationJobData } from '../../types/notification-job-data.interface';
-import {
-  NotificationManifest,
-  RenderedNotification,
-} from '../../manifests/types/manifest.types';
-import { NotificationTemplateData } from '../../types/template-data.types';
+import { RenderedNotification } from '../../manifests/types/manifest.types';
 import { NotificationSenderService } from '../notification-sender.service';
 import { InAppNotificationService } from '../in-app-notification.service';
 import { NotificationRenderer } from '../../renderer/notification-renderer.service';

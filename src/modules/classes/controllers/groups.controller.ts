@@ -32,7 +32,6 @@ import { SerializeOptions } from '@nestjs/common';
 import { GroupResponseDto } from '../dto/group-response.dto';
 import { AssignStudentToGroupDto } from '../dto/assign-student-to-group.dto';
 import { RemoveStudentsFromGroupDto } from '../dto/remove-students-from-group.dto';
-import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
 import { CreateApiResponses } from '@/shared/common/decorators';
 
 @ApiTags('Groups')

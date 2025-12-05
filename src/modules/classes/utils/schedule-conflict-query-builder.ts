@@ -43,7 +43,8 @@ export class ScheduleConflictQueryBuilder {
     return scheduleItems
       .map((_, index) => {
         const baseIndex =
-          this.SQL_PARAMS.SCHEDULE_ITEM_BASE + index * this.SQL_PARAMS.SCHEDULE_ITEM_SIZE;
+          this.SQL_PARAMS.SCHEDULE_ITEM_BASE +
+          index * this.SQL_PARAMS.SCHEDULE_ITEM_SIZE;
         return `(
           existing.day = $${baseIndex}
           AND (
@@ -94,4 +95,3 @@ export class ScheduleConflictQueryBuilder {
     return params;
   }
 }
-

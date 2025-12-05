@@ -123,10 +123,10 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
       conflictTime: string;
     }
 
-    const result = (await this.getEntityManager().query(
+    const result = await this.getEntityManager().query<ConflictResult[]>(
       query,
       params,
-    )) as ConflictResult[];
+    );
 
     if (result && result.length > 0) {
       return {

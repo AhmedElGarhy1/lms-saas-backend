@@ -6,7 +6,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, IsUUID } from 'class-validator';
+import { IsString, MaxLength } from 'class-validator';
 import { ScheduleItemDto } from './schedule-item.dto';
 
 export class UpdateGroupDto {

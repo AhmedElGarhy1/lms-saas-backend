@@ -7,7 +7,6 @@
  * This filter only converts database-specific errors to domain exceptions.
  */
 import {
-  ArgumentsHost,
   ExceptionFilter,
   HttpException,
   Injectable,
@@ -38,7 +37,7 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
    * @param _host - NestJS execution context
    * @throws HttpException - Re-throws converted custom exception
    */
-  catch(exception: unknown, _host: ArgumentsHost) {
+  catch(exception: unknown) {
     this.logger.debug(
       `TypeOrmExceptionFilter caught: ${exception?.constructor?.name}`,
     );
@@ -74,9 +73,7 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
           field = match ? match[1] : 'field';
         }
 
-        const match = detail.match(/Key \((.+?)\)=\((.+?)\)/);
-        const value = match ? match[2] : '';
-
+        // Extract field name from error detail for translation
         // Pass field as translation key - GlobalExceptionFilter will translate it
         httpException = new ResourceAlreadyExistsException(
           TRANSLATION_KEYS.ERRORS.DUPLICATE_FIELD,

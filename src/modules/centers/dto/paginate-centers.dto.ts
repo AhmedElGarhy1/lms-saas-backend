@@ -1,9 +1,4 @@
-import {
-  IsOptional,
-  IsString,
-  IsEnum,
-  IsUUID,
-} from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsUUID } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { AccessibleUsersEnum } from '@/modules/user/dto/paginate-users.dto';
@@ -22,7 +17,6 @@ export class PaginateCentersDto extends BasePaginationDto {
     type: String,
   })
   @IsOptional()
-  @IsString()
   @IsUUID()
   userProfileId?: string;
 

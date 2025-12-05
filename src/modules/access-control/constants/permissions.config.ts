@@ -23,5 +23,5 @@ export const ROLE_SCOPES = {
 } as const;
 
 export const getAllPermissionActions = (): string[] => {
-  return ALL_PERMISSIONS.map((p) => (p as any).action);
+  return ALL_PERMISSIONS.map((p) => p.action);
 };

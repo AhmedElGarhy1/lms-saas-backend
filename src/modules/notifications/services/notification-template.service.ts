@@ -7,10 +7,7 @@ import { BaseService } from '@/shared/common/services/base.service';
 import { TemplateRenderingException } from '../exceptions/notification.exceptions';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationType } from '../enums/notification-type.enum';
-import {
-  getChannelExtension,
-  TemplateFallbackStrategy,
-} from '../config/template-format.config';
+import { getChannelExtension } from '../config/template-format.config';
 import { resolveTemplatePathWithFallback } from '../utils/template-path.util';
 import {
   getNotificationI18nKey,
@@ -59,7 +56,6 @@ export class NotificationTemplateService extends BaseService {
       templateName,
       locale,
       channel,
-      TemplateFallbackStrategy.CHANNEL_OR_WHATSAPP,
     );
 
     if (!templatePath) {

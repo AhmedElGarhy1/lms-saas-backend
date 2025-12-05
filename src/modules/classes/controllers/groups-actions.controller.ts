@@ -60,7 +60,7 @@ export class GroupsActionsController {
     const baseFilename = query.filename || 'groups';
 
     // Use the simplified export method
-    const data = await this.exportService.exportData(
+    const data = this.exportService.exportData(
       groups,
       mapper,
       format,

@@ -1,10 +1,4 @@
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { Branch } from '../../centers/entities/branch.entity';
 import { Center } from '../../centers/entities/center.entity';

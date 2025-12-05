@@ -14,7 +14,9 @@ export class ValidationHelpers {
    * @param resourceName - The translation key for the resource name
    * @throws ResourceNotFoundException if resource doesn't exist or doesn't belong to center
    */
-  static validateResourceExistsAndBelongsToCenter<T extends { centerId: string }>(
+  static validateResourceExistsAndBelongsToCenter<
+    T extends { centerId: string },
+  >(
     resource: T | null,
     resourceId: string,
     centerId: string,
@@ -37,4 +39,3 @@ export class ValidationHelpers {
     }
   }
 }
-

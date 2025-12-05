@@ -3,7 +3,6 @@ import { ExportMapper } from '@/shared/common/services/export.service';
 import { Level } from '@/modules/levels/entities/level.entity';
 import { Subject } from '@/modules/subjects/entities/subject.entity';
 import { Branch } from '@/modules/centers/entities/branch.entity';
-import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 
 export interface ClassExportData {
   id: string;
@@ -25,11 +24,10 @@ export class ClassExportMapper implements ExportMapper<Class, ClassExportData> {
     // Get teacher name from user profile
     let teacherName = '';
     if (classEntity.teacher) {
-      const teacher = classEntity.teacher as UserProfile;
       // If teacher relation is loaded with user, use it
-      if ('user' in teacher && teacher.user) {
+      if ('user' in classEntity.teacher && classEntity.teacher.user) {
         teacherName =
-          teacher.user.name || teacher.user.phone || '';
+          classEntity.teacher.user.name || classEntity.teacher.user.phone || '';
       }
     }
 

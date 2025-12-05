@@ -1,5 +1,3 @@
-import { EventType } from '@/shared/events';
-
 /**
  * Type-safe event validation helper
  *

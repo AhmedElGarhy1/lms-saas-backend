@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { validate, ValidationError } from 'class-validator';
-import { plainToClass } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import {
   ErrorDetail,
   EnhancedErrorResponse,
@@ -14,15 +14,31 @@ import { ErrorCode } from '../enums/error-codes.enum';
 import { I18nPath } from '@/generated/i18n.generated';
 import { PathArgs } from '@/generated/i18n-type-map.generated';
 
+/**
+ * Custom validation pipe that transforms class-validator errors
+ * into structured error responses with i18n support.
+ */
 @Injectable()
-export class CustomValidationPipe implements PipeTransform<any> {
-  constructor() {}
-  async transform(value: any, { metatype }: ArgumentMetadata) {
+export class CustomValidationPipe implements PipeTransform {
+  /**
+   * Transforms and validates the incoming value.
+   *
+   * @param value The value to validate
+   * @param metadata Argument metadata containing type information
+   * @returns The validated and transformed object
+   * @throws BadRequestException if validation fails
+   */
+  async transform(
+    value: unknown,
+    { metatype }: ArgumentMetadata,
+  ): Promise<unknown> {
     if (!metatype || !this.toValidate(metatype)) {
       return value;
     }
 
-    const object = plainToClass(metatype, value);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const object = plainToInstance(metatype, value);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const errors = await validate(object);
 
     if (errors.length > 0) {
@@ -43,8 +59,14 @@ export class CustomValidationPipe implements PipeTransform<any> {
     return object;
   }
 
-  private toValidate(metatype: new (...args: any[]) => any): boolean {
-    const types: (new (...args: any[]) => any)[] = [
+  /**
+   * Checks if the metatype should be validated.
+   *
+   * @param metatype The type to check
+   * @returns True if the type should be validated
+   */
+  private toValidate(metatype: new (...args: unknown[]) => unknown): boolean {
+    const types: (new (...args: unknown[]) => unknown)[] = [
       String,
       Boolean,
       Number,
@@ -54,35 +76,41 @@ export class CustomValidationPipe implements PipeTransform<any> {
     return !types.includes(metatype);
   }
 
+  /**
+   * Flattens nested validation errors into a flat array.
+   *
+   * @param errors Array of validation errors
+   * @returns Flattened array of error details
+   */
   private flattenValidationErrors(errors: ValidationError[]): ErrorDetail[] {
     const result: ErrorDetail[] = [];
 
     for (const error of errors) {
+      // Process all constraints, not just the first one
       if (error.constraints) {
-        const constraintKey = Object.keys(error.constraints)[0];
-        // Use the non-type-safe version for dynamic constraint keys
-        const translatedMessage = this.getValidationMessage(
-          error.property,
-          constraintKey,
-          error.constraints,
-        );
+        const constraintKeys = Object.keys(error.constraints);
+        for (const constraintKey of constraintKeys) {
+          const translatedMessage = this.getValidationMessage(
+            error.property,
+            constraintKey,
+          );
 
-        // Get args if there are any (for nested translation keys)
-        const args = this.getValidationMessageArgs(
-          error.property,
-          constraintKey,
-          error.constraints,
-        );
+          const args = this.getValidationMessageArgs(
+            error.property,
+            constraintKey,
+            error.constraints,
+          );
 
-        const errorDetail: ErrorDetail = {
-          field: error.property,
-          value: error.value,
-          message: {
-            key: translatedMessage,
-            args: args as PathArgs<I18nPath>,
-          },
-        };
-        result.push(errorDetail);
+          const errorDetail: ErrorDetail = {
+            field: error.property,
+            value: error.value,
+            message: {
+              key: translatedMessage,
+              args: args as PathArgs<I18nPath>,
+            },
+          };
+          result.push(errorDetail);
+        }
       }
 
       // Handle nested validation errors
@@ -100,13 +128,16 @@ export class CustomValidationPipe implements PipeTransform<any> {
     return result;
   }
 
-  private getValidationMessage(
-    field: string,
-    constraintKey: string,
-    constraints: Record<string, any>,
-  ): I18nPath {
+  /**
+   * Maps class-validator constraint keys to i18n translation keys.
+   *
+   * @param field The field name
+   * @param constraintKey The constraint key from class-validator
+   * @returns The i18n translation key
+   */
+  private getValidationMessage(field: string, constraintKey: string): I18nPath {
     // Map class-validator constraint keys to translation keys
-    const constraintMap: Record<string, string> = {
+    const constraintMap: Record<string, I18nPath> = {
       isNotEmpty: 't.validation.required.message',
       isEmail: 't.validation.email.invalid',
       isPhoneNumber: 't.validation.phone.invalid',
@@ -128,38 +159,66 @@ export class CustomValidationPipe implements PipeTransform<any> {
       max: 't.validation.max.message',
     };
 
-    return (constraintMap[constraintKey] ||
-      't.validation.invalid.message') as I18nPath;
+    return (
+      constraintMap[constraintKey] ||
+      ('t.validation.invalid.message' as I18nPath)
+    );
   }
 
+  /**
+   * Gets the arguments for validation message translation.
+   *
+   * @param field The field name
+   * @param constraintKey The constraint key
+   * @param constraints All constraints for the field
+   * @returns Arguments object for the translation, or undefined
+   */
   private getValidationMessageArgs(
     field: string,
     constraintKey: string,
-    constraints: Record<string, any>,
-  ): Record<string, any> | undefined {
+    constraints: Record<string, string>,
+  ): Record<string, string | number> | undefined {
     const constraintValue = constraints[constraintKey];
     const fieldLabelKey = `t.common.labels.${field}`;
+
+    // Safely extract numeric constraint values
+    const getNumericValue = (): number => {
+      if (typeof constraintValue === 'number') {
+        return constraintValue;
+      }
+      if (typeof constraintValue === 'string') {
+        const parsed = Number.parseFloat(constraintValue);
+        return Number.isNaN(parsed) ? 0 : parsed;
+      }
+      return 0;
+    };
 
     // Map constraint keys to their required args
     const argsMap: Record<string, () => Record<string, string | number>> = {
       isNotEmpty: () => ({ field: fieldLabelKey as I18nPath }),
       minLength: () => ({
         field: fieldLabelKey as I18nPath,
-        min: constraintValue || 0,
+        min: getNumericValue(),
       }),
       maxLength: () => ({
         field: fieldLabelKey as I18nPath,
-        max: constraintValue || 0,
+        max: getNumericValue(),
       }),
       arrayMinSize: () => {
         const baseField = field.replace(/[Ii]ds?$/, '');
         const itemLabelKey = `t.common.labels.${baseField}`;
-        return { min: constraintValue || 1, item: itemLabelKey as I18nPath };
+        return {
+          min: getNumericValue() || 1,
+          item: itemLabelKey as I18nPath,
+        };
       },
       arrayMaxSize: () => {
         const baseField = field.replace(/[Ii]ds?$/, '');
         const itemLabelKey = `t.common.labels.${baseField}`;
-        return { max: constraintValue || 100, item: itemLabelKey as I18nPath };
+        return {
+          max: getNumericValue() || 100,
+          item: itemLabelKey as I18nPath,
+        };
       },
       isUuid: () => {
         const baseField = field.replace(/[Ii]ds?$/, '');
@@ -175,11 +234,11 @@ export class CustomValidationPipe implements PipeTransform<any> {
       isInt: () => ({ field: fieldLabelKey }),
       min: () => ({
         field: fieldLabelKey as I18nPath,
-        min: constraintValue || 0,
+        min: getNumericValue(),
       }),
       max: () => ({
         field: fieldLabelKey as I18nPath,
-        max: constraintValue || 0,
+        max: getNumericValue(),
       }),
     };
 

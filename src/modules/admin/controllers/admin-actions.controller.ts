@@ -53,7 +53,7 @@ export class AdminActionsController {
     const baseFilename = query.filename || 'admins';
 
     // Use the simplified export method
-    const data = await this.exportService.exportData(
+    const data = this.exportService.exportData(
       users,
       mapper,
       format,

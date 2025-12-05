@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible';
-import { Redis } from 'ioredis';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { BaseRateLimitStrategy } from '../base-rate-limit-strategy';
 import {
@@ -128,7 +127,7 @@ export class RateLimiterFlexibleAdapter
     }
   }
 
-  async getCurrentCount(key: string, windowSeconds: number): Promise<number> {
+  async getCurrentCount(key: string): Promise<number> {
     const fullKey = RateLimitKeyBuilder.buildKey(undefined, undefined, key);
 
     try {

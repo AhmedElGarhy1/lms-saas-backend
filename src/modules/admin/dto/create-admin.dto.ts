@@ -1,9 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsOptional,
-  IsUUID,
-  Validate,
-} from 'class-validator';
+import { IsOptional, IsUUID, Validate } from 'class-validator';
 import { CreateUserDto } from '@/modules/user/dto/create-user.dto';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { Role } from '@/modules/access-control/entities/role.entity';

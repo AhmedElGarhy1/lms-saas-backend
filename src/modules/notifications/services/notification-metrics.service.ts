@@ -3,13 +3,11 @@ import { RedisService } from '@/shared/modules/redis/redis.service';
 import { notificationKeys } from '../utils/notification-redis-key-builder';
 import { BaseService } from '@/shared/common/services/base.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { NotificationStatus } from '../enums/notification-status.enum';
 import { MetricsBatchService } from './metrics-batch.service';
 import {
   METRICS_CONSTANTS,
   REDIS_CONSTANTS,
 } from '../constants/notification.constants';
-import { NotificationConfig } from '../config/notification.config';
 
 /**
  * Service for tracking notification metrics (Prometheus-compatible)
@@ -37,52 +35,52 @@ export class NotificationMetricsService extends BaseService {
   /**
    * Increment counter for sent notifications (batched)
    */
-  async incrementSent(
-    channel: NotificationChannel,
-    type?: string,
-  ): Promise<void> {
+  incrementSent(channel: NotificationChannel, type?: string): Promise<void> {
     this.batchService.queueIncrement('sent', channel, type);
+    return Promise.resolve();
   }
 
   /**
    * Increment counter for failed notifications (batched)
    */
-  async incrementFailed(
-    channel: NotificationChannel,
-    type?: string,
-  ): Promise<void> {
+  incrementFailed(channel: NotificationChannel, type?: string): Promise<void> {
     this.batchService.queueIncrement('failed', channel, type);
+    return Promise.resolve();
   }
 
   /**
    * Increment counter for retries (batched)
    */
-  async incrementRetry(channel: NotificationChannel): Promise<void> {
+  incrementRetry(channel: NotificationChannel): Promise<void> {
     this.batchService.queueIncrement('retry', channel);
+    return Promise.resolve();
   }
 
   /**
    * Record delivery latency (in milliseconds) - batched
    */
-  async recordLatency(
+  recordLatency(
     channel: NotificationChannel,
     latencyMs: number,
   ): Promise<void> {
     this.batchService.queueLatency(channel, latencyMs);
+    return Promise.resolve();
   }
 
   /**
    * Update queue backlog size (gauges are updated immediately)
    */
-  async setQueueBacklog(size: number): Promise<void> {
+  setQueueBacklog(size: number): Promise<void> {
     this.batchService.queueGaugeUpdate('queue_backlog', size);
+    return Promise.resolve();
   }
 
   /**
    * Update active socket connections count (gauges are updated immediately)
    */
-  async setActiveConnections(count: number): Promise<void> {
+  setActiveConnections(count: number): Promise<void> {
     this.batchService.queueGaugeUpdate('active_connections', count);
+    return Promise.resolve();
   }
 
   /**

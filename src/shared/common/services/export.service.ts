@@ -31,12 +31,12 @@ export class ExportService extends BaseService {
   /**
    * Export data to CSV format
    */
-  async exportToCsv<T, R extends Record<string, any>>(
+  exportToCsv<T, R extends Record<string, any>>(
     data: T[],
     mapper: ExportMapper<T, R>,
     filename: string,
     res: Response,
-  ): Promise<ExportResponseDto> {
+  ): ExportResponseDto {
     try {
       const headers = mapper.getHeaders();
       const csvData = this.convertToCsv(data, mapper, headers);
@@ -73,12 +73,12 @@ export class ExportService extends BaseService {
   /**
    * Export data to XLSX format
    */
-  async exportToXlsx<T, R extends Record<string, any>>(
+  exportToXlsx<T, R extends Record<string, any>>(
     data: T[],
     mapper: ExportMapper<T, R>,
     filename: string,
     res: Response,
-  ): Promise<ExportResponseDto> {
+  ): ExportResponseDto {
     try {
       const headers = mapper.getHeaders();
       const xlsxData = this.convertToXlsx(data, mapper, headers);
@@ -118,12 +118,12 @@ export class ExportService extends BaseService {
   /**
    * Export data to JSON format
    */
-  async exportToJson<T, R extends Record<string, any>>(
+  exportToJson<T, R extends Record<string, any>>(
     data: T[],
     mapper: ExportMapper<T, R>,
     filename: string,
     res: Response,
-  ): Promise<ExportResponseDto> {
+  ): ExportResponseDto {
     try {
       const jsonData = data.map((item) => mapper.mapToExport(item));
       const jsonString = JSON.stringify(jsonData, null, 2);
@@ -160,19 +160,19 @@ export class ExportService extends BaseService {
   /**
    * Generic export method that handles different formats
    */
-  async export<T, R extends Record<string, any>>(
+  export<T, R extends Record<string, any>>(
     data: T[],
     mapper: ExportMapper<T, R>,
     options: ExportOptions,
     res: Response,
-  ): Promise<ExportResponseDto> {
+  ): ExportResponseDto {
     switch (options.format) {
       case 'csv':
-        return await this.exportToCsv(data, mapper, options.filename, res);
+        return this.exportToCsv(data, mapper, options.filename, res);
       case 'xlsx':
-        return await this.exportToXlsx(data, mapper, options.filename, res);
+        return this.exportToXlsx(data, mapper, options.filename, res);
       case 'json':
-        return await this.exportToJson(data, mapper, options.filename, res);
+        return this.exportToJson(data, mapper, options.filename, res);
       default:
         throw new ExportFormatNotSupportedException(
           options.format,
@@ -184,13 +184,13 @@ export class ExportService extends BaseService {
   /**
    * Simplified export method that handles format selection and validation
    */
-  async exportData(
+  exportData(
     data: any[],
     mapper: ExportMapper<any, any>,
     format: ExportFormat,
     filename: string,
     res: Response,
-  ): Promise<ExportResponseDto> {
+  ): ExportResponseDto {
     // Validate format
     if (!this.isValidFormat(format)) {
       throw new ExportFormatNotSupportedException(
@@ -210,12 +210,12 @@ export class ExportService extends BaseService {
     const finalFilename = this.generateFilename(filename, format);
 
     // Export based on format
-    if (format === 'csv') {
-      return await this.exportToCsv(data, mapper, finalFilename, res);
-    } else if (format === 'xlsx') {
-      return await this.exportToXlsx(data, mapper, finalFilename, res);
-    } else if (format === 'json') {
-      return await this.exportToJson(data, mapper, finalFilename, res);
+    if (format === ExportFormat.CSV) {
+      return this.exportToCsv(data, mapper, finalFilename, res);
+    } else if (format === ExportFormat.XLSX) {
+      return this.exportToXlsx(data, mapper, finalFilename, res);
+    } else if (format === ExportFormat.JSON) {
+      return this.exportToJson(data, mapper, finalFilename, res);
     } else {
       throw new ExportFormatNotSupportedException(
         format,
@@ -275,9 +275,10 @@ export class ExportService extends BaseService {
   /**
    * Generate filename with timestamp
    */
-  generateFilename(baseName: string, format: string): string {
+  generateFilename(baseName: string, format?: string): string {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    return `${baseName}_${timestamp}`;
+    const extension = format ? `.${format}` : '';
+    return `${baseName}_${timestamp}${extension}`;
   }
 
   /**

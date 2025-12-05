@@ -142,6 +142,7 @@
       "address": "Address",
       "locale": "Locale",
       "logo": "Logo",
+      "student": "Student",
       "all": "All",
       "loading": "Loading",
       "error": "Error",

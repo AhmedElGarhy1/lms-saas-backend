@@ -21,11 +21,12 @@ export function ApiFilterDocs(options: FilterDocsOptions) {
       dtoInstance,
       fieldName,
     );
-    const isOptional = Reflect.getMetadata(
-      'nestjs:optional',
-      dtoInstance,
-      fieldName,
-    );
+    // Optional metadata available but not currently used
+    // const isOptional = Reflect.getMetadata(
+    //   'nestjs:optional',
+    //   dtoInstance,
+    //   fieldName,
+    // );
 
     return ApiQuery({
       name: `${prefix}[${fieldName}]`,

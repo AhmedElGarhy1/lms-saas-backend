@@ -5,7 +5,6 @@ import { NotificationChannel } from '../enums/notification-channel.enum';
 import {
   getChannelExtension,
   getChannelFolder,
-  TemplateFallbackStrategy,
 } from '../config/template-format.config';
 
 /**
@@ -104,7 +103,6 @@ export function resolveTemplatePathWithFallback(
   template: string,
   locale: string = 'en',
   channel: NotificationChannel,
-  _strategy: TemplateFallbackStrategy = TemplateFallbackStrategy.CHANNEL_OR_WHATSAPP,
 ): string | null {
   // WhatsApp templates are reference-only, not used for rendering
   if (channel === NotificationChannel.WHATSAPP) {

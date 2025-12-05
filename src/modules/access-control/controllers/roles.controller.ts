@@ -197,7 +197,7 @@ export class RolesController {
     const baseFilename = query.filename || 'roles';
 
     // Use the simplified export method
-    return await this.exportService.exportData(
+    return this.exportService.exportData(
       roles,
       mapper,
       format,

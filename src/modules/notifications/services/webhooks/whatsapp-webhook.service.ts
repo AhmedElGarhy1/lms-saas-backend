@@ -194,9 +194,7 @@ export class WhatsAppWebhookService extends BaseService {
    * Process incoming message (optional, for 2-way messaging)
    * @param message Incoming message
    */
-  async processIncomingMessage(
-    message: WhatsAppIncomingMessage,
-  ): Promise<void> {
+  processIncomingMessage(message: WhatsAppIncomingMessage): void {
     // TODO: Implement incoming message handling if needed
     this.logger.debug(
       `Received incoming message: ${message.id} from ${message.from}`,
