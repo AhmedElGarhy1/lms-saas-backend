@@ -25,10 +25,21 @@ export class GroupsRepository extends BaseRepository<Group> {
   ): Promise<Pagination<Group>> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('group')
-      .leftJoinAndSelect('group.class', 'class')
+      // Join relations for id and name fields only (not full entities)
+      .leftJoin('group.class', 'class')
+      .leftJoin('group.branch', 'branch')
+      .leftJoin('group.center', 'center')
+      // Load full scheduleItems
       .leftJoinAndSelect('group.scheduleItems', 'scheduleItems')
-      .leftJoinAndSelect('group.groupStudents', 'groupStudents')
-      .leftJoinAndSelect('groupStudents.student', 'student')
+      // Add id and name fields as selections
+      .addSelect([
+        'class.id',
+        'class.name',
+        'branch.id',
+        'branch.location',
+        'center.id',
+        'center.name',
+      ])
       // Add student count subquery
       .addSelect(
         (subQuery) =>
@@ -81,12 +92,21 @@ export class GroupsRepository extends BaseRepository<Group> {
   async findGroupWithRelations(id: string): Promise<Group | null> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('group')
-      .leftJoinAndSelect('group.class', 'class')
+      // Join relations for id and name fields only (not full entities)
+      .leftJoin('group.class', 'class')
+      .leftJoin('group.branch', 'branch')
+      .leftJoin('group.center', 'center')
+      // Load full scheduleItems
       .leftJoinAndSelect('group.scheduleItems', 'scheduleItems')
-      .leftJoinAndSelect('group.groupStudents', 'groupStudents')
-      .leftJoinAndSelect('groupStudents.student', 'student')
-      .leftJoinAndSelect('group.branch', 'branch')
-      .leftJoinAndSelect('group.center', 'center')
+      // Add id and name fields as selections
+      .addSelect([
+        'class.id',
+        'class.name',
+        'branch.id',
+        'branch.location',
+        'center.id',
+        'center.name',
+      ])
       // Add student count subquery
       .addSelect(
         (subQuery) =>
