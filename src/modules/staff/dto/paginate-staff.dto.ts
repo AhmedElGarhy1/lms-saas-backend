@@ -1,9 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsBoolean } from 'class-validator';
-import { PaginateUsersDto } from '@/modules/user/dto/paginate-users.dto';
 import { Transform } from 'class-transformer';
+import { PaginateManagerUsersDto } from '@/modules/user/dto/paginate-manager-users.dto';
 
-export class PaginateStaffDto extends PaginateUsersDto {
+export class PaginateStaffDto extends PaginateManagerUsersDto {
   @ApiPropertyOptional({
     description: 'Display role in case of centerId provided',
     type: Boolean,

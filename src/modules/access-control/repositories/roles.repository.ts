@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Role } from '../entities/role.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { AccessControlHelperService } from '../services/access-control-helper.service';
 import { RoleResponseDto } from '../dto/role-response.dto';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';

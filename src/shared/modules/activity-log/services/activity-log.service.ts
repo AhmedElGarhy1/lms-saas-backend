@@ -5,7 +5,7 @@ import { ActivityLogRepository } from '../repositories/activity-log.repository';
 import { RequestContext } from '@/shared/common/context/request.context';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateActivityLogsDto } from '../dto/paginate-activity-logs.dto';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Logger } from '@nestjs/common';
 import { ActivityLogTypesResponseDto } from '../dto/activity-log-types-response.dto';

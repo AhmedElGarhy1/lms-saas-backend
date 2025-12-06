@@ -9,7 +9,7 @@ import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
 import { GetNotificationHistoryDto } from '../dto/notification-history.dto';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { NotificationLog } from '../entities/notification-log.entity';
 
 @Controller('notifications/history')

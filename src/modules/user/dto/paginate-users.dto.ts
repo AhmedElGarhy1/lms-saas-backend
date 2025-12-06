@@ -13,23 +13,6 @@ export enum AccessibleUsersEnum {
 
 export class PaginateUsersDto extends BasePaginationDto {
   @ApiPropertyOptional({
-    description: 'User ID for access control (internal use)',
-    type: String,
-  })
-  @IsOptional()
-  @IsString()
-  userProfileId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Filter by role ID',
-    type: String,
-  })
-  @IsOptional()
-  @IsUUID()
-  @Exists(Role)
-  roleId?: string;
-
-  @ApiPropertyOptional({
     description: 'Filter by center ID',
     type: String,
   })
@@ -39,24 +22,6 @@ export class PaginateUsersDto extends BasePaginationDto {
   centerId?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter by branch ID',
-    type: String,
-  })
-  @IsOptional()
-  @IsUUID()
-  @Exists(Branch)
-  branchId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Return only accessible users',
-    enum: AccessibleUsersEnum,
-    example: AccessibleUsersEnum.INCLUDE,
-  })
-  @IsOptional()
-  @IsEnum(AccessibleUsersEnum)
-  userAccess?: AccessibleUsersEnum;
-
-  @ApiPropertyOptional({
     description: 'Return only accessible centers',
     enum: AccessibleUsersEnum,
     example: AccessibleUsersEnum.INCLUDE,
@@ -64,22 +29,4 @@ export class PaginateUsersDto extends BasePaginationDto {
   @IsOptional()
   @IsEnum(AccessibleUsersEnum)
   centerAccess?: AccessibleUsersEnum;
-
-  @ApiPropertyOptional({
-    description: 'Return only accessible roles',
-    enum: AccessibleUsersEnum,
-    example: AccessibleUsersEnum.INCLUDE,
-  })
-  @IsOptional()
-  @IsEnum(AccessibleUsersEnum)
-  roleAccess?: AccessibleUsersEnum;
-
-  @ApiPropertyOptional({
-    description: 'Return only accessible branches',
-    enum: AccessibleUsersEnum,
-    example: AccessibleUsersEnum.INCLUDE,
-  })
-  @IsOptional()
-  @IsEnum(AccessibleUsersEnum)
-  branchAccess?: AccessibleUsersEnum;
 }

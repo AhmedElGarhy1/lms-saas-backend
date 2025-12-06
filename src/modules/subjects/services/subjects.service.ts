@@ -4,7 +4,7 @@ import { UpdateSubjectDto } from '../dto/update-subject.dto';
 import { PaginateSubjectsDto } from '../dto/paginate-subjects.dto';
 import { SubjectsRepository } from '../repositories/subjects.repository';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';

@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ActivityLog } from '../entities/activity-log.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { PaginateActivityLogsDto } from '../dto/paginate-activity-logs.dto';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { TransactionHost } from '@nestjs-cls/transactional';
@@ -43,7 +43,14 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
       .leftJoin('activityLog.user', 'user')
       .leftJoin('activityLog.targetUser', 'targetUser')
       .leftJoin('activityLog.center', 'center')
-      .addSelect(['user.name', 'targetUser.name', 'center.name']);
+      .addSelect([
+        'user.id',
+        'user.name',
+        'targetUser.id',
+        'targetUser.name',
+        'center.id',
+        'center.name',
+      ]);
 
     if (type) {
       qb.andWhere(`"activityLog"."type" = :type`, { type });

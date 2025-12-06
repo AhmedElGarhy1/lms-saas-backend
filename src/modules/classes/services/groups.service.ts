@@ -7,7 +7,7 @@ import { ClassesRepository } from '../repositories/classes.repository';
 import { ScheduleItemsRepository } from '../repositories/schedule-items.repository';
 import { GroupStudentsRepository } from '../repositories/group-students.repository';
 import { GroupValidationService } from './group-validation.service';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import {
   ResourceNotFoundException,
@@ -154,14 +154,15 @@ export class GroupsService extends BaseService {
     );
 
     // Check if student is already in another group of the same class
-    const classCheck =
-      await this.groupStudentsRepository.isStudentInAnotherGroupOfSameClass(
+    // Business logic: interpret repository data
+    const existingGroupIds =
+      await this.groupStudentsRepository.findStudentGroupsByClassId(
         userProfileId,
         group.classId,
         undefined, // Not excluding any group (new assignment)
       );
 
-    if (classCheck.isInAnotherGroup) {
+    if (existingGroupIds.length > 0) {
       throw new BusinessLogicException('t.errors.already.is', {
         resource: 't.common.labels.student',
         state: 't.common.messages.assignedToClass',
@@ -174,13 +175,21 @@ export class GroupsService extends BaseService {
         (item) => ({
           day: item.day,
           startTime: item.startTime,
-          endTime: item.endTime,
         }),
       );
+
+      // Get class duration from the group's class relation
+      const classEntity = group.class as Class;
+      if (!classEntity || !classEntity.duration) {
+        throw new BusinessLogicException('t.errors.validationFailed', {
+          reason: 'Class duration is required',
+        });
+      }
 
       await this.scheduleService.checkStudentScheduleConflicts(
         userProfileId,
         scheduleItems,
+        classEntity.duration,
         undefined, // Not excluding any group (new assignment)
       );
     }
@@ -269,10 +278,11 @@ export class GroupsService extends BaseService {
     scheduleItems: UpdateGroupDto['scheduleItems'],
   ): Promise<void> {
     if (!scheduleItems) return;
-    await this.scheduleItemsRepository.updateScheduleItems(
-      groupId,
-      scheduleItems,
-    );
+
+    // Business logic: delete then create pattern
+    // Use repository methods for data access only
+    await this.scheduleItemsRepository.deleteByGroupId(groupId);
+    await this.scheduleItemsRepository.bulkCreate(groupId, scheduleItems);
   }
 
   async deleteGroup(groupId: string, actor: ActorUser): Promise<void> {

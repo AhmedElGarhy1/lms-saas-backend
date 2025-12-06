@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 import { User } from '../entities/user.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { USER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 import { UserResponseDto } from '../dto/user-response.dto';
@@ -302,28 +302,12 @@ export class UserRepository extends BaseRepository<User> {
     params: PaginateStudentDto,
     actor: ActorUser,
   ): Promise<Pagination<UserResponseDto>> {
-    const {
-      centerId,
-      userProfileId,
-      roleId,
-      userAccess,
-      roleAccess,
-      centerAccess,
-      displayDetailes,
-      branchId,
-      branchAccess,
-      isDeleted,
-    } = params;
+    const { centerId, centerAccess, displayDetailes, isDeleted } = params;
     delete params.isDeleted;
 
     const includeCenter =
       centerId &&
       (!centerAccess || centerAccess === AccessibleUsersEnum.INCLUDE);
-
-    const includeBranch =
-      branchId &&
-      centerId &&
-      (!branchAccess || branchAccess === AccessibleUsersEnum.INCLUDE);
 
     // Create query builder with proper JOINs
     const queryBuilder = this.getRepository()
@@ -341,13 +325,6 @@ export class UserRepository extends BaseRepository<User> {
         ? 'centerAccess.isActive'
         : 'userProfiles.isActive',
     );
-
-    if (includeBranch) {
-      queryBuilder.andWhere(
-        'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = userProfiles.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId AND ba."deletedAt" IS NULL)',
-        { branchId, centerId },
-      );
-    }
 
     if (includeCenter) {
       queryBuilder
@@ -381,16 +358,6 @@ export class UserRepository extends BaseRepository<User> {
             `,
             { centerId },
           );
-      }
-      if (roleId && roleAccess !== AccessibleUsersEnum.ALL) {
-        if (displayDetailes) {
-          queryBuilder.andWhere('role.id = :roleId', { roleId });
-        } else {
-          queryBuilder.andWhere(
-            `EXISTS (SELECT 1 FROM profile_roles pr WHERE pr."userProfileId" = "userProfiles".id AND pr."roleId" = :roleId AND pr."deletedAt" IS NULL)`,
-            { roleId },
-          );
-        }
       }
     } else {
       if (isDeleted) {
@@ -444,27 +411,6 @@ export class UserRepository extends BaseRepository<User> {
       }
     }
 
-    if (userProfileId) {
-      queryBuilder.andWhere('userProfiles.id != :userProfileId', {
-        userProfileId,
-      });
-      if (userAccess === AccessibleUsersEnum.INCLUDE) {
-        queryBuilder.andWhere(
-          `EXISTS (
-            SELECT 1 FROM "user_access" AS ua
-            WHERE ua."targetUserProfileId" = "userProfiles"."id"
-            AND ua."granterUserProfileId" = :granterUserProfileId
-            AND ua."deletedAt" IS NULL
-            ${centerId ? 'AND ua."centerId" = :centerId' : ''}
-          )`,
-          {
-            granterUserProfileId: userProfileId,
-            centerId,
-          },
-        );
-      }
-    }
-
     const result = await this.paginate(
       params,
       USER_PAGINATION_COLUMNS,
@@ -475,37 +421,11 @@ export class UserRepository extends BaseRepository<User> {
     let filteredItems: UserResponseDto[] =
       result.items as unknown as UserResponseDto[];
 
-    if (userProfileId && userAccess) {
-      filteredItems = await this.applyUserAccess(
-        filteredItems,
-        userProfileId,
-        userAccess,
-        centerId,
-      );
-    }
-    if (roleId && roleAccess) {
-      filteredItems = await this.applyRoleAccess(
-        filteredItems,
-        roleId,
-        roleAccess,
-        centerId,
-      );
-    }
-
     if (centerId && centerAccess) {
       filteredItems = await this.applyCenterAccess(
         filteredItems,
         centerId,
         centerAccess,
-      );
-    }
-
-    if (branchId && branchAccess && centerId) {
-      filteredItems = await this.applyBranchAccess(
-        filteredItems,
-        branchId,
-        branchAccess,
-        centerId,
       );
     }
 
@@ -531,28 +451,12 @@ export class UserRepository extends BaseRepository<User> {
     params: PaginateTeacherDto,
     actor: ActorUser,
   ): Promise<Pagination<UserResponseDto>> {
-    const {
-      centerId,
-      userProfileId,
-      roleId,
-      userAccess,
-      roleAccess,
-      centerAccess,
-      displayDetailes,
-      branchId,
-      branchAccess,
-      isDeleted,
-    } = params;
+    const { centerId, centerAccess, displayDetailes, isDeleted } = params;
     delete params.isDeleted;
 
     const includeCenter =
       centerId &&
       (!centerAccess || centerAccess === AccessibleUsersEnum.INCLUDE);
-
-    const includeBranch =
-      branchId &&
-      centerId &&
-      (!branchAccess || branchAccess === AccessibleUsersEnum.INCLUDE);
 
     // Create query builder with proper JOINs
     const queryBuilder = this.getRepository()
@@ -570,13 +474,6 @@ export class UserRepository extends BaseRepository<User> {
         ? 'centerAccess.isActive'
         : 'userProfiles.isActive',
     );
-
-    if (includeBranch) {
-      queryBuilder.andWhere(
-        'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = userProfiles.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId AND ba."deletedAt" IS NULL)',
-        { branchId, centerId },
-      );
-    }
 
     if (includeCenter) {
       queryBuilder
@@ -610,16 +507,6 @@ export class UserRepository extends BaseRepository<User> {
             `,
             { centerId },
           );
-      }
-      if (roleId && roleAccess !== AccessibleUsersEnum.ALL) {
-        if (displayDetailes) {
-          queryBuilder.andWhere('role.id = :roleId', { roleId });
-        } else {
-          queryBuilder.andWhere(
-            `EXISTS (SELECT 1 FROM profile_roles pr WHERE pr."userProfileId" = "userProfiles".id AND pr."roleId" = :roleId AND pr."deletedAt" IS NULL)`,
-            { roleId },
-          );
-        }
       }
     } else {
       if (isDeleted) {
@@ -673,27 +560,6 @@ export class UserRepository extends BaseRepository<User> {
       }
     }
 
-    if (userProfileId) {
-      queryBuilder.andWhere('userProfiles.id != :userProfileId', {
-        userProfileId,
-      });
-      if (userAccess === AccessibleUsersEnum.INCLUDE) {
-        queryBuilder.andWhere(
-          `EXISTS (
-            SELECT 1 FROM "user_access" AS ua
-            WHERE ua."targetUserProfileId" = "userProfiles"."id"
-            AND ua."granterUserProfileId" = :granterUserProfileId
-            AND ua."deletedAt" IS NULL
-            ${centerId ? 'AND ua."centerId" = :centerId' : ''}
-          )`,
-          {
-            granterUserProfileId: userProfileId,
-            centerId,
-          },
-        );
-      }
-    }
-
     const result = await this.paginate(
       params,
       USER_PAGINATION_COLUMNS,
@@ -704,37 +570,11 @@ export class UserRepository extends BaseRepository<User> {
     let filteredItems: UserResponseDto[] =
       result.items as unknown as UserResponseDto[];
 
-    if (userProfileId && userAccess) {
-      filteredItems = await this.applyUserAccess(
-        filteredItems,
-        userProfileId,
-        userAccess,
-        centerId,
-      );
-    }
-    if (roleId && roleAccess) {
-      filteredItems = await this.applyRoleAccess(
-        filteredItems,
-        roleId,
-        roleAccess,
-        centerId,
-      );
-    }
-
     if (centerId && centerAccess) {
       filteredItems = await this.applyCenterAccess(
         filteredItems,
         centerId,
         centerAccess,
-      );
-    }
-
-    if (branchId && branchAccess && centerId) {
-      filteredItems = await this.applyBranchAccess(
-        filteredItems,
-        branchId,
-        branchAccess,
-        centerId,
       );
     }
 

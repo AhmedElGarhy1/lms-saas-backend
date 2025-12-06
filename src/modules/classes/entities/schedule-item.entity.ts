@@ -16,9 +16,6 @@ export class ScheduleItem extends BaseEntity {
   @Column({ type: 'varchar', length: 8 })
   startTime: string; // Format: "HH:mm"
 
-  @Column({ type: 'varchar', length: 8 })
-  endTime: string; // Format: "HH:mm"
-
   // Relations
   @ManyToOne(() => Group, (group) => group.scheduleItems, {
     onDelete: 'CASCADE',

@@ -49,6 +49,9 @@ export class Class extends BaseEntity {
   @Column({ type: 'timestamp', nullable: true })
   endDate?: Date;
 
+  @Column({ type: 'int' })
+  duration: number; // Duration in minutes
+
   // Relations
   @ManyToOne(() => Level, (level) => level.classes, {
     onDelete: 'CASCADE',

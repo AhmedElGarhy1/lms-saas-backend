@@ -3,7 +3,7 @@ import { CreateBranchDto } from '../dto/create-branch.dto';
 import { PaginateBranchesDto } from '../dto/paginate-branches.dto';
 import { BranchesRepository } from '../repositories/branches.repository';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import {

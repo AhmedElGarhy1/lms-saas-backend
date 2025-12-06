@@ -10,7 +10,7 @@ import { NotificationReadEvent } from '../events/notification.events';
 import { RateLimitService } from '@/modules/rate-limit/services/rate-limit.service';
 import { ChannelRateLimitService } from './channel-rate-limit.service';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { GetInAppNotificationsDto } from '../dto/in-app-notification.dto';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';

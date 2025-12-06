@@ -29,9 +29,9 @@ export class CreateUserProfileDto extends CreateUserDto {
   @IsOptional()
   @IsUUID()
   @Exists(Center)
-  @ValidateIf((o) => o.profileType !== ProfileType.ADMIN)
+  @ValidateIf((o: CreateUserProfileDto) => o.profileType !== ProfileType.ADMIN)
   @Validate(
-    (object: CreateUserProfileDto, value: any) => {
+    (object: CreateUserProfileDto, value: string) => {
       // If profileType is STAFF or TEACHER, centerId can be provided
       // If profileType is ADMIN, centerId should not be provided
       if (object.profileType === ProfileType.ADMIN) {

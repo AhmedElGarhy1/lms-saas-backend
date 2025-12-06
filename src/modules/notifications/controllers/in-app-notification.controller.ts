@@ -9,7 +9,7 @@ import {
   MarkAsReadDto,
 } from '../dto/in-app-notification.dto';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { Notification } from '../entities/notification.entity';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';

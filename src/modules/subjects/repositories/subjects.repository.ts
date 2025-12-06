@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Subject } from '../entities/subject.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { PaginateSubjectsDto } from '../dto/paginate-subjects.dto';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';
 

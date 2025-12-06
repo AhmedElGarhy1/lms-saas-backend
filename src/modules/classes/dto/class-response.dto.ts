@@ -38,6 +38,12 @@ export class ClassResponseDto {
   @ApiProperty({ required: false })
   endDate?: Date;
 
+  @ApiProperty({
+    description: 'Class duration in minutes',
+    example: 60,
+  })
+  duration: number;
+
   @ApiProperty()
   createdAt: Date;
 

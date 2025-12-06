@@ -3,6 +3,9 @@ import {
   IsUUID,
   IsDate,
   IsOptional,
+  IsInt,
+  Min,
+  Max,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
@@ -73,7 +76,7 @@ export class CreateClassDto {
   })
   @IsDate()
   @Type(() => Date)
-  startDate: Date;
+  startDate: Date = new Date();
 
   @ApiProperty({
     description: 'Class end date (optional)',
@@ -84,4 +87,15 @@ export class CreateClassDto {
   @IsDate()
   @Type(() => Date)
   endDate?: Date;
+
+  @ApiProperty({
+    description: 'Class duration in minutes',
+    example: 60,
+    minimum: 1,
+    maximum: 1440,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(1440) // 24 hours maximum
+  duration: number;
 }

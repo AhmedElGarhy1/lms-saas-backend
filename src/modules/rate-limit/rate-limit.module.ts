@@ -89,23 +89,10 @@ export class RateLimitModule {
         ...(options.imports || []),
         // Optionally import ThrottlerModule if using THROTTLER strategy
         // This allows the ThrottlerAdapter to access ThrottlerStorage
-        ...(this.shouldImportThrottler()
-          ? [ThrottlerModule]
-          : []),
+        ThrottlerModule,
       ],
       providers,
       exports: [RateLimitService, RateLimitGuard],
     };
-  }
-
-  /**
-   * Check if ThrottlerModule should be imported
-   * This is a simple heuristic - in practice, you might want to check
-   * the actual configuration to see if THROTTLER strategy is used
-   */
-  private static shouldImportThrottler(): boolean {
-    // For now, always import if available (optional dependency)
-    // The ThrottlerAdapter will handle missing ThrottlerStorage gracefully
-    return true;
   }
 }

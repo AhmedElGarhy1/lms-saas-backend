@@ -8,11 +8,19 @@ export class ScheduleItemResponseDto {
   @ApiProperty({ enum: DayOfWeek })
   day: DayOfWeek;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Start time in HH:mm format',
+    example: '17:00',
+  })
   startTime: string;
 
-  @ApiProperty()
-  endTime: string;
+  @ApiProperty({
+    description:
+      'End time in HH:mm format (computed from startTime + class duration)',
+    example: '18:00',
+    required: false,
+  })
+  endTime?: string;
 
   @ApiProperty()
   createdAt: Date;

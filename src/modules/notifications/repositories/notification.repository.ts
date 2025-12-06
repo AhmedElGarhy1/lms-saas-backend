@@ -5,7 +5,7 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { FindManyOptions, In, MoreThanOrEqual } from 'typeorm';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { GetInAppNotificationsDto } from '../dto/in-app-notification.dto';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';

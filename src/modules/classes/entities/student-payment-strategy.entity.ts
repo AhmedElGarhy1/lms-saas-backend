@@ -18,7 +18,21 @@ export class StudentPaymentStrategy extends BaseEntity {
   @Column({ type: 'integer', nullable: true })
   count?: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    transformer: {
+      // Convert database string to number when reading
+      from: (value: string | null): number | null => {
+        return value === null ? null : parseFloat(value);
+      },
+      // Convert number to string when writing
+      to: (value: number | null): string | null => {
+        return value === null ? null : value.toString();
+      },
+    },
+  })
   amount: number;
 
   // Relations

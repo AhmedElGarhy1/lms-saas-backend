@@ -24,7 +24,7 @@ import { CentersService } from '@/modules/centers/services/centers.service';
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { PaginateTeacherDto } from '@/modules/teachers/dto/paginate-teacher.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { UpdateUserDto } from '../dto/update-user.dto';

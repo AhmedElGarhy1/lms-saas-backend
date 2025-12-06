@@ -13,6 +13,7 @@ export interface ClassExportData {
   branchName: string;
   startDate: string;
   endDate: string;
+  duration: number;
   studentPaymentStrategy: string;
   teacherPaymentStrategy: string;
   createdAt: string;
@@ -44,6 +45,7 @@ export class ClassExportMapper implements ExportMapper<Class, ClassExportData> {
       branchName: branch?.location || '',
       startDate: classEntity.startDate?.toISOString() || '',
       endDate: classEntity.endDate?.toISOString() || '',
+      duration: classEntity.duration || 0,
       studentPaymentStrategy: classEntity.studentPaymentStrategy
         ? JSON.stringify({
             per: classEntity.studentPaymentStrategy.per,
@@ -72,6 +74,7 @@ export class ClassExportMapper implements ExportMapper<Class, ClassExportData> {
       'Branch Name',
       'Start Date',
       'End Date',
+      'Duration (minutes)',
       'Student Payment Strategy',
       'Teacher Payment Strategy',
       'Created At',

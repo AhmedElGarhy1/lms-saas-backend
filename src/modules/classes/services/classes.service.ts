@@ -5,7 +5,7 @@ import { PaginateClassesDto } from '../dto/paginate-classes.dto';
 import { ClassesRepository } from '../repositories/classes.repository';
 import { ClassValidationService } from './class-validation.service';
 import { PaymentStrategyService } from './payment-strategy.service';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';

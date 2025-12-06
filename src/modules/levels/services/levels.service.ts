@@ -4,7 +4,7 @@ import { UpdateLevelDto } from '../dto/update-level.dto';
 import { PaginateLevelsDto } from '../dto/paginate-levels.dto';
 import { LevelsRepository } from '../repositories/levels.repository';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';

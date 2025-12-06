@@ -37,14 +37,14 @@ export class ScheduleItemsRepository extends BaseRepository<ScheduleItem> {
     return this.getRepository().save(scheduleItems);
   }
 
-  async updateScheduleItems(
-    groupId: string,
-    items: ScheduleItemDto[],
-  ): Promise<ScheduleItem[]> {
-    // Delete existing items
+  /**
+   * Delete all schedule items for a given group ID.
+   * Pure data access method - no business logic.
+   *
+   * @param groupId - The group ID
+   * @returns Promise that resolves when deletion is complete
+   */
+  async deleteByGroupId(groupId: string): Promise<void> {
     await this.getRepository().delete({ groupId });
-
-    // Create new items
-    return this.bulkCreate(groupId, items);
   }
 }

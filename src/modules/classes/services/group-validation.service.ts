@@ -35,8 +35,18 @@ export class GroupValidationService extends BaseService {
     // Validate class exists and belongs to center
     const classEntity = await this.validateClassForGroup(dto.classId, centerId);
 
+    // Validate class has duration
+    if (!classEntity.duration || classEntity.duration <= 0) {
+      throw new BusinessLogicException('t.errors.validationFailed', {
+        reason: 'Class duration is required and must be positive',
+      });
+    }
+
     // Validate schedule items
-    this.scheduleService.validateScheduleItems(dto.scheduleItems);
+    this.scheduleService.validateScheduleItems(
+      dto.scheduleItems,
+      classEntity.duration,
+    );
 
     // Validate schedule items are within class date range
     this.validateScheduleWithinClassDateRange(dto.scheduleItems, classEntity);
@@ -45,6 +55,7 @@ export class GroupValidationService extends BaseService {
     await this.scheduleService.checkTeacherScheduleConflicts(
       classEntity.teacherUserProfileId,
       dto.scheduleItems,
+      classEntity.duration,
       undefined,
     );
 
@@ -72,14 +83,25 @@ export class GroupValidationService extends BaseService {
 
     // Validate schedule items if provided
     if (dto.scheduleItems) {
-      this.scheduleService.validateScheduleItems(dto.scheduleItems);
+      // Validate class has duration
+      if (!classEntity.duration || classEntity.duration <= 0) {
+        throw new BusinessLogicException('t.errors.validationFailed', {
+          reason: 'Class duration is required and must be positive',
+        });
+      }
+
+      this.scheduleService.validateScheduleItems(
+        dto.scheduleItems,
+        classEntity.duration,
+      );
       this.validateScheduleWithinClassDateRange(dto.scheduleItems, classEntity);
 
       // Check for teacher schedule conflicts
       await this.scheduleService.checkTeacherScheduleConflicts(
         classEntity.teacherUserProfileId,
         dto.scheduleItems,
-        groupId,
+        classEntity.duration,
+        [groupId], // Pass as array for consistency
       );
     }
 

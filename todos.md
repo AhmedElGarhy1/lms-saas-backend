@@ -107,8 +107,16 @@
 
 [ ] update translations
 [ ] student assign
-[ ] add duration to class creation and groups use it
+[x] add duration to class creation and groups use it
+[x] fix date issues in creation
+[ ] center creation must have branch
+[ ] update branch and center entities with reasonable parameters
+[ ] in update class duration throw error or rechecking teacher sechdule and all students sechdules and display the error with some helper dialog to solve the issue then update (need some work)
+[ ] readable and conditional display for calsses strategies for perentage or fixed
+[ ] we can't have student within same class in more that one group
+[ ] in case on inside entity edit disable some files to force it to not change ed: class add group we can't select class becuase we already in class
 
+[ ] fix rest of eslint erros
 [ ] user can update his center (throw settings)
 [ ] view modals in all modules
 [ ] inconsistant in case of deleted (unclear)

@@ -24,21 +24,15 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
     });
   }
 
-  async bulkAssign(
-    groupId: string,
-    studentUserProfileIds: string[],
-  ): Promise<GroupStudent[]> {
-    // Delete existing assignments
+  /**
+   * Delete all group student assignments for a given group ID.
+   * Pure data access method - no business logic.
+   *
+   * @param groupId - The group ID
+   * @returns Promise that resolves when deletion is complete
+   */
+  async deleteByGroupId(groupId: string): Promise<void> {
     await this.getRepository().delete({ groupId });
-
-    // Create new assignments
-    const groupStudents = studentUserProfileIds.map((studentUserProfileId) =>
-      this.getRepository().create({
-        groupId,
-        studentUserProfileId,
-      }),
-    );
-    return this.getRepository().save(groupStudents);
   }
 
   async isStudentInGroup(
@@ -61,29 +55,26 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
   }
 
   /**
-   * Checks if a student has schedule conflicts with their existing group assignments.
-   * Uses an optimized SQL query to detect overlapping time slots in the database.
+   * Find student schedule conflicts in the database.
+   * Pure data access method - returns conflict data if found, null otherwise.
+   * No business logic interpretation.
    *
    * @param studentUserProfileId - The student's user profile ID
-   * @param newScheduleItems - Array of new schedule items to check for conflicts
-   * @param excludeGroupId - Optional group ID to exclude from conflict check (useful for updates)
-   * @returns Object indicating if conflict exists and details about the first conflict found
+   * @param newScheduleItems - Array of new schedule items to check for conflicts (with duration)
+   * @param excludeGroupIds - Optional group IDs to exclude from conflict check
+   * @returns Conflict data if found, null otherwise
    */
-  async hasStudentScheduleConflict(
+  async findStudentScheduleConflicts(
     studentUserProfileId: string,
     newScheduleItems: Array<{
       day: string;
       startTime: string;
-      endTime: string;
+      duration: number;
     }>,
-    excludeGroupId?: string,
-  ): Promise<{
-    hasConflict: boolean;
-    conflictDay?: string;
-    conflictTime?: string;
-  }> {
+    excludeGroupIds?: string[],
+  ): Promise<{ conflictDay: string; conflictTime: string } | null> {
     if (newScheduleItems.length === 0) {
-      return { hasConflict: false };
+      return null;
     }
 
     // Build parameters array using utility
@@ -98,17 +89,22 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
 
     // Build exclude condition using utility
     const excludeInfo = ScheduleConflictQueryBuilder.buildExcludeCondition(
-      excludeGroupId,
+      excludeGroupIds,
       params.length,
     );
-    ScheduleConflictQueryBuilder.addExcludeParameter(params, excludeGroupId);
+    ScheduleConflictQueryBuilder.addExcludeParameter(params, excludeGroupIds);
 
     const query = `
       SELECT 
         existing.day as "conflictDay",
-        existing."startTime" || '-' || existing."endTime" as "conflictTime"
+        existing."startTime" || '-' || 
+        TO_CHAR(
+          TO_TIMESTAMP(existing."startTime", 'HH24:MI') + (COALESCE(c.duration, 60) || ' minutes')::INTERVAL,
+          'HH24:MI'
+        ) as "conflictTime"
       FROM schedule_items existing
       INNER JOIN groups g ON g.id = existing."groupId"
+      INNER JOIN classes c ON c.id = g."classId"
       INNER JOIN group_students gs ON gs."groupId" = g.id
       WHERE gs."studentUserProfileId" = $1
         AND g."deletedAt" IS NULL
@@ -130,20 +126,28 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
 
     if (result && result.length > 0) {
       return {
-        hasConflict: true,
         conflictDay: result[0].conflictDay,
         conflictTime: result[0].conflictTime,
       };
     }
 
-    return { hasConflict: false };
+    return null;
   }
 
-  async isStudentInAnotherGroupOfSameClass(
+  /**
+   * Find all group IDs for a student in a given class.
+   * Pure data access method - returns data only, no business logic interpretation.
+   *
+   * @param studentUserProfileId - The student's user profile ID
+   * @param classId - The class ID
+   * @param excludeGroupId - Optional group ID to exclude from results
+   * @returns Array of group IDs (empty if none found)
+   */
+  async findStudentGroupsByClassId(
     studentUserProfileId: string,
     classId: string,
     excludeGroupId?: string,
-  ): Promise<{ isInAnotherGroup: boolean; existingGroupId?: string }> {
+  ): Promise<string[]> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('gs')
       .innerJoin('gs.group', 'g')
@@ -159,15 +163,7 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
       queryBuilder.andWhere('g.id != :excludeGroupId', { excludeGroupId });
     }
 
-    const result = await queryBuilder.getRawOne<{ groupId: string }>();
-
-    if (result) {
-      return {
-        isInAnotherGroup: true,
-        existingGroupId: result.groupId,
-      };
-    }
-
-    return { isInAnotherGroup: false };
+    const results = await queryBuilder.getRawMany<{ groupId: string }>();
+    return results.map((r) => r.groupId);
   }
 }

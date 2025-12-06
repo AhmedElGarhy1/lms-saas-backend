@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Center } from '../entities/center.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { CENTER_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { CenterResponseDto } from '../dto/center-response.dto';

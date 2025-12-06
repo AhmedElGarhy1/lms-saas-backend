@@ -69,7 +69,7 @@ export class ActivityLogController {
     const baseFilename = query.filename || 'activity-logs';
 
     // Use the simplified export method
-    const data = await this.exportService.exportData(
+    const data = this.exportService.exportData(
       activityLogs,
       mapper,
       format,

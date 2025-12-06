@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 import { Injectable, Logger } from '@nestjs/common';
 import { ResourceNotFoundException } from '../exceptions/custom.exceptions';
-import { Pagination, paginate } from 'nestjs-typeorm-paginate';
+import { Pagination } from '../types/pagination.types';
 import { BasePaginationDto } from '../dto/base-pagination.dto';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
@@ -315,6 +315,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     },
     route: string,
     queryBuilder: SelectQueryBuilder<T>,
+    options?: {
+      includeComputedFields?: boolean;
+      computedFieldsMapper?: (entity: T, raw: any, index: number) => T;
+    },
   ): Promise<Pagination<T>> {
     // Get the main alias from the query builder
     const mainAlias = queryBuilder.alias;
@@ -356,11 +360,60 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       );
     }
 
-    return await paginate(queryBuilder, {
-      page: query.page || 1,
-      limit: Math.min(query.limit || 10, 100),
-      route,
-    });
+    // Calculate pagination parameters
+    const page = query.page || 1;
+    const limit = Math.min(query.limit || 10, 100);
+    const skip = (page - 1) * limit;
+
+    // Get total count before pagination
+    const totalItems = await queryBuilder.getCount();
+
+    // Apply pagination
+    queryBuilder.skip(skip).take(limit);
+
+    // Get entities (with or without raw data for computed fields)
+    let items: T[];
+    if (options?.includeComputedFields && options.computedFieldsMapper) {
+      // Use getRawAndEntities to access computed fields
+      const { entities, raw } = await queryBuilder.getRawAndEntities();
+      // Map entities with computed fields using the provided mapper
+      items = entities.map((entity, index) =>
+        options.computedFieldsMapper!(entity, raw[index], index),
+      );
+    } else {
+      // Use getMany for standard pagination
+      items = await queryBuilder.getMany();
+    }
+
+    // Build pagination response
+    const totalPages = Math.ceil(totalItems / limit);
+
+    // Build links - match the exact format from the example
+    // first: "/classes?limit=10" (no page parameter)
+    // last: "/classes?page=1&limit=10"
+    const buildLink = (pageNum?: number): string => {
+      if (pageNum === undefined) {
+        return `${route}?limit=${limit}`;
+      }
+      return `${route}?page=${pageNum}&limit=${limit}`;
+    };
+
+    return {
+      items,
+      meta: {
+        totalItems,
+        itemCount: items.length,
+        itemsPerPage: limit,
+        totalPages,
+        currentPage: page,
+      },
+      links: {
+        first: buildLink(), // No page parameter for first
+        last: buildLink(totalPages),
+        next: page < totalPages ? buildLink(page + 1) : '',
+        previous: page > 1 ? buildLink(page - 1) : '',
+      },
+    };
   }
 
   /**
