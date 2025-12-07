@@ -16,10 +16,34 @@ export interface GroupExportData {
 }
 
 export class GroupExportMapper implements ExportMapper<Group, GroupExportData> {
+  /**
+   * Map group to export data.
+   * This method matches the ExportMapper interface signature.
+   * For proper functionality, use mapToExportWithContext instead.
+   *
+   * @param group - The group entity
+   * @returns GroupExportData
+   */
   mapToExport(group: Group): GroupExportData {
-    const classEntity = group.class as Class | undefined;
-    const branch = group.branch as Branch | undefined;
+    // This method is kept for interface compatibility but should not be used directly
+    // Use mapToExportWithContext instead
+    return this.mapToExportWithContext(group, undefined, undefined);
+  }
 
+  /**
+   * Map group to export data with class and branch entities.
+   * This method accepts class and branch as parameters instead of relying on relations.
+   *
+   * @param group - The group entity
+   * @param classEntity - Optional class entity (fetched separately)
+   * @param branch - Optional branch entity (fetched separately)
+   * @returns GroupExportData
+   */
+  mapToExportWithContext(
+    group: Group,
+    classEntity?: Class,
+    branch?: Branch,
+  ): GroupExportData {
     // Format schedule summary - calculate endTime from startTime + duration
     const scheduleSummary =
       group.scheduleItems &&
@@ -36,12 +60,17 @@ export class GroupExportMapper implements ExportMapper<Group, GroupExportData> {
             .join(', ')
         : '';
 
+    // Get student count from computed field if available, otherwise from relation (for backward compatibility)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const studentsCount =
+      (group as any).studentsCount ?? group.groupStudents?.length ?? 0;
+
     return {
       id: group.id,
       name: group.name || '',
       className: classEntity?.name || '',
       branchName: branch?.location || '',
-      studentCount: group.groupStudents?.length || 0,
+      studentCount: studentsCount,
       scheduleSummary: scheduleSummary,
       createdAt: group.createdAt?.toISOString() || '',
       updatedAt: group.updatedAt?.toISOString() || '',

@@ -178,8 +178,8 @@ export class GroupsService extends BaseService {
         }),
       );
 
-      // Get class duration from the group's class relation
-      const classEntity = group.class as Class;
+      // Fetch class entity separately instead of relying on relation
+      const classEntity = await this.classesRepository.findOne(group.classId);
       if (!classEntity || !classEntity.duration) {
         throw new BusinessLogicException('t.errors.validationFailed', {
           reason: 'Class duration is required',

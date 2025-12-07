@@ -154,9 +154,7 @@ export class ClassesRepository extends BaseRepository<Class> {
         'class.teacherPaymentStrategy',
         'teacherPaymentStrategy',
       )
-      // Load full groups with scheduleItems
-      .leftJoinAndSelect('class.groups', 'groups')
-      .leftJoinAndSelect('groups.scheduleItems', 'scheduleItems')
+      // Groups will be fetched separately to avoid relying on relations
       // Add name and id fields as selections
       .addSelect([
         'level.id',
@@ -197,9 +195,17 @@ export class ClassesRepository extends BaseRepository<Class> {
     // Map computed count from raw data (groupsCount not needed since we return all groups)
     const studentsCount = parseInt(rawData.studentsCount || '0', 10);
 
+    // Fetch groups separately instead of relying on relation
+    const groups = await this.getEntityManager()
+      .createQueryBuilder(Group, 'group')
+      .leftJoinAndSelect('group.scheduleItems', 'scheduleItems')
+      .where('group.classId = :classId', { classId: id })
+      .andWhere('group.deletedAt IS NULL')
+      .getMany();
+
     // Add studentsCount to each group
-    if (entity.groups && entity.groups.length > 0) {
-      const groupIds = entity.groups.map((g) => g.id);
+    if (groups && groups.length > 0) {
+      const groupIds = groups.map((g) => g.id);
       const groupStudentCounts = await this.getEntityManager()
         .createQueryBuilder(GroupStudent, 'gs')
         .select('gs.groupId', 'groupId')
@@ -222,30 +228,58 @@ export class ClassesRepository extends BaseRepository<Class> {
       );
 
       // Add studentsCount to each group
-      entity.groups.forEach((group) => {
+      groups.forEach((group) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (group as any).studentsCount = countMap.get(group.id) || 0;
       });
     }
 
-    // Return entity with computed fields added (groupsCount not needed since we return all groups)
+    // Return entity with computed fields and groups attached (groupsCount not needed since we return all groups)
     return {
       ...entity,
+      groups,
       studentsCount,
     } as any;
   }
 
   async findClassesByTeacher(teacherUserProfileId: string): Promise<Class[]> {
-    return this.getRepository()
+    // Fetch classes first without groups
+    const classes = await this.getRepository()
       .createQueryBuilder('class')
-      .leftJoinAndSelect('class.groups', 'group')
-      .leftJoinAndSelect('group.scheduleItems', 'scheduleItem')
       .where('class.teacherUserProfileId = :teacherUserProfileId', {
         teacherUserProfileId,
       })
       .andWhere('class.deletedAt IS NULL')
-      .andWhere('(group.deletedAt IS NULL OR group.id IS NULL)')
       .getMany();
+
+    if (classes.length === 0) {
+      return classes;
+    }
+
+    // Fetch groups with scheduleItems for all classes
+    const classIds = classes.map((c) => c.id);
+    const groups = await this.getEntityManager()
+      .createQueryBuilder(Group, 'group')
+      .leftJoinAndSelect('group.scheduleItems', 'scheduleItems')
+      .where('group.classId IN (:...classIds)', { classIds })
+      .andWhere('group.deletedAt IS NULL')
+      .getMany();
+
+    // Group groups by classId
+    const groupsByClassId = new Map<string, Group[]>();
+    groups.forEach((group) => {
+      const existing = groupsByClassId.get(group.classId) || [];
+      existing.push(group);
+      groupsByClassId.set(group.classId, existing);
+    });
+
+    // Attach groups to their respective classes
+    classes.forEach((classEntity) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (classEntity as any).groups = groupsByClassId.get(classEntity.id) || [];
+    });
+
+    return classes;
   }
 
   /**

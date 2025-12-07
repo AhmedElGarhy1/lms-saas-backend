@@ -16,6 +16,7 @@ import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { ValidationHelpers } from '../utils/validation-helpers';
 import { ScheduleService } from './schedule.service';
 import { GroupsRepository } from '../repositories/groups.repository';
+import { GroupStudentsRepository } from '../repositories/group-students.repository';
 import { ScheduleItemDto } from '../dto/schedule-item.dto';
 
 @Injectable()
@@ -28,6 +29,7 @@ export class ClassValidationService extends BaseService {
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly scheduleService: ScheduleService,
     private readonly groupsRepository: GroupsRepository,
+    private readonly groupStudentsRepository: GroupStudentsRepository,
   ) {
     super();
   }
@@ -204,7 +206,7 @@ export class ClassValidationService extends BaseService {
     newDuration: number,
     teacherUserProfileId: string,
   ): Promise<void> {
-    // Load all groups for this class with their schedule items and students
+    // Load all groups for this class with their schedule items
     // Repository handles which relations to load - service doesn't specify
     const groups =
       await this.groupsRepository.findGroupsByClassIdWithScheduleAndStudents(
@@ -216,9 +218,22 @@ export class ClassValidationService extends BaseService {
       return;
     }
 
+    // Fetch groupStudents separately for all groups instead of relying on relation
+    const groupIds = groups.map((g) => g.id);
+    const allGroupStudents = await Promise.all(
+      groupIds.map((groupId) =>
+        this.groupStudentsRepository.findByGroupId(groupId),
+      ),
+    );
+
+    // Create a map of groupId -> groupStudents for quick lookup
+    const groupStudentsMap = new Map<string, (typeof allGroupStudents)[0]>();
+    groupIds.forEach((groupId, index) => {
+      groupStudentsMap.set(groupId, allGroupStudents[index]);
+    });
+
     // Collect schedule items and group information
     const allScheduleItems: ScheduleItemDto[] = [];
-    const groupIds: string[] = [];
     const studentToGroupsMap = new Map<string, ScheduleItemDto[]>();
 
     for (const group of groups) {
@@ -232,18 +247,16 @@ export class ClassValidationService extends BaseService {
 
         // Add to all schedule items (for teacher conflict check)
         allScheduleItems.push(...scheduleItems);
-        groupIds.push(group.id);
 
-        // Map schedule items to students in this group
-        if (group.groupStudents) {
-          for (const groupStudent of group.groupStudents) {
-            const studentId = groupStudent.studentUserProfileId;
-            const existingItems = studentToGroupsMap.get(studentId) || [];
-            studentToGroupsMap.set(studentId, [
-              ...existingItems,
-              ...scheduleItems,
-            ]);
-          }
+        // Map schedule items to students in this group (fetch from separate query)
+        const groupStudents = groupStudentsMap.get(group.id) || [];
+        for (const groupStudent of groupStudents) {
+          const studentId = groupStudent.studentUserProfileId;
+          const existingItems = studentToGroupsMap.get(studentId) || [];
+          studentToGroupsMap.set(studentId, [
+            ...existingItems,
+            ...scheduleItems,
+          ]);
         }
       }
     }

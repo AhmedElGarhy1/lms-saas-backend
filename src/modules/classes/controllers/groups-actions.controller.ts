@@ -26,11 +26,26 @@ import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { GroupEvents } from '@/shared/events/groups.events.enum';
 import { GroupExportedEvent } from '../events/group.events';
+import { ClassesRepository } from '../repositories/classes.repository';
+import { BranchesRepository } from '@/modules/centers/repositories/branches.repository';
+import { Class } from '../entities/class.entity';
+import { Branch } from '@/modules/centers/entities/branch.entity';
+import { Group } from '../entities/group.entity';
+import { ExportMapper } from '@/shared/common/services/export.service';
 
 @ApiBearerAuth()
 @ApiTags('Groups Actions')
 @Controller('groups/actions')
 export class GroupsActionsController {
+  constructor(
+    private readonly groupsService: GroupsService,
+    private readonly bulkOperationService: BulkOperationService,
+    private readonly exportService: ExportService,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly classesRepository: ClassesRepository,
+    private readonly branchesRepository: BranchesRepository,
+  ) {}
+
   @Get('export')
   @ApiOperation({ summary: 'Export groups data' })
   @ApiResponse({
@@ -53,8 +68,45 @@ export class GroupsActionsController {
     );
     const groups = paginationResult.items;
 
-    // Create mapper
-    const mapper = new GroupExportMapper();
+    // Fetch class and branch data separately instead of relying on relations
+    const classIds = [...new Set(groups.map((g) => g.classId))];
+    const branchIds = [...new Set(groups.map((g) => g.branchId))];
+
+    const classes = await Promise.all(
+      classIds.map((id) => this.classesRepository.findOne(id)),
+    );
+    const branches = await Promise.all(
+      branchIds.map((id) => this.branchesRepository.findOne(id)),
+    );
+
+    // Create maps for quick lookup
+    const classMap = new Map<string, Class | null>();
+    classes.forEach((classEntity) => {
+      if (classEntity) {
+        classMap.set(classEntity.id, classEntity);
+      }
+    });
+
+    const branchMap = new Map<string, Branch | null>();
+    branches.forEach((branch) => {
+      if (branch) {
+        branchMap.set(branch.id, branch);
+      }
+    });
+
+    // Create mapper with access to class and branch data
+    const baseMapper = new GroupExportMapper();
+    const mapper: ExportMapper<
+      Group,
+      ReturnType<GroupExportMapper['mapToExport']>
+    > = {
+      mapToExport: (group: Group) => {
+        const classEntity = classMap.get(group.classId) || undefined;
+        const branch = branchMap.get(group.branchId) || undefined;
+        return baseMapper.mapToExportWithContext(group, classEntity, branch);
+      },
+      getHeaders: () => baseMapper.getHeaders(),
+    };
 
     // Generate base filename
     const baseFilename = query.filename || 'groups';
@@ -76,12 +128,6 @@ export class GroupsActionsController {
 
     return data;
   }
-  constructor(
-    private readonly groupsService: GroupsService,
-    private readonly bulkOperationService: BulkOperationService,
-    private readonly exportService: ExportService,
-    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-  ) {}
 
   @Post('bulk/delete')
   @ApiOperation({ summary: 'Bulk delete groups' })

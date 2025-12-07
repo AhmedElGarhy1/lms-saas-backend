@@ -153,19 +153,20 @@ export class GroupsRepository extends BaseRepository<Group> {
   }
 
   /**
-   * Find all groups for a given class ID with schedule items and students loaded.
+   * Find all groups for a given class ID with schedule items loaded.
    * Repository decides which relations to load - service layer doesn't specify relations.
    * Pure data access method - no business logic.
+   * Note: groupStudents are not loaded - fetch them separately using GroupStudentsRepository.
    *
    * @param classId - The class ID
-   * @returns Array of groups with scheduleItems and groupStudents relations loaded
+   * @returns Array of groups with scheduleItems relation loaded
    */
   async findGroupsByClassIdWithScheduleAndStudents(
     classId: string,
   ): Promise<Group[]> {
     return this.getRepository().find({
       where: { classId },
-      relations: ['scheduleItems', 'groupStudents'],
+      relations: ['scheduleItems'],
     });
   }
 }
