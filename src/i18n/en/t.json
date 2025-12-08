@@ -1,404 +1,540 @@
 {
+  "resources": {
+    "user": "User",
+    "users": "Users",
+    "admin": "Admin",
+    "admins": "Admins",
+    "staff": "Staff",
+    "student": "Student",
+    "students": "Students",
+    "teacher": "Teacher",
+    "teachers": "Teachers",
+    "role": "Role",
+    "roles": "Roles",
+    "center": "Center",
+    "centers": "Centers",
+    "branch": "Branch",
+    "branches": "Branches",
+    "number": "Number",
+    "level": "Level",
+    "percentage": "Percentage",
+    "resourceCount": "{resource} Count",
+    "levels": "Levels",
+    "subject": "Subject",
+    "subjects": "Subjects",
+    "class": "Class",
+    "classes": "Classes",
+    "group": "Group",
+    "groups": "Groups",
+    "column": "Column",
+    "columns": "Columns",
+    "duration": "Duration",
+    "activityLog": "Activity Log",
+    "activityLogs": "Activity Logs",
+    "permission": "Permission",
+    "otp": "OTP",
+    "notification": "Notification",
+    "alert": "Alert",
+    "profile": "Profile",
+    "access": "Access",
+    "userAccess": "User Access",
+    "branchAccess": "Branch Access",
+    "centerAccess": "Center Access",
+    "refreshToken": "Refresh Token",
+    "verificationCode": "Verification Code",
+    "adminScope": "Admin Scope",
+    "profileType": "Profile Type",
+    "tokenType": "Token Type",
+    "signature": "Signature",
+    "credentials": "Credentials",
+    "data": "Data",
+    "item": "Item",
+    "items": "Items",
+    "dashboard": "Dashboard",
+    "systemHealth": "System Health",
+    "csv": "CSV",
+    "excel": "Excel",
+    "json": "JSON",
+    "name": "Name",
+    "description": "Description",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "basicInformation": "Basic Information",
+    "permissions": "Permissions",
+    "statistics": "Statistics",
+    "assignedUsers": "Assigned Users",
+    "permissionsCount": "Permissions Count",
+    "timestamps": "Timestamps",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At",
+    "include": "Include",
+    "unknownUser": "Unknown User",
+    "email": "Email",
+    "phone": "Phone",
+    "phoneNumber": "Phone Number",
+    "userId": "User ID",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "theme": "Theme",
+    "notifications": "Notifications",
+    "dateOfBirth": "Date of Birth",
+    "address": "Address",
+    "locale": "Locale",
+    "logo": "Logo",
+    "password": "Password",
+    "website": "Website",
+    "avatar": "Avatar",
+    "fullName": "Full Name",
+    "location": "Location",
+    "language": "Language",
+    "english": "English",
+    "arabic": "Arabic",
+    "timezone": "Timezone",
+    "dateFormat": "Date Format",
+    "timeFormat": "Time Format",
+    "twoFactorAuth": "Two-Factor Authentication",
+    "type": "Type",
+    "date": "Date",
+    "dates": "Dates",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "amount": "Amount",
+    "count": "Count",
+    "session": "Session",
+    "sessions": "Sessions",
+    "day": "Day",
+    "schedule": "Schedule",
+    "scheduleItems": "Schedule Items",
+    "scheduleItem": "Schedule Item",
+    "roleName": "Role Name",
+    "currency": "Currency",
+    "per": "Per",
+    "paymentStrategy": "{resource} Payment Strategy",
+    "paymentStrategies": "Payment Strategies",
+    "paymentStrategyDescription": "Configure {resource} payment for this class",
+    "paymentUnit": "Payment Unit",
+    "lastUpdated": "Last Updated",
+    "contactInformation": "Contact Information",
+    "activeStatus": "Active Status",
+    "studentsCount": "Students Count",
+    "current": "Current",
+    "channel": "Channel",
+    "total": "Total",
+    "errors": "Errors",
+    "centerName": "Center Name",
+    "contact": "Contact",
+    "created": "Created",
+    "actions": "Actions",
+    "never": "Never",
+    "ipAddress": "IP Address",
+    "userAgent": "User Agent",
+    "metadata": "Metadata",
+    "title": "Title",
+    "message": "Message",
+    "error": "Error",
+    "priority": "Priority",
+    "recipient": "Recipient",
+    "targetUser": "Target User",
+    "sms": "SMS",
+    "whatsapp": "WhatsApp",
+    "inApp": "In-App",
+    "push": "Push",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "lastDays": "Last {count} days",
+    "days": "Days",
+    "week": "Week",
+    "weeks": "Weeks",
+    "month": "Month",
+    "months": "Months",
+    "year": "Year",
+    "years": "Years",
+    "hour": "Hour",
+    "hours": "Hours",
+    "minute": "Minute",
+    "minutes": "Minutes",
+    "thisWeek": "This week",
+    "lastWeek": "Last week",
+    "thisMonth": "This month",
+    "lastMonth": "Last month",
+    "thisYear": "This year",
+    "lastYear": "Last year",
+    "customRange": "Custom range",
+    "filename": "Filename",
+    "userInfo": "User Info",
+    "profiles": "Profiles",
+    "resource": "Resource",
+    "field": "Field",
+    "otpCode": "OTP Code",
+    "identifier": "ID",
+    "scope": "Scope",
+    "context": "Context",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "readOnly": "Read-only"
+  },
+  "messages": {
+    "created": "{resource} created successfully",
+    "updated": "{resource} updated successfully",
+    "deleted": "{resource} deleted successfully",
+    "restored": "{resource} restored successfully",
+    "archived": "{resource} archived successfully",
+    "exported": "{resource} exported successfully",
+    "found": "{resource} found successfully",
+    "activated": "{resource} activated successfully",
+    "deactivated": "{resource} deactivated successfully",
+    "inactive": "{resource} is inactive",
+    "accessDenied": "You do not have permission to access {resource}",
+    "alreadyExists": "{resource} with {field} '{value}' already exists",
+    "alreadyDeleted": "{resource} is already deleted",
+    "expired": "{resource} has expired",
+    "fieldInvalid": "Invalid {field}",
+    "fieldRequired": "{field} is required",
+    "validationFailed": "Validation failed",
+    "error": "{type} error occurred",
+    "errorWithMessage": "{message}",
+    "httpError": "HTTP {code} error: {message}",
+    "operationError": "Operation failed: {reason}",
+    "sessionExpired": "You may need to log in or your session has expired",
+    "rateLimitExceeded": "Too many requests. Please try again in {time}",
+    "loading": "Loading {resource}...",
+    "loadingClean": "Loading...",
+    "processing": "Processing {action}...",
+    "completed": "Completed successfully",
+    "noData": "No data available",
+    "noResults": "No results found",
+    "genericError": "Something went wrong",
+    "welcome": "Welcome",
+    "bulkOperationResult": "Operation Results",
+    "bulkOperationSuccess": "{count, plural, =0 {No operations} =1 {Successfully processed # {item}} other {Successfully processed # {item}s}}",
+    "bulkOperationFailure": "{count, plural, =0 {No operations} =1 {Failed to process # {item}} other {Failed to process # {item}s}}",
+    "bulkOperationPartial": "Successfully processed {success, number} {success, plural, =1 {{item}} other {{item}s}}, but {failed, number} {failed, plural, =1 {{item}} other {{item}s}} failed",
+    "changed": "{resource} changed successfully",
+    "sent": "{resource} sent successfully",
+    "verified": "{resource} verified successfully",
+    "enabled": "{resource} enabled successfully",
+    "disabled": "{resource} disabled successfully",
+    "assigned": "{resource} assigned successfully",
+    "removed": "{resource} removed successfully",
+    "imported": "{resource} imported successfully",
+    "granted": "{resource} granted successfully",
+    "revoked": "{resource} revoked successfully",
+    "notFound": "{resource} not found",
+    "contactAdministrator": "If you believe this is a mistake, contact your administrator",
+    "checkUrlOrDashboard": "Try checking the URL or returning to the dashboard",
+    "actionNotAllowed": "Cannot {action} {resource}. {reason}",
+    "actionUnauthorized": "You are not authorized to {action} this {resource}",
+    "withIdNotFound": "{resource} with {identifier} {value} not found",
+    "alreadyHas": "{resource} already has {what}",
+    "alreadyIs": "{resource} is already {state}",
+    "duplicateField": "This {field} is already in use. Please choose a different one",
+    "phoneNotVerified": "Phone is not verified",
+    "insufficientPermissions": "You don't have sufficient permissions to perform this action",
+    "accessDeniedToResource": "You do not have access to {resource}",
+    "twoFactorNotEnabled": "Two-factor authentication is not enabled for this account",
+    "systemNotReady": "The system is currently unavailable. Please try again shortly.",
+    "seederFailed": "Seeder operation failed",
+    "fieldInvalidFormat": "Invalid {field} format",
+    "fieldInvalidOrExpired": "Invalid or expired {field}",
+    "bulkExportNotImplemented": "Bulk export not implemented for {item}",
+    "bulkImportNotImplemented": "Bulk import not implemented for {item}",
+    "bulkDeleteNotImplemented": "Bulk delete not implemented for {item}",
+    "bulkActionNotImplemented": "Bulk action \"{action}\" not implemented for {item}",
+    "foundResults": "Found {count, number} {count, plural, =1 {result} other {results}}",
+    "startTypingToSearch": "Start typing to search...",
+    "allItemsAlreadyInState": "{count, plural, =0 {No items} =1 {All # selected {item} is already {state}} other {All # selected {item}s are already {state}}}",
+    "contactAdmin": "If you believe this is an error, please contact your administrator",
+    "copySuccess": "Copied to clipboard successfully",
+    "loadMore": "Load more ({count, number} remaining)",
+    "global": "Global",
+    "globalScope": "Global Scope",
+    "globalDashboard": "Global Dashboard",
+    "all": "All",
+    "notAvailable": "N/A",
+    "couldNotLoad": "Could not load {resource}",
+    "showAll": "Show all {resource}",
+    "noOptionsAvailable": "No options available",
+    "noSchedule": "No schedule",
+    "noResourceAvailable": "No {resource} available",
+    "noItemsFound": "No {item} found",
+    "tryAdjustingSearchTerms": "No results found. Try adjusting your search terms.",
+    "resourcePermissions": "{resource} Permissions",
+    "errorDetails": "Error Details",
+    "errorDetailsDevelopment": "Error Details (Development)",
+    "errorLabel": "Error:",
+    "stack": "Stack:",
+    "componentStack": "Component Stack:",
+    "noTags": "No tags",
+    "searchAndSelectResource": "Search and select a {resource}",
+    "selectResourceFirst": "Select a {resource} first",
+    "resourceInactive": "The selected {resource} is currently inactive",
+    "resourceError": "Error Loading {resource}",
+    "somethingWentWrongLoadingResource": "Something went wrong while loading {resource}",
+    "alreadyHaveAccount": "Already have an account?",
+    "tryDifferentApproach": "Please try a different approach",
+    "success": "{resource} {action} successfully",
+    "failed": "Failed to {action} {resource}",
+    "inProgress": "{action} {resource}...",
+    "codeSent": "{type} sent successfully",
+    "codeSentTo": "{type} code sent to {target}",
+    "codeInvalid": "Invalid or expired {type} code",
+    "enterCode": "Enter the {length}-digit {type} code sent to {target}",
+    "resendAvailable": "Resend available in {seconds}s",
+    "exporting": "Exporting...",
+    "deleting": "Deleting...",
+    "saving": "Saving...",
+    "verifying": "Verifying...",
+    "sending": "Sending...",
+    "importing": "Importing...",
+    "readOnly": "This {resource} is read-only and cannot be modified",
+    "notDeleted": "{resource} is not deleted and cannot be restored",
+    "cannotGrantAccess": "{resource} cannot grant user access",
+    "onlyForStaffAndAdmin": "This action is only available for {resource} with staff or admin profile types",
+    "scopeNotAllowed": "{scope} is not allowed for {context}",
+    "scopeDoesNotMatch": "{resource} scope does not match the required scope",
+    "cannotBeAssociated": "{resource1} cannot be associated with {resource2}",
+    "relatedEntityMissingOrInvalid": "Related entity is missing or invalid",
+    "temporaryDatabaseConflict": "A temporary database conflict occurred. Please try again",
+    "databaseOperationFailed": "Database operation failed",
+    "internalServerError": "An internal server error occurred",
+    "serviceUnavailable": "Service is temporarily unavailable",
+    "businessLogicError": "A business logic error occurred",
+    "missingRequiredHeader": "Required header {header} is missing"
+  },
   "actions": {
-    "tryDifferentApproach": "Please try a different approach"
+    "sent": "Sent",
+    "failed": "Failed",
+    "retrying": "Retrying",
+    "pending": "Pending",
+    "delivered": "Delivered",
+    "success": "Success"
   },
-  "auth": {
-    "login": {
-      "title": "Welcome Back",
-      "subtitle": "Sign in to your account to continue"
-    },
-    "register": {
-      "title": "Create Account",
-      "subtitle": "Sign up to get started"
-    },
-    "noAccount": "Don't have an account?",
-    "forgotPassword": {
-      "title": "Forgot Password",
-      "description": "Enter your phone number to receive a password reset code",
-      "resetTitle": "Reset Password",
-      "resetDescription": "Enter the code sent to your phone and your new password",
-      "sendCode": "Send Reset Code",
-      "resetPassword": "Reset Password",
-      "backToLogin": "Back to Login",
-      "otpSent": "If an account exists, a password reset code has been sent.",
-      "otpSentTo": "OTP code sent to",
-      "resetSuccess": "Password reset successfully",
-      "invalidCode": "Invalid or expired code. Please request a new code."
-    },
-    "twoFactor": {
-      "setupSuccess": "2FA setup OTP sent to your phone. Verify the code to enable 2FA.",
-      "enableSuccess": "Two-factor authentication enabled successfully",
-      "disableSuccess": "Two-factor authentication disabled successfully",
-      "alreadyEnabled": "2FA is already enabled",
-      "notEnabled": "2FA is not enabled",
-      "invalidCode": "Invalid or expired code",
-      "enterCode": "Enter the OTP code sent to your phone to enable 2FA",
-      "disableOtpRequired": "Enter the OTP code sent to your phone to disable 2FA",
-      "otpRequired": "Enter the OTP code sent to your phone to disable 2FA",
-      "enable": "Enable 2FA",
-      "disable": "Disable 2FA"
-    }
+  "buttons": {
+    "show": "Show",
+    "create": "Create",
+    "update": "Update",
+    "delete": "Delete",
+    "restore": "Restore",
+    "archive": "Archive",
+    "export": "Export",
+    "import": "Import",
+    "assign": "Assign",
+    "remove": "Remove",
+    "view": "View",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "submit": "Submit",
+    "save": "Save",
+    "close": "Close",
+    "back": "Back",
+    "refresh": "Refresh",
+    "exportData": "Export Data",
+    "manageResource": "Manage {resource}",
+    "resourceAccess": "{resource} Access",
+    "activateSelected": "Activate Selected",
+    "deactivateSelected": "Deactivate Selected",
+    "saveChanges": "Save Changes",
+    "changePassword": "Change Password",
+    "deleteSelected": "Delete Selected",
+    "enable": "Enable",
+    "disable": "Disable",
+    "filter": "Filter",
+    "clear": "Clear",
+    "reset": "Reset",
+    "confirm": "Confirm",
+    "login": "Login",
+    "logout": "Log out",
+    "register": "Sign Up",
+    "forgotPassword": "Forgot password?",
+    "deactivate": "Deactivate",
+    "toggleStatusInResource": "Toggle Status in {resource}",
+    "deleteFromResource": "Delete from {resource}",
+    "restoreInResource": "Restore in {resource}",
+    "activateInResourceSelected": "Activate in {resource} Selected",
+    "deactivateInResourceSelected": "Deactivate in {resource} Selected",
+    "deleteFromResourceSelected": "Delete from {resource} Selected",
+    "restoreInResourceSelected": "Restore in {resource} Selected",
+    "clearSearch": "Clear Search",
+    "selectResource": "Select {resource}",
+    "tryAgain": "Try Again",
+    "toggleStatus": "Toggle Status",
+    "manageAccess": "Manage Access",
+    "reloadPage": "Reload Page",
+    "deselectAll": "Deselect All",
+    "markAllAs": "Mark all as {state}",
+    "viewAll": "View all {resource}",
+    "done": "Done",
+    "quickSelect": "Quick select",
+    "selectPreset": "Select a preset",
+    "selectDates": "Select dates",
+    "open": "Open {type}",
+    "verify": "Verify",
+    "verifyPhone": "Verify Phone",
+    "sendCode": "Send {type}",
+    "autoRefresh": "{refresh} Auto",
+    "importResource": "Import {resource}",
+    "resendCode": "Resend Code",
+    "grantResourceAccess": "Grant {resource} Access",
+    "columnVisibility": "Column Visibility",
+    "showAll": "Show All {type}",
+    "hideAll": "Hide All {type}",
+    "contactAdmin": "Contact Administrator",
+    "addItem": "Add {item}",
+    "switchResource": "Switch {resource}",
+    "markAs": "Mark as {state}"
   },
-  "common": {
-    "actions": {
-      "switchCenter": "Switch Center"
+  "placeholders": {
+    "search": "Search...",
+    "select": "Select...",
+    "filterBy": "Filter by {field}",
+    "enterField": "Enter {field}",
+    "selectField": "Select {field}",
+    "searchField": "Search {field}",
+    "pickDate": "Pick a date",
+    "pickDateRange": "Pick a date range",
+    "searchItems": "Search {item}...",
+    "confirmField": "Confirm {field}"
+  },
+  "ui": {
+    "form": {
+      "hints": {
+        "phone": "Enter a {length}-digit {country} mobile number (e.g., {example})",
+        "code": "Enter the {length}-digit {type} code sent to {target}"
+      }
     },
-    "buttons": {
-      "cancel": "Cancel",
-      "delete": "Delete",
-      "edit": "Edit",
-      "createResource": "Create {resource}",
-      "update": "Update",
-      "updateResource": "Update {resource}",
-      "deleteResource": "Delete {resource}",
-      "submit": "Submit",
-      "close": "Close",
-      "back": "Back",
-      "refresh": "Refresh",
-      "export": "Export",
-      "import": "Import",
-      "exportData": "Export Data",
-      "exporting": "Exporting...",
-      "assign": "Assign",
-      "remove": "Remove",
-      "manageRoles": "Manage Roles",
-      "centerAccess": "Center Access",
-      "activateSelected": "Activate Selected",
-      "deactivateSelected": "Deactivate Selected",
-      "selectProfile": "Select Profile",
-      "saveChanges": "Save Changes",
-      "changePassword": "Change Password",
-      "deleteSelected": "Delete Selected",
-      "enable": "Enable",
-      "disable": "Disable",
-      "deleting": "Deleting...",
-      "restore": "Restore",
-      "filter": "Filter",
-      "clear": "Clear",
-      "reset": "Reset",
-      "confirm": "Confirm",
-      "login": "Login",
-      "logout": "Log out",
-      "register": "Sign Up",
-      "forgotPassword": "Forgot password?",
-      "deactivate": "Deactivate",
-      "toggleStatusInCenter": "Toggle Status in Center",
-      "deleteFromCenter": "Delete from Center",
-      "restoreInCenter": "Restore in Center",
-      "activateInCenterSelected": "Activate in Center Selected",
-      "deactivateInCenterSelected": "Deactivate in Center Selected",
-      "deleteFromCenterSelected": "Delete from Center Selected",
-      "restoreInCenterSelected": "Restore in Center Selected",
-      "view": "View",
-      "clearSearch": "Clear Search",
-      "tryAgain": "Try Again",
-      "saving": "Saving...",
-      "toggleStatus": "Toggle Status",
-      "manageAccess": "Manage Access",
-      "reloadPage": "Reload Page",
-      "deselectAll": "Deselect All",
-      "markAllRead": "Mark all read",
-      "viewAllNotifications": "View all notifications",
-      "archiveNotification": "Archive notification",
-      "done": "Done",
-      "quickSelect": "Quick select",
-      "selectPreset": "Select a preset",
-      "selectDates": "Select dates",
-      "openMenu": "Open menu",
-      "verify": "Verify",
-      "verifying": "Verifying...",
-      "sendOtp": "Send OTP",
-      "sending": "Sending...",
-      "verifyPhone": "Verify Phone",
-      "autoRefresh": "{refresh} Auto",
-      "importUser": "Import User",
-      "importing": "Importing...",
-      "resendCode": "Resend Code",
-      "processing": "Processing...",
-      "grantUserAccess": "Grant User Access",
-      "columnVisibility": "Column Visibility",
-      "showAllColumns": "Show All Columns",
-      "hideAllColumns": "Hide All Columns",
-      "selectCenter": "Select Center",
-      "contactAdmin": "Contact Administrator"
+    "table": {
+      "selection": {
+        "selectedItems": "{count, plural, =0 {No items} =1 {# {item} selected} other {# {item}s selected}}",
+        "selectAll": "Select All ({total, number})",
+        "selectAllRows": "Select all",
+        "selectRow": "Select row"
+      },
+      "trashToggle": {
+        "activeItems": "Active Items",
+        "deletedItems": "Deleted Items"
+      }
     },
-    "labels": {
-      "name": "Name",
-      "email": "Email",
-      "phone": "Phone",
-      "description": "Description",
-      "status": "Status",
-      "active": "Active",
-      "inactive": "Inactive",
-      "userId": "User ID",
-      "never": "Never",
-      "currentPassword": "Current Password",
-      "newPassword": "New Password",
-      "confirmPassword": "Confirm Password",
-      "theme": "Theme",
-      "notifications": "Notifications",
-      "phoneNumber": "Phone Number",
-      "dateOfBirth": "Date of Birth",
-      "address": "Address",
-      "locale": "Locale",
-      "logo": "Logo",
-      "student": "Student",
-      "all": "All",
-      "loading": "Loading",
-      "error": "Error",
-      "success": "Success",
-      "password": "Password",
-      "website": "Website",
-      "role": "Role",
-      "permissions": "Permissions",
-      "avatar": "Avatar",
-      "fullName": "Full Name",
-      "center": "Center",
-      "location": "Location",
-      "user": "User",
-      "profile": "profile",
-      "language": "Language",
-      "english": "English",
-      "arabic": "Arabic",
-      "timezone": "Timezone",
-      "dateFormat": "Date Format",
-      "timeFormat": "Time Format",
-      "twoFactorAuth": "Two-Factor Authentication",
-      "type": "Type",
-      "notification": "Notification",
-      "alert": "Alert",
-      "statistics": "Statistics",
-      "yes": "Yes",
-      "no": "No",
-      "current": "Current",
-      "date": "Date",
-      "filenameOptional": "Filename (Optional)",
-      "filter": "Filter",
-      "timestamps": "Timestamps",
-      "basicInformation": "Basic Information",
-      "roleName": "Role Name",
-      "createdAt": "Created At",
-      "lastUpdated": "Last Updated",
-      "updatedAt": "Updated At",
-      "assignedUsers": "Assigned Users",
-      "permissionsCount": "Permissions Count",
-      "unknownUser": "Unknown User",
-      "contactInformation": "Contact Information",
-      "show": "Show",
-      "activeStatus": "Active Status",
-      "adminName": "Admin Name",
-      "adminPassword": "Admin Password",
-      "adminPhone": "Admin Phone",
-      "adminAddress": "Admin Address",
-      "adminDateOfBirth": "Admin Date of Birth",
-      "adminActiveStatus": "Admin Active Status",
-      "selectDates": "Select dates...",
-      "today": "Today",
-      "yesterday": "Yesterday",
-      "thisWeek": "This week",
-      "lastWeek": "Last week",
-      "thisMonth": "This month",
-      "lastMonth": "Last month",
-      "thisYear": "This year",
-      "lastYear": "Last year",
-      "customRange": "Custom range",
-      "allUsers": "All Users",
-      "allAdmins": "All Admins",
-      "include": "Include",
-      "globalDashboard": "Global Dashboard",
-      "dateRange": "Date Range",
-      "unknownBranch": "Unknown Branch",
-      "noRendererConfigured": "No renderer configured",
-      "otpCode": "OTP Code",
-      "notProvided": "Not provided",
-      "profileAvatar": "Profile avatar",
-      "channel": "Channel",
-      "total": "Total",
-      "failed": "Failed",
-      "errors": "Errors",
-      "columnVisibility": "Column Visibility",
-      "lastDays": "Last {count, number} days",
-      "unknownLevel": "Unknown Level",
-      "unknownSubject": "Unknown Subject"
+    "pagination": {
+      "selectedRows": "{selected, plural, =0 {No rows} =1 {# row} other {# rows}} of {total, plural, =0 {none} =1 {# row} other {# rows}} selected",
+      "showingResults": "Showing {start, number} to {end, number} of {total, plural, =0 {no results} =1 {# result} other {# results}}",
+      "rowsPerPage": "Rows per page",
+      "pageOf": "Page {current, number} of {total, number}"
     },
-    "status": {
-      "active": "Active",
-      "inactive": "Inactive",
-      "pending": "Pending",
-      "sent": "Sent",
-      "failed": "Failed",
-      "retrying": "Retrying",
-      "delivered": "Delivered"
+    "dialogs": {
+      "confirmBulkOperation": {
+        "title": "Confirm Bulk Operation",
+        "message": "Are you sure you want to {operation} {count, plural, =1 {# {entityName}} other {# {entityName}s}}?",
+        "skipped": "{skipped, plural, =1 {# {entityName} is} other {# {entityName}s are}} already in the target state and will be skipped.",
+        "cannotUndo": "This action cannot be undone"
+      },
+      "confirmIndividualAction": {
+        "title": "Confirm {operation}",
+        "message": "Are you sure you want to {operation} {entityName}?",
+        "description": "This action will {operation} {entityName}"
+      },
+      "deleteResource": {
+        "title": "Delete {resource}",
+        "message": "Are you sure you want to delete {resourceName}? This will permanently remove {resource} and all associated data.",
+        "cannotUndo": "This action cannot be undone.",
+        "thisActionWill": "This action will",
+        "removeResource": "Remove {resource} from the system",
+        "removeData": "Remove all {resource}-specific data",
+        "deactivateAccount": "{resource} account will be deactivated",
+        "cannotReverse": "This action cannot be reversed"
+      },
+      "viewResource": {
+        "title": "View {resource}"
+      },
+      "scopes": {
+        "label": "Scopes:"
+      },
+      "notifications": {
+        "unread": "Unread",
+        "archived": "Archived"
+      },
+      "createResource": {
+        "title": "Create {resource}",
+        "description": "Create a new {resource} account"
+      },
+      "deleteUser": {
+        "title": "Delete {userName}",
+        "message": "Are you sure you want to delete {userName}? This will permanently remove the user and all associated data.",
+        "cannotUndo": "This action cannot be undone.",
+        "thisActionWill": "This action will",
+        "removeUser": "Remove the user from the system",
+        "removeData": "Remove all user-specific data",
+        "deactivateAccount": "User account will be deactivated",
+        "cannotReverse": "This action cannot be reversed"
+      },
+      "manageResourceAccess": {
+        "title": "Manage {resource} Access for {resourceName}",
+        "description": "Manage {resource} access permissions"
+      },
+      "manageResourceFor": {
+        "title": "Manage {resource} for {resourceName}",
+        "description": "Assign or remove {resource} for {resourceName}",
+        "allItems": "All {resource}"
+      },
+      "verifyCode": {
+        "title": "Verify {target}",
+        "description": "Verify the {target} for {userName}",
+        "enterCodeHint": "Enter the {length}-digit code sent to the {target}",
+        "resendCooldown": "Resend available in {seconds}s"
+      },
+      "otpRequired": {
+        "title": "Enter OTP Code",
+        "description": "Please enter the OTP code sent to your phone"
+      },
+      "importUser": {
+        "title": "Import User from Another Center",
+        "step1": "Request {type}",
+        "step2": "Verify & Import",
+        "step1Description": "Enter the phone number of the user you want to import. A {type} will be sent to verify the user exists.",
+        "step2Description": "Enter the {type} code received via SMS and select the profile type to import the user.",
+        "sendCode": "Send {type}",
+        "verifyAndImport": "Verify & Import",
+        "phoneHint": "Enter an 11-digit Egyptian mobile number (e.g., 01234567890)",
+        "codeHint": "Enter the {length}-digit code sent to the phone number",
+        "phoneLocked": "Phone number is locked for this import session",
+        "codeSent": "{type} sent successfully",
+        "userNotFoundTitle": "User Not Found",
+        "userNotFoundDescription": "No user found with phone number {phone}. Would you like to create a new user instead?",
+        "createUserInstead": "Create User Instead"
+      }
     },
-    "channels": {
-      "email": "Email",
-      "sms": "SMS",
-      "whatsapp": "WhatsApp",
-      "inApp": "In-App",
-      "push": "Push"
-    },
-    "profileTypes": {},
-    "resources": {
-      "resource": "Resource",
-      "user": "User",
-      "role": "Role",
-      "center": "Center",
-      "branch": "Branch",
-      "permission": "Permission",
-      "notification": "Notification",
-      "alert": "Alert",
-      "data": "Data",
-      "item": "Item",
-      "class": "Class",
-      "classes": "Classes",
-      "group": "Group",
-      "groups": "Groups",
-      "roles": "roles",
-      "admins": "admins",
-      "staff": "staff",
-      "centers": "centers",
-      "access": "access",
-      "branches": "branches",
-      "profile": "profile",
-      "profiles": "profiles",
-      "notifications": "notifications",
-      "admin": "admin",
-      "activityLog": "activity log",
-      "userAccess": "User access",
-      "branchAccess": "Branch access",
-      "centerAccess": "Center access",
-      "level": "Level",
-      "levels": "Levels",
-      "subject": "Subject",
-      "subjects": "Subjects",
-      "refreshToken": "Refresh token",
-      "verificationCode": "Verification code",
-      "adminScope": "Admin scope",
-      "profileType": "Profile type",
-      "profileSelection": "Profile selection",
-      "tokenType": "Token type",
-      "signature": "Signature",
-      "credentials": "Credentials",
-      "twoFactorAuthentication": "Two-factor authentication",
-      "userInfo": "User info",
-      "activityLogs": "activity logs",
-      "student": "Student",
-      "teacher": "Teacher"
-    },
-    "placeholders": {
-      "search": "Search...",
-      "select": "Select...",
-      "filterBy": "Filter by {field}",
-      "enterField": "Enter {field}",
-      "selectField": "Select {field}",
-      "searchField": "Search {field}",
-      "pickDate": "Pick a date",
-      "pickDateRange": "Pick a date range",
-      "searchUsers": "Search users...",
-      "searchCenters": "Search centers...",
-      "searchAdmins": "Search admins...",
-      "searchRoles": "Search roles...",
-      "searchItems": "Search {item}...",
-      "confirmNewPassword": "Confirm new password"
-    },
-    "messages": {
-      "noData": "No data available",
-      "error": "An error occurred",
-      "bulkOperationCompleted": "Operation Results",
-      "allOperationsSucceeded": "{count, plural, =0 {No operations} =1 {Successfully processed # {item}} other {Successfully processed # {item}s}}",
-      "allOperationsFailed": "{count, plural, =0 {No operations} =1 {Failed to process # {item}} other {Failed to process # {item}s}}",
-      "partialOperationsSucceeded": "Successfully processed {success, number} {success, plural, =1 {{item}} other {{item}s}}, but {failed, number} {failed, plural, =1 {{item}} other {{item}s}} failed",
-      "forbidden": "This action is forbidden",
-      "noResults": "No results found",
-      "searching": "Searching...",
-      "startTypingToSearch": "Start typing to search...",
-      "tryAgain": "Please try again",
-      "welcome": "Welcome",
-      "foundResults": "Found {count, number} {count, plural, =1 {result} other {results}}",
-      "items": "items",
-      "couldNotLoadNotifications": "Could not load notifications",
-      "noNotifications": "No notifications",
-      "showAllItems": "Show all items",
-      "noOptionsAvailable": "No options available",
-      "noPermissionsAvailable": "No permissions available",
-      "noPermissionsFound": "No permissions found",
-      "noPermissionsAssigned": "No permissions assigned",
-      "pleaseCheckPermissionsLoaded": "Please check if the permissions are loaded correctly",
-      "tryAdjustingSearchTerms": "Try adjusting your search terms",
-      "centerPermissions": "Center Permissions",
-      "adminPermissions": "Admin Permissions",
-      "somethingWentWrong": "Something went wrong",
-      "loading": "Loading {resource}...",
-      "pleaseWaitLoading": "Please wait while we load {resource}...",
-      "unexpectedErrorOccurred": "An unexpected error occurred while rendering this component",
-      "assignedToBranch": "assigned to branch",
-      "assignedToGroup": "assigned to group",
-      "assignedToClass": "already assigned to a group in this class",
-      "enabled": "enabled",
-      "centerAccessNotDeleted": "Center access is not deleted",
-      "profileNotDeleted": "User profile is not deleted",
-      "centerNotDeleted": "Center is not deleted",
-      "roleNotDeleted": "Role is not deleted",
-      "adminUsersCannotHaveCenterAccessDeactivated": "Admin users cannot have their center access deactivated",
-      "adminUsers": "for admin users",
-      "readOnly": "read-only",
-      "studentCannotGrantUserAccess": "Students cannot grant user access",
-      "teacherCannotGrantUserAccess": "Teachers cannot grant user access",
-      "errorDetails": "Error Details",
-      "errorDetailsDevelopment": "Error Details (Development)",
-      "errorLabel": "Error:",
-      "stack": "Stack:",
-      "componentStack": "Component Stack:",
-      "selectAllRows": "Select all",
-      "selectRow": "Select row",
-      "nA": "N/A",
-      "invalidDate": "Invalid date",
-      "noTags": "No tags",
-      "invalidNumber": "Invalid number",
-      "invalidAmount": "Invalid amount",
-      "invalidPercentage": "Invalid percentage",
-      "searchAndSelectCenter": "Search and select a center",
-      "searchAndSelectRole": "Search and select a role",
-      "selectCenterFirst": "Select a center first",
-      "allItemsAlreadyInState": "{count, plural, =0 {No items} =1 {All # selected {item} is already {state}} other {All # selected {item}s are already {state}}}",
-      "errorRefreshing": "Error refreshing {item}",
-      "exportFailed": "Export failed",
-      "authenticationError": "Authentication error",
-      "somethingWentWrongAuth": "Something went wrong during authentication",
-      "errorSendingOtp": "Error sending OTP",
-      "verificationFailed": "Verification failed",
-      "branchesError": "Branches error",
-      "somethingWentWrongBranches": "Something went wrong with branches",
-      "centersError": "Centers error",
-      "somethingWentWrongCenters": "Something went wrong with centers",
-      "passwordChangeError": "Password change error",
-      "rolesError": "Roles error",
-      "somethingWentWrongLoadingRoles": "Something went wrong while loading roles",
-      "alreadyHaveAccount": "Already have an account?",
-      "processing": "Processing...",
+    "health": {
       "noActiveAlerts": "No active alerts at this time",
       "allSystemsOperational": "All Systems Operational",
       "allHealthChecksPassing": "All health checks are passing",
-      "allSystemsOperationalFull": "{title} - {message}",
+      "systemStatusOperational": "{title} - {message}",
       "systemDegraded": "System Degraded",
       "someComponentsIssues": "Some system components are experiencing issues",
-      "systemDegradedFull": "{title} - {message}",
+      "systemStatusDegraded": "{title} - {message}",
       "databaseConnectionIssue": "Database Connection Issue",
       "databaseNotResponding": "Database is not responding properly",
-      "databaseConnectionIssueFull": "{title} - {message}",
+      "databaseStatusIssue": "{title} - {message}",
       "diskUsageWarning": "Disk Usage Warning",
       "diskUsageAt": "Disk usage at",
-      "diskUsageWarningFull": "{title} - {message}",
+      "diskStatusWarning": "{title} - {message}",
       "cpuUsageWarning": "CPU Usage Warning",
       "cpuUsageAt": "CPU usage at",
-      "cpuUsageWarningFull": "{title} - {message}",
+      "cpuStatusWarning": "{title} - {message}",
       "memoryUsageWarning": "Memory Usage Warning",
       "memoryUsageAt": "Memory usage at",
-      "memoryUsageWarningFull": "{title} - {message}",
+      "memoryStatusWarning": "{title} - {message}",
       "systemAlerts": "System Alerts",
       "currentSystemAlerts": "Current system alerts and notifications",
-      "studentInactive": "Student account is inactive",
-      "teacherInactive": "Teacher account is inactive",
       "serviceStatusOverview": "Service Status Overview",
       "currentStatusAllEndpoints": "Current status of all health endpoints",
       "healthStatus": "Health Status",
@@ -428,680 +564,180 @@
       "services": "Services",
       "metrics": "Metrics",
       "alerts": "Alerts",
-      "cpuUsageTitle": "CPU Usage",
+      "cpuUsageLabel": "CPU Usage",
       "coresCount": "Cores: {count, number}",
-      "memoryUsageTitle": "Memory Usage",
+      "memoryUsageLabel": "Memory Usage",
       "memoryUsageGb": "{used, number} GB / {total, number} GB",
       "diskUsageGb": "{used, number} GB / {total, number} GB",
-      "diskUsageTitle": "Disk Usage",
+      "diskUsageLabel": "Disk Usage",
       "databaseResponse": "Database Response",
       "databaseConnections": "Active: {active, number} | Idle: {idle, number}",
       "responseTimeWithMs": "Response: {time, number} ms",
       "cpuUsagePercentage": "Usage: {percentage, number, percent}",
       "diskUsagePercentage": "Usage: {percentage, number, percent}",
-      "version": "Version:",
-      "versionWithValue": "Version: {version}",
+      "version": "Version: {version}",
       "status": "Status:",
-      "uptime": "Uptime:",
-      "loadMore": "Load more ({count, number} remaining)",
-      "globalScope": "Global Scope",
-      "global": "Global",
-      "passwordChangeSuccess": "Password changed successfully",
-      "avatarUpdated": "Avatar updated successfully",
-      "contactAdmin": "If you believe this is an error, please contact your administrator",
-      "staffInactive": "This staff member is inactive. Please contact support to activate their account.",
-      "adminInactive": "This admin is inactive. Please contact support to activate their account.",
-      "otpSent": "OTP code sent successfully",
-      "phoneVerified": "Phone verified successfully",
-      "invalidOtp": "Invalid OTP code",
-      "bulkExportNotImplemented": "Bulk export not implemented for {item}",
-      "bulkImportNotImplemented": "Bulk import not implemented for {item}",
-      "bulkDeleteNotImplemented": "Bulk delete not implemented for {item}",
-      "bulkActionNotImplemented": "Bulk action \"{action}\" not implemented for {item}",
-      "exportCompleted": "Export completed successfully as {format}",
-      "exportNotAvailable": "Export not available for this table",
-      "badRequest": "Bad Request: Please check your input and try again.",
-      "unauthorized": "Unauthorized: Please log in to continue.",
-      "accessDenied": "Access Denied: You do not have permission to view this page.",
-      "notFound": "Not Found: The requested resource does not exist.",
-      "sessionExpired": "You may need to log in or your session has expired.",
-      "contactAdministrator": "If you believe this is a mistake, contact your administrator.",
-      "checkUrlOrDashboard": "Try checking the URL or returning to the dashboard."
-    },
-    "countdown": {}
-  },
-  "dashboard": {
-    "welcome": "Welcome to Vision AI",
-    "description": "A modern Learning Management System for multi-center organizations with secure role and permission management."
-  },
-  "dialogs": {
-    "createAdmin": {
-      "title": "Create Admin",
-      "description": "Create a new admin account with appropriate permissions"
-    },
-    "editAdmin": {
-      "title": "Edit Admin",
-      "description": "Update admin information and settings"
-    },
-    "viewAdmin": {
-      "title": "Admin Details"
-    },
-    "createUser": {
-      "title": "Create User",
-      "description": "Create a new user account with appropriate permissions"
-    },
-    "editUser": {
-      "title": "Edit User",
-      "description": "Update user information and settings"
-    },
-    "selectCenterForRoleManagement": {},
-    "viewUser": {
-      "title": "User Details"
-    },
-    "deleteUser": {
-      "title": "Delete User",
-      "message": "Are you sure you want to delete {userName}? This will permanently remove the user and all associated data.",
-      "cannotUndo": "This action cannot be undone.",
-      "deactivateAccount": "User account will be deactivated",
-      "removeData": "All user data will be removed",
-      "cannotReverse": "This action cannot be reversed"
-    },
-    "createStaff": {
-      "title": "Create Staff",
-      "description": "Create a new staff member account with appropriate permissions"
-    },
-    "editStaff": {
-      "title": "Edit Staff",
-      "description": "Update staff member information and settings"
-    },
-    "viewStaff": {
-      "title": "Staff Details"
-    },
-    "createStudent": {
-      "title": "Create Student",
-      "description": "Create a new student account"
-    },
-    "editStudent": {
-      "title": "Edit Student",
-      "description": "Update student information and settings"
-    },
-    "viewStudent": {
-      "title": "Student Details"
-    },
-    "createTeacher": {
-      "title": "Create Teacher",
-      "description": "Create a new teacher account"
-    },
-    "editTeacher": {
-      "title": "Edit Teacher",
-      "description": "Update teacher information and settings"
-    },
-    "viewTeacher": {
-      "title": "Teacher Details"
-    },
-    "confirmBulkOperation": {
-      "title": "Confirm Bulk Operation",
-      "cannotUndo": "This action cannot be undone"
-    },
-    "deleteStaff": {},
-    "activateStaff": {},
-    "deactivateStaff": {},
-    "restoreStaff": {},
-    "createRole": {
-      "title": "Create New Role"
-    },
-    "editRole": {
-      "title": "Edit Role"
-    },
-    "scopes": {
-      "label": "Scopes:"
-    },
-    "viewRole": {
-      "title": "Role Details"
-    },
-    "deleteRole": {
-      "title": "Delete Role",
-      "message": "Are you sure you want to delete the role {roleName}? This will permanently remove the role and all associated permissions.",
-      "cannotUndo": "This action cannot be undone.",
-      "thisActionWill": "This action will",
-      "removeRole": "Remove the role from the system",
-      "revokePermissions": "Revoke all permissions associated with this role",
-      "removeFromUsers": "Remove the role from all users who have it assigned",
-      "deleteData": "Delete all role-specific data"
-    },
-    "createCenter": {
-      "title": "Create New Center"
-    },
-    "editCenter": {
-      "title": "Edit Center"
-    },
-    "viewCenter": {
-      "title": "Center Details"
-    },
-    "deleteCenter": {
-      "title": "Delete Center",
-      "message": "Are you sure you want to delete the center {centerName}? This will permanently remove the center and all associated data.",
-      "cannotUndo": "This action cannot be undone.",
-      "thisActionWill": "This action will",
-      "removeCenter": "Remove the center from the system",
-      "disassociateUsers": "Disassociate all users from this center",
-      "removeData": "Remove all center-specific data"
-    },
-    "manageUsers": {
-      "title": "Manage Users - {centerName}",
-      "description": "Manage user access for this center. Use the Grant/Revoke buttons to control which users can access this center.",
-      "allUsers": "All Users"
-    },
-    "manageAdmins": {
-      "title": "Manage Admins - {centerName}",
-      "description": "Manage admin access for this center. Use the Grant/Revoke buttons to control which admins can manage this center."
-    },
-    "manageAccess": {
-      "title": "User Access - {userName}",
-      "description": "Showing users that {userName} can access based on their roles and permissions. Use the Grant/Revoke buttons to manage access."
-    },
-    "manageCenterAccess": {
-      "title": "Center Access - {userName}",
-      "description": "Manage center access for this user. Use the Grant/Revoke buttons to control access to different centers.",
-      "allCenters": "All Centers"
-    },
-    "manageRoleUsers": {
-      "title": "Manage Role Users - {roleName}",
-      "description": "Manage user assignments for this role. Use the Grant/Revoke buttons to control which users have this role assigned.",
-      "allUsers": "All Users",
-      "adminScope": "Admin Scope",
-      "centerScope": "Center Scope"
-    },
-    "notifications": {
-      "title": "Notifications",
-      "all": "All",
-      "unread": "Unread",
-      "archived": "Archived"
-    },
-    "manageAdminRoles": {},
-    "manageRoles": {
-      "title": "Manage Roles",
-      "description": "Showing roles available for {userName} in your center. Use the Assign/Remove buttons to manage role assignments."
-    },
-    "rolesForCenter": {},
-    "createProducts": {},
-    "editProducts": {},
-    "viewProducts": {},
-    "deleteProducts": {},
-    "createBranch": {
-      "title": "Create New Branch"
-    },
-    "editBranch": {
-      "title": "Edit Branch"
-    },
-    "viewBranch": {
-      "title": "Branch Details",
-      "basicInformation": "Basic Information",
-      "location": "Location",
-      "address": "Address",
-      "status": "Status",
-      "contactInformation": "Contact Information",
-      "email": "Email",
-      "timestamps": "Timestamps",
-      "createdAt": "Created At",
-      "lastUpdated": "Last Updated"
-    },
-    "deleteBranch": {
-      "title": "Delete Branch",
-      "message": "Are you sure you want to delete {branchName}? This will permanently remove the branch and all associated data."
-    },
-    "manageBranchAccess": {
-      "title": "Manage Branch Access - {branchName}"
-    },
-    "createLevel": {
-      "title": "Create New Level"
-    },
-    "editLevel": {
-      "title": "Edit Level"
-    },
-    "viewLevel": {
-      "title": "Level Details",
-      "basicInformation": "Basic Information",
-      "timestamps": "Timestamps",
-      "createdAt": "Created At",
-      "lastUpdated": "Last Updated"
-    },
-    "deleteLevel": {
-      "title": "Delete Level",
-      "message": "Are you sure you want to delete the level {levelName}? This will permanently remove the level and all associated data.",
-      "cannotUndo": "This action cannot be undone.",
-      "thisActionWill": "This action will",
-      "removeLevel": "Remove the level from the system",
-      "removeData": "Remove all level-specific data"
-    },
-    "createSubject": {
-      "title": "Create New Subject"
-    },
-    "editSubject": {
-      "title": "Edit Subject"
-    },
-    "viewSubject": {
-      "title": "Subject Details",
-      "basicInformation": "Basic Information",
-      "timestamps": "Timestamps",
-      "createdAt": "Created At",
-      "lastUpdated": "Last Updated"
-    },
-    "deleteSubject": {
-      "title": "Delete Subject",
-      "message": "Are you sure you want to delete the subject {subjectName}? This will permanently remove the subject and all associated data.",
-      "cannotUndo": "This action cannot be undone.",
-      "thisActionWill": "This action will",
-      "removeSubject": "Remove the subject from the system",
-      "removeData": "Remove all subject-specific data"
-    },
-    "createTestModule": {},
-    "editTestModule": {},
-    "viewTestModule": {},
-    "deleteTestModule": {},
-    "verifyPhone": {
-      "title": "Verify Phone Number",
-      "description": "Verify the phone number for {userName}",
-      "enterOtpHint": "Enter the 6-digit code sent to the phone number",
-      "resendCooldown": "Resend available in {seconds}s"
-    },
-    "importUser": {
-      "title": "Import User from Another Center",
-      "step1": "Request OTP",
-      "step2": "Verify & Import",
-      "step1Description": "Enter the phone number of the user you want to import. An OTP will be sent to verify the user exists.",
-      "step2Description": "Enter the OTP code received via SMS and select the profile type to import the user.",
-      "sendOtp": "Send OTP",
-      "verifyAndImport": "Verify & Import",
-      "phoneHint": "Enter an 11-digit Egyptian mobile number (e.g., 01234567890)",
-      "otpHint": "Enter the 6-digit code sent to the phone number",
-      "phoneLocked": "Phone number is locked for this import session",
-      "otpSent": "OTP sent successfully",
-      "userNotFoundTitle": "User Not Found",
-      "userNotFoundDescription": "No user found with phone number {phone}. Would you like to create a new user instead?",
-      "createUserInstead": "Create User Instead"
-    }
-  },
-  "errors": {
-    "invalid": {
-      "generic": "Invalid {field}",
-      "format": "Invalid {field} format",
-      "expired": "Invalid or expired {field}",
-      "type": "Invalid {field} type"
-    },
-    "cannot": {
-      "actionReason": "Cannot {action} {resource}. {reason}"
-    },
-    "notAuthorized": {
-      "action": "You are not authorized to {action} this {resource}"
-    },
-    "notFound": {
-      "generic": "{resource} not found",
-      "withId": "{resource} with {identifier} {value} not found"
-    },
-    "already": {
-      "existsWithField": "{resource} with {field} '{value}' already exists",
-      "has": "{resource} already has {what}",
-      "is": "{resource} is already {state}",
-      "deleted": "{resource} is already deleted"
-    },
-    "expired": {
-      "generic": "{resource} has expired"
-    },
-    "required": {
-      "field": "{field} is required",
-      "oneOf": "Either {field1} or {field2} must be provided"
-    },
-    "incorrect": {
-      "field": "{field} is incorrect"
-    },
-    "studentScheduleConflict": "Student has a schedule conflict on {day} at {time}",
-    "denied": {
-      "access": "Access denied to {resource}"
-    },
-    "rateLimit": {
-      "tooManyRequestsWithTime": "Too many requests. Please try again in {time}"
-    },
-    "centerInactive": {
-      "title": "Center Inactive",
-      "description": "The center itself is currently inactive and cannot be accessed. Please select a different center or contact the administrator to activate this center."
-    },
-    "centerAccessDenied": {
-      "title": "Center Access Denied",
-      "description": "You do not have access to this center. Please contact your administrator to request center access."
-    },
-    "centerAccessInactive": {
-      "title": "Center Access Inactive",
-      "description": "Your access to this center is currently inactive. Please contact the center administrator for more information."
-    },
-    "genericError": "An error occurred",
-    "validationFailed": "Validation failed",
-    "authenticationFailed": "Authentication failed",
-    "accessDenied": "Access denied",
-    "resourceNotFound": "The requested resource was not found",
-    "duplicateField": "This {field} is already in use. Please choose a different one",
-    "databaseOperationFailed": "The operation could not be completed. Please try again",
-    "internalServerError": "An unexpected error occurred",
-    "businessLogicError": "The operation could not be completed due to a business rule violation",
-    "serviceUnavailable": "Service temporarily unavailable. Please try again later",
-    "userDoesNotHaveAccess": "User does not have access",
-    "userNotAuthenticated": "User not authenticated",
-    "profileInactive": {},
-    "userPhoneNotVerified": "User phone is not verified",
-    "tokenNotActiveYet": "Token not active yet",
-    "tokenValidationFailed": "Token validation failed",
-    "permissionScopeDoesNotMatch": "Permission scope does not match",
-    "operation": "Operation failed",
-    "adminScopeNotAllowedForCenter": "Admin scope permissions are not allowed for center-specific roles",
-    "insufficientPermissions": "You don't have sufficient permissions to perform this action",
-    "adminRoleCannotBeAssociatedWithCenter": "Admin role cannot be associated with a center. Admin roles are system-wide only",
-    "onlyForStaffAndAdmin": "{resource} can only be assigned to staff or admin profiles",
-    "noAccessToGranterUser": "You do not have access to the granter user",
-    "noAccessToTargetUser": "You do not have access to the target user",
-    "superAdminCanAccessAnyUser": "Super admin users can access any user and cannot be restricted",
-    "twoFactorNotEnabled": "Two-factor authentication is not enabled for this account",
-    "systemNotReady": "System is not ready. Please try again later",
-    "seederFailed": "Seeder operation failed",
-    "unsupportedContentType": "Unsupported content type",
-    "exportFormatNotSupported": "Export format is not supported",
-    "exportDataUnavailable": "No data available for export",
-    "requestBodyTooLarge": "Request body is too large",
-    "missingRequiredHeader": "Missing required header: {header}",
-    "relatedEntityMissingOrInvalid": "Related entity is missing or invalid. Please check the referenced data and try again",
-    "temporaryDatabaseConflict": "Temporary database conflict occurred. Please retry."
-  },
-  "export": {
-    "formats": {
-      "csv": "CSV",
-      "excel": "Excel",
-      "json": "JSON"
-    },
-    "tableExport": "table-export"
-  },
-  "form": {
-    "name": {
-      "label": "Name",
-      "placeholder": "Enter your name"
-    },
-    "email": {},
-    "password": {
-      "label": "Password",
-      "placeholder": "Enter your password"
-    },
-    "confirmPassword": {
-      "label": "Confirm Password",
-      "placeholder": "Confirm your password"
-    },
-    "terms": {
-      "label": "I agree to the terms and conditions"
-    }
-  },
-  "navigation": {
-    "dashboard": "Dashboard",
-    "users": "Users",
-    "staff": "Staff",
-    "admins": "Admins",
-    "centers": "Centers",
-    "branches": "Branches",
-    "levels": "Levels",
-    "subjects": "Subjects",
-    "roles": "Roles",
-    "systemHealth": "System Health",
-    "students": "Students",
-    "teachers": "Teachers"
-  },
-  "overlay": {
-    "centerSelection": {
-      "title": "Select Center",
-      "description": "Please select a center to continue"
-    },
-    "profileSelection": {
-      "title": "Select Profile",
-      "description": "Please select a profile to continue",
-      "noProfilesFound": "No profiles found"
-    },
-    "phoneVerification": {
-      "title": "Phone Verification Required",
-      "description": "Please verify your phone number to continue",
-      "enterOtpHint": "Enter the 6-digit code sent to your phone",
-      "resendOtp": "Resend OTP",
-      "resendCooldown": "Resend available in {seconds}s",
-      "securityNotice": "This verification is required for security. You won't be able to access the application until verified."
-    }
-  },
-  "pages": {
-    "admins": {
-      "title": "Admins",
-      "subtitle": "Manage system administrators"
-    },
-    "centers": {
-      "title": "Centers",
-      "subtitle": "Manage learning centers"
-    },
-    "roles": {
-      "title": "Roles",
-      "subtitle": "Manage system roles and permissions"
-    },
-    "users": {},
-    "staff": {
-      "title": "Staff",
-      "subtitle": "Manage staff members and their permissions"
-    },
-    "students": {
-      "title": "Students",
-      "subtitle": "Manage student accounts and information"
-    },
-    "teachers": {
-      "title": "Teachers",
-      "subtitle": "Manage teacher accounts and information"
-    },
-    "centerInactive": {},
-    "profileInactive": {
-      "title": "Profile Inactive",
-      "description": "Your selected profile is currently inactive and cannot be accessed. Please select a different profile to continue."
-    },
-    "activityLogs": {
-      "title": "Activity Logs",
-      "subtitle": "View and monitor system activity logs"
-    },
-    "health": {
-      "title": "System Health",
-      "subtitle": "Real-time monitoring of system performance and service status"
-    },
-    "profile": {
-      "title": "Profile",
-      "subtitle": "Manage your account settings and preferences",
-      "tabs": {
-        "profile": "Profile Information",
-        "security": "Security",
-        "preferences": "Preferences"
+      "uptime": "Uptime:"
+    },
+    "overlay": {
+      "resourceSelection": {
+        "title": "Select {resource}",
+        "description": "Please select a {resource} to continue",
+        "noItemsFound": "No {resource} found"
       },
-      "sections": {
-        "personalInfo": "Personal Information",
-        "editingMode": "Editing Mode",
-        "password": "Password",
-        "passwordDescription": "Manage your account password",
-        "twoFactorAuth": "Two-Factor Authentication",
-        "twoFactorAuthDescription": "Add an extra layer of security to your account",
-        "twoFactorEnabledDescription": "Your account is protected with 2FA",
-        "twoFactorDisabledDescription": "Enable 2FA to secure your account",
-        "changePassword": "Change Password",
-        "personalInfoDescription": "Update your personal information and contact details",
-        "security": "Security Settings",
-        "securityDescription": "Manage your password and security preferences",
-        "securityStatus": "Your account security status",
-        "twoFactorEnabled": "2FA is enabled",
-        "twoFactorDisabled": "2FA is disabled",
-        "securityRecommendations": "Security Recommendations",
-        "strongPassword": "Use a strong password with at least 8 characters",
-        "passwordMix": "Include a mix of letters, numbers, and symbols",
-        "uniquePassword": "Don't reuse passwords from other accounts",
-        "enableTwoFactor": "Enable two-factor authentication for extra security",
-        "preferences": "Preferences",
-        "preferencesDescription": "Customize your application preferences",
-        "languageDescription": "Choose your preferred language",
-        "themeDescription": "Select your preferred theme",
-        "notificationsDescription": "Manage your notification preferences"
+      "resourceVerification": {
+        "title": "{target} Verification Required",
+        "description": "Please verify your {target} to continue",
+        "enterCodeHint": "Enter the {length}-digit code sent to your {target}",
+        "resendCode": "Resend {type}",
+        "resendCooldown": "Resend available in {seconds}s",
+        "securityNotice": "This verification is required for security. You won't be able to access the application until verified."
       }
     },
-    "selectProfile": {},
-    "unauthorized": {
-      "title": "Access Denied",
-      "description": "You don't have permission to access this resource",
-      "message": "Please contact your administrator if you believe this is an error",
-      "goToDashboard": "Go to Dashboard",
-      "goBack": "Go Back"
-    },
-    "products": {},
-    "branches": {
-      "title": "Branches",
-      "subtitle": "Manage branches and their settings"
-    },
-    "levels": {
-      "title": "Levels",
-      "subtitle": "Manage levels and their settings"
-    },
-    "subjects": {
-      "title": "Subjects",
-      "subtitle": "Manage subjects and their settings"
-    },
-    "test-module": {},
-    "notifications": {
-      "title": "My Notifications",
-      "subtitle": "View and manage your personal notifications"
-    },
-    "notificationHistory": {
-      "title": "Notification Monitoring",
-      "subtitle": "Monitor and manage system notifications"
-    }
-  },
-  "pagination": {
-    "selectedRows": "{selected, plural, =0 {No rows} =1 {# row} other {# rows}} of {total, plural, =0 {none} =1 {# row} other {# rows}} selected",
-    "showingResults": "Showing {start, number} to {end, number} of {total, plural, =0 {no results} =1 {# result} other {# results}}",
-    "rowsPerPage": "Rows per page",
-    "pageOf": "Page {current, number} of {total, number}"
-  },
-  "selectCenter": {},
-  "success": {
-    "create": "{resource} created successfully",
-    "update": "{resource} updated successfully",
-    "delete": "{resource} deleted successfully",
-    "restore": "{resource} restored successfully",
-    "archive": "{resource} archived successfully",
-    "export": "{resource} exported successfully",
-    "login": "Login successful",
-    "logout": "Logout successful",
-    "passwordChange": "Password changed successfully",
-    "roleAssigned": "Role assigned successfully",
-    "roleRemoved": "Role removed successfully",
-    "userAccessGranted": "User access granted successfully",
-    "userAccessRevoked": "User access revoked successfully",
-    "permissionsRetrieved": "Permissions retrieved successfully",
-    "dataRetrieved": "Data retrieved successfully",
-    "dataUpdated": "Data updated successfully",
-    "tokenRefreshed": "Token refreshed successfully",
-    "passwordResetSent": "Password reset email sent",
-    "passwordReset": "Password reset successfully",
-    "twoFactorSetup": "2FA setup initiated",
-    "userActivated": "User activated successfully",
-    "userDeactivated": "User deactivated successfully",
-    "found": "{resource} found successfully",
-    "otpSent": "OTP sent successfully",
-    "userImported": "User imported successfully",
-    "phoneVerificationRequestSent": "Phone verification request sent",
-    "phoneVerified": "Phone verified successfully",
-    "centerAccessGranted": "Center access granted successfully",
-    "centerAccessRevoked": "Center access revoked successfully",
-    "centerAccessDeleted": "Center access soft deleted successfully",
-    "centerAccessRestored": "Center access restored successfully",
-    "twoFactorEnabled": "Two-factor authentication enabled successfully",
-    "twoFactorDisabled": "Two-factor authentication disabled successfully",
-    "operation": "Operation completed successfully",
-    "bulkDelete": "Bulk delete completed successfully",
-    "bulkRestore": "Bulk restore completed successfully",
-    "bulkAssign": "Bulk assign completed successfully",
-    "bulkRemove": "Bulk remove completed successfully",
-    "bulkGrantCenterAccess": "Bulk grant center access completed successfully",
-    "bulkRevokeCenterAccess": "Bulk revoke center access completed successfully",
-    "bulkToggleCenterAccessStatus": "Bulk toggle center access status completed successfully",
-    "bulkDeleteCenterAccess": "Bulk delete center access completed successfully",
-    "bulkRestoreCenterAccess": "Bulk restore center access completed successfully",
-    "bulkGrantBranchAccess": "Bulk grant branch access completed successfully",
-    "bulkRevokeBranchAccess": "Bulk revoke branch access completed successfully",
-    "bulkGrantUserAccess": "Bulk grant user access completed successfully",
-    "bulkRevokeUserAccess": "Bulk revoke user access completed successfully",
-    "bulkAssignStudentsToGroup": "Bulk assign students to group completed successfully",
-    "activityLogTypesRetrieved": "Activity log types retrieved successfully"
-  },
-  "system": {
-    "health": {
-      "check": "System health check"
-    },
-    "status": {},
-    "monitoring": {},
-    "operations": {},
-    "components": {},
-    "actions": {},
-    "deployment": {},
-    "processing": {}
-  },
-  "table": {
-    "columns": {
-      "centerName": "Center Name",
-      "contact": "Contact",
-      "roleName": "Role Name",
-      "name": "Name",
-      "email": "Email",
-      "phone": "Phone",
-      "status": "Status",
-      "active": "Active",
-      "inactive": "Inactive",
-      "createdAt": "Created At",
-      "role": "Role",
-      "created": "Created",
-      "actions": "Actions",
-      "type": "Type",
-      "user": "User",
-      "center": "Center",
-      "ipAddress": "IP Address",
-      "userAgent": "User Agent",
-      "metadata": "Metadata",
-      "description": "Description",
-      "location": "Location",
-      "address": "Address",
-      "title": "Title",
-      "message": "Message",
-      "priority": "Priority",
-      "recipient": "Recipient",
-      "channel": "Channel",
-      "error": "Error",
-      "targetUser": "Target User"
-    },
-    "actions": {
-      "deleteSelected": "Delete Selected",
-      "toggleStatus": "Toggle Status",
-      "view": "View",
-      "edit": "Edit",
-      "delete": "Delete",
-      "manageUsers": "Manage Users",
-      "manageAdmins": "Manage Admins",
-      "manageAccess": "User Access",
-      "manageCenterAccess": "Center Access",
-      "manageRoles": "Manage Roles",
-      "restore": "Restore",
-      "markAsRead": "Mark as Read",
-      "archive": "Archive"
-    },
-    "filters": {
-      "status": "Status"
-    },
-    "selection": {
-      "selectedItems": "{count, plural, =0 {No items} =1 {# {item} selected} other {# {item}s selected}}",
-      "selectAll": "Select All ({total, number})"
-    },
-    "trashToggle": {
-      "activeItems": "Active Items",
-      "deletedItems": "Deleted Items"
+    "pages": {
+      "dashboard": {
+        "welcome": "Welcome to Vision AI",
+        "description": "A modern Learning Management System for multi-center organizations with secure role and permission management."
+      },
+      "admins": {
+        "subtitle": "Manage system administrators"
+      },
+      "centers": {
+        "subtitle": "Manage learning centers"
+      },
+      "roles": {
+        "subtitle": "Manage system roles and permissions",
+        "superAdmin": {
+          "name": "Super Administrator",
+          "description": "Ultimate system administrator with full access to everything"
+        },
+        "owner": {
+          "name": "Owner",
+          "description": "Ultimate center owner with full access within the center"
+        }
+      },
+      "staff": {
+        "subtitle": "Manage staff members and their permissions"
+      },
+      "students": {
+        "subtitle": "Manage student accounts and information"
+      },
+      "teachers": {
+        "subtitle": "Manage teacher accounts and information"
+      },
+      "profileInactive": {
+        "title": "Profile Inactive",
+        "description": "Your selected profile is currently inactive and cannot be accessed. Please select a different profile to continue."
+      },
+      "activityLogs": {
+        "subtitle": "View and monitor system activity logs"
+      },
+      "health": {
+        "title": "System Health",
+        "subtitle": "Real-time monitoring of system performance and service status"
+      },
+      "profile": {
+        "subtitle": "Manage your account settings and preferences",
+        "tabs": {
+          "profile": "Profile Information",
+          "security": "Security",
+          "preferences": "Preferences"
+        },
+        "sections": {
+          "personalInfo": "Personal Information",
+          "editingMode": "Editing Mode",
+          "password": "Password",
+          "passwordDescription": "Manage your account password",
+          "twoFactorAuth": "Two-Factor Authentication",
+          "twoFactorAuthDescription": "Add an extra layer of security to your account",
+          "twoFactorEnabledDescription": "Your account is protected with 2FA",
+          "twoFactorDisabledDescription": "Enable 2FA to secure your account",
+          "changePassword": "Change Password",
+          "personalInfoDescription": "Update your personal information and contact details",
+          "security": "Security Settings",
+          "securityDescription": "Manage your password and security preferences",
+          "securityStatus": "Your account security status",
+          "twoFactorEnabled": "2FA is enabled",
+          "twoFactorDisabled": "2FA is disabled",
+          "securityRecommendations": "Security Recommendations",
+          "strongPassword": "Use a strong password with at least 8 characters",
+          "passwordMix": "Include a mix of letters, numbers, and symbols",
+          "uniquePassword": "Don't reuse passwords from other accounts",
+          "enableTwoFactor": "Enable two-factor authentication for extra security",
+          "preferences": "Preferences",
+          "preferencesDescription": "Customize your application preferences",
+          "languageDescription": "Choose your preferred language",
+          "themeDescription": "Select your preferred theme",
+          "notificationsDescription": "Manage your notification preferences"
+        }
+      },
+      "unauthorized": {
+        "title": "Access Denied",
+        "description": "You don't have permission to access this resource",
+        "message": "Please contact your administrator if you believe this is an error",
+        "goToDashboard": "Go to Dashboard",
+        "goBack": "Go Back"
+      },
+      "branches": {
+        "subtitle": "Manage {resource} and their settings"
+      },
+      "levels": {
+        "subtitle": "Manage {resource} and their settings"
+      },
+      "subjects": {
+        "subtitle": "Manage {resource} and their settings"
+      },
+      "classes": {
+        "subtitle": "Manage {resource} and their settings"
+      },
+      "groups": {
+        "subtitle": "Manage {resource} and their settings"
+      },
+      "notifications": {
+        "title": "My Notifications",
+        "subtitle": "View and manage your personal notifications"
+      },
+      "notificationHistory": {
+        "title": "Notification Monitoring",
+        "subtitle": "Monitor and manage system notifications"
+      },
+      "auth": {
+        "login": {
+          "title": "Welcome Back",
+          "subtitle": "Sign in to your account to continue"
+        },
+        "register": {
+          "title": "Create Account",
+          "subtitle": "Sign up to get started"
+        },
+        "noAccount": "Don't have an account?",
+        "forgotPassword": {
+          "title": "Forgot Password",
+          "description": "Enter your phone number to receive a password reset code",
+          "resetTitle": "Reset Password",
+          "resetDescription": "Enter the code sent to your phone and your new password",
+          "sendCode": "Send Reset Code",
+          "resetPassword": "Reset Password",
+          "backToLogin": "Back to Login",
+          "otpSent": "If an account exists, a password reset code has been sent.",
+          "otpSentTo": "OTP code sent to",
+          "resetSuccess": "Password reset successfully",
+          "invalidCode": "Invalid or expired code. Please request a new code."
+        },
+        "twoFactor": {
+          "setupSuccess": "2FA setup OTP sent to your phone. Verify the code to enable 2FA.",
+          "enableSuccess": "Two-factor authentication enabled successfully",
+          "disableSuccess": "Two-factor authentication disabled successfully",
+          "alreadyEnabled": "2FA is already enabled",
+          "notEnabled": "2FA is not enabled",
+          "invalidCode": "Invalid or expired code",
+          "enterCode": "Enter the OTP code sent to your phone to enable 2FA",
+          "disableOtpRequired": "Enter the OTP code sent to your phone to disable 2FA",
+          "otpRequired": "Enter the OTP code sent to your phone to disable 2FA",
+          "enable": "Enable 2FA",
+          "disable": "Disable 2FA"
+        }
+      }
     }
   },
   "validation": {
@@ -1162,39 +798,41 @@
     },
     "max": {
       "message": "{field} must not exceed {max}"
-    }
-  },
-  "toast": {
-    "success": {
-      "message": "Operation completed successfully"
     },
-    "error": {
-      "message": "An error occurred"
+    "class": {
+      "countRequired": "Count is required and must be at least 1 for session/hour/month",
+      "endDateAfterStart": "End date must be after start date"
     },
-    "warning": {},
-    "info": {
-      "message": "Please note"
-    }
-  },
-  "tooltip": {},
-  "empty": {},
-  "date": {
-    "formats": {},
-    "relative": {}
-  },
-  "time": {
-    "formats": {}
-  },
-  "currency": {},
-  "roles": {
-    "superAdmin": {
-      "name": "Super Administrator",
-      "description": "Ultimate system administrator with full access to everything"
+    "group": {
+      "endTimeAfterStart": "End time must be after start time",
+      "timeFormat": "Time must be in HH:mm format (24-hour)",
+      "atLeastOneScheduleItem": "At least one schedule item is required"
     },
-    "owner": {
-      "name": "Owner",
-      "description": "Ultimate center owner with full access within the center"
+    "uuid": {
+      "resourceId": "{resource} {field} must be a valid UUID"
+    },
+    "amount": {
+      "min": "Amount must be greater than or equal to 0"
+    },
+    "staff": {
+      "resourceRequiredBefore": "{resource} must be selected before selecting a {beforeResource}"
+    },
+    "userImport": {
+      "invalidProfileType": "Invalid profile type"
+    },
+    "role": {
+      "nameMinLength": "Name must be at least 2 characters",
+      "nameMaxLength": "Name must be at most 50 characters",
+      "descriptionMaxLength": "Description must be at most 200 characters"
+    },
+    "terms": {
+      "label": "I agree to the terms and conditions"
+    },
+    "common": {
+      "required": "{field} is required",
+      "invalid": "{field} is invalid",
+      "minLength": "{field} must be at least {min} characters",
+      "maxLength": "{field} must not exceed {max} characters"
     }
-  },
-  "confirm": {}
+  }
 }
