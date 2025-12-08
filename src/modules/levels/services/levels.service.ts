@@ -34,17 +34,17 @@ export class LevelsService extends BaseService {
     const level = await this.levelsRepository.findOne(levelId);
 
     if (!level) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.level',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.level',
+        identifier: 't.resources.identifier',
         value: levelId,
       });
     }
 
     if (level.centerId !== actor.centerId) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.level',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.level',
+        identifier: 't.resources.identifier',
         value: levelId,
       });
     }
@@ -92,17 +92,17 @@ export class LevelsService extends BaseService {
 
     const level = await this.levelsRepository.findOneSoftDeletedById(levelId);
     if (!level) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.level',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.level',
+        identifier: 't.resources.identifier',
         value: levelId,
       });
     }
 
     if (level.centerId !== actor.centerId) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.level',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.level',
+        identifier: 't.resources.identifier',
         value: levelId,
       });
     }

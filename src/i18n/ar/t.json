@@ -182,7 +182,18 @@
     "context": "السياق",
     "enabled": "مفعّل",
     "disabled": "معطّل",
-    "readOnly": "للقراءة فقط"
+    "readOnly": "للقراءة فقط",
+    "profileSelection": "اختيار الملف الشخصي",
+    "classStaffAccess": "وصول موظفي الفصل",
+    "groupStudent": "طالب المجموعة",
+    "staff": "موظف",
+    "student": "طالب",
+    "teacher": "معلم",
+    "admin": "مدير",
+    "adminScope": "نطاق المدير",
+    "branchAccess": "وصول الفرع",
+    "centerAccess": "وصول المركز",
+    "userAccess": "وصول المستخدم"
   },
   "messages": {
     "created": "تم إنشاء {resource} بنجاح",
@@ -308,7 +319,12 @@
     "internalServerError": "حدث خطأ داخلي في الخادم",
     "serviceUnavailable": "الخدمة غير متاحة مؤقتاً",
     "businessLogicError": "حدث خطأ في منطق العمل",
-    "missingRequiredHeader": "رأس HTTP المطلوب {header} مفقود"
+    "missingRequiredHeader": "رأس HTTP المطلوب {header} مفقود",
+    "requiredOneOf": "إما {field1} أو {field2} مطلوب",
+    "notAuthenticated": "المستخدم غير مصادق عليه",
+    "exportFormatNotSupported": "تنسيق التصدير غير مدعوم",
+    "exportDataUnavailable": "لا توجد بيانات متاحة للتصدير",
+    "operationSuccess": "تمت العملية بنجاح"
   },
   "actions": {
     "sent": "تم الإرسال",

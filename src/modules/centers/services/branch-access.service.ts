@@ -71,8 +71,8 @@ export class BranchAccessService extends BaseService {
         centerId: data.centerId,
         branchId: data.branchId,
       });
-      throw new BranchAccessDeniedException('t.errors.denied.access', {
-        resource: 't.common.resources.branch',
+      throw new BranchAccessDeniedException('t.messages.accessDenied', {
+        resource: 't.resources.branch',
       });
     }
   }
@@ -129,8 +129,8 @@ export class BranchAccessService extends BaseService {
     // Validate that profile type is STAFF or ADMIN
     const profile = await this.userProfileService.findOne(data.userProfileId);
     if (!profile) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.resources.profile',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.profile',
       });
     }
 
@@ -139,16 +139,16 @@ export class BranchAccessService extends BaseService {
       profile.profileType !== ProfileType.STAFF &&
       profile.profileType !== ProfileType.ADMIN
     ) {
-      throw new BusinessLogicException('t.errors.onlyForStaffAndAdmin', {
-        resource: 't.common.resources.branchAccess',
+      throw new BusinessLogicException('t.messages.onlyForStaffAndAdmin', {
+        resource: 't.resources.branchAccess',
       });
     }
 
     const canAccess = await this.canBranchAccess(data);
     if (canAccess) {
-      throw new BusinessLogicException('t.errors.already.is', {
-        resource: 't.common.labels.profile',
-        state: 't.common.messages.assignedToBranch',
+      throw new BusinessLogicException('t.messages.alreadyIs', {
+        resource: 't.resources.profile',
+        state: 'assigned to branch',
       });
     }
 

@@ -35,7 +35,9 @@ export class InAppNotificationController {
       actor.id,
       query,
     );
-    return ControllerResponse.success(result, 't.success.dataRetrieved') as any;
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.notification',
+    }) as any;
   }
 
   @Get('unread')
@@ -52,7 +54,9 @@ export class InAppNotificationController {
         profileId,
       );
 
-    return ControllerResponse.success(notifications, 't.success.dataRetrieved');
+    return ControllerResponse.success(notifications, 't.messages.found', {
+      resource: 't.resources.notification',
+    });
   }
 
   @Get('unread/count')
@@ -74,7 +78,8 @@ export class InAppNotificationController {
         profileType: profileType ?? null,
         profileId: profileId ?? null,
       },
-      't.success.dataRetrieved',
+      't.messages.found',
+      { resource: 't.resources.notification' },
     );
   }
 
@@ -86,8 +91,8 @@ export class InAppNotificationController {
       dto.notificationIds,
       actor.id,
     );
-    return ControllerResponse.message('t.success.update', {
-      resource: 't.common.resources.notification',
+    return ControllerResponse.message('t.messages.updated', {
+      resource: 't.resources.notification',
     });
   }
 
@@ -104,8 +109,8 @@ export class InAppNotificationController {
       profileType,
       profileId,
     );
-    return ControllerResponse.message('t.success.update', {
-      resource: 't.common.resources.notification',
+    return ControllerResponse.message('t.messages.updated', {
+      resource: 't.resources.notification',
     });
   }
 
@@ -117,8 +122,8 @@ export class InAppNotificationController {
     @Param('id') notificationId: string,
   ) {
     await this.inAppNotificationService.archive(actor.id, notificationId);
-    return ControllerResponse.message('t.success.archive', {
-      resource: 't.common.resources.notification',
+    return ControllerResponse.message('t.messages.archived', {
+      resource: 't.resources.notification',
     });
   }
 

@@ -67,9 +67,9 @@ export class UserService extends BaseService {
     const { userId, dto } = params;
     const user = await this.findOne(userId, true);
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.user',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.user',
+        identifier: 't.resources.identifier',
         value: userId,
       });
     }
@@ -80,13 +80,9 @@ export class UserService extends BaseService {
       user.password,
     );
     if (!isCurrentPasswordValid) {
-      throw new ValidationFailedException(
-        't.errors.incorrect.field',
-        undefined,
-        {
-          field: 't.common.labels.currentPassword',
-        },
-      );
+      throw new ValidationFailedException('t.messages.fieldInvalid', [], {
+        field: 't.resources.currentPassword',
+      });
     }
 
     // Check if 2FA is enabled
@@ -94,7 +90,7 @@ export class UserService extends BaseService {
       // If OTP code not provided, send OTP and throw exception
       if (!dto.code) {
         await this.verificationService.sendTwoFactorOTP(user.id || '');
-        throw new OtpRequiredException('t.errors.required.field', {
+        throw new OtpRequiredException('t.messages.fieldRequired', {
           field: 'OTP code',
         });
       }
@@ -112,9 +108,9 @@ export class UserService extends BaseService {
           phone: user.phone,
           error: error instanceof Error ? error.message : String(error),
         });
-        throw new AuthenticationFailedException(
-          't.errors.authenticationFailed',
-        );
+        throw new AuthenticationFailedException('t.messages.operationError', {
+          reason: 'authentication failed',
+        });
       }
     }
 
@@ -191,9 +187,9 @@ export class UserService extends BaseService {
     // First check if the user exists
     const user = await this.userRepository.findOne(userId);
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.user',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.user',
+        identifier: 't.resources.identifier',
         value: userId,
       });
     }
@@ -203,10 +199,10 @@ export class UserService extends BaseService {
     );
     if (!isSuperAdmin) {
       throw new InsufficientPermissionsException(
-        't.errors.notAuthorized.action',
+        't.messages.actionUnauthorized',
         {
-          action: 't.common.buttons.delete',
-          resource: 't.common.resources.user',
+          action: 't.buttons.delete',
+          resource: 't.resources.user',
         },
       );
     }
@@ -223,9 +219,9 @@ export class UserService extends BaseService {
     // First check if the user exists
     const user = await this.userRepository.findOneSoftDeletedById(userId);
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.user',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.user',
+        identifier: 't.resources.identifier',
         value: userId,
       });
     }
@@ -235,10 +231,10 @@ export class UserService extends BaseService {
     );
     if (!isSuperAdmin) {
       throw new InsufficientPermissionsException(
-        't.errors.notAuthorized.action',
+        't.messages.actionUnauthorized',
         {
-          action: 't.common.buttons.restore',
-          resource: 't.common.resources.user',
+          action: 't.buttons.restore',
+          resource: 't.resources.user',
         },
       );
     }
@@ -275,9 +271,9 @@ export class UserService extends BaseService {
     // First check if the user exists
     const user = await this.userRepository.findOne(userId);
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.user',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.user',
+        identifier: 't.resources.identifier',
         value: userId,
       });
     }
@@ -317,8 +313,8 @@ export class UserService extends BaseService {
     // Get userId from profile for command emission
     const profile = await this.userProfileService.findOne(userProfileId);
     if (!profile) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.resources.profile',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.profile',
       });
     }
 
@@ -381,8 +377,8 @@ export class UserService extends BaseService {
     // Find user by profileId - need to get user from profile
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.resources.profile',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.profile',
       });
     }
     return this.userRepository.findOne(userProfile.userId);
@@ -445,8 +441,8 @@ export class UserService extends BaseService {
     // Find user by profileId
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.resources.profile',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.profile',
       });
     }
 
@@ -461,8 +457,8 @@ export class UserService extends BaseService {
     // Find user by profileId
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.resources.profile',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.profile',
       });
     }
 
@@ -471,10 +467,10 @@ export class UserService extends BaseService {
     );
     if (!isSuperAdmin) {
       throw new InsufficientPermissionsException(
-        't.errors.notAuthorized.action',
+        't.messages.actionUnauthorized',
         {
-          action: 't.common.buttons.delete',
-          resource: 't.common.resources.user',
+          action: 't.buttons.delete',
+          resource: 't.resources.user',
         },
       );
     }
@@ -489,8 +485,8 @@ export class UserService extends BaseService {
     // Find user by profileId
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.resources.profile',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.profile',
       });
     }
 
@@ -499,10 +495,10 @@ export class UserService extends BaseService {
     );
     if (!isSuperAdmin) {
       throw new InsufficientPermissionsException(
-        't.errors.notAuthorized.action',
+        't.messages.actionUnauthorized',
         {
-          action: 't.common.buttons.delete',
-          resource: 't.common.resources.user',
+          action: 't.buttons.delete',
+          resource: 't.resources.user',
         },
       );
     }

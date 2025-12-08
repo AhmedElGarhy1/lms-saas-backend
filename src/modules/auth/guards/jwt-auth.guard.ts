@@ -59,7 +59,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       // Translation happens in TranslationResponseInterceptor
       throw new UnauthorizedException({
         message: {
-          key: 't.errors.invalid.expired',
+          key: 't.messages.fieldInvalidOrExpired',
           args: { field: 'token' },
         },
       });

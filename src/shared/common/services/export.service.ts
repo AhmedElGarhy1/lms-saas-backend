@@ -52,7 +52,7 @@ export class ExportService extends BaseService {
       return {
         success: true,
         message: {
-          key: 't.success.export',
+          key: 't.messages.exported',
           args: { resource: 'CSV' },
         },
         filename: `${filename}.csv`,
@@ -97,7 +97,7 @@ export class ExportService extends BaseService {
       return {
         success: true,
         message: {
-          key: 't.success.export',
+          key: 't.messages.exported',
           args: { resource: 'XLSX' },
         },
         filename: `${filename}.xlsx`,
@@ -139,7 +139,7 @@ export class ExportService extends BaseService {
       return {
         success: true,
         message: {
-          key: 't.success.export',
+          key: 't.messages.exported',
           args: { resource: 'JSON' },
         },
         filename: `${filename}.json`,
@@ -176,7 +176,7 @@ export class ExportService extends BaseService {
       default:
         throw new ExportFormatNotSupportedException(
           options.format,
-          't.errors.exportFormatNotSupported',
+          't.messages.exportFormatNotSupported',
         );
     }
   }
@@ -195,14 +195,14 @@ export class ExportService extends BaseService {
     if (!this.isValidFormat(format)) {
       throw new ExportFormatNotSupportedException(
         format,
-        't.errors.exportFormatNotSupported',
+        't.messages.exportFormatNotSupported',
       );
     }
 
     // Check for empty data
     if (!data || data.length === 0) {
       throw new ExportDataUnavailableException(
-        't.errors.exportDataUnavailable',
+        't.messages.exportDataUnavailable',
       );
     }
 
@@ -219,7 +219,7 @@ export class ExportService extends BaseService {
     } else {
       throw new ExportFormatNotSupportedException(
         format,
-        't.errors.exportFormatNotSupported',
+        't.messages.exportFormatNotSupported',
       );
     }
   }

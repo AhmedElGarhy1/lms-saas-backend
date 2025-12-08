@@ -46,7 +46,7 @@ export class PhoneVerificationGuard implements CanActivate {
 
     // Check if user's phone is verified
     if (!user.phoneVerified) {
-      throw new PhoneNotVerifiedException('t.errors.userPhoneNotVerified');
+      throw new PhoneNotVerifiedException('t.messages.phoneNotVerified');
     }
 
     return true;

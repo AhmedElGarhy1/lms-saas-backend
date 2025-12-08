@@ -10,7 +10,9 @@ export function exportToXlsx<T extends Record<string, any>>(
   sheetName = 'Sheet1',
 ): Buffer {
   if (!data || data.length === 0) {
-    throw new ExportDataUnavailableException('t.errors.exportDataUnavailable');
+    throw new ExportDataUnavailableException(
+      't.messages.exportDataUnavailable',
+    );
   }
 
   const worksheet = XLSX.utils.json_to_sheet(data);

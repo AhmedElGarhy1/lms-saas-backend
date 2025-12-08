@@ -25,6 +25,8 @@ export class AdminController {
     @GetUser() actorUser: ActorUser,
   ) {
     const result = await this.adminService.paginateAdmins(query, actorUser);
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.admin',
+    });
   }
 }

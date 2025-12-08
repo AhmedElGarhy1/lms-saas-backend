@@ -47,8 +47,8 @@ export class CentersController {
   ) {
     const result = await this.centersService.createCenter(dto, actor);
 
-    return ControllerResponse.success(result, 't.success.create', {
-      resource: 't.common.resources.center',
+    return ControllerResponse.success(result, 't.messages.created', {
+      resource: 't.resources.center',
     });
   }
 
@@ -61,7 +61,9 @@ export class CentersController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.centersService.paginateCenters(query, actor);
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.center',
+    });
   }
 
   @Get(':id')
@@ -72,7 +74,9 @@ export class CentersController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.centersService.findCenterById(id, actor);
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.center',
+    });
   }
 
   @Put(':id')
@@ -88,8 +92,8 @@ export class CentersController {
   ) {
     const result = await this.centersService.updateCenter(id, dto, actor);
 
-    return ControllerResponse.success(result, 't.success.update', {
-      resource: 't.common.resources.center',
+    return ControllerResponse.success(result, 't.messages.updated', {
+      resource: 't.resources.center',
     });
   }
 
@@ -101,8 +105,8 @@ export class CentersController {
   async deleteCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
     await this.centersService.deleteCenter(id, actor);
 
-    return ControllerResponse.message('t.success.delete', {
-      resource: 't.common.resources.center',
+    return ControllerResponse.message('t.messages.deleted', {
+      resource: 't.resources.center',
     });
   }
 
@@ -114,8 +118,8 @@ export class CentersController {
   async restoreCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
     await this.centersService.restoreCenter(id, actor);
 
-    return ControllerResponse.message('t.success.restore', {
-      resource: 't.common.resources.center',
+    return ControllerResponse.message('t.messages.restored', {
+      resource: 't.resources.center',
     });
   }
 
@@ -134,8 +138,8 @@ export class CentersController {
   ) {
     await this.centersService.toggleCenterStatus(id, body.isActive, actor);
 
-    return ControllerResponse.message('t.success.update', {
-      resource: 't.common.resources.center',
+    return ControllerResponse.message('t.messages.updated', {
+      resource: 't.resources.center',
     });
   }
 }

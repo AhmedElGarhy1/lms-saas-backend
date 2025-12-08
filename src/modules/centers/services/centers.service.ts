@@ -59,9 +59,9 @@ export class CentersService extends BaseService {
       ? await this.centersRepository.findOneSoftDeletedById(centerId)
       : await this.centersRepository.findOne(centerId);
     if (!center) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.center',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.center',
+        identifier: 't.resources.identifier',
         value: centerId,
       });
     }
@@ -107,9 +107,9 @@ export class CentersService extends BaseService {
   ): Promise<Center> {
     const center = await this.findCenterById(centerId, actor);
     if (!center) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.center',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.center',
+        identifier: 't.resources.identifier',
         value: centerId,
       });
     }
@@ -117,8 +117,8 @@ export class CentersService extends BaseService {
     if (dto.name && dto.name !== center.name) {
       const existingCenter = await this.centersRepository.findByName(dto.name);
       if (existingCenter) {
-        throw new BusinessLogicException('t.errors.already.existsWithField', {
-          resource: 't.common.resources.center',
+        throw new BusinessLogicException('t.messages.alreadyExists', {
+          resource: 't.resources.center',
           field: 'name',
           value: dto.name,
         });
@@ -130,9 +130,9 @@ export class CentersService extends BaseService {
       dto,
     );
     if (!updatedCenter) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.center',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.center',
+        identifier: 't.resources.identifier',
         value: centerId,
       });
     }
@@ -163,10 +163,10 @@ export class CentersService extends BaseService {
     const center = await this.findCenterById(centerId, actor, true);
 
     if (!center.deletedAt) {
-      throw new BusinessLogicException('t.errors.cannot.actionReason', {
-        action: 't.common.buttons.restore',
-        resource: 't.common.resources.center',
-        reason: 't.common.messages.centerNotDeleted',
+      throw new BusinessLogicException('t.messages.actionNotAllowed', {
+        action: 't.buttons.restore',
+        resource: 't.resources.center',
+        reason: 'it is not deleted',
       });
     }
 

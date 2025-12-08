@@ -26,6 +26,8 @@ export class TeacherController {
   ) {
     const result = await this.teacherService.paginateTeachers(query, actorUser);
     // Wrap in ControllerResponse for consistent messaging
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.teacher',
+    });
   }
 }

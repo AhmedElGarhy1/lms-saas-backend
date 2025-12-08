@@ -206,10 +206,10 @@ export class UserRepository extends BaseRepository<User> {
           );
       } else {
         throw new InsufficientPermissionsException(
-          't.errors.notAuthorized.action',
+          't.messages.actionUnauthorized',
           {
-            action: 't.common.buttons.view',
-            resource: 't.common.labels.user',
+            action: 't.buttons.view',
+            resource: 't.resources.user',
           },
         );
       }
@@ -498,10 +498,10 @@ export class UserRepository extends BaseRepository<User> {
           );
       } else {
         throw new InsufficientPermissionsException(
-          't.errors.notAuthorized.action',
+          't.messages.actionUnauthorized',
           {
-            action: 't.common.buttons.view',
-            resource: 't.common.labels.user',
+            action: 't.buttons.view',
+            resource: 't.resources.user',
           },
         );
       }
@@ -584,10 +584,10 @@ export class UserRepository extends BaseRepository<User> {
 
     if (!isAdmin)
       throw new InsufficientPermissionsException(
-        't.errors.notAuthorized.action',
+        't.messages.actionUnauthorized',
         {
-          action: 't.common.buttons.view',
-          resource: 't.common.labels.user',
+          action: 't.buttons.view',
+          resource: 't.resources.user',
         },
       );
     if (isSuperAdmin) {

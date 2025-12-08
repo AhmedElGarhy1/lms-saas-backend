@@ -62,7 +62,9 @@ export class RolesController {
   @ReadApiResponses('Get my permissions')
   async getMyPermissions(@GetUser() actor: ActorUser) {
     const result = await this.rolesService.getMyPermissions(actor);
-    return ControllerResponse.success(result, 't.success.permissionsRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.permission',
+    });
   }
 
   @Get('permissions')
@@ -73,7 +75,9 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.permissionService.getPermissions(actor, scope);
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.role',
+    });
   }
 
   @Post()
@@ -87,8 +91,8 @@ export class RolesController {
   ) {
     const result = await this.rolesService.createRole(dto, actor);
 
-    return ControllerResponse.success(result, 't.success.create', {
-      resource: 't.common.resources.role',
+    return ControllerResponse.success(result, 't.messages.created', {
+      resource: 't.resources.role',
     });
   }
 
@@ -103,7 +107,9 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.rolesService.paginateRoles(query, actor);
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.role',
+    });
   }
 
   @Get(':roleId')
@@ -114,7 +120,9 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.rolesService.findById(roleId, actor);
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.role',
+    });
   }
 
   @Put(':roleId')
@@ -130,8 +138,8 @@ export class RolesController {
   ) {
     const result = await this.rolesService.updateRole(roleId, dto, user);
 
-    return ControllerResponse.success(result, 't.success.update', {
-      resource: 't.common.resources.role',
+    return ControllerResponse.success(result, 't.messages.updated', {
+      resource: 't.resources.role',
     });
   }
 
@@ -146,8 +154,8 @@ export class RolesController {
   ) {
     const result = await this.rolesService.deleteRole(roleId, user);
 
-    return ControllerResponse.success(result, 't.success.delete', {
-      resource: 't.common.resources.role',
+    return ControllerResponse.success(result, 't.messages.deleted', {
+      resource: 't.resources.role',
     });
   }
 
@@ -162,8 +170,8 @@ export class RolesController {
   ) {
     await this.rolesService.restoreRole(roleId, user);
 
-    return ControllerResponse.message('t.success.restore', {
-      resource: 't.common.resources.role',
+    return ControllerResponse.message('t.messages.restored', {
+      resource: 't.resources.role',
     });
   }
 

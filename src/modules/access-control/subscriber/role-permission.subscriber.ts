@@ -49,8 +49,8 @@ export class RolePermissionSubscriber
         rolePermission.permissionId,
       );
       if (!permission)
-        throw new ResourceNotFoundException('t.errors.notFound.generic', {
-          resource: 't.common.resources.permission',
+        throw new ResourceNotFoundException('t.messages.notFound', {
+          resource: 't.resources.permission',
         });
 
       if (centerId) {
@@ -58,9 +58,10 @@ export class RolePermissionSubscriber
           rolePermission.permissionScope === PermissionScope.ADMIN ||
           rolePermission.permissionScope === PermissionScope.BOTH
         ) {
-          throw new BusinessLogicException(
-            't.errors.adminScopeNotAllowedForCenter',
-          );
+          throw new BusinessLogicException('t.messages.scopeNotAllowed', {
+            scope: 't.resources.adminScope',
+            context: 't.resources.center',
+          });
         }
       }
 
@@ -70,7 +71,11 @@ export class RolePermissionSubscriber
         permission.scope !== PermissionScope.BOTH
       ) {
         throw new ValidationFailedException(
-          't.errors.permissionScopeDoesNotMatch',
+          't.messages.scopeDoesNotMatch',
+          [],
+          {
+            resource: 't.resources.permission',
+          },
         );
       }
     }

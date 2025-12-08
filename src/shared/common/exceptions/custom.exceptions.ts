@@ -171,7 +171,7 @@ export class PasswordTooWeakException<
       field: 'password',
       value: '',
       message: {
-        key: 't.errors.genericError',
+        key: 't.messages.error',
         args: { requirement: req } as PathArgs<I18nPath>,
       },
     }));
@@ -198,7 +198,7 @@ export class UserAlreadyExistsException<
       {
         field: 'phone',
         value: fieldValue,
-        message: { key: 't.errors.duplicateField' },
+        message: { key: 't.messages.duplicateField' },
       },
     ];
     super(
@@ -537,9 +537,9 @@ export class ProfileSelectionRequiredException<
         field: 'profileId',
         value: null,
         message: {
-          key: 't.errors.required.field',
+          key: 't.messages.fieldRequired',
           args: {
-            field: 't.common.resources.profile',
+            field: 't.resources.profile',
           },
         },
       },
@@ -565,7 +565,7 @@ export class InternalInvalidOperationException extends HttpException {
       {
         statusCode: HttpStatus.BAD_REQUEST,
         message: {
-          key: 't.errors.genericError',
+          key: 't.messages.error',
           args: { detail: message } as PathArgs<I18nPath>,
         },
         error: 'Bad Request',
@@ -587,7 +587,7 @@ export class InternalServiceUnavailableException extends HttpException {
       {
         statusCode: HttpStatus.SERVICE_UNAVAILABLE,
         message: {
-          key: 't.errors.serviceUnavailable',
+          key: 't.messages.serviceUnavailable',
           args: { detail: message } as PathArgs<I18nPath>,
         },
         error: 'Service Unavailable',
@@ -609,7 +609,7 @@ export class InternalBusinessLogicException extends HttpException {
       {
         statusCode: HttpStatus.BAD_REQUEST,
         message: {
-          key: 't.errors.businessLogicError',
+          key: 't.messages.businessLogicError',
           args: { detail: message } as PathArgs<I18nPath>,
         },
         error: 'Bad Request',

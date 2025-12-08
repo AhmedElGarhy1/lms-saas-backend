@@ -60,9 +60,9 @@ export class UserProfileService extends BaseService {
     // Get user with profile
     const user = await this.userService.findOne(actor.id);
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.labels.user',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.user',
+        identifier: 't.resources.identifier',
         value: actor.id,
       });
     }
@@ -77,9 +77,9 @@ export class UserProfileService extends BaseService {
     if (!actor.userProfileId) return returnData;
     const userProfile = await this.findOne(actor.userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.profile',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.profile',
+        identifier: 't.resources.identifier',
         value: actor.userProfileId,
       });
     }
@@ -108,8 +108,8 @@ export class UserProfileService extends BaseService {
       actor.profileType,
     );
     if (!profile) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.profile',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.profile',
       });
     }
 
@@ -127,9 +127,9 @@ export class UserProfileService extends BaseService {
     // Get userProfile to determine profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.profile',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.profile',
+        identifier: 't.resources.identifier',
         value: userProfileId,
       });
     }
@@ -163,9 +163,9 @@ export class UserProfileService extends BaseService {
     // Get the user profile to find the profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.profile',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.profile',
+        identifier: 't.resources.identifier',
         value: userProfileId,
       });
     }
@@ -228,9 +228,9 @@ export class UserProfileService extends BaseService {
       profileType,
     );
     if (existingProfile) {
-      throw new ValidationFailedException('t.errors.already.has', undefined, {
-        resource: 't.common.labels.user',
-        what: `t.common.labels.${profileType.toLowerCase()}Profile`,
+      throw new ValidationFailedException('t.messages.alreadyHas', [], {
+        resource: 't.resources.user',
+        what: `t.resources.${profileType.toLowerCase()}Profile`,
       });
     }
 
@@ -266,9 +266,9 @@ export class UserProfileService extends BaseService {
     // Get userProfile to determine profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.profile',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.profile',
+        identifier: 't.resources.identifier',
         value: userProfileId,
       });
     }
@@ -294,18 +294,18 @@ export class UserProfileService extends BaseService {
       await this.userProfileRepository.findOneSoftDeletedById(userProfileId);
 
     if (!deletedProfile) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.profile',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.profile',
+        identifier: 't.resources.identifier',
         value: userProfileId,
       });
     }
 
     if (!deletedProfile.deletedAt) {
-      throw new BusinessLogicException('t.errors.cannot.actionReason', {
-        action: 't.common.buttons.restore',
-        resource: 't.common.labels.profile',
-        reason: 't.common.messages.profileNotDeleted',
+      throw new BusinessLogicException('t.messages.actionNotAllowed', {
+        action: 't.buttons.restore',
+        resource: 't.resources.profile',
+        reason: 'it is not deleted',
       });
     }
 

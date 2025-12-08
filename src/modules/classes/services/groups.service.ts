@@ -70,12 +70,7 @@ export class GroupsService extends BaseService {
    */
   async getGroup(groupId: string, actor: ActorUser): Promise<Group> {
     const group = await this.groupsRepository.findGroupWithRelations(groupId);
-    this.validateResourceAccess(
-      group,
-      groupId,
-      actor,
-      't.common.resources.group',
-    );
+    this.validateResourceAccess(group, groupId, actor, 't.resources.group');
     return group;
   }
 
@@ -172,9 +167,9 @@ export class GroupsService extends BaseService {
 
     // Check if already assigned
     if (existingStudentIds.includes(userProfileId)) {
-      throw new BusinessLogicException('t.errors.already.is', {
-        resource: 't.common.labels.student',
-        state: 't.common.messages.assignedToGroup',
+      throw new BusinessLogicException('t.messages.alreadyIs', {
+        resource: 't.resources.student',
+        state: 'assigned to group',
       });
     }
 
@@ -194,9 +189,9 @@ export class GroupsService extends BaseService {
       );
 
     if (existingGroupIds.length > 0) {
-      throw new BusinessLogicException('t.errors.already.is', {
-        resource: 't.common.labels.student',
-        state: 't.common.messages.assignedToClass',
+      throw new BusinessLogicException('t.messages.alreadyIs', {
+        resource: 't.resources.student',
+        state: 'assigned to class',
       });
     }
 
@@ -212,7 +207,7 @@ export class GroupsService extends BaseService {
       // Fetch class entity separately instead of relying on relation
       const classEntity = await this.classesRepository.findOne(group.classId);
       if (!classEntity || !classEntity.duration) {
-        throw new BusinessLogicException('t.errors.validationFailed', {
+        throw new BusinessLogicException('t.messages.validationFailed', {
           reason: 'Class duration is required',
         });
       }
@@ -250,7 +245,7 @@ export class GroupsService extends BaseService {
   ) {
     // Validate input
     if (!userProfileIds || userProfileIds.length === 0) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
+      throw new BusinessLogicException('t.messages.validationFailed', {
         reason: 'At least one student user profile ID is required',
       });
     }
@@ -352,20 +347,15 @@ export class GroupsService extends BaseService {
    */
   async restoreGroup(groupId: string, actor: ActorUser): Promise<void> {
     const group = await this.groupsRepository.findOneSoftDeletedById(groupId);
-    this.validateResourceAccess(
-      group,
-      groupId,
-      actor,
-      't.common.resources.group',
-    );
+    this.validateResourceAccess(group, groupId, actor, 't.resources.group');
 
     await this.groupsRepository.restore(groupId);
 
     const restoredGroup = await this.groupsRepository.findOne(groupId);
     if (!restoredGroup) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.group',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.group',
+        identifier: 't.resources.identifier',
         value: groupId,
       });
     }
@@ -394,7 +384,7 @@ export class GroupsService extends BaseService {
   ) {
     // Validate input
     if (!studentUserProfileIds || studentUserProfileIds.length === 0) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
+      throw new BusinessLogicException('t.messages.validationFailed', {
         reason: 'At least one student user profile ID is required',
       });
     }
@@ -412,8 +402,8 @@ export class GroupsService extends BaseService {
             studentUserProfileId,
           );
         if (!groupStudent) {
-          throw new ResourceNotFoundException('t.errors.notFound.generic', {
-            resource: 't.common.resources.groupStudent',
+          throw new ResourceNotFoundException('t.messages.notFound', {
+            resource: 't.resources.groupStudent',
           });
         }
 

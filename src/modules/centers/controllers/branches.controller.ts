@@ -41,7 +41,9 @@ export class BranchesController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.branch',
+    });
   }
 
   @Get(':branchId')
@@ -60,7 +62,9 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.branchesService.getBranch(branchId, actor);
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.branch',
+    });
   }
 
   @Post()
@@ -83,8 +87,8 @@ export class BranchesController {
       createBranchDto,
       actor,
     );
-    return ControllerResponse.success(result, 't.success.create', {
-      resource: 't.common.resources.branch',
+    return ControllerResponse.success(result, 't.messages.created', {
+      resource: 't.resources.branch',
     });
   }
 
@@ -111,8 +115,8 @@ export class BranchesController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, 't.success.update', {
-      resource: 't.common.resources.branch',
+    return ControllerResponse.success(result, 't.messages.updated', {
+      resource: 't.resources.branch',
     });
   }
 
@@ -134,8 +138,8 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.branchesService.deleteBranch(branchId, actor);
-    return ControllerResponse.message('t.success.delete', {
-      resource: 't.common.resources.branch',
+    return ControllerResponse.message('t.messages.deleted', {
+      resource: 't.resources.branch',
     });
   }
 
@@ -162,8 +166,8 @@ export class BranchesController {
       body.isActive,
       actor,
     );
-    return ControllerResponse.message('t.success.update', {
-      resource: 't.common.resources.branch',
+    return ControllerResponse.message('t.messages.updated', {
+      resource: 't.resources.branch',
     });
   }
 
@@ -177,8 +181,8 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.branchesService.restoreBranch(branchId, actor);
-    return ControllerResponse.message('t.success.restore', {
-      resource: 't.common.resources.branch',
+    return ControllerResponse.message('t.messages.restored', {
+      resource: 't.resources.branch',
     });
   }
 }

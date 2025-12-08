@@ -48,25 +48,25 @@ export class UserProfilePermissionService extends BaseService {
     if (userProfileId) {
       // Validate that userProfileId is actually a UUID before querying
       if (!isUUID(userProfileId)) {
-        throw new ResourceNotFoundException('t.errors.invalid.format', {
-          field: 't.common.resources.profile',
+        throw new ResourceNotFoundException('t.messages.fieldInvalidFormat', {
+          field: 't.resources.profile',
         });
       }
 
       const profile = await this.userProfileService.findOne(userProfileId);
       if (!profile) {
-        throw new ResourceNotFoundException('t.errors.notFound.withId', {
-          resource: 't.common.resources.profile',
-          identifier: 'ID',
+        throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+          resource: 't.resources.profile',
+          identifier: 't.resources.identifier',
           value: userProfileId,
         });
       }
       return profile.profileType;
     }
 
-    throw new ResourceNotFoundException('t.errors.required.oneOf', {
-      field1: 't.common.resources.profileType',
-      field2: 't.common.resources.profile',
+    throw new ResourceNotFoundException('t.messages.requiredOneOf', {
+      field1: 't.resources.profileType',
+      field2: 't.resources.profile',
     });
   }
 
@@ -97,11 +97,11 @@ export class UserProfilePermissionService extends BaseService {
     } else if (profileType === ProfileType.STUDENT) {
       if (permissionKey === 'GRANT_USER_ACCESS') {
         throw new InsufficientPermissionsException(
-          't.errors.cannot.actionReason',
+          't.messages.actionNotAllowed',
           {
-            action: 't.common.buttons.grantUserAccess',
-            resource: 't.common.resources.student',
-            reason: 't.common.messages.studentCannotGrantUserAccess',
+            action: 't.buttons.grantResourceAccess',
+            resource: 't.resources.student',
+            reason: 't.messages.cannotGrantAccess',
           },
         );
       }
@@ -109,18 +109,18 @@ export class UserProfilePermissionService extends BaseService {
     } else if (profileType === ProfileType.TEACHER) {
       if (permissionKey === 'GRANT_USER_ACCESS') {
         throw new InsufficientPermissionsException(
-          't.errors.cannot.actionReason',
+          't.messages.actionNotAllowed',
           {
-            action: 't.common.buttons.grantUserAccess',
-            resource: 't.common.resources.teacher',
-            reason: 't.common.messages.teacherCannotGrantUserAccess',
+            action: 't.buttons.grantResourceAccess',
+            resource: 't.resources.teacher',
+            reason: 't.messages.cannotGrantAccess',
           },
         );
       }
       requiredPermission = PERMISSIONS.TEACHER[permissionKey];
     } else {
-      throw new ResourceNotFoundException('t.errors.invalid.type', {
-        field: 't.common.resources.profileType',
+      throw new ResourceNotFoundException('t.messages.fieldInvalid', {
+        field: 't.resources.profileType',
       });
     }
 
@@ -134,7 +134,7 @@ export class UserProfilePermissionService extends BaseService {
 
     if (!hasPermission) {
       throw new InsufficientPermissionsException(
-        't.errors.insufficientPermissions',
+        't.messages.insufficientPermissions',
       );
     }
   }
@@ -171,8 +171,8 @@ export class UserProfilePermissionService extends BaseService {
         profileType = profileTypeOrId;
       } else {
         // Invalid string - neither UUID nor ProfileType
-        throw new ResourceNotFoundException('t.errors.invalid.type', {
-          field: 't.common.resources.profileType',
+        throw new ResourceNotFoundException('t.messages.fieldInvalid', {
+          field: 't.resources.profileType',
         });
       }
     } else {

@@ -24,7 +24,9 @@ export class PerformanceController {
   })
   getDatabasePerformance() {
     const result = this.databasePerformanceService.getPerformanceStats();
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.data',
+    });
   }
 
   @Get('transactions')
@@ -35,7 +37,9 @@ export class PerformanceController {
   })
   getTransactionPerformance() {
     const result = this.databasePerformanceService.getTransactionMetrics();
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.data',
+    });
   }
 
   @Get('health')
@@ -70,7 +74,9 @@ export class PerformanceController {
       },
       alerts: alertStats,
     };
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.data',
+    });
   }
 
   @Get('alerts')
@@ -81,7 +87,9 @@ export class PerformanceController {
   })
   getActiveAlerts() {
     const result = this.alertsService.getActiveAlerts();
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.data',
+    });
   }
 
   @Get('stats')
@@ -101,7 +109,9 @@ export class PerformanceController {
         nodeVersion: process.version,
       },
     };
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.data',
+    });
   }
 
   @Post('alerts/resolve/:alertId')
@@ -112,8 +122,8 @@ export class PerformanceController {
   })
   resolveAlert(@Body('alertId') alertId: string) {
     void this.alertsService.resolveAlert(alertId);
-    return ControllerResponse.message('t.success.update', {
-      resource: 't.common.labels.alert',
+    return ControllerResponse.message('t.messages.updated', {
+      resource: 't.resources.alert',
     });
   }
 

@@ -112,7 +112,11 @@ export class ClassStaffAccessController {
 
     return ControllerResponse.success(
       result,
-      't.success.bulkGrantBranchAccess',
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.classStaffAccess',
+      },
     );
   }
 
@@ -149,7 +153,11 @@ export class ClassStaffAccessController {
 
     return ControllerResponse.success(
       result,
-      't.success.bulkRevokeBranchAccess',
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.classStaffAccess',
+      },
     );
   }
 
@@ -166,6 +174,8 @@ export class ClassStaffAccessController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.classStaffService.getClassStaff(classId, actor);
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.classStaffAccess',
+    });
   }
 }

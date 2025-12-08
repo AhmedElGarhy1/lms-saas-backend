@@ -27,6 +27,6 @@ export function translateResource(
   translationService: TranslationService,
   resource: string,
 ): string {
-  const resourceKey = `t.common.resources.${resource}` as I18nPath;
+  const resourceKey = `t.resources.${resource}` as I18nPath;
   return translationService.translate(resourceKey);
 }

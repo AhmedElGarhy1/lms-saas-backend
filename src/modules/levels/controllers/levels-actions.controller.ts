@@ -49,9 +49,14 @@ export class LevelsActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkDelete', {
-      resource: 't.common.resources.level',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.level',
+      },
+    );
   }
 
   @Post('bulk/restore')
@@ -76,8 +81,13 @@ export class LevelsActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkRestore', {
-      resource: 't.common.resources.level',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.level',
+      },
+    );
   }
 }

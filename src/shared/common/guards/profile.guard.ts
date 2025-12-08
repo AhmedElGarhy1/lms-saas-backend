@@ -48,7 +48,7 @@ export class ProfileGuard implements CanActivate {
     const user = request.user;
     if (!user) {
       throw new ForbiddenException({
-        message: { key: 't.errors.userNotAuthenticated' },
+        message: { key: 't.messages.notAuthenticated' },
       });
     }
 
@@ -61,8 +61,8 @@ export class ProfileGuard implements CanActivate {
     }
 
     if (!userProfileId) {
-      throw new ProfileSelectionRequiredException('t.errors.required.field', {
-        field: 't.common.resources.profileSelection',
+      throw new ProfileSelectionRequiredException('t.messages.fieldRequired', {
+        field: 't.resources.profileSelection',
       });
     }
     const profile = await this.userProfileService.findForUser(
@@ -70,12 +70,14 @@ export class ProfileGuard implements CanActivate {
       userProfileId,
     );
     if (!profile) {
-      throw new ProfileSelectionRequiredException('t.errors.required.field', {
-        field: 't.common.resources.profileSelection',
+      throw new ProfileSelectionRequiredException('t.messages.fieldRequired', {
+        field: 't.resources.profileSelection',
       });
     }
     if (!profile.isActive) {
-      throw new InactiveProfileException('t.errors.profileInactive');
+      throw new InactiveProfileException('t.messages.inactive', {
+        resource: 't.resources.profile',
+      });
     }
 
     user.profileType = profile.profileType;

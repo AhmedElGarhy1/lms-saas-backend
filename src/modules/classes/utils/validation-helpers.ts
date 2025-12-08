@@ -23,17 +23,17 @@ export class ValidationHelpers {
     resourceName: string,
   ): asserts resource is T {
     if (!resource) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
         resource: resourceName,
-        identifier: 'ID',
+        identifier: 't.resources.identifier',
         value: resourceId,
       });
     }
 
     if (resource.centerId !== centerId) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
         resource: resourceName,
-        identifier: 'ID',
+        identifier: 't.resources.identifier',
         value: resourceId,
       });
     }

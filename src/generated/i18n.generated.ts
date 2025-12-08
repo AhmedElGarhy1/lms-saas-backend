@@ -386,407 +386,550 @@ export type I18nTranslations = {
         };
     };
     "t": {
-        "actions": {
+        "resources": {
+            "user": string;
+            "users": string;
+            "admin": string;
+            "admins": string;
+            "staff": string;
+            "student": string;
+            "students": string;
+            "teacher": string;
+            "teachers": string;
+            "role": string;
+            "roles": string;
+            "center": string;
+            "centers": string;
+            "branch": string;
+            "branches": string;
+            "resourceCount": string;
+            "number": string;
+            "percentage": string;
+            "level": string;
+            "levels": string;
+            "subject": string;
+            "subjects": string;
+            "class": string;
+            "classes": string;
+            "group": string;
+            "groups": string;
+            "column": string;
+            "columns": string;
+            "duration": string;
+            "activityLogs": string;
+            "activityLog": string;
+            "permission": string;
+            "otp": string;
+            "notification": string;
+            "alert": string;
+            "profile": string;
+            "access": string;
+            "userAccess": string;
+            "branchAccess": string;
+            "centerAccess": string;
+            "refreshToken": string;
+            "verificationCode": string;
+            "adminScope": string;
+            "profileType": string;
+            "tokenType": string;
+            "signature": string;
+            "credentials": string;
+            "data": string;
+            "item": string;
+            "items": string;
+            "dashboard": string;
+            "systemHealth": string;
+            "csv": string;
+            "excel": string;
+            "json": string;
+            "name": string;
+            "description": string;
+            "status": string;
+            "active": string;
+            "inactive": string;
+            "basicInformation": string;
+            "permissions": string;
+            "statistics": string;
+            "assignedUsers": string;
+            "permissionsCount": string;
+            "timestamps": string;
+            "createdAt": string;
+            "updatedAt": string;
+            "include": string;
+            "unknownUser": string;
+            "email": string;
+            "phone": string;
+            "phoneNumber": string;
+            "userId": string;
+            "currentPassword": string;
+            "newPassword": string;
+            "confirmPassword": string;
+            "theme": string;
+            "notifications": string;
+            "dateOfBirth": string;
+            "address": string;
+            "locale": string;
+            "logo": string;
+            "password": string;
+            "website": string;
+            "avatar": string;
+            "fullName": string;
+            "location": string;
+            "language": string;
+            "english": string;
+            "arabic": string;
+            "timezone": string;
+            "dateFormat": string;
+            "timeFormat": string;
+            "twoFactorAuth": string;
+            "type": string;
+            "date": string;
+            "dates": string;
+            "startDate": string;
+            "endDate": string;
+            "startTime": string;
+            "endTime": string;
+            "amount": string;
+            "count": string;
+            "session": string;
+            "sessions": string;
+            "schedule": string;
+            "scheduleItems": string;
+            "scheduleItem": string;
+            "roleName": string;
+            "currency": string;
+            "per": string;
+            "paymentStrategy": string;
+            "paymentStrategies": string;
+            "paymentStrategyDescription": string;
+            "paymentUnit": string;
+            "lastUpdated": string;
+            "contactInformation": string;
+            "activeStatus": string;
+            "studentsCount": string;
+            "current": string;
+            "channel": string;
+            "total": string;
+            "errors": string;
+            "centerName": string;
+            "contact": string;
+            "created": string;
+            "actions": string;
+            "never": string;
+            "ipAddress": string;
+            "userAgent": string;
+            "metadata": string;
+            "title": string;
+            "message": string;
+            "error": string;
+            "priority": string;
+            "recipient": string;
+            "targetUser": string;
+            "sms": string;
+            "whatsapp": string;
+            "inApp": string;
+            "push": string;
+            "monday": string;
+            "tuesday": string;
+            "wednesday": string;
+            "thursday": string;
+            "friday": string;
+            "saturday": string;
+            "sunday": string;
+            "today": string;
+            "yesterday": string;
+            "lastDays": string;
+            "thisWeek": string;
+            "lastWeek": string;
+            "thisMonth": string;
+            "lastMonth": string;
+            "thisYear": string;
+            "lastYear": string;
+            "customRange": string;
+            "day": string;
+            "days": string;
+            "week": string;
+            "weeks": string;
+            "month": string;
+            "months": string;
+            "year": string;
+            "years": string;
+            "hour": string;
+            "hours": string;
+            "minute": string;
+            "minutes": string;
+            "filename": string;
+            "userInfo": string;
+            "profiles": string;
+            "resource": string;
+            "field": string;
+            "otpCode": string;
+            "identifier": string;
+            "scope": string;
+            "context": string;
+            "enabled": string;
+            "disabled": string;
+            "readOnly": string;
+            "profileSelection": string;
+            "classStaffAccess": string;
+            "groupStudent": string;
+        };
+        "messages": {
+            "created": string;
+            "updated": string;
+            "deleted": string;
+            "restored": string;
+            "archived": string;
+            "exported": string;
+            "found": string;
+            "activated": string;
+            "deactivated": string;
+            "notFound": string;
+            "inactive": string;
+            "accessDenied": string;
+            "alreadyExists": string;
+            "alreadyDeleted": string;
+            "expired": string;
+            "fieldInvalid": string;
+            "fieldRequired": string;
+            "validationFailed": string;
+            "error": string;
+            "errorWithMessage": string;
+            "httpError": string;
+            "operationError": string;
+            "sessionExpired": string;
+            "rateLimitExceeded": string;
+            "loading": string;
+            "loadingClean": string;
+            "processing": string;
+            "completed": string;
+            "noData": string;
+            "noResults": string;
+            "genericError": string;
+            "welcome": string;
+            "bulkOperationResult": string;
+            "bulkOperationSuccess": string;
+            "bulkOperationFailure": string;
+            "bulkOperationPartial": string;
+            "changed": string;
+            "sent": string;
+            "verified": string;
+            "enabled": string;
+            "disabled": string;
+            "assigned": string;
+            "removed": string;
+            "imported": string;
+            "granted": string;
+            "revoked": string;
+            "contactAdministrator": string;
+            "checkUrlOrDashboard": string;
+            "actionNotAllowed": string;
+            "actionUnauthorized": string;
+            "withIdNotFound": string;
+            "alreadyHas": string;
+            "alreadyIs": string;
+            "duplicateField": string;
+            "phoneNotVerified": string;
+            "insufficientPermissions": string;
+            "accessDeniedToResource": string;
+            "twoFactorNotEnabled": string;
+            "systemNotReady": string;
+            "seederFailed": string;
+            "fieldInvalidFormat": string;
+            "fieldInvalidOrExpired": string;
+            "bulkExportNotImplemented": string;
+            "bulkImportNotImplemented": string;
+            "bulkDeleteNotImplemented": string;
+            "bulkActionNotImplemented": string;
+            "foundResults": string;
+            "startTypingToSearch": string;
+            "allItemsAlreadyInState": string;
+            "contactAdmin": string;
+            "copySuccess": string;
+            "loadMore": string;
+            "global": string;
+            "globalScope": string;
+            "globalDashboard": string;
+            "all": string;
+            "notAvailable": string;
+            "couldNotLoad": string;
+            "showAll": string;
+            "noResourceAvailable": string;
+            "noItemsFound": string;
+            "tryAdjustingSearchTerms": string;
+            "resourcePermissions": string;
+            "errorDetails": string;
+            "errorDetailsDevelopment": string;
+            "errorLabel": string;
+            "stack": string;
+            "componentStack": string;
+            "noTags": string;
+            "searchAndSelectResource": string;
+            "selectResourceFirst": string;
+            "resourceInactive": string;
+            "resourceError": string;
+            "somethingWentWrongLoadingResource": string;
+            "alreadyHaveAccount": string;
             "tryDifferentApproach": string;
+            "success": string;
+            "failed": string;
+            "inProgress": string;
+            "codeSent": string;
+            "codeSentTo": string;
+            "codeInvalid": string;
+            "enterCode": string;
+            "resendAvailable": string;
+            "exporting": string;
+            "deleting": string;
+            "saving": string;
+            "verifying": string;
+            "sending": string;
+            "importing": string;
+            "readOnly": string;
+            "notDeleted": string;
+            "cannotGrantAccess": string;
+            "onlyForStaffAndAdmin": string;
+            "scopeNotAllowed": string;
+            "scopeDoesNotMatch": string;
+            "cannotBeAssociated": string;
+            "relatedEntityMissingOrInvalid": string;
+            "temporaryDatabaseConflict": string;
+            "databaseOperationFailed": string;
+            "internalServerError": string;
+            "serviceUnavailable": string;
+            "businessLogicError": string;
+            "missingRequiredHeader": string;
+            "requiredOneOf": string;
+            "notAuthenticated": string;
+            "exportFormatNotSupported": string;
+            "exportDataUnavailable": string;
+            "operationSuccess": string;
+            "noOptionsAvailable": string;
+            "noSchedule": string;
         };
-        "auth": {
-            "login": {
-                "title": string;
-                "subtitle": string;
-            };
-            "register": {
-                "title": string;
-                "subtitle": string;
-            };
-            "noAccount": string;
-            "forgotPassword": {
-                "title": string;
-                "description": string;
-                "resetTitle": string;
-                "resetDescription": string;
-                "sendCode": string;
-                "resetPassword": string;
-                "backToLogin": string;
-                "otpSent": string;
-                "otpSentTo": string;
-                "resetSuccess": string;
-                "invalidCode": string;
-            };
-            "twoFactor": {
-                "setupSuccess": string;
-                "enableSuccess": string;
-                "disableSuccess": string;
-                "alreadyEnabled": string;
-                "notEnabled": string;
-                "invalidCode": string;
-                "enterCode": string;
-                "disableOtpRequired": string;
-                "otpRequired": string;
-                "enable": string;
-                "disable": string;
-            };
+        "actions": {
+            "sent": string;
+            "failed": string;
+            "retrying": string;
+            "pending": string;
+            "delivered": string;
+            "success": string;
         };
-        "common": {
-            "actions": {
-                "switchCenter": string;
+        "buttons": {
+            "show": string;
+            "create": string;
+            "update": string;
+            "delete": string;
+            "restore": string;
+            "archive": string;
+            "export": string;
+            "import": string;
+            "assign": string;
+            "remove": string;
+            "view": string;
+            "cancel": string;
+            "edit": string;
+            "submit": string;
+            "save": string;
+            "close": string;
+            "back": string;
+            "refresh": string;
+            "exportData": string;
+            "manageResource": string;
+            "resourceAccess": string;
+            "activateSelected": string;
+            "deactivateSelected": string;
+            "saveChanges": string;
+            "changePassword": string;
+            "deleteSelected": string;
+            "enable": string;
+            "disable": string;
+            "filter": string;
+            "clear": string;
+            "reset": string;
+            "confirm": string;
+            "login": string;
+            "logout": string;
+            "register": string;
+            "forgotPassword": string;
+            "deactivate": string;
+            "toggleStatusInResource": string;
+            "deleteFromResource": string;
+            "restoreInResource": string;
+            "activateInResourceSelected": string;
+            "deactivateInResourceSelected": string;
+            "deleteFromResourceSelected": string;
+            "restoreInResourceSelected": string;
+            "clearSearch": string;
+            "tryAgain": string;
+            "toggleStatus": string;
+            "manageAccess": string;
+            "reloadPage": string;
+            "deselectAll": string;
+            "markAllAs": string;
+            "viewAll": string;
+            "done": string;
+            "quickSelect": string;
+            "selectPreset": string;
+            "selectDates": string;
+            "open": string;
+            "verify": string;
+            "verifyPhone": string;
+            "sendCode": string;
+            "autoRefresh": string;
+            "importResource": string;
+            "resendCode": string;
+            "grantResourceAccess": string;
+            "selectResource": string;
+            "columnVisibility": string;
+            "showAll": string;
+            "hideAll": string;
+            "contactAdmin": string;
+            "addItem": string;
+            "switchResource": string;
+            "markAs": string;
+        };
+        "placeholders": {
+            "search": string;
+            "select": string;
+            "filterBy": string;
+            "enterField": string;
+            "selectField": string;
+            "searchField": string;
+            "pickDate": string;
+            "pickDateRange": string;
+            "searchItems": string;
+            "confirmField": string;
+        };
+        "ui": {
+            "form": {
+                "hints": {
+                    "phone": string;
+                    "code": string;
+                };
             };
-            "buttons": {
-                "cancel": string;
-                "delete": string;
-                "edit": string;
-                "createResource": string;
-                "update": string;
-                "updateResource": string;
-                "deleteResource": string;
-                "submit": string;
-                "close": string;
-                "back": string;
-                "refresh": string;
-                "export": string;
-                "import": string;
-                "exportData": string;
-                "exporting": string;
-                "assign": string;
-                "remove": string;
-                "manageRoles": string;
-                "centerAccess": string;
-                "activateSelected": string;
-                "deactivateSelected": string;
-                "selectProfile": string;
-                "saveChanges": string;
-                "changePassword": string;
-                "deleteSelected": string;
-                "enable": string;
-                "disable": string;
-                "deleting": string;
-                "filter": string;
-                "clear": string;
-                "reset": string;
-                "confirm": string;
-                "login": string;
-                "logout": string;
-                "register": string;
-                "forgotPassword": string;
-                "deactivate": string;
-                "restore": string;
-                "toggleStatusInCenter": string;
-                "deleteFromCenter": string;
-                "restoreInCenter": string;
-                "activateInCenterSelected": string;
-                "deactivateInCenterSelected": string;
-                "deleteFromCenterSelected": string;
-                "restoreInCenterSelected": string;
-                "view": string;
-                "clearSearch": string;
-                "tryAgain": string;
-                "saving": string;
-                "toggleStatus": string;
-                "manageAccess": string;
-                "reloadPage": string;
-                "deselectAll": string;
-                "markAllRead": string;
-                "viewAllNotifications": string;
-                "archiveNotification": string;
-                "done": string;
-                "quickSelect": string;
-                "selectPreset": string;
-                "selectDates": string;
-                "openMenu": string;
-                "verify": string;
-                "verifying": string;
-                "sendOtp": string;
-                "sending": string;
-                "verifyPhone": string;
-                "autoRefresh": string;
-                "importUser": string;
-                "importing": string;
-                "resendCode": string;
-                "processing": string;
-                "grantUserAccess": string;
-                "columnVisibility": string;
-                "showAllColumns": string;
-                "hideAllColumns": string;
-                "selectCenter": string;
-                "contactAdmin": string;
+            "table": {
+                "selection": {
+                    "selectedItems": string;
+                    "selectAll": string;
+                    "selectAllRows": string;
+                    "selectRow": string;
+                };
+                "trashToggle": {
+                    "activeItems": string;
+                    "deletedItems": string;
+                };
             };
-            "labels": {
-                "name": string;
-                "email": string;
-                "phone": string;
-                "description": string;
-                "status": string;
-                "active": string;
-                "inactive": string;
-                "userId": string;
-                "never": string;
-                "currentPassword": string;
-                "newPassword": string;
-                "theme": string;
-                "notifications": string;
-                "address": string;
-                "locale": string;
-                "logo": string;
-                "student": string;
-                "all": string;
-                "loading": string;
-                "error": string;
-                "success": string;
-                "password": string;
-                "confirmPassword": string;
-                "website": string;
-                "role": string;
-                "permissions": string;
-                "avatar": string;
-                "dateOfBirth": string;
-                "fullName": string;
-                "phoneNumber": string;
-                "center": string;
-                "location": string;
-                "user": string;
-                "profile": string;
-                "language": string;
-                "english": string;
-                "arabic": string;
-                "timezone": string;
-                "dateFormat": string;
-                "timeFormat": string;
-                "twoFactorAuth": string;
-                "type": string;
-                "notification": string;
-                "alert": string;
-                "statistics": string;
-                "yes": string;
-                "no": string;
-                "current": string;
-                "date": string;
-                "filenameOptional": string;
-                "filter": string;
-                "timestamps": string;
-                "basicInformation": string;
-                "roleName": string;
-                "createdAt": string;
-                "lastUpdated": string;
-                "updatedAt": string;
-                "assignedUsers": string;
-                "permissionsCount": string;
-                "unknownUser": string;
-                "contactInformation": string;
-                "show": string;
-                "activeStatus": string;
-                "adminName": string;
-                "adminPassword": string;
-                "adminPhone": string;
-                "adminAddress": string;
-                "adminDateOfBirth": string;
-                "adminActiveStatus": string;
-                "selectDates": string;
-                "today": string;
-                "yesterday": string;
-                "thisWeek": string;
-                "lastWeek": string;
-                "thisMonth": string;
-                "lastMonth": string;
-                "thisYear": string;
-                "lastYear": string;
-                "customRange": string;
-                "allUsers": string;
-                "allAdmins": string;
-                "include": string;
-                "globalDashboard": string;
-                "dateRange": string;
-                "unknownBranch": string;
-                "noRendererConfigured": string;
-                "otpCode": string;
-                "notProvided": string;
-                "profileAvatar": string;
-                "channel": string;
-                "total": string;
-                "failed": string;
-                "errors": string;
-                "columnVisibility": string;
-                "lastDays": string;
-                "unknownLevel": string;
-                "unknownSubject": string;
+            "pagination": {
+                "selectedRows": string;
+                "showingResults": string;
+                "rowsPerPage": string;
+                "pageOf": string;
             };
-            "countdown": {};
-            "status": {
-                "active": string;
-                "inactive": string;
-                "pending": string;
-                "sent": string;
-                "failed": string;
-                "retrying": string;
-                "delivered": string;
+            "dialogs": {
+                "confirmBulkOperation": {
+                    "title": string;
+                    "message": string;
+                    "skipped": string;
+                    "cannotUndo": string;
+                };
+                "confirmIndividualAction": {
+                    "title": string;
+                    "message": string;
+                    "description": string;
+                };
+                "deleteResource": {
+                    "title": string;
+                    "message": string;
+                    "cannotUndo": string;
+                    "thisActionWill": string;
+                    "removeResource": string;
+                    "removeData": string;
+                    "deactivateAccount": string;
+                    "cannotReverse": string;
+                };
+                "viewResource": {
+                    "title": string;
+                };
+                "scopes": {
+                    "label": string;
+                };
+                "notifications": {
+                    "unread": string;
+                    "archived": string;
+                };
+                "createResource": {
+                    "title": string;
+                    "description": string;
+                };
+                "deleteUser": {
+                    "title": string;
+                    "message": string;
+                    "cannotUndo": string;
+                    "thisActionWill": string;
+                    "removeUser": string;
+                    "removeData": string;
+                    "deactivateAccount": string;
+                    "cannotReverse": string;
+                };
+                "manageResourceAccess": {
+                    "title": string;
+                    "description": string;
+                };
+                "manageResourceFor": {
+                    "title": string;
+                    "description": string;
+                    "allItems": string;
+                };
+                "verifyCode": {
+                    "title": string;
+                    "description": string;
+                    "enterCodeHint": string;
+                    "resendCooldown": string;
+                };
+                "otpRequired": {
+                    "title": string;
+                    "description": string;
+                };
+                "importUser": {
+                    "title": string;
+                    "step1": string;
+                    "step2": string;
+                    "step1Description": string;
+                    "step2Description": string;
+                    "sendCode": string;
+                    "verifyAndImport": string;
+                    "phoneHint": string;
+                    "codeHint": string;
+                    "phoneLocked": string;
+                    "codeSent": string;
+                    "userNotFoundTitle": string;
+                    "userNotFoundDescription": string;
+                    "createUserInstead": string;
+                };
             };
-            "profileTypes": {};
-            "channels": {
-                "email": string;
-                "sms": string;
-                "whatsapp": string;
-                "inApp": string;
-                "push": string;
-            };
-            "resources": {
-                "resource": string;
-                "user": string;
-                "role": string;
-                "center": string;
-                "branch": string;
-                "permission": string;
-                "notification": string;
-                "alert": string;
-                "data": string;
-                "item": string;
-                "roles": string;
-                "admins": string;
-                "centers": string;
-                "access": string;
-                "branches": string;
-                "notifications": string;
-                "admin": string;
-                "userAccess": string;
-                "branchAccess": string;
-                "centerAccess": string;
-                "level": string;
-                "levels": string;
-                "subject": string;
-                "subjects": string;
-                "refreshToken": string;
-                "verificationCode": string;
-                "adminScope": string;
-                "profileType": string;
-                "profileSelection": string;
-                "tokenType": string;
-                "signature": string;
-                "credentials": string;
-                "twoFactorAuthentication": string;
-                "userInfo": string;
-                "activityLog": string;
-                "activityLogs": string;
-                "staff": string;
-                "profile": string;
-                "profiles": string;
-                "student": string;
-                "class": string;
-                "classes": string;
-                "group": string;
-                "groups": string;
-                "teacher": string;
-            };
-            "placeholders": {
-                "search": string;
-                "select": string;
-                "filterBy": string;
-                "enterField": string;
-                "selectField": string;
-                "searchField": string;
-                "pickDate": string;
-                "pickDateRange": string;
-                "searchUsers": string;
-                "searchCenters": string;
-                "searchAdmins": string;
-                "searchRoles": string;
-                "searchItems": string;
-                "confirmNewPassword": string;
-            };
-            "messages": {
-                "noData": string;
-                "error": string;
-                "bulkOperationCompleted": string;
-                "allOperationsSucceeded": string;
-                "allOperationsFailed": string;
-                "partialOperationsSucceeded": string;
-                "forbidden": string;
-                "noResults": string;
-                "searching": string;
-                "startTypingToSearch": string;
-                "tryAgain": string;
-                "welcome": string;
-                "foundResults": string;
-                "items": string;
-                "couldNotLoadNotifications": string;
-                "noNotifications": string;
-                "showAllItems": string;
-                "noOptionsAvailable": string;
-                "noPermissionsAvailable": string;
-                "noPermissionsFound": string;
-                "noPermissionsAssigned": string;
-                "pleaseCheckPermissionsLoaded": string;
-                "tryAdjustingSearchTerms": string;
-                "centerPermissions": string;
-                "adminPermissions": string;
-                "somethingWentWrong": string;
-                "loading": string;
-                "pleaseWaitLoading": string;
-                "unexpectedErrorOccurred": string;
-                "assignedToBranch": string;
-                "assignedToGroup": string;
-                "assignedToClass": string;
-                "enabled": string;
-                "centerAccessNotDeleted": string;
-                "profileNotDeleted": string;
-                "centerNotDeleted": string;
-                "roleNotDeleted": string;
-                "adminUsersCannotHaveCenterAccessDeactivated": string;
-                "adminUsers": string;
-                "readOnly": string;
-                "studentCannotGrantUserAccess": string;
-                "teacherCannotGrantUserAccess": string;
-                "errorDetails": string;
-                "errorDetailsDevelopment": string;
-                "errorLabel": string;
-                "stack": string;
-                "componentStack": string;
-                "selectAllRows": string;
-                "selectRow": string;
-                "nA": string;
-                "invalidDate": string;
-                "noTags": string;
-                "invalidNumber": string;
-                "invalidAmount": string;
-                "invalidPercentage": string;
-                "searchAndSelectCenter": string;
-                "searchAndSelectRole": string;
-                "selectCenterFirst": string;
-                "allItemsAlreadyInState": string;
-                "errorRefreshing": string;
-                "exportFailed": string;
-                "authenticationError": string;
-                "somethingWentWrongAuth": string;
-                "errorSendingOtp": string;
-                "verificationFailed": string;
-                "branchesError": string;
-                "somethingWentWrongBranches": string;
-                "centersError": string;
-                "somethingWentWrongCenters": string;
-                "passwordChangeError": string;
-                "rolesError": string;
-                "somethingWentWrongLoadingRoles": string;
-                "alreadyHaveAccount": string;
-                "processing": string;
+            "health": {
                 "noActiveAlerts": string;
                 "allSystemsOperational": string;
                 "allHealthChecksPassing": string;
-                "allSystemsOperationalFull": string;
+                "systemStatusOperational": string;
                 "systemDegraded": string;
                 "someComponentsIssues": string;
-                "systemDegradedFull": string;
+                "systemStatusDegraded": string;
                 "databaseConnectionIssue": string;
                 "databaseNotResponding": string;
-                "databaseConnectionIssueFull": string;
+                "databaseStatusIssue": string;
                 "diskUsageWarning": string;
                 "diskUsageAt": string;
-                "diskUsageWarningFull": string;
+                "diskStatusWarning": string;
                 "cpuUsageWarning": string;
                 "cpuUsageAt": string;
-                "cpuUsageWarningFull": string;
+                "cpuStatusWarning": string;
                 "memoryUsageWarning": string;
                 "memoryUsageAt": string;
-                "memoryUsageWarningFull": string;
+                "memoryStatusWarning": string;
                 "systemAlerts": string;
                 "currentSystemAlerts": string;
-                "studentInactive": string;
-                "teacherInactive": string;
                 "serviceStatusOverview": string;
                 "currentStatusAllEndpoints": string;
                 "healthStatus": string;
@@ -816,680 +959,180 @@ export type I18nTranslations = {
                 "services": string;
                 "metrics": string;
                 "alerts": string;
-                "cpuUsageTitle": string;
+                "cpuUsageLabel": string;
                 "coresCount": string;
-                "memoryUsageTitle": string;
+                "memoryUsageLabel": string;
                 "memoryUsageGb": string;
                 "diskUsageGb": string;
-                "diskUsageTitle": string;
+                "diskUsageLabel": string;
                 "databaseResponse": string;
                 "databaseConnections": string;
                 "responseTimeWithMs": string;
                 "cpuUsagePercentage": string;
                 "diskUsagePercentage": string;
                 "version": string;
-                "versionWithValue": string;
                 "status": string;
                 "uptime": string;
-                "loadMore": string;
-                "globalScope": string;
-                "global": string;
-                "passwordChangeSuccess": string;
-                "avatarUpdated": string;
-                "contactAdmin": string;
-                "staffInactive": string;
-                "adminInactive": string;
-                "otpSent": string;
-                "phoneVerified": string;
-                "invalidOtp": string;
-                "bulkExportNotImplemented": string;
-                "bulkImportNotImplemented": string;
-                "bulkDeleteNotImplemented": string;
-                "bulkActionNotImplemented": string;
-                "exportCompleted": string;
-                "exportNotAvailable": string;
-                "badRequest": string;
-                "unauthorized": string;
-                "accessDenied": string;
-                "notFound": string;
-                "sessionExpired": string;
-                "contactAdministrator": string;
-                "checkUrlOrDashboard": string;
             };
-        };
-        "dashboard": {
-            "welcome": string;
-            "description": string;
-        };
-        "dialogs": {
-            "createAdmin": {
-                "title": string;
-                "description": string;
-            };
-            "editAdmin": {
-                "title": string;
-                "description": string;
-            };
-            "viewAdmin": {
-                "title": string;
-            };
-            "createUser": {
-                "title": string;
-                "description": string;
-            };
-            "editUser": {
-                "title": string;
-                "description": string;
-            };
-            "selectCenterForRoleManagement": {};
-            "viewUser": {
-                "title": string;
-            };
-            "deleteUser": {
-                "title": string;
-                "message": string;
-                "cannotUndo": string;
-                "deactivateAccount": string;
-                "removeData": string;
-                "cannotReverse": string;
-            };
-            "createStaff": {
-                "title": string;
-                "description": string;
-            };
-            "editStaff": {
-                "title": string;
-                "description": string;
-            };
-            "viewStaff": {
-                "title": string;
-            };
-            "createStudent": {
-                "title": string;
-                "description": string;
-            };
-            "editStudent": {
-                "title": string;
-                "description": string;
-            };
-            "viewStudent": {
-                "title": string;
-            };
-            "createTeacher": {
-                "title": string;
-                "description": string;
-            };
-            "editTeacher": {
-                "title": string;
-                "description": string;
-            };
-            "viewTeacher": {
-                "title": string;
-            };
-            "confirmBulkOperation": {
-                "title": string;
-                "cannotUndo": string;
-            };
-            "deleteStaff": {};
-            "activateStaff": {};
-            "deactivateStaff": {};
-            "restoreStaff": {};
-            "createRole": {
-                "title": string;
-            };
-            "editRole": {
-                "title": string;
-            };
-            "scopes": {
-                "label": string;
-            };
-            "viewRole": {
-                "title": string;
-            };
-            "deleteRole": {
-                "title": string;
-                "message": string;
-                "cannotUndo": string;
-                "thisActionWill": string;
-                "removeRole": string;
-                "revokePermissions": string;
-                "removeFromUsers": string;
-                "deleteData": string;
-            };
-            "createCenter": {
-                "title": string;
-            };
-            "editCenter": {
-                "title": string;
-            };
-            "viewCenter": {
-                "title": string;
-            };
-            "deleteCenter": {
-                "title": string;
-                "message": string;
-                "cannotUndo": string;
-                "thisActionWill": string;
-                "removeCenter": string;
-                "disassociateUsers": string;
-                "removeData": string;
-            };
-            "manageUsers": {
-                "title": string;
-                "description": string;
-                "allUsers": string;
-            };
-            "manageAdmins": {
-                "title": string;
-                "description": string;
-            };
-            "manageAccess": {
-                "title": string;
-                "description": string;
-            };
-            "manageCenterAccess": {
-                "title": string;
-                "description": string;
-                "allCenters": string;
-            };
-            "manageRoleUsers": {
-                "title": string;
-                "description": string;
-                "allUsers": string;
-                "adminScope": string;
-                "centerScope": string;
-            };
-            "notifications": {
-                "title": string;
-                "all": string;
-                "unread": string;
-                "archived": string;
-            };
-            "manageAdminRoles": {};
-            "manageRoles": {
-                "title": string;
-                "description": string;
-            };
-            "rolesForCenter": {};
-            "createProducts": {};
-            "editProducts": {};
-            "viewProducts": {};
-            "deleteProducts": {};
-            "createBranch": {
-                "title": string;
-            };
-            "editBranch": {
-                "title": string;
-            };
-            "viewBranch": {
-                "title": string;
-                "basicInformation": string;
-                "location": string;
-                "address": string;
-                "status": string;
-                "contactInformation": string;
-                "email": string;
-                "timestamps": string;
-                "createdAt": string;
-                "lastUpdated": string;
-            };
-            "deleteBranch": {
-                "title": string;
-                "message": string;
-            };
-            "manageBranchAccess": {
-                "title": string;
-            };
-            "createLevel": {
-                "title": string;
-            };
-            "editLevel": {
-                "title": string;
-            };
-            "viewLevel": {
-                "title": string;
-                "basicInformation": string;
-                "timestamps": string;
-                "createdAt": string;
-                "lastUpdated": string;
-            };
-            "deleteLevel": {
-                "title": string;
-                "message": string;
-                "cannotUndo": string;
-                "thisActionWill": string;
-                "removeLevel": string;
-                "removeData": string;
-            };
-            "createSubject": {
-                "title": string;
-            };
-            "editSubject": {
-                "title": string;
-            };
-            "viewSubject": {
-                "title": string;
-                "basicInformation": string;
-                "timestamps": string;
-                "createdAt": string;
-                "lastUpdated": string;
-            };
-            "deleteSubject": {
-                "title": string;
-                "message": string;
-                "cannotUndo": string;
-                "thisActionWill": string;
-                "removeSubject": string;
-                "removeData": string;
-            };
-            "createTestModule": {};
-            "editTestModule": {};
-            "viewTestModule": {};
-            "deleteTestModule": {};
-            "verifyPhone": {
-                "title": string;
-                "description": string;
-                "enterOtpHint": string;
-                "resendCooldown": string;
-            };
-            "importUser": {
-                "title": string;
-                "step1": string;
-                "step2": string;
-                "step1Description": string;
-                "step2Description": string;
-                "sendOtp": string;
-                "verifyAndImport": string;
-                "phoneHint": string;
-                "otpHint": string;
-                "phoneLocked": string;
-                "otpSent": string;
-                "userNotFoundTitle": string;
-                "userNotFoundDescription": string;
-                "createUserInstead": string;
-            };
-        };
-        "errors": {
-            "invalid": {
-                "generic": string;
-                "format": string;
-                "expired": string;
-                "type": string;
-            };
-            "cannot": {
-                "actionReason": string;
-            };
-            "notAuthorized": {
-                "action": string;
-            };
-            "notFound": {
-                "generic": string;
-                "withId": string;
-            };
-            "already": {
-                "existsWithField": string;
-                "has": string;
-                "is": string;
-                "deleted": string;
-            };
-            "expired": {
-                "generic": string;
-            };
-            "required": {
-                "field": string;
-                "oneOf": string;
-            };
-            "incorrect": {
-                "field": string;
-            };
-            "studentScheduleConflict": string;
-            "denied": {
-                "access": string;
-            };
-            "rateLimit": {
-                "tooManyRequestsWithTime": string;
-            };
-            "genericError": string;
-            "validationFailed": string;
-            "authenticationFailed": string;
-            "accessDenied": string;
-            "resourceNotFound": string;
-            "duplicateField": string;
-            "databaseOperationFailed": string;
-            "internalServerError": string;
-            "businessLogicError": string;
-            "userDoesNotHaveAccess": string;
-            "userNotAuthenticated": string;
-            "profileInactive": {};
-            "userPhoneNotVerified": string;
-            "tokenNotActiveYet": string;
-            "tokenValidationFailed": string;
-            "permissionScopeDoesNotMatch": string;
-            "operation": string;
-            "centerInactive": {
-                "title": string;
-                "description": string;
-            };
-            "centerAccessDenied": {
-                "title": string;
-                "description": string;
-            };
-            "centerAccessInactive": {
-                "title": string;
-                "description": string;
-            };
-            "serviceUnavailable": string;
-            "adminScopeNotAllowedForCenter": string;
-            "insufficientPermissions": string;
-            "adminRoleCannotBeAssociatedWithCenter": string;
-            "onlyForStaffAndAdmin": string;
-            "noAccessToGranterUser": string;
-            "noAccessToTargetUser": string;
-            "superAdminCanAccessAnyUser": string;
-            "twoFactorNotEnabled": string;
-            "systemNotReady": string;
-            "seederFailed": string;
-            "unsupportedContentType": string;
-            "exportFormatNotSupported": string;
-            "exportDataUnavailable": string;
-            "requestBodyTooLarge": string;
-            "missingRequiredHeader": string;
-            "relatedEntityMissingOrInvalid": string;
-            "temporaryDatabaseConflict": string;
-        };
-        "confirm": {};
-        "export": {
-            "formats": {
-                "csv": string;
-                "excel": string;
-                "json": string;
-            };
-            "tableExport": string;
-        };
-        "form": {
-            "name": {
-                "label": string;
-                "placeholder": string;
-            };
-            "email": {};
-            "password": {
-                "label": string;
-                "placeholder": string;
-            };
-            "confirmPassword": {
-                "label": string;
-                "placeholder": string;
-            };
-            "terms": {
-                "label": string;
-            };
-        };
-        "navigation": {
-            "dashboard": string;
-            "users": string;
-            "staff": string;
-            "admins": string;
-            "centers": string;
-            "branches": string;
-            "levels": string;
-            "subjects": string;
-            "roles": string;
-            "systemHealth": string;
-            "students": string;
-            "teachers": string;
-        };
-        "overlay": {
-            "centerSelection": {
-                "title": string;
-                "description": string;
-            };
-            "profileSelection": {
-                "title": string;
-                "description": string;
-                "noProfilesFound": string;
-            };
-            "phoneVerification": {
-                "title": string;
-                "description": string;
-                "enterOtpHint": string;
-                "resendOtp": string;
-                "resendCooldown": string;
-                "securityNotice": string;
-            };
-        };
-        "pages": {
-            "admins": {
-                "title": string;
-                "subtitle": string;
-            };
-            "centers": {
-                "title": string;
-                "subtitle": string;
-            };
-            "roles": {
-                "title": string;
-                "subtitle": string;
-            };
-            "users": {};
-            "staff": {
-                "title": string;
-                "subtitle": string;
-            };
-            "students": {
-                "title": string;
-                "subtitle": string;
-            };
-            "teachers": {
-                "title": string;
-                "subtitle": string;
-            };
-            "centerInactive": {};
-            "profileInactive": {
-                "title": string;
-                "description": string;
-            };
-            "activityLogs": {
-                "title": string;
-                "subtitle": string;
-            };
-            "health": {
-                "title": string;
-                "subtitle": string;
-            };
-            "profile": {
-                "title": string;
-                "subtitle": string;
-                "tabs": {
-                    "profile": string;
-                    "security": string;
-                    "preferences": string;
+            "overlay": {
+                "resourceSelection": {
+                    "title": string;
+                    "description": string;
+                    "noItemsFound": string;
                 };
-                "sections": {
-                    "personalInfo": string;
-                    "editingMode": string;
-                    "password": string;
-                    "passwordDescription": string;
-                    "twoFactorAuth": string;
-                    "twoFactorAuthDescription": string;
-                    "twoFactorEnabledDescription": string;
-                    "twoFactorDisabledDescription": string;
-                    "changePassword": string;
-                    "personalInfoDescription": string;
-                    "security": string;
-                    "securityDescription": string;
-                    "securityStatus": string;
-                    "twoFactorEnabled": string;
-                    "twoFactorDisabled": string;
-                    "securityRecommendations": string;
-                    "strongPassword": string;
-                    "passwordMix": string;
-                    "uniquePassword": string;
-                    "enableTwoFactor": string;
-                    "preferences": string;
-                    "preferencesDescription": string;
-                    "languageDescription": string;
-                    "themeDescription": string;
-                    "notificationsDescription": string;
+                "resourceVerification": {
+                    "title": string;
+                    "description": string;
+                    "enterCodeHint": string;
+                    "resendCode": string;
+                    "resendCooldown": string;
+                    "securityNotice": string;
                 };
             };
-            "selectProfile": {};
-            "unauthorized": {
-                "title": string;
-                "description": string;
-                "message": string;
-                "goToDashboard": string;
-                "goBack": string;
-            };
-            "products": {};
-            "branches": {
-                "title": string;
-                "subtitle": string;
-            };
-            "levels": {
-                "title": string;
-                "subtitle": string;
-            };
-            "subjects": {
-                "title": string;
-                "subtitle": string;
-            };
-            "test-module": {};
-            "notifications": {
-                "title": string;
-                "subtitle": string;
-            };
-            "notificationHistory": {
-                "title": string;
-                "subtitle": string;
-            };
-        };
-        "pagination": {
-            "selectedRows": string;
-            "showingResults": string;
-            "rowsPerPage": string;
-            "pageOf": string;
-        };
-        "selectCenter": {};
-        "success": {
-            "create": string;
-            "update": string;
-            "delete": string;
-            "restore": string;
-            "archive": string;
-            "export": string;
-            "login": string;
-            "logout": string;
-            "passwordChange": string;
-            "roleAssigned": string;
-            "roleRemoved": string;
-            "userAccessGranted": string;
-            "userAccessRevoked": string;
-            "permissionsRetrieved": string;
-            "dataRetrieved": string;
-            "dataUpdated": string;
-            "tokenRefreshed": string;
-            "passwordResetSent": string;
-            "passwordReset": string;
-            "twoFactorSetup": string;
-            "userActivated": string;
-            "userDeactivated": string;
-            "otpSent": string;
-            "userImported": string;
-            "phoneVerificationRequestSent": string;
-            "phoneVerified": string;
-            "centerAccessGranted": string;
-            "centerAccessRevoked": string;
-            "centerAccessDeleted": string;
-            "centerAccessRestored": string;
-            "twoFactorEnabled": string;
-            "twoFactorDisabled": string;
-            "operation": string;
-            "bulkDelete": string;
-            "bulkRestore": string;
-            "bulkAssign": string;
-            "bulkRemove": string;
-            "bulkGrantCenterAccess": string;
-            "bulkRevokeCenterAccess": string;
-            "bulkToggleCenterAccessStatus": string;
-            "bulkDeleteCenterAccess": string;
-            "bulkRestoreCenterAccess": string;
-            "bulkGrantUserAccess": string;
-            "bulkRevokeUserAccess": string;
-            "bulkGrantBranchAccess": string;
-            "bulkRevokeBranchAccess": string;
-            "bulkAssignStudentsToGroup": string;
-            "activityLogTypesRetrieved": string;
-            "found": string;
-        };
-        "system": {
-            "health": {
-                "check": string;
-            };
-            "status": {};
-            "monitoring": {};
-            "operations": {};
-            "components": {};
-            "actions": {};
-            "deployment": {};
-            "processing": {};
-        };
-        "table": {
-            "columns": {
-                "centerName": string;
-                "contact": string;
-                "roleName": string;
-                "name": string;
-                "email": string;
-                "phone": string;
-                "status": string;
-                "active": string;
-                "inactive": string;
-                "createdAt": string;
-                "role": string;
-                "created": string;
-                "actions": string;
-                "type": string;
-                "user": string;
-                "targetUser": string;
-                "center": string;
-                "ipAddress": string;
-                "userAgent": string;
-                "metadata": string;
-                "description": string;
-                "location": string;
-                "address": string;
-                "title": string;
-                "message": string;
-                "priority": string;
-                "recipient": string;
-                "channel": string;
-                "error": string;
-            };
-            "actions": {
-                "deleteSelected": string;
-                "toggleStatus": string;
-                "view": string;
-                "edit": string;
-                "delete": string;
-                "manageUsers": string;
-                "manageAdmins": string;
-                "manageAccess": string;
-                "manageCenterAccess": string;
-                "manageRoles": string;
-                "restore": string;
-                "markAsRead": string;
-                "archive": string;
-            };
-            "filters": {
-                "status": string;
-            };
-            "selection": {
-                "selectedItems": string;
-                "selectAll": string;
-            };
-            "trashToggle": {
-                "activeItems": string;
-                "deletedItems": string;
+            "pages": {
+                "dashboard": {
+                    "welcome": string;
+                    "description": string;
+                };
+                "admins": {
+                    "subtitle": string;
+                };
+                "centers": {
+                    "subtitle": string;
+                };
+                "roles": {
+                    "subtitle": string;
+                    "superAdmin": {
+                        "name": string;
+                        "description": string;
+                    };
+                    "owner": {
+                        "name": string;
+                        "description": string;
+                    };
+                };
+                "staff": {
+                    "subtitle": string;
+                };
+                "students": {
+                    "subtitle": string;
+                };
+                "teachers": {
+                    "subtitle": string;
+                };
+                "profileInactive": {
+                    "title": string;
+                    "description": string;
+                };
+                "activityLogs": {
+                    "subtitle": string;
+                };
+                "health": {
+                    "title": string;
+                    "subtitle": string;
+                };
+                "profile": {
+                    "subtitle": string;
+                    "tabs": {
+                        "profile": string;
+                        "security": string;
+                        "preferences": string;
+                    };
+                    "sections": {
+                        "personalInfo": string;
+                        "editingMode": string;
+                        "password": string;
+                        "passwordDescription": string;
+                        "twoFactorAuth": string;
+                        "twoFactorAuthDescription": string;
+                        "twoFactorEnabledDescription": string;
+                        "twoFactorDisabledDescription": string;
+                        "changePassword": string;
+                        "personalInfoDescription": string;
+                        "security": string;
+                        "securityDescription": string;
+                        "securityStatus": string;
+                        "twoFactorEnabled": string;
+                        "twoFactorDisabled": string;
+                        "securityRecommendations": string;
+                        "strongPassword": string;
+                        "passwordMix": string;
+                        "uniquePassword": string;
+                        "enableTwoFactor": string;
+                        "preferences": string;
+                        "preferencesDescription": string;
+                        "languageDescription": string;
+                        "themeDescription": string;
+                        "notificationsDescription": string;
+                    };
+                };
+                "unauthorized": {
+                    "title": string;
+                    "description": string;
+                    "message": string;
+                    "goToDashboard": string;
+                    "goBack": string;
+                };
+                "branches": {
+                    "subtitle": string;
+                };
+                "levels": {
+                    "subtitle": string;
+                };
+                "subjects": {
+                    "subtitle": string;
+                };
+                "classes": {
+                    "subtitle": string;
+                };
+                "groups": {
+                    "subtitle": string;
+                };
+                "notifications": {
+                    "title": string;
+                    "subtitle": string;
+                };
+                "notificationHistory": {
+                    "title": string;
+                    "subtitle": string;
+                };
+                "auth": {
+                    "login": {
+                        "title": string;
+                        "subtitle": string;
+                    };
+                    "register": {
+                        "title": string;
+                        "subtitle": string;
+                    };
+                    "noAccount": string;
+                    "forgotPassword": {
+                        "title": string;
+                        "description": string;
+                        "resetTitle": string;
+                        "resetDescription": string;
+                        "sendCode": string;
+                        "resetPassword": string;
+                        "backToLogin": string;
+                        "otpSent": string;
+                        "otpSentTo": string;
+                        "resetSuccess": string;
+                        "invalidCode": string;
+                    };
+                    "twoFactor": {
+                        "setupSuccess": string;
+                        "enableSuccess": string;
+                        "disableSuccess": string;
+                        "alreadyEnabled": string;
+                        "notEnabled": string;
+                        "invalidCode": string;
+                        "enterCode": string;
+                        "disableOtpRequired": string;
+                        "otpRequired": string;
+                        "enable": string;
+                        "disable": string;
+                    };
+                };
             };
         };
         "validation": {
@@ -1551,37 +1194,40 @@ export type I18nTranslations = {
             "max": {
                 "message": string;
             };
-        };
-        "toast": {
-            "success": {
-                "message": string;
+            "class": {
+                "countRequired": string;
+                "endDateAfterStart": string;
             };
-            "error": {
-                "message": string;
+            "group": {
+                "endTimeAfterStart": string;
+                "timeFormat": string;
+                "atLeastOneScheduleItem": string;
             };
-            "warning": {};
-            "info": {
-                "message": string;
+            "uuid": {
+                "resourceId": string;
             };
-        };
-        "tooltip": {};
-        "empty": {};
-        "date": {
-            "formats": {};
-            "relative": {};
-        };
-        "time": {
-            "formats": {};
-        };
-        "currency": {};
-        "roles": {
-            "superAdmin": {
-                "name": string;
-                "description": string;
+            "amount": {
+                "min": string;
             };
-            "owner": {
-                "name": string;
-                "description": string;
+            "staff": {
+                "resourceRequiredBefore": string;
+            };
+            "userImport": {
+                "invalidProfileType": string;
+            };
+            "role": {
+                "nameMinLength": string;
+                "nameMaxLength": string;
+                "descriptionMaxLength": string;
+            };
+            "terms": {
+                "label": string;
+            };
+            "common": {
+                "required": string;
+                "invalid": string;
+                "minLength": string;
+                "maxLength": string;
             };
         };
     };

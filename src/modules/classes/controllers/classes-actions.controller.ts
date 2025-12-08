@@ -110,9 +110,14 @@ export class ClassesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkDelete', {
-      resource: 't.common.resources.class',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.class',
+      },
+    );
   }
 
   @Post('bulk/restore')
@@ -137,8 +142,13 @@ export class ClassesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkRestore', {
-      resource: 't.common.resources.class',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.class',
+      },
+    );
   }
 }

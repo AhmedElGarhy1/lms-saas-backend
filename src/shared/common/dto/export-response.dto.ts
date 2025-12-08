@@ -10,7 +10,7 @@ export class ExportResponseDto {
 
   @ApiProperty({
     description: 'Message describing the result',
-    example: { key: 't.success.export', args: { resource: 'CSV' } },
+    example: { key: 't.messages.exported', args: { resource: 'CSV' } },
   })
   message: TranslationMessage;
 

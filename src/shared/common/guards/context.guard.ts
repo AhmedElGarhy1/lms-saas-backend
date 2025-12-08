@@ -47,7 +47,7 @@ export class ContextGuard implements CanActivate {
     const user = request.user;
     if (!user) {
       throw new ForbiddenException({
-        message: { key: 't.errors.userNotAuthenticated' },
+        message: { key: 't.messages.notAuthenticated' },
       });
     }
     user.centerId = centerId;
@@ -60,15 +60,15 @@ export class ContextGuard implements CanActivate {
     }
     const { userProfileId, userProfileType } = RequestContext.get();
     if (!userProfileId) {
-      throw new ProfileSelectionRequiredException('t.errors.required.field', {
-        field: 't.common.resources.profileSelection',
+      throw new ProfileSelectionRequiredException('t.messages.fieldRequired', {
+        field: 't.resources.profileSelection',
       });
     }
     if (!userProfileType) {
       throw new InternalServerErrorException({
         message: {
-          key: 't.errors.notFound.generic',
-          args: { resource: 't.common.resources.profileType' },
+          key: 't.messages.notFound',
+          args: { resource: 't.resources.profileType' },
         },
       });
     }

@@ -44,9 +44,9 @@ export class ClassStaffService extends BaseService {
     // Verify class exists and actor has access
     const classEntity = await this.classesRepository.findOne(classId);
     if (!classEntity) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.class',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.class',
+        identifier: 't.resources.identifier',
         value: classId,
       });
     }
@@ -56,7 +56,7 @@ export class ClassStaffService extends BaseService {
       classEntity,
       classId,
       actor,
-      't.common.resources.class',
+      't.resources.class',
     );
 
     return this.classStaffRepository.findByClassId(classId);
@@ -88,15 +88,15 @@ export class ClassStaffService extends BaseService {
     // Validate that profile type is STAFF
     const profile = await this.userProfileService.findOne(data.userProfileId);
     if (!profile) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.resources.profile',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.profile',
       });
     }
 
     // Positive check: must be STAFF
     if (profile.profileType !== ProfileType.STAFF) {
-      throw new BusinessLogicException('t.errors.onlyForStaffAndAdmin', {
-        resource: 't.common.resources.classStaffAccess',
+      throw new BusinessLogicException('t.messages.onlyForStaffAndAdmin', {
+        resource: 't.resources.classStaffAccess',
       });
     }
 
@@ -108,7 +108,7 @@ export class ClassStaffService extends BaseService {
       });
 
     if (!hasCenterAccess) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
+      throw new BusinessLogicException('t.messages.validationFailed', {
         reason:
           'Staff must have center access before being assigned to a class',
       });
@@ -119,9 +119,9 @@ export class ClassStaffService extends BaseService {
       data.classId,
     );
     if (canAccess) {
-      throw new BusinessLogicException('t.errors.already.is', {
-        resource: 't.common.labels.staff',
-        state: 't.common.messages.assignedToClass',
+      throw new BusinessLogicException('t.messages.alreadyIs', {
+        resource: 't.resources.staff',
+        state: 'assigned to class',
       });
     }
 

@@ -107,7 +107,7 @@ export class ClassValidationService extends BaseService {
         level,
         dto.levelId,
         centerId,
-        't.common.resources.level',
+        't.resources.level',
       );
     }
 
@@ -118,7 +118,7 @@ export class ClassValidationService extends BaseService {
         subject,
         dto.subjectId,
         centerId,
-        't.common.resources.subject',
+        't.resources.subject',
       );
     }
 
@@ -129,7 +129,7 @@ export class ClassValidationService extends BaseService {
         branch,
         dto.branchId,
         centerId,
-        't.common.resources.branch',
+        't.resources.branch',
       );
     }
   }
@@ -141,22 +141,22 @@ export class ClassValidationService extends BaseService {
     const teacherProfile =
       await this.userProfileService.findOne(teacherUserProfileId);
     if (!teacherProfile) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.profile',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.profile',
+        identifier: 't.resources.identifier',
         value: teacherUserProfileId,
       });
     }
 
     if (teacherProfile.profileType !== ProfileType.TEACHER) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
+      throw new BusinessLogicException('t.messages.validationFailed', {
         reason: 'Teacher profile must be of type TEACHER',
       });
     }
 
     // Validate teacher profile is active
     if (!teacherProfile.isActive) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
+      throw new BusinessLogicException('t.messages.validationFailed', {
         reason: 'Teacher profile must be active',
       });
     }
@@ -170,7 +170,7 @@ export class ClassValidationService extends BaseService {
 
   validateDates(startDate: Date, endDate?: Date): void {
     if (endDate && startDate >= endDate) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
+      throw new BusinessLogicException('t.messages.validationFailed', {
         reason: 'Start date must be before end date',
       });
     }
@@ -178,7 +178,7 @@ export class ClassValidationService extends BaseService {
 
   validateDuration(duration: number): void {
     if (!duration || duration <= 0) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
+      throw new BusinessLogicException('t.messages.validationFailed', {
         reason: 'Duration must be a positive number',
       });
     }
@@ -186,7 +186,7 @@ export class ClassValidationService extends BaseService {
     // Maximum duration: 24 hours (1440 minutes)
     const maxDuration = 24 * 60;
     if (duration > maxDuration) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
+      throw new BusinessLogicException('t.messages.validationFailed', {
         reason: `Duration cannot exceed ${maxDuration} minutes (24 hours)`,
       });
     }

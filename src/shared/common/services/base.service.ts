@@ -17,7 +17,7 @@ export abstract class BaseService {
    * @param resource - The resource entity to validate (must have centerId property)
    * @param resourceId - The ID of the resource (for error messages)
    * @param actor - The actor performing the action
-   * @param resourceName - The translation key for the resource name (e.g., 't.common.resources.group')
+   * @param resourceName - The translation key for the resource name (e.g., 't.resources.group')
    * @throws ResourceNotFoundException if resource doesn't exist or doesn't belong to actor's center
    */
   protected validateResourceAccess<T extends { centerId: string }>(
@@ -27,17 +27,17 @@ export abstract class BaseService {
     resourceName: string,
   ): asserts resource is T {
     if (!resource) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
         resource: resourceName,
-        identifier: 'ID',
+        identifier: 't.resources.identifier',
         value: resourceId,
       });
     }
 
     if (resource.centerId !== actor.centerId) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
         resource: resourceName,
-        identifier: 'ID',
+        identifier: 't.resources.identifier',
         value: resourceId,
       });
     }

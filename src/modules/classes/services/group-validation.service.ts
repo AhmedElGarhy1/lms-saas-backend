@@ -37,7 +37,7 @@ export class GroupValidationService extends BaseService {
 
     // Validate class has duration
     if (!classEntity.duration || classEntity.duration <= 0) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
+      throw new BusinessLogicException('t.messages.validationFailed', {
         reason: 'Class duration is required and must be positive',
       });
     }
@@ -74,9 +74,9 @@ export class GroupValidationService extends BaseService {
       currentGroup.classId,
     );
     if (!classEntity) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.class',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.class',
+        identifier: 't.resources.identifier',
         value: currentGroup.classId,
       });
     }
@@ -85,7 +85,7 @@ export class GroupValidationService extends BaseService {
     if (dto.scheduleItems) {
       // Validate class has duration
       if (!classEntity.duration || classEntity.duration <= 0) {
-        throw new BusinessLogicException('t.errors.validationFailed', {
+        throw new BusinessLogicException('t.messages.validationFailed', {
           reason: 'Class duration is required and must be positive',
         });
       }
@@ -118,7 +118,7 @@ export class GroupValidationService extends BaseService {
       classEntity,
       classId,
       centerId,
-      't.common.resources.class',
+      't.resources.class',
     );
     return classEntity;
   }
@@ -131,15 +131,15 @@ export class GroupValidationService extends BaseService {
       const studentProfile =
         await this.userProfileService.findOne(studentUserProfileId);
       if (!studentProfile) {
-        throw new ResourceNotFoundException('t.errors.notFound.withId', {
-          resource: 't.common.resources.profile',
-          identifier: 'ID',
+        throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+          resource: 't.resources.profile',
+          identifier: 't.resources.identifier',
           value: studentUserProfileId,
         });
       }
 
       if (studentProfile.profileType !== ProfileType.STUDENT) {
-        throw new BusinessLogicException('t.errors.validationFailed', {
+        throw new BusinessLogicException('t.messages.validationFailed', {
           reason: 'Student profile must be of type STUDENT',
         });
       }
@@ -169,7 +169,7 @@ export class GroupValidationService extends BaseService {
     if (classEntity.endDate) {
       const now = new Date();
       if (now > classEntity.endDate) {
-        throw new BusinessLogicException('t.errors.validationFailed', {
+        throw new BusinessLogicException('t.messages.validationFailed', {
           reason: 'Cannot create schedule for a class that has ended',
         });
       }

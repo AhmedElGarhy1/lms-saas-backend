@@ -102,9 +102,9 @@ export class UserProfileImportService extends BaseService {
       // Case 1: centerId is provided
       // If user has BOTH profile AND center access → throw error (nothing to do)
       if (existingProfile && hasCenterAccess) {
-        throw new ResourceAlreadyExistsException('t.errors.already.has', {
-          resource: 't.common.labels.user',
-          what: 't.common.resources.access',
+        throw new ResourceAlreadyExistsException('t.messages.alreadyHas', {
+          resource: 't.resources.user',
+          what: 't.resources.access',
         });
       }
       // Otherwise OK: will create profile and/or add center access
@@ -112,9 +112,9 @@ export class UserProfileImportService extends BaseService {
       // Case 2: centerId is NOT provided
       if (existingProfile) {
         // User already has profile → nothing to do (can't add center access without centerId)
-        throw new ResourceAlreadyExistsException('t.errors.already.has', {
-          resource: 't.common.labels.user',
-          what: 't.common.labels.profile',
+        throw new ResourceAlreadyExistsException('t.messages.alreadyHas', {
+          resource: 't.resources.user',
+          what: 't.resources.profile',
         });
       }
       // Otherwise OK: will create profile only (no center access)
@@ -286,8 +286,8 @@ export class UserProfileImportService extends BaseService {
   private async findUserByPhone(phone: string): Promise<User> {
     const user = await this.userService.findUserByPhone(phone);
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.user',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.user',
       });
     }
     return user;

@@ -89,8 +89,8 @@ export class AccessControlHelperService extends BaseService {
       return;
     }
     this.logger.warn('Admin access validation failed', { userProfileId });
-    throw new AdminScopeAccessDeniedException('t.errors.denied.access', {
-      resource: 't.common.resources.adminScope',
+    throw new AdminScopeAccessDeniedException('t.messages.accessDenied', {
+      resource: 't.resources.adminScope',
     });
   }
 
@@ -226,7 +226,10 @@ export class AccessControlHelperService extends BaseService {
         centerId: data.centerId,
       });
       throw new InsufficientPermissionsException(
-        't.errors.noAccessToTargetUser',
+        't.messages.accessDeniedToResource',
+        {
+          resource: 't.resources.user',
+        },
       );
     }
   }
@@ -291,7 +294,9 @@ export class AccessControlHelperService extends BaseService {
           centerName: center.name,
         },
       );
-      throw new InactiveCenterException('t.errors.centerInactive.description');
+      throw new InactiveCenterException('t.messages.inactive', {
+        resource: 't.resources.center',
+      });
     }
 
     // Check if user has access to the center
@@ -302,9 +307,9 @@ export class AccessControlHelperService extends BaseService {
         userProfileId: data.userProfileId,
         centerId: data.centerId,
       });
-      throw new CenterAccessDeniedException(
-        't.errors.centerAccessDenied.description',
-      );
+      throw new CenterAccessDeniedException('t.messages.accessDenied', {
+        resource: 't.resources.centerAccess',
+      });
     }
     const centerAccess = await this.findCenterAccess(data);
     if (!centerAccess) return;
@@ -315,9 +320,9 @@ export class AccessControlHelperService extends BaseService {
         userProfileId: data.userProfileId,
         centerId: data.centerId,
       });
-      throw new CenterAccessInactiveException(
-        't.errors.centerAccessInactive.description',
-      );
+      throw new CenterAccessInactiveException('t.messages.inactive', {
+        resource: 't.resources.centerAccess',
+      });
     }
   }
 

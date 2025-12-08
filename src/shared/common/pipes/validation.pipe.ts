@@ -47,7 +47,7 @@ export class CustomValidationPipe implements PipeTransform {
 
       const errorResponse: EnhancedErrorResponse = {
         statusCode: 400,
-        message: { key: 't.errors.validationFailed' },
+        message: { key: 't.messages.validationFailed' },
         code: ErrorCode.VALIDATION_FAILED,
         timestamp: new Date().toISOString(),
         details: validationErrors,
@@ -179,7 +179,7 @@ export class CustomValidationPipe implements PipeTransform {
     constraints: Record<string, string>,
   ): Record<string, string | number> | undefined {
     const constraintValue = constraints[constraintKey];
-    const fieldLabelKey = `t.common.labels.${field}`;
+    const fieldLabelKey = `t.resources.${field}`;
 
     // Safely extract numeric constraint values
     const getNumericValue = (): number => {
@@ -206,7 +206,7 @@ export class CustomValidationPipe implements PipeTransform {
       }),
       arrayMinSize: () => {
         const baseField = field.replace(/[Ii]ds?$/, '');
-        const itemLabelKey = `t.common.labels.${baseField}`;
+        const itemLabelKey = `t.resources.${baseField}`;
         return {
           min: getNumericValue() || 1,
           item: itemLabelKey as I18nPath,
@@ -214,7 +214,7 @@ export class CustomValidationPipe implements PipeTransform {
       },
       arrayMaxSize: () => {
         const baseField = field.replace(/[Ii]ds?$/, '');
-        const itemLabelKey = `t.common.labels.${baseField}`;
+        const itemLabelKey = `t.resources.${baseField}`;
         return {
           max: getNumericValue() || 100,
           item: itemLabelKey as I18nPath,
@@ -222,7 +222,7 @@ export class CustomValidationPipe implements PipeTransform {
       },
       isUuid: () => {
         const baseField = field.replace(/[Ii]ds?$/, '');
-        const itemLabelKey = `t.common.labels.${baseField}`;
+        const itemLabelKey = `t.resources.${baseField}`;
         return { item: itemLabelKey as I18nPath };
       },
       isString: () => ({ field: fieldLabelKey }),

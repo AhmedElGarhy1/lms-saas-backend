@@ -36,8 +36,8 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
   async revokeCenterAccess(data: CenterAccessDto) {
     const existingAccess = await this.findCenterAccess(data, true);
     if (!existingAccess) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.resources.access',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.access',
       });
     }
 

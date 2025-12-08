@@ -68,7 +68,10 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
               total: number;
               totalPages: number;
             },
-            { key: 't.success.dataRetrieved' },
+            {
+              key: 't.messages.found',
+              args: { resource: 't.resources.resource' },
+            },
             requestId,
             processingTime,
           );
@@ -97,45 +100,80 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
     // If data is null/undefined (common for DELETE operations), provide appropriate message key
     if (!data) {
       const messages: Record<string, TranslationMessage> = {
-        DELETE: { key: 't.success.delete', args: undefined },
-        PATCH: { key: 't.success.update', args: undefined },
-        PUT: { key: 't.success.update', args: undefined },
-        POST: { key: 't.success.create', args: undefined },
+        DELETE: { key: 't.messages.deleted', args: undefined },
+        PATCH: { key: 't.messages.updated', args: undefined },
+        PUT: { key: 't.messages.updated', args: undefined },
+        POST: { key: 't.messages.created', args: undefined },
       };
       return (
-        messages[method] || { key: 't.success.operation', args: undefined }
+        messages[method] || {
+          key: 't.messages.operationSuccess',
+          args: undefined,
+        }
       );
     }
 
     // For arrays, provide count-specific message key
     if (Array.isArray(data)) {
-      return { key: 't.success.dataRetrieved', args: undefined };
+      return {
+        key: 't.messages.found',
+        args: { resource: 't.resources.resource' },
+      };
     }
 
     // For objects with ID (created resources)
     if (method === 'POST' && data && data.id) {
-      return { key: 't.success.create', args: undefined };
+      return {
+        key: 't.messages.created',
+        args: { resource: 't.resources.resource' },
+      };
     }
 
     // For update operations
     if ((method === 'PUT' || method === 'PATCH') && data) {
-      return { key: 't.success.update', args: undefined };
+      return {
+        key: 't.messages.updated',
+        args: { resource: 't.resources.resource' },
+      };
     }
 
     // For delete operations
     if (method === 'DELETE') {
-      return { key: 't.success.delete', args: undefined };
+      return {
+        key: 't.messages.deleted',
+        args: { resource: 't.resources.resource' },
+      };
     }
 
     // Default messages by method
     const messages: Record<string, TranslationMessage> = {
-      GET: { key: 't.success.dataRetrieved', args: undefined },
-      POST: { key: 't.success.create', args: undefined },
-      PUT: { key: 't.success.update', args: undefined },
-      PATCH: { key: 't.success.update', args: undefined },
-      DELETE: { key: 't.success.delete', args: undefined },
+      GET: {
+        key: 't.messages.found',
+        args: { resource: 't.resources.resource' },
+      },
+      POST: {
+        key: 't.messages.created',
+        args: { resource: 't.resources.resource' },
+      },
+      PUT: {
+        key: 't.messages.updated',
+        args: { resource: 't.resources.resource' },
+      },
+      PATCH: {
+        key: 't.messages.updated',
+        args: { resource: 't.resources.resource' },
+      },
+      DELETE: {
+        key: 't.messages.deleted',
+        args: { resource: 't.resources.resource' },
+      },
     };
 
-    return messages[method] || { key: 't.success.operation', args: undefined };
+    return (
+      messages[method] || {
+        key: 't.messages.operationSuccess',
+        args: undefined,
+      }
+    );
   }
 }

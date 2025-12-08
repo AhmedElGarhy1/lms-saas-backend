@@ -50,7 +50,9 @@ export class UserProfileImportController {
     // This endpoint doesn't require authentication as per plan
     await this.userProfileImportService.sendImportOtp(dto, actor);
 
-    return ControllerResponse.success(null, 't.success.otpSent');
+    return ControllerResponse.success(null, 't.messages.sent', {
+      resource: 't.resources.otpCode',
+    });
   }
 
   @Post('verify')
@@ -96,6 +98,8 @@ export class UserProfileImportController {
       actor,
     );
 
-    return ControllerResponse.success(result, 't.success.userImported');
+    return ControllerResponse.success(result, 't.messages.imported', {
+      resource: 't.resources.user',
+    });
   }
 }

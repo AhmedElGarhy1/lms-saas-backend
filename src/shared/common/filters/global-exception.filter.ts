@@ -104,7 +104,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           // Extract field name from translation key if it's a key
           const fieldName =
             typeof field === 'string' && field.startsWith('t.')
-              ? field.replace('t.common.labels.', '')
+              ? field.replace(
+                  /^t\.(common\.(labels|resources)|resources)\./,
+                  '',
+                )
               : typeof field === 'string'
                 ? field
                 : 'field';
@@ -228,7 +231,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       // Rate limit with retry after - use translation key
       const remainingTime = formatRemainingTime(retryAfter);
       message = {
-        key: 't.errors.rateLimit.tooManyRequestsWithTime',
+        key: 't.messages.rateLimitExceeded',
         args: { time: remainingTime },
       };
     } else if (typeof rawMessage === 'string' && rawMessage.startsWith('t.')) {
@@ -237,8 +240,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     } else {
       // Not a translation key, convert to generic error message
       message = {
-        key: TRANSLATION_KEYS.ERRORS.GENERIC_ERROR,
-        args: { detail: rawMessage },
+        key: 't.messages.errorWithMessage',
+        args: { message: rawMessage },
       };
     }
 

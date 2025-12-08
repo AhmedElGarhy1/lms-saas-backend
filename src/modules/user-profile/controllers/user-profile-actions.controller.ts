@@ -52,9 +52,14 @@ export class UserProfileActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkDelete', {
-      resource: 't.common.resources.profile',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.profile',
+      },
+    );
   }
 
   @Post('bulk/restore')
@@ -79,9 +84,14 @@ export class UserProfileActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkRestore', {
-      resource: 't.common.resources.profile',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.profile',
+      },
+    );
   }
 
   @Post('bulk/status')
@@ -110,8 +120,13 @@ export class UserProfileActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.update', {
-      resource: 't.common.resources.profile',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.profile',
+      },
+    );
   }
 }

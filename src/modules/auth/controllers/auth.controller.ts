@@ -63,7 +63,7 @@ export class AuthController {
   async login(@Body() loginDto: LoginRequestDto) {
     const result = await this.authService.login(loginDto);
 
-    return ControllerResponse.success(result, 't.success.login');
+    return ControllerResponse.success(result, 't.messages.completed');
   }
 
   @Public()
@@ -75,7 +75,9 @@ export class AuthController {
   async resendLoginOTP(@Body() dto: LoginRequestDto) {
     await this.authService.resendLoginOTP(dto.phone, dto.password);
 
-    return ControllerResponse.success(null, 't.success.otpSent');
+    return ControllerResponse.success(null, 't.messages.sent', {
+      resource: 't.resources.otpCode',
+    });
   }
 
   @Public()
@@ -97,7 +99,7 @@ export class AuthController {
     const userId = req.user.sub;
 
     const result = await this.authService.refresh(userId);
-    return ControllerResponse.success(result, 't.success.tokenRefreshed');
+    return ControllerResponse.success(result, 't.messages.completed');
   }
 
   @Post('request-phone-verification')
@@ -112,10 +114,9 @@ export class AuthController {
   ) {
     await this.authService.requestPhoneVerification(dto.userId, dto.phone);
 
-    return ControllerResponse.success(
-      null,
-      't.success.phoneVerificationRequestSent',
-    );
+    return ControllerResponse.success(null, 't.messages.sent', {
+      resource: 't.resources.verificationCode',
+    });
   }
 
   @Post('verify-phone')
@@ -132,7 +133,9 @@ export class AuthController {
   ) {
     await this.authService.verifyPhone(dto.code, dto.userId || user.id);
 
-    return ControllerResponse.success(null, 't.success.phoneVerified');
+    return ControllerResponse.success(null, 't.messages.verified', {
+      resource: 't.resources.phone',
+    });
   }
 
   @Post('forgot-password')
@@ -146,7 +149,9 @@ export class AuthController {
   ) {
     const result = await this.authService.forgotPassword(dto, actor);
 
-    return ControllerResponse.success(result, 't.success.passwordResetSent');
+    return ControllerResponse.success(result, 't.messages.sent', {
+      resource: 't.resources.verificationCode',
+    });
   }
 
   @Post('reset-password')
@@ -158,7 +163,7 @@ export class AuthController {
   async resetPassword(@Body() dto: ResetPasswordRequestDto) {
     const result = await this.authService.resetPassword(dto);
 
-    return ControllerResponse.success(result, 't.success.passwordReset');
+    return ControllerResponse.success(result, 't.messages.completed');
   }
 
   @Post('setup-2fa')
@@ -170,7 +175,9 @@ export class AuthController {
   async setup2FA(@GetUser() actor: ActorUser) {
     const result = await this.authService.setupTwoFactor(actor);
 
-    return ControllerResponse.success(result, 't.success.twoFactorSetup');
+    return ControllerResponse.success(result, 't.messages.sent', {
+      resource: 't.resources.otpCode',
+    });
   }
 
   @Post('enable-2fa')
@@ -185,17 +192,15 @@ export class AuthController {
     @GetUser() actor: ActorUser,
   ) {
     if (!dto.code) {
-      throw new ValidationFailedException(
-        't.errors.required.field',
-        undefined,
-        {
-          field: 'OTP code',
-        },
-      );
+      throw new ValidationFailedException('t.messages.fieldRequired', [], {
+        field: 'OTP code',
+      });
     }
     const result = await this.authService.enableTwoFactor(dto.code, actor);
 
-    return ControllerResponse.success(result, 't.success.twoFactorEnabled');
+    return ControllerResponse.success(result, 't.messages.enabled', {
+      resource: 't.resources.twoFactorAuth',
+    });
   }
 
   @Post('disable-2fa')
@@ -210,7 +215,9 @@ export class AuthController {
   ) {
     const result = await this.authService.disableTwoFactor(dto.code, actor);
 
-    return ControllerResponse.success(result, 't.success.twoFactorDisabled');
+    return ControllerResponse.success(result, 't.messages.disabled', {
+      resource: 't.resources.twoFactorAuth',
+    });
   }
 
   @Post('logout')
@@ -221,7 +228,7 @@ export class AuthController {
   async logout(@GetUser() user: ActorUser) {
     const result = await this.authService.logout(user);
 
-    return ControllerResponse.success(result, 't.success.logout');
+    return ControllerResponse.success(result, 't.messages.completed');
   }
 
   @Patch('change-password')
@@ -240,7 +247,7 @@ export class AuthController {
       dto,
     });
 
-    return ControllerResponse.success(result, 't.success.passwordChange');
+    return ControllerResponse.success(result, 't.messages.completed');
   }
 
   /**
@@ -258,6 +265,8 @@ export class AuthController {
   })
   async getVerificationTokens() {
     const tokens = await this.verificationTokenRepository.findAll();
-    return ControllerResponse.success(tokens, 't.success.dataRetrieved');
+    return ControllerResponse.success(tokens, 't.messages.found', {
+      resource: 't.resources.verificationCode',
+    });
   }
 }

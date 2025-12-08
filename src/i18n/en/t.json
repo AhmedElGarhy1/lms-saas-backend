@@ -182,7 +182,18 @@
     "context": "Context",
     "enabled": "Enabled",
     "disabled": "Disabled",
-    "readOnly": "Read-only"
+    "readOnly": "Read-only",
+    "profileSelection": "Profile Selection",
+    "classStaffAccess": "Class Staff Access",
+    "groupStudent": "Group Student",
+    "staff": "Staff",
+    "student": "Student",
+    "teacher": "Teacher",
+    "admin": "Admin",
+    "adminScope": "Admin Scope",
+    "branchAccess": "Branch Access",
+    "centerAccess": "Center Access",
+    "userAccess": "User Access"
   },
   "messages": {
     "created": "{resource} created successfully",
@@ -310,7 +321,12 @@
     "internalServerError": "An internal server error occurred",
     "serviceUnavailable": "Service is temporarily unavailable",
     "businessLogicError": "A business logic error occurred",
-    "missingRequiredHeader": "Required header {header} is missing"
+    "missingRequiredHeader": "Required header {header} is missing",
+    "requiredOneOf": "Either {field1} or {field2} is required",
+    "notAuthenticated": "User is not authenticated",
+    "exportFormatNotSupported": "Export format is not supported",
+    "exportDataUnavailable": "No data available for export",
+    "operationSuccess": "Operation completed successfully"
   },
   "actions": {
     "sent": "Sent",

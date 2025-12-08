@@ -5,6 +5,7 @@ import { ClassCreatedEvent, ClassUpdatedEvent } from '../events/class.events';
 import { GroupCreatedEvent, GroupUpdatedEvent } from '../events/group.events';
 import { Class } from '../entities/class.entity';
 import { Group } from '../entities/group.entity';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 /**
  * Helper utility for type-safe event emission in the classes module.
@@ -24,7 +25,7 @@ export class EventEmitterHelper {
     typeSafeEventEmitter: TypeSafeEventEmitter,
     eventType: ClassEvents.CREATED | ClassEvents.UPDATED,
     classEntity: Class,
-    actor: { userProfileId: string; centerId?: string | null },
+    actor: ActorUser,
     centerId: string,
   ): Promise<void> {
     if (eventType === ClassEvents.CREATED) {
@@ -55,7 +56,7 @@ export class EventEmitterHelper {
     eventType: GroupEvents.CREATED | GroupEvents.UPDATED,
     group: Group,
     classEntity: Class | null,
-    actor: { userProfileId: string; centerId?: string | null },
+    actor: ActorUser,
     centerId: string,
   ): Promise<void> {
     if (eventType === GroupEvents.CREATED) {
@@ -74,5 +75,3 @@ export class EventEmitterHelper {
     }
   }
 }
-
-

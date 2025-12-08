@@ -126,7 +126,7 @@ export class DatabaseSeeder {
           where: { id: userUuid },
         });
         if (!user) {
-          throw new SeederException('t.errors.seederFailed');
+          throw new SeederException('t.messages.seederFailed');
         }
         return user;
       },
@@ -198,7 +198,7 @@ export class DatabaseSeeder {
           where: { id: userUuid },
         });
         if (!user) {
-          throw new SeederException('t.errors.seederFailed');
+          throw new SeederException('t.messages.seederFailed');
         }
         return user;
       },

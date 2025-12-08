@@ -80,8 +80,8 @@ export class StaffService extends BaseService {
       actor,
     );
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.user',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.user',
       });
     }
     return user;

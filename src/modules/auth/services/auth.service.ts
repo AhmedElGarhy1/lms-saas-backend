@@ -65,9 +65,9 @@ export class AuthService extends BaseService {
     // If user exists, validate account status
     if (user) {
       if (!user.isActive) {
-        throw new BusinessLogicException('t.errors.already.is', {
-          resource: 't.common.resources.user',
-          state: 't.common.labels.inactive',
+        throw new BusinessLogicException('t.messages.alreadyIs', {
+          resource: 't.resources.user',
+          state: 't.resources.inactive',
         });
       }
 
@@ -81,8 +81,8 @@ export class AuthService extends BaseService {
           new UserLoginFailedEvent(dto.phone, user.id, 'Invalid password'),
         );
 
-        throw new AuthenticationFailedException('t.errors.invalid.generic', {
-          field: 't.common.resources.credentials',
+        throw new AuthenticationFailedException('t.messages.fieldInvalid', {
+          field: 't.resources.credentials',
         });
       }
 
@@ -91,9 +91,9 @@ export class AuthService extends BaseService {
         this.logger.error(
           `User object missing or invalid ID for phone: ${dto.phone}`,
         );
-        throw new AuthenticationFailedException(
-          't.errors.authenticationFailed',
-        );
+        throw new AuthenticationFailedException('t.messages.operationError', {
+          reason: 'authentication failed',
+        });
       }
 
       // Check if 2FA is enabled
@@ -101,8 +101,8 @@ export class AuthService extends BaseService {
         // If OTP code not provided, send OTP and throw exception
         if (!dto.code) {
           await this.verificationService.sendLoginOTP(user.id || '');
-          throw new OtpRequiredException('t.errors.required.field', {
-            field: 't.common.labels.otpCode',
+          throw new OtpRequiredException('t.messages.fieldRequired', {
+            field: 't.resources.otpCode',
           });
         }
 
@@ -119,9 +119,9 @@ export class AuthService extends BaseService {
             phone: user.phone,
             error: error instanceof Error ? error.message : String(error),
           });
-          throw new AuthenticationFailedException(
-            't.errors.authenticationFailed',
-          );
+          throw new AuthenticationFailedException('t.messages.operationError', {
+            reason: 'authentication failed',
+          });
         }
       }
 
@@ -129,8 +129,8 @@ export class AuthService extends BaseService {
       return this.completeLogin(user);
     } else {
       // User doesn't exist - return same error message to prevent enumeration
-      throw new AuthenticationFailedException('t.errors.invalid.generic', {
-        field: 't.common.resources.credentials',
+      throw new AuthenticationFailedException('t.messages.fieldInvalid', {
+        field: 't.resources.credentials',
       });
     }
   }
@@ -151,14 +151,14 @@ export class AuthService extends BaseService {
     // Validate password to ensure only the real user can request resend
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new AuthenticationFailedException('t.errors.invalid.generic', {
-        field: 't.common.resources.credentials',
+      throw new AuthenticationFailedException('t.messages.fieldInvalid', {
+        field: 't.resources.credentials',
       });
     }
 
     if (!user.twoFactorEnabled) {
       // If 2FA is not enabled, no need to send OTP
-      throw new BusinessLogicException('t.errors.twoFactorNotEnabled');
+      throw new BusinessLogicException('t.messages.twoFactorNotEnabled');
     }
 
     // Send login OTP
@@ -177,18 +177,14 @@ export class AuthService extends BaseService {
     } else if (phone) {
       user = await this.userService.findUserByPhone(phone);
     } else {
-      throw new ValidationFailedException(
-        't.errors.required.field',
-        undefined,
-        {
-          field: 't.common.labels.otpCode',
-        },
-      );
+      throw new ValidationFailedException('t.messages.fieldRequired', [], {
+        field: 't.resources.otpCode',
+      });
     }
 
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.user',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.user',
       });
     }
 
@@ -234,13 +230,9 @@ export class AuthService extends BaseService {
     } else if (dto.phone) {
       user = await this.userService.findUserByPhone(dto.phone);
     } else {
-      throw new ValidationFailedException(
-        't.errors.required.field',
-        undefined,
-        {
-          field: 't.common.labels.otpCode',
-        },
-      );
+      throw new ValidationFailedException('t.messages.fieldRequired', [], {
+        field: 't.resources.otpCode',
+      });
     }
 
     if (!user) {
@@ -274,9 +266,9 @@ export class AuthService extends BaseService {
 
   async setupTwoFactor(actor: ActorUser) {
     if (actor.twoFactorEnabled) {
-      throw new BusinessLogicException('t.errors.already.is', {
-        resource: 't.common.resources.twoFactorAuthentication',
-        state: 't.common.messages.enabled',
+      throw new BusinessLogicException('t.messages.alreadyIs', {
+        resource: 't.resources.twoFactorAuth',
+        state: 't.resources.enabled',
       });
     }
 
@@ -299,15 +291,15 @@ export class AuthService extends BaseService {
     const user = await this.userService.findOne(actor.id, true);
 
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.user',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.user',
       });
     }
 
     if (user.twoFactorEnabled) {
-      throw new BusinessLogicException('t.errors.already.is', {
-        resource: 't.common.resources.twoFactorAuthentication',
-        state: 't.common.messages.enabled',
+      throw new BusinessLogicException('t.messages.alreadyIs', {
+        resource: 't.resources.twoFactorAuth',
+        state: 't.resources.enabled',
       });
     }
 
@@ -319,7 +311,9 @@ export class AuthService extends BaseService {
         actor.id,
       );
     } catch {
-      throw new AuthenticationFailedException('t.errors.authenticationFailed');
+      throw new AuthenticationFailedException('t.messages.operationError', {
+        reason: 'authentication failed',
+      });
     }
 
     // Enable 2FA (no secret needed for SMS OTP)
@@ -341,20 +335,20 @@ export class AuthService extends BaseService {
     const user = await this.userService.findOne(actor.id, true);
 
     if (!user) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.labels.user',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.user',
       });
     }
 
     if (!user.twoFactorEnabled) {
-      throw new BusinessLogicException('t.errors.twoFactorNotEnabled');
+      throw new BusinessLogicException('t.messages.twoFactorNotEnabled');
     }
 
     // If OTP code not provided, send OTP and throw exception
     if (!verificationCode) {
       await this.verificationService.sendTwoFactorOTP(actor.id);
-      throw new OtpRequiredException('t.errors.required.field', {
-        field: 't.common.labels.otpCode',
+      throw new OtpRequiredException('t.messages.fieldRequired', {
+        field: 't.resources.otpCode',
       });
     }
 
@@ -370,7 +364,9 @@ export class AuthService extends BaseService {
         userId: user.id,
         phone: user.phone,
       });
-      throw new AuthenticationFailedException('t.errors.authenticationFailed');
+      throw new AuthenticationFailedException('t.messages.operationError', {
+        reason: 'authentication failed',
+      });
     }
 
     // Disable 2FA
@@ -462,7 +458,9 @@ export class AuthService extends BaseService {
     // Get user (validation already done by strategy)
     const user = await this.userService.findOne(userId, true);
     if (!user) {
-      throw new AuthenticationFailedException('t.errors.authenticationFailed');
+      throw new AuthenticationFailedException('t.messages.operationError', {
+        reason: 'authentication failed',
+      });
     }
 
     // Generate new tokens

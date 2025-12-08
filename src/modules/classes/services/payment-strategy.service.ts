@@ -133,7 +133,7 @@ export class PaymentStrategyService extends BaseService {
     if (
       !Object.values(TeacherPaymentUnit).includes(teacherPaymentStrategy.per)
     ) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
+      throw new BusinessLogicException('t.messages.validationFailed', {
         reason: 'Invalid teacher payment unit',
       });
     }
@@ -142,7 +142,7 @@ export class PaymentStrategyService extends BaseService {
       typeof teacherPaymentStrategy.amount !== 'number' ||
       teacherPaymentStrategy.amount < 0
     ) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
+      throw new BusinessLogicException('t.messages.validationFailed', {
         reason: 'Teacher payment amount must be a non-negative number',
       });
     }
@@ -151,7 +151,7 @@ export class PaymentStrategyService extends BaseService {
     if (
       !Object.values(StudentPaymentUnit).includes(studentPaymentStrategy.per)
     ) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
+      throw new BusinessLogicException('t.messages.validationFailed', {
         reason: 'Invalid student payment unit',
       });
     }
@@ -160,7 +160,7 @@ export class PaymentStrategyService extends BaseService {
       typeof studentPaymentStrategy.amount !== 'number' ||
       studentPaymentStrategy.amount < 0
     ) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
+      throw new BusinessLogicException('t.messages.validationFailed', {
         reason: 'Student payment amount must be a non-negative number',
       });
     }
@@ -172,7 +172,7 @@ export class PaymentStrategyService extends BaseService {
         studentPaymentStrategy.per === StudentPaymentUnit.MONTH) &&
       (!studentPaymentStrategy.count || studentPaymentStrategy.count < 1)
     ) {
-      throw new BusinessLogicException('t.errors.validationFailed', {
+      throw new BusinessLogicException('t.messages.validationFailed', {
         reason: 'Count is required for SESSION, HOUR, and MONTH payment units',
       });
     }

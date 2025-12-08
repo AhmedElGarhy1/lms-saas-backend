@@ -46,7 +46,9 @@ export class SubjectsController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.subject',
+    });
   }
 
   @Get(':subjectId')
@@ -67,7 +69,9 @@ export class SubjectsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.subjectsService.getSubject(subjectId, actor);
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.subject',
+    });
   }
 
   @Post()
@@ -91,8 +95,8 @@ export class SubjectsController {
       createSubjectDto,
       actor,
     );
-    return ControllerResponse.success(result, 't.success.create', {
-      resource: 't.common.resources.subject',
+    return ControllerResponse.success(result, 't.messages.created', {
+      resource: 't.resources.subject',
     });
   }
 
@@ -120,8 +124,8 @@ export class SubjectsController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, 't.success.update', {
-      resource: 't.common.resources.subject',
+    return ControllerResponse.success(result, 't.messages.updated', {
+      resource: 't.resources.subject',
     });
   }
 
@@ -143,8 +147,8 @@ export class SubjectsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.subjectsService.deleteSubject(subjectId, actor);
-    return ControllerResponse.message('t.success.delete', {
-      resource: 't.common.resources.subject',
+    return ControllerResponse.message('t.messages.deleted', {
+      resource: 't.resources.subject',
     });
   }
 
@@ -159,8 +163,8 @@ export class SubjectsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.subjectsService.restoreSubject(subjectId, actor);
-    return ControllerResponse.message('t.success.restore', {
-      resource: 't.common.resources.subject',
+    return ControllerResponse.message('t.messages.restored', {
+      resource: 't.resources.subject',
     });
   }
 }

@@ -61,7 +61,11 @@ export class CentersAccessActionsController {
 
     return ControllerResponse.success(
       result,
-      't.success.bulkGrantCenterAccess',
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.centerAccess',
+      },
     );
   }
 
@@ -95,7 +99,11 @@ export class CentersAccessActionsController {
 
     return ControllerResponse.success(
       result,
-      't.success.bulkRevokeCenterAccess',
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.centerAccess',
+      },
     );
   }
 
@@ -132,7 +140,11 @@ export class CentersAccessActionsController {
 
     return ControllerResponse.success(
       result,
-      't.success.bulkToggleCenterAccessStatus',
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.centerAccess',
+      },
     );
   }
 
@@ -166,7 +178,11 @@ export class CentersAccessActionsController {
 
     return ControllerResponse.success(
       result,
-      't.success.bulkDeleteCenterAccess',
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.centerAccess',
+      },
     );
   }
 
@@ -200,7 +216,11 @@ export class CentersAccessActionsController {
 
     return ControllerResponse.success(
       result,
-      't.success.bulkRestoreCenterAccess',
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.centerAccess',
+      },
     );
   }
 }

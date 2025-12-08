@@ -140,9 +140,9 @@ export class ClassesService extends BaseService {
       await this.classesRepository.findClassWithRelations(classId);
 
     if (!classWithRelations) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.class',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.class',
+        identifier: 't.resources.identifier',
         value: classId,
       });
     }
@@ -213,9 +213,9 @@ export class ClassesService extends BaseService {
     );
 
     if (!updatedClass) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.class',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.class',
+        identifier: 't.resources.identifier',
         value: classId,
       });
     }
@@ -257,9 +257,9 @@ export class ClassesService extends BaseService {
     actor: ActorUser,
   ): Promise<void> {
     if (!classEntity) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.class',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.class',
+        identifier: 't.resources.identifier',
         value: classId,
       });
     }
@@ -277,10 +277,10 @@ export class ClassesService extends BaseService {
       );
       if (!canAccess) {
         throw new InsufficientPermissionsException(
-          't.errors.notAuthorized.action',
+          't.messages.actionUnauthorized',
           {
-            action: 't.common.buttons.view',
-            resource: 't.common.resources.class',
+            action: 't.buttons.view',
+            resource: 't.resources.class',
           },
         );
       }
@@ -290,7 +290,7 @@ export class ClassesService extends BaseService {
         classEntity,
         classId,
         actor,
-        't.common.resources.class',
+        't.resources.class',
       );
     }
   }
@@ -313,9 +313,9 @@ export class ClassesService extends BaseService {
 
     const restoredClass = await this.classesRepository.findOne(classId);
     if (!restoredClass) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.class',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.class',
+        identifier: 't.resources.identifier',
         value: classId,
       });
     }

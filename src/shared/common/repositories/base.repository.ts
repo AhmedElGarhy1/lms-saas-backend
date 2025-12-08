@@ -460,9 +460,9 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   async findOneOrThrow(id: string): Promise<T> {
     const entity = await this.findOne(id);
     if (!entity) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.resource',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.resource',
+        identifier: 't.resources.identifier',
         value: id,
       });
     }
@@ -549,9 +549,9 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   async updateThrow(id: string, data: DeepPartial<T>): Promise<T> {
     const entity = await this.update(id, data);
     if (!entity) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.resource',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.resource',
+        identifier: 't.resources.identifier',
         value: id,
       });
     }
@@ -575,9 +575,9 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       where: { id } as unknown as FindOptionsWhere<T>,
     });
     if (!entity) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.resource',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.resource',
+        identifier: 't.resources.identifier',
         value: id,
       });
     }
@@ -602,9 +602,9 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       where: { id } as unknown as FindOptionsWhere<T>,
     });
     if (!entity) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.resource',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.resource',
+        identifier: 't.resources.identifier',
         value: id,
       });
     }

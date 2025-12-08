@@ -46,7 +46,9 @@ export class ClassesController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.class',
+    });
   }
 
   @Get(':classId')
@@ -67,7 +69,9 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.classesService.getClass(classId, actor);
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.class',
+    });
   }
 
   @Post()
@@ -88,8 +92,8 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.classesService.createClass(createClassDto, actor);
-    return ControllerResponse.success(result, 't.success.create', {
-      resource: 't.common.resources.class',
+    return ControllerResponse.success(result, 't.messages.created', {
+      resource: 't.resources.class',
     });
   }
 
@@ -113,8 +117,8 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.classesService.updateClass(classId, data, actor);
-    return ControllerResponse.success(result, 't.success.update', {
-      resource: 't.common.resources.class',
+    return ControllerResponse.success(result, 't.messages.updated', {
+      resource: 't.resources.class',
     });
   }
 
@@ -136,8 +140,8 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.classesService.deleteClass(classId, actor);
-    return ControllerResponse.message('t.success.delete', {
-      resource: 't.common.resources.class',
+    return ControllerResponse.message('t.messages.deleted', {
+      resource: 't.resources.class',
     });
   }
 
@@ -152,8 +156,8 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.classesService.restoreClass(classId, actor);
-    return ControllerResponse.message('t.success.restore', {
-      resource: 't.common.resources.class',
+    return ControllerResponse.message('t.messages.restored', {
+      resource: 't.resources.class',
     });
   }
 }

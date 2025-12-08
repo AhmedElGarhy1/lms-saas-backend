@@ -53,7 +53,9 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.groupsService.paginateGroups(paginateDto, actor);
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.group',
+    });
   }
 
   @Get(':groupId')
@@ -74,7 +76,9 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.groupsService.getGroup(groupId, actor);
-    return ControllerResponse.success(result, 't.success.dataRetrieved');
+    return ControllerResponse.success(result, 't.messages.found', {
+      resource: 't.resources.group',
+    });
   }
 
   @Post()
@@ -95,8 +99,8 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.groupsService.createGroup(createGroupDto, actor);
-    return ControllerResponse.success(result, 't.success.create', {
-      resource: 't.common.resources.group',
+    return ControllerResponse.success(result, 't.messages.created', {
+      resource: 't.resources.group',
     });
   }
 
@@ -120,8 +124,8 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.groupsService.updateGroup(groupId, data, actor);
-    return ControllerResponse.success(result, 't.success.update', {
-      resource: 't.common.resources.group',
+    return ControllerResponse.success(result, 't.messages.updated', {
+      resource: 't.resources.group',
     });
   }
 
@@ -143,8 +147,8 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.groupsService.deleteGroup(groupId, actor);
-    return ControllerResponse.message('t.success.delete', {
-      resource: 't.common.resources.group',
+    return ControllerResponse.message('t.messages.deleted', {
+      resource: 't.resources.group',
     });
   }
 
@@ -159,8 +163,8 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.groupsService.restoreGroup(groupId, actor);
-    return ControllerResponse.message('t.success.restore', {
-      resource: 't.common.resources.group',
+    return ControllerResponse.message('t.messages.restored', {
+      resource: 't.resources.group',
     });
   }
 
@@ -184,8 +188,8 @@ export class GroupsController {
       dto.userProfileId,
       actor,
     );
-    return ControllerResponse.message('t.success.update', {
-      resource: 't.common.resources.group',
+    return ControllerResponse.message('t.messages.updated', {
+      resource: 't.resources.group',
     });
   }
 
@@ -209,8 +213,13 @@ export class GroupsController {
       dto.studentUserProfileIds,
       actor,
     );
-    return ControllerResponse.success(result, 't.success.bulkDelete', {
-      resource: 't.common.resources.groupStudent',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.groupStudent',
+      },
+    );
   }
 }

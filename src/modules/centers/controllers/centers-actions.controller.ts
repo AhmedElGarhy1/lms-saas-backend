@@ -114,9 +114,14 @@ export class CentersActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkDelete', {
-      resource: 't.common.resources.center',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.center',
+      },
+    );
   }
 
   @Post('bulk/restore')
@@ -141,9 +146,14 @@ export class CentersActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkRestore', {
-      resource: 't.common.resources.center',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.center',
+      },
+    );
   }
 
   @Post('bulk/status')
@@ -172,8 +182,13 @@ export class CentersActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.update', {
-      resource: 't.common.resources.center',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.center',
+      },
+    );
   }
 }

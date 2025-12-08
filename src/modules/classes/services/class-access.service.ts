@@ -54,10 +54,10 @@ export class ClassAccessService extends BaseService {
         classId,
       });
       throw new InsufficientPermissionsException(
-        't.errors.notAuthorized.action',
+        't.messages.actionUnauthorized',
         {
-          action: 't.common.buttons.view',
-          resource: 't.common.resources.class',
+          action: 't.buttons.view',
+          resource: 't.resources.class',
         },
       );
     }

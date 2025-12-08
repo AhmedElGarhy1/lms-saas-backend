@@ -1,5 +1,14 @@
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  MaxLength,
+  IsArray,
+  ValidateNested,
+  ArrayMinSize,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { ScheduleItemDto } from './schedule-item.dto';
 
 export class UpdateGroupDto {
   @ApiProperty({
@@ -12,4 +21,16 @@ export class UpdateGroupDto {
   @IsString()
   @MaxLength(255)
   name?: string;
+
+  @ApiProperty({
+    description: 'Schedule items (optional)',
+    type: [ScheduleItemDto],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => ScheduleItemDto)
+  scheduleItems?: ScheduleItemDto[];
 }

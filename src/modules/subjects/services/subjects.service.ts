@@ -37,17 +37,17 @@ export class SubjectsService extends BaseService {
     const subject = await this.subjectsRepository.findOne(subjectId);
 
     if (!subject) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.subject',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.subject',
+        identifier: 't.resources.identifier',
         value: subjectId,
       });
     }
 
     if (subject.centerId !== actor.centerId) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.subject',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.subject',
+        identifier: 't.resources.identifier',
         value: subjectId,
       });
     }
@@ -103,17 +103,17 @@ export class SubjectsService extends BaseService {
     const subject =
       await this.subjectsRepository.findOneSoftDeletedById(subjectId);
     if (!subject) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.subject',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.subject',
+        identifier: 't.resources.identifier',
         value: subjectId,
       });
     }
 
     if (subject.centerId !== actor.centerId) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.subject',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.subject',
+        identifier: 't.resources.identifier',
         value: subjectId,
       });
     }

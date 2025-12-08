@@ -15,8 +15,8 @@ import { PathArgs } from '@/generated/i18n-type-map.generated';
  *
  * // Type-safe - TypeScript will enforce correct arguments
  * // Use translation keys for UI text (full IntelliSense)
- * const message = this.translationService.translate('t.common.buttons.createResource', {
- *   resource: 't.common.labels.user' // ✅ Translation key with full autocomplete
+ * const message = this.translationService.translate('t.buttons.createResource', {
+ *   resource: 't.resources.user' // ✅ Translation key with full autocomplete
  * });
  *
  * // Type error if arguments are missing or incorrect

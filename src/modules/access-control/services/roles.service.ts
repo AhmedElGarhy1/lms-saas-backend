@@ -73,17 +73,17 @@ export class RolesService extends BaseService {
   ) {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.role',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.role',
+        identifier: 't.resources.identifier',
         value: roleId,
       });
     }
     if (role.readOnly) {
-      throw new BusinessLogicException('t.errors.cannot.actionReason', {
-        action: 't.common.buttons.update',
-        resource: 't.common.resources.role',
-        reason: 't.common.messages.readOnly',
+      throw new BusinessLogicException('t.messages.actionNotAllowed', {
+        action: 't.buttons.update',
+        resource: 't.resources.role',
+        reason: 't.messages.readOnly',
       });
     }
     if (!role.isSameScope(actor.centerId)) {
@@ -93,10 +93,10 @@ export class RolesService extends BaseService {
         centerId: actor.centerId,
       });
       throw new InsufficientPermissionsException(
-        't.errors.notAuthorized.action',
+        't.messages.actionUnauthorized',
         {
-          action: 't.common.buttons.update',
-          resource: 't.common.resources.role',
+          action: 't.buttons.update',
+          resource: 't.resources.role',
         },
       );
     }
@@ -115,17 +115,17 @@ export class RolesService extends BaseService {
   async deleteRole(roleId: string, actor: ActorUser) {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.role',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.role',
+        identifier: 't.resources.identifier',
         value: roleId,
       });
     }
     if (role.readOnly) {
-      throw new BusinessLogicException('t.errors.cannot.actionReason', {
-        action: 't.common.buttons.delete',
-        resource: 't.common.resources.role',
-        reason: 't.common.messages.readOnly',
+      throw new BusinessLogicException('t.messages.actionNotAllowed', {
+        action: 't.buttons.delete',
+        resource: 't.resources.role',
+        reason: 't.messages.readOnly',
       });
     }
     if (!role?.isSameScope(actor.centerId)) {
@@ -135,10 +135,10 @@ export class RolesService extends BaseService {
         centerId: actor.centerId,
       });
       throw new InsufficientPermissionsException(
-        't.errors.notAuthorized.action',
+        't.messages.actionUnauthorized',
         {
-          action: 't.common.buttons.delete',
-          resource: 't.common.resources.role',
+          action: 't.buttons.delete',
+          resource: 't.resources.role',
         },
       );
     }
@@ -166,8 +166,8 @@ export class RolesService extends BaseService {
       data.userProfileId,
     );
     if (!profile) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.resources.profile',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.profile',
       });
     }
 
@@ -176,8 +176,8 @@ export class RolesService extends BaseService {
       profile.profileType !== ProfileType.STAFF &&
       profile.profileType !== ProfileType.ADMIN
     ) {
-      throw new BusinessLogicException('t.errors.onlyForStaffAndAdmin', {
-        resource: 't.common.resources.role',
+      throw new BusinessLogicException('t.messages.onlyForStaffAndAdmin', {
+        resource: 't.resources.role',
       });
     }
 
@@ -218,10 +218,10 @@ export class RolesService extends BaseService {
           centerId: actor.centerId,
         });
         throw new InsufficientPermissionsException(
-          't.errors.notAuthorized.action',
+          't.messages.actionUnauthorized',
           {
-            action: 't.common.buttons.view',
-            resource: 't.common.resources.role',
+            action: 't.buttons.view',
+            resource: 't.resources.role',
           },
         );
       }
@@ -238,19 +238,19 @@ export class RolesService extends BaseService {
     // First check if the role exists
     const role = await this.rolesRepository.findOneSoftDeleted({ id: roleId });
     if (!role) {
-      throw new ResourceNotFoundException('t.errors.notFound.withId', {
-        resource: 't.common.resources.role',
-        identifier: 'ID',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.role',
+        identifier: 't.resources.identifier',
         value: roleId,
       });
     }
 
     // Check if the role is already active (not deleted)
     if (!role.deletedAt) {
-      throw new BusinessLogicException('t.errors.cannot.actionReason', {
-        action: 't.common.buttons.restore',
-        resource: 't.common.resources.role',
-        reason: 't.common.messages.roleNotDeleted',
+      throw new BusinessLogicException('t.messages.actionNotAllowed', {
+        action: 't.buttons.restore',
+        resource: 't.resources.role',
+        reason: 'it is not deleted',
       });
     }
 

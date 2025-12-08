@@ -49,9 +49,14 @@ export class SubjectsActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkDelete', {
-      resource: 't.common.resources.subject',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.subject',
+      },
+    );
   }
 
   @Post('bulk/restore')
@@ -76,8 +81,13 @@ export class SubjectsActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkRestore', {
-      resource: 't.common.resources.subject',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.subject',
+      },
+    );
   }
 }

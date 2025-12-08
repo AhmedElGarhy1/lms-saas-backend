@@ -117,9 +117,14 @@ export class RolesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkDelete', {
-      resource: 't.common.resources.role',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.role',
+      },
+    );
   }
 
   @Post('bulk/restore')
@@ -144,9 +149,14 @@ export class RolesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkRestore', {
-      resource: 't.common.resources.role',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.role',
+      },
+    );
   }
 
   @Post('bulk/assign')
@@ -176,9 +186,14 @@ export class RolesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkAssign', {
-      resource: 't.common.resources.role',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.role',
+      },
+    );
   }
 
   @Delete('bulk/remove')
@@ -208,8 +223,13 @@ export class RolesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkRemove', {
-      resource: 't.common.resources.role',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.role',
+      },
+    );
   }
 }

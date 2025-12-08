@@ -95,9 +95,14 @@ export class BranchesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkDelete', {
-      resource: 't.common.resources.branch',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.branch',
+      },
+    );
   }
 
   @Post('bulk/restore')
@@ -122,9 +127,14 @@ export class BranchesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkRestore', {
-      resource: 't.common.resources.branch',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.branch',
+      },
+    );
   }
 
   @Post('bulk/status')
@@ -153,8 +163,13 @@ export class BranchesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.update', {
-      resource: 't.common.resources.branch',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.branch',
+      },
+    );
   }
 }

@@ -101,7 +101,11 @@ export class BranchesAccessController {
 
     return ControllerResponse.success(
       result,
-      't.success.bulkGrantBranchAccess',
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.branchAccess',
+      },
     );
   }
 
@@ -136,7 +140,11 @@ export class BranchesAccessController {
 
     return ControllerResponse.success(
       result,
-      't.success.bulkRevokeBranchAccess',
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.branchAccess',
+      },
     );
   }
 }

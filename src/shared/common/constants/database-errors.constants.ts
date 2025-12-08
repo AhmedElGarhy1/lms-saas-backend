@@ -25,15 +25,16 @@ export function isDatabaseErrorCode(
  */
 export const TRANSLATION_KEYS = {
   ERRORS: {
-    DUPLICATE_FIELD: 't.errors.duplicateField',
-    RESOURCE_NOT_FOUND: 't.errors.resourceNotFound',
-    RELATED_ENTITY_MISSING_OR_INVALID: 't.errors.relatedEntityMissingOrInvalid',
-    TEMPORARY_DATABASE_CONFLICT: 't.errors.temporaryDatabaseConflict',
-    DATABASE_OPERATION_FAILED: 't.errors.databaseOperationFailed',
-    GENERIC_ERROR: 't.errors.genericError',
-    INTERNAL_SERVER_ERROR: 't.errors.internalServerError',
-    SERVICE_UNAVAILABLE: 't.errors.serviceUnavailable',
-    BUSINESS_LOGIC_ERROR: 't.errors.businessLogicError',
-    REQUIRED_FIELD: 't.errors.required.field',
+    DUPLICATE_FIELD: 't.messages.duplicateField',
+    RESOURCE_NOT_FOUND: 't.messages.notFound',
+    RELATED_ENTITY_MISSING_OR_INVALID:
+      't.messages.relatedEntityMissingOrInvalid',
+    TEMPORARY_DATABASE_CONFLICT: 't.messages.temporaryDatabaseConflict',
+    DATABASE_OPERATION_FAILED: 't.messages.databaseOperationFailed',
+    GENERIC_ERROR: 't.messages.genericError',
+    INTERNAL_SERVER_ERROR: 't.messages.internalServerError',
+    SERVICE_UNAVAILABLE: 't.messages.serviceUnavailable',
+    BUSINESS_LOGIC_ERROR: 't.messages.businessLogicError',
+    REQUIRED_FIELD: 't.messages.fieldRequired',
   },
 } as const;

@@ -31,8 +31,8 @@ export class UserInfoRepository extends BaseRepository<UserInfo> {
       where: { userId },
     });
     if (!userInfo) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.resources.userInfo',
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.userInfo',
       });
     }
 

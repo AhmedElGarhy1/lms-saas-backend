@@ -30,8 +30,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   async validate(payload: JwtPayload) {
     // Ensure this is an access token, not a refresh token
     if (payload.type !== 'access') {
-      throw new AuthenticationFailedException('t.errors.invalid.type', {
-        field: 't.common.resources.tokenType',
+      throw new AuthenticationFailedException('t.messages.fieldInvalid', {
+        field: 't.resources.tokenType',
       });
     }
 
@@ -40,13 +40,15 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (!user) {
       // Changed from ResourceNotFoundException to AuthenticationFailedException
       // A missing user during JWT validation is an authentication failure, not a 404
-      throw new AuthenticationFailedException('t.errors.authenticationFailed');
+      throw new AuthenticationFailedException('t.messages.operationError', {
+        reason: 'authentication failed',
+      });
     }
 
     if (!user.isActive) {
-      throw new BusinessLogicException('t.errors.already.is', {
-        resource: 't.common.resources.user',
-        state: 't.common.labels.inactive',
+      throw new BusinessLogicException('t.messages.alreadyIs', {
+        resource: 't.resources.user',
+        state: 't.resources.inactive',
       });
     }
 

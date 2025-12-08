@@ -71,7 +71,8 @@ export class CentersAccessController {
     return {
       id: userProfileId,
       message: this.translationService.translate(
-        dto.isActive ? 't.success.userActivated' : 't.success.userDeactivated',
+        dto.isActive ? 't.messages.activated' : 't.messages.deactivated',
+        { resource: 't.resources.centerAccess' },
       ),
       isActive: dto.isActive,
     };
@@ -91,7 +92,9 @@ export class CentersAccessController {
         actor,
       );
 
-    return ControllerResponse.success(result, 't.success.centerAccessGranted');
+    return ControllerResponse.success(result, 't.messages.granted', {
+      resource: 't.resources.centerAccess',
+    });
   }
 
   @Delete()
@@ -108,7 +111,9 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, 't.success.centerAccessRevoked');
+    return ControllerResponse.success(result, 't.messages.revoked', {
+      resource: 't.resources.centerAccess',
+    });
   }
 
   @Delete(':userProfileId')
@@ -139,7 +144,9 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, 't.success.centerAccessDeleted');
+    return ControllerResponse.success(result, 't.messages.deleted', {
+      resource: 't.resources.centerAccess',
+    });
   }
 
   @Patch(':userProfileId/restore')
@@ -164,6 +171,8 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, 't.success.centerAccessRestored');
+    return ControllerResponse.success(result, 't.messages.restored', {
+      resource: 't.resources.centerAccess',
+    });
   }
 }

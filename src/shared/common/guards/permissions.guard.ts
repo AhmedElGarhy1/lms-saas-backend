@@ -31,7 +31,7 @@ export class PermissionsGuard implements CanActivate {
 
     if (!user) {
       throw new ForbiddenException({
-        message: { key: 't.errors.userNotAuthenticated' },
+        message: { key: 't.messages.notAuthenticated' },
       });
     }
 

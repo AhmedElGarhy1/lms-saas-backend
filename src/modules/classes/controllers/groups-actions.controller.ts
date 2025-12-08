@@ -151,9 +151,14 @@ export class GroupsActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkDelete', {
-      resource: 't.common.resources.group',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.group',
+      },
+    );
   }
 
   @Post('bulk/restore')
@@ -178,9 +183,14 @@ export class GroupsActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 't.success.bulkRestore', {
-      resource: 't.common.resources.group',
-    });
+    return ControllerResponse.success(
+      result,
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.group',
+      },
+    );
   }
 
   @Post('bulk/assign-students')
@@ -204,7 +214,11 @@ export class GroupsActionsController {
     );
     return ControllerResponse.success(
       result,
-      't.success.bulkAssignStudentsToGroup',
+      't.messages.bulkOperationSuccess',
+      {
+        count: result.success.toString(),
+        item: 't.resources.student',
+      },
     );
   }
 }
