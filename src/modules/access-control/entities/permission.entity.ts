@@ -3,15 +3,14 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  DeleteDateColumn,
   OneToMany,
+  BaseEntity,
 } from 'typeorm';
 import { Center } from '../../centers/entities/center.entity';
 import { PermissionScope } from '@/modules/access-control/constants/permissions';
 
 @Entity('permissions')
-export class Permission {
+export class Permission extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -34,18 +33,9 @@ export class Permission {
   })
   scope: PermissionScope;
 
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt: Date | null;
-
   @OneToMany(() => Center, (center) => center.id, { nullable: true })
   centerId: string | null;
 
-  // Translation happens in TranslationResponseInterceptor
-  // Entities store translation keys as-is (e.g., name: 't.permissions.users.create')
+  @CreateDateColumn()
+  createdAt: Date;
 }

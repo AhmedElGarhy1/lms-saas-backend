@@ -1,7 +1,7 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Group } from './group.entity';
 import { DayOfWeek } from '../enums/day-of-week.enum';
+import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('schedule_items')
 @Index(['groupId'])

@@ -2,11 +2,9 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  DeleteDateColumn,
   Column,
   JoinColumn,
   ManyToOne,
-  BeforeRemove,
   BeforeUpdate,
   BeforeInsert,
 } from 'typeorm';
@@ -24,17 +22,11 @@ export abstract class BaseEntity extends BaseEntityTypeORM {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @DeleteDateColumn()
-  deletedAt?: Date;
-
   @Column({ type: 'uuid' })
   createdBy: string;
 
   @Column({ type: 'uuid', nullable: true })
   updatedBy?: string;
-
-  @Column({ type: 'uuid', nullable: true })
-  deletedBy?: string;
 
   // Relations
   @ManyToOne(() => User)
@@ -44,10 +36,6 @@ export abstract class BaseEntity extends BaseEntityTypeORM {
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'updatedBy' })
   updater?: User;
-
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'deletedBy' })
-  deleter?: User;
 
   @BeforeInsert()
   protected setCreatedBy() {
@@ -68,16 +56,6 @@ export abstract class BaseEntity extends BaseEntityTypeORM {
     if (userId) {
       this.updatedBy = userId;
       this.updatedAt = new Date();
-    }
-  }
-
-  @BeforeRemove()
-  protected setDeletedBy() {
-    const ctx = RequestContext.get();
-    const userId = ctx.userId; // Fallback to userId for backward compatibility
-    if (userId) {
-      this.deletedBy = userId;
-      this.deletedAt = new Date();
     }
   }
 }

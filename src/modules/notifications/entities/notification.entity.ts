@@ -1,28 +1,17 @@
-import {
-  Entity,
-  Column,
-  Index,
-  ManyToOne,
-  JoinColumn,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-  CreateDateColumn,
-} from 'typeorm';
+import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { NotificationType } from '../enums/notification-type.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationStatus } from '../enums/notification-status.enum';
+import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('notifications')
 @Index(['userId', 'readAt'])
 @Index(['userId', 'createdAt'])
 @Index(['userId', 'profileType', 'profileId'])
 @Index(['createdAt'])
-export class Notification {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class Notification extends BaseEntity {
   @Column({ type: 'uuid' })
   userId: string;
 
@@ -74,10 +63,4 @@ export class Notification {
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
   user: User;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

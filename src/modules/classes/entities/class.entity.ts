@@ -7,7 +7,6 @@ import {
   OneToOne,
   Index,
 } from 'typeorm';
-import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Level } from '@/modules/levels/entities/level.entity';
 import { Subject } from '@/modules/subjects/entities/subject.entity';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
@@ -16,6 +15,7 @@ import { Center } from '@/modules/centers/entities/center.entity';
 import { Group } from './group.entity';
 import { StudentPaymentStrategy } from './student-payment-strategy.entity';
 import { TeacherPaymentStrategy } from './teacher-payment-strategy.entity';
+import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('classes')
 @Index(['centerId'])
@@ -24,7 +24,7 @@ import { TeacherPaymentStrategy } from './teacher-payment-strategy.entity';
 @Index(['subjectId'])
 @Index(['teacherUserProfileId'])
 @Index(['centerId', 'branchId'])
-export class Class extends BaseEntity {
+export class Class extends SoftBaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   name?: string;
 

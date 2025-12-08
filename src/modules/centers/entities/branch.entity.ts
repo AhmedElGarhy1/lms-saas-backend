@@ -8,16 +8,16 @@ import {
 } from 'typeorm';
 import { Center } from './center.entity';
 import { BranchAccess } from '../../access-control/entities/branch-access.entity';
-import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { Group } from '@/modules/classes/entities/group.entity';
+import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('branches')
 @Index(['centerId'])
 @Index(['isActive'])
 @Index(['location'])
 @Index(['centerId', 'isActive'])
-export class Branch extends BaseEntity {
+export class Branch extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   centerId: string;
 

@@ -6,19 +6,19 @@ import {
   OneToMany,
   Index,
 } from 'typeorm';
-import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Class } from './class.entity';
 import { Branch } from '@/modules/centers/entities/branch.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { ScheduleItem } from './schedule-item.entity';
 import { GroupStudent } from './group-student.entity';
+import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('groups')
 @Index(['classId'])
 @Index(['branchId'])
 @Index(['centerId'])
 @Index(['classId', 'centerId'])
-export class Group extends BaseEntity {
+export class Group extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   classId: string;
 

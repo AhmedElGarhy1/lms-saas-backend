@@ -12,12 +12,12 @@ import * as bcrypt from 'bcrypt';
 import { VerificationToken } from '@/modules/auth/entities/verification-token.entity';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { UserInfo } from './user-info.entity';
-import { BaseEntity } from '@/shared/common/entities/base.entity';
+import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('users')
 @Index(['phone'], { unique: true })
 @Index(['isActive'])
-export class User extends BaseEntity {
+export class User extends SoftBaseEntity {
   @Column({ type: 'varchar', length: 12, unique: true })
   phone: string;
 

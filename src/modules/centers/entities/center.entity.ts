@@ -1,6 +1,4 @@
 import { Entity, Column, OneToMany, Index } from 'typeorm';
-
-import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
@@ -11,12 +9,13 @@ import { Level } from '@/modules/levels/entities/level.entity';
 import { Subject } from '@/modules/subjects/entities/subject.entity';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { Group } from '@/modules/classes/entities/group.entity';
+import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('centers')
 @Index(['name'])
 @Index(['email'], { where: 'email IS NOT NULL', unique: true })
 @Index(['phone'], { where: 'phone IS NOT NULL', unique: true })
-export class Center extends BaseEntity {
+export class Center extends SoftBaseEntity {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 

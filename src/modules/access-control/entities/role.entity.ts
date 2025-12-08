@@ -5,17 +5,15 @@ import {
   Index,
   ManyToOne,
   JoinColumn,
-  BeforeInsert,
-  BeforeUpdate,
 } from 'typeorm';
 import { ProfileRole } from './profile-role.entity';
-import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { RolePermission } from './role-permission.entity';
+import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('roles')
 @Index(['name', 'centerId'], { unique: true })
-export class Role extends BaseEntity {
+export class Role extends SoftBaseEntity {
   @Column({ type: 'varchar', length: 100 })
   name: string;
 
@@ -39,12 +37,7 @@ export class Role extends BaseEntity {
   @OneToMany(() => RolePermission, (rolePermission) => rolePermission.role)
   rolePermissions: RolePermission[];
 
-  @BeforeInsert()
-  @BeforeUpdate()
   isSameScope(centerId?: string) {
     return !!this.centerId === !!centerId;
   }
-
-  // Translation happens in TranslationResponseInterceptor
-  // Entities store translation keys as-is (e.g., name: 't.roles.admin' for system roles)
 }

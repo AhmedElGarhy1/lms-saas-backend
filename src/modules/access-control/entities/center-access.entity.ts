@@ -1,12 +1,12 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
-import { BaseEntity } from '@/shared/common/entities/base.entity';
+import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('center_access')
 @Index(['userProfileId', 'centerId'], { unique: true })
 @Index(['centerId'])
-export class CenterAccess extends BaseEntity {
+export class CenterAccess extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   userProfileId: string;
 

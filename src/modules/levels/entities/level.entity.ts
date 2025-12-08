@@ -7,13 +7,13 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Center } from '@/modules/centers/entities/center.entity';
-import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Class } from '@/modules/classes/entities/class.entity';
+import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('levels')
 @Index(['centerId'])
 @Index(['name', 'centerId'], { unique: true })
-export class Level extends BaseEntity {
+export class Level extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   centerId: string;
 

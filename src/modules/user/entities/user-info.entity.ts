@@ -1,7 +1,7 @@
 import { Entity, Column, OneToOne, JoinColumn, Index } from 'typeorm';
 import { User } from './user.entity';
-import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Locale } from '@/shared/common/enums/locale.enum';
+import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('user_info')
 @Index(['userId'])
