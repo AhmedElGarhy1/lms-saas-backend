@@ -14,6 +14,7 @@ import { UserInfoService } from './services/user-info.service';
 import { UserRepository } from './repositories/user.repository';
 import { UserInfoRepository } from './repositories/user-info.repository';
 import { UserActivityListener } from './listeners//user-activity.listener';
+import { ClassesModule } from '../classes/classes.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UserActivityListener } from './listeners//user-activity.listener';
     forwardRef(() => CentersModule),
     forwardRef(() => AuthModule),
     forwardRef(() => UserProfileModule),
+    ClassesModule,
     ActivityLogModule,
   ],
   controllers: [UserController, UserAccessController],

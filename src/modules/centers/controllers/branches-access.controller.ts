@@ -5,8 +5,8 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { BranchAccessDto } from '@/modules/access-control/dto/branch-access.dto';
-import { AccessControlService } from '@/modules/access-control/services/access-control.service';
+import { BranchAccessDto } from '../dto/branch-access.dto';
+import { BranchAccessService } from '../services/branch-access.service';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
 import { BulkGrantBranchAccessDto } from '@/modules/access-control/dto/bulk-grant-branch-access.dto';
@@ -17,7 +17,7 @@ import { ControllerResponse } from '@/shared/common/dto/controller-response.dto'
 @Controller('centers/branches/access')
 export class BranchesAccessController {
   constructor(
-    private readonly accessControlService: AccessControlService,
+    private readonly branchAccessService: BranchAccessService,
     private readonly bulkOperationService: BulkOperationService,
   ) {}
 
@@ -41,7 +41,7 @@ export class BranchesAccessController {
     @Body() branchAccessDto: BranchAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    const branchAccess = await this.accessControlService.assignProfileToBranch(
+    const branchAccess = await this.branchAccessService.assignProfileToBranch(
       branchAccessDto,
       actor,
     );
@@ -64,7 +64,7 @@ export class BranchesAccessController {
     @Body() branchAccessDto: BranchAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.accessControlService.removeUserFromBranch(
+    await this.branchAccessService.removeProfileFromBranch(
       branchAccessDto,
       actor,
     );
@@ -91,7 +91,7 @@ export class BranchesAccessController {
           branchId: dto.branchId,
           centerId: actor.centerId!,
         };
-        await this.accessControlService.assignProfileToBranch(
+        await this.branchAccessService.assignProfileToBranch(
           branchAccessDto,
           actor,
         );
@@ -126,7 +126,7 @@ export class BranchesAccessController {
           branchId: dto.branchId,
           centerId: actor.centerId!,
         };
-        await this.accessControlService.removeUserFromBranch(
+        await this.branchAccessService.removeProfileFromBranch(
           branchAccessDto,
           actor,
         );

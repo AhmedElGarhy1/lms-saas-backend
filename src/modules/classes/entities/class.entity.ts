@@ -15,6 +15,7 @@ import { Center } from '@/modules/centers/entities/center.entity';
 import { Group } from './group.entity';
 import { StudentPaymentStrategy } from './student-payment-strategy.entity';
 import { TeacherPaymentStrategy } from './teacher-payment-strategy.entity';
+import { ClassStaff } from './class-staff.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('classes')
@@ -95,4 +96,7 @@ export class Class extends SoftBaseEntity {
     cascade: true,
   })
   teacherPaymentStrategy: TeacherPaymentStrategy;
+
+  @OneToMany(() => ClassStaff, (classStaff) => classStaff.class)
+  classStaff: ClassStaff[];
 }

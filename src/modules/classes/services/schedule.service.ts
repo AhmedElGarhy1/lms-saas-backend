@@ -220,9 +220,8 @@ export class ScheduleService extends BaseService {
 
     // Business logic: interpret the data and throw exception if conflict exists
     if (conflict) {
-      throw new BusinessLogicException('t.errors.studentScheduleConflict', {
-        day: conflict.conflictDay || 'unknown',
-        time: conflict.conflictTime || 'unknown',
+      throw new BusinessLogicException('t.errors.validationFailed', {
+        reason: `Student has a schedule conflict on ${conflict.conflictDay || 'unknown'} at ${conflict.conflictTime || 'unknown'}`,
       });
     }
   }

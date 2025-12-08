@@ -137,13 +137,14 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
   /**
    * Find all group IDs for a student in a given class.
    * Pure data access method - returns data only, no business logic interpretation.
+   * Uses denormalized classId field for better performance.
    *
    * @param studentUserProfileId - The student's user profile ID
    * @param classId - The class ID
    * @param excludeGroupId - Optional group ID to exclude from results
    * @returns Array of group IDs (empty if none found)
    */
-  async findStudentGroupsByClassId(
+  async findStudentGroupIdsByClassId(
     studentUserProfileId: string,
     classId: string,
     excludeGroupId?: string,
@@ -154,7 +155,7 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
       .where('gs."studentUserProfileId" = :studentUserProfileId', {
         studentUserProfileId,
       })
-      .andWhere('g."classId" = :classId', { classId })
+      .andWhere('gs."classId" = :classId', { classId })
       .andWhere('g."deletedAt" IS NULL')
       .andWhere('gs."deletedAt" IS NULL')
       .select('g.id', 'groupId');

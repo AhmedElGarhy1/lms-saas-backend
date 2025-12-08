@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Class } from './entities/class.entity';
 import { Group } from './entities/group.entity';
@@ -6,22 +6,27 @@ import { ScheduleItem } from './entities/schedule-item.entity';
 import { GroupStudent } from './entities/group-student.entity';
 import { StudentPaymentStrategy } from './entities/student-payment-strategy.entity';
 import { TeacherPaymentStrategy } from './entities/teacher-payment-strategy.entity';
+import { ClassStaff } from './entities/class-staff.entity';
 import { ClassesService } from './services/classes.service';
 import { GroupsService } from './services/groups.service';
 import { ScheduleService } from './services/schedule.service';
 import { ClassValidationService } from './services/class-validation.service';
 import { GroupValidationService } from './services/group-validation.service';
 import { PaymentStrategyService } from './services/payment-strategy.service';
+import { ClassStaffService } from './services/class-staff.service';
+import { ClassAccessService } from './services/class-access.service';
 import { ClassesRepository } from './repositories/classes.repository';
 import { GroupsRepository } from './repositories/groups.repository';
 import { ScheduleItemsRepository } from './repositories/schedule-items.repository';
 import { GroupStudentsRepository } from './repositories/group-students.repository';
 import { StudentPaymentStrategyRepository } from './repositories/student-payment-strategy.repository';
 import { TeacherPaymentStrategyRepository } from './repositories/teacher-payment-strategy.repository';
+import { ClassStaffRepository } from './repositories/class-staff.repository';
 import { ClassesController } from './controllers/classes.controller';
 import { ClassesActionsController } from './controllers/classes-actions.controller';
 import { GroupsController } from './controllers/groups.controller';
 import { GroupsActionsController } from './controllers/groups-actions.controller';
+import { ClassStaffAccessController } from './controllers/class-staff-access.controller';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { SharedModule } from '@/shared/shared.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
@@ -41,8 +46,9 @@ import { GroupActivityListener } from './listeners/group-activity.listener';
       GroupStudent,
       StudentPaymentStrategy,
       TeacherPaymentStrategy,
+      ClassStaff,
     ]),
-    AccessControlModule,
+    forwardRef(() => AccessControlModule),
     SharedModule,
     ActivityLogModule,
     LevelsModule,
@@ -55,6 +61,7 @@ import { GroupActivityListener } from './listeners/group-activity.listener';
     ClassesActionsController,
     GroupsController,
     GroupsActionsController,
+    ClassStaffAccessController,
   ],
   providers: [
     ClassesService,
@@ -63,12 +70,15 @@ import { GroupActivityListener } from './listeners/group-activity.listener';
     ClassValidationService,
     GroupValidationService,
     PaymentStrategyService,
+    ClassStaffService,
+    ClassAccessService,
     ClassesRepository,
     GroupsRepository,
     ScheduleItemsRepository,
     GroupStudentsRepository,
     StudentPaymentStrategyRepository,
     TeacherPaymentStrategyRepository,
+    ClassStaffRepository,
     ClassActivityListener,
     GroupActivityListener,
   ],
@@ -79,12 +89,15 @@ import { GroupActivityListener } from './listeners/group-activity.listener';
     ClassValidationService,
     GroupValidationService,
     PaymentStrategyService,
+    ClassAccessService,
+    ClassStaffService,
     ClassesRepository,
     GroupsRepository,
     ScheduleItemsRepository,
     GroupStudentsRepository,
     StudentPaymentStrategyRepository,
     TeacherPaymentStrategyRepository,
+    ClassStaffRepository,
   ],
 })
 export class ClassesModule {}

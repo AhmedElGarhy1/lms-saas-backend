@@ -11,8 +11,6 @@ import { CenterAccessRepository } from '../repositories/center-access.repository
 import { CenterAccessDto } from '../dto/center-access.dto';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { BranchAccessDto } from '../dto/branch-access.dto';
-import { BranchAccessRepository } from '../repositories/branch-access.repository';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 import {
   ActivateCenterAccessEvent,
@@ -35,7 +33,6 @@ export class AccessControlService extends BaseService {
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly userAccessRepository: UserAccessRepository,
     private readonly centerAccessRepository: CenterAccessRepository,
-    private readonly branchAccessRepository: BranchAccessRepository,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     @Inject(forwardRef(() => UserProfileService))
     private readonly userProfileService: UserProfileService,
@@ -241,67 +238,6 @@ export class AccessControlService extends BaseService {
     const userAccesses =
       await this.userAccessRepository.listUserAccesses(profileId);
     return userAccesses.map((access: UserAccess) => access.targetUserProfileId);
-  }
-
-  async assignProfileToBranch(data: BranchAccessDto, actor: ActorUser) {
-    const centerId = data.centerId ?? actor.centerId ?? '';
-
-    // Validate access (can actor manage this profile?)
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: data.userProfileId,
-      centerId,
-    });
-
-    // Validate that profile type is STAFF or ADMIN
-    const profile = await this.userProfileService.findOne(data.userProfileId);
-    if (!profile) {
-      throw new ResourceNotFoundException('t.errors.notFound.generic', {
-        resource: 't.common.resources.profile',
-      });
-    }
-
-    // Positive check: must be STAFF or ADMIN
-    if (
-      profile.profileType !== ProfileType.STAFF &&
-      profile.profileType !== ProfileType.ADMIN
-    ) {
-      throw new BusinessLogicException('t.errors.onlyForStaffAndAdmin', {
-        resource: 't.common.resources.branchAccess',
-      });
-    }
-
-    const canAccess =
-      await this.accessControlHelperService.canBranchAccess(data);
-    if (canAccess) {
-      throw new BusinessLogicException('t.errors.already.is', {
-        resource: 't.common.labels.profile',
-        state: 't.common.messages.assignedToBranch',
-      });
-    }
-
-    // Create new assignment
-    const branchAccess =
-      await this.branchAccessRepository.grantBranchAccess(data);
-
-    return branchAccess;
-  }
-
-  async removeUserFromBranch(data: BranchAccessDto, actor: ActorUser) {
-    const centerId = data.centerId ?? actor.centerId ?? '';
-
-    // Validate access (can actor manage this profile?)
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: data.userProfileId,
-      centerId,
-    });
-
-    await this.accessControlHelperService.validateBranchAccess(data);
-
-    const result = await this.branchAccessRepository.revokeBranchAccess(data);
-
-    return result;
   }
 
   async softRemoveCenterAccess(

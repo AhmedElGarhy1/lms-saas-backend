@@ -242,46 +242,6 @@ export class ClassesRepository extends BaseRepository<Class> {
     } as any;
   }
 
-  async findClassesByTeacher(teacherUserProfileId: string): Promise<Class[]> {
-    // Fetch classes first without groups
-    const classes = await this.getRepository()
-      .createQueryBuilder('class')
-      .where('class.teacherUserProfileId = :teacherUserProfileId', {
-        teacherUserProfileId,
-      })
-      .andWhere('class.deletedAt IS NULL')
-      .getMany();
-
-    if (classes.length === 0) {
-      return classes;
-    }
-
-    // Fetch groups with scheduleItems for all classes
-    const classIds = classes.map((c) => c.id);
-    const groups = await this.getEntityManager()
-      .createQueryBuilder(Group, 'group')
-      .leftJoinAndSelect('group.scheduleItems', 'scheduleItems')
-      .where('group.classId IN (:...classIds)', { classIds })
-      .andWhere('group.deletedAt IS NULL')
-      .getMany();
-
-    // Group groups by classId
-    const groupsByClassId = new Map<string, Group[]>();
-    groups.forEach((group) => {
-      const existing = groupsByClassId.get(group.classId) || [];
-      existing.push(group);
-      groupsByClassId.set(group.classId, existing);
-    });
-
-    // Attach groups to their respective classes
-    classes.forEach((classEntity) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (classEntity as any).groups = groupsByClassId.get(classEntity.id) || [];
-    });
-
-    return classes;
-  }
-
   /**
    * Find teacher schedule conflicts in the database.
    * Pure data access method - returns conflict data if found, null otherwise.

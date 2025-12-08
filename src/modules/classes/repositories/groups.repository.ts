@@ -146,12 +146,6 @@ export class GroupsRepository extends BaseRepository<Group> {
    * @param classId - The class ID
    * @returns Array of groups
    */
-  async findGroupsByClassId(classId: string): Promise<Group[]> {
-    return this.getRepository().find({
-      where: { classId },
-    });
-  }
-
   /**
    * Find all groups for a given class ID with schedule items loaded.
    * Repository decides which relations to load - service layer doesn't specify relations.

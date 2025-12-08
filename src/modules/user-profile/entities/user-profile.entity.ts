@@ -10,10 +10,11 @@ import { User } from '@/modules/user/entities/user.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
-import { BranchAccess } from '@/modules/access-control/entities/branch-access.entity';
+import { BranchAccess } from '@/modules/centers/entities/branch-access.entity';
 import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { GroupStudent } from '@/modules/classes/entities/group-student.entity';
+import { ClassStaff } from '@/modules/classes/entities/class-staff.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('user_profiles')
@@ -57,4 +58,7 @@ export class UserProfile extends SoftBaseEntity {
 
   @OneToMany(() => GroupStudent, (groupStudent) => groupStudent.student)
   groupStudents: GroupStudent[];
+
+  @OneToMany(() => ClassStaff, (classStaff) => classStaff.profile)
+  classStaff: ClassStaff[];
 }

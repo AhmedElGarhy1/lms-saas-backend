@@ -1,7 +1,7 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
-import { Branch } from '../../centers/entities/branch.entity';
-import { Center } from '../../centers/entities/center.entity';
+import { Branch } from './branch.entity';
+import { Center } from './center.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('branch_access')

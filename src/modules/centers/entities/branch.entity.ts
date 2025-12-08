@@ -7,7 +7,7 @@ import {
   Index,
 } from 'typeorm';
 import { Center } from './center.entity';
-import { BranchAccess } from '../../access-control/entities/branch-access.entity';
+import { BranchAccess } from './branch-access.entity';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { Group } from '@/modules/classes/entities/group.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';

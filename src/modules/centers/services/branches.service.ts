@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateBranchDto } from '../dto/create-branch.dto';
 import { PaginateBranchesDto } from '../dto/paginate-branches.dto';
 import { BranchesRepository } from '../repositories/branches.repository';
-import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { BranchAccessService } from './branch-access.service';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
@@ -20,7 +20,7 @@ import { BaseService } from '@/shared/common/services/base.service';
 export class BranchesService extends BaseService {
   constructor(
     private readonly branchesRepository: BranchesRepository,
-    private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly branchAccessService: BranchAccessService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
@@ -37,7 +37,7 @@ export class BranchesService extends BaseService {
   }
 
   async getBranch(branchId: string, actor: ActorUser) {
-    await this.accessControlHelperService.validateBranchAccess({
+    await this.branchAccessService.validateBranchAccess({
       userProfileId: actor.userProfileId,
       centerId: actor.centerId!,
       branchId,
@@ -76,7 +76,7 @@ export class BranchesService extends BaseService {
     data: CreateBranchDto,
     actor: ActorUser,
   ) {
-    await this.accessControlHelperService.validateBranchAccess({
+    await this.branchAccessService.validateBranchAccess({
       userProfileId: actor.userProfileId,
       centerId: actor.centerId!,
       branchId,
@@ -97,7 +97,7 @@ export class BranchesService extends BaseService {
   }
 
   async deleteBranch(branchId: string, actor: ActorUser) {
-    await this.accessControlHelperService.validateBranchAccess({
+    await this.branchAccessService.validateBranchAccess({
       userProfileId: actor.userProfileId,
       centerId: actor.centerId!,
       branchId,
@@ -118,7 +118,7 @@ export class BranchesService extends BaseService {
     isActive: boolean,
     actor: ActorUser,
   ): Promise<void> {
-    await this.accessControlHelperService.validateBranchAccess({
+    await this.branchAccessService.validateBranchAccess({
       userProfileId: actor.userProfileId,
       centerId: actor.centerId!,
       branchId,
@@ -148,7 +148,7 @@ export class BranchesService extends BaseService {
   }
 
   async restoreBranch(branchId: string, actor: ActorUser): Promise<void> {
-    await this.accessControlHelperService.validateBranchAccess({
+    await this.branchAccessService.validateBranchAccess({
       userProfileId: actor.userProfileId,
       centerId: actor.centerId!,
       branchId,

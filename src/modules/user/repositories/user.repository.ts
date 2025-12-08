@@ -327,6 +327,7 @@ export class UserRepository extends BaseRepository<User> {
     );
 
     if (includeCenter) {
+      // TODO: invalidating center access twice
       queryBuilder
         .andWhere(
           `EXISTS
@@ -337,15 +338,6 @@ export class UserRepository extends BaseRepository<User> {
         .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
 
       if (displayDetailes) {
-        queryBuilder
-          .leftJoinAndSelect(
-            'userProfiles.profileRoles',
-            'profileRoles',
-            'profileRoles.userProfileId = userProfiles.id AND profileRoles.centerId = :centerId',
-            { centerId },
-          )
-          .leftJoinAndSelect('profileRoles.role', 'role');
-
         queryBuilder
           .withDeleted()
           .andWhere('user.deletedAt IS NULL')
@@ -362,52 +354,6 @@ export class UserRepository extends BaseRepository<User> {
     } else {
       if (isDeleted) {
         queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');
-      }
-    }
-
-    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
-      actor.userProfileId,
-    );
-    const isAdmin = await this.accessControlHelperService.isAdmin(
-      actor.userProfileId,
-    );
-
-    if (centerId) {
-      const isCenterOwner = await this.accessControlHelperService.isCenterOwner(
-        actor.userProfileId,
-        centerId,
-      );
-      const isUser = await this.accessControlHelperService.isStaff(
-        actor.userProfileId,
-      );
-
-      if (isUser && !isCenterOwner) {
-        queryBuilder.andWhere(
-          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
-          { userProfileId: actor.userProfileId, centerId },
-        );
-      }
-    } else {
-      if (isSuperAdmin) {
-        // super admin users have no access control - can see all users
-      } else if (isAdmin) {
-        queryBuilder
-          .andWhere(
-            `EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = "userProfiles".id AND ca."centerId" = :centerId AND ca."deletedAt" IS NULL)`,
-            { centerId },
-          )
-          .orWhere(
-            `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
-            { userProfileId: actor.userProfileId, centerId },
-          );
-      } else {
-        throw new InsufficientPermissionsException(
-          't.errors.notAuthorized.action',
-          {
-            action: 't.common.buttons.view',
-            resource: 't.common.labels.user',
-          },
-        );
       }
     }
 
@@ -437,6 +383,7 @@ export class UserRepository extends BaseRepository<User> {
     };
   }
 
+  // TODO: apply acccess later
   /**
    * Paginate teachers in a specific center using JOINs for better performance
    * @param query - Pagination query

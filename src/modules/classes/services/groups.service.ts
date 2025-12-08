@@ -27,6 +27,8 @@ import {
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { ScheduleService } from './schedule.service';
 import { ScheduleItemDto } from '../dto/schedule-item.dto';
+import { Transactional } from '@nestjs-cls/transactional';
+import { EventEmitterHelper } from '../utils/event-emitter.helper';
 
 @Injectable()
 export class GroupsService extends BaseService {
@@ -43,6 +45,13 @@ export class GroupsService extends BaseService {
     super();
   }
 
+  /**
+   * Paginate groups for a center with filtering and search capabilities.
+   *
+   * @param paginateDto - Pagination and filter parameters
+   * @param actor - The user performing the action
+   * @returns Paginated list of groups with computed fields (studentsCount)
+   */
   async paginateGroups(
     paginateDto: PaginateGroupsDto,
     actor: ActorUser,
@@ -50,6 +59,15 @@ export class GroupsService extends BaseService {
     return this.groupsRepository.paginateGroups(paginateDto, actor.centerId!);
   }
 
+  /**
+   * Get a single group with all relations loaded.
+   *
+   * @param groupId - The group ID
+   * @param actor - The user performing the action
+   * @returns Group entity with all relations (scheduleItems, class, branch, center)
+   * @throws ResourceNotFoundException if group doesn't exist
+   * @throws InsufficientPermissionsException if actor doesn't have access
+   */
   async getGroup(groupId: string, actor: ActorUser): Promise<Group> {
     const group = await this.groupsRepository.findGroupWithRelations(groupId);
     this.validateResourceAccess(
@@ -61,6 +79,15 @@ export class GroupsService extends BaseService {
     return group;
   }
 
+  /**
+   * Create a new group with schedule items.
+   * Validates group data, creates group entity, and sets up schedule items.
+   *
+   * @param createGroupDto - Group creation data including schedule items
+   * @param actor - The user performing the action
+   * @returns Created group entity with all relations loaded
+   * @throws BusinessLogicException if validation fails or schedule conflicts detected
+   */
   async createGroup(
     createGroupDto: CreateGroupDto,
     actor: ActorUser,
@@ -81,9 +108,13 @@ export class GroupsService extends BaseService {
     // Load group with relations and emit event
     const createdGroup = await this.getGroup(group.id, actor);
 
-    await this.typeSafeEventEmitter.emitAsync(
+    await EventEmitterHelper.emitGroupEvent(
+      this.typeSafeEventEmitter,
       GroupEvents.CREATED,
-      new GroupCreatedEvent(createdGroup, classEntity, actor, actor.centerId!),
+      createdGroup,
+      classEntity,
+      actor,
+      actor.centerId!,
     );
 
     return createdGroup;
@@ -156,7 +187,7 @@ export class GroupsService extends BaseService {
     // Check if student is already in another group of the same class
     // Business logic: interpret repository data
     const existingGroupIds =
-      await this.groupStudentsRepository.findStudentGroupsByClassId(
+      await this.groupStudentsRepository.findStudentGroupIdsByClassId(
         userProfileId,
         group.classId,
         undefined, // Not excluding any group (new assignment)
@@ -198,6 +229,7 @@ export class GroupsService extends BaseService {
     await this.groupStudentsRepository.create({
       groupId,
       studentUserProfileId: userProfileId,
+      classId: group.classId,
     });
   }
 
@@ -236,6 +268,7 @@ export class GroupsService extends BaseService {
     );
   }
 
+  @Transactional()
   async updateGroup(
     groupId: string,
     data: UpdateGroupDto,
@@ -265,9 +298,13 @@ export class GroupsService extends BaseService {
     // Load updated group and emit event
     const updatedGroup = await this.getGroup(groupId, actor);
 
-    await this.typeSafeEventEmitter.emitAsync(
+    await EventEmitterHelper.emitGroupEvent(
+      this.typeSafeEventEmitter,
       GroupEvents.UPDATED,
-      new GroupUpdatedEvent(updatedGroup, actor, actor.centerId!),
+      updatedGroup,
+      null,
+      actor,
+      actor.centerId!,
     );
 
     return updatedGroup;
@@ -285,6 +322,15 @@ export class GroupsService extends BaseService {
     await this.scheduleItemsRepository.bulkCreate(groupId, scheduleItems);
   }
 
+  /**
+   * Soft delete a group.
+   * Marks the group as deleted but preserves data for potential restoration.
+   *
+   * @param groupId - The group ID to delete
+   * @param actor - The user performing the action
+   * @throws ResourceNotFoundException if group doesn't exist
+   * @throws InsufficientPermissionsException if actor doesn't have access
+   */
   async deleteGroup(groupId: string, actor: ActorUser): Promise<void> {
     await this.getGroup(groupId, actor);
     await this.groupsRepository.softRemove(groupId);
@@ -295,6 +341,15 @@ export class GroupsService extends BaseService {
     );
   }
 
+  /**
+   * Restore a soft-deleted group.
+   * Recovers a previously deleted group and makes it active again.
+   *
+   * @param groupId - The group ID to restore
+   * @param actor - The user performing the action
+   * @throws ResourceNotFoundException if group doesn't exist
+   * @throws InsufficientPermissionsException if actor doesn't have access
+   */
   async restoreGroup(groupId: string, actor: ActorUser): Promise<void> {
     const group = await this.groupsRepository.findOneSoftDeletedById(groupId);
     this.validateResourceAccess(
@@ -323,17 +378,20 @@ export class GroupsService extends BaseService {
 
   /**
    * Removes multiple students from a group.
+   * Uses BulkOperationService for consistent error handling and reporting.
    *
    * @param groupId - The group ID to remove students from
    * @param studentUserProfileIds - Array of student user profile IDs to remove
    * @param actor - The user performing the action
+   * @returns BulkOperationResult with success/failure details for each student
    * @throws BusinessLogicException if studentUserProfileIds array is empty
    */
+  @Transactional()
   async removeStudentsFromGroup(
     groupId: string,
     studentUserProfileIds: string[],
     actor: ActorUser,
-  ): Promise<void> {
+  ) {
     // Validate input
     if (!studentUserProfileIds || studentUserProfileIds.length === 0) {
       throw new BusinessLogicException('t.errors.validationFailed', {
@@ -341,18 +399,28 @@ export class GroupsService extends BaseService {
       });
     }
 
+    // Verify group exists and actor has access
     await this.getGroup(groupId, actor);
 
-    // Remove students
-    for (const studentUserProfileId of studentUserProfileIds) {
-      const groupStudent =
-        await this.groupStudentsRepository.findByGroupAndStudent(
-          groupId,
-          studentUserProfileId,
-        );
-      if (groupStudent) {
-        await this.groupStudentsRepository.softRemove(groupStudent.id);
-      }
-    }
+    // Use bulk operation service for consistent error handling
+    return await this.bulkOperationService.executeBulk(
+      studentUserProfileIds,
+      async (studentUserProfileId: string) => {
+        const groupStudent =
+          await this.groupStudentsRepository.findByGroupAndStudent(
+            groupId,
+            studentUserProfileId,
+          );
+        if (!groupStudent) {
+          throw new ResourceNotFoundException('t.errors.notFound.generic', {
+            resource: 't.common.resources.groupStudent',
+          });
+        }
+
+        // Use hard delete (remove) since GroupStudent extends BaseEntity, not SoftBaseEntity
+        await this.groupStudentsRepository.remove(groupStudent.id);
+        return { id: studentUserProfileId };
+      },
+    );
   }
 }

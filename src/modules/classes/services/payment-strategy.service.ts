@@ -17,6 +17,15 @@ export class PaymentStrategyService extends BaseService {
     super();
   }
 
+  /**
+   * Create payment strategies for a class.
+   * Creates both student and teacher payment strategies with validation.
+   *
+   * @param classId - The class ID
+   * @param studentStrategy - Student payment strategy configuration
+   * @param teacherStrategy - Teacher payment strategy configuration
+   * @throws BusinessLogicException if payment strategy validation fails
+   */
   async createStrategiesForClass(
     classId: string,
     studentStrategy: StudentPaymentStrategyDto,
@@ -41,6 +50,15 @@ export class PaymentStrategyService extends BaseService {
     });
   }
 
+  /**
+   * Update payment strategies for a class.
+   * Updates existing strategies or creates new ones if they don't exist.
+   *
+   * @param classId - The class ID
+   * @param studentStrategy - Optional student payment strategy to update
+   * @param teacherStrategy - Optional teacher payment strategy to update
+   * @throws BusinessLogicException if payment strategy validation fails
+   */
   async updateStrategiesForClass(
     classId: string,
     studentStrategy?: StudentPaymentStrategyDto,

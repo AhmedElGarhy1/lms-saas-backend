@@ -1,26 +1,23 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   InsufficientPermissionsException,
   AdminScopeAccessDeniedException,
   CenterAccessDeniedException,
   CenterAccessInactiveException,
   InactiveCenterException,
-  BranchAccessDeniedException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { In } from 'typeorm';
 import { UserAccess } from '../entities/user-access.entity';
 import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { UserAccessRepository } from '../repositories/user-access.repository';
 import { CenterAccessRepository } from '../repositories/center-access.repository';
-import { BranchAccess } from '@/modules/access-control/entities/branch-access.entity';
-import { BranchAccessRepository } from '../repositories/branch-access.repository';
-import { BranchAccessDto } from '../dto/branch-access.dto';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { CenterAccessDto } from '../dto/center-access.dto';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 import { PermissionScope } from '../constants/permissions';
 import { RolesService } from './roles.service';
 import { CentersService } from '@/modules/centers/services/centers.service';
+import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { CenterAccess } from '../entities/center-access.entity';
 import { BaseService } from '@/shared/common/services/base.service';
 
@@ -32,10 +29,11 @@ export class AccessControlHelperService extends BaseService {
     private readonly profileRoleRepository: ProfileRoleRepository,
     private readonly userAccessRepository: UserAccessRepository,
     private readonly centerAccessRepository: CenterAccessRepository,
-    private readonly branchAccessRepository: BranchAccessRepository,
     private readonly centersService: CentersService,
     private readonly rolesService: RolesService,
     private readonly userProfileService: UserProfileService,
+    @Inject(forwardRef(() => BranchAccessService))
+    private readonly branchAccessService: BranchAccessService,
   ) {
     super();
   }
@@ -132,21 +130,25 @@ export class AccessControlHelperService extends BaseService {
     ).then((results) => results.filter((result) => result !== null));
   }
 
+  /**
+   * Get accessible profile IDs for a branch.
+   * Delegates to BranchAccessService to maintain module boundaries.
+   *
+   * @param branchId - The branch ID
+   * @param targetProfileIds - Array of profile IDs to check
+   * @param centerId - The center ID
+   * @returns Array of profile IDs that have branch access
+   */
   async getAccessibleProfilesIdsForBranch(
     branchId: string,
     targetProfileIds: string[],
     centerId: string,
   ): Promise<string[]> {
-    return Promise.all(
-      targetProfileIds.map(async (targetProfileId) => {
-        const canAccess = await this.canBranchAccess({
-          userProfileId: targetProfileId,
-          centerId,
-          branchId,
-        });
-        return canAccess ? targetProfileId : null;
-      }),
-    ).then((results) => results.filter((result) => result !== null));
+    return this.branchAccessService.getAccessibleProfilesIdsForBranch(
+      branchId,
+      targetProfileIds,
+      centerId,
+    );
   }
 
   async getAccessibleProfilesIdsForRole(
@@ -316,37 +318,6 @@ export class AccessControlHelperService extends BaseService {
       throw new CenterAccessInactiveException(
         't.errors.centerAccessInactive.description',
       );
-    }
-  }
-
-  findBranchAccess(data: BranchAccessDto): Promise<BranchAccess | null> {
-    return this.branchAccessRepository.findBranchAccess(data);
-  }
-
-  async canBranchAccess(data: BranchAccessDto): Promise<boolean> {
-    const bypassBranchAccess = await this.bypassCenterInternalAccess(
-      data.userProfileId,
-      data.centerId,
-    );
-    console.log('bypassBranchAccess', bypassBranchAccess);
-    if (bypassBranchAccess) {
-      return true;
-    }
-    const branchAccess = await this.findBranchAccess(data);
-    return !!branchAccess;
-  }
-
-  async validateBranchAccess(data: BranchAccessDto): Promise<void> {
-    const branchAccess = await this.canBranchAccess(data);
-    if (!branchAccess) {
-      this.logger.warn('Branch access validation failed', {
-        userProfileId: data.userProfileId,
-        centerId: data.centerId,
-        branchId: data.branchId,
-      });
-      throw new BranchAccessDeniedException('t.errors.denied.access', {
-        resource: 't.common.resources.branch',
-      });
     }
   }
 

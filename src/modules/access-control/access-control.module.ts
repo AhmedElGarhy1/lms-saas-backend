@@ -22,8 +22,6 @@ import { RolePermissionRepository } from './repositories/role-permission.reposit
 import { CenterAccessRepository } from './repositories/center-access.repository';
 import { ProfileRoleSubscriber } from './subscriber/profile-role.subscriber';
 import { RolePermissionSubscriber } from './subscriber/role-permission.subscriber';
-import { BranchAccess } from './entities/branch-access.entity';
-import { BranchAccessRepository } from './repositories/branch-access.repository';
 import { UserModule } from '../user/user.module';
 import { CentersModule } from '../centers/centers.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
@@ -32,6 +30,7 @@ import { CenterAccessListener } from './listeners/center-access.listener';
 import { BranchAccessListener } from './listeners/branch-access.listener';
 import { RoleListener } from './listeners/role.listener';
 import { UserProfileModule } from '../user-profile/user-profile.module';
+import { ClassesModule } from '../classes/classes.module';
 
 @Global()
 @Module({
@@ -43,7 +42,6 @@ import { UserProfileModule } from '../user-profile/user-profile.module';
       RolePermission,
       CenterAccess,
       UserAccess,
-      BranchAccess,
     ]),
     forwardRef(() => UserModule),
     forwardRef(() => CentersModule),
@@ -65,7 +63,6 @@ import { UserProfileModule } from '../user-profile/user-profile.module';
     ProfileRoleSubscriber,
     RolePermissionSubscriber,
     UserAccessRepository,
-    BranchAccessRepository,
     UserAccessListener,
     CenterAccessListener,
     BranchAccessListener,

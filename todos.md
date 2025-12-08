@@ -118,6 +118,7 @@
 [ ] add tooltip for actions in view and don't display the view (because you already in view mode) and don't display delete
 [x] update backend to not rely on base entity to get other entites ex: don't relay on class entity to get groups and don't rely on group to get class
 
+[ ] no module export repository
 [ ] fix rest of eslint erros
 [ ] user can update his center (throw settings)
 [ ] view modals in all modules

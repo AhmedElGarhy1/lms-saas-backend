@@ -6,6 +6,7 @@ import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity
 @Entity('group_students')
 @Index(['groupId'])
 @Index(['studentUserProfileId'])
+@Index(['classId'])
 @Unique(['groupId', 'studentUserProfileId'])
 export class GroupStudent extends BaseEntity {
   @Column({ type: 'uuid' })
@@ -13,6 +14,9 @@ export class GroupStudent extends BaseEntity {
 
   @Column({ type: 'uuid' })
   studentUserProfileId: string;
+
+  @Column({ type: 'uuid' })
+  classId: string; // Denormalized from group for unique constraint
 
   // Relations
   @ManyToOne(() => Group, (group) => group.groupStudents, {

@@ -7,7 +7,10 @@ import { ClassValidationService } from './class-validation.service';
 import { PaymentStrategyService } from './payment-strategy.service';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import {
+  ResourceNotFoundException,
+  InsufficientPermissionsException,
+} from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Class } from '../entities/class.entity';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
@@ -18,6 +21,11 @@ import {
   ClassDeletedEvent,
   ClassRestoredEvent,
 } from '../events/class.events';
+import { ClassAccessService } from './class-access.service';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { Transactional } from '@nestjs-cls/transactional';
+import { EventEmitterHelper } from '../utils/event-emitter.helper';
 
 @Injectable()
 export class ClassesService extends BaseService {
@@ -26,10 +34,19 @@ export class ClassesService extends BaseService {
     private readonly classValidationService: ClassValidationService,
     private readonly paymentStrategyService: PaymentStrategyService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly classAccessService: ClassAccessService,
+    private readonly userProfileService: UserProfileService,
   ) {
     super();
   }
 
+  /**
+   * Paginate classes for a center with filtering and search capabilities.
+   *
+   * @param paginateDto - Pagination and filter parameters
+   * @param actor - The user performing the action
+   * @returns Paginated list of classes with computed fields (groupsCount, studentsCount)
+   */
   async paginateClasses(
     paginateDto: PaginateClassesDto,
     actor: ActorUser,
@@ -37,18 +54,34 @@ export class ClassesService extends BaseService {
     return this.classesRepository.paginateClasses(paginateDto, actor.centerId!);
   }
 
+  /**
+   * Get a single class with all relations loaded.
+   * Validates access based on actor profile type (staff vs non-staff).
+   *
+   * @param classId - The class ID
+   * @param actor - The user performing the action
+   * @returns Class entity with all relations (groups, level, subject, teacher, etc.)
+   * @throws ResourceNotFoundException if class doesn't exist
+   * @throws InsufficientPermissionsException if actor doesn't have access
+   */
   async getClass(classId: string, actor: ActorUser): Promise<Class> {
     const classEntity =
       await this.classesRepository.findClassWithRelations(classId);
-    this.validateResourceAccess(
-      classEntity,
-      classId,
-      actor,
-      't.common.resources.class',
-    );
-    return classEntity;
+    await this.validateClassAccess(classEntity, classId, actor);
+    // validateClassAccess throws if classEntity is null, so it's safe to assert non-null
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return classEntity!;
   }
 
+  /**
+   * Create a new class with payment strategies.
+   * Validates class data, creates class entity, and sets up payment strategies.
+   *
+   * @param createClassDto - Class creation data including payment strategies
+   * @param actor - The user performing the action
+   * @returns Created class entity with all relations loaded
+   * @throws BusinessLogicException if validation fails
+   */
   async createClass(
     createClassDto: CreateClassDto,
     actor: ActorUser,
@@ -81,8 +114,7 @@ export class ClassesService extends BaseService {
     return this.loadClassWithRelationsAndEmit(
       classEntity.id,
       ClassEvents.CREATED,
-      (classWithRelations) =>
-        new ClassCreatedEvent(classWithRelations, actor, actor.centerId!),
+      actor,
     );
   }
 
@@ -102,7 +134,7 @@ export class ClassesService extends BaseService {
   private async loadClassWithRelationsAndEmit(
     classId: string,
     event: ClassEvents.CREATED | ClassEvents.UPDATED,
-    eventFactory: (classEntity: Class) => ClassCreatedEvent | ClassUpdatedEvent,
+    actor: ActorUser,
   ): Promise<Class> {
     const classWithRelations =
       await this.classesRepository.findClassWithRelations(classId);
@@ -115,25 +147,18 @@ export class ClassesService extends BaseService {
       });
     }
 
-    const eventInstance = eventFactory(classWithRelations);
-
-    // Type-safe event emission - TypeScript can't infer the exact mapping,
-    // but we know the eventFactory returns the correct type for the event
-    if (event === ClassEvents.CREATED) {
-      await this.typeSafeEventEmitter.emitAsync(
-        ClassEvents.CREATED,
-        eventInstance as ClassCreatedEvent,
-      );
-    } else {
-      await this.typeSafeEventEmitter.emitAsync(
-        ClassEvents.UPDATED,
-        eventInstance as ClassUpdatedEvent,
-      );
-    }
+    await EventEmitterHelper.emitClassEvent(
+      this.typeSafeEventEmitter,
+      event,
+      classWithRelations,
+      actor,
+      actor.centerId!,
+    );
 
     return classWithRelations;
   }
 
+  @Transactional()
   async updateClass(
     classId: string,
     data: UpdateClassDto,
@@ -171,8 +196,7 @@ export class ClassesService extends BaseService {
     return this.loadClassWithRelationsAndEmit(
       classId,
       ClassEvents.UPDATED,
-      (classWithRelations) =>
-        new ClassUpdatedEvent(classWithRelations, actor, actor.centerId!),
+      actor,
     );
   }
 
@@ -197,6 +221,15 @@ export class ClassesService extends BaseService {
     }
   }
 
+  /**
+   * Soft delete a class.
+   * Marks the class as deleted but preserves data for potential restoration.
+   *
+   * @param classId - The class ID to delete
+   * @param actor - The user performing the action
+   * @throws ResourceNotFoundException if class doesn't exist
+   * @throws InsufficientPermissionsException if actor doesn't have access
+   */
   async deleteClass(classId: string, actor: ActorUser): Promise<void> {
     await this.getClass(classId, actor);
     await this.classesRepository.softRemove(classId);
@@ -207,15 +240,74 @@ export class ClassesService extends BaseService {
     );
   }
 
+  /**
+   * Validates class access for an actor.
+   * For staff profiles, checks ClassStaff assignment.
+   * For other profiles, uses existing centerId validation.
+   *
+   * @param classEntity - The class entity (can be null)
+   * @param classId - The class ID
+   * @param actor - The actor performing the action
+   * @throws ResourceNotFoundException if class doesn't exist
+   * @throws InsufficientPermissionsException if actor doesn't have access
+   */
+  private async validateClassAccess(
+    classEntity: Class | null,
+    classId: string,
+    actor: ActorUser,
+  ): Promise<void> {
+    if (!classEntity) {
+      throw new ResourceNotFoundException('t.errors.notFound.withId', {
+        resource: 't.common.resources.class',
+        identifier: 'ID',
+        value: classId,
+      });
+    }
+
+    // Check if actor is staff profile
+    const actorProfile = await this.userProfileService.findOne(
+      actor.userProfileId,
+    );
+
+    if (actorProfile?.profileType === ProfileType.STAFF) {
+      // For staff, check ClassStaff assignment
+      const canAccess = await this.classAccessService.canAccessClass(
+        actor.userProfileId,
+        classId,
+      );
+      if (!canAccess) {
+        throw new InsufficientPermissionsException(
+          't.errors.notAuthorized.action',
+          {
+            action: 't.common.buttons.view',
+            resource: 't.common.resources.class',
+          },
+        );
+      }
+    } else {
+      // For non-staff, use existing centerId validation
+      this.validateResourceAccess(
+        classEntity,
+        classId,
+        actor,
+        't.common.resources.class',
+      );
+    }
+  }
+
+  /**
+   * Restore a soft-deleted class.
+   * Recovers a previously deleted class and makes it active again.
+   *
+   * @param classId - The class ID to restore
+   * @param actor - The user performing the action
+   * @throws ResourceNotFoundException if class doesn't exist
+   * @throws InsufficientPermissionsException if actor doesn't have access
+   */
   async restoreClass(classId: string, actor: ActorUser): Promise<void> {
     const classEntity =
       await this.classesRepository.findOneSoftDeletedById(classId);
-    this.validateResourceAccess(
-      classEntity,
-      classId,
-      actor,
-      't.common.resources.class',
-    );
+    await this.validateClassAccess(classEntity, classId, actor);
 
     await this.classesRepository.restore(classId);
 

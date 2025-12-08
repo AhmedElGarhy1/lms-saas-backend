@@ -28,6 +28,7 @@ import { GetUser } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UpdateApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
 import { SerializeOptions } from '@nestjs/common';
 import { GroupResponseDto } from '../dto/group-response.dto';
 import { AssignStudentToGroupDto } from '../dto/assign-student-to-group.dto';
@@ -193,7 +194,8 @@ export class GroupsController {
   @ApiParam({ name: 'groupId', description: 'Group ID' })
   @ApiResponse({
     status: 200,
-    description: 'Students removed successfully',
+    description: 'Bulk remove completed',
+    type: BulkOperationResultDto,
   })
   @Permissions(PERMISSIONS.GROUPS.UPDATE)
   @Transactional()
@@ -201,14 +203,14 @@ export class GroupsController {
     @Param('groupId', ParseUUIDPipe) groupId: string,
     @Body() dto: RemoveStudentsFromGroupDto,
     @GetUser() actor: ActorUser,
-  ) {
-    await this.groupsService.removeStudentsFromGroup(
+  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+    const result = await this.groupsService.removeStudentsFromGroup(
       groupId,
       dto.studentUserProfileIds,
       actor,
     );
-    return ControllerResponse.message('t.success.update', {
-      resource: 't.common.resources.group',
+    return ControllerResponse.success(result, 't.success.bulkDelete', {
+      resource: 't.common.resources.groupStudent',
     });
   }
 }

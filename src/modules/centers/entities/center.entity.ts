@@ -4,7 +4,7 @@ import { Role } from '@/modules/access-control/entities/role.entity';
 import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
 import { CenterAccess } from '@/modules/access-control/entities/center-access.entity';
 import { Branch } from './branch.entity';
-import { BranchAccess } from '../../access-control/entities/branch-access.entity';
+import { BranchAccess } from './branch-access.entity';
 import { Level } from '@/modules/levels/entities/level.entity';
 import { Subject } from '@/modules/subjects/entities/subject.entity';
 import { Class } from '@/modules/classes/entities/class.entity';
