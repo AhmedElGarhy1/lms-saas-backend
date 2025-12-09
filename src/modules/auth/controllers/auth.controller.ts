@@ -63,7 +63,9 @@ export class AuthController {
   async login(@Body() loginDto: LoginRequestDto) {
     const result = await this.authService.login(loginDto);
 
-    return ControllerResponse.success(result, 't.messages.completed');
+    return ControllerResponse.success(result, {
+      key: 't.messages.completed',
+    });
   }
 
   @Public()
@@ -75,8 +77,9 @@ export class AuthController {
   async resendLoginOTP(@Body() dto: LoginRequestDto) {
     await this.authService.resendLoginOTP(dto.phone, dto.password);
 
-    return ControllerResponse.success(null, 't.messages.sent', {
-      resource: 't.resources.otpCode',
+    return ControllerResponse.success(null, {
+      key: 't.messages.sent',
+      args: { resource: 't.resources.otpCode' },
     });
   }
 
@@ -99,7 +102,9 @@ export class AuthController {
     const userId = req.user.sub;
 
     const result = await this.authService.refresh(userId);
-    return ControllerResponse.success(result, 't.messages.completed');
+    return ControllerResponse.success(result, {
+      key: 't.messages.completed',
+    });
   }
 
   @Post('request-phone-verification')
@@ -114,8 +119,9 @@ export class AuthController {
   ) {
     await this.authService.requestPhoneVerification(dto.userId, dto.phone);
 
-    return ControllerResponse.success(null, 't.messages.sent', {
-      resource: 't.resources.verificationCode',
+    return ControllerResponse.success(null, {
+      key: 't.messages.sent',
+      args: { resource: 't.resources.verificationCode' },
     });
   }
 
@@ -133,8 +139,9 @@ export class AuthController {
   ) {
     await this.authService.verifyPhone(dto.code, dto.userId || user.id);
 
-    return ControllerResponse.success(null, 't.messages.verified', {
-      resource: 't.resources.phone',
+    return ControllerResponse.success(null, {
+      key: 't.messages.verified',
+      args: { resource: 't.resources.phone' },
     });
   }
 
@@ -149,8 +156,9 @@ export class AuthController {
   ) {
     const result = await this.authService.forgotPassword(dto, actor);
 
-    return ControllerResponse.success(result, 't.messages.sent', {
-      resource: 't.resources.verificationCode',
+    return ControllerResponse.success(result, {
+      key: 't.messages.sent',
+      args: { resource: 't.resources.verificationCode' },
     });
   }
 
@@ -163,7 +171,9 @@ export class AuthController {
   async resetPassword(@Body() dto: ResetPasswordRequestDto) {
     const result = await this.authService.resetPassword(dto);
 
-    return ControllerResponse.success(result, 't.messages.completed');
+    return ControllerResponse.success(result, {
+      key: 't.messages.completed',
+    });
   }
 
   @Post('setup-2fa')
@@ -175,8 +185,9 @@ export class AuthController {
   async setup2FA(@GetUser() actor: ActorUser) {
     const result = await this.authService.setupTwoFactor(actor);
 
-    return ControllerResponse.success(result, 't.messages.sent', {
-      resource: 't.resources.otpCode',
+    return ControllerResponse.success(result, {
+      key: 't.messages.sent',
+      args: { resource: 't.resources.otpCode' },
     });
   }
 
@@ -198,8 +209,9 @@ export class AuthController {
     }
     const result = await this.authService.enableTwoFactor(dto.code, actor);
 
-    return ControllerResponse.success(result, 't.messages.enabled', {
-      resource: 't.resources.twoFactorAuth',
+    return ControllerResponse.success(result, {
+      key: 't.messages.enabled',
+      args: { resource: 't.resources.twoFactorAuth' },
     });
   }
 
@@ -215,8 +227,9 @@ export class AuthController {
   ) {
     const result = await this.authService.disableTwoFactor(dto.code, actor);
 
-    return ControllerResponse.success(result, 't.messages.disabled', {
-      resource: 't.resources.twoFactorAuth',
+    return ControllerResponse.success(result, {
+      key: 't.messages.disabled',
+      args: { resource: 't.resources.twoFactorAuth' },
     });
   }
 
@@ -228,7 +241,9 @@ export class AuthController {
   async logout(@GetUser() user: ActorUser) {
     const result = await this.authService.logout(user);
 
-    return ControllerResponse.success(result, 't.messages.completed');
+    return ControllerResponse.success(result, {
+      key: 't.messages.completed',
+    });
   }
 
   @Patch('change-password')
@@ -247,7 +262,9 @@ export class AuthController {
       dto,
     });
 
-    return ControllerResponse.success(result, 't.messages.completed');
+    return ControllerResponse.success(result, {
+      key: 't.messages.completed',
+    });
   }
 
   /**
@@ -265,8 +282,9 @@ export class AuthController {
   })
   async getVerificationTokens() {
     const tokens = await this.verificationTokenRepository.findAll();
-    return ControllerResponse.success(tokens, 't.messages.found', {
-      resource: 't.resources.verificationCode',
+    return ControllerResponse.success(tokens, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.verificationCode' },
     });
   }
 }

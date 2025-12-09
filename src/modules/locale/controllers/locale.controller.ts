@@ -45,8 +45,9 @@ export class LocaleController {
   getUserLocale() {
     const userLocale = RequestContext.get().locale;
 
-    return ControllerResponse.success(userLocale, 't.messages.found', {
-      resource: 't.resources.locale',
+    return ControllerResponse.success(userLocale, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.locale' },
     });
   }
 
@@ -58,8 +59,9 @@ export class LocaleController {
   })
   getAvailableLanguages() {
     const languages = this.localeService.getAvailableLanguages();
-    return ControllerResponse.success(languages, 't.messages.found', {
-      resource: 't.resources.language',
+    return ControllerResponse.success(languages, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.language' },
     });
   }
 }

@@ -110,14 +110,13 @@ export class ClassStaffAccessController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.classStaffAccess',
       },
-    );
+    });
   }
 
   @Post('bulk/revoke')
@@ -151,14 +150,13 @@ export class ClassStaffAccessController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.classStaffAccess',
       },
-    );
+    });
   }
 
   @Get(':classId')
@@ -174,8 +172,9 @@ export class ClassStaffAccessController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.classStaffService.getClassStaff(classId, actor);
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.classStaffAccess',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.classStaffAccess' },
     });
   }
 }

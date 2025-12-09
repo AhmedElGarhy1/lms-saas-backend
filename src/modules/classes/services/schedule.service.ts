@@ -28,9 +28,7 @@ export class ScheduleService extends BaseService {
    */
   validateScheduleItems(items: ScheduleItemDto[], duration: number): void {
     if (!items || items.length === 0) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: 'Schedule items are required',
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
 
     // Validate each item
@@ -45,31 +43,23 @@ export class ScheduleService extends BaseService {
   private validateScheduleItem(item: ScheduleItemDto, duration: number): void {
     // Validate day
     if (!Object.values(DayOfWeek).includes(item.day)) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: `Invalid day: ${item.day}`,
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
 
     // Validate time format
     const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
     if (!timeRegex.test(item.startTime)) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: 'Start time must be in HH:mm format',
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
 
     // Validate duration
     if (!duration || duration <= 0) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: 'Duration must be a positive number',
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
 
     // Validate that end time doesn't exceed 24:00 (same-day validation)
     if (!isEndTimeWithinSameDay(item.startTime, duration)) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: 'Schedule item end time exceeds 24:00',
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
   }
 
@@ -88,9 +78,7 @@ export class ScheduleService extends BaseService {
       for (let i = 0; i < dayItems.length; i++) {
         for (let j = i + 1; j < dayItems.length; j++) {
           if (this.itemsOverlap(dayItems[i], dayItems[j], duration)) {
-            throw new BusinessLogicException('t.messages.validationFailed', {
-              reason: `Overlapping time slots on ${day}`,
-            });
+            throw new BusinessLogicException('t.messages.validationFailed');
           }
         }
       }
@@ -174,9 +162,7 @@ export class ScheduleService extends BaseService {
 
     // Business logic: interpret the data and throw exception if conflict exists
     if (conflict) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: `Teacher has a schedule conflict on ${conflict.conflictDay} at ${conflict.conflictTime}`,
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
   }
 
@@ -220,9 +206,7 @@ export class ScheduleService extends BaseService {
 
     // Business logic: interpret the data and throw exception if conflict exists
     if (conflict) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: `Student has a schedule conflict on ${conflict.conflictDay || 'unknown'} at ${conflict.conflictTime || 'unknown'}`,
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
   }
 }

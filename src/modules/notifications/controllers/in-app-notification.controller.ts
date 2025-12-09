@@ -35,8 +35,9 @@ export class InAppNotificationController {
       actor.id,
       query,
     );
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.notification',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.notification' },
     }) as any;
   }
 
@@ -54,8 +55,9 @@ export class InAppNotificationController {
         profileId,
       );
 
-    return ControllerResponse.success(notifications, 't.messages.found', {
-      resource: 't.resources.notification',
+    return ControllerResponse.success(notifications, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.notification' },
     });
   }
 
@@ -78,8 +80,10 @@ export class InAppNotificationController {
         profileType: profileType ?? null,
         profileId: profileId ?? null,
       },
-      't.messages.found',
-      { resource: 't.resources.notification' },
+      {
+        key: 't.messages.found',
+        args: { resource: 't.resources.notification' },
+      },
     );
   }
 
@@ -91,8 +95,9 @@ export class InAppNotificationController {
       dto.notificationIds,
       actor.id,
     );
-    return ControllerResponse.message('t.messages.updated', {
-      resource: 't.resources.notification',
+    return ControllerResponse.message({
+      key: 't.messages.updated',
+      args: { resource: 't.resources.notification' },
     });
   }
 
@@ -109,8 +114,9 @@ export class InAppNotificationController {
       profileType,
       profileId,
     );
-    return ControllerResponse.message('t.messages.updated', {
-      resource: 't.resources.notification',
+    return ControllerResponse.message({
+      key: 't.messages.updated',
+      args: { resource: 't.resources.notification' },
     });
   }
 
@@ -122,8 +128,9 @@ export class InAppNotificationController {
     @Param('id') notificationId: string,
   ) {
     await this.inAppNotificationService.archive(actor.id, notificationId);
-    return ControllerResponse.message('t.messages.archived', {
-      resource: 't.resources.notification',
+    return ControllerResponse.message({
+      key: 't.messages.archived',
+      args: { resource: 't.resources.notification' },
     });
   }
 

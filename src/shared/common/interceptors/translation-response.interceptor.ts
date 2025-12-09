@@ -297,9 +297,10 @@ export class TranslationResponseInterceptor implements NestInterceptor {
   ): string {
     try {
       // Resolve nested translation keys in args (simple recursive translation)
-      const resolvedArgs = translationMsg.args
-        ? this.resolveArgs(translationMsg.args)
-        : undefined;
+      const resolvedArgs =
+        'args' in translationMsg && translationMsg.args
+          ? this.resolveArgs(translationMsg.args)
+          : undefined;
 
       // Translate the main message with resolved args
       const translated = this.translationService.translate(

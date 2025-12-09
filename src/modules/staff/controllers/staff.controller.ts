@@ -26,8 +26,9 @@ export class StaffController {
   ) {
     const result = await this.staffService.paginateStaff(query, actorUser);
     // Wrap in ControllerResponse for consistent messaging
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.staff',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.staff' },
     });
   }
 }

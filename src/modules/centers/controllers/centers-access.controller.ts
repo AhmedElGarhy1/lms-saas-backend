@@ -92,8 +92,9 @@ export class CentersAccessController {
         actor,
       );
 
-    return ControllerResponse.success(result, 't.messages.granted', {
-      resource: 't.resources.centerAccess',
+    return ControllerResponse.success(result, {
+      key: 't.messages.granted',
+      args: { resource: 't.resources.centerAccess' },
     });
   }
 
@@ -111,8 +112,9 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, 't.messages.revoked', {
-      resource: 't.resources.centerAccess',
+    return ControllerResponse.success(result, {
+      key: 't.messages.revoked',
+      args: { resource: 't.resources.centerAccess' },
     });
   }
 
@@ -144,8 +146,9 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, 't.messages.deleted', {
-      resource: 't.resources.centerAccess',
+    return ControllerResponse.success(result, {
+      key: 't.messages.deleted',
+      args: { resource: 't.resources.centerAccess' },
     });
   }
 
@@ -171,8 +174,9 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, 't.messages.restored', {
-      resource: 't.resources.centerAccess',
+    return ControllerResponse.success(result, {
+      key: 't.messages.restored',
+      args: { resource: 't.resources.centerAccess' },
     });
   }
 }

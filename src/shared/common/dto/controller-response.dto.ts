@@ -1,6 +1,5 @@
 import { I18nPath } from '@/generated/i18n.generated';
-import { OptionalArgs } from '@/generated/i18n-type-map.generated';
-import { TranslationMessage } from '../types/translation.types';
+import { TranslationMessage } from '@/generated/i18n-type-map.generated';
 
 export class ControllerResponse<T = any, P extends I18nPath = I18nPath> {
   data?: T;
@@ -12,43 +11,36 @@ export class ControllerResponse<T = any, P extends I18nPath = I18nPath> {
   }
 
   /**
-   * Create success response with translation key
+   * Create success response with translation message
    * Translation happens in TranslationResponseInterceptor
-   * @param data Response data
-   * @param messageKey Translation key (I18nPath)
-   * @param args Optional translation arguments (type-safe, required when key needs them)
+   *
+   * The TranslationMessage type enforces that args MUST be provided
+   * when the translation key requires them.
    */
-  static success<T, P extends I18nPath = I18nPath>(
+  static success<T, P extends I18nPath>(
     data: T,
-    messageKey: P,
-    args?: OptionalArgs<P>,
+    message: TranslationMessage<P>,
   ): ControllerResponse<T, P> {
-    return new ControllerResponse(data, { key: messageKey, args });
+    return new ControllerResponse(data, message);
   }
 
   /**
-   * Create message-only response with translation key
+   * Create message-only response with translation message
    * Translation happens in TranslationResponseInterceptor
-   * @param messageKey Translation key (I18nPath)
-   * @param args Optional translation arguments (type-safe, required when key needs them)
    */
-  static message<P extends I18nPath = I18nPath>(
-    messageKey: P,
-    args?: OptionalArgs<P>,
+  static message<P extends I18nPath>(
+    message: TranslationMessage<P>,
   ): ControllerResponse<null, P> {
-    return new ControllerResponse(null, { key: messageKey, args });
+    return new ControllerResponse(null, message);
   }
 
   /**
-   * Create error response with translation key
+   * Create error response with translation message
    * Translation happens in TranslationResponseInterceptor
-   * @param messageKey Translation key (I18nPath)
-   * @param args Optional translation arguments (type-safe, required when key needs them)
    */
-  static error<P extends I18nPath = I18nPath>(
-    messageKey: P,
-    args?: OptionalArgs<P>,
+  static error<P extends I18nPath>(
+    message: TranslationMessage<P>,
   ): ControllerResponse<null, P> {
-    return new ControllerResponse(null, { key: messageKey, args });
+    return new ControllerResponse(null, message);
   }
 }

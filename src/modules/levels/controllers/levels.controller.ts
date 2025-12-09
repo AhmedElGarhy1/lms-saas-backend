@@ -43,8 +43,9 @@ export class LevelsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.levelsService.paginateLevels(paginateDto, actor);
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.level',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.level' },
     });
   }
 
@@ -66,8 +67,9 @@ export class LevelsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.levelsService.getLevel(levelId, actor);
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.level',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.level' },
     });
   }
 
@@ -89,8 +91,9 @@ export class LevelsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.levelsService.createLevel(createLevelDto, actor);
-    return ControllerResponse.success(result, 't.messages.created', {
-      resource: 't.resources.level',
+    return ControllerResponse.success(result, {
+      key: 't.messages.created',
+      args: { resource: 't.resources.level' },
     });
   }
 
@@ -114,8 +117,9 @@ export class LevelsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.levelsService.updateLevel(levelId, data, actor);
-    return ControllerResponse.success(result, 't.messages.updated', {
-      resource: 't.resources.level',
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.level' },
     });
   }
 
@@ -137,8 +141,9 @@ export class LevelsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.levelsService.deleteLevel(levelId, actor);
-    return ControllerResponse.message('t.messages.deleted', {
-      resource: 't.resources.level',
+    return ControllerResponse.message({
+      key: 't.messages.deleted',
+      args: { resource: 't.resources.level' },
     });
   }
 
@@ -153,8 +158,9 @@ export class LevelsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.levelsService.restoreLevel(levelId, actor);
-    return ControllerResponse.message('t.messages.restored', {
-      resource: 't.resources.level',
+    return ControllerResponse.message({
+      key: 't.messages.restored',
+      args: { resource: 't.resources.level' },
     });
   }
 }

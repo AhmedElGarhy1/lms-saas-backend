@@ -49,14 +49,13 @@ export class LevelsActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.level',
       },
-    );
+    });
   }
 
   @Post('bulk/restore')
@@ -81,13 +80,12 @@ export class LevelsActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.level',
       },
-    );
+    });
   }
 }

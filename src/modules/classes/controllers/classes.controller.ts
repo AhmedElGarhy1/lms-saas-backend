@@ -46,8 +46,9 @@ export class ClassesController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.class',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.class' },
     });
   }
 
@@ -69,8 +70,9 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.classesService.getClass(classId, actor);
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.class',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.class' },
     });
   }
 
@@ -92,8 +94,9 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.classesService.createClass(createClassDto, actor);
-    return ControllerResponse.success(result, 't.messages.created', {
-      resource: 't.resources.class',
+    return ControllerResponse.success(result, {
+      key: 't.messages.created',
+      args: { resource: 't.resources.class' },
     });
   }
 
@@ -117,8 +120,9 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.classesService.updateClass(classId, data, actor);
-    return ControllerResponse.success(result, 't.messages.updated', {
-      resource: 't.resources.class',
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.class' },
     });
   }
 
@@ -140,8 +144,9 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.classesService.deleteClass(classId, actor);
-    return ControllerResponse.message('t.messages.deleted', {
-      resource: 't.resources.class',
+    return ControllerResponse.message({
+      key: 't.messages.deleted',
+      args: { resource: 't.resources.class' },
     });
   }
 
@@ -156,8 +161,9 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.classesService.restoreClass(classId, actor);
-    return ControllerResponse.message('t.messages.restored', {
-      resource: 't.resources.class',
+    return ControllerResponse.message({
+      key: 't.messages.restored',
+      args: { resource: 't.resources.class' },
     });
   }
 }

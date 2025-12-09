@@ -53,8 +53,9 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.groupsService.paginateGroups(paginateDto, actor);
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.group',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.group' },
     });
   }
 
@@ -76,8 +77,9 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.groupsService.getGroup(groupId, actor);
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.group',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.group' },
     });
   }
 
@@ -99,8 +101,9 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.groupsService.createGroup(createGroupDto, actor);
-    return ControllerResponse.success(result, 't.messages.created', {
-      resource: 't.resources.group',
+    return ControllerResponse.success(result, {
+      key: 't.messages.created',
+      args: { resource: 't.resources.group' },
     });
   }
 
@@ -124,8 +127,9 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.groupsService.updateGroup(groupId, data, actor);
-    return ControllerResponse.success(result, 't.messages.updated', {
-      resource: 't.resources.group',
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.group' },
     });
   }
 
@@ -147,8 +151,9 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.groupsService.deleteGroup(groupId, actor);
-    return ControllerResponse.message('t.messages.deleted', {
-      resource: 't.resources.group',
+    return ControllerResponse.message({
+      key: 't.messages.deleted',
+      args: { resource: 't.resources.group' },
     });
   }
 
@@ -163,8 +168,9 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.groupsService.restoreGroup(groupId, actor);
-    return ControllerResponse.message('t.messages.restored', {
-      resource: 't.resources.group',
+    return ControllerResponse.message({
+      key: 't.messages.restored',
+      args: { resource: 't.resources.group' },
     });
   }
 
@@ -188,8 +194,9 @@ export class GroupsController {
       dto.userProfileId,
       actor,
     );
-    return ControllerResponse.message('t.messages.updated', {
-      resource: 't.resources.group',
+    return ControllerResponse.message({
+      key: 't.messages.updated',
+      args: { resource: 't.resources.group' },
     });
   }
 
@@ -213,13 +220,12 @@ export class GroupsController {
       dto.studentUserProfileIds,
       actor,
     );
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.groupStudent',
       },
-    );
+    });
   }
 }

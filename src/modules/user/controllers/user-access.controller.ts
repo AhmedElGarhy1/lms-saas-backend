@@ -41,8 +41,9 @@ export class UserAccessController {
     // Validation is now handled in AccessControlService.grantUserAccessValidate
     await this.accessControlService.grantUserAccessValidate(dto, actor);
 
-    return ControllerResponse.message('t.messages.granted', {
-      resource: 't.resources.userAccess',
+    return ControllerResponse.message({
+      key: 't.messages.granted',
+      args: { resource: 't.resources.userAccess' },
     });
   }
 
@@ -57,8 +58,9 @@ export class UserAccessController {
     // Validation is now handled in AccessControlService.revokeUserAccessValidate
     await this.accessControlService.revokeUserAccessValidate(dto, actor);
 
-    return ControllerResponse.message('t.messages.revoked', {
-      resource: 't.resources.userAccess',
+    return ControllerResponse.message({
+      key: 't.messages.revoked',
+      args: { resource: 't.resources.userAccess' },
     });
   }
 
@@ -91,14 +93,13 @@ export class UserAccessController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.userAccess',
       },
-    );
+    });
   }
 
   @Post('bulk/revoke')
@@ -130,13 +131,12 @@ export class UserAccessController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.userAccess',
       },
-    );
+    });
   }
 }

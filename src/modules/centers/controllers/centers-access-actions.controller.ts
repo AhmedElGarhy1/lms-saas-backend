@@ -59,14 +59,13 @@ export class CentersAccessActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.centerAccess',
       },
-    );
+    });
   }
 
   @Post('bulk/revoke')
@@ -97,14 +96,13 @@ export class CentersAccessActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.centerAccess',
       },
-    );
+    });
   }
 
   @Post('bulk/status')
@@ -138,14 +136,13 @@ export class CentersAccessActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.centerAccess',
       },
-    );
+    });
   }
 
   @Post('bulk/delete')
@@ -176,14 +173,13 @@ export class CentersAccessActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.centerAccess',
       },
-    );
+    });
   }
 
   @Post('bulk/restore')
@@ -214,13 +210,12 @@ export class CentersAccessActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.centerAccess',
       },
-    );
+    });
   }
 }

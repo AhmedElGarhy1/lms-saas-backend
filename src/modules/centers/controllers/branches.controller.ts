@@ -41,8 +41,9 @@ export class BranchesController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.branch',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.branch' },
     });
   }
 
@@ -62,8 +63,9 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.branchesService.getBranch(branchId, actor);
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.branch',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.branch' },
     });
   }
 
@@ -87,8 +89,9 @@ export class BranchesController {
       createBranchDto,
       actor,
     );
-    return ControllerResponse.success(result, 't.messages.created', {
-      resource: 't.resources.branch',
+    return ControllerResponse.success(result, {
+      key: 't.messages.created',
+      args: { resource: 't.resources.branch' },
     });
   }
 
@@ -115,8 +118,9 @@ export class BranchesController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, 't.messages.updated', {
-      resource: 't.resources.branch',
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.branch' },
     });
   }
 
@@ -138,8 +142,9 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.branchesService.deleteBranch(branchId, actor);
-    return ControllerResponse.message('t.messages.deleted', {
-      resource: 't.resources.branch',
+    return ControllerResponse.message({
+      key: 't.messages.deleted',
+      args: { resource: 't.resources.branch' },
     });
   }
 
@@ -166,8 +171,9 @@ export class BranchesController {
       body.isActive,
       actor,
     );
-    return ControllerResponse.message('t.messages.updated', {
-      resource: 't.resources.branch',
+    return ControllerResponse.message({
+      key: 't.messages.updated',
+      args: { resource: 't.resources.branch' },
     });
   }
 
@@ -181,8 +187,9 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.branchesService.restoreBranch(branchId, actor);
-    return ControllerResponse.message('t.messages.restored', {
-      resource: 't.resources.branch',
+    return ControllerResponse.message({
+      key: 't.messages.restored',
+      args: { resource: 't.resources.branch' },
     });
   }
 }

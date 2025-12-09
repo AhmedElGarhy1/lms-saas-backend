@@ -207,9 +207,7 @@ export class GroupsService extends BaseService {
       // Fetch class entity separately instead of relying on relation
       const classEntity = await this.classesRepository.findOne(group.classId);
       if (!classEntity || !classEntity.duration) {
-        throw new BusinessLogicException('t.messages.validationFailed', {
-          reason: 'Class duration is required',
-        });
+        throw new BusinessLogicException('t.messages.validationFailed');
       }
 
       await this.scheduleService.checkStudentScheduleConflicts(
@@ -245,9 +243,7 @@ export class GroupsService extends BaseService {
   ) {
     // Validate input
     if (!userProfileIds || userProfileIds.length === 0) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: 'At least one student user profile ID is required',
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
 
     // Verify group exists and actor has access
@@ -384,9 +380,7 @@ export class GroupsService extends BaseService {
   ) {
     // Validate input
     if (!studentUserProfileIds || studentUserProfileIds.length === 0) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: 'At least one student user profile ID is required',
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
 
     // Verify group exists and actor has access

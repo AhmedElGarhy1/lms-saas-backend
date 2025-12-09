@@ -52,14 +52,13 @@ export class UserProfileActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.profile',
       },
-    );
+    });
   }
 
   @Post('bulk/restore')
@@ -84,14 +83,13 @@ export class UserProfileActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.profile',
       },
-    );
+    });
   }
 
   @Post('bulk/status')
@@ -120,13 +118,12 @@ export class UserProfileActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.profile',
       },
-    );
+    });
   }
 }

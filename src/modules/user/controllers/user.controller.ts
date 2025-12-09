@@ -30,8 +30,9 @@ export class UserController {
   ) {
     const user = await this.userService.updateUser(actor.id, dto, actor);
 
-    return ControllerResponse.success(user, 't.messages.updated', {
-      resource: 't.resources.user',
+    return ControllerResponse.success(user, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.user' },
     });
   }
 }

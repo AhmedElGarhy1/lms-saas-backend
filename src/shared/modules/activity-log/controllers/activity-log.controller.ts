@@ -99,8 +99,9 @@ export class ActivityLogController {
   getActivityLogTypes() {
     const types = this.activityLogService.getAllActivityLogTypes();
 
-    return ControllerResponse.success(types, 't.messages.found', {
-      resource: 't.resources.data',
+    return ControllerResponse.success(types, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.data' },
     });
   }
 }

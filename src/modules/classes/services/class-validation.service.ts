@@ -149,16 +149,12 @@ export class ClassValidationService extends BaseService {
     }
 
     if (teacherProfile.profileType !== ProfileType.TEACHER) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: 'Teacher profile must be of type TEACHER',
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
 
     // Validate teacher profile is active
     if (!teacherProfile.isActive) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: 'Teacher profile must be active',
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
 
     // Validate teacher has center access (teachers only have center access, not branch access)
@@ -170,25 +166,19 @@ export class ClassValidationService extends BaseService {
 
   validateDates(startDate: Date, endDate?: Date): void {
     if (endDate && startDate >= endDate) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: 'Start date must be before end date',
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
   }
 
   validateDuration(duration: number): void {
     if (!duration || duration <= 0) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: 'Duration must be a positive number',
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
 
     // Maximum duration: 24 hours (1440 minutes)
     const maxDuration = 24 * 60;
     if (duration > maxDuration) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: `Duration cannot exceed ${maxDuration} minutes (24 hours)`,
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
   }
 

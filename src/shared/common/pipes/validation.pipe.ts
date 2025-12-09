@@ -13,6 +13,7 @@ import {
 import { ErrorCode } from '../enums/error-codes.enum';
 import { I18nPath } from '@/generated/i18n.generated';
 import { PathArgs } from '@/generated/i18n-type-map.generated';
+import { TranslationMessage } from '../types/translation.types';
 
 /**
  * Custom validation pipe that transforms class-validator errors
@@ -47,7 +48,7 @@ export class CustomValidationPipe implements PipeTransform {
 
       const errorResponse: EnhancedErrorResponse = {
         statusCode: 400,
-        message: { key: 't.messages.validationFailed' },
+        message: { key: 't.messages.validationFailed' } as TranslationMessage,
         code: ErrorCode.VALIDATION_FAILED,
         timestamp: new Date().toISOString(),
         details: validationErrors,

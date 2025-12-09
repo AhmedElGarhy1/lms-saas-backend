@@ -151,14 +151,13 @@ export class GroupsActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.group',
       },
-    );
+    });
   }
 
   @Post('bulk/restore')
@@ -183,14 +182,13 @@ export class GroupsActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.group',
       },
-    );
+    });
   }
 
   @Post('bulk/assign-students')
@@ -212,13 +210,12 @@ export class GroupsActionsController {
       dto.userProfileIds,
       actor,
     );
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.student',
       },
-    );
+    });
   }
 }

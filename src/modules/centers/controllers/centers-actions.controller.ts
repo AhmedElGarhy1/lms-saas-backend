@@ -114,14 +114,13 @@ export class CentersActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.center',
       },
-    );
+    });
   }
 
   @Post('bulk/restore')
@@ -146,14 +145,13 @@ export class CentersActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.center',
       },
-    );
+    });
   }
 
   @Post('bulk/status')
@@ -182,13 +180,12 @@ export class CentersActionsController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.center',
       },
-    );
+    });
   }
 }

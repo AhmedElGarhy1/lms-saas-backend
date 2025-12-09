@@ -100,15 +100,26 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
     // If data is null/undefined (common for DELETE operations), provide appropriate message key
     if (!data) {
       const messages: Record<string, TranslationMessage> = {
-        DELETE: { key: 't.messages.deleted', args: undefined },
-        PATCH: { key: 't.messages.updated', args: undefined },
-        PUT: { key: 't.messages.updated', args: undefined },
-        POST: { key: 't.messages.created', args: undefined },
+        DELETE: {
+          key: 't.messages.deleted',
+          args: { resource: 't.resources.resource' },
+        },
+        PATCH: {
+          key: 't.messages.updated',
+          args: { resource: 't.resources.resource' },
+        },
+        PUT: {
+          key: 't.messages.updated',
+          args: { resource: 't.resources.resource' },
+        },
+        POST: {
+          key: 't.messages.created',
+          args: { resource: 't.resources.resource' },
+        },
       };
       return (
         messages[method] || {
           key: 't.messages.operationSuccess',
-          args: undefined,
         }
       );
     }
@@ -172,7 +183,6 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
     return (
       messages[method] || {
         key: 't.messages.operationSuccess',
-        args: undefined,
       }
     );
   }

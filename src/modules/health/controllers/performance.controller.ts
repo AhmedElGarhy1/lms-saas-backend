@@ -24,8 +24,9 @@ export class PerformanceController {
   })
   getDatabasePerformance() {
     const result = this.databasePerformanceService.getPerformanceStats();
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.data',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.data' },
     });
   }
 
@@ -37,8 +38,9 @@ export class PerformanceController {
   })
   getTransactionPerformance() {
     const result = this.databasePerformanceService.getTransactionMetrics();
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.data',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.data' },
     });
   }
 
@@ -74,8 +76,9 @@ export class PerformanceController {
       },
       alerts: alertStats,
     };
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.data',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.data' },
     });
   }
 
@@ -87,8 +90,9 @@ export class PerformanceController {
   })
   getActiveAlerts() {
     const result = this.alertsService.getActiveAlerts();
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.data',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.data' },
     });
   }
 
@@ -109,8 +113,9 @@ export class PerformanceController {
         nodeVersion: process.version,
       },
     };
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.data',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.data' },
     });
   }
 
@@ -122,8 +127,9 @@ export class PerformanceController {
   })
   resolveAlert(@Body('alertId') alertId: string) {
     void this.alertsService.resolveAlert(alertId);
-    return ControllerResponse.message('t.messages.updated', {
-      resource: 't.resources.alert',
+    return ControllerResponse.message({
+      key: 't.messages.updated',
+      args: { resource: 't.resources.alert' },
     });
   }
 

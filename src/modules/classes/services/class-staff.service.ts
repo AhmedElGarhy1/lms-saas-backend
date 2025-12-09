@@ -108,10 +108,7 @@ export class ClassStaffService extends BaseService {
       });
 
     if (!hasCenterAccess) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason:
-          'Staff must have center access before being assigned to a class',
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
 
     const canAccess = await this.classAccessService.canAccessClass(

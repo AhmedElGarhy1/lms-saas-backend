@@ -195,7 +195,7 @@ export class NotificationTemplateService extends BaseService {
         // so we use type assertion for I18nPath compatibility
         translatedTitle = this.translationService.translateWithLocale(
           titleKey as I18nPath,
-          (data || {}) as Record<string, any>,
+          (data || {}) as any,
           locale,
         );
       } catch (error) {
@@ -220,7 +220,7 @@ export class NotificationTemplateService extends BaseService {
         // so we use type assertion for I18nPath compatibility
         translatedMessage = this.translationService.translateWithLocale(
           messageKey as I18nPath,
-          (data || {}) as Record<string, any>,
+          (data || {}) as any,
           locale,
         );
       } catch (error) {

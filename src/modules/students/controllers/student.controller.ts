@@ -26,8 +26,9 @@ export class StudentController {
   ) {
     const result = await this.studentService.paginateStudents(query, actorUser);
     // Wrap in ControllerResponse for consistent messaging
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.student',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.student' },
     });
   }
 }

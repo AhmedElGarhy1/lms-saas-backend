@@ -37,9 +37,7 @@ export class GroupValidationService extends BaseService {
 
     // Validate class has duration
     if (!classEntity.duration || classEntity.duration <= 0) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        reason: 'Class duration is required and must be positive',
-      });
+      throw new BusinessLogicException('t.messages.validationFailed');
     }
 
     // Validate schedule items
@@ -85,9 +83,7 @@ export class GroupValidationService extends BaseService {
     if (dto.scheduleItems) {
       // Validate class has duration
       if (!classEntity.duration || classEntity.duration <= 0) {
-        throw new BusinessLogicException('t.messages.validationFailed', {
-          reason: 'Class duration is required and must be positive',
-        });
+        throw new BusinessLogicException('t.messages.validationFailed');
       }
 
       this.scheduleService.validateScheduleItems(
@@ -139,9 +135,7 @@ export class GroupValidationService extends BaseService {
       }
 
       if (studentProfile.profileType !== ProfileType.STUDENT) {
-        throw new BusinessLogicException('t.messages.validationFailed', {
-          reason: 'Student profile must be of type STUDENT',
-        });
+        throw new BusinessLogicException('t.messages.validationFailed');
       }
 
       // Validate student has branch access if branchId is provided
@@ -169,9 +163,7 @@ export class GroupValidationService extends BaseService {
     if (classEntity.endDate) {
       const now = new Date();
       if (now > classEntity.endDate) {
-        throw new BusinessLogicException('t.messages.validationFailed', {
-          reason: 'Cannot create schedule for a class that has ended',
-        });
+        throw new BusinessLogicException('t.messages.validationFailed');
       }
     }
   }

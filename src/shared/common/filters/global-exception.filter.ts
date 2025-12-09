@@ -79,10 +79,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           translatableException.translationKey
         ) {
           // Message is missing - set TranslationMessage object
-          errorResponse.message = {
-            key: translatableException.translationKey,
-            args: translatableException.translationArgs,
-          };
+          // Use type assertion since TypeScript can't narrow the conditional type here
+          errorResponse.message = (
+            translatableException.translationArgs
+              ? {
+                  key: translatableException.translationKey,
+                  args: translatableException.translationArgs,
+                }
+              : {
+                  key: translatableException.translationKey,
+                }
+          ) as TranslationMessage;
         }
 
         // Create error details for unique constraint violations if not already present
@@ -235,8 +242,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         args: { time: remainingTime },
       };
     } else if (typeof rawMessage === 'string' && rawMessage.startsWith('t.')) {
-      // Already a translation key
-      message = { key: rawMessage as I18nPath };
+      // Already a translation key - use type assertion since key is dynamic
+      // TypeScript cannot determine at compile time if this key requires args
+      message = { key: rawMessage as I18nPath } as TranslationMessage;
     } else {
       // Not a translation key, convert to generic error message
       message = {
@@ -269,10 +277,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.logger.error('Internal server error', String(exception));
     }
     // Store TranslationMessage object (translation happens in interceptor)
+    // Use type assertion since TypeScript can't narrow conditional type with variable key
     const message: TranslationMessage = {
       key: TRANSLATION_KEYS.ERRORS.INTERNAL_SERVER_ERROR,
-      args: undefined,
-    };
+    } as TranslationMessage;
 
     return {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -393,9 +401,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   ): string {
     try {
       // Resolve nested translation keys in args (simple recursive translation)
-      const resolvedArgs = translationMsg.args
-        ? this.resolveArgs(translationMsg.args)
-        : undefined;
+      const resolvedArgs =
+        'args' in translationMsg && translationMsg.args
+          ? this.resolveArgs(translationMsg.args)
+          : undefined;
       return this.translationService.translate(
         translationMsg.key,
         resolvedArgs as PathArgs<P>,

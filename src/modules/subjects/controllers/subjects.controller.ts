@@ -46,8 +46,9 @@ export class SubjectsController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.subject',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.subject' },
     });
   }
 
@@ -69,8 +70,9 @@ export class SubjectsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.subjectsService.getSubject(subjectId, actor);
-    return ControllerResponse.success(result, 't.messages.found', {
-      resource: 't.resources.subject',
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.subject' },
     });
   }
 
@@ -95,8 +97,9 @@ export class SubjectsController {
       createSubjectDto,
       actor,
     );
-    return ControllerResponse.success(result, 't.messages.created', {
-      resource: 't.resources.subject',
+    return ControllerResponse.success(result, {
+      key: 't.messages.created',
+      args: { resource: 't.resources.subject' },
     });
   }
 
@@ -124,8 +127,9 @@ export class SubjectsController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, 't.messages.updated', {
-      resource: 't.resources.subject',
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.subject' },
     });
   }
 
@@ -147,8 +151,9 @@ export class SubjectsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.subjectsService.deleteSubject(subjectId, actor);
-    return ControllerResponse.message('t.messages.deleted', {
-      resource: 't.resources.subject',
+    return ControllerResponse.message({
+      key: 't.messages.deleted',
+      args: { resource: 't.resources.subject' },
     });
   }
 
@@ -163,8 +168,9 @@ export class SubjectsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.subjectsService.restoreSubject(subjectId, actor);
-    return ControllerResponse.message('t.messages.restored', {
-      resource: 't.resources.subject',
+    return ControllerResponse.message({
+      key: 't.messages.restored',
+      args: { resource: 't.resources.subject' },
     });
   }
 }

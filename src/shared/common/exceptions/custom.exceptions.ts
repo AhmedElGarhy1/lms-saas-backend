@@ -2,7 +2,7 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { ErrorCode } from '../enums/error-codes.enum';
 import { I18nPath } from '@/generated/i18n.generated';
 import { PathArgs, OptionalArgs } from '@/generated/i18n-type-map.generated';
-import { TranslationMessage } from '../types/translation.types';
+import { TranslationMessage } from '@/generated/i18n-type-map.generated';
 
 export interface ErrorDetail {
   field: string;
@@ -15,6 +15,7 @@ export interface EnhancedErrorResponse {
   message: TranslationMessage;
   code: ErrorCode;
   timestamp: string;
+  error?: string; // Optional HTTP error message
   path?: string;
   method?: string;
   details?: ErrorDetail[];
@@ -51,20 +52,18 @@ abstract class BaseTranslatableException<
     translationArgs?: OptionalArgs<P>,
     details?: ErrorDetail[],
   ) {
-    super(
-      {
-        statusCode,
-        message: {
-          key: translationKey,
-          args: translationArgs,
-        } as TranslationMessage<P>,
-        error: errorMessage,
-        code: errorCode,
-        timestamp: new Date().toISOString(),
-        details,
-      } as EnhancedErrorResponse,
+    const response: EnhancedErrorResponse = {
       statusCode,
-    );
+      message: {
+        key: translationKey,
+        args: translationArgs,
+      } as TranslationMessage<P> as TranslationMessage,
+      error: errorMessage,
+      code: errorCode,
+      timestamp: new Date().toISOString(),
+      details,
+    };
+    super(response, statusCode);
     this.translationKey = translationKey;
     this.translationArgs = translationArgs;
   }
@@ -171,8 +170,8 @@ export class PasswordTooWeakException<
       field: 'password',
       value: '',
       message: {
-        key: 't.messages.error',
-        args: { requirement: req } as PathArgs<I18nPath>,
+        key: 't.messages.errorWithMessage',
+        args: { message: req },
       },
     }));
     super(
@@ -198,7 +197,7 @@ export class UserAlreadyExistsException<
       {
         field: 'phone',
         value: fieldValue,
-        message: { key: 't.messages.duplicateField' },
+        message: { key: 't.messages.duplicateField', args: { field: 'phone' } },
       },
     ];
     super(
@@ -561,19 +560,17 @@ export class ProfileSelectionRequiredException<
  */
 export class InternalInvalidOperationException extends HttpException {
   constructor(message: string) {
-    super(
-      {
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: {
-          key: 't.messages.error',
-          args: { detail: message } as PathArgs<I18nPath>,
-        },
-        error: 'Bad Request',
-        code: ErrorCode.INVALID_OPERATION,
-        timestamp: new Date().toISOString(),
-      } as EnhancedErrorResponse,
-      HttpStatus.BAD_REQUEST,
-    );
+    const response: EnhancedErrorResponse = {
+      statusCode: HttpStatus.BAD_REQUEST,
+      message: {
+        key: 't.messages.errorWithMessage',
+        args: { message },
+      } as TranslationMessage,
+      error: 'Bad Request',
+      code: ErrorCode.INVALID_OPERATION,
+      timestamp: new Date().toISOString(),
+    };
+    super(response, HttpStatus.BAD_REQUEST);
   }
 }
 
@@ -583,19 +580,16 @@ export class InternalInvalidOperationException extends HttpException {
  */
 export class InternalServiceUnavailableException extends HttpException {
   constructor(message: string) {
-    super(
-      {
-        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
-        message: {
-          key: 't.messages.serviceUnavailable',
-          args: { detail: message } as PathArgs<I18nPath>,
-        },
-        error: 'Service Unavailable',
-        code: ErrorCode.SERVICE_UNAVAILABLE,
-        timestamp: new Date().toISOString(),
-      } as EnhancedErrorResponse,
-      HttpStatus.SERVICE_UNAVAILABLE,
-    );
+    const response: EnhancedErrorResponse = {
+      statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+      message: {
+        key: 't.messages.serviceUnavailable',
+      } as TranslationMessage,
+      error: 'Service Unavailable',
+      code: ErrorCode.SERVICE_UNAVAILABLE,
+      timestamp: new Date().toISOString(),
+    };
+    super(response, HttpStatus.SERVICE_UNAVAILABLE);
   }
 }
 
@@ -605,18 +599,15 @@ export class InternalServiceUnavailableException extends HttpException {
  */
 export class InternalBusinessLogicException extends HttpException {
   constructor(message: string) {
-    super(
-      {
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: {
-          key: 't.messages.businessLogicError',
-          args: { detail: message } as PathArgs<I18nPath>,
-        },
-        error: 'Bad Request',
-        code: ErrorCode.BUSINESS_LOGIC_ERROR,
-        timestamp: new Date().toISOString(),
-      } as EnhancedErrorResponse,
-      HttpStatus.BAD_REQUEST,
-    );
+    const response: EnhancedErrorResponse = {
+      statusCode: HttpStatus.BAD_REQUEST,
+      message: {
+        key: 't.messages.businessLogicError',
+      } as TranslationMessage,
+      error: 'Bad Request',
+      code: ErrorCode.BUSINESS_LOGIC_ERROR,
+      timestamp: new Date().toISOString(),
+    };
+    super(response, HttpStatus.BAD_REQUEST);
   }
 }

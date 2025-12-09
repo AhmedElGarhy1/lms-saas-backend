@@ -99,14 +99,13 @@ export class BranchesAccessController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.branchAccess',
       },
-    );
+    });
   }
 
   @Post('bulk/revoke')
@@ -138,13 +137,12 @@ export class BranchesAccessController {
       },
     );
 
-    return ControllerResponse.success(
-      result,
-      't.messages.bulkOperationSuccess',
-      {
+    return ControllerResponse.success(result, {
+      key: 't.messages.bulkOperationSuccess',
+      args: {
         count: result.success.toString(),
         item: 't.resources.branchAccess',
       },
-    );
+    });
   }
 }
