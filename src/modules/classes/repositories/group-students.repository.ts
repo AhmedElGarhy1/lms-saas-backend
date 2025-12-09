@@ -108,7 +108,6 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
       INNER JOIN group_students gs ON gs."groupId" = g.id
       WHERE gs."studentUserProfileId" = $1
         AND g."deletedAt" IS NULL
-        AND existing."deletedAt" IS NULL
         ${excludeInfo.condition}
         AND (${conflictConditions})
       LIMIT 1
@@ -157,7 +156,6 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
       })
       .andWhere('gs."classId" = :classId', { classId })
       .andWhere('g."deletedAt" IS NULL')
-      .andWhere('gs."deletedAt" IS NULL')
       .select('g.id', 'groupId');
 
     if (excludeGroupId) {

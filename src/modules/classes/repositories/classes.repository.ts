@@ -59,10 +59,10 @@ export class ClassesRepository extends BaseRepository<Class> {
           subQuery
             .select('COUNT(groupStudents.id)', 'studentsCount')
             .from(GroupStudent, 'groupStudents')
-            .innerJoin('groupStudents.group', 'g')
-            .where('g.classId = class.id')
-            .andWhere('g.deletedAt IS NULL')
-            .andWhere('groupStudents.deletedAt IS NULL'),
+            .where('groupStudents.classId = class.id')
+            .andWhere(
+              'EXISTS (SELECT 1 FROM groups g WHERE g.id = "groupStudents"."groupId" AND g."deletedAt" IS NULL)',
+            ),
         'studentsCount',
       )
       .where('class.centerId = :centerId', { centerId });
@@ -171,18 +171,6 @@ export class ClassesRepository extends BaseRepository<Class> {
         'center.id',
         'center.name',
       ])
-      // Add count subquery for total students (groupsCount not needed since we return all groups)
-      .addSelect(
-        (subQuery) =>
-          subQuery
-            .select('COUNT(groupStudents.id)', 'studentsCount')
-            .from(GroupStudent, 'groupStudents')
-            .innerJoin('groupStudents.group', 'g')
-            .where('g.classId = class.id')
-            .andWhere('g.deletedAt IS NULL')
-            .andWhere('groupStudents.deletedAt IS NULL'),
-        'studentsCount',
-      )
       .where('class.id = :id', { id });
 
     if (!includeDeleted) {
@@ -191,17 +179,9 @@ export class ClassesRepository extends BaseRepository<Class> {
       queryBuilder.withDeleted();
     }
 
-    const { entities, raw } = await queryBuilder.getRawAndEntities();
+    const result = await queryBuilder.getOne();
 
-    if (!entities || entities.length === 0) {
-      return null;
-    }
-
-    const entity = entities[0];
-    const rawData = raw[0];
-
-    // Map computed count from raw data (groupsCount not needed since we return all groups)
-    const studentsCount = parseInt(rawData.studentsCount || '0', 10);
+    const entity = result;
 
     // Fetch groups separately instead of relying on relation
     const groups = await this.getEntityManager()
@@ -209,44 +189,26 @@ export class ClassesRepository extends BaseRepository<Class> {
       .leftJoinAndSelect('group.scheduleItems', 'scheduleItems')
       .where('group.classId = :classId', { classId: id })
       .andWhere('group.deletedAt IS NULL')
-      .getMany();
-
-    // Add studentsCount to each group
-    if (groups && groups.length > 0) {
-      const groupIds = groups.map((g) => g.id);
-      const groupStudentCounts = await this.getEntityManager()
-        .createQueryBuilder(GroupStudent, 'gs')
-        .select('gs.groupId', 'groupId')
-        .addSelect('COUNT(gs.id)', 'studentsCount')
-        .where('gs.groupId IN (:...groupIds)', { groupIds })
-        .andWhere('gs.deletedAt IS NULL')
-        .groupBy('gs.groupId')
-        .getRawMany();
-
-      interface GroupCountResult {
-        groupId: string;
-        studentsCount: string;
-      }
-
-      const countMap = new Map(
-        (groupStudentCounts as GroupCountResult[]).map((item) => [
-          item.groupId,
-          parseInt(item.studentsCount || '0', 10),
-        ]),
+      .addSelect(
+        (subQuery) =>
+          subQuery
+            .select('COUNT(groupStudents.id)', 'studentsCount')
+            .from(GroupStudent, 'groupStudents')
+            .where('groupStudents.groupId = group.id'),
+        'studentsCount',
+      )
+      .getRawAndEntities()
+      .then((result) =>
+        result.entities.map((group, i) => ({
+          ...group,
+          studentsCount: parseInt(result.raw[i].studentsCount || '0', 10),
+        })),
       );
-
-      // Add studentsCount to each group
-      groups.forEach((group) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (group as any).studentsCount = countMap.get(group.id) || 0;
-      });
-    }
 
     // Return entity with computed fields and groups attached (groupsCount not needed since we return all groups)
     return {
       ...entity,
       groups,
-      studentsCount,
     } as any;
   }
 
@@ -304,7 +266,6 @@ export class ClassesRepository extends BaseRepository<Class> {
       WHERE c."teacherUserProfileId" = $1
         AND c."deletedAt" IS NULL
         AND g."deletedAt" IS NULL
-        AND existing."deletedAt" IS NULL
         ${excludeInfo.condition}
         AND (${conflictConditions})
       LIMIT 1

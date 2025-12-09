@@ -122,6 +122,8 @@ or rechecking teacher sechdule and all students sechdules and display the error 
 [x] add tooltip for actions in view and don't display the view (because you already in view mode)
 [x] update backend to not rely on base entity to get other entites ex: don't relay on class entity to get groups and don't rely on group to get class
 [ ] submodule for permissions, RoleName, sortable columns, other is okay
+[ ] when notification sending fail all events fail including center creating user or branch
+[ ] other statuses for finsihed classes
 
 [ ] no module export repository
 [ ] fix rest of eslint erros
