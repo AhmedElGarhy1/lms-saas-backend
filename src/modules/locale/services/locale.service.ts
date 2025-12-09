@@ -17,6 +17,8 @@ export class LocaleService {
     const i18nTranslations = (this.i18nService as any).translations;
 
     if (i18nTranslations && i18nTranslations[lang]) {
+      // Return all translations from t.json (now includes permissions)
+      // This gives frontend access to both regular translations and permissions
       return i18nTranslations[lang].t as Record<string, any>;
     }
     return {};

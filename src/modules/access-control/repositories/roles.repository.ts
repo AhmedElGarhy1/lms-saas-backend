@@ -28,10 +28,14 @@ export class RolesRepository extends BaseRepository<Role> {
     return Role;
   }
 
-  async findRolePermissions(roleId: string): Promise<Role> {
+  async findRolePermissions(
+    roleId: string,
+    includeDeleted = false,
+  ): Promise<Role> {
     const role = await this.getRepository().findOne({
       where: { id: roleId },
       relations: ['rolePermissions', 'rolePermissions.permission'],
+      withDeleted: includeDeleted,
     });
     if (!role) {
       throw new ResourceNotFoundException('t.messages.withIdNotFound', {

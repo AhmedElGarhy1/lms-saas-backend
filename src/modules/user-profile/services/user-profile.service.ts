@@ -205,7 +205,11 @@ export class UserProfileService extends BaseService {
     return this.userProfileRepository.findForUser(userId, userProfileId);
   }
 
-  async findOne(userProfileId: string, actor?: ActorUser) {
+  async findOne(
+    userProfileId: string,
+    actor?: ActorUser,
+    includeDeleted = false,
+  ) {
     // If actor is provided, validate access
     if (actor) {
       await this.accessControlHelperService.validateUserAccess({
@@ -214,7 +218,9 @@ export class UserProfileService extends BaseService {
         centerId: actor.centerId,
       });
     }
-    return this.userProfileRepository.findOne(userProfileId);
+    return includeDeleted
+      ? this.userProfileRepository.findOneSoftDeletedById(userProfileId)
+      : this.userProfileRepository.findOne(userProfileId);
   }
 
   async createUserProfile(

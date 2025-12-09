@@ -691,6 +691,369 @@ export class UserRepository extends BaseRepository<User> {
     });
   }
 
+  /**
+   * Find a single staff user by profile ID with the same structure as paginateStaff
+   * @param userProfileId - User profile ID
+   * @param actor - Actor user for access control
+   * @param includeDeleted - Whether to include soft-deleted users
+   * @returns UserResponseDto or null if not found
+   */
+  async findStaffUserByProfileId(
+    userProfileId: string,
+    actor: ActorUser,
+    includeDeleted = false,
+  ): Promise<UserResponseDto | null> {
+    const centerId = actor.centerId;
+
+    // Build query builder similar to paginateStaff
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('user')
+      .withDeleted()
+      .leftJoinAndSelect('user.userProfiles', 'userProfiles')
+      .where('userProfiles.profileType = :profileType', {
+        profileType: ProfileType.STAFF,
+      })
+      .andWhere('userProfiles.id = :targetUserProfileId', {
+        targetUserProfileId: userProfileId,
+      });
+
+    // Handle deleted filter
+    if (!includeDeleted) {
+      queryBuilder.andWhere('userProfiles.deletedAt IS NULL');
+    }
+
+    // Add center access if centerId is provided
+    if (centerId) {
+      queryBuilder
+        .andWhere(
+          `EXISTS
+          (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId
+           AND ca."deletedAt" IS NULL)`,
+          { centerId },
+        )
+        .leftJoinAndSelect(
+          'userProfiles.profileRoles',
+          'profileRoles',
+          'profileRoles.userProfileId = userProfiles.id AND profileRoles.centerId = :centerId',
+          { centerId },
+        )
+        .leftJoinAndSelect('profileRoles.role', 'role')
+        .leftJoinAndSelect(
+          'userProfiles.centerAccess',
+          'centerAccess',
+          `
+            "centerAccess"."centerId" = :centerId
+            AND "centerAccess"."userProfileId" = "userProfiles"."id"
+            `,
+          { centerId },
+        );
+    }
+
+    // Access control checks
+    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+      actor.userProfileId,
+    );
+    const isAdmin = await this.accessControlHelperService.isAdmin(
+      actor.userProfileId,
+    );
+
+    if (centerId) {
+      const isCenterOwner = await this.accessControlHelperService.isCenterOwner(
+        actor.userProfileId,
+        centerId,
+      );
+      const isUser = await this.accessControlHelperService.isStaff(
+        actor.userProfileId,
+      );
+
+      if (isUser && !isCenterOwner) {
+        queryBuilder.andWhere(
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
+          { userProfileId: actor.userProfileId, centerId },
+        );
+      }
+    } else {
+      if (!isSuperAdmin && !isAdmin) {
+        throw new InsufficientPermissionsException(
+          't.messages.actionUnauthorized',
+          {
+            action: 't.buttons.view',
+            resource: 't.resources.user',
+          },
+        );
+      }
+    }
+
+    const user = await queryBuilder.getOne();
+
+    if (!user) {
+      return null;
+    }
+
+    // Format response using prepareUsersResponse
+    const formatted = this.prepareUsersResponse([
+      user as unknown as UserResponseDto,
+    ]);
+
+    return formatted[0] || null;
+  }
+
+  /**
+   * Find a single student user by profile ID with the same structure as paginateStudents
+   * @param userProfileId - User profile ID
+   * @param actor - Actor user for access control
+   * @param includeDeleted - Whether to include soft-deleted users
+   * @returns UserResponseDto or null if not found
+   */
+  async findStudentUserByProfileId(
+    userProfileId: string,
+    actor: ActorUser,
+    includeDeleted = false,
+  ): Promise<UserResponseDto | null> {
+    const centerId = actor.centerId;
+
+    // Build query builder similar to paginateStudents
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('user')
+      .withDeleted()
+      .leftJoinAndSelect('user.userProfiles', 'userProfiles')
+      .where('userProfiles.profileType = :profileType', {
+        profileType: ProfileType.STUDENT,
+      })
+      .andWhere('userProfiles.id = :targetUserProfileId', {
+        targetUserProfileId: userProfileId,
+      });
+
+    // Handle deleted filter
+    if (!includeDeleted) {
+      queryBuilder.andWhere('userProfiles.deletedAt IS NULL');
+    }
+
+    // Add center access if centerId is provided
+    if (centerId) {
+      queryBuilder
+        .andWhere(
+          `EXISTS
+          (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId
+           AND ca."deletedAt" IS NULL)`,
+          { centerId },
+        )
+        .leftJoinAndSelect(
+          'userProfiles.centerAccess',
+          'centerAccess',
+          `
+            "centerAccess"."centerId" = :centerId
+            AND "centerAccess"."userProfileId" = "userProfiles"."id"
+            `,
+          { centerId },
+        );
+    }
+
+    const user = await queryBuilder.getOne();
+
+    if (!user) {
+      return null;
+    }
+
+    // Format response using prepareUsersResponse
+    const formatted = this.prepareUsersResponse([
+      user as unknown as UserResponseDto,
+    ]);
+
+    return formatted[0] || null;
+  }
+
+  /**
+   * Find a single teacher user by profile ID with the same structure as paginateTeachers
+   * @param userProfileId - User profile ID
+   * @param actor - Actor user for access control
+   * @param includeDeleted - Whether to include soft-deleted users
+   * @returns UserResponseDto or null if not found
+   */
+  async findTeacherUserByProfileId(
+    userProfileId: string,
+    actor: ActorUser,
+    includeDeleted = false,
+  ): Promise<UserResponseDto | null> {
+    const centerId = actor.centerId;
+
+    // Build query builder similar to paginateTeachers
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('user')
+      .withDeleted()
+      .leftJoinAndSelect('user.userProfiles', 'userProfiles')
+      .where('userProfiles.profileType = :profileType', {
+        profileType: ProfileType.TEACHER,
+      })
+      .andWhere('userProfiles.id = :targetUserProfileId', {
+        targetUserProfileId: userProfileId,
+      });
+
+    // Handle deleted filter
+    if (!includeDeleted) {
+      queryBuilder.andWhere('userProfiles.deletedAt IS NULL');
+    }
+
+    // Add center access if centerId is provided
+    if (centerId) {
+      queryBuilder
+        .andWhere(
+          `EXISTS
+          (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId
+           AND ca."deletedAt" IS NULL)`,
+          { centerId },
+        )
+        .leftJoinAndSelect(
+          'userProfiles.profileRoles',
+          'profileRoles',
+          'profileRoles.userProfileId = userProfiles.id AND profileRoles.centerId = :centerId',
+          { centerId },
+        )
+        .leftJoinAndSelect('profileRoles.role', 'role')
+        .leftJoinAndSelect(
+          'userProfiles.centerAccess',
+          'centerAccess',
+          `
+            "centerAccess"."centerId" = :centerId
+            AND "centerAccess"."userProfileId" = "userProfiles"."id"
+            `,
+          { centerId },
+        );
+    }
+
+    // Access control checks
+    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+      actor.userProfileId,
+    );
+    const isAdmin = await this.accessControlHelperService.isAdmin(
+      actor.userProfileId,
+    );
+
+    if (centerId) {
+      const isCenterOwner = await this.accessControlHelperService.isCenterOwner(
+        actor.userProfileId,
+        centerId,
+      );
+      const isUser = await this.accessControlHelperService.isStaff(
+        actor.userProfileId,
+      );
+
+      if (isUser && !isCenterOwner) {
+        queryBuilder.andWhere(
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
+          { userProfileId: actor.userProfileId, centerId },
+        );
+      }
+    } else {
+      if (!isSuperAdmin && !isAdmin) {
+        throw new InsufficientPermissionsException(
+          't.messages.actionUnauthorized',
+          {
+            action: 't.buttons.view',
+            resource: 't.resources.user',
+          },
+        );
+      }
+    }
+
+    const user = await queryBuilder.getOne();
+
+    if (!user) {
+      return null;
+    }
+
+    // Format response using prepareUsersResponse
+    const formatted = this.prepareUsersResponse([
+      user as unknown as UserResponseDto,
+    ]);
+
+    return formatted[0] || null;
+  }
+
+  /**
+   * Find a single admin user by profile ID with the same structure as paginateAdmins
+   * @param userProfileId - User profile ID
+   * @param actor - Actor user for access control
+   * @param includeDeleted - Whether to include soft-deleted users
+   * @returns UserResponseDto or null if not found
+   */
+  async findAdminUserByProfileId(
+    userProfileId: string,
+    actor: ActorUser,
+    includeDeleted = false,
+  ): Promise<UserResponseDto | null> {
+    const centerId = actor.centerId;
+
+    // Build query builder similar to paginateAdmins
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('user')
+      .withDeleted()
+      .leftJoinAndSelect('user.userProfiles', 'userProfiles')
+      .where('userProfiles.profileType = :profileType', {
+        profileType: ProfileType.ADMIN,
+      })
+      .andWhere('userProfiles.id = :targetUserProfileId', {
+        targetUserProfileId: userProfileId,
+      })
+      .leftJoinAndSelect('userProfiles.profileRoles', 'profileRoles')
+      .leftJoinAndSelect('profileRoles.role', 'role')
+      .andWhere(
+        '("user"."deletedAt" IS NULL AND "profileRoles"."deletedAt" IS NULL AND "role"."deletedAt" IS NULL)',
+      );
+
+    // Handle deleted filter
+    if (!includeDeleted) {
+      queryBuilder.andWhere('userProfiles.deletedAt IS NULL');
+    }
+
+    // Access control checks
+    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+      actor.userProfileId,
+    );
+    const isAdmin = await this.accessControlHelperService.isAdmin(
+      actor.userProfileId,
+    );
+
+    if (!isAdmin) {
+      throw new InsufficientPermissionsException(
+        't.messages.actionUnauthorized',
+        {
+          action: 't.buttons.view',
+          resource: 't.resources.user',
+        },
+      );
+    }
+
+    if (!isSuperAdmin) {
+      queryBuilder.andWhere(
+        `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" IS NULL AND ua."deletedAt" IS NULL)`,
+        { userProfileId: actor.userProfileId },
+      );
+    }
+
+    if (centerId) {
+      queryBuilder.andWhere(
+        `EXISTS (
+          SELECT 1 FROM center_access ca 
+          WHERE ca."userProfileId" = "userProfiles".id AND ca."centerId" = :centerId AND ca."deletedAt" IS NULL)`,
+        { centerId },
+      );
+    }
+
+    const user = await queryBuilder.getOne();
+
+    if (!user) {
+      return null;
+    }
+
+    // Format response using prepareUsersResponse
+    const formatted = this.prepareUsersResponse([
+      user as unknown as UserResponseDto,
+    ]);
+
+    return formatted[0] || null;
+  }
+
   async clearAllUsers(): Promise<void> {
     await this.getRepository().createQueryBuilder().delete().execute();
   }

@@ -76,7 +76,7 @@ export class GroupsController {
     @Param('groupId', ParseUUIDPipe) groupId: string,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.groupsService.getGroup(groupId, actor);
+    const result = await this.groupsService.getGroup(groupId, actor, true); // includeDeleted: true for API endpoints
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.group' },

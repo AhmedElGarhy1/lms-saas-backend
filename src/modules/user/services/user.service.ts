@@ -366,6 +366,82 @@ export class UserService extends BaseService {
     return this.userRepository.findOne(id);
   }
 
+  /**
+   * Find a single staff user by profile ID with the same structure as paginateStaff
+   * @param userProfileId - User profile ID
+   * @param actor - Actor user for access control
+   * @param includeDeleted - Whether to include soft-deleted users
+   * @returns UserResponseDto or null if not found
+   */
+  async findStaffUserByProfileId(
+    userProfileId: string,
+    actor: ActorUser,
+    includeDeleted = false,
+  ) {
+    return this.userRepository.findStaffUserByProfileId(
+      userProfileId,
+      actor,
+      includeDeleted,
+    );
+  }
+
+  /**
+   * Find a single student user by profile ID with the same structure as paginateStudents
+   * @param userProfileId - User profile ID
+   * @param actor - Actor user for access control
+   * @param includeDeleted - Whether to include soft-deleted users
+   * @returns UserResponseDto or null if not found
+   */
+  async findStudentUserByProfileId(
+    userProfileId: string,
+    actor: ActorUser,
+    includeDeleted = false,
+  ) {
+    return this.userRepository.findStudentUserByProfileId(
+      userProfileId,
+      actor,
+      includeDeleted,
+    );
+  }
+
+  /**
+   * Find a single teacher user by profile ID with the same structure as paginateTeachers
+   * @param userProfileId - User profile ID
+   * @param actor - Actor user for access control
+   * @param includeDeleted - Whether to include soft-deleted users
+   * @returns UserResponseDto or null if not found
+   */
+  async findTeacherUserByProfileId(
+    userProfileId: string,
+    actor: ActorUser,
+    includeDeleted = false,
+  ) {
+    return this.userRepository.findTeacherUserByProfileId(
+      userProfileId,
+      actor,
+      includeDeleted,
+    );
+  }
+
+  /**
+   * Find a single admin user by profile ID with the same structure as paginateAdmins
+   * @param userProfileId - User profile ID
+   * @param actor - Actor user for access control
+   * @param includeDeleted - Whether to include soft-deleted users
+   * @returns UserResponseDto or null if not found
+   */
+  async findAdminUserByProfileId(
+    userProfileId: string,
+    actor: ActorUser,
+    includeDeleted = false,
+  ) {
+    return this.userRepository.findAdminUserByProfileId(
+      userProfileId,
+      actor,
+      includeDeleted,
+    );
+  }
+
   async findUserByProfileId(
     userProfileId: string,
     actor: ActorUser,

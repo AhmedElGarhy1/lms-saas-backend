@@ -75,7 +75,7 @@ export class CentersController {
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.centersService.findCenterById(id, actor);
+    const result = await this.centersService.findCenterById(id, actor, true); // includeDeleted: true for API endpoints
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.center' },

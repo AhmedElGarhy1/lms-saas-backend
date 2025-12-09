@@ -94,6 +94,7 @@ export class UserProfileController {
     const profile = await this.userProfileService.findOne(
       userProfileId,
       actorUser,
+      true, // includeDeleted: true for API endpoints
     );
     return ControllerResponse.success(profile, {
       key: 't.messages.found',

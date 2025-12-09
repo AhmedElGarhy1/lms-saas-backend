@@ -26,14 +26,22 @@ export class AdminService extends BaseService {
     return this.userService.paginateAdmins(params, actor);
   }
 
-  async findOne(userProfileId: string, actor: ActorUser): Promise<User> {
-    const user = await this.userService.findUserByProfileId(
+  async findOne(
+    userProfileId: string,
+    actor: ActorUser,
+    includeDeleted = false,
+  ) {
+    // Find user by profileId with same structure as paginate
+    const user = await this.userService.findAdminUserByProfileId(
       userProfileId,
       actor,
+      includeDeleted,
     );
     if (!user) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.user',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.admin',
+        identifier: 't.resources.identifier',
+        value: userProfileId,
       });
     }
     return user;

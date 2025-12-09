@@ -36,14 +36,16 @@ export class BranchesService extends BaseService {
     );
   }
 
-  async getBranch(branchId: string, actor: ActorUser) {
+  async getBranch(branchId: string, actor: ActorUser, includeDeleted = false) {
     await this.branchAccessService.validateBranchAccess({
       userProfileId: actor.userProfileId,
       centerId: actor.centerId!,
       branchId,
     });
 
-    const branch = await this.branchesRepository.findOne(branchId);
+    const branch = includeDeleted
+      ? await this.branchesRepository.findOneSoftDeletedById(branchId)
+      : await this.branchesRepository.findOne(branchId);
 
     if (!branch) {
       throw new ResourceNotFoundException('t.messages.withIdNotFound', {

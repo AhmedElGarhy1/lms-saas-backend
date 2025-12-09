@@ -66,7 +66,11 @@ export class StaffService extends BaseService {
     );
   }
 
-  async findOne(userProfileId: string, actor: ActorUser): Promise<User> {
+  async findOne(
+    userProfileId: string,
+    actor: ActorUser,
+    includeDeleted = false,
+  ) {
     // Validate that actor has access to this user profile
     await this.accessControlHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,
@@ -74,14 +78,17 @@ export class StaffService extends BaseService {
       centerId: actor.centerId,
     });
 
-    // Find user by profileId
-    const user = await this.userService.findUserByProfileId(
+    // Find user by profileId with same structure as paginate
+    const user = await this.userService.findStaffUserByProfileId(
       userProfileId,
       actor,
+      includeDeleted,
     );
     if (!user) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.user',
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.staff',
+        identifier: 't.resources.identifier',
+        value: userProfileId,
       });
     }
     return user;

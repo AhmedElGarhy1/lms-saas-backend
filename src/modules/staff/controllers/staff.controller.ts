@@ -1,5 +1,5 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Query, Param, ParseUUIDPipe } from '@nestjs/common';
+import { ApiTags, ApiParam } from '@nestjs/swagger';
 import { ReadApiResponses } from '@/shared/common/decorators';
 import { SerializeOptions } from '@nestjs/common';
 import { PaginateStaffDto } from '../dto/paginate-staff.dto';
@@ -26,6 +26,26 @@ export class StaffController {
   ) {
     const result = await this.staffService.paginateStaff(query, actorUser);
     // Wrap in ControllerResponse for consistent messaging
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.staff' },
+    });
+  }
+
+  @Get(':id')
+  @ReadApiResponses('Get staff member by ID')
+  @ApiParam({ name: 'id', description: 'User Profile ID', type: String })
+  @SerializeOptions({ type: UserResponseDto })
+  @Permissions(PERMISSIONS.STAFF.READ)
+  async getStaff(
+    @Param('id', ParseUUIDPipe) userProfileId: string,
+    @GetUser() actorUser: ActorUser,
+  ) {
+    const result = await this.staffService.findOne(
+      userProfileId,
+      actorUser,
+      true, // includeDeleted: true for API endpoints
+    );
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.staff' },

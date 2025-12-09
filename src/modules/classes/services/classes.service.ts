@@ -60,13 +60,20 @@ export class ClassesService extends BaseService {
    *
    * @param classId - The class ID
    * @param actor - The user performing the action
+   * @param includeDeleted - Whether to include soft-deleted classes
    * @returns Class entity with all relations (groups, level, subject, teacher, etc.)
    * @throws ResourceNotFoundException if class doesn't exist
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
-  async getClass(classId: string, actor: ActorUser): Promise<Class> {
-    const classEntity =
-      await this.classesRepository.findClassWithRelations(classId);
+  async getClass(
+    classId: string,
+    actor: ActorUser,
+    includeDeleted = false,
+  ): Promise<Class> {
+    const classEntity = await this.classesRepository.findClassWithRelations(
+      classId,
+      includeDeleted,
+    );
     await this.validateClassAccess(classEntity, classId, actor);
     // validateClassAccess throws if classEntity is null, so it's safe to assert non-null
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

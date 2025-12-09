@@ -64,12 +64,20 @@ export class GroupsService extends BaseService {
    *
    * @param groupId - The group ID
    * @param actor - The user performing the action
+   * @param includeDeleted - Whether to include soft-deleted groups
    * @returns Group entity with all relations (scheduleItems, class, branch, center)
    * @throws ResourceNotFoundException if group doesn't exist
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
-  async getGroup(groupId: string, actor: ActorUser): Promise<Group> {
-    const group = await this.groupsRepository.findGroupWithRelations(groupId);
+  async getGroup(
+    groupId: string,
+    actor: ActorUser,
+    includeDeleted = false,
+  ): Promise<Group> {
+    const group = await this.groupsRepository.findGroupWithRelations(
+      groupId,
+      includeDeleted,
+    );
     this.validateResourceAccess(group, groupId, actor, 't.resources.group');
     return group;
   }

@@ -66,7 +66,7 @@ export class LevelsController {
     @Param('levelId', ParseUUIDPipe) levelId: string,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.levelsService.getLevel(levelId, actor);
+    const result = await this.levelsService.getLevel(levelId, actor, true); // includeDeleted: true for API endpoints
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.level' },

@@ -1,5 +1,5 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Query, Param, ParseUUIDPipe } from '@nestjs/common';
+import { ApiTags, ApiParam } from '@nestjs/swagger';
 import { ReadApiResponses } from '@/shared/common/decorators';
 import { SerializeOptions } from '@nestjs/common';
 import { PaginateTeacherDto } from '../dto/paginate-teacher.dto';
@@ -26,6 +26,26 @@ export class TeacherController {
   ) {
     const result = await this.teacherService.paginateTeachers(query, actorUser);
     // Wrap in ControllerResponse for consistent messaging
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.teacher' },
+    });
+  }
+
+  @Get(':id')
+  @ReadApiResponses('Get teacher by ID')
+  @ApiParam({ name: 'id', description: 'User Profile ID', type: String })
+  @SerializeOptions({ type: UserResponseDto })
+  @Permissions(PERMISSIONS.TEACHER.READ)
+  async getTeacher(
+    @Param('id', ParseUUIDPipe) userProfileId: string,
+    @GetUser() actorUser: ActorUser,
+  ) {
+    const result = await this.teacherService.findOne(
+      userProfileId,
+      actorUser,
+      true, // includeDeleted: true for API endpoints
+    );
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.teacher' },

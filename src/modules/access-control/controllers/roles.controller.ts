@@ -123,7 +123,7 @@ export class RolesController {
     @Param('roleId', ParseUUIDPipe) roleId: string,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.rolesService.findById(roleId, actor);
+    const result = await this.rolesService.findById(roleId, actor, true); // includeDeleted: true for API endpoints
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.role' },

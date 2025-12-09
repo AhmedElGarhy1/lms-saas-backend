@@ -135,7 +135,10 @@ export class ClassesRepository extends BaseRepository<Class> {
     );
   }
 
-  async findClassWithRelations(id: string): Promise<Class | null> {
+  async findClassWithRelations(
+    id: string,
+    includeDeleted = false,
+  ): Promise<Class | null> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('class')
       // Join relations for name fields only (not full entities)
@@ -180,8 +183,13 @@ export class ClassesRepository extends BaseRepository<Class> {
             .andWhere('groupStudents.deletedAt IS NULL'),
         'studentsCount',
       )
-      .where('class.id = :id', { id })
-      .andWhere('class.deletedAt IS NULL');
+      .where('class.id = :id', { id });
+
+    if (!includeDeleted) {
+      queryBuilder.andWhere('class.deletedAt IS NULL');
+    } else {
+      queryBuilder.withDeleted();
+    }
 
     const { entities, raw } = await queryBuilder.getRawAndEntities();
 

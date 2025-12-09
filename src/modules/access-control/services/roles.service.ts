@@ -206,8 +206,11 @@ export class RolesService extends BaseService {
     return this.removeUserRole(data);
   }
 
-  async findById(roleId: string, actor?: ActorUser) {
-    const role = await this.rolesRepository.findRolePermissions(roleId);
+  async findById(roleId: string, actor?: ActorUser, includeDeleted = false) {
+    const role = await this.rolesRepository.findRolePermissions(
+      roleId,
+      includeDeleted,
+    );
 
     // If actor is provided, validate scope access
     if (actor) {

@@ -28,13 +28,19 @@ export class SubjectsService extends BaseService {
     );
   }
 
-  async getSubject(subjectId: string, actor: ActorUser) {
+  async getSubject(
+    subjectId: string,
+    actor: ActorUser,
+    includeDeleted = false,
+  ) {
     await this.accessControlHelperService.validateCenterAccess({
       userProfileId: actor.userProfileId,
       centerId: actor.centerId!,
     });
 
-    const subject = await this.subjectsRepository.findOne(subjectId);
+    const subject = includeDeleted
+      ? await this.subjectsRepository.findOneSoftDeletedById(subjectId)
+      : await this.subjectsRepository.findOne(subjectId);
 
     if (!subject) {
       throw new ResourceNotFoundException('t.messages.withIdNotFound', {

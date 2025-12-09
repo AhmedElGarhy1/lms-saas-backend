@@ -62,7 +62,7 @@ export class BranchesController {
     @Param('branchId', ParseUUIDPipe) branchId: string,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.branchesService.getBranch(branchId, actor);
+    const result = await this.branchesService.getBranch(branchId, actor, true); // includeDeleted: true for API endpoints
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.branch' },

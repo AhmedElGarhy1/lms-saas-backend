@@ -25,13 +25,15 @@ export class LevelsService extends BaseService {
     return this.levelsRepository.paginateLevels(paginateDto, actor.centerId!);
   }
 
-  async getLevel(levelId: string, actor: ActorUser) {
+  async getLevel(levelId: string, actor: ActorUser, includeDeleted = false) {
     await this.accessControlHelperService.validateCenterAccess({
       userProfileId: actor.userProfileId,
       centerId: actor.centerId!,
     });
 
-    const level = await this.levelsRepository.findOne(levelId);
+    const level = includeDeleted
+      ? await this.levelsRepository.findOneSoftDeletedById(levelId)
+      : await this.levelsRepository.findOne(levelId);
 
     if (!level) {
       throw new ResourceNotFoundException('t.messages.withIdNotFound', {

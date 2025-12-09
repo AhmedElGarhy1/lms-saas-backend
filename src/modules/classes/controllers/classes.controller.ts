@@ -69,7 +69,7 @@ export class ClassesController {
     @Param('classId', ParseUUIDPipe) classId: string,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.classesService.getClass(classId, actor);
+    const result = await this.classesService.getClass(classId, actor, true); // includeDeleted: true for API endpoints
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.class' },

@@ -53,9 +53,9 @@ export class CentersService extends BaseService {
   async findCenterById(
     centerId: string,
     actor?: ActorUser,
-    isDeleted?: boolean,
+    includeDeleted = false,
   ): Promise<Center> {
-    const center = isDeleted
+    const center = includeDeleted
       ? await this.centersRepository.findOneSoftDeletedById(centerId)
       : await this.centersRepository.findOne(centerId);
     if (!center) {

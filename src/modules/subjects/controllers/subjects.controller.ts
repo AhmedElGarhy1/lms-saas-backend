@@ -69,7 +69,11 @@ export class SubjectsController {
     @Param('subjectId', ParseUUIDPipe) subjectId: string,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.subjectsService.getSubject(subjectId, actor);
+    const result = await this.subjectsService.getSubject(
+      subjectId,
+      actor,
+      true,
+    ); // includeDeleted: true for API endpoints
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.subject' },
