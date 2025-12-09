@@ -105,16 +105,16 @@
 
 <!-- groups/classess -->
 
-[ ] update translations
+[x] update translations
 [ ] student assign
 [x] add duration to class creation and groups use it
 [x] fix date issues in creation
-[ ] center creation must have branch
+[x] center creation must have branch
 [ ] update branch and center entities with reasonable parameters
 [ ] in update class duration throw error or rechecking teacher sechdule and all students sechdules and display the error with some helper dialog to solve the issue then update (need some work)
 [ ] readable and conditional display for calsses strategies for perentage or fixed
-[ ] we can't have student within same class in more that one group
-[ ] in case on inside entity edit disable some files to force it to not change ed: class add group we can't select class becuase we already in class
+[x] we can't have student within same class in more that one group
+[ ] in case on inside entity edit disable some fields to force it to not change ed: class add group we can't select class becuase we already in class
 [ ] add tooltip for actions in view and don't display the view (because you already in view mode) and don't display delete
 [x] update backend to not rely on base entity to get other entites ex: don't relay on class entity to get groups and don't rely on group to get class
 

@@ -7,6 +7,7 @@ import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity
 @Index(['groupId'])
 @Index(['studentUserProfileId'])
 @Index(['classId'])
+@Index(['classId', 'studentUserProfileId'], { unique: true })
 @Unique(['groupId', 'studentUserProfileId'])
 export class GroupStudent extends BaseEntity {
   @Column({ type: 'uuid' })

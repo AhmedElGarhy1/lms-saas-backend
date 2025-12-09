@@ -185,15 +185,7 @@
     "readOnly": "Read-only",
     "profileSelection": "Profile Selection",
     "classStaffAccess": "Class Staff Access",
-    "groupStudent": "Group Student",
-    "staff": "Staff",
-    "student": "Student",
-    "teacher": "Teacher",
-    "admin": "Admin",
-    "adminScope": "Admin Scope",
-    "branchAccess": "Branch Access",
-    "centerAccess": "Center Access",
-    "userAccess": "User Access"
+    "groupStudent": "Group Student"
   },
   "messages": {
     "created": "{resource} created successfully",
@@ -622,15 +614,7 @@
         "subtitle": "Manage learning centers"
       },
       "roles": {
-        "subtitle": "Manage system roles and permissions",
-        "superAdmin": {
-          "name": "Super Administrator",
-          "description": "Ultimate system administrator with full access to everything"
-        },
-        "owner": {
-          "name": "Owner",
-          "description": "Ultimate center owner with full access within the center"
-        }
+        "subtitle": "Manage system roles and permissions"
       },
       "staff": {
         "subtitle": "Manage staff members and their permissions"
@@ -849,6 +833,16 @@
       "invalid": "{field} is invalid",
       "minLength": "{field} must be at least {min} characters",
       "maxLength": "{field} must not exceed {max} characters"
+    }
+  },
+  "roles": {
+    "superAdmin": {
+      "name": "Super Administrator",
+      "description": "Ultimate system administrator with full access to everything"
+    },
+    "owner": {
+      "name": "Owner",
+      "description": "Ultimate center owner with full access within the center"
     }
   }
 }
