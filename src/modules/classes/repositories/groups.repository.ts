@@ -7,6 +7,10 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { GroupStudent } from '../entities/group-student.entity';
 
+export interface GroupWithStudentCount extends Group {
+  studentsCount: number;
+}
+
 @Injectable()
 export class GroupsRepository extends BaseRepository<Group> {
   constructor(
@@ -22,7 +26,7 @@ export class GroupsRepository extends BaseRepository<Group> {
   async paginateGroups(
     paginateDto: PaginateGroupsDto,
     centerId: string,
-  ): Promise<Pagination<Group>> {
+  ): Promise<Pagination<GroupWithStudentCount>> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('group')
       // Join relations for id and name fields only (not full entities)
@@ -35,6 +39,7 @@ export class GroupsRepository extends BaseRepository<Group> {
       .addSelect([
         'class.id',
         'class.name',
+        'class.duration',
         'branch.id',
         'branch.location',
         'center.id',
@@ -74,7 +79,7 @@ export class GroupsRepository extends BaseRepository<Group> {
       queryBuilder,
       {
         includeComputedFields: true,
-        computedFieldsMapper: (entity: Group, raw: any) => {
+        computedFieldsMapper: (entity: Group, raw: any): Group => {
           // Map computed student count from raw data
           const studentsCount = parseInt(raw.studentsCount || '0', 10);
 
@@ -82,16 +87,16 @@ export class GroupsRepository extends BaseRepository<Group> {
           return {
             ...entity,
             studentsCount,
-          } as any;
+          } as GroupWithStudentCount;
         },
       },
-    );
+    ) as Promise<Pagination<GroupWithStudentCount>>;
   }
 
   async findGroupWithRelations(
     id: string,
     includeDeleted = false,
-  ): Promise<Group | null> {
+  ): Promise<GroupWithStudentCount | null> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('group')
       // Join relations for id and name fields only (not full entities)
@@ -104,6 +109,7 @@ export class GroupsRepository extends BaseRepository<Group> {
       .addSelect([
         'class.id',
         'class.name',
+        'class.duration',
         'branch.id',
         'branch.location',
         'center.id',
@@ -142,7 +148,7 @@ export class GroupsRepository extends BaseRepository<Group> {
     return {
       ...entity,
       studentsCount,
-    } as any;
+    } as GroupWithStudentCount;
   }
 
   /**

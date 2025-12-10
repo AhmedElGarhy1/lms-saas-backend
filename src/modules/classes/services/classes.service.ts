@@ -7,10 +7,7 @@ import { ClassValidationService } from './class-validation.service';
 import { PaymentStrategyService } from './payment-strategy.service';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import {
-  ResourceNotFoundException,
-  InsufficientPermissionsException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Class } from '../entities/class.entity';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
@@ -22,10 +19,8 @@ import {
   ClassRestoredEvent,
 } from '../events/class.events';
 import { ClassAccessService } from './class-access.service';
-import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Transactional } from '@nestjs-cls/transactional';
-import { EventEmitterHelper } from '../utils/event-emitter.helper';
 
 @Injectable()
 export class ClassesService extends BaseService {
@@ -35,7 +30,6 @@ export class ClassesService extends BaseService {
     private readonly paymentStrategyService: PaymentStrategyService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly classAccessService: ClassAccessService,
-    private readonly userProfileService: UserProfileService,
   ) {
     super();
   }
@@ -74,10 +68,25 @@ export class ClassesService extends BaseService {
       classId,
       includeDeleted,
     );
-    await this.validateClassAccess(classEntity, classId, actor);
-    // validateClassAccess throws if classEntity is null, so it's safe to assert non-null
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return classEntity!;
+
+    if (!classEntity) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.class',
+        identifier: 't.resources.identifier',
+        value: classId,
+      });
+    }
+
+    // For STAFF: validate class access via ClassStaff assignment
+    // For non-STAFF: no validation needed (ContextGuard ensures center access)
+    if (actor.profileType === ProfileType.STAFF) {
+      await this.classAccessService.validateClassAccess(
+        actor.userProfileId,
+        classId,
+      );
+    }
+
+    return classEntity;
   }
 
   /**
@@ -89,6 +98,7 @@ export class ClassesService extends BaseService {
    * @returns Created class entity with all relations loaded
    * @throws BusinessLogicException if validation fails
    */
+  @Transactional()
   async createClass(
     createClassDto: CreateClassDto,
     actor: ActorUser,
@@ -105,10 +115,10 @@ export class ClassesService extends BaseService {
       createClassDto;
 
     // Create class entity
-    const classEntity = await this.createClassEntity(
-      classData,
-      actor.centerId!,
-    );
+    const classEntity = await this.classesRepository.create({
+      ...classData,
+      centerId: actor.centerId!,
+    });
 
     // Create payment strategies
     await this.paymentStrategyService.createStrategiesForClass(
@@ -118,48 +128,20 @@ export class ClassesService extends BaseService {
     );
 
     // Load class with relations and emit event
-    return this.loadClassWithRelationsAndEmit(
-      classEntity.id,
-      ClassEvents.CREATED,
-      actor,
-    );
-  }
-
-  private async createClassEntity(
-    classData: Omit<
-      CreateClassDto,
-      'studentPaymentStrategy' | 'teacherPaymentStrategy'
-    >,
-    centerId: string,
-  ): Promise<Class> {
-    return this.classesRepository.create({
-      ...classData,
-      centerId,
-    });
-  }
-
-  private async loadClassWithRelationsAndEmit(
-    classId: string,
-    event: ClassEvents.CREATED | ClassEvents.UPDATED,
-    actor: ActorUser,
-  ): Promise<Class> {
     const classWithRelations =
-      await this.classesRepository.findClassWithRelations(classId);
+      await this.classesRepository.findClassWithRelations(classEntity.id);
 
     if (!classWithRelations) {
       throw new ResourceNotFoundException('t.messages.withIdNotFound', {
         resource: 't.resources.class',
         identifier: 't.resources.identifier',
-        value: classId,
+        value: classEntity.id,
       });
     }
 
-    await EventEmitterHelper.emitClassEvent(
-      this.typeSafeEventEmitter,
-      event,
-      classWithRelations,
-      actor,
-      actor.centerId!,
+    await this.typeSafeEventEmitter.emitAsync(
+      ClassEvents.CREATED,
+      new ClassCreatedEvent(classWithRelations, actor, actor.centerId!),
     );
 
     return classWithRelations;
@@ -171,7 +153,8 @@ export class ClassesService extends BaseService {
     data: UpdateClassDto,
     actor: ActorUser,
   ): Promise<Class> {
-    const classEntity = await this.getClass(classId, actor);
+    // Fetch class for validation (basic fields only, no relations needed)
+    const classEntity = await this.classesRepository.findOneOrThrow(classId);
 
     // Validate class update
     await this.classValidationService.validateClassUpdate(
@@ -189,8 +172,7 @@ export class ClassesService extends BaseService {
       ...classUpdateData
     } = data;
 
-    // Update class entity
-    await this.updateClassEntity(classId, classUpdateData);
+    await this.classesRepository.update(classId, classUpdateData);
 
     // Update payment strategies if provided
     await this.paymentStrategyService.updateStrategiesForClass(
@@ -199,33 +181,24 @@ export class ClassesService extends BaseService {
       teacherPaymentStrategy,
     );
 
-    // Load updated class with relations and emit event
-    return this.loadClassWithRelationsAndEmit(
-      classId,
-      ClassEvents.UPDATED,
-      actor,
-    );
-  }
+    // Fetch updated class with relations for return and event
+    const classWithRelations =
+      await this.classesRepository.findClassWithRelations(classId);
 
-  private async updateClassEntity(
-    classId: string,
-    classUpdateData: Omit<
-      UpdateClassDto,
-      'studentPaymentStrategy' | 'teacherPaymentStrategy'
-    >,
-  ): Promise<void> {
-    const updatedClass = await this.classesRepository.update(
-      classId,
-      classUpdateData,
-    );
-
-    if (!updatedClass) {
+    if (!classWithRelations) {
       throw new ResourceNotFoundException('t.messages.withIdNotFound', {
         resource: 't.resources.class',
         identifier: 't.resources.identifier',
         value: classId,
       });
     }
+
+    await this.typeSafeEventEmitter.emitAsync(
+      ClassEvents.UPDATED,
+      new ClassUpdatedEvent(classWithRelations, actor, actor.centerId!),
+    );
+
+    return classWithRelations;
   }
 
   /**
@@ -238,68 +211,13 @@ export class ClassesService extends BaseService {
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
   async deleteClass(classId: string, actor: ActorUser): Promise<void> {
-    await this.getClass(classId, actor);
+    await this.classesRepository.findOneOrThrow(classId);
     await this.classesRepository.softRemove(classId);
 
     await this.typeSafeEventEmitter.emitAsync(
       ClassEvents.DELETED,
       new ClassDeletedEvent(classId, actor, actor.centerId!),
     );
-  }
-
-  /**
-   * Validates class access for an actor.
-   * For staff profiles, checks ClassStaff assignment.
-   * For other profiles, uses existing centerId validation.
-   *
-   * @param classEntity - The class entity (can be null)
-   * @param classId - The class ID
-   * @param actor - The actor performing the action
-   * @throws ResourceNotFoundException if class doesn't exist
-   * @throws InsufficientPermissionsException if actor doesn't have access
-   */
-  private async validateClassAccess(
-    classEntity: Class | null,
-    classId: string,
-    actor: ActorUser,
-  ): Promise<void> {
-    if (!classEntity) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.class',
-        identifier: 't.resources.identifier',
-        value: classId,
-      });
-    }
-
-    // Check if actor is staff profile
-    const actorProfile = await this.userProfileService.findOne(
-      actor.userProfileId,
-    );
-
-    if (actorProfile?.profileType === ProfileType.STAFF) {
-      // For staff, check ClassStaff assignment
-      const canAccess = await this.classAccessService.canAccessClass(
-        actor.userProfileId,
-        classId,
-      );
-      if (!canAccess) {
-        throw new InsufficientPermissionsException(
-          't.messages.actionUnauthorized',
-          {
-            action: 't.buttons.view',
-            resource: 't.resources.class',
-          },
-        );
-      }
-    } else {
-      // For non-staff, use existing centerId validation
-      this.validateResourceAccess(
-        classEntity,
-        classId,
-        actor,
-        't.resources.class',
-      );
-    }
   }
 
   /**
@@ -314,12 +232,8 @@ export class ClassesService extends BaseService {
   async restoreClass(classId: string, actor: ActorUser): Promise<void> {
     const classEntity =
       await this.classesRepository.findOneSoftDeletedById(classId);
-    await this.validateClassAccess(classEntity, classId, actor);
 
-    await this.classesRepository.restore(classId);
-
-    const restoredClass = await this.classesRepository.findOne(classId);
-    if (!restoredClass) {
+    if (!classEntity) {
       throw new ResourceNotFoundException('t.messages.withIdNotFound', {
         resource: 't.resources.class',
         identifier: 't.resources.identifier',
@@ -327,9 +241,20 @@ export class ClassesService extends BaseService {
       });
     }
 
+    // For STAFF: validate class access via ClassStaff assignment
+    // For non-STAFF: no validation needed (ContextGuard ensures center access)
+    if (actor.profileType === ProfileType.STAFF) {
+      await this.classAccessService.validateClassAccess(
+        actor.userProfileId,
+        classId,
+      );
+    }
+
+    await this.classesRepository.restore(classId);
+
     await this.typeSafeEventEmitter.emitAsync(
       ClassEvents.RESTORED,
-      new ClassRestoredEvent(restoredClass, actor, actor.centerId!),
+      new ClassRestoredEvent(classEntity, actor, actor.centerId!),
     );
   }
 }

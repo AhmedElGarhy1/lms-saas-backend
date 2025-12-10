@@ -1,4 +1,4 @@
-import { parse, format, addMinutes, isSameDay } from 'date-fns';
+import { parse, format, addMinutes } from 'date-fns';
 
 /**
  * Utility functions for time calculations in schedule items.
@@ -33,30 +33,4 @@ export function calculateEndTime(
   // Note: If duration exceeds 24 hours, this will show the time on the next day
   // (e.g., 23:30 + 60 minutes = 00:30), which is handled gracefully
   return format(endDate, 'HH:mm');
-}
-
-/**
- * Validates that the calculated end time doesn't exceed 24:00 for same-day validation.
- * This ensures schedule items don't span across days.
- *
- * @param startTime - Start time in HH:mm format
- * @param durationMinutes - Duration in minutes
- * @returns true if end time is within the same day (before or at 24:00), false otherwise
- */
-export function isEndTimeWithinSameDay(
-  startTime: string,
-  durationMinutes: number,
-): boolean {
-  // Use a reference date (today at midnight) for parsing
-  const referenceDate = new Date();
-  referenceDate.setHours(0, 0, 0, 0);
-
-  // Parse the time string using date-fns parse
-  const startDate = parse(startTime, 'HH:mm', referenceDate);
-
-  // Add duration using date-fns addMinutes
-  const endDate = addMinutes(startDate, durationMinutes);
-
-  // Check if end time is still on the same day using date-fns isSameDay
-  return isSameDay(referenceDate, endDate);
 }

@@ -28,7 +28,8 @@ import { BulkOperationService } from '@/shared/common/services/bulk-operation.se
 import { ScheduleService } from './schedule.service';
 import { ScheduleItemDto } from '../dto/schedule-item.dto';
 import { Transactional } from '@nestjs-cls/transactional';
-import { EventEmitterHelper } from '../utils/event-emitter.helper';
+import { ClassAccessService } from './class-access.service';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 @Injectable()
 export class GroupsService extends BaseService {
@@ -41,6 +42,7 @@ export class GroupsService extends BaseService {
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly bulkOperationService: BulkOperationService,
     private readonly scheduleService: ScheduleService,
+    private readonly classAccessService: ClassAccessService,
   ) {
     super();
   }
@@ -78,7 +80,23 @@ export class GroupsService extends BaseService {
       groupId,
       includeDeleted,
     );
-    this.validateResourceAccess(group, groupId, actor, 't.resources.group');
+    if (!group) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.group',
+        identifier: 't.resources.identifier',
+        value: groupId,
+      });
+    }
+
+    // For STAFF: validate class access via ClassStaff assignment
+    // For non-STAFF: no validation needed (ContextGuard ensures center access)
+    if (actor.profileType === ProfileType.STAFF) {
+      await this.classAccessService.validateClassAccess(
+        actor.userProfileId,
+        group.classId,
+      );
+    }
+
     return group;
   }
 
@@ -91,19 +109,26 @@ export class GroupsService extends BaseService {
    * @returns Created group entity with all relations loaded
    * @throws BusinessLogicException if validation fails or schedule conflicts detected
    */
+  @Transactional()
   async createGroup(
     createGroupDto: CreateGroupDto,
     actor: ActorUser,
   ): Promise<Group> {
     // Validate group creation
-    const classEntity = await this.groupValidationService.validateGroupCreation(
-      createGroupDto,
+    const classEntity = await this.groupValidationService.validateGroup(
+      createGroupDto.classId,
+      createGroupDto.scheduleItems,
       actor,
-      actor.centerId!,
+      undefined,
     );
 
     // Create group entity
-    const group = await this.createGroupEntity(createGroupDto, classEntity);
+    const group = await this.groupsRepository.create({
+      classId: createGroupDto.classId,
+      branchId: classEntity.branchId,
+      centerId: classEntity.centerId,
+      name: createGroupDto.name,
+    });
 
     // Create schedule items
     await this.createScheduleItems(group.id, createGroupDto.scheduleItems);
@@ -111,28 +136,12 @@ export class GroupsService extends BaseService {
     // Load group with relations and emit event
     const createdGroup = await this.getGroup(group.id, actor);
 
-    await EventEmitterHelper.emitGroupEvent(
-      this.typeSafeEventEmitter,
+    await this.typeSafeEventEmitter.emitAsync(
       GroupEvents.CREATED,
-      createdGroup,
-      classEntity,
-      actor,
-      actor.centerId!,
+      new GroupCreatedEvent(createdGroup, classEntity, actor, actor.centerId!),
     );
 
     return createdGroup;
-  }
-
-  private async createGroupEntity(
-    dto: CreateGroupDto,
-    classEntity: Class,
-  ): Promise<Group> {
-    return this.groupsRepository.create({
-      classId: dto.classId,
-      branchId: classEntity.branchId,
-      centerId: classEntity.centerId,
-      name: dto.name,
-    });
   }
 
   private async createScheduleItems(
@@ -163,8 +172,8 @@ export class GroupsService extends BaseService {
     userProfileId: string,
     actor: ActorUser,
   ): Promise<void> {
-    // Verify group exists and actor has access
-    const group = await this.getGroup(groupId, actor);
+    // Verify group exists
+    const group = await this.groupsRepository.findOneOrThrow(groupId);
 
     // Get existing students
     const existingStudents =
@@ -182,10 +191,7 @@ export class GroupsService extends BaseService {
     }
 
     // Validate student (with branch access)
-    await this.groupValidationService.validateStudents(
-      [userProfileId],
-      actor.centerId!,
-    );
+    await this.groupValidationService.validateStudents([userProfileId], actor);
 
     // Check if student is already in another group of the same class
     // Business logic: interpret repository data
@@ -204,13 +210,13 @@ export class GroupsService extends BaseService {
     }
 
     // Check for schedule conflicts with other groups the student is assigned to
-    if (group.scheduleItems && group.scheduleItems.length > 0) {
-      const scheduleItems: ScheduleItemDto[] = group.scheduleItems.map(
-        (item) => ({
-          day: item.day,
-          startTime: item.startTime,
-        }),
-      );
+    const scheduleItems =
+      await this.scheduleItemsRepository.findByGroupId(groupId);
+    if (scheduleItems && scheduleItems.length > 0) {
+      const scheduleItemsDto: ScheduleItemDto[] = scheduleItems.map((item) => ({
+        day: item.day,
+        startTime: item.startTime,
+      }));
 
       // Fetch class entity separately instead of relying on relation
       const classEntity = await this.classesRepository.findOne(group.classId);
@@ -218,11 +224,14 @@ export class GroupsService extends BaseService {
         throw new BusinessLogicException('t.messages.validationFailed');
       }
 
-      await this.scheduleService.checkStudentScheduleConflicts(
-        userProfileId,
-        scheduleItems,
+      // Check for student schedule conflicts
+      await this.scheduleService.validateScheduleConflicts(
+        scheduleItemsDto,
         classEntity.duration,
-        undefined, // Not excluding any group (new assignment)
+        {
+          studentIds: [userProfileId],
+          excludeGroupIds: undefined, // Not excluding any group (new assignment)
+        },
       );
     }
 
@@ -254,8 +263,8 @@ export class GroupsService extends BaseService {
       throw new BusinessLogicException('t.messages.validationFailed');
     }
 
-    // Verify group exists and actor has access
-    await this.getGroup(groupId, actor);
+    // Verify group exists
+    await this.groupsRepository.findOneOrThrow(groupId);
 
     // Use bulk operation service for consistent error handling
     return await this.bulkOperationService.executeBulk(
@@ -273,15 +282,15 @@ export class GroupsService extends BaseService {
     data: UpdateGroupDto,
     actor: ActorUser,
   ): Promise<Group> {
-    const group = await this.getGroup(groupId, actor);
+    const group = await this.groupsRepository.findOneOrThrow(groupId);
 
     // Validate group update
-    await this.groupValidationService.validateGroupUpdate(
-      groupId,
-      data,
+    await this.groupValidationService.validateGroup(
+      group.classId,
+      data.scheduleItems,
       actor,
-      actor.centerId!,
-      group,
+      [groupId],
+      groupId,
     );
 
     // Update name if provided
@@ -297,13 +306,9 @@ export class GroupsService extends BaseService {
     // Load updated group and emit event
     const updatedGroup = await this.getGroup(groupId, actor);
 
-    await EventEmitterHelper.emitGroupEvent(
-      this.typeSafeEventEmitter,
+    await this.typeSafeEventEmitter.emitAsync(
       GroupEvents.UPDATED,
-      updatedGroup,
-      null,
-      actor,
-      actor.centerId!,
+      new GroupUpdatedEvent(updatedGroup, actor, actor.centerId!),
     );
 
     return updatedGroup;
@@ -331,7 +336,7 @@ export class GroupsService extends BaseService {
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
   async deleteGroup(groupId: string, actor: ActorUser): Promise<void> {
-    await this.getGroup(groupId, actor);
+    await this.groupsRepository.findOneOrThrow(groupId);
     await this.groupsRepository.softRemove(groupId);
 
     await this.typeSafeEventEmitter.emitAsync(
@@ -351,12 +356,7 @@ export class GroupsService extends BaseService {
    */
   async restoreGroup(groupId: string, actor: ActorUser): Promise<void> {
     const group = await this.groupsRepository.findOneSoftDeletedById(groupId);
-    this.validateResourceAccess(group, groupId, actor, 't.resources.group');
-
-    await this.groupsRepository.restore(groupId);
-
-    const restoredGroup = await this.groupsRepository.findOne(groupId);
-    if (!restoredGroup) {
+    if (!group) {
       throw new ResourceNotFoundException('t.messages.withIdNotFound', {
         resource: 't.resources.group',
         identifier: 't.resources.identifier',
@@ -364,9 +364,11 @@ export class GroupsService extends BaseService {
       });
     }
 
+    await this.groupsRepository.restore(groupId);
+
     await this.typeSafeEventEmitter.emitAsync(
       GroupEvents.RESTORED,
-      new GroupRestoredEvent(restoredGroup, actor, actor.centerId!),
+      new GroupRestoredEvent(group, actor, actor.centerId!),
     );
   }
 
@@ -391,8 +393,8 @@ export class GroupsService extends BaseService {
       throw new BusinessLogicException('t.messages.validationFailed');
     }
 
-    // Verify group exists and actor has access
-    await this.getGroup(groupId, actor);
+    // Verify group exists
+    await this.groupsRepository.findOneOrThrow(groupId);
 
     // Use bulk operation service for consistent error handling
     return await this.bulkOperationService.executeBulk(

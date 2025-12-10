@@ -302,12 +302,27 @@ export class UserRepository extends BaseRepository<User> {
     params: PaginateStudentDto,
     actor: ActorUser,
   ): Promise<Pagination<UserResponseDto>> {
-    const { centerId, centerAccess, displayDetailes, isDeleted } = params;
+    const {
+      centerId,
+      centerAccess,
+      displayDetailes,
+      isDeleted,
+      groupId,
+      groupAccess,
+      classId,
+      classAccess,
+    } = params;
     delete params.isDeleted;
 
     const includeCenter =
       centerId &&
       (!centerAccess || centerAccess === AccessibleUsersEnum.INCLUDE);
+
+    const includeGroup =
+      groupId && (!groupAccess || groupAccess === AccessibleUsersEnum.INCLUDE);
+
+    const includeClass =
+      classId && (!classAccess || classAccess === AccessibleUsersEnum.INCLUDE);
 
     // Create query builder with proper JOINs
     const queryBuilder = this.getRepository()
@@ -317,6 +332,20 @@ export class UserRepository extends BaseRepository<User> {
       .where('userProfiles.profileType = :profileType', {
         profileType: ProfileType.STUDENT,
       });
+
+    if (includeGroup) {
+      queryBuilder.andWhere(
+        'EXISTS (SELECT 1 FROM group_students gs WHERE gs."studentUserProfileId" = userProfiles.id AND gs."groupId" = :groupId)',
+        { groupId },
+      );
+    }
+
+    if (includeClass) {
+      queryBuilder.andWhere(
+        'EXISTS (SELECT 1 FROM group_students gs WHERE gs."studentUserProfileId" = userProfiles.id AND gs."classId" = :classId)',
+        { classId },
+      );
+    }
 
     this.applyIsActiveFilter(
       queryBuilder,
@@ -373,6 +402,20 @@ export class UserRepository extends BaseRepository<User> {
         centerId,
         centerAccess,
       );
+    }
+    if (groupId && groupAccess) {
+      // filteredItems = await this.applyGroupAccess(
+      //   filteredItems,
+      //   groupId,
+      //   groupAccess,
+      // );
+    }
+    if (classId && classAccess) {
+      // filteredItems = await this.applyClassAccess(
+      //   filteredItems,
+      //   classId,
+      //   classAccess,
+      // );
     }
 
     filteredItems = this.prepareUsersResponse(filteredItems);

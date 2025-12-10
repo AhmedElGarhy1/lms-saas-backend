@@ -242,13 +242,37 @@ export class AccessDeniedException<
 export class BusinessLogicException<
   P extends I18nPath = I18nPath,
 > extends BaseTranslatableException<P> {
-  constructor(translationKey: P, translationArgs?: OptionalArgs<P>) {
+  constructor(
+    translationKey: P,
+    translationArgs?: OptionalArgs<P>,
+    details?: ErrorDetail[],
+  ) {
     super(
       HttpStatus.BAD_REQUEST,
       ErrorCode.BUSINESS_LOGIC_ERROR,
       'Bad Request',
       translationKey,
       translationArgs,
+      details,
+    );
+  }
+}
+
+export class ScheduleConflictException<
+  P extends I18nPath = I18nPath,
+> extends BaseTranslatableException<P> {
+  constructor(
+    translationKey: P,
+    details?: ErrorDetail[],
+    translationArgs?: OptionalArgs<P>,
+  ) {
+    super(
+      HttpStatus.BAD_REQUEST,
+      ErrorCode.SCHEDULE_CONFLICT_ERROR,
+      'Bad Request',
+      translationKey,
+      translationArgs,
+      details,
     );
   }
 }

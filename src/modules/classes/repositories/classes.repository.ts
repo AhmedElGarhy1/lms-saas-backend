@@ -8,6 +8,7 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { ScheduleConflictQueryBuilder } from '../utils/schedule-conflict-query-builder';
 import { Group } from '../entities/group.entity';
 import { GroupStudent } from '../entities/group-student.entity';
+import { TeacherConflictDto } from '../dto/schedule-conflict.dto';
 
 @Injectable()
 export class ClassesRepository extends BaseRepository<Class> {
@@ -213,16 +214,16 @@ export class ClassesRepository extends BaseRepository<Class> {
   }
 
   /**
-   * Find teacher schedule conflicts in the database.
-   * Pure data access method - returns conflict data if found, null otherwise.
-   * No business logic interpretation.
+   * Find all teacher schedule conflicts for duration update with aggregated data.
+   * Pure data access method - returns all conflicts with teacher information.
+   * All aggregation done at database level using JSON_AGG.
    *
    * @param teacherUserProfileId - The teacher's user profile ID
    * @param newScheduleItems - Array of new schedule items to check for conflicts (with duration)
    * @param excludeGroupIds - Optional group IDs to exclude from conflict check
-   * @returns Conflict data if found, null otherwise
+   * @returns Teacher conflict data with all conflicts aggregated, or null if no conflicts
    */
-  async findTeacherScheduleConflicts(
+  async findAllTeacherScheduleConflictsForDurationUpdate(
     teacherUserProfileId: string,
     newScheduleItems: Array<{
       day: string;
@@ -230,7 +231,7 @@ export class ClassesRepository extends BaseRepository<Class> {
       duration: number;
     }>,
     excludeGroupIds?: string[],
-  ): Promise<{ conflictDay: string; conflictTime: string } | null> {
+  ): Promise<TeacherConflictDto | null> {
     if (newScheduleItems.length === 0) {
       return null;
     }
@@ -253,27 +254,49 @@ export class ClassesRepository extends BaseRepository<Class> {
     ScheduleConflictQueryBuilder.addExcludeParameter(params, excludeGroupIds);
 
     const query = `
+      WITH distinct_conflicts AS (
+        SELECT DISTINCT
+          c."teacherUserProfileId",
+          u.name as "teacherName",
+          existing.day,
+          existing."startTime" || '-' || 
+            TO_CHAR(
+              TO_TIMESTAMP(existing."startTime", 'HH24:MI') + (COALESCE(c.duration, 60) || ' minutes')::INTERVAL,
+              'HH24:MI'
+            ) as "timeRange"
+        FROM schedule_items existing
+        INNER JOIN groups g ON g.id = existing."groupId"
+        INNER JOIN classes c ON c.id = g."classId"
+        INNER JOIN user_profiles up ON up.id = c."teacherUserProfileId"
+        INNER JOIN users u ON u.id = up."userId"
+        WHERE c."teacherUserProfileId" = $1
+          AND c."deletedAt" IS NULL
+          AND g."deletedAt" IS NULL
+          ${excludeInfo.condition}
+          AND (${conflictConditions})
+      ),
+      conflict_data AS (
+        SELECT *
+        FROM distinct_conflicts
+        ORDER BY day, "timeRange"
+      )
       SELECT 
-        existing.day as "conflictDay",
-        existing."startTime" || '-' || 
-        TO_CHAR(
-          TO_TIMESTAMP(existing."startTime", 'HH24:MI') + (COALESCE(c.duration, 60) || ' minutes')::INTERVAL,
-          'HH24:MI'
-        ) as "conflictTime"
-      FROM schedule_items existing
-      INNER JOIN groups g ON g.id = existing."groupId"
-      INNER JOIN classes c ON c.id = g."classId"
-      WHERE c."teacherUserProfileId" = $1
-        AND c."deletedAt" IS NULL
-        AND g."deletedAt" IS NULL
-        ${excludeInfo.condition}
-        AND (${conflictConditions})
-      LIMIT 1
+        "teacherUserProfileId",
+        "teacherName",
+        JSON_AGG(
+          JSON_BUILD_OBJECT(
+            'day', day,
+            'timeRange', "timeRange"
+          )
+        ) as conflicts
+      FROM conflict_data
+      GROUP BY "teacherUserProfileId", "teacherName"
     `;
 
     interface ConflictResult {
-      conflictDay: string;
-      conflictTime: string;
+      teacherUserProfileId: string;
+      teacherName: string;
+      conflicts: Array<{ day: string; timeRange: string }> | null;
     }
 
     const result = await this.getEntityManager().query<ConflictResult[]>(
@@ -281,10 +304,11 @@ export class ClassesRepository extends BaseRepository<Class> {
       params,
     );
 
-    if (result && result.length > 0) {
+    if (result && result.length > 0 && result[0].conflicts) {
       return {
-        conflictDay: result[0].conflictDay,
-        conflictTime: result[0].conflictTime,
+        teacherUserProfileId: result[0].teacherUserProfileId,
+        teacherName: result[0].teacherName,
+        conflicts: result[0].conflicts,
       };
     }
 

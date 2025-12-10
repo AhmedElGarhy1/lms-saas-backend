@@ -10,6 +10,8 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { ScheduleItemDto } from './schedule-item.dto';
+import { Exists } from '@/shared/common/decorators/exists.decorator';
+import { Class } from '../entities/class.entity';
 
 export class CreateGroupDto {
   @ApiProperty({
@@ -17,6 +19,7 @@ export class CreateGroupDto {
     example: 'uuid',
   })
   @IsUUID(4)
+  @Exists(Class)
   classId: string;
 
   @ApiProperty({

@@ -1,14 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import {
+  BusinessLogicException,
+  ScheduleConflictException,
+  ErrorDetail,
+} from '@/shared/common/exceptions/custom.exceptions';
+import { TranslationMessage } from '@/generated/i18n-type-map.generated';
 import { ScheduleItemDto } from '../dto/schedule-item.dto';
 import { DayOfWeek } from '../enums/day-of-week.enum';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ClassesRepository } from '../repositories/classes.repository';
 import { GroupStudentsRepository } from '../repositories/group-students.repository';
 import {
-  calculateEndTime,
-  isEndTimeWithinSameDay,
-} from '../utils/time-calculator.util';
+  TeacherConflictDto,
+  StudentConflictDto,
+} from '../dto/schedule-conflict.dto';
+import {
+  areIntervalsOverlapping,
+  parse,
+  addMinutes,
+  startOfWeek,
+  addDays,
+} from 'date-fns';
 
 @Injectable()
 export class ScheduleService extends BaseService {
@@ -20,64 +32,51 @@ export class ScheduleService extends BaseService {
   }
 
   /**
-   * Validates schedule items for format, time ranges, and overlaps.
+   * Validates schedule items for overlaps.
+   * Format and type validations are handled by DTO validators.
    *
    * @param items - Array of schedule items to validate
    * @param duration - Duration in minutes (from class)
-   * @throws BusinessLogicException if items are empty, invalid format, or have overlaps
+   * @throws BusinessLogicException if items have overlaps
    */
   validateScheduleItems(items: ScheduleItemDto[], duration: number): void {
-    if (!items || items.length === 0) {
-      throw new BusinessLogicException('t.messages.validationFailed');
-    }
+    // Helper to get reference date for a specific day of week
+    const getReferenceDateForDay = (day: DayOfWeek): Date => {
+      const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }); // Monday = 1
+      const dayMap: Record<DayOfWeek, number> = {
+        [DayOfWeek.MON]: 0,
+        [DayOfWeek.TUE]: 1,
+        [DayOfWeek.WED]: 2,
+        [DayOfWeek.THU]: 3,
+        [DayOfWeek.FRI]: 4,
+        [DayOfWeek.SAT]: 5,
+        [DayOfWeek.SUN]: 6,
+      };
+      return addDays(weekStart, dayMap[day]);
+    };
 
-    // Validate each item
-    for (const item of items) {
-      this.validateScheduleItem(item, duration);
-    }
-
-    // Check for overlaps
-    this.checkOverlaps(items, duration);
-  }
-
-  private validateScheduleItem(item: ScheduleItemDto, duration: number): void {
-    // Validate day
-    if (!Object.values(DayOfWeek).includes(item.day)) {
-      throw new BusinessLogicException('t.messages.validationFailed');
-    }
-
-    // Validate time format
-    const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
-    if (!timeRegex.test(item.startTime)) {
-      throw new BusinessLogicException('t.messages.validationFailed');
-    }
-
-    // Validate duration
-    if (!duration || duration <= 0) {
-      throw new BusinessLogicException('t.messages.validationFailed');
-    }
-
-    // Validate that end time doesn't exceed 24:00 (same-day validation)
-    if (!isEndTimeWithinSameDay(item.startTime, duration)) {
-      throw new BusinessLogicException('t.messages.validationFailed');
-    }
-  }
-
-  private checkOverlaps(items: ScheduleItemDto[], duration: number): void {
-    // Group by day
+    // Group by day and check overlaps
     const itemsByDay = new Map<DayOfWeek, ScheduleItemDto[]>();
     for (const item of items) {
-      if (!itemsByDay.has(item.day)) {
-        itemsByDay.set(item.day, []);
-      }
-      itemsByDay.get(item.day)!.push(item);
+      const dayItems = itemsByDay.get(item.day) || [];
+      dayItems.push(item);
+      itemsByDay.set(item.day, dayItems);
     }
 
     // Check overlaps for each day
     for (const [day, dayItems] of itemsByDay.entries()) {
+      const referenceDate = getReferenceDateForDay(day);
+
+      // Helper to create interval from schedule item (using cached reference date)
+      const createInterval = (item: ScheduleItemDto) => {
+        const start = parse(item.startTime, 'HH:mm', referenceDate);
+        return { start, end: addMinutes(start, duration) };
+      };
+
       for (let i = 0; i < dayItems.length; i++) {
+        const interval1 = createInterval(dayItems[i]);
         for (let j = i + 1; j < dayItems.length; j++) {
-          if (this.itemsOverlap(dayItems[i], dayItems[j], duration)) {
+          if (areIntervalsOverlapping(interval1, createInterval(dayItems[j]))) {
             throw new BusinessLogicException('t.messages.validationFailed');
           }
         }
@@ -85,128 +84,146 @@ export class ScheduleService extends BaseService {
     }
   }
 
-  private itemsOverlap(
-    item1: ScheduleItemDto,
-    item2: ScheduleItemDto,
-    duration: number,
-  ): boolean {
-    const [start1Hours, start1Minutes] = item1.startTime.split(':').map(Number);
-    const start1Total = start1Hours * 60 + start1Minutes;
-    const end1Total = start1Total + duration;
-
-    const [start2Hours, start2Minutes] = item2.startTime.split(':').map(Number);
-    const start2Total = start2Hours * 60 + start2Minutes;
-    const end2Total = start2Total + duration;
-
-    // Check if they overlap: start1 < end2 AND start2 < end1
-    return start1Total < end2Total && start2Total < end1Total;
-  }
-
-  checkScheduleConflicts(
-    groupId: string,
-    items: ScheduleItemDto[],
-    duration: number,
-  ): void {
-    // This can be extended to check conflicts with other groups
-    // For now, just validate the items themselves
-    this.validateScheduleItems(items, duration);
-  }
-
-  /**
-   * Check if two schedule items overlap (public method for external use)
-   */
-  scheduleItemsOverlap(
-    item1: ScheduleItemDto,
-    item2: ScheduleItemDto,
-    duration: number,
-  ): boolean {
-    return this.itemsOverlap(item1, item2, duration);
-  }
-
   /**
    * Check for teacher schedule conflicts across all groups.
-   * Validates that a teacher's new schedule items don't overlap with existing schedules
-   * in other groups they're assigned to.
+   * Returns structured conflict data with teacher information and all conflicts.
    *
    * @param teacherUserProfileId - The teacher's user profile ID
    * @param scheduleItems - New schedule items to check for conflicts
    * @param duration - Duration in minutes (from class)
-   * @param excludeGroupIds - Optional group ID(s) to exclude from conflict check (for updates)
-   * @throws BusinessLogicException if a schedule conflict is detected
+   * @param excludeGroupIds - Optional group IDs to exclude from conflict check
+   * @returns Teacher conflict data with all conflicts, or null if no conflicts
    */
   async checkTeacherScheduleConflicts(
     teacherUserProfileId: string,
     scheduleItems: ScheduleItemDto[],
     duration: number,
-    excludeGroupIds?: string | string[],
-  ): Promise<void> {
-    const items = scheduleItems.map((item) => ({
-      day: item.day,
-      startTime: item.startTime,
-      duration,
-    }));
+    excludeGroupIds?: string[],
+  ): Promise<TeacherConflictDto | null> {
+    const items = this.mapScheduleItemsWithDuration(scheduleItems, duration);
 
-    // Normalize to array for repository method
-    const groupIdsArray = excludeGroupIds
-      ? Array.isArray(excludeGroupIds)
-        ? excludeGroupIds
-        : [excludeGroupIds]
-      : undefined;
-
-    // Get conflict data from repository (pure data access)
-    const conflict = await this.classesRepository.findTeacherScheduleConflicts(
+    return await this.classesRepository.findAllTeacherScheduleConflictsForDurationUpdate(
       teacherUserProfileId,
       items,
-      groupIdsArray,
+      excludeGroupIds,
     );
-
-    // Business logic: interpret the data and throw exception if conflict exists
-    if (conflict) {
-      throw new BusinessLogicException('t.messages.validationFailed');
-    }
   }
 
   /**
    * Check for student schedule conflicts across all groups.
-   * Validates that a student's new schedule items don't overlap with existing schedules
-   * in other groups they're assigned to.
+   * Returns structured conflict data for all students with conflicts.
    *
-   * @param studentUserProfileId - The student's user profile ID
-   * @param newGroupScheduleItems - New schedule items from the group being assigned
+   * @param studentIds - Array of student user profile IDs to check
+   * @param scheduleItems - New schedule items to check for conflicts
    * @param duration - Duration in minutes (from class)
-   * @param excludeGroupIds - Optional group ID(s) to exclude from conflict check (for updates)
-   * @throws BusinessLogicException if a schedule conflict is detected
+   * @param excludeGroupIds - Optional group IDs to exclude from conflict check
+   * @returns Array of student conflict data, each with student info and their conflicts
    */
   async checkStudentScheduleConflicts(
-    studentUserProfileId: string,
-    newGroupScheduleItems: ScheduleItemDto[],
+    studentIds: string[],
+    scheduleItems: ScheduleItemDto[],
     duration: number,
-    excludeGroupIds?: string | string[],
+    excludeGroupIds?: string[],
+  ): Promise<StudentConflictDto[]> {
+    const items = this.mapScheduleItemsWithDuration(scheduleItems, duration);
+
+    return await this.groupStudentsRepository.findAllStudentScheduleConflictsForDurationUpdate(
+      studentIds,
+      items,
+      excludeGroupIds,
+    );
+  }
+
+  /**
+   * Validates schedule items and checks for conflicts with teachers and/or students.
+   * Throws ScheduleConflictException if any conflicts are found, with combined details.
+   *
+   * @param scheduleItems - Schedule items to validate and check for conflicts
+   * @param duration - Duration in minutes (from class)
+   * @param options - Options for conflict checking
+   * @param options.teacherUserProfileId - Optional teacher ID to check conflicts for
+   * @param options.studentIds - Optional array of student IDs to check conflicts for
+   * @param options.excludeGroupIds - Optional group IDs to exclude from conflict check
+   * @throws ScheduleConflictException if any conflicts are detected, with combined teacher and student conflict details
+   */
+  async validateScheduleConflicts(
+    scheduleItems: ScheduleItemDto[],
+    duration: number,
+    options: {
+      teacherUserProfileId?: string;
+      studentIds?: string[];
+      excludeGroupIds?: string[];
+    },
   ): Promise<void> {
-    const items = newGroupScheduleItems.map((item) => ({
+    // Validate schedule items for overlaps
+    this.validateScheduleItems(scheduleItems, duration);
+
+    const details: ErrorDetail[] = [];
+
+    // Check teacher conflicts if teacher ID provided
+    if (options.teacherUserProfileId) {
+      const teacherConflict = await this.checkTeacherScheduleConflicts(
+        options.teacherUserProfileId,
+        scheduleItems,
+        duration,
+        options.excludeGroupIds,
+      );
+
+      if (teacherConflict) {
+        details.push({
+          field: 'teacher',
+          value: teacherConflict,
+          message: {
+            key: 't.messages.validationFailed',
+            args: {},
+          } as TranslationMessage,
+        });
+      }
+    }
+
+    // Check student conflicts if student IDs provided
+    if (options.studentIds && options.studentIds.length > 0) {
+      const studentConflicts = await this.checkStudentScheduleConflicts(
+        options.studentIds,
+        scheduleItems,
+        duration,
+        options.excludeGroupIds,
+      );
+
+      if (studentConflicts.length > 0) {
+        details.push(
+          ...studentConflicts.map((conflict) => ({
+            field: 'student',
+            value: conflict,
+            message: {
+              key: 't.messages.validationFailed',
+              args: {},
+            } as TranslationMessage,
+          })),
+        );
+      }
+    }
+
+    // Throw exception if any conflicts found
+    if (details.length > 0) {
+      throw new ScheduleConflictException(
+        't.messages.validationFailed',
+        details,
+      );
+    }
+  }
+
+  /**
+   * Map schedule items to include duration for repository queries.
+   */
+  private mapScheduleItemsWithDuration(
+    scheduleItems: ScheduleItemDto[],
+    duration: number,
+  ): Array<{ day: string; startTime: string; duration: number }> {
+    return scheduleItems.map((item) => ({
       day: item.day,
       startTime: item.startTime,
       duration,
     }));
-
-    // Normalize to array for repository method
-    const groupIdsArray = excludeGroupIds
-      ? Array.isArray(excludeGroupIds)
-        ? excludeGroupIds
-        : [excludeGroupIds]
-      : undefined;
-
-    // Get conflict data from repository (pure data access)
-    const conflict =
-      await this.groupStudentsRepository.findStudentScheduleConflicts(
-        studentUserProfileId,
-        items,
-        groupIdsArray,
-      );
-
-    // Business logic: interpret the data and throw exception if conflict exists
-    if (conflict) {
-      throw new BusinessLogicException('t.messages.validationFailed');
-    }
   }
 }

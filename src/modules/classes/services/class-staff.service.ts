@@ -51,14 +51,6 @@ export class ClassStaffService extends BaseService {
       });
     }
 
-    // Validate actor has access to the class's center
-    this.validateResourceAccess(
-      classEntity,
-      classId,
-      actor,
-      't.resources.class',
-    );
-
     return this.classStaffRepository.findByClassId(classId);
   }
 

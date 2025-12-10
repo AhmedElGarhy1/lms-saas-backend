@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { In } from 'typeorm';
 import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ClassStaffRepository } from '../repositories/class-staff.repository';
@@ -75,11 +76,20 @@ export class ClassAccessService extends BaseService {
     classId: string,
     targetProfileIds: string[],
   ): Promise<string[]> {
-    return Promise.all(
-      targetProfileIds.map(async (targetProfileId) => {
-        const canAccess = await this.canAccessClass(targetProfileId, classId);
-        return canAccess ? targetProfileId : null;
-      }),
-    ).then((results) => results.filter((result) => result !== null));
+    if (!targetProfileIds || targetProfileIds.length === 0) {
+      return [];
+    }
+
+    // Batch fetch all ClassStaff assignments for the given class and profile IDs
+    const classStaffs = await this.classStaffRepository.findMany({
+      where: {
+        classId,
+        userProfileId: In(targetProfileIds),
+        isActive: true,
+      },
+    });
+
+    // Return only the profile IDs that have active access
+    return classStaffs.map((cs) => cs.userProfileId);
   }
 }

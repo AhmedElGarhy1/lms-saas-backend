@@ -18,6 +18,7 @@ import { ScheduleService } from './schedule.service';
 import { GroupsRepository } from '../repositories/groups.repository';
 import { GroupStudentsRepository } from '../repositories/group-students.repository';
 import { ScheduleItemDto } from '../dto/schedule-item.dto';
+import { Class } from '../entities/class.entity';
 
 @Injectable()
 export class ClassValidationService extends BaseService {
@@ -44,12 +45,6 @@ export class ClassValidationService extends BaseService {
 
     // Validate teacher
     await this.validateTeacher(dto.teacherUserProfileId, centerId);
-
-    // Validate dates
-    this.validateDates(dto.startDate, dto.endDate);
-
-    // Validate duration
-    this.validateDuration(dto.duration);
   }
 
   async validateClassUpdate(
@@ -57,34 +52,10 @@ export class ClassValidationService extends BaseService {
     dto: UpdateClassDto,
     actor: ActorUser,
     centerId: string,
-    currentClass: {
-      branchId: string;
-      startDate: Date;
-      endDate?: Date;
-      teacherUserProfileId: string;
-      duration: number;
-    },
+    currentClass: Class,
   ): Promise<void> {
-    // Validate related entities if provided
-    if (dto.levelId || dto.subjectId || dto.branchId) {
-      await this.validateRelatedEntities(dto, centerId);
-    }
-
-    // Validate teacher if provided
-    if (dto.teacherUserProfileId) {
-      await this.validateTeacher(dto.teacherUserProfileId, centerId);
-    }
-
-    // Validate dates if provided
-    const startDate = dto.startDate || currentClass.startDate;
-    const endDate =
-      dto.endDate !== undefined ? dto.endDate : currentClass.endDate;
-    this.validateDates(startDate, endDate);
-
-    // Validate duration if provided
+    // Validate duration if provided (DTO validation handles range, but we check for conflicts)
     if (dto.duration !== undefined) {
-      this.validateDuration(dto.duration);
-
       // If duration is changing and class has groups, check for schedule conflicts
       if (dto.duration !== currentClass.duration) {
         await this.validateDurationUpdateConflicts(
@@ -97,7 +68,7 @@ export class ClassValidationService extends BaseService {
   }
 
   async validateRelatedEntities(
-    dto: CreateClassDto | UpdateClassDto,
+    dto: CreateClassDto,
     centerId: string,
   ): Promise<void> {
     // Validate level if provided
@@ -152,11 +123,6 @@ export class ClassValidationService extends BaseService {
       throw new BusinessLogicException('t.messages.validationFailed');
     }
 
-    // Validate teacher profile is active
-    if (!teacherProfile.isActive) {
-      throw new BusinessLogicException('t.messages.validationFailed');
-    }
-
     // Validate teacher has center access (teachers only have center access, not branch access)
     await this.accessControlHelperService.validateCenterAccess({
       userProfileId: teacherUserProfileId,
@@ -164,32 +130,14 @@ export class ClassValidationService extends BaseService {
     });
   }
 
-  validateDates(startDate: Date, endDate?: Date): void {
-    if (endDate && startDate >= endDate) {
-      throw new BusinessLogicException('t.messages.validationFailed');
-    }
-  }
-
-  validateDuration(duration: number): void {
-    if (!duration || duration <= 0) {
-      throw new BusinessLogicException('t.messages.validationFailed');
-    }
-
-    // Maximum duration: 24 hours (1440 minutes)
-    const maxDuration = 24 * 60;
-    if (duration > maxDuration) {
-      throw new BusinessLogicException('t.messages.validationFailed');
-    }
-  }
-
   /**
    * Validates that updating class duration won't cause schedule conflicts.
-   * Reuses existing conflict checking methods to avoid code duplication.
+   * Uses optimized flow: check teacher conflicts first, only check students if teacher has no conflicts.
    *
    * @param classId - The class ID being updated
    * @param newDuration - The new duration value
    * @param teacherUserProfileId - The teacher's user profile ID
-   * @throws BusinessLogicException if schedule conflicts are detected
+   * @throws BusinessLogicException if schedule conflicts are detected, with structured conflict data in ErrorDetail[]
    */
   async validateDurationUpdateConflicts(
     classId: string,
@@ -208,23 +156,9 @@ export class ClassValidationService extends BaseService {
       return;
     }
 
-    // Fetch groupStudents separately for all groups instead of relying on relation
-    const groupIds = groups.map((g) => g.id);
-    const allGroupStudents = await Promise.all(
-      groupIds.map((groupId) =>
-        this.groupStudentsRepository.findByGroupId(groupId),
-      ),
-    );
-
-    // Create a map of groupId -> groupStudents for quick lookup
-    const groupStudentsMap = new Map<string, (typeof allGroupStudents)[0]>();
-    groupIds.forEach((groupId, index) => {
-      groupStudentsMap.set(groupId, allGroupStudents[index]);
-    });
-
-    // Collect schedule items and group information
+    // Collect schedule items from all groups
     const allScheduleItems: ScheduleItemDto[] = [];
-    const studentToGroupsMap = new Map<string, ScheduleItemDto[]>();
+    const groupIds = groups.map((g) => g.id);
 
     for (const group of groups) {
       if (group.scheduleItems && group.scheduleItems.length > 0) {
@@ -234,20 +168,7 @@ export class ClassValidationService extends BaseService {
             startTime: item.startTime,
           }),
         );
-
-        // Add to all schedule items (for teacher conflict check)
         allScheduleItems.push(...scheduleItems);
-
-        // Map schedule items to students in this group (fetch from separate query)
-        const groupStudents = groupStudentsMap.get(group.id) || [];
-        for (const groupStudent of groupStudents) {
-          const studentId = groupStudent.studentUserProfileId;
-          const existingItems = studentToGroupsMap.get(studentId) || [];
-          studentToGroupsMap.set(studentId, [
-            ...existingItems,
-            ...scheduleItems,
-          ]);
-        }
       }
     }
 
@@ -256,32 +177,31 @@ export class ClassValidationService extends BaseService {
       return;
     }
 
-    // Validate schedule items with new duration (ensures they don't exceed 24:00)
-    this.scheduleService.validateScheduleItems(allScheduleItems, newDuration);
-
-    // Check for teacher schedule conflicts
-    // Exclude all groups from this class to avoid false positives
-    // Reuse existing conflict checker
-    await this.scheduleService.checkTeacherScheduleConflicts(
-      teacherUserProfileId,
-      allScheduleItems,
-      newDuration,
-      groupIds, // Exclude all groups from this class
+    // Get all unique student IDs from groups in this class
+    const allGroupStudents = await Promise.all(
+      groupIds.map((groupId) =>
+        this.groupStudentsRepository.findByGroupId(groupId),
+      ),
     );
 
-    // Check for student schedule conflicts
-    // For each student, check only schedule items from groups they're in
-    // Reuse existing conflict checker
-    for (const [
-      studentId,
-      studentScheduleItems,
-    ] of studentToGroupsMap.entries()) {
-      await this.scheduleService.checkStudentScheduleConflicts(
-        studentId,
-        studentScheduleItems,
-        newDuration,
-        groupIds, // Exclude all groups from this class
-      );
+    const studentIdsSet = new Set<string>();
+    for (const groupStudents of allGroupStudents) {
+      for (const groupStudent of groupStudents) {
+        studentIdsSet.add(groupStudent.studentUserProfileId);
+      }
     }
+
+    const studentIds = Array.from(studentIdsSet);
+
+    // Validate schedule items and check conflicts for both teacher and students
+    await this.scheduleService.validateScheduleConflicts(
+      allScheduleItems,
+      newDuration,
+      {
+        teacherUserProfileId,
+        studentIds: studentIds.length > 0 ? studentIds : undefined,
+        excludeGroupIds: groupIds, // Exclude all groups from this class
+      },
+    );
   }
 }

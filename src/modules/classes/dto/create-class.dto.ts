@@ -8,11 +8,17 @@ import {
   Max,
   MaxLength,
   ValidateNested,
+  Validate,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { TeacherPaymentStrategyDto } from './teacher-payment-strategy.dto';
 import { StudentPaymentStrategyDto } from './student-payment-strategy.dto';
+import { Exists } from '@/shared/common/decorators/exists.decorator';
+import { Level } from '@/modules/levels/entities/level.entity';
+import { Subject } from '@/modules/subjects/entities/subject.entity';
+import { Branch } from '@/modules/centers/entities/branch.entity';
+import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 
 export class CreateClassDto {
   @ApiProperty({
@@ -31,6 +37,7 @@ export class CreateClassDto {
     example: 'uuid',
   })
   @IsUUID(4)
+  @Exists(Level)
   levelId: string;
 
   @ApiProperty({
@@ -38,6 +45,7 @@ export class CreateClassDto {
     example: 'uuid',
   })
   @IsUUID(4)
+  @Exists(Subject)
   subjectId: string;
 
   @ApiProperty({
@@ -45,6 +53,7 @@ export class CreateClassDto {
     example: 'uuid',
   })
   @IsUUID(4)
+  @Exists(UserProfile)
   teacherUserProfileId: string;
 
   @ApiProperty({
@@ -52,6 +61,7 @@ export class CreateClassDto {
     example: 'uuid',
   })
   @IsUUID(4)
+  @Exists(Branch)
   branchId: string;
 
   @ApiProperty({
@@ -86,16 +96,26 @@ export class CreateClassDto {
   @IsOptional()
   @IsDate()
   @Type(() => Date)
+  @Validate((object: CreateClassDto, value: Date) => {
+    // If endDate is not provided, validation passes (it's optional)
+    if (!value) return true;
+
+    // If startDate is not provided, we can't compare
+    if (!object.startDate) return true;
+
+    // endDate must be after startDate
+    return new Date(value) > new Date(object.startDate);
+  })
   endDate?: Date;
 
   @ApiProperty({
     description: 'Class duration in minutes',
     example: 60,
-    minimum: 1,
-    maximum: 1440,
+    minimum: 10,
+    maximum: 24 * 60,
   })
   @IsInt()
-  @Min(1)
-  @Max(1440) // 24 hours maximum
+  @Min(10)
+  @Max(24 * 60) // 24 hours maximum
   duration: number;
 }
