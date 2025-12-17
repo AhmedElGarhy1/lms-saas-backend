@@ -2,7 +2,7 @@
 
 /* prettier-ignore */
 import { TranslationArgs } from "./i18n-args.generated";
-import { I18nPath } from './i18n.generated';
+import { I18nPath } from "./i18n.generated";
 
 /**
  * PathArgs extracts argument types for a given translation key.

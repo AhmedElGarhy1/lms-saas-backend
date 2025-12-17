@@ -22,9 +22,33 @@ function extractPlaceholders(str: string): Set<string> {
 }
 
 /**
- * Flatten nested object keys to dot notation
+ * Check if an object is a pluralization object (has plural keys like zero, one, other, etc.)
  */
-function flattenKeys(obj: any, prefix = ''): Record<string, string> {
+function isPluralizationObject(obj: any): boolean {
+  if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) {
+    return false;
+  }
+
+  const pluralKeys = ['zero', 'one', 'two', 'few', 'many', 'other'];
+  const keys = Object.keys(obj);
+
+  // Check if all keys are plural keys and all values are strings
+  return (
+    keys.length > 0 &&
+    keys.every((k) => pluralKeys.includes(k)) &&
+    Object.values(obj).every((v) => typeof v === 'string')
+  );
+}
+
+/**
+ * Flatten nested object keys to dot notation
+ * Also tracks pluralization objects to generate parent key types
+ */
+function flattenKeys(
+  obj: any,
+  prefix = '',
+  pluralizationParents: Map<string, Set<string>> = new Map(),
+): Record<string, string> {
   const result: Record<string, string> = {};
 
   for (const [key, value] of Object.entries(obj)) {
@@ -37,7 +61,42 @@ function flattenKeys(obj: any, prefix = ''): Record<string, string> {
       value !== null &&
       !Array.isArray(value)
     ) {
-      Object.assign(result, flattenKeys(value, fullKey));
+      // Check if this is a pluralization object
+      if (isPluralizationObject(value)) {
+        // Extract placeholders from all plural forms to determine parent args
+        const allPlaceholders = new Set<string>();
+        for (const pluralValue of Object.values(value)) {
+          if (typeof pluralValue === 'string') {
+            const placeholders = extractPlaceholders(pluralValue);
+            placeholders.forEach((p) => allPlaceholders.add(p));
+          }
+        }
+
+        // Store parent key with its arguments
+        if (allPlaceholders.size > 0) {
+          if (!pluralizationParents.has(prefix || 'messages')) {
+            pluralizationParents.set(prefix || 'messages', new Set());
+          }
+          const parentKey = prefix || 'messages';
+          const parentFullKey = prefix ? `${prefix}.${key}` : `messages.${key}`;
+          pluralizationParents.get(parentKey)!.add(parentFullKey);
+
+          // Store the arguments for this parent key
+          (pluralizationParents as any)[`__args_${parentFullKey}`] =
+            Array.from(allPlaceholders).sort();
+        }
+
+        // Flatten the plural forms
+        Object.assign(
+          result,
+          flattenKeys(value, fullKey, pluralizationParents),
+        );
+      } else {
+        Object.assign(
+          result,
+          flattenKeys(value, fullKey, pluralizationParents),
+        );
+      }
     }
   }
 
@@ -51,8 +110,12 @@ function generateArgumentTypes() {
   const translationsPath = path.join(__dirname, '../src/i18n/en/t.json');
   const translations = JSON.parse(fs.readFileSync(translationsPath, 'utf-8'));
 
+  // Track pluralization parent keys and their arguments
+  const pluralizationParents = new Map<string, Set<string>>();
+  const pluralizationArgs = new Map<string, string[]>();
+
   // Flatten the nested structure to dot notation
-  const flatTranslations = flattenKeys(translations);
+  const flatTranslations = flattenKeys(translations, '', pluralizationParents);
 
   // Extract placeholders for each translation key
   // Include ALL keys, even those without placeholders (they'll have Record<string, never>)
@@ -67,6 +130,50 @@ function generateArgumentTypes() {
       } else {
         // Mark key as having no args (null means no placeholders)
         argsMap[key] = null;
+      }
+    }
+  }
+
+  // Detect pluralization parent keys and generate types for them
+  // When a key has children like .zero, .one, .other, nestjs-i18n allows using the parent key
+  const pluralKeys = new Set<string>();
+  for (const key of Object.keys(argsMap)) {
+    // Check if this is a plural form (ends with .zero, .one, .other, etc.)
+    const pluralFormMatch = key.match(/^(.+)\.(zero|one|two|few|many|other)$/);
+    if (pluralFormMatch) {
+      const parentKey = pluralFormMatch[1];
+      pluralKeys.add(parentKey);
+
+      // Use the args from the plural form for the parent (they should be the same)
+      // Prefer forms with args over 'zero' which often has no args
+      if (argsMap[key] && argsMap[key]!.length > 0) {
+        // Only set if parent doesn't already have args or if this form has more args
+        if (!argsMap[parentKey] || argsMap[parentKey]!.length === 0) {
+          argsMap[parentKey] = argsMap[key];
+        } else {
+          // Merge args from all plural forms (should be the same, but be safe)
+          const existingArgs = new Set(argsMap[parentKey] || []);
+          argsMap[key]!.forEach((arg) => existingArgs.add(arg));
+          argsMap[parentKey] = Array.from(existingArgs).sort();
+        }
+      }
+    }
+  }
+
+  // Also add parent keys that don't have args if they have plural children
+  // (for cases where zero has no args but one/other do)
+  for (const parentKey of pluralKeys) {
+    if (!argsMap[parentKey]) {
+      // Find any child with args
+      for (const key of Object.keys(argsMap)) {
+        if (
+          key.startsWith(`${parentKey}.`) &&
+          argsMap[key] &&
+          argsMap[key]!.length > 0
+        ) {
+          argsMap[parentKey] = argsMap[key];
+          break;
+        }
       }
     }
   }
