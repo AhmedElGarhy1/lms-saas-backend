@@ -1,20 +1,24 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { In } from 'typeorm';
+import { In, IsNull } from 'typeorm';
 import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ClassStaffRepository } from '../repositories/class-staff.repository';
+import { GroupStudentsRepository } from '../repositories/group-students.repository';
 
 @Injectable()
 export class ClassAccessService extends BaseService {
   private readonly logger: Logger = new Logger(ClassAccessService.name);
 
-  constructor(private readonly classStaffRepository: ClassStaffRepository) {
+  constructor(
+    private readonly classStaffRepository: ClassStaffRepository,
+    private readonly groupStudentsRepository: GroupStudentsRepository,
+  ) {
     super();
   }
 
   /**
    * Check if a user has ClassStaff assignment for a specific class.
-   * Returns true if ClassStaff assignment exists, is active, and not deleted.
+   * Returns true if ClassStaff assignment exists and is active (leftAt is null).
    *
    * @param userProfileId - The user profile ID
    * @param classId - The class ID
@@ -29,7 +33,7 @@ export class ClassAccessService extends BaseService {
       classId,
     );
 
-    if (!classStaff || !classStaff.isActive) {
+    if (!classStaff || classStaff.leftAt !== null) {
       return false;
     }
 
@@ -65,14 +69,14 @@ export class ClassAccessService extends BaseService {
   }
 
   /**
-   * Get accessible profile IDs for a class.
-   * Filters an array of profile IDs to return only those that have class access.
+   * Get accessible staff profile IDs for a class.
+   * Filters an array of profile IDs to return only those that have class staff access (via ClassStaff).
    *
    * @param classId - The class ID
    * @param targetProfileIds - Array of profile IDs to check
-   * @returns Array of profile IDs that have class access
+   * @returns Array of profile IDs that have class staff access
    */
-  async getAccessibleProfilesIdsForClass(
+  async getAccessibleStaffProfileIdsForClass(
     classId: string,
     targetProfileIds: string[],
   ): Promise<string[]> {
@@ -85,11 +89,40 @@ export class ClassAccessService extends BaseService {
       where: {
         classId,
         userProfileId: In(targetProfileIds),
-        isActive: true,
+        leftAt: IsNull(),
       },
     });
 
     // Return only the profile IDs that have active access
     return classStaffs.map((cs) => cs.userProfileId);
+  }
+
+  /**
+   * Get accessible student profile IDs for a class.
+   * Filters an array of profile IDs to return only those that have class access via groups (via GroupStudent).
+   *
+   * @param classId - The class ID
+   * @param targetProfileIds - Array of profile IDs to check
+   * @returns Array of profile IDs that have class access through groups
+   */
+  async getAccessibleStudentProfileIdsForClass(
+    classId: string,
+    targetProfileIds: string[],
+  ): Promise<string[]> {
+    if (!targetProfileIds || targetProfileIds.length === 0) {
+      return [];
+    }
+
+    // Batch fetch all GroupStudent assignments for the given class and profile IDs
+    const groupStudents = await this.groupStudentsRepository.findMany({
+      where: {
+        classId,
+        studentUserProfileId: In(targetProfileIds),
+        leftAt: IsNull(),
+      },
+    });
+
+    // Return only the profile IDs that have active access
+    return groupStudents.map((gs) => gs.studentUserProfileId);
   }
 }

@@ -19,6 +19,7 @@ import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
+import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BulkDeleteBranchesDto } from '../dto/bulk-delete-branches.dto';
 import { BulkRestoreBranchesDto } from '../dto/bulk-restore-branches.dto';
 import { BulkToggleBranchStatusDto } from '../dto/bulk-toggle-branch-status.dto';
@@ -86,7 +87,7 @@ export class BranchesActionsController {
   async bulkDelete(
     @Body() dto: BulkDeleteBranchesDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.branchIds,
       async (branchId: string) => {
@@ -117,7 +118,7 @@ export class BranchesActionsController {
   async bulkRestore(
     @Body() dto: BulkRestoreBranchesDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.branchIds,
       async (branchId: string) => {
@@ -148,7 +149,7 @@ export class BranchesActionsController {
   async bulkToggleStatus(
     @Body() dto: BulkToggleBranchStatusDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.branchIds,
       async (branchId: string) => {

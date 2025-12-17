@@ -27,6 +27,7 @@ import { ClassesActionsController } from './controllers/classes-actions.controll
 import { GroupsController } from './controllers/groups.controller';
 import { GroupsActionsController } from './controllers/groups-actions.controller';
 import { ClassStaffAccessController } from './controllers/class-staff-access.controller';
+import { GroupsStudentsAccessController } from './controllers/groups-students-access.controller';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { SharedModule } from '@/shared/shared.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
@@ -62,6 +63,7 @@ import { GroupActivityListener } from './listeners/group-activity.listener';
     GroupsController,
     GroupsActionsController,
     ClassStaffAccessController,
+    GroupsStudentsAccessController,
   ],
   providers: [
     ClassesService,

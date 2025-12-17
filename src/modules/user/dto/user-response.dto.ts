@@ -56,6 +56,14 @@ export class UserResponseDto {
   @Expose()
   isBranchAccessible?: boolean;
 
+  @ApiProperty({ description: 'Whether the user has group access' })
+  @Expose()
+  isGroupAccessible?: boolean;
+
+  @ApiProperty({ description: 'Whether the user has class access' })
+  @Expose()
+  isClassAccessible?: boolean;
+
   @ApiProperty({ description: 'Creation date' })
   @Expose()
   @Type(() => Date)

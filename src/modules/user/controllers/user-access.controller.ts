@@ -19,6 +19,7 @@ import { BulkRevokeUserAccessDto } from '@/modules/user/dto/bulk-revoke-user-acc
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
+import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 
 @ApiBearerAuth()
@@ -76,7 +77,7 @@ export class UserAccessController {
   async bulkGrantUserAccess(
     @Body() dto: BulkGrantUserAccessDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.targetUserProfileIds,
       async (targetUserProfileId: string) => {
@@ -114,7 +115,7 @@ export class UserAccessController {
   async bulkRevokeUserAccess(
     @Body() dto: BulkRevokeUserAccessDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.targetUserProfileIds,
       async (targetUserProfileId: string) => {

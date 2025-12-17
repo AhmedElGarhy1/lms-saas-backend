@@ -90,10 +90,10 @@ export class ScheduleConflictQueryBuilder {
 
     // Single ID: use != for backward compatibility
     if (groupIds.length === 1) {
-    const excludeParamIndex = currentParamIndex + 1;
-    return {
-      condition: `AND g.id != $${excludeParamIndex}`,
-      nextParamIndex: excludeParamIndex,
+      const excludeParamIndex = currentParamIndex + 1;
+      return {
+        condition: `AND g.id != $${excludeParamIndex}`,
+        nextParamIndex: excludeParamIndex,
       };
     }
 

@@ -1,19 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsUUID, ArrayMinSize, ArrayMaxSize } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { Class } from '../entities/class.entity';
+import { Group } from '../entities/group.entity';
 
-export class BulkRevokeClassStaffDto {
+export class BulkGrantGroupStudentDto {
   @ApiProperty({
-    description: 'Class ID to revoke access from',
-    example: 'uuid-class-id',
+    description: 'Group ID to grant access to',
+    example: 'uuid-group-id',
   })
   @IsUUID()
-  @Exists(Class)
-  classId: string;
+  @Exists(Group)
+  groupId: string;
 
   @ApiProperty({
-    description: 'Array of user profile IDs to revoke class access from',
+    description: 'Array of user profile IDs to grant group access to',
     type: [String],
     example: ['uuid1', 'uuid2', 'uuid3'],
   })

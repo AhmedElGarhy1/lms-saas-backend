@@ -30,6 +30,7 @@ import { ScheduleItemDto } from '../dto/schedule-item.dto';
 import { Transactional } from '@nestjs-cls/transactional';
 import { ClassAccessService } from './class-access.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { GroupStudentAccessDto } from '../dto/group-student-access.dto';
 
 @Injectable()
 export class GroupsService extends BaseService {
@@ -175,15 +176,14 @@ export class GroupsService extends BaseService {
     // Verify group exists
     const group = await this.groupsRepository.findOneOrThrow(groupId);
 
-    // Get existing students
-    const existingStudents =
-      await this.groupStudentsRepository.findByGroupId(groupId);
-    const existingStudentIds = existingStudents.map(
-      (gs) => gs.studentUserProfileId,
-    );
+    // Check if student is already actively assigned to this group
+    const existingActiveAssignment =
+      await this.groupStudentsRepository.findByGroupAndStudent(
+        groupId,
+        userProfileId,
+      );
 
-    // Check if already assigned
-    if (existingStudentIds.includes(userProfileId)) {
+    if (existingActiveAssignment) {
       throw new BusinessLogicException('t.messages.alreadyIs', {
         resource: 't.resources.student',
         state: 'assigned to group',
@@ -235,12 +235,62 @@ export class GroupsService extends BaseService {
       );
     }
 
-    // Create assignment
+    // Create new assignment (always create new record for history tracking)
     await this.groupStudentsRepository.create({
       groupId,
       studentUserProfileId: userProfileId,
       classId: group.classId,
+      joinedAt: new Date(),
     });
+  }
+
+  /**
+   * Gets all student assignments for a specific group.
+   *
+   * @param groupId - The group ID
+   * @param actor - The user performing the action (for consistency with other methods)
+   * @returns Array of GroupStudent assignments
+   * @throws ResourceNotFoundException if group doesn't exist
+   */
+  async getGroupStudents(groupId: string, actor: ActorUser) {
+    // Verify group exists
+    await this.groupsRepository.findOneOrThrow(groupId);
+
+    return this.groupStudentsRepository.findByGroupId(groupId);
+  }
+
+  /**
+   * Assigns a student to a group using DTO.
+   * Wrapper method that follows the same pattern as ClassStaffService.
+   *
+   * @param data - GroupStudentAccessDto containing userProfileId and groupId
+   * @param actor - The user performing the action
+   * @returns Promise that resolves when assignment is complete
+   */
+  async assignStudentToGroupByDto(
+    data: GroupStudentAccessDto,
+    actor: ActorUser,
+  ): Promise<void> {
+    return this.assignStudentToGroup(data.groupId, data.userProfileId, actor);
+  }
+
+  /**
+   * Removes a student from a group using DTO.
+   * Wrapper method that follows the same pattern as ClassStaffService.
+   *
+   * @param data - GroupStudentAccessDto containing userProfileId and groupId
+   * @param actor - The user performing the action
+   * @returns Promise that resolves when removal is complete
+   */
+  async removeStudentFromGroupByDto(
+    data: GroupStudentAccessDto,
+    actor: ActorUser,
+  ): Promise<void> {
+    await this.removeStudentsFromGroup(
+      data.groupId,
+      [data.userProfileId],
+      actor,
+    );
   }
 
   /**
@@ -411,8 +461,10 @@ export class GroupsService extends BaseService {
           });
         }
 
-        // Use hard delete (remove) since GroupStudent extends BaseEntity, not SoftBaseEntity
-        await this.groupStudentsRepository.remove(groupStudent.id);
+        // Set leftAt instead of deleting to preserve history
+        await this.groupStudentsRepository.update(groupStudent.id, {
+          leftAt: new Date(),
+        });
         return { id: studentUserProfileId };
       },
     );

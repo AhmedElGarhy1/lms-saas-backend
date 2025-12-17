@@ -13,8 +13,11 @@ export class ClassStaffResponseDto {
   @ApiProperty()
   centerId: string;
 
-  @ApiProperty()
-  isActive: boolean;
+  @ApiProperty({ required: false })
+  joinedAt?: Date;
+
+  @ApiProperty({ required: false })
+  leftAt?: Date;
 
   @ApiProperty()
   createdAt: Date;
@@ -38,4 +41,3 @@ export class ClassStaffResponseDto {
     branchId: string;
   };
 }
-

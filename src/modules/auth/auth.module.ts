@@ -18,10 +18,12 @@ import { UserRepository } from '../user/repositories/user.repository';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { AuthListener } from './listeners/auth.listener';
 import { VerificationListener } from './listeners/verification.listener';
+import { ClassesModule } from '../classes/classes.module';
 
 @Module({
   imports: [
     UserModule,
+    ClassesModule,
     TypeOrmModule.forFeature([User, VerificationToken]),
     ActivityLogModule,
     EventEmitterModule,

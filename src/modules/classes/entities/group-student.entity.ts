@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index, Unique } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Group } from './group.entity';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
@@ -7,8 +7,6 @@ import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity
 @Index(['groupId'])
 @Index(['studentUserProfileId'])
 @Index(['classId'])
-@Index(['classId', 'studentUserProfileId'], { unique: true })
-@Unique(['groupId', 'studentUserProfileId'])
 export class GroupStudent extends BaseEntity {
   @Column({ type: 'uuid' })
   groupId: string;
@@ -18,6 +16,15 @@ export class GroupStudent extends BaseEntity {
 
   @Column({ type: 'uuid' })
   classId: string; // Denormalized from group for unique constraint
+
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  joinedAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  leftAt?: Date;
 
   // Relations
   @ManyToOne(() => Group, (group) => group.groupStudents, {

@@ -5,6 +5,7 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { IsNull } from 'typeorm';
 
 @Injectable()
 export class ClassStaffRepository extends BaseRepository<ClassStaff> {
@@ -31,7 +32,7 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
     classId: string,
   ): Promise<ClassStaff | null> {
     return this.getRepository().findOne({
-      where: { userProfileId, classId },
+      where: { userProfileId, classId, leftAt: IsNull() },
     });
   }
 
@@ -43,7 +44,9 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
    * @returns ClassStaff assignment or null if not found
    */
   findClassStaffAccess(data: ClassStaffAccessDto): Promise<ClassStaff | null> {
-    return this.getRepository().findOneBy(data);
+    return this.getRepository().findOne({
+      where: { ...data, leftAt: IsNull() },
+    });
   }
 
   /**
@@ -55,7 +58,7 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
    */
   async findByClassId(classId: string): Promise<ClassStaff[]> {
     return this.getRepository().find({
-      where: { classId },
+      where: { classId, leftAt: IsNull() },
       relations: ['profile'],
     });
   }
@@ -72,7 +75,7 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
     userProfileId: string,
     centerId?: string,
   ): Promise<ClassStaff[]> {
-    const where: any = { userProfileId };
+    const where: any = { userProfileId, leftAt: IsNull() };
     if (centerId) {
       where.centerId = centerId;
     }
@@ -100,13 +103,13 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
   /**
    * Grant class staff access using DTO.
    * Pure data access method - no business logic.
-   * Database unique constraint will handle uniqueness.
+   * Creates a new assignment record for history tracking.
    *
    * @param data - ClassStaffAccessDto
    * @returns Created ClassStaff assignment
    */
   async grantClassStaffAccess(data: ClassStaffAccessDto): Promise<ClassStaff> {
-    return this.create({ ...data, isActive: true });
+    return this.create({ ...data, joinedAt: new Date() });
   }
 
   /**
@@ -124,7 +127,8 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
       });
     }
 
-    await this.remove(existingAccess.id);
+    await this.update(existingAccess.id, { leftAt: new Date() });
+    existingAccess.leftAt = new Date();
     return existingAccess;
   }
 

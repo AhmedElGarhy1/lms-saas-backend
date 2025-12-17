@@ -31,8 +31,6 @@ import { ControllerResponse } from '@/shared/common/dto/controller-response.dto'
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
 import { SerializeOptions } from '@nestjs/common';
 import { GroupResponseDto } from '../dto/group-response.dto';
-import { AssignStudentToGroupDto } from '../dto/assign-student-to-group.dto';
-import { RemoveStudentsFromGroupDto } from '../dto/remove-students-from-group.dto';
 import { CreateApiResponses } from '@/shared/common/decorators';
 
 @ApiTags('Groups')
@@ -171,61 +169,6 @@ export class GroupsController {
     return ControllerResponse.message({
       key: 't.messages.restored',
       args: { resource: 't.resources.group' },
-    });
-  }
-
-  @Post(':groupId/students/assign')
-  @CreateApiResponses('Assign a student to a group')
-  @ApiParam({ name: 'groupId', description: 'Group ID' })
-  @ApiBody({ type: AssignStudentToGroupDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Student assigned successfully',
-  })
-  @Permissions(PERMISSIONS.GROUPS.UPDATE)
-  @Transactional()
-  async assignStudentToGroup(
-    @Param('groupId', ParseUUIDPipe) groupId: string,
-    @Body() dto: AssignStudentToGroupDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    await this.groupsService.assignStudentToGroup(
-      groupId,
-      dto.userProfileId,
-      actor,
-    );
-    return ControllerResponse.message({
-      key: 't.messages.updated',
-      args: { resource: 't.resources.group' },
-    });
-  }
-
-  @Delete(':groupId/students')
-  @ApiOperation({ summary: 'Remove students from a group' })
-  @ApiParam({ name: 'groupId', description: 'Group ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Bulk remove completed',
-    type: BulkOperationResultDto,
-  })
-  @Permissions(PERMISSIONS.GROUPS.UPDATE)
-  @Transactional()
-  async removeStudentsFromGroup(
-    @Param('groupId', ParseUUIDPipe) groupId: string,
-    @Body() dto: RemoveStudentsFromGroupDto,
-    @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
-    const result = await this.groupsService.removeStudentsFromGroup(
-      groupId,
-      dto.studentUserProfileIds,
-      actor,
-    );
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.groupStudent',
-      },
     });
   }
 }

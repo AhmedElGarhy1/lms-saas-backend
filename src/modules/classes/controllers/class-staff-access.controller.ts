@@ -16,6 +16,7 @@ import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
+import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BulkGrantClassStaffDto } from '../dto/bulk-grant-class-staff.dto';
 import { BulkRevokeClassStaffDto } from '../dto/bulk-revoke-class-staff.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
@@ -93,7 +94,7 @@ export class ClassStaffAccessController {
   async bulkGrantClassStaffAccess(
     @Body() dto: BulkGrantClassStaffDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.userProfileIds,
       async (userProfileId: string) => {
@@ -133,7 +134,7 @@ export class ClassStaffAccessController {
   async bulkRevokeClassStaffAccess(
     @Body() dto: BulkRevokeClassStaffDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.userProfileIds,
       async (userProfileId: string) => {

@@ -61,6 +61,7 @@ export class ClassesRepository extends BaseRepository<Class> {
             .select('COUNT(groupStudents.id)', 'studentsCount')
             .from(GroupStudent, 'groupStudents')
             .where('groupStudents.classId = class.id')
+            .andWhere('groupStudents.leftAt IS NULL')
             .andWhere(
               'EXISTS (SELECT 1 FROM groups g WHERE g.id = "groupStudents"."groupId" AND g."deletedAt" IS NULL)',
             ),
@@ -195,7 +196,8 @@ export class ClassesRepository extends BaseRepository<Class> {
           subQuery
             .select('COUNT(groupStudents.id)', 'studentsCount')
             .from(GroupStudent, 'groupStudents')
-            .where('groupStudents.groupId = group.id'),
+            .where('groupStudents.groupId = group.id')
+            .andWhere('groupStudents.leftAt IS NULL'),
         'studentsCount',
       )
       .getRawAndEntities()

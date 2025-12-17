@@ -19,12 +19,17 @@ import { PaginateStudentDto } from '@/modules/students/dto/paginate-student.dto'
 import { PaginateTeacherDto } from '@/modules/teachers/dto/paginate-teacher.dto';
 import { PaginateAdminDto } from '@/modules/admin/dto/paginate-admin.dto';
 import * as _ from 'lodash';
+import { ClassAccessService } from '@/modules/classes/services/class-access.service';
+import { GroupStudentsRepository } from '@/modules/classes/repositories/group-students.repository';
+import { In, IsNull } from 'typeorm';
 
 @Injectable()
 export class UserRepository extends BaseRepository<User> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly classAccessService: ClassAccessService,
+    private readonly groupStudentsRepository: GroupStudentsRepository,
   ) {
     super(txHost);
   }
@@ -335,14 +340,14 @@ export class UserRepository extends BaseRepository<User> {
 
     if (includeGroup) {
       queryBuilder.andWhere(
-        'EXISTS (SELECT 1 FROM group_students gs WHERE gs."studentUserProfileId" = userProfiles.id AND gs."groupId" = :groupId)',
+        'EXISTS (SELECT 1 FROM group_students gs WHERE gs."studentUserProfileId" = userProfiles.id AND gs."groupId" = :groupId AND gs."leftAt" IS NULL)',
         { groupId },
       );
     }
 
     if (includeClass) {
       queryBuilder.andWhere(
-        'EXISTS (SELECT 1 FROM group_students gs WHERE gs."studentUserProfileId" = userProfiles.id AND gs."classId" = :classId)',
+        'EXISTS (SELECT 1 FROM group_students gs WHERE gs."studentUserProfileId" = userProfiles.id AND gs."classId" = :classId AND gs."leftAt" IS NULL)',
         { classId },
       );
     }
@@ -404,18 +409,18 @@ export class UserRepository extends BaseRepository<User> {
       );
     }
     if (groupId && groupAccess) {
-      // filteredItems = await this.applyGroupAccess(
-      //   filteredItems,
-      //   groupId,
-      //   groupAccess,
-      // );
+      filteredItems = await this.applyGroupAccess(
+        filteredItems,
+        groupId,
+        groupAccess,
+      );
     }
     if (classId && classAccess) {
-      // filteredItems = await this.applyClassAccess(
-      //   filteredItems,
-      //   classId,
-      //   classAccess,
-      // );
+      filteredItems = await this.applyClassAccess(
+        filteredItems,
+        classId,
+        classAccess,
+      );
     }
 
     filteredItems = this.prepareUsersResponse(filteredItems);
@@ -1242,6 +1247,71 @@ export class UserRepository extends BaseRepository<User> {
       filteredItems = filteredItems.map((user) =>
         Object.assign(user, {
           isBranchAccessible: true,
+        }),
+      );
+    }
+    return filteredItems;
+  }
+
+  private async applyGroupAccess(
+    users: UserResponseDto[],
+    groupId: string,
+    groupAccess: AccessibleUsersEnum,
+  ): Promise<UserResponseDto[]> {
+    const userProfileIds = users.map((user) => user.userProfiles[0]?.id);
+    let filteredItems: UserResponseDto[] = users;
+    if (groupAccess === AccessibleUsersEnum.ALL) {
+      const groupStudents = await this.groupStudentsRepository.findMany({
+        where: {
+          groupId,
+          studentUserProfileId: In(userProfileIds),
+          leftAt: IsNull(),
+        },
+      });
+      const accessibleProfileIds = groupStudents.map(
+        (gs) => gs.studentUserProfileId,
+      );
+      filteredItems = filteredItems.map((user) =>
+        Object.assign(user, {
+          isGroupAccessible: accessibleProfileIds.includes(
+            user.userProfiles[0]?.id,
+          ),
+        }),
+      );
+    } else {
+      filteredItems = filteredItems.map((user) =>
+        Object.assign(user, {
+          isGroupAccessible: true,
+        }),
+      );
+    }
+    return filteredItems;
+  }
+
+  private async applyClassAccess(
+    users: UserResponseDto[],
+    classId: string,
+    classAccess: AccessibleUsersEnum,
+  ): Promise<UserResponseDto[]> {
+    const userProfileIds = users.map((user) => user.userProfiles[0]?.id);
+    let filteredItems: UserResponseDto[] = users;
+    if (classAccess === AccessibleUsersEnum.ALL) {
+      const accessibleProfileIds =
+        await this.classAccessService.getAccessibleStudentProfileIdsForClass(
+          classId,
+          userProfileIds,
+        );
+      filteredItems = filteredItems.map((user) =>
+        Object.assign(user, {
+          isClassAccessible: accessibleProfileIds.includes(
+            user.userProfiles[0]?.id,
+          ),
+        }),
+      );
+    } else {
+      filteredItems = filteredItems.map((user) =>
+        Object.assign(user, {
+          isClassAccessible: true,
         }),
       );
     }

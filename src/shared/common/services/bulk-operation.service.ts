@@ -1,9 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, HttpException } from '@nestjs/common';
 import pLimit from 'p-limit';
 import { BaseService } from './base.service';
-import { TranslatableException } from '../exceptions/custom.exceptions';
+import {
+  TranslatableException,
+  ErrorDetail,
+  EnhancedErrorResponse,
+} from '../exceptions/custom.exceptions';
 import { I18nPath } from '@/generated/i18n.generated';
 import { PathArgs } from '@/generated/i18n-type-map.generated';
+import { ErrorCode } from '../enums/error-codes.enum';
 
 export interface BulkOperationOptions {
   concurrency?: number; // Default: 10, minimum: 1
@@ -12,8 +17,12 @@ export interface BulkOperationOptions {
 
 export interface BulkOperationError {
   id: string;
-  error: string;
-  message?: string;
+  code?: ErrorCode;
+  error: string; // Translation key or error message
+  translationKey?: I18nPath;
+  translationArgs?: PathArgs<I18nPath>;
+  details?: unknown; // Generic structured error details from ErrorDetail array
+  stack?: string; // Only in development mode
 }
 
 export interface BulkOperationResult {
@@ -65,54 +74,18 @@ export class BulkOperationService extends BaseService {
     // Process all items with concurrency control
     const results = await Promise.allSettled(
       uniqueIds.map((id) =>
-        limit(async () => {
-          try {
-            await operation(id);
-            return { id, success: true };
-          } catch (error: unknown) {
-            // Extract error message - store translation key if it's a translatable exception
-            let errorMessage: string; // Translation key or error message
-
-            if (error instanceof Error) {
-              // Check if it's a translatable exception with a translationKey
-              const translatableError =
-                error as unknown as TranslatableException;
-              if (
-                translatableError.translationKey &&
-                typeof translatableError.translationKey === 'string'
-              ) {
-                // Store translation key - TranslationResponseInterceptor will translate it
-                errorMessage = translatableError.translationKey;
-                // Log the key and args for debugging (no translation in service)
-                this.logger.warn(
-                  `Bulk operation failed for ID ${id}: ${translatableError.translationKey}`,
-                  translatableError.translationArgs || {},
-                );
-              } else {
-                // Use the error message as-is for non-translatable errors
-                errorMessage = error.message;
-                this.logger.warn(
-                  `Bulk operation failed for ID ${id}: ${error.message}`,
-                );
-              }
-            } else {
-              errorMessage = String(error);
-              this.logger.warn(
-                `Bulk operation failed for ID ${id}: ${String(error)}`,
-              );
+        limit(
+          async (): Promise<
+            { id: string; success: true } | BulkOperationError
+          > => {
+            try {
+              await operation(id);
+              return { id, success: true };
+            } catch (error: unknown) {
+              return this.extractErrorDetails(id, error);
             }
-
-            return {
-              id,
-              success: false,
-              error: errorMessage,
-              stack:
-                process.env.NODE_ENV !== 'production' && error instanceof Error
-                  ? error.stack
-                  : undefined,
-            } as const;
-          }
-        }),
+          },
+        ),
       ),
     );
 
@@ -128,77 +101,18 @@ export class BulkOperationService extends BaseService {
     results.forEach((settledResult, index) => {
       if (settledResult.status === 'fulfilled') {
         const value = settledResult.value;
-        if (value.success) {
+        if ('success' in value && value.success) {
           result.success++;
-        } else {
+        } else if ('error' in value) {
+          // Value is BulkOperationError
           result.failed++;
-          result.errors?.push({
-            id: value.id,
-            error: value.error || 'Unknown error',
-            message: value.stack,
-          });
+          result.errors?.push(value);
         }
       } else {
         // Handle unexpected promise rejection (shouldn't happen, but defensive coding)
         result.failed++;
         const id = uniqueIds[index];
-
-        // Extract error message - store translation key if it's a translatable exception
-        let errorMessage: string; // Translation key or error message
-
-        if (settledResult.reason instanceof Error) {
-          // Check if it's a translatable exception with a translationKey
-          const translatableError =
-            settledResult.reason as unknown as TranslatableException;
-          if (
-            translatableError.translationKey &&
-            typeof translatableError.translationKey === 'string'
-          ) {
-            // Store translation key - TranslationResponseInterceptor will translate it
-            errorMessage = translatableError.translationKey;
-            // Log the key and args for debugging (no translation in service)
-            this.logger.warn(
-              `Bulk operation failed for ID ${id}: ${translatableError.translationKey}`,
-              translatableError.translationArgs || {},
-            );
-          } else {
-            // Use the error message as-is for non-translatable errors
-            errorMessage = settledResult.reason.message;
-            this.logger.warn(
-              `Bulk operation failed for ID ${id}: ${settledResult.reason.message}`,
-            );
-          }
-        } else {
-          errorMessage = String(settledResult.reason);
-          this.logger.warn(
-            `Bulk operation failed for ID ${id}: ${String(settledResult.reason)}`,
-          );
-        }
-
-        const errorDetail: {
-          id: string;
-          error: string;
-          message?: string;
-          translationArgs?: PathArgs<I18nPath>;
-        } = {
-          id,
-          error: errorMessage,
-          message:
-            process.env.NODE_ENV !== 'production' &&
-            settledResult.reason instanceof Error
-              ? settledResult.reason.stack
-              : undefined,
-        };
-
-        // Store translationArgs if it's a translatable exception
-        if (settledResult.reason instanceof Error) {
-          const translatableError =
-            settledResult.reason as unknown as TranslatableException;
-          if (translatableError.translationArgs) {
-            errorDetail.translationArgs = translatableError.translationArgs;
-          }
-        }
-
+        const errorDetail = this.extractErrorDetails(id, settledResult.reason);
         result.errors?.push(errorDetail);
       }
 
@@ -218,5 +132,114 @@ export class BulkOperationService extends BaseService {
     }
 
     return result;
+  }
+
+  /**
+   * Extract structured error information from an exception
+   * @param id - The ID that failed
+   * @param error - The error that occurred
+   * @returns BulkOperationError with structured information
+   */
+  private extractErrorDetails(id: string, error: unknown): BulkOperationError {
+    const errorDetail: BulkOperationError = {
+      id,
+      error: 'Unknown error',
+    };
+
+    if (error instanceof Error) {
+      // Check if it's a translatable exception with a translationKey
+      const translatableError = error as unknown as TranslatableException;
+      const httpException = error as unknown as HttpException;
+
+      // Extract error code and details from HttpException response if available
+      if (
+        httpException.getResponse &&
+        typeof httpException.getResponse === 'function'
+      ) {
+        const response = httpException.getResponse() as
+          | EnhancedErrorResponse
+          | string;
+        if (typeof response === 'object' && 'code' in response) {
+          if (response.code) {
+            errorDetail.code = response.code;
+          }
+          // Extract details from response (where BaseTranslatableException stores them)
+          if (response.details && Array.isArray(response.details)) {
+            errorDetail.details = this.extractStructuredDetails(
+              response.details,
+            );
+          }
+        }
+      }
+
+      // Extract translation key and args if it's a translatable exception
+      if (
+        translatableError.translationKey &&
+        typeof translatableError.translationKey === 'string'
+      ) {
+        errorDetail.translationKey = translatableError.translationKey;
+        errorDetail.error = translatableError.translationKey; // Store key for translation
+        errorDetail.translationArgs = translatableError.translationArgs;
+
+        this.logger.warn(
+          `Bulk operation failed for ID ${id}: ${translatableError.translationKey}`,
+          translatableError.translationArgs || {},
+        );
+      } else {
+        // Use the error message as-is for non-translatable errors
+        errorDetail.error = error.message;
+        this.logger.warn(
+          `Bulk operation failed for ID ${id}: ${error.message}`,
+        );
+      }
+
+      // Include stack trace only in development mode
+      if (process.env.NODE_ENV !== 'production') {
+        errorDetail.stack = error.stack;
+      }
+    } else {
+      errorDetail.error = String(error);
+      this.logger.warn(`Bulk operation failed for ID ${id}: ${String(error)}`);
+    }
+
+    return errorDetail;
+  }
+
+  /**
+   * Extract generic error details from ErrorDetail array
+   * Converts ErrorDetail array to a structured object for frontend consumption
+   * @param details - Array of ErrorDetail objects
+   * @returns Structured error details object
+   */
+  private extractStructuredDetails(details: ErrorDetail[]): unknown {
+    if (!details || details.length === 0) {
+      return undefined;
+    }
+
+    // Convert ErrorDetail array to a structured object
+    // Each detail's value is preserved, allowing any module to provide structured data
+    const structuredDetails: Record<string, unknown> = {};
+
+    for (const detail of details) {
+      if (detail.field && detail.value !== undefined) {
+        // Use field as key, value as the structured data
+        // This allows any module to provide any structure in the value
+        structuredDetails[detail.field] = detail.value;
+      }
+    }
+
+    // If only one detail, return its value directly for simpler structure
+    // Otherwise return the structured object
+    if (
+      details.length === 1 &&
+      details[0].field &&
+      details[0].value !== undefined
+    ) {
+      return details[0].value;
+    }
+
+    return Object.keys(structuredDetails).length > 0
+      ? structuredDetails
+      : undefined;
   }
 }

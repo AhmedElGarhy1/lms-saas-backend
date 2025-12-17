@@ -250,8 +250,22 @@ export type I18nTranslations = {
             "genericError": string;
             "welcome": string;
             "bulkOperationResult": string;
-            "bulkOperationSuccess": string;
-            "bulkOperationFailure": string;
+            "bulkOperationSuccess": {
+                "zero": string;
+                "one": string;
+                "two": string;
+                "few": string;
+                "many": string;
+                "other": string;
+            };
+            "bulkOperationFailure": {
+                "zero": string;
+                "one": string;
+                "two": string;
+                "few": string;
+                "many": string;
+                "other": string;
+            };
             "bulkOperationPartial": string;
             "changed": string;
             "sent": string;
@@ -283,9 +297,22 @@ export type I18nTranslations = {
             "bulkImportNotImplemented": string;
             "bulkDeleteNotImplemented": string;
             "bulkActionNotImplemented": string;
-            "foundResults": string;
+            "foundResults": {
+                "one": string;
+                "two": string;
+                "few": string;
+                "many": string;
+                "other": string;
+            };
             "startTypingToSearch": string;
-            "allItemsAlreadyInState": string;
+            "allItemsAlreadyInState": {
+                "zero": string;
+                "one": string;
+                "two": string;
+                "few": string;
+                "many": string;
+                "other": string;
+            };
             "contactAdmin": string;
             "copySuccess": string;
             "loadMore": string;

@@ -61,7 +61,7 @@ export class GroupExportMapper implements ExportMapper<Group, GroupExportData> {
         : '';
 
     // Get student count from computed field if available, otherwise from relation (for backward compatibility)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const studentsCount =
       (group as any).studentsCount ?? group.groupStudents?.length ?? 0;
 

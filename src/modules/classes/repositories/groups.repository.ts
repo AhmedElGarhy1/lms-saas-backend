@@ -51,7 +51,8 @@ export class GroupsRepository extends BaseRepository<Group> {
           subQuery
             .select('COUNT(groupStudentsForCount.id)', 'studentsCount')
             .from(GroupStudent, 'groupStudentsForCount')
-            .where('groupStudentsForCount.groupId = group.id'),
+            .where('groupStudentsForCount.groupId = group.id')
+            .andWhere('groupStudentsForCount.leftAt IS NULL'),
         'studentsCount',
       )
       .where('group.centerId = :centerId', { centerId });
@@ -121,7 +122,8 @@ export class GroupsRepository extends BaseRepository<Group> {
           subQuery
             .select('COUNT(groupStudentsForCount.id)', 'studentsCount')
             .from(GroupStudent, 'groupStudentsForCount')
-            .where('groupStudentsForCount.groupId = group.id'),
+            .where('groupStudentsForCount.groupId = group.id')
+            .andWhere('groupStudentsForCount.leftAt IS NULL'),
         'studentsCount',
       )
       .where('group.id = :id', { id });

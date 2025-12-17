@@ -14,6 +14,7 @@ import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
+import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BulkDeleteSubjectsDto } from '../dto/bulk-delete-subjects.dto';
 import { BulkRestoreSubjectsDto } from '../dto/bulk-restore-subjects.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
@@ -40,7 +41,7 @@ export class SubjectsActionsController {
   async bulkDelete(
     @Body() dto: BulkDeleteSubjectsDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.subjectIds,
       async (subjectId: string) => {
@@ -71,7 +72,7 @@ export class SubjectsActionsController {
   async bulkRestore(
     @Body() dto: BulkRestoreSubjectsDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.subjectIds,
       async (subjectId: string) => {

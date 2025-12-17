@@ -11,19 +11,19 @@ import { map, catchError } from 'rxjs/operators';
 import { TranslationService } from '@/shared/common/services/translation.service';
 import { I18nPath } from '@/generated/i18n.generated';
 import { PathArgs } from '@/generated/i18n-type-map.generated';
-import { ControllerResponse } from '../dto/controller-response.dto';
 import { TranslationMessage } from '../types/translation.types';
 
 /**
  * Translation response interceptor
  *
- * Translates only response messages (ControllerResponse.message and error messages).
- * Data translation is handled by the frontend.
+ * Translates response messages and error messages.
+ * This interceptor runs after ResponseInterceptor, which converts ControllerResponse to ApiResponse.
  *
  * Features:
- * - Translates TranslationMessage objects in response messages
+ * - Translates TranslationMessage objects in ApiResponse messages
  * - Translates error messages and details
  * - Handles nested translation keys in message arguments
+ * - Translates bulk operation error messages
  */
 @Injectable()
 export class TranslationResponseInterceptor implements NestInterceptor {
@@ -41,37 +41,39 @@ export class TranslationResponseInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(
       map((data: unknown) => {
-        // For ControllerResponse instances, translate the message
-        if (data instanceof ControllerResponse) {
-          return {
-            data: data.data, // Return data as-is, no translation
-            message: this.translateMessage(data.message),
-          };
-        }
-
-        // For ApiResponse objects (plain objects with success, data, message, meta)
-        // These are created by ResponseInterceptor from ControllerResponse
+        // Handle ApiResponse objects (created by ResponseInterceptor from ControllerResponse)
         if (
           data &&
           typeof data === 'object' &&
           'success' in data &&
-          'message' in data &&
-          this.isTranslationMessage((data as { message: unknown }).message)
+          'message' in data
         ) {
           const apiResponse = data as {
             success: boolean;
             data: unknown;
-            message: TranslationMessage;
+            message: string | TranslationMessage | undefined;
             meta?: unknown;
             [key: string]: unknown;
           };
+
+          // Translate bulk operation error messages if present
+          const translatedData = this.translateBulkOperationErrors(
+            apiResponse.data,
+          );
+
+          // Translate the message
+          const translatedMessage = this.translateApiResponseMessage(
+            apiResponse.message,
+          );
+
           return {
             ...apiResponse,
-            message: this.translateMessage(apiResponse.message),
+            data: translatedData,
+            message: translatedMessage,
           };
         }
 
-        // For other responses, return as-is (no data translation)
+        // For other responses, return as-is
         return data;
       }),
       catchError((error: unknown) => {
@@ -96,7 +98,6 @@ export class TranslationResponseInterceptor implements NestInterceptor {
           const translated = this.translateErrorResponse(response);
 
           // Create a new HttpException with translated response
-          // Preserve the original stack trace by attaching it to the new exception
           const translatedException = new HttpException(
             translated as string | Record<string, unknown>,
             error.getStatus(),
@@ -118,8 +119,44 @@ export class TranslationResponseInterceptor implements NestInterceptor {
   }
 
   /**
+   * Translate ApiResponse message
+   * Handles both TranslationMessage objects and translation key strings
+   *
+   * @param message - Message to translate (TranslationMessage object or string)
+   * @returns Translated string message
+   */
+  private translateApiResponseMessage(
+    message: string | TranslationMessage | undefined,
+  ): string | undefined {
+    if (!message) {
+      return undefined;
+    }
+
+    // If it's a TranslationMessage object, translate it directly
+    if (this.isTranslationMessage(message)) {
+      return this.translateMessage(message);
+    }
+
+    // If it's a translation key string, translate it
+    // This can happen if the TranslationMessage was serialized to just the key
+    if (this.isTranslationKey(message)) {
+      try {
+        return this.translationService.translate(message as I18nPath);
+      } catch (error) {
+        this.logger.warn(
+          `Failed to translate message key: ${message}`,
+          error instanceof Error ? error.message : String(error),
+        );
+        return message; // Fallback to original
+      }
+    }
+
+    // Not a translation, return as-is
+    return message;
+  }
+
+  /**
    * Check if value is a TranslationMessage object
-   * Type guard for better type safety
    *
    * @param value - Value to check
    * @returns true if value is a TranslationMessage object
@@ -141,41 +178,6 @@ export class TranslationResponseInterceptor implements NestInterceptor {
    */
   private isTranslationKey(value: unknown): boolean {
     return typeof value === 'string' && value.startsWith('t.');
-  }
-
-  /**
-   * Translate details array (error details)
-   */
-  private translateDetailsArray(
-    details: Array<{ message?: unknown; [key: string]: unknown }>,
-  ): Array<{ message: string; [key: string]: unknown }> {
-    return details.map((detail) => {
-      const msg = detail.message;
-      let message: string;
-
-      if (this.isTranslationMessage(msg)) {
-        message = this.translateMessage(msg);
-      } else if (typeof msg === 'string') {
-        message = msg;
-      } else if (msg === null || msg === undefined) {
-        message = '';
-      } else if (typeof msg === 'object' && msg !== null) {
-        // For objects, use JSON.stringify to avoid '[object Object]'
-        try {
-          message = JSON.stringify(msg);
-        } catch {
-          message = '[Unable to stringify object]';
-        }
-      } else {
-        // For primitives (number, boolean, etc.), convert to string
-        message = JSON.stringify(msg);
-      }
-
-      return {
-        ...detail,
-        message,
-      };
-    });
   }
 
   /**
@@ -214,6 +216,41 @@ export class TranslationResponseInterceptor implements NestInterceptor {
   }
 
   /**
+   * Translate details array (error details)
+   */
+  private translateDetailsArray(
+    details: Array<{ message?: unknown; [key: string]: unknown }>,
+  ): Array<{ message: string; [key: string]: unknown }> {
+    return details.map((detail) => {
+      const msg = detail.message;
+      let message: string;
+
+      if (this.isTranslationMessage(msg)) {
+        message = this.translateMessage(msg);
+      } else if (typeof msg === 'string') {
+        message = msg;
+      } else if (msg === null || msg === undefined) {
+        message = '';
+      } else if (typeof msg === 'object' && msg !== null) {
+        // For objects, use JSON.stringify to avoid '[object Object]'
+        try {
+          message = JSON.stringify(msg);
+        } catch {
+          message = '[Unable to stringify object]';
+        }
+      } else {
+        // For primitives (number, boolean, etc.), convert to string
+        message = JSON.stringify(msg);
+      }
+
+      return {
+        ...detail,
+        message,
+      };
+    });
+  }
+
+  /**
    * Translate a TranslationMessage object
    *
    * @param translationMsg - Translation message object with key and optional args
@@ -223,27 +260,135 @@ export class TranslationResponseInterceptor implements NestInterceptor {
     translationMsg: TranslationMessage<P>,
   ): string {
     try {
-      // Resolve nested translation keys in args
+      // Always recursively resolve all translation keys in args (deep recursive)
       const resolvedArgs =
         'args' in translationMsg && translationMsg.args
           ? this.resolveArgs(translationMsg.args)
           : undefined;
 
-      // Translate the main message with resolved args
+      // Translate the message with resolved args
       const translated = this.translationService.translate(
         translationMsg.key,
         resolvedArgs as PathArgs<P>,
       );
 
       // Ensure we return a string
-      return typeof translated === 'string' ? translated : translationMsg.key;
+      if (typeof translated !== 'string') {
+        this.logger.warn(
+          `Translation returned non-string for key: ${translationMsg.key}`,
+          { translated, args: resolvedArgs },
+        );
+        return translationMsg.key;
+      }
+
+      return translated;
     } catch (error) {
-      this.logger.warn(
+      this.logger.error(
         `Translation failed for key: ${translationMsg.key}`,
         error instanceof Error ? error.stack : String(error),
+        {
+          args: 'args' in translationMsg ? translationMsg.args : undefined,
+        },
       );
       return translationMsg.key; // Fallback to key if translation fails
     }
+  }
+
+  /**
+   * Translate error messages in bulk operation results
+   *
+   * @param data - Response data that may contain bulk operation results
+   * @returns Data with translated error messages and structured conflict details
+   */
+  private translateBulkOperationErrors(data: unknown): unknown {
+    if (
+      data &&
+      typeof data === 'object' &&
+      'type' in data &&
+      (data as { type: unknown }).type === 'bulk-operation' &&
+      'errors' in data &&
+      Array.isArray((data as { errors: unknown }).errors)
+    ) {
+      const bulkResult = data as {
+        type: 'bulk-operation';
+        success: number;
+        failed: number;
+        total: number;
+        errors?: Array<{
+          id: string;
+          code?: string;
+          error: string;
+          translationKey?: I18nPath;
+          translationArgs?: Record<string, unknown>;
+          details?: unknown;
+          stack?: string;
+        }>;
+      };
+
+      // Translate error messages that are translation keys
+      if (bulkResult.errors && bulkResult.errors.length > 0) {
+        const translatedErrors = bulkResult.errors.map((error) => {
+          let translatedMessage: string;
+
+          // Prefer translationKey if available (with args)
+          if (error.translationKey) {
+            try {
+              const resolvedArgs = error.translationArgs
+                ? this.resolveArgs(error.translationArgs as PathArgs<I18nPath>)
+                : undefined;
+              translatedMessage = this.translationService.translate(
+                error.translationKey,
+                resolvedArgs as PathArgs<I18nPath>,
+              );
+            } catch (err) {
+              this.logger.warn(
+                `Failed to translate bulk operation error: ${error.translationKey}`,
+                err instanceof Error ? err.message : String(err),
+              );
+              // Fallback to error string or translation key
+              translatedMessage = this.isTranslationKey(error.error)
+                ? error.error
+                : error.error;
+            }
+          } else if (this.isTranslationKey(error.error)) {
+            // Fallback to error field if it's a translation key
+            try {
+              translatedMessage = this.translationService.translate(
+                error.error as I18nPath,
+              );
+            } catch (err) {
+              this.logger.warn(
+                `Failed to translate bulk operation error: ${error.error}`,
+                err instanceof Error ? err.message : String(err),
+              );
+              translatedMessage = error.error;
+            }
+          } else {
+            // Use error message as-is if not a translation key
+            translatedMessage = error.error;
+          }
+
+          // Return structured error matching DTO format
+          return {
+            id: error.id,
+            code: error.code,
+            message: translatedMessage,
+            details: error.details,
+            // Only include stack in development
+            ...(process.env.NODE_ENV !== 'production' && error.stack
+              ? { stack: error.stack }
+              : {}),
+          };
+        });
+
+        return {
+          ...bulkResult,
+          errors: translatedErrors,
+        };
+      }
+    }
+
+    return data;
   }
 
   /**
@@ -264,8 +409,24 @@ export class TranslationResponseInterceptor implements NestInterceptor {
       if (this.isTranslationKey(value)) {
         // Translate nested translation key
         try {
-          resolved[key] = this.translationService.translate(value as I18nPath);
-        } catch {
+          const translated = this.translationService.translate(
+            value as I18nPath,
+          );
+          // Ensure we got a valid string translation
+          if (typeof translated === 'string' && translated.length > 0) {
+            resolved[key] = translated;
+          } else {
+            this.logger.warn(
+              `Translation returned invalid value for nested key: ${String(value)}`,
+              { translated },
+            );
+            resolved[key] = value; // Fallback to key if translation fails
+          }
+        } catch (error) {
+          this.logger.warn(
+            `Failed to translate nested key: ${String(value)}`,
+            error instanceof Error ? error.message : String(error),
+          );
           resolved[key] = value; // Fallback to key if translation fails
         }
       } else if (Array.isArray(value)) {
@@ -292,8 +453,14 @@ export class TranslationResponseInterceptor implements NestInterceptor {
         // Recursively resolve nested objects
         resolved[key] = this.resolveArgs(value as PathArgs<I18nPath>);
       } else {
-        // Keep other values as-is (primitives)
-        resolved[key] = value;
+        // Convert string numbers to actual numbers (nestjs-i18n pluralization requires numbers)
+        // Only convert if string is purely numeric (no extra characters)
+        if (typeof value === 'string' && /^-?\d+\.?\d*$/.test(value.trim())) {
+          const num = Number(value);
+          resolved[key] = !Number.isNaN(num) ? num : value;
+        } else {
+          resolved[key] = value;
+        }
       }
     }
 

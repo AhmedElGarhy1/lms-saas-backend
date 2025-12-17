@@ -9,6 +9,7 @@ import { BranchAccessDto } from '../dto/branch-access.dto';
 import { BranchAccessService } from '../services/branch-access.service';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
+import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BulkGrantBranchAccessDto } from '@/modules/access-control/dto/bulk-grant-branch-access.dto';
 import { BulkRevokeBranchAccessDto } from '@/modules/access-control/dto/bulk-revoke-branch-access.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
@@ -82,7 +83,7 @@ export class BranchesAccessController {
   async bulkGrantBranchAccess(
     @Body() dto: BulkGrantBranchAccessDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.userProfileIds,
       async (userProfileId: string) => {
@@ -120,7 +121,7 @@ export class BranchesAccessController {
   async bulkRevokeBranchAccess(
     @Body() dto: BulkRevokeBranchAccessDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.userProfileIds,
       async (userProfileId: string) => {

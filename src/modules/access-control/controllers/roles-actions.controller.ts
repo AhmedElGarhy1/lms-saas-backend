@@ -28,6 +28,7 @@ import { RoleResponseExportMapper } from '@/shared/common/mappers/role-response-
 import { ExportRolesDto } from '../dto/export-roles.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
+import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BulkDeleteRolesDto } from '../dto/bulk-delete-roles.dto';
 import { BulkRestoreRolesDto } from '../dto/bulk-restore-roles.dto';
 import { BulkAssignRoleDto } from '../dto/bulk-assign-role.dto';
@@ -108,7 +109,7 @@ export class RolesActionsController {
   async bulkDelete(
     @Body() dto: BulkDeleteRolesDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.roleIds,
       async (roleId: string) => {
@@ -139,7 +140,7 @@ export class RolesActionsController {
   async bulkRestore(
     @Body() dto: BulkRestoreRolesDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.roleIds,
       async (roleId: string) => {
@@ -170,7 +171,7 @@ export class RolesActionsController {
   async bulkAssign(
     @Body() dto: BulkAssignRoleDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.userProfileIds,
       async (userProfileId: string) => {
@@ -206,7 +207,7 @@ export class RolesActionsController {
   async bulkRemove(
     @Body() dto: BulkRemoveRoleDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.userProfileIds,
       async (userProfileId: string) => {

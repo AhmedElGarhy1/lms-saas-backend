@@ -24,6 +24,7 @@ import { CenterEvents } from '@/shared/events/center.events.enum';
 import { CenterExportedEvent } from '../events/center.events';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
+import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BulkDeleteCentersDto } from '../dto/bulk-delete-centers.dto';
 import { BulkRestoreCentersDto } from '../dto/bulk-restore-centers.dto';
 import { BulkToggleCenterStatusDto } from '../dto/bulk-toggle-center-status.dto';
@@ -105,7 +106,7 @@ export class CentersActionsController {
   async bulkDelete(
     @Body() dto: BulkDeleteCentersDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.centerIds,
       async (centerId: string) => {
@@ -136,7 +137,7 @@ export class CentersActionsController {
   async bulkRestore(
     @Body() dto: BulkRestoreCentersDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.centerIds,
       async (centerId: string) => {
@@ -167,7 +168,7 @@ export class CentersActionsController {
   async bulkToggleStatus(
     @Body() dto: BulkToggleCenterStatusDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.centerIds,
       async (centerId: string) => {

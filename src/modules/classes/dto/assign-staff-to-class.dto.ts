@@ -12,4 +12,3 @@ export class AssignStaffToClassDto {
   @Exists(UserProfile)
   userProfileId: string;
 }
-

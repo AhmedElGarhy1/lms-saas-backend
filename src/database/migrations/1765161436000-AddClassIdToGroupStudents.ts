@@ -64,5 +64,3 @@ export class AddClassIdToGroupStudents1765161436000
     `);
   }
 }
-
-

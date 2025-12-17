@@ -28,7 +28,6 @@ import { CustomValidationPipe } from '@/shared/common/pipes/validation.pipe';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { ContextGuard } from '@/shared/common/guards/context.guard';
 import { PermissionsGuard } from '@/shared/common/guards/permissions.guard';
-import { ClassSerializerInterceptor } from '@nestjs/common';
 import { DatabaseModule } from './shared/modules/database/database.module';
 import { AccessControlHelperService } from './modules/access-control/services/access-control-helper.service';
 import { ContextMiddleware } from './shared/common/middleware/context.middleware';
@@ -153,10 +152,6 @@ import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limi
     {
       provide: APP_INTERCEPTOR,
       useClass: PerformanceInterceptor,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: ClassSerializerInterceptor,
     },
     {
       provide: APP_INTERCEPTOR,

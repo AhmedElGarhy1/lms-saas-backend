@@ -12,4 +12,3 @@ export class RemoveStaffFromClassDto {
   @Exists(UserProfile)
   userProfileId: string;
 }
-

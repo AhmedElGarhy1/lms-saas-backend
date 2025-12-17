@@ -11,6 +11,7 @@ import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
+import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BulkDeleteUserProfilesDto } from '../dto/bulk-delete-user-profiles.dto';
 import { BulkRestoreUserProfilesDto } from '../dto/bulk-restore-user-profiles.dto';
 import { BulkToggleUserProfileStatusDto } from '../dto/bulk-toggle-user-profile-status.dto';
@@ -43,7 +44,7 @@ export class UserProfileActionsController {
   async bulkDelete(
     @Body() dto: BulkDeleteUserProfilesDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.userProfileIds,
       async (userProfileId: string) => {
@@ -74,7 +75,7 @@ export class UserProfileActionsController {
   async bulkRestore(
     @Body() dto: BulkRestoreUserProfilesDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.userProfileIds,
       async (userProfileId: string) => {
@@ -105,7 +106,7 @@ export class UserProfileActionsController {
   async bulkToggleStatus(
     @Body() dto: BulkToggleUserProfileStatusDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.userProfileIds,
       async (userProfileId: string) => {

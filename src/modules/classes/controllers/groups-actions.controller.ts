@@ -15,6 +15,7 @@ import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
+import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BulkDeleteGroupsDto } from '../dto/bulk-delete-groups.dto';
 import { BulkRestoreGroupsDto } from '../dto/bulk-restore-groups.dto';
 import { BulkAssignStudentsToGroupDto } from '../dto/bulk-assign-students-to-group.dto';
@@ -142,7 +143,7 @@ export class GroupsActionsController {
   async bulkDelete(
     @Body() dto: BulkDeleteGroupsDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.groupIds,
       async (groupId: string) => {
@@ -173,7 +174,7 @@ export class GroupsActionsController {
   async bulkRestore(
     @Body() dto: BulkRestoreGroupsDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.groupIds,
       async (groupId: string) => {
@@ -204,7 +205,7 @@ export class GroupsActionsController {
   async bulkAssignStudentsToGroup(
     @Body() dto: BulkAssignStudentsToGroupDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.groupsService.bulkAssignStudentsToGroup(
       dto.groupId,
       dto.userProfileIds,

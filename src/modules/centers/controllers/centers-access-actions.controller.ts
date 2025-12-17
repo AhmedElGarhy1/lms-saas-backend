@@ -13,6 +13,7 @@ import { AccessControlService } from '@/modules/access-control/services/access-c
 import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
+import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BulkGrantCenterAccessDto } from '@/modules/access-control/dto/bulk-grant-center-access.dto';
 import { BulkRevokeCenterAccessDto } from '@/modules/access-control/dto/bulk-revoke-center-access.dto';
 import { BulkToggleCenterAccessStatusDto } from '@/modules/access-control/dto/bulk-toggle-center-access-status.dto';
@@ -43,7 +44,7 @@ export class CentersAccessActionsController {
   async bulkGrantCenterAccess(
     @Body() dto: BulkGrantCenterAccessDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.userProfileIds,
       async (userProfileId: string) => {
@@ -80,7 +81,7 @@ export class CentersAccessActionsController {
   async bulkRevokeCenterAccess(
     @Body() dto: BulkRevokeCenterAccessDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.userProfileIds,
       async (userProfileId: string) => {
@@ -120,7 +121,7 @@ export class CentersAccessActionsController {
   async bulkToggleCenterAccessStatus(
     @Body() dto: BulkToggleCenterAccessStatusDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.userProfileIds,
       async (userProfileId: string) => {
@@ -158,7 +159,7 @@ export class CentersAccessActionsController {
   async bulkDeleteCenterAccess(
     @Body() dto: BulkDeleteCenterAccessDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.userProfileIds,
       async (userProfileId: string) => {
@@ -195,7 +196,7 @@ export class CentersAccessActionsController {
   async bulkRestoreCenterAccess(
     @Body() dto: BulkRestoreCenterAccessDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<BulkOperationResultDto>> {
+  ): Promise<ControllerResponse<BulkOperationResult>> {
     const result = await this.bulkOperationService.executeBulk(
       dto.userProfileIds,
       async (userProfileId: string) => {

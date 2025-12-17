@@ -4,7 +4,8 @@ import { Class } from './class.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('class_staff')
-@Index(['userProfileId', 'classId'], { unique: true })
+// Note: Unique constraint is now handled via partial unique index in the database
+// (UQ_class_staff_active_userProfileId_classId) which only applies when leftAt IS NULL
 @Index(['classId'])
 @Index(['centerId'])
 @Index(['userProfileId'])
@@ -18,8 +19,14 @@ export class ClassStaff extends BaseEntity {
   @Column({ type: 'uuid' })
   centerId: string; // Denormalized from Class for performance
 
-  @Column({ type: 'boolean', default: true })
-  isActive: boolean;
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  joinedAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  leftAt?: Date;
 
   // Relations
   @ManyToOne(() => UserProfile, (userProfile) => userProfile.classStaff, {

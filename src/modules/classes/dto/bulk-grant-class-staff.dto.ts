@@ -28,4 +28,3 @@ export class BulkGrantClassStaffDto {
   })
   userProfileIds: string[];
 }
-

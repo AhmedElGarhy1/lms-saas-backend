@@ -5,6 +5,7 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { ScheduleConflictQueryBuilder } from '../utils/schedule-conflict-query-builder';
 import { StudentConflictDto } from '../dto/schedule-conflict.dto';
+import { IsNull } from 'typeorm';
 
 @Injectable()
 export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
@@ -20,7 +21,7 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
 
   async findByGroupId(groupId: string): Promise<GroupStudent[]> {
     return this.getRepository().find({
-      where: { groupId },
+      where: { groupId, leftAt: IsNull() },
       relations: ['student'],
     });
   }
@@ -41,7 +42,7 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
     studentUserProfileId: string,
   ): Promise<boolean> {
     const exists = await this.getRepository().exists({
-      where: { groupId, studentUserProfileId },
+      where: { groupId, studentUserProfileId, leftAt: IsNull() },
     });
     return exists;
   }
@@ -51,7 +52,7 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
     studentUserProfileId: string,
   ): Promise<GroupStudent | null> {
     return this.getRepository().findOne({
-      where: { groupId, studentUserProfileId },
+      where: { groupId, studentUserProfileId, leftAt: IsNull() },
     });
   }
 
@@ -77,6 +78,7 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
         studentUserProfileId,
       })
       .andWhere('gs."classId" = :classId', { classId })
+      .andWhere('gs."leftAt" IS NULL')
       .andWhere('g."deletedAt" IS NULL')
       .select('g.id', 'groupId');
 
@@ -182,6 +184,7 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
         INNER JOIN user_profiles up ON up.id = gs."studentUserProfileId"
         INNER JOIN users u ON u.id = up."userId"
         WHERE gs."studentUserProfileId" IN (${studentIdsPlaceholders})
+          AND gs."leftAt" IS NULL
           AND g."deletedAt" IS NULL
           ${excludeInfo.condition}
           AND (${adjustedConflictConditions})
