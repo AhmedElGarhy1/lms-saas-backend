@@ -9,11 +9,11 @@ import {
 import { Response } from 'express';
 import { Transactional } from '@nestjs-cls/transactional';
 import { GroupsService } from '../services/groups.service';
+import { GroupStudentService } from '../services/group-student.service';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BulkDeleteGroupsDto } from '../dto/bulk-delete-groups.dto';
@@ -21,7 +21,7 @@ import { BulkRestoreGroupsDto } from '../dto/bulk-restore-groups.dto';
 import { BulkAssignStudentsToGroupDto } from '../dto/bulk-assign-students-to-group.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { ExportService } from '@/shared/common/services/export.service';
-import { GroupExportMapper } from '../mappers/group-export.mapper';
+import { GroupExportMapper } from '@/shared/common/mappers/group-export.mapper';
 import { ExportGroupsDto } from '../dto/export-groups.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
@@ -40,7 +40,7 @@ import { ExportMapper } from '@/shared/common/services/export.service';
 export class GroupsActionsController {
   constructor(
     private readonly groupsService: GroupsService,
-    private readonly bulkOperationService: BulkOperationService,
+    private readonly groupStudentService: GroupStudentService,
     private readonly exportService: ExportService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly classesRepository: ClassesRepository,
@@ -144,12 +144,9 @@ export class GroupsActionsController {
     @Body() dto: BulkDeleteGroupsDto,
     @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<BulkOperationResult>> {
-    const result = await this.bulkOperationService.executeBulk(
+    const result = await this.groupsService.bulkDeleteGroups(
       dto.groupIds,
-      async (groupId: string) => {
-        await this.groupsService.deleteGroup(groupId, actor);
-        return { id: groupId };
-      },
+      actor,
     );
 
     return ControllerResponse.success(result, {
@@ -175,12 +172,9 @@ export class GroupsActionsController {
     @Body() dto: BulkRestoreGroupsDto,
     @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<BulkOperationResult>> {
-    const result = await this.bulkOperationService.executeBulk(
+    const result = await this.groupsService.bulkRestoreGroups(
       dto.groupIds,
-      async (groupId: string) => {
-        await this.groupsService.restoreGroup(groupId, actor);
-        return { id: groupId };
-      },
+      actor,
     );
 
     return ControllerResponse.success(result, {
@@ -206,7 +200,7 @@ export class GroupsActionsController {
     @Body() dto: BulkAssignStudentsToGroupDto,
     @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<BulkOperationResult>> {
-    const result = await this.groupsService.bulkAssignStudentsToGroup(
+    const result = await this.groupStudentService.bulkAssignStudentsToGroup(
       dto.groupId,
       dto.userProfileIds,
       actor,

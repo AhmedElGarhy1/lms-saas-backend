@@ -1,7 +1,6 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { StaffRepository } from '../repositories/staff.repository';
 import { UserService } from '@/modules/user/services/user.service';
-import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { PaginateStaffDto } from '../dto/paginate-staff.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { User } from '@/modules/user/entities/user.entity';
@@ -16,7 +15,6 @@ export class StaffService extends BaseService {
   constructor(
     private readonly staffRepository: StaffRepository,
     private readonly userService: UserService,
-    private readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super();
   }
@@ -71,13 +69,6 @@ export class StaffService extends BaseService {
     actor: ActorUser,
     includeDeleted = false,
   ) {
-    // Validate that actor has access to this user profile
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: userProfileId,
-      centerId: actor.centerId,
-    });
-
     // Find user by profileId with same structure as paginate
     const user = await this.userService.findStaffUserByProfileId(
       userProfileId,

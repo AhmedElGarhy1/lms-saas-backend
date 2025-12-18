@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { CreateBranchDto } from '../dto/create-branch.dto';
 import { PaginateBranchesDto } from '../dto/paginate-branches.dto';
 import { BranchesRepository } from '../repositories/branches.repository';
-import { BranchAccessService } from './branch-access.service';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
@@ -20,7 +19,6 @@ import { BaseService } from '@/shared/common/services/base.service';
 export class BranchesService extends BaseService {
   constructor(
     private readonly branchesRepository: BranchesRepository,
-    private readonly branchAccessService: BranchAccessService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
@@ -37,12 +35,6 @@ export class BranchesService extends BaseService {
   }
 
   async getBranch(branchId: string, actor: ActorUser, includeDeleted = false) {
-    await this.branchAccessService.validateBranchAccess({
-      userProfileId: actor.userProfileId,
-      centerId: actor.centerId!,
-      branchId,
-    });
-
     const branch = includeDeleted
       ? await this.branchesRepository.findOneSoftDeletedById(branchId)
       : await this.branchesRepository.findOne(branchId);
@@ -78,12 +70,6 @@ export class BranchesService extends BaseService {
     data: CreateBranchDto,
     actor: ActorUser,
   ) {
-    await this.branchAccessService.validateBranchAccess({
-      userProfileId: actor.userProfileId,
-      centerId: actor.centerId!,
-      branchId,
-    });
-
     const branch = await this.getBranch(branchId, actor);
 
     Object.assign(branch, data);
@@ -99,12 +85,6 @@ export class BranchesService extends BaseService {
   }
 
   async deleteBranch(branchId: string, actor: ActorUser) {
-    await this.branchAccessService.validateBranchAccess({
-      userProfileId: actor.userProfileId,
-      centerId: actor.centerId!,
-      branchId,
-    });
-
     const branch = await this.getBranch(branchId, actor);
     await this.branchesRepository.softRemove(branchId);
 
@@ -120,12 +100,6 @@ export class BranchesService extends BaseService {
     isActive: boolean,
     actor: ActorUser,
   ): Promise<void> {
-    await this.branchAccessService.validateBranchAccess({
-      userProfileId: actor.userProfileId,
-      centerId: actor.centerId!,
-      branchId,
-    });
-
     const branch = await this.branchesRepository.findOne(branchId);
     if (!branch) {
       throw new ResourceNotFoundException('t.messages.withIdNotFound', {
@@ -150,12 +124,6 @@ export class BranchesService extends BaseService {
   }
 
   async restoreBranch(branchId: string, actor: ActorUser): Promise<void> {
-    await this.branchAccessService.validateBranchAccess({
-      userProfileId: actor.userProfileId,
-      centerId: actor.centerId!,
-      branchId,
-    });
-
     const branch =
       await this.branchesRepository.findOneSoftDeletedById(branchId);
     if (!branch) {

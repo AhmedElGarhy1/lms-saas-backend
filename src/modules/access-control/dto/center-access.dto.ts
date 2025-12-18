@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
+import { HasUserAccess } from '@/shared/common/decorators/has-user-access.decorator';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 
@@ -11,6 +12,7 @@ export class CenterAccessDto {
   })
   @IsUUID()
   @Exists(UserProfile)
+  @HasUserAccess()
   userProfileId: string;
 
   @ApiProperty({

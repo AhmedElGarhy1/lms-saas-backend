@@ -31,10 +31,8 @@ export class PaymentStrategyService extends BaseService {
     studentStrategy: StudentPaymentStrategyDto,
     teacherStrategy: TeacherPaymentStrategyDto,
   ): Promise<void> {
-    // Validate payment strategies
     this.validatePaymentStrategies(studentStrategy, teacherStrategy);
 
-    // Create student payment strategy
     await this.studentPaymentStrategyRepository.create({
       classId,
       per: studentStrategy.per,
@@ -42,7 +40,6 @@ export class PaymentStrategyService extends BaseService {
       amount: studentStrategy.amount,
     });
 
-    // Create teacher payment strategy
     await this.teacherPaymentStrategyRepository.create({
       classId,
       per: teacherStrategy.per,
@@ -64,18 +61,14 @@ export class PaymentStrategyService extends BaseService {
     studentStrategy?: StudentPaymentStrategyDto,
     teacherStrategy?: TeacherPaymentStrategyDto,
   ): Promise<void> {
-    // Validate payment strategies if both are provided (for consistency check)
-    // Note: Individual validation happens when creating/updating each strategy
     if (studentStrategy && teacherStrategy) {
       this.validatePaymentStrategies(studentStrategy, teacherStrategy);
     }
 
-    // Update student payment strategy if provided
     if (studentStrategy) {
       await this.updateStudentStrategy(classId, studentStrategy);
     }
 
-    // Update teacher payment strategy if provided
     if (teacherStrategy) {
       await this.updateTeacherStrategy(classId, teacherStrategy);
     }
@@ -129,7 +122,6 @@ export class PaymentStrategyService extends BaseService {
     studentPaymentStrategy: StudentPaymentStrategyDto,
     teacherPaymentStrategy: TeacherPaymentStrategyDto,
   ): void {
-    // Validate teacher payment strategy
     if (
       !Object.values(TeacherPaymentUnit).includes(teacherPaymentStrategy.per)
     ) {
@@ -143,7 +135,6 @@ export class PaymentStrategyService extends BaseService {
       throw new BusinessLogicException('t.messages.validationFailed');
     }
 
-    // Validate student payment strategy
     if (
       !Object.values(StudentPaymentUnit).includes(studentPaymentStrategy.per)
     ) {
@@ -157,7 +148,7 @@ export class PaymentStrategyService extends BaseService {
       throw new BusinessLogicException('t.messages.validationFailed');
     }
 
-    // Validate count for SESSION, HOUR, and MONTH
+    // Count required for SESSION, HOUR, and MONTH payment units
     if (
       (studentPaymentStrategy.per === StudentPaymentUnit.SESSION ||
         studentPaymentStrategy.per === StudentPaymentUnit.HOUR ||

@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Delete,
-  Get,
-  Body,
-  Param,
-  ParseUUIDPipe,
-} from '@nestjs/common';
+import { Controller, Post, Delete, Get, Body, Param } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
@@ -14,11 +6,11 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
-import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BulkGrantClassStaffDto } from '../dto/bulk-grant-class-staff.dto';
 import { BulkRevokeClassStaffDto } from '../dto/bulk-revoke-class-staff.dto';
+import { ClassIdParamDto } from '../dto/class-id-param.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { ClassStaffService } from '../services/class-staff.service';
 import { SerializeOptions } from '@nestjs/common';
@@ -27,10 +19,7 @@ import { ClassStaffResponseDto } from '../dto/class-staff-response.dto';
 @ApiTags('Classes - Staff Access')
 @Controller('classes/staff/access')
 export class ClassStaffAccessController {
-  constructor(
-    private readonly bulkOperationService: BulkOperationService,
-    private readonly classStaffService: ClassStaffService,
-  ) {}
+  constructor(private readonly classStaffService: ClassStaffService) {}
 
   @Post()
   @ApiOperation({ summary: 'Assign staff to class' })
@@ -46,7 +35,7 @@ export class ClassStaffAccessController {
     status: 404,
     description: 'Staff or class not found',
   })
-  @Permissions(PERMISSIONS.CLASSES.UPDATE)
+  @Permissions(PERMISSIONS.CLASSES.MANAGE_CLASS_STAFF_ACCESS)
   @Transactional()
   @SerializeOptions({ type: ClassStaffResponseDto })
   async assignStaffToClass(
@@ -70,7 +59,7 @@ export class ClassStaffAccessController {
     status: 404,
     description: 'Staff assignment not found',
   })
-  @Permissions(PERMISSIONS.CLASSES.UPDATE)
+  @Permissions(PERMISSIONS.CLASSES.MANAGE_CLASS_STAFF_ACCESS)
   @Transactional()
   async removeStaffFromClass(
     @Body() classStaffAccessDto: ClassStaffAccessDto,
@@ -90,25 +79,16 @@ export class ClassStaffAccessController {
     description: 'Bulk grant completed',
     type: BulkOperationResultDto,
   })
+  @Permissions(PERMISSIONS.CLASSES.MANAGE_CLASS_STAFF_ACCESS)
   @Transactional()
   async bulkGrantClassStaffAccess(
     @Body() dto: BulkGrantClassStaffDto,
     @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<BulkOperationResult>> {
-    const result = await this.bulkOperationService.executeBulk(
+    const result = await this.classStaffService.bulkAssignStaffToClass(
+      dto.classId,
       dto.userProfileIds,
-      async (userProfileId: string) => {
-        const classStaffAccessDto: ClassStaffAccessDto = {
-          userProfileId,
-          classId: dto.classId,
-          centerId: actor.centerId!,
-        };
-        await this.classStaffService.assignProfileToClass(
-          classStaffAccessDto,
-          actor,
-        );
-        return { id: userProfileId };
-      },
+      actor,
     );
 
     return ControllerResponse.success(result, {
@@ -130,25 +110,16 @@ export class ClassStaffAccessController {
     description: 'Bulk revoke completed',
     type: BulkOperationResultDto,
   })
+  @Permissions(PERMISSIONS.CLASSES.MANAGE_CLASS_STAFF_ACCESS)
   @Transactional()
   async bulkRevokeClassStaffAccess(
     @Body() dto: BulkRevokeClassStaffDto,
     @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<BulkOperationResult>> {
-    const result = await this.bulkOperationService.executeBulk(
+    const result = await this.classStaffService.bulkRemoveStaffFromClass(
+      dto.classId,
       dto.userProfileIds,
-      async (userProfileId: string) => {
-        const classStaffAccessDto: ClassStaffAccessDto = {
-          userProfileId,
-          classId: dto.classId,
-          centerId: actor.centerId!,
-        };
-        await this.classStaffService.removeUserFromClass(
-          classStaffAccessDto,
-          actor,
-        );
-        return { id: userProfileId };
-      },
+      actor,
     );
 
     return ControllerResponse.success(result, {
@@ -168,11 +139,8 @@ export class ClassStaffAccessController {
   })
   @Permissions(PERMISSIONS.CLASSES.READ)
   @SerializeOptions({ type: ClassStaffResponseDto })
-  async getClassStaff(
-    @Param('classId', ParseUUIDPipe) classId: string,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.classStaffService.getClassStaff(classId, actor);
+  async getClassStaff(@Param() params: ClassIdParamDto) {
+    const result = await this.classStaffService.getClassStaff(params.classId);
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.classStaffAccess' },

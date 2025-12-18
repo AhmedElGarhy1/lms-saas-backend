@@ -9,6 +9,8 @@ import { TeacherPaymentStrategy } from './entities/teacher-payment-strategy.enti
 import { ClassStaff } from './entities/class-staff.entity';
 import { ClassesService } from './services/classes.service';
 import { GroupsService } from './services/groups.service';
+import { GroupScheduleService } from './services/group-schedule.service';
+import { GroupStudentService } from './services/group-student.service';
 import { ScheduleService } from './services/schedule.service';
 import { ClassValidationService } from './services/class-validation.service';
 import { GroupValidationService } from './services/group-validation.service';
@@ -68,6 +70,8 @@ import { GroupActivityListener } from './listeners/group-activity.listener';
   providers: [
     ClassesService,
     GroupsService,
+    GroupScheduleService,
+    GroupStudentService,
     ScheduleService,
     ClassValidationService,
     GroupValidationService,

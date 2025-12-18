@@ -4,6 +4,12 @@ import { InsufficientPermissionsException } from '@/shared/common/exceptions/cus
 import { BaseService } from '@/shared/common/services/base.service';
 import { ClassStaffRepository } from '../repositories/class-staff.repository';
 import { GroupStudentsRepository } from '../repositories/group-students.repository';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
+import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
+import { ClassStaff } from '../entities/class-staff.entity';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { ClassesRepository } from '../repositories/classes.repository';
 
 @Injectable()
 export class ClassAccessService extends BaseService {
@@ -12,51 +18,93 @@ export class ClassAccessService extends BaseService {
   constructor(
     private readonly classStaffRepository: ClassStaffRepository,
     private readonly groupStudentsRepository: GroupStudentsRepository,
+    private readonly userProfileService: UserProfileService,
+    private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly classesRepository: ClassesRepository,
   ) {
     super();
   }
 
+  // class access methods
+
+  /**
+   * Find ClassStaff assignment for a specific user and class.
+   *
+   * @param data - ClassStaffAccessDto
+   * @param includeLeft - Whether to include assignments where leftAt is not null (default: false)
+   * @returns ClassStaff assignment or null if not found
+   */
+  async findClassAccess(
+    data: ClassStaffAccessDto,
+    includeLeft: boolean = false,
+  ): Promise<ClassStaff | null> {
+    return this.classStaffRepository.findClassStaffAccess(data, includeLeft);
+  }
+
   /**
    * Check if a user has ClassStaff assignment for a specific class.
-   * Returns true if ClassStaff assignment exists and is active (leftAt is null).
+   * Returns true if user is super admin or has active ClassStaff assignment.
    *
-   * @param userProfileId - The user profile ID
-   * @param classId - The class ID
-   * @returns true if user has active ClassStaff assignment, false otherwise
+   * @param data - ClassStaffAccessDto
+   * @param includeLeft - Whether to include assignments where leftAt is not null (default: false)
+   * @returns true if user has access, false otherwise
    */
-  async canAccessClass(
-    userProfileId: string,
-    classId: string,
+  async canClassAccess(
+    data: ClassStaffAccessDto,
+    includeLeft: boolean = false,
   ): Promise<boolean> {
-    const classStaff = await this.classStaffRepository.findClassStaff(
+    const { userProfileId, classId } = data;
+    const isAdmin =
+      await this.accessControlHelperService.isAdmin(userProfileId);
+    if (isAdmin) {
+      return true;
+    }
+    const classEntity = await this.classesRepository.findOneOrThrow(classId);
+    const isOwner = await this.accessControlHelperService.isCenterOwner(
       userProfileId,
-      classId,
+      classEntity.centerId,
     );
 
-    if (!classStaff || classStaff.leftAt !== null) {
+    if (isOwner) {
+      return true;
+    }
+
+    const classAccess = await this.findClassAccess(data, includeLeft);
+    if (!classAccess) {
       return false;
     }
 
-    return true;
+    return includeLeft || classAccess.leftAt === null;
   }
 
   /**
    * Validates that a user has ClassStaff assignment for a specific class.
+   * Only validates if the user is STAFF (non-STAFF users don't need class access validation).
    * Throws InsufficientPermissionsException if access is denied.
    *
-   * @param userProfileId - The user profile ID
-   * @param classId - The class ID
+   * @param data - ClassStaffAccessDto
+   * @param config - Configuration options for validation
+   * @param config.includeLeft - Whether to include assignments where leftAt is not null (default: false)
    * @throws InsufficientPermissionsException if user doesn't have ClassStaff assignment
    */
   async validateClassAccess(
-    userProfileId: string,
-    classId: string,
+    data: ClassStaffAccessDto,
+    config: {
+      includeLeft?: boolean;
+    } = {
+      includeLeft: false,
+    },
   ): Promise<void> {
-    const canAccess = await this.canAccessClass(userProfileId, classId);
+    const profile = await this.userProfileService.findOne(data.userProfileId);
+    if (!profile || profile.profileType !== ProfileType.STAFF) {
+      return;
+    }
+
+    const canAccess = await this.canClassAccess(data, config.includeLeft);
     if (!canAccess) {
       this.logger.warn('Class access validation failed', {
-        userProfileId,
-        classId,
+        userProfileId: data.userProfileId,
+        classId: data.classId,
       });
       throw new InsufficientPermissionsException(
         't.messages.actionUnauthorized',
@@ -84,7 +132,6 @@ export class ClassAccessService extends BaseService {
       return [];
     }
 
-    // Batch fetch all ClassStaff assignments for the given class and profile IDs
     const classStaffs = await this.classStaffRepository.findMany({
       where: {
         classId,
@@ -93,7 +140,6 @@ export class ClassAccessService extends BaseService {
       },
     });
 
-    // Return only the profile IDs that have active access
     return classStaffs.map((cs) => cs.userProfileId);
   }
 
@@ -113,7 +159,6 @@ export class ClassAccessService extends BaseService {
       return [];
     }
 
-    // Batch fetch all GroupStudent assignments for the given class and profile IDs
     const groupStudents = await this.groupStudentsRepository.findMany({
       where: {
         classId,
@@ -122,7 +167,6 @@ export class ClassAccessService extends BaseService {
       },
     });
 
-    // Return only the profile IDs that have active access
     return groupStudents.map((gs) => gs.studentUserProfileId);
   }
 }

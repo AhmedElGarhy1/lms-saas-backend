@@ -117,16 +117,8 @@ export class BranchAccessService extends BaseService {
     data: BranchAccessDto,
     actor: ActorUser,
   ): Promise<BranchAccess> {
-    const centerId = data.centerId ?? actor.centerId ?? '';
+    data.centerId = data.centerId ?? actor.centerId ?? '';
 
-    // Validate access (can actor manage this profile?)
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: data.userProfileId,
-      centerId,
-    });
-
-    // Validate that profile type is STAFF or ADMIN
     const profile = await this.userProfileService.findOne(data.userProfileId);
     if (!profile) {
       throw new ResourceNotFoundException('t.messages.notFound', {
@@ -134,7 +126,6 @@ export class BranchAccessService extends BaseService {
       });
     }
 
-    // Positive check: must be STAFF or ADMIN
     if (
       profile.profileType !== ProfileType.STAFF &&
       profile.profileType !== ProfileType.ADMIN
@@ -152,11 +143,7 @@ export class BranchAccessService extends BaseService {
       });
     }
 
-    // Create new assignment
-    const branchAccess =
-      await this.branchAccessRepository.grantBranchAccess(data);
-
-    return branchAccess;
+    return await this.branchAccessRepository.grantBranchAccess(data);
   }
 
   /**
@@ -171,19 +158,10 @@ export class BranchAccessService extends BaseService {
     data: BranchAccessDto,
     actor: ActorUser,
   ): Promise<BranchAccess> {
-    const centerId = data.centerId ?? actor.centerId ?? '';
-
-    // Validate access (can actor manage this profile?)
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: data.userProfileId,
-      centerId,
-    });
+    data.centerId = data.centerId ?? actor.centerId ?? '';
 
     await this.validateBranchAccess(data);
 
-    const result = await this.branchAccessRepository.revokeBranchAccess(data);
-
-    return result;
+    return await this.branchAccessRepository.revokeBranchAccess(data);
   }
 }

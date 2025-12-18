@@ -81,9 +81,11 @@ export class UserRepository extends BaseRepository<User> {
       userAccess,
       roleAccess,
       centerAccess,
-      displayDetailes,
+      displayDetails,
       branchId,
       branchAccess,
+      classId,
+      classAccess,
       isDeleted,
     } = params;
     delete params.isDeleted;
@@ -97,6 +99,9 @@ export class UserRepository extends BaseRepository<User> {
       centerId &&
       (!branchAccess || branchAccess === AccessibleUsersEnum.INCLUDE);
 
+    const includeClass =
+      classId && (!classAccess || classAccess === AccessibleUsersEnum.INCLUDE);
+
     // Create query builder with proper JOINs
     const queryBuilder = this.getRepository()
       .createQueryBuilder('user')
@@ -109,7 +114,7 @@ export class UserRepository extends BaseRepository<User> {
     this.applyIsActiveFilter(
       queryBuilder,
       params,
-      centerId && displayDetailes
+      centerId && displayDetails
         ? 'centerAccess.isActive'
         : 'userProfiles.isActive',
     );
@@ -118,6 +123,13 @@ export class UserRepository extends BaseRepository<User> {
       queryBuilder.andWhere(
         'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = userProfiles.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId AND ba."deletedAt" IS NULL)',
         { branchId, centerId },
+      );
+    }
+
+    if (includeClass) {
+      queryBuilder.andWhere(
+        'EXISTS (SELECT 1 FROM class_staff cs WHERE cs."userProfileId" = userProfiles.id AND cs."classId" = :classId AND cs."leftAt" IS NULL)',
+        { classId },
       );
     }
 
@@ -131,7 +143,7 @@ export class UserRepository extends BaseRepository<User> {
         )
         .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
 
-      if (displayDetailes) {
+      if (displayDetails) {
         queryBuilder
           .leftJoinAndSelect(
             'userProfiles.profileRoles',
@@ -155,7 +167,7 @@ export class UserRepository extends BaseRepository<User> {
           );
       }
       if (roleId && roleAccess !== AccessibleUsersEnum.ALL) {
-        if (displayDetailes) {
+        if (displayDetails) {
           queryBuilder.andWhere('role.id = :roleId', { roleId });
         } else {
           // queryBuilder
@@ -285,6 +297,14 @@ export class UserRepository extends BaseRepository<User> {
       );
     }
 
+    if (classId && classAccess) {
+      filteredItems = await this.applyClassAccessForStaff(
+        filteredItems,
+        classId,
+        classAccess,
+      );
+    }
+
     filteredItems = this.prepareUsersResponse(filteredItems);
 
     return {
@@ -310,7 +330,7 @@ export class UserRepository extends BaseRepository<User> {
     const {
       centerId,
       centerAccess,
-      displayDetailes,
+      displayDetails,
       isDeleted,
       groupId,
       groupAccess,
@@ -355,7 +375,7 @@ export class UserRepository extends BaseRepository<User> {
     this.applyIsActiveFilter(
       queryBuilder,
       params,
-      centerId && displayDetailes
+      centerId && displayDetails
         ? 'centerAccess.isActive'
         : 'userProfiles.isActive',
     );
@@ -371,7 +391,7 @@ export class UserRepository extends BaseRepository<User> {
         )
         .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
 
-      if (displayDetailes) {
+      if (displayDetails) {
         queryBuilder
           .withDeleted()
           .andWhere('user.deletedAt IS NULL')
@@ -446,7 +466,7 @@ export class UserRepository extends BaseRepository<User> {
     params: PaginateTeacherDto,
     actor: ActorUser,
   ): Promise<Pagination<UserResponseDto>> {
-    const { centerId, centerAccess, displayDetailes, isDeleted } = params;
+    const { centerId, centerAccess, displayDetails, isDeleted } = params;
     delete params.isDeleted;
 
     const includeCenter =
@@ -465,7 +485,7 @@ export class UserRepository extends BaseRepository<User> {
     this.applyIsActiveFilter(
       queryBuilder,
       params,
-      centerId && displayDetailes
+      centerId && displayDetails
         ? 'centerAccess.isActive'
         : 'userProfiles.isActive',
     );
@@ -480,7 +500,7 @@ export class UserRepository extends BaseRepository<User> {
         )
         .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
 
-      if (displayDetailes) {
+      if (displayDetails) {
         queryBuilder
           .leftJoinAndSelect(
             'userProfiles.profileRoles',
@@ -1298,6 +1318,36 @@ export class UserRepository extends BaseRepository<User> {
     if (classAccess === AccessibleUsersEnum.ALL) {
       const accessibleProfileIds =
         await this.classAccessService.getAccessibleStudentProfileIdsForClass(
+          classId,
+          userProfileIds,
+        );
+      filteredItems = filteredItems.map((user) =>
+        Object.assign(user, {
+          isClassAccessible: accessibleProfileIds.includes(
+            user.userProfiles[0]?.id,
+          ),
+        }),
+      );
+    } else {
+      filteredItems = filteredItems.map((user) =>
+        Object.assign(user, {
+          isClassAccessible: true,
+        }),
+      );
+    }
+    return filteredItems;
+  }
+
+  private async applyClassAccessForStaff(
+    users: UserResponseDto[],
+    classId: string,
+    classAccess: AccessibleUsersEnum,
+  ): Promise<UserResponseDto[]> {
+    const userProfileIds = users.map((user) => user.userProfiles[0]?.id);
+    let filteredItems: UserResponseDto[] = users;
+    if (classAccess === AccessibleUsersEnum.ALL) {
+      const accessibleProfileIds =
+        await this.classAccessService.getAccessibleStaffProfileIdsForClass(
           classId,
           userProfileIds,
         );

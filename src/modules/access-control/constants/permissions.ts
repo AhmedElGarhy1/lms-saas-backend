@@ -651,6 +651,12 @@ export const PERMISSIONS = {
       group: 'classes',
       scope: PermissionScope.CENTER,
     },
+    MANAGE_CLASS_STAFF_ACCESS: {
+      action: 'classes:manage-class-staff-access',
+      name: 't.permissions.classes.manageClassStaffAccess.name',
+      group: 'classes',
+      scope: PermissionScope.CENTER,
+    },
     READ_ALL: {
       action: 'classes:read-all',
       name: 't.permissions.classes.readAll.name',
@@ -700,6 +706,12 @@ export const PERMISSIONS = {
     RESTORE: {
       action: 'groups:restore',
       name: 't.permissions.groups.restore.name',
+      group: 'groups',
+      scope: PermissionScope.CENTER,
+    },
+    MANAGE_GROUP_STUDENT_ACCESS: {
+      action: 'groups:manage-group-student-access',
+      name: 't.permissions.groups.manageGroupStudentAccess.name',
       group: 'groups',
       scope: PermissionScope.CENTER,
     },

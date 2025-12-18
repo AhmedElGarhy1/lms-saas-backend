@@ -153,15 +153,8 @@ export class RolesService extends BaseService {
   }
 
   async assignRoleValidate(data: AssignRoleDto, actor: ActorUser) {
-    const centerId = data.centerId ?? actor.centerId;
-    data.centerId = centerId;
-    await this.accessControlerHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: data.userProfileId,
-      centerId,
-    });
+    data.centerId = data.centerId ?? actor.centerId;
 
-    // Validate that profile type is STAFF or ADMIN
     const profile = await this.accessControlerHelperService.findUserProfile(
       data.userProfileId,
     );
@@ -171,7 +164,6 @@ export class RolesService extends BaseService {
       });
     }
 
-    // Positive check: must be STAFF or ADMIN
     if (
       profile.profileType !== ProfileType.STAFF &&
       profile.profileType !== ProfileType.ADMIN
@@ -197,12 +189,6 @@ export class RolesService extends BaseService {
   }
 
   async removeUserRoleValidate(data: AssignRoleDto, actor: ActorUser) {
-    await this.accessControlerHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: data.userProfileId,
-      centerId: data.centerId,
-    });
-
     return this.removeUserRole(data);
   }
 

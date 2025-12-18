@@ -7,6 +7,7 @@ import {
   ArrayMaxSize,
 } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
+import { HasUserAccess } from '@/shared/common/decorators/has-user-access.decorator';
 import { Role } from '../entities/role.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 
@@ -33,6 +34,7 @@ export class BulkRemoveRoleDto {
     each: true,
     message: 'Each user profile ID must be a valid UUID',
   })
+  @HasUserAccess({ each: true })
   userProfileIds: string[];
 
   @ApiProperty({

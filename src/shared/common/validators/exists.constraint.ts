@@ -17,9 +17,8 @@ export class ExistsConstraint implements ValidatorConstraintInterface {
       EntityTarget<ObjectLiteral>,
       string,
     ];
-    if (!value) return true; // Allow empty values for optional fields
+    if (!value) return true;
 
-    // Check if dataSource is available
     if (!this.dataSource) {
       console.error('DataSource is not available in ExistsConstraint');
       return false;
@@ -27,14 +26,10 @@ export class ExistsConstraint implements ValidatorConstraintInterface {
 
     try {
       const repo = this.dataSource.getRepository(entityClass);
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const exists = await repo.exists({ where: { [column]: value } });
       return !!exists;
     } catch (error) {
-      // Log the error for debugging but don't throw
       console.error('Error in ExistsConstraint:', error);
-      // Return false to indicate validation failure, not an internal error
       return false;
     }
   }

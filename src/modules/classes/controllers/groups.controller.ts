@@ -8,7 +8,6 @@ import {
   Body,
   Param,
   Query,
-  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -22,6 +21,7 @@ import { GroupsService } from '../services/groups.service';
 import { CreateGroupDto } from '../dto/create-group.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
 import { PaginateGroupsDto } from '../dto/paginate-groups.dto';
+import { GroupIdParamDto } from '../dto/group-id-param.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { GetUser } from '@/shared/common/decorators';
@@ -71,10 +71,14 @@ export class GroupsController {
   @Permissions(PERMISSIONS.GROUPS.READ)
   @SerializeOptions({ type: GroupResponseDto })
   async getGroup(
-    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Param() params: GroupIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.groupsService.getGroup(groupId, actor, true); // includeDeleted: true for API endpoints
+    const result = await this.groupsService.getGroup(
+      params.groupId,
+      actor,
+      true,
+    ); // includeDeleted: true for API endpoints
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.group' },
@@ -120,11 +124,15 @@ export class GroupsController {
   @Transactional()
   @SerializeOptions({ type: GroupResponseDto })
   async updateGroup(
-    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Param() params: GroupIdParamDto,
     @Body() data: UpdateGroupDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.groupsService.updateGroup(groupId, data, actor);
+    const result = await this.groupsService.updateGroup(
+      params.groupId,
+      data,
+      actor,
+    );
     return ControllerResponse.success(result, {
       key: 't.messages.updated',
       args: { resource: 't.resources.group' },
@@ -145,10 +153,10 @@ export class GroupsController {
   @Permissions(PERMISSIONS.GROUPS.DELETE)
   @Transactional()
   async deleteGroup(
-    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Param() params: GroupIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.groupsService.deleteGroup(groupId, actor);
+    await this.groupsService.deleteGroup(params.groupId, actor);
     return ControllerResponse.message({
       key: 't.messages.deleted',
       args: { resource: 't.resources.group' },
@@ -162,10 +170,10 @@ export class GroupsController {
   @Transactional()
   @SerializeOptions({ type: GroupResponseDto })
   async restoreGroup(
-    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Param() params: GroupIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.groupsService.restoreGroup(groupId, actor);
+    await this.groupsService.restoreGroup(params.groupId, actor);
     return ControllerResponse.message({
       key: 't.messages.restored',
       args: { resource: 't.resources.group' },

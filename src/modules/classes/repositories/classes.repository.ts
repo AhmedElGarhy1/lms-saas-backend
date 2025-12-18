@@ -9,6 +9,7 @@ import { ScheduleConflictQueryBuilder } from '../utils/schedule-conflict-query-b
 import { Group } from '../entities/group.entity';
 import { GroupStudent } from '../entities/group-student.entity';
 import { TeacherConflictDto } from '../dto/schedule-conflict.dto';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
 export class ClassesRepository extends BaseRepository<Class> {
@@ -315,5 +316,29 @@ export class ClassesRepository extends BaseRepository<Class> {
     }
 
     return null;
+  }
+
+  /**
+   * Find a class by ID with all relations loaded, throws if not found.
+   * Pure data access method - no business logic.
+   *
+   * @param id - The class ID
+   * @param includeDeleted - Whether to include soft-deleted classes
+   * @returns Class with all relations
+   * @throws ResourceNotFoundException if class not found
+   */
+  async findClassWithRelationsOrThrow(
+    id: string,
+    includeDeleted = false,
+  ): Promise<Class> {
+    const classEntity = await this.findClassWithRelations(id, includeDeleted);
+    if (!classEntity) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.class',
+        identifier: 't.resources.identifier',
+        value: id,
+      });
+    }
+    return classEntity;
   }
 }

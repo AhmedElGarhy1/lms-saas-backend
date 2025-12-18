@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsUUID, ArrayMinSize, ArrayMaxSize } from 'class-validator';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
+import { HasBranchAccessViaResource } from '@/shared/common/decorators/has-branch-access-via-resource.decorator';
+import { HasCenterAccess } from '@/shared/common/decorators/has-center-access.decorator';
+import { IsProfileType } from '@/shared/common/decorators/is-profile-type.decorator';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Group } from '../entities/group.entity';
 
 export class BulkGrantGroupStudentDto {
@@ -9,7 +12,7 @@ export class BulkGrantGroupStudentDto {
     example: 'uuid-group-id',
   })
   @IsUUID()
-  @Exists(Group)
+  @HasBranchAccessViaResource(Group)
   groupId: string;
 
   @ApiProperty({
@@ -26,5 +29,7 @@ export class BulkGrantGroupStudentDto {
     each: true,
     message: 'Each user profile ID must be a valid UUID',
   })
+  @HasCenterAccess({ each: true })
+  @IsProfileType(ProfileType.STUDENT, { each: true })
   userProfileIds: string[];
 }

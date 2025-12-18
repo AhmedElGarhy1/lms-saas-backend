@@ -9,7 +9,6 @@ import {
   Param,
   Query,
   Res,
-  ParseUUIDPipe,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { Transactional } from '@nestjs-cls/transactional';
@@ -47,6 +46,7 @@ import { ExportService } from '@/shared/common/services/export.service';
 import { RoleResponseExportMapper } from '@/shared/common/mappers/role-response-export.mapper';
 import { ExportRolesDto } from '../dto/export-roles.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
+import { RoleIdParamDto } from '../dto/role-id-param.dto';
 
 @ApiTags('Roles')
 @Controller('roles')
@@ -120,10 +120,10 @@ export class RolesController {
   @ReadApiResponses('Get role by ID')
   @ApiParam({ name: 'roleId', type: String })
   async getRoleById(
-    @Param('roleId', ParseUUIDPipe) roleId: string,
+    @Param() params: RoleIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.rolesService.findById(roleId, actor, true); // includeDeleted: true for API endpoints
+    const result = await this.rolesService.findById(params.roleId, actor, true); // includeDeleted: true for API endpoints
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.role' },
@@ -137,11 +137,11 @@ export class RolesController {
   @Permissions(PERMISSIONS.ROLES.UPDATE)
   @Transactional()
   async updateRole(
-    @Param('roleId', ParseUUIDPipe) roleId: string,
+    @Param() params: RoleIdParamDto,
     @Body() dto: CreateRoleRequestDto,
     @GetUser() user: ActorUser,
   ) {
-    const result = await this.rolesService.updateRole(roleId, dto, user);
+    const result = await this.rolesService.updateRole(params.roleId, dto, user);
 
     return ControllerResponse.success(result, {
       key: 't.messages.updated',
@@ -155,10 +155,10 @@ export class RolesController {
   @Permissions(PERMISSIONS.ROLES.DELETE)
   @Transactional()
   async deleteRole(
-    @Param('roleId', ParseUUIDPipe) roleId: string,
+    @Param() params: RoleIdParamDto,
     @GetUser() user: ActorUser,
   ) {
-    const result = await this.rolesService.deleteRole(roleId, user);
+    const result = await this.rolesService.deleteRole(params.roleId, user);
 
     return ControllerResponse.success(result, {
       key: 't.messages.deleted',
@@ -172,10 +172,10 @@ export class RolesController {
   @Permissions(PERMISSIONS.ROLES.RESTORE)
   @Transactional()
   async restoreRole(
-    @Param('roleId', ParseUUIDPipe) roleId: string,
+    @Param() params: RoleIdParamDto,
     @GetUser() user: ActorUser,
   ) {
-    await this.rolesService.restoreRole(roleId, user);
+    await this.rolesService.restoreRole(params.roleId, user);
 
     return ControllerResponse.message({
       key: 't.messages.restored',

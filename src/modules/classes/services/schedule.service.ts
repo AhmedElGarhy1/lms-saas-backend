@@ -40,9 +40,8 @@ export class ScheduleService extends BaseService {
    * @throws BusinessLogicException if items have overlaps
    */
   validateScheduleItems(items: ScheduleItemDto[], duration: number): void {
-    // Helper to get reference date for a specific day of week
     const getReferenceDateForDay = (day: DayOfWeek): Date => {
-      const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }); // Monday = 1
+      const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
       const dayMap: Record<DayOfWeek, number> = {
         [DayOfWeek.MON]: 0,
         [DayOfWeek.TUE]: 1,
@@ -55,7 +54,6 @@ export class ScheduleService extends BaseService {
       return addDays(weekStart, dayMap[day]);
     };
 
-    // Group by day and check overlaps
     const itemsByDay = new Map<DayOfWeek, ScheduleItemDto[]>();
     for (const item of items) {
       const dayItems = itemsByDay.get(item.day) || [];
@@ -63,11 +61,9 @@ export class ScheduleService extends BaseService {
       itemsByDay.set(item.day, dayItems);
     }
 
-    // Check overlaps for each day
     for (const [day, dayItems] of itemsByDay.entries()) {
       const referenceDate = getReferenceDateForDay(day);
 
-      // Helper to create interval from schedule item (using cached reference date)
       const createInterval = (item: ScheduleItemDto) => {
         const start = parse(item.startTime, 'HH:mm', referenceDate);
         return { start, end: addMinutes(start, duration) };
@@ -155,12 +151,10 @@ export class ScheduleService extends BaseService {
       excludeGroupIds?: string[];
     },
   ): Promise<void> {
-    // Validate schedule items for overlaps
     this.validateScheduleItems(scheduleItems, duration);
 
     const details: ErrorDetail[] = [];
 
-    // Check teacher conflicts if teacher ID provided
     if (options.teacherUserProfileId) {
       const teacherConflict = await this.checkTeacherScheduleConflicts(
         options.teacherUserProfileId,
@@ -181,7 +175,6 @@ export class ScheduleService extends BaseService {
       }
     }
 
-    // Check student conflicts if student IDs provided
     if (options.studentIds && options.studentIds.length > 0) {
       const studentConflicts = await this.checkStudentScheduleConflicts(
         options.studentIds,
@@ -204,7 +197,6 @@ export class ScheduleService extends BaseService {
       }
     }
 
-    // Throw exception if any conflicts found
     if (details.length > 0) {
       throw new ScheduleConflictException(
         't.messages.validationFailed',

@@ -1,20 +1,26 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsBoolean } from 'class-validator';
+import { IsOptional, IsBoolean, IsUUID, IsEnum } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { PaginateManagerUsersDto } from '@/modules/user/dto/paginate-manager-users.dto';
+import { AccessibleUsersEnum } from '@/modules/user/dto/paginate-manager-users.dto';
+import { Exists } from '@/shared/common/decorators/exists.decorator';
+import { Class } from '@/modules/classes/entities/class.entity';
 
 export class PaginateStaffDto extends PaginateManagerUsersDto {
   @ApiPropertyOptional({
-    description: 'Display role in case of centerId provided',
-    type: Boolean,
-    example: true,
+    description: 'Filter by class ID',
+    type: String,
   })
   @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return value as boolean;
+  @IsUUID()
+  @Exists(Class)
+  classId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by class access',
+    enum: AccessibleUsersEnum,
   })
-  displayDetailes?: boolean;
+  @IsOptional()
+  @IsEnum(AccessibleUsersEnum)
+  classAccess?: AccessibleUsersEnum;
 }

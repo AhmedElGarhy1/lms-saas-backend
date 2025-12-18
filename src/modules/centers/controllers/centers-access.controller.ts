@@ -5,7 +5,6 @@ import {
   Delete,
   Patch,
   Param,
-  ParseUUIDPipe,
   ForbiddenException,
 } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
@@ -28,6 +27,7 @@ import {
 import { TranslationService } from '@/shared/common/services/translation.service';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
+import { UserProfileIdParamDto } from '@/modules/access-control/dto/user-profile-id-param.dto';
 
 @ApiBearerAuth()
 @ApiTags('Centers Access')
@@ -50,7 +50,7 @@ export class CentersAccessController {
   @Permissions(PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS)
   @Transactional()
   async toggleCenterAccessStatus(
-    @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
+    @Param() params: UserProfileIdParamDto,
     @Body() dto: ToggleUserStatusRequestDto,
     @GetUser() actor: ActorUser,
   ): Promise<ToggleUserStatusResponseDto> {
@@ -62,14 +62,14 @@ export class CentersAccessController {
     await this.accessControlService.activateCenterAccess(
       {
         centerId: actor.centerId,
-        userProfileId: userProfileId,
+        userProfileId: params.userProfileId,
       },
       dto.isActive,
       actor,
     );
 
     return {
-      id: userProfileId,
+      id: params.userProfileId,
       message: this.translationService.translate(
         dto.isActive ? 't.messages.activated' : 't.messages.deactivated',
         { resource: 't.resources.centerAccess' },
@@ -128,7 +128,7 @@ export class CentersAccessController {
   @Permissions(PERMISSIONS.STAFF.DELETE_CENTER_ACCESS)
   @Transactional()
   async deleteCenterAccess(
-    @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
+    @Param() params: UserProfileIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     if (!actor.centerId) {
@@ -137,12 +137,12 @@ export class CentersAccessController {
       );
     }
     await this.accessControlHelperService.validateCenterAccess({
-      userProfileId,
+      userProfileId: params.userProfileId,
       centerId: actor.centerId,
     });
 
     const result = await this.accessControlService.softRemoveCenterAccess(
-      { userProfileId, centerId: actor.centerId },
+      { userProfileId: params.userProfileId, centerId: actor.centerId },
       actor,
     );
 
@@ -157,7 +157,7 @@ export class CentersAccessController {
   @Permissions(PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS)
   @Transactional()
   async restoreCenterAccess(
-    @Param('userProfileId', ParseUUIDPipe) userProfileId: string,
+    @Param() params: UserProfileIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     if (!actor.centerId) {
@@ -166,11 +166,11 @@ export class CentersAccessController {
       );
     }
     await this.accessControlHelperService.validateCenterAccess({
-      userProfileId: userProfileId,
+      userProfileId: params.userProfileId,
       centerId: actor.centerId,
     });
     const result = await this.accessControlService.restoreCenterAccess(
-      { userProfileId: userProfileId, centerId: actor.centerId },
+      { userProfileId: params.userProfileId, centerId: actor.centerId },
       actor,
     );
 

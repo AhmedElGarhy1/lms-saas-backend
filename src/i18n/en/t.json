@@ -1180,6 +1180,9 @@
       "restore": {
         "name": "Restore Classes"
       },
+      "manageClassStaffAccess": {
+        "name": "Manage Class Staff Access"
+      },
       "readAll": {
         "name": "Read All Classes"
       },
@@ -1205,6 +1208,9 @@
       },
       "restore": {
         "name": "Restore Groups"
+      },
+      "manageGroupStudentAccess": {
+        "name": "Manage Group Student Access"
       },
       "readAll": {
         "name": "Read All Groups"

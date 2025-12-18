@@ -117,4 +117,18 @@ export class BasePaginationDto {
     return value as boolean;
   })
   isActive?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Display role in case of centerId provided',
+    type: Boolean,
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean;
+  })
+  displayDetails?: boolean;
 }

@@ -20,6 +20,7 @@ import { CentersService } from '@/modules/centers/services/centers.service';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { CenterAccess } from '../entities/center-access.entity';
 import { BaseService } from '@/shared/common/services/base.service';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 @Injectable()
 export class AccessControlHelperService extends BaseService {
@@ -384,5 +385,58 @@ export class AccessControlHelperService extends BaseService {
       scope,
       centerId,
     );
+  }
+
+  /**
+   * Validates if a profile can be assigned to a class (e.g., as teacher)
+   * Checks profile type, center access, and optionally user access
+   *
+   * @param targetUserProfileId - The profile to validate
+   * @param centerId - The center ID
+   * @param requiredProfileType - Required profile type (e.g., ProfileType.TEACHER)
+   * @param actorUserProfileId - Optional actor profile ID for user access check
+   * @param checkUserAccess - Whether to validate user access (default: false)
+   * @returns boolean - true if valid, false otherwise
+   */
+  async canAssignProfileToClass(
+    targetUserProfileId: string,
+    centerId: string,
+    requiredProfileType: ProfileType,
+    actorUserProfileId?: string,
+    checkUserAccess: boolean = false,
+  ): Promise<boolean> {
+    // Fetch UserProfile by ID
+    const profile = await this.userProfileService.findOne(targetUserProfileId);
+    if (!profile) {
+      return false;
+    }
+
+    // Check profile type matches requiredProfileType
+    if (profile.profileType !== requiredProfileType) {
+      return false;
+    }
+
+    // Check center access using canCenterAccess
+    const hasCenterAccess = await this.canCenterAccess({
+      userProfileId: targetUserProfileId,
+      centerId,
+    });
+    if (!hasCenterAccess) {
+      return false;
+    }
+
+    // If checkUserAccess and actorUserProfileId provided, check user access
+    if (checkUserAccess && actorUserProfileId) {
+      const hasUserAccess = await this.canUserAccess({
+        granterUserProfileId: actorUserProfileId,
+        targetUserProfileId,
+        centerId,
+      });
+      if (!hasUserAccess) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

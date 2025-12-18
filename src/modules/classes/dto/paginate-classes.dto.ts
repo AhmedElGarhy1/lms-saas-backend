@@ -1,6 +1,9 @@
 import { IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
+import { BelongsToCenter } from '@/shared/common/decorators/belongs-to-center.decorator';
+import { HasBranchAccess } from '@/shared/common/decorators/has-branch-access.decorator';
+import { Branch } from '@/modules/centers/entities/branch.entity';
 
 export class PaginateClassesDto extends BasePaginationDto {
   @ApiProperty({
@@ -9,6 +12,8 @@ export class PaginateClassesDto extends BasePaginationDto {
   })
   @IsOptional()
   @IsUUID(4)
+  @BelongsToCenter(Branch)
+  @HasBranchAccess()
   branchId?: string;
 
   @ApiProperty({

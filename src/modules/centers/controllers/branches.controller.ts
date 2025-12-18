@@ -8,7 +8,6 @@ import {
   Body,
   Param,
   Query,
-  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { Transactional } from '@nestjs-cls/transactional';
@@ -21,6 +20,7 @@ import { GetUser } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UpdateApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { BranchIdParamDto } from '../dto/branch-id-param.dto';
 
 @ApiTags('Centers - Branches')
 @Controller('centers/branches')
@@ -59,10 +59,14 @@ export class BranchesController {
     description: 'Branch not found',
   })
   async getBranch(
-    @Param('branchId', ParseUUIDPipe) branchId: string,
+    @Param() params: BranchIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.branchesService.getBranch(branchId, actor, true); // includeDeleted: true for API endpoints
+    const result = await this.branchesService.getBranch(
+      params.branchId,
+      actor,
+      true,
+    ); // includeDeleted: true for API endpoints
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.branch' },
@@ -109,12 +113,12 @@ export class BranchesController {
   @Permissions(PERMISSIONS.BRANCHES.UPDATE)
   @Transactional()
   async updateBranch(
-    @Param('branchId', ParseUUIDPipe) branchId: string,
+    @Param() params: BranchIdParamDto,
     @Body() data: CreateBranchDto,
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.branchesService.updateBranch(
-      branchId,
+      params.branchId,
       data,
       actor,
     );
@@ -138,10 +142,10 @@ export class BranchesController {
   @Permissions(PERMISSIONS.BRANCHES.DELETE)
   @Transactional()
   async deleteBranch(
-    @Param('branchId', ParseUUIDPipe) branchId: string,
+    @Param() params: BranchIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.branchesService.deleteBranch(branchId, actor);
+    await this.branchesService.deleteBranch(params.branchId, actor);
     return ControllerResponse.message({
       key: 't.messages.deleted',
       args: { resource: 't.resources.branch' },
@@ -162,12 +166,12 @@ export class BranchesController {
   @Permissions(PERMISSIONS.BRANCHES.ACTIVATE)
   @Transactional()
   async toggleBranchStatus(
-    @Param('branchId', ParseUUIDPipe) branchId: string,
+    @Param() params: BranchIdParamDto,
     @Body() body: { isActive: boolean },
     @GetUser() actor: ActorUser,
   ) {
     await this.branchesService.toggleBranchStatus(
-      branchId,
+      params.branchId,
       body.isActive,
       actor,
     );
@@ -183,10 +187,10 @@ export class BranchesController {
   @Permissions(PERMISSIONS.BRANCHES.RESTORE)
   @Transactional()
   async restoreBranch(
-    @Param('branchId', ParseUUIDPipe) branchId: string,
+    @Param() params: BranchIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.branchesService.restoreBranch(branchId, actor);
+    await this.branchesService.restoreBranch(params.branchId, actor);
     return ControllerResponse.message({
       key: 't.messages.restored',
       args: { resource: 't.resources.branch' },

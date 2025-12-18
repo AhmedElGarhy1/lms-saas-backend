@@ -1190,6 +1190,9 @@
       "restore": {
         "name": "استعادة الفصول"
       },
+      "manageClassStaffAccess": {
+        "name": "إدارة وصول طاقم الفصل"
+      },
       "readAll": {
         "name": "قراءة جميع الفصول"
       },
@@ -1215,6 +1218,9 @@
       },
       "restore": {
         "name": "استعادة المجموعات"
+      },
+      "manageGroupStudentAccess": {
+        "name": "إدارة وصول طلاب المجموعة"
       },
       "readAll": {
         "name": "قراءة جميع المجموعات"

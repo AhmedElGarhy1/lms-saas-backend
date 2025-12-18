@@ -1,9 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
+import { HasBranchAccessViaResource } from '@/shared/common/decorators/has-branch-access-via-resource.decorator';
+import { HasUserAccess } from '@/shared/common/decorators/has-user-access.decorator';
+import { HasCenterAccess } from '@/shared/common/decorators/has-center-access.decorator';
+import { IsProfileType } from '@/shared/common/decorators/is-profile-type.decorator';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Class } from '../entities/class.entity';
-import { Center } from '@/modules/centers/entities/center.entity';
 
 export class ClassStaffAccessDto {
   @ApiProperty({
@@ -11,22 +13,16 @@ export class ClassStaffAccessDto {
     format: 'uuid',
   })
   @IsUUID()
-  @Exists(UserProfile)
+  @HasUserAccess()
+  @HasCenterAccess()
+  @IsProfileType(ProfileType.STAFF)
   userProfileId: string;
-
-  @ApiProperty({
-    description: 'The ID of the center for which to grant class access',
-    format: 'uuid',
-  })
-  @IsUUID()
-  @Exists(Center)
-  centerId: string;
 
   @ApiProperty({
     description: 'The ID of the class for which to grant access',
     format: 'uuid',
   })
   @IsUUID()
-  @Exists(Class)
+  @HasBranchAccessViaResource(Class)
   classId: string;
 }

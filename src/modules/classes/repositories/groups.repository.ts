@@ -6,6 +6,7 @@ import { Pagination } from '@/shared/common/types/pagination.types';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { GroupStudent } from '../entities/group-student.entity';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 
 export interface GroupWithStudentCount extends Group {
   studentsCount: number;
@@ -176,5 +177,63 @@ export class GroupsRepository extends BaseRepository<Group> {
       where: { classId },
       relations: ['scheduleItems'],
     });
+  }
+
+  /**
+   * Find a group by ID with class relation loaded.
+   * Pure data access method - no business logic.
+   *
+   * @param id - The group ID
+   * @returns Group with class relation or null if not found
+   */
+  async findOneWithClass(id: string): Promise<Group | null> {
+    return this.getRepository().findOne({
+      where: { id },
+      relations: ['class'],
+    });
+  }
+
+  /**
+   * Find a group by ID with class relation loaded, throws if not found.
+   * Pure data access method - no business logic.
+   *
+   * @param id - The group ID
+   * @returns Group with class relation
+   * @throws ResourceNotFoundException if group not found
+   */
+  async findOneWithClassOrThrow(id: string): Promise<Group> {
+    const group = await this.findOneWithClass(id);
+    if (!group) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.group',
+        identifier: 't.resources.identifier',
+        value: id,
+      });
+    }
+    return group;
+  }
+
+  /**
+   * Find a group by ID with all relations loaded, throws if not found.
+   * Pure data access method - no business logic.
+   *
+   * @param id - The group ID
+   * @param includeDeleted - Whether to include soft-deleted groups
+   * @returns Group with all relations
+   * @throws ResourceNotFoundException if group not found
+   */
+  async findGroupWithRelationsOrThrow(
+    id: string,
+    includeDeleted = false,
+  ): Promise<GroupWithStudentCount> {
+    const group = await this.findGroupWithRelations(id, includeDeleted);
+    if (!group) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.group',
+        identifier: 't.resources.identifier',
+        value: id,
+      });
+    }
+    return group;
   }
 }

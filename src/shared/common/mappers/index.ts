@@ -3,3 +3,5 @@ export * from './center-export.mapper';
 export * from './role-export.mapper';
 export * from './activity-log-export.mapper';
 export * from './branch-response-export.mapper';
+export * from './class-export.mapper';
+export * from './group-export.mapper';

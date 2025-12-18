@@ -6,7 +6,6 @@ import {
   Patch,
   Body,
   Delete,
-  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiParam, ApiBody } from '@nestjs/swagger';
 import {
@@ -28,6 +27,7 @@ import { UpdateUserProfileStatusDto } from '../dto/update-user-profile-status.dt
 import { CreateUserProfileDto } from '../dto/create-user-profile.dto';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
+import { UserProfileIdParamDto } from '../dto/user-profile-id-param.dto';
 import { ProfileResponseDto } from '../dto/profile-response.dto';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 
@@ -88,11 +88,11 @@ export class UserProfileController {
   @ReadApiResponses('Get user profile by ID')
   @ApiParam({ name: 'id', description: 'User Profile ID', type: String })
   async getProfile(
-    @Param('id', ParseUUIDPipe) userProfileId: string,
+    @Param() params: UserProfileIdParamDto,
     @GetUser() actorUser: ActorUser,
   ) {
     const profile = await this.userProfileService.findOne(
-      userProfileId,
+      params.id,
       actorUser,
       true, // includeDeleted: true for API endpoints
     );
@@ -108,19 +108,15 @@ export class UserProfileController {
   @Permissions(PERMISSIONS.STAFF.ACTIVATE)
   @Transactional()
   async updateStatus(
-    @Param('id', ParseUUIDPipe) userProfileId: string,
+    @Param() params: UserProfileIdParamDto,
     @Body() dto: UpdateUserProfileStatusDto,
     @GetUser() actor: ActorUser,
   ) {
     // Use UserService method which handles event emission
-    await this.userService.activateProfileUser(
-      userProfileId,
-      dto.isActive,
-      actor,
-    );
+    await this.userService.activateProfileUser(params.id, dto.isActive, actor);
 
     return ControllerResponse.success(
-      { id: userProfileId, isActive: dto.isActive },
+      { id: params.id, isActive: dto.isActive },
       {
         key: 't.messages.updated',
         args: { resource: 't.resources.profile' },
@@ -134,13 +130,13 @@ export class UserProfileController {
   @Permissions(PERMISSIONS.STAFF.DELETE)
   @Transactional()
   async deleteProfile(
-    @Param('id', ParseUUIDPipe) userProfileId: string,
+    @Param() params: UserProfileIdParamDto,
     @GetUser() actorUser: ActorUser,
   ) {
-    await this.userProfileService.deleteUserProfile(userProfileId, actorUser);
+    await this.userProfileService.deleteUserProfile(params.id, actorUser);
     // Note: Activity logging should be handled by event listeners if UserProfileService emits events
     return ControllerResponse.success(
-      { id: userProfileId },
+      { id: params.id },
       {
         key: 't.messages.deleted',
         args: { resource: 't.resources.profile' },
@@ -154,13 +150,13 @@ export class UserProfileController {
   @Permissions(PERMISSIONS.STAFF.RESTORE)
   @Transactional()
   async restoreProfile(
-    @Param('id', ParseUUIDPipe) userProfileId: string,
+    @Param() params: UserProfileIdParamDto,
     @GetUser() actorUser: ActorUser,
   ) {
-    await this.userProfileService.restoreUserProfile(userProfileId, actorUser);
+    await this.userProfileService.restoreUserProfile(params.id, actorUser);
     // Note: Activity logging should be handled by event listeners if UserProfileService emits events
     return ControllerResponse.success(
-      { id: userProfileId },
+      { id: params.id },
       {
         key: 't.messages.restored',
         args: { resource: 't.resources.profile' },

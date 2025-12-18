@@ -1,8 +1,8 @@
-import { Group } from '../entities/group.entity';
+import { Group } from '@/modules/classes/entities/group.entity';
 import { ExportMapper } from '@/shared/common/services/export.service';
-import { Class } from '../entities/class.entity';
+import { Class } from '@/modules/classes/entities/class.entity';
 import { Branch } from '@/modules/centers/entities/branch.entity';
-import { calculateEndTime } from '../utils/time-calculator.util';
+import { calculateEndTime } from '@/modules/classes/utils/time-calculator.util';
 
 export interface GroupExportData {
   id: string;
@@ -90,3 +90,5 @@ export class GroupExportMapper implements ExportMapper<Group, GroupExportData> {
     ];
   }
 }
+
+

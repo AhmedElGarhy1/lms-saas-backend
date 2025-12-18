@@ -41,11 +41,19 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
    * Pure data access method - no business logic.
    *
    * @param data - ClassStaffAccessDto
+   * @param includeLeft - Whether to include assignments where leftAt is not null (default: false)
    * @returns ClassStaff assignment or null if not found
    */
-  findClassStaffAccess(data: ClassStaffAccessDto): Promise<ClassStaff | null> {
+  async findClassStaffAccess(
+    data: ClassStaffAccessDto,
+    includeLeft: boolean = false,
+  ): Promise<ClassStaff | null> {
+    const where: any = { ...data };
+    if (!includeLeft) {
+      where.leftAt = IsNull();
+    }
     return this.getRepository().findOne({
-      where: { ...data, leftAt: IsNull() },
+      where,
     });
   }
 
@@ -106,10 +114,14 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
    * Creates a new assignment record for history tracking.
    *
    * @param data - ClassStaffAccessDto
+   * @param centerId - Center ID (from actor)
    * @returns Created ClassStaff assignment
    */
-  async grantClassStaffAccess(data: ClassStaffAccessDto): Promise<ClassStaff> {
-    return this.create({ ...data, joinedAt: new Date() });
+  async grantClassStaffAccess(
+    data: ClassStaffAccessDto,
+    centerId: string,
+  ): Promise<ClassStaff> {
+    return this.create({ ...data, centerId, joinedAt: new Date() });
   }
 
   /**

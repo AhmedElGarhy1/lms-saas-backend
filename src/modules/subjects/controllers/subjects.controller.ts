@@ -8,7 +8,6 @@ import {
   Body,
   Param,
   Query,
-  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { Transactional } from '@nestjs-cls/transactional';
@@ -24,6 +23,7 @@ import { UpdateApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { SerializeOptions } from '@nestjs/common';
 import { SubjectResponseDto } from '../dto/subject-response.dto';
+import { SubjectIdParamDto } from '../dto/subject-id-param.dto';
 
 @ApiTags('Subjects')
 @Controller('subjects')
@@ -66,11 +66,11 @@ export class SubjectsController {
   @Permissions(PERMISSIONS.SUBJECTS.READ)
   @SerializeOptions({ type: SubjectResponseDto })
   async getSubject(
-    @Param('subjectId', ParseUUIDPipe) subjectId: string,
+    @Param() params: SubjectIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.subjectsService.getSubject(
-      subjectId,
+      params.subjectId,
       actor,
       true,
     ); // includeDeleted: true for API endpoints
@@ -122,12 +122,12 @@ export class SubjectsController {
   @Transactional()
   @SerializeOptions({ type: SubjectResponseDto })
   async updateSubject(
-    @Param('subjectId', ParseUUIDPipe) subjectId: string,
+    @Param() params: SubjectIdParamDto,
     @Body() data: UpdateSubjectDto,
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.subjectsService.updateSubject(
-      subjectId,
+      params.subjectId,
       data,
       actor,
     );
@@ -151,10 +151,10 @@ export class SubjectsController {
   @Permissions(PERMISSIONS.SUBJECTS.DELETE)
   @Transactional()
   async deleteSubject(
-    @Param('subjectId', ParseUUIDPipe) subjectId: string,
+    @Param() params: SubjectIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.subjectsService.deleteSubject(subjectId, actor);
+    await this.subjectsService.deleteSubject(params.subjectId, actor);
     return ControllerResponse.message({
       key: 't.messages.deleted',
       args: { resource: 't.resources.subject' },
@@ -163,15 +163,19 @@ export class SubjectsController {
 
   @Patch(':subjectId/restore')
   @UpdateApiResponses('Restore deleted subject')
-  @ApiParam({ name: 'subjectId', description: 'Subject ID', type: String })
+  @ApiParam({
+    name: 'subjectId',
+    description: 'Subject ID',
+    type: String,
+  })
   @Permissions(PERMISSIONS.SUBJECTS.RESTORE)
   @Transactional()
   @SerializeOptions({ type: SubjectResponseDto })
   async restoreSubject(
-    @Param('subjectId', ParseUUIDPipe) subjectId: string,
+    @Param() params: SubjectIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.subjectsService.restoreSubject(subjectId, actor);
+    await this.subjectsService.restoreSubject(params.subjectId, actor);
     return ControllerResponse.message({
       key: 't.messages.restored',
       args: { resource: 't.resources.subject' },

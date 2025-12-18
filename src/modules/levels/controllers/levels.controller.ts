@@ -8,7 +8,6 @@ import {
   Body,
   Param,
   Query,
-  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { Transactional } from '@nestjs-cls/transactional';
@@ -24,6 +23,7 @@ import { UpdateApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { SerializeOptions } from '@nestjs/common';
 import { LevelResponseDto } from '../dto/level-response.dto';
+import { LevelIdParamDto } from '../dto/level-id-param.dto';
 
 @ApiTags('Levels')
 @Controller('levels')
@@ -63,10 +63,14 @@ export class LevelsController {
   @Permissions(PERMISSIONS.LEVELS.READ)
   @SerializeOptions({ type: LevelResponseDto })
   async getLevel(
-    @Param('levelId', ParseUUIDPipe) levelId: string,
+    @Param() params: LevelIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.levelsService.getLevel(levelId, actor, true); // includeDeleted: true for API endpoints
+    const result = await this.levelsService.getLevel(
+      params.levelId,
+      actor,
+      true,
+    ); // includeDeleted: true for API endpoints
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.level' },
@@ -112,11 +116,15 @@ export class LevelsController {
   @Transactional()
   @SerializeOptions({ type: LevelResponseDto })
   async updateLevel(
-    @Param('levelId', ParseUUIDPipe) levelId: string,
+    @Param() params: LevelIdParamDto,
     @Body() data: UpdateLevelDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.levelsService.updateLevel(levelId, data, actor);
+    const result = await this.levelsService.updateLevel(
+      params.levelId,
+      data,
+      actor,
+    );
     return ControllerResponse.success(result, {
       key: 't.messages.updated',
       args: { resource: 't.resources.level' },
@@ -137,10 +145,10 @@ export class LevelsController {
   @Permissions(PERMISSIONS.LEVELS.DELETE)
   @Transactional()
   async deleteLevel(
-    @Param('levelId', ParseUUIDPipe) levelId: string,
+    @Param() params: LevelIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.levelsService.deleteLevel(levelId, actor);
+    await this.levelsService.deleteLevel(params.levelId, actor);
     return ControllerResponse.message({
       key: 't.messages.deleted',
       args: { resource: 't.resources.level' },
@@ -154,10 +162,10 @@ export class LevelsController {
   @Transactional()
   @SerializeOptions({ type: LevelResponseDto })
   async restoreLevel(
-    @Param('levelId', ParseUUIDPipe) levelId: string,
+    @Param() params: LevelIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.levelsService.restoreLevel(levelId, actor);
+    await this.levelsService.restoreLevel(params.levelId, actor);
     return ControllerResponse.message({
       key: 't.messages.restored',
       args: { resource: 't.resources.level' },

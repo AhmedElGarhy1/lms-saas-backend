@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Delete,
-  Get,
-  Body,
-  Param,
-  ParseUUIDPipe,
-} from '@nestjs/common';
+import { Controller, Post, Delete, Get, Body, Param } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
@@ -18,15 +10,16 @@ import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-resul
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BulkGrantGroupStudentDto } from '../dto/bulk-grant-group-student.dto';
 import { BulkRevokeGroupStudentDto } from '../dto/bulk-revoke-group-student.dto';
+import { GroupIdParamDto } from '../dto/group-id-param.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
-import { GroupsService } from '../services/groups.service';
+import { GroupStudentService } from '../services/group-student.service';
 import { SerializeOptions } from '@nestjs/common';
 import { GroupStudent } from '../entities/group-student.entity';
 
 @ApiTags('Groups - Students Access')
 @Controller('groups/students/access')
 export class GroupsStudentsAccessController {
-  constructor(private readonly groupsService: GroupsService) {}
+  constructor(private readonly groupStudentService: GroupStudentService) {}
 
   @Post()
   @ApiOperation({ summary: 'Assign student to group' })
@@ -42,14 +35,15 @@ export class GroupsStudentsAccessController {
     status: 404,
     description: 'Student or group not found',
   })
-  @Permissions(PERMISSIONS.GROUPS.UPDATE)
+  @Permissions(PERMISSIONS.GROUPS.MANAGE_GROUP_STUDENT_ACCESS)
   @Transactional()
   async assignStudentToGroup(
     @Body() groupStudentAccessDto: GroupStudentAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.groupsService.assignStudentToGroupByDto(
-      groupStudentAccessDto,
+    await this.groupStudentService.assignStudentToGroup(
+      groupStudentAccessDto.groupId,
+      groupStudentAccessDto.userProfileId,
       actor,
     );
     return ControllerResponse.message({
@@ -68,15 +62,15 @@ export class GroupsStudentsAccessController {
     status: 404,
     description: 'Student assignment not found',
   })
-  @Permissions(PERMISSIONS.GROUPS.UPDATE)
+  @Permissions(PERMISSIONS.GROUPS.MANAGE_GROUP_STUDENT_ACCESS)
   @Transactional()
   async removeStudentFromGroup(
     @Body() groupStudentAccessDto: GroupStudentAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.groupsService.removeStudentFromGroupByDto(
-      groupStudentAccessDto,
-      actor,
+    await this.groupStudentService.removeStudentsFromGroup(
+      groupStudentAccessDto.groupId,
+      [groupStudentAccessDto.userProfileId],
     );
     return ControllerResponse.message({
       key: 't.messages.removed',
@@ -94,13 +88,13 @@ export class GroupsStudentsAccessController {
     description: 'Bulk grant completed',
     type: BulkOperationResultDto,
   })
-  @Permissions(PERMISSIONS.GROUPS.UPDATE)
+  @Permissions(PERMISSIONS.GROUPS.MANAGE_GROUP_STUDENT_ACCESS)
   @Transactional()
   async bulkGrantGroupStudentAccess(
     @Body() dto: BulkGrantGroupStudentDto,
     @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<BulkOperationResult>> {
-    const result = await this.groupsService.bulkAssignStudentsToGroup(
+    const result = await this.groupStudentService.bulkAssignStudentsToGroup(
       dto.groupId,
       dto.userProfileIds,
       actor,
@@ -125,16 +119,15 @@ export class GroupsStudentsAccessController {
     description: 'Bulk revoke completed',
     type: BulkOperationResultDto,
   })
-  @Permissions(PERMISSIONS.GROUPS.UPDATE)
+  @Permissions(PERMISSIONS.GROUPS.MANAGE_GROUP_STUDENT_ACCESS)
   @Transactional()
   async bulkRevokeGroupStudentAccess(
     @Body() dto: BulkRevokeGroupStudentDto,
     @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<BulkOperationResult>> {
-    const result = await this.groupsService.removeStudentsFromGroup(
+    const result = await this.groupStudentService.removeStudentsFromGroup(
       dto.groupId,
       dto.userProfileIds,
-      actor,
     );
 
     return ControllerResponse.success(result, {
@@ -155,10 +148,12 @@ export class GroupsStudentsAccessController {
   @Permissions(PERMISSIONS.GROUPS.READ)
   @SerializeOptions({ type: GroupStudent })
   async getGroupStudents(
-    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Param() params: GroupIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.groupsService.getGroupStudents(groupId, actor);
+    const result = await this.groupStudentService.getGroupStudents(
+      params.groupId,
+    );
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.groupStudent' },

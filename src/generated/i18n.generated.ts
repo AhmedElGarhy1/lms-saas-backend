@@ -1221,6 +1221,9 @@ export type I18nTranslations = {
                 "restore": {
                     "name": string;
                 };
+                "manageClassStaffAccess": {
+                    "name": string;
+                };
                 "readAll": {
                     "name": string;
                 };
@@ -1245,6 +1248,9 @@ export type I18nTranslations = {
                     "name": string;
                 };
                 "restore": {
+                    "name": string;
+                };
+                "manageGroupStudentAccess": {
                     "name": string;
                 };
                 "readAll": {

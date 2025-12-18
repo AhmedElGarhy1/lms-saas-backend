@@ -6,6 +6,7 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 import { DatabaseService } from '../../database.service';
 import { getDatabaseConfig } from '../../config/database.config';
 import { ExistsConstraint } from '../../common/validators/exists.constraint';
+import { BelongsToCenterConstraint } from '../../common/validators/belongs-to-center.constraint';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { ExistsConstraint } from '../../common/validators/exists.constraint';
       ],
     }),
   ],
-  providers: [DatabaseService, ExistsConstraint],
-  exports: [DatabaseService, ExistsConstraint],
+  providers: [DatabaseService, ExistsConstraint, BelongsToCenterConstraint],
+  exports: [DatabaseService, ExistsConstraint, BelongsToCenterConstraint],
 })
 export class DatabaseModule {}

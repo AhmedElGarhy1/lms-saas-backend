@@ -8,7 +8,6 @@ import {
   Body,
   Param,
   Query,
-  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { Transactional } from '@nestjs-cls/transactional';
@@ -16,6 +15,7 @@ import { ClassesService } from '../services/classes.service';
 import { CreateClassDto } from '../dto/create-class.dto';
 import { UpdateClassDto } from '../dto/update-class.dto';
 import { PaginateClassesDto } from '../dto/paginate-classes.dto';
+import { ClassIdParamDto } from '../dto/class-id-param.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { GetUser } from '@/shared/common/decorators';
@@ -66,10 +66,14 @@ export class ClassesController {
   @Permissions(PERMISSIONS.CLASSES.READ)
   @SerializeOptions({ type: ClassResponseDto })
   async getClass(
-    @Param('classId', ParseUUIDPipe) classId: string,
+    @Param() params: ClassIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.classesService.getClass(classId, actor, true); // includeDeleted: true for API endpoints
+    const result = await this.classesService.getClass(
+      params.classId,
+      actor,
+      true,
+    ); // includeDeleted: true for API endpoints
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.class' },
@@ -115,11 +119,15 @@ export class ClassesController {
   @Transactional()
   @SerializeOptions({ type: ClassResponseDto })
   async updateClass(
-    @Param('classId', ParseUUIDPipe) classId: string,
+    @Param() params: ClassIdParamDto,
     @Body() data: UpdateClassDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.classesService.updateClass(classId, data, actor);
+    const result = await this.classesService.updateClass(
+      params.classId,
+      data,
+      actor,
+    );
     return ControllerResponse.success(result, {
       key: 't.messages.updated',
       args: { resource: 't.resources.class' },
@@ -140,10 +148,10 @@ export class ClassesController {
   @Permissions(PERMISSIONS.CLASSES.DELETE)
   @Transactional()
   async deleteClass(
-    @Param('classId', ParseUUIDPipe) classId: string,
+    @Param() params: ClassIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.classesService.deleteClass(classId, actor);
+    await this.classesService.deleteClass(params.classId, actor);
     return ControllerResponse.message({
       key: 't.messages.deleted',
       args: { resource: 't.resources.class' },
@@ -157,10 +165,10 @@ export class ClassesController {
   @Transactional()
   @SerializeOptions({ type: ClassResponseDto })
   async restoreClass(
-    @Param('classId', ParseUUIDPipe) classId: string,
+    @Param() params: ClassIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.classesService.restoreClass(classId, actor);
+    await this.classesService.restoreClass(params.classId, actor);
     return ControllerResponse.message({
       key: 't.messages.restored',
       args: { resource: 't.resources.class' },

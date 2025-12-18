@@ -26,27 +26,6 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
     });
   }
 
-  /**
-   * Delete all group student assignments for a given group ID.
-   * Pure data access method - no business logic.
-   *
-   * @param groupId - The group ID
-   * @returns Promise that resolves when deletion is complete
-   */
-  async deleteByGroupId(groupId: string): Promise<void> {
-    await this.getRepository().delete({ groupId });
-  }
-
-  async isStudentInGroup(
-    groupId: string,
-    studentUserProfileId: string,
-  ): Promise<boolean> {
-    const exists = await this.getRepository().exists({
-      where: { groupId, studentUserProfileId, leftAt: IsNull() },
-    });
-    return exists;
-  }
-
   async findByGroupAndStudent(
     groupId: string,
     studentUserProfileId: string,

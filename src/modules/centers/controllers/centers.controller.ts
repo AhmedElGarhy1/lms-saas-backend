@@ -7,7 +7,6 @@ import {
   Param,
   Delete,
   Put,
-  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
 import {
@@ -29,6 +28,7 @@ import { UpdateCenterRequestDto } from '../dto/update-center.dto';
 import { CenterResponseDto } from '../dto/center-response.dto';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { NoContext } from '@/shared/common/decorators/no-context.decorator';
+import { CenterIdParamDto } from '../dto/center-id-param.dto';
 
 @Controller('centers')
 @ApiTags('Centers')
@@ -72,10 +72,14 @@ export class CentersController {
   @ReadApiResponses('Get center by ID')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   async getCenterById(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param() params: CenterIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.centersService.findCenterById(id, actor, true); // includeDeleted: true for API endpoints
+    const result = await this.centersService.findCenterById(
+      params.id,
+      actor,
+      true,
+    ); // includeDeleted: true for API endpoints
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.center' },
@@ -89,11 +93,15 @@ export class CentersController {
   @Permissions(PERMISSIONS.CENTER.UPDATE)
   @Transactional()
   async updateCenter(
-    @Param('id') id: string,
+    @Param() params: CenterIdParamDto,
     @Body() dto: UpdateCenterRequestDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.centersService.updateCenter(id, dto, actor);
+    const result = await this.centersService.updateCenter(
+      params.id,
+      dto,
+      actor,
+    );
 
     return ControllerResponse.success(result, {
       key: 't.messages.updated',
@@ -106,8 +114,11 @@ export class CentersController {
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @Permissions(PERMISSIONS.CENTER.DELETE)
   @Transactional()
-  async deleteCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
-    await this.centersService.deleteCenter(id, actor);
+  async deleteCenter(
+    @Param() params: CenterIdParamDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    await this.centersService.deleteCenter(params.id, actor);
 
     return ControllerResponse.message({
       key: 't.messages.deleted',
@@ -120,8 +131,11 @@ export class CentersController {
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @Permissions(PERMISSIONS.CENTER.RESTORE)
   @Transactional()
-  async restoreCenter(@Param('id') id: string, @GetUser() actor: ActorUser) {
-    await this.centersService.restoreCenter(id, actor);
+  async restoreCenter(
+    @Param() params: CenterIdParamDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    await this.centersService.restoreCenter(params.id, actor);
 
     return ControllerResponse.message({
       key: 't.messages.restored',
@@ -138,11 +152,15 @@ export class CentersController {
   @Permissions(PERMISSIONS.CENTER.ACTIVATE)
   @Transactional()
   async toggleCenterStatus(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param() params: CenterIdParamDto,
     @Body() body: { isActive: boolean },
     @GetUser() actor: ActorUser,
   ) {
-    await this.centersService.toggleCenterStatus(id, body.isActive, actor);
+    await this.centersService.toggleCenterStatus(
+      params.id,
+      body.isActive,
+      actor,
+    );
 
     return ControllerResponse.message({
       key: 't.messages.updated',

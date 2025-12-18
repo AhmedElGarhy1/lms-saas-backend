@@ -3,7 +3,6 @@ import { ScheduleItemDto } from '../dto/schedule-item.dto';
 import { ClassesRepository } from '../repositories/classes.repository';
 import { GroupStudentsRepository } from '../repositories/group-students.repository';
 import { ScheduleService } from './schedule.service';
-import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { Class } from '../entities/class.entity';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
@@ -18,54 +17,71 @@ export class GroupValidationService extends BaseService {
     super();
   }
 
-  async validateGroup(
+  /**
+   * Validates schedule conflicts for teacher and students.
+   *
+   * @param classEntity - The class entity (must have duration and teacherUserProfileId)
+   * @param scheduleItems - Schedule items to validate
+   * @param excludeGroupIds - Group IDs to exclude from conflict checks
+   * @param groupId - The group ID (for fetching student IDs during updates)
+   */
+  async validateScheduleCore(
+    classEntity: Class,
+    scheduleItems: ScheduleItemDto[] | undefined,
+    excludeGroupIds?: string[],
+    groupId?: string,
+  ): Promise<void> {
+    if (!scheduleItems) {
+      return;
+    }
+
+    let studentIds: string[] | undefined;
+    if (excludeGroupIds && excludeGroupIds.length > 0 && groupId) {
+      const groupStudents =
+        await this.groupStudentsRepository.findByGroupId(groupId);
+      studentIds = groupStudents.map((gs) => gs.studentUserProfileId);
+    }
+
+    await this.scheduleService.validateScheduleConflicts(
+      scheduleItems,
+      classEntity.duration,
+      {
+        teacherUserProfileId: classEntity.teacherUserProfileId,
+        studentIds:
+          studentIds && studentIds.length > 0 ? studentIds : undefined,
+        excludeGroupIds,
+      },
+    );
+  }
+
+  async validateGroupSchedule(
     classId: string,
     scheduleItems: ScheduleItemDto[] | undefined,
-    actor: ActorUser,
     excludeGroupIds?: string[],
     groupId?: string,
   ): Promise<Class> {
-    // Fetch class entity
-    const classEntity = await this.classesRepository.findOne(classId);
-    if (!classEntity) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.class',
-        identifier: 't.resources.identifier',
-        value: classId,
-      });
-    }
+    const classEntity = await this.classesRepository.findOneOrThrow(classId);
 
-    // Validate schedule items if provided
-    if (scheduleItems) {
-      // Get student IDs if this is an update (excludeGroupIds provided means update)
-      let studentIds: string[] | undefined;
-      if (excludeGroupIds && excludeGroupIds.length > 0 && groupId) {
-        const groupStudents =
-          await this.groupStudentsRepository.findByGroupId(groupId);
-        studentIds = groupStudents.map((gs) => gs.studentUserProfileId);
-      }
-
-      // Validate schedule items and check conflicts (both teacher and students if applicable)
-      await this.scheduleService.validateScheduleConflicts(
-        scheduleItems,
-        classEntity.duration,
-        {
-          teacherUserProfileId: classEntity.teacherUserProfileId,
-          studentIds:
-            studentIds && studentIds.length > 0 ? studentIds : undefined,
-          excludeGroupIds,
-        },
-      );
-    }
+    await this.validateScheduleCore(
+      classEntity,
+      scheduleItems,
+      excludeGroupIds,
+      groupId,
+    );
 
     return classEntity;
   }
 
-  async validateStudents(
-    studentUserProfileIds: string[],
-    actor: ActorUser,
-  ): Promise<void> {
-    // No validation needed - ContextGuard ensures center access
-    // Students are validated at DTO level with @Exists decorator
-  }
+  /**
+   * Validates group with full validation including class center ownership.
+   * Used for updateGroup where classId comes from existing group and needs validation.
+   *
+   * @param classId - The class ID
+   * @param scheduleItems - Schedule items to validate
+   * @param actor - The user performing the action
+   * @param excludeGroupIds - Group IDs to exclude from conflict checks
+   * @param groupId - The group ID (for fetching student IDs during updates)
+   * @returns The class entity
+   * @throws ResourceNotFoundException if class doesn't exist or doesn't belong to actor's center
+   */
 }

@@ -1,4 +1,5 @@
 import { Controller, Get, Put, Param, Body, Query } from '@nestjs/common';
+import { NotificationIdParamDto } from '../dto/notification-id-param.dto';
 import { Transactional } from '@nestjs-cls/transactional';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
@@ -125,9 +126,9 @@ export class InAppNotificationController {
   @Transactional()
   async archive(
     @GetUser() actor: ActorUser,
-    @Param('id') notificationId: string,
+    @Param() params: NotificationIdParamDto,
   ) {
-    await this.inAppNotificationService.archive(actor.id, notificationId);
+    await this.inAppNotificationService.archive(actor.id, params.id);
     return ControllerResponse.message({
       key: 't.messages.archived',
       args: { resource: 't.resources.notification' },

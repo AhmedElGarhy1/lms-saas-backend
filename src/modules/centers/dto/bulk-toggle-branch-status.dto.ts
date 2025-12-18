@@ -6,6 +6,9 @@ import {
   ArrayMinSize,
   ArrayMaxSize,
 } from 'class-validator';
+import { BelongsToCenter } from '@/shared/common/decorators/belongs-to-center.decorator';
+import { HasBranchAccess } from '@/shared/common/decorators/has-branch-access.decorator';
+import { Branch } from '../entities/branch.entity';
 
 export class BulkToggleBranchStatusDto {
   @ApiProperty({
@@ -19,6 +22,8 @@ export class BulkToggleBranchStatusDto {
     message: 'Maximum 100 branch IDs allowed per request',
   })
   @IsUUID(4, { each: true, message: 'Each branch ID must be a valid UUID' })
+  @BelongsToCenter(Branch, { each: true })
+  @HasBranchAccess({ each: true })
   branchIds: string[];
 
   @ApiProperty({

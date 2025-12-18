@@ -137,12 +137,6 @@ export class UserProfileService extends BaseService {
     // Check permission based on profileType
     await this.userProfilePermissionService.canActivate(actor, userProfileId);
 
-    // Validate access (can actor manage this profile?)
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: userProfileId,
-    });
-
     await this.userProfileRepository.update(userProfileId, { isActive });
 
     return userProfile;
@@ -172,12 +166,6 @@ export class UserProfileService extends BaseService {
 
     // Check permission based on profileType
     await this.userProfilePermissionService.canUpdate(actor, userProfileId);
-
-    // Validate access (can actor manage this profile?)
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: userProfileId,
-    });
 
     // 4. Convert profile update data to user update format
     const userUpdateData: UpdateUserDto = {
@@ -210,14 +198,6 @@ export class UserProfileService extends BaseService {
     actor?: ActorUser,
     includeDeleted = false,
   ) {
-    // If actor is provided, validate access
-    if (actor) {
-      await this.accessControlHelperService.validateUserAccess({
-        granterUserProfileId: actor.userProfileId,
-        targetUserProfileId: userProfileId,
-        centerId: actor.centerId,
-      });
-    }
     return includeDeleted
       ? this.userProfileRepository.findOneSoftDeletedById(userProfileId)
       : this.userProfileRepository.findOne(userProfileId);
@@ -282,12 +262,6 @@ export class UserProfileService extends BaseService {
     // Check permission based on profileType
     await this.userProfilePermissionService.canDelete(actor, userProfileId);
 
-    // Validate access (can actor manage this profile?)
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: userProfileId,
-    });
-
     await this.userProfileRepository.softRemove(userProfileId);
   }
 
@@ -317,12 +291,6 @@ export class UserProfileService extends BaseService {
 
     // Check permission based on profileType
     await this.userProfilePermissionService.canRestore(actor, userProfileId);
-
-    // Validate access (can actor manage this profile?)
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: userProfileId,
-    });
 
     await this.userProfileRepository.restore(userProfileId);
   }

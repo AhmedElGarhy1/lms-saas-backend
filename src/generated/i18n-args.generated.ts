@@ -265,12 +265,14 @@ export type TranslationArgs = {
   't.permissions.classes.delete.name': Record<string, never>;
   't.permissions.classes.export.name': Record<string, never>;
   't.permissions.classes.import.name': Record<string, never>;
+  't.permissions.classes.manageClassStaffAccess.name': Record<string, never>;
   't.permissions.classes.read.name': Record<string, never>;
   't.permissions.classes.readAll.name': Record<string, never>;
   't.permissions.classes.restore.name': Record<string, never>;
   't.permissions.classes.update.name': Record<string, never>;
   't.permissions.groups.create.name': Record<string, never>;
   't.permissions.groups.delete.name': Record<string, never>;
+  't.permissions.groups.manageGroupStudentAccess.name': Record<string, never>;
   't.permissions.groups.read.name': Record<string, never>;
   't.permissions.groups.readAll.name': Record<string, never>;
   't.permissions.groups.restore.name': Record<string, never>;

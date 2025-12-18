@@ -61,14 +61,12 @@ export class AccessControlService extends BaseService {
     const centerId = body.centerId ?? actor.centerId ?? '';
     body.centerId = centerId;
 
-    // Validate that actor has permission to grant user access for the target profile type
     await this.userProfilePermissionService.canGrantUserAccess(
       actor,
       body.targetUserProfileId,
       centerId,
     );
 
-    // Check user already have access
     const IHaveAccessToGranterUser =
       await this.accessControlHelperService.canUserAccess({
         granterUserProfileId: actor.userProfileId,
@@ -101,7 +99,6 @@ export class AccessControlService extends BaseService {
       );
     }
 
-    // check if target user have height role
     const isGranterSuperAdmin =
       await this.accessControlHelperService.isSuperAdmin(
         body.granterUserProfileId,
@@ -115,7 +112,6 @@ export class AccessControlService extends BaseService {
       );
     }
 
-    // Check if access already exists
     const canAccess = await this.accessControlHelperService.canUserAccess({
       granterUserProfileId: body.granterUserProfileId,
       targetUserProfileId: body.targetUserProfileId,
@@ -139,14 +135,12 @@ export class AccessControlService extends BaseService {
     const centerId = body.centerId ?? actor.centerId ?? '';
     body.centerId = centerId;
 
-    // Validate that actor has permission to revoke user access for the target profile type
     await this.userProfilePermissionService.canGrantUserAccess(
       actor,
       body.targetUserProfileId,
       centerId,
     );
 
-    // Check user already have access
     const IHaveAccessToGranterUser =
       await this.accessControlHelperService.canUserAccess({
         granterUserProfileId: actor.userProfileId,
@@ -210,16 +204,7 @@ export class AccessControlService extends BaseService {
   // Center Access Management Methods
 
   async grantCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
-    // Validate that the granter has permission to grant access
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: dto.userProfileId,
-      centerId: dto.centerId,
-    });
-
-    const result = await this.centerAccessRepository.grantCenterAccess(dto);
-
-    return result;
+    return await this.centerAccessRepository.grantCenterAccess(dto);
   }
 
   async grantCenterAccessAndValidatePermission(
@@ -238,16 +223,7 @@ export class AccessControlService extends BaseService {
   }
 
   async revokeCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
-    // Validate that the granter has permission to revoke access
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: dto.userProfileId,
-      centerId: dto.centerId,
-    });
-
-    const result = await this.centerAccessRepository.revokeCenterAccess(dto);
-
-    return result;
+    return await this.centerAccessRepository.revokeCenterAccess(dto);
   }
 
   // Additional methods needed by other services
@@ -264,7 +240,6 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
 
-    // Get profile type to determine which permission to check
     const profile = await this.userProfileService.findOne(body.userProfileId);
     if (!profile) {
       throw new ResourceNotFoundException('t.messages.withIdNotFound', {
@@ -274,7 +249,6 @@ export class AccessControlService extends BaseService {
       });
     }
 
-    // Check permission based on profile type
     let requiredPermission: {
       action: string;
       scope: PermissionScope;
@@ -327,13 +301,6 @@ export class AccessControlService extends BaseService {
       });
     }
 
-    // Validate access (can actor manage this profile?)
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: body.userProfileId,
-      centerId,
-    });
-
     const centerAccess =
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
@@ -356,7 +323,6 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
 
-    // Get profile type to determine which permission to check
     const profile = await this.userProfileService.findOne(body.userProfileId);
     if (!profile) {
       throw new ResourceNotFoundException('t.messages.withIdNotFound', {
@@ -366,7 +332,6 @@ export class AccessControlService extends BaseService {
       });
     }
 
-    // Check permission based on profile type
     let requiredPermission: {
       action: string;
       scope: PermissionScope;
@@ -398,13 +363,6 @@ export class AccessControlService extends BaseService {
       );
     }
 
-    // Validate access (can actor manage this profile?)
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: body.userProfileId,
-      centerId,
-    });
-
     const centerAccess = await this.accessControlHelperService.findCenterAccess(
       body,
       true,
@@ -431,7 +389,6 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
 
-    // Get profile type to determine which permission to check
     const profile = await this.userProfileService.findOne(body.userProfileId);
     if (!profile) {
       throw new ResourceNotFoundException('t.messages.withIdNotFound', {
@@ -441,7 +398,6 @@ export class AccessControlService extends BaseService {
       });
     }
 
-    // Check permission based on profile type
     let requiredPermission: {
       action: string;
       scope: PermissionScope;
@@ -486,13 +442,6 @@ export class AccessControlService extends BaseService {
         });
       }
     }
-
-    // Validate access (can actor manage this profile?)
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: body.userProfileId,
-      centerId,
-    });
 
     const centerAccess =
       await this.accessControlHelperService.findCenterAccess(body);

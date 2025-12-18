@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsUUID, ArrayMinSize, ArrayMaxSize } from 'class-validator';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
+import { BelongsToCenter } from '@/shared/common/decorators/belongs-to-center.decorator';
+import { HasBranchAccess } from '@/shared/common/decorators/has-branch-access.decorator';
+import { HasCenterAccess } from '@/shared/common/decorators/has-center-access.decorator';
 import { Branch } from '@/modules/centers/entities/branch.entity';
 
 export class BulkGrantBranchAccessDto {
@@ -9,7 +11,8 @@ export class BulkGrantBranchAccessDto {
     example: 'uuid-branch-id',
   })
   @IsUUID()
-  @Exists(Branch)
+  @BelongsToCenter(Branch)
+  @HasBranchAccess()
   branchId: string;
 
   @ApiProperty({
@@ -26,5 +29,6 @@ export class BulkGrantBranchAccessDto {
     each: true,
     message: 'Each user profile ID must be a valid UUID',
   })
+  @HasCenterAccess({ each: true })
   userProfileIds: string[];
 }

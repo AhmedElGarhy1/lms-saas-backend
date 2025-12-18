@@ -1,4 +1,4 @@
-import { Class } from '../entities/class.entity';
+import { Class } from '@/modules/classes/entities/class.entity';
 import { ExportMapper } from '@/shared/common/services/export.service';
 import { Level } from '@/modules/levels/entities/level.entity';
 import { Subject } from '@/modules/subjects/entities/subject.entity';
@@ -82,3 +82,5 @@ export class ClassExportMapper implements ExportMapper<Class, ClassExportData> {
     ];
   }
 }
+
+
