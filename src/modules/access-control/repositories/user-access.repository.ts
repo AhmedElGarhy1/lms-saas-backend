@@ -5,6 +5,7 @@ import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
+import { In } from 'typeorm';
 
 @Injectable()
 export class UserAccessRepository extends BaseRepository<UserAccess> {
@@ -53,6 +54,32 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
   async listUserAccesses(userProfileId: string): Promise<UserAccess[]> {
     return this.getRepository().find({
       where: { granterUserProfileId: userProfileId },
+    });
+  }
+
+  /**
+   * Batch load user access records.
+   * Loads all user access records for a granter to multiple targets in one query.
+   *
+   * @param granterUserProfileId - The granter user profile ID
+   * @param targetUserProfileIds - Array of target user profile IDs
+   * @param centerId - Optional center ID to filter by
+   * @returns Array of UserAccess records
+   */
+  async findManyUserAccess(
+    granterUserProfileId: string,
+    targetUserProfileIds: string[],
+    centerId?: string,
+  ) {
+    if (targetUserProfileIds.length === 0) {
+      return [];
+    }
+    return this.getRepository().find({
+      where: {
+        granterUserProfileId,
+        targetUserProfileId: In(targetUserProfileIds),
+        ...(centerId && { centerId }),
+      },
     });
   }
 }

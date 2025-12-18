@@ -25,6 +25,9 @@ import { GlobalExceptionFilter } from '@/shared/common/filters/global-exception.
 import { TypeOrmExceptionFilter } from '@/shared/common/filters/typeorm-exception.filter';
 import { ResponseInterceptor } from '@/shared/common/interceptors/response.interceptor';
 import { TranslationResponseInterceptor } from '@/shared/common/interceptors/translation-response.interceptor';
+import { ETagInterceptor } from '@/shared/common/interceptors/etag.interceptor';
+import { CacheInterceptor } from '@/shared/common/interceptors/cache.interceptor';
+import { CacheModule } from '@/shared/modules/cache/cache.module';
 import { CustomValidationPipe } from '@/shared/common/pipes/validation.pipe';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { ContextGuard } from '@/shared/common/guards/context.guard';
@@ -87,6 +90,7 @@ import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limi
     }),
     SharedModule,
     RedisModule,
+    CacheModule,
     ScheduleModule.forRoot(),
     BullModule.forRootAsync({
       imports: [RedisModule],
@@ -162,6 +166,14 @@ import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limi
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ETagInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CacheInterceptor,
     },
     {
       provide: APP_FILTER,

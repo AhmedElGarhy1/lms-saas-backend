@@ -12,6 +12,7 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { AccessControlCacheService } from '@/shared/common/services/access-control-cache.service';
 
 @Injectable()
 export class BranchAccessService extends BaseService {
@@ -32,8 +33,34 @@ export class BranchAccessService extends BaseService {
    * @param data - BranchAccessDto containing userProfileId, centerId, and branchId
    * @returns BranchAccess assignment or null if not found
    */
-  findBranchAccess(data: BranchAccessDto): Promise<BranchAccess | null> {
-    return this.branchAccessRepository.findBranchAccess(data);
+  async findBranchAccess(data: BranchAccessDto): Promise<BranchAccess | null> {
+    const { userProfileId, centerId, branchId } = data;
+    // Defensive check: verify cache exists
+    const cached = AccessControlCacheService.getBranchAccess(
+      userProfileId,
+      centerId,
+      branchId,
+    );
+    if (cached !== undefined && cached.branchAccess !== undefined) {
+      return cached.branchAccess;
+    }
+
+    // Not cached - query repository
+    const branchAccess =
+      await this.branchAccessRepository.findBranchAccess(data);
+
+    // Cache null values explicitly to avoid repeated queries for non-existent records
+    AccessControlCacheService.setBranchAccess(
+      userProfileId,
+      centerId,
+      branchId,
+      {
+        ...cached,
+        branchAccess,
+      },
+    );
+
+    return branchAccess;
   }
 
   /**
@@ -91,16 +118,73 @@ export class BranchAccessService extends BaseService {
     targetProfileIds: string[],
     centerId: string,
   ): Promise<string[]> {
-    return Promise.all(
-      targetProfileIds.map(async (targetProfileId) => {
+    // Early return: if empty array, return []
+    if (targetProfileIds.length === 0) {
+      return [];
+    }
+
+    // Batch load: Use findManyBranchAccess to load all branch access records in one query
+    const queries = targetProfileIds.map((userProfileId) => ({
+      userProfileId,
+      centerId,
+      branchId,
+    }));
+    const branchAccesses =
+      await this.branchAccessRepository.findManyBranchAccess(queries);
+
+    // Cache results: Store each record in branch access cache (including nulls)
+    const accessibleSet = new Set<string>();
+    const processedProfileIds = new Set<string>();
+
+    for (const branchAccess of branchAccesses) {
+      accessibleSet.add(branchAccess.userProfileId);
+      processedProfileIds.add(branchAccess.userProfileId);
+      // Cache the branch access
+      AccessControlCacheService.setBranchAccess(
+        branchAccess.userProfileId,
+        branchAccess.centerId,
+        branchAccess.branchId,
+        {
+          branchAccess,
+          hasBranchAccess: true,
+        },
+      );
+    }
+
+    // Cache nulls for profiles that don't have branch access
+    for (const targetProfileId of targetProfileIds) {
+      if (!processedProfileIds.has(targetProfileId)) {
+        AccessControlCacheService.setBranchAccess(
+          targetProfileId,
+          centerId,
+          branchId,
+          {
+            branchAccess: null,
+            hasBranchAccess: false,
+          },
+        );
+      }
+    }
+
+    // Check bypass: For profiles not in accessible set, check bypass (now cached) individually
+    const results: string[] = [];
+    for (const targetProfileId of targetProfileIds) {
+      if (accessibleSet.has(targetProfileId)) {
+        results.push(targetProfileId);
+      } else {
+        // Check bypass access (now cached)
         const canAccess = await this.canBranchAccess({
           userProfileId: targetProfileId,
           centerId,
           branchId,
         });
-        return canAccess ? targetProfileId : null;
-      }),
-    ).then((results) => results.filter((result) => result !== null));
+        if (canAccess) {
+          results.push(targetProfileId);
+        }
+      }
+    }
+
+    return results;
   }
 
   /**

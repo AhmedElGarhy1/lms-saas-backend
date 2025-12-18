@@ -21,6 +21,10 @@ import { BranchAccessService } from '@/modules/centers/services/branch-access.se
 import { CenterAccess } from '../entities/center-access.entity';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import {
+  AccessControlCacheService,
+  RolesCacheData,
+} from '@/shared/common/services/access-control-cache.service';
 
 @Injectable()
 export class AccessControlHelperService extends BaseService {
@@ -104,31 +108,145 @@ export class AccessControlHelperService extends BaseService {
     targetProfileIds: string[],
     centerId?: string,
   ): Promise<string[]> {
-    return Promise.all(
-      targetProfileIds.map(async (targetProfileId) => {
-        const canAccess = await this.canUserAccess({
-          granterUserProfileId: userProfileId,
-          targetUserProfileId: targetProfileId,
+    // Early return: if empty array, return []
+    if (targetProfileIds.length === 0) {
+      return [];
+    }
+
+    // Batch load: Use findManyUserAccess to load all records in one query
+    const userAccesses = await this.userAccessRepository.findManyUserAccess(
+      userProfileId,
+      targetProfileIds,
+      centerId,
+    );
+
+    // Cache results: Store each in user access cache (including nulls)
+    const accessibleSet = new Set<string>();
+    const processedProfileIds = new Set<string>();
+
+    for (const userAccess of userAccesses) {
+      accessibleSet.add(userAccess.targetUserProfileId);
+      processedProfileIds.add(userAccess.targetUserProfileId);
+      // Cache the user access
+      AccessControlCacheService.setUserAccess(
+        userAccess.granterUserProfileId,
+        userAccess.targetUserProfileId,
+        userAccess.centerId ?? null,
+        {
+          userAccess,
+          hasUserAccess: true,
+        },
+      );
+    }
+
+    // Cache nulls for profiles that don't have user access
+    for (const targetProfileId of targetProfileIds) {
+      if (!processedProfileIds.has(targetProfileId)) {
+        AccessControlCacheService.setUserAccess(
+          userProfileId,
+          targetProfileId,
+          centerId ?? null,
+          {
+            userAccess: null,
+            hasUserAccess: false,
+          },
+        );
+      }
+    }
+
+    // Build accessible set: Include profiles with bypass access (single cached check for granter)
+    // If granter has bypass access (super admin, center owner, or admin with center access),
+    // all target profiles are accessible regardless of user access records
+    const bypassAccess = await this.bypassCenterInternalAccess(
+      userProfileId,
           centerId,
-        });
-        return canAccess ? targetProfileId : null;
-      }),
-    ).then((results) => results.filter((result) => result !== null));
+    );
+
+    const results: string[] = [];
+    for (const targetProfileId of targetProfileIds) {
+      if (accessibleSet.has(targetProfileId)) {
+        results.push(targetProfileId);
+      } else if (bypassAccess) {
+        // Granter has bypass access, so all targets are accessible
+        results.push(targetProfileId);
+      }
+    }
+
+    return results;
   }
 
   async getAccessibleProfilesIdsForCenter(
     centerId: string,
     targetProfileIds: string[],
   ): Promise<string[]> {
-    return Promise.all(
-      targetProfileIds.map(async (targetProfileId) => {
-        const canAccess = await this.canCenterAccess({
-          userProfileId: targetProfileId,
+    // Early return: if empty array, return []
+    if (targetProfileIds.length === 0) {
+      return [];
+    }
+
+    // Batch load: Use findManyCenterAccess to load all records in one query
+    const centerAccesses =
+      await this.centerAccessRepository.findManyCenterAccess(
+        targetProfileIds,
+        centerId,
+      );
+
+    // Cache results: Store each in center access cache (including nulls)
+    const accessibleSet = new Set<string>();
+    const processedProfileIds = new Set<string>();
+
+    for (const centerAccess of centerAccesses) {
+      accessibleSet.add(centerAccess.userProfileId);
+      processedProfileIds.add(centerAccess.userProfileId);
+      // Cache the center access
+      const currentCache =
+        AccessControlCacheService.getCenterAccess(
+          centerAccess.userProfileId,
+          centerAccess.centerId,
+        ) ?? {};
+      AccessControlCacheService.setCenterAccess(
+        centerAccess.userProfileId,
+        centerAccess.centerId,
+        {
+          ...currentCache,
+          centerAccess,
+          hasCenterAccess: true,
+        },
+      );
+    }
+
+    // Cache nulls for profiles that don't have center access
+    for (const targetProfileId of targetProfileIds) {
+      if (!processedProfileIds.has(targetProfileId)) {
+        const currentCache =
+          AccessControlCacheService.getCenterAccess(
+            targetProfileId,
           centerId,
+          ) ?? {};
+        AccessControlCacheService.setCenterAccess(targetProfileId, centerId, {
+          ...currentCache,
+          centerAccess: null,
+          hasCenterAccess: false,
         });
-        return canAccess ? targetProfileId : null;
-      }),
-    ).then((results) => results.filter((result) => result !== null));
+      }
+    }
+
+    // Build accessible set: Include super admins (single cached check for all)
+    // Check if any of the target profiles are super admins
+    const results: string[] = [];
+    for (const targetProfileId of targetProfileIds) {
+      if (accessibleSet.has(targetProfileId)) {
+        results.push(targetProfileId);
+      } else {
+        // Check if super admin (cached)
+        const isSuperAdmin = await this.isSuperAdmin(targetProfileId);
+        if (isSuperAdmin) {
+          results.push(targetProfileId);
+        }
+      }
+    }
+
+    return results;
   }
 
   /**
@@ -173,17 +291,45 @@ export class AccessControlHelperService extends BaseService {
     userProfileId: string,
     targetCenterIds: string[],
   ): Promise<string[]> {
-    const result = await Promise.all(
-      targetCenterIds.map(async (targetCenterId) => {
-        const canAccess = await this.canCenterAccess({
-          userProfileId,
-          centerId: targetCenterId,
-        });
+    // Early return: if empty array, return []
+    if (targetCenterIds.length === 0) {
+      return [];
+    }
 
-        return canAccess ? targetCenterId : null;
-      }),
+    // Check super admin first: Single cached check - if true, return all centerIds
+    const isSuperAdmin = await this.isSuperAdmin(userProfileId);
+    if (isSuperAdmin) {
+      return targetCenterIds;
+    }
+
+    // Batch load: Use findManyCenterAccess with userProfileId (loads all center accesses in one query)
+    const centerAccesses =
+      await this.centerAccessRepository.findManyCenterAccess([userProfileId]);
+
+    // Cache results: Store each in center access cache
+    const accessibleCenterIds = new Set<string>();
+    for (const centerAccess of centerAccesses) {
+      accessibleCenterIds.add(centerAccess.centerId);
+      const currentCache =
+        AccessControlCacheService.getCenterAccess(
+          centerAccess.userProfileId,
+          centerAccess.centerId,
+        ) ?? {};
+      AccessControlCacheService.setCenterAccess(
+        centerAccess.userProfileId,
+        centerAccess.centerId,
+        {
+          ...currentCache,
+          centerAccess,
+          hasCenterAccess: true,
+        },
     );
-    return result.filter((result) => result !== null);
+    }
+
+    // Filter: Return centerIds that exist in cached results
+    return targetCenterIds.filter((centerId) =>
+      accessibleCenterIds.has(centerId),
+    );
   }
 
   async getAccessibleRolesIdsForProfile(
@@ -199,7 +345,32 @@ export class AccessControlHelperService extends BaseService {
 
   // user access methods
   async findUserAccess(data: UserAccessDto): Promise<UserAccess | null> {
-    return this.userAccessRepository.findUserAccess(data);
+    const { granterUserProfileId, targetUserProfileId, centerId } = data;
+    // Defensive check: verify cache exists
+    const cached = AccessControlCacheService.getUserAccess(
+      granterUserProfileId,
+      targetUserProfileId,
+      centerId ?? null,
+    );
+    if (cached !== undefined && cached.userAccess !== undefined) {
+      return cached.userAccess;
+    }
+
+    // Not cached - query repository
+    const userAccess = await this.userAccessRepository.findUserAccess(data);
+
+    // Cache null values explicitly to avoid repeated queries for non-existent records
+    AccessControlCacheService.setUserAccess(
+      granterUserProfileId,
+      targetUserProfileId,
+      centerId ?? null,
+      {
+        ...cached,
+        userAccess,
+      },
+    );
+
+    return userAccess;
   }
 
   async canUserAccess(data: UserAccessDto): Promise<boolean> {
@@ -241,7 +412,38 @@ export class AccessControlHelperService extends BaseService {
     data: CenterAccessDto,
     isDeleted?: boolean,
   ): Promise<CenterAccess | null> {
-    return this.centerAccessRepository.findCenterAccess(data, isDeleted);
+    const { userProfileId, centerId } = data;
+    // Defensive check: verify cache exists, fall back to direct query if missing
+    // Note: We only cache non-deleted records. If isDeleted=true, skip cache and query directly.
+    if (!isDeleted) {
+      const cached = AccessControlCacheService.getCenterAccess(
+        userProfileId,
+        centerId,
+      );
+      if (cached !== undefined && cached.centerAccess !== undefined) {
+        return cached.centerAccess;
+      }
+    }
+
+    // Not cached or isDeleted=true - query repository
+    const centerAccess = await this.centerAccessRepository.findCenterAccess(
+      data,
+      isDeleted,
+    );
+
+    // Cache null values explicitly to avoid repeated queries for non-existent records
+    // Only cache if not deleted
+    if (!isDeleted) {
+      const currentCache =
+        AccessControlCacheService.getCenterAccess(userProfileId, centerId) ??
+        {};
+      AccessControlCacheService.setCenterAccess(userProfileId, centerId, {
+        ...currentCache,
+        centerAccess,
+      });
+    }
+
+    return centerAccess;
   }
 
   async canCenterAccess(
@@ -301,7 +503,6 @@ export class AccessControlHelperService extends BaseService {
     }
 
     // Check if user has access to the center
-
     const canAccess = await this.canCenterAccess(data, config.includeDeleted);
     if (!canAccess) {
       this.logger.warn('Center access validation failed', {
@@ -312,7 +513,21 @@ export class AccessControlHelperService extends BaseService {
         resource: 't.resources.centerAccess',
       });
     }
-    const centerAccess = await this.findCenterAccess(data);
+
+    // Retrieve from cache if available (only cached for non-deleted records)
+    // If not cached (because includeDeleted=true was used), query directly
+    let centerAccess =
+      AccessControlCacheService.getCenterAccess(
+        data.userProfileId,
+        data.centerId,
+      )?.centerAccess ?? null;
+
+    // If not in cache (because includeDeleted=true doesn't cache), query directly
+    if (!centerAccess && config.includeDeleted) {
+      centerAccess = await this.findCenterAccess(data, config.includeDeleted);
+    }
+
+    // If still null (super admin case or no access record), return early
     if (!centerAccess) return;
 
     // Check if the user's access to the center is active
@@ -327,26 +542,103 @@ export class AccessControlHelperService extends BaseService {
     }
   }
 
-  async isSuperAdmin(userProfileId: string) {
-    return this.profileRoleRepository.isSuperAdmin(userProfileId);
+  /**
+   * Load and cache all role data for a user profile.
+   * This is called when any role check misses cache to batch-load all role data efficiently.
+   * @private
+   */
+  private async loadAndCacheRoles(
+    userProfileId: string,
+  ): Promise<RolesCacheData> {
+    const [isSuperAdmin, isAdmin, isStaff, userProfile] = await Promise.all([
+      this.profileRoleRepository.isSuperAdmin(userProfileId),
+      this.userProfileService.isAdmin(userProfileId),
+      this.userProfileService.isStaff(userProfileId),
+      this.userProfileService.findOne(userProfileId).catch(() => null),
+    ]);
+
+    const rolesData: RolesCacheData = {
+      isSuperAdmin,
+      isAdmin,
+      isStaff,
+      profileType: userProfile?.profileType,
+    };
+
+    AccessControlCacheService.setRoles(userProfileId, rolesData);
+    return rolesData;
   }
 
-  async isCenterOwner(userProfileId: string, centerId: string) {
-    return this.profileRoleRepository.isCenterOwner(userProfileId, centerId);
+  async isSuperAdmin(userProfileId: string): Promise<boolean> {
+    // Defensive check: if cache not available, fall back to direct query
+    const cached = AccessControlCacheService.getRoles(userProfileId);
+    if (cached !== undefined) {
+      return cached.isSuperAdmin;
+    }
+
+    // Not cached - load and cache all role data
+    const rolesData = await this.loadAndCacheRoles(userProfileId);
+    return rolesData.isSuperAdmin;
   }
 
-  async isAdmin(userProfileId: string) {
-    return this.userProfileService.isAdmin(userProfileId);
+  async isCenterOwner(
+    userProfileId: string,
+    centerId: string,
+  ): Promise<boolean> {
+    // ⚠️ CRITICAL: This is center-scoped, NOT global role - must use center layer cache
+    // Defensive check: verify cache exists
+    const cached = AccessControlCacheService.getCenterAccess(
+      userProfileId,
+      centerId,
+    );
+    if (cached !== undefined && cached.isOwner !== undefined) {
+      return cached.isOwner;
+    }
+
+    // Not cached - query repository
+    const isOwner = await this.profileRoleRepository.isCenterOwner(
+      userProfileId,
+      centerId,
+    );
+
+    // Cache result in center layer (NOT roles layer)
+    // Preserve existing cache data if present
+    AccessControlCacheService.setCenterAccess(userProfileId, centerId, {
+      ...cached,
+      isOwner,
+    });
+
+    return isOwner;
   }
 
-  async isStaff(userProfileId: string) {
-    return this.userProfileService.isStaff(userProfileId);
+  async isAdmin(userProfileId: string): Promise<boolean> {
+    // Check cache first
+    const cached = AccessControlCacheService.getRoles(userProfileId);
+    if (cached !== undefined) {
+      return cached.isAdmin;
+    }
+
+    // Not cached - load and cache all role data
+    const rolesData = await this.loadAndCacheRoles(userProfileId);
+    return rolesData.isAdmin;
+  }
+
+  async isStaff(userProfileId: string): Promise<boolean> {
+    // Reuse roles cache (global role), similar to isAdmin
+    const cached = AccessControlCacheService.getRoles(userProfileId);
+    if (cached !== undefined) {
+      return cached.isStaff;
+    }
+
+    // Not cached - load and cache all role data
+    const rolesData = await this.loadAndCacheRoles(userProfileId);
+    return rolesData.isStaff;
   }
 
   async bypassCenterInternalAccess(
     userProfileId: string,
     centerId?: string,
   ): Promise<boolean> {
+    // All underlying calls are now cached (isSuperAdmin, isCenterOwner, findCenterAccess, isAdmin)
     const isSuperAdmin = await this.isSuperAdmin(userProfileId);
     if (isSuperAdmin) {
       return true;
@@ -356,7 +648,8 @@ export class AccessControlHelperService extends BaseService {
       if (isCenterOwner) {
         return true;
       }
-      const centerAccess = await this.centerAccessRepository.findCenterAccess({
+      // Use service method (cached) instead of direct repository call
+      const centerAccess = await this.findCenterAccess({
         userProfileId,
         centerId,
       });

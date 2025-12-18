@@ -9,6 +9,7 @@ import { TypeOrmExceptionFilter } from './common/filters/typeorm-exception.filte
 import { RedisModule } from './modules/redis/redis.module';
 import { TypeSafeEventEmitter } from './services/type-safe-event-emitter.service';
 import { TranslationService } from './common/services/translation.service';
+import { CacheKeyBuilderService } from './common/services/cache-key-builder.service';
 
 @Global()
 @Module({
@@ -21,6 +22,7 @@ import { TranslationService } from './common/services/translation.service';
     TypeOrmExceptionFilter,
     TypeSafeEventEmitter,
     TranslationService,
+    CacheKeyBuilderService,
   ],
   exports: [
     DatabaseService,
@@ -31,6 +33,7 @@ import { TranslationService } from './common/services/translation.service';
     RedisModule,
     TypeSafeEventEmitter,
     TranslationService,
+    CacheKeyBuilderService,
   ],
 })
 export class SharedModule {}

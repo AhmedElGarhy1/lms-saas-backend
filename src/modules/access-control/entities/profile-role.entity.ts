@@ -7,6 +7,7 @@ import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 @Entity('profile_roles')
 @Index(['userProfileId', 'centerId', 'roleId'], { unique: true })
 @Index(['centerId'])
+@Index(['userProfileId'])
 export class ProfileRole extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   roleId: string;

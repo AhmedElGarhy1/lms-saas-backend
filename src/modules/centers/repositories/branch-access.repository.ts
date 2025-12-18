@@ -38,4 +38,37 @@ export class BranchAccessRepository extends BaseRepository<BranchAccess> {
     await this.remove(existingAccess.id);
     return existingAccess;
   }
+
+  /**
+   * Batch load branch access records for multiple queries.
+   * Uses query builder with OR conditions to load all records in one query.
+   *
+   * @param queries - Array of queries with userProfileId, centerId, and branchId
+   * @returns Array of BranchAccess records
+   */
+  async findManyBranchAccess(
+    queries: Array<{
+      userProfileId: string;
+      centerId: string;
+      branchId: string;
+    }>,
+  ): Promise<BranchAccess[]> {
+    if (queries.length === 0) {
+      return [];
+    }
+    const queryBuilder =
+      this.getRepository().createQueryBuilder('branchAccess');
+    const conditions = queries.map(
+      (q, index) =>
+        `(branchAccess.userProfileId = :userProfileId${index} AND branchAccess.centerId = :centerId${index} AND branchAccess.branchId = :branchId${index})`,
+    );
+    queryBuilder.where(conditions.join(' OR '));
+    queries.forEach((q, index) => {
+      queryBuilder
+        .setParameter(`userProfileId${index}`, q.userProfileId)
+        .setParameter(`centerId${index}`, q.centerId)
+        .setParameter(`branchId${index}`, q.branchId);
+    });
+    return queryBuilder.getMany();
+  }
 }

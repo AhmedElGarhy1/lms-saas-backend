@@ -6,6 +6,7 @@ import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 @Entity('center_access')
 @Index(['userProfileId', 'centerId'], { unique: true })
 @Index(['centerId'])
+@Index(['userProfileId'])
 export class CenterAccess extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   userProfileId: string;

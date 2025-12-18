@@ -7,6 +7,7 @@ import { BaseEntity } from '@/shared/common/entities/base.entity';
 @Index(['granterUserProfileId', 'targetUserProfileId', 'centerId'], {
   unique: true,
 })
+@Index(['granterUserProfileId'])
 export class UserAccess extends BaseEntity {
   @Column({ type: 'uuid' })
   targetUserProfileId: string;

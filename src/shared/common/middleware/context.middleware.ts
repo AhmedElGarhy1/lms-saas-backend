@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 import { RequestContext } from '../context/request.context';
 import { IRequest } from '../interfaces/request.interface';
 import { randomUUID } from 'crypto';
+import { AccessControlCacheService } from '../services/access-control-cache.service';
 
 @Injectable()
 export class ContextMiddleware implements NestMiddleware {
@@ -26,6 +27,8 @@ export class ContextMiddleware implements NestMiddleware {
       requestId,
       correlationId: requestId, // Explicit correlationId for notification tracing
     });
+    // Initialize access control cache after RequestContext setup
+    AccessControlCacheService.initialize();
     next();
   }
 
