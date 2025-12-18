@@ -96,7 +96,10 @@ export class ClassAccessService extends BaseService {
     },
   ): Promise<void> {
     const profile = await this.userProfileService.findOne(data.userProfileId);
-    if (!profile || profile.profileType !== ProfileType.STAFF) {
+    if (!profile) {
+      return;
+    }
+    if (profile.profileType !== ProfileType.STAFF) {
       return;
     }
 

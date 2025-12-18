@@ -15,6 +15,7 @@ import { ScheduleItemDto } from '../dto/schedule-item.dto';
 import { Transactional } from '@nestjs-cls/transactional';
 import { GroupStudent } from '../entities/group-student.entity';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
+import { GroupStudentAccessDto } from '../dto/group-student-access.dto';
 
 @Injectable()
 export class GroupStudentService extends BaseService {
@@ -32,30 +33,30 @@ export class GroupStudentService extends BaseService {
   /**
    * Assigns a student to a group with comprehensive validation.
    * Performs the following validations:
-   * 1. Group exists and actor has access
+   * 1. Group exists and actor has access (validated by DTO)
    * 2. Student is not already assigned to this group
-   * 3. Student profile exists and is of type STUDENT
-   * 4. Student has center access
+   * 3. Student profile exists and is of type STUDENT (validated by DTO)
+   * 4. Student has center access (validated by DTO)
    * 5. Student is not already in another group of the same class
    * 6. Student's schedule doesn't conflict with other assigned groups
    *
-   * @param groupId - The group ID to assign the student to
-   * @param userProfileId - The student's user profile ID
+   * @param data - GroupStudentAccessDto containing groupId and userProfileId
    * @param actor - The user performing the action
    * @throws ResourceNotFoundException if group doesn't exist or actor lacks access
    * @throws BusinessLogicException if student is already assigned, wrong profile type, or schedule conflict
    */
   async assignStudentToGroup(
-    groupId: string,
-    userProfileId: string,
+    data: GroupStudentAccessDto,
     actor: ActorUser,
   ): Promise<void> {
-    const group = await this.groupsRepository.findOneWithClassOrThrow(groupId);
+    const group = await this.groupsRepository.findOneWithClassOrThrow(
+      data.groupId,
+    );
 
     const existingActiveAssignment =
       await this.groupStudentsRepository.findByGroupAndStudent(
-        groupId,
-        userProfileId,
+        data.groupId,
+        data.userProfileId,
       );
 
     if (existingActiveAssignment) {
@@ -67,7 +68,7 @@ export class GroupStudentService extends BaseService {
 
     const existingGroupIds =
       await this.groupStudentsRepository.findStudentGroupIdsByClassId(
-        userProfileId,
+        data.userProfileId,
         group.classId,
         undefined, // Not excluding any group (new assignment)
       );
@@ -79,8 +80,9 @@ export class GroupStudentService extends BaseService {
       });
     }
 
-    const scheduleItems =
-      await this.scheduleItemsRepository.findByGroupId(groupId);
+    const scheduleItems = await this.scheduleItemsRepository.findByGroupId(
+      data.groupId,
+    );
     if (scheduleItems && scheduleItems.length > 0) {
       const scheduleItemsDto: ScheduleItemDto[] = scheduleItems.map((item) => ({
         day: item.day,
@@ -95,15 +97,15 @@ export class GroupStudentService extends BaseService {
         scheduleItemsDto,
         group.class.duration,
         {
-          studentIds: [userProfileId],
+          studentIds: [data.userProfileId],
           excludeGroupIds: undefined,
         },
       );
     }
 
     await this.groupStudentsRepository.create({
-      groupId,
-      studentUserProfileId: userProfileId,
+      groupId: data.groupId,
+      studentUserProfileId: data.userProfileId,
       classId: group.classId,
       joinedAt: new Date(),
     });
@@ -144,7 +146,11 @@ export class GroupStudentService extends BaseService {
     return await this.bulkOperationService.executeBulk(
       userProfileIds,
       async (userProfileId: string) => {
-        await this.assignStudentToGroup(groupId, userProfileId, actor);
+        const data: GroupStudentAccessDto = {
+          groupId,
+          userProfileId,
+        };
+        await this.assignStudentToGroup(data, actor);
         return { id: userProfileId };
       },
     );

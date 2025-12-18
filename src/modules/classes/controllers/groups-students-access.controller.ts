@@ -42,8 +42,7 @@ export class GroupsStudentsAccessController {
     @GetUser() actor: ActorUser,
   ) {
     await this.groupStudentService.assignStudentToGroup(
-      groupStudentAccessDto.groupId,
-      groupStudentAccessDto.userProfileId,
+      groupStudentAccessDto,
       actor,
     );
     return ControllerResponse.message({
