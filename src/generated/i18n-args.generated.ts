@@ -98,9 +98,6 @@ export type TranslationArgs = {
   't.messages.activated': { resource: string };
   't.messages.all': Record<string, never>;
   't.messages.allItemsAlreadyInState': { count: string; item: string; state: string };
-  't.messages.allItemsAlreadyInState.one': { count: string; item: string; state: string };
-  't.messages.allItemsAlreadyInState.other': { count: string; item: string; state: string };
-  't.messages.allItemsAlreadyInState.zero': Record<string, never>;
   't.messages.alreadyDeleted': { resource: string };
   't.messages.alreadyExists': { field: string; resource: string; value: string };
   't.messages.alreadyHas': { resource: string; what: string };
@@ -113,15 +110,9 @@ export type TranslationArgs = {
   't.messages.bulkExportNotImplemented': { item: string };
   't.messages.bulkImportNotImplemented': { item: string };
   't.messages.bulkOperationFailure': { count: string; item: string };
-  't.messages.bulkOperationFailure.one': { count: string; item: string };
-  't.messages.bulkOperationFailure.other': { count: string; item: string };
-  't.messages.bulkOperationFailure.zero': Record<string, never>;
   't.messages.bulkOperationPartial': { failed: string; item: string; success: string };
   't.messages.bulkOperationResult': Record<string, never>;
   't.messages.bulkOperationSuccess': { count: string; item: string };
-  't.messages.bulkOperationSuccess.one': { count: string; item: string };
-  't.messages.bulkOperationSuccess.other': { count: string; item: string };
-  't.messages.bulkOperationSuccess.zero': Record<string, never>;
   't.messages.businessLogicError': Record<string, never>;
   't.messages.cannotBeAssociated': { resource1: string; resource2: string };
   't.messages.cannotGrantAccess': { resource: string };
@@ -162,8 +153,6 @@ export type TranslationArgs = {
   't.messages.fieldRequired': { field: string };
   't.messages.found': { resource: string };
   't.messages.foundResults': { count: string };
-  't.messages.foundResults.one': { count: string };
-  't.messages.foundResults.other': { count: string };
   't.messages.genericError': Record<string, never>;
   't.messages.global': Record<string, never>;
   't.messages.globalDashboard': Record<string, never>;

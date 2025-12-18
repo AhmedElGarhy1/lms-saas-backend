@@ -220,16 +220,8 @@
     "genericError": "Something went wrong",
     "welcome": "Welcome",
     "bulkOperationResult": "Operation Results",
-    "bulkOperationSuccess": {
-      "zero": "No operations",
-      "one": "Successfully processed {count} {item}",
-      "other": "Successfully processed {count} {item}s"
-    },
-    "bulkOperationFailure": {
-      "zero": "No operations",
-      "one": "Failed to process {count} {item}",
-      "other": "Failed to process {count} {item}s"
-    },
+    "bulkOperationSuccess": "{count, plural, =0 {No operations} =1 {Successfully processed {count} {item}} other {Successfully processed {count} {item}s}}",
+    "bulkOperationFailure": "{count, plural, =0 {No operations} =1 {Failed to process {count} {item}} other {Failed to process {count} {item}s}}",
     "bulkOperationPartial": "Successfully processed {success, number} {success, plural, =1 {{item}} other {{item}s}}, but {failed, number} {failed, plural, =1 {{item}} other {{item}s}} failed",
     "changed": "{resource} changed successfully",
     "sent": "{resource} sent successfully",
@@ -262,16 +254,9 @@
     "bulkImportNotImplemented": "Bulk import not implemented for {item}",
     "bulkDeleteNotImplemented": "Bulk delete not implemented for {item}",
     "bulkActionNotImplemented": "Bulk action \"{action}\" not implemented for {item}",
-    "foundResults": {
-      "one": "Found {count} result",
-      "other": "Found {count} results"
-    },
+    "foundResults": "{count, plural, =1 {Found {count} result} other {Found {count} results}}",
     "startTypingToSearch": "Start typing to search...",
-    "allItemsAlreadyInState": {
-      "zero": "No items",
-      "one": "All {count} selected {item} is already {state}",
-      "other": "All {count} selected {item}s are already {state}"
-    },
+    "allItemsAlreadyInState": "{count, plural, =0 {No items} =1 {All {count} selected {item} is already {state}} other {All {count} selected {item}s are already {state}}}",
     "contactAdmin": "If you believe this is an error, please contact your administrator",
     "copySuccess": "Copied to clipboard successfully",
     "loadMore": "Load more ({count, number} remaining)",

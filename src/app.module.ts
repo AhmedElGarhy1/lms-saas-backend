@@ -8,6 +8,7 @@ import {
   I18nModule,
   QueryResolver,
 } from 'nestjs-i18n';
+import { intlMessageFormatter } from './shared/common/formatters/intl-message-formatter';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { UserModule } from '@/modules/user/user.module';
 import { CentersModule } from '@/modules/centers/centers.module';
@@ -77,6 +78,7 @@ import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limi
         includeSubfolders: false,
       },
       typesOutputPath: join(__dirname, '../src/generated/i18n.generated.ts'),
+      formatter: intlMessageFormatter,
       resolvers: [
         { use: QueryResolver, options: ['lang'] },
         UserLocaleResolver,
