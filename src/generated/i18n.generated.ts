@@ -897,7 +897,10 @@ export type I18nTranslations = {
                 "importProfile": {
                     "name": string;
                 };
-                "grantUserAccess": {
+                "grantStaffAccess": {
+                    "name": string;
+                };
+                "grantTeacherAccess": {
                     "name": string;
                 };
                 "grantBranchAccess": {
@@ -1035,7 +1038,7 @@ export type I18nTranslations = {
                 "importProfile": {
                     "name": string;
                 };
-                "grantUserAccess": {
+                "grantAdminAccess": {
                     "name": string;
                 };
                 "grantCenterAccess": {

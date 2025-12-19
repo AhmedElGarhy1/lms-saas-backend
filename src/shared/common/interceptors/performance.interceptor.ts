@@ -79,12 +79,17 @@ export class PerformanceInterceptor implements NestInterceptor {
             timestamp: new Date().toISOString(),
           };
 
-          // Log error performance metrics
-          console.error('Request failed:', {
-            ...metrics,
-            error: error.message || 'Unknown error',
-            stack: error.stack,
-          });
+          // 304 Not Modified is a success response, not an error - log as success
+          if (statusCode === 304) {
+            console.log('Request completed:', metrics);
+          } else {
+            // Log error performance metrics for actual errors
+            console.error('Request failed:', {
+              ...metrics,
+              error: error.message || 'Unknown error',
+              stack: error.stack,
+            });
+          }
         },
       }),
     );

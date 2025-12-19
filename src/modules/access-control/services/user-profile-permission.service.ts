@@ -84,40 +84,53 @@ export class UserProfilePermissionService extends BaseService {
       | 'RESTORE'
       | 'ACTIVATE'
       | 'IMPORT_PROFILE'
-      | 'GRANT_USER_ACCESS'
+      | 'GRANT_STAFF_ACCESS'
+      | 'GRANT_TEACHER_ACCESS'
+      | 'GRANT_ADMIN_ACCESS'
       | 'GRANT_CENTER_ACCESS',
     centerId?: string,
   ): Promise<void> {
+    // TODO: Refactor this to use a more generic approach
     // Determine which permission to check based on profile type
     let requiredPermission;
     if (profileType === ProfileType.STAFF) {
-      requiredPermission = PERMISSIONS.STAFF[permissionKey];
+      if (permissionKey === 'GRANT_STAFF_ACCESS') {
+        requiredPermission = PERMISSIONS.STAFF.GRANT_STAFF_ACCESS;
+      } else if (permissionKey === 'GRANT_CENTER_ACCESS') {
+        requiredPermission = PERMISSIONS.STAFF.GRANT_CENTER_ACCESS;
+      } else {
+        requiredPermission =
+          PERMISSIONS.STAFF[permissionKey as keyof typeof PERMISSIONS.STAFF];
+      }
     } else if (profileType === ProfileType.ADMIN) {
-      requiredPermission = PERMISSIONS.ADMIN[permissionKey];
+      if (permissionKey === 'GRANT_ADMIN_ACCESS') {
+        requiredPermission = PERMISSIONS.ADMIN.GRANT_ADMIN_ACCESS;
+      } else if (permissionKey === 'GRANT_CENTER_ACCESS') {
+        requiredPermission = PERMISSIONS.ADMIN.GRANT_CENTER_ACCESS;
+      } else {
+        requiredPermission =
+          PERMISSIONS.ADMIN[permissionKey as keyof typeof PERMISSIONS.ADMIN];
+      }
     } else if (profileType === ProfileType.STUDENT) {
-      if (permissionKey === 'GRANT_USER_ACCESS') {
-        throw new InsufficientPermissionsException(
-          't.messages.actionNotAllowed',
-          {
-            action: 't.buttons.grantResourceAccess',
-            resource: 't.resources.student',
-            reason: 't.messages.cannotGrantAccess',
-          },
-        );
+      if (permissionKey === 'GRANT_CENTER_ACCESS') {
+        requiredPermission = PERMISSIONS.STUDENT.GRANT_CENTER_ACCESS;
+      } else {
+        requiredPermission =
+          PERMISSIONS.STUDENT[
+            permissionKey as keyof typeof PERMISSIONS.STUDENT
+          ];
       }
-      requiredPermission = PERMISSIONS.STUDENT[permissionKey];
     } else if (profileType === ProfileType.TEACHER) {
-      if (permissionKey === 'GRANT_USER_ACCESS') {
-        throw new InsufficientPermissionsException(
-          't.messages.actionNotAllowed',
-          {
-            action: 't.buttons.grantResourceAccess',
-            resource: 't.resources.teacher',
-            reason: 't.messages.cannotGrantAccess',
-          },
-        );
+      if (permissionKey === 'GRANT_TEACHER_ACCESS') {
+        requiredPermission = PERMISSIONS.STAFF.GRANT_TEACHER_ACCESS;
+      } else if (permissionKey === 'GRANT_CENTER_ACCESS') {
+        requiredPermission = PERMISSIONS.TEACHER.GRANT_CENTER_ACCESS;
+      } else {
+        requiredPermission =
+          PERMISSIONS.TEACHER[
+            permissionKey as keyof typeof PERMISSIONS.TEACHER
+          ];
       }
-      requiredPermission = PERMISSIONS.TEACHER[permissionKey];
     } else {
       throw new ResourceNotFoundException('t.messages.fieldInvalid', {
         field: 't.resources.profileType',
@@ -154,7 +167,9 @@ export class UserProfilePermissionService extends BaseService {
       | 'RESTORE'
       | 'ACTIVATE'
       | 'IMPORT_PROFILE'
-      | 'GRANT_USER_ACCESS'
+      | 'GRANT_STAFF_ACCESS'
+      | 'GRANT_TEACHER_ACCESS'
+      | 'GRANT_ADMIN_ACCESS'
       | 'GRANT_CENTER_ACCESS',
     centerId?: string,
   ): Promise<void> {
@@ -308,6 +323,11 @@ export class UserProfilePermissionService extends BaseService {
 
   /**
    * Checks if actor can grant user access for a profile of the specified type
+   * Uses the appropriate permission based on profile type:
+   * - STAFF -> GRANT_STAFF_ACCESS
+   * - TEACHER -> GRANT_TEACHER_ACCESS
+   * - ADMIN -> GRANT_ADMIN_ACCESS
+   * - STUDENT -> throws error (students cannot grant access)
    * @param actor The user performing the action
    * @param profileTypeOrId Either ProfileType or userProfileId to fetch profileType from
    * @param centerId Optional center ID for permission scope
@@ -317,10 +337,45 @@ export class UserProfilePermissionService extends BaseService {
     profileTypeOrId: ProfileType | string,
     centerId?: string,
   ): Promise<void> {
-    await this.resolveAndCheckPermission(
+    const resolvedProfileType = await this.resolveProfileType(
+      typeof profileTypeOrId === 'string' && !isUUID(profileTypeOrId)
+        ? (profileTypeOrId as ProfileType)
+        : undefined,
+      typeof profileTypeOrId === 'string' && isUUID(profileTypeOrId)
+        ? profileTypeOrId
+        : undefined,
+    );
+
+    let permissionKey:
+      | 'GRANT_STAFF_ACCESS'
+      | 'GRANT_TEACHER_ACCESS'
+      | 'GRANT_ADMIN_ACCESS';
+
+    if (resolvedProfileType === ProfileType.STAFF) {
+      permissionKey = 'GRANT_STAFF_ACCESS';
+    } else if (resolvedProfileType === ProfileType.TEACHER) {
+      permissionKey = 'GRANT_TEACHER_ACCESS';
+    } else if (resolvedProfileType === ProfileType.ADMIN) {
+      permissionKey = 'GRANT_ADMIN_ACCESS';
+    } else if (resolvedProfileType === ProfileType.STUDENT) {
+      throw new InsufficientPermissionsException(
+        't.messages.actionNotAllowed',
+        {
+          action: 't.buttons.grantResourceAccess',
+          resource: 't.resources.student',
+          reason: 't.messages.cannotGrantAccess',
+        },
+      );
+    } else {
+      throw new ResourceNotFoundException('t.messages.fieldInvalid', {
+        field: 't.resources.profileType',
+      });
+    }
+
+    await this.checkPermission(
       actor,
-      profileTypeOrId,
-      'GRANT_USER_ACCESS',
+      resolvedProfileType,
+      permissionKey,
       centerId,
     );
   }

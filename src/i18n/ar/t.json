@@ -866,8 +866,11 @@
       "importProfile": {
         "name": "استيراد الملف الشخصي"
       },
-      "grantUserAccess": {
-        "name": "منح وصول المستخدم"
+      "grantStaffAccess": {
+        "name": "منح وصول الموظف"
+      },
+      "grantTeacherAccess": {
+        "name": "منح وصول المعلم"
       },
       "grantBranchAccess": {
         "name": "منح وصول الفرع"
@@ -1004,8 +1007,8 @@
       "importProfile": {
         "name": "استيراد الملف الشخصي"
       },
-      "grantUserAccess": {
-        "name": "منح وصول المستخدم"
+      "grantAdminAccess": {
+        "name": "منح وصول المدير"
       },
       "grantCenterAccess": {
         "name": "منح وصول المركز"

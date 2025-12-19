@@ -22,9 +22,15 @@ export const PERMISSIONS = {
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
-    GRANT_USER_ACCESS: {
-      action: 'staff:grant-user-access',
-      name: 't.permissions.staff.grantUserAccess.name',
+    GRANT_STAFF_ACCESS: {
+      action: 'staff:grant-staff-access',
+      name: 't.permissions.staff.grantStaffAccess.name',
+      group: 'staff',
+      scope: PermissionScope.CENTER,
+    },
+    GRANT_TEACHER_ACCESS: {
+      action: 'staff:grant-teacher-access',
+      name: 't.permissions.staff.grantTeacherAccess.name',
       group: 'staff',
       scope: PermissionScope.CENTER,
     },
@@ -333,9 +339,9 @@ export const PERMISSIONS = {
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },
-    GRANT_USER_ACCESS: {
-      action: 'admin:grant-user-access',
-      name: 't.permissions.admin.grantUserAccess.name',
+    GRANT_ADMIN_ACCESS: {
+      action: 'admin:grant-admin-access',
+      name: 't.permissions.admin.grantAdminAccess.name',
       group: 'admin',
       scope: PermissionScope.ADMIN,
     },

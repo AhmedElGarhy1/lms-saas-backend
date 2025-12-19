@@ -204,7 +204,7 @@ export class UserRepository extends BaseRepository<User> {
 
       if (isUser && !isCenterOwner) {
         queryBuilder.andWhere(
-          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
           { userProfileId: actor.userProfileId, centerId },
         );
       }
@@ -218,7 +218,7 @@ export class UserRepository extends BaseRepository<User> {
             { centerId },
           )
           .orWhere(
-            `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
+            `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
             { userProfileId: actor.userProfileId, centerId },
           );
       } else {
@@ -242,7 +242,7 @@ export class UserRepository extends BaseRepository<User> {
             SELECT 1 FROM "user_access" AS ua
             WHERE ua."targetUserProfileId" = "userProfiles"."id"
             AND ua."granterUserProfileId" = :granterUserProfileId
-            AND ua."deletedAt" IS NULL
+          
             ${centerId ? 'AND ua."centerId" = :centerId' : ''}
           )`,
           {
@@ -269,6 +269,7 @@ export class UserRepository extends BaseRepository<User> {
         userProfileId,
         userAccess,
         centerId,
+        ProfileType.STAFF,
       );
     }
     if (roleId && roleAccess) {
@@ -466,12 +467,24 @@ export class UserRepository extends BaseRepository<User> {
     params: PaginateTeacherDto,
     actor: ActorUser,
   ): Promise<Pagination<UserResponseDto>> {
-    const { centerId, centerAccess, displayDetails, isDeleted } = params;
+    const {
+      centerId,
+      centerAccess,
+      displayDetails,
+      isDeleted,
+      staffProfileId,
+      staffProfileAccess,
+    } = params;
     delete params.isDeleted;
 
     const includeCenter =
       centerId &&
       (!centerAccess || centerAccess === AccessibleUsersEnum.INCLUDE);
+
+    const includeStaffProfile =
+      staffProfileId &&
+      (!staffProfileAccess ||
+        staffProfileAccess === AccessibleUsersEnum.INCLUDE);
 
     // Create query builder with proper JOINs
     const queryBuilder = this.getRepository()
@@ -491,6 +504,7 @@ export class UserRepository extends BaseRepository<User> {
     );
 
     if (includeCenter) {
+      // TODO: invalidating center access twice
       queryBuilder
         .andWhere(
           `EXISTS
@@ -501,15 +515,6 @@ export class UserRepository extends BaseRepository<User> {
         .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
 
       if (displayDetails) {
-        queryBuilder
-          .leftJoinAndSelect(
-            'userProfiles.profileRoles',
-            'profileRoles',
-            'profileRoles.userProfileId = userProfiles.id AND profileRoles.centerId = :centerId',
-            { centerId },
-          )
-          .leftJoinAndSelect('profileRoles.role', 'role');
-
         queryBuilder
           .withDeleted()
           .andWhere('user.deletedAt IS NULL')
@@ -527,6 +532,15 @@ export class UserRepository extends BaseRepository<User> {
       if (isDeleted) {
         queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');
       }
+    }
+
+    console.log(includeStaffProfile, staffProfileId, staffProfileAccess);
+
+    if (includeStaffProfile) {
+      queryBuilder.andWhere(
+        'EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = userProfiles.id AND ua."granterUserProfileId" = :staffProfileId)',
+        { staffProfileId },
+      );
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
@@ -547,7 +561,7 @@ export class UserRepository extends BaseRepository<User> {
 
       if (isUser && !isCenterOwner) {
         queryBuilder.andWhere(
-          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
           { userProfileId: actor.userProfileId, centerId },
         );
       }
@@ -561,7 +575,7 @@ export class UserRepository extends BaseRepository<User> {
             { centerId },
           )
           .orWhere(
-            `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
+            `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
             { userProfileId: actor.userProfileId, centerId },
           );
       } else {
@@ -590,6 +604,16 @@ export class UserRepository extends BaseRepository<User> {
         filteredItems,
         centerId,
         centerAccess,
+      );
+    }
+
+    if (staffProfileId && staffProfileAccess) {
+      filteredItems = await this.applyStaffProfileAccess(
+        filteredItems,
+        staffProfileId,
+        staffProfileAccess,
+        centerId,
+        ProfileType.TEACHER,
       );
     }
 
@@ -662,7 +686,7 @@ export class UserRepository extends BaseRepository<User> {
       // do nothing
     } else {
       queryBuilder.andWhere(
-        `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" IS NULL AND ua."deletedAt" IS NULL)`,
+        `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" IS NULL)`,
         { userProfileId: actor.userProfileId },
       );
     }
@@ -693,7 +717,7 @@ export class UserRepository extends BaseRepository<User> {
             SELECT 1 FROM "user_access" AS ua
             WHERE ua."targetUserProfileId" = "userProfiles"."id"
             AND ua."granterUserProfileId" = :granterUserProfileId
-            AND ua."deletedAt" IS NULL
+          
             ${centerId ? 'AND ua."centerId" = :centerId' : ''}
           )`,
           {
@@ -723,6 +747,7 @@ export class UserRepository extends BaseRepository<User> {
         userProfileId,
         userAccess,
         centerId,
+        ProfileType.ADMIN,
       );
     }
     if (roleId && roleAccess) {
@@ -836,7 +861,7 @@ export class UserRepository extends BaseRepository<User> {
 
       if (isUser && !isCenterOwner) {
         queryBuilder.andWhere(
-          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
           { userProfileId: actor.userProfileId, centerId },
         );
       }
@@ -1008,7 +1033,7 @@ export class UserRepository extends BaseRepository<User> {
 
       if (isUser && !isCenterOwner) {
         queryBuilder.andWhere(
-          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId AND ua."deletedAt" IS NULL)`,
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
           { userProfileId: actor.userProfileId, centerId },
         );
       }
@@ -1094,7 +1119,7 @@ export class UserRepository extends BaseRepository<User> {
 
     if (!isSuperAdmin) {
       queryBuilder.andWhere(
-        `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" IS NULL AND ua."deletedAt" IS NULL)`,
+        `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" IS NULL)`,
         { userProfileId: actor.userProfileId },
       );
     }
@@ -1152,6 +1177,7 @@ export class UserRepository extends BaseRepository<User> {
     userProfileId: string,
     userAccess: AccessibleUsersEnum,
     centerId?: string,
+    profileType?: ProfileType,
   ): Promise<UserResponseDto[]> {
     const userProfileIds = users.map((user) => user.userProfiles[0]?.id);
     let filteredItems: UserResponseDto[] = users;
@@ -1161,6 +1187,7 @@ export class UserRepository extends BaseRepository<User> {
           userProfileId,
           userProfileIds,
           centerId,
+          profileType,
         );
       filteredItems = filteredItems.map((user) =>
         Object.assign(user, {
@@ -1362,6 +1389,40 @@ export class UserRepository extends BaseRepository<User> {
       filteredItems = filteredItems.map((user) =>
         Object.assign(user, {
           isClassAccessible: true,
+        }),
+      );
+    }
+    return filteredItems;
+  }
+
+  private async applyStaffProfileAccess(
+    users: UserResponseDto[],
+    staffProfileId: string,
+    staffProfileAccess: AccessibleUsersEnum,
+    centerId: string | undefined,
+    profileType: ProfileType,
+  ): Promise<UserResponseDto[]> {
+    const userProfileIds = users.map((user) => user.userProfiles[0]?.id);
+    let filteredItems: UserResponseDto[] = users;
+    if (staffProfileAccess === AccessibleUsersEnum.ALL) {
+      const accessibleProfileIds =
+        await this.accessControlHelperService.getAccessibleProfilesIdsForUser(
+          staffProfileId,
+          userProfileIds,
+          centerId,
+          profileType,
+        );
+      filteredItems = filteredItems.map((user) =>
+        Object.assign(user, {
+          isStaffProfileAccessible: accessibleProfileIds.includes(
+            user.userProfiles[0]?.id,
+          ),
+        }),
+      );
+    } else {
+      filteredItems = filteredItems.map((user) =>
+        Object.assign(user, {
+          isStaffProfileAccessible: true,
         }),
       );
     }

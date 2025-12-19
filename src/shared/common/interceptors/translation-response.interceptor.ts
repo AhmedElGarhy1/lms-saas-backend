@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   CallHandler,
   HttpException,
+  HttpStatus,
   Logger,
 } from '@nestjs/common';
 import { Observable, throwError } from 'rxjs';
@@ -94,13 +95,21 @@ export class TranslationResponseInterceptor implements NestInterceptor {
 
         // Translate error responses
         if (error instanceof HttpException) {
+          const status = error.getStatus();
+
+          // 304 Not Modified is a success response, not an error - rethrow as-is
+          // Use numeric comparison since HttpStatus.NOT_MODIFIED is 304
+          if (status === 304) {
+            return throwError(() => error);
+          }
+
           const response = error.getResponse();
           const translated = this.translateErrorResponse(response);
 
           // Create a new HttpException with translated response
           const translatedException = new HttpException(
             translated as string | Record<string, unknown>,
-            error.getStatus(),
+            status,
           );
 
           // Preserve the original stack trace for debugging

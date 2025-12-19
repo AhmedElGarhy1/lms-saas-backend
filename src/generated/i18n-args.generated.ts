@@ -226,8 +226,8 @@ export type TranslationArgs = {
   't.permissions.admin.create.name': Record<string, never>;
   't.permissions.admin.delete.name': Record<string, never>;
   't.permissions.admin.export.name': Record<string, never>;
+  't.permissions.admin.grantAdminAccess.name': Record<string, never>;
   't.permissions.admin.grantCenterAccess.name': Record<string, never>;
-  't.permissions.admin.grantUserAccess.name': Record<string, never>;
   't.permissions.admin.import.name': Record<string, never>;
   't.permissions.admin.importProfile.name': Record<string, never>;
   't.permissions.admin.read.name': Record<string, never>;
@@ -289,7 +289,8 @@ export type TranslationArgs = {
   't.permissions.staff.export.name': Record<string, never>;
   't.permissions.staff.grantBranchAccess.name': Record<string, never>;
   't.permissions.staff.grantCenterAccess.name': Record<string, never>;
-  't.permissions.staff.grantUserAccess.name': Record<string, never>;
+  't.permissions.staff.grantStaffAccess.name': Record<string, never>;
+  't.permissions.staff.grantTeacherAccess.name': Record<string, never>;
   't.permissions.staff.import.name': Record<string, never>;
   't.permissions.staff.importProfile.name': Record<string, never>;
   't.permissions.staff.read.name': Record<string, never>;

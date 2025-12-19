@@ -3,10 +3,12 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  HttpStatus,
+  HttpException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { Request, Response } from 'express';
 import { createHash } from 'crypto';
 import { NO_ETAG_KEY } from '../decorators/no-etag.decorator';
@@ -71,11 +73,16 @@ export class ETagInterceptor implements NestInterceptor {
     }
 
     // Check If-None-Match header from client
-    const clientETag = request.headers['if-none-match'];
+    const clientETag = request.headers['if-none-match'] as string | undefined;
 
     // Handle the response - we need to process it to generate ETag
     return next.handle().pipe(
-      tap((data: unknown) => {
+      map((data: unknown) => {
+        // Check if response has already been sent (e.g., by exception filter)
+        if (response.headersSent || response.finished) {
+          return data;
+        }
+
         // Generate ETag from response body
         const etag = this.generateETag(data);
 
@@ -84,12 +91,13 @@ export class ETagInterceptor implements NestInterceptor {
 
         // If client sent If-None-Match and it matches, return 304 Not Modified
         if (clientETag && this.compareETags(clientETag, etag)) {
-          // Send 304 response - this will prevent further body serialization
-          // by setting status and ending the response
-          // Note: NestJS will still process the data, but response.status(304).end()
-          // will be sent before the body is serialized, effectively short-circuiting
-          response.status(304).end();
+          // Throw HttpException with 304 status - NestJS will handle this correctly
+          // Pass empty object instead of null - exception filter will handle 304 specially
+          throw new HttpException({}, HttpStatus.NOT_MODIFIED);
         }
+
+        // ETags don't match or no client ETag - return data normally
+        return data;
       }),
     );
   }

@@ -868,8 +868,11 @@
       "importProfile": {
         "name": "Import Profile"
       },
-      "grantUserAccess": {
-        "name": "Grant User Access"
+      "grantStaffAccess": {
+        "name": "Grant Staff Access"
+      },
+      "grantTeacherAccess": {
+        "name": "Grant Teacher Access"
       },
       "grantBranchAccess": {
         "name": "Grant Branch Access"
@@ -1006,8 +1009,8 @@
       "importProfile": {
         "name": "Import Profile"
       },
-      "grantUserAccess": {
-        "name": "Grant User Access"
+      "grantAdminAccess": {
+        "name": "Grant Admin Access"
       },
       "grantCenterAccess": {
         "name": "Grant Center Access"

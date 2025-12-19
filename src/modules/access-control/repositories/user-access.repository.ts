@@ -6,6 +6,7 @@ import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exc
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { In } from 'typeorm';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 @Injectable()
 export class UserAccessRepository extends BaseRepository<UserAccess> {
@@ -64,16 +65,41 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
    * @param granterUserProfileId - The granter user profile ID
    * @param targetUserProfileIds - Array of target user profile IDs
    * @param centerId - Optional center ID to filter by
+   * @param profileType - Optional profile type to filter target profiles
    * @returns Array of UserAccess records
    */
   async findManyUserAccess(
     granterUserProfileId: string,
     targetUserProfileIds: string[],
     centerId?: string,
+    profileType?: ProfileType,
   ) {
     if (targetUserProfileIds.length === 0) {
       return [];
     }
+
+    if (profileType) {
+      // Use query builder to join with user_profiles via relation and filter by profileType
+      return this.getRepository()
+        .createQueryBuilder('userAccess')
+        .innerJoin('userAccess.target', 'targetProfile')
+        .where('userAccess.granterUserProfileId = :granterUserProfileId', {
+          granterUserProfileId,
+        })
+        .andWhere(
+          'userAccess.targetUserProfileId IN (:...targetUserProfileIds)',
+          {
+            targetUserProfileIds,
+          },
+        )
+        .andWhere('targetProfile.profileType = :profileType', { profileType })
+        .andWhere('targetProfile.deletedAt IS NULL')
+        .andWhere(centerId ? 'userAccess.centerId = :centerId' : '1=1', {
+          centerId,
+        })
+        .getMany();
+    }
+
     return this.getRepository().find({
       where: {
         granterUserProfileId,

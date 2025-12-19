@@ -48,6 +48,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
+
+      // Handle 304 Not Modified specially - don't send error response body
+      if (status === HttpStatus.NOT_MODIFIED) {
+        if (!response.headersSent && !response.finished) {
+          // Just send the status code - 304 should have no body
+          response.status(status).end();
+        }
+        return;
+      }
+
       const exceptionResponse = exception.getResponse();
 
       // Check if exception has translationKey property (custom exceptions)
@@ -206,7 +216,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     // Send the standardized response (translated)
-    response.status(status).json(errorResponse);
+    // Check if response has already been sent (e.g., by ETagInterceptor with 304)
+    if (!response.headersSent && !response.finished) {
+      response.status(status).json(errorResponse);
+    } else {
+      // Response already sent, just log the error
+      this.logger.error(
+        `Cannot send error response: headers already sent. Error: ${JSON.stringify(errorResponse)}`,
+      );
+    }
   }
 
   private convertToStandardFormat(
