@@ -1,4 +1,4 @@
-import { Injectable, Inject, forwardRef, Logger } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import {
   ResourceNotFoundException,
   BusinessLogicException,
@@ -8,10 +8,7 @@ import { Center } from '../entities/center.entity';
 import { CreateCenterDto } from '../dto/create-center.dto';
 import { UpdateCenterRequestDto } from '../dto/update-center.dto';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { BaseService } from '@/shared/common/services/base.service';
-import { UserService } from '@/modules/user/services/user.service';
-import { RolesService } from '@/modules/access-control/services/roles.service';
 import { PaginateCentersDto } from '../dto/paginate-centers.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
@@ -35,14 +32,8 @@ export interface SeederCenterData {
 
 @Injectable()
 export class CentersService extends BaseService {
-  private readonly logger: Logger = new Logger(CentersService.name);
-
   constructor(
     private readonly centersRepository: CentersRepository,
-    private readonly accessControlService: AccessControlService,
-    @Inject(forwardRef(() => UserService))
-    private readonly userService: UserService,
-    private readonly rolesService: RolesService,
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
@@ -182,18 +173,15 @@ export class CentersService extends BaseService {
   async updateCenterActivation(
     centerId: string,
     isActive: boolean,
-    updatedBy: string,
+    actor: ActorUser,
   ): Promise<void> {
-    try {
-      await this.centersRepository.updateCenterActivation(centerId, isActive);
-    } catch (error: unknown) {
-      this.logger.error(
-        `Error updating center activation for center ${centerId}`,
-        error,
-        { centerId, isActive, updatedBy },
-      );
-      throw error;
-    }
+    // Validate actor has center access
+    await this.accessControlHelperService.validateCenterAccess({
+      userProfileId: actor.userProfileId,
+      centerId,
+    });
+
+    await this.centersRepository.updateCenterActivation(centerId, isActive);
   }
 
   // Seeder methods

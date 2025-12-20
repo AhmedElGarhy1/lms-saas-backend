@@ -141,6 +141,12 @@ export class AccessControlService extends BaseService {
       centerId,
     );
 
+    await this.userProfilePermissionService.canGrantUserAccess(
+      actor,
+      body.targetUserProfileId,
+      centerId,
+    );
+
     const IHaveAccessToGranterUser =
       await this.accessControlHelperService.canUserAccess({
         granterUserProfileId: actor.userProfileId,
@@ -204,13 +210,42 @@ export class AccessControlService extends BaseService {
   // Center Access Management Methods
 
   async grantCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
+    // i have access to the center
+    await this.accessControlHelperService.validateCenterAccess({
+      userProfileId: actor.userProfileId,
+      centerId: dto.centerId ?? actor.centerId,
+    });
+    // i have access to the target user
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: dto.userProfileId,
+      centerId: dto.centerId ?? actor.centerId,
+    });
+
+    // Check if access exists
+    const canCenterAccess =
+      await this.accessControlHelperService.canCenterAccess({
+        userProfileId: dto.userProfileId,
+        centerId: dto.centerId ?? actor.centerId,
+      });
+
+    if (canCenterAccess) {
+      throw new BusinessLogicException('t.messages.alreadyHas', {
+        resource: 't.resources.centerAccess',
+        what: 't.resources.access',
+      });
+    }
+
     return await this.centerAccessRepository.grantCenterAccess(dto);
   }
 
-  async grantCenterAccessAndValidatePermission(
-    dto: CenterAccessDto,
-    actor: ActorUser,
-  ) {
+  async revokeCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
+    // i have access to the center
+    await this.accessControlHelperService.validateCenterAccess({
+      userProfileId: actor.userProfileId,
+      centerId: dto.centerId ?? actor.centerId,
+    });
+
     // Validate that actor has permission to grant center access for the target profile type
     await this.userProfilePermissionService.canGrantCenterAccess(
       actor,
@@ -218,11 +253,26 @@ export class AccessControlService extends BaseService {
       dto.centerId ?? actor.centerId,
     );
 
-    // Grant center access (this will also validate user access)
-    return await this.grantCenterAccess(dto, actor);
-  }
+    // i have access to the target user
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: dto.userProfileId,
+      centerId: dto.centerId ?? actor.centerId,
+    });
 
-  async revokeCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
+    // Check if access exists
+    const canCenterAccess =
+      await this.accessControlHelperService.canCenterAccess({
+        userProfileId: dto.userProfileId,
+        centerId: dto.centerId ?? actor.centerId,
+      });
+
+    if (!canCenterAccess) {
+      throw new BusinessLogicException('t.messages.notFound', {
+        resource: 't.resources.centerAccess',
+      });
+    }
+
     return await this.centerAccessRepository.revokeCenterAccess(dto);
   }
 
@@ -239,6 +289,12 @@ export class AccessControlService extends BaseService {
     actor: ActorUser,
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
+
+    // Validate actor has center access
+    await this.accessControlHelperService.validateCenterAccess({
+      userProfileId: actor.userProfileId,
+      centerId,
+    });
 
     const profile = await this.userProfileService.findOne(body.userProfileId);
     if (!profile) {
@@ -323,6 +379,12 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
 
+    // Validate actor has center access
+    await this.accessControlHelperService.validateCenterAccess({
+      userProfileId: actor.userProfileId,
+      centerId,
+    });
+
     const profile = await this.userProfileService.findOne(body.userProfileId);
     if (!profile) {
       throw new ResourceNotFoundException('t.messages.withIdNotFound', {
@@ -388,6 +450,12 @@ export class AccessControlService extends BaseService {
     actor: ActorUser,
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
+
+    // Validate actor has center access
+    await this.accessControlHelperService.validateCenterAccess({
+      userProfileId: actor.userProfileId,
+      centerId,
+    });
 
     const profile = await this.userProfileService.findOne(body.userProfileId);
     if (!profile) {

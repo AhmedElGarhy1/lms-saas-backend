@@ -7,6 +7,8 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { GroupStudent } from '../entities/group-student.entity';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 export interface GroupWithStudentCount extends Group {
   studentsCount: number;
@@ -16,6 +18,7 @@ export interface GroupWithStudentCount extends Group {
 export class GroupsRepository extends BaseRepository<Group> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    protected readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super(txHost);
   }
@@ -26,8 +29,9 @@ export class GroupsRepository extends BaseRepository<Group> {
 
   async paginateGroups(
     paginateDto: PaginateGroupsDto,
-    centerId: string,
+    actor: ActorUser,
   ): Promise<Pagination<GroupWithStudentCount>> {
+    const centerId = actor.centerId!;
     const queryBuilder = this.getRepository()
       .createQueryBuilder('group')
       // Join relations for id and name fields only (not full entities)
@@ -57,6 +61,21 @@ export class GroupsRepository extends BaseRepository<Group> {
         'studentsCount',
       )
       .where('group.centerId = :centerId', { centerId });
+
+    // access control
+    const canBypassCenterInternalAccess =
+      await this.accessControlHelperService.bypassCenterInternalAccess(
+        actor.userProfileId,
+        centerId,
+      );
+
+    if (!canBypassCenterInternalAccess) {
+      queryBuilder
+        .leftJoin('class.classStaff', 'classStaff')
+        .andWhere('classStaff.userProfileId = :userProfileId', {
+          userProfileId: actor.userProfileId,
+        });
+    }
 
     if (paginateDto.classId) {
       queryBuilder.andWhere('group.classId = :classId', {

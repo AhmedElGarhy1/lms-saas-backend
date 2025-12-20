@@ -198,9 +198,28 @@ export class UserProfileService extends BaseService {
     actor?: ActorUser,
     includeDeleted = false,
   ) {
-    return includeDeleted
-      ? this.userProfileRepository.findOneSoftDeletedById(userProfileId)
-      : this.userProfileRepository.findOne(userProfileId);
+    const profile = includeDeleted
+      ? await this.userProfileRepository.findOneSoftDeletedById(userProfileId)
+      : await this.userProfileRepository.findOne(userProfileId);
+
+    if (!profile) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.profile',
+        identifier: 't.resources.identifier',
+        value: userProfileId,
+      });
+    }
+
+    // If actor is provided, validate user access (centerId is optional)
+    if (actor) {
+      await this.accessControlHelperService.validateUserAccess({
+        granterUserProfileId: actor.userProfileId,
+        targetUserProfileId: userProfileId,
+        centerId: actor.centerId, // Optional - can be undefined
+      });
+    }
+
+    return profile;
   }
 
   async createUserProfile(

@@ -106,23 +106,24 @@
 <!-- groups/classess -->
 
 [x] update translations
-[ ] student assign
+[x] student assign
 [x] add duration to class creation and groups use it
 [x] fix date issues in creation
 [x] center creation must have branch
-[ ] update branch and center entities with reasonable parameters
 [x] in update class duration throw error that frontend can use for fixing the issue so it can be 2 types
 1 teacher error teacher have scehdule overlap so we need to display the teacher data and the time he have overlap in ex: 10 -> 11
 2 student error any one of students have schdule overlap so we need to return all students with overlap time ex: st1 10 -> 11, st2 9:30 10:30 or rechecking teacher sechdule and all students sechdules and display the error with some helper dialog to solve the issue then update (need some work)
-[ ] readable and conditional display for calsses strategies for perentage or fixed
+[x] readable and conditional display for calsses strategies for perentage or fixed
 [x] we can't have student within same class in more that one group
 [x] add tooltip for actions in view and don't display the view (because you already in view mode)
 [x] update backend to not rely on base entity to get other entites ex: don't relay on class entity to get groups and don't rely on group to get class
-[ ] submodule for permissions, RoleName, sortable columns, other is okay
+[x] Exists decoartor make it context aware and able to validate if resource related to center or not then cleanup code specialy class validate resource belong to center
 [ ] when notification sending fail all events fail including center creating user or branch
+[ ] update branch and center entities with reasonable parameters
 [ ] other statuses for finsihed classes
 [ ] consider adding withDetailes flag and use it in backend
-[ ] Exists decoartor make it context aware and able to validate if resource related to center or not then cleanup code specialy class validate resource belong to center
+[ ] submodule for permissions, RoleName, sortable columns, other is okay
+[ ] activity log decorator
 
 [ ] no module export repository
 [ ] fix rest of eslint erros
@@ -139,38 +140,3 @@
 [ ] invetation flow and update invite user flow
 [?] when i display tables data I should disply myself also
 [ ] global decorator for otp_required (not good)
-
-translation interceptor issue and bulk conflict not readable response
-{
-"success": true,
-"data": {
-"type": "bulk-operation",
-"success": 0,
-"failed": 3,
-"total": 3,
-"errors": [
-{
-"id": "06afe234-c82b-44fd-a406-fb6961dd943b",
-"error": "t.messages.validationFailed",
-"message": "ScheduleConflictException: Schedule Conflict Exception\n at ScheduleService.throwStudentConflicts (/Users/ahmedelgarhy/Documents/Work/lms/backend/src/modules/classes/services/schedule.service.ts:229:11)\n at GroupsService.assignStudentToGroup (/Users/ahmedelgarhy/Documents/Work/lms/backend/src/modules/classes/services/groups.service.ts:220:30)\n at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n at async <anonymous> (/Users/ahmedelgarhy/Documents/Work/lms/backend/src/modules/classes/services/groups.service.ts:259:9)\n at async <anonymous> (/Users/ahmedelgarhy/Documents/Work/lms/backend/src/shared/common/services/bulk-operation.service.ts:70:13)"
-},
-{
-"id": "04c9622e-0624-4933-9525-853690fd3b2f",
-"error": "t.messages.validationFailed",
-"message": "ScheduleConflictException: Schedule Conflict Exception\n at ScheduleService.throwStudentConflicts (/Users/ahmedelgarhy/Documents/Work/lms/backend/src/modules/classes/services/schedule.service.ts:229:11)\n at GroupsService.assignStudentToGroup (/Users/ahmedelgarhy/Documents/Work/lms/backend/src/modules/classes/services/groups.service.ts:220:30)\n at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n at async <anonymous> (/Users/ahmedelgarhy/Documents/Work/lms/backend/src/modules/classes/services/groups.service.ts:259:9)\n at async <anonymous> (/Users/ahmedelgarhy/Documents/Work/lms/backend/src/shared/common/services/bulk-operation.service.ts:70:13)"
-},
-{
-"id": "fe9e1883-fd6a-4fb5-97e9-09ecb4c88a74",
-"error": "t.messages.validationFailed",
-"message": "ScheduleConflictException: Schedule Conflict Exception\n at ScheduleService.throwStudentConflicts (/Users/ahmedelgarhy/Documents/Work/lms/backend/src/modules/classes/services/schedule.service.ts:229:11)\n at GroupsService.assignStudentToGroup (/Users/ahmedelgarhy/Documents/Work/lms/backend/src/modules/classes/services/groups.service.ts:220:30)\n at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n at async <anonymous> (/Users/ahmedelgarhy/Documents/Work/lms/backend/src/modules/classes/services/groups.service.ts:259:9)\n at async <anonymous> (/Users/ahmedelgarhy/Documents/Work/lms/backend/src/shared/common/services/bulk-operation.service.ts:70:13)"
-}
-]
-},
-"message": " =1 } other s}",
-"meta": {
-"timestamp": "2025-12-10T01:50:14.949Z",
-"requestId": "req_1765331414949_d2g4m7hc2",
-"version": "1.0.0",
-"processingTime": 43
-}
-}

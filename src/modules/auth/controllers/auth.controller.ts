@@ -7,7 +7,6 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
-import { ValidationFailedException } from '@/shared/common/exceptions/custom.exceptions';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '@/modules/user/services/user.service';
 import { LoginRequestDto } from '../dto/login.dto';
@@ -202,11 +201,6 @@ export class AuthController {
     @Body() dto: TwoFAVerifyRequestDto,
     @GetUser() actor: ActorUser,
   ) {
-    if (!dto.code) {
-      throw new ValidationFailedException('t.messages.fieldRequired', [], {
-        field: 'OTP code',
-      });
-    }
     const result = await this.authService.enableTwoFactor(dto.code, actor);
 
     return ControllerResponse.success(result, {

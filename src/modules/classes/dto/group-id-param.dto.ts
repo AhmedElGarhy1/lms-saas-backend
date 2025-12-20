@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
-import { HasBranchAccessViaResource } from '@/shared/common/decorators/has-branch-access-via-resource.decorator';
+import { BelongsToBranch } from '@/shared/common/decorators/belongs-to-branch.decorator';
 import { Group } from '../entities/group.entity';
 
 export class GroupIdParamDto {
@@ -9,6 +9,6 @@ export class GroupIdParamDto {
     example: 'uuid',
   })
   @IsUUID()
-  @HasBranchAccessViaResource(Group)
+  @BelongsToBranch(Group)
   groupId: string;
 }

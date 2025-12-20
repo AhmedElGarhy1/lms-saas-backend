@@ -44,6 +44,12 @@ export class ContextGuard implements CanActivate {
 
     const centerId = (request.get('x-center-id') ?? request.centerId) as string;
 
+    // Extract branchId from params, query, or body (priority: params > query > body)
+    const branchId =
+      (request.params as { branchId?: string })?.branchId ??
+      (request.query as { branchId?: string })?.branchId ??
+      (request.body as { branchId?: string })?.branchId;
+
     const user = request.user;
     if (!user) {
       throw new ForbiddenException({
@@ -78,9 +84,10 @@ export class ContextGuard implements CanActivate {
       centerId,
     });
 
-    // Set the userId (and maybe centerId) in the request context
+    // Set the userId, centerId, and branchId in the request context
     RequestContext.set({
       centerId: user.centerId,
+      branchId,
     });
 
     return true;

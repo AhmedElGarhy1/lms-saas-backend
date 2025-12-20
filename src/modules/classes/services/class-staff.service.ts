@@ -9,6 +9,9 @@ import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { Transactional } from '@nestjs-cls/transactional';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
+import { ClassesRepository } from '../repositories/classes.repository';
 
 @Injectable()
 export class ClassStaffService extends BaseService {
@@ -16,6 +19,9 @@ export class ClassStaffService extends BaseService {
     private readonly classStaffRepository: ClassStaffRepository,
     private readonly classAccessService: ClassAccessService,
     private readonly bulkOperationService: BulkOperationService,
+    private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly branchAccessService: BranchAccessService,
+    private readonly classesRepository: ClassesRepository,
   ) {
     super();
   }
@@ -29,12 +35,24 @@ export class ClassStaffService extends BaseService {
    * @throws ResourceNotFoundException if class doesn't exist
    * @throws InsufficientPermissionsException if actor doesn't have permission
    */
-  async getClassStaff(classId: string): Promise<ClassStaff[]> {
+  async getClassStaff(
+    classId: string,
+    actor: ActorUser,
+  ): Promise<ClassStaff[]> {
+    const classEntity = await this.classesRepository.findOneOrThrow(classId);
+
+    // Validate actor has branch access to the class's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: classEntity.branchId,
+    });
+
     return this.classStaffRepository.findByClassId(classId);
   }
 
   /**
-   * Assigns a profile to a class.
+   * Assigns a staff member to a class.
    * Validates user access, profile type, center access, and creates class staff assignment.
    *
    * @param data - ClassStaffAccessDto containing userProfileId and classId
@@ -43,11 +61,36 @@ export class ClassStaffService extends BaseService {
    * @throws ResourceNotFoundException if profile doesn't exist
    * @throws BusinessLogicException if profile is not STAFF, doesn't have center access, or already assigned
    */
-  async assignProfileToClass(
+  async assignStaffToClass(
     data: ClassStaffAccessDto,
     actor: ActorUser,
   ): Promise<ClassStaff> {
     const centerId = actor.centerId!;
+
+    // Validate actor has user access to target user (optional centerId)
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: data.userProfileId,
+      centerId: centerId, // Optional - can be undefined
+    });
+
+    // Validate target user has center access
+    await this.accessControlHelperService.validateCenterAccess({
+      userProfileId: data.userProfileId,
+      centerId: centerId,
+    });
+
+    // Fetch class to get branchId for branch access validation
+    const classEntity = await this.classesRepository.findOneOrThrow(
+      data.classId,
+    );
+
+    // Validate actor has branch access to the class's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: centerId,
+      branchId: classEntity.branchId,
+    });
 
     const canAccess = await this.classAccessService.canClassAccess(data);
     if (canAccess) {
@@ -66,17 +109,34 @@ export class ClassStaffService extends BaseService {
   }
 
   /**
-   * Removes a profile from a class.
+   * Removes a staff member from a class.
    * Validates user access and removes class staff assignment.
    *
    * @param data - ClassStaffAccessDto containing userProfileId and classId
    * @param actor - The user performing the action (centerId is taken from actor)
    * @returns Removed ClassStaff assignment
    */
-  async removeUserFromClass(
+  async removeStaffFromClass(
     data: ClassStaffAccessDto,
     actor: ActorUser,
   ): Promise<ClassStaff> {
+    const centerId = actor.centerId!;
+
+    // Validate actor has user access to target user (optional centerId)
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: data.userProfileId,
+      centerId: centerId, // Optional - can be undefined
+    });
+
+    // Validate target user has center access
+    await this.accessControlHelperService.validateCenterAccess({
+      userProfileId: data.userProfileId,
+      centerId: centerId,
+    });
+
+    // validateClassAccess already validates that the target user has class access
+    // and implicitly validates branch access via the class
     await this.classAccessService.validateClassAccess(data);
 
     const result = await this.classStaffRepository.revokeClassStaffAccess(data);
@@ -112,7 +172,7 @@ export class ClassStaffService extends BaseService {
           userProfileId,
           classId,
         };
-        await this.assignProfileToClass(classStaffAccessDto, actor);
+        await this.assignStaffToClass(classStaffAccessDto, actor);
         return { id: userProfileId };
       },
     );
@@ -146,7 +206,7 @@ export class ClassStaffService extends BaseService {
           userProfileId,
           classId,
         };
-        await this.removeUserFromClass(classStaffAccessDto, actor);
+        await this.removeStaffFromClass(classStaffAccessDto, actor);
         return { id: userProfileId };
       },
     );

@@ -534,8 +534,6 @@ export class UserRepository extends BaseRepository<User> {
       }
     }
 
-    console.log(includeStaffProfile, staffProfileId, staffProfileAccess);
-
     if (includeStaffProfile) {
       queryBuilder.andWhere(
         'EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = userProfiles.id AND ua."granterUserProfileId" = :staffProfileId)',

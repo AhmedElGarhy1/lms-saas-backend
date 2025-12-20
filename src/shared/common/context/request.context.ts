@@ -6,6 +6,7 @@ import { ProfileType } from '../enums/profile-type.enum';
 export interface IRequestContext {
   userId?: string;
   centerId?: string;
+  branchId?: string;
   ipAddress?: string;
   userAgent?: string;
   requestId?: string; // Used as correlationId for request tracing

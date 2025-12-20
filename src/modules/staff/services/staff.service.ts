@@ -1,10 +1,8 @@
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { StaffRepository } from '../repositories/staff.repository';
 import { UserService } from '@/modules/user/services/user.service';
 import { PaginateStaffDto } from '../dto/paginate-staff.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { User } from '@/modules/user/entities/user.entity';
-import { Staff } from '../entities/staff.entity';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 
@@ -23,45 +21,6 @@ export class StaffService extends BaseService {
     const centerId = params.centerId ?? actor.centerId;
     params.centerId = centerId;
     return this.userService.paginateStaff(params, actor);
-  }
-
-  async deleteStaffAccess(
-    userProfileId: string,
-    actor: ActorUser,
-  ): Promise<void> {
-    if (!actor.centerId) {
-      throw new ForbiddenException(
-        'You are not authorized to delete this staff access',
-      );
-    }
-
-    // Note: deleteCenterAccess is not a user command, so no user event emission here
-    await this.userService.deleteCenterAccess(
-      {
-        centerId: actor.centerId,
-        userProfileId: userProfileId,
-      },
-      actor,
-    );
-  }
-
-  async restoreStaffAccess(
-    userProfileId: string,
-    actor: ActorUser,
-  ): Promise<void> {
-    if (!actor.centerId) {
-      throw new ForbiddenException(
-        'You are not authorized to restore this staff access',
-      );
-    }
-    // Note: restoreCenterAccess is not a user command, so no user event emission here
-    await this.userService.restoreCenterAccess(
-      {
-        centerId: actor.centerId,
-        userProfileId: userProfileId,
-      },
-      actor,
-    );
   }
 
   async findOne(
@@ -83,18 +42,5 @@ export class StaffService extends BaseService {
       });
     }
     return user;
-  }
-
-  async createStaffForUser(
-    userId: string,
-    staffData: Partial<Staff> = {},
-  ): Promise<any> {
-    // Create staff record
-    const staff = await this.staffRepository.create(staffData);
-
-    // Note: This method is kept for backward compatibility
-    // The actual profile creation should be handled via events
-    // This is a simplified version for direct calls
-    return staff;
   }
 }

@@ -7,8 +7,6 @@ import {
 import { Transform } from 'class-transformer';
 import { IsProfileType } from '@/shared/common/decorators/is-profile-type.decorator';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { HasUserAccess } from '@/shared/common/decorators/has-user-access.decorator';
-import { HasCenterAccess } from '@/shared/common/decorators/has-center-access.decorator';
 
 export class PaginateTeacherDto extends PaginateUsersDto {
   @ApiPropertyOptional({
@@ -32,8 +30,6 @@ export class PaginateTeacherDto extends PaginateUsersDto {
   })
   @IsOptional()
   @IsProfileType(ProfileType.STAFF)
-  @HasUserAccess()
-  @HasCenterAccess()
   staffProfileId?: string;
 
   @ApiPropertyOptional({

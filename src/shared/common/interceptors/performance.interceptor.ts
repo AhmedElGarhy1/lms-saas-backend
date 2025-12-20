@@ -84,11 +84,11 @@ export class PerformanceInterceptor implements NestInterceptor {
             console.log('Request completed:', metrics);
           } else {
             // Log error performance metrics for actual errors
-            console.error('Request failed:', {
-              ...metrics,
-              error: error.message || 'Unknown error',
-              stack: error.stack,
-            });
+          console.error('Request failed:', {
+            ...metrics,
+            error: error.message || 'Unknown error',
+            stack: error.stack,
+          });
           }
         },
       }),

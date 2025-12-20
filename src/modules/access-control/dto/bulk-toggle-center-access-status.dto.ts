@@ -7,7 +7,6 @@ import {
   ArrayMaxSize,
 } from 'class-validator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { HasCenterAccess } from '@/shared/common/decorators/has-center-access.decorator';
 import { Center } from '@/modules/centers/entities/center.entity';
 
 export class BulkToggleCenterAccessStatusDto {
@@ -33,7 +32,6 @@ export class BulkToggleCenterAccessStatusDto {
     each: true,
     message: 'Each user profile ID must be a valid UUID',
   })
-  @HasCenterAccess({ each: true })
   userProfileIds: string[];
 
   @ApiProperty({

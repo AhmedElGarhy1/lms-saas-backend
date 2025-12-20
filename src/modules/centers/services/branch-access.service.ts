@@ -203,6 +203,13 @@ export class BranchAccessService extends BaseService {
   ): Promise<BranchAccess> {
     data.centerId = data.centerId ?? actor.centerId ?? '';
 
+    // Validate actor has access to the branch (to grant access to others)
+    await this.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: data.branchId,
+    });
+
     const profile = await this.userProfileService.findOne(data.userProfileId);
     if (!profile) {
       throw new ResourceNotFoundException('t.messages.notFound', {
@@ -244,6 +251,14 @@ export class BranchAccessService extends BaseService {
   ): Promise<BranchAccess> {
     data.centerId = data.centerId ?? actor.centerId ?? '';
 
+    // Validate actor has access to the branch (to revoke access from others)
+    await this.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: data.branchId,
+    });
+
+    // Validate target user has branch access (to revoke)
     await this.validateBranchAccess(data);
 
     return await this.branchAccessRepository.revokeBranchAccess(data);

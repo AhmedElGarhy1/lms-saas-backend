@@ -9,12 +9,20 @@ import { ScheduleConflictQueryBuilder } from '../utils/schedule-conflict-query-b
 import { Group } from '../entities/group.entity';
 import { GroupStudent } from '../entities/group-student.entity';
 import { TeacherConflictDto } from '../dto/schedule-conflict.dto';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import {
+  AccessDeniedException,
+  InsufficientPermissionsException,
+  ResourceNotFoundException,
+} from '@/shared/common/exceptions/custom.exceptions';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 @Injectable()
 export class ClassesRepository extends BaseRepository<Class> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    protected readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super(txHost);
   }
@@ -25,8 +33,9 @@ export class ClassesRepository extends BaseRepository<Class> {
 
   async paginateClasses(
     paginateDto: PaginateClassesDto,
-    centerId: string,
+    actor: ActorUser,
   ): Promise<Pagination<Class>> {
+    const centerId = actor.centerId!;
     const queryBuilder = this.getRepository()
       .createQueryBuilder('class')
       // Join relations for name fields only (not full entities)
@@ -69,6 +78,33 @@ export class ClassesRepository extends BaseRepository<Class> {
         'studentsCount',
       )
       .where('class.centerId = :centerId', { centerId });
+
+    // access control
+    const canBypassCenterInternalAccess =
+      await this.accessControlHelperService.bypassCenterInternalAccess(
+        actor.userProfileId,
+        centerId,
+      );
+
+    if (!canBypassCenterInternalAccess) {
+      if (actor.profileType === ProfileType.STAFF) {
+        queryBuilder.leftJoin('class.classStaff', 'classStaff');
+        queryBuilder.andWhere('classStaff.userProfileId = :userProfileId', {
+          userProfileId: actor.userProfileId,
+        });
+      } else if (actor.profileType === ProfileType.TEACHER) {
+        queryBuilder.andWhere(
+          'class.teacherUserProfileId = :teacherUserProfileId',
+          {
+            teacherUserProfileId: actor.userProfileId,
+          },
+        );
+      } else {
+        throw new AccessDeniedException('t.messages.accessDenied', {
+          resource: 't.resources.class',
+        });
+      }
+    }
 
     // Apply filters
     if (paginateDto.branchId) {

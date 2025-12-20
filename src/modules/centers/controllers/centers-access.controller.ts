@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Delete,
-  Patch,
-  Param,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Controller, Post, Body, Delete, Patch, Param } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { ApiTags, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
 import {
@@ -19,7 +11,6 @@ import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 import { CenterAccessDto } from '@/modules/access-control/dto/center-access.dto';
-import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import {
   ToggleUserStatusRequestDto,
   ToggleUserStatusResponseDto,
@@ -35,7 +26,6 @@ import { UserProfileIdParamDto } from '@/modules/access-control/dto/user-profile
 export class CentersAccessController {
   constructor(
     private readonly accessControlService: AccessControlService,
-    private readonly accessControlHelperService: AccessControlHelperService,
     private readonly translationService: TranslationService,
   ) {}
 
@@ -54,14 +44,9 @@ export class CentersAccessController {
     @Body() dto: ToggleUserStatusRequestDto,
     @GetUser() actor: ActorUser,
   ): Promise<ToggleUserStatusResponseDto> {
-    if (!actor.centerId) {
-      throw new ForbiddenException(
-        'You are not authorized to toggle this center access',
-      );
-    }
     await this.accessControlService.activateCenterAccess(
       {
-        centerId: actor.centerId,
+        centerId: actor.centerId!,
         userProfileId: params.userProfileId,
       },
       dto.isActive,
@@ -86,11 +71,10 @@ export class CentersAccessController {
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result =
-      await this.accessControlService.grantCenterAccessAndValidatePermission(
-        dto,
-        actor,
-      );
+    const result = await this.accessControlService.grantCenterAccess(
+      dto,
+      actor,
+    );
 
     return ControllerResponse.success(result, {
       key: 't.messages.granted',
@@ -131,18 +115,8 @@ export class CentersAccessController {
     @Param() params: UserProfileIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    if (!actor.centerId) {
-      throw new ForbiddenException(
-        'You are not authorized to delete this center access',
-      );
-    }
-    await this.accessControlHelperService.validateCenterAccess({
-      userProfileId: params.userProfileId,
-      centerId: actor.centerId,
-    });
-
     const result = await this.accessControlService.softRemoveCenterAccess(
-      { userProfileId: params.userProfileId, centerId: actor.centerId },
+      { userProfileId: params.userProfileId, centerId: actor.centerId! },
       actor,
     );
 
@@ -160,17 +134,8 @@ export class CentersAccessController {
     @Param() params: UserProfileIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
-    if (!actor.centerId) {
-      throw new ForbiddenException(
-        'You are not authorized to restore this center access',
-      );
-    }
-    await this.accessControlHelperService.validateCenterAccess({
-      userProfileId: params.userProfileId,
-      centerId: actor.centerId,
-    });
     const result = await this.accessControlService.restoreCenterAccess(
-      { userProfileId: params.userProfileId, centerId: actor.centerId },
+      { userProfileId: params.userProfileId, centerId: actor.centerId! },
       actor,
     );
 

@@ -11,6 +11,10 @@ import {
   BusinessLogicException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
+import { ClassAccessService } from './class-access.service';
+import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
 import { ScheduleItemDto } from '../dto/schedule-item.dto';
 import { Transactional } from '@nestjs-cls/transactional';
 import { GroupStudent } from '../entities/group-student.entity';
@@ -26,6 +30,9 @@ export class GroupStudentService extends BaseService {
     private readonly groupValidationService: GroupValidationService,
     private readonly scheduleService: ScheduleService,
     private readonly bulkOperationService: BulkOperationService,
+    private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly branchAccessService: BranchAccessService,
+    private readonly classAccessService: ClassAccessService,
   ) {
     super();
   }
@@ -49,9 +56,37 @@ export class GroupStudentService extends BaseService {
     data: GroupStudentAccessDto,
     actor: ActorUser,
   ): Promise<void> {
+    const centerId = actor.centerId!;
+
+    // Validate actor has user access to target user (optional centerId)
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: data.userProfileId,
+      centerId: centerId, // Optional - can be undefined
+    });
+
+    // Validate target user has center access
+    await this.accessControlHelperService.validateCenterAccess({
+      userProfileId: data.userProfileId,
+      centerId: centerId,
+    });
+
     const group = await this.groupsRepository.findOneWithClassOrThrow(
       data.groupId,
     );
+
+    // Validate actor has branch access to the group's branch (via class)
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: centerId,
+      branchId: group.branchId,
+    });
+
+    // Validate actor has ClassStaff access to the parent class
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
 
     const existingActiveAssignment =
       await this.groupStudentsRepository.findByGroupAndStudent(
@@ -115,10 +150,29 @@ export class GroupStudentService extends BaseService {
    * Gets all student assignments for a specific group.
    *
    * @param groupId - The group ID (path parameter, validated by DTO)
+   * @param actor - The user performing the action
    * @returns Array of GroupStudent assignments
    * @throws ResourceNotFoundException if group doesn't exist or doesn't belong to actor's center
    */
-  async getGroupStudents(groupId: string): Promise<GroupStudent[]> {
+  async getGroupStudents(
+    groupId: string,
+    actor: ActorUser,
+  ): Promise<GroupStudent[]> {
+    const group = await this.groupsRepository.findOneWithClassOrThrow(groupId);
+
+    // Validate actor has branch access to the group's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: group.branchId,
+    });
+
+    // Validate actor has ClassStaff access to the parent class
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
+
     return this.groupStudentsRepository.findByGroupId(groupId);
   }
 
@@ -163,6 +217,7 @@ export class GroupStudentService extends BaseService {
    *
    * @param groupId - The group ID to remove students from
    * @param studentUserProfileIds - Array of student user profile IDs to remove
+   * @param actor - The user performing the action
    * @returns BulkOperationResult with success/failure details for each student
    * @throws BusinessLogicException if studentUserProfileIds array is empty
    */
@@ -170,14 +225,46 @@ export class GroupStudentService extends BaseService {
   async removeStudentsFromGroup(
     groupId: string,
     studentUserProfileIds: string[],
+    actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!studentUserProfileIds || studentUserProfileIds.length === 0) {
       throw new BusinessLogicException('t.messages.validationFailed');
     }
 
+    const centerId = actor.centerId!;
+
+    // Fetch group to get branchId
+    const group = await this.groupsRepository.findOneWithClassOrThrow(groupId);
+
+    // Validate actor has branch access to the group's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: centerId,
+      branchId: group.branchId,
+    });
+
+    // Validate actor has ClassStaff access to the parent class
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
+
     return await this.bulkOperationService.executeBulk(
       studentUserProfileIds,
       async (studentUserProfileId: string) => {
+        // Validate actor has user access to target user (optional centerId)
+        await this.accessControlHelperService.validateUserAccess({
+          granterUserProfileId: actor.userProfileId,
+          targetUserProfileId: studentUserProfileId,
+          centerId: centerId, // Optional - can be undefined
+        });
+
+        // Validate target user has center access
+        await this.accessControlHelperService.validateCenterAccess({
+          userProfileId: studentUserProfileId,
+          centerId: centerId,
+        });
+
         const groupStudent =
           await this.groupStudentsRepository.findByGroupAndStudent(
             groupId,

@@ -10,7 +10,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { ScheduleItemDto } from './schedule-item.dto';
-import { HasBranchAccessViaResource } from '@/shared/common/decorators/has-branch-access-via-resource.decorator';
+import { BelongsToBranch } from '@/shared/common/decorators/belongs-to-branch.decorator';
 import { Class } from '../entities/class.entity';
 
 export class CreateGroupDto {
@@ -19,7 +19,7 @@ export class CreateGroupDto {
     example: 'uuid',
   })
   @IsUUID(4)
-  @HasBranchAccessViaResource(Class)
+  @BelongsToBranch(Class)
   classId: string;
 
   @ApiProperty({

@@ -14,12 +14,14 @@ import {
 import { BranchEvents } from '@/shared/events/branch.events.enum';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { BaseService } from '@/shared/common/services/base.service';
+import { BranchAccessService } from './branch-access.service';
 
 @Injectable()
 export class BranchesService extends BaseService {
   constructor(
     private readonly branchesRepository: BranchesRepository,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly branchAccessService: BranchAccessService,
   ) {
     super();
   }
@@ -46,6 +48,13 @@ export class BranchesService extends BaseService {
         value: branchId,
       });
     }
+
+    // Validate actor has branch access
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId,
+    });
 
     return branch;
   }
@@ -109,6 +118,13 @@ export class BranchesService extends BaseService {
       });
     }
 
+    // Validate actor has branch access
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId,
+    });
+
     await this.branchesRepository.update(branchId, { isActive });
 
     // Emit event for activity logging
@@ -133,6 +149,13 @@ export class BranchesService extends BaseService {
         value: branchId,
       });
     }
+
+    // Validate actor has branch access
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId,
+    });
 
     await this.branchesRepository.restore(branchId);
 

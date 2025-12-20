@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
-import { HasCenterAccess } from '@/shared/common/decorators/has-center-access.decorator';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 
@@ -12,6 +11,5 @@ export class UserProfileIdParamDto {
   })
   @IsUUID()
   @Exists(UserProfile)
-  @HasCenterAccess()
   userProfileId: string;
 }

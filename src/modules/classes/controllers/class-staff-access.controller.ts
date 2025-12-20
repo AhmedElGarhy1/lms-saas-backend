@@ -42,7 +42,7 @@ export class ClassStaffAccessController {
     @Body() classStaffAccessDto: ClassStaffAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    const classStaff = await this.classStaffService.assignProfileToClass(
+    const classStaff = await this.classStaffService.assignStaffToClass(
       classStaffAccessDto,
       actor,
     );
@@ -65,7 +65,7 @@ export class ClassStaffAccessController {
     @Body() classStaffAccessDto: ClassStaffAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.classStaffService.removeUserFromClass(
+    await this.classStaffService.removeStaffFromClass(
       classStaffAccessDto,
       actor,
     );
@@ -139,8 +139,14 @@ export class ClassStaffAccessController {
   })
   @Permissions(PERMISSIONS.CLASSES.READ)
   @SerializeOptions({ type: ClassStaffResponseDto })
-  async getClassStaff(@Param() params: ClassIdParamDto) {
-    const result = await this.classStaffService.getClassStaff(params.classId);
+  async getClassStaff(
+    @Param() params: ClassIdParamDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.classStaffService.getClassStaff(
+      params.classId,
+      actor,
+    );
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.classStaffAccess' },

@@ -56,7 +56,6 @@ export class UserAccessController {
     @Body() dto: UserAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    // Validation is now handled in AccessControlService.revokeUserAccessValidate
     await this.accessControlService.revokeUserAccessValidate(dto, actor);
 
     return ControllerResponse.message({

@@ -9,6 +9,8 @@ import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { Class } from '../entities/class.entity';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { ClassEvents } from '@/shared/events/classes.events.enum';
@@ -35,6 +37,8 @@ export class ClassesService extends BaseService {
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly classAccessService: ClassAccessService,
     private readonly bulkOperationService: BulkOperationService,
+    private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly branchAccessService: BranchAccessService,
   ) {
     super();
   }
@@ -54,7 +58,7 @@ export class ClassesService extends BaseService {
     paginateDto: PaginateClassesDto,
     actor: ActorUser,
   ): Promise<Pagination<Class>> {
-    return this.classesRepository.paginateClasses(paginateDto, actor.centerId!);
+    return this.classesRepository.paginateClasses(paginateDto, actor);
   }
 
   /**
@@ -79,6 +83,13 @@ export class ClassesService extends BaseService {
         includeDeleted,
       );
 
+    // Validate actor has branch access to the class's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: classEntity.branchId,
+    });
+
     return classEntity;
   }
 
@@ -96,6 +107,21 @@ export class ClassesService extends BaseService {
     createClassDto: CreateClassDto,
     actor: ActorUser,
   ): Promise<Class> {
+    const centerId = actor.centerId!;
+
+    // Validate actor has user access to target teacher (optional centerId)
+    await this.accessControlHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: createClassDto.teacherUserProfileId,
+      centerId: centerId, // Optional - can be undefined
+    });
+
+    // Validate that teacherUserProfileId has center access
+    await this.accessControlHelperService.validateCenterAccess({
+      userProfileId: createClassDto.teacherUserProfileId,
+      centerId: centerId,
+    });
+
     const { studentPaymentStrategy, teacherPaymentStrategy, ...classData } =
       createClassDto;
 
@@ -134,6 +160,13 @@ export class ClassesService extends BaseService {
         classId,
         false,
       );
+
+    // Validate actor has branch access to the class's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: classEntity.branchId,
+    });
 
     await this.classValidationService.validateClassUpdate(
       classId,
@@ -188,6 +221,15 @@ export class ClassesService extends BaseService {
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
   async deleteClass(classId: string, actor: ActorUser): Promise<void> {
+    const classEntity = await this.classesRepository.findOneOrThrow(classId);
+
+    // Validate actor has branch access to the class's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: classEntity.branchId,
+    });
+
     await this.classesRepository.softRemove(classId);
 
     await this.typeSafeEventEmitter.emitAsync(
@@ -225,6 +267,13 @@ export class ClassesService extends BaseService {
         value: classId,
       });
     }
+
+    // Validate actor has branch access to the class's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: centerId,
+      branchId: classEntity.branchId,
+    });
 
     await this.classesRepository.restore(classId);
 

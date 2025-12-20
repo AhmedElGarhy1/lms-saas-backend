@@ -52,7 +52,7 @@ export class CentersAccessActionsController {
           userProfileId,
           centerId: dto.centerId,
         };
-        await this.accessControlService.grantCenterAccessAndValidatePermission(
+        await this.accessControlService.grantCenterAccess(
           centerAccessDto,
           actor,
         );

@@ -10,8 +10,8 @@ import { BranchAccessService } from '../services/branch-access.service';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
-import { BulkGrantBranchAccessDto } from '@/modules/access-control/dto/bulk-grant-branch-access.dto';
-import { BulkRevokeBranchAccessDto } from '@/modules/access-control/dto/bulk-revoke-branch-access.dto';
+import { BulkGrantBranchAccessDto } from '@/modules/centers/dto/bulk-grant-branch-access.dto';
+import { BulkRevokeBranchAccessDto } from '@/modules/centers/dto/bulk-revoke-branch-access.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 
 @ApiTags('Centers - Branches')

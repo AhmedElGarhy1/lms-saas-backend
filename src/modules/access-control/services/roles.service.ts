@@ -155,6 +155,13 @@ export class RolesService extends BaseService {
   async assignRoleValidate(data: AssignRoleDto, actor: ActorUser) {
     data.centerId = data.centerId ?? actor.centerId;
 
+    // Validate actor has user access to target user (centerId is optional)
+    await this.accessControlerHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: data.userProfileId,
+      centerId: data.centerId, // Optional - can be undefined
+    });
+
     const profile = await this.accessControlerHelperService.findUserProfile(
       data.userProfileId,
     );
@@ -189,6 +196,15 @@ export class RolesService extends BaseService {
   }
 
   async removeUserRoleValidate(data: AssignRoleDto, actor: ActorUser) {
+    data.centerId = data.centerId ?? actor.centerId;
+
+    // Validate actor has user access to target user (centerId is optional)
+    await this.accessControlerHelperService.validateUserAccess({
+      granterUserProfileId: actor.userProfileId,
+      targetUserProfileId: data.userProfileId,
+      centerId: data.centerId, // Optional - can be undefined
+    });
+
     return this.removeUserRole(data);
   }
 

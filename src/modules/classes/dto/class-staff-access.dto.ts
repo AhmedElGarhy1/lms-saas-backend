@@ -1,8 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
-import { HasBranchAccessViaResource } from '@/shared/common/decorators/has-branch-access-via-resource.decorator';
-import { HasUserAccess } from '@/shared/common/decorators/has-user-access.decorator';
-import { HasCenterAccess } from '@/shared/common/decorators/has-center-access.decorator';
+import { BelongsToBranch } from '@/shared/common/decorators/belongs-to-branch.decorator';
 import { IsProfileType } from '@/shared/common/decorators/is-profile-type.decorator';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Class } from '../entities/class.entity';
@@ -13,8 +11,6 @@ export class ClassStaffAccessDto {
     format: 'uuid',
   })
   @IsUUID()
-  @HasUserAccess()
-  @HasCenterAccess()
   @IsProfileType(ProfileType.STAFF)
   userProfileId: string;
 
@@ -23,6 +19,6 @@ export class ClassStaffAccessDto {
     format: 'uuid',
   })
   @IsUUID()
-  @HasBranchAccessViaResource(Class)
+  @BelongsToBranch(Class)
   classId: string;
 }

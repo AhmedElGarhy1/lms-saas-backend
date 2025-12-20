@@ -193,22 +193,12 @@ export class AuthService extends BaseService {
   }
 
   async verifyPhone(code: string, userId: string): Promise<void> {
-    let verifiedUserId: string;
-    try {
-      const result = await this.verificationService.verifyCode(
-        code,
-        VerificationType.OTP_VERIFICATION,
-        userId,
-      );
-      verifiedUserId = result.userId;
-    } catch (error: unknown) {
-      this.logger.error(
-        'Phone verification failed - invalid or expired code',
-        error,
-        { userId },
-      );
-      throw error;
-    }
+    const result = await this.verificationService.verifyCode(
+      code,
+      VerificationType.OTP_VERIFICATION,
+      userId,
+    );
+    const verifiedUserId = result.userId;
 
     // Update user phoneVerified date
     await this.userService.update(verifiedUserId, {

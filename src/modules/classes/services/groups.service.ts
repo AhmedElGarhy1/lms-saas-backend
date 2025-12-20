@@ -25,6 +25,7 @@ import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 
 @Injectable()
 export class GroupsService extends BaseService {
@@ -35,6 +36,7 @@ export class GroupsService extends BaseService {
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly classAccessService: ClassAccessService,
     private readonly bulkOperationService: BulkOperationService,
+    private readonly branchAccessService: BranchAccessService,
   ) {
     super();
   }
@@ -50,7 +52,7 @@ export class GroupsService extends BaseService {
     paginateDto: PaginateGroupsDto,
     actor: ActorUser,
   ): Promise<Pagination<Group>> {
-    return this.groupsRepository.paginateGroups(paginateDto, actor.centerId!);
+    return this.groupsRepository.paginateGroups(paginateDto, actor);
   }
 
   /**
@@ -72,6 +74,19 @@ export class GroupsService extends BaseService {
       groupId,
       includeDeleted,
     );
+
+    // Validate actor has branch access to the group's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: group.branchId,
+    });
+
+    // Validate actor has ClassStaff access to the parent class
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
 
     return group;
   }
@@ -95,6 +110,19 @@ export class GroupsService extends BaseService {
       createGroupDto.scheduleItems,
       undefined,
     );
+
+    // Validate actor has branch access to the class's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: classEntity.branchId,
+    });
+
+    // Validate actor has ClassStaff access to the parent class
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: classEntity.id,
+    });
 
     const group = await this.groupsRepository.create({
       classId: createGroupDto.classId,
@@ -128,6 +156,19 @@ export class GroupsService extends BaseService {
       groupId,
       false,
     );
+
+    // Validate actor has branch access to the group's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: group.branchId,
+    });
+
+    // Validate actor has ClassStaff access to the parent class
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
 
     await this.groupValidationService.validateScheduleCore(
       group.class,
@@ -174,6 +215,24 @@ export class GroupsService extends BaseService {
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
   async deleteGroup(groupId: string, actor: ActorUser): Promise<void> {
+    const group = await this.groupsRepository.findGroupWithRelationsOrThrow(
+      groupId,
+      false,
+    );
+
+    // Validate actor has branch access to the group's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: group.branchId,
+    });
+
+    // Validate actor has ClassStaff access to the parent class
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
+
     await this.groupsRepository.softRemove(groupId);
 
     await this.typeSafeEventEmitter.emitAsync(
@@ -209,6 +268,19 @@ export class GroupsService extends BaseService {
         value: groupId,
       });
     }
+
+    // Validate actor has branch access to the group's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: centerId,
+      branchId: group.branchId,
+    });
+
+    // Validate actor has ClassStaff access to the parent class
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
 
     await this.groupsRepository.restore(groupId);
 

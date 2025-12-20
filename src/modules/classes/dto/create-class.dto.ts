@@ -16,8 +16,6 @@ import { TeacherPaymentStrategyDto } from './teacher-payment-strategy.dto';
 import { StudentPaymentStrategyDto } from './student-payment-strategy.dto';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { BelongsToCenter } from '@/shared/common/decorators/belongs-to-center.decorator';
-import { HasBranchAccess } from '@/shared/common/decorators/has-branch-access.decorator';
-import { HasCenterAccess } from '@/shared/common/decorators/has-center-access.decorator';
 import { IsProfileType } from '@/shared/common/decorators/is-profile-type.decorator';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Level } from '@/modules/levels/entities/level.entity';
@@ -59,7 +57,6 @@ export class CreateClassDto {
   })
   @IsUUID(4)
   @Exists(UserProfile)
-  @HasCenterAccess()
   @IsProfileType(ProfileType.TEACHER)
   teacherUserProfileId: string;
 
@@ -69,7 +66,6 @@ export class CreateClassDto {
   })
   @IsUUID(4)
   @BelongsToCenter(Branch)
-  @HasBranchAccess()
   branchId: string;
 
   @ApiProperty({

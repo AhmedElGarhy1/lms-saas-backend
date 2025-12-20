@@ -70,6 +70,7 @@ export class GroupsStudentsAccessController {
     await this.groupStudentService.removeStudentsFromGroup(
       groupStudentAccessDto.groupId,
       [groupStudentAccessDto.userProfileId],
+      actor,
     );
     return ControllerResponse.message({
       key: 't.messages.removed',
@@ -127,6 +128,7 @@ export class GroupsStudentsAccessController {
     const result = await this.groupStudentService.removeStudentsFromGroup(
       dto.groupId,
       dto.userProfileIds,
+      actor,
     );
 
     return ControllerResponse.success(result, {
@@ -152,6 +154,7 @@ export class GroupsStudentsAccessController {
   ) {
     const result = await this.groupStudentService.getGroupStudents(
       params.groupId,
+      actor,
     );
     return ControllerResponse.success(result, {
       key: 't.messages.found',

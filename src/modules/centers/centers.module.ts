@@ -23,8 +23,6 @@ import { BranchesAccessController } from './controllers/branches-access.controll
 import { BranchListener } from './listeners/branch.listener';
 import { CenterActivityListener } from './listeners/center-activity.listener';
 import { BelongsToBranchConstraint } from '@/shared/common/validators/belongs-to-branch.constraint';
-import { HasBranchAccessConstraint } from '@/shared/common/validators/has-branch-access.constraint';
-import { HasBranchAccessViaResourceConstraint } from '@/shared/common/validators/has-branch-access-via-resource.constraint';
 
 @Module({
   imports: [
@@ -53,8 +51,6 @@ import { HasBranchAccessViaResourceConstraint } from '@/shared/common/validators
     BranchListener,
     CenterActivityListener,
     BelongsToBranchConstraint,
-    HasBranchAccessConstraint,
-    HasBranchAccessViaResourceConstraint,
   ],
   exports: [
     CentersService,
@@ -64,8 +60,6 @@ import { HasBranchAccessViaResourceConstraint } from '@/shared/common/validators
     BranchesRepository,
     BranchAccessRepository,
     BelongsToBranchConstraint,
-    HasBranchAccessConstraint,
-    HasBranchAccessViaResourceConstraint,
   ],
 })
 export class CentersModule {}
