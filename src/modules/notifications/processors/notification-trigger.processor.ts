@@ -45,16 +45,6 @@ export class NotificationTriggerProcessor extends WorkerHost {
     const jobId = job.id || 'unknown';
     const attempt = (job.attemptsMade || 0) + 1;
 
-    this.logger.debug(
-      `Processing notification trigger job: ${jobId} - type: ${type}, attempt: ${attempt}`,
-      {
-        jobId,
-        notificationType: type,
-        correlationId,
-        attempt,
-      },
-    );
-
     try {
       // Get manifest to determine available audiences
       const manifest = NotificationRegistry[type];
@@ -72,13 +62,6 @@ export class NotificationTriggerProcessor extends WorkerHost {
       const audiences = Object.keys(manifest.audiences);
 
       for (const audience of audiences) {
-        this.logger.debug(`Resolving intent for audience: ${audience}`, {
-          jobId,
-          notificationType: type,
-          audience,
-          correlationId,
-        });
-
         // Resolve intent for this audience
         // Resolver handles: fetching data, building template variables, resolving recipients
         const { templateVariables, recipients } = await resolver.resolveIntent(
@@ -111,15 +94,6 @@ export class NotificationTriggerProcessor extends WorkerHost {
           actorId: (intent as { actorId?: string }).actorId,
         });
       }
-
-      this.logger.debug(
-        `Successfully processed notification trigger job: ${jobId}`,
-        {
-          jobId,
-          notificationType: type,
-          correlationId,
-        },
-      );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
@@ -162,8 +136,8 @@ export class NotificationTriggerProcessor extends WorkerHost {
    * Handle completed jobs
    */
   @OnWorkerEvent('completed')
-  onCompleted(job: Job<NotificationTriggerJobData>): void {
-    this.logger.debug(`Trigger job ${job.id} completed`);
+  onCompleted(_job: Job<NotificationTriggerJobData>): void {
+    // Job completed successfully - no logging needed for normal operation
   }
 
   /**

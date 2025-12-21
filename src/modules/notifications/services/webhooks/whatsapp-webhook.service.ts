@@ -122,9 +122,7 @@ export class WhatsAppWebhookService extends BaseService {
         );
 
       if (alreadyProcessed) {
-        this.logger.debug(
-          `Status update already processed: ${status.id}:${status.status}`,
-        );
+        // Status update already processed (normal idempotency, no logging needed)
         return;
       }
 
@@ -176,10 +174,6 @@ export class WhatsAppWebhookService extends BaseService {
         errorMessage,
         metadata,
       );
-
-      this.logger.debug(
-        `Updated notification log ${log.id} with status ${status.status}`,
-      );
     } catch (error) {
       this.logger.error(
         `Failed to process status update: ${status.id}:${status.status}`,
@@ -194,11 +188,8 @@ export class WhatsAppWebhookService extends BaseService {
    * Process incoming message (optional, for 2-way messaging)
    * @param message Incoming message
    */
-  processIncomingMessage(message: WhatsAppIncomingMessage): void {
+  processIncomingMessage(_message: WhatsAppIncomingMessage): void {
     // TODO: Implement incoming message handling if needed
-    this.logger.debug(
-      `Received incoming message: ${message.id} from ${message.from}`,
-    );
   }
 
   /**

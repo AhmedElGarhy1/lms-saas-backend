@@ -57,11 +57,6 @@ export class NotificationIntentService {
           age: 86400, // Keep failed jobs for 24 hours
         },
       });
-
-      this.logger.debug(`Enqueued notification intent: ${type}`, {
-        notificationType: type,
-        correlationId,
-      });
     } catch (error) {
       // Log but don't throw - queue failures shouldn't break events
       this.logger.error(

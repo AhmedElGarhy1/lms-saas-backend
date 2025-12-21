@@ -73,10 +73,6 @@ export class ChannelSelectionService
           selectedChannels = selectedChannels.filter(
             (ch) => ch !== NotificationChannel.IN_APP,
           );
-          this.logger.debug(
-            `User ${userId} is inactive, prioritizing external channels over IN_APP`,
-            { userId, isActive, selectedChannels },
-          );
         }
       }
 
@@ -84,10 +80,6 @@ export class ChannelSelectionService
       if (effectivePriority >= 8 && !hasExternalChannel()) {
         // Add SMS as fallback for critical events if no external channel
         selectedChannels.push(NotificationChannel.SMS);
-        this.logger.debug(
-          `Critical event (priority ${effectivePriority}), added SMS channel`,
-          { userId, priority: effectivePriority, selectedChannels },
-        );
       }
 
       // Ensure we don't return empty array
@@ -262,6 +254,5 @@ export class ChannelSelectionService
    */
   onModuleDestroy(): void {
     this.activityCache.clear();
-    this.logger.debug('Channel selection activity cache cleared');
   }
 }

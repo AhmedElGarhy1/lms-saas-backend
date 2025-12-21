@@ -26,8 +26,6 @@ export class WhatsAppWebhookProcessor extends WorkerHost {
   async process(job: Job<WhatsAppWebhookEvent>): Promise<void> {
     const { id, data } = job;
 
-    this.logger.debug(`Processing webhook job ${id}`);
-
     try {
       const event = data;
 
@@ -43,8 +41,6 @@ export class WhatsAppWebhookProcessor extends WorkerHost {
 
       // Process webhook event
       await this.webhookService.processWebhookEvent(event);
-
-      this.logger.debug(`Successfully processed webhook event job ${id}`);
     } catch (error) {
       this.logger.error(
         `Failed to process webhook job ${id}`,
@@ -59,8 +55,8 @@ export class WhatsAppWebhookProcessor extends WorkerHost {
    * Handle completed jobs
    */
   @OnWorkerEvent('completed')
-  onCompleted(job: Job<WhatsAppWebhookEvent>): void {
-    this.logger.debug(`Webhook job ${job.id} completed`);
+  onCompleted(_job: Job<WhatsAppWebhookEvent>): void {
+    // Job completed successfully - no logging needed for normal operation
   }
 
   /**

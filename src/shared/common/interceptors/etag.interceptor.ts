@@ -12,14 +12,16 @@ import { map } from 'rxjs/operators';
 import { Request, Response } from 'express';
 import { createHash } from 'crypto';
 import { NO_ETAG_KEY } from '../decorators/no-etag.decorator';
+import { RequestContext } from '../context/request.context';
 
 /**
  * ETag Interceptor for Browser Caching
  *
  * This interceptor implements HTTP ETag support for efficient browser caching:
- * - Generates ETags from response body content (SHA-256 hash)
+ * - Generates ETags from response body content and centerId (SHA-256 hash)
  * - Handles If-None-Match requests (returns 304 Not Modified when ETag matches)
  * - Sets ETag header on all GET responses (unless disabled via @NoETag decorator)
+ * - ETags are scoped per center (via x-center-id header) to ensure cache isolation
  *
  * Benefits:
  * - Reduces bandwidth usage
@@ -73,7 +75,7 @@ export class ETagInterceptor implements NestInterceptor {
     }
 
     // Check If-None-Match header from client
-    const clientETag = request.headers['if-none-match'] as string | undefined;
+    const clientETag = request.headers['if-none-match'];
 
     // Handle the response - we need to process it to generate ETag
     return next.handle().pipe(
@@ -83,7 +85,7 @@ export class ETagInterceptor implements NestInterceptor {
           return data;
         }
 
-        // Generate ETag from response body
+        // Generate ETag from response body and centerId (if available)
         const etag = this.generateETag(data);
 
         // Set ETag header on response
@@ -103,21 +105,30 @@ export class ETagInterceptor implements NestInterceptor {
   }
 
   /**
-   * Generate ETag from response data
-   * Uses SHA-256 hash of JSON stringified response body
+   * Generate ETag from response data and center context
+   * Uses SHA-256 hash of JSON stringified response body + centerId (if available)
+   * This ensures ETags are scoped per center, preventing cache collisions
+   * when different centers return identical response bodies
    *
    * @param data - Response data
    * @returns ETag string (format: W/"<hash>")
    */
   private generateETag(data: unknown): string {
     try {
+      const context = RequestContext.get();
+
       // Convert data to string for hashing
       // JSON.stringify provides deterministic output for ETag generation
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const dataString = JSON.stringify(data);
 
+      // Include centerId in hash to scope ETags per center (if available)
+      // This ensures different centers get different ETags even if response bodies are identical
+      const hashInput = context.centerId
+        ? `${context.centerId}:${dataString}`
+        : dataString;
+
       // Generate hash
-      const hash = createHash('sha256').update(dataString).digest('hex');
+      const hash = createHash('sha256').update(hashInput).digest('hex');
 
       // Return ETag in format: W/"<hash>" (weak ETag, as recommended by HTTP spec)
       // Weak ETags allow for semantically equivalent content to share the same ETag

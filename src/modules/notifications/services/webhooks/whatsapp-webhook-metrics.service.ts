@@ -13,7 +13,7 @@ export class WhatsAppWebhookMetricsService {
    * Record webhook received (simple log)
    */
   recordWebhookReceived(): void {
-    this.logger.debug('Webhook received');
+    // Webhook received - metrics handled elsewhere, no debug log needed
   }
 
   /**

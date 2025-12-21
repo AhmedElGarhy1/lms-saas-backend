@@ -66,8 +66,6 @@ export class WhatsAppWebhookController {
       'hub.challenge': challenge,
     } = query;
 
-    this.logger.debug(`Webhook verification attempt: mode=${mode}`);
-
     // Verify mode is "subscribe"
     if (mode !== 'subscribe') {
       this.logger.warn(`Invalid webhook mode: ${mode}`);

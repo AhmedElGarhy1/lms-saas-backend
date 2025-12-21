@@ -13,11 +13,10 @@
   },
   "CENTER_CREATED": {
     "title": "Center Created Successfully",
-    "message": "Your learning center {centerName} has been successfully created! You can now start managing your center."
+    "message": "Your center {centerName} has been successfully created! You can now start managing your center."
   },
   "CENTER_UPDATED": {
     "title": "Center Information Updated",
     "message": "Your center {centerName} information has been successfully updated."
   }
 }
-

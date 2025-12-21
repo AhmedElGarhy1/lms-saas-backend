@@ -146,10 +146,7 @@ export class NotificationRouterService extends BaseService {
           channel === NotificationChannel.EMAIL &&
           !recipient?.includes('@')
         ) {
-          this.logger.debug(
-            `Skipping EMAIL channel: no email for user ${userId}`,
-            { userId, eventName },
-          );
+          // Skipping EMAIL channel - no email available (normal, no logging needed)
         } else if (
           (channel === NotificationChannel.SMS ||
             channel === NotificationChannel.WHATSAPP) &&
@@ -157,11 +154,6 @@ export class NotificationRouterService extends BaseService {
         ) {
           this.logger.warn(
             `Skipping ${channel} channel: no phone for user ${userId}`,
-            { userId, eventName, channel },
-          );
-        } else {
-          this.logger.debug(
-            `Skipping ${channel} channel: invalid recipient format`,
             { userId, eventName, channel },
           );
         }
@@ -232,14 +224,6 @@ export class NotificationRouterService extends BaseService {
         if (preRenderedCache && preRenderedCache.has(cacheKey)) {
           // Use pre-rendered content from cache (bulk optimization)
           rendered = preRenderedCache.get(cacheKey)!;
-          this.logger.debug(
-            `Using pre-rendered template from cache: ${cacheKey}`,
-            {
-              notificationType: mapping.type,
-              channel,
-              locale,
-            },
-          );
         } else {
           // Render template (normal flow or cache miss)
           rendered = await this.renderer.render(
@@ -338,16 +322,6 @@ export class NotificationRouterService extends BaseService {
     if (payloadsToEnqueue.length > 0) {
       try {
         await this.enqueueNotifications(payloadsToEnqueue, priority);
-        this.logger.debug(
-          `Bulk enqueued ${payloadsToEnqueue.length} notification(s) for user ${userId}`,
-          {
-            eventName,
-            userId,
-            correlationId,
-            channelCount: payloadsToEnqueue.length,
-            channels: payloadsToEnqueue.map((p) => p.channel),
-          },
-        );
 
         // Release idempotency locks after successful bulk enqueue
         if (this.idempotencyCache) {
@@ -414,18 +388,7 @@ export class NotificationRouterService extends BaseService {
       );
 
       if (!lockAcquired) {
-        this.logger.debug(
-          `Skipping notification (lock not acquired): ${notificationType}:${channel}`,
-          {
-            correlationId,
-            type: notificationType,
-            channel,
-            recipient: channelRecipient.substring(
-              0,
-              STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
-            ),
-          },
-        );
+        // Lock not acquired - another process is handling this notification (normal, no logging needed)
         return { shouldProceed: false, lockAcquired: false };
       }
 
@@ -443,18 +406,7 @@ export class NotificationRouterService extends BaseService {
           channel,
           channelRecipient,
         );
-        this.logger.debug(
-          `Skipping duplicate notification (idempotency): ${notificationType}:${channel}`,
-          {
-            correlationId,
-            type: notificationType,
-            channel,
-            recipient: channelRecipient.substring(
-              0,
-              STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
-            ),
-          },
-        );
+        // Duplicate notification detected (normal idempotency check, no logging needed)
         return { shouldProceed: false, lockAcquired: false };
       }
 
@@ -515,14 +467,6 @@ export class NotificationRouterService extends BaseService {
       // Send IN_APP directly without queuing for low latency
       try {
         await this.senderService.send(payload);
-        this.logger.debug(
-          `IN_APP notification sent directly: ${eventName} to user ${userId}`,
-          {
-            userId,
-            eventName,
-            correlationId,
-          },
-        );
       } catch (error) {
         this.logger.error(
           `Failed to send IN_APP notification directly: ${error instanceof Error ? error.message : String(error)}`,

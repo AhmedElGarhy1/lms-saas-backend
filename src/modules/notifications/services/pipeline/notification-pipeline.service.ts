@@ -71,10 +71,6 @@ export class NotificationPipelineService extends BaseService {
     this.determineChannels(context);
 
     if (context.enabledChannels && context.enabledChannels.length === 0) {
-      this.logger.debug(
-        `No enabled channels for ${context.eventName}, skipping`,
-        { userId: recipientInfo.userId, eventName: context.eventName },
-      );
       return context;
     }
 
@@ -241,17 +237,6 @@ export class NotificationPipelineService extends BaseService {
               eventType: context.eventName,
             },
           );
-
-        if (finalChannels.length === 0) {
-          this.logger.debug(
-            `No optimal channels selected for user ${userId} and event ${manifest.type}`,
-            {
-              userId,
-              eventName: manifest.type,
-              enabledChannels,
-            },
-          );
-        }
 
         context.finalChannels = finalChannels;
       } catch (error) {

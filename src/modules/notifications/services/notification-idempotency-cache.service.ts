@@ -101,18 +101,7 @@ export class NotificationIdempotencyCacheService extends BaseService {
 
       // If result is null (and not timeout), lock already exists (Redis SET NX returned null)
       // This means another process is currently processing this notification
-      this.logger.debug(
-        `Lock already exists for ${correlationId}:${type}:${channel} - skipping duplicate`,
-        {
-          correlationId,
-          type,
-          channel,
-          recipient: recipient.substring(
-            0,
-            STRING_CONSTANTS.MAX_LOGGED_RECIPIENT_LENGTH,
-          ),
-        },
-      );
+      // No logging needed for normal idempotency behavior
       return false; // Lock exists: skip notification to prevent duplicate
     } catch (error) {
       // On Redis error, fail open (allow notification to proceed)
