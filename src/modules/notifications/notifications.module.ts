@@ -1,4 +1,9 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import {
+  Module,
+  NestModule,
+  MiddlewareConsumer,
+  OnModuleInit,
+} from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 import { NotificationLog } from './entities/notification-log.entity';
@@ -7,9 +12,9 @@ import { NotificationService } from './services/notification.service';
 import { NotificationSenderService } from './services/notification-sender.service';
 import { NotificationTemplateService } from './services/notification-template.service';
 import { NotificationProcessor } from './processors/notification.processor';
+import { NotificationTriggerProcessor } from './processors/notification-trigger.processor';
 import { NotificationLogRepository } from './repositories/notification-log.repository';
 import { NotificationListener } from './listeners/notification.listener';
-import { NotificationListenerHelper } from './listeners/helpers/notification-listener.helper';
 import {
   EmailAdapter,
   SmsAdapter,
@@ -35,7 +40,6 @@ import { MetricsBatchService } from './services/metrics-batch.service';
 import { ChannelRateLimitService } from './services/channel-rate-limit.service';
 import { ChannelRetryStrategyService } from './services/channel-retry-strategy.service';
 import { ChannelSelectionService } from './services/channel-selection.service';
-import { RecipientResolverService } from './services/recipient-resolver.service';
 import { NotificationManifestResolver } from './manifests/registry/notification-manifest-resolver.service';
 import { NotificationRenderer } from './renderer/notification-renderer.service';
 import { NotificationValidator } from './validator/notification-validator.service';
@@ -58,16 +62,43 @@ import { WhatsAppWebhookMetricsService } from './services/webhooks/whatsapp-webh
 import { WhatsAppWebhookProcessor } from './processors/whatsapp-webhook.processor';
 import { TIME_CONSTANTS } from './constants/notification.constants';
 import { RawBodyMiddleware } from './middleware/raw-body.middleware';
+import { CenterUpdatedResolver } from './intents/resolvers/center-updated.resolver';
+import { OtpResolver } from './intents/resolvers/otp.resolver';
+import { PhoneVerifiedResolver } from './intents/resolvers/phone-verified.resolver';
+import { CenterCreatedResolver } from './intents/resolvers/center-created.resolver';
+import { NotificationIntentResolverRegistryService } from './intents/notification-intent-resolver-registry.service';
+import { NotificationIntentService } from './services/notification-intent.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([NotificationLog, Notification]),
-    UserModule,
-    CentersModule,
+    UserModule, // Needed for intent resolvers (UserService)
+    CentersModule, // Needed for intent resolvers (CentersRepository)
     JwtModule,
     AuthModule,
     BullModule.registerQueueAsync({
       name: 'notifications',
+      imports: [RedisModule],
+      useFactory: (redisService: RedisService) => ({
+        connection: redisService.getClient(),
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 2000,
+          },
+          removeOnComplete: {
+            age: QUEUE_CONSTANTS.COMPLETED_JOB_AGE_SECONDS,
+          },
+          removeOnFail: {
+            age: QUEUE_CONSTANTS.FAILED_JOB_AGE_SECONDS,
+          },
+        },
+      }),
+      inject: [RedisService],
+    }),
+    BullModule.registerQueueAsync({
+      name: 'notification-triggers',
       imports: [RedisModule],
       useFactory: (redisService: RedisService) => ({
         connection: redisService.getClient(),
@@ -114,10 +145,17 @@ import { RawBodyMiddleware } from './middleware/raw-body.middleware';
     NotificationSenderService,
     NotificationTemplateService,
     NotificationProcessor,
+    NotificationTriggerProcessor,
     NotificationLogRepository,
     NotificationRepository,
-    NotificationListenerHelper, // Helper service for notification listener operations
     NotificationListener,
+    // Intent system
+    NotificationIntentService,
+    NotificationIntentResolverRegistryService,
+    CenterCreatedResolver,
+    CenterUpdatedResolver,
+    OtpResolver,
+    PhoneVerifiedResolver,
     EmailAdapter,
     SmsAdapter,
     WhatsAppAdapter,
@@ -133,7 +171,6 @@ import { RawBodyMiddleware } from './middleware/raw-body.middleware';
     ChannelRetryStrategyService,
     NotificationMetricsService,
     ChannelSelectionService,
-    RecipientResolverService,
     NotificationManifestResolver, // Resolves manifests for renderer
     NotificationRenderer, // Renders notifications using manifests
     NotificationValidator, // Validates manifests on module init
@@ -166,6 +203,8 @@ import { RawBodyMiddleware } from './middleware/raw-body.middleware';
   ],
 })
 export class NotificationModule implements NestModule {
+  constructor() {}
+
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(RawBodyMiddleware)

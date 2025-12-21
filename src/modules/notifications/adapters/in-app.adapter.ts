@@ -156,6 +156,10 @@ export class InAppAdapter
     payload: InAppNotificationPayload,
     data: ExtractedNotificationData,
   ): Promise<Notification> {
+    // Set createdBy to actorId if provided, otherwise fallback to userId (recipient)
+    // This ensures notifications created in queue context (no RequestContext) have a valid createdBy
+    const createdBy = payload.actorId || payload.userId;
+
     return this.notificationRepository.createNotification({
       userId: payload.userId,
       title: data.title,
@@ -170,6 +174,7 @@ export class InAppAdapter
       readAt: undefined,
       channel: NotificationChannel.IN_APP,
       status: NotificationStatus.PENDING,
+      createdBy, // Set explicitly for queue context (no RequestContext)
     });
   }
 

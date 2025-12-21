@@ -92,6 +92,13 @@ export class ClassStaffService extends BaseService {
       branchId: classEntity.branchId,
     });
 
+    // Validate target staff member has branch access to the class's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: data.userProfileId,
+      centerId: centerId,
+      branchId: classEntity.branchId,
+    });
+
     const canAccess = await this.classAccessService.canClassAccess(data);
     if (canAccess) {
       throw new BusinessLogicException('t.messages.alreadyIs', {

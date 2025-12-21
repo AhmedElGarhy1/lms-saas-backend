@@ -60,7 +60,6 @@ export type TypedChannels<TType extends NotificationType> =
  */
 export interface TypedNotificationOptions<TType extends NotificationType> {
   channels?: TypedChannels<TType>;
-  context?: Record<string, unknown>;
 }
 
 /**
@@ -69,5 +68,4 @@ export interface TypedNotificationOptions<TType extends NotificationType> {
  */
 export type ValidateAndTriggerOptions<TType extends NotificationType> = {
   channels?: TypedChannels<TType>;
-  context?: Record<string, unknown>;
 };

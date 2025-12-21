@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { BaseService } from '@/shared/common/services/base.service';
 import { NotificationManifestResolver } from '../manifests/registry/notification-manifest-resolver.service';
@@ -44,17 +46,18 @@ export class NotificationService extends BaseService {
 
   private async processEventForRecipient(
     notificationType: NotificationType,
-    event: NotificationEvent | Record<string, unknown>,
+    templateVariables: Record<string, unknown>,
     correlationId: string,
     recipientInfo: RecipientInfo,
     manifest: NotificationManifest,
     audience: AudienceId,
     channels?: NotificationChannel[],
     preRenderedCache?: Map<string, RenderedNotification>,
+    actorId?: string, // Actor who triggered the notification (for createdBy field)
   ): Promise<void> {
     const context: NotificationProcessingContext = {
       eventName: notificationType,
-      event,
+      event: templateVariables, // Keep as event for backward compatibility with pipeline, but it's actually template variables
       correlationId,
       requestedChannels: channels,
       audience,
@@ -65,6 +68,7 @@ export class NotificationService extends BaseService {
       recipient: '',
       locale: 'en',
       templateData: {} as NotificationTemplateData,
+      actorId: actorId, // Pass actorId through context for createdBy field
     };
 
     await this.pipelineService.process(context, recipientInfo);
@@ -91,12 +95,13 @@ export class NotificationService extends BaseService {
     type: NotificationType,
     options: {
       audience: AudienceId;
-      event: NotificationEvent | Record<string, unknown>;
+      templateVariables: Record<string, unknown>;
       recipients: RecipientInfo[];
       channels?: NotificationChannel[];
+      actorId?: string; // Actor who triggered the notification (for createdBy field)
     },
   ): Promise<BulkNotificationResult> {
-    const { audience, event, recipients, channels } = options;
+    const { audience, templateVariables, recipients, channels, actorId } = options;
     const startTime = Date.now();
 
     const result: BulkNotificationResult = {
@@ -195,7 +200,7 @@ export class NotificationService extends BaseService {
       const recipientGroups = this.groupRecipientsByTemplateData(
         uniqueRecipients,
         type,
-        event,
+        templateVariables,
         manifest,
         audience,
       );
@@ -205,7 +210,7 @@ export class NotificationService extends BaseService {
           await this.preRenderTemplatesForGroup(
             group,
             type,
-            event,
+            templateVariables,
             manifest,
             audience,
             preRenderedCache,
@@ -220,13 +225,14 @@ export class NotificationService extends BaseService {
           async (recipient) => {
             await this.processEventForRecipient(
               type,
-              event,
+              templateVariables,
               correlationId,
               recipient,
               manifest,
               audience,
               channels,
               preRenderedCache,
+              actorId,
             );
           },
         );
@@ -295,7 +301,7 @@ export class NotificationService extends BaseService {
   private groupRecipientsByTemplateData(
     recipients: RecipientInfo[],
     notificationType: NotificationType,
-    event: NotificationEvent | Record<string, unknown>,
+    templateVariables: Record<string, unknown>,
     manifest: NotificationManifest,
     audience: AudienceId,
   ): Array<{ templateDataHash: string; recipients: RecipientInfo[] }> {
@@ -303,7 +309,7 @@ export class NotificationService extends BaseService {
 
     for (const recipient of recipients) {
       const templateData = this.prepareTemplateDataForHash(
-        event,
+        templateVariables,
         recipient,
         manifest,
       );
@@ -331,11 +337,11 @@ export class NotificationService extends BaseService {
   }
 
   private prepareTemplateDataForHash(
-    event: NotificationEvent | Record<string, unknown>,
+    templateVariables: Record<string, unknown>,
     recipient: RecipientInfo,
     manifest: NotificationManifest,
   ): Record<string, unknown> {
-    const eventData = { ...(event as Record<string, unknown>) };
+    const eventData = { ...templateVariables };
     delete eventData.userId;
     delete eventData.recipient;
     delete eventData.phone;
@@ -397,7 +403,7 @@ export class NotificationService extends BaseService {
   private async preRenderTemplatesForGroup(
     group: { templateDataHash: string; recipients: RecipientInfo[] },
     notificationType: NotificationType,
-    event: NotificationEvent | Record<string, unknown>,
+    templateVariables: Record<string, unknown>,
     manifest: NotificationManifest,
     audience: AudienceId,
     cache: Map<string, RenderedNotification>,
@@ -413,7 +419,7 @@ export class NotificationService extends BaseService {
     }
 
     const templateData = this.prepareTemplateDataForHash(
-      event,
+      templateVariables,
       representative,
       manifest,
     );

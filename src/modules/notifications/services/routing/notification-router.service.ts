@@ -198,6 +198,7 @@ export class NotificationRouterService extends BaseService {
         profileType ?? undefined,
         profileId ?? undefined,
         correlationId,
+        context.actorId,
       );
 
       // Get channel config for WhatsApp (needed for template name)

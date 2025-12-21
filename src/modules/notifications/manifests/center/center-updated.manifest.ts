@@ -13,7 +13,7 @@ export const centerUpdatedManifest = {
   type: NotificationType.CENTER_UPDATED,
   group: NotificationGroup.MANAGEMENT,
   priority: 2,
-  requiredVariables: ['center'],
+  requiredVariables: ['centerName'],
   audiences: {
     DEFAULT: {
       channels: {

@@ -31,6 +31,7 @@ export interface NotificationProcessingContext {
   locale: string;
   profileType?: ProfileType | null;
   profileId?: string | null;
+  actorId?: string; // Actor who triggered the notification (for createdBy field)
 
   // Channel selection (progressive refinement)
   requestedChannels?: NotificationChannel[];

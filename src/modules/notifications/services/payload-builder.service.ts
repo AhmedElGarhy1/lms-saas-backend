@@ -32,6 +32,7 @@ interface BasePayloadData {
   profileType: ProfileType | null;
   profileId?: string | null;
   correlationId: ReturnType<typeof createCorrelationId>;
+  actorId?: string; // Actor who triggered the notification (for createdBy field)
 }
 
 /**
@@ -55,6 +56,7 @@ export class PayloadBuilderService {
     profileType: ProfileType | undefined,
     profileId: string | undefined,
     correlationId: string,
+    actorId?: string,
   ): BasePayloadData {
     return {
       recipient,
@@ -67,6 +69,7 @@ export class PayloadBuilderService {
       profileType: profileType ?? null,
       profileId: profileId ?? null,
       correlationId: createCorrelationId(correlationId),
+      actorId,
     };
   }
 
@@ -97,6 +100,7 @@ export class PayloadBuilderService {
 
       return {
         ...basePayload,
+        actorId: basePayload.actorId,
         subject: rendered.subject,
         data: {
           html: rendered.content as string,
@@ -109,6 +113,7 @@ export class PayloadBuilderService {
     if (channel === NotificationChannel.SMS) {
       return {
         ...basePayload,
+        actorId: basePayload.actorId,
         data: {
           content: rendered.content as string,
           template: rendered.metadata?.template || '',
@@ -152,6 +157,7 @@ export class PayloadBuilderService {
 
       return {
         ...basePayload,
+        actorId: basePayload.actorId,
         data: {
           templateName: channelConfig.template, // Unified template field
           templateLanguage: basePayload.locale,
@@ -173,6 +179,7 @@ export class PayloadBuilderService {
 
       return {
         ...basePayload,
+        actorId: basePayload.actorId,
         title,
         data: {
           message,
@@ -194,6 +201,7 @@ export class PayloadBuilderService {
 
       return {
         ...basePayload,
+        actorId: basePayload.actorId,
         title,
         data: {
           message,
@@ -227,6 +235,7 @@ export class PayloadBuilderService {
     rendered: RenderedNotification,
     templateData: NotificationTemplateData,
     channelConfig?: ChannelManifest,
+    actorId?: string, // Actor who triggered the notification (for createdBy field)
   ): NotificationPayload | null {
     const basePayload = this.buildBasePayload(
       recipient,
@@ -239,6 +248,7 @@ export class PayloadBuilderService {
       profileType,
       profileId,
       correlationId,
+      actorId,
     );
 
     return this.buildPayload(

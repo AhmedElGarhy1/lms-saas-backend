@@ -16,6 +16,7 @@ export interface BaseNotificationPayload {
   profileType?: ProfileType | null;
   profileId?: string | null;
   correlationId?: CorrelationId;
+  actorId?: string; // Actor who triggered the notification (for createdBy field)
 }
 
 /**
