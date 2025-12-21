@@ -118,12 +118,13 @@
 [x] add tooltip for actions in view and don't display the view (because you already in view mode)
 [x] update backend to not rely on base entity to get other entites ex: don't relay on class entity to get groups and don't rely on group to get class
 [x] Exists decoartor make it context aware and able to validate if resource related to center or not then cleanup code specialy class validate resource belong to center
-[ ] when notification sending fail all events fail including center creating user or branch
-[ ] update branch and center entities with reasonable parameters
+[x] when notification sending fail all events fail including center creating user or branch
+[x] update branch and center entities with reasonable parameters
 [ ] other statuses for finsihed classes
 [ ] consider adding withDetailes flag and use it in backend
 [ ] submodule for permissions, RoleName, sortable columns, other is okay
 [ ] activity log decorator
+[ ] notifications sometimese doesn't get sent
 
 [ ] no module export repository
 [ ] fix rest of eslint erros

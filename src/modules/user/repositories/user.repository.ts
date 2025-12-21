@@ -121,7 +121,7 @@ export class UserRepository extends BaseRepository<User> {
 
     if (includeBranch) {
       queryBuilder.andWhere(
-        'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = userProfiles.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId AND ba."deletedAt" IS NULL)',
+        'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = userProfiles.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId)',
         { branchId, centerId },
       );
     }
