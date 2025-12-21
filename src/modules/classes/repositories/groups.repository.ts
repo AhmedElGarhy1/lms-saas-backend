@@ -46,7 +46,7 @@ export class GroupsRepository extends BaseRepository<Group> {
         'class.name',
         'class.duration',
         'branch.id',
-        'branch.location',
+        'branch.city',
         'center.id',
         'center.name',
       ])
@@ -132,7 +132,7 @@ export class GroupsRepository extends BaseRepository<Group> {
         'class.name',
         'class.duration',
         'branch.id',
-        'branch.location',
+        'branch.city',
         'center.id',
         'center.name',
       ])

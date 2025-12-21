@@ -53,7 +53,7 @@ export class ClassesRepository extends BaseRepository<Class> {
         'teacherUser.id',
         'teacherUser.name',
         'branch.id',
-        'branch.location',
+        'branch.city',
       ])
       // Add count subqueries
       .addSelect(
@@ -149,7 +149,7 @@ export class ClassesRepository extends BaseRepository<Class> {
           'name',
           'level.name',
           'subject.name',
-          'branch.location',
+          'branch.city',
         ],
         sortableColumns: ['createdAt', 'updatedAt'],
         defaultSortBy: ['createdAt', 'DESC'],
@@ -206,7 +206,7 @@ export class ClassesRepository extends BaseRepository<Class> {
         'teacherUser.id',
         'teacherUser.name',
         'branch.id',
-        'branch.location',
+        'branch.city',
         'center.id',
         'center.name',
       ])

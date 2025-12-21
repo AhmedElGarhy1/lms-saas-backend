@@ -133,7 +133,7 @@ export class BranchesService extends BaseService {
       new BranchUpdatedEvent(
         branchId,
         branch.centerId,
-        { location: branch.location, isActive } as any,
+        { city: branch.city, isActive },
         actor,
       ),
     );

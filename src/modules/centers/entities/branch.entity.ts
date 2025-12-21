@@ -5,6 +5,8 @@ import {
   JoinColumn,
   OneToMany,
   Index,
+  VirtualColumn,
+  AfterLoad,
 } from 'typeorm';
 import { Center } from './center.entity';
 import { BranchAccess } from './branch-access.entity';
@@ -15,20 +17,20 @@ import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 @Entity('branches')
 @Index(['centerId'])
 @Index(['isActive'])
-@Index(['location'])
+@Index(['city'])
 @Index(['centerId', 'isActive'])
 export class Branch extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   centerId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  location: string;
-
-  @Column({ type: 'boolean', default: true })
-  isActive: boolean;
+  city: string;
 
   @Column({ type: 'text', nullable: true })
   address?: string;
+
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   email?: string;
@@ -48,4 +50,12 @@ export class Branch extends SoftBaseEntity {
 
   @OneToMany(() => Group, (group) => group.branch)
   groups: Group[];
+
+  // virtual fields
+  name: string;
+
+  @AfterLoad()
+  virtualFields() {
+    this.name = `${this.city}${this.address ? ` - ${this.address}` : ''}`;
+  }
 }

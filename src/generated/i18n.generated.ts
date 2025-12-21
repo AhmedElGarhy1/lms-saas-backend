@@ -109,6 +109,7 @@ export type I18nTranslations = {
             "avatar": string;
             "fullName": string;
             "location": string;
+            "city": string;
             "language": string;
             "english": string;
             "arabic": string;
@@ -148,6 +149,7 @@ export type I18nTranslations = {
             "centerName": string;
             "contact": string;
             "created": string;
+            "deleted": string;
             "actions": string;
             "never": string;
             "ipAddress": string;
@@ -253,6 +255,18 @@ export type I18nTranslations = {
             "bulkOperationSuccess": string;
             "bulkOperationFailure": string;
             "bulkOperationPartial": string;
+            "paymentCalculation": {
+                "description": string;
+            };
+            "paymentCount": {
+                "helperText": string;
+            };
+            "scheduleConflict": {
+                "title": string;
+                "description": string;
+                "dialogTitle": string;
+                "conflicts": string;
+            };
             "changed": string;
             "sent": string;
             "verified": string;
@@ -296,6 +310,8 @@ export type I18nTranslations = {
             "notAvailable": string;
             "couldNotLoad": string;
             "showAll": string;
+            "noOptionsAvailable": string;
+            "noSchedule": string;
             "noResourceAvailable": string;
             "noItemsFound": string;
             "tryAdjustingSearchTerms": string;
@@ -346,8 +362,6 @@ export type I18nTranslations = {
             "exportFormatNotSupported": string;
             "exportDataUnavailable": string;
             "operationSuccess": string;
-            "noOptionsAvailable": string;
-            "noSchedule": string;
         };
         "actions": {
             "sent": string;

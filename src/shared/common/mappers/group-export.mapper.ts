@@ -69,7 +69,7 @@ export class GroupExportMapper implements ExportMapper<Group, GroupExportData> {
       id: group.id,
       name: group.name || '',
       className: classEntity?.name || '',
-      branchName: branch?.location || '',
+      branchName: branch?.name || '',
       studentCount: studentsCount,
       scheduleSummary: scheduleSummary,
       createdAt: group.createdAt?.toISOString() || '',
@@ -90,5 +90,3 @@ export class GroupExportMapper implements ExportMapper<Group, GroupExportData> {
     ];
   }
 }
-
-

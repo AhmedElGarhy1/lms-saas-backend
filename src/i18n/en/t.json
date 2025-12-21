@@ -88,6 +88,7 @@
     "avatar": "Avatar",
     "fullName": "Full Name",
     "location": "Location",
+    "city": "City",
     "language": "Language",
     "english": "English",
     "arabic": "Arabic",
@@ -128,6 +129,7 @@
     "centerName": "Center Name",
     "contact": "Contact",
     "created": "Created",
+    "deleted": "Deleted",
     "actions": "Actions",
     "never": "Never",
     "ipAddress": "IP Address",
@@ -223,6 +225,12 @@
     "bulkOperationSuccess": "{count, plural, =0 {No operations} =1 {Successfully processed {count} {item}} other {Successfully processed {count} {item}s}}",
     "bulkOperationFailure": "{count, plural, =0 {No operations} =1 {Failed to process {count} {item}} other {Failed to process {count} {item}s}}",
     "bulkOperationPartial": "Successfully processed {success, number} {success, plural, =1 {{item}} other {{item}s}}, but {failed, number} {failed, plural, =1 {{item}} other {{item}s}} failed",
+    "paymentCalculation": {
+      "description": "Payment calculation for {resource}"
+    },
+    "paymentCount": {
+      "helperText": "Number of {unit}s per payment (e.g., pay every 3 {unit}s)"
+    },
     "changed": "{resource} changed successfully",
     "sent": "{resource} sent successfully",
     "verified": "{resource} verified successfully",
@@ -239,6 +247,12 @@
     "actionNotAllowed": "Cannot {action} {resource}. {reason}",
     "actionUnauthorized": "You are not authorized to {action} this {resource}",
     "withIdNotFound": "{resource} with {identifier} {value} not found",
+    "scheduleConflict": {
+      "title": "Schedule Conflict Detected",
+      "description": "The {resource} has overlapping schedule conflicts that prevent creating or updating this group.",
+      "dialogTitle": "Schedule Conflict - {resource}",
+      "conflicts": "Conflicting Time Slots"
+    },
     "alreadyHas": "{resource} already has {what}",
     "alreadyIs": "{resource} is already {state}",
     "duplicateField": "This {field} is already in use. Please choose a different one",

@@ -11,9 +11,9 @@ export class BranchResponseDto {
   @Expose()
   centerId: string;
 
-  @ApiProperty({ description: 'Branch location' })
+  @ApiProperty({ description: 'Branch city' })
   @Expose()
-  location: string;
+  city: string;
 
   @ApiProperty({ description: 'Branch address' })
   @Expose()

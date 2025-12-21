@@ -42,7 +42,7 @@ export class BranchListener {
       {
         branchId: branch.id,
         centerId: branch.centerId,
-        location: branch.location,
+        city: branch.city,
         address: branch.address,
         email: branch.email,
       },

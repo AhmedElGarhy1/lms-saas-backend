@@ -80,6 +80,7 @@
     "avatar": "الصورة الشخصية",
     "fullName": "الاسم الكامل",
     "location": "الموقع",
+    "city": "المدينة",
     "language": "اللغة",
     "english": "الإنجليزية",
     "arabic": "العربية",
@@ -119,6 +120,7 @@
     "centerName": "اسم المركز",
     "contact": "جهة الاتصال",
     "created": "تم الإنشاء",
+    "deleted": "تم الحذف",
     "actions": "الإجراءات",
     "never": "أبداً",
     "ipAddress": "عنوان IP",
@@ -224,6 +226,18 @@
     "bulkOperationSuccess": "{count, plural, =0 {لا توجد عمليات} =1 {تمت معالجة {count} {item} بنجاح} =2 {تمت معالجة {count} {item} بنجاح} few {تمت معالجة {count} {item} بنجاح} many {تمت معالجة {count} {item} بنجاح} other {تمت معالجة {count} {item} بنجاح}}",
     "bulkOperationFailure": "{count, plural, =0 {لا توجد عمليات} =1 {فشلت معالجة {count} {item}} =2 {فشلت معالجة {count} {item}} few {فشلت معالجة {count} {item}} many {فشلت معالجة {count} {item}} other {فشلت معالجة {count} {item}}}",
     "bulkOperationPartial": "تمت معالجة {success, number} {success, plural, =1 {{item}} =2 {{item}} few {{item}} many {{item}} other {{item}}} بنجاح، لكن فشل {failed, number} {failed, plural, =1 {{item}} =2 {{item}} few {{item}} many {{item}} other {{item}}}",
+    "paymentCalculation": {
+      "description": "حساب الدفع لـ {resource}"
+    },
+    "paymentCount": {
+      "helperText": "عدد {unit} لكل دفعة (مثال: دفع كل 3 {unit})"
+    },
+    "scheduleConflict": {
+      "title": "تم اكتشاف تعارض في الجدول",
+      "description": "يحتوي {resource} على تعارضات جدولة متداخلة تمنع إنشاء أو تحديث هذه المجموعة.",
+      "dialogTitle": "تعارض الجدول - {resource}",
+      "conflicts": "فترات زمنية متضاربة"
+    },
     "changed": "تم تغيير {resource} بنجاح",
     "sent": "تم إرسال {resource} بنجاح",
     "verified": "تم التحقق من {resource} بنجاح",
@@ -267,6 +281,8 @@
     "notAvailable": "غير متاح",
     "couldNotLoad": "تعذر تحميل {resource}",
     "showAll": "عرض جميع {resource}",
+    "noOptionsAvailable": "لا توجد خيارات متاحة",
+    "noSchedule": "لا يوجد جدول",
     "noResourceAvailable": "لا يوجد {resource} متاح",
     "noItemsFound": "لم يتم العثور على {item}",
     "tryAdjustingSearchTerms": "لم يتم العثور على نتائج. حاول تعديل مصطلحات البحث.",

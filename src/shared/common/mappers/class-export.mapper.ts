@@ -42,7 +42,7 @@ export class ClassExportMapper implements ExportMapper<Class, ClassExportData> {
       levelName: level?.name || '',
       subjectName: subject?.name || '',
       teacherName: teacherName,
-      branchName: branch?.location || '',
+      branchName: branch?.name || '',
       startDate: classEntity.startDate?.toISOString() || '',
       endDate: classEntity.endDate?.toISOString() || '',
       duration: classEntity.duration || 0,
@@ -82,5 +82,3 @@ export class ClassExportMapper implements ExportMapper<Class, ClassExportData> {
     ];
   }
 }
-
-

@@ -1,23 +1,15 @@
-import {
-  IsString,
-  IsOptional,
-  IsBoolean,
-  IsEmail,
-  MaxLength,
-} from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEmail } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateBranchDto {
   @ApiProperty({
-    description: 'Location/address of the branch',
-    example: 'Downtown Los Angeles',
-    maxLength: 255,
+    description: 'City of the branch',
+    example: 'Cairo',
   })
   @IsString()
-  @MaxLength(255)
-  location: string;
+  city: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Full address of the branch',
     example: '123 Main St, Los Angeles, CA 90210',
   })
@@ -32,7 +24,6 @@ export class CreateBranchDto {
   })
   @IsOptional()
   @IsEmail()
-  @MaxLength(255)
   email?: string;
 
   @ApiPropertyOptional({

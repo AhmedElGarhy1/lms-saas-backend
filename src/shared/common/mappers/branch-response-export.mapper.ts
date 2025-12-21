@@ -4,7 +4,7 @@ import { BranchResponseDto } from '@/modules/centers/dto/branch-response.dto';
 export interface BranchResponseExportData {
   id: string;
   centerId: string;
-  location: string;
+  city: string;
   address: string;
   phone: string;
   email: string;
@@ -26,7 +26,7 @@ export class BranchResponseExportMapper
     return {
       id: branch.id,
       centerId: branch.centerId,
-      location: branch.location,
+      city: branch.city,
       address: branch.address || '',
       phone: branch.phone || '',
       email: branch.email || '',
