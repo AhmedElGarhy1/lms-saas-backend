@@ -79,6 +79,7 @@ import {
   ClassDeletedEvent,
   ClassRestoredEvent,
   ClassExportedEvent,
+  ClassStatusChangedEvent,
 } from '@/modules/classes/events/class.events';
 import {
   GroupCreatedEvent,
@@ -93,6 +94,16 @@ import {
   OtpEvent,
   PhoneVerifiedEvent,
 } from '@/modules/auth/events/auth.events';
+import {
+  SessionCreatedEvent,
+  SessionUpdatedEvent,
+  SessionDeletedEvent,
+  SessionCanceledEvent,
+  SessionsRegeneratedEvent,
+  SessionsBulkCreatedEvent,
+  SessionsBulkDeletedEvent,
+  SessionConflictDetectedEvent,
+} from '@/modules/sessions/events/session.events';
 
 // Import event enums for type safety
 import { UserEvents } from '@/shared/events/user.events.enum';
@@ -107,6 +118,7 @@ import { StudentEvents } from '@/shared/events/student.events.enum';
 import { TeacherEvents } from '@/shared/events/teacher.events.enum';
 import { ClassEvents } from '@/shared/events/classes.events.enum';
 import { GroupEvents } from '@/shared/events/groups.events.enum';
+import { SessionEvents } from '@/shared/events/sessions.events.enum';
 
 /**
  * Event Type Map
@@ -190,6 +202,7 @@ export type EventTypeMap = {
   [ClassEvents.DELETED]: ClassDeletedEvent;
   [ClassEvents.RESTORED]: ClassRestoredEvent;
   [ClassEvents.EXPORTED]: ClassExportedEvent;
+  [ClassEvents.STATUS_CHANGED]: ClassStatusChangedEvent;
 
   // Group Events
   [GroupEvents.CREATED]: GroupCreatedEvent;
@@ -203,6 +216,16 @@ export type EventTypeMap = {
   [AuthEvents.PHONE_VERIFICATION_SEND_REQUESTED]: RequestPhoneVerificationEvent;
   [AuthEvents.OTP]: OtpEvent;
   [AuthEvents.PHONE_VERIFIED]: PhoneVerifiedEvent;
+
+  // Session Events
+  [SessionEvents.CREATED]: SessionCreatedEvent;
+  [SessionEvents.UPDATED]: SessionUpdatedEvent;
+  [SessionEvents.DELETED]: SessionDeletedEvent;
+  [SessionEvents.CANCELED]: SessionCanceledEvent;
+  [SessionEvents.REGENERATED]: SessionsRegeneratedEvent;
+  [SessionEvents.BULK_CREATED]: SessionsBulkCreatedEvent;
+  [SessionEvents.BULK_DELETED]: SessionsBulkDeletedEvent;
+  [SessionEvents.CONFLICT_DETECTED]: SessionConflictDetectedEvent;
 };
 
 /**

@@ -19,7 +19,14 @@ import {
   ClassUpdatedEvent,
   ClassDeletedEvent,
   ClassRestoredEvent,
+  ClassStatusChangedEvent,
 } from '../events/class.events';
+import { ClassStatus } from '../enums/class-status.enum';
+import {
+  getAvailableStatuses,
+  isValidTransition,
+} from '../utils/class-status-transition.util';
+import { ChangeClassStatusDto } from '../dto/change-class-status.dto';
 import { ClassAccessService } from './class-access.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
@@ -182,9 +189,19 @@ export class ClassesService extends BaseService {
       ...classUpdateData
     } = data;
 
+    const changedFields: string[] = [];
+
     if (Object.keys(classUpdateData).length > 0) {
       await this.classesRepository.update(classId, classUpdateData);
       Object.assign(classEntity, classUpdateData);
+
+      // Track which fields changed
+      Object.keys(classUpdateData).forEach((key) => {
+        const value = (classUpdateData as Record<string, unknown>)[key];
+        if (value !== undefined) {
+          changedFields.push(key);
+        }
+      });
     }
 
     if (studentPaymentStrategy || teacherPaymentStrategy) {
@@ -205,7 +222,7 @@ export class ClassesService extends BaseService {
 
     await this.typeSafeEventEmitter.emitAsync(
       ClassEvents.UPDATED,
-      new ClassUpdatedEvent(classEntity, actor, actor.centerId!),
+      new ClassUpdatedEvent(classEntity, actor, actor.centerId!, changedFields),
     );
 
     return classEntity;
@@ -281,6 +298,98 @@ export class ClassesService extends BaseService {
       ClassEvents.RESTORED,
       new ClassRestoredEvent(classEntity, actor, centerId),
     );
+  }
+
+  /**
+   * Get available status transitions for a class.
+   * Returns the list of statuses that the class can transition to from its current status.
+   *
+   * @param classId - The class ID
+   * @param actor - The user performing the action
+   * @returns Array of available ClassStatus values
+   * @throws ResourceNotFoundException if class doesn't exist
+   */
+  async getAvailableStatuses(
+    classId: string,
+    actor: ActorUser,
+  ): Promise<ClassStatus[]> {
+    const classEntity = await this.getClass(classId, actor);
+
+    return getAvailableStatuses(classEntity.status);
+  }
+
+  /**
+   * Change the status of a class.
+   * Validates the transition is allowed and emits a status changed event.
+   *
+   * @param classId - The class ID
+   * @param changeStatusDto - DTO containing new status and optional reason
+   * @param actor - The user performing the action
+   * @returns Updated class entity
+   * @throws ResourceNotFoundException if class doesn't exist
+   * @throws BusinessLogicException if transition is not allowed
+   */
+  @Transactional()
+  async changeClassStatus(
+    classId: string,
+    changeStatusDto: ChangeClassStatusDto,
+    actor: ActorUser,
+  ): Promise<Class> {
+    const classEntity = await this.getClass(classId, actor);
+    const oldStatus = classEntity.status;
+    const newStatus = changeStatusDto.status;
+    const reason = changeStatusDto.reason;
+
+    // Validate transition is allowed
+    if (!isValidTransition(oldStatus, newStatus)) {
+      throw new BusinessLogicException(
+        't.messages.invalidStatusTransition' as any,
+        {
+          resource: 't.resources.class',
+          from: oldStatus,
+          to: newStatus,
+        } as any,
+      );
+    }
+
+    // Validate 24-hour grace period for reverting CANCELED/FINISHED to ACTIVE
+    if (
+      (oldStatus === ClassStatus.CANCELED ||
+        oldStatus === ClassStatus.FINISHED) &&
+      newStatus === ClassStatus.ACTIVE
+    ) {
+      const gracePeriodMs = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+      const timeSinceUpdate = Date.now() - classEntity.updatedAt.getTime();
+
+      if (timeSinceUpdate >= gracePeriodMs) {
+        throw new BusinessLogicException(
+          't.messages.gracePeriodExpired' as any,
+          {
+            resource: 't.resources.class',
+            hours: 24,
+          } as any,
+        );
+      }
+    }
+
+    // Update status
+    await this.classesRepository.update(classId, { status: newStatus });
+    classEntity.status = newStatus;
+
+    // Emit status changed event
+    await this.typeSafeEventEmitter.emitAsync(
+      ClassEvents.STATUS_CHANGED,
+      new ClassStatusChangedEvent(
+        classId,
+        oldStatus,
+        newStatus,
+        reason,
+        actor,
+        actor.centerId!,
+      ),
+    );
+
+    return classEntity;
   }
 
   /**

@@ -20,6 +20,7 @@ import { Transactional } from '@nestjs-cls/transactional';
 import { GroupStudent } from '../entities/group-student.entity';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { GroupStudentAccessDto } from '../dto/group-student-access.dto';
+import { ClassStatus } from '../enums/class-status.enum';
 
 @Injectable()
 export class GroupStudentService extends BaseService {
@@ -71,9 +72,21 @@ export class GroupStudentService extends BaseService {
       centerId: centerId,
     });
 
-    const group = await this.groupsRepository.findOneWithClassOrThrow(
-      data.groupId,
-    );
+    const group = await this.groupsRepository.findByIdOrThrow(data.groupId, [
+      'class',
+    ]);
+
+    // Block enrollment if class status is CANCELED or FINISHED
+    if (
+      group.class &&
+      (group.class.status === ClassStatus.CANCELED ||
+        group.class.status === ClassStatus.FINISHED)
+    ) {
+      throw new BusinessLogicException(
+        't.messages.cannotEnrollInClass' as any,
+        { status: group.class.status } as any,
+      );
+    }
 
     // Validate actor has branch access to the group's branch (via class)
     await this.branchAccessService.validateBranchAccess({
@@ -158,7 +171,9 @@ export class GroupStudentService extends BaseService {
     groupId: string,
     actor: ActorUser,
   ): Promise<GroupStudent[]> {
-    const group = await this.groupsRepository.findOneWithClassOrThrow(groupId);
+    const group = await this.groupsRepository.findByIdOrThrow(groupId, [
+      'class',
+    ]);
 
     // Validate actor has branch access to the group's branch
     await this.branchAccessService.validateBranchAccess({
@@ -234,7 +249,9 @@ export class GroupStudentService extends BaseService {
     const centerId = actor.centerId!;
 
     // Fetch group to get branchId
-    const group = await this.groupsRepository.findOneWithClassOrThrow(groupId);
+    const group = await this.groupsRepository.findByIdOrThrow(groupId, [
+      'class',
+    ]);
 
     // Validate actor has branch access to the group's branch
     await this.branchAccessService.validateBranchAccess({

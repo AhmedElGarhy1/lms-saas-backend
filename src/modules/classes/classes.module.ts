@@ -39,6 +39,7 @@ import { CentersModule } from '@/modules/centers/centers.module';
 import { UserProfileModule } from '@/modules/user-profile/user-profile.module';
 import { ClassActivityListener } from './listeners/class-activity.listener';
 import { GroupActivityListener } from './listeners/group-activity.listener';
+import { ClassStatusUpdateJob } from './jobs/class-status-update.job';
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import { GroupActivityListener } from './listeners/group-activity.listener';
     ClassStaffRepository,
     ClassActivityListener,
     GroupActivityListener,
+    ClassStatusUpdateJob,
   ],
   exports: [
     ClassesService,

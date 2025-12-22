@@ -9,6 +9,7 @@ import {
   ClassDeletedEvent,
   ClassRestoredEvent,
   ClassExportedEvent,
+  ClassStatusChangedEvent,
 } from '../events/class.events';
 
 /**
@@ -95,6 +96,29 @@ export class ClassActivityListener {
         filename: filename,
         recordCount: recordCount,
         filters: filters,
+      },
+      actor.id,
+    );
+  }
+
+  @OnEvent(ClassEvents.STATUS_CHANGED)
+  async handleClassStatusChanged(event: ClassStatusChangedEvent) {
+    const { classId, oldStatus, newStatus, reason, actor, centerId } = event;
+
+    // Build description with status transition and optional reason
+    const description = reason
+      ? `Class status changed from ${oldStatus} to ${newStatus}. Reason: ${reason}`
+      : `Class status changed from ${oldStatus} to ${newStatus}`;
+
+    await this.activityLogService.log(
+      ClassActivityType.CLASS_UPDATED, // Using CLASS_UPDATED as status change is a type of update
+      {
+        classId: classId,
+        centerId: centerId,
+        oldStatus: oldStatus,
+        newStatus: newStatus,
+        reason: reason,
+        description: description,
       },
       actor.id,
     );

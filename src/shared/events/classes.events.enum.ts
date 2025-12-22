@@ -5,4 +5,5 @@ export enum ClassEvents {
   DELETED = 'class.deleted',
   RESTORED = 'class.restored',
   EXPORTED = 'class.exported',
+  STATUS_CHANGED = 'classes.statusChanged',
 }

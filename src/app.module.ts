@@ -15,6 +15,7 @@ import { CentersModule } from '@/modules/centers/centers.module';
 import { LevelsModule } from '@/modules/levels/levels.module';
 import { SubjectsModule } from '@/modules/subjects/subjects.module';
 import { ClassesModule } from '@/modules/classes/classes.module';
+import { SessionsModule } from '@/modules/sessions/sessions.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { SharedModule } from '@/shared/shared.module';
@@ -111,6 +112,7 @@ import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limi
     LevelsModule,
     SubjectsModule,
     ClassesModule,
+    SessionsModule,
     ActivityLogModule,
     SeederModule,
     LocaleModule,

@@ -125,6 +125,8 @@
 [ ] submodule for permissions, RoleName, sortable columns, other is okay
 [ ] activity log decorator
 [ ] notifications sometimese doesn't get sent
+[ ] handle timezone in frontend and backend and transformation
+[ ] teacher conflict is error, student conflict is worning with "continue anyway"
 
 [ ] no module export repository
 [ ] fix rest of eslint erros
@@ -137,6 +139,7 @@
 [ ] import functioanlity
 [ ] multi profile for parents
 [ ] auto detection for single center or single profile
+[ ] you can only delete session you created isExtra other you can only cancle them (no soft deleted here)
 
 [ ] invetation flow and update invite user flow
 [?] when i display tables data I should disply myself also

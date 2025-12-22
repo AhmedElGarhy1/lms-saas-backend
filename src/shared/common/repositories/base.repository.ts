@@ -450,6 +450,61 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   }
 
   /**
+   * Find a single entity by ID with optional relations loaded.
+   *
+   * @param id Entity ID
+   * @param relations Optional array of relation names to load
+   * @param withDeleted Optional flag to include soft-deleted entities
+   * @returns Entity with relations or null if not found
+   * @throws Error if ID is invalid
+   */
+  async findById(
+    id: string,
+    relations?: string[],
+    withDeleted?: boolean,
+  ): Promise<T | null> {
+    if (!id || typeof id !== 'string' || id.trim().length === 0) {
+      throw new Error('ID must be a non-empty string');
+    }
+    const options: any = {
+      where: { id } as unknown as FindOptionsWhere<T>,
+    };
+    if (relations) {
+      options.relations = relations;
+    }
+    if (withDeleted) {
+      options.withDeleted = true;
+    }
+    return this.getRepository().findOne(options);
+  }
+
+  /**
+   * Find a single entity by ID with optional relations loaded, or throw an error if not found.
+   *
+   * @param id Entity ID
+   * @param relations Optional array of relation names to load
+   * @param withDeleted Optional flag to include soft-deleted entities
+   * @returns Entity with relations (never null)
+   * @throws ResourceNotFoundException if entity not found
+   * @throws Error if ID is invalid
+   */
+  async findByIdOrThrow(
+    id: string,
+    relations?: string[],
+    withDeleted?: boolean,
+  ): Promise<T> {
+    const entity = await this.findById(id, relations, withDeleted);
+    if (!entity) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.resource',
+        identifier: 't.resources.identifier',
+        value: id,
+      });
+    }
+    return entity;
+  }
+
+  /**
    * Find a single entity by ID or throw an error if not found.
    *
    * @param id Entity ID

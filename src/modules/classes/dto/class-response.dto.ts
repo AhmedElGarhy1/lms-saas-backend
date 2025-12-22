@@ -3,6 +3,7 @@ import {
   TeacherPaymentStrategy,
   StudentPaymentStrategy,
 } from '../interfaces/payment-strategy.interface';
+import { ClassStatus } from '../enums/class-status.enum';
 
 export class ClassResponseDto {
   @ApiProperty()
@@ -43,6 +44,13 @@ export class ClassResponseDto {
     example: 60,
   })
   duration: number;
+
+  @ApiProperty({
+    description: 'Class status',
+    enum: ClassStatus,
+    example: ClassStatus.PENDING_TEACHER_APPROVAL,
+  })
+  status: ClassStatus;
 
   @ApiProperty()
   createdAt: Date;

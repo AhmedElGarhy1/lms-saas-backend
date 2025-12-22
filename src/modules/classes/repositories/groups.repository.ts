@@ -198,39 +198,6 @@ export class GroupsRepository extends BaseRepository<Group> {
     });
   }
 
-  /**
-   * Find a group by ID with class relation loaded.
-   * Pure data access method - no business logic.
-   *
-   * @param id - The group ID
-   * @returns Group with class relation or null if not found
-   */
-  async findOneWithClass(id: string): Promise<Group | null> {
-    return this.getRepository().findOne({
-      where: { id },
-      relations: ['class'],
-    });
-  }
-
-  /**
-   * Find a group by ID with class relation loaded, throws if not found.
-   * Pure data access method - no business logic.
-   *
-   * @param id - The group ID
-   * @returns Group with class relation
-   * @throws ResourceNotFoundException if group not found
-   */
-  async findOneWithClassOrThrow(id: string): Promise<Group> {
-    const group = await this.findOneWithClass(id);
-    if (!group) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.group',
-        identifier: 't.resources.identifier',
-        value: id,
-      });
-    }
-    return group;
-  }
 
   /**
    * Find a group by ID with all relations loaded, throws if not found.
@@ -254,5 +221,19 @@ export class GroupsRepository extends BaseRepository<Group> {
       });
     }
     return group;
+  }
+
+
+  /**
+   * Find all groups for a given class ID.
+   * Pure data access method - no business logic.
+   *
+   * @param classId - The class ID
+   * @returns Array of groups
+   */
+  async findByClassId(classId: string): Promise<Group[]> {
+    return this.getRepository().find({
+      where: { classId },
+    });
   }
 }

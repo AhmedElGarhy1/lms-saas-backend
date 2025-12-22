@@ -134,6 +134,13 @@ export class ClassesRepository extends BaseRepository<Class> {
       );
     }
 
+    // Apply status filter
+    if (paginateDto.status !== undefined && paginateDto.status !== null) {
+      queryBuilder.andWhere('class.status = :status', {
+        status: paginateDto.status,
+      });
+    }
+
     // Apply search filter (from base repository logic)
     if (paginateDto.search) {
       queryBuilder.andWhere('class.name ILIKE :search', {

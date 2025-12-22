@@ -284,6 +284,14 @@ export type I18nTranslations = {
             "withIdNotFound": string;
             "alreadyHas": string;
             "alreadyIs": string;
+            "cannotEnrollInClass": string;
+            "cannotAssignStaffToClass": string;
+            "cannotCreateGroupInClass": string;
+            "cannotUpdateStartDateWhenNotNotStarted": string;
+            "invalidStatusTransition": string;
+            "gracePeriodExpired": string;
+            "cannotDeleteSession": string;
+            "cannotDeleteScheduledSession": string;
             "duplicateField": string;
             "phoneNotVerified": string;
             "insufficientPermissions": string;

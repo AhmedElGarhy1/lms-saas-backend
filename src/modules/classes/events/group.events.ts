@@ -17,6 +17,7 @@ export class GroupUpdatedEvent {
     public readonly group: Group,
     public readonly actor: ActorUser,
     public readonly centerId: string,
+    public readonly changedFields?: string[], // ['name', 'scheduleItems']
   ) {}
 }
 

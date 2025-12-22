@@ -25,6 +25,7 @@ import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import { ClassStatus } from '../enums/class-status.enum';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 
 @Injectable()
@@ -111,6 +112,17 @@ export class GroupsService extends BaseService {
       undefined,
     );
 
+    // Block group creation if class status is CANCELED or FINISHED
+    if (
+      classEntity.status === ClassStatus.CANCELED ||
+      classEntity.status === ClassStatus.FINISHED
+    ) {
+      throw new BusinessLogicException(
+        't.messages.cannotCreateGroupInClass' as any,
+        { status: classEntity.status } as any,
+      );
+    }
+
     // Validate actor has branch access to the class's branch
     await this.branchAccessService.validateBranchAccess({
       userProfileId: actor.userProfileId,
@@ -177,9 +189,12 @@ export class GroupsService extends BaseService {
       groupId,
     );
 
+    const changedFields: string[] = [];
+
     if (data.name !== undefined) {
       await this.groupsRepository.update(groupId, { name: data.name });
       group.name = data.name;
+      changedFields.push('name');
     }
 
     if (data.scheduleItems) {
@@ -187,6 +202,7 @@ export class GroupsService extends BaseService {
         groupId,
         data.scheduleItems,
       );
+      changedFields.push('scheduleItems');
       const updatedGroup =
         await this.groupsRepository.findGroupWithRelationsOrThrow(
           groupId,
@@ -199,7 +215,7 @@ export class GroupsService extends BaseService {
 
     await this.typeSafeEventEmitter.emitAsync(
       GroupEvents.UPDATED,
-      new GroupUpdatedEvent(group, actor, actor.centerId!),
+      new GroupUpdatedEvent(group, actor, actor.centerId!, changedFields),
     );
 
     return group;

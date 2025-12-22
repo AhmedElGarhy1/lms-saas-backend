@@ -4,6 +4,7 @@ import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { ScheduleItemDto } from '../dto/schedule-item.dto';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
 export class ScheduleItemsRepository extends BaseRepository<ScheduleItem> {
@@ -47,4 +48,5 @@ export class ScheduleItemsRepository extends BaseRepository<ScheduleItem> {
   async deleteByGroupId(groupId: string): Promise<void> {
     await this.getRepository().delete({ groupId });
   }
+
 }

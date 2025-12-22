@@ -12,6 +12,7 @@ import { Transactional } from '@nestjs-cls/transactional';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { ClassesRepository } from '../repositories/classes.repository';
+import { ClassStatus } from '../enums/class-status.enum';
 
 @Injectable()
 export class ClassStaffService extends BaseService {
@@ -84,6 +85,17 @@ export class ClassStaffService extends BaseService {
     const classEntity = await this.classesRepository.findOneOrThrow(
       data.classId,
     );
+
+    // Block staff assignment if class status is CANCELED or FINISHED
+    if (
+      classEntity.status === ClassStatus.CANCELED ||
+      classEntity.status === ClassStatus.FINISHED
+    ) {
+      throw new BusinessLogicException(
+        't.messages.cannotAssignStaffToClass' as any,
+        { status: classEntity.status } as any,
+      );
+    }
 
     // Validate actor has branch access to the class's branch
     await this.branchAccessService.validateBranchAccess({

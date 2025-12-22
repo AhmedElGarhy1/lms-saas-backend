@@ -17,6 +17,7 @@ import { StudentPaymentStrategy } from './student-payment-strategy.entity';
 import { TeacherPaymentStrategy } from './teacher-payment-strategy.entity';
 import { ClassStaff } from './class-staff.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
+import { ClassStatus } from '../enums/class-status.enum';
 
 @Entity('classes')
 @Index(['centerId'])
@@ -25,9 +26,18 @@ import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 @Index(['subjectId'])
 @Index(['teacherUserProfileId'])
 @Index(['centerId', 'branchId'])
+@Index(['status'])
+@Index(['centerId', 'status'])
 export class Class extends SoftBaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   name?: string;
+
+  @Column({
+    type: 'varchar',
+    length: 30,
+    default: ClassStatus.PENDING_TEACHER_APPROVAL,
+  })
+  status: ClassStatus;
 
   @Column({ type: 'uuid' })
   levelId: string;

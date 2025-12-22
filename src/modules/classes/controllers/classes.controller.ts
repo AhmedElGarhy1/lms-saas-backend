@@ -16,6 +16,8 @@ import { CreateClassDto } from '../dto/create-class.dto';
 import { UpdateClassDto } from '../dto/update-class.dto';
 import { PaginateClassesDto } from '../dto/paginate-classes.dto';
 import { ClassIdParamDto } from '../dto/class-id-param.dto';
+import { ChangeClassStatusDto } from '../dto/change-class-status.dto';
+import { ClassStatus } from '../enums/class-status.enum';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { GetUser } from '@/shared/common/decorators';
@@ -154,6 +156,74 @@ export class ClassesController {
     await this.classesService.deleteClass(params.classId, actor);
     return ControllerResponse.message({
       key: 't.messages.deleted',
+      args: { resource: 't.resources.class' },
+    });
+  }
+
+  @Get(':classId/available-statuses')
+  @ApiOperation({ summary: 'Get available status transitions for a class' })
+  @ApiParam({ name: 'classId', description: 'Class ID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Available statuses retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: Object.values(ClassStatus),
+          },
+        },
+      },
+    },
+  })
+  @Permissions(PERMISSIONS.CLASSES.READ)
+  async getAvailableStatuses(
+    @Param() params: ClassIdParamDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.classesService.getAvailableStatuses(
+      params.classId,
+      actor,
+    );
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.status' },
+    });
+  }
+
+  @Patch(':classId/status')
+  @ApiOperation({ summary: 'Change class status' })
+  @ApiParam({ name: 'classId', description: 'Class ID', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Class status updated successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid status transition',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Class not found',
+  })
+  @Permissions(PERMISSIONS.CLASSES.UPDATE)
+  @Transactional()
+  @SerializeOptions({ type: ClassResponseDto })
+  async changeClassStatus(
+    @Param() params: ClassIdParamDto,
+    @Body() changeStatusDto: ChangeClassStatusDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.classesService.changeClassStatus(
+      params.classId,
+      changeStatusDto,
+      actor,
+    );
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
       args: { resource: 't.resources.class' },
     });
   }

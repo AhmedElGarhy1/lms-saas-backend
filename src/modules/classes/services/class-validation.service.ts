@@ -7,6 +7,8 @@ import { ScheduleItemDto } from '../dto/schedule-item.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Class } from '../entities/class.entity';
+import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import { ClassStatus } from '../enums/class-status.enum';
 
 @Injectable()
 export class ClassValidationService extends BaseService {
@@ -25,6 +27,22 @@ export class ClassValidationService extends BaseService {
     centerId: string,
     currentClass: Class,
   ): Promise<void> {
+    // Prevent updating startDate if class is not in NOT_STARTED status
+    if (dto.startDate !== undefined) {
+      const startDateChanged =
+        new Date(dto.startDate).getTime() !==
+        new Date(currentClass.startDate).getTime();
+      if (startDateChanged && currentClass.status !== ClassStatus.NOT_STARTED) {
+        throw new BusinessLogicException(
+          't.messages.cannotUpdateStartDateWhenNotNotStarted' as any,
+          {
+            resource: 't.resources.class',
+            status: currentClass.status,
+          } as any,
+        );
+      }
+    }
+
     if (dto.duration !== undefined) {
       if (dto.duration !== currentClass.duration) {
         await this.validateDurationUpdateConflicts(

@@ -12,6 +12,7 @@ import { Center } from '@/modules/centers/entities/center.entity';
 import { ScheduleItem } from './schedule-item.entity';
 import { GroupStudent } from './group-student.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
+import { Session } from '@/modules/sessions/entities/session.entity';
 
 @Entity('groups')
 @Index(['classId'])
@@ -59,4 +60,7 @@ export class Group extends SoftBaseEntity {
     cascade: true,
   })
   groupStudents: GroupStudent[];
+
+  @OneToMany(() => Session, (session) => session.group)
+  sessions: Session[];
 }

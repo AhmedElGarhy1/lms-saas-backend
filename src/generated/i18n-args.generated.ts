@@ -114,8 +114,13 @@ export type TranslationArgs = {
   't.messages.bulkOperationResult': Record<string, never>;
   't.messages.bulkOperationSuccess': { count: string; item: string };
   't.messages.businessLogicError': Record<string, never>;
+  't.messages.cannotAssignStaffToClass': { status: string };
   't.messages.cannotBeAssociated': { resource1: string; resource2: string };
+  't.messages.cannotCreateGroupInClass': { status: string };
+  't.messages.cannotDeleteSession': { status: string };
+  't.messages.cannotEnrollInClass': { status: string };
   't.messages.cannotGrantAccess': { resource: string };
+  't.messages.cannotUpdateStartDateWhenNotNotStarted': { status: string };
   't.messages.changed': { resource: string };
   't.messages.checkUrlOrDashboard': Record<string, never>;
   't.messages.codeInvalid': { type: string };
@@ -157,6 +162,7 @@ export type TranslationArgs = {
   't.messages.global': Record<string, never>;
   't.messages.globalDashboard': Record<string, never>;
   't.messages.globalScope': Record<string, never>;
+  't.messages.gracePeriodExpired': { hours: string; resource: string };
   't.messages.granted': { resource: string };
   't.messages.httpError': { code: string; message: string };
   't.messages.imported': { resource: string };
@@ -165,6 +171,7 @@ export type TranslationArgs = {
   't.messages.inactive': { resource: string };
   't.messages.insufficientPermissions': Record<string, never>;
   't.messages.internalServerError': Record<string, never>;
+  't.messages.invalidStatusTransition': { from: string; to: string };
   't.messages.loadMore': { count: string };
   't.messages.loading': { resource: string };
   't.messages.loadingClean': Record<string, never>;
@@ -183,6 +190,8 @@ export type TranslationArgs = {
   't.messages.onlyForStaffAndAdmin': { resource: string };
   't.messages.operationError': { reason: string };
   't.messages.operationSuccess': Record<string, never>;
+  't.messages.paymentCalculation.description': { resource: string };
+  't.messages.paymentCount.helperText': { unit: string };
   't.messages.phoneNotVerified': Record<string, never>;
   't.messages.processing': { action: string };
   't.messages.rateLimitExceeded': { time: string };
@@ -197,6 +206,10 @@ export type TranslationArgs = {
   't.messages.restored': { resource: string };
   't.messages.revoked': { resource: string };
   't.messages.saving': Record<string, never>;
+  't.messages.scheduleConflict.conflicts': Record<string, never>;
+  't.messages.scheduleConflict.description': { resource: string };
+  't.messages.scheduleConflict.dialogTitle': { resource: string };
+  't.messages.scheduleConflict.title': Record<string, never>;
   't.messages.scopeDoesNotMatch': { resource: string };
   't.messages.scopeNotAllowed': { context: string; scope: string };
   't.messages.searchAndSelectResource': { resource: string };
@@ -369,6 +382,7 @@ export type TranslationArgs = {
   't.resources.centerName': Record<string, never>;
   't.resources.centers': Record<string, never>;
   't.resources.channel': Record<string, never>;
+  't.resources.city': Record<string, never>;
   't.resources.class': Record<string, never>;
   't.resources.classStaffAccess': Record<string, never>;
   't.resources.classes': Record<string, never>;
@@ -395,6 +409,7 @@ export type TranslationArgs = {
   't.resources.dates': Record<string, never>;
   't.resources.day': Record<string, never>;
   't.resources.days': Record<string, never>;
+  't.resources.deleted': Record<string, never>;
   't.resources.description': Record<string, never>;
   't.resources.disabled': Record<string, never>;
   't.resources.duration': Record<string, never>;
