@@ -5,6 +5,8 @@ import {
   IsOptional,
   MaxLength,
   IsUUID,
+  IsInt,
+  Min,
 } from 'class-validator';
 import { BelongsToBranch } from '@/shared/common/decorators/belongs-to-branch.decorator';
 import { Group } from '@/modules/classes/entities/group.entity';
@@ -29,16 +31,25 @@ export class CreateSessionDto {
   title?: string;
 
   @ApiProperty({
-    description: 'Session start time (ISO 8601 format)',
-    example: '2024-01-15T14:30:00Z',
+    description: 'Date for the session (YYYY-MM-DD format)',
+    example: '2024-01-15',
   })
   @IsDateString()
+  date: string;
+
+  @ApiProperty({
+    description: 'Session start time (HH:mm format, 24-hour)',
+    example: '14:30',
+  })
+  @IsString()
   startTime: string;
 
   @ApiProperty({
-    description: 'Session end time (ISO 8601 format)',
-    example: '2024-01-15T16:30:00Z',
+    description: 'Session duration in minutes',
+    example: 120,
+    minimum: 1,
   })
-  @IsDateString()
-  endTime: string;
+  @IsInt()
+  @Min(1)
+  duration: number;
 }

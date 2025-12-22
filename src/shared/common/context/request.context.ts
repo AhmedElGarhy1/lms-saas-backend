@@ -19,7 +19,10 @@ export interface IRequestContext {
 const asyncLocalStorage = new AsyncLocalStorage<IRequestContext>();
 
 export class RequestContext {
-  static run(context: IRequestContext, callback: () => void) {
+  static run<T = void>(
+    context: IRequestContext,
+    callback: () => T | Promise<T>,
+  ): T | Promise<T> {
     return asyncLocalStorage.run(context, callback);
   }
 

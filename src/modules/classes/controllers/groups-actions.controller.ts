@@ -204,6 +204,7 @@ export class GroupsActionsController {
       dto.groupId,
       dto.userProfileIds,
       actor,
+      dto.skipWarning,
     );
     return ControllerResponse.success(result, {
       key: 't.messages.bulkOperationSuccess',

@@ -15,6 +15,7 @@ import { Pagination } from '../types/pagination.types';
 import { BasePaginationDto } from '../dto/base-pagination.dto';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
+import { RequestContext } from '../context/request.context';
 
 export interface BulkOperationOptions {
   batchSize?: number;
@@ -28,8 +29,6 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
   ) {
-    // Use class name as context (e.g., 'UserRepository', 'CenterRepository')
-    // Note: Cannot use ClassName.name for abstract class, must use this.constructor.name
     const context = this.constructor.name;
     this.logger = new Logger(context);
   }
@@ -77,12 +76,13 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   }
 
   /**
-   * Bulk insert with progress tracking and error handling.
-   * Uses TypeORM's built-in batch save for optimal performance.
+   * Bulk insert with automatic createdBy population from RequestContext.
+   * Automatically sets createdBy from RequestContext if not already provided in entities.
+   * Uses TypeORM's save() method which processes entities in batches for performance.
    *
-   * @param entities Array of partial entities to insert
+   * @param entities Array of partial entity data to insert
    * @param options Bulk operation options including batch size and progress callback
-   * @returns Array of inserted entities
+   * @returns Array of created entities
    * @throws Error if entities array is empty
    */
   async bulkInsert(
@@ -98,13 +98,27 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     const total = entities.length;
     const results: T[] = [];
 
-    // Process in batches using TypeORM's built-in chunking
+    const ctx = RequestContext.get();
+    const userId = ctx.userId;
+
     for (let i = 0; i < total; i += batchSize) {
       try {
         const batch = entities.slice(i, i + batchSize);
-        const batchResults = await repo.save(batch as T[], {
-          chunk: batchSize,
+
+        const batchWithCreatedBy = batch.map((entity) => {
+          const entityWithCreatedBy = { ...entity } as Record<string, unknown>;
+          if (!entityWithCreatedBy.createdBy && userId) {
+            entityWithCreatedBy.createdBy = userId;
+          }
+          return entityWithCreatedBy;
         });
+
+        const batchResults = await repo.save(
+          batchWithCreatedBy as unknown as T[],
+          {
+          chunk: batchSize,
+          },
+        );
         results.push(...batchResults);
 
         if (onProgress) {
@@ -144,6 +158,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   /**
    * Bulk update with progress tracking and error handling.
    * Uses direct SQL update for optimal performance without loading entities into memory.
+   * Automatically sets updatedBy from RequestContext if not already provided.
+   *
+   * Note: This method uses QueryBuilder which bypasses TypeORM hooks (@BeforeUpdate).
+   * If hooks are needed, use individual update() or updateThrow() calls instead.
    *
    * @param where Where conditions to match entities
    * @param updateData Data to update
@@ -161,6 +179,18 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     }
 
     const repo = this.getRepository();
+
+    const ctx = RequestContext.get();
+    const userId = ctx.userId;
+
+    const updateDataWithUpdatedBy: Record<string, unknown> = {
+      ...(updateData as Record<string, unknown>),
+    };
+    if (!updateDataWithUpdatedBy.updatedBy && userId) {
+      updateDataWithUpdatedBy.updatedBy = userId;
+    }
+    updateDataWithUpdatedBy.updatedAt = new Date();
+
     const qb = repo
       .createQueryBuilder()
       .update(this.getEntityClass())
@@ -182,6 +212,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    * Bulk delete with progress tracking and error handling.
    * Uses soft delete if entity supports it (has deletedAt column), otherwise uses hard delete.
    * Uses direct SQL delete for optimal performance without loading entities into memory.
+   * Automatically sets deletedBy from RequestContext for soft deletes if entity supports it.
+   *
+   * Note: This method uses QueryBuilder/softDelete which bypasses TypeORM hooks (@BeforeRemove).
+   * If hooks are needed, delete entities individually using remove() or delete().
    *
    * @param where Where conditions to match entities
    * @param options Bulk operation options including batch size and progress callback
@@ -203,15 +237,39 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       (col) => col.propertyName === 'deletedAt',
     );
 
+    // Check if entity supports deletedBy (has deletedBy column)
+    const hasDeletedBy = repo.metadata.columns.some(
+      (col) => col.propertyName === 'deletedBy',
+    );
+
     if (hasSoftDelete) {
-      // Use softDelete for entities that support it
+      const ctx = RequestContext.get();
+      const userId = ctx.userId;
+
+      if (hasDeletedBy && userId) {
+        const qb = repo
+          .createQueryBuilder()
+          .update(this.getEntityClass())
+          .set({
+            deletedAt: new Date(),
+            deletedBy: userId,
+          } as any);
+
+        this.applyWhereConditions(qb, where);
+        const result = await qb.execute();
+
+        if (options.onProgress) {
+          options.onProgress(result.affected || 0, result.affected || 0);
+        }
+        return result.affected || 0;
+      } else {
       const result = await repo.softDelete(where);
       if (options.onProgress) {
         options.onProgress(result.affected || 0, result.affected || 0);
       }
       return result.affected || 0;
+      }
     } else {
-      // Use hard delete for entities that don't support soft delete
       const qb = repo.createQueryBuilder().delete().from(this.getEntityClass());
       this.applyWhereConditions(qb, where);
       const result = await qb.execute();
@@ -244,15 +302,11 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       return;
     }
 
-    // For UpdateQueryBuilder and DeleteQueryBuilder, we need to use the table name as alias
-    // For SelectQueryBuilder, we can use the alias property
     const alias =
       'alias' in queryBuilder
         ? queryBuilder.alias
         : this.getRepository().metadata.tableName;
 
-    // TypeScript doesn't recognize that all query builder types have andWhere
-    // We need to cast to access the common interface
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const qb = queryBuilder as any;
 
@@ -266,7 +320,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         qb.andWhere(`${alias}.${key} IS NOT NULL`);
       } else if (Array.isArray(value)) {
         if (value.length === 0) {
-          qb.andWhere('1 = 0'); // No results
+          qb.andWhere('1 = 0');
         } else {
           qb.andWhere(`${alias}.${key} IN (:...${parameterName})`, {
             [parameterName]: value,
@@ -278,17 +332,15 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         '_type' in value &&
         (value as { _type?: string })._type === 'in'
       ) {
-        // Handle TypeORM In() operator - extract the values
         const inValues = (value as { _value?: unknown[] })._value;
         if (Array.isArray(inValues) && inValues.length > 0) {
           qb.andWhere(`${alias}.${key} IN (:...${parameterName})`, {
             [parameterName]: inValues,
           });
         } else {
-          qb.andWhere('1 = 0'); // No results
+          qb.andWhere('1 = 0');
         }
       } else {
-        // Simple equality (strings, numbers, booleans, etc.)
         qb.andWhere(`${alias}.${key} = :${parameterName}`, {
           [parameterName]: value,
         });
@@ -320,22 +372,16 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       computedFieldsMapper?: (entity: T, raw: any, index: number) => T;
     },
   ): Promise<Pagination<T>> {
-    // Get the main alias from the query builder
     const mainAlias = queryBuilder.alias;
 
-    // Handle soft-deleted records
     if (query.isDeleted) {
       queryBuilder.withDeleted().andWhere(`${mainAlias}.deletedAt IS NOT NULL`);
     }
 
-    // Apply global date filters automatically
     this.applyDateFilters(queryBuilder, query, 'createdAt', mainAlias);
 
-    // Apply search
     if (query.search && columns.searchableColumns.length > 0) {
       const searchConditions = columns.searchableColumns.map((column) => {
-        // If column already contains a dot, it's a full path (e.g., 'userProfiles.name')
-        // Otherwise, prefix it with the main alias (e.g., 'user.name')
         const columnPath = column.includes('.')
           ? column
           : `${mainAlias}.${column}`;
@@ -346,7 +392,6 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       });
     }
 
-    // Apply sorting - clear any existing orderBy first
     queryBuilder.orderBy({});
 
     if (query.sortBy && query.sortBy.length > 0) {
@@ -360,37 +405,26 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       );
     }
 
-    // Calculate pagination parameters
     const page = query.page || 1;
     const limit = Math.min(query.limit || 10, 100);
     const skip = (page - 1) * limit;
 
-    // Get total count before pagination
     const totalItems = await queryBuilder.getCount();
 
-    // Apply pagination
     queryBuilder.skip(skip).take(limit);
 
-    // Get entities (with or without raw data for computed fields)
     let items: T[];
     if (options?.includeComputedFields && options.computedFieldsMapper) {
-      // Use getRawAndEntities to access computed fields
       const { entities, raw } = await queryBuilder.getRawAndEntities();
-      // Map entities with computed fields using the provided mapper
       items = entities.map((entity, index) =>
         options.computedFieldsMapper!(entity, raw[index], index),
       );
     } else {
-      // Use getMany for standard pagination
       items = await queryBuilder.getMany();
     }
 
-    // Build pagination response
     const totalPages = Math.ceil(totalItems / limit);
 
-    // Build links - match the exact format from the example
-    // first: "/classes?limit=10" (no page parameter)
-    // last: "/classes?page=1&limit=10"
     const buildLink = (pageNum?: number): string => {
       if (pageNum === undefined) {
         return `${route}?limit=${limit}`;
@@ -408,7 +442,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         currentPage: page,
       },
       links: {
-        first: buildLink(), // No page parameter for first
+        first: buildLink(),
         last: buildLink(totalPages),
         next: page < totalPages ? buildLink(page + 1) : '',
         previous: page > 1 ? buildLink(page - 1) : '',
@@ -580,16 +614,16 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     }
 
     const repo = this.getRepository();
-    // TypeORM's update method accepts DeepPartial<T> but TypeScript doesn't recognize the compatibility
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const result = await repo.update(id, data as any);
+    const entity = await repo.findOne({
+      where: { id } as unknown as FindOptionsWhere<T>,
+    });
 
-    if (result.affected === 0) {
+    if (!entity) {
       return null;
     }
 
-    // Return updated entity
-    return repo.findOne({ where: { id } as unknown as FindOptionsWhere<T> });
+    Object.assign(entity, data);
+    return repo.save(entity);
   }
 
   /**
@@ -671,13 +705,29 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    * Restore a soft-deleted entity by ID (removes deletedAt timestamp).
    *
    * @param id Entity ID
+   * @throws ResourceNotFoundException if entity not found
    * @throws Error if ID is invalid
    */
   async restore(id: string): Promise<void> {
     if (!id || typeof id !== 'string' || id.trim().length === 0) {
       throw new Error('ID must be a non-empty string');
     }
-    await this.getRepository().restore(id);
+
+    const repo = this.getRepository();
+    const entity = await repo.findOne({
+      where: { id } as unknown as FindOptionsWhere<T>,
+      withDeleted: true,
+    });
+
+    if (!entity) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.resource',
+        identifier: 't.resources.identifier',
+        value: id,
+      });
+    }
+
+    await repo.recover(entity);
   }
 
   /**

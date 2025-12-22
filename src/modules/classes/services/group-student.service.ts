@@ -82,10 +82,9 @@ export class GroupStudentService extends BaseService {
       (group.class.status === ClassStatus.CANCELED ||
         group.class.status === ClassStatus.FINISHED)
     ) {
-      throw new BusinessLogicException(
-        't.messages.cannotEnrollInClass' as any,
-        { status: group.class.status } as any,
-      );
+      throw new BusinessLogicException('t.messages.cannotEnrollInClass', {
+        status: group.class.status,
+      });
     }
 
     // Validate actor has branch access to the group's branch (via class)
@@ -147,6 +146,7 @@ export class GroupStudentService extends BaseService {
         {
           studentIds: [data.userProfileId],
           excludeGroupIds: undefined,
+          skipWarning: data.skipWarning,
         },
       );
     }
@@ -199,6 +199,7 @@ export class GroupStudentService extends BaseService {
    * @param groupId - The group ID to assign students to
    * @param userProfileIds - Array of student user profile IDs
    * @param actor - The user performing the action
+   * @param skipWarning - If true, student conflicts are silently skipped
    * @returns BulkOperationResult with success/failure details for each student
    * @throws BusinessLogicException if userProfileIds array is empty
    */
@@ -207,6 +208,7 @@ export class GroupStudentService extends BaseService {
     groupId: string,
     userProfileIds: string[],
     actor: ActorUser,
+    skipWarning?: boolean,
   ): Promise<BulkOperationResult> {
     if (!userProfileIds || userProfileIds.length === 0) {
       throw new BusinessLogicException('t.messages.validationFailed');
@@ -218,6 +220,7 @@ export class GroupStudentService extends BaseService {
         const data: GroupStudentAccessDto = {
           groupId,
           userProfileId,
+          skipWarning,
         };
         await this.assignStudentToGroup(data, actor);
         return { id: userProfileId };

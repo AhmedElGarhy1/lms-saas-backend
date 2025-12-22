@@ -1,5 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsUUID, ArrayMinSize, ArrayMaxSize } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsArray,
+  IsUUID,
+  ArrayMinSize,
+  ArrayMaxSize,
+  IsOptional,
+  IsBoolean,
+} from 'class-validator';
 import { BelongsToBranch } from '@/shared/common/decorators/belongs-to-branch.decorator';
 import { IsProfileType } from '@/shared/common/decorators/is-profile-type.decorator';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
@@ -30,4 +37,13 @@ export class BulkGrantGroupStudentDto {
   })
   @IsProfileType(ProfileType.STUDENT, { each: true })
   userProfileIds: string[];
+
+  @ApiPropertyOptional({
+    description: 'Skip student conflict warnings. If true, student schedule conflicts will be ignored and operation will proceed.',
+    example: false,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  skipWarning?: boolean;
 }

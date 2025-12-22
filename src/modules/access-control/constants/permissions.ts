@@ -729,6 +729,46 @@ export const PERMISSIONS = {
     },
   },
 
+  // ===== SESSIONS PERMISSIONS =====
+  SESSIONS: {
+    READ: {
+      action: 'sessions:read',
+      name: 't.permissions.sessions.read.name',
+      group: 'sessions',
+      scope: PermissionScope.CENTER,
+    },
+    CREATE: {
+      action: 'sessions:create',
+      name: 't.permissions.sessions.create.name',
+      group: 'sessions',
+      scope: PermissionScope.CENTER,
+    },
+    UPDATE: {
+      action: 'sessions:update',
+      name: 't.permissions.sessions.update.name',
+      group: 'sessions',
+      scope: PermissionScope.CENTER,
+    },
+    DELETE: {
+      action: 'sessions:delete',
+      name: 't.permissions.sessions.delete.name',
+      group: 'sessions',
+      scope: PermissionScope.CENTER,
+    },
+    READ_ALL: {
+      action: 'sessions:read-all',
+      name: 't.permissions.sessions.readAll.name',
+      group: 'sessions',
+      scope: PermissionScope.CENTER,
+    },
+    EXPORT: {
+      action: 'sessions:export',
+      name: 't.permissions.sessions.export.name',
+      group: 'sessions',
+      scope: PermissionScope.CENTER,
+    },
+  },
+
   // ===== SYSTEM PERMISSIONS =====
   SYSTEM: {
     HEALTH_CHECK: {

@@ -49,6 +49,11 @@ export type I18nTranslations = {
             "subjects": string;
             "class": string;
             "classes": string;
+            "paused": string;
+            "finished": string;
+            "canceled": string;
+            "scheduled": string;
+            "conducting": string;
             "group": string;
             "groups": string;
             "column": string;
@@ -120,6 +125,7 @@ export type I18nTranslations = {
             "type": string;
             "date": string;
             "dates": string;
+            "dateRange": string;
             "startDate": string;
             "endDate": string;
             "startTime": string;
@@ -128,6 +134,9 @@ export type I18nTranslations = {
             "count": string;
             "session": string;
             "sessions": string;
+            "sessionType": string;
+            "extraSession": string;
+            "scheduledSession": string;
             "schedule": string;
             "scheduleItems": string;
             "scheduleItem": string;
@@ -251,6 +260,8 @@ export type I18nTranslations = {
             "noResults": string;
             "genericError": string;
             "welcome": string;
+            "pendingApproval": string;
+            "notStarted": string;
             "bulkOperationResult": string;
             "bulkOperationSuccess": string;
             "bulkOperationFailure": string;
@@ -260,6 +271,16 @@ export type I18nTranslations = {
             };
             "paymentCount": {
                 "helperText": string;
+            };
+            "gracePeriod": {
+                "expired": string;
+                "remaining": string;
+                "remainingShort": string;
+                "expiringSoon": string;
+                "expiredStatus": string;
+                "info": string;
+                "sessionsCleanupNote": string;
+                "hours": string;
             };
             "scheduleConflict": {
                 "title": string;
@@ -291,7 +312,11 @@ export type I18nTranslations = {
             "invalidStatusTransition": string;
             "gracePeriodExpired": string;
             "cannotDeleteSession": string;
+            "cannotUpdateSession": string;
             "cannotDeleteScheduledSession": string;
+            "cannotCancelSession": string;
+            "sessionDateMustBeInFuture": string;
+            "cannotUpdatePaymentStrategy": string;
             "duplicateField": string;
             "phoneNotVerified": string;
             "insufficientPermissions": string;
@@ -322,6 +347,7 @@ export type I18nTranslations = {
             "noSchedule": string;
             "noResourceAvailable": string;
             "noItemsFound": string;
+            "reason": string;
             "tryAdjustingSearchTerms": string;
             "resourcePermissions": string;
             "errorDetails": string;
@@ -427,6 +453,8 @@ export type I18nTranslations = {
             "clearSearch": string;
             "tryAgain": string;
             "toggleStatus": string;
+            "updateStatus": string;
+            "revertToActive": string;
             "manageAccess": string;
             "reloadPage": string;
             "deselectAll": string;
@@ -464,6 +492,7 @@ export type I18nTranslations = {
             "pickDateRange": string;
             "searchItems": string;
             "confirmField": string;
+            "reason": string;
         };
         "ui": {
             "form": {
@@ -570,6 +599,16 @@ export type I18nTranslations = {
                     "userNotFoundTitle": string;
                     "userNotFoundDescription": string;
                     "createUserInstead": string;
+                };
+                "changeStatus": {
+                    "title": string;
+                    "description": string;
+                };
+                "cancelSession": {
+                    "title": string;
+                    "description": string;
+                    "message": string;
+                    "note": string;
                 };
             };
             "health": {
@@ -1252,6 +1291,26 @@ export type I18nTranslations = {
                     "name": string;
                 };
                 "readAll": {
+                    "name": string;
+                };
+            };
+            "sessions": {
+                "read": {
+                    "name": string;
+                };
+                "create": {
+                    "name": string;
+                };
+                "update": {
+                    "name": string;
+                };
+                "delete": {
+                    "name": string;
+                };
+                "readAll": {
+                    "name": string;
+                };
+                "export": {
                     "name": string;
                 };
             };

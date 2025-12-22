@@ -4,6 +4,3 @@ export enum SessionStatus {
   FINISHED = 'FINISHED',
   CANCELED = 'CANCELED',
 }
-
-
-

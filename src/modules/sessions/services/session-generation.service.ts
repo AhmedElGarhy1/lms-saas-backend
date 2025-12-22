@@ -50,6 +50,19 @@ export class SessionGenerationService extends BaseService {
       throw new Error('Class relation not loaded for group');
     }
 
+    // Cap endDate to class endDate if it exists
+    let effectiveEndDate = endDate;
+    if (classEntity.endDate) {
+      effectiveEndDate = new Date(
+        Math.min(endDate.getTime(), classEntity.endDate.getTime()),
+      );
+    }
+
+    // If effective end date is before start date, nothing to generate
+    if (effectiveEndDate < startDate) {
+      return [];
+    }
+
     const scheduleItems = group.scheduleItems;
     if (!scheduleItems || scheduleItems.length === 0) {
       // No schedule items, nothing to generate
@@ -65,7 +78,7 @@ export class SessionGenerationService extends BaseService {
     for (const scheduleItem of scheduleItems) {
       const dates = this.getDatesForDayOfWeek(
         startDate,
-        endDate,
+        effectiveEndDate,
         scheduleItem.day,
       );
 
@@ -132,7 +145,13 @@ export class SessionGenerationService extends BaseService {
       }
     }
 
+    // If no sessions to create (all skipped due to conflicts/duplicates or date range issues), return empty array
+    if (sessionsToCreate.length === 0) {
+      return [];
+    }
+
     // Bulk insert sessions
+    // Note: bulkInsert automatically populates createdBy from RequestContext
     const createdSessions =
       await this.sessionsRepository.bulkInsert(sessionsToCreate);
 
@@ -150,6 +169,7 @@ export class SessionGenerationService extends BaseService {
   /**
    * Generate initial sessions for a group (2 months from class.startDate or current date)
    * Called when a class transitions from NOT_STARTED to ACTIVE
+   * Will not generate sessions beyond the class endDate if it exists
    * @param groupId - Group ID
    * @param actor - Actor performing the action
    */
@@ -173,12 +193,26 @@ export class SessionGenerationService extends BaseService {
     const endDate = new Date(startDate);
     endDate.setMonth(endDate.getMonth() + 2); // 2 months ahead
 
-    return this.generateSessionsForGroup(groupId, startDate, endDate, actor);
+    // Cap endDate to class endDate if it exists
+    let effectiveEndDate = endDate;
+    if (classEntity.endDate) {
+      effectiveEndDate = new Date(
+        Math.min(endDate.getTime(), classEntity.endDate.getTime()),
+      );
+    }
+
+    return this.generateSessionsForGroup(
+      groupId,
+      startDate,
+      effectiveEndDate,
+      actor,
+    );
   }
 
   /**
    * Generate buffer sessions for a group (4 weeks if buffer < 4 weeks)
    * Calculates required sessions based on schedule items count
+   * Will not generate sessions beyond the class endDate if it exists
    * @param groupId - Group ID
    * @param actor - Actor performing the action
    */
@@ -186,8 +220,9 @@ export class SessionGenerationService extends BaseService {
     groupId: string,
     actor: ActorUser,
   ): Promise<Session[]> {
-    // Fetch group with scheduleItems to calculate required buffer
+    // Fetch group with class and scheduleItems to calculate required buffer
     const group = await this.groupsRepository.findByIdOrThrow(groupId, [
+      'class',
       'scheduleItems',
     ]);
 
@@ -233,7 +268,21 @@ export class SessionGenerationService extends BaseService {
     const endDate = new Date(now);
     endDate.setDate(endDate.getDate() + 28); // 4 weeks = 28 days
 
-    return this.generateSessionsForGroup(groupId, startDate, endDate, actor);
+    // Cap endDate to class endDate if it exists
+    let effectiveEndDate = endDate;
+    const classEntity = group.class;
+    if (classEntity?.endDate) {
+      effectiveEndDate = new Date(
+        Math.min(endDate.getTime(), classEntity.endDate.getTime()),
+      );
+    }
+
+    return this.generateSessionsForGroup(
+      groupId,
+      startDate,
+      effectiveEndDate,
+      actor,
+    );
   }
 
   /**

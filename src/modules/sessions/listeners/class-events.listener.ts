@@ -8,7 +8,6 @@ import {
 import { ClassStatus } from '@/modules/classes/enums/class-status.enum';
 import { SessionGenerationService } from '../services/session-generation.service';
 import { GroupsRepository } from '@/modules/classes/repositories/groups.repository';
-import { ScheduleItemsRepository } from '@/modules/classes/repositories/schedule-items.repository';
 import { SessionsService } from '../services/sessions.service';
 
 /**
@@ -22,7 +21,6 @@ export class ClassEventsListener {
   constructor(
     private readonly sessionGenerationService: SessionGenerationService,
     private readonly groupsRepository: GroupsRepository,
-    private readonly scheduleItemsRepository: ScheduleItemsRepository,
     private readonly sessionsService: SessionsService,
   ) {}
 
@@ -74,48 +72,42 @@ export class ClassEventsListener {
   }
 
   /**
-   * Handle ClassUpdatedEvent - regenerate sessions if duration changed
-   * Only regenerates when duration field is in changedFields
+   * Handle ClassUpdatedEvent - update session endTime if duration changed
+   * Only updates when duration field is in changedFields
    */
   @OnEvent(ClassEvents.UPDATED)
   async handleClassUpdated(event: ClassUpdatedEvent) {
     const { classEntity, actor, changedFields } = event;
 
-    // Only regenerate if duration was updated
+    // Only update if duration was updated
     if (
       !changedFields ||
       !Array.isArray(changedFields) ||
       !changedFields.includes('duration')
     ) {
-      return; // Skip regeneration if duration didn't change
+      return; // Skip update if duration didn't change
     }
 
-    // Get all groups for this class
-    const groups = await this.groupsRepository.findByClassId(classEntity.id);
-
-    // Regenerate sessions for all groups in the class
-    for (const group of groups) {
-      try {
-        const scheduleItems = await this.scheduleItemsRepository.findByGroupId(
-          group.id,
+    try {
+      // Update endTime for all future SCHEDULED sessions in the class
+      const result =
+        await this.sessionsService.updateSessionsEndTimeForDurationChange(
+          classEntity.id,
+          classEntity.duration,
+          actor,
         );
 
-        for (const scheduleItem of scheduleItems) {
-          await this.sessionsService.regenerateSessionsForScheduleItem(
-            scheduleItem.id,
-            actor,
-          );
-        }
-      } catch (error) {
-        // Log error but continue with other groups
-        // This prevents one group's failure from blocking others
-        this.logger.error(
-          `Failed to regenerate sessions for group ${group.id} after duration change: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
-          error instanceof Error ? error.stack : undefined,
-        );
-      }
+      this.logger.log(
+        `Updated ${result.updated} sessions and detected ${result.conflicts} conflicts for class ${classEntity.id} after duration change`,
+      );
+    } catch (error) {
+      // Log error but don't throw - this prevents blocking other event handlers
+      this.logger.error(
+        `Failed to update sessions for class ${classEntity.id} after duration change: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        error instanceof Error ? error.stack : undefined,
+      );
     }
   }
 }

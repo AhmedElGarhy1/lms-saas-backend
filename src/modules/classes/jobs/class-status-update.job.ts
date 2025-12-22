@@ -8,6 +8,9 @@ import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.
 import { ClassEvents } from '@/shared/events/classes.events.enum';
 import { ClassStatusChangedEvent } from '../events/class.events';
 import { createSystemActor } from '@/shared/common/utils/system-actor.util';
+import { RequestContext } from '@/shared/common/context/request.context';
+import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
+import { Locale } from '@/shared/common/enums/locale.enum';
 
 /**
  * Cronjob to automatically update class statuses based on startDate and endDate
@@ -29,6 +32,25 @@ export class ClassStatusUpdateJob {
    */
   @Cron(CronExpression.EVERY_HOUR)
   async updateClassStatuses(): Promise<void> {
+    this.logger.log('Starting automatic class status update');
+
+    // Create RequestContext with system user ID so BaseEntity hooks can populate createdBy/updatedBy
+    // RequestContext.run() creates a new async context that persists for all async operations including event listeners
+    await RequestContext.run(
+      {
+        userId: SYSTEM_USER_ID,
+        locale: Locale.EN,
+      },
+      async () => {
+        await this.executeStatusUpdates();
+      },
+    );
+  }
+
+  /**
+   * Main status update logic - extracted for testability and clarity
+   */
+  private async executeStatusUpdates(): Promise<void> {
     const startTime = Date.now();
     const now = new Date();
 
@@ -130,6 +152,7 @@ export class ClassStatusUpdateJob {
         'Error during automatic class status update',
         error instanceof Error ? error.stack : String(error),
       );
+      throw error; // Re-throw to ensure cron framework knows it failed
     }
   }
 }

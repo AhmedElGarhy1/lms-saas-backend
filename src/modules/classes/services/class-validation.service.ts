@@ -34,11 +34,10 @@ export class ClassValidationService extends BaseService {
         new Date(currentClass.startDate).getTime();
       if (startDateChanged && currentClass.status !== ClassStatus.NOT_STARTED) {
         throw new BusinessLogicException(
-          't.messages.cannotUpdateStartDateWhenNotNotStarted' as any,
+          't.messages.cannotUpdateStartDateWhenNotNotStarted',
           {
-            resource: 't.resources.class',
             status: currentClass.status,
-          } as any,
+          },
         );
       }
     }
@@ -49,6 +48,7 @@ export class ClassValidationService extends BaseService {
           classId,
           dto.duration,
           currentClass.teacherUserProfileId,
+          dto.skipWarning,
         );
       }
     }
@@ -61,12 +61,14 @@ export class ClassValidationService extends BaseService {
    * @param classId - The class ID being updated
    * @param newDuration - The new duration value
    * @param teacherUserProfileId - The teacher's user profile ID
+   * @param skipWarning - If true, student conflicts are silently skipped
    * @throws BusinessLogicException if schedule conflicts are detected, with structured conflict data in ErrorDetail[]
    */
   async validateDurationUpdateConflicts(
     classId: string,
     newDuration: number,
     teacherUserProfileId: string,
+    skipWarning?: boolean,
   ): Promise<void> {
     const groups =
       await this.groupsRepository.findGroupsByClassIdWithScheduleAndStudents(
@@ -118,6 +120,7 @@ export class ClassValidationService extends BaseService {
         teacherUserProfileId,
         studentIds: studentIds.length > 0 ? studentIds : undefined,
         excludeGroupIds: groupIds,
+        skipWarning,
       },
     );
   }

@@ -5,6 +5,9 @@ import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationConfig } from '../config/notification.config';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { notificationKeys } from '../utils/notification-redis-key-builder';
+import { RequestContext } from '@/shared/common/context/request.context';
+import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
+import { Locale } from '@/shared/common/enums/locale.enum';
 
 /**
  * Periodic job to clean up old failed notification logs from DLQ
@@ -30,6 +33,16 @@ export class NotificationDlqCleanupJob {
    */
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async cleanupOldFailedJobs(): Promise<void> {
+    this.logger.log('Starting DLQ cleanup job');
+
+    // Create RequestContext with system user ID for consistency and activity logging
+    // RequestContext.run() creates a new async context that persists for all async operations
+    await RequestContext.run(
+      {
+        userId: SYSTEM_USER_ID,
+        locale: Locale.EN,
+      },
+      async () => {
     const startTime = Date.now();
 
     try {
@@ -86,7 +99,10 @@ export class NotificationDlqCleanupJob {
         `DLQ cleanup job failed - retentionDays: ${this.retentionDays}, duration: ${Date.now() - startTime}`,
         error instanceof Error ? error.stack : String(error),
       );
+          throw error; // Re-throw to ensure cron framework knows it failed
     }
+      },
+    );
   }
 
   /**

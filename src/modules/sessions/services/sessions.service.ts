@@ -13,17 +13,26 @@ import {
   SessionCanceledEvent,
   SessionsRegeneratedEvent,
   SessionsBulkDeletedEvent,
+  SessionConflictDetectedEvent,
 } from '../events/session.events';
 import { Session } from '../entities/session.entity';
 import { CreateSessionDto } from '../dto/create-session.dto';
 import { UpdateSessionDto } from '../dto/update-session.dto';
 import { PaginateSessionsDto } from '../dto/paginate-sessions.dto';
+import { CalendarSessionsDto } from '../dto/calendar-sessions.dto';
+import {
+  CalendarSessionsResponseDto,
+  CalendarSessionItem,
+} from '../dto/calendar-sessions-response.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { SessionStatus } from '../enums/session-status.enum';
 import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
 import { Transactional } from '@nestjs-cls/transactional';
 import { GroupsRepository } from '@/modules/classes/repositories/groups.repository';
 import { ScheduleItemsRepository } from '@/modules/classes/repositories/schedule-items.repository';
+import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
+import { DayOfWeek } from '@/modules/classes/enums/day-of-week.enum';
+import { SessionsBulkCreatedEvent } from '../events/session.events';
 
 @Injectable()
 export class SessionsService extends BaseService {
@@ -57,8 +66,29 @@ export class SessionsService extends BaseService {
 
     const teacherUserProfileId = group.class.teacherUserProfileId;
 
-    const startTime = new Date(createSessionDto.startTime);
-    const endTime = new Date(createSessionDto.endTime);
+    // Parse date and startTime, then combine them
+    const sessionDate = new Date(createSessionDto.date);
+    const [hours, minutes] = createSessionDto.startTime.split(':').map(Number);
+
+    // Validate date is in the future
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const dateOnly = new Date(sessionDate);
+    dateOnly.setHours(0, 0, 0, 0);
+    if (dateOnly < now) {
+      throw new BusinessLogicException(
+        't.messages.sessionDateMustBeInFuture',
+        {} as any,
+      );
+    }
+
+    // Create full datetime from date + time
+    const startTime = new Date(sessionDate);
+    startTime.setHours(hours, minutes, 0, 0);
+
+    // Calculate endTime from startTime + duration
+    const endTime = new Date(startTime);
+    endTime.setMinutes(endTime.getMinutes() + createSessionDto.duration);
 
     // Validate teacher conflict
     const teacherConflict =
@@ -114,9 +144,10 @@ export class SessionsService extends BaseService {
 
   /**
    * Update a session
-   * Only SCHEDULED sessions can be updated
+   * Can update title, date, startTime, and duration
+   * Only SCHEDULED sessions can have their times changed
    * @param sessionId - Session ID
-   * @param updateSessionDto - Update data
+   * @param updateSessionDto - Update data (date, startTime, duration are required)
    * @param actor - Actor performing the action
    */
   @Transactional()
@@ -127,87 +158,158 @@ export class SessionsService extends BaseService {
   ): Promise<Session> {
     const session = await this.sessionsRepository.findOneOrThrow(sessionId);
 
+    // Only SCHEDULED sessions can have their times changed
     if (session.status !== SessionStatus.SCHEDULED) {
-      throw new BusinessLogicException('t.messages.cannotDeleteSession', {
-        status: session.status,
+      const currentStatus = session.status;
+      throw new BusinessLogicException('t.messages.cannotUpdateSession', {
+        status: currentStatus,
       });
     }
 
-    // Fetch group with class to get teacherUserProfileId if time is changing
-    let teacherUserProfileId: string | undefined;
-    if (updateSessionDto.startTime || updateSessionDto.endTime) {
-      const group = await this.groupsRepository.findById(session.groupId, [
-        'class',
-      ]);
+    // Fetch group with class to get teacherUserProfileId
+    const group = await this.groupsRepository.findById(session.groupId, [
+      'class',
+    ]);
+    const teacherUserProfileId = group?.class.teacherUserProfileId;
 
-      if (group) {
-        teacherUserProfileId = group.class.teacherUserProfileId;
-      }
+    // Parse date and startTime, then combine them
+    const sessionDate = new Date(updateSessionDto.date);
+    const [hours, minutes] = updateSessionDto.startTime
+      .split(':')
+      .map(Number) as [number, number];
 
-      const newStartTime = updateSessionDto.startTime
-        ? new Date(updateSessionDto.startTime)
-        : session.startTime;
-      const newEndTime = updateSessionDto.endTime
-        ? new Date(updateSessionDto.endTime)
-        : session.endTime;
+    // Validate date is in the future
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const dateOnly = new Date(sessionDate);
+    dateOnly.setHours(0, 0, 0, 0);
+    if (dateOnly < now) {
+      throw new BusinessLogicException(
+        't.messages.sessionDateMustBeInFuture',
+        {} as any,
+      );
+    }
 
-      // Validate teacher conflict if time changed
-      if (
-        newStartTime.getTime() !== session.startTime.getTime() ||
-        newEndTime.getTime() !== session.endTime.getTime()
-      ) {
-        if (teacherUserProfileId) {
-          const teacherConflict =
-            await this.sessionValidationService.validateTeacherConflict(
-              teacherUserProfileId,
-              newStartTime,
-              newEndTime,
-              sessionId, // Exclude current session
-            );
+    // Create full datetime from date + time
+    const newStartTime = new Date(sessionDate);
+    newStartTime.setHours(hours, minutes, 0, 0);
 
-          if (teacherConflict) {
-            throw new BusinessLogicException(
-              't.messages.scheduleConflict.description',
-              { resource: 't.resources.session' },
-            );
-          }
-        }
+    // Calculate endTime from startTime + duration
+    const newEndTime = new Date(newStartTime);
+    newEndTime.setMinutes(newEndTime.getMinutes() + updateSessionDto.duration);
 
-        // Validate group conflict (overlapping sessions in same group)
-        const groupConflict =
-          await this.sessionValidationService.validateGroupConflict(
-            session.groupId,
+    // Validate teacher conflict if time changed
+    const timeChanged =
+      newStartTime.getTime() !== session.startTime.getTime() ||
+      newEndTime.getTime() !== session.endTime.getTime();
+
+    if (timeChanged) {
+      if (teacherUserProfileId) {
+        const teacherConflict =
+          await this.sessionValidationService.validateTeacherConflict(
+            teacherUserProfileId,
             newStartTime,
             newEndTime,
             sessionId, // Exclude current session
           );
 
-        if (groupConflict) {
+        if (teacherConflict) {
           throw new BusinessLogicException(
             't.messages.scheduleConflict.description',
             { resource: 't.resources.session' },
           );
         }
       }
+
+      // Validate group conflict (overlapping sessions in same group)
+      const groupConflict =
+        await this.sessionValidationService.validateGroupConflict(
+          session.groupId,
+          newStartTime,
+          newEndTime,
+          sessionId, // Exclude current session
+        );
+
+      if (groupConflict) {
+        throw new BusinessLogicException(
+          't.messages.scheduleConflict.description',
+          { resource: 't.resources.session' },
+        );
+      }
+    }
+
+    const updateData: {
+      title?: string;
+      startTime: Date;
+      endTime: Date;
+    } = {
+      startTime: newStartTime,
+      endTime: newEndTime,
+    };
+
+    if (updateSessionDto.title !== undefined) {
+      updateData.title = updateSessionDto.title;
     }
 
     const updatedSession = await this.sessionsRepository.updateThrow(
       sessionId,
-      {
-        title: updateSessionDto.title,
-        startTime: updateSessionDto.startTime
-          ? new Date(updateSessionDto.startTime)
-          : undefined,
-        endTime: updateSessionDto.endTime
-          ? new Date(updateSessionDto.endTime)
-          : undefined,
-      },
+      updateData,
     );
 
     await this.typeSafeEventEmitter.emitAsync(
       SessionEvents.UPDATED,
       new SessionUpdatedEvent(updatedSession, actor, actor.centerId!),
     );
+
+    return updatedSession;
+  }
+
+  /**
+   * Update session status
+   * Handles status transitions and emits appropriate events
+   * @param sessionId - Session ID
+   * @param status - New status
+   * @param actor - Actor performing the action
+   */
+  @Transactional()
+  async updateSessionStatus(
+    sessionId: string,
+    status: SessionStatus,
+    actor: ActorUser,
+  ): Promise<Session> {
+    const session = await this.sessionsRepository.findOneOrThrow(sessionId);
+    const previousStatus = session.status;
+
+    // If status hasn't changed, return early
+    if (status === previousStatus) {
+      return session;
+    }
+
+    // Validate cancellation: only SCHEDULED sessions can be canceled
+    if (status === SessionStatus.CANCELED) {
+      await this.sessionValidationService.validateSessionCancellation(
+        sessionId,
+      );
+    }
+
+    const updatedSession = await this.sessionsRepository.updateThrow(
+      sessionId,
+      { status },
+    );
+
+    // Emit appropriate event based on status change
+    if (status === SessionStatus.CANCELED) {
+      await this.typeSafeEventEmitter.emitAsync(
+        SessionEvents.CANCELED,
+        new SessionCanceledEvent(updatedSession, actor, actor.centerId!),
+      );
+    } else {
+      // For other status changes, emit UPDATED event
+      await this.typeSafeEventEmitter.emitAsync(
+        SessionEvents.UPDATED,
+        new SessionUpdatedEvent(updatedSession, actor, actor.centerId!),
+      );
+    }
 
     return updatedSession;
   }
@@ -233,30 +335,6 @@ export class SessionsService extends BaseService {
   }
 
   /**
-   * Cancel a session
-   * Sets status to CANCELED
-   * TODO: Trigger refund logic
-   * @param sessionId - Session ID
-   * @param actor - Actor performing the action
-   */
-  @Transactional()
-  async cancelSession(sessionId: string, actor: ActorUser): Promise<Session> {
-    const updatedSession = await this.sessionsRepository.updateThrow(
-      sessionId,
-      {
-        status: SessionStatus.CANCELED,
-      },
-    );
-
-    await this.typeSafeEventEmitter.emitAsync(
-      SessionEvents.CANCELED,
-      new SessionCanceledEvent(updatedSession, actor, actor.centerId!),
-    );
-
-    return updatedSession;
-  }
-
-  /**
    * Paginate sessions with filtering and search capabilities.
    *
    * @param paginateDto - Pagination and filter parameters
@@ -268,6 +346,87 @@ export class SessionsService extends BaseService {
     actor: ActorUser,
   ): Promise<Pagination<Session>> {
     return this.sessionsRepository.paginateSessions(paginateDto, actor);
+  }
+
+  /**
+   * Get sessions for calendar view
+   * Returns sessions in calendar-friendly format with all necessary metadata
+   *
+   * @param dto - Calendar sessions DTO with filters and date range
+   * @param actor - Actor performing the action
+   * @returns Calendar sessions response with items, dateRange, and total
+   */
+  async getCalendarSessions(
+    dto: CalendarSessionsDto,
+    actor: ActorUser,
+  ): Promise<CalendarSessionsResponseDto> {
+    // Get sessions and total count
+    const sessions = await this.sessionsRepository.getCalendarSessions(
+      dto,
+      actor,
+    );
+    const total = await this.sessionsRepository.countCalendarSessions(
+      dto,
+      actor,
+    );
+
+    // Transform sessions to calendar format with nested relations
+    const items: CalendarSessionItem[] = sessions.map((session) => {
+      // Type assertion for loaded relations
+      const sessionWithRelations = session as Session & {
+        group?: {
+          id?: string;
+          name?: string;
+          class?: {
+            id?: string;
+            name?: string;
+            teacher?: {
+              user?: {
+                name?: string;
+              };
+            };
+          };
+        };
+      };
+
+      const group = sessionWithRelations.group;
+      const classEntity = group?.class;
+      const teacher = classEntity?.teacher;
+      const teacherUser = teacher?.user;
+
+      return {
+        id: session.id,
+        title: session.title || 'Session',
+        startTime: session.startTime.toISOString(),
+        endTime: session.endTime.toISOString(),
+        status: session.status,
+        groupId: session.groupId,
+        isExtraSession: session.isExtraSession,
+        group: {
+          id: group?.id || session.groupId,
+          name: group?.name || '',
+          class: {
+            id: classEntity?.id || '',
+            name: classEntity?.name || '',
+            teacher: {
+              user: {
+                name: teacherUser?.name || '',
+              },
+            },
+          },
+        },
+      };
+    });
+
+    return {
+      items,
+      meta: {
+        totalItems: total,
+        itemsPerPage: 1000,
+        totalPages: 1,
+        currentPage: 1,
+      },
+    };
   }
 
   /**
@@ -290,6 +449,144 @@ export class SessionsService extends BaseService {
     }
 
     return session;
+  }
+
+  /**
+   * Update sessions endTime when class duration changes
+   * Only updates future SCHEDULED sessions (isExtraSession: false)
+   * Validates conflicts and skips sessions with conflicts
+   * @param classId - Class ID
+   * @param newDuration - New duration in minutes
+   * @param actor - Actor performing the action
+   * @returns Object with updated and conflicts counts
+   */
+  @Transactional()
+  async updateSessionsEndTimeForDurationChange(
+    classId: string,
+    newDuration: number,
+    actor: ActorUser,
+  ): Promise<{ updated: number; conflicts: number }> {
+    const groups = await this.groupsRepository.findByClassId(classId);
+
+    let totalUpdated = 0;
+    let totalConflicts = 0;
+
+    for (const group of groups) {
+      const groupId = group.id;
+
+      // Get group with class to access teacherUserProfileId
+      const groupWithClass = await this.groupsRepository.findByIdOrThrow(
+        groupId,
+        ['class'],
+      );
+      const teacherUserProfileId = groupWithClass.class.teacherUserProfileId;
+
+      // Find all future SCHEDULED sessions for this group (excluding extra sessions)
+      const futureSessions =
+        await this.sessionsRepository.findFutureScheduledSessionsByGroup(
+          groupId,
+        );
+
+      // Filter to only scheduled sessions (not extra)
+      const scheduledSessions = futureSessions.filter((s) => !s.isExtraSession);
+
+      const sessionsToUpdate: Session[] = [];
+      const conflictSessions: Session[] = [];
+
+      for (const session of scheduledSessions) {
+        // Calculate new endTime = startTime + newDuration (in minutes)
+        const newEndTime = new Date(session.startTime);
+        newEndTime.setMinutes(newEndTime.getMinutes() + newDuration);
+
+        // Validate teacher conflict
+        const teacherConflict =
+          await this.sessionValidationService.validateTeacherConflict(
+            teacherUserProfileId,
+            session.startTime,
+            newEndTime,
+            session.id, // Exclude current session
+          );
+
+        if (teacherConflict) {
+          // Emit conflict detection event
+          await this.typeSafeEventEmitter.emitAsync(
+            SessionEvents.CONFLICT_DETECTED,
+            new SessionConflictDetectedEvent(
+              groupId,
+              session.scheduleItemId || '',
+              session.startTime,
+              newEndTime,
+              'TEACHER' as const,
+              teacherConflict.sessionId,
+              teacherConflict.startTime,
+              teacherConflict.endTime,
+              actor,
+              String(actor.centerId),
+            ),
+          );
+          conflictSessions.push(session);
+          totalConflicts++;
+          continue;
+        }
+
+        // Validate group conflict
+        const groupConflict =
+          await this.sessionValidationService.validateGroupConflict(
+            groupId,
+            session.startTime,
+            newEndTime,
+            session.id, // Exclude current session
+          );
+
+        if (groupConflict) {
+          // Emit conflict detection event
+          await this.typeSafeEventEmitter.emitAsync(
+            SessionEvents.CONFLICT_DETECTED,
+            new SessionConflictDetectedEvent(
+              groupId,
+              session.scheduleItemId || '',
+              session.startTime,
+              newEndTime,
+              'GROUP' as const,
+              groupConflict.sessionId,
+              groupConflict.startTime,
+              groupConflict.endTime,
+              actor,
+              String(actor.centerId),
+            ),
+          );
+          conflictSessions.push(session);
+          totalConflicts++;
+          continue;
+        }
+
+        // No conflict, add to update list
+        sessionsToUpdate.push(session);
+      }
+
+      // Update sessions that don't have conflicts
+      for (const session of sessionsToUpdate) {
+        const newEndTime = new Date(session.startTime);
+        newEndTime.setMinutes(newEndTime.getMinutes() + newDuration);
+
+        await this.sessionsRepository.updateThrow(session.id, {
+          endTime: newEndTime,
+        });
+
+        // Emit updated event for each session
+        const updatedSession = await this.sessionsRepository.findOneOrThrow(
+          session.id,
+        );
+        await this.typeSafeEventEmitter.emitAsync(
+          SessionEvents.UPDATED,
+          new SessionUpdatedEvent(updatedSession, actor, actor.centerId!),
+        );
+
+        totalUpdated++;
+      }
+    }
+
+    return { updated: totalUpdated, conflicts: totalConflicts };
   }
 
   /**
@@ -368,6 +665,413 @@ export class SessionsService extends BaseService {
         actor,
         actor.centerId!,
       ),
+    );
+  }
+
+  /**
+   * Update sessions intelligently when schedule items change
+   * Compares old vs new schedule items and updates sessions accordingly:
+   * - Added items: Generate new sessions
+   * - Removed items: Delete future sessions
+   * - Modified items: Update existing sessions (move to new day/time)
+   * - Unchanged items: Leave as-is
+   * @param groupId - Group ID
+   * @param oldScheduleItems - Old schedule items
+   * @param newScheduleItems - New schedule items
+   * @param actor - Actor performing the action
+   * @returns Object with counts of added, removed, updated, and conflicts
+   */
+  @Transactional()
+  async updateSessionsForScheduleItemsChange(
+    groupId: string,
+    oldScheduleItems: ScheduleItem[],
+    newScheduleItems: ScheduleItem[],
+    actor: ActorUser,
+  ): Promise<{
+    added: number;
+    removed: number;
+    updated: number;
+    conflicts: number;
+  }> {
+    // Get group with class to access teacher and duration
+    const group = await this.groupsRepository.findByIdOrThrow(groupId, [
+      'class',
+    ]);
+    const teacherUserProfileId = group.class.teacherUserProfileId;
+    const duration = group.class.duration; // in minutes
+
+    // Helper to get schedule item key
+    const getScheduleItemKey = (item: {
+      day: DayOfWeek;
+      startTime: string;
+    }): string => `${item.day}-${item.startTime}`;
+
+    // Create maps for comparison
+    const oldMap = new Map(
+      oldScheduleItems.map((item) => [getScheduleItemKey(item), item]),
+    );
+    const newMap = new Map(
+      newScheduleItems.map((item) => [getScheduleItemKey(item), item]),
+    );
+
+    let addedCount = 0;
+    let removedCount = 0;
+    let updatedCount = 0;
+    let conflictsCount = 0;
+
+    // Process removed items (exist in old but not in new)
+    for (const [key, oldItem] of oldMap) {
+      if (!newMap.has(key)) {
+        // Schedule item was removed - delete future sessions for this item
+        const sessionsToDelete =
+          await this.sessionsRepository.findFutureScheduledSessionsByScheduleItem(
+            oldItem.id,
+          );
+
+        // Filter to only scheduled sessions (not extra)
+        const sessionsToDeleteFiltered = sessionsToDelete.filter(
+          (s) => !s.isExtraSession,
+        );
+
+        const deletedSessionIds: string[] = [];
+        for (const session of sessionsToDeleteFiltered) {
+          await this.sessionsRepository.remove(session.id);
+          deletedSessionIds.push(session.id);
+        }
+
+        if (deletedSessionIds.length > 0) {
+          await this.typeSafeEventEmitter.emitAsync(
+            SessionEvents.BULK_DELETED,
+            new SessionsBulkDeletedEvent(
+              deletedSessionIds,
+              actor,
+              actor.centerId!,
+            ),
+          );
+          removedCount += deletedSessionIds.length;
+        }
+      }
+    }
+
+    // Process added items (exist in new but not in old)
+    for (const [key, newScheduleItem] of newMap) {
+      if (!oldMap.has(key)) {
+        // Schedule item was added - generate new sessions for this specific item
+        const now = new Date();
+        const endDate = new Date(now);
+        endDate.setMonth(endDate.getMonth() + 2);
+
+        // Cap endDate to class endDate if it exists
+        let effectiveEndDate = endDate;
+        if (group.class.endDate) {
+          effectiveEndDate = new Date(
+            Math.min(endDate.getTime(), group.class.endDate.getTime()),
+          );
+        }
+
+        if (effectiveEndDate >= now) {
+          // Generate sessions for this specific schedule item
+          const dates = this.getDatesForDayOfWeek(
+            now,
+            effectiveEndDate,
+            newScheduleItem.day,
+          );
+
+          const sessionsToCreate: Partial<Session>[] = [];
+
+          for (const date of dates) {
+            // Calculate startTime and endTime
+            const [hours, minutes] = newScheduleItem.startTime
+              .split(':')
+              .map(Number);
+            const sessionStartTime = new Date(date);
+            sessionStartTime.setHours(hours, minutes, 0, 0);
+
+            const sessionEndTime = new Date(sessionStartTime);
+            sessionEndTime.setMinutes(sessionEndTime.getMinutes() + duration);
+
+            // Check for teacher conflict
+            const conflict =
+              await this.sessionValidationService.validateTeacherConflict(
+                teacherUserProfileId,
+                sessionStartTime,
+                sessionEndTime,
+              );
+
+            if (conflict) {
+              await this.typeSafeEventEmitter.emitAsync(
+                SessionEvents.CONFLICT_DETECTED,
+                new SessionConflictDetectedEvent(
+                  groupId,
+                  newScheduleItem.id,
+                  sessionStartTime,
+                  sessionEndTime,
+                  'TEACHER' as const,
+                  conflict.sessionId,
+                  conflict.startTime,
+                  conflict.endTime,
+                  actor,
+                  String(actor.centerId),
+                ),
+              );
+              conflictsCount++;
+              continue;
+            }
+
+            // Check for duplicate (same groupId + startTime)
+            const existingSessions =
+              await this.sessionsRepository.findByGroupId(groupId, {
+                startTimeFrom: sessionStartTime,
+                startTimeTo: sessionStartTime,
+              });
+
+            if (existingSessions.length > 0) {
+              // Skip if duplicate exists
+              continue;
+            }
+
+            sessionsToCreate.push({
+              groupId,
+              scheduleItemId: newScheduleItem.id,
+              startTime: sessionStartTime,
+              endTime: sessionEndTime,
+              status: SessionStatus.SCHEDULED,
+              isExtraSession: false,
+            });
+          }
+
+          if (sessionsToCreate.length > 0) {
+            const createdSessions =
+              await this.sessionsRepository.bulkInsert(sessionsToCreate);
+
+            if (createdSessions.length > 0) {
+              await this.typeSafeEventEmitter.emitAsync(
+                SessionEvents.BULK_CREATED,
+                new SessionsBulkCreatedEvent(
+                  createdSessions,
+                  actor,
+                  actor.centerId!,
+                ),
+              );
+            }
+
+            addedCount += createdSessions.length;
+          }
+        }
+      }
+    }
+
+    // Process modified items (exist in both but day or time changed)
+    for (const [key, oldItem] of oldMap) {
+      const newItem = newMap.get(key);
+      if (
+        newItem &&
+        (oldItem.day !== newItem.day || oldItem.startTime !== newItem.startTime)
+      ) {
+        // Item was modified - update existing sessions
+        const futureSessions =
+          await this.sessionsRepository.findFutureScheduledSessionsByScheduleItem(
+            oldItem.id,
+          );
+
+        // Filter to only scheduled sessions (not extra)
+        const scheduledSessions = futureSessions.filter(
+          (s) => !s.isExtraSession,
+        );
+
+        // Map DayOfWeek enum to JavaScript day index
+        const dayMap: Record<DayOfWeek, number> = {
+          [DayOfWeek.SUN]: 0,
+          [DayOfWeek.MON]: 1,
+          [DayOfWeek.TUE]: 2,
+          [DayOfWeek.WED]: 3,
+          [DayOfWeek.THU]: 4,
+          [DayOfWeek.FRI]: 5,
+          [DayOfWeek.SAT]: 6,
+        };
+
+        const oldDayIndex = dayMap[oldItem.day];
+        const newDayIndex = dayMap[newItem.day];
+
+        for (const session of scheduledSessions) {
+          // Calculate new session times based on new schedule item
+          const sessionDate = new Date(session.startTime);
+
+          // Calculate new date - only move if day changed
+          const sessionDayOfWeek = sessionDate.getDay();
+          let newSessionDate: Date;
+
+          if (oldItem.day !== newItem.day) {
+            // Day changed - move session to new day
+            // Calculate days difference to move from old day to new day
+            // Handle wrap-around (e.g., if old is Friday (5) and new is Monday (1))
+            let daysDiff = newDayIndex - oldDayIndex;
+            if (daysDiff < 0) {
+              daysDiff += 7;
+            }
+
+            // Calculate offset from session's current day to old day
+            const currentOffset = (sessionDayOfWeek - oldDayIndex + 7) % 7;
+            // Move to new day: subtract offset to get to old day, then add daysDiff
+            newSessionDate = new Date(sessionDate);
+            newSessionDate.setDate(
+              newSessionDate.getDate() - currentOffset + daysDiff,
+            );
+          } else {
+            // If only time changed, keep the same date
+            newSessionDate = new Date(sessionDate);
+          }
+
+          // Calculate new startTime with new time
+          const [hours, minutes] = newItem.startTime.split(':').map(Number);
+          const newStartTime = new Date(newSessionDate);
+          newStartTime.setHours(hours, minutes, 0, 0);
+
+          // Calculate new endTime
+          const newEndTime = new Date(newStartTime);
+          newEndTime.setMinutes(newEndTime.getMinutes() + duration);
+
+          // Validate teacher conflict
+          const teacherConflict =
+            await this.sessionValidationService.validateTeacherConflict(
+              teacherUserProfileId,
+              newStartTime,
+              newEndTime,
+              session.id,
+            );
+
+          if (teacherConflict) {
+            await this.typeSafeEventEmitter.emitAsync(
+              SessionEvents.CONFLICT_DETECTED,
+              new SessionConflictDetectedEvent(
+                groupId,
+                newItem.id,
+                newStartTime,
+                newEndTime,
+                'TEACHER' as const,
+                teacherConflict.sessionId,
+                teacherConflict.startTime,
+                teacherConflict.endTime,
+                actor,
+                String(actor.centerId),
+              ),
+            );
+            conflictsCount++;
+            continue;
+          }
+
+          // Validate group conflict
+          const groupConflict =
+            await this.sessionValidationService.validateGroupConflict(
+              groupId,
+              newStartTime,
+              newEndTime,
+              session.id,
+            );
+
+          if (groupConflict) {
+            await this.typeSafeEventEmitter.emitAsync(
+              SessionEvents.CONFLICT_DETECTED,
+              new SessionConflictDetectedEvent(
+                groupId,
+                newItem.id,
+                newStartTime,
+                newEndTime,
+                'GROUP' as const,
+                groupConflict.sessionId,
+                groupConflict.startTime,
+                groupConflict.endTime,
+                actor,
+                String(actor.centerId),
+              ),
+            );
+            conflictsCount++;
+            continue;
+          }
+
+          // No conflict, update the session
+          const updatedSession = await this.sessionsRepository.updateThrow(
+            session.id,
+            {
+              scheduleItemId: newItem.id,
+              startTime: newStartTime,
+              endTime: newEndTime,
+            },
+          );
+
+          await this.typeSafeEventEmitter.emitAsync(
+            SessionEvents.UPDATED,
+            new SessionUpdatedEvent(updatedSession, actor, actor.centerId!),
+          );
+
+          updatedCount++;
+        }
+      }
+    }
+
+    return {
+      added: addedCount,
+      removed: removedCount,
+      updated: updatedCount,
+      conflicts: conflictsCount,
+    };
+  }
+
+  /**
+   * Get all dates for a specific day of week within a date range
+   * @param startDate - Start date (inclusive)
+   * @param endDate - End date (inclusive)
+   * @param dayOfWeek - Day of week (Mon, Tue, Wed, etc.)
+   * @returns Array of dates matching the day of week
+   */
+  private getDatesForDayOfWeek(
+    startDate: Date,
+    endDate: Date,
+    dayOfWeek: DayOfWeek,
+  ): Date[] {
+    const dates: Date[] = [];
+    const dayMap: Record<DayOfWeek, number> = {
+      [DayOfWeek.MON]: 1,
+      [DayOfWeek.TUE]: 2,
+      [DayOfWeek.WED]: 3,
+      [DayOfWeek.THU]: 4,
+      [DayOfWeek.FRI]: 5,
+      [DayOfWeek.SAT]: 6,
+      [DayOfWeek.SUN]: 0,
+    };
+
+    const targetDay = dayMap[dayOfWeek];
+    const currentDate = new Date(startDate);
+
+    while (currentDate <= endDate) {
+      if (currentDate.getDay() === targetDay) {
+        dates.push(new Date(currentDate));
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return dates;
+  }
+
+  /**
+   * Extract time string (HH:mm) from a Date object
+   * @param date - Date object
+   * @returns Time string in HH:mm format
+   */
+  private getTimeFromDate(date: Date): string {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  /**
+   * Calculate duration in minutes from session start and end times
+   * @param session - Session entity
+   * @returns Duration in minutes
+   */
+  private getDurationFromSession(session: Session): number {
+    return Math.round(
+      (session.endTime.getTime() - session.startTime.getTime()) / 60000,
     );
   }
 }

@@ -120,13 +120,17 @@
 [x] Exists decoartor make it context aware and able to validate if resource related to center or not then cleanup code specialy class validate resource belong to center
 [x] when notification sending fail all events fail including center creating user or branch
 [x] update branch and center entities with reasonable parameters
-[ ] other statuses for finsihed classes
+[x] other statuses for finsihed classes
+[x] update class should update only class data and studenty payment and teacher payment moved to seprate endpoints and dialogs
+[x] create/update session should include startTime, day, and duration and endDate can be calculated automaticly
+[x] teacher conflict is error, student conflict is worning with "continue anyway"
+[x] correct display for each calender type Month, Day, Week for ux
 [ ] consider adding withDetailes flag and use it in backend
 [ ] submodule for permissions, RoleName, sortable columns, other is okay
 [ ] activity log decorator
-[ ] notifications sometimese doesn't get sent
+[ ]? notifications sometimese doesn't get sent
 [ ] handle timezone in frontend and backend and transformation
-[ ] teacher conflict is error, student conflict is worning with "continue anyway"
+[ ] before session by amount of time (specified somewhere) the session can be start for attendance
 
 [ ] no module export repository
 [ ] fix rest of eslint erros

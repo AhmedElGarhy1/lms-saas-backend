@@ -132,7 +132,8 @@ export class ScheduleService extends BaseService {
 
   /**
    * Validates schedule items and checks for conflicts with teachers and/or students.
-   * Throws ScheduleConflictException if any conflicts are found, with combined details.
+   * Teacher conflicts always throw errors (blocking).
+   * Student conflicts throw errors unless skipWarning is true (non-blocking).
    *
    * @param scheduleItems - Schedule items to validate and check for conflicts
    * @param duration - Duration in minutes (from class)
@@ -140,7 +141,8 @@ export class ScheduleService extends BaseService {
    * @param options.teacherUserProfileId - Optional teacher ID to check conflicts for
    * @param options.studentIds - Optional array of student IDs to check conflicts for
    * @param options.excludeGroupIds - Optional group IDs to exclude from conflict check
-   * @throws ScheduleConflictException if any conflicts are detected, with combined teacher and student conflict details
+   * @param options.skipWarning - If true, student conflicts are silently skipped (not logged, not thrown)
+   * @throws ScheduleConflictException if teacher conflicts are detected, or if student conflicts are detected and skipWarning is false/undefined
    */
   async validateScheduleConflicts(
     scheduleItems: ScheduleItemDto[],
@@ -149,12 +151,14 @@ export class ScheduleService extends BaseService {
       teacherUserProfileId?: string;
       studentIds?: string[];
       excludeGroupIds?: string[];
+      skipWarning?: boolean;
     },
   ): Promise<void> {
     this.validateScheduleItems(scheduleItems, duration);
 
     const details: ErrorDetail[] = [];
 
+    // Check teacher conflicts - always throw if found (blocking)
     if (options.teacherUserProfileId) {
       const teacherConflict = await this.checkTeacherScheduleConflicts(
         options.teacherUserProfileId,
@@ -175,6 +179,7 @@ export class ScheduleService extends BaseService {
       }
     }
 
+    // Check student conflicts - only throw if skipWarning is false/undefined
     if (options.studentIds && options.studentIds.length > 0) {
       const studentConflicts = await this.checkStudentScheduleConflicts(
         options.studentIds,
@@ -184,19 +189,23 @@ export class ScheduleService extends BaseService {
       );
 
       if (studentConflicts.length > 0) {
-        details.push(
-          ...studentConflicts.map((conflict) => ({
-            field: 'student',
-            value: conflict,
-            message: {
-              key: 't.messages.validationFailed',
-              args: {},
-            } as TranslationMessage,
-          })),
-        );
+        // If skipWarning is true, silently skip student conflicts (don't add to details)
+        if (!options.skipWarning) {
+          details.push(
+            ...studentConflicts.map((conflict) => ({
+              field: 'student',
+              value: conflict,
+              message: {
+                key: 't.messages.validationFailed',
+                args: {},
+              } as TranslationMessage,
+            })),
+          );
+        }
       }
     }
 
+    // Throw if there are any conflicts (teacher conflicts always included, student conflicts only if skipWarning is false)
     if (details.length > 0) {
       throw new ScheduleConflictException(
         't.messages.validationFailed',

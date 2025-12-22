@@ -24,12 +24,14 @@ export class GroupValidationService extends BaseService {
    * @param scheduleItems - Schedule items to validate
    * @param excludeGroupIds - Group IDs to exclude from conflict checks
    * @param groupId - The group ID (for fetching student IDs during updates)
+   * @param skipWarning - If true, student conflicts are silently skipped
    */
   async validateScheduleCore(
     classEntity: Class,
     scheduleItems: ScheduleItemDto[] | undefined,
     excludeGroupIds?: string[],
     groupId?: string,
+    skipWarning?: boolean,
   ): Promise<void> {
     if (!scheduleItems) {
       return;
@@ -50,6 +52,7 @@ export class GroupValidationService extends BaseService {
         studentIds:
           studentIds && studentIds.length > 0 ? studentIds : undefined,
         excludeGroupIds,
+        skipWarning,
       },
     );
   }
@@ -59,6 +62,7 @@ export class GroupValidationService extends BaseService {
     scheduleItems: ScheduleItemDto[] | undefined,
     excludeGroupIds?: string[],
     groupId?: string,
+    skipWarning?: boolean,
   ): Promise<Class> {
     const classEntity = await this.classesRepository.findOneOrThrow(classId);
 
@@ -67,6 +71,7 @@ export class GroupValidationService extends BaseService {
       scheduleItems,
       excludeGroupIds,
       groupId,
+      skipWarning,
     );
 
     return classEntity;

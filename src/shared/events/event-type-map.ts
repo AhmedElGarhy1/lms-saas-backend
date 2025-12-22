@@ -87,6 +87,7 @@ import {
   GroupDeletedEvent,
   GroupRestoredEvent,
   GroupExportedEvent,
+  ScheduleItemsUpdatedEvent,
 } from '@/modules/classes/events/group.events';
 import {
   PasswordResetRequestedEvent,
@@ -207,6 +208,7 @@ export type EventTypeMap = {
   // Group Events
   [GroupEvents.CREATED]: GroupCreatedEvent;
   [GroupEvents.UPDATED]: GroupUpdatedEvent;
+  [GroupEvents.SCHEDULE_ITEMS_UPDATED]: ScheduleItemsUpdatedEvent;
   [GroupEvents.DELETED]: GroupDeletedEvent;
   [GroupEvents.RESTORED]: GroupRestoredEvent;
   [GroupEvents.EXPORTED]: GroupExportedEvent;

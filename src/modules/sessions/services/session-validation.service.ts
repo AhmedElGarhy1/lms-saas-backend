@@ -109,4 +109,21 @@ export class SessionValidationService extends BaseService {
     // TODO: Check if attendance exists
     // If payments or attendance exist, throw BusinessLogicException
   }
+
+  /**
+   * Validate if a session can be canceled
+   * Only SCHEDULED sessions can be canceled
+   * @param sessionId - Session ID to validate
+   * @throws BusinessLogicException if session cannot be canceled
+   */
+  async validateSessionCancellation(sessionId: string): Promise<void> {
+    const session = await this.sessionsRepository.findOneOrThrow(sessionId);
+
+    if (session.status !== SessionStatus.SCHEDULED) {
+      // Type assertion needed because translation types may not be regenerated yet
+      throw new BusinessLogicException('t.messages.cannotCancelSession', {
+        status: session.status,
+      } as any);
+    }
+  }
 }

@@ -5,9 +5,10 @@ import {
   IsArray,
   ValidateNested,
   ArrayMinSize,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ScheduleItemDto } from './schedule-item.dto';
 
 export class UpdateGroupDto {
@@ -33,4 +34,13 @@ export class UpdateGroupDto {
   @ValidateNested({ each: true })
   @Type(() => ScheduleItemDto)
   scheduleItems?: ScheduleItemDto[];
+
+  @ApiPropertyOptional({
+    description: 'Skip student conflict warnings. If true, student schedule conflicts will be ignored and operation will proceed.',
+    example: false,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  skipWarning?: boolean;
 }

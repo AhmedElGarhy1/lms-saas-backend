@@ -41,7 +41,10 @@ export class ActivityLogService extends BaseService {
 
       // userId (who performed the action) is ALWAYS from RequestContext (never passed as parameter)
       // If not in context, it's a system event (null is okay)
-      const userId = requestContext?.userId ?? null;
+      // If userId is "system", set to null (system actions don't have a user)
+      const rawUserId = requestContext?.userId ?? null;
+      const userId =
+        rawUserId === 'system' || rawUserId === null ? null : rawUserId;
 
       // targetUserId (who was affected) - try to resolve from targetUserProfileId if not provided
       let targetUserId = dto.targetUserId ?? null;
@@ -62,6 +65,11 @@ export class ActivityLogService extends BaseService {
           );
           // Continue with targetUserId as null
         }
+      }
+
+      // If targetUserId is "system", set to null (system actions don't have a target user)
+      if (targetUserId === 'system') {
+        targetUserId = null;
       }
 
       const centerId =

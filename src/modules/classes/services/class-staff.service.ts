@@ -91,10 +91,9 @@ export class ClassStaffService extends BaseService {
       classEntity.status === ClassStatus.CANCELED ||
       classEntity.status === ClassStatus.FINISHED
     ) {
-      throw new BusinessLogicException(
-        't.messages.cannotAssignStaffToClass' as any,
-        { status: classEntity.status } as any,
-      );
+      throw new BusinessLogicException('t.messages.cannotAssignStaffToClass', {
+        status: classEntity.status,
+      });
     }
 
     // Validate actor has branch access to the class's branch

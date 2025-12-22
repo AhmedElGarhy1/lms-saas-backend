@@ -26,6 +26,9 @@ import { UpdateApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { SerializeOptions } from '@nestjs/common';
 import { ClassResponseDto } from '../dto/class-response.dto';
+import { StudentPaymentStrategyDto } from '../dto/student-payment-strategy.dto';
+import { TeacherPaymentStrategyDto } from '../dto/teacher-payment-strategy.dto';
+import { ApiBody } from '@nestjs/swagger';
 
 @ApiTags('Classes')
 @Controller('classes')
@@ -242,6 +245,68 @@ export class ClassesController {
     return ControllerResponse.message({
       key: 't.messages.restored',
       args: { resource: 't.resources.class' },
+    });
+  }
+
+  @Put(':classId/student-payment')
+  @ApiOperation({ summary: 'Update student payment strategy for a class' })
+  @ApiParam({ name: 'classId', description: 'Class ID' })
+  @ApiBody({ type: StudentPaymentStrategyDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Student payment strategy updated successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Class or payment strategy not found',
+  })
+  @Permissions(PERMISSIONS.CLASSES.UPDATE)
+  @Transactional()
+  @SerializeOptions({ type: ClassResponseDto })
+  async updateStudentPayment(
+    @Param() params: ClassIdParamDto,
+    @Body() dto: StudentPaymentStrategyDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.classesService.updateStudentPaymentStrategy(
+      params.classId,
+      dto,
+      actor,
+    );
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.studentPaymentStrategy' },
+    });
+  }
+
+  @Put(':classId/teacher-payment')
+  @ApiOperation({ summary: 'Update teacher payment strategy for a class' })
+  @ApiParam({ name: 'classId', description: 'Class ID' })
+  @ApiBody({ type: TeacherPaymentStrategyDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Teacher payment strategy updated successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Class or payment strategy not found',
+  })
+  @Permissions(PERMISSIONS.CLASSES.UPDATE)
+  @Transactional()
+  @SerializeOptions({ type: ClassResponseDto })
+  async updateTeacherPayment(
+    @Param() params: ClassIdParamDto,
+    @Body() dto: TeacherPaymentStrategyDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.classesService.updateTeacherPaymentStrategy(
+      params.classId,
+      dto,
+      actor,
+    );
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.teacherPaymentStrategy' },
     });
   }
 }

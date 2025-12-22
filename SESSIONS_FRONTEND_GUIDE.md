@@ -11,6 +11,7 @@ The Sessions Module manages class sessions in the Learning Management System. Th
 ### What is a Session?
 
 A **Session** represents a single class meeting. Each session has:
+
 - A specific date and time (start and end)
 - A group it belongs to
 - A status (Scheduled, Conducting, Finished, or Canceled)
@@ -21,6 +22,7 @@ A **Session** represents a single class meeting. Each session has:
 Sessions come in two types, each with different rules:
 
 #### 1. Scheduled Sessions (System-Generated)
+
 - **Created by**: The system automatically
 - **When**: When a class becomes active or when schedules are updated
 - **Purpose**: Represents the official curriculum schedule
@@ -29,6 +31,7 @@ Sessions come in two types, each with different rules:
 - **Why this restriction?**: These are the "official record" - they must remain in the database for audit purposes (e.g., parent reports showing why a class didn't happen)
 
 #### 2. Extra Sessions (Manual)
+
 - **Created by**: Users (secretaries/admins) manually
 - **When**: For makeup classes, workshops, or special events
 - **Purpose**: One-off sessions that aren't part of the regular schedule
@@ -45,11 +48,13 @@ Sessions come in two types, each with different rules:
 #### Creating Extra Sessions
 
 You can create manual/extra sessions through the API. These are useful for:
+
 - Makeup classes
 - Special workshops
 - One-time events
 
 **Important Notes:**
+
 - The system will automatically check for conflicts (teacher or group conflicts)
 - If a conflict is detected, the creation will fail with a clear error message
 - Extra sessions are never automatically deleted or regenerated
@@ -57,6 +62,7 @@ You can create manual/extra sessions through the API. These are useful for:
 #### Automatic Session Generation
 
 Scheduled sessions are created automatically by the system:
+
 - When a class transitions from "Not Started" to "Active"
 - When a group's schedule items are updated
 - Weekly maintenance to maintain a 4-week buffer
@@ -68,6 +74,7 @@ Scheduled sessions are created automatically by the system:
 #### Pagination and Filtering
 
 You can retrieve sessions with various filters:
+
 - By group
 - By class
 - By status (Scheduled, Conducting, Finished, Canceled)
@@ -79,6 +86,7 @@ Results are paginated for performance.
 #### Single Session Details
 
 You can retrieve a single session by its ID. The response includes:
+
 - All session details (time, status, group, etc.)
 - Whether it's an extra session or scheduled
 - Related information (group, class)
@@ -88,6 +96,7 @@ You can retrieve a single session by its ID. The response includes:
 #### What Can Be Updated?
 
 Only **Scheduled** sessions can be updated. You can change:
+
 - Title/topic
 - Start time
 - End time
@@ -111,11 +120,13 @@ Only **Scheduled** sessions can be updated. You can change:
 #### Delete Rules
 
 **Scheduled Sessions:**
+
 - ❌ **Cannot be deleted**
 - ✅ Must be **canceled** instead
 - **Reason**: These are the official schedule record and must remain for audit purposes
 
 **Extra Sessions:**
+
 - ✅ **Can be deleted**
 - ✅ Can also be canceled
 - **Reason**: These are manually created and can be removed if created by mistake
@@ -123,11 +134,13 @@ Only **Scheduled** sessions can be updated. You can change:
 #### When to Delete vs Cancel
 
 **Use Delete when:**
+
 - It's an extra session
 - It was created by mistake
 - You want to completely remove it from the system
 
 **Use Cancel when:**
+
 - It's a scheduled session (only option)
 - It's an extra session but you want to keep a record that it was planned
 - You want to show in reports that a class was canceled (not just deleted)
@@ -154,12 +167,14 @@ Only **Scheduled** sessions can be updated. You can change:
 ### What is a Conflict?
 
 A conflict occurs when:
+
 1. **Teacher Conflict**: The teacher already has another session at the same time
 2. **Group Conflict**: The same group already has another session at the same time
 
 ### When Conflicts Are Checked
 
 Conflicts are automatically checked when:
+
 - Creating an extra session
 - Updating a session's time
 - The system generates sessions (conflicts are skipped, not errors)
@@ -169,6 +184,7 @@ Conflicts are automatically checked when:
 #### For Manual Operations (Create/Update)
 
 If a conflict is detected:
+
 - The operation **fails** with a clear error message
 - The error message explains what type of conflict occurred
 - You must resolve the conflict before proceeding
@@ -176,6 +192,7 @@ If a conflict is detected:
 #### For Automatic Generation
 
 When the system automatically generates sessions:
+
 - Conflicts are **skipped** (not errors)
 - The system logs which sessions were skipped due to conflicts
 - You can view these in activity logs
@@ -184,6 +201,7 @@ When the system automatically generates sessions:
 ### Conflict Error Messages
 
 When a conflict occurs, you'll receive an error message that includes:
+
 - The type of conflict (teacher or group)
 - The conflicting session details
 - Clear guidance on how to resolve it
@@ -195,6 +213,7 @@ When a conflict occurs, you'll receive an error message that includes:
 ### What is Regeneration?
 
 Regeneration is when the system automatically:
+
 1. Deletes future scheduled sessions
 2. Creates new sessions based on updated schedule information
 
@@ -282,32 +301,38 @@ Scheduled → Conducting → Finished
 ### 1. Creating Extra Sessions
 
 ✅ **Do:**
+
 - Use for makeup classes, workshops, special events
 - Check for conflicts before creating (system does this automatically)
 - Use descriptive titles
 
 ❌ **Don't:**
+
 - Create extra sessions to replace scheduled ones (use cancel + reschedule instead)
 - Create sessions with conflicts (system will prevent this)
 
 ### 2. Updating Sessions
 
 ✅ **Do:**
+
 - Update scheduled sessions when times need to change
 - Check for conflicts before updating (system does this automatically)
 - Update titles to reflect session topics
 
 ❌ **Don't:**
+
 - Try to update non-scheduled sessions (will fail)
 - Update times without checking for conflicts (system prevents this)
 
 ### 3. Deleting vs Canceling
 
 ✅ **Use Delete for:**
+
 - Extra sessions created by mistake
 - Extra sessions that are no longer needed
 
 ✅ **Use Cancel for:**
+
 - Scheduled sessions (only option)
 - Sessions you want to keep a record of
 - When you need audit trail
@@ -315,22 +340,26 @@ Scheduled → Conducting → Finished
 ### 4. Handling Conflicts
 
 ✅ **Do:**
+
 - Show clear error messages to users
 - Provide guidance on how to resolve conflicts
 - Allow users to view conflicting sessions
 
 ❌ **Don't:**
+
 - Ignore conflict errors
 - Try to create/update with conflicts (will fail)
 
 ### 5. Understanding Regeneration
 
 ✅ **Do:**
+
 - Trust the system to handle regeneration automatically
 - Know that your extra sessions are safe
 - Understand that regeneration only affects scheduled sessions
 
 ❌ **Don't:**
+
 - Try to manually trigger regeneration (not needed)
 - Worry about extra sessions being deleted (they're preserved)
 
@@ -354,7 +383,8 @@ Scheduled → Conducting → Finished
 
 **Cause**: Teacher or group already has a session at that time
 
-**Solution**: 
+**Solution**:
+
 - Check existing sessions
 - Choose a different time
 - Cancel or reschedule the conflicting session first
@@ -378,6 +408,7 @@ Scheduled → Conducting → Finished
 ### Error Response Format
 
 All errors follow a consistent format:
+
 - **Status Code**: HTTP status code (400, 404, etc.)
 - **Message**: Human-readable error message
 - **Translation Key**: For internationalization
@@ -390,6 +421,7 @@ All errors follow a consistent format:
 ### What Gets Logged?
 
 The system automatically logs:
+
 - Session creation (individual and bulk)
 - Session updates
 - Session deletions
@@ -400,6 +432,7 @@ The system automatically logs:
 ### Viewing Activity Logs
 
 Activity logs are available through the activity log API and include:
+
 - What action was performed
 - Who performed it
 - When it happened
@@ -412,6 +445,7 @@ Activity logs are available through the activity log API and include:
 ### Pagination
 
 Always use pagination when listing sessions:
+
 - Default page size is reasonable
 - Adjust page size based on your needs
 - Use filters to reduce result sets
@@ -419,6 +453,7 @@ Always use pagination when listing sessions:
 ### Bulk Operations
 
 The system uses efficient bulk operations internally:
+
 - Bulk session creation
 - Bulk session deletion
 - Bulk event emission
@@ -479,6 +514,7 @@ The system uses efficient bulk operations internally:
 **Problem**: Need to cancel a scheduled session because teacher is sick
 
 **Solution**:
+
 1. Find the scheduled session
 2. Use the cancel endpoint (not delete)
 3. Session status becomes "Canceled"
@@ -489,6 +525,7 @@ The system uses efficient bulk operations internally:
 **Problem**: Need to schedule a makeup class
 
 **Solution**:
+
 1. Create an extra session with the makeup class time
 2. System checks for conflicts automatically
 3. If no conflicts, session is created
@@ -499,6 +536,7 @@ The system uses efficient bulk operations internally:
 **Problem**: Group schedule was updated (day/time changed)
 
 **Solution**:
+
 1. System automatically regenerates future scheduled sessions
 2. Your extra sessions are preserved
 3. New sessions match the updated schedule
@@ -509,6 +547,7 @@ The system uses efficient bulk operations internally:
 **Problem**: Created an extra session with wrong time
 
 **Solution**:
+
 1. If it's an extra session: Delete it
 2. If it's a scheduled session: Cancel it, then create a new extra session with correct time
 3. Or update it (if still Scheduled status)
@@ -518,6 +557,7 @@ The system uses efficient bulk operations internally:
 **Problem**: Trying to create/update a session but conflict detected
 
 **Solution**:
+
 1. Show the error message to user
 2. Display conflicting session details
 3. Allow user to:
@@ -558,23 +598,23 @@ The system uses efficient bulk operations internally:
 
 ### Quick Reference
 
-| Action | Scheduled Session | Extra Session |
-|--------|------------------|---------------|
-| Create | ❌ System only | ✅ Manual |
-| Update | ✅ Yes (if Scheduled) | ✅ Yes (if Scheduled) |
-| Delete | ❌ No | ✅ Yes |
-| Cancel | ✅ Yes | ✅ Yes |
-| Auto-Regenerated | ✅ Yes | ❌ No |
+| Action           | Scheduled Session     | Extra Session         |
+| ---------------- | --------------------- | --------------------- |
+| Create           | ❌ System only        | ✅ Manual             |
+| Update           | ✅ Yes (if Scheduled) | ✅ Yes (if Scheduled) |
+| Delete           | ❌ No                 | ✅ Yes                |
+| Cancel           | ✅ Yes                | ✅ Yes                |
+| Auto-Regenerated | ✅ Yes                | ❌ No                 |
 
 ---
 
 ## Support
 
 For questions or issues:
+
 1. Check error messages - they provide clear guidance
 2. Review activity logs - see what happened
 3. Understand the session type - scheduled vs extra
 4. Check conflict details - understand why operations fail
 
 Remember: The system is designed to prevent invalid operations and preserve data integrity. Error messages are your friend - they guide you to the correct solution.
-

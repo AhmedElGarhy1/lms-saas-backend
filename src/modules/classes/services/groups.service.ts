@@ -17,16 +17,18 @@ import {
   GroupUpdatedEvent,
   GroupDeletedEvent,
   GroupRestoredEvent,
+  ScheduleItemsUpdatedEvent,
 } from '../events/group.events';
 import { Transactional } from '@nestjs-cls/transactional';
 import { ClassAccessService } from './class-access.service';
-import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
 import { ClassStatus } from '../enums/class-status.enum';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
+import { ScheduleItemsRepository } from '../repositories/schedule-items.repository';
+import { ScheduleItem } from '../entities/schedule-item.entity';
+import { ScheduleItemDto } from '../dto/schedule-item.dto';
 
 @Injectable()
 export class GroupsService extends BaseService {
@@ -38,6 +40,7 @@ export class GroupsService extends BaseService {
     private readonly classAccessService: ClassAccessService,
     private readonly bulkOperationService: BulkOperationService,
     private readonly branchAccessService: BranchAccessService,
+    private readonly scheduleItemsRepository: ScheduleItemsRepository,
   ) {
     super();
   }
@@ -117,10 +120,9 @@ export class GroupsService extends BaseService {
       classEntity.status === ClassStatus.CANCELED ||
       classEntity.status === ClassStatus.FINISHED
     ) {
-      throw new BusinessLogicException(
-        't.messages.cannotCreateGroupInClass' as any,
-        { status: classEntity.status } as any,
-      );
+      throw new BusinessLogicException('t.messages.cannotCreateGroupInClass', {
+        status: classEntity.status,
+      });
     }
 
     // Validate actor has branch access to the class's branch
@@ -182,34 +184,70 @@ export class GroupsService extends BaseService {
       classId: group.classId,
     });
 
+    // Extract skipWarning from DTO (not part of group data)
+    const { skipWarning, ...groupUpdateData } = data;
+
     await this.groupValidationService.validateScheduleCore(
       group.class,
       data.scheduleItems,
       undefined,
       groupId,
+      skipWarning,
     );
 
     const changedFields: string[] = [];
 
-    if (data.name !== undefined) {
-      await this.groupsRepository.update(groupId, { name: data.name });
-      group.name = data.name;
+    if (groupUpdateData.name !== undefined) {
+      await this.groupsRepository.update(groupId, {
+        name: groupUpdateData.name,
+      });
+      group.name = groupUpdateData.name;
       changedFields.push('name');
     }
 
-    if (data.scheduleItems) {
-      await this.groupScheduleService.updateScheduleItems(
-        groupId,
-        data.scheduleItems,
-      );
-      changedFields.push('scheduleItems');
-      const updatedGroup =
-        await this.groupsRepository.findGroupWithRelationsOrThrow(
-          groupId,
-          false,
+    if (groupUpdateData.scheduleItems) {
+      // Fetch old schedule items for comparison
+      const oldScheduleItems =
+        await this.scheduleItemsRepository.findByGroupId(groupId);
+
+      // Compare old vs new - skip update if identical
+      if (
+        this.areScheduleItemsEqual(
+          oldScheduleItems,
+          groupUpdateData.scheduleItems,
+        )
+      ) {
+        // No changes, skip update and event emission
+        // Don't add 'scheduleItems' to changedFields
+      } else {
+        // There are changes, proceed with update
+        const { oldItems, newItems } =
+          await this.groupScheduleService.updateScheduleItems(
+            groupId,
+            groupUpdateData.scheduleItems,
+          );
+        changedFields.push('scheduleItems');
+
+        // Emit specific event for schedule items update
+        await this.typeSafeEventEmitter.emitAsync(
+          GroupEvents.SCHEDULE_ITEMS_UPDATED,
+          new ScheduleItemsUpdatedEvent(
+            groupId,
+            oldItems,
+            newItems,
+            actor,
+            actor.centerId!,
+          ),
         );
-      if (updatedGroup) {
-        Object.assign(group, updatedGroup);
+
+        const updatedGroup =
+          await this.groupsRepository.findGroupWithRelationsOrThrow(
+            groupId,
+            false,
+          );
+        if (updatedGroup) {
+          Object.assign(group, updatedGroup);
+        }
       }
     }
 
@@ -219,6 +257,45 @@ export class GroupsService extends BaseService {
     );
 
     return group;
+  }
+
+  /**
+   * Compare schedule items to determine if they are equal
+   * @param oldItems - Existing schedule items
+   * @param newItems - New schedule items to compare
+   * @returns true if items are identical, false otherwise
+   */
+  private areScheduleItemsEqual(
+    oldItems: ScheduleItem[],
+    newItems: ScheduleItemDto[],
+  ): boolean {
+    if (oldItems.length !== newItems.length) {
+      return false;
+    }
+
+    // Create maps for comparison (day + startTime is unique)
+    const oldMap = new Map(
+      oldItems.map((item) => [`${item.day}-${item.startTime}`, item]),
+    );
+    const newSet = new Set(
+      newItems.map((item) => `${item.day}-${item.startTime}`),
+    );
+
+    // Check if all old items exist in new items
+    for (const [key] of oldMap) {
+      if (!newSet.has(key)) {
+        return false;
+      }
+    }
+
+    // Check if all new items exist in old items
+    for (const key of newSet) {
+      if (!oldMap.has(key)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /**

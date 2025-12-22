@@ -31,7 +31,7 @@ export class InAppNotificationController {
   async getNotifications(
     @GetUser() actor: ActorUser,
     @Query() query: GetInAppNotificationsDto,
-  ): Promise<Pagination<Notification>> {
+  ) {
     const result = await this.inAppNotificationService.getUserNotifications(
       actor.id,
       query,
@@ -39,7 +39,7 @@ export class InAppNotificationController {
     return ControllerResponse.success(result, {
       key: 't.messages.found',
       args: { resource: 't.resources.notification' },
-    }) as any;
+    });
   }
 
   @Get('unread')

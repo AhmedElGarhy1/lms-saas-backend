@@ -4,6 +4,7 @@ import { TeacherPaymentStrategyDto } from '../dto/teacher-payment-strategy.dto';
 import { StudentPaymentStrategyRepository } from '../repositories/student-payment-strategy.repository';
 import { TeacherPaymentStrategyRepository } from '../repositories/teacher-payment-strategy.repository';
 import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 import { TeacherPaymentUnit } from '../enums/teacher-payment-unit.enum';
 import { StudentPaymentUnit } from '../enums/student-payment-unit.enum';
@@ -47,77 +48,6 @@ export class PaymentStrategyService extends BaseService {
     });
   }
 
-  /**
-   * Update payment strategies for a class.
-   * Updates existing strategies or creates new ones if they don't exist.
-   *
-   * @param classId - The class ID
-   * @param studentStrategy - Optional student payment strategy to update
-   * @param teacherStrategy - Optional teacher payment strategy to update
-   * @throws BusinessLogicException if payment strategy validation fails
-   */
-  async updateStrategiesForClass(
-    classId: string,
-    studentStrategy?: StudentPaymentStrategyDto,
-    teacherStrategy?: TeacherPaymentStrategyDto,
-  ): Promise<void> {
-    if (studentStrategy && teacherStrategy) {
-      this.validatePaymentStrategies(studentStrategy, teacherStrategy);
-    }
-
-    if (studentStrategy) {
-      await this.updateStudentStrategy(classId, studentStrategy);
-    }
-
-    if (teacherStrategy) {
-      await this.updateTeacherStrategy(classId, teacherStrategy);
-    }
-  }
-
-  private async updateStudentStrategy(
-    classId: string,
-    strategy: StudentPaymentStrategyDto,
-  ): Promise<void> {
-    const existingStrategy =
-      await this.studentPaymentStrategyRepository.findByClassId(classId);
-
-    if (existingStrategy) {
-      await this.studentPaymentStrategyRepository.update(existingStrategy.id, {
-        per: strategy.per,
-        count: strategy.count,
-        amount: strategy.amount,
-      });
-    } else {
-      await this.studentPaymentStrategyRepository.create({
-        classId,
-        per: strategy.per,
-        count: strategy.count,
-        amount: strategy.amount,
-      });
-    }
-  }
-
-  private async updateTeacherStrategy(
-    classId: string,
-    strategy: TeacherPaymentStrategyDto,
-  ): Promise<void> {
-    const existingStrategy =
-      await this.teacherPaymentStrategyRepository.findByClassId(classId);
-
-    if (existingStrategy) {
-      await this.teacherPaymentStrategyRepository.update(existingStrategy.id, {
-        per: strategy.per,
-        amount: strategy.amount,
-      });
-    } else {
-      await this.teacherPaymentStrategyRepository.create({
-        classId,
-        per: strategy.per,
-        amount: strategy.amount,
-      });
-    }
-  }
-
   validatePaymentStrategies(
     studentPaymentStrategy: StudentPaymentStrategyDto,
     teacherPaymentStrategy: TeacherPaymentStrategyDto,
@@ -157,5 +87,96 @@ export class PaymentStrategyService extends BaseService {
     ) {
       throw new BusinessLogicException('t.messages.validationFailed');
     }
+  }
+
+  /**
+   * Update student payment strategy for a class.
+   * Only updates existing strategy (throws error if missing).
+   * Used by the dedicated student payment endpoint.
+   *
+   * @param classId - The class ID
+   * @param strategy - Student payment strategy data
+   * @throws ResourceNotFoundException if payment strategy doesn't exist
+   * @throws BusinessLogicException if validation fails
+   */
+  async updateStudentStrategy(
+    classId: string,
+    strategy: StudentPaymentStrategyDto,
+  ): Promise<void> {
+    const existingStrategy =
+      await this.studentPaymentStrategyRepository.findByClassId(classId);
+
+    if (!existingStrategy) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.studentPaymentStrategy',
+        identifier: 't.resources.identifier',
+        value: classId,
+      });
+    }
+
+    // Validate student payment strategy
+    if (!Object.values(StudentPaymentUnit).includes(strategy.per)) {
+      throw new BusinessLogicException('t.messages.validationFailed');
+    }
+
+    if (typeof strategy.amount !== 'number' || strategy.amount < 0) {
+      throw new BusinessLogicException('t.messages.validationFailed');
+    }
+
+    // Count required for SESSION, HOUR, and MONTH payment units
+    if (
+      (strategy.per === StudentPaymentUnit.SESSION ||
+        strategy.per === StudentPaymentUnit.HOUR ||
+        strategy.per === StudentPaymentUnit.MONTH) &&
+      (!strategy.count || strategy.count < 1)
+    ) {
+      throw new BusinessLogicException('t.messages.validationFailed');
+    }
+
+    await this.studentPaymentStrategyRepository.update(existingStrategy.id, {
+      per: strategy.per,
+      count: strategy.count,
+      amount: strategy.amount,
+    });
+  }
+
+  /**
+   * Update teacher payment strategy for a class.
+   * Only updates existing strategy (throws error if missing).
+   * Used by the dedicated teacher payment endpoint.
+   *
+   * @param classId - The class ID
+   * @param strategy - Teacher payment strategy data
+   * @throws ResourceNotFoundException if payment strategy doesn't exist
+   * @throws BusinessLogicException if validation fails
+   */
+  async updateTeacherStrategy(
+    classId: string,
+    strategy: TeacherPaymentStrategyDto,
+  ): Promise<void> {
+    const existingStrategy =
+      await this.teacherPaymentStrategyRepository.findByClassId(classId);
+
+    if (!existingStrategy) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.teacherPaymentStrategy',
+        identifier: 't.resources.identifier',
+        value: classId,
+      });
+    }
+
+    // Validate teacher payment strategy
+    if (!Object.values(TeacherPaymentUnit).includes(strategy.per)) {
+      throw new BusinessLogicException('t.messages.validationFailed');
+    }
+
+    if (typeof strategy.amount !== 'number' || strategy.amount < 0) {
+      throw new BusinessLogicException('t.messages.validationFailed');
+    }
+
+    await this.teacherPaymentStrategyRepository.update(existingStrategy.id, {
+      per: strategy.per,
+      amount: strategy.amount,
+    });
   }
 }

@@ -98,6 +98,7 @@ export class GroupsStudentsAccessController {
       dto.groupId,
       dto.userProfileIds,
       actor,
+      dto.skipWarning,
     );
 
     return ControllerResponse.success(result, {

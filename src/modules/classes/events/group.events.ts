@@ -2,6 +2,7 @@ import { Group } from '../entities/group.entity';
 import { Class } from '../entities/class.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { BaseEvent } from '@/shared/common/base/base-event';
+import { ScheduleItem } from '../entities/schedule-item.entity';
 
 export class GroupCreatedEvent {
   constructor(
@@ -51,4 +52,14 @@ export class GroupExportedEvent extends BaseEvent {
   ) {
     super(actor);
   }
+}
+
+export class ScheduleItemsUpdatedEvent {
+  constructor(
+    public readonly groupId: string,
+    public readonly oldScheduleItems: ScheduleItem[],
+    public readonly newScheduleItems: ScheduleItem[],
+    public readonly actor: ActorUser,
+    public readonly centerId: string,
+  ) {}
 }

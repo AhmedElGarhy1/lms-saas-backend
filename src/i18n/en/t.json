@@ -24,6 +24,11 @@
     "subjects": "Subjects",
     "class": "Class",
     "classes": "Classes",
+    "paused": "Paused",
+    "finished": "Finished",
+    "canceled": "Canceled",
+    "scheduled": "Scheduled",
+    "conducting": "Conducting",
     "group": "Group",
     "groups": "Groups",
     "column": "Column",
@@ -99,6 +104,7 @@
     "type": "Type",
     "date": "Date",
     "dates": "Dates",
+    "dateRange": "Date Range",
     "startDate": "Start Date",
     "endDate": "End Date",
     "startTime": "Start Time",
@@ -107,6 +113,9 @@
     "count": "Count",
     "session": "Session",
     "sessions": "Sessions",
+    "sessionType": "Session Type",
+    "extraSession": "Extra Session",
+    "scheduledSession": "Scheduled Session",
     "day": "Day",
     "schedule": "Schedule",
     "scheduleItems": "Schedule Items",
@@ -221,6 +230,8 @@
     "noResults": "No results found",
     "genericError": "Something went wrong",
     "welcome": "Welcome",
+    "pendingApproval": "Pending Approval",
+    "notStarted": "Not Started",
     "bulkOperationResult": "Operation Results",
     "bulkOperationSuccess": "{count, plural, =0 {No operations} =1 {Successfully processed {count} {item}} other {Successfully processed {count} {item}s}}",
     "bulkOperationFailure": "{count, plural, =0 {No operations} =1 {Failed to process {count} {item}} other {Failed to process {count} {item}s}}",
@@ -230,6 +241,16 @@
     },
     "paymentCount": {
       "helperText": "Number of {unit}s per payment (e.g., pay every 3 {unit}s)"
+    },
+    "gracePeriod": {
+      "expired": "Cannot revert {resource} status. The {hours}-hour grace period has expired. You can only revert a canceled or finished {resource} within {hours} hours of the status change.",
+      "remaining": "{hours} {hours, plural, =1 {hour} other {hours}} {minutes} {minutes, plural, =1 {minute} other {minutes}} remaining to revert",
+      "remainingShort": "{hours}h {minutes}m remaining",
+      "expiringSoon": "Less than 1 hour remaining to revert",
+      "expiredStatus": "Grace period expired. Cannot revert.",
+      "info": "You can revert this {resource} within {hours} {hours, plural, =1 {hour} other {hours}} of cancellation/completion",
+      "sessionsCleanupNote": "Sessions will be automatically cleaned up after {hours} {hours, plural, =1 {hour} other {hours}}",
+      "hours": "{hours} {hours, plural, =1 {hour} other {hours}}"
     },
     "changed": "{resource} changed successfully",
     "sent": "{resource} sent successfully",
@@ -262,7 +283,11 @@
     "invalidStatusTransition": "Invalid status transition from {from} to {to}",
     "gracePeriodExpired": "Cannot revert {resource} status. The 24-hour grace period has expired. You can only revert a canceled or finished class within {hours} hours of the status change.",
     "cannotDeleteSession": "Cannot delete session with status {status}. Only SCHEDULED sessions can be deleted.",
+    "cannotUpdateSession": "Cannot update session times with status {status}. Only SCHEDULED sessions can have their times changed.",
     "cannotDeleteScheduledSession": "Cannot delete scheduled session. Please cancel it instead.",
+    "cannotCancelSession": "Cannot cancel session with status {status}. Only SCHEDULED sessions can be canceled.",
+    "sessionDateMustBeInFuture": "Session date must be in the future.",
+    "cannotUpdatePaymentStrategy": "Cannot update payment strategy for class with status {status}. Payment strategies can only be updated when class status is PENDING_TEACHER_APPROVAL or NOT_STARTED.",
     "duplicateField": "This {field} is already in use. Please choose a different one",
     "phoneNotVerified": "Phone is not verified",
     "insufficientPermissions": "You don't have sufficient permissions to perform this action",
@@ -399,6 +424,8 @@
     "selectResource": "Select {resource}",
     "tryAgain": "Try Again",
     "toggleStatus": "Toggle Status",
+    "updateStatus": "Update Status",
+    "revertToActive": "Revert to Active",
     "manageAccess": "Manage Access",
     "reloadPage": "Reload Page",
     "deselectAll": "Deselect All",
@@ -434,7 +461,8 @@
     "pickDate": "Pick a date",
     "pickDateRange": "Pick a date range",
     "searchItems": "Search {item}...",
-    "confirmField": "Confirm {field}"
+    "confirmField": "Confirm {field}",
+    "reason": "Reason"
   },
   "ui": {
     "form": {
@@ -541,6 +569,16 @@
         "userNotFoundTitle": "User Not Found",
         "userNotFoundDescription": "No user found with phone number {phone}. Would you like to create a new user instead?",
         "createUserInstead": "Create User Instead"
+      },
+      "changeStatus": {
+        "title": "Change Status",
+        "description": "Change the status. Some status changes may require a reason."
+      },
+      "cancelSession": {
+        "title": "Cancel Session",
+        "description": "Cancel this session. Canceled sessions are preserved and can be viewed later.",
+        "message": "Are you sure you want to cancel {resourceName}?",
+        "note": "Canceled sessions are preserved in the system and can still be viewed, but cannot be edited or reactivated."
       }
     },
     "health": {
@@ -1224,6 +1262,26 @@
       },
       "readAll": {
         "name": "Read All Groups"
+      }
+    },
+    "sessions": {
+      "read": {
+        "name": "View Sessions"
+      },
+      "create": {
+        "name": "Create Sessions"
+      },
+      "update": {
+        "name": "Update Sessions"
+      },
+      "delete": {
+        "name": "Delete Sessions"
+      },
+      "readAll": {
+        "name": "View All Sessions"
+      },
+      "export": {
+        "name": "Export Sessions"
       }
     },
     "system": {

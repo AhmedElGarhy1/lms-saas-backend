@@ -462,9 +462,10 @@ export class AuthService extends BaseService {
     });
 
     // Emit event after work is done
+    // Use the user as the actor since token refresh is a user action
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.TOKEN_REFRESHED,
-      new TokenRefreshedEvent(userId, null as any),
+      new TokenRefreshedEvent(userId, user as ActorUser),
     );
 
     return tokens;

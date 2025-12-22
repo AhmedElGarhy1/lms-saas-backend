@@ -117,9 +117,11 @@ export type TranslationArgs = {
   't.messages.cannotAssignStaffToClass': { status: string };
   't.messages.cannotBeAssociated': { resource1: string; resource2: string };
   't.messages.cannotCreateGroupInClass': { status: string };
+  't.messages.cannotDeleteScheduledSession': Record<string, never>;
   't.messages.cannotDeleteSession': { status: string };
   't.messages.cannotEnrollInClass': { status: string };
   't.messages.cannotGrantAccess': { resource: string };
+  't.messages.cannotUpdateSession': { status: string };
   't.messages.cannotUpdateStartDateWhenNotNotStarted': { status: string };
   't.messages.changed': { resource: string };
   't.messages.checkUrlOrDashboard': Record<string, never>;
@@ -294,6 +296,12 @@ export type TranslationArgs = {
   't.permissions.roles.import.name': Record<string, never>;
   't.permissions.roles.restore.name': Record<string, never>;
   't.permissions.roles.update.name': Record<string, never>;
+  't.permissions.sessions.create.name': Record<string, never>;
+  't.permissions.sessions.delete.name': Record<string, never>;
+  't.permissions.sessions.export.name': Record<string, never>;
+  't.permissions.sessions.read.name': Record<string, never>;
+  't.permissions.sessions.readAll.name': Record<string, never>;
+  't.permissions.sessions.update.name': Record<string, never>;
   't.permissions.staff.activate.name': Record<string, never>;
   't.permissions.staff.activateCenterAccess.name': Record<string, never>;
   't.permissions.staff.create.name': Record<string, never>;

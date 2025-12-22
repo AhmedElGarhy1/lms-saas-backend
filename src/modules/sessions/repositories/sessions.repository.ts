@@ -5,6 +5,8 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { SessionStatus } from '../enums/session-status.enum';
 import { PaginateSessionsDto } from '../dto/paginate-sessions.dto';
+import { SessionFiltersDto } from '../dto/session-filters.dto';
+import { CalendarSessionsDto } from '../dto/calendar-sessions.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { SelectQueryBuilder } from 'typeorm';
@@ -127,16 +129,17 @@ export class SessionsRepository extends BaseRepository<Session> {
   }
 
   /**
-   * Paginate sessions with filtering and search capabilities.
+   * Build a query builder with shared session filters
+   * Used by both pagination and calendar endpoints
    *
-   * @param paginateDto - Pagination and filter parameters
+   * @param filters - Filter parameters
    * @param actor - The user performing the action
-   * @returns Paginated list of sessions
+   * @returns Query builder with filters applied
    */
-  async paginateSessions(
-    paginateDto: PaginateSessionsDto,
+  private buildSessionQueryBuilder(
+    filters: SessionFiltersDto,
     actor: ActorUser,
-  ): Promise<Pagination<Session>> {
+  ): SelectQueryBuilder<Session> {
     const centerId = actor.centerId!;
     const queryBuilder = this.getRepository()
       .createQueryBuilder('session')
@@ -149,37 +152,59 @@ export class SessionsRepository extends BaseRepository<Session> {
       .where('group.centerId = :centerId', { centerId });
 
     // Apply filters
-    if (paginateDto.groupId) {
+    if (filters.groupId) {
       queryBuilder.andWhere('session.groupId = :groupId', {
-        groupId: paginateDto.groupId,
+        groupId: filters.groupId,
       });
     }
 
-    if (paginateDto.classId) {
+    if (filters.classId) {
       queryBuilder.andWhere('group.classId = :classId', {
-        classId: paginateDto.classId,
+        classId: filters.classId,
       });
     }
 
-    if (paginateDto.status !== undefined && paginateDto.status !== null) {
+    if (filters.status !== undefined && filters.status !== null) {
       queryBuilder.andWhere('session.status = :status', {
-        status: paginateDto.status,
+        status: filters.status,
       });
     }
 
-    if (paginateDto.startTimeFrom) {
-      const startTimeFromDate = new Date(paginateDto.startTimeFrom);
-      queryBuilder.andWhere('session.startTime >= :startTimeFrom', {
-        startTimeFrom: startTimeFromDate,
+    // Handle dateFrom (from PaginateSessionsDto via BasePaginationDto or CalendarSessionsDto)
+    const filtersWithDates = filters as SessionFiltersDto & {
+      dateFrom?: string;
+      dateTo?: string;
+    };
+    if (filtersWithDates.dateFrom) {
+      const dateFrom = new Date(filtersWithDates.dateFrom);
+      queryBuilder.andWhere('session.startTime >= :dateFrom', {
+        dateFrom,
       });
     }
 
-    if (paginateDto.startTimeTo) {
-      const startTimeToDate = new Date(paginateDto.startTimeTo);
-      queryBuilder.andWhere('session.startTime <= :startTimeTo', {
-        startTimeTo: startTimeToDate,
+    // Handle dateTo (from PaginateSessionsDto via BasePaginationDto or CalendarSessionsDto)
+    if (filtersWithDates.dateTo) {
+      const dateTo = new Date(filtersWithDates.dateTo);
+      queryBuilder.andWhere('session.startTime <= :dateTo', {
+        dateTo,
       });
     }
+
+    return queryBuilder;
+  }
+
+  /**
+   * Paginate sessions with filtering and search capabilities.
+   *
+   * @param paginateDto - Pagination and filter parameters
+   * @param actor - The user performing the action
+   * @returns Paginated list of sessions
+   */
+  async paginateSessions(
+    paginateDto: PaginateSessionsDto,
+    actor: ActorUser,
+  ): Promise<Pagination<Session>> {
+    const queryBuilder = this.buildSessionQueryBuilder(paginateDto, actor);
 
     return this.paginate(
       paginateDto,
@@ -191,6 +216,84 @@ export class SessionsRepository extends BaseRepository<Session> {
       '/sessions',
       queryBuilder,
     );
+  }
+
+  /**
+   * Get sessions for calendar view
+   * Returns sessions within the specified date range with all necessary relations
+   *
+   * @param dto - Calendar sessions DTO with filters and date range
+   * @param actor - The user performing the action
+   * @returns Array of sessions with relations loaded
+   */
+  async getCalendarSessions(
+    dto: CalendarSessionsDto,
+    actor: ActorUser,
+  ): Promise<Session[]> {
+    const centerId = actor.centerId!;
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('session')
+      // Join and select relations needed for calendar display
+      .leftJoinAndSelect('session.group', 'group')
+      .leftJoinAndSelect('group.class', 'class')
+      .leftJoinAndSelect('class.teacher', 'teacher')
+      .leftJoinAndSelect('teacher.user', 'teacherUser')
+      // Filter by center through group
+      .where('group.centerId = :centerId', { centerId });
+
+    // Apply date range filter (dateFrom/dateTo are required)
+    const dateFrom = new Date(dto.dateFrom);
+    const dateTo = new Date(dto.dateTo);
+    queryBuilder
+      .andWhere('session.startTime >= :dateFrom', { dateFrom })
+      .andWhere('session.startTime <= :dateTo', { dateTo });
+
+    // Apply other filters
+    if (dto.groupId) {
+      queryBuilder.andWhere('session.groupId = :groupId', {
+        groupId: dto.groupId,
+      });
+    }
+
+    if (dto.classId) {
+      queryBuilder.andWhere('group.classId = :classId', {
+        classId: dto.classId,
+      });
+    }
+
+    if (dto.status !== undefined && dto.status !== null) {
+      queryBuilder.andWhere('session.status = :status', {
+        status: dto.status,
+      });
+    }
+
+    // Order by start time
+    queryBuilder.orderBy('session.startTime', 'ASC');
+
+    return queryBuilder.getMany();
+  }
+
+  /**
+   * Count total sessions in date range for calendar
+   *
+   * @param dto - Calendar sessions DTO with filters and date range
+   * @param actor - The user performing the action
+   * @returns Total count of sessions
+   */
+  async countCalendarSessions(
+    dto: CalendarSessionsDto,
+    actor: ActorUser,
+  ): Promise<number> {
+    const queryBuilder = this.buildSessionQueryBuilder(dto, actor);
+
+    // Apply date range filter
+    const dateFrom = new Date(dto.dateFrom);
+    const dateTo = new Date(dto.dateTo);
+    queryBuilder
+      .andWhere('session.startTime >= :dateFrom', { dateFrom })
+      .andWhere('session.startTime <= :dateTo', { dateTo });
+
+    return queryBuilder.getCount();
   }
 
   async findByGroupId(

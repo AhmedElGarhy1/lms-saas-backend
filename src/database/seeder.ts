@@ -13,6 +13,7 @@ import { Role } from '@/modules/access-control/entities/role.entity';
 import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
 import { DefaultRoles } from '@/modules/access-control/constants/roles';
 import { SeederException } from '@/shared/common/exceptions/custom.exceptions';
+import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
 
 @Injectable()
 export class DatabaseSeeder {
@@ -64,12 +65,25 @@ export class DatabaseSeeder {
   private async createSystemUser(): Promise<User> {
     this.logger.log('Creating system user...');
 
-    // Check if system user already exists
+    // Check if system user already exists by ID (fixed UUID)
     let systemUser = await this.dataSource.getRepository(User).findOne({
+      where: { id: SYSTEM_USER_ID },
+    });
+
+    if (systemUser) {
+      this.logger.log('System user already exists with fixed UUID');
+      return systemUser;
+    }
+
+    // Also check by phone as fallback (for existing databases)
+    systemUser = await this.dataSource.getRepository(User).findOne({
       where: { phone: '01000000000' },
     });
 
     if (systemUser) {
+      this.logger.warn(
+        `System user exists with different UUID (${systemUser.id}). Consider migrating to fixed UUID ${SYSTEM_USER_ID}`,
+      );
       return systemUser;
     }
 
@@ -77,17 +91,15 @@ export class DatabaseSeeder {
     const hashedPassword = await bcrypt.hash('system123', 12);
 
     // Create system user using raw SQL to avoid circular dependencies
+    // Use fixed SYSTEM_USER_ID instead of generating random UUID
     systemUser = await this.dataSource.transaction(
       async (transactionalEntityManager) => {
-        // Generate UUIDs for both user and profile
-        const userResult = await transactionalEntityManager.query(
-          'SELECT gen_random_uuid() as id',
-        );
+        // Use fixed UUID for system user
+        const userUuid = SYSTEM_USER_ID;
+        // Generate UUID for profile (profile can have random UUID)
         const profileResult = await transactionalEntityManager.query(
           'SELECT gen_random_uuid() as id',
         );
-
-        const userUuid = userResult[0].id;
         const profileUuid = profileResult[0].id;
 
         // Temporarily disable foreign key constraints

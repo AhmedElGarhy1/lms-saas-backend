@@ -28,12 +28,12 @@ import {
 } from '../utils/class-status-transition.util';
 import { ChangeClassStatusDto } from '../dto/change-class-status.dto';
 import { ClassAccessService } from './class-access.service';
-import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
 import { Transactional } from '@nestjs-cls/transactional';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import { StudentPaymentStrategyDto } from '../dto/student-payment-strategy.dto';
+import { TeacherPaymentStrategyDto } from '../dto/teacher-payment-strategy.dto';
 
 @Injectable()
 export class ClassesService extends BaseService {
@@ -183,11 +183,9 @@ export class ClassesService extends BaseService {
       classEntity,
     );
 
-    const {
-      studentPaymentStrategy,
-      teacherPaymentStrategy,
-      ...classUpdateData
-    } = data;
+    // Extract skipWarning from DTO (not part of class data) - used in validation above
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { skipWarning, ...classUpdateData } = data;
 
     const changedFields: string[] = [];
 
@@ -195,7 +193,7 @@ export class ClassesService extends BaseService {
       await this.classesRepository.update(classId, classUpdateData);
       Object.assign(classEntity, classUpdateData);
 
-      // Track which fields changed
+      // Track which fields changed (exclude skipWarning)
       Object.keys(classUpdateData).forEach((key) => {
         const value = (classUpdateData as Record<string, unknown>)[key];
         if (value !== undefined) {
@@ -204,28 +202,132 @@ export class ClassesService extends BaseService {
       });
     }
 
-    if (studentPaymentStrategy || teacherPaymentStrategy) {
-      await this.paymentStrategyService.updateStrategiesForClass(
-        classId,
-        studentPaymentStrategy,
-        teacherPaymentStrategy,
-      );
-      const updatedClass =
-        await this.classesRepository.findClassWithRelationsOrThrow(
-          classId,
-          false,
-        );
-      if (updatedClass) {
-        Object.assign(classEntity, updatedClass);
-      }
-    }
-
     await this.typeSafeEventEmitter.emitAsync(
       ClassEvents.UPDATED,
       new ClassUpdatedEvent(classEntity, actor, actor.centerId!, changedFields),
     );
 
     return classEntity;
+  }
+
+  /**
+   * Update student payment strategy for a class.
+   * Only updates existing strategy (throws error if missing).
+   * Only allowed if class status is PENDING_TEACHER_APPROVAL or NOT_STARTED.
+   *
+   * @param classId - The class ID
+   * @param studentStrategy - Student payment strategy data
+   * @param actor - The user performing the action
+   * @returns Updated class entity with all relations loaded
+   * @throws ResourceNotFoundException if class or payment strategy doesn't exist
+   * @throws BusinessLogicException if class status doesn't allow payment updates
+   */
+  @Transactional()
+  async updateStudentPaymentStrategy(
+    classId: string,
+    studentStrategy: StudentPaymentStrategyDto,
+    actor: ActorUser,
+  ): Promise<Class> {
+    const classEntity =
+      await this.classesRepository.findClassWithRelationsOrThrow(
+        classId,
+        false,
+      );
+
+    // Validate actor has branch access to the class's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: classEntity.branchId,
+    });
+
+    // Validate class status allows payment strategy updates
+    if (
+      classEntity.status !== ClassStatus.PENDING_TEACHER_APPROVAL &&
+      classEntity.status !== ClassStatus.NOT_STARTED
+    ) {
+      throw new BusinessLogicException(
+        't.messages.cannotUpdatePaymentStrategy',
+        {
+          status: classEntity.status,
+        } as any,
+      );
+    }
+
+    // Update student payment strategy (throws error if doesn't exist)
+    await this.paymentStrategyService.updateStudentStrategy(
+      classId,
+      studentStrategy,
+    );
+
+    // Return updated class with relations
+    const updatedClass =
+      await this.classesRepository.findClassWithRelationsOrThrow(
+        classId,
+        false,
+      );
+
+    return updatedClass;
+  }
+
+  /**
+   * Update teacher payment strategy for a class.
+   * Only updates existing strategy (throws error if missing).
+   * Only allowed if class status is PENDING_TEACHER_APPROVAL or NOT_STARTED.
+   *
+   * @param classId - The class ID
+   * @param teacherStrategy - Teacher payment strategy data
+   * @param actor - The user performing the action
+   * @returns Updated class entity with all relations loaded
+   * @throws ResourceNotFoundException if class or payment strategy doesn't exist
+   * @throws BusinessLogicException if class status doesn't allow payment updates
+   */
+  @Transactional()
+  async updateTeacherPaymentStrategy(
+    classId: string,
+    teacherStrategy: TeacherPaymentStrategyDto,
+    actor: ActorUser,
+  ): Promise<Class> {
+    const classEntity =
+      await this.classesRepository.findClassWithRelationsOrThrow(
+        classId,
+        false,
+      );
+
+    // Validate actor has branch access to the class's branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: classEntity.branchId,
+    });
+
+    // Validate class status allows payment strategy updates
+    if (
+      classEntity.status !== ClassStatus.PENDING_TEACHER_APPROVAL &&
+      classEntity.status !== ClassStatus.NOT_STARTED
+    ) {
+      throw new BusinessLogicException(
+        't.messages.cannotUpdatePaymentStrategy',
+        {
+          status: classEntity.status,
+        } as any,
+      );
+    }
+
+    // Update teacher payment strategy (throws error if doesn't exist)
+    await this.paymentStrategyService.updateTeacherStrategy(
+      classId,
+      teacherStrategy,
+    );
+
+    // Return updated class with relations
+    const updatedClass =
+      await this.classesRepository.findClassWithRelationsOrThrow(
+        classId,
+        false,
+      );
+
+    return updatedClass;
   }
 
   /**
@@ -342,14 +444,10 @@ export class ClassesService extends BaseService {
 
     // Validate transition is allowed
     if (!isValidTransition(oldStatus, newStatus)) {
-      throw new BusinessLogicException(
-        't.messages.invalidStatusTransition' as any,
-        {
-          resource: 't.resources.class',
-          from: oldStatus,
-          to: newStatus,
-        } as any,
-      );
+      throw new BusinessLogicException('t.messages.invalidStatusTransition', {
+        from: oldStatus,
+        to: newStatus,
+      });
     }
 
     // Validate 24-hour grace period for reverting CANCELED/FINISHED to ACTIVE
@@ -362,19 +460,50 @@ export class ClassesService extends BaseService {
       const timeSinceUpdate = Date.now() - classEntity.updatedAt.getTime();
 
       if (timeSinceUpdate >= gracePeriodMs) {
-        throw new BusinessLogicException(
-          't.messages.gracePeriodExpired' as any,
-          {
-            resource: 't.resources.class',
-            hours: 24,
-          } as any,
-        );
+        throw new BusinessLogicException('t.messages.gracePeriodExpired', {
+          resource: 't.resources.class',
+          hours: '24',
+        });
       }
     }
 
-    // Update status
-    await this.classesRepository.update(classId, { status: newStatus });
-    classEntity.status = newStatus;
+    // Prepare update data with status and date handling
+    // Use Record<string, any> to allow null values for clearing fields
+    const updateData: Record<string, any> = { status: newStatus };
+    const now = new Date();
+
+    // Handle ACTIVE status: Force update startDate to now (even if in future)
+    if (newStatus === ClassStatus.ACTIVE) {
+      updateData.startDate = now;
+    }
+
+    // Handle FINISHED status: Set endDate to now
+    if (newStatus === ClassStatus.FINISHED) {
+      updateData.endDate = now;
+    }
+
+    // Handle CANCELED status: Set endDate to now
+    if (newStatus === ClassStatus.CANCELED) {
+      updateData.endDate = now;
+    }
+
+    // Handle reverting FINISHED/CANCELED → ACTIVE: Clear endDate
+    // Use null instead of undefined because TypeORM's update() ignores undefined values
+    // null explicitly sets the field to NULL in the database
+    if (
+      (oldStatus === ClassStatus.FINISHED ||
+        oldStatus === ClassStatus.CANCELED) &&
+      newStatus === ClassStatus.ACTIVE
+    ) {
+      updateData.endDate = null;
+    }
+
+    // Update class with status and dates using updateThrow to ensure it persists
+    // updateThrow will throw an error if the update fails or no rows are affected
+    const updatedClass = await this.classesRepository.updateThrow(
+      classId,
+      updateData,
+    );
 
     // Emit status changed event
     await this.typeSafeEventEmitter.emitAsync(
@@ -389,7 +518,7 @@ export class ClassesService extends BaseService {
       ),
     );
 
-    return classEntity;
+    return updatedClass;
   }
 
   /**

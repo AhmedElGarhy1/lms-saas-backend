@@ -118,9 +118,10 @@ export class UserService extends BaseService {
     await this.userRepository.update(userId, { password: dto.newPassword });
 
     // Emit event for activity logging
+    // Use the user as the actor since password change is a user action
     await this.eventEmitter.emitAsync(
       AuthEvents.PASSWORD_CHANGED,
-      new PasswordChangedEvent(userId, { id: userId } as ActorUser),
+      new PasswordChangedEvent(userId, user as ActorUser),
     );
 
     return {

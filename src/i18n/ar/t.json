@@ -20,6 +20,11 @@
     "subjects": "المواد",
     "class": "الفصل",
     "classes": "الفصول",
+    "paused": "متوقف",
+    "finished": "منتهي",
+    "canceled": "ملغي",
+    "scheduled": "مجدول",
+    "conducting": "قيد التنفيذ",
     "group": "المجموعة",
     "groups": "المجموعات",
     "column": "عمود",
@@ -91,6 +96,7 @@
     "type": "النوع",
     "date": "التاريخ",
     "dates": "التواريخ",
+    "dateRange": "نطاق التاريخ",
     "startDate": "تاريخ البدء",
     "endDate": "تاريخ الانتهاء",
     "startTime": "وقت البدء",
@@ -99,6 +105,9 @@
     "count": "العدد",
     "session": "جلسة",
     "sessions": "جلسات",
+    "sessionType": "نوع الجلسة",
+    "extraSession": "جلسة إضافية",
+    "scheduledSession": "جلسة مجدولة",
     "schedule": "الجدول الزمني",
     "scheduleItems": "عناصر الجدول",
     "scheduleItem": "عنصر الجدول",
@@ -222,6 +231,8 @@
     "noResults": "لم يتم العثور على نتائج",
     "genericError": "حدث خطأ ما",
     "welcome": "مرحباً",
+    "pendingApproval": "في انتظار الموافقة",
+    "notStarted": "لم يبدأ",
     "bulkOperationResult": "نتائج العملية",
     "bulkOperationSuccess": "{count, plural, =0 {لا توجد عمليات} =1 {تمت معالجة {count} {item} بنجاح} =2 {تمت معالجة {count} {item} بنجاح} few {تمت معالجة {count} {item} بنجاح} many {تمت معالجة {count} {item} بنجاح} other {تمت معالجة {count} {item} بنجاح}}",
     "bulkOperationFailure": "{count, plural, =0 {لا توجد عمليات} =1 {فشلت معالجة {count} {item}} =2 {فشلت معالجة {count} {item}} few {فشلت معالجة {count} {item}} many {فشلت معالجة {count} {item}} other {فشلت معالجة {count} {item}}}",
@@ -231,6 +242,16 @@
     },
     "paymentCount": {
       "helperText": "عدد {unit} لكل دفعة (مثال: دفع كل 3 {unit})"
+    },
+    "gracePeriod": {
+      "expired": "لا يمكن استعادة حالة {resource}. انتهت فترة السماح البالغة {hours} ساعة. يمكنك فقط استعادة {resource} الملغي أو المنتهي خلال {hours} ساعة من تغيير الحالة.",
+      "remaining": "{hours} {hours, plural, =1 {ساعة} =2 {ساعتان} few {ساعات} many {ساعة} other {ساعة}} {minutes} {minutes, plural, =1 {دقيقة} =2 {دقيقتان} few {دقائق} many {دقيقة} other {دقيقة}} متبقية للاستعادة",
+      "remainingShort": "{hours}س {minutes}د متبقية",
+      "expiringSoon": "أقل من ساعة واحدة متبقية للاستعادة",
+      "expiredStatus": "انتهت فترة السماح. لا يمكن الاستعادة.",
+      "info": "يمكنك استعادة هذا {resource} خلال {hours} {hours, plural, =1 {ساعة} =2 {ساعتين} few {ساعات} many {ساعة} other {ساعة}} من الإلغاء/الانتهاء",
+      "sessionsCleanupNote": "سيتم تنظيف الجلسات تلقائياً بعد {hours} {hours, plural, =1 {ساعة} =2 {ساعتين} few {ساعات} many {ساعة} other {ساعة}}",
+      "hours": "{hours} {hours, plural, =1 {ساعة} =2 {ساعتين} few {ساعات} many {ساعة} other {ساعة}}"
     },
     "scheduleConflict": {
       "title": "تم اكتشاف تعارض في الجدول",
@@ -262,7 +283,11 @@
     "invalidStatusTransition": "انتقال حالة غير صالح من {from} إلى {to}",
     "gracePeriodExpired": "لا يمكن إعادة حالة {resource}. انتهت فترة السماح البالغة 24 ساعة. يمكنك فقط إعادة حالة الفصل الملغى أو المنتهي خلال {hours} ساعة من تغيير الحالة.",
     "cannotDeleteSession": "لا يمكن حذف الجلسة بحالة {status}. يمكن حذف الجلسات المجدولة فقط.",
+    "cannotUpdateSession": "لا يمكن تحديث أوقات الجلسة بحالة {status}. يمكن تحديث أوقات الجلسات المجدولة فقط.",
     "cannotDeleteScheduledSession": "لا يمكن حذف الجلسة المجدولة. يرجى إلغاؤها بدلاً من ذلك.",
+    "cannotCancelSession": "لا يمكن إلغاء الجلسة بحالة {status}. يمكن إلغاء الجلسات المجدولة فقط.",
+    "sessionDateMustBeInFuture": "يجب أن يكون تاريخ الجلسة في المستقبل.",
+    "cannotUpdatePaymentStrategy": "لا يمكن تحديث استراتيجية الدفع للفصل بحالة {status}. يمكن تحديث استراتيجيات الدفع فقط عندما تكون حالة الفصل PENDING_TEACHER_APPROVAL أو NOT_STARTED.",
     "duplicateField": "هذا {field} مستخدم بالفعل. يرجى اختيار آخر",
     "phoneNotVerified": "الهاتف غير مفعّل",
     "insufficientPermissions": "ليس لديك صلاحيات كافية لتنفيذ هذا الإجراء",
@@ -293,6 +318,7 @@
     "noSchedule": "لا يوجد جدول",
     "noResourceAvailable": "لا يوجد {resource} متاح",
     "noItemsFound": "لم يتم العثور على {item}",
+    "reason": "السبب",
     "tryAdjustingSearchTerms": "لم يتم العثور على نتائج. حاول تعديل مصطلحات البحث.",
     "resourcePermissions": "صلاحيات {resource}",
     "errorDetails": "تفاصيل الخطأ",
@@ -398,6 +424,8 @@
     "clearSearch": "مسح البحث",
     "tryAgain": "حاول مرة أخرى",
     "toggleStatus": "تبديل الحالة",
+    "updateStatus": "تحديث الحالة",
+    "revertToActive": "استعادة إلى نشط",
     "manageAccess": "إدارة الوصول",
     "reloadPage": "إعادة تحميل الصفحة",
     "deselectAll": "إلغاء اختيار الكل",
@@ -434,7 +462,8 @@
     "pickDate": "اختر تاريخ",
     "pickDateRange": "اختر نطاق التاريخ",
     "searchItems": "البحث في {item}...",
-    "confirmField": "أكد {field}"
+    "confirmField": "أكد {field}",
+    "reason": "السبب"
   },
   "ui": {
     "form": {
@@ -541,6 +570,16 @@
         "userNotFoundTitle": "المستخدم غير موجود",
         "userNotFoundDescription": "لم يتم العثور على مستخدم برقم الهاتف {phone}. هل تريد إنشاء مستخدم جديد بدلاً من ذلك؟",
         "createUserInstead": "إنشاء مستخدم بدلاً من ذلك"
+      },
+      "changeStatus": {
+        "title": "تغيير الحالة",
+        "description": "قم بتغيير الحالة. قد تتطلب بعض تغييرات الحالة إدخال سبب."
+      },
+      "cancelSession": {
+        "title": "إلغاء الجلسة",
+        "description": "إلغاء هذه الجلسة. سيتم حفظ الجلسات الملغية ويمكن عرضها لاحقاً.",
+        "message": "هل أنت متأكد من أنك تريد إلغاء {resourceName}؟",
+        "note": "سيتم حفظ الجلسات الملغية في النظام ويمكن عرضها ، لكن لا يمكن تحريرها أو استعادتها."
       }
     },
     "health": {
@@ -1224,6 +1263,26 @@
       },
       "readAll": {
         "name": "قراءة جميع المجموعات"
+      }
+    },
+    "sessions": {
+      "read": {
+        "name": "عرض الجلسات"
+      },
+      "create": {
+        "name": "إنشاء الجلسات"
+      },
+      "update": {
+        "name": "تحديث الجلسات"
+      },
+      "delete": {
+        "name": "حذف الجلسات"
+      },
+      "readAll": {
+        "name": "عرض جميع الجلسات"
+      },
+      "export": {
+        "name": "تصدير الجلسات"
       }
     },
     "system": {
