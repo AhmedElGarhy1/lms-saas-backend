@@ -38,6 +38,7 @@ import { AccessControlHelperService } from './modules/access-control/services/ac
 import { ContextMiddleware } from './shared/common/middleware/context.middleware';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RolesService } from './modules/access-control/services/roles.service';
+import { CentersRepository } from './modules/centers/repositories/centers.repository';
 import { join } from 'path';
 import { UserLocaleResolver } from './shared/resolvers/user-locale.resolver';
 import { Locale } from './shared/common/enums/locale.enum';
@@ -213,8 +214,9 @@ import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limi
       useFactory: (
         reflector: Reflector,
         accessControlHelperService: AccessControlHelperService,
-      ) => new ContextGuard(reflector, accessControlHelperService),
-      inject: [Reflector, AccessControlHelperService],
+        centersRepository: CentersRepository,
+      ) => new ContextGuard(reflector, accessControlHelperService, centersRepository),
+      inject: [Reflector, AccessControlHelperService, CentersRepository],
     },
     {
       provide: APP_GUARD,

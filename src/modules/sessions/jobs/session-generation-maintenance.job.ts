@@ -12,6 +12,8 @@ import { createSystemActor } from '@/shared/common/utils/system-actor.util';
 import { RequestContext } from '@/shared/common/context/request.context';
 import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
 import { Locale } from '@/shared/common/enums/locale.enum';
+import { TimezoneService } from '@/shared/common/services/timezone.service';
+import { addDays } from 'date-fns';
 
 /**
  * Weekly cronjob to maintain 4-week buffer of future sessions
@@ -50,9 +52,10 @@ export class SessionGenerationMaintenanceJob {
    */
   private async executeMaintenance(): Promise<void> {
     try {
-      const now = new Date();
-      const fourWeeksFromNow = new Date(now);
-      fourWeeksFromNow.setDate(fourWeeksFromNow.getDate() + 28); // 4 weeks = 28 days
+      // Use default timezone for maintenance job (processes all centers)
+      // Individual session generation will use each center's timezone
+      const now = TimezoneService.getZonedNowFromContext();
+      const fourWeeksFromNow = addDays(now, 28); // 4 weeks = 28 days
 
       const groupsNeedingSessions = await this.findGroupsNeedingSessions(
         now,

@@ -34,6 +34,7 @@ import { BulkOperationResult } from '@/shared/common/services/bulk-operation.ser
 import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
 import { StudentPaymentStrategyDto } from '../dto/student-payment-strategy.dto';
 import { TeacherPaymentStrategyDto } from '../dto/teacher-payment-strategy.dto';
+import { TimezoneService } from '@/shared/common/services/timezone.service';
 
 @Injectable()
 export class ClassesService extends BaseService {
@@ -132,10 +133,26 @@ export class ClassesService extends BaseService {
     const { studentPaymentStrategy, teacherPaymentStrategy, ...classData } =
       createClassDto;
 
-    const classEntity = await this.classesRepository.create({
+    // Convert date-only strings to UTC midnight in center timezone
+    const timezone = TimezoneService.getTimezoneFromContext();
+    const startDateUtc = TimezoneService.dateOnlyToUtc(
+      createClassDto.startDate,
+      timezone,
+    );
+    const endDateUtc = createClassDto.endDate
+      ? TimezoneService.dateOnlyToUtc(createClassDto.endDate, timezone)
+      : undefined;
+
+    const classDataWithUtcDates = {
       ...classData,
+      startDate: startDateUtc,
+      endDate: endDateUtc,
       centerId: actor.centerId!,
-    });
+    };
+
+    const classEntity = await this.classesRepository.create(
+      classDataWithUtcDates,
+    );
 
     await this.paymentStrategyService.createStrategiesForClass(
       classEntity.id,
@@ -187,11 +204,37 @@ export class ClassesService extends BaseService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { skipWarning, ...classUpdateData } = data;
 
+    // Convert date-only strings to UTC midnight in center timezone if provided
+    const timezone = TimezoneService.getTimezoneFromContext();
+    const classUpdateDataWithUtcDates: Record<string, unknown> = {
+      ...classUpdateData,
+    };
+
+    if (
+      classUpdateData.startDate &&
+      typeof classUpdateData.startDate === 'string'
+    ) {
+      classUpdateDataWithUtcDates.startDate = TimezoneService.dateOnlyToUtc(
+        classUpdateData.startDate,
+        timezone,
+      );
+    }
+
+    if (
+      classUpdateData.endDate &&
+      typeof classUpdateData.endDate === 'string'
+    ) {
+      classUpdateDataWithUtcDates.endDate = TimezoneService.dateOnlyToUtc(
+        classUpdateData.endDate,
+        timezone,
+      );
+    }
+
     const changedFields: string[] = [];
 
-    if (Object.keys(classUpdateData).length > 0) {
-      await this.classesRepository.update(classId, classUpdateData);
-      Object.assign(classEntity, classUpdateData);
+    if (Object.keys(classUpdateDataWithUtcDates).length > 0) {
+      await this.classesRepository.update(classId, classUpdateDataWithUtcDates);
+      Object.assign(classEntity, classUpdateDataWithUtcDates);
 
       // Track which fields changed (exclude skipWarning)
       Object.keys(classUpdateData).forEach((key) => {
@@ -470,7 +513,7 @@ export class ClassesService extends BaseService {
     // Prepare update data with status and date handling
     // Use Record<string, any> to allow null values for clearing fields
     const updateData: Record<string, any> = { status: newStatus };
-    const now = new Date();
+    const now = TimezoneService.getZonedNowFromContext();
 
     // Handle ACTIVE status: Force update startDate to now (even if in future)
     if (newStatus === ClassStatus.ACTIVE) {

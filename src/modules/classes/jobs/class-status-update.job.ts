@@ -11,6 +11,9 @@ import { createSystemActor } from '@/shared/common/utils/system-actor.util';
 import { RequestContext } from '@/shared/common/context/request.context';
 import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
 import { Locale } from '@/shared/common/enums/locale.enum';
+import { Center } from '@/modules/centers/entities/center.entity';
+import { TimezoneService } from '@/shared/common/services/timezone.service';
+import { DEFAULT_TIMEZONE } from '@/shared/common/constants/timezone.constants';
 
 /**
  * Cronjob to automatically update class statuses based on startDate and endDate
@@ -23,6 +26,8 @@ export class ClassStatusUpdateJob {
   constructor(
     @InjectRepository(Class)
     private readonly classRepository: Repository<Class>,
+    @InjectRepository(Center)
+    private readonly centerRepository: Repository<Center>,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
@@ -48,103 +53,127 @@ export class ClassStatusUpdateJob {
   }
 
   /**
-   * Main status update logic - extracted for testability and clarity
+   * Main status update logic - Elite Precision implementation
+   * Processes each center separately based on its timezone to ensure
+   * status transitions happen at the center's local midnight, not UTC midnight
    */
   private async executeStatusUpdates(): Promise<void> {
-    const startTime = Date.now();
-    const now = new Date();
+    // eslint-disable-next-line no-restricted-globals
+    const startTime = Date.now(); // Performance timing - returns number, not Date object
 
     try {
-      // Find classes with status NOT_STARTED where startDate <= now() → set to ACTIVE
-      // Note: Classes in PENDING_TEACHER_APPROVAL will not auto-transition (requires manual approval)
-      const classesToActivate = await this.classRepository.find({
-        where: {
-          status: ClassStatus.NOT_STARTED,
-          startDate: LessThanOrEqual(now),
-          deletedAt: IsNull(), // Only process non-deleted classes
-        },
+      // Fetch all active centers with their timezones
+      const centers = await this.centerRepository.find({
+        where: { isActive: true },
+        select: ['id', 'timezone'],
       });
 
-      // Find classes with status ACTIVE or PAUSED where endDate IS NOT NULL AND endDate < now() → set to FINISHED
-      const classesToFinish = await this.classRepository
-        .createQueryBuilder('class')
-        .where('class.status IN (:...statuses)', {
-          statuses: [ClassStatus.ACTIVE, ClassStatus.PAUSED],
-        })
-        .andWhere('class.endDate IS NOT NULL')
-        .andWhere('class.endDate <= :now', { now })
-        .andWhere('class.deletedAt IS NULL')
-        .getMany();
-
-      let activatedCount = 0;
-      let finishedCount = 0;
-
-      // Activate classes that should start
-      if (classesToActivate.length > 0) {
-        const classIds = classesToActivate.map((c) => c.id);
-        await this.classRepository.update(
-          { id: In(classIds) },
-          { status: ClassStatus.ACTIVE },
-        );
-
-        // Emit events for each activated class
-        for (const classEntity of classesToActivate) {
-          const systemActor = createSystemActor(classEntity.centerId);
-
-          const event = new ClassStatusChangedEvent(
-            classEntity.id,
-            ClassStatus.NOT_STARTED,
-            ClassStatus.ACTIVE,
-            'Automatic status update: startDate reached',
-            systemActor,
-            classEntity.centerId,
-          );
-          await this.typeSafeEventEmitter.emitAsync(
-            ClassEvents.STATUS_CHANGED,
-            event as any,
-          );
-        }
-
-        activatedCount = classesToActivate.length;
+      if (centers.length === 0) {
+        this.logger.log('No active centers found, skipping status update');
+        return;
       }
 
-      // Finish classes that should end
-      if (classesToFinish.length > 0) {
-        const classIds = classesToFinish.map((c) => c.id);
-        await this.classRepository.update(
-          { id: In(classIds) },
-          { status: ClassStatus.FINISHED },
-        );
+      let totalActivatedCount = 0;
+      let totalFinishedCount = 0;
 
-        // Emit events for each finished class
-        for (const classEntity of classesToFinish) {
-          const systemActor = createSystemActor(classEntity.centerId);
+      // Process each center separately with its timezone
+      for (const center of centers) {
+        const timezone = center.timezone || DEFAULT_TIMEZONE;
 
-          const event = new ClassStatusChangedEvent(
-            classEntity.id,
-            classEntity.status,
-            ClassStatus.FINISHED,
-            'Automatic status update: endDate reached',
-            systemActor,
-            classEntity.centerId,
+        // Get current moment in center's timezone (already returns UTC Date)
+        const centerNowUtc = TimezoneService.getZonedNow(timezone);
+
+        // 1. Activate Classes (NOT_STARTED -> ACTIVE)
+        const classesToActivate = await this.classRepository.find({
+          where: {
+            centerId: center.id,
+            status: ClassStatus.NOT_STARTED,
+            startDate: LessThanOrEqual(centerNowUtc), // Comparing UTC to UTC
+            deletedAt: IsNull(),
+          },
+        });
+
+        // 2. Finish Classes (ACTIVE/PAUSED -> FINISHED)
+        const classesToFinish = await this.classRepository
+          .createQueryBuilder('class')
+          .where('class.centerId = :centerId', { centerId: center.id })
+          .andWhere('class.status IN (:...statuses)', {
+            statuses: [ClassStatus.ACTIVE, ClassStatus.PAUSED],
+          })
+          .andWhere('class.endDate IS NOT NULL')
+          .andWhere('class.endDate <= :centerNowUtc', { centerNowUtc })
+          .andWhere('class.deletedAt IS NULL')
+          .getMany();
+
+        // Activate classes that should start
+        if (classesToActivate.length > 0) {
+          const classIds = classesToActivate.map((c) => c.id);
+          await this.classRepository.update(
+            { id: In(classIds) },
+            { status: ClassStatus.ACTIVE },
           );
-          await this.typeSafeEventEmitter.emitAsync(
-            ClassEvents.STATUS_CHANGED,
-            event as any,
-          );
+
+          // Emit events for each activated class
+          for (const classEntity of classesToActivate) {
+            const systemActor = createSystemActor(classEntity.centerId);
+
+            const event = new ClassStatusChangedEvent(
+              classEntity.id,
+              ClassStatus.NOT_STARTED,
+              ClassStatus.ACTIVE,
+              'Automatic status update: startDate reached',
+              systemActor,
+              classEntity.centerId,
+            );
+            await this.typeSafeEventEmitter.emitAsync(
+              ClassEvents.STATUS_CHANGED,
+              event as any,
+            );
+          }
+
+          totalActivatedCount += classesToActivate.length;
         }
 
-        finishedCount = classesToFinish.length;
+        // Finish classes that should end
+        if (classesToFinish.length > 0) {
+          const classIds = classesToFinish.map((c) => c.id);
+          await this.classRepository.update(
+            { id: In(classIds) },
+            { status: ClassStatus.FINISHED },
+          );
+
+          // Emit events for each finished class
+          for (const classEntity of classesToFinish) {
+            const systemActor = createSystemActor(classEntity.centerId);
+
+            const event = new ClassStatusChangedEvent(
+              classEntity.id,
+              classEntity.status,
+              ClassStatus.FINISHED,
+              'Automatic status update: endDate reached',
+              systemActor,
+              classEntity.centerId,
+            );
+            await this.typeSafeEventEmitter.emitAsync(
+              ClassEvents.STATUS_CHANGED,
+              event as any,
+            );
+          }
+
+          totalFinishedCount += classesToFinish.length;
+        }
       }
 
-      const duration = Date.now() - startTime;
+      // eslint-disable-next-line no-restricted-globals
+      const duration = Date.now() - startTime; // Performance timing - returns number, not Date object
 
-      if (activatedCount > 0 || finishedCount > 0) {
-        this.logger.log('Class status update completed', {
-          activatedCount,
-          finishedCount,
+      if (totalActivatedCount > 0 || totalFinishedCount > 0) {
+        this.logger.log('Class status update completed (Elite Precision)', {
+          activatedCount: totalActivatedCount,
+          finishedCount: totalFinishedCount,
+          centersProcessed: centers.length,
           duration,
-          timestamp: now.toISOString(),
+          timestamp: TimezoneService.getZonedNow().toISOString(),
         });
       }
     } catch (error) {

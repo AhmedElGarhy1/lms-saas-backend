@@ -13,6 +13,9 @@ import { Session } from '../entities/session.entity';
 import { DayOfWeek } from '@/modules/classes/enums/day-of-week.enum';
 import { SessionStatus } from '../enums/session-status.enum';
 import { GroupsRepository } from '@/modules/classes/repositories/groups.repository';
+import { TimezoneService } from '@/shared/common/services/timezone.service';
+import { format, addMonths, addDays, addMinutes, max, min } from 'date-fns';
+import { TZDate } from '@date-fns/tz';
 
 @Injectable()
 export class SessionGenerationService extends BaseService {
@@ -53,7 +56,7 @@ export class SessionGenerationService extends BaseService {
     // Cap endDate to class endDate if it exists
     let effectiveEndDate = endDate;
     if (classEntity.endDate) {
-      effectiveEndDate = new Date(
+      effectiveEndDate = TimezoneService.fromTimestamp(
         Math.min(endDate.getTime(), classEntity.endDate.getTime()),
       );
     }
@@ -83,13 +86,18 @@ export class SessionGenerationService extends BaseService {
       );
 
       for (const date of dates) {
-        // Calculate startTime and endTime
-        const [hours, minutes] = scheduleItem.startTime.split(':').map(Number);
-        const sessionStartTime = new Date(date);
-        sessionStartTime.setHours(hours, minutes, 0, 0);
+        // Calculate startTime and endTime using timezone-aware conversion
+        // Get the date string in center timezone (not UTC) to correctly handle
+        // cases where late-night times cross midnight in UTC
+        const timezone = TimezoneService.getTimezoneFromContext();
+        const zonedDate = new TZDate(date, timezone);
+        const dateStr = format(zonedDate, 'yyyy-MM-dd');
+        const sessionStartTime = TimezoneService.toUtc(
+          dateStr,
+          scheduleItem.startTime,
+        );
 
-        const sessionEndTime = new Date(sessionStartTime);
-        sessionEndTime.setMinutes(sessionEndTime.getMinutes() + duration);
+        const sessionEndTime = addMinutes(sessionStartTime, duration);
 
         // Check for teacher conflict
         const conflict =
@@ -183,20 +191,18 @@ export class SessionGenerationService extends BaseService {
     ]);
 
     const classEntity = group.class;
-    const startDate = new Date(
-      Math.max(
-        classEntity.startDate.getTime(),
-        new Date().getTime(), // Use current date if startDate is in the past
-      ),
-    );
+    const now = TimezoneService.getZonedNowFromContext();
+    const startDate = max([
+      classEntity.startDate,
+      now, // Use current date if startDate is in the past
+    ]);
 
-    const endDate = new Date(startDate);
-    endDate.setMonth(endDate.getMonth() + 2); // 2 months ahead
+    const endDate = addMonths(startDate, 2); // 2 months ahead
 
     // Cap endDate to class endDate if it exists
     let effectiveEndDate = endDate;
     if (classEntity.endDate) {
-      effectiveEndDate = new Date(
+      effectiveEndDate = TimezoneService.fromTimestamp(
         Math.min(endDate.getTime(), classEntity.endDate.getTime()),
       );
     }
@@ -236,9 +242,8 @@ export class SessionGenerationService extends BaseService {
     // Each schedule item generates 1 session per week, so 4 weeks = 4 sessions per item
     const requiredSessions = scheduleItems.length * 4;
 
-    const now = new Date();
-    const fourWeeksFromNow = new Date(now);
-    fourWeeksFromNow.setDate(fourWeeksFromNow.getDate() + 28); // 4 weeks = 28 days
+    const now = TimezoneService.getZonedNowFromContext();
+    const fourWeeksFromNow = addDays(now, 28); // 4 weeks = 28 days
 
     // Check if we have enough future sessions
     const futureSessions = await this.sessionsRepository.findByGroupId(
@@ -260,26 +265,23 @@ export class SessionGenerationService extends BaseService {
         ? futureSessions[futureSessions.length - 1]
         : null;
 
-    const startDate = latestSession
-      ? new Date(latestSession.startTime)
-      : new Date();
-    startDate.setDate(startDate.getDate() + 1); // Start from next day
+    const startDate = latestSession ? latestSession.startTime : now;
+    // Start from next day after latest session (or now if no sessions)
+    // This ensures we don't regenerate existing sessions
+    const effectiveStartDate = addDays(startDate, 1);
 
-    const endDate = new Date(now);
-    endDate.setDate(endDate.getDate() + 28); // 4 weeks = 28 days
+    const endDate = addDays(now, 28); // 4 weeks = 28 days
 
     // Cap endDate to class endDate if it exists
     let effectiveEndDate = endDate;
     const classEntity = group.class;
     if (classEntity?.endDate) {
-      effectiveEndDate = new Date(
-        Math.min(endDate.getTime(), classEntity.endDate.getTime()),
-      );
+      effectiveEndDate = min([endDate, classEntity.endDate]);
     }
 
     return this.generateSessionsForGroup(
       groupId,
-      startDate,
+      effectiveStartDate,
       effectiveEndDate,
       actor,
     );
@@ -309,13 +311,16 @@ export class SessionGenerationService extends BaseService {
     };
 
     const targetDay = dayMap[dayOfWeek];
-    const currentDate = new Date(startDate);
+    // Clone startDate to avoid mutating the original (addDays returns new Date, so this is safe)
+    let currentDate = startDate;
 
     while (currentDate <= endDate) {
-      if (currentDate.getDay() === targetDay) {
-        dates.push(new Date(currentDate));
+      // Use timezone-aware day of week to match schedule items (which are in center timezone)
+      if (TimezoneService.getDayOfWeek(currentDate) === targetDay) {
+        // addDays returns a new Date, so we can safely push currentDate directly
+        dates.push(currentDate);
       }
-      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate = addDays(currentDate, 1);
     }
 
     return dates;

@@ -15,9 +15,6 @@ export class StudentPaymentStrategy extends BaseEntity {
   })
   per: StudentPaymentUnit;
 
-  @Column({ type: 'integer', nullable: true })
-  count?: number;
-
   @Column({
     type: 'decimal',
     precision: 10,

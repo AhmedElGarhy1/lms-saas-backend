@@ -71,33 +71,15 @@ export class GroupEventsListener {
   }
 
   /**
-   * Handle ScheduleItemsUpdatedEvent - smart update sessions based on old vs new state
-   * Compares old and new schedule items and updates sessions intelligently
+   * Handle ScheduleItemsUpdatedEvent
+   * Note: Session updates are now handled directly in GroupsService.updateGroup()
+   * before schedule items are updated, to prevent foreign key constraint violations.
+   * This listener is kept for backward compatibility and potential future use.
    */
   @OnEvent(GroupEvents.SCHEDULE_ITEMS_UPDATED)
   async handleScheduleItemsUpdated(event: ScheduleItemsUpdatedEvent) {
-    const { groupId, oldScheduleItems, newScheduleItems, actor } = event;
-
-    try {
-      const result =
-        await this.sessionsService.updateSessionsForScheduleItemsChange(
-          groupId,
-          oldScheduleItems,
-          newScheduleItems,
-          actor,
-        );
-
-      this.logger.log(
-        `Updated sessions for group ${groupId}: ${result.added} added, ${result.removed} removed, ${result.updated} updated, ${result.conflicts} conflicts`,
-      );
-    } catch (error) {
-      // Log error but don't throw - this prevents blocking other event handlers
-      this.logger.error(
-        `Failed to update sessions for group ${groupId} after schedule items change: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-        error instanceof Error ? error.stack : undefined,
-      );
-    }
+    // Sessions are now handled in GroupsService.updateGroup() before schedule items are updated
+    // This prevents foreign key constraint violations when deleting schedule items
+    // This listener is kept for potential future use or other listeners that might need this event
   }
 }

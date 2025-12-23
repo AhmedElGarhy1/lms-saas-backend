@@ -19,6 +19,10 @@ import {
   DeleteCenterEvent,
   RestoreCenterEvent,
 } from '../events/center.events';
+import {
+  DEFAULT_TIMEZONE,
+  isValidTimezone,
+} from '@/shared/common/constants/timezone.constants';
 
 export interface SeederCenterData {
   name: string;
@@ -69,6 +73,14 @@ export class CentersService extends BaseService {
   }
 
   async createCenter(dto: CreateCenterDto, actor: ActorUser): Promise<Center> {
+    // Validate timezone if provided
+    const timezone = dto.timezone || DEFAULT_TIMEZONE;
+    if (!isValidTimezone(timezone)) {
+      throw new BusinessLogicException('t.messages.fieldInvalid', {
+        field: 'timezone',
+      });
+    }
+
     // Create the center
     const center = await this.centersRepository.create({
       name: dto.name,
@@ -77,6 +89,7 @@ export class CentersService extends BaseService {
       email: dto.email,
       website: dto.website,
       isActive: dto.isActive,
+      timezone,
     });
 
     await this.typeSafeEventEmitter.emitAsync(
@@ -114,6 +127,13 @@ export class CentersService extends BaseService {
           value: dto.name,
         });
       }
+    }
+
+    // Validate timezone if provided
+    if (dto.timezone !== undefined && !isValidTimezone(dto.timezone)) {
+      throw new BusinessLogicException('t.messages.fieldInvalid', {
+        field: 'timezone',
+      });
     }
 
     const updatedCenter = await this.centersRepository.updateCenter(

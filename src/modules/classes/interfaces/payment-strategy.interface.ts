@@ -16,13 +16,12 @@ export interface TeacherPaymentStrategy {
 
 /**
  * Student payment strategy
- * - SESSION: amount for a specific number of sessions (requires count)
- * - HOUR: amount for a specific number of hours (requires count)
- * - MONTH: amount for a specific number of months (requires count)
- * - CLASS: total amount for the full class period (1 payment, count not used)
+ * - SESSION: amount per session
+ * - HOUR: amount per hour
+ * - MONTH: amount per month
+ * - CLASS: total amount for the full class period (1 payment)
  */
 export interface StudentPaymentStrategy {
   per: StudentPaymentUnit;
-  count?: number; // Required when per is SESSION, HOUR, or MONTH, ignored when per is CLASS
   amount: number;
 }

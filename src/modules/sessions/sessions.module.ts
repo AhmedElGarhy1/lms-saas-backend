@@ -6,6 +6,7 @@ import { Group } from '@/modules/classes/entities/group.entity';
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { ClassesModule } from '@/modules/classes/classes.module';
+import { CentersModule } from '@/modules/centers/centers.module';
 import { SharedModule } from '@/shared/shared.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { SessionsController } from './controllers/sessions.controller';
@@ -27,6 +28,8 @@ import { SessionAttendanceListener } from './listeners/session-attendance-listen
     TypeOrmModule.forFeature([Session, Group, ScheduleItem, Class]),
     // Import ClassesModule to access repositories (using forwardRef to handle potential circular dependencies)
     forwardRef(() => ClassesModule),
+    // Import CentersModule to access BranchAccessService
+    CentersModule,
     SharedModule, // For TypeSafeEventEmitter, ActivityLogModule, etc.
     AccessControlModule, // For permissions
   ],

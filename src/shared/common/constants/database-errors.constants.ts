@@ -5,6 +5,7 @@
 export const DATABASE_ERROR_CODES = {
   UNIQUE_VIOLATION: ['23505', 'ER_DUP_ENTRY', 1062] as const,
   FOREIGN_KEY_VIOLATION: ['23503', 'ER_NO_REFERENCED_ROW_2', 1452] as const,
+  EXCLUSION_VIOLATION: ['23P01'] as const, // PostgreSQL exclusion constraint violation
   DEADLOCK: ['40001', '40P01'] as const,
 };
 
@@ -31,6 +32,7 @@ export const TRANSLATION_KEYS = {
       't.messages.relatedEntityMissingOrInvalid',
     TEMPORARY_DATABASE_CONFLICT: 't.messages.temporaryDatabaseConflict',
     DATABASE_OPERATION_FAILED: 't.messages.databaseOperationFailed',
+    SCHEDULE_CONFLICT: 't.messages.scheduleConflict.description', // For exclusion constraint violations (overlapping sessions)
     GENERIC_ERROR: 't.messages.genericError',
     INTERNAL_SERVER_ERROR: 't.messages.internalServerError',
     SERVICE_UNAVAILABLE: 't.messages.serviceUnavailable',

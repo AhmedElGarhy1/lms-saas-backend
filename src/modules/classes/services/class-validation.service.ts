@@ -9,6 +9,7 @@ import { BaseService } from '@/shared/common/services/base.service';
 import { Class } from '../entities/class.entity';
 import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
 import { ClassStatus } from '../enums/class-status.enum';
+import { TimezoneService } from '@/shared/common/services/timezone.service';
 
 @Injectable()
 export class ClassValidationService extends BaseService {
@@ -29,9 +30,11 @@ export class ClassValidationService extends BaseService {
   ): Promise<void> {
     // Prevent updating startDate if class is not in NOT_STARTED status
     if (dto.startDate !== undefined) {
+      // Convert string date to UTC using timezone-aware conversion
+      const newStartDateUtc = TimezoneService.dateOnlyToUtc(dto.startDate);
+      const currentStartDateUtc = currentClass.startDate; // Already UTC Date
       const startDateChanged =
-        new Date(dto.startDate).getTime() !==
-        new Date(currentClass.startDate).getTime();
+        newStartDateUtc.getTime() !== currentStartDateUtc.getTime();
       if (startDateChanged && currentClass.status !== ClassStatus.NOT_STARTED) {
         throw new BusinessLogicException(
           't.messages.cannotUpdateStartDateWhenNotNotStarted',

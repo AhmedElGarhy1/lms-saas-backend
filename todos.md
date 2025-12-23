@@ -125,13 +125,18 @@
 [x] create/update session should include startTime, day, and duration and endDate can be calculated automaticly
 [x] teacher conflict is error, student conflict is worning with "continue anyway"
 [x] correct display for each calender type Month, Day, Week for ux
+[x] handle timezone in frontend and backend and transformation
+[ ] make shared view dialog for shared data or control same design and overlay
+[ ] before session by amount of time (specified somewhere) the session can be start for attendance
+[ ] session generation/ schdule validation are happening always in the same time but in diffrent places we can combine them or make them smarter
+[ ] access control for sessions module
+[ ] calender ui doesn't fit many!
+[ ] calender doesn't have filters
+
 [ ] consider adding withDetailes flag and use it in backend
 [ ] submodule for permissions, RoleName, sortable columns, other is okay
 [ ] activity log decorator
 [ ]? notifications sometimese doesn't get sent
-[ ] handle timezone in frontend and backend and transformation
-[ ] before session by amount of time (specified somewhere) the session can be start for attendance
-
 [ ] no module export repository
 [ ] fix rest of eslint erros
 [ ] user can update his center (throw settings)

@@ -82,6 +82,28 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
           },
         );
       } else if (
+        isDatabaseErrorCode(code, DATABASE_ERROR_CODES.EXCLUSION_VIOLATION)
+      ) {
+        // Exclusion constraint violation (e.g., overlapping session times)
+        // This handles the database-level protection against double-booking
+        // that prevents race conditions in high-concurrency scenarios
+        const constraintName = drv.constraint || '';
+
+        // Check if this is the session overlap constraint
+        if (constraintName.includes('groupId_timeRange_exclusion')) {
+          httpException = new BusinessLogicException(
+            TRANSLATION_KEYS.ERRORS.SCHEDULE_CONFLICT,
+            {
+              resource: 't.resources.session',
+            },
+          );
+        } else {
+          // Generic exclusion violation
+          httpException = new BusinessLogicException(
+            TRANSLATION_KEYS.ERRORS.DATABASE_OPERATION_FAILED,
+          );
+        }
+      } else if (
         isDatabaseErrorCode(code, DATABASE_ERROR_CODES.FOREIGN_KEY_VIOLATION)
       ) {
         // Foreign key violation

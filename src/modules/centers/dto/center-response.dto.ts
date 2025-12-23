@@ -35,6 +35,13 @@ export class CenterResponseDto {
   isActive: boolean;
 
   @ApiProperty({
+    description: 'Center timezone (IANA timezone identifier)',
+    example: 'Africa/Cairo',
+  })
+  @Expose()
+  timezone: string;
+
+  @ApiProperty({
     description: 'Whether the center is accessible to the target user',
   })
   @Expose()

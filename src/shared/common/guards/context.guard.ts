@@ -4,6 +4,9 @@ import {
   ExecutionContext,
   ForbiddenException,
   InternalServerErrorException,
+  Inject,
+  forwardRef,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
@@ -12,12 +15,18 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { RequestContext } from '../context/request.context';
 import { NO_CONTEXT_KEY } from '../decorators/no-context.decorator';
 import { ProfileSelectionRequiredException } from '../exceptions/custom.exceptions';
+import { CentersRepository } from '@/modules/centers/repositories/centers.repository';
+import { DEFAULT_TIMEZONE } from '../constants/timezone.constants';
 
 @Injectable()
 export class ContextGuard implements CanActivate {
+  private readonly logger = new Logger(ContextGuard.name);
+
   constructor(
     private readonly reflector: Reflector,
     private readonly accessControlHelperService: AccessControlHelperService,
+    @Inject(forwardRef(() => CentersRepository))
+    private readonly centersRepository: CentersRepository,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -84,10 +93,33 @@ export class ContextGuard implements CanActivate {
       centerId,
     });
 
-    // Set the userId, centerId, and branchId in the request context
+    // Fetch center to get timezone
+    let timezone = DEFAULT_TIMEZONE;
+    if (centerId) {
+      try {
+        const center = await this.centersRepository.findById(centerId);
+        if (center?.timezone) {
+          timezone = center.timezone;
+        } else {
+          this.logger.warn(
+            `Center ${centerId} found but has no timezone set, using default: ${DEFAULT_TIMEZONE}`,
+          );
+        }
+      } catch (error) {
+        // If center not found or error, use default timezone
+        // This ensures the guard doesn't fail if center lookup fails
+        this.logger.warn(
+          `Failed to fetch center timezone for centerId: ${centerId}, using default: ${DEFAULT_TIMEZONE}`,
+          error instanceof Error ? error.stack : undefined,
+        );
+      }
+    }
+
+    // Set the userId, centerId, branchId, and timezone in the request context
     RequestContext.set({
       centerId: user.centerId,
       branchId,
+      timezone,
     });
 
     return true;

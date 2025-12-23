@@ -33,6 +33,20 @@ import { ScheduleItemsRepository } from '@/modules/classes/repositories/schedule
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
 import { DayOfWeek } from '@/modules/classes/enums/day-of-week.enum';
 import { SessionsBulkCreatedEvent } from '../events/session.events';
+import { TimezoneService } from '@/shared/common/services/timezone.service';
+import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
+import { ClassAccessService } from '@/modules/classes/services/class-access.service';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import {
+  addMinutes,
+  addMonths,
+  addDays,
+  min,
+  startOfDay,
+  isAfter,
+  format,
+} from 'date-fns';
+import { TZDate } from '@date-fns/tz';
 
 @Injectable()
 export class SessionsService extends BaseService {
@@ -43,6 +57,9 @@ export class SessionsService extends BaseService {
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly groupsRepository: GroupsRepository,
     private readonly scheduleItemsRepository: ScheduleItemsRepository,
+    private readonly branchAccessService: BranchAccessService,
+    private readonly classAccessService: ClassAccessService,
+    private readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super();
   }
@@ -64,31 +81,42 @@ export class SessionsService extends BaseService {
       'class',
     ]);
 
+    // Validate branch access
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: group.branchId,
+    });
+
+    // Validate class staff access (for STAFF users)
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
+
     const teacherUserProfileId = group.class.teacherUserProfileId;
 
-    // Parse date and startTime, then combine them
-    const sessionDate = new Date(createSessionDto.date);
-    const [hours, minutes] = createSessionDto.startTime.split(':').map(Number);
+    // Use date string directly (already YYYY-MM-DD format)
+    const dateStr = createSessionDto.date;
 
-    // Validate date is in the future
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    const dateOnly = new Date(sessionDate);
-    dateOnly.setHours(0, 0, 0, 0);
-    if (dateOnly < now) {
+    // Validate date is in the future using center timezone
+    const centerNow = TimezoneService.getZonedNowFromContext();
+    const requestedDate = TimezoneService.dateOnlyToUtc(dateStr);
+    if (TimezoneService.isAfter(requestedDate, centerNow)) {
       throw new BusinessLogicException(
         't.messages.sessionDateMustBeInFuture',
         {} as any,
       );
     }
 
-    // Create full datetime from date + time
-    const startTime = new Date(sessionDate);
-    startTime.setHours(hours, minutes, 0, 0);
+    // Create full datetime from date + time using timezone-aware conversion
+    const startTime = TimezoneService.toUtc(
+      dateStr,
+      createSessionDto.startTime,
+    );
 
-    // Calculate endTime from startTime + duration
-    const endTime = new Date(startTime);
-    endTime.setMinutes(endTime.getMinutes() + createSessionDto.duration);
+    // Calculate endTime from startTime + duration using date-fns
+    const endTime = addMinutes(startTime, createSessionDto.duration);
 
     // Validate teacher conflict
     const teacherConflict =
@@ -167,36 +195,43 @@ export class SessionsService extends BaseService {
     }
 
     // Fetch group with class to get teacherUserProfileId
-    const group = await this.groupsRepository.findById(session.groupId, [
+    const group = await this.groupsRepository.findByIdOrThrow(session.groupId, [
       'class',
     ]);
-    const teacherUserProfileId = group?.class.teacherUserProfileId;
 
-    // Parse date and startTime, then combine them
-    const sessionDate = new Date(updateSessionDto.date);
-    const [hours, minutes] = updateSessionDto.startTime
-      .split(':')
-      .map(Number) as [number, number];
+    // Validate branch access
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: group.branchId,
+    });
 
-    // Validate date is in the future
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    const dateOnly = new Date(sessionDate);
-    dateOnly.setHours(0, 0, 0, 0);
-    if (dateOnly < now) {
-      throw new BusinessLogicException(
-        't.messages.sessionDateMustBeInFuture',
-        {} as any,
-      );
+    // Validate class staff access (for STAFF users)
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
+
+    const teacherUserProfileId = group.class.teacherUserProfileId;
+
+    // Use date string directly (already YYYY-MM-DD format)
+    const dateStr = updateSessionDto.date;
+
+    // Validate date is in the future using center timezone
+    const centerNow = TimezoneService.getZonedNowFromContext();
+    const requestedDate = TimezoneService.dateOnlyToUtc(dateStr);
+    if (TimezoneService.isAfter(requestedDate, centerNow)) {
+      throw new BusinessLogicException('t.messages.sessionDateMustBeInFuture');
     }
 
-    // Create full datetime from date + time
-    const newStartTime = new Date(sessionDate);
-    newStartTime.setHours(hours, minutes, 0, 0);
+    // Create full datetime from date + time using timezone-aware conversion
+    const newStartTime = TimezoneService.toUtc(
+      dateStr,
+      updateSessionDto.startTime,
+    );
 
-    // Calculate endTime from startTime + duration
-    const newEndTime = new Date(newStartTime);
-    newEndTime.setMinutes(newEndTime.getMinutes() + updateSessionDto.duration);
+    // Calculate endTime from startTime + duration using date-fns
+    const newEndTime = addMinutes(newStartTime, updateSessionDto.duration);
 
     // Validate teacher conflict if time changed
     const timeChanged =
@@ -285,6 +320,24 @@ export class SessionsService extends BaseService {
       return session;
     }
 
+    // Fetch group with class for access validation
+    const group = await this.groupsRepository.findByIdOrThrow(session.groupId, [
+      'class',
+    ]);
+
+    // Validate branch access
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: group.branchId,
+    });
+
+    // Validate class staff access (for STAFF users)
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
+
     // Validate cancellation: only SCHEDULED sessions can be canceled
     if (status === SessionStatus.CANCELED) {
       await this.sessionValidationService.validateSessionCancellation(
@@ -324,6 +377,26 @@ export class SessionsService extends BaseService {
    */
   @Transactional()
   async deleteSession(sessionId: string, actor: ActorUser): Promise<void> {
+    const session = await this.sessionsRepository.findOneOrThrow(sessionId);
+
+    // Fetch group with class for access validation
+    const group = await this.groupsRepository.findByIdOrThrow(session.groupId, [
+      'class',
+    ]);
+
+    // Validate branch access
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: group.branchId,
+    });
+
+    // Validate class staff access (for STAFF users)
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
+
     await this.sessionValidationService.validateSessionDeletion(sessionId);
 
     await this.sessionsRepository.remove(sessionId);
@@ -437,16 +510,32 @@ export class SessionsService extends BaseService {
   async getSession(sessionId: string, actor: ActorUser): Promise<Session> {
     const session = await this.sessionsRepository.findOneOrThrow(sessionId);
 
-    // Validate group belongs to actor's center using repository
-    const group = await this.groupsRepository.findOne(session.groupId);
+    // Fetch group with class to get branchId and classId
+    const group = await this.groupsRepository.findByIdOrThrow(session.groupId, [
+      'class',
+    ]);
 
-    if (!group || group.centerId !== actor.centerId) {
+    // Validate center access (implicit via centerId check)
+    if (group.centerId !== actor.centerId) {
       throw new BusinessLogicException('t.messages.withIdNotFound', {
         resource: 't.resources.session',
         identifier: 't.resources.identifier',
         value: sessionId,
       });
     }
+
+    // Validate branch access
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId,
+      branchId: group.branchId,
+    });
+
+    // Validate class staff access (for STAFF users)
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
 
     return session;
   }
@@ -495,8 +584,7 @@ export class SessionsService extends BaseService {
 
       for (const session of scheduledSessions) {
         // Calculate new endTime = startTime + newDuration (in minutes)
-        const newEndTime = new Date(session.startTime);
-        newEndTime.setMinutes(newEndTime.getMinutes() + newDuration);
+        const newEndTime = addMinutes(session.startTime, newDuration);
 
         // Validate teacher conflict
         const teacherConflict =
@@ -566,8 +654,7 @@ export class SessionsService extends BaseService {
 
       // Update sessions that don't have conflicts
       for (const session of sessionsToUpdate) {
-        const newEndTime = new Date(session.startTime);
-        newEndTime.setMinutes(newEndTime.getMinutes() + newDuration);
+        const newEndTime = addMinutes(session.startTime, newDuration);
 
         await this.sessionsRepository.updateThrow(session.id, {
           endTime: newEndTime,
@@ -640,10 +727,9 @@ export class SessionsService extends BaseService {
     }
 
     // Regenerate sessions from updated scheduleItem
-    // Calculate date range (2 months from now)
-    const now = new Date();
-    const endDate = new Date(now);
-    endDate.setMonth(endDate.getMonth() + 2);
+    // Calculate date range (2 months from now) using center timezone
+    const now = TimezoneService.getZonedNowFromContext();
+    const endDate = addMonths(now, 2);
 
     const createdSessions =
       await this.sessionGenerationService.generateSessionsForGroup(
@@ -666,6 +752,52 @@ export class SessionsService extends BaseService {
         actor.centerId!,
       ),
     );
+  }
+
+  /**
+   * Delete future sessions for removed schedule items
+   * Used before deleting schedule items to prevent FK constraint violations
+   * @param scheduleItemIds - Array of schedule item IDs to delete sessions for
+   * @param actor - Actor performing the action
+   * @returns Number of sessions deleted
+   */
+  @Transactional()
+  async deleteSessionsForRemovedScheduleItems(
+    scheduleItemIds: string[],
+    actor: ActorUser,
+  ): Promise<number> {
+    let deletedCount = 0;
+    const allDeletedSessionIds: string[] = [];
+
+    for (const scheduleItemId of scheduleItemIds) {
+      const futureSessions =
+        await this.sessionsRepository.findFutureScheduledSessionsByScheduleItem(
+          scheduleItemId,
+        );
+
+      // Filter to only scheduled sessions (not extra)
+      const sessionsToDelete = futureSessions.filter((s) => !s.isExtraSession);
+
+      for (const session of sessionsToDelete) {
+        await this.sessionsRepository.remove(session.id);
+        allDeletedSessionIds.push(session.id);
+        deletedCount++;
+      }
+    }
+
+    // Emit single bulk event for all deleted sessions
+    if (allDeletedSessionIds.length > 0) {
+      await this.typeSafeEventEmitter.emitAsync(
+        SessionEvents.BULK_DELETED,
+        new SessionsBulkDeletedEvent(
+          allDeletedSessionIds,
+          actor,
+          actor.centerId!,
+        ),
+      );
+    }
+
+    return deletedCount;
   }
 
   /**
@@ -757,19 +889,16 @@ export class SessionsService extends BaseService {
     for (const [key, newScheduleItem] of newMap) {
       if (!oldMap.has(key)) {
         // Schedule item was added - generate new sessions for this specific item
-        const now = new Date();
-        const endDate = new Date(now);
-        endDate.setMonth(endDate.getMonth() + 2);
+        const now = TimezoneService.getZonedNowFromContext();
+        const endDate = addMonths(now, 2);
 
         // Cap endDate to class endDate if it exists
         let effectiveEndDate = endDate;
         if (group.class.endDate) {
-          effectiveEndDate = new Date(
-            Math.min(endDate.getTime(), group.class.endDate.getTime()),
-          );
+          effectiveEndDate = min([endDate, group.class.endDate]);
         }
 
-        if (effectiveEndDate >= now) {
+        if (!TimezoneService.isBefore(effectiveEndDate, now)) {
           // Generate sessions for this specific schedule item
           const dates = this.getDatesForDayOfWeek(
             now,
@@ -780,15 +909,18 @@ export class SessionsService extends BaseService {
           const sessionsToCreate: Partial<Session>[] = [];
 
           for (const date of dates) {
-            // Calculate startTime and endTime
-            const [hours, minutes] = newScheduleItem.startTime
-              .split(':')
-              .map(Number);
-            const sessionStartTime = new Date(date);
-            sessionStartTime.setHours(hours, minutes, 0, 0);
+            // Calculate startTime and endTime using timezone-aware conversion
+            // Get the date string in center timezone (not UTC) to correctly handle
+            // cases where late-night times cross midnight in UTC
+            const timezone = TimezoneService.getTimezoneFromContext();
+            const zonedDate = new TZDate(date, timezone);
+            const dateStr = format(zonedDate, 'yyyy-MM-dd');
+            const sessionStartTime = TimezoneService.toUtc(
+              dateStr,
+              newScheduleItem.startTime,
+            );
 
-            const sessionEndTime = new Date(sessionStartTime);
-            sessionEndTime.setMinutes(sessionEndTime.getMinutes() + duration);
+            const sessionEndTime = addMinutes(sessionStartTime, duration);
 
             // Check for teacher conflict
             const conflict =
@@ -895,10 +1027,11 @@ export class SessionsService extends BaseService {
 
         for (const session of scheduledSessions) {
           // Calculate new session times based on new schedule item
-          const sessionDate = new Date(session.startTime);
+          const sessionDate = session.startTime;
 
           // Calculate new date - only move if day changed
-          const sessionDayOfWeek = sessionDate.getDay();
+          // Use timezone-aware day of week to match schedule items (which are in center timezone)
+          const sessionDayOfWeek = TimezoneService.getDayOfWeek(sessionDate);
           let newSessionDate: Date;
 
           if (oldItem.day !== newItem.day) {
@@ -913,23 +1046,25 @@ export class SessionsService extends BaseService {
             // Calculate offset from session's current day to old day
             const currentOffset = (sessionDayOfWeek - oldDayIndex + 7) % 7;
             // Move to new day: subtract offset to get to old day, then add daysDiff
-            newSessionDate = new Date(sessionDate);
-            newSessionDate.setDate(
-              newSessionDate.getDate() - currentOffset + daysDiff,
-            );
+            newSessionDate = addDays(sessionDate, -currentOffset + daysDiff);
           } else {
             // If only time changed, keep the same date
-            newSessionDate = new Date(sessionDate);
+            newSessionDate = sessionDate;
           }
 
-          // Calculate new startTime with new time
-          const [hours, minutes] = newItem.startTime.split(':').map(Number);
-          const newStartTime = new Date(newSessionDate);
-          newStartTime.setHours(hours, minutes, 0, 0);
+          // Calculate new startTime with new time using timezone-aware conversion
+          // Get the date string in center timezone (not UTC) to correctly handle
+          // cases where late-night times cross midnight in UTC
+          const timezone = TimezoneService.getTimezoneFromContext();
+          const zonedDate = new TZDate(newSessionDate, timezone);
+          const dateStr = format(zonedDate, 'yyyy-MM-dd');
+          const newStartTime = TimezoneService.toUtc(
+            dateStr,
+            newItem.startTime,
+          );
 
           // Calculate new endTime
-          const newEndTime = new Date(newStartTime);
-          newEndTime.setMinutes(newEndTime.getMinutes() + duration);
+          const newEndTime = addMinutes(newStartTime, duration);
 
           // Validate teacher conflict
           const teacherConflict =
@@ -1041,37 +1176,16 @@ export class SessionsService extends BaseService {
     };
 
     const targetDay = dayMap[dayOfWeek];
-    const currentDate = new Date(startDate);
+    let currentDate = startOfDay(startDate);
 
-    while (currentDate <= endDate) {
-      if (currentDate.getDay() === targetDay) {
-        dates.push(new Date(currentDate));
+    while (!isAfter(currentDate, endDate)) {
+      // Use timezone-aware day of week to match schedule items (which are in center timezone)
+      if (TimezoneService.getDayOfWeek(currentDate) === targetDay) {
+        dates.push(currentDate);
       }
-      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate = addDays(currentDate, 1);
     }
 
     return dates;
-  }
-
-  /**
-   * Extract time string (HH:mm) from a Date object
-   * @param date - Date object
-   * @returns Time string in HH:mm format
-   */
-  private getTimeFromDate(date: Date): string {
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
-  }
-
-  /**
-   * Calculate duration in minutes from session start and end times
-   * @param session - Session entity
-   * @returns Duration in minutes
-   */
-  private getDurationFromSession(session: Session): number {
-    return Math.round(
-      (session.endTime.getTime() - session.startTime.getTime()) / 60000,
-    );
   }
 }

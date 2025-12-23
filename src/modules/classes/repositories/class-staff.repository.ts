@@ -6,6 +6,7 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { IsNull } from 'typeorm';
+import { TimezoneService } from '@/shared/common/services/timezone.service';
 
 @Injectable()
 export class ClassStaffRepository extends BaseRepository<ClassStaff> {
@@ -121,7 +122,11 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
     data: ClassStaffAccessDto,
     centerId: string,
   ): Promise<ClassStaff> {
-    return this.create({ ...data, centerId, joinedAt: new Date() });
+    return this.create({
+      ...data,
+      centerId,
+      joinedAt: TimezoneService.getZonedNowFromContext(),
+    });
   }
 
   /**
@@ -139,8 +144,9 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
       });
     }
 
-    await this.update(existingAccess.id, { leftAt: new Date() });
-    existingAccess.leftAt = new Date();
+    const leftAt = TimezoneService.getZonedNowFromContext();
+    await this.update(existingAccess.id, { leftAt });
+    existingAccess.leftAt = leftAt;
     return existingAccess;
   }
 

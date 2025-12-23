@@ -37,9 +37,11 @@ import { LevelsModule } from '@/modules/levels/levels.module';
 import { SubjectsModule } from '@/modules/subjects/subjects.module';
 import { CentersModule } from '@/modules/centers/centers.module';
 import { UserProfileModule } from '@/modules/user-profile/user-profile.module';
+import { SessionsModule } from '@/modules/sessions/sessions.module';
 import { ClassActivityListener } from './listeners/class-activity.listener';
 import { GroupActivityListener } from './listeners/group-activity.listener';
 import { ClassStatusUpdateJob } from './jobs/class-status-update.job';
+import { Center } from '@/modules/centers/entities/center.entity';
 
 @Module({
   imports: [
@@ -51,8 +53,10 @@ import { ClassStatusUpdateJob } from './jobs/class-status-update.job';
       StudentPaymentStrategy,
       TeacherPaymentStrategy,
       ClassStaff,
+      Center,
     ]),
     forwardRef(() => AccessControlModule),
+    forwardRef(() => SessionsModule),
     SharedModule,
     ActivityLogModule,
     LevelsModule,

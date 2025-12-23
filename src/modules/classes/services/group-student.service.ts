@@ -21,6 +21,7 @@ import { GroupStudent } from '../entities/group-student.entity';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { GroupStudentAccessDto } from '../dto/group-student-access.dto';
 import { ClassStatus } from '../enums/class-status.enum';
+import { TimezoneService } from '@/shared/common/services/timezone.service';
 
 @Injectable()
 export class GroupStudentService extends BaseService {
@@ -155,7 +156,7 @@ export class GroupStudentService extends BaseService {
       groupId: data.groupId,
       studentUserProfileId: data.userProfileId,
       classId: group.classId,
-      joinedAt: new Date(),
+      joinedAt: TimezoneService.getZonedNowFromContext(),
     });
   }
 
@@ -297,7 +298,7 @@ export class GroupStudentService extends BaseService {
         }
 
         await this.groupStudentsRepository.update(groupStudent.id, {
-          leftAt: new Date(),
+          leftAt: TimezoneService.getZonedNowFromContext(),
         });
         return { id: studentUserProfileId };
       },

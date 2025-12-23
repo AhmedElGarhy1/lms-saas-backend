@@ -7,6 +7,7 @@ import {
   IsBoolean,
   Matches,
 } from 'class-validator';
+import { IsTimezone } from '@/shared/common/decorators/is-timezone.decorator';
 
 export class UpdateCenterRequestDto {
   @ApiProperty({ description: 'Center name' })
@@ -41,6 +42,17 @@ export class UpdateCenterRequestDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @ApiProperty({
+    description: 'Center timezone (IANA timezone identifier)',
+    example: 'Africa/Cairo',
+  })
+  @IsString()
+  @IsOptional()
+  @IsTimezone({
+    message: 'timezone must be a valid IANA timezone identifier (e.g., Africa/Cairo, America/New_York)',
+  })
+  timezone?: string;
 
   @ApiProperty({ description: 'Center logo' })
   @IsString()

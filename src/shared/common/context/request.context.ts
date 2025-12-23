@@ -14,6 +14,7 @@ export interface IRequestContext {
   locale: Locale;
   userProfileType?: ProfileType;
   userProfileId?: string;
+  timezone?: string; // Center timezone for date conversions
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<IRequestContext>();

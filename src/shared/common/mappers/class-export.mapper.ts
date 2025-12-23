@@ -49,7 +49,6 @@ export class ClassExportMapper implements ExportMapper<Class, ClassExportData> {
       studentPaymentStrategy: classEntity.studentPaymentStrategy
         ? JSON.stringify({
             per: classEntity.studentPaymentStrategy.per,
-            count: classEntity.studentPaymentStrategy.count,
             amount: Number(classEntity.studentPaymentStrategy.amount),
           })
         : '',

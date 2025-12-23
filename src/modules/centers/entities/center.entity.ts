@@ -37,6 +37,9 @@ export class Center extends SoftBaseEntity {
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
+  @Column({ type: 'varchar', length: 50, default: 'Africa/Cairo' })
+  timezone: string;
+
   // Relations
 
   @OneToMany(() => UserAccess, (userAccess) => userAccess.center)

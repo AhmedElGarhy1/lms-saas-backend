@@ -37,7 +37,6 @@ export class PaymentStrategyService extends BaseService {
     await this.studentPaymentStrategyRepository.create({
       classId,
       per: studentStrategy.per,
-      count: studentStrategy.count,
       amount: studentStrategy.amount,
     });
 
@@ -77,16 +76,6 @@ export class PaymentStrategyService extends BaseService {
     ) {
       throw new BusinessLogicException('t.messages.validationFailed');
     }
-
-    // Count required for SESSION, HOUR, and MONTH payment units
-    if (
-      (studentPaymentStrategy.per === StudentPaymentUnit.SESSION ||
-        studentPaymentStrategy.per === StudentPaymentUnit.HOUR ||
-        studentPaymentStrategy.per === StudentPaymentUnit.MONTH) &&
-      (!studentPaymentStrategy.count || studentPaymentStrategy.count < 1)
-    ) {
-      throw new BusinessLogicException('t.messages.validationFailed');
-    }
   }
 
   /**
@@ -123,19 +112,8 @@ export class PaymentStrategyService extends BaseService {
       throw new BusinessLogicException('t.messages.validationFailed');
     }
 
-    // Count required for SESSION, HOUR, and MONTH payment units
-    if (
-      (strategy.per === StudentPaymentUnit.SESSION ||
-        strategy.per === StudentPaymentUnit.HOUR ||
-        strategy.per === StudentPaymentUnit.MONTH) &&
-      (!strategy.count || strategy.count < 1)
-    ) {
-      throw new BusinessLogicException('t.messages.validationFailed');
-    }
-
     await this.studentPaymentStrategyRepository.update(existingStrategy.id, {
       per: strategy.per,
-      count: strategy.count,
       amount: strategy.amount,
     });
   }

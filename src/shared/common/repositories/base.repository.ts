@@ -16,6 +16,7 @@ import { BasePaginationDto } from '../dto/base-pagination.dto';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { RequestContext } from '../context/request.context';
+import { TimezoneService } from '../services/timezone.service';
 
 export interface BulkOperationOptions {
   batchSize?: number;
@@ -731,8 +732,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   }
 
   /**
-   * Apply global date filters to any query builder
-   * This method can be used by all repositories for consistent date filtering
+   * Apply timezone-aware date filters to any query builder.
+   * Filters by dateFrom and dateTo from BasePaginationDto.
+   * If date strings are in YYYY-MM-DD format, converts them to UTC ranges based on center timezone.
+   * This method can be used by all repositories for consistent timezone-aware date filtering
    *
    * @example
    * ```typescript
@@ -746,16 +749,80 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     dateField: string = 'createdAt',
     alias: string = 'entity',
   ): void {
-    if (paginationDto.dateFrom) {
+    if (!paginationDto.dateFrom && !paginationDto.dateTo) {
+      return; // No date filtering needed
+    }
+
+    // Check if dates are in YYYY-MM-DD format (date-only strings)
+    const isDateOnlyFormat = (dateStr: string): boolean => {
+      return /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
+    };
+
+    const timezone = TimezoneService.getTimezoneFromContext();
+
+    if (paginationDto.dateFrom && paginationDto.dateTo) {
+      // Both dates provided
+      if (
+        isDateOnlyFormat(paginationDto.dateFrom) &&
+        isDateOnlyFormat(paginationDto.dateTo)
+      ) {
+        // Date-only strings - use timezone-aware range conversion
+        const { start, end } = TimezoneService.getZonedDateRange(
+          paginationDto.dateFrom,
+          paginationDto.dateTo,
+          timezone,
+        );
+        // Use >= for start (inclusive) and < for end (exclusive)
+        queryBuilder.andWhere(`${alias}.${dateField} >= :dateFrom`, {
+          dateFrom: start,
+        });
+        queryBuilder.andWhere(`${alias}.${dateField} < :dateTo`, {
+          dateTo: end,
+        });
+      } else {
+        // ISO date strings or Date objects - use as-is (already UTC or will be parsed as UTC)
+        queryBuilder.andWhere(`${alias}.${dateField} >= :dateFrom`, {
+          dateFrom: paginationDto.dateFrom,
+        });
+        queryBuilder.andWhere(`${alias}.${dateField} <= :dateTo`, {
+          dateTo: paginationDto.dateTo,
+        });
+      }
+    } else if (paginationDto.dateFrom) {
+      // Only dateFrom provided
+      if (isDateOnlyFormat(paginationDto.dateFrom)) {
+        // Date-only string - convert to UTC midnight in center timezone
+        const start = TimezoneService.dateOnlyToUtc(
+          paginationDto.dateFrom,
+          timezone,
+        );
+        queryBuilder.andWhere(`${alias}.${dateField} >= :dateFrom`, {
+          dateFrom: start,
+        });
+      } else {
+        // ISO date string or Date object - use as-is
       queryBuilder.andWhere(`${alias}.${dateField} >= :dateFrom`, {
         dateFrom: paginationDto.dateFrom,
       });
     }
-
-    if (paginationDto.dateTo) {
+    } else if (paginationDto.dateTo) {
+      // Only dateTo provided
+      if (isDateOnlyFormat(paginationDto.dateTo)) {
+        // Date-only string - convert to UTC range (midnight to next midnight)
+        const dateToRange = TimezoneService.dateRangeToUtc(
+          paginationDto.dateTo,
+          timezone,
+        );
+        // Use < for end (exclusive) to include all records on dateTo
+        queryBuilder.andWhere(`${alias}.${dateField} < :dateTo`, {
+          dateTo: dateToRange.end,
+        });
+      } else {
+        // ISO date string or Date object - use as-is
       queryBuilder.andWhere(`${alias}.${dateField} <= :dateTo`, {
         dateTo: paginationDto.dateTo,
       });
+      }
     }
   }
 
@@ -774,6 +841,68 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     if (dto.isActive !== undefined && dto.isActive !== null) {
       queryBuilder.andWhere(`${isActiveField} = :isActive`, {
         isActive: dto.isActive,
+      });
+    }
+  }
+
+  /**
+   * Apply timezone-aware date range filter to query builder.
+   * Converts date-only strings (YYYY-MM-DD) to UTC ranges based on center timezone.
+   * Uses exclusive upper bound (<) to ensure all sessions on dateTo are included.
+   *
+   * @param queryBuilder Query builder to apply filter to
+   * @param dateField Field name for the date column (e.g., 'startTime', 'createdAt')
+   * @param dateFrom Optional start date string in YYYY-MM-DD format
+   * @param dateTo Optional end date string in YYYY-MM-DD format
+   * @param timezone Optional timezone (defaults to context timezone or DEFAULT_TIMEZONE)
+   * @param alias Optional table alias (defaults to 'entity')
+   *
+   * @example
+   * ```typescript
+   * // In any repository:
+   * this.applyTimezoneDateRange(queryBuilder, 'startTime', '2024-01-01', '2024-01-31');
+   * ```
+   */
+  protected applyTimezoneDateRange(
+    queryBuilder: SelectQueryBuilder<any>,
+    dateField: string,
+    dateFrom?: string,
+    dateTo?: string,
+    timezone?: string,
+    alias: string = 'entity',
+  ): void {
+    if (!dateFrom && !dateTo) {
+      return; // No date filtering needed
+    }
+
+    const tz = timezone || TimezoneService.getTimezoneFromContext();
+
+    if (dateFrom && dateTo) {
+      // Both dates provided - use range conversion
+      const { start, end } = TimezoneService.getZonedDateRange(
+        dateFrom,
+        dateTo,
+        tz,
+      );
+      // Use >= for start (inclusive) and < for end (exclusive)
+      queryBuilder.andWhere(`${alias}.${dateField} >= :dateFrom`, {
+        dateFrom: start,
+      });
+      queryBuilder.andWhere(`${alias}.${dateField} < :dateTo`, {
+        dateTo: end,
+      });
+    } else if (dateFrom) {
+      // Only dateFrom provided - convert to UTC midnight in center timezone
+      const start = TimezoneService.dateOnlyToUtc(dateFrom, tz);
+      queryBuilder.andWhere(`${alias}.${dateField} >= :dateFrom`, {
+        dateFrom: start,
+      });
+    } else if (dateTo) {
+      // Only dateTo provided - convert to UTC range (midnight to next midnight)
+      const dateToRange = TimezoneService.dateRangeToUtc(dateTo, tz);
+      // Use < for end (exclusive) to include all sessions on dateTo
+      queryBuilder.andWhere(`${alias}.${dateField} < :dateTo`, {
+        dateTo: dateToRange.end,
       });
     }
   }

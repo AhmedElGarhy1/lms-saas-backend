@@ -21,6 +21,7 @@ import {
   startOfWeek,
   addDays,
 } from 'date-fns';
+import { TimezoneService } from '@/shared/common/services/timezone.service';
 
 @Injectable()
 export class ScheduleService extends BaseService {
@@ -41,7 +42,11 @@ export class ScheduleService extends BaseService {
    */
   validateScheduleItems(items: ScheduleItemDto[], duration: number): void {
     const getReferenceDateForDay = (day: DayOfWeek): Date => {
-      const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+      // Use timezone-aware anchor date for weekly pattern validation
+      // This ensures validation uses center's calendar day, not server's
+      const zonedNow = TimezoneService.getZonedNowFromContext();
+      // Convert zoned date back to Date object for date-fns operations
+      const weekStart = startOfWeek(zonedNow, { weekStartsOn: 1 });
       const dayMap: Record<DayOfWeek, number> = {
         [DayOfWeek.MON]: 0,
         [DayOfWeek.TUE]: 1,

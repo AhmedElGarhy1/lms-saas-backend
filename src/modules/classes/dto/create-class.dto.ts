@@ -1,7 +1,7 @@
 import {
   IsString,
   IsUUID,
-  IsDate,
+  IsDateString,
   IsOptional,
   IsInt,
   Min,
@@ -9,6 +9,7 @@ import {
   MaxLength,
   ValidateNested,
   Validate,
+  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
@@ -85,22 +86,26 @@ export class CreateClassDto {
   teacherPaymentStrategy: TeacherPaymentStrategyDto;
 
   @ApiProperty({
-    description: 'Class start date',
-    example: '2024-01-01T00:00:00Z',
+    description: 'Class start date (YYYY-MM-DD format, interpreted as midnight in center timezone)',
+    example: '2024-01-01',
   })
-  @IsDate()
-  @Type(() => Date)
-  startDate: Date = new Date();
+  @IsDateString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+    message: 'startDate must be in YYYY-MM-DD format',
+  })
+  startDate: string;
 
   @ApiProperty({
-    description: 'Class end date (optional)',
-    example: '2024-12-31T23:59:59Z',
+    description: 'Class end date (optional, YYYY-MM-DD format, interpreted as midnight in center timezone)',
+    example: '2024-12-31',
     required: false,
   })
   @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  @Validate((object: CreateClassDto, value: Date) => {
+  @IsDateString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+    message: 'endDate must be in YYYY-MM-DD format',
+  })
+  @Validate((object: CreateClassDto, value: string) => {
     // If endDate is not provided, validation passes (it's optional)
     if (!value) return true;
 
@@ -108,9 +113,9 @@ export class CreateClassDto {
     if (!object.startDate) return true;
 
     // endDate must be after startDate
-    return new Date(value) > new Date(object.startDate);
+    return value > object.startDate;
   })
-  endDate?: Date;
+  endDate?: string;
 
   @ApiProperty({
     description: 'Class duration in minutes',

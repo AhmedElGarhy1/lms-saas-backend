@@ -10,11 +10,15 @@ import { CalendarSessionsDto } from '../dto/calendar-sessions.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { SelectQueryBuilder } from 'typeorm';
+import { TimezoneService } from '@/shared/common/services/timezone.service';
+import { subHours } from 'date-fns';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 
 @Injectable()
 export class SessionsRepository extends BaseRepository<Session> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    protected readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super(txHost);
   }
@@ -136,10 +140,10 @@ export class SessionsRepository extends BaseRepository<Session> {
    * @param actor - The user performing the action
    * @returns Query builder with filters applied
    */
-  private buildSessionQueryBuilder(
+  private async buildSessionQueryBuilder(
     filters: SessionFiltersDto,
     actor: ActorUser,
-  ): SelectQueryBuilder<Session> {
+  ): Promise<SelectQueryBuilder<Session>> {
     const centerId = actor.centerId!;
     const queryBuilder = this.getRepository()
       .createQueryBuilder('session')
@@ -150,6 +154,21 @@ export class SessionsRepository extends BaseRepository<Session> {
       .addSelect(['group.id', 'group.name', 'class.id', 'class.name'])
       // Filter by center through group
       .where('group.centerId = :centerId', { centerId });
+
+    // Access control: Filter by class staff for non-bypass users
+    const canBypassCenterInternalAccess =
+      await this.accessControlHelperService.bypassCenterInternalAccess(
+        actor.userProfileId,
+        centerId,
+      );
+
+    if (!canBypassCenterInternalAccess) {
+      queryBuilder
+        .leftJoin('class.classStaff', 'classStaff')
+        .andWhere('classStaff.userProfileId = :userProfileId', {
+          userProfileId: actor.userProfileId,
+        });
+    }
 
     // Apply filters
     if (filters.groupId) {
@@ -170,24 +189,50 @@ export class SessionsRepository extends BaseRepository<Session> {
       });
     }
 
-    // Handle dateFrom (from PaginateSessionsDto via BasePaginationDto or CalendarSessionsDto)
+    // Handle dateFrom/dateTo with timezone-aware conversion
+    // If date strings are provided (YYYY-MM-DD), convert to UTC range based on center timezone
     const filtersWithDates = filters as SessionFiltersDto & {
       dateFrom?: string;
       dateTo?: string;
     };
-    if (filtersWithDates.dateFrom) {
-      const dateFrom = new Date(filtersWithDates.dateFrom);
-      queryBuilder.andWhere('session.startTime >= :dateFrom', {
-        dateFrom,
-      });
-    }
 
-    // Handle dateTo (from PaginateSessionsDto via BasePaginationDto or CalendarSessionsDto)
-    if (filtersWithDates.dateTo) {
-      const dateTo = new Date(filtersWithDates.dateTo);
-      queryBuilder.andWhere('session.startTime <= :dateTo', {
-        dateTo,
-      });
+    if (filtersWithDates.dateFrom || filtersWithDates.dateTo) {
+      const timezone = TimezoneService.getTimezoneFromContext();
+
+      if (filtersWithDates.dateFrom && filtersWithDates.dateTo) {
+        // Both dates provided - use range conversion
+        const { start, end } = TimezoneService.getZonedDateRange(
+          filtersWithDates.dateFrom,
+          filtersWithDates.dateTo,
+          timezone,
+        );
+        // Use >= for start (inclusive) and < for end (exclusive)
+        queryBuilder.andWhere('session.startTime >= :dateFrom', {
+          dateFrom: start,
+        });
+        queryBuilder.andWhere('session.startTime < :dateTo', {
+          dateTo: end,
+        });
+      } else if (filtersWithDates.dateFrom) {
+        // Only dateFrom provided - convert to UTC midnight in center timezone
+        const dateFrom = TimezoneService.dateOnlyToUtc(
+          filtersWithDates.dateFrom,
+          timezone,
+        );
+        queryBuilder.andWhere('session.startTime >= :dateFrom', {
+          dateFrom,
+        });
+      } else if (filtersWithDates.dateTo) {
+        // Only dateTo provided - convert to UTC range (midnight to next midnight)
+        const dateToRange = TimezoneService.dateRangeToUtc(
+          filtersWithDates.dateTo,
+          timezone,
+        );
+        // Use < for end (exclusive) to include all sessions on dateTo
+        queryBuilder.andWhere('session.startTime < :dateTo', {
+          dateTo: dateToRange.end,
+        });
+      }
     }
 
     return queryBuilder;
@@ -204,7 +249,10 @@ export class SessionsRepository extends BaseRepository<Session> {
     paginateDto: PaginateSessionsDto,
     actor: ActorUser,
   ): Promise<Pagination<Session>> {
-    const queryBuilder = this.buildSessionQueryBuilder(paginateDto, actor);
+    const queryBuilder = await this.buildSessionQueryBuilder(
+      paginateDto,
+      actor,
+    );
 
     return this.paginate(
       paginateDto,
@@ -241,12 +289,33 @@ export class SessionsRepository extends BaseRepository<Session> {
       // Filter by center through group
       .where('group.centerId = :centerId', { centerId });
 
-    // Apply date range filter (dateFrom/dateTo are required)
-    const dateFrom = new Date(dto.dateFrom);
-    const dateTo = new Date(dto.dateTo);
+    // Access control: Filter by class staff for non-bypass users
+    const canBypassCenterInternalAccess =
+      await this.accessControlHelperService.bypassCenterInternalAccess(
+        actor.userProfileId,
+        centerId,
+      );
+
+    if (!canBypassCenterInternalAccess) {
+      queryBuilder
+        .leftJoin('class.classStaff', 'classStaff')
+        .andWhere('classStaff.userProfileId = :userProfileId', {
+          userProfileId: actor.userProfileId,
+        });
+    }
+
+    // Apply date range filter with timezone-aware conversion
+    // dateFrom and dateTo are date strings (YYYY-MM-DD) interpreted in center timezone
+    const timezone = TimezoneService.getTimezoneFromContext();
+    const { start, end } = TimezoneService.getZonedDateRange(
+      dto.dateFrom,
+      dto.dateTo,
+      timezone,
+    );
+    // Use >= for start (inclusive) and < for end (exclusive)
     queryBuilder
-      .andWhere('session.startTime >= :dateFrom', { dateFrom })
-      .andWhere('session.startTime <= :dateTo', { dateTo });
+      .andWhere('session.startTime >= :dateFrom', { dateFrom: start })
+      .andWhere('session.startTime < :dateTo', { dateTo: end });
 
     // Apply other filters
     if (dto.groupId) {
@@ -284,14 +353,19 @@ export class SessionsRepository extends BaseRepository<Session> {
     dto: CalendarSessionsDto,
     actor: ActorUser,
   ): Promise<number> {
-    const queryBuilder = this.buildSessionQueryBuilder(dto, actor);
+    const queryBuilder = await this.buildSessionQueryBuilder(dto, actor);
 
-    // Apply date range filter
-    const dateFrom = new Date(dto.dateFrom);
-    const dateTo = new Date(dto.dateTo);
+    // Apply date range filter with timezone-aware conversion
+    const timezone = TimezoneService.getTimezoneFromContext();
+    const { start, end } = TimezoneService.getZonedDateRange(
+      dto.dateFrom,
+      dto.dateTo,
+      timezone,
+    );
+    // Use >= for start (inclusive) and < for end (exclusive)
     queryBuilder
-      .andWhere('session.startTime >= :dateFrom', { dateFrom })
-      .andWhere('session.startTime <= :dateTo', { dateTo });
+      .andWhere('session.startTime >= :dateFrom', { dateFrom: start })
+      .andWhere('session.startTime < :dateTo', { dateTo: end });
 
     return queryBuilder.getCount();
   }
@@ -320,7 +394,7 @@ export class SessionsRepository extends BaseRepository<Session> {
     scheduleItemId: string,
     relations?: string[],
   ): Promise<Session[]> {
-    const now = new Date();
+    const now = TimezoneService.getZonedNowFromContext();
     return this.findSessions(
       {
         scheduleItemId,
@@ -386,7 +460,7 @@ export class SessionsRepository extends BaseRepository<Session> {
     groupId: string,
     relations?: string[],
   ): Promise<Session[]> {
-    const now = new Date();
+    const now = TimezoneService.getZonedNowFromContext();
     return this.findSessions(
       {
         groupId,
@@ -398,7 +472,7 @@ export class SessionsRepository extends BaseRepository<Session> {
   }
 
   async countFutureSessionsByGroup(groupId: string): Promise<number> {
-    const now = new Date();
+    const now = TimezoneService.getZonedNowFromContext();
     return this.getRepository()
       .createQueryBuilder('session')
       .where('session.groupId = :groupId', { groupId })
@@ -407,7 +481,7 @@ export class SessionsRepository extends BaseRepository<Session> {
   }
 
   async deleteFutureScheduledSessionsByGroup(groupId: string): Promise<void> {
-    const now = new Date();
+    const now = TimezoneService.getZonedNowFromContext();
     await this.getRepository()
       .createQueryBuilder()
       .delete()
@@ -425,8 +499,8 @@ export class SessionsRepository extends BaseRepository<Session> {
    * @returns Count of deleted sessions
    */
   async deleteScheduledSessionsForHardLockedClasses(): Promise<number> {
-    const twentyFourHoursAgo = new Date();
-    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    const now = TimezoneService.getZonedNowFromContext();
+    const twentyFourHoursAgo = subHours(now, 24);
 
     const deleteResult = await this.getRepository()
       .createQueryBuilder()
@@ -463,7 +537,9 @@ export class SessionsRepository extends BaseRepository<Session> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('session')
       .where('session.status = :status', { status: SessionStatus.SCHEDULED })
-      .andWhere('session.startTime > :now', { now: new Date() });
+      .andWhere('session.startTime > :now', {
+        now: TimezoneService.getZonedNowFromContext(),
+      });
 
     if (groupId) {
       queryBuilder.andWhere('session.groupId = :groupId', { groupId });
