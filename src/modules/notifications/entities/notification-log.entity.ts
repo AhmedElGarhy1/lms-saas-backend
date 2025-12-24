@@ -67,7 +67,8 @@ export class NotificationLog {
   @Column({ type: 'int', default: 0 })
   retryCount: number;
 
-  @Column({ type: 'timestamp', nullable: true })
+  
+  @Column({ type: 'timestamptz', nullable: true })
   lastAttemptAt?: Date;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -83,9 +84,11 @@ export class NotificationLog {
   @JoinColumn({ name: 'centerId' })
   center?: Center;
 
-  @CreateDateColumn()
+  
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

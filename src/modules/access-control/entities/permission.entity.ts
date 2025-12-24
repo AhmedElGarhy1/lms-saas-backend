@@ -36,6 +36,7 @@ export class Permission extends BaseEntity {
   @OneToMany(() => Center, (center) => center.id, { nullable: true })
   centerId: string | null;
 
-  @CreateDateColumn()
+  
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }

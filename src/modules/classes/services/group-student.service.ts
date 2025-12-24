@@ -154,7 +154,7 @@ export class GroupStudentService extends BaseService {
       classId: group.classId,
       centerId: group.centerId,
       branchId: group.branchId,
-      joinedAt: TimezoneService.getUtcNow(),
+      joinedAt: new Date(),
     });
   }
 
@@ -296,7 +296,7 @@ export class GroupStudentService extends BaseService {
         }
 
         await this.groupStudentsRepository.update(groupStudent.id, {
-          leftAt: TimezoneService.getUtcNow(),
+          leftAt: new Date(),
         });
         return { id: studentUserProfileId };
       },

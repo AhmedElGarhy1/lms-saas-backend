@@ -20,9 +20,17 @@ import { BusinessLogicException } from '@/shared/common/exceptions/custom.except
 import { Transactional } from '@nestjs-cls/transactional';
 import { GroupsRepository } from '@/modules/classes/repositories/groups.repository';
 import { TimezoneService } from '@/shared/common/services/timezone.service';
+import { DEFAULT_TIMEZONE } from '@/shared/common/constants/timezone.constants';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { ClassAccessService } from '@/modules/classes/services/class-access.service';
-import { addMinutes, addDays, startOfDay, subMinutes } from 'date-fns';
+import {
+  addMinutes,
+  addDays,
+  startOfDay,
+  subMinutes,
+  getDay,
+  isBefore,
+} from 'date-fns';
 import { ScheduleItemsRepository } from '@/modules/classes/repositories/schedule-items.repository';
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
 import { DayOfWeek } from '@/modules/classes/enums/day-of-week.enum';
@@ -95,8 +103,9 @@ export class SessionsService extends BaseService {
     const startTime = createSessionDto.startTime;
 
     // Validate date is in the future (UTC comparison - mathematically identical to zoned comparison)
-    const now = TimezoneService.getUtcNow();
-    if (TimezoneService.isBefore(startTime, now)) {
+    const now = new Date();
+    console.log(startTime, now);
+    if (isBefore(startTime, now)) {
       throw new BusinessLogicException(
         't.messages.sessionDateMustBeInFuture',
         {} as any,
@@ -174,12 +183,14 @@ export class SessionsService extends BaseService {
    */
   @Transactional()
   async startSession(groupId: string, actor: ActorUser): Promise<Session> {
-    // 1. Get current time from backend (timezone-aware)
-    const now = TimezoneService.getZonedNowFromContext();
+    // 1. Get current UTC time
+    const now = new Date();
 
-    // 2. Fetch Group with class to extract denormalized fields and schedule items
+    // 2. Fetch Group with class and center to extract denormalized fields and schedule items
+    // Center relation is needed for timezone when generating virtual sessions
     const group = await this.groupsRepository.findByIdOrThrow(groupId, [
       'class',
+      'class.center', // Add Center relation for timezone
     ]);
 
     // 3. Access Validation
@@ -245,8 +256,7 @@ export class SessionsService extends BaseService {
     // 6. Normalize scheduled start time (strip milliseconds for exact matching)
     const normalizedTimestamp =
       Math.floor(scheduledStartTime.getTime() / 1000) * 1000;
-    const normalizedStartTime =
-      TimezoneService.fromTimestamp(normalizedTimestamp);
+    const normalizedStartTime = new Date(normalizedTimestamp);
 
     // 7. Duplicate Check: Query repository for existing session at this scheduled time
     const existingSession =
@@ -303,7 +313,7 @@ export class SessionsService extends BaseService {
   ): Promise<Session> {
     // scheduledStartTime is already a UTC Date object (converted by @IsIsoDateTime decorator)
     // Normalize milliseconds for exact matching (strip milliseconds)
-    const normalizedStartTime = TimezoneService.fromTimestamp(
+    const normalizedStartTime = new Date(
       Math.floor(scheduledStartTime.getTime() / 1000) * 1000,
     );
 
@@ -418,8 +428,8 @@ export class SessionsService extends BaseService {
     const newStartTime = updateSessionDto.startTime;
 
     // Validate date is in the future (UTC comparison - mathematically identical to zoned comparison)
-    const now = TimezoneService.getUtcNow();
-    if (TimezoneService.isBefore(newStartTime, now)) {
+    const now = new Date();
+    if (isBefore(newStartTime, now)) {
       throw new BusinessLogicException('t.messages.sessionDateMustBeInFuture');
     }
 
@@ -648,12 +658,10 @@ export class SessionsService extends BaseService {
     dto: CalendarSessionsDto,
     actor: ActorUser,
   ): Promise<CalendarSessionsResponseDto> {
-    // Convert date strings to UTC date range
-    // dto.dateFrom and dto.dateTo are already UTC Date objects (converted by @IsIsoDateTime decorator)
-    // For calendar queries, extract date part and create range in center timezone
-    const timezone = TimezoneService.getTimezoneFromContext();
-    const { start: startDate, end: endDate } =
-      TimezoneService.dateRangeFromDates(dto.dateFrom, dto.dateTo, timezone);
+    // dto.dateFrom and dto.dateTo are already UTC Date objects (converted by @IsoUtcDate decorator)
+    // Use them directly - no timezone conversion needed
+    const startDate = dto.dateFrom;
+    const endDate = dto.dateTo;
 
     // Get real sessions with relations loaded
     const realSessions = await this.sessionsRepository.getCalendarSessions(
@@ -680,6 +688,7 @@ export class SessionsService extends BaseService {
       Array.from(groupIds).map((groupId) =>
         this.groupsRepository.findByIdOrThrow(groupId, [
           'class',
+          'class.center', // Add Center relation for timezone
           'class.teacher',
           'class.teacher.user',
         ]),
@@ -785,14 +794,14 @@ export class SessionsService extends BaseService {
       const classEntity = group.class;
 
       // Effective start date should be the later of query startDate or class startDate
-      const effectiveStartDate = TimezoneService.fromTimestamp(
+      const effectiveStartDate = new Date(
         Math.max(startDate.getTime(), classEntity.startDate.getTime()),
       );
 
       // Cap endDate to class endDate if it exists
       let effectiveEndDate = endDate;
       if (classEntity.endDate) {
-        effectiveEndDate = TimezoneService.fromTimestamp(
+        effectiveEndDate = new Date(
           Math.min(endDate.getTime(), classEntity.endDate.getTime()),
         );
       }
@@ -810,13 +819,21 @@ export class SessionsService extends BaseService {
       );
 
       for (const date of dates) {
-        // Calculate startTime and endTime using timezone-aware conversion
-        const dateStr = TimezoneService.formatZoned(date, 'yyyy-MM-dd');
-        const sessionStartTime = TimezoneService.toUtc(
-          dateStr,
+        // Fetch Center's timezone from entity relationship (Group → Class → Center)
+        // Fallback to DEFAULT_TIMEZONE if center timezone is not available
+        const timezone = group.class.center?.timezone || DEFAULT_TIMEZONE;
+
+        // Calculate startTime: Convert social time (HH:mm in center timezone) to physical UTC
+        // date is UTC Date, scheduleItem.startTime is HH:mm string in center timezone
+        const sessionStartTime = TimezoneService.combineDateAndTime(
+          date,
           scheduleItem.startTime,
+          timezone,
         );
 
+        // Calculate endTime using UTC math (adding minutes to UTC startTime)
+        // This correctly handles sessions that cross calendar day boundaries
+        // UTC math is universal: 60 minutes is 60 minutes everywhere
         const sessionEndTime = addMinutes(
           sessionStartTime,
           classEntity.duration,
@@ -868,8 +885,8 @@ export class SessionsService extends BaseService {
 
     // endDate is exclusive, so we continue while currentDate < endDate
     while (currentDate.getTime() < endDate.getTime()) {
-      // Use timezone-aware day of week to match schedule items (which are in center timezone)
-      if (TimezoneService.getDayOfWeek(currentDate) === targetDay) {
+      // Use date-fns getDay() on UTC dates (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+      if (getDay(currentDate) === targetDay) {
         dates.push(currentDate);
       }
       currentDate = addDays(currentDate, 1);

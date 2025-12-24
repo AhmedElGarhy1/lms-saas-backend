@@ -48,16 +48,6 @@ export default tseslint.config(
           ],
         },
       ],
-      // Ban native Date constructor - force TimezoneService usage
-      // Note: Date.now() is allowed for performance timing (returns number, not Date object)
-      'no-restricted-globals': [
-        'error',
-        {
-          name: 'Date',
-          message:
-            'Direct usage of Date constructor (new Date()) is not allowed. Use TimezoneService.getZonedNow(timezone) for "now" or TimezoneService methods for conversions. For performance timing, use Date.now() with eslint-disable comment.',
-        },
-      ],
     },
   },
   // Allow EventEmitter2 only in TypeSafeEventEmitter service
@@ -65,13 +55,6 @@ export default tseslint.config(
     files: ['src/shared/services/type-safe-event-emitter.service.ts'],
     rules: {
       'no-restricted-imports': 'off',
-    },
-  },
-  // Allow Date constructor only in TimezoneService
-  {
-    files: ['src/shared/common/services/timezone.service.ts'],
-    rules: {
-      'no-restricted-globals': 'off',
     },
   },
 );

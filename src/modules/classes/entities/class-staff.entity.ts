@@ -23,13 +23,15 @@ export class ClassStaff extends BaseEntity {
   @Column({ type: 'uuid' })
   branchId: string; // Denormalized from Class for performance and snapshot
 
+  
   @Column({
-    type: 'timestamp',
+    type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
   })
   joinedAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  
+  @Column({ type: 'timestamptz', nullable: true })
   leftAt?: Date;
 
   // Relations

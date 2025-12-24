@@ -12,8 +12,6 @@ import { RequestContext } from '@/shared/common/context/request.context';
 import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
 import { Locale } from '@/shared/common/enums/locale.enum';
 import { Center } from '@/modules/centers/entities/center.entity';
-import { TimezoneService } from '@/shared/common/services/timezone.service';
-import { DEFAULT_TIMEZONE } from '@/shared/common/constants/timezone.constants';
 
 /**
  * Cronjob to automatically update class statuses based on startDate and endDate
@@ -53,12 +51,10 @@ export class ClassStatusUpdateJob {
   }
 
   /**
-   * Main status update logic - Elite Precision implementation
-   * Processes each center separately based on its timezone to ensure
-   * status transitions happen at the center's local midnight, not UTC midnight
+   * Main status update logic
+   * Class dates are stored in UTC, so we compare UTC to UTC
    */
   private async executeStatusUpdates(): Promise<void> {
-    // eslint-disable-next-line no-restricted-globals
     const startTime = Date.now(); // Performance timing - returns number, not Date object
 
     try {
@@ -76,19 +72,17 @@ export class ClassStatusUpdateJob {
       let totalActivatedCount = 0;
       let totalFinishedCount = 0;
 
-      // Process each center separately with its timezone
+      // Process each center separately
+      // Class dates are already UTC, so we compare UTC to UTC
+      const now = new Date();
+
       for (const center of centers) {
-        const timezone = center.timezone || DEFAULT_TIMEZONE;
-
-        // Get current moment in center's timezone (already returns UTC Date)
-        const centerNowUtc = TimezoneService.getZonedNow(timezone);
-
         // 1. Activate Classes (NOT_STARTED -> ACTIVE)
         const classesToActivate = await this.classRepository.find({
           where: {
             centerId: center.id,
             status: ClassStatus.NOT_STARTED,
-            startDate: LessThanOrEqual(centerNowUtc), // Comparing UTC to UTC
+            startDate: LessThanOrEqual(now), // Comparing UTC to UTC
             deletedAt: IsNull(),
           },
         });
@@ -101,7 +95,7 @@ export class ClassStatusUpdateJob {
             statuses: [ClassStatus.ACTIVE, ClassStatus.PAUSED],
           })
           .andWhere('class.endDate IS NOT NULL')
-          .andWhere('class.endDate <= :centerNowUtc', { centerNowUtc })
+          .andWhere('class.endDate <= :now', { now })
           .andWhere('class.deletedAt IS NULL')
           .getMany();
 
@@ -164,7 +158,6 @@ export class ClassStatusUpdateJob {
         }
       }
 
-      // eslint-disable-next-line no-restricted-globals
       const duration = Date.now() - startTime; // Performance timing - returns number, not Date object
 
       if (totalActivatedCount > 0 || totalFinishedCount > 0) {
@@ -173,7 +166,7 @@ export class ClassStatusUpdateJob {
           finishedCount: totalFinishedCount,
           centersProcessed: centers.length,
           duration,
-          timestamp: TimezoneService.getZonedNow().toISOString(),
+          timestamp: new Date().toISOString(),
         });
       }
     } catch (error) {

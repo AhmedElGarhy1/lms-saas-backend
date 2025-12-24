@@ -55,10 +55,12 @@ export class Class extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   centerId: string;
 
-  @Column({ type: 'timestamp' })
+  
+  @Column({ type: 'timestamptz' })
   startDate: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  
+  @Column({ type: 'timestamptz', nullable: true })
   endDate?: Date;
 
   @Column({ type: 'int' })

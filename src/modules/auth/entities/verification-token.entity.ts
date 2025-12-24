@@ -32,13 +32,16 @@ export class VerificationToken {
   @Column({ type: 'varchar', length: 10 })
   code: string; // OTP code
 
-  @Column({ type: 'timestamp' })
+  
+  @Column({ type: 'timestamptz' })
   expiresAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  
+  @Column({ type: 'timestamptz', nullable: true })
   verifiedAt: Date | null;
 
-  @CreateDateColumn()
+  
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
   // Relations

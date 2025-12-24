@@ -25,7 +25,6 @@ function IsIso8601OrDate(validationOptions?: ValidationOptions) {
           }
 
           // If already a Date (after transformation), it's valid
-          // eslint-disable-next-line no-restricted-globals
           if (value instanceof Date) {
             return !isNaN(value.getTime());
           }
@@ -60,9 +59,7 @@ export function IsoUtcDate(validationOptions?: ValidationOptions) {
       if (value === null || value === undefined) return value;
 
       // If already a Date, just normalize milliseconds
-      // eslint-disable-next-line no-restricted-globals
       if (value instanceof Date) {
-        // eslint-disable-next-line no-restricted-globals
         const date = new Date(value);
         date.setMilliseconds(0);
         return date;
@@ -70,7 +67,6 @@ export function IsoUtcDate(validationOptions?: ValidationOptions) {
 
       // If string, parse and normalize
       if (typeof value === 'string') {
-        // eslint-disable-next-line no-restricted-globals
         const date = new Date(value);
 
         // Check if parsing failed

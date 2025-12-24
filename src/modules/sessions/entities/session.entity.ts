@@ -35,10 +35,12 @@ export class Session extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   title?: string;
 
-  @Column({ type: 'timestamp' })
+  
+  @Column({ type: 'timestamptz' })
   startTime: Date;
 
-  @Column({ type: 'timestamp' })
+  
+  @Column({ type: 'timestamptz' })
   endTime: Date;
 
   @Column({

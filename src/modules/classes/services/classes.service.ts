@@ -531,7 +531,7 @@ export class ClassesService extends BaseService {
     const updateData = this.prepareStatusUpdateData(
       oldStatus,
       newStatus,
-      TimezoneService.getUtcNow(),
+      new Date(),
     );
 
     // Update class with status and dates using updateThrow to ensure it persists

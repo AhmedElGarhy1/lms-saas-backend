@@ -51,7 +51,7 @@ export class CustomValidationPipe implements PipeTransform {
         statusCode: 400,
         message: { key: 't.messages.validationFailed' } as TranslationMessage,
         code: ErrorCode.VALIDATION_FAILED,
-        timestamp: TimezoneService.getUtcNow().toISOString(),
+        timestamp: new Date().toISOString(),
         details: validationErrors,
       };
 

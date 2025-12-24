@@ -38,7 +38,8 @@ export class User extends SoftBaseEntity {
   @Exclude()
   hashedRt: string | null;
 
-  @Column({ type: 'timestamp', nullable: true })
+  
+  @Column({ type: 'timestamptz', nullable: true })
   phoneVerified: Date | null;
 
   @OneToMany(() => VerificationToken, (token) => token.user)

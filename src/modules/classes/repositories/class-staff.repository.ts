@@ -129,7 +129,7 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
       ...data,
       centerId,
       branchId,
-      joinedAt: TimezoneService.getUtcNow(),
+      joinedAt: new Date(),
     });
   }
 
@@ -148,7 +148,7 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
       });
     }
 
-    const leftAt = TimezoneService.getUtcNow();
+    const leftAt = new Date();
     await this.update(existingAccess.id, { leftAt });
     existingAccess.leftAt = leftAt;
     return existingAccess;

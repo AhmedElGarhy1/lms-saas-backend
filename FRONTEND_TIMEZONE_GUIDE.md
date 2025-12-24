@@ -307,23 +307,36 @@ function formatDateForAPI(date: Date, timezone: string): string {
 
 ## 7. Important Behaviors
 
-### All Dates Are Converted to UTC Automatically
+### Architecture: UTC-Only Application Layer
 
-- Frontend sends ISO 8601 strings with timezone
-- Backend automatically converts to UTC Date objects
-- **No need to convert to UTC on frontend** - just include the timezone in the ISO string
+**DTO Layer (Validation & Conversion):**
+- Frontend can send ISO 8601 strings with **any timezone** (e.g., `+02:00`, `-05:00`, `Z`)
+- DTO layer (`@IsoUtcDate` decorator) validates ISO 8601 format and converts to UTC Date objects
+- All timezone conversion happens at the DTO layer
 
-### Date Ranges Are Inclusive
+**Application Layer (UTC Only):**
+- Application layer receives only UTC Date objects
+- All date operations (queries, comparisons, calculations) work with UTC dates
+- No timezone conversions occur in the application layer
 
-- `dateFrom: "2024-01-01T00:00:00+02:00"` includes all of Jan 1st in center timezone
-- `dateTo: "2024-01-31T23:59:59+02:00"` includes all of Jan 31st in center timezone
+**Benefits:**
+- Consistent date handling throughout the application
+- No timezone-related bugs in business logic
+- Simple and predictable date operations
+
+### Date Ranges
+
+- Frontend sends ISO 8601 strings with timezone (e.g., `"2024-01-01T00:00:00+02:00"`)
+- DTO converts to UTC Date objects
+- Backend uses UTC dates directly in queries
 - Backend uses exclusive upper bounds internally (`<` not `<=`)
 
 ### Backend Handles Timezone Conversion
 
 - Frontend sends ISO 8601 strings with timezone
-- Backend converts to UTC using the timezone in the ISO string
+- DTO layer converts to UTC using the timezone in the ISO string
 - **Always include timezone in ISO strings** - this is required
+- Application layer works exclusively with UTC
 
 ---
 
@@ -424,10 +437,19 @@ const displayTime = formatInTimeZone(
 
 ## Summary
 
-**Key Takeaway:** Send **all date fields as ISO 8601 strings with timezone offset** (Z or +/-HH:MM), display dates using the **center timezone**, and let the backend handle UTC conversion. The backend automatically converts all ISO 8601 strings to UTC Date objects.
+**Key Takeaway:** 
+- Send **all date fields as ISO 8601 strings with timezone offset** (Z or +/-HH:MM)
+- Frontend can send **any timezone** - DTO layer validates and converts to UTC automatically
+- Display dates using the **center timezone** for user-facing content
+- Application layer works exclusively with UTC (no timezone conversions in business logic)
+
+**Architecture:**
+- **DTO Layer**: Validates ISO 8601 (any timezone) → Converts to UTC Date objects
+- **Application Layer**: Works with UTC Date objects only (no timezone conversions)
 
 **Critical:** 
 - Always include timezone in ISO 8601 strings (required)
 - Always validate ISO 8601 format with timezone on the frontend before API calls
 - Never send YYYY-MM-DD format (old format, no longer supported)
 - Never send Date objects (always send strings)
+- Frontend can send any timezone - backend DTO layer handles conversion
