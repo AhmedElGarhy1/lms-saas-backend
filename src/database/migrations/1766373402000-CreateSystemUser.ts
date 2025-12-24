@@ -77,7 +77,14 @@ export class CreateSystemUser1766373402000 implements MigrationInterface {
         "updatedBy"
       ) VALUES ($1, $2, $3, $4, NOW(), NOW(), $5, $6)
       ON CONFLICT (id) DO NOTHING`,
-      [profileUuid, SYSTEM_USER_ID, 'System', 'en', SYSTEM_USER_ID, SYSTEM_USER_ID],
+      [
+        profileUuid,
+        SYSTEM_USER_ID,
+        'System',
+        'en',
+        SYSTEM_USER_ID,
+        SYSTEM_USER_ID,
+      ],
     );
 
     // Re-enable foreign key constraints
@@ -88,10 +95,9 @@ export class CreateSystemUser1766373402000 implements MigrationInterface {
     const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
 
     // Delete user_info first (due to foreign key)
-    await queryRunner.query(
-      `DELETE FROM user_info WHERE "userId" = $1`,
-      [SYSTEM_USER_ID],
-    );
+    await queryRunner.query(`DELETE FROM user_info WHERE "userId" = $1`, [
+      SYSTEM_USER_ID,
+    ]);
 
     // Delete system user
     await queryRunner.query(`DELETE FROM users WHERE id = $1`, [
@@ -99,4 +105,3 @@ export class CreateSystemUser1766373402000 implements MigrationInterface {
     ]);
   }
 }
-

@@ -4,82 +4,39 @@ import { GroupEvents } from '@/shared/events/groups.events.enum';
 import {
   GroupCreatedEvent,
   GroupUpdatedEvent,
-  ScheduleItemsUpdatedEvent,
 } from '@/modules/classes/events/group.events';
-import { ClassStatus } from '@/modules/classes/enums/class-status.enum';
-import { SessionsService } from '../services/sessions.service';
-import { SessionGenerationService } from '../services/session-generation.service';
 
 /**
  * Listener for Group events from classes module
- * Handles session generation when groups are created (if class is ACTIVE)
- * and smart session updates when group schedules are updated
+ * With virtual sessions, no pre-generation is needed - sessions are calculated on-demand
  */
 @Injectable()
 export class GroupEventsListener {
   private readonly logger = new Logger(GroupEventsListener.name);
 
-  constructor(
-    private readonly sessionsService: SessionsService,
-    private readonly sessionGenerationService: SessionGenerationService,
-  ) {}
+  constructor() {}
 
   /**
-   * Handle GroupCreatedEvent - generate sessions if class is ACTIVE
-   * If class is NOT_STARTED, sessions will be generated when class transitions to ACTIVE
+   * Handle GroupCreatedEvent
+   * No action needed - virtual sessions will be calculated on-demand when queried
    */
   @OnEvent(GroupEvents.CREATED)
-  async handleGroupCreated(event: GroupCreatedEvent) {
-    const { group, classEntity, actor } = event;
-
-    // Only generate sessions if class is already ACTIVE
-    // If class is NOT_STARTED, sessions will be generated when class transitions to ACTIVE
-    if (
-      classEntity.status === ClassStatus.ACTIVE ||
-      classEntity.status === ClassStatus.PAUSED
-    ) {
-      try {
-        const sessions =
-          await this.sessionGenerationService.generateInitialSessionsForGroup(
-            group.id,
-            actor,
-          );
-
-        this.logger.log(
-          `Generated ${sessions.length} initial sessions for group ${group.id} (class ${classEntity.id} is ACTIVE)`,
-        );
-      } catch (error) {
-        // Log error but don't throw - this prevents blocking other event handlers
-        this.logger.error(
-          `Failed to generate sessions for group ${group.id}: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
-          error instanceof Error ? error.stack : undefined,
-        );
-      }
-    }
+  handleGroupCreated(event: GroupCreatedEvent) {
+    // Virtual sessions are calculated on-demand, no pre-generation needed
+    this.logger.debug(
+      `Group ${event.group.id} created - sessions will be calculated on-demand`,
+    );
   }
 
   /**
-   * Handle GroupUpdatedEvent - keep for backward compatibility
-   * Note: Schedule items updates are now handled by ScheduleItemsUpdatedEvent
+   * Handle GroupUpdatedEvent
+   * No action needed - virtual sessions automatically reflect schedule changes
    */
   @OnEvent(GroupEvents.UPDATED)
-  async handleGroupUpdated(event: GroupUpdatedEvent) {
-    // Schedule items updates are handled by ScheduleItemsUpdatedEvent
-    // This handler is kept for other group updates (e.g., name changes)
-  }
-
-  /**
-   * Handle ScheduleItemsUpdatedEvent
-   * Note: Session updates are now handled directly in GroupsService.updateGroup()
-   * before schedule items are updated, to prevent foreign key constraint violations.
-   * This listener is kept for backward compatibility and potential future use.
-   */
-  @OnEvent(GroupEvents.SCHEDULE_ITEMS_UPDATED)
-  async handleScheduleItemsUpdated(event: ScheduleItemsUpdatedEvent) {
-    // Sessions are now handled in GroupsService.updateGroup() before schedule items are updated
-    // This prevents foreign key constraint violations when deleting schedule items
-    // This listener is kept for potential future use or other listeners that might need this event
+  handleGroupUpdated(event: GroupUpdatedEvent) {
+    // Virtual sessions automatically reflect schedule changes, no action needed
+    this.logger.debug(
+      `Group ${event.group.id} updated - virtual sessions will reflect changes on-demand`,
+    );
   }
 }

@@ -9,6 +9,7 @@ import { BaseEntity } from '@/shared/common/entities/base.entity';
 @Index(['classId'])
 @Index(['centerId'])
 @Index(['userProfileId'])
+@Index(['centerId', 'branchId'])
 export class ClassStaff extends BaseEntity {
   @Column({ type: 'uuid' })
   userProfileId: string;
@@ -18,6 +19,9 @@ export class ClassStaff extends BaseEntity {
 
   @Column({ type: 'uuid' })
   centerId: string; // Denormalized from Class for performance
+
+  @Column({ type: 'uuid' })
+  branchId: string; // Denormalized from Class for performance and snapshot
 
   @Column({
     type: 'timestamp',

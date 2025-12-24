@@ -41,6 +41,3 @@ export class SessionResponseDto {
   @ApiPropertyOptional({ description: 'Updated by user ID' })
   updatedBy?: string;
 }
-
-
-

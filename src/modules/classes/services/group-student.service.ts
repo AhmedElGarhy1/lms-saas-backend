@@ -73,6 +73,8 @@ export class GroupStudentService extends BaseService {
       centerId: centerId,
     });
 
+    // DTO validation (@BelongsToBranch decorator) already ensures group belongs to actor's branch
+    // Fetch group to get class info and denormalized fields for snapshot
     const group = await this.groupsRepository.findByIdOrThrow(data.groupId, [
       'class',
     ]);
@@ -87,13 +89,6 @@ export class GroupStudentService extends BaseService {
         status: group.class.status,
       });
     }
-
-    // Validate actor has branch access to the group's branch (via class)
-    await this.branchAccessService.validateBranchAccess({
-      userProfileId: actor.userProfileId,
-      centerId: centerId,
-      branchId: group.branchId,
-    });
 
     // Validate actor has ClassStaff access to the parent class
     await this.classAccessService.validateClassAccess({
@@ -152,10 +147,13 @@ export class GroupStudentService extends BaseService {
       );
     }
 
+    // Extract centerId and branchId from validated group entity for snapshot
     await this.groupStudentsRepository.create({
       groupId: data.groupId,
       studentUserProfileId: data.userProfileId,
       classId: group.classId,
+      centerId: group.centerId,
+      branchId: group.branchId,
       joinedAt: TimezoneService.getZonedNowFromContext(),
     });
   }

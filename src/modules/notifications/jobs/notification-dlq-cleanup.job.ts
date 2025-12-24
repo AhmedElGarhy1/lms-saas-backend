@@ -43,64 +43,64 @@ export class NotificationDlqCleanupJob {
         locale: Locale.EN,
       },
       async () => {
-    const startTime = Date.now();
+        const startTime = Date.now();
 
-    try {
-      // Calculate cutoff date
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - this.retentionDays);
+        try {
+          // Calculate cutoff date
+          const cutoffDate = new Date();
+          cutoffDate.setDate(cutoffDate.getDate() - this.retentionDays);
 
-      // Get count of entries to be deleted (for logging)
-      // Use repository methods instead of accessing protected getRepository()
-      const totalFailed = await this.logRepository.findMany({
-        where: {
-          status: NotificationStatus.FAILED,
-        },
-      });
+          // Get count of entries to be deleted (for logging)
+          // Use repository methods instead of accessing protected getRepository()
+          const totalFailed = await this.logRepository.findMany({
+            where: {
+              status: NotificationStatus.FAILED,
+            },
+          });
 
-      const oldEntries = totalFailed.filter(
-        (log) => log.createdAt < cutoffDate,
-      );
-      const countToDelete = oldEntries.length;
-      const oldestEntry =
-        oldEntries.length > 0 ? oldEntries[0].createdAt : null;
+          const oldEntries = totalFailed.filter(
+            (log) => log.createdAt < cutoffDate,
+          );
+          const countToDelete = oldEntries.length;
+          const oldestEntry =
+            oldEntries.length > 0 ? oldEntries[0].createdAt : null;
 
-      if (countToDelete === 0) {
-        return;
-      }
+          if (countToDelete === 0) {
+            return;
+          }
 
-      // Delete entries older than cutoff date using repository method
-      const deletedCount =
-        await this.logRepository.deleteOldFailedLogs(cutoffDate);
+          // Delete entries older than cutoff date using repository method
+          const deletedCount =
+            await this.logRepository.deleteOldFailedLogs(cutoffDate);
 
-      // Persist cleanup run timestamp
-      await this.persistCleanupRun();
+          // Persist cleanup run timestamp
+          await this.persistCleanupRun();
 
-      const duration = Date.now() - startTime;
+          const duration = Date.now() - startTime;
 
-      this.logger.log('DLQ cleanup completed', {
-        deletedCount,
-        retentionDays: this.retentionDays,
-        cutoffDate: cutoffDate.toISOString(),
-        oldestEntryDate: oldestEntry?.toISOString(),
-        totalFailed: totalFailed.length,
-        duration,
-      });
+          this.logger.log('DLQ cleanup completed', {
+            deletedCount,
+            retentionDays: this.retentionDays,
+            cutoffDate: cutoffDate.toISOString(),
+            oldestEntryDate: oldestEntry?.toISOString(),
+            totalFailed: totalFailed.length,
+            duration,
+          });
 
-      // Log warning if cleanup took too long
-      if (duration > 60000) {
-        // More than 1 minute
-        this.logger.warn(
-          `DLQ cleanup took too long - consider optimizing or running during lower traffic periods - duration: ${duration}, deletedCount: ${deletedCount}, durationSeconds: ${Math.round(duration / 1000)}`,
-        );
-      }
-    } catch (error) {
-      this.logger.error(
-        `DLQ cleanup job failed - retentionDays: ${this.retentionDays}, duration: ${Date.now() - startTime}`,
-        error instanceof Error ? error.stack : String(error),
-      );
+          // Log warning if cleanup took too long
+          if (duration > 60000) {
+            // More than 1 minute
+            this.logger.warn(
+              `DLQ cleanup took too long - consider optimizing or running during lower traffic periods - duration: ${duration}, deletedCount: ${deletedCount}, durationSeconds: ${Math.round(duration / 1000)}`,
+            );
+          }
+        } catch (error) {
+          this.logger.error(
+            `DLQ cleanup job failed - retentionDays: ${this.retentionDays}, duration: ${Date.now() - startTime}`,
+            error instanceof Error ? error.stack : String(error),
+          );
           throw error; // Re-throw to ensure cron framework knows it failed
-    }
+        }
       },
     );
   }

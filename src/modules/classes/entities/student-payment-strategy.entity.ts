@@ -5,9 +5,17 @@ import { StudentPaymentUnit } from '../enums/student-payment-unit.enum';
 
 @Entity('student_payment_strategies')
 @Index(['classId'])
+@Index(['centerId'])
+@Index(['centerId', 'branchId'])
 export class StudentPaymentStrategy extends BaseEntity {
   @Column({ type: 'uuid', unique: true })
   classId: string;
+
+  @Column({ type: 'uuid' })
+  centerId: string; // Denormalized from Class for performance and snapshot
+
+  @Column({ type: 'uuid' })
+  branchId: string; // Denormalized from Class for performance and snapshot
 
   @Column({
     type: 'enum',

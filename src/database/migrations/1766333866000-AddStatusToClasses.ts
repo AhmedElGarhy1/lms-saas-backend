@@ -52,4 +52,3 @@ export class AddStatusToClasses1766333866000 implements MigrationInterface {
     `);
   }
 }
-

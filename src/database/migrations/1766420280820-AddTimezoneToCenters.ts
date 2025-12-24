@@ -30,4 +30,3 @@ export class AddTimezoneToCenters1766420280820 implements MigrationInterface {
     `);
   }
 }
-

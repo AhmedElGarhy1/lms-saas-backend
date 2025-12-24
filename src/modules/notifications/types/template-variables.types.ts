@@ -14,10 +14,10 @@ type VariablesFromManifest<TManifest> = TManifest extends {
 /**
  * Type-safe template variables for a notification type
  * Extracted from manifest.requiredVariables at compile time
- * 
+ *
  * Note: To enforce exact matching (prevent excess properties), resolvers should use
  * the `satisfies` operator when creating templateVariables objects:
- * 
+ *
  * ```typescript
  * const templateVariables = {
  *   center: {...},
@@ -35,6 +35,5 @@ type VariablesFromManifest<TManifest> = TManifest extends {
  */
 export type TemplateVariablesFor<T extends NotificationType> =
   T extends keyof typeof NotificationRegistry
-    ? VariablesFromManifest<typeof NotificationRegistry[T]>
+    ? VariablesFromManifest<(typeof NotificationRegistry)[T]>
     : never;
-

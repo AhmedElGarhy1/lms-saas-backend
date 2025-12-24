@@ -8,8 +8,6 @@ import {
   SessionUpdatedEvent,
   SessionDeletedEvent,
   SessionCanceledEvent,
-  SessionsRegeneratedEvent,
-  SessionsBulkCreatedEvent,
   SessionsBulkDeletedEvent,
   SessionConflictDetectedEvent,
 } from '../events/session.events';
@@ -83,45 +81,6 @@ export class SessionActivityListener {
       {
         sessionId: session.id,
         groupId: session.groupId,
-        centerId: centerId,
-      },
-      actor.id,
-    );
-  }
-
-  @OnEvent(SessionEvents.REGENERATED)
-  async handleSessionsRegenerated(event: SessionsRegeneratedEvent) {
-    const {
-      scheduleItemId,
-      groupId,
-      deletedCount,
-      createdCount,
-      actor,
-      centerId,
-    } = event;
-
-    await this.activityLogService.log(
-      SessionActivityType.SESSIONS_REGENERATED,
-      {
-        scheduleItemId: scheduleItemId,
-        groupId: groupId,
-        deletedCount: deletedCount,
-        createdCount: createdCount,
-        centerId: centerId,
-      },
-      actor.id,
-    );
-  }
-
-  @OnEvent(SessionEvents.BULK_CREATED)
-  async handleSessionsBulkCreated(event: SessionsBulkCreatedEvent) {
-    const { sessions, actor, centerId } = event;
-
-    await this.activityLogService.log(
-      SessionActivityType.SESSION_CREATED,
-      {
-        sessionCount: sessions.length,
-        groupIds: [...new Set(sessions.map((s) => s.groupId))],
         centerId: centerId,
       },
       actor.id,

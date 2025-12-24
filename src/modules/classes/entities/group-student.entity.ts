@@ -7,6 +7,8 @@ import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity
 @Index(['groupId'])
 @Index(['studentUserProfileId'])
 @Index(['classId'])
+@Index(['centerId'])
+@Index(['centerId', 'branchId'])
 export class GroupStudent extends BaseEntity {
   @Column({ type: 'uuid' })
   groupId: string;
@@ -16,6 +18,12 @@ export class GroupStudent extends BaseEntity {
 
   @Column({ type: 'uuid' })
   classId: string; // Denormalized from group for unique constraint
+
+  @Column({ type: 'uuid' })
+  centerId: string; // Denormalized from Group for performance and snapshot
+
+  @Column({ type: 'uuid' })
+  branchId: string; // Denormalized from Group for performance and snapshot
 
   @Column({
     type: 'timestamp',

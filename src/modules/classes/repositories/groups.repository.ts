@@ -198,7 +198,6 @@ export class GroupsRepository extends BaseRepository<Group> {
     });
   }
 
-
   /**
    * Find a group by ID with all relations loaded, throws if not found.
    * Pure data access method - no business logic.
@@ -222,7 +221,6 @@ export class GroupsRepository extends BaseRepository<Group> {
     }
     return group;
   }
-
 
   /**
    * Find all groups for a given class ID.

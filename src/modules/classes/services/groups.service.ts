@@ -17,7 +17,6 @@ import {
   GroupUpdatedEvent,
   GroupDeletedEvent,
   GroupRestoredEvent,
-  ScheduleItemsUpdatedEvent,
 } from '../events/group.events';
 import { Transactional } from '@nestjs-cls/transactional';
 import { ClassAccessService } from './class-access.service';
@@ -222,69 +221,15 @@ export class GroupsService extends BaseService {
         // No changes, skip update and event emission
         // Don't add 'scheduleItems' to changedFields
       } else {
-        // Handle sessions BEFORE updating schedule items to prevent FK constraint violations
-        // Step 1: Delete sessions for removed schedule items (before deleting schedule items)
-        // Step 2: Update schedule items (create/update/delete)
-        // Step 3: Create/update sessions for added/modified schedule items (after schedule items have IDs)
-
-        // Helper to get schedule item key for comparison
-        const getScheduleItemKey = (item: {
-          day: string;
-          startTime: string;
-        }): string => `${item.day}-${item.startTime}`;
-
-        // Create maps for comparison
-        const oldMap = new Map(
-          oldScheduleItems.map((item) => [getScheduleItemKey(item), item]),
-        );
-        const newMap = new Map(
-          groupUpdateData.scheduleItems.map((item) => [
-            getScheduleItemKey(item),
-            item,
-          ]),
-        );
-
-        // Step 1: Delete sessions for removed items (before deleting schedule items)
-        // This prevents FK constraint violations when schedule items are deleted
-        const removedItems = Array.from(oldMap.values()).filter(
-          (oldItem) => !newMap.has(getScheduleItemKey(oldItem)),
-        );
-
-        if (removedItems.length > 0) {
-          const removedItemIds = removedItems.map((item) => item.id);
-          await this.sessionsService.deleteSessionsForRemovedScheduleItems(
-            removedItemIds,
-            actor,
-          );
-        }
-
         // Step 2: Now safe to update schedule items (sessions for removed items already deleted)
-        const { oldItems, newItems } =
-          await this.groupScheduleService.updateScheduleItems(
-            groupId,
-            groupUpdateData.scheduleItems,
-          );
+        await this.groupScheduleService.updateScheduleItems(
+          groupId,
+          groupUpdateData.scheduleItems,
+        );
         changedFields.push('scheduleItems');
 
-        // Step 3: Handle added and modified items (now they have IDs)
-        await this.sessionsService.updateSessionsForScheduleItemsChange(
-          groupId,
-          oldItems, // Use the items returned from updateScheduleItems (they have IDs)
-          newItems, // Use the items returned from updateScheduleItems (they have IDs)
-          actor,
-        );
-
-        // Emit specific event for schedule items update (for other listeners)
-        await this.typeSafeEventEmitter.emitAsync(
-          GroupEvents.SCHEDULE_ITEMS_UPDATED,
-          new ScheduleItemsUpdatedEvent(
-            groupId,
-            oldItems,
-            newItems,
-            actor,
-            actor.centerId!,
-          ),
-        );
+        // Step 3: Virtual sessions automatically reflect schedule changes, no action needed
+        // Real sessions for removed schedule items are already deleted in Step 1
 
         const updatedGroup =
           await this.groupsRepository.findGroupWithRelationsOrThrow(

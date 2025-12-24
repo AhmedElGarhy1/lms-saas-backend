@@ -215,7 +215,12 @@ import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limi
         reflector: Reflector,
         accessControlHelperService: AccessControlHelperService,
         centersRepository: CentersRepository,
-      ) => new ContextGuard(reflector, accessControlHelperService, centersRepository),
+      ) =>
+        new ContextGuard(
+          reflector,
+          accessControlHelperService,
+          centersRepository,
+        ),
       inject: [Reflector, AccessControlHelperService, CentersRepository],
     },
     {

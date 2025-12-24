@@ -101,7 +101,8 @@ export class NotificationService extends BaseService {
       actorId?: string; // Actor who triggered the notification (for createdBy field)
     },
   ): Promise<BulkNotificationResult> {
-    const { audience, templateVariables, recipients, channels, actorId } = options;
+    const { audience, templateVariables, recipients, channels, actorId } =
+      options;
     const startTime = Date.now();
 
     const result: BulkNotificationResult = {

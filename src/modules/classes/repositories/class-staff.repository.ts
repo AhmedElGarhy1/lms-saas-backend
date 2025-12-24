@@ -105,6 +105,7 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
     userProfileId: string;
     classId: string;
     centerId: string;
+    branchId: string;
   }): Promise<ClassStaff> {
     return this.create(data);
   }
@@ -116,15 +117,18 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
    *
    * @param data - ClassStaffAccessDto
    * @param centerId - Center ID (from actor)
+   * @param branchId - Branch ID (from validated class entity, snapshot value)
    * @returns Created ClassStaff assignment
    */
   async grantClassStaffAccess(
     data: ClassStaffAccessDto,
     centerId: string,
+    branchId: string,
   ): Promise<ClassStaff> {
     return this.create({
       ...data,
       centerId,
+      branchId,
       joinedAt: TimezoneService.getZonedNowFromContext(),
     });
   }

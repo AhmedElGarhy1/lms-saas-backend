@@ -53,13 +53,3 @@ export class GroupExportedEvent extends BaseEvent {
     super(actor);
   }
 }
-
-export class ScheduleItemsUpdatedEvent {
-  constructor(
-    public readonly groupId: string,
-    public readonly oldScheduleItems: ScheduleItem[],
-    public readonly newScheduleItems: ScheduleItem[],
-    public readonly actor: ActorUser,
-    public readonly centerId: string,
-  ) {}
-}

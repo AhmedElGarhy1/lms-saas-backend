@@ -17,11 +17,13 @@ export abstract class BaseIntentResolver {
   /**
    * Extract phone from actor (handles both class instance and serialized object)
    */
-  protected extractPhone(actor: ActorUser | { phone?: string; getPhone?: () => string }): string {
+  protected extractPhone(
+    actor: ActorUser | { phone?: string; getPhone?: () => string },
+  ): string {
     if (typeof (actor as any).getPhone === 'function') {
       return (actor as ActorUser).getPhone();
     }
-    return this.formatPhone((actor.phone as string | undefined) || '');
+    return this.formatPhone(actor.phone || '');
   }
 
   /**
@@ -31,7 +33,6 @@ export abstract class BaseIntentResolver {
     actor: ActorUser | { userInfo?: { locale?: string } },
     fallback: string = 'en',
   ): string {
-    return (actor.userInfo?.locale as string | undefined) || fallback;
+    return actor.userInfo?.locale || fallback;
   }
 }
-

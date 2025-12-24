@@ -4,10 +4,8 @@ import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { SessionStatus } from '../enums/session-status.enum';
-import { PaginateSessionsDto } from '../dto/paginate-sessions.dto';
 import { SessionFiltersDto } from '../dto/session-filters.dto';
 import { CalendarSessionsDto } from '../dto/calendar-sessions.dto';
-import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { SelectQueryBuilder } from 'typeorm';
 import { TimezoneService } from '@/shared/common/services/timezone.service';
@@ -147,13 +145,13 @@ export class SessionsRepository extends BaseRepository<Session> {
     const centerId = actor.centerId!;
     const queryBuilder = this.getRepository()
       .createQueryBuilder('session')
-      // Join relations for filtering
+      // Join relations only when we need relation data (e.g., group.name, class.name)
       .leftJoin('session.group', 'group')
       .leftJoin('group.class', 'class')
       // Select only needed fields from relations
       .addSelect(['group.id', 'group.name', 'class.id', 'class.name'])
-      // Filter by center through group
-      .where('group.centerId = :centerId', { centerId });
+      // Filter by center using denormalized field (no join needed)
+      .where('session.centerId = :centerId', { centerId });
 
     // Access control: Filter by class staff for non-bypass users
     const canBypassCenterInternalAccess =
@@ -178,7 +176,8 @@ export class SessionsRepository extends BaseRepository<Session> {
     }
 
     if (filters.classId) {
-      queryBuilder.andWhere('group.classId = :classId', {
+      // Use denormalized field instead of joining through group
+      queryBuilder.andWhere('session.classId = :classId', {
         classId: filters.classId,
       });
     }
@@ -239,34 +238,6 @@ export class SessionsRepository extends BaseRepository<Session> {
   }
 
   /**
-   * Paginate sessions with filtering and search capabilities.
-   *
-   * @param paginateDto - Pagination and filter parameters
-   * @param actor - The user performing the action
-   * @returns Paginated list of sessions
-   */
-  async paginateSessions(
-    paginateDto: PaginateSessionsDto,
-    actor: ActorUser,
-  ): Promise<Pagination<Session>> {
-    const queryBuilder = await this.buildSessionQueryBuilder(
-      paginateDto,
-      actor,
-    );
-
-    return this.paginate(
-      paginateDto,
-      {
-        searchableColumns: ['title'],
-        sortableColumns: ['startTime', 'endTime', 'createdAt', 'updatedAt'],
-        defaultSortBy: ['startTime', 'ASC'],
-      },
-      '/sessions',
-      queryBuilder,
-    );
-  }
-
-  /**
    * Get sessions for calendar view
    * Returns sessions within the specified date range with all necessary relations
    *
@@ -286,8 +257,8 @@ export class SessionsRepository extends BaseRepository<Session> {
       .leftJoinAndSelect('group.class', 'class')
       .leftJoinAndSelect('class.teacher', 'teacher')
       .leftJoinAndSelect('teacher.user', 'teacherUser')
-      // Filter by center through group
-      .where('group.centerId = :centerId', { centerId });
+      // Filter by center using denormalized field (no join needed for filtering)
+      .where('session.centerId = :centerId', { centerId });
 
     // Access control: Filter by class staff for non-bypass users
     const canBypassCenterInternalAccess =
@@ -325,7 +296,8 @@ export class SessionsRepository extends BaseRepository<Session> {
     }
 
     if (dto.classId) {
-      queryBuilder.andWhere('group.classId = :classId', {
+      // Use denormalized field instead of joining through group
+      queryBuilder.andWhere('session.classId = :classId', {
         classId: dto.classId,
       });
     }

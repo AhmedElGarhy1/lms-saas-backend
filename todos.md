@@ -126,12 +126,18 @@
 [x] teacher conflict is error, student conflict is worning with "continue anyway"
 [x] correct display for each calender type Month, Day, Week for ux
 [x] handle timezone in frontend and backend and transformation
-[ ] make shared view dialog for shared data or control same design and overlay
+[x] make shared view dialog for shared data or control same design and overlay
 [ ] before session by amount of time (specified somewhere) the session can be start for attendance
 [ ] session generation/ schdule validation are happening always in the same time but in diffrent places we can combine them or make them smarter
+[ ] create schdule item add demorization fields centerId, branchId, classId (do the same for all entites)
 [ ] access control for sessions module
 [ ] calender ui doesn't fit many!
 [ ] calender doesn't have filters
+
+? what will happen if class deleted?
+? what will happen if group deleted?
+? what will happen if branch deleted?
+? what will happen if session deleted?
 
 [ ] consider adding withDetailes flag and use it in backend
 [ ] submodule for permissions, RoleName, sortable columns, other is okay

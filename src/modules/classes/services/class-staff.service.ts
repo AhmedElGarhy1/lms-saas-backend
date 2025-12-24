@@ -81,7 +81,8 @@ export class ClassStaffService extends BaseService {
       centerId: centerId,
     });
 
-    // Fetch class to get branchId for branch access validation
+    // DTO validation (@BelongsToBranch decorator) already ensures class belongs to actor's branch
+    // Fetch class to get branchId for snapshot and status check
     const classEntity = await this.classesRepository.findOneOrThrow(
       data.classId,
     );
@@ -95,13 +96,6 @@ export class ClassStaffService extends BaseService {
         status: classEntity.status,
       });
     }
-
-    // Validate actor has branch access to the class's branch
-    await this.branchAccessService.validateBranchAccess({
-      userProfileId: actor.userProfileId,
-      centerId: centerId,
-      branchId: classEntity.branchId,
-    });
 
     // Validate target staff member has branch access to the class's branch
     await this.branchAccessService.validateBranchAccess({
@@ -118,9 +112,11 @@ export class ClassStaffService extends BaseService {
       });
     }
 
+    // Extract branchId from validated class entity for snapshot
     const classStaff = await this.classStaffRepository.grantClassStaffAccess(
       data,
       centerId,
+      classEntity.branchId,
     );
 
     return classStaff;

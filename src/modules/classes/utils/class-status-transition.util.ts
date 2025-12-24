@@ -47,10 +47,7 @@ export function getAvailableStatuses(
  * @param to - The target status
  * @returns true if the transition is allowed, false otherwise
  */
-export function isValidTransition(
-  from: ClassStatus,
-  to: ClassStatus,
-): boolean {
+export function isValidTransition(from: ClassStatus, to: ClassStatus): boolean {
   // Same status is always valid (no-op)
   if (from === to) {
     return true;
@@ -59,4 +56,3 @@ export function isValidTransition(
   const allowedStatuses = ALLOWED_TRANSITIONS[from];
   return allowedStatuses?.includes(to) ?? false;
 }
-

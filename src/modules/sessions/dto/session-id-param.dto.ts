@@ -9,4 +9,3 @@ export class SessionIdParamDto {
   @Exists(Session)
   sessionId: string;
 }
-

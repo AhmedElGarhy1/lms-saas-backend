@@ -5,9 +5,17 @@ import { TeacherPaymentUnit } from '../enums/teacher-payment-unit.enum';
 
 @Entity('teacher_payment_strategies')
 @Index(['classId'])
+@Index(['centerId'])
+@Index(['centerId', 'branchId'])
 export class TeacherPaymentStrategy extends BaseEntity {
   @Column({ type: 'uuid', unique: true })
   classId: string;
+
+  @Column({ type: 'uuid' })
+  centerId: string; // Denormalized from Class for performance and snapshot
+
+  @Column({ type: 'uuid' })
+  branchId: string; // Denormalized from Class for performance and snapshot
 
   @Column({
     type: 'enum',

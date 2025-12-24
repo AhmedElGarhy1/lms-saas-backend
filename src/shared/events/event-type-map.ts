@@ -87,7 +87,6 @@ import {
   GroupDeletedEvent,
   GroupRestoredEvent,
   GroupExportedEvent,
-  ScheduleItemsUpdatedEvent,
 } from '@/modules/classes/events/group.events';
 import {
   PasswordResetRequestedEvent,
@@ -100,8 +99,6 @@ import {
   SessionUpdatedEvent,
   SessionDeletedEvent,
   SessionCanceledEvent,
-  SessionsRegeneratedEvent,
-  SessionsBulkCreatedEvent,
   SessionsBulkDeletedEvent,
   SessionConflictDetectedEvent,
 } from '@/modules/sessions/events/session.events';
@@ -208,7 +205,6 @@ export type EventTypeMap = {
   // Group Events
   [GroupEvents.CREATED]: GroupCreatedEvent;
   [GroupEvents.UPDATED]: GroupUpdatedEvent;
-  [GroupEvents.SCHEDULE_ITEMS_UPDATED]: ScheduleItemsUpdatedEvent;
   [GroupEvents.DELETED]: GroupDeletedEvent;
   [GroupEvents.RESTORED]: GroupRestoredEvent;
   [GroupEvents.EXPORTED]: GroupExportedEvent;
@@ -224,16 +220,15 @@ export type EventTypeMap = {
   [SessionEvents.UPDATED]: SessionUpdatedEvent;
   [SessionEvents.DELETED]: SessionDeletedEvent;
   [SessionEvents.CANCELED]: SessionCanceledEvent;
-  [SessionEvents.REGENERATED]: SessionsRegeneratedEvent;
-  [SessionEvents.BULK_CREATED]: SessionsBulkCreatedEvent;
   [SessionEvents.BULK_DELETED]: SessionsBulkDeletedEvent;
   [SessionEvents.CONFLICT_DETECTED]: SessionConflictDetectedEvent;
 };
 
 /**
  * Helper type to extract event name from EventTypeMap
+ * Constrained to string values only to ensure type safety with EventEmitter2
  */
-export type EventName = keyof EventTypeMap;
+export type EventName = Extract<keyof EventTypeMap, string>;
 
 /**
  * Helper type to extract payload type for a given event name

@@ -11,12 +11,16 @@ import { GroupStudent } from '../entities/group-student.entity';
 import { TeacherConflictDto } from '../dto/schedule-conflict.dto';
 import {
   AccessDeniedException,
-  InsufficientPermissionsException,
   ResourceNotFoundException,
 } from '@/shared/common/exceptions/custom.exceptions';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+
+export interface ClassWithComputedFields extends Class {
+  groupsCount: number;
+  studentsCount: number;
+}
 
 @Injectable()
 export class ClassesRepository extends BaseRepository<Class> {
@@ -34,7 +38,7 @@ export class ClassesRepository extends BaseRepository<Class> {
   async paginateClasses(
     paginateDto: PaginateClassesDto,
     actor: ActorUser,
-  ): Promise<Pagination<Class>> {
+  ): Promise<Pagination<ClassWithComputedFields>> {
     const centerId = actor.centerId!;
     const queryBuilder = this.getRepository()
       .createQueryBuilder('class')
@@ -149,7 +153,7 @@ export class ClassesRepository extends BaseRepository<Class> {
     }
 
     // Get paginated results with computed fields (counts)
-    return await this.paginate(
+    return (await this.paginate(
       paginateDto,
       {
         searchableColumns: [
@@ -165,20 +169,23 @@ export class ClassesRepository extends BaseRepository<Class> {
       queryBuilder,
       {
         includeComputedFields: true,
-        computedFieldsMapper: (entity: Class, raw: any) => {
+        computedFieldsMapper: (
+          entity: Class,
+          raw: any,
+        ): ClassWithComputedFields => {
           // Map computed counts from raw data
-          const groupsCount = parseInt(raw.groupsCount || '0', 10);
-          const studentsCount = parseInt(raw.studentsCount || '0', 10);
+          const groupsCount = parseInt(String(raw.groupsCount || '0'), 10);
+          const studentsCount = parseInt(String(raw.studentsCount || '0'), 10);
 
           // Return entity with computed fields added
           return {
             ...entity,
             groupsCount,
             studentsCount,
-          } as any;
+          } as ClassWithComputedFields;
         },
       },
-    );
+    )) as Pagination<ClassWithComputedFields>;
   }
 
   async findClassWithRelations(

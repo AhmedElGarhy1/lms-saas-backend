@@ -35,25 +35,6 @@ export class SessionCanceledEvent {
   ) {}
 }
 
-export class SessionsRegeneratedEvent {
-  constructor(
-    public readonly scheduleItemId: string,
-    public readonly groupId: string,
-    public readonly deletedCount: number,
-    public readonly createdCount: number,
-    public readonly actor: ActorUser,
-    public readonly centerId: string,
-  ) {}
-}
-
-export class SessionsBulkCreatedEvent {
-  constructor(
-    public readonly sessions: Session[],
-    public readonly actor: ActorUser,
-    public readonly centerId: string,
-  ) {}
-}
-
 export class SessionsBulkDeletedEvent {
   constructor(
     public readonly sessionIds: string[],

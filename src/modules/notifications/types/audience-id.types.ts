@@ -21,6 +21,5 @@ type ExtractAudiences<TManifest> = TManifest extends {
  */
 export type AudienceIdForNotification<T extends NotificationType> =
   T extends keyof typeof NotificationRegistry
-    ? ExtractAudiences<typeof NotificationRegistry[T]>
+    ? ExtractAudiences<(typeof NotificationRegistry)[T]>
     : never;
-

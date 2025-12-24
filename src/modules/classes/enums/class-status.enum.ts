@@ -6,4 +6,3 @@ export enum ClassStatus {
   FINISHED = 'FINISHED',
   CANCELED = 'CANCELED',
 }
-

@@ -28,22 +28,21 @@ export class SessionCleanupJob {
         locale: Locale.EN,
       },
       async () => {
-    try {
-      const deletedCount =
-        await this.sessionsRepository.deleteScheduledSessionsForHardLockedClasses();
+        try {
+          const deletedCount =
+            await this.sessionsRepository.deleteScheduledSessionsForHardLockedClasses();
 
-      this.logger.log(
-        `Session cleanup completed. Deleted ${deletedCount} SCHEDULED sessions for hard-locked classes`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Session cleanup job failed: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error.stack : undefined,
-      );
+          this.logger.log(
+            `Session cleanup completed. Deleted ${deletedCount} SCHEDULED sessions for hard-locked classes`,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Session cleanup job failed: ${error instanceof Error ? error.message : String(error)}`,
+            error instanceof Error ? error.stack : undefined,
+          );
           throw error; // Re-throw to ensure cron framework knows it failed
-    }
+        }
       },
     );
   }
 }
-

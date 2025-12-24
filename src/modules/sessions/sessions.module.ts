@@ -12,9 +12,7 @@ import { AccessControlModule } from '@/modules/access-control/access-control.mod
 import { SessionsController } from './controllers/sessions.controller';
 import { SessionsService } from './services/sessions.service';
 import { SessionsRepository } from './repositories/sessions.repository';
-import { SessionGenerationService } from './services/session-generation.service';
 import { SessionValidationService } from './services/session-validation.service';
-import { SessionGenerationMaintenanceJob } from './jobs/session-generation-maintenance.job';
 import { SessionCleanupJob } from './jobs/session-cleanup.job';
 import { SessionActivityListener } from './listeners/session-activity.listener';
 import { GroupEventsListener } from './listeners/group-events.listener';
@@ -39,10 +37,8 @@ import { SessionAttendanceListener } from './listeners/session-attendance-listen
     SessionsRepository,
     // Services
     SessionsService,
-    SessionGenerationService,
     SessionValidationService,
     // Jobs
-    SessionGenerationMaintenanceJob,
     SessionCleanupJob,
     // Listeners
     SessionActivityListener,

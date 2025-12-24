@@ -32,4 +32,3 @@ export type NotificationIntentMap = {
  */
 export type IntentForNotification<T extends NotificationType> =
   T extends keyof NotificationIntentMap ? NotificationIntentMap[T] : never;
-

@@ -22,4 +22,3 @@ export class ChangeClassStatusDto {
   @MaxLength(500)
   reason?: string;
 }
-

@@ -18,6 +18,7 @@ import { TeacherPaymentStrategy } from './teacher-payment-strategy.entity';
 import { ClassStaff } from './class-staff.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 import { ClassStatus } from '../enums/class-status.enum';
+import { ScheduleItem } from './schedule-item.entity';
 
 @Entity('classes')
 @Index(['centerId'])
@@ -109,4 +110,7 @@ export class Class extends SoftBaseEntity {
 
   @OneToMany(() => ClassStaff, (classStaff) => classStaff.class)
   classStaff: ClassStaff[];
+
+  @OneToMany(() => ScheduleItem, (scheduleItem) => scheduleItem.class)
+  scheduleItems: ScheduleItem[];
 }

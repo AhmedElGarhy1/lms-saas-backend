@@ -11,4 +11,3 @@ export class UpdateSessionStatusDto {
   @IsEnum(SessionStatus)
   status: SessionStatus;
 }
-

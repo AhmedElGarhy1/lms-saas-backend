@@ -11,9 +11,23 @@ import { SessionStatus } from '../enums/session-status.enum';
 @Index(['status'])
 @Index(['groupId', 'status'])
 @Index(['groupId', 'startTime'], { unique: true })
+@Index(['centerId'])
+@Index(['centerId', 'branchId'])
+@Index(['centerId', 'classId'])
+@Index(['centerId', 'branchId', 'classId'])
+@Index(['classId'])
 export class Session extends BaseEntity {
   @Column({ type: 'uuid' })
   groupId: string;
+
+  @Column({ type: 'uuid' })
+  centerId: string; // Denormalized from Group for performance and snapshot
+
+  @Column({ type: 'uuid' })
+  branchId: string; // Denormalized from Group for performance and snapshot
+
+  @Column({ type: 'uuid' })
+  classId: string; // Denormalized from Group for performance and snapshot
 
   @Column({ type: 'uuid', nullable: true })
   scheduleItemId?: string;

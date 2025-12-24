@@ -1,9 +1,4 @@
-import {
-  IsDateString,
-  Validate,
-  IsNotEmpty,
-  Matches,
-} from 'class-validator';
+import { IsDateString, Validate, IsNotEmpty, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { SessionFiltersDto } from './session-filters.dto';
 import {
@@ -36,12 +31,16 @@ function IsDateRangeMax45Days(validationOptions?: ValidationOptions) {
             return false;
           }
 
-          // Calculate days difference using string comparison
-          // Parse as dates for day calculation (using UTC to avoid DST issues)
-          // Since both are YYYY-MM-DD format, parsing as UTC is acceptable for relative comparison
-          const fromDate = new Date(obj.dateFrom + 'T00:00:00Z');
-          const toDate = new Date(obj.dateTo + 'T00:00:00Z');
-          const diffTime = Math.abs(toDate.getTime() - fromDate.getTime());
+          // Calculate days difference using timestamp comparison
+          // Parse ISO date strings as UTC for relative day calculation
+          // This is safe for relative comparison since both dates are parsed the same way
+          // Note: Using Date constructor here is acceptable for validator context where
+          // RequestContext is not available. The actual timezone conversion happens in the service layer.
+          // eslint-disable-next-line no-restricted-globals
+          const fromTimestamp = new Date(obj.dateFrom + 'T00:00:00Z').getTime();
+          // eslint-disable-next-line no-restricted-globals
+          const toTimestamp = new Date(obj.dateTo + 'T00:00:00Z').getTime();
+          const diffTime = Math.abs(toTimestamp - fromTimestamp);
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
           return diffDays <= 45;
@@ -57,13 +56,13 @@ function IsDateRangeMax45Days(validationOptions?: ValidationOptions) {
 /**
  * Calendar sessions DTO
  * Extends SessionFiltersDto for shared filters and adds required date range
- * 
+ *
  * TIMEZONE BEHAVIOR:
  * - dateFrom and dateTo are interpreted as full calendar days in the center's timezone
  * - Frontend should send date strings in YYYY-MM-DD format (e.g., "2024-01-01")
  * - Backend converts these to UTC ranges: [midnight of dateFrom in center TZ → midnight of dateTo+1 in center TZ)
  * - This ensures all sessions on the specified dates are included, regardless of server timezone
- * 
+ *
  * Example:
  * - Frontend sends: dateFrom="2024-01-01", dateTo="2024-01-02"
  * - Backend converts to UTC range based on center timezone (e.g., Africa/Cairo)
@@ -71,7 +70,8 @@ function IsDateRangeMax45Days(validationOptions?: ValidationOptions) {
  */
 export class CalendarSessionsDto extends SessionFiltersDto {
   @ApiProperty({
-    description: 'Start date of the calendar range (YYYY-MM-DD format, interpreted as midnight in center timezone)',
+    description:
+      'Start date of the calendar range (YYYY-MM-DD format, interpreted as midnight in center timezone)',
     example: '2024-01-01',
   })
   @IsNotEmpty()
@@ -82,7 +82,8 @@ export class CalendarSessionsDto extends SessionFiltersDto {
   dateFrom!: string;
 
   @ApiProperty({
-    description: 'End date of the calendar range (YYYY-MM-DD format, interpreted as midnight in center timezone, inclusive)',
+    description:
+      'End date of the calendar range (YYYY-MM-DD format, interpreted as midnight in center timezone, inclusive)',
     example: '2024-01-31',
   })
   @IsNotEmpty()
@@ -91,8 +92,8 @@ export class CalendarSessionsDto extends SessionFiltersDto {
     message: 'dateTo must be in YYYY-MM-DD format',
   })
   @Validate(IsDateRangeMax45Days, {
-    message: 'Date range must not exceed 45 days and "dateTo" must be after "dateFrom"',
+    message:
+      'Date range must not exceed 45 days and "dateTo" must be after "dateFrom"',
   })
   dateTo!: string;
 }
-

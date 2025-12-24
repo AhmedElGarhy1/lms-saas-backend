@@ -154,8 +154,11 @@ export class ClassesService extends BaseService {
       classDataWithUtcDates,
     );
 
+    // Pass centerId (from actor) and branchId (from validated DTO) for snapshot
     await this.paymentStrategyService.createStrategiesForClass(
       classEntity.id,
+      centerId,
+      createClassDto.branchId,
       studentPaymentStrategy,
       teacherPaymentStrategy,
     );
@@ -464,6 +467,52 @@ export class ClassesService extends BaseService {
   }
 
   /**
+   * Prepares update data for status changes, including date handling logic.
+   * Handles date updates for ACTIVE, FINISHED, and CANCELED statuses.
+   *
+   * @param oldStatus - The current status of the class
+   * @param newStatus - The new status to transition to
+   * @param now - The current timestamp (timezone-aware)
+   * @returns Update data object with status and date fields
+   */
+  private prepareStatusUpdateData(
+    oldStatus: ClassStatus,
+    newStatus: ClassStatus,
+    now: Date,
+  ): Record<string, any> {
+    // Use Record<string, any> to allow null values for clearing fields
+    const updateData: Record<string, any> = { status: newStatus };
+
+    // Handle ACTIVE status: Force update startDate to now (even if in future)
+    if (newStatus === ClassStatus.ACTIVE) {
+      updateData.startDate = now;
+    }
+
+    // Handle FINISHED status: Set endDate to now
+    if (newStatus === ClassStatus.FINISHED) {
+      updateData.endDate = now;
+    }
+
+    // Handle CANCELED status: Set endDate to now
+    if (newStatus === ClassStatus.CANCELED) {
+      updateData.endDate = now;
+    }
+
+    // Handle reverting FINISHED/CANCELED → ACTIVE: Clear endDate
+    // Use null instead of undefined because TypeORM's update() ignores undefined values
+    // null explicitly sets the field to NULL in the database
+    if (
+      (oldStatus === ClassStatus.FINISHED ||
+        oldStatus === ClassStatus.CANCELED) &&
+      newStatus === ClassStatus.ACTIVE
+    ) {
+      updateData.endDate = null;
+    }
+
+    return updateData;
+  }
+
+  /**
    * Change the status of a class.
    * Validates the transition is allowed and emits a status changed event.
    *
@@ -511,35 +560,11 @@ export class ClassesService extends BaseService {
     }
 
     // Prepare update data with status and date handling
-    // Use Record<string, any> to allow null values for clearing fields
-    const updateData: Record<string, any> = { status: newStatus };
-    const now = TimezoneService.getZonedNowFromContext();
-
-    // Handle ACTIVE status: Force update startDate to now (even if in future)
-    if (newStatus === ClassStatus.ACTIVE) {
-      updateData.startDate = now;
-    }
-
-    // Handle FINISHED status: Set endDate to now
-    if (newStatus === ClassStatus.FINISHED) {
-      updateData.endDate = now;
-    }
-
-    // Handle CANCELED status: Set endDate to now
-    if (newStatus === ClassStatus.CANCELED) {
-      updateData.endDate = now;
-    }
-
-    // Handle reverting FINISHED/CANCELED → ACTIVE: Clear endDate
-    // Use null instead of undefined because TypeORM's update() ignores undefined values
-    // null explicitly sets the field to NULL in the database
-    if (
-      (oldStatus === ClassStatus.FINISHED ||
-        oldStatus === ClassStatus.CANCELED) &&
-      newStatus === ClassStatus.ACTIVE
-    ) {
-      updateData.endDate = null;
-    }
+    const updateData = this.prepareStatusUpdateData(
+      oldStatus,
+      newStatus,
+      TimezoneService.getZonedNowFromContext(),
+    );
 
     // Update class with status and dates using updateThrow to ensure it persists
     // updateThrow will throw an error if the update fails or no rows are affected

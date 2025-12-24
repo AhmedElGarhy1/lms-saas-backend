@@ -15,7 +15,6 @@ import { SessionsService } from '../services/sessions.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
 import { UpdateSessionDto } from '../dto/update-session.dto';
 import { UpdateSessionStatusDto } from '../dto/update-session-status.dto';
-import { PaginateSessionsDto } from '../dto/paginate-sessions.dto';
 import { CalendarSessionsDto } from '../dto/calendar-sessions.dto';
 import { SessionIdParamDto } from '../dto/session-id-param.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
@@ -80,28 +79,6 @@ export class SessionsController {
   ) {
     const result = await this.sessionsService.getCalendarSessions(
       calendarDto,
-      actor,
-    );
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.session' },
-    });
-  }
-
-  @Get()
-  @ApiOperation({ summary: 'Paginate sessions with filtering capabilities' })
-  @ApiResponse({
-    status: 200,
-    description: 'Sessions retrieved successfully',
-  })
-  @Permissions(PERMISSIONS.SESSIONS.READ)
-  @SerializeOptions({ type: SessionResponseDto })
-  async paginateSessions(
-    @Query() paginateDto: PaginateSessionsDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.sessionsService.paginateSessions(
-      paginateDto,
       actor,
     );
     return ControllerResponse.success(result, {

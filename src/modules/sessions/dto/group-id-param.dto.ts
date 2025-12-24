@@ -6,6 +6,3 @@ export class GroupIdParamDto {
   @IsUUID(4)
   groupId: string;
 }
-
-
-

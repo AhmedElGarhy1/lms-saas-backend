@@ -14,7 +14,8 @@ export class UpdateClassDto extends PartialType(
   ] as const),
 ) {
   @ApiPropertyOptional({
-    description: 'Skip student conflict warnings. If true, student schedule conflicts will be ignored and operation will proceed.',
+    description:
+      'Skip student conflict warnings. If true, student schedule conflicts will be ignored and operation will proceed.',
     example: false,
     default: false,
   })

@@ -30,4 +30,3 @@ export interface NotificationIntentResolver<T extends NotificationType> {
     recipients: RecipientInfo[];
   }>;
 }
-

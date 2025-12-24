@@ -13,6 +13,7 @@ import { BranchAccess } from './branch-access.entity';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { Group } from '@/modules/classes/entities/group.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
+import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
 
 @Entity('branches')
 @Index(['centerId'])
@@ -50,6 +51,9 @@ export class Branch extends SoftBaseEntity {
 
   @OneToMany(() => Group, (group) => group.branch)
   groups: Group[];
+
+  @OneToMany(() => ScheduleItem, (scheduleItem) => scheduleItem.branch)
+  scheduleItems: ScheduleItem[];
 
   // virtual fields
   name: string;

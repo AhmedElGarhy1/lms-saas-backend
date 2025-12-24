@@ -50,7 +50,8 @@ export class UpdateCenterRequestDto {
   @IsString()
   @IsOptional()
   @IsTimezone({
-    message: 'timezone must be a valid IANA timezone identifier (e.g., Africa/Cairo, America/New_York)',
+    message:
+      'timezone must be a valid IANA timezone identifier (e.g., Africa/Cairo, America/New_York)',
   })
   timezone?: string;
 

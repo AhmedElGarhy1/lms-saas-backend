@@ -117,7 +117,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         const batchResults = await repo.save(
           batchWithCreatedBy as unknown as T[],
           {
-          chunk: batchSize,
+            chunk: batchSize,
           },
         );
         results.push(...batchResults);
@@ -264,11 +264,11 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         }
         return result.affected || 0;
       } else {
-      const result = await repo.softDelete(where);
-      if (options.onProgress) {
-        options.onProgress(result.affected || 0, result.affected || 0);
-      }
-      return result.affected || 0;
+        const result = await repo.softDelete(where);
+        if (options.onProgress) {
+          options.onProgress(result.affected || 0, result.affected || 0);
+        }
+        return result.affected || 0;
       }
     } else {
       const qb = repo.createQueryBuilder().delete().from(this.getEntityClass());
@@ -801,10 +801,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         });
       } else {
         // ISO date string or Date object - use as-is
-      queryBuilder.andWhere(`${alias}.${dateField} >= :dateFrom`, {
-        dateFrom: paginationDto.dateFrom,
-      });
-    }
+        queryBuilder.andWhere(`${alias}.${dateField} >= :dateFrom`, {
+          dateFrom: paginationDto.dateFrom,
+        });
+      }
     } else if (paginationDto.dateTo) {
       // Only dateTo provided
       if (isDateOnlyFormat(paginationDto.dateTo)) {
@@ -819,9 +819,9 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         });
       } else {
         // ISO date string or Date object - use as-is
-      queryBuilder.andWhere(`${alias}.${dateField} <= :dateTo`, {
-        dateTo: paginationDto.dateTo,
-      });
+        queryBuilder.andWhere(`${alias}.${dateField} <= :dateTo`, {
+          dateTo: paginationDto.dateTo,
+        });
       }
     }
   }

@@ -89,4 +89,3 @@ export class CreateSessionsTable1766338247000 implements MigrationInterface {
     `);
   }
 }
-

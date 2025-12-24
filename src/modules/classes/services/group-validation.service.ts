@@ -76,17 +76,4 @@ export class GroupValidationService extends BaseService {
 
     return classEntity;
   }
-
-  /**
-   * Validates group with full validation including class center ownership.
-   * Used for updateGroup where classId comes from existing group and needs validation.
-   *
-   * @param classId - The class ID
-   * @param scheduleItems - Schedule items to validate
-   * @param actor - The user performing the action
-   * @param excludeGroupIds - Group IDs to exclude from conflict checks
-   * @param groupId - The group ID (for fetching student IDs during updates)
-   * @returns The class entity
-   * @throws ResourceNotFoundException if class doesn't exist or doesn't belong to actor's center
-   */
 }

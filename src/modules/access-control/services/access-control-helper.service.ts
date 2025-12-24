@@ -161,7 +161,7 @@ export class AccessControlHelperService extends BaseService {
     // all target profiles are accessible regardless of user access records
     const bypassAccess = await this.bypassCenterInternalAccess(
       userProfileId,
-          centerId,
+      centerId,
     );
 
     const results: string[] = [];
@@ -223,7 +223,7 @@ export class AccessControlHelperService extends BaseService {
         const currentCache =
           AccessControlCacheService.getCenterAccess(
             targetProfileId,
-          centerId,
+            centerId,
           ) ?? {};
         AccessControlCacheService.setCenterAccess(targetProfileId, centerId, {
           ...currentCache,
@@ -325,7 +325,7 @@ export class AccessControlHelperService extends BaseService {
           centerAccess,
           hasCenterAccess: true,
         },
-    );
+      );
     }
 
     // Filter: Return centerIds that exist in cached results

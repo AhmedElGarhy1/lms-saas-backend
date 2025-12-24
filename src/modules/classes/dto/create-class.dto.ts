@@ -86,7 +86,8 @@ export class CreateClassDto {
   teacherPaymentStrategy: TeacherPaymentStrategyDto;
 
   @ApiProperty({
-    description: 'Class start date (YYYY-MM-DD format, interpreted as midnight in center timezone)',
+    description:
+      'Class start date (YYYY-MM-DD format, interpreted as midnight in center timezone)',
     example: '2024-01-01',
   })
   @IsDateString()
@@ -96,7 +97,8 @@ export class CreateClassDto {
   startDate: string;
 
   @ApiProperty({
-    description: 'Class end date (optional, YYYY-MM-DD format, interpreted as midnight in center timezone)',
+    description:
+      'Class end date (optional, YYYY-MM-DD format, interpreted as midnight in center timezone)',
     example: '2024-12-31',
     required: false,
   })
