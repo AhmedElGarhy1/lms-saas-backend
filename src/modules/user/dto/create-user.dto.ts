@@ -5,12 +5,12 @@ import {
   IsOptional,
   IsBoolean,
   IsNotEmpty,
-  IsDateString,
   IsEnum,
   ValidateNested,
   Matches,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsoUtcDate } from '@/shared/common/decorators/is-iso-datetime.decorator';
 import { Locale } from '@/shared/common/enums/locale.enum';
 import { Type } from 'class-transformer';
 
@@ -20,9 +20,14 @@ export class UserInfoDto {
   @IsString()
   address?: string;
 
-  @ApiProperty({ description: 'User date of birth', required: false })
+  @ApiProperty({
+    description:
+      'User date of birth (ISO 8601 format with timezone, e.g., 1990-01-15T00:00:00+02:00)',
+    required: false,
+    type: Date,
+  })
   @IsOptional()
-  @IsDateString()
+  @IsoUtcDate()
   dateOfBirth?: Date;
 
   @ApiProperty({ description: 'User locale', required: false })

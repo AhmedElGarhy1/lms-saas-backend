@@ -2,50 +2,67 @@
 
 ## Overview
 
-This guide outlines critical considerations for the frontend team when working with date and timezone handling in the LMS backend API.
+This guide outlines critical considerations for the frontend team when working with date and timezone handling in the LMS backend API. **All date fields now require ISO 8601 format with timezone offset.**
 
 ---
 
 ## 1. Date Format Requirements
 
-### Date-Only Fields (YYYY-MM-DD Format)
+### All Date Fields (ISO 8601 Format with Timezone)
 
-For fields that represent calendar days (not specific times), **always send date strings in YYYY-MM-DD format**:
+**All date fields must be sent as ISO 8601 strings with timezone offset:**
 
 - Class `startDate` / `endDate`
+- Session `startTime` / `endTime`
 - Calendar session queries (`dateFrom` / `dateTo`)
 - Date filters in pagination (`dateFrom` / `dateTo`)
+- User `dateOfBirth`
+- Any other datetime fields
+
+**CRITICAL: Timezone offset is REQUIRED**
 
 **Example:**
 ```typescript
-// ✅ CORRECT
+// ✅ CORRECT - ISO 8601 with timezone
 {
-  startDate: "2024-01-01",  // String in YYYY-MM-DD format
-  endDate: "2024-12-31"
+  startDate: "2024-01-01T00:00:00+02:00",  // ISO 8601 with timezone
+  startTime: "2024-01-15T14:30:00+02:00",  // ISO 8601 with timezone
+  dateFrom: "2024-01-01T00:00:00+02:00",   // ISO 8601 with timezone
+  dateTo: "2024-01-31T23:59:59+02:00"      // ISO 8601 with timezone
 }
 
-// ❌ WRONG
+// ✅ ALSO CORRECT - UTC timezone
 {
-  startDate: "2024-01-01T00:00:00Z",  // Don't send ISO strings
-  startDate: new Date("2024-01-01"),  // Don't send Date objects
+  startDate: "2024-01-01T00:00:00Z",        // ISO 8601 with Z (UTC)
+  startTime: "2024-01-15T14:30:00Z"        // ISO 8601 with Z (UTC)
+}
+
+// ❌ WRONG - Missing timezone
+{
+  startDate: "2024-01-01T00:00:00",        // Missing timezone - will be rejected
+  startTime: "2024-01-15T14:30:00"         // Missing timezone - will be rejected
+}
+
+// ❌ WRONG - YYYY-MM-DD format (old format, no longer supported)
+{
+  startDate: "2024-01-01",                 // Old format - will be rejected
+  dateFrom: "2024-01-01"                   // Old format - will be rejected
+}
+
+// ❌ WRONG - Date objects
+{
+  startDate: new Date("2024-01-01"),       // Don't send Date objects
+  startTime: new Date()                     // Don't send Date objects
 }
 ```
 
-### Event Fields (ISO 8601 Format)
+### Supported ISO 8601 Formats
 
-For fields with specific times (sessions, timestamps), send ISO 8601 strings:
-
-- Session `startTime` / `endTime`
-- Any datetime fields
-
-**Example:**
-```typescript
-// ✅ CORRECT
-{
-  startTime: "2024-01-01T10:00:00Z",  // ISO 8601 string
-  endTime: "2024-01-01T11:30:00Z"
-}
-```
+- `2024-01-15T14:30:00Z` - UTC timezone (Z)
+- `2024-01-15T14:30:00+02:00` - Timezone with offset (+02:00)
+- `2024-01-15T14:30:00-05:00` - Timezone with negative offset (-05:00)
+- `2024-01-15T14:30:00.000Z` - With milliseconds (optional)
+- `2024-01-15T14:30:00.123+02:00` - With milliseconds and offset
 
 ---
 
@@ -53,31 +70,41 @@ For fields with specific times (sessions, timestamps), send ISO 8601 strings:
 
 ### The Problem
 
-If the frontend accidentally sends an ISO string where a YYYY-MM-DD is expected (e.g., in `startDate`), the backend regex `@Matches(/^\d{4}-\d{2}-\d{2}$/)` will trigger a **400 Bad Request** error.
+If the frontend sends an ISO string **without timezone offset**, the backend will reject it with a **400 Bad Request** error.
 
 **Example of what causes the error:**
 ```typescript
 // ❌ This will cause 400 Bad Request
 {
-  startDate: "2024-01-01T00:00:00Z"  // ISO string instead of YYYY-MM-DD
+  startDate: "2024-01-01T00:00:00"  // Missing timezone offset
 }
 ```
 
 ### Frontend Action Required
 
-**Ensure your form validation (Zod/Yup) matches the backend regex** so the user gets a clean error message before the API call fails.
+**Ensure your form validation (Zod/Yup) validates ISO 8601 format with required timezone** so the user gets a clean error message before the API call fails.
 
 **Zod Example:**
 ```typescript
 import { z } from 'zod';
 
+// ISO 8601 regex with required timezone (Z or +/-HH:MM)
+const iso8601WithTimezoneRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?(Z|[+-]\d{2}:\d{2})$/;
+
 const createClassSchema = z.object({
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
-    message: 'startDate must be in YYYY-MM-DD format (e.g., 2024-01-01)'
+  startDate: z.string().regex(iso8601WithTimezoneRegex, {
+    message: 'startDate must be in ISO 8601 format with timezone (e.g., 2024-01-01T00:00:00+02:00)'
   }),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
-    message: 'endDate must be in YYYY-MM-DD format (e.g., 2024-12-31)'
+  endDate: z.string().regex(iso8601WithTimezoneRegex, {
+    message: 'endDate must be in ISO 8601 format with timezone (e.g., 2024-12-31T23:59:59+02:00)'
   }).optional(),
+});
+
+const createSessionSchema = z.object({
+  startTime: z.string().regex(iso8601WithTimezoneRegex, {
+    message: 'startTime must be in ISO 8601 format with timezone (e.g., 2024-01-15T14:30:00+02:00)'
+  }),
+  duration: z.number().min(1),
 });
 ```
 
@@ -85,14 +112,16 @@ const createClassSchema = z.object({
 ```typescript
 import * as yup from 'yup';
 
+const iso8601WithTimezoneRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?(Z|[+-]\d{2}:\d{2})$/;
+
 const createClassSchema = yup.object({
   startDate: yup
     .string()
-    .matches(/^\d{4}-\d{2}-\d{2}$/, 'startDate must be in YYYY-MM-DD format (e.g., 2024-01-01)')
+    .matches(iso8601WithTimezoneRegex, 'startDate must be in ISO 8601 format with timezone (e.g., 2024-01-01T00:00:00+02:00)')
     .required(),
   endDate: yup
     .string()
-    .matches(/^\d{4}-\d{2}-\d{2}$/, 'endDate must be in YYYY-MM-DD format (e.g., 2024-12-31)')
+    .matches(iso8601WithTimezoneRegex, 'endDate must be in ISO 8601 format with timezone (e.g., 2024-12-31T23:59:59+02:00)')
     .optional(),
 });
 ```
@@ -120,7 +149,7 @@ Use `@date-fns/tz` (or similar) to format dates for display:
 ```typescript
 import { formatInTimeZone } from '@date-fns/tz';
 
-// Display a UTC date in center timezone
+// Display a UTC date from API in center timezone
 const displayDate = formatInTimeZone(
   utcDateFromAPI,        // Date from backend (UTC)
   centerTimezone,        // e.g., 'Africa/Cairo'
@@ -150,7 +179,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 This ensures:
 - Calendar displays in center timezone
 - User interactions are in center timezone
-- Backend receives correct date strings
+- Backend receives correct ISO 8601 strings with timezone
 
 ---
 
@@ -159,11 +188,24 @@ This ensures:
 ### Creating/Updating Classes
 
 ```typescript
-// Create class with date-only fields
+// Create class with ISO 8601 dates
 POST /classes
 {
-  startDate: "2024-01-01",  // YYYY-MM-DD string
-  endDate: "2024-12-31",    // YYYY-MM-DD string
+  startDate: "2024-01-01T00:00:00+02:00",  // ISO 8601 with timezone
+  endDate: "2024-12-31T23:59:59+02:00",     // ISO 8601 with timezone
+  // ... other fields
+}
+```
+
+### Creating Sessions
+
+```typescript
+// Create session with ISO 8601 startTime
+POST /sessions
+{
+  groupId: "uuid",
+  startTime: "2024-01-15T14:30:00+02:00",  // ISO 8601 with timezone
+  duration: 120,
   // ... other fields
 }
 ```
@@ -172,7 +214,8 @@ POST /classes
 
 ```typescript
 // Get calendar sessions
-GET /sessions/calendar?dateFrom=2024-01-01&dateTo=2024-01-31
+GET /sessions/calendar?dateFrom=2024-01-01T00:00:00%2B02:00&dateTo=2024-01-31T23:59:59%2B02:00
+// URL encode the + sign as %2B
 // Backend interprets these as full calendar days in center timezone
 ```
 
@@ -180,7 +223,7 @@ GET /sessions/calendar?dateFrom=2024-01-01&dateTo=2024-01-31
 
 ```typescript
 // Filter notifications, activity logs, etc.
-GET /notifications?dateFrom=2024-01-01&dateTo=2024-01-31
+GET /notifications?dateFrom=2024-01-01T00:00:00%2B02:00&dateTo=2024-01-31T23:59:59%2B02:00
 // Backend automatically converts to UTC range based on center timezone
 ```
 
@@ -193,24 +236,70 @@ Create helper functions:
 ```typescript
 import { formatInTimeZone } from '@date-fns/tz';
 
-// Convert user-selected date to YYYY-MM-DD string
+/**
+ * Convert user-selected date to ISO 8601 string with timezone
+ * @param date - Date object from date picker
+ * @param timezone - Center timezone (e.g., 'Africa/Cairo')
+ * @returns ISO 8601 string with timezone offset
+ */
 function formatDateForAPI(date: Date, timezone: string): string {
-  return formatInTimeZone(date, timezone, 'yyyy-MM-dd');
+  // Format as ISO 8601 with timezone offset
+  // Example: "2024-01-15T14:30:00+02:00"
+  const year = formatInTimeZone(date, timezone, 'yyyy');
+  const month = formatInTimeZone(date, timezone, 'MM');
+  const day = formatInTimeZone(date, timezone, 'dd');
+  const hours = formatInTimeZone(date, timezone, 'HH');
+  const minutes = formatInTimeZone(date, timezone, 'mm');
+  const seconds = formatInTimeZone(date, timezone, 'ss');
+  
+  // Get timezone offset
+  const offset = getTimezoneOffset(date, timezone);
+  const offsetStr = formatTimezoneOffset(offset);
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${offsetStr}`;
 }
 
-// Convert UTC date from API to display in center timezone
+/**
+ * Convert UTC date from API to display in center timezone
+ */
 function formatDateForDisplay(utcDate: Date, timezone: string): string {
   return formatInTimeZone(utcDate, timezone, 'yyyy-MM-dd HH:mm');
 }
 
-// Get start/end of day in center timezone for date pickers
+/**
+ * Get start/end of day in center timezone for date pickers
+ */
 function getDayRange(date: Date, timezone: string) {
   const start = startOfDay(date);
   const end = endOfDay(date);
   return {
-    start: formatInTimeZone(start, timezone, 'yyyy-MM-dd'),
-    end: formatInTimeZone(end, timezone, 'yyyy-MM-dd')
+    start: formatDateForAPI(start, timezone),
+    end: formatDateForAPI(end, timezone)
   };
+}
+
+// Helper to get timezone offset string
+function formatTimezoneOffset(offsetMinutes: number): string {
+  if (offsetMinutes === 0) return 'Z';
+  const sign = offsetMinutes > 0 ? '+' : '-';
+  const absOffset = Math.abs(offsetMinutes);
+  const hours = Math.floor(absOffset / 60);
+  const minutes = absOffset % 60;
+  return `${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+```
+
+**Alternative: Use a library like `date-fns-tz` or `luxon`**
+
+```typescript
+import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
+
+// Using date-fns-tz
+function formatDateForAPI(date: Date, timezone: string): string {
+  // Convert to zoned time and format as ISO
+  const zoned = toZonedTime(date, timezone);
+  // Format with timezone offset
+  return formatInTimeZone(zoned, timezone, "yyyy-MM-dd'T'HH:mm:ssXXX");
 }
 ```
 
@@ -218,22 +307,23 @@ function getDayRange(date: Date, timezone: string) {
 
 ## 7. Important Behaviors
 
-### Date-Only Fields Are Interpreted as Midnight in Center Timezone
+### All Dates Are Converted to UTC Automatically
 
-- When you send `startDate: "2024-01-01"`, backend treats it as Jan 1st 00:00:00 in center timezone
-- This prevents "one day off" bugs across timezones
+- Frontend sends ISO 8601 strings with timezone
+- Backend automatically converts to UTC Date objects
+- **No need to convert to UTC on frontend** - just include the timezone in the ISO string
 
 ### Date Ranges Are Inclusive
 
-- `dateFrom: "2024-01-01"` includes all of Jan 1st
-- `dateTo: "2024-01-31"` includes all of Jan 31st
+- `dateFrom: "2024-01-01T00:00:00+02:00"` includes all of Jan 1st in center timezone
+- `dateTo: "2024-01-31T23:59:59+02:00"` includes all of Jan 31st in center timezone
 - Backend uses exclusive upper bounds internally (`<` not `<=`)
 
 ### Backend Handles Timezone Conversion
 
-- Frontend sends date strings (YYYY-MM-DD) or ISO timestamps
-- Backend converts to UTC using center timezone
-- **No need to convert to UTC on frontend**
+- Frontend sends ISO 8601 strings with timezone
+- Backend converts to UTC using the timezone in the ISO string
+- **Always include timezone in ISO strings** - this is required
 
 ---
 
@@ -241,9 +331,9 @@ function getDayRange(date: Date, timezone: string) {
 
 ### Date Format Validation
 
-- Validate YYYY-MM-DD format before sending
-- Use regex: `/^\d{4}-\d{2}-\d{2}$/`
-- Backend will reject invalid formats
+- Validate ISO 8601 format with timezone before sending
+- Use regex: `/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?(Z|[+-]\d{2}:\d{2})$/`
+- Backend will reject invalid formats or missing timezone
 
 ### Date Range Validation
 
@@ -255,44 +345,89 @@ function getDayRange(date: Date, timezone: string) {
 
 ## 9. Migration Checklist
 
-- [ ] Install `@date-fns/tz` in frontend
-- [ ] Update date pickers to output YYYY-MM-DD for date-only fields
-- [ ] **Add form validation (Zod/Yup) matching backend regex `/^\d{4}-\d{2}-\d{2}$/`**
+- [ ] Install `@date-fns/tz` or similar timezone library in frontend
+- [ ] Update date pickers to output ISO 8601 format with timezone
+- [ ] **Add form validation (Zod/Yup) matching backend ISO 8601 regex with timezone**
 - [ ] Configure FullCalendar with center timezone
-- [ ] Update API calls to send YYYY-MM-DD strings (not ISO dates)
-- [ ] Add date formatting utilities for display
-- [ ] Update date filter components to use YYYY-MM-DD format
+- [ ] Update API calls to send ISO 8601 strings with timezone (not YYYY-MM-DD)
+- [ ] Add date formatting utilities for API requests
+- [ ] Update date filter components to use ISO 8601 format
 - [ ] Test with different timezones (Cairo, UTC, etc.)
 - [ ] Verify calendar displays correctly in center timezone
+- [ ] Test that validation rejects ISO strings without timezone
 
 ---
 
 ## 10. Common Pitfalls to Avoid
 
-1. ❌ **Don't convert date-only fields to UTC on frontend** — send YYYY-MM-DD strings
-2. ❌ **Don't send Date objects** — always send strings
+1. ❌ **Don't send ISO strings without timezone** — always include Z or +/-HH:MM
+2. ❌ **Don't send Date objects** — always send ISO 8601 strings
 3. ❌ **Don't assume server timezone** — always use center timezone from API
-4. ❌ **Don't use `new Date()` for date-only fields** — use date pickers that output YYYY-MM-DD
+4. ❌ **Don't use YYYY-MM-DD format** — old format is no longer supported
 5. ❌ **Don't forget to format display dates** — use `formatInTimeZone` for user-facing dates
-6. ❌ **Don't skip form validation** — validate date format before API calls to prevent 400 errors
+6. ❌ **Don't skip form validation** — validate ISO 8601 format with timezone before API calls
+7. ❌ **Don't convert to UTC on frontend** — send ISO string with timezone, backend handles conversion
 
 ---
 
 ## 11. Testing Scenarios
 
 Test these scenarios:
-- Create class with `startDate: "2024-01-01"` in Cairo timezone
-- Query calendar sessions for a specific date range
-- Filter notifications by date range
+- Create class with `startDate: "2024-01-01T00:00:00+02:00"` in Cairo timezone
+- Create session with `startTime: "2024-01-15T14:30:00+02:00"` in Cairo timezone
+- Query calendar sessions for a specific date range with ISO 8601 dates
+- Filter notifications by date range with ISO 8601 dates
 - Display session times in center timezone
 - Handle DST transitions (if applicable)
-- **Test form validation catches ISO strings before API call**
+- **Test form validation catches ISO strings without timezone before API call**
+- Test with UTC timezone (`Z` suffix)
+- Test with positive and negative timezone offsets
+
+---
+
+## 12. Example: Complete Session Creation Flow
+
+```typescript
+import { formatInTimeZone } from '@date-fns/tz';
+
+// 1. User selects date and time in date picker (in center timezone)
+const selectedDate = new Date('2024-01-15T14:30:00'); // User's local selection
+
+// 2. Get center timezone from API
+const centerTimezone = 'Africa/Cairo'; // From center response
+
+// 3. Format as ISO 8601 with timezone for API
+const startTimeISO = formatDateForAPI(selectedDate, centerTimezone);
+// Result: "2024-01-15T14:30:00+02:00"
+
+// 4. Send to API
+const response = await fetch('/api/sessions', {
+  method: 'POST',
+  body: JSON.stringify({
+    groupId: 'uuid',
+    startTime: startTimeISO, // ISO 8601 with timezone
+    duration: 120
+  })
+});
+
+// 5. Display response dates in center timezone
+const session = await response.json();
+const displayTime = formatInTimeZone(
+  new Date(session.startTime), // UTC from API
+  centerTimezone,
+  'yyyy-MM-dd HH:mm'
+);
+// Result: "2024-01-15 14:30" (in center timezone)
+```
 
 ---
 
 ## Summary
 
-**Key Takeaway:** Send date-only fields as **YYYY-MM-DD strings**, display dates using the **center timezone**, and let the backend handle UTC conversion. The backend interprets all date-only strings as midnight in the center's timezone, preventing timezone-related bugs.
+**Key Takeaway:** Send **all date fields as ISO 8601 strings with timezone offset** (Z or +/-HH:MM), display dates using the **center timezone**, and let the backend handle UTC conversion. The backend automatically converts all ISO 8601 strings to UTC Date objects.
 
-**Critical:** Always validate date format on the frontend using the same regex as the backend (`/^\d{4}-\d{2}-\d{2}$/`) to prevent 400 Bad Request errors and provide better user experience.
-
+**Critical:** 
+- Always include timezone in ISO 8601 strings (required)
+- Always validate ISO 8601 format with timezone on the frontend before API calls
+- Never send YYYY-MM-DD format (old format, no longer supported)
+- Never send Date objects (always send strings)

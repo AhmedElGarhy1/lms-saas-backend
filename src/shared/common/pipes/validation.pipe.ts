@@ -14,6 +14,7 @@ import { ErrorCode } from '../enums/error-codes.enum';
 import { I18nPath } from '@/generated/i18n.generated';
 import { PathArgs } from '@/generated/i18n-type-map.generated';
 import { TranslationMessage } from '../types/translation.types';
+import { TimezoneService } from '../services/timezone.service';
 
 /**
  * Custom validation pipe that transforms class-validator errors
@@ -50,7 +51,7 @@ export class CustomValidationPipe implements PipeTransform {
         statusCode: 400,
         message: { key: 't.messages.validationFailed' } as TranslationMessage,
         code: ErrorCode.VALIDATION_FAILED,
-        timestamp: new Date().toISOString(),
+        timestamp: TimezoneService.getUtcNow().toISOString(),
         details: validationErrors,
       };
 
@@ -143,7 +144,7 @@ export class CustomValidationPipe implements PipeTransform {
       isEmail: 't.validation.email.invalid',
       isPhoneNumber: 't.validation.phone.invalid',
       isStrongPassword: 't.validation.password.invalid',
-      matches: 't.validation.password.mismatch',
+      matches: 't.validation.invalid.message', // Generic invalid message, not password-specific
       minLength: 't.validation.minLength.message',
       maxLength: 't.validation.maxLength.message',
       arrayMinSize: 't.validation.arrayMinSize.message',
@@ -153,6 +154,8 @@ export class CustomValidationPipe implements PipeTransform {
       isBoolean: 't.validation.isBoolean.message',
       isEnum: 't.validation.isEnum.message',
       isDateString: 't.validation.isDateString.message',
+      isIso8601OrDate: 't.validation.isIso8601.message',
+      isISO8601: 't.validation.isIso8601.message',
       isArray: 't.validation.isArray.message',
       isNumber: 't.validation.isNumber.message',
       isInt: 't.validation.isInt.message',

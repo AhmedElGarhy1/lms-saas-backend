@@ -1,7 +1,6 @@
 import {
   IsString,
   IsUUID,
-  IsDateString,
   IsOptional,
   IsInt,
   Min,
@@ -9,7 +8,6 @@ import {
   MaxLength,
   ValidateNested,
   Validate,
-  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
@@ -18,6 +16,7 @@ import { StudentPaymentStrategyDto } from './student-payment-strategy.dto';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { BelongsToCenter } from '@/shared/common/decorators/belongs-to-center.decorator';
 import { IsProfileType } from '@/shared/common/decorators/is-profile-type.decorator';
+import { IsoUtcDate } from '@/shared/common/decorators/is-iso-datetime.decorator';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Level } from '@/modules/levels/entities/level.entity';
 import { Subject } from '@/modules/subjects/entities/subject.entity';
@@ -87,27 +86,23 @@ export class CreateClassDto {
 
   @ApiProperty({
     description:
-      'Class start date (YYYY-MM-DD format, interpreted as midnight in center timezone)',
-    example: '2024-01-01',
+      'Class start date (ISO 8601 format with timezone, e.g., 2024-01-01T00:00:00+02:00)',
+    example: '2024-01-01T00:00:00+02:00',
+    type: Date,
   })
-  @IsDateString()
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-    message: 'startDate must be in YYYY-MM-DD format',
-  })
-  startDate: string;
+  @IsoUtcDate()
+  startDate: Date;
 
   @ApiProperty({
     description:
-      'Class end date (optional, YYYY-MM-DD format, interpreted as midnight in center timezone)',
-    example: '2024-12-31',
+      'Class end date (optional, ISO 8601 format with timezone, e.g., 2024-12-31T23:59:59+02:00)',
+    example: '2024-12-31T23:59:59+02:00',
     required: false,
+    type: Date,
   })
   @IsOptional()
-  @IsDateString()
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-    message: 'endDate must be in YYYY-MM-DD format',
-  })
-  @Validate((object: CreateClassDto, value: string) => {
+  @IsoUtcDate()
+  @Validate((object: CreateClassDto, value: Date) => {
     // If endDate is not provided, validation passes (it's optional)
     if (!value) return true;
 
@@ -115,9 +110,9 @@ export class CreateClassDto {
     if (!object.startDate) return true;
 
     // endDate must be after startDate
-    return value > object.startDate;
+    return value.getTime() > object.startDate.getTime();
   })
-  endDate?: string;
+  endDate?: Date;
 
   @ApiProperty({
     description: 'Class duration in minutes',

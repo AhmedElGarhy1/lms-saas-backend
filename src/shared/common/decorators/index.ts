@@ -6,3 +6,4 @@ export * from './log-activity.decorator';
 export * from './no-phone-verification.decorator';
 export * from './no-etag.decorator';
 export * from './cache.decorator';
+export * from './is-iso-datetime.decorator';

@@ -59,7 +59,7 @@ export class CalendarGroup {
  */
 export class CalendarSessionItem {
   @ApiProperty({ description: 'Session ID', example: 'uuid' })
-  id: string;
+  id?: string;
 
   @ApiProperty({
     description: 'Session title',

@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
-  IsDateString,
   IsOptional,
   MaxLength,
   IsUUID,
@@ -9,6 +8,7 @@ import {
   Min,
 } from 'class-validator';
 import { BelongsToBranch } from '@/shared/common/decorators/belongs-to-branch.decorator';
+import { IsoUtcDate } from '@/shared/common/decorators/is-iso-datetime.decorator';
 import { Group } from '@/modules/classes/entities/group.entity';
 
 export class CreateSessionDto {
@@ -31,18 +31,13 @@ export class CreateSessionDto {
   title?: string;
 
   @ApiProperty({
-    description: 'Date for the session (YYYY-MM-DD format)',
-    example: '2024-01-15',
+    description:
+      'Session start time (ISO 8601 format with timezone, e.g., 2024-01-15T14:30:00+02:00)',
+    example: '2024-01-15T14:30:00+02:00',
+    type: Date,
   })
-  @IsDateString()
-  date: string;
-
-  @ApiProperty({
-    description: 'Session start time (HH:mm format, 24-hour)',
-    example: '14:30',
-  })
-  @IsString()
-  startTime: string;
+  @IsoUtcDate()
+  startTime: Date;
 
   @ApiProperty({
     description: 'Session duration in minutes',

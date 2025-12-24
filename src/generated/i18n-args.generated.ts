@@ -73,6 +73,7 @@ export type TranslationArgs = {
   't.buttons.restore': Record<string, never>;
   't.buttons.restoreInResource': { resource: string };
   't.buttons.restoreInResourceSelected': { resource: string };
+  't.buttons.revertToActive': Record<string, never>;
   't.buttons.save': Record<string, never>;
   't.buttons.saveChanges': Record<string, never>;
   't.buttons.selectDates': Record<string, never>;
@@ -87,6 +88,7 @@ export type TranslationArgs = {
   't.buttons.toggleStatusInResource': { resource: string };
   't.buttons.tryAgain': Record<string, never>;
   't.buttons.update': Record<string, never>;
+  't.buttons.updateStatus': Record<string, never>;
   't.buttons.verify': Record<string, never>;
   't.buttons.verifyPhone': Record<string, never>;
   't.buttons.view': Record<string, never>;
@@ -116,11 +118,13 @@ export type TranslationArgs = {
   't.messages.businessLogicError': Record<string, never>;
   't.messages.cannotAssignStaffToClass': { status: string };
   't.messages.cannotBeAssociated': { resource1: string; resource2: string };
+  't.messages.cannotCancelSession': { status: string };
   't.messages.cannotCreateGroupInClass': { status: string };
   't.messages.cannotDeleteScheduledSession': Record<string, never>;
   't.messages.cannotDeleteSession': { status: string };
   't.messages.cannotEnrollInClass': { status: string };
   't.messages.cannotGrantAccess': { resource: string };
+  't.messages.cannotUpdatePaymentStrategy': { status: string };
   't.messages.cannotUpdateSession': { status: string };
   't.messages.cannotUpdateStartDateWhenNotNotStarted': { status: string };
   't.messages.changed': { resource: string };
@@ -164,6 +168,14 @@ export type TranslationArgs = {
   't.messages.global': Record<string, never>;
   't.messages.globalDashboard': Record<string, never>;
   't.messages.globalScope': Record<string, never>;
+  't.messages.gracePeriod.expired': { hours: string; resource: string };
+  't.messages.gracePeriod.expiredStatus': Record<string, never>;
+  't.messages.gracePeriod.expiringSoon': Record<string, never>;
+  't.messages.gracePeriod.hours': { hours: string };
+  't.messages.gracePeriod.info': { hours: string; resource: string };
+  't.messages.gracePeriod.remaining': { hours: string; minutes: string };
+  't.messages.gracePeriod.remainingShort': { hours: string; minutes: string };
+  't.messages.gracePeriod.sessionsCleanupNote': { hours: string };
   't.messages.gracePeriodExpired': { hours: string; resource: string };
   't.messages.granted': { resource: string };
   't.messages.httpError': { code: string; message: string };
@@ -189,11 +201,13 @@ export type TranslationArgs = {
   't.messages.notAvailable': Record<string, never>;
   't.messages.notDeleted': { resource: string };
   't.messages.notFound': { resource: string };
+  't.messages.notStarted': Record<string, never>;
   't.messages.onlyForStaffAndAdmin': { resource: string };
   't.messages.operationError': { reason: string };
   't.messages.operationSuccess': Record<string, never>;
   't.messages.paymentCalculation.description': { resource: string };
   't.messages.paymentCount.helperText': { unit: string };
+  't.messages.pendingApproval': Record<string, never>;
   't.messages.phoneNotVerified': Record<string, never>;
   't.messages.processing': { action: string };
   't.messages.rateLimitExceeded': { time: string };
@@ -220,6 +234,7 @@ export type TranslationArgs = {
   't.messages.sending': Record<string, never>;
   't.messages.sent': { resource: string };
   't.messages.serviceUnavailable': Record<string, never>;
+  't.messages.sessionDateMustBeInFuture': Record<string, never>;
   't.messages.sessionExpired': Record<string, never>;
   't.messages.showAll': { resource: string };
   't.messages.somethingWentWrongLoadingResource': { resource: string };
@@ -361,6 +376,7 @@ export type TranslationArgs = {
   't.placeholders.filterBy': { field: string };
   't.placeholders.pickDate': Record<string, never>;
   't.placeholders.pickDateRange': Record<string, never>;
+  't.placeholders.reason': Record<string, never>;
   't.placeholders.search': Record<string, never>;
   't.placeholders.searchField': { field: string };
   't.placeholders.searchItems': { item: string };
@@ -385,6 +401,7 @@ export type TranslationArgs = {
   't.resources.branch': Record<string, never>;
   't.resources.branchAccess': Record<string, never>;
   't.resources.branches': Record<string, never>;
+  't.resources.canceled': Record<string, never>;
   't.resources.center': Record<string, never>;
   't.resources.centerAccess': Record<string, never>;
   't.resources.centerName': Record<string, never>;
@@ -396,6 +413,7 @@ export type TranslationArgs = {
   't.resources.classes': Record<string, never>;
   't.resources.column': Record<string, never>;
   't.resources.columns': Record<string, never>;
+  't.resources.conducting': Record<string, never>;
   't.resources.confirmPassword': Record<string, never>;
   't.resources.contact': Record<string, never>;
   't.resources.contactInformation': Record<string, never>;
@@ -414,6 +432,7 @@ export type TranslationArgs = {
   't.resources.date': Record<string, never>;
   't.resources.dateFormat': Record<string, never>;
   't.resources.dateOfBirth': Record<string, never>;
+  't.resources.dateRange': Record<string, never>;
   't.resources.dates': Record<string, never>;
   't.resources.day': Record<string, never>;
   't.resources.days': Record<string, never>;
@@ -429,8 +448,10 @@ export type TranslationArgs = {
   't.resources.error': Record<string, never>;
   't.resources.errors': Record<string, never>;
   't.resources.excel': Record<string, never>;
+  't.resources.extraSession': Record<string, never>;
   't.resources.field': Record<string, never>;
   't.resources.filename': Record<string, never>;
+  't.resources.finished': Record<string, never>;
   't.resources.friday': Record<string, never>;
   't.resources.fullName': Record<string, never>;
   't.resources.group': Record<string, never>;
@@ -473,6 +494,7 @@ export type TranslationArgs = {
   't.resources.otp': Record<string, never>;
   't.resources.otpCode': Record<string, never>;
   't.resources.password': Record<string, never>;
+  't.resources.paused': Record<string, never>;
   't.resources.paymentStrategies': Record<string, never>;
   't.resources.paymentStrategy': { resource: string };
   't.resources.paymentStrategyDescription': { resource: string };
@@ -502,8 +524,11 @@ export type TranslationArgs = {
   't.resources.schedule': Record<string, never>;
   't.resources.scheduleItem': Record<string, never>;
   't.resources.scheduleItems': Record<string, never>;
+  't.resources.scheduled': Record<string, never>;
+  't.resources.scheduledSession': Record<string, never>;
   't.resources.scope': Record<string, never>;
   't.resources.session': Record<string, never>;
+  't.resources.sessionType': Record<string, never>;
   't.resources.sessions': Record<string, never>;
   't.resources.signature': Record<string, never>;
   't.resources.sms': Record<string, never>;
@@ -558,6 +583,12 @@ export type TranslationArgs = {
   't.roles.owner.name': Record<string, never>;
   't.roles.superAdmin.description': Record<string, never>;
   't.roles.superAdmin.name': Record<string, never>;
+  't.ui.dialogs.cancelSession.description': Record<string, never>;
+  't.ui.dialogs.cancelSession.message': { resourceName: string };
+  't.ui.dialogs.cancelSession.note': Record<string, never>;
+  't.ui.dialogs.cancelSession.title': Record<string, never>;
+  't.ui.dialogs.changeStatus.description': Record<string, never>;
+  't.ui.dialogs.changeStatus.title': Record<string, never>;
   't.ui.dialogs.confirmBulkOperation.cannotUndo': Record<string, never>;
   't.ui.dialogs.confirmBulkOperation.message': { count: string; entityName: string; operation: string };
   't.ui.dialogs.confirmBulkOperation.skipped': { entityName: string; skipped: string };

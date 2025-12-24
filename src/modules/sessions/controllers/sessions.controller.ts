@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Put,
-  Patch,
   Delete,
   Body,
   Param,
@@ -14,9 +13,10 @@ import { Transactional } from '@nestjs-cls/transactional';
 import { SessionsService } from '../services/sessions.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
 import { UpdateSessionDto } from '../dto/update-session.dto';
-import { UpdateSessionStatusDto } from '../dto/update-session-status.dto';
 import { CalendarSessionsDto } from '../dto/calendar-sessions.dto';
 import { SessionIdParamDto } from '../dto/session-id-param.dto';
+import { StartSessionDto } from '../dto/start-session.dto';
+import { CancelSessionDto } from '../dto/cancel-session.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { GetUser } from '@/shared/common/decorators';
@@ -29,6 +29,74 @@ import { SessionResponseDto } from '../dto/session-response.dto';
 @Controller('sessions')
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
+
+  @Post('start')
+  @ApiOperation({
+    summary: 'Start a session (materialize virtual to real)',
+    description:
+      'Materializes a virtual session slot into a real database record for attendance tracking. Can only be started within 30 minutes before or anytime after the scheduled session time.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Session started successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Too early to start session (>30 minutes before scheduled time) or no matching scheduled session found',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Insufficient permissions',
+  })
+  @Permissions(PERMISSIONS.SESSIONS.UPDATE)
+  @Transactional()
+  @SerializeOptions({ type: SessionResponseDto })
+  async startSession(
+    @Body() startSessionDto: StartSessionDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.sessionsService.startSession(
+      startSessionDto.groupId,
+      actor,
+    );
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.session' },
+    });
+  }
+
+  @Post('cancel')
+  @ApiOperation({
+    summary: 'Cancel a session (create tombstone or update existing)',
+    description:
+      'Cancels a session by creating a tombstone record for virtual slots or updating existing real sessions to CANCELLED status.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Session cancelled successfully',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Insufficient permissions',
+  })
+  @Permissions(PERMISSIONS.SESSIONS.UPDATE)
+  @Transactional()
+  @SerializeOptions({ type: SessionResponseDto })
+  async cancelSession(
+    @Body() cancelSessionDto: CancelSessionDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.sessionsService.cancelSession(
+      cancelSessionDto.groupId,
+      cancelSessionDto.scheduledStartTime,
+      actor,
+    );
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.session' },
+    });
+  }
 
   @Post()
   @ApiOperation({ summary: 'Create an extra/manual session' })
@@ -118,7 +186,7 @@ export class SessionsController {
   @ApiOperation({
     summary: 'Update a session',
     description:
-      'Update session title and times. Only SCHEDULED sessions can have their times changed. Use PATCH /sessions/:sessionId/status to update status.',
+      'Update session title and times. Only SCHEDULED sessions can have their times changed.',
   })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
   @ApiResponse({
@@ -152,20 +220,20 @@ export class SessionsController {
     });
   }
 
-  @Patch(':sessionId/status')
+  @Post(':sessionId/finish')
   @ApiOperation({
-    summary: 'Update session status',
+    summary: 'Finish a session',
     description:
-      'Update the status of a session. Valid statuses: SCHEDULED, CONDUCTING, FINISHED, CANCELED.',
+      'Marks a session as finished. Only allows transition from CONDUCTING to FINISHED status.',
   })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
   @ApiResponse({
     status: 200,
-    description: 'Session status updated successfully',
+    description: 'Session finished successfully',
   })
   @ApiResponse({
     status: 400,
-    description: 'Invalid status or invalid status transition',
+    description: 'Session is not in CONDUCTING status',
   })
   @ApiResponse({
     status: 404,
@@ -174,14 +242,48 @@ export class SessionsController {
   @Permissions(PERMISSIONS.SESSIONS.UPDATE)
   @Transactional()
   @SerializeOptions({ type: SessionResponseDto })
-  async updateSessionStatus(
+  async finishSession(
     @Param() params: SessionIdParamDto,
-    @Body() data: UpdateSessionStatusDto,
     @GetUser() actor: ActorUser,
   ) {
-    const result = await this.sessionsService.updateSessionStatus(
+    const result = await this.sessionsService.finishSession(
       params.sessionId,
-      data.status,
+      actor,
+    );
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.session' },
+    });
+  }
+
+  @Post(':sessionId/schedule')
+  @ApiOperation({
+    summary: 'Reschedule a canceled session',
+    description:
+      'Reschedules a previously canceled session. Only allows transition from CANCELED to SCHEDULED status.',
+  })
+  @ApiParam({ name: 'sessionId', description: 'Session ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Session rescheduled successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Session is not in CANCELED status',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Session not found',
+  })
+  @Permissions(PERMISSIONS.SESSIONS.UPDATE)
+  @Transactional()
+  @SerializeOptions({ type: SessionResponseDto })
+  async scheduleSession(
+    @Param() params: SessionIdParamDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.sessionsService.scheduleSession(
+      params.sessionId,
       actor,
     );
     return ControllerResponse.success(result, {

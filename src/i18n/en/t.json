@@ -844,6 +844,9 @@
     "isDateString": {
       "message": "{field} must be a valid date string"
     },
+    "isIso8601": {
+      "message": "{field} must be a valid ISO 8601 datetime string with timezone (e.g., 2024-01-15T14:30:00Z or 2024-01-15T14:30:00+02:00)"
+    },
     "isArray": {
       "message": "{field} must be an array"
     },

@@ -22,7 +22,7 @@ import { GroupsRepository } from '@/modules/classes/repositories/groups.reposito
 import { TimezoneService } from '@/shared/common/services/timezone.service';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { ClassAccessService } from '@/modules/classes/services/class-access.service';
-import { addMinutes, addDays, startOfDay } from 'date-fns';
+import { addMinutes, addDays, startOfDay, subMinutes } from 'date-fns';
 import { ScheduleItemsRepository } from '@/modules/classes/repositories/schedule-items.repository';
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
 import { DayOfWeek } from '@/modules/classes/enums/day-of-week.enum';
@@ -91,24 +91,17 @@ export class SessionsService extends BaseService {
 
     const teacherUserProfileId = group.class.teacherUserProfileId;
 
-    // Use date string directly (already YYYY-MM-DD format)
-    const dateStr = createSessionDto.date;
+    // startTime is already a UTC Date object (converted by @IsIsoDateTime decorator)
+    const startTime = createSessionDto.startTime;
 
-    // Validate date is in the future using center timezone
-    const centerNow = TimezoneService.getZonedNowFromContext();
-    const requestedDate = TimezoneService.dateOnlyToUtc(dateStr);
-    if (TimezoneService.isBefore(requestedDate, centerNow)) {
+    // Validate date is in the future (UTC comparison - mathematically identical to zoned comparison)
+    const now = TimezoneService.getUtcNow();
+    if (TimezoneService.isBefore(startTime, now)) {
       throw new BusinessLogicException(
         't.messages.sessionDateMustBeInFuture',
         {} as any,
       );
     }
-
-    // Create full datetime from date + time using timezone-aware conversion
-    const startTime = TimezoneService.toUtc(
-      dateStr,
-      createSessionDto.startTime,
-    );
 
     // Calculate endTime from startTime + duration using date-fns
     const endTime = addMinutes(startTime, createSessionDto.duration);
@@ -170,6 +163,214 @@ export class SessionsService extends BaseService {
   }
 
   /**
+   * Start a session (materialize virtual to real)
+   * Materializes a virtual slot into a real database record for attendance tracking
+   * Finds the scheduled session slot and validates 30-minute window
+   *
+   * @param groupId - Group ID
+   * @param actor - Actor performing the action
+   * @returns Created or existing session
+   * @throws BusinessLogicException if too early to start (>30 minutes before scheduled time)
+   */
+  @Transactional()
+  async startSession(groupId: string, actor: ActorUser): Promise<Session> {
+    // 1. Get current time from backend (timezone-aware)
+    const now = TimezoneService.getZonedNowFromContext();
+
+    // 2. Fetch Group with class to extract denormalized fields and schedule items
+    const group = await this.groupsRepository.findByIdOrThrow(groupId, [
+      'class',
+    ]);
+
+    // 3. Access Validation
+    // DTO validation (@BelongsToBranch decorator) already ensures group belongs to actor's branch
+    // Validate actor has class staff access
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
+
+    // 4. Get schedule items for this group
+    const scheduleItems = await this.scheduleItemsRepository.getMany(
+      { groupId },
+      actor,
+    );
+
+    if (scheduleItems.length === 0) {
+      throw new BusinessLogicException('t.messages.validationFailed', {
+        resource: 't.resources.session',
+      } as any);
+    }
+
+    // 5. Find the scheduled session slot that matches current time
+    // Calculate virtual sessions for today and next few days to find matching slot
+    const today = startOfDay(now);
+    const searchEndDate = addDays(today, 7); // Search up to 7 days ahead
+
+    const groupMap = new Map<string, Group>();
+    groupMap.set(group.id, group);
+
+    const virtualSessions = this.calculateVirtualSessions(
+      scheduleItems,
+      groupMap,
+      today,
+      searchEndDate,
+    );
+
+    // Find the scheduled session slot that we're trying to start
+    // Look for a session slot where current time is within 30 minutes before or anytime after
+    let scheduledStartTime: Date | null = null;
+    let matchingScheduleItemId: string | undefined = undefined;
+
+    for (const virtualSession of virtualSessions) {
+      const slotStartTime = virtualSession.startTime;
+      const thirtyMinutesBefore = subMinutes(slotStartTime, 30);
+
+      // Current time must be >= (scheduled time - 30 minutes)
+      // This means we can start 30 minutes early or anytime after scheduled time
+      if (now >= thirtyMinutesBefore) {
+        // Use the scheduled time, not current time
+        scheduledStartTime = slotStartTime;
+        matchingScheduleItemId = virtualSession.scheduleItemId;
+        break; // Use the first matching slot
+      }
+    }
+
+    if (!scheduledStartTime) {
+      throw new BusinessLogicException('t.messages.validationFailed', {
+        resource: 't.resources.session',
+      } as any);
+    }
+
+    // 6. Normalize scheduled start time (strip milliseconds for exact matching)
+    const normalizedTimestamp =
+      Math.floor(scheduledStartTime.getTime() / 1000) * 1000;
+    const normalizedStartTime =
+      TimezoneService.fromTimestamp(normalizedTimestamp);
+
+    // 7. Duplicate Check: Query repository for existing session at this scheduled time
+    const existingSession =
+      await this.sessionsRepository.findByGroupIdAndStartTime(
+        groupId,
+        normalizedStartTime,
+      );
+
+    if (existingSession) {
+      // Idempotent operation - return existing session
+      return existingSession;
+    }
+
+    // 8. Calculate endTime from scheduled startTime + class duration
+    const endTime = addMinutes(normalizedStartTime, group.class.duration);
+
+    // 9. Create Session with denormalized fields
+    const session = await this.sessionsRepository.create({
+      groupId,
+      centerId: group.centerId,
+      branchId: group.branchId,
+      classId: group.classId,
+      scheduleItemId: matchingScheduleItemId,
+      startTime: normalizedStartTime,
+      endTime,
+      status: SessionStatus.CONDUCTING,
+      isExtraSession: matchingScheduleItemId === undefined,
+    });
+
+    // 10. Emit Event
+    await this.typeSafeEventEmitter.emitAsync(
+      SessionEvents.CREATED,
+      new SessionCreatedEvent(session, actor, actor.centerId!),
+    );
+
+    // 11. Return created session
+    return session;
+  }
+
+  /**
+   * Cancel a session (create tombstone or update existing)
+   * Creates a tombstone record for virtual slots or updates existing real sessions to CANCELLED
+   *
+   * @param groupId - Group ID
+   * @param scheduledStartTime - Scheduled start time (ISO 8601 string, will be parsed and normalized)
+   * @param actor - Actor performing the action
+   * @returns Updated or created cancelled session
+   */
+  @Transactional()
+  async cancelSession(
+    groupId: string,
+    scheduledStartTime: Date,
+    actor: ActorUser,
+  ): Promise<Session> {
+    // scheduledStartTime is already a UTC Date object (converted by @IsIsoDateTime decorator)
+    // Normalize milliseconds for exact matching (strip milliseconds)
+    const normalizedStartTime = TimezoneService.fromTimestamp(
+      Math.floor(scheduledStartTime.getTime() / 1000) * 1000,
+    );
+
+    // 1. Fetch Group with class to extract denormalized fields
+    const group = await this.groupsRepository.findByIdOrThrow(groupId, [
+      'class',
+    ]);
+
+    // 2. Access Validation
+    // DTO validation (@BelongsToBranch decorator) already ensures group belongs to actor's branch
+    // Validate actor has class staff access
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
+
+    // 3. Check Existing Session
+    const existingSession =
+      await this.sessionsRepository.findByGroupIdAndStartTime(
+        groupId,
+        normalizedStartTime,
+      );
+
+    let session: Session;
+
+    if (existingSession) {
+      // 4a. Update existing session
+      await this.sessionsRepository.update(existingSession.id, {
+        status: SessionStatus.CANCELED,
+      });
+      // Fetch updated session
+      session = await this.sessionsRepository.findOneOrThrow(
+        existingSession.id,
+      );
+    } else {
+      // 4b. Create tombstone record (virtual slot)
+      const endTime = addMinutes(normalizedStartTime, group.class.duration);
+
+      // Try to find matching scheduleItemId (optional enhancement)
+      // Note: Schedule item matching is complex and would require calculating all occurrences
+      // For now, we'll leave it undefined - can be enhanced later
+      const scheduleItemId: string | undefined = undefined;
+
+      session = await this.sessionsRepository.create({
+        groupId,
+        centerId: group.centerId,
+        branchId: group.branchId,
+        classId: group.classId,
+        scheduleItemId,
+        startTime: normalizedStartTime,
+        endTime,
+        status: SessionStatus.CANCELED,
+        isExtraSession: scheduleItemId === undefined,
+      });
+    }
+
+    // 5. Emit Event
+    await this.typeSafeEventEmitter.emitAsync(
+      SessionEvents.CANCELED,
+      new SessionCanceledEvent(session, actor, actor.centerId!),
+    );
+
+    // 6. Return updated or created session
+    return session;
+  }
+
+  /**
    * Update a session
    * Can update title, date, startTime, and duration
    * Only SCHEDULED sessions can have their times changed
@@ -213,21 +414,14 @@ export class SessionsService extends BaseService {
 
     const teacherUserProfileId = group.class.teacherUserProfileId;
 
-    // Use date string directly (already YYYY-MM-DD format)
-    const dateStr = updateSessionDto.date;
+    // startTime is already a UTC Date object (converted by @IsIsoDateTime decorator)
+    const newStartTime = updateSessionDto.startTime;
 
-    // Validate date is in the future using center timezone
-    const centerNow = TimezoneService.getZonedNowFromContext();
-    const requestedDate = TimezoneService.dateOnlyToUtc(dateStr);
-    if (TimezoneService.isBefore(requestedDate, centerNow)) {
+    // Validate date is in the future (UTC comparison - mathematically identical to zoned comparison)
+    const now = TimezoneService.getUtcNow();
+    if (TimezoneService.isBefore(newStartTime, now)) {
       throw new BusinessLogicException('t.messages.sessionDateMustBeInFuture');
     }
-
-    // Create full datetime from date + time using timezone-aware conversion
-    const newStartTime = TimezoneService.toUtc(
-      dateStr,
-      updateSessionDto.startTime,
-    );
 
     // Calculate endTime from startTime + duration using date-fns
     const newEndTime = addMinutes(newStartTime, updateSessionDto.duration);
@@ -299,24 +493,21 @@ export class SessionsService extends BaseService {
   }
 
   /**
-   * Update session status
-   * Handles status transitions and emits appropriate events
+   * Finish a session (CONDUCTING → FINISHED)
+   * Only allows transition from CONDUCTING to FINISHED status
    * @param sessionId - Session ID
-   * @param status - New status
    * @param actor - Actor performing the action
+   * @returns Updated session with FINISHED status
    */
   @Transactional()
-  async updateSessionStatus(
-    sessionId: string,
-    status: SessionStatus,
-    actor: ActorUser,
-  ): Promise<Session> {
+  async finishSession(sessionId: string, actor: ActorUser): Promise<Session> {
     const session = await this.sessionsRepository.findOneOrThrow(sessionId);
-    const previousStatus = session.status;
 
-    // If status hasn't changed, return early
-    if (status === previousStatus) {
-      return session;
+    // Validate current status is CONDUCTING
+    if (session.status !== SessionStatus.CONDUCTING) {
+      throw new BusinessLogicException('t.messages.validationFailed', {
+        resource: 't.resources.session',
+      } as any);
     }
 
     // Fetch group with class for access validation
@@ -337,31 +528,69 @@ export class SessionsService extends BaseService {
       classId: group.classId,
     });
 
-    // Validate cancellation: only SCHEDULED sessions can be canceled
-    if (status === SessionStatus.CANCELED) {
-      await this.sessionValidationService.validateSessionCancellation(
-        sessionId,
-      );
-    }
-
+    // Update status to FINISHED
     const updatedSession = await this.sessionsRepository.updateThrow(
       sessionId,
-      { status },
+      { status: SessionStatus.FINISHED },
     );
 
-    // Emit appropriate event based on status change
-    if (status === SessionStatus.CANCELED) {
-      await this.typeSafeEventEmitter.emitAsync(
-        SessionEvents.CANCELED,
-        new SessionCanceledEvent(updatedSession, actor, actor.centerId!),
-      );
-    } else {
-      // For other status changes, emit UPDATED event
-      await this.typeSafeEventEmitter.emitAsync(
-        SessionEvents.UPDATED,
-        new SessionUpdatedEvent(updatedSession, actor, actor.centerId!),
-      );
+    // Emit UPDATED event
+    await this.typeSafeEventEmitter.emitAsync(
+      SessionEvents.UPDATED,
+      new SessionUpdatedEvent(updatedSession, actor, actor.centerId!),
+    );
+
+    return updatedSession;
+  }
+
+  /**
+   * Schedule a session (CANCELED → SCHEDULED)
+   * Only allows transition from CANCELED to SCHEDULED status
+   * Used to reschedule previously canceled sessions
+   * @param sessionId - Session ID
+   * @param actor - Actor performing the action
+   * @returns Updated session with SCHEDULED status
+   */
+  @Transactional()
+  async scheduleSession(sessionId: string, actor: ActorUser): Promise<Session> {
+    const session = await this.sessionsRepository.findOneOrThrow(sessionId);
+
+    // Validate current status is CANCELED
+    if (session.status !== SessionStatus.CANCELED) {
+      throw new BusinessLogicException('t.messages.validationFailed', {
+        resource: 't.resources.session',
+      } as any);
     }
+
+    // Fetch group with class for access validation
+    const group = await this.groupsRepository.findByIdOrThrow(session.groupId, [
+      'class',
+    ]);
+
+    // Validate branch access
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: group.branchId,
+    });
+
+    // Validate class staff access (for STAFF users)
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: group.classId,
+    });
+
+    // Update status to SCHEDULED
+    const updatedSession = await this.sessionsRepository.updateThrow(
+      sessionId,
+      { status: SessionStatus.SCHEDULED },
+    );
+
+    // Emit UPDATED event
+    await this.typeSafeEventEmitter.emitAsync(
+      SessionEvents.UPDATED,
+      new SessionUpdatedEvent(updatedSession, actor, actor.centerId!),
+    );
 
     return updatedSession;
   }
@@ -420,9 +649,11 @@ export class SessionsService extends BaseService {
     actor: ActorUser,
   ): Promise<CalendarSessionsResponseDto> {
     // Convert date strings to UTC date range
+    // dto.dateFrom and dto.dateTo are already UTC Date objects (converted by @IsIsoDateTime decorator)
+    // For calendar queries, extract date part and create range in center timezone
     const timezone = TimezoneService.getTimezoneFromContext();
     const { start: startDate, end: endDate } =
-      TimezoneService.getZonedDateRange(dto.dateFrom, dto.dateTo, timezone);
+      TimezoneService.dateRangeFromDates(dto.dateFrom, dto.dateTo, timezone);
 
     // Get real sessions with relations loaded
     const realSessions = await this.sessionsRepository.getCalendarSessions(
@@ -492,10 +723,7 @@ export class SessionsService extends BaseService {
       }
 
       // Generate ID for virtual sessions (deterministic based on groupId + startTime)
-      const sessionId =
-        session.id === undefined
-          ? `virtual-${session.groupId}-${session.startTime.getTime()}`
-          : session.id;
+      const sessionId = session.id;
 
       return {
         id: sessionId,

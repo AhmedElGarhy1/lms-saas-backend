@@ -159,3 +159,5 @@
 [ ] invetation flow and update invite user flow
 [?] when i display tables data I should disply myself also
 [ ] global decorator for otp_required (not good)
+
+[ ] check if session exist in db then generate virtual version (only one not all) then start the session

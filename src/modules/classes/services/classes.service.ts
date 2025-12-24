@@ -133,20 +133,9 @@ export class ClassesService extends BaseService {
     const { studentPaymentStrategy, teacherPaymentStrategy, ...classData } =
       createClassDto;
 
-    // Convert date-only strings to UTC midnight in center timezone
-    const timezone = TimezoneService.getTimezoneFromContext();
-    const startDateUtc = TimezoneService.dateOnlyToUtc(
-      createClassDto.startDate,
-      timezone,
-    );
-    const endDateUtc = createClassDto.endDate
-      ? TimezoneService.dateOnlyToUtc(createClassDto.endDate, timezone)
-      : undefined;
-
+    // Dates are already UTC Date objects from DTO (converted by @IsIsoDateTime decorator)
     const classDataWithUtcDates = {
       ...classData,
-      startDate: startDateUtc,
-      endDate: endDateUtc,
       centerId: actor.centerId!,
     };
 
@@ -207,31 +196,10 @@ export class ClassesService extends BaseService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { skipWarning, ...classUpdateData } = data;
 
-    // Convert date-only strings to UTC midnight in center timezone if provided
-    const timezone = TimezoneService.getTimezoneFromContext();
+    // Dates are already UTC Date objects from DTO (converted by @IsIsoDateTime decorator)
     const classUpdateDataWithUtcDates: Record<string, unknown> = {
       ...classUpdateData,
     };
-
-    if (
-      classUpdateData.startDate &&
-      typeof classUpdateData.startDate === 'string'
-    ) {
-      classUpdateDataWithUtcDates.startDate = TimezoneService.dateOnlyToUtc(
-        classUpdateData.startDate,
-        timezone,
-      );
-    }
-
-    if (
-      classUpdateData.endDate &&
-      typeof classUpdateData.endDate === 'string'
-    ) {
-      classUpdateDataWithUtcDates.endDate = TimezoneService.dateOnlyToUtc(
-        classUpdateData.endDate,
-        timezone,
-      );
-    }
 
     const changedFields: string[] = [];
 
@@ -563,7 +531,7 @@ export class ClassesService extends BaseService {
     const updateData = this.prepareStatusUpdateData(
       oldStatus,
       newStatus,
-      TimezoneService.getZonedNowFromContext(),
+      TimezoneService.getUtcNow(),
     );
 
     // Update class with status and dates using updateThrow to ensure it persists

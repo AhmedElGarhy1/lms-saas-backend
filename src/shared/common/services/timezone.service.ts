@@ -60,20 +60,38 @@ export class TimezoneService {
   }
 
   /**
+   * Get current UTC time (no timezone conversion)
+   * Use this for simple duration checks and timestamp comparisons
+   * For business logic that depends on center's "wall clock time", use getZonedNow() instead
+   *
+   * @returns Date object representing current UTC time
+   */
+  static getUtcNow(): Date {
+    // Use Date.now() to get timestamp, then convert via fromTimestamp
+    // This avoids direct Date() constructor usage
+    return this.fromTimestamp(Date.now());
+  }
+
+  /**
    * Get current time relative to the center's clock
-   * Useful for "Elite Precision" Cron jobs
+   * Useful for "Elite Precision" Cron jobs and business logic that depends on center's calendar day
    * Returns a Date object representing "now" in the specified timezone
+   *
+   * @param timezone - Optional timezone (defaults to context timezone)
+   * @returns Date object representing "now" in the specified timezone (as UTC)
    */
   static getZonedNow(timezone?: string): Date {
     const tz = timezone || this.getTimezoneFromContext();
-    const zoned = new TZDate(new Date(), tz);
+    const zoned = new TZDate(this.getUtcNow(), tz);
     // Convert TZDate to Date to ensure type consistency
-    return new Date(zoned.toISOString());
+    return this.fromTimestamp(zoned.getTime());
   }
 
   /**
    * Get current time in center timezone from RequestContext (convenience method)
    * Combines getTimezoneFromContext() and getZonedNow() in one call
+   * Use this for business logic that depends on center's "wall clock time"
+   * For simple duration checks, use getUtcNow() instead
    */
   static getZonedNowFromContext(): Date {
     const timezone = this.getTimezoneFromContext();
@@ -148,5 +166,92 @@ export class TimezoneService {
    */
   static fromTimestamp(timestamp: number): Date {
     return new Date(timestamp);
+  }
+
+  /**
+   * Parse an ISO 8601 date-time string and normalize it by stripping milliseconds
+   * This ensures exact matching for database queries (e.g., session start times)
+   * The input can be in any timezone (UTC, local, or with offset)
+   * @param isoString - ISO 8601 date-time string (e.g., "2024-01-15T18:00:00.000Z" or "2024-01-15T18:00:00+02:00")
+   * @returns Date object with milliseconds normalized to .000
+   */
+  static parseAndNormalizeIso8601(isoString: string): Date {
+    // TZDate can parse ISO 8601 strings in any timezone
+    const parsedTZDate = new TZDate(isoString);
+    // Strip milliseconds by flooring to the nearest second
+    const normalizedTimestamp =
+      Math.floor(parsedTZDate.getTime() / 1000) * 1000;
+    return this.fromTimestamp(normalizedTimestamp);
+  }
+
+  /**
+   * Convert Date range to UTC range for database queries
+   * Uses range approach (>= midnight AND < next_midnight) to preserve index usage
+   * CRITICAL: Never use DATE() or EXTRACT() functions in WHERE clauses
+   *
+   * @param dateFrom - Start date (UTC Date object)
+   * @param dateTo - End date (UTC Date object)
+   * @param timezone - Optional timezone for date-only semantics (defaults to context timezone)
+   * @returns UTC range with exclusive end: { start: Date, end: Date }
+   *
+   * @example
+   * // For calendar queries, extract date part and create range
+   * const dateFrom = new Date('2024-01-15T14:30:00Z');
+   * const dateTo = new Date('2024-01-31T18:00:00Z');
+   * const { start, end } = TimezoneService.dateRangeFromDates(dateFrom, dateTo);
+   * // Use in query: WHERE startTime >= :start AND startTime < :end
+   */
+  static dateRangeFromDates(
+    dateFrom: Date,
+    dateTo: Date,
+    timezone?: string,
+  ): { start: Date; end: Date } {
+    // For date-only semantics, normalize to midnight in center timezone
+    const tz = timezone || this.getTimezoneFromContext();
+
+    // Extract date part from dateFrom in center timezone and normalize to midnight
+    const fromZoned = new TZDate(dateFrom, tz);
+    const fromDateStr = format(fromZoned, 'yyyy-MM-dd');
+    const startZoned = new TZDate(`${fromDateStr}T00:00:00`, tz);
+
+    // Extract date part from dateTo in center timezone and normalize to next midnight (exclusive)
+    const toZoned = new TZDate(dateTo, tz);
+    const toDateStr = format(toZoned, 'yyyy-MM-dd');
+    const endZoned = addDays(new TZDate(`${toDateStr}T00:00:00`, tz), 1);
+
+    return {
+      start: new Date(startZoned.toISOString()),
+      end: new Date(endZoned.toISOString()),
+    };
+  }
+
+  /**
+   * Extract date part (YYYY-MM-DD) from Date object in center timezone
+   * Useful for date-only semantics when working with Date objects
+   *
+   * @param date - UTC Date object
+   * @param timezone - Optional timezone (defaults to context timezone)
+   * @returns Date string in YYYY-MM-DD format
+   */
+  static extractDatePart(date: Date, timezone?: string): string {
+    const tz = timezone || this.getTimezoneFromContext();
+    const zoned = new TZDate(date, tz);
+    return format(zoned, 'yyyy-MM-dd');
+  }
+
+  /**
+   * Normalize Date to midnight in center timezone
+   * Returns Date object representing midnight in center timezone (converted to UTC)
+   *
+   * @param date - UTC Date object
+   * @param timezone - Optional timezone (defaults to context timezone)
+   * @returns Date object representing midnight in center timezone (UTC)
+   */
+  static normalizeToMidnight(date: Date, timezone?: string): Date {
+    const tz = timezone || this.getTimezoneFromContext();
+    const zoned = new TZDate(date, tz);
+    const dateStr = format(zoned, 'yyyy-MM-dd');
+    const midnightZoned = new TZDate(`${dateStr}T00:00:00`, tz);
+    return new Date(midnightZoned.toISOString());
   }
 }

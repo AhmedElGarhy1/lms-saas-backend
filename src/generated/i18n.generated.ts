@@ -874,6 +874,9 @@ export type I18nTranslations = {
             "isDateString": {
                 "message": string;
             };
+            "isIso8601": {
+                "message": string;
+            };
             "isArray": {
                 "message": string;
             };

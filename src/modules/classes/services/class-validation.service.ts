@@ -30,8 +30,8 @@ export class ClassValidationService extends BaseService {
   ): Promise<void> {
     // Prevent updating startDate if class is not in NOT_STARTED status
     if (dto.startDate !== undefined) {
-      // Convert string date to UTC using timezone-aware conversion
-      const newStartDateUtc = TimezoneService.dateOnlyToUtc(dto.startDate);
+      // dto.startDate is already a UTC Date object (converted by @IsIsoDateTime decorator)
+      const newStartDateUtc = dto.startDate;
       const currentStartDateUtc = currentClass.startDate; // Already UTC Date
       const startDateChanged =
         newStartDateUtc.getTime() !== currentStartDateUtc.getTime();

@@ -8,6 +8,7 @@ import {
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsoUtcDate } from '../decorators/is-iso-datetime.decorator';
 
 export class BasePaginationDto {
   @ApiPropertyOptional({
@@ -76,20 +77,22 @@ export class BasePaginationDto {
   sortBy?: [string, 'ASC' | 'DESC'][];
 
   @ApiPropertyOptional({
-    description: 'Filter from date',
-    type: String,
+    description:
+      'Filter from date (ISO 8601 format with timezone, e.g., 2024-01-01T00:00:00+02:00)',
+    type: Date,
   })
   @IsOptional()
-  @IsString()
-  dateFrom?: string;
+  @IsoUtcDate()
+  dateFrom?: Date;
 
   @ApiPropertyOptional({
-    description: 'Filter to date',
-    type: String,
+    description:
+      'Filter to date (ISO 8601 format with timezone, e.g., 2024-01-31T23:59:59+02:00)',
+    type: Date,
   })
   @IsOptional()
-  @IsString()
-  dateTo?: string;
+  @IsoUtcDate()
+  dateTo?: Date;
 
   @ApiPropertyOptional({
     description: 'return only deleted records',

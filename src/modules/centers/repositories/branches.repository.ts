@@ -32,8 +32,8 @@ export class BranchesRepository extends BaseRepository<Branch> {
     return this.paginate(
       paginateDto,
       {
-        searchableColumns: ['location', 'address'],
-        sortableColumns: ['location', 'createdAt', 'updatedAt'],
+        searchableColumns: ['city', 'address'],
+        sortableColumns: ['city', 'createdAt', 'updatedAt'],
         defaultSortBy: ['createdAt', 'DESC'],
       },
       'centers/branches',
