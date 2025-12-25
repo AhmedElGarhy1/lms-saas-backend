@@ -2,59 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { SessionStatus } from '../enums/session-status.enum';
 
 /**
- * Teacher user info for calendar
- */
-export class CalendarTeacherUser {
-  @ApiProperty({ description: 'Teacher user name', example: 'Teacher Name' })
-  name: string;
-}
-
-/**
- * Teacher info for calendar
- */
-export class CalendarTeacher {
-  @ApiProperty({
-    description: 'Teacher user information',
-    type: CalendarTeacherUser,
-  })
-  user: CalendarTeacherUser;
-}
-
-/**
- * Class info for calendar
- */
-export class CalendarClass {
-  @ApiProperty({ description: 'Class ID', example: 'uuid' })
-  id: string;
-
-  @ApiProperty({ description: 'Class name', example: 'Class Name' })
-  name: string;
-
-  @ApiProperty({
-    description: 'Teacher information',
-    type: CalendarTeacher,
-  })
-  teacher: CalendarTeacher;
-}
-
-/**
- * Group info for calendar
- */
-export class CalendarGroup {
-  @ApiProperty({ description: 'Group ID', example: 'uuid' })
-  id: string;
-
-  @ApiProperty({ description: 'Group name', example: 'Group A' })
-  name: string;
-
-  @ApiProperty({
-    description: 'Class information',
-    type: CalendarClass,
-  })
-  class: CalendarClass;
-}
-
-/**
  * Calendar session item with nested relations
  */
 export class CalendarSessionItem {
@@ -94,12 +41,6 @@ export class CalendarSessionItem {
     example: false,
   })
   isExtraSession: boolean;
-
-  @ApiProperty({
-    description: 'Group information with nested relations',
-    type: CalendarGroup,
-  })
-  group: CalendarGroup;
 
   @ApiProperty({
     description: 'Actual start time',

@@ -127,12 +127,11 @@
 [x] correct display for each calender type Month, Day, Week for ux
 [x] handle timezone in frontend and backend and transformation
 [x] make shared view dialog for shared data or control same design and overlay
-[ ] before session by amount of time (specified somewhere) the session can be start for attendance
-[ ] session generation/ schdule validation are happening always in the same time but in diffrent places we can combine them or make them smarter
-[ ] create schdule item add demorization fields centerId, branchId, classId (do the same for all entites)
-[ ] access control for sessions module
-[ ] calender ui doesn't fit many!
-[ ] calender doesn't have filters
+[x] session generation/ schdule validation are happening always in the same time but in diffrent places we can combine them or make them smarter
+[x] create schdule item add demorization fields centerId, branchId, classId (do the same for all entites)
+[x] access control for sessions module
+[x] calender ui doesn't fit many!
+[x] calender doesn't have filters
 
 ? what will happen if class deleted?
 ? what will happen if group deleted?
@@ -157,7 +156,3 @@
 [ ] you can only delete session you created isExtra other you can only cancle them (no soft deleted here)
 
 [ ] invetation flow and update invite user flow
-[?] when i display tables data I should disply myself also
-[ ] global decorator for otp_required (not good)
-
-[ ] check if session exist in db then generate virtual version (only one not all) then start the session

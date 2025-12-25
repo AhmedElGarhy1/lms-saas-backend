@@ -114,7 +114,7 @@ export class SessionsService extends BaseService {
     const canBypassCenterInternalAccess =
       await this.accessControlHelperService.bypassCenterInternalAccess(
         actor.userProfileId,
-        actor.centerId!,
+        actor.centerId,
       );
 
     if (!canBypassCenterInternalAccess) {
@@ -206,26 +206,27 @@ export class SessionsService extends BaseService {
   }
 
   /**
-   * Start a session (materialize virtual to real or update existing)
+   * Check-in a session (materialize virtual to real or update existing)
    * Handles both real sessions (UUID) and virtual sessions (virtual ID)
    *
    * For real sessions:
-   * - If SCHEDULED → update to CONDUCTING
-   * - If CONDUCTING/FINISHED → return as-is (idempotent)
+   * - If SCHEDULED → update to CHECKING_IN
+   * - If CHECKING_IN → return as-is (idempotent)
+   * - If CONDUCTING/FINISHED → return as-is
    * - If CANCELED → throw error
    *
    * For virtual sessions:
    * - Check if real session already exists (race condition protection)
    * - If exists → handle as real session
-   * - If not → find matching schedule item and create CONDUCTING session
+   * - If not → find matching schedule item and create CHECKING_IN session
    *
    * @param sessionId - Session ID (UUID or virtual ID)
    * @param actor - Actor performing the action
    * @returns Created or updated session
-   * @throws BusinessLogicException if session cannot be started
+   * @throws BusinessLogicException if session cannot be checked-in
    */
   @Transactional()
-  async startSession(sessionId: string, actor: ActorUser): Promise<Session> {
+  async checkInSession(sessionId: string, actor: ActorUser): Promise<Session> {
     // 1. Resolve session from ID (handles security validation and race condition protection)
     const resolved = await this.resolveSessionFromId(sessionId, actor);
 
@@ -235,22 +236,30 @@ export class SessionsService extends BaseService {
 
       switch (session.status) {
         case SessionStatus.SCHEDULED: {
-          // Update to CONDUCTING and capture actual start time
-          const actualStartTime = new Date();
           await this.sessionsRepository.update(session.id, {
-            status: SessionStatus.CONDUCTING,
-            actualStartTime,
+            status: SessionStatus.CHECKING_IN,
           });
-          return await this.sessionsRepository.findOneOrThrow(session.id);
+
+          const updatedSession = await this.sessionsRepository.findOneOrThrow(
+            session.id,
+          );
+
+          await this.typeSafeEventEmitter.emitAsync(
+            SessionEvents.UPDATED,
+            new SessionUpdatedEvent(updatedSession, actor, actor.centerId!),
+          );
+
+          return updatedSession;
         }
 
+        case SessionStatus.CHECKING_IN:
         case SessionStatus.CONDUCTING:
         case SessionStatus.FINISHED:
-          // Already started/finished - return as-is (idempotent)
+          // Already checked-in/started/finished - return as-is (idempotent)
           return session;
 
         case SessionStatus.CANCELED:
-          // Can't start a canceled session
+          // Can't check-in a canceled session
           throw new BusinessLogicException('t.messages.validationFailed', {
             resource: 't.resources.session',
           } as any);
@@ -299,37 +308,96 @@ export class SessionsService extends BaseService {
     // Double-check if session exists (race condition protection)
     // Even though we checked in resolveSessionFromId, another request might have created it
     if (match.existingSessionId) {
-      // Another request created it - handle as real session
       const existingSession = await this.sessionsRepository.findOneOrThrow(
         match.existingSessionId,
       );
-      // Recursively handle (will update SCHEDULED to CONDUCTING or return as-is)
-      return this.startSession(existingSession.id, actor);
+      return this.checkInSession(existingSession.id, actor);
     }
 
-    // Create CONDUCTING session with actual start time
-    const actualStartTime = new Date();
+    // Create CHECKING_IN session (materialized from schedule)
     const session = await this.sessionsRepository.create({
-      groupId: resolved.groupId,
+      // Four Pillars snapshot (denormalized for access-control and fast filtering)
+      groupId: group.id,
       centerId: group.centerId,
       branchId: group.branchId,
       classId: group.classId,
       scheduleItemId: match.scheduleItemId,
       startTime: normalizedStartTime,
       endTime: match.calculatedEndTime,
-      status: SessionStatus.CONDUCTING,
-      actualStartTime,
+      status: SessionStatus.CHECKING_IN,
       isExtraSession: false, // Always false since we matched a schedule item
     });
 
-    // Emit Event
     await this.typeSafeEventEmitter.emitAsync(
       SessionEvents.CREATED,
       new SessionCreatedEvent(session, actor, actor.centerId!),
     );
 
-    // Return created session
     return session;
+  }
+
+  /**
+   * Start a session (CHECKING_IN → CONDUCTING)
+   * Handles real sessions (UUID). Virtual sessions must be checked-in first.
+   *
+   * For real sessions:
+   * - If CHECKING_IN → update to CONDUCTING
+   * - If CONDUCTING/FINISHED → return as-is (idempotent)
+   * - If CANCELED → throw error
+   *
+   * @param sessionId - Session ID (UUID or virtual ID)
+   * @param actor - Actor performing the action
+   * @returns Created or updated session
+   * @throws BusinessLogicException if session cannot be started
+   */
+  @Transactional()
+  async startSession(sessionId: string, actor: ActorUser): Promise<Session> {
+    // 1. Resolve session from ID (handles security validation and race condition protection)
+    const resolved = await this.resolveSessionFromId(sessionId, actor);
+
+    // 2. Strict flow: virtual sessions must be checked-in first (to materialize a real session record)
+    if (!resolved.isReal || !resolved.realSession) {
+      throw new BusinessLogicException('t.messages.validationFailed', {
+        resource: 't.resources.session',
+      } as any);
+    }
+
+    // 3. Handle real session
+    const session = resolved.realSession;
+
+    switch (session.status) {
+      case SessionStatus.CHECKING_IN: {
+        // Update to CONDUCTING and capture actual start time
+        const actualStartTime = new Date();
+        await this.sessionsRepository.update(session.id, {
+          status: SessionStatus.CONDUCTING,
+          actualStartTime,
+        });
+        return await this.sessionsRepository.findOneOrThrow(session.id);
+      }
+
+      case SessionStatus.SCHEDULED:
+        // Must check-in first
+        throw new BusinessLogicException('t.messages.validationFailed', {
+          resource: 't.resources.session',
+        } as any);
+
+      case SessionStatus.CONDUCTING:
+      case SessionStatus.FINISHED:
+        // Already started/finished - return as-is (idempotent)
+        return session;
+
+      case SessionStatus.CANCELED:
+        // Can't start a canceled session
+        throw new BusinessLogicException('t.messages.validationFailed', {
+          resource: 't.resources.session',
+        } as any);
+
+      default:
+        throw new BusinessLogicException('t.messages.validationFailed', {
+          resource: 't.resources.session',
+        } as any);
+    }
   }
 
   /**
@@ -762,8 +830,6 @@ export class SessionsService extends BaseService {
         this.groupsRepository.findByIdOrThrow(groupId, [
           'class',
           'class.center', // Add Center relation for timezone
-          'class.teacher',
-          'class.teacher.user',
         ]),
       ),
     );
@@ -823,19 +889,6 @@ export class SessionsService extends BaseService {
         actualStartTime: session.actualStartTime,
         actualFinishTime: session.actualFinishTime,
         isExtraSession: session.isExtraSession,
-        group: {
-          id: group.id,
-          name: group.name || '',
-          class: {
-            id: group.class.id,
-            name: group.class.name || '',
-            teacher: {
-              user: {
-                name: group.class.teacher?.user?.name || '',
-              },
-            },
-          },
-        },
       };
     });
 
@@ -897,14 +950,14 @@ export class SessionsService extends BaseService {
       const canBypassCenterInternalAccess =
         await this.accessControlHelperService.bypassCenterInternalAccess(
           actor.userProfileId,
-          actor.centerId!,
+          actor.centerId,
         );
 
       if (!canBypassCenterInternalAccess) {
         // Validate branch access
         await this.branchAccessService.validateBranchAccess({
           userProfileId: actor.userProfileId,
-          centerId: actor.centerId!,
+          centerId: actor.centerId,
           branchId: group.branchId,
         });
 
@@ -966,14 +1019,14 @@ export class SessionsService extends BaseService {
       const canBypassCenterInternalAccess =
         await this.accessControlHelperService.bypassCenterInternalAccess(
           actor.userProfileId,
-          actor.centerId!,
+          actor.centerId,
         );
 
       if (!canBypassCenterInternalAccess) {
         // Validate branch access
         await this.branchAccessService.validateBranchAccess({
           userProfileId: actor.userProfileId,
-          centerId: actor.centerId!,
+          centerId: actor.centerId,
           branchId: group.branchId,
         });
 

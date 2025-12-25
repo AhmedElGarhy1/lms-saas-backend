@@ -17,6 +17,7 @@ import { CalendarSessionsDto } from '../dto/calendar-sessions.dto';
 import { PaginateSessionsDto } from '../dto/paginate-sessions.dto';
 import { SessionIdParamDto } from '../dto/session-id-param.dto';
 import { StartSessionDto } from '../dto/start-session.dto';
+import { CheckInSessionDto } from '../dto/check-in-session.dto';
 import { CancelSessionDto } from '../dto/cancel-session.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
@@ -31,11 +32,47 @@ import { SessionResponseDto } from '../dto/session-response.dto';
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 
+  @Post('check-in')
+  @ApiOperation({
+    summary: 'Check-in a session (materialize virtual to real or update existing)',
+    description:
+      'Checks-in a session by either materializing a virtual session slot into a real database record, or updating an existing SCHEDULED session to CHECKING_IN. Accepts either a real session UUID or a virtual session ID from the calendar.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Session checked-in successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Invalid session ID, no matching scheduled session found, or cannot check-in canceled session',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Insufficient permissions',
+  })
+  @Permissions(PERMISSIONS.SESSIONS.UPDATE)
+  @Transactional()
+  @SerializeOptions({ type: SessionResponseDto })
+  async checkInSession(
+    @Body() checkInSessionDto: CheckInSessionDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.sessionsService.checkInSession(
+      checkInSessionDto.sessionId,
+      actor,
+    );
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.session' },
+    });
+  }
+
   @Post('start')
   @ApiOperation({
     summary: 'Start a session (materialize virtual to real or update existing)',
     description:
-      'Starts a session by either materializing a virtual session slot into a real database record, or updating an existing SCHEDULED session to CONDUCTING. Accepts either a real session UUID or a virtual session ID from the calendar.',
+      'Starts a session by updating an existing CHECKING_IN session to CONDUCTING. Accepts a real session UUID. Virtual sessions must be checked-in first to materialize a real session record.',
   })
   @ApiResponse({
     status: 200,
