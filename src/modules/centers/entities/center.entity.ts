@@ -11,6 +11,7 @@ import { Class } from '@/modules/classes/entities/class.entity';
 import { Group } from '@/modules/classes/entities/group.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
+import { Session } from '@/modules/sessions/entities/session.entity';
 
 @Entity('centers')
 @Index(['name'])
@@ -75,4 +76,7 @@ export class Center extends SoftBaseEntity {
 
   @OneToMany(() => ScheduleItem, (scheduleItem) => scheduleItem.center)
   scheduleItems: ScheduleItem[];
+
+  @OneToMany(() => Session, (session) => session.center)
+  sessions: Session[];
 }

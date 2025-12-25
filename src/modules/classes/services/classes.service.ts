@@ -34,7 +34,6 @@ import { BulkOperationResult } from '@/shared/common/services/bulk-operation.ser
 import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
 import { StudentPaymentStrategyDto } from '../dto/student-payment-strategy.dto';
 import { TeacherPaymentStrategyDto } from '../dto/teacher-payment-strategy.dto';
-import { TimezoneService } from '@/shared/common/services/timezone.service';
 
 @Injectable()
 export class ClassesService extends BaseService {
@@ -85,20 +84,7 @@ export class ClassesService extends BaseService {
     actor: ActorUser,
     includeDeleted = false,
   ): Promise<Class> {
-    const classEntity =
-      await this.classesRepository.findClassWithRelationsOrThrow(
-        classId,
-        includeDeleted,
-      );
-
-    // Validate actor has branch access to the class's branch
-    await this.branchAccessService.validateBranchAccess({
-      userProfileId: actor.userProfileId,
-      centerId: actor.centerId!,
-      branchId: classEntity.branchId,
-    });
-
-    return classEntity;
+    return this.findClassAndValidateAccess(classId, actor, includeDeleted);
   }
 
   /**
@@ -171,18 +157,11 @@ export class ClassesService extends BaseService {
     data: UpdateClassDto,
     actor: ActorUser,
   ): Promise<Class> {
-    const classEntity =
-      await this.classesRepository.findClassWithRelationsOrThrow(
+    const classEntity = await this.findClassAndValidateAccess(
         classId,
+      actor,
         false,
       );
-
-    // Validate actor has branch access to the class's branch
-    await this.branchAccessService.validateBranchAccess({
-      userProfileId: actor.userProfileId,
-      centerId: actor.centerId!,
-      branchId: classEntity.branchId,
-    });
 
     await this.classValidationService.validateClassUpdate(
       classId,
@@ -255,6 +234,11 @@ export class ClassesService extends BaseService {
       branchId: classEntity.branchId,
     });
 
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: classEntity.id,
+    });
+
     // Validate class status allows payment strategy updates
     if (
       classEntity.status !== ClassStatus.PENDING_TEACHER_APPROVAL &&
@@ -302,18 +286,11 @@ export class ClassesService extends BaseService {
     teacherStrategy: TeacherPaymentStrategyDto,
     actor: ActorUser,
   ): Promise<Class> {
-    const classEntity =
-      await this.classesRepository.findClassWithRelationsOrThrow(
+    const classEntity = await this.findClassAndValidateAccess(
         classId,
+      actor,
         false,
       );
-
-    // Validate actor has branch access to the class's branch
-    await this.branchAccessService.validateBranchAccess({
-      userProfileId: actor.userProfileId,
-      centerId: actor.centerId!,
-      branchId: classEntity.branchId,
-    });
 
     // Validate class status allows payment strategy updates
     if (
@@ -363,6 +340,11 @@ export class ClassesService extends BaseService {
       branchId: classEntity.branchId,
     });
 
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: classEntity.id,
+    });
+
     await this.classesRepository.softRemove(classId);
 
     await this.typeSafeEventEmitter.emitAsync(
@@ -381,32 +363,11 @@ export class ClassesService extends BaseService {
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
   async restoreClass(classId: string, actor: ActorUser): Promise<void> {
-    // Manual validation needed: BelongsToCenter only checks active classes
-    const classEntity =
-      await this.classesRepository.findOneSoftDeletedById(classId);
-
-    if (!classEntity) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.class',
-        identifier: 't.resources.identifier',
-        value: classId,
-      });
-    }
-    const centerId = actor.centerId;
-    if (!centerId || classEntity.centerId !== centerId) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.class',
-        identifier: 't.resources.identifier',
-        value: classId,
-      });
-    }
-
-    // Validate actor has branch access to the class's branch
-    await this.branchAccessService.validateBranchAccess({
-      userProfileId: actor.userProfileId,
-      centerId: centerId,
-      branchId: classEntity.branchId,
-    });
+    const classEntity = await this.findSoftDeletedClassAndValidateAccess(
+      classId,
+      actor,
+    );
+    const centerId = actor.centerId!;
 
     await this.classesRepository.restore(classId);
 
@@ -430,7 +391,6 @@ export class ClassesService extends BaseService {
     actor: ActorUser,
   ): Promise<ClassStatus[]> {
     const classEntity = await this.getClass(classId, actor);
-
     return getAvailableStatuses(classEntity.status);
   }
 
@@ -611,5 +571,93 @@ export class ClassesService extends BaseService {
         return { id: classId };
       },
     );
+  }
+
+  /**
+   * Unified gatekeeper to ensure the actor has permission to access this class.
+   * Validates: 1. Class existence, 2. Branch Access, 3. Class Staff Access (for STAFF users).
+   *
+   * @param classId - The class ID
+   * @param actor - The user performing the action
+   * @param includeDeleted - Whether to include soft-deleted classes (default: false)
+   * @returns Class entity with all relations loaded
+   * @throws ResourceNotFoundException if class doesn't exist
+   * @throws InsufficientPermissionsException if actor doesn't have access
+   */
+  private async findClassAndValidateAccess(
+    classId: string,
+    actor: ActorUser,
+    includeDeleted = false,
+  ): Promise<Class> {
+    const classEntity =
+      await this.classesRepository.findClassWithRelationsOrThrow(
+        classId,
+        includeDeleted,
+      );
+
+    // 1. Branch Access (User must belong to the branch)
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: classEntity.branchId,
+    });
+
+    // 2. Class Access (If Staff, must be assigned to this specific class)
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: classEntity.id,
+    });
+
+    return classEntity;
+  }
+
+  /**
+   * Gatekeeper for restoring soft-deleted classes.
+   * Validates class exists (including soft-deleted), center ownership, branch access, and class access.
+   *
+   * @param classId - The class ID
+   * @param actor - The user performing the action
+   * @returns Class entity
+   * @throws ResourceNotFoundException if class doesn't exist or doesn't belong to actor's center
+   * @throws InsufficientPermissionsException if actor doesn't have access
+   */
+  private async findSoftDeletedClassAndValidateAccess(
+    classId: string,
+    actor: ActorUser,
+  ): Promise<Class> {
+    const classEntity =
+      await this.classesRepository.findOneSoftDeletedById(classId);
+
+    if (!classEntity) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.class',
+        identifier: 't.resources.identifier',
+        value: classId,
+      });
+    }
+
+    const centerId = actor.centerId;
+    if (!centerId || classEntity.centerId !== centerId) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.class',
+        identifier: 't.resources.identifier',
+        value: classId,
+      });
+    }
+
+    // Branch Access
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: centerId,
+      branchId: classEntity.branchId,
+    });
+
+    // Class Access
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: classEntity.id,
+    });
+
+    return classEntity;
   }
 }

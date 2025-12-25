@@ -19,6 +19,7 @@ import { ClassStaff } from './class-staff.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 import { ClassStatus } from '../enums/class-status.enum';
 import { ScheduleItem } from './schedule-item.entity';
+import { Session } from '@/modules/sessions/entities/session.entity';
 
 @Entity('classes')
 @Index(['centerId'])
@@ -55,11 +56,9 @@ export class Class extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   centerId: string;
 
-  
   @Column({ type: 'timestamptz' })
   startDate: Date;
 
-  
   @Column({ type: 'timestamptz', nullable: true })
   endDate?: Date;
 
@@ -115,4 +114,7 @@ export class Class extends SoftBaseEntity {
 
   @OneToMany(() => ScheduleItem, (scheduleItem) => scheduleItem.class)
   scheduleItems: ScheduleItem[];
+
+  @OneToMany(() => Session, (session) => session.class)
+  sessions: Session[];
 }

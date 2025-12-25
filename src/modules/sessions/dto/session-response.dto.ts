@@ -20,6 +20,16 @@ export class SessionResponseDto {
   @ApiProperty({ description: 'Session end time' })
   endTime: Date;
 
+  @ApiPropertyOptional({
+    description: 'Actual start time - captured when session is started (status → CONDUCTING)',
+  })
+  actualStartTime?: Date;
+
+  @ApiPropertyOptional({
+    description: 'Actual finish time - captured when session is finished (status → FINISHED)',
+  })
+  actualFinishTime?: Date;
+
   @ApiProperty({
     description: 'Session status',
     enum: SessionStatus,

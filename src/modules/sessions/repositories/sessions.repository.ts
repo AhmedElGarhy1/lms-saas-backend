@@ -6,11 +6,13 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 import { SessionStatus } from '../enums/session-status.enum';
 import { SessionFiltersDto } from '../dto/session-filters.dto';
 import { CalendarSessionsDto } from '../dto/calendar-sessions.dto';
+import { PaginateSessionsDto } from '../dto/paginate-sessions.dto';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { SelectQueryBuilder } from 'typeorm';
-import { TimezoneService } from '@/shared/common/services/timezone.service';
 import { subHours } from 'date-fns';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
 export class SessionsRepository extends BaseRepository<Session> {
@@ -134,22 +136,23 @@ export class SessionsRepository extends BaseRepository<Session> {
    * Build a query builder with shared session filters
    * Used by both pagination and calendar endpoints
    *
-   * @param filters - Filter parameters
+   * @param filters - Filter parameters (SessionFiltersDto, PaginateSessionsDto, or CalendarSessionsDto)
    * @param actor - The user performing the action
    * @returns Query builder with filters applied
    */
   private async buildSessionQueryBuilder(
-    filters: SessionFiltersDto,
+    filters: SessionFiltersDto | PaginateSessionsDto | CalendarSessionsDto,
     actor: ActorUser,
   ): Promise<SelectQueryBuilder<Session>> {
     const centerId = actor.centerId!;
     const queryBuilder = this.getRepository()
       .createQueryBuilder('session')
-      // Join relations only when we need relation data (e.g., group.name, class.name)
-      .leftJoin('session.group', 'group')
-      .leftJoin('group.class', 'class')
-      // Select only needed fields from relations
-      .addSelect(['group.id', 'group.name', 'class.id', 'class.name'])
+      // Join and select all required relations for consistent session response
+      .leftJoinAndSelect('session.group', 'group')
+      .leftJoinAndSelect('session.branch', 'branch')
+      .leftJoinAndSelect('group.class', 'class')
+      .leftJoinAndSelect('class.teacher', 'teacher')
+      .leftJoinAndSelect('teacher.user', 'teacherUser')
       // Filter by center using denormalized field (no join needed)
       .where('session.centerId = :centerId', { centerId });
 
@@ -166,6 +169,14 @@ export class SessionsRepository extends BaseRepository<Session> {
         .andWhere('classStaff.userProfileId = :userProfileId', {
           userProfileId: actor.userProfileId,
         });
+
+      // Branch access filtering
+      queryBuilder.andWhere(
+        'session.branchId IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true)',
+        {
+          userProfileId: actor.userProfileId,
+        },
+      );
     }
 
     // Apply filters
@@ -180,6 +191,37 @@ export class SessionsRepository extends BaseRepository<Session> {
       queryBuilder.andWhere('session.classId = :classId', {
         classId: filters.classId,
       });
+    }
+
+    if (filters.branchId) {
+      // Use denormalized field
+      queryBuilder.andWhere('session.branchId = :branchId', {
+        branchId: filters.branchId,
+      });
+    }
+
+    if (filters.teacherUserProfileId) {
+      // Filter by teacher user profile ID via class join (already joined above)
+      queryBuilder.andWhere(
+        'class.teacherUserProfileId = :teacherUserProfileId',
+        {
+          teacherUserProfileId: filters.teacherUserProfileId,
+        },
+      );
+    }
+
+    if (filters.studentUserProfileId) {
+      // Filter by student user profile ID via group_students join
+      // Only include active students (leftAt IS NULL)
+      queryBuilder
+        .leftJoin('group.groupStudents', 'groupStudents')
+        .andWhere(
+          'groupStudents.studentUserProfileId = :studentUserProfileId',
+          {
+            studentUserProfileId: filters.studentUserProfileId,
+          },
+        )
+        .andWhere('groupStudents.leftAt IS NULL');
     }
 
     if (filters.status !== undefined && filters.status !== null) {
@@ -222,6 +264,37 @@ export class SessionsRepository extends BaseRepository<Session> {
   }
 
   /**
+   * Find a session by ID with all required relations loaded
+   * Used for single session retrieval to ensure consistent response structure
+   *
+   * @param sessionId - Session ID
+   * @returns Session with relations (group, branch, class, teacher, teacher.user)
+   * @throws ResourceNotFoundException if session doesn't exist
+   */
+  async findSessionWithRelationsOrThrow(sessionId: string): Promise<Session> {
+    const session = await this.getRepository()
+      .createQueryBuilder('session')
+      // Join and select all required relations for consistent session response
+      .leftJoinAndSelect('session.group', 'group')
+      .leftJoinAndSelect('session.branch', 'branch')
+      .leftJoinAndSelect('group.class', 'class')
+      .leftJoinAndSelect('class.teacher', 'teacher')
+      .leftJoinAndSelect('teacher.user', 'teacherUser')
+      .where('session.id = :sessionId', { sessionId })
+      .getOne();
+
+    if (!session) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.session',
+        identifier: 't.resources.identifier',
+        value: sessionId,
+      });
+    }
+
+    return session;
+  }
+
+  /**
    * Get sessions for calendar view
    * Returns sessions within the specified date range with all necessary relations
    *
@@ -236,8 +309,9 @@ export class SessionsRepository extends BaseRepository<Session> {
     const centerId = actor.centerId!;
     const queryBuilder = this.getRepository()
       .createQueryBuilder('session')
-      // Join and select relations needed for calendar display
+      // Join and select all required relations for consistent session response
       .leftJoinAndSelect('session.group', 'group')
+      .leftJoinAndSelect('session.branch', 'branch')
       .leftJoinAndSelect('group.class', 'class')
       .leftJoinAndSelect('class.teacher', 'teacher')
       .leftJoinAndSelect('teacher.user', 'teacherUser')
@@ -257,6 +331,14 @@ export class SessionsRepository extends BaseRepository<Session> {
         .andWhere('classStaff.userProfileId = :userProfileId', {
           userProfileId: actor.userProfileId,
         });
+
+      // Branch access filtering
+      queryBuilder.andWhere(
+        'session.branchId IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true)',
+        {
+          userProfileId: actor.userProfileId,
+        },
+      );
     }
 
     // Apply date range filter - dates are already UTC Date objects (converted by @IsoUtcDate decorator)
@@ -278,6 +360,37 @@ export class SessionsRepository extends BaseRepository<Session> {
       queryBuilder.andWhere('session.classId = :classId', {
         classId: dto.classId,
       });
+    }
+
+    if (dto.branchId) {
+      // Use denormalized field
+      queryBuilder.andWhere('session.branchId = :branchId', {
+        branchId: dto.branchId,
+      });
+    }
+
+    if (dto.teacherUserProfileId) {
+      // Filter by teacher user profile ID via class join
+      queryBuilder.andWhere(
+        'class.teacherUserProfileId = :teacherUserProfileId',
+        {
+          teacherUserProfileId: dto.teacherUserProfileId,
+        },
+      );
+    }
+
+    if (dto.studentUserProfileId) {
+      // Filter by student user profile ID via group_students join
+      // Only include active students (leftAt IS NULL)
+      queryBuilder
+        .leftJoin('group.groupStudents', 'groupStudents')
+        .andWhere(
+          'groupStudents.studentUserProfileId = :studentUserProfileId',
+          {
+            studentUserProfileId: dto.studentUserProfileId,
+          },
+        )
+        .andWhere('groupStudents.leftAt IS NULL');
     }
 
     if (dto.status !== undefined && dto.status !== null) {
@@ -313,6 +426,40 @@ export class SessionsRepository extends BaseRepository<Session> {
       .andWhere('session.startTime < :dateTo', { dateTo: dto.dateTo });
 
     return queryBuilder.getCount();
+  }
+
+  /**
+   * Paginate sessions for a center with filtering and search capabilities.
+   *
+   * @param paginateDto - Pagination and filter parameters
+   * @param actor - The user performing the action
+   * @returns Paginated list of sessions
+   */
+  async paginateSessions(
+    paginateDto: PaginateSessionsDto,
+    actor: ActorUser,
+  ): Promise<Pagination<Session>> {
+    const queryBuilder = await this.buildSessionQueryBuilder(
+      paginateDto,
+      actor,
+    );
+
+    return this.paginate(
+      paginateDto,
+      {
+        searchableColumns: ['title', 'group.name', 'class.name'],
+        sortableColumns: [
+          'startTime',
+          'endTime',
+          'createdAt',
+          'updatedAt',
+          'status',
+        ],
+        defaultSortBy: ['startTime', 'DESC'],
+      },
+      '/sessions',
+      queryBuilder,
+    );
   }
 
   async findByGroupId(
@@ -567,5 +714,251 @@ export class SessionsRepository extends BaseRepository<Session> {
         startTime,
       },
     });
+  }
+
+  /**
+   * Find existing session within a time window
+   * Optimized check to see if a session already exists before searching for schedule items
+   * This short-circuits expensive schedule item queries when a session already exists
+   *
+   * @param groupId - Group ID
+   * @param now - Current UTC time
+   * @param windowMinutes - Time window in minutes (default: 30 minutes before, 5 minutes after)
+   * @returns Session if found within window, null otherwise
+   */
+  async findExistingSessionInTimeWindow(
+    groupId: string,
+    now: Date,
+    windowMinutes: number = 30,
+  ): Promise<Session | null> {
+    return this.getRepository()
+      .createQueryBuilder('session')
+      .where('session.groupId = :groupId', { groupId })
+      .andWhere('session.startTime >= :windowStart', {
+        windowStart: new Date(now.getTime() - windowMinutes * 60 * 1000),
+      })
+      .andWhere('session.startTime <= :windowEnd', {
+        windowEnd: new Date(now.getTime() + 5 * 60 * 1000), // 5 minute buffer for just-started sessions
+      })
+      .andWhere('session.status != :canceledStatus', {
+        canceledStatus: SessionStatus.CANCELED,
+      })
+      .orderBy('session.startTime', 'ASC')
+      .limit(1)
+      .getOne();
+  }
+
+  /**
+   * Find matching schedule item for startSession operation
+   * Optimized database query that directly matches schedule items to current time
+   * and checks if session already exists - all in one query
+   *
+   * Edge Cases Handled:
+   * - DST Transitions: Uses explicit ::date cast to ensure correct day identification in center timezone
+   * - Overlapping Schedule Items: ORDER BY ensures earliest matching session is selected
+   * - Midnight Boundary Shift: DOW extraction is done AFTER converting to center timezone
+   * - Concurrency: Unique constraint on (groupId, startTime) prevents duplicate sessions
+   *
+   * @param groupId - Group ID
+   * @param now - Current UTC time
+   * @returns Matching schedule item with calculated times and existing session info, or null
+   */
+  async findMatchingScheduleItemForStartSession(
+    groupId: string,
+    now: Date,
+  ): Promise<{
+    scheduleItemId: string;
+    calculatedStartTime: Date;
+    calculatedEndTime: Date;
+    existingSessionId?: string;
+    existingSessionStatus?: SessionStatus;
+  } | null> {
+    const manager = this.getRepository().manager;
+    const result = (await manager.query(
+      `
+      -- CTE: Calculate session times once, reference everywhere
+      -- This eliminates code duplication and prevents copy-paste errors
+      WITH schedule_calculations AS (
+        SELECT 
+          si.id,
+          si."groupId",
+          si.day,
+          -- DST-safe time calculation:
+          -- 1. Convert UTC timestamp to center timezone
+          -- 2. Extract date (day) in center timezone (explicit ::date cast handles DST)
+          -- 3. Add time component (startTime is stored as "HH:mm", concatenate ':00' for seconds)
+          -- 4. Convert back to UTC
+          (
+            (DATE_TRUNC('day', $1 AT TIME ZONE center.timezone)::date + 
+             (si."startTime" || ':00')::TIME) AT TIME ZONE center.timezone
+          ) AS calculated_start_time,
+          -- Calculate end time: start time + class duration
+          (
+            (DATE_TRUNC('day', $1 AT TIME ZONE center.timezone)::date + 
+             (si."startTime" || ':00')::TIME + 
+             (c.duration || ' minutes')::INTERVAL) AT TIME ZONE center.timezone
+          ) AS calculated_end_time
+        FROM schedule_items si
+        INNER JOIN groups g ON si."groupId" = g.id
+        INNER JOIN classes c ON si."classId" = c.id
+        INNER JOIN centers center ON c."centerId" = center.id
+        WHERE si."groupId" = $2
+          -- Midnight boundary shift protection: Extract DOW AFTER converting to center timezone
+          AND EXTRACT(DOW FROM $1 AT TIME ZONE center.timezone) = (
+            CASE si.day
+              WHEN 'Mon' THEN 1
+              WHEN 'Tue' THEN 2
+              WHEN 'Wed' THEN 3
+              WHEN 'Thu' THEN 4
+              WHEN 'Fri' THEN 5
+              WHEN 'Sat' THEN 6
+              WHEN 'Sun' THEN 0
+            END
+          )
+          -- Class must be active and within date range
+          AND c."startDate" <= $1
+          AND (c."endDate" IS NULL OR c."endDate" >= $1)
+      )
+      SELECT 
+        sc.id as "scheduleItemId",
+        sc.calculated_start_time AS "calculatedStartTime",
+        sc.calculated_end_time AS "calculatedEndTime",
+        s.id as "existingSessionId",
+        s.status as "existingSessionStatus"
+      FROM schedule_calculations sc
+      -- Check if session already exists (concurrency protection via unique constraint)
+      LEFT JOIN sessions s ON s."groupId" = sc."groupId" 
+        AND s."startTime" = sc.calculated_start_time
+      WHERE $1 >= (sc.calculated_start_time - INTERVAL '30 minutes')
+        -- Overlapping schedule items: ORDER BY ensures earliest matching session is selected
+      ORDER BY sc.calculated_start_time ASC
+      LIMIT 1
+      `,
+      [now, groupId],
+    )) as Array<{
+      scheduleItemId: string;
+      calculatedStartTime: string | Date;
+      calculatedEndTime: string | Date;
+      existingSessionId?: string | null;
+      existingSessionStatus?: SessionStatus | null;
+    }>;
+
+    if (!result || result.length === 0) {
+      return null;
+    }
+
+    const row = result[0];
+    return {
+      scheduleItemId: row.scheduleItemId,
+      calculatedStartTime: new Date(row.calculatedStartTime),
+      calculatedEndTime: new Date(row.calculatedEndTime),
+      existingSessionId: row.existingSessionId || undefined,
+      existingSessionStatus: row.existingSessionStatus || undefined,
+    };
+  }
+
+  /**
+   * Find matching schedule item for cancelSession operation
+   * Validates that scheduledStartTime matches a schedule item and checks if session exists
+   *
+   * Edge Cases Handled:
+   * - DST Transitions: Uses explicit ::date cast to ensure correct day identification in center timezone
+   * - Time Matching: Uses 1-second tolerance to account for millisecond normalization
+   * - Midnight Boundary Shift: DOW extraction is done AFTER converting to center timezone
+   * - Concurrency: Unique constraint on (groupId, startTime) prevents duplicate sessions
+   *
+   * @param groupId - Group ID
+   * @param scheduledStartTime - Scheduled start time (UTC Date)
+   * @returns Matching schedule item with calculated times and existing session info, or null
+   */
+  async findMatchingScheduleItemForCancelSession(
+    groupId: string,
+    scheduledStartTime: Date,
+  ): Promise<{
+    scheduleItemId: string;
+    calculatedStartTime: Date;
+    calculatedEndTime: Date;
+    existingSessionId?: string;
+    existingSessionStatus?: SessionStatus;
+  } | null> {
+    const manager = this.getRepository().manager;
+    const result = (await manager.query(
+      `
+      -- CTE: Calculate session times once, reference everywhere
+      -- This eliminates code duplication and prevents copy-paste errors
+      WITH schedule_calculations AS (
+        SELECT 
+          si.id,
+          si."groupId",
+          si.day,
+          -- DST-safe time calculation:
+          -- 1. Convert UTC timestamp to center timezone
+          -- 2. Extract date (day) in center timezone (explicit ::date cast handles DST)
+          -- 3. Add time component (startTime is stored as "HH:mm", concatenate ':00' for seconds)
+          -- 4. Convert back to UTC
+          (
+            (DATE_TRUNC('day', $1 AT TIME ZONE center.timezone)::date + 
+             (si."startTime" || ':00')::TIME) AT TIME ZONE center.timezone
+          ) AS calculated_start_time,
+          -- Calculate end time: start time + class duration
+          (
+            (DATE_TRUNC('day', $1 AT TIME ZONE center.timezone)::date + 
+             (si."startTime" || ':00')::TIME + 
+             (c.duration || ' minutes')::INTERVAL) AT TIME ZONE center.timezone
+          ) AS calculated_end_time
+        FROM schedule_items si
+        INNER JOIN groups g ON si."groupId" = g.id
+        INNER JOIN classes c ON si."classId" = c.id
+        INNER JOIN centers center ON c."centerId" = center.id
+        WHERE si."groupId" = $2
+          -- Midnight boundary shift protection: Extract DOW AFTER converting to center timezone
+          AND EXTRACT(DOW FROM $1 AT TIME ZONE center.timezone) = (
+            CASE si.day
+              WHEN 'Mon' THEN 1
+              WHEN 'Tue' THEN 2
+              WHEN 'Wed' THEN 3
+              WHEN 'Thu' THEN 4
+              WHEN 'Fri' THEN 5
+              WHEN 'Sat' THEN 6
+              WHEN 'Sun' THEN 0
+            END
+          )
+      )
+      SELECT 
+        sc.id as "scheduleItemId",
+        sc.calculated_start_time AS "calculatedStartTime",
+        sc.calculated_end_time AS "calculatedEndTime",
+        s.id as "existingSessionId",
+        s.status as "existingSessionStatus"
+      FROM schedule_calculations sc
+      -- Check if session already exists (concurrency protection via unique constraint)
+      LEFT JOIN sessions s ON s."groupId" = sc."groupId" 
+        AND s."startTime" = sc.calculated_start_time
+      WHERE 
+        -- Time matching with 1-second tolerance (accounts for millisecond normalization)
+        ABS(EXTRACT(EPOCH FROM (sc.calculated_start_time - $1))) < 1
+      LIMIT 1
+      `,
+      [scheduledStartTime, groupId],
+    )) as Array<{
+      scheduleItemId: string;
+      calculatedStartTime: string | Date;
+      calculatedEndTime: string | Date;
+      existingSessionId?: string | null;
+      existingSessionStatus?: SessionStatus | null;
+    }>;
+
+    if (!result || result.length === 0) {
+      return null;
+    }
+
+    const row = result[0];
+    return {
+      scheduleItemId: row.scheduleItemId,
+      calculatedStartTime: new Date(row.calculatedStartTime),
+      calculatedEndTime: new Date(row.calculatedEndTime),
+      existingSessionId: row.existingSessionId || undefined,
+      existingSessionStatus: row.existingSessionStatus || undefined,
+    };
   }
 }

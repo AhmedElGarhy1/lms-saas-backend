@@ -100,6 +100,18 @@ export class CalendarSessionItem {
     type: CalendarGroup,
   })
   group: CalendarGroup;
+
+  @ApiProperty({
+    description: 'Actual start time',
+    example: '2024-01-15T09:00:00Z',
+  })
+  actualStartTime?: Date;
+
+  @ApiProperty({
+    description: 'Actual finish time',
+    example: '2024-01-15T10:30:00Z',
+  })
+  actualFinishTime?: Date;
 }
 
 /**

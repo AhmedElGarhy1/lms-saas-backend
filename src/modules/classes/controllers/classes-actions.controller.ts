@@ -30,6 +30,12 @@ import { ClassExportedEvent } from '../events/class.events';
 @ApiTags('Classes Actions')
 @Controller('classes/actions')
 export class ClassesActionsController {
+  constructor(
+    private readonly classesService: ClassesService,
+    private readonly exportService: ExportService,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+  ) {}
+
   @Get('export')
   @ApiOperation({ summary: 'Export classes data' })
   @ApiResponse({
@@ -81,11 +87,6 @@ export class ClassesActionsController {
 
     return data;
   }
-  constructor(
-    private readonly classesService: ClassesService,
-    private readonly exportService: ExportService,
-    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-  ) {}
 
   @Post('bulk/delete')
   @ApiOperation({ summary: 'Bulk delete classes' })

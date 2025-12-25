@@ -38,7 +38,6 @@ export class CreateGroupDto {
     type: [ScheduleItemDto],
   })
   @IsArray()
-  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => ScheduleItemDto)
   scheduleItems: ScheduleItemDto[];

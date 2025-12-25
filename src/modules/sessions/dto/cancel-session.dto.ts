@@ -1,24 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
-import { BelongsToBranch } from '@/shared/common/decorators/belongs-to-branch.decorator';
-import { IsoUtcDate } from '@/shared/common/decorators/is-iso-datetime.decorator';
-import { Group } from '@/modules/classes/entities/group.entity';
+import { IsString, IsNotEmpty } from 'class-validator';
+import { IsSessionId } from '../decorators/is-session-id.decorator';
 
 export class CancelSessionDto {
   @ApiProperty({
-    description: 'Group ID',
-    example: 'uuid',
-  })
-  @IsUUID(4)
-  @BelongsToBranch(Group)
-  groupId: string;
-
-  @ApiProperty({
     description:
-      'Scheduled start time for the session (ISO 8601 format with timezone, e.g., 2024-01-15T18:00:00+02:00)',
-    example: '2024-01-15T18:00:00+02:00',
-    type: Date,
+      'Session ID - either a real session UUID or a virtual session ID (format: virtual|groupId|startTimeISO|scheduleItemId)',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    examples: [
+      '550e8400-e29b-41d4-a716-446655440000',
+      'virtual|550e8400-e29b-41d4-a716-446655440000|2025-01-15T09:00:00.000Z|schedule-item-uuid',
+    ],
   })
-  @IsoUtcDate()
-  scheduledStartTime: Date;
+  @IsString()
+  @IsNotEmpty()
+  @IsSessionId()
+  sessionId: string;
 }

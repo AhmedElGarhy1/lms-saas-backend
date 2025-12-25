@@ -15,6 +15,8 @@ import { Session } from '../entities/session.entity';
 import { CreateSessionDto } from '../dto/create-session.dto';
 import { UpdateSessionDto } from '../dto/update-session.dto';
 import { CalendarSessionsDto } from '../dto/calendar-sessions.dto';
+import { PaginateSessionsDto } from '../dto/paginate-sessions.dto';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { SessionStatus } from '../enums/session-status.enum';
 import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
 import { Transactional } from '@nestjs-cls/transactional';
@@ -23,14 +25,8 @@ import { TimezoneService } from '@/shared/common/services/timezone.service';
 import { DEFAULT_TIMEZONE } from '@/shared/common/constants/timezone.constants';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { ClassAccessService } from '@/modules/classes/services/class-access.service';
-import {
-  addMinutes,
-  addDays,
-  startOfDay,
-  subMinutes,
-  getDay,
-  isBefore,
-} from 'date-fns';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { addMinutes, addDays, startOfDay, getDay, isBefore } from 'date-fns';
 import { ScheduleItemsRepository } from '@/modules/classes/repositories/schedule-items.repository';
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
 import { DayOfWeek } from '@/modules/classes/enums/day-of-week.enum';
@@ -39,6 +35,11 @@ import {
   CalendarSessionItem,
 } from '../dto/calendar-sessions-response.dto';
 import { Group } from '@/modules/classes/entities/group.entity';
+import {
+  generateVirtualSessionId,
+  parseVirtualSessionId,
+  isVirtualSessionId,
+} from '../utils/virtual-session-id.util';
 
 /**
  * Virtual session interface for sessions calculated from schedule items
@@ -52,6 +53,8 @@ interface VirtualSession {
   endTime: Date; // UTC
   status: SessionStatus.SCHEDULED;
   isExtraSession: false;
+  actualStartTime?: Date;
+  actualFinishTime?: Date;
 }
 
 /**
@@ -69,8 +72,23 @@ export class SessionsService extends BaseService {
     private readonly branchAccessService: BranchAccessService,
     private readonly classAccessService: ClassAccessService,
     private readonly scheduleItemsRepository: ScheduleItemsRepository,
+    private readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super();
+  }
+
+  /**
+   * Paginate sessions for a center with filtering and search capabilities.
+   *
+   * @param paginateDto - Pagination and filter parameters
+   * @param actor - The user performing the action
+   * @returns Paginated list of sessions
+   */
+  async paginateSessions(
+    paginateDto: PaginateSessionsDto,
+    actor: ActorUser,
+  ): Promise<Pagination<Session>> {
+    return this.sessionsRepository.paginateSessions(paginateDto, actor);
   }
 
   /**
@@ -91,11 +109,28 @@ export class SessionsService extends BaseService {
       'class',
     ]);
 
-    // Validate class staff access (for STAFF users)
-    await this.classAccessService.validateClassAccess({
-      userProfileId: actor.userProfileId,
-      classId: group.classId,
-    });
+    // Check if user can bypass center internal access
+    // If bypass is true, skip branch and class access validation
+    const canBypassCenterInternalAccess =
+      await this.accessControlHelperService.bypassCenterInternalAccess(
+        actor.userProfileId,
+        actor.centerId!,
+      );
+
+    if (!canBypassCenterInternalAccess) {
+      // Validate branch access
+      await this.branchAccessService.validateBranchAccess({
+        userProfileId: actor.userProfileId,
+        centerId: actor.centerId!,
+        branchId: group.branchId,
+      });
+
+      // Validate class staff access (for STAFF users)
+      await this.classAccessService.validateClassAccess({
+        userProfileId: actor.userProfileId,
+        classId: group.classId,
+      });
+    }
 
     const teacherUserProfileId = group.class.teacherUserProfileId;
 
@@ -104,7 +139,6 @@ export class SessionsService extends BaseService {
 
     // Validate date is in the future (UTC comparison - mathematically identical to zoned comparison)
     const now = new Date();
-    console.log(startTime, now);
     if (isBefore(startTime, now)) {
       throw new BusinessLogicException(
         't.messages.sessionDateMustBeInFuture',
@@ -172,211 +206,246 @@ export class SessionsService extends BaseService {
   }
 
   /**
-   * Start a session (materialize virtual to real)
-   * Materializes a virtual slot into a real database record for attendance tracking
-   * Finds the scheduled session slot and validates 30-minute window
+   * Start a session (materialize virtual to real or update existing)
+   * Handles both real sessions (UUID) and virtual sessions (virtual ID)
    *
-   * @param groupId - Group ID
+   * For real sessions:
+   * - If SCHEDULED → update to CONDUCTING
+   * - If CONDUCTING/FINISHED → return as-is (idempotent)
+   * - If CANCELED → throw error
+   *
+   * For virtual sessions:
+   * - Check if real session already exists (race condition protection)
+   * - If exists → handle as real session
+   * - If not → find matching schedule item and create CONDUCTING session
+   *
+   * @param sessionId - Session ID (UUID or virtual ID)
    * @param actor - Actor performing the action
-   * @returns Created or existing session
-   * @throws BusinessLogicException if too early to start (>30 minutes before scheduled time)
+   * @returns Created or updated session
+   * @throws BusinessLogicException if session cannot be started
    */
   @Transactional()
-  async startSession(groupId: string, actor: ActorUser): Promise<Session> {
-    // 1. Get current UTC time
-    const now = new Date();
+  async startSession(sessionId: string, actor: ActorUser): Promise<Session> {
+    // 1. Resolve session from ID (handles security validation and race condition protection)
+    const resolved = await this.resolveSessionFromId(sessionId, actor);
 
-    // 2. Fetch Group with class and center to extract denormalized fields and schedule items
-    // Center relation is needed for timezone when generating virtual sessions
-    const group = await this.groupsRepository.findByIdOrThrow(groupId, [
-      'class',
-      'class.center', // Add Center relation for timezone
-    ]);
+    // 2. Handle real session
+    if (resolved.isReal && resolved.realSession) {
+      const session = resolved.realSession;
 
-    // 3. Access Validation
-    // DTO validation (@BelongsToBranch decorator) already ensures group belongs to actor's branch
-    // Validate actor has class staff access
-    await this.classAccessService.validateClassAccess({
-      userProfileId: actor.userProfileId,
-      classId: group.classId,
-    });
+      switch (session.status) {
+        case SessionStatus.SCHEDULED: {
+          // Update to CONDUCTING and capture actual start time
+          const actualStartTime = new Date();
+          await this.sessionsRepository.update(session.id, {
+            status: SessionStatus.CONDUCTING,
+            actualStartTime,
+          });
+          return await this.sessionsRepository.findOneOrThrow(session.id);
+        }
 
-    // 4. Get schedule items for this group
-    const scheduleItems = await this.scheduleItemsRepository.getMany(
-      { groupId },
-      actor,
-    );
+        case SessionStatus.CONDUCTING:
+        case SessionStatus.FINISHED:
+          // Already started/finished - return as-is (idempotent)
+          return session;
 
-    if (scheduleItems.length === 0) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        resource: 't.resources.session',
-      } as any);
-    }
+        case SessionStatus.CANCELED:
+          // Can't start a canceled session
+          throw new BusinessLogicException('t.messages.validationFailed', {
+            resource: 't.resources.session',
+          } as any);
 
-    // 5. Find the scheduled session slot that matches current time
-    // Calculate virtual sessions for today and next few days to find matching slot
-    const today = startOfDay(now);
-    const searchEndDate = addDays(today, 7); // Search up to 7 days ahead
-
-    const groupMap = new Map<string, Group>();
-    groupMap.set(group.id, group);
-
-    const virtualSessions = this.calculateVirtualSessions(
-      scheduleItems,
-      groupMap,
-      today,
-      searchEndDate,
-    );
-
-    // Find the scheduled session slot that we're trying to start
-    // Look for a session slot where current time is within 30 minutes before or anytime after
-    let scheduledStartTime: Date | null = null;
-    let matchingScheduleItemId: string | undefined = undefined;
-
-    for (const virtualSession of virtualSessions) {
-      const slotStartTime = virtualSession.startTime;
-      const thirtyMinutesBefore = subMinutes(slotStartTime, 30);
-
-      // Current time must be >= (scheduled time - 30 minutes)
-      // This means we can start 30 minutes early or anytime after scheduled time
-      if (now >= thirtyMinutesBefore) {
-        // Use the scheduled time, not current time
-        scheduledStartTime = slotStartTime;
-        matchingScheduleItemId = virtualSession.scheduleItemId;
-        break; // Use the first matching slot
+        default:
+          throw new BusinessLogicException('t.messages.validationFailed', {
+            resource: 't.resources.session',
+          } as any);
       }
     }
 
-    if (!scheduledStartTime) {
+    // 3. Handle virtual session (no real session exists)
+    // Get current UTC time for schedule item matching
+    const now = new Date();
+
+    // Fetch group for denormalized fields
+    const group = await this.groupsRepository.findByIdOrThrow(
+      resolved.groupId,
+      ['class'],
+    );
+
+    // Find matching schedule item using optimized database query
+    const match =
+      (await this.sessionsRepository.findMatchingScheduleItemForStartSession(
+        resolved.groupId,
+        now,
+      )) as {
+        scheduleItemId: string;
+        calculatedStartTime: Date;
+        calculatedEndTime: Date;
+        existingSessionId?: string;
+        existingSessionStatus?: SessionStatus;
+      } | null;
+
+    if (!match) {
       throw new BusinessLogicException('t.messages.validationFailed', {
         resource: 't.resources.session',
       } as any);
     }
 
-    // 6. Normalize scheduled start time (strip milliseconds for exact matching)
+    // Normalize calculated start time (strip milliseconds for exact matching)
     const normalizedTimestamp =
-      Math.floor(scheduledStartTime.getTime() / 1000) * 1000;
+      Math.floor(match.calculatedStartTime.getTime() / 1000) * 1000;
     const normalizedStartTime = new Date(normalizedTimestamp);
 
-    // 7. Duplicate Check: Query repository for existing session at this scheduled time
-    const existingSession =
-      await this.sessionsRepository.findByGroupIdAndStartTime(
-        groupId,
-        normalizedStartTime,
+    // Double-check if session exists (race condition protection)
+    // Even though we checked in resolveSessionFromId, another request might have created it
+    if (match.existingSessionId) {
+      // Another request created it - handle as real session
+      const existingSession = await this.sessionsRepository.findOneOrThrow(
+        match.existingSessionId,
       );
-
-    if (existingSession) {
-      // Idempotent operation - return existing session
-      return existingSession;
+      // Recursively handle (will update SCHEDULED to CONDUCTING or return as-is)
+      return this.startSession(existingSession.id, actor);
     }
 
-    // 8. Calculate endTime from scheduled startTime + class duration
-    const endTime = addMinutes(normalizedStartTime, group.class.duration);
-
-    // 9. Create Session with denormalized fields
+    // Create CONDUCTING session with actual start time
+    const actualStartTime = new Date();
     const session = await this.sessionsRepository.create({
-      groupId,
+      groupId: resolved.groupId,
       centerId: group.centerId,
       branchId: group.branchId,
       classId: group.classId,
-      scheduleItemId: matchingScheduleItemId,
+      scheduleItemId: match.scheduleItemId,
       startTime: normalizedStartTime,
-      endTime,
+      endTime: match.calculatedEndTime,
       status: SessionStatus.CONDUCTING,
-      isExtraSession: matchingScheduleItemId === undefined,
+      actualStartTime,
+      isExtraSession: false, // Always false since we matched a schedule item
     });
 
-    // 10. Emit Event
+    // Emit Event
     await this.typeSafeEventEmitter.emitAsync(
       SessionEvents.CREATED,
       new SessionCreatedEvent(session, actor, actor.centerId!),
     );
 
-    // 11. Return created session
+    // Return created session
     return session;
   }
 
   /**
    * Cancel a session (create tombstone or update existing)
-   * Creates a tombstone record for virtual slots or updates existing real sessions to CANCELLED
+   * Handles both real sessions (UUID) and virtual sessions (virtual ID)
    *
-   * @param groupId - Group ID
-   * @param scheduledStartTime - Scheduled start time (ISO 8601 string, will be parsed and normalized)
+   * For real sessions:
+   * - Update status to CANCELED
+   *
+   * For virtual sessions:
+   * - Check if real session already exists (race condition protection)
+   * - If exists → update to CANCELED
+   * - If not → find matching schedule item and create CANCELED tombstone
+   *
+   * @param sessionId - Session ID (UUID or virtual ID)
    * @param actor - Actor performing the action
    * @returns Updated or created cancelled session
    */
   @Transactional()
-  async cancelSession(
-    groupId: string,
-    scheduledStartTime: Date,
-    actor: ActorUser,
-  ): Promise<Session> {
-    // scheduledStartTime is already a UTC Date object (converted by @IsIsoDateTime decorator)
-    // Normalize milliseconds for exact matching (strip milliseconds)
-    const normalizedStartTime = new Date(
-      Math.floor(scheduledStartTime.getTime() / 1000) * 1000,
-    );
+  async cancelSession(sessionId: string, actor: ActorUser): Promise<Session> {
+    // 1. Resolve session from ID (handles security validation and race condition protection)
+    const resolved = await this.resolveSessionFromId(sessionId, actor);
 
-    // 1. Fetch Group with class to extract denormalized fields
-    const group = await this.groupsRepository.findByIdOrThrow(groupId, [
-      'class',
-    ]);
+    // 2. Handle real session
+    if (resolved.isReal && resolved.realSession) {
+      const session = resolved.realSession;
 
-    // 2. Access Validation
-    // DTO validation (@BelongsToBranch decorator) already ensures group belongs to actor's branch
-    // Validate actor has class staff access
-    await this.classAccessService.validateClassAccess({
-      userProfileId: actor.userProfileId,
-      classId: group.classId,
-    });
-
-    // 3. Check Existing Session
-    const existingSession =
-      await this.sessionsRepository.findByGroupIdAndStartTime(
-        groupId,
-        normalizedStartTime,
-      );
-
-    let session: Session;
-
-    if (existingSession) {
-      // 4a. Update existing session
-      await this.sessionsRepository.update(existingSession.id, {
+      // Update existing session to CANCELED
+      await this.sessionsRepository.update(session.id, {
         status: SessionStatus.CANCELED,
       });
-      // Fetch updated session
-      session = await this.sessionsRepository.findOneOrThrow(
-        existingSession.id,
+
+      const updatedSession = await this.sessionsRepository.findOneOrThrow(
+        session.id,
       );
-    } else {
-      // 4b. Create tombstone record (virtual slot)
-      const endTime = addMinutes(normalizedStartTime, group.class.duration);
 
-      // Try to find matching scheduleItemId (optional enhancement)
-      // Note: Schedule item matching is complex and would require calculating all occurrences
-      // For now, we'll leave it undefined - can be enhanced later
-      const scheduleItemId: string | undefined = undefined;
+      // Emit Event
+      await this.typeSafeEventEmitter.emitAsync(
+        SessionEvents.CANCELED,
+        new SessionCanceledEvent(updatedSession, actor, actor.centerId!),
+      );
 
-      session = await this.sessionsRepository.create({
-        groupId,
-        centerId: group.centerId,
-        branchId: group.branchId,
-        classId: group.classId,
-        scheduleItemId,
-        startTime: normalizedStartTime,
-        endTime,
-        status: SessionStatus.CANCELED,
-        isExtraSession: scheduleItemId === undefined,
-      });
+      return updatedSession;
     }
 
-    // 5. Emit Event
+    // 3. Handle virtual session (no real session exists)
+    // Normalize start time (strip milliseconds for exact matching)
+    const normalizedStartTime = resolved.startTime;
+
+    // Fetch group for denormalized fields
+    const group = await this.groupsRepository.findByIdOrThrow(
+      resolved.groupId,
+      ['class'],
+    );
+
+    // Find matching schedule item using optimized database query
+    // This validates that startTime matches a schedule item
+    const match =
+      (await this.sessionsRepository.findMatchingScheduleItemForCancelSession(
+        resolved.groupId,
+        normalizedStartTime,
+      )) as {
+        scheduleItemId: string;
+        calculatedStartTime: Date;
+        calculatedEndTime: Date;
+        existingSessionId?: string;
+        existingSessionStatus?: SessionStatus;
+      } | null;
+
+    if (!match) {
+      throw new BusinessLogicException('t.messages.validationFailed', {
+        resource: 't.resources.session',
+      } as any);
+    }
+
+    // Double-check if session exists (race condition protection)
+    // Even though we checked in resolveSessionFromId, another request might have created it
+    if (match.existingSessionId) {
+      // Another request created it - update to CANCELED
+      await this.sessionsRepository.update(match.existingSessionId, {
+        status: SessionStatus.CANCELED,
+      });
+
+      const updatedSession = await this.sessionsRepository.findOneOrThrow(
+        match.existingSessionId,
+      );
+
+      // Emit Event
+      await this.typeSafeEventEmitter.emitAsync(
+        SessionEvents.CANCELED,
+        new SessionCanceledEvent(updatedSession, actor, actor.centerId!),
+      );
+
+      return updatedSession;
+    }
+
+    // Create CANCELED tombstone record with validated scheduleItemId
+    const session = await this.sessionsRepository.create({
+      groupId: resolved.groupId,
+      centerId: group.centerId,
+      branchId: group.branchId,
+      classId: group.classId,
+      scheduleItemId: match.scheduleItemId,
+      startTime: normalizedStartTime,
+      endTime: match.calculatedEndTime,
+      status: SessionStatus.CANCELED,
+      isExtraSession: false, // Always false since we matched a schedule item
+    });
+
+    // Emit Event
     await this.typeSafeEventEmitter.emitAsync(
       SessionEvents.CANCELED,
       new SessionCanceledEvent(session, actor, actor.centerId!),
     );
 
-    // 6. Return updated or created session
+    // Return created tombstone
     return session;
   }
 
@@ -538,10 +607,14 @@ export class SessionsService extends BaseService {
       classId: group.classId,
     });
 
-    // Update status to FINISHED
+    // Update status to FINISHED and capture actual finish time
+    const actualFinishTime = new Date();
     const updatedSession = await this.sessionsRepository.updateThrow(
       sessionId,
-      { status: SessionStatus.FINISHED },
+      {
+        status: SessionStatus.FINISHED,
+        actualFinishTime,
+      },
     );
 
     // Emit UPDATED event
@@ -731,8 +804,14 @@ export class SessionsService extends BaseService {
         throw new Error(`Class not loaded for group ${session.groupId}`);
       }
 
-      // Generate ID for virtual sessions (deterministic based on groupId + startTime)
-      const sessionId = session.id;
+      // Generate ID: real UUID for actual sessions, virtual ID for virtual sessions
+      const sessionId = session.id
+        ? session.id // Real session - use actual UUID
+        : generateVirtualSessionId(
+            session.groupId,
+            session.startTime,
+            session.scheduleItemId,
+          );
 
       return {
         id: sessionId,
@@ -741,6 +820,8 @@ export class SessionsService extends BaseService {
         endTime: session.endTime.toISOString(),
         status: session.status,
         groupId: session.groupId,
+        actualStartTime: session.actualStartTime,
+        actualFinishTime: session.actualFinishTime,
         isExtraSession: session.isExtraSession,
         group: {
           id: group.id,
@@ -767,6 +848,150 @@ export class SessionsService extends BaseService {
         currentPage: 1,
       },
     };
+  }
+
+  /**
+   * Resolve session information from ID (real or virtual)
+   * Handles security validation and race condition protection
+   *
+   * @param sessionId - Session ID (UUID or virtual ID)
+   * @param actor - Actor performing the action
+   * @returns Resolved session information
+   */
+  private async resolveSessionFromId(
+    sessionId: string,
+    actor: ActorUser,
+  ): Promise<{
+    isReal: boolean;
+    realSession?: Session;
+    groupId: string;
+    startTime: Date;
+    scheduleItemId?: string;
+  }> {
+    // 1. Check if it's a real UUID or virtual ID
+    if (isVirtualSessionId(sessionId)) {
+      // 2. Parse virtual ID
+      const parsed = parseVirtualSessionId(sessionId);
+      if (!parsed) {
+        throw new BusinessLogicException('t.messages.validationFailed', {
+          resource: 't.resources.session',
+        } as any);
+      }
+
+      const { groupId, startTime, scheduleItemId } = parsed;
+
+      // 3. CRITICAL: Validate actor has access to groupId (security check)
+      const group = await this.groupsRepository.findByIdOrThrow(groupId, [
+        'class',
+      ]);
+
+      // Verify group belongs to actor's center
+      if (group.centerId !== actor.centerId) {
+        throw new BusinessLogicException('t.messages.validationFailed', {
+          resource: 't.resources.session',
+        } as any);
+      }
+
+      // Check if user can bypass center internal access (super admin, center owner, or admin with center access)
+      // If bypass is true, skip branch and class access validation
+      const canBypassCenterInternalAccess =
+        await this.accessControlHelperService.bypassCenterInternalAccess(
+          actor.userProfileId,
+          actor.centerId!,
+        );
+
+      if (!canBypassCenterInternalAccess) {
+        // Validate branch access
+        await this.branchAccessService.validateBranchAccess({
+          userProfileId: actor.userProfileId,
+          centerId: actor.centerId!,
+          branchId: group.branchId,
+        });
+
+        // Validate class staff access
+        await this.classAccessService.validateClassAccess({
+          userProfileId: actor.userProfileId,
+          classId: group.classId,
+        });
+      }
+
+      // 4. CRITICAL: Check if real session already exists (race condition protection)
+      const normalizedStartTime = new Date(
+        Math.floor(startTime.getTime() / 1000) * 1000,
+      );
+      const existingSession =
+        await this.sessionsRepository.findByGroupIdAndStartTime(
+          groupId,
+          normalizedStartTime,
+        );
+
+      if (existingSession) {
+        // Real session exists - return it
+        return {
+          isReal: true,
+          realSession: existingSession,
+          groupId: existingSession.groupId,
+          startTime: existingSession.startTime,
+          scheduleItemId: existingSession.scheduleItemId,
+        };
+      }
+
+      // No real session exists - return virtual session info
+      return {
+        isReal: false,
+        groupId,
+        startTime: normalizedStartTime,
+        scheduleItemId,
+      };
+    } else {
+      // Real UUID - load session from DB
+      const realSession =
+        await this.sessionsRepository.findOneOrThrow(sessionId);
+
+      // Validate actor has access (via groupId from session)
+      const group = await this.groupsRepository.findByIdOrThrow(
+        realSession.groupId,
+        ['class'],
+      );
+
+      // Verify group belongs to actor's center
+      if (group.centerId !== actor.centerId) {
+        throw new BusinessLogicException('t.messages.validationFailed', {
+          resource: 't.resources.session',
+        } as any);
+      }
+
+      // Check if user can bypass center internal access (super admin, center owner, or admin with center access)
+      // If bypass is true, skip branch and class access validation
+      const canBypassCenterInternalAccess =
+        await this.accessControlHelperService.bypassCenterInternalAccess(
+          actor.userProfileId,
+          actor.centerId!,
+        );
+
+      if (!canBypassCenterInternalAccess) {
+        // Validate branch access
+        await this.branchAccessService.validateBranchAccess({
+          userProfileId: actor.userProfileId,
+          centerId: actor.centerId!,
+          branchId: group.branchId,
+        });
+
+        // Validate class staff access
+        await this.classAccessService.validateClassAccess({
+          userProfileId: actor.userProfileId,
+          classId: group.classId,
+        });
+      }
+
+      return {
+        isReal: true,
+        realSession,
+        groupId: realSession.groupId,
+        startTime: realSession.startTime,
+        scheduleItemId: realSession.scheduleItemId,
+      };
+    }
   }
 
   /**
@@ -946,40 +1171,70 @@ export class SessionsService extends BaseService {
   }
 
   /**
-   * Get a single session
-   * @param sessionId - Session ID
+   * Get a single session (real or virtual)
+   * Handles both real sessions (UUID) and virtual sessions (virtual ID)
+   *
+   * @param sessionId - Session ID (UUID or virtual ID)
    * @param actor - Actor performing the action
+   * @returns Session entity (real) or constructed Session object (virtual)
    */
   async getSession(sessionId: string, actor: ActorUser): Promise<Session> {
-    const session = await this.sessionsRepository.findOneOrThrow(sessionId);
+    // 1. Resolve session from ID (handles security validation and race condition protection)
+    const resolved = await this.resolveSessionFromId(sessionId, actor);
 
-    // Fetch group with class to get branchId and classId
-    const group = await this.groupsRepository.findByIdOrThrow(session.groupId, [
-      'class',
-    ]);
-
-    // Validate center access (implicit via centerId check)
-    if (group.centerId !== actor.centerId) {
-      throw new BusinessLogicException('t.messages.withIdNotFound', {
-        resource: 't.resources.session',
-        identifier: 't.resources.identifier',
-        value: sessionId,
-      });
+    // 2. If real session exists, load it with all required relations
+    if (resolved.isReal && resolved.realSession) {
+      return await this.sessionsRepository.findSessionWithRelationsOrThrow(
+        resolved.realSession.id,
+      );
     }
 
-    // Validate branch access
-    await this.branchAccessService.validateBranchAccess({
-      userProfileId: actor.userProfileId,
-      centerId: actor.centerId,
+    // 3. Handle virtual session - construct Session object
+    if (!resolved.scheduleItemId) {
+      throw new BusinessLogicException('t.messages.validationFailed', {
+        resource: 't.resources.session',
+      } as any);
+    }
+
+    const group = await this.groupsRepository.findByIdOrThrow(
+      resolved.groupId,
+      ['class', 'class.teacher', 'class.teacher.user', 'branch'],
+    );
+
+    // Calculate endTime from startTime + class duration
+    const endTime = addMinutes(resolved.startTime, group.class.duration);
+
+    // Construct virtual Session object with all required relations
+    // Note: This is a virtual session, so some fields (id, createdAt, updatedAt, etc.) are placeholders
+    const virtualSession = {
+      id: sessionId, // Use virtual ID as identifier
+      groupId: resolved.groupId,
+      centerId: group.centerId,
       branchId: group.branchId,
-    });
-
-    // Validate class staff access (for STAFF users)
-    await this.classAccessService.validateClassAccess({
-      userProfileId: actor.userProfileId,
       classId: group.classId,
-    });
+      scheduleItemId: resolved.scheduleItemId,
+      title: undefined,
+      startTime: resolved.startTime,
+      endTime: endTime,
+      status: SessionStatus.SCHEDULED,
+      isExtraSession: false,
+      createdAt: resolved.startTime, // Use startTime as placeholder
+      updatedAt: resolved.startTime, // Use startTime as placeholder
+      createdBy: actor.userProfileId, // Use actor as placeholder
+      updatedBy: undefined,
+      // Attach relations to match the expected response structure
+      group: {
+        id: group.id,
+        name: group.name,
+      },
+      branch: group.branch,
+      class: {
+        id: group.class.id,
+        name: group.class.name,
+        teacher: group.class.teacher,
+      },
+    } as Session;
 
-    return session;
+    return virtualSession;
   }
 }

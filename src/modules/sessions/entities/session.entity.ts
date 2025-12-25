@@ -3,6 +3,10 @@ import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Group } from '@/modules/classes/entities/group.entity';
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
 import { SessionStatus } from '../enums/session-status.enum';
+import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
+import { Class } from '@/modules/classes/entities/class.entity';
+import { Center } from '@/modules/centers/entities/center.entity';
+import { Branch } from '@/modules/centers/entities/branch.entity';
 
 @Entity('sessions')
 @Index(['groupId'])
@@ -35,13 +39,17 @@ export class Session extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   title?: string;
 
-  
   @Column({ type: 'timestamptz' })
   startTime: Date;
 
-  
   @Column({ type: 'timestamptz' })
   endTime: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  actualStartTime?: Date; // Captured when session is actually started (status → CONDUCTING)
+
+  @Column({ type: 'timestamptz', nullable: true })
+  actualFinishTime?: Date; // Captured when session is actually finished (status → FINISHED)
 
   @Column({
     type: 'varchar',
@@ -54,11 +62,27 @@ export class Session extends BaseEntity {
   isExtraSession: boolean;
 
   // Relations
-  @ManyToOne(() => Group)
+  @ManyToOne(() => Group, (group) => group.sessions)
   @JoinColumn({ name: 'groupId' })
   group: Group;
 
-  @ManyToOne(() => ScheduleItem, { nullable: true })
+  @ManyToOne(() => Class, (classEntity) => classEntity.sessions)
+  @JoinColumn({ name: 'classId' })
+  class: Class;
+
+  @ManyToOne(() => UserProfile, (userProfile) => userProfile.sessionsAsTeacher)
+  @JoinColumn({ name: 'teacherUserProfileId' })
+  teacher: UserProfile;
+
+  @ManyToOne(() => Center, (center) => center.sessions)
+  @JoinColumn({ name: 'centerId' })
+  center: Center;
+
+  @ManyToOne(() => Branch, (branch) => branch.sessions)
+  @JoinColumn({ name: 'branchId' })
+  branch: Branch;
+
+  @ManyToOne(() => ScheduleItem, (scheduleItem) => scheduleItem.sessions)
   @JoinColumn({ name: 'scheduleItemId' })
-  scheduleItem?: ScheduleItem;
+  scheduleItem: ScheduleItem;
 }

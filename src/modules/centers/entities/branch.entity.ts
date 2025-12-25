@@ -5,7 +5,6 @@ import {
   JoinColumn,
   OneToMany,
   Index,
-  VirtualColumn,
   AfterLoad,
 } from 'typeorm';
 import { Center } from './center.entity';
@@ -14,6 +13,7 @@ import { Class } from '@/modules/classes/entities/class.entity';
 import { Group } from '@/modules/classes/entities/group.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
+import { Session } from '@/modules/sessions/entities/session.entity';
 
 @Entity('branches')
 @Index(['centerId'])
@@ -54,6 +54,9 @@ export class Branch extends SoftBaseEntity {
 
   @OneToMany(() => ScheduleItem, (scheduleItem) => scheduleItem.branch)
   scheduleItems: ScheduleItem[];
+
+  @OneToMany(() => Session, (session) => session.branch)
+  sessions: Session[];
 
   // virtual fields
   name: string;

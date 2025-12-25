@@ -14,6 +14,7 @@ import { SessionsService } from '../services/sessions.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
 import { UpdateSessionDto } from '../dto/update-session.dto';
 import { CalendarSessionsDto } from '../dto/calendar-sessions.dto';
+import { PaginateSessionsDto } from '../dto/paginate-sessions.dto';
 import { SessionIdParamDto } from '../dto/session-id-param.dto';
 import { StartSessionDto } from '../dto/start-session.dto';
 import { CancelSessionDto } from '../dto/cancel-session.dto';
@@ -32,9 +33,9 @@ export class SessionsController {
 
   @Post('start')
   @ApiOperation({
-    summary: 'Start a session (materialize virtual to real)',
+    summary: 'Start a session (materialize virtual to real or update existing)',
     description:
-      'Materializes a virtual session slot into a real database record for attendance tracking. Can only be started within 30 minutes before or anytime after the scheduled session time.',
+      'Starts a session by either materializing a virtual session slot into a real database record, or updating an existing SCHEDULED session to CONDUCTING. Accepts either a real session UUID or a virtual session ID from the calendar.',
   })
   @ApiResponse({
     status: 200,
@@ -43,7 +44,7 @@ export class SessionsController {
   @ApiResponse({
     status: 400,
     description:
-      'Too early to start session (>30 minutes before scheduled time) or no matching scheduled session found',
+      'Invalid session ID, too early to start session, no matching scheduled session found, or cannot start canceled session',
   })
   @ApiResponse({
     status: 403,
@@ -57,7 +58,7 @@ export class SessionsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.sessionsService.startSession(
-      startSessionDto.groupId,
+      startSessionDto.sessionId,
       actor,
     );
     return ControllerResponse.success(result, {
@@ -70,11 +71,15 @@ export class SessionsController {
   @ApiOperation({
     summary: 'Cancel a session (create tombstone or update existing)',
     description:
-      'Cancels a session by creating a tombstone record for virtual slots or updating existing real sessions to CANCELLED status.',
+      'Cancels a session by creating a tombstone record for virtual slots or updating existing real sessions to CANCELLED status. Accepts either a real session UUID or a virtual session ID from the calendar.',
   })
   @ApiResponse({
     status: 200,
     description: 'Session cancelled successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid session ID or no matching scheduled session found',
   })
   @ApiResponse({
     status: 403,
@@ -88,8 +93,7 @@ export class SessionsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.sessionsService.cancelSession(
-      cancelSessionDto.groupId,
-      cancelSessionDto.scheduledStartTime,
+      cancelSessionDto.sessionId,
       actor,
     );
     return ControllerResponse.success(result, {
@@ -126,6 +130,28 @@ export class SessionsController {
     });
   }
 
+  @Get()
+  @ApiOperation({ summary: 'Get all sessions for a center with pagination' })
+  @ApiResponse({
+    status: 200,
+    description: 'Sessions retrieved successfully',
+  })
+  @Permissions(PERMISSIONS.SESSIONS.READ)
+  @SerializeOptions({ type: SessionResponseDto })
+  async paginateSessions(
+    @Query() paginateDto: PaginateSessionsDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    const result = await this.sessionsService.paginateSessions(
+      paginateDto,
+      actor,
+    );
+    return ControllerResponse.success(result, {
+      key: 't.messages.found',
+      args: { resource: 't.resources.session' },
+    });
+  }
+
   @Get('calendar')
   @ApiOperation({
     summary: 'Get sessions for calendar view',
@@ -156,8 +182,16 @@ export class SessionsController {
   }
 
   @Get(':sessionId')
-  @ApiOperation({ summary: 'Get a specific session' })
-  @ApiParam({ name: 'sessionId', description: 'Session ID' })
+  @ApiOperation({
+    summary: 'Get a specific session (real or virtual)',
+    description:
+      'Retrieves a session by ID. Accepts either a real session UUID or a virtual session ID from the calendar. Virtual sessions are constructed on-demand from schedule items.',
+  })
+  @ApiParam({
+    name: 'sessionId',
+    description:
+      'Session ID - either a real session UUID or a virtual session ID (format: virtual|groupId|startTimeISO|scheduleItemId)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Session retrieved successfully',
@@ -165,6 +199,10 @@ export class SessionsController {
   @ApiResponse({
     status: 404,
     description: 'Session not found',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid session ID format',
   })
   @Permissions(PERMISSIONS.SESSIONS.READ)
   @SerializeOptions({ type: SessionResponseDto })
