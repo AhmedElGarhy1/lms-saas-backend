@@ -134,6 +134,8 @@ export type I18nTranslations = {
             "count": string;
             "session": string;
             "sessions": string;
+            "attendance": string;
+            "attendances": string;
             "sessionType": string;
             "extraSession": string;
             "scheduledSession": string;
@@ -242,6 +244,7 @@ export type I18nTranslations = {
             "accessDenied": string;
             "alreadyExists": string;
             "alreadyDeleted": string;
+            "attendanceAlreadyRecorded": string;
             "expired": string;
             "fieldInvalid": string;
             "fieldRequired": string;
@@ -1319,6 +1322,17 @@ export type I18nTranslations = {
             };
             "system": {
                 "healthCheck": {
+                    "name": string;
+                };
+            };
+            "finance": {
+                "manageFinance": {
+                    "name": string;
+                };
+                "cashDeposit": {
+                    "name": string;
+                };
+                "viewCashbox": {
                     "name": string;
                 };
             };

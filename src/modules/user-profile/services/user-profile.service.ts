@@ -31,6 +31,7 @@ import { Staff } from '@/modules/staff/entities/staff.entity';
 import { Student } from '@/modules/students/entities/student.entity';
 import { Teacher } from '@/modules/teachers/entities/teacher.entity';
 import { Admin } from '@/modules/admin/entities/admin.entity';
+import { UserProfileCodeService } from './user-profile-code.service';
 
 @Injectable()
 export class UserProfileService extends BaseService {
@@ -46,6 +47,7 @@ export class UserProfileService extends BaseService {
     private readonly centerService: CentersService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly userProfilePermissionService: UserProfilePermissionService,
+    private readonly userProfileCodeService: UserProfileCodeService,
   ) {
     super();
   }
@@ -239,10 +241,12 @@ export class UserProfileService extends BaseService {
       });
     }
 
+    const code = await this.userProfileCodeService.generate(profileType);
     const userProfile = await this.userProfileRepository.create({
       userId,
       profileType,
       profileRefId,
+      code,
     });
 
     return userProfile;

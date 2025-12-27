@@ -35,19 +35,35 @@ export class ClassStatusUpdateJob {
    */
   @Cron(CronExpression.EVERY_HOUR)
   async updateClassStatuses(): Promise<void> {
-    this.logger.log('Starting automatic class status update');
+    const startMs = Date.now();
+    const jobId = `class-status-update:${new Date().toISOString()}`;
+
+    this.logger.log('Starting automatic class status update', { jobId });
 
     // Create RequestContext with system user ID so BaseEntity hooks can populate createdBy/updatedBy
     // RequestContext.run() creates a new async context that persists for all async operations including event listeners
-    await RequestContext.run(
-      {
-        userId: SYSTEM_USER_ID,
-        locale: Locale.EN,
-      },
-      async () => {
-        await this.executeStatusUpdates();
-      },
-    );
+    try {
+      await RequestContext.run(
+        {
+          userId: SYSTEM_USER_ID,
+          locale: Locale.EN,
+        },
+        async () => {
+          await this.executeStatusUpdates();
+        },
+      );
+      this.logger.log('Class status update job completed', {
+        jobId,
+        durationMs: Date.now() - startMs,
+      });
+    } catch (error) {
+      this.logger.error(
+        'Class status update job failed',
+        error instanceof Error ? error.stack : String(error),
+        { jobId, durationMs: Date.now() - startMs } as any,
+      );
+      throw error;
+    }
   }
 
   /**
@@ -121,7 +137,7 @@ export class ClassStatusUpdateJob {
             );
             await this.typeSafeEventEmitter.emitAsync(
               ClassEvents.STATUS_CHANGED,
-              event as any,
+              event,
             );
           }
 
@@ -150,7 +166,7 @@ export class ClassStatusUpdateJob {
             );
             await this.typeSafeEventEmitter.emitAsync(
               ClassEvents.STATUS_CHANGED,
-              event as any,
+              event,
             );
           }
 

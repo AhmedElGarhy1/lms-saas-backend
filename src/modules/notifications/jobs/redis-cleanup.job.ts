@@ -124,6 +124,9 @@ export class RedisCleanupJob {
    */
   @Cron(CronExpression.EVERY_HOUR)
   async cleanupStaleConnections(): Promise<void> {
+    const startMs = Date.now();
+    const jobId = `redis-cleanup-hourly:${new Date().toISOString()}`;
+
     let client;
     try {
       client = this.redisService.getClient();
@@ -280,7 +283,7 @@ export class RedisCleanupJob {
         stats.aggressiveCleanups > 0
       ) {
         this.logger.log(
-          `Redis cleanup job completed - keysScanned: ${stats.keysScanned}, keysCleaned: ${stats.keysCleaned}, emptyKeysRemoved: ${stats.emptyKeysRemoved}, staleKeysRemoved: ${stats.staleKeysRemoved}, totalConnections: ${stats.totalConnections}, warnings: ${stats.warnings}, staleRemoved: ${stats.staleRemoved}, validatedCount: ${stats.validatedCount}, activeCount: ${stats.activeCount}, aggressiveCleanups: ${stats.aggressiveCleanups}`,
+          `Redis cleanup job completed - jobId: ${jobId}, durationMs: ${Date.now() - startMs}, keysScanned: ${stats.keysScanned}, keysCleaned: ${stats.keysCleaned}, emptyKeysRemoved: ${stats.emptyKeysRemoved}, staleKeysRemoved: ${stats.staleKeysRemoved}, totalConnections: ${stats.totalConnections}, warnings: ${stats.warnings}, staleRemoved: ${stats.staleRemoved}, validatedCount: ${stats.validatedCount}, activeCount: ${stats.activeCount}, aggressiveCleanups: ${stats.aggressiveCleanups}`,
         );
       }
 
@@ -296,7 +299,7 @@ export class RedisCleanupJob {
       }
     } catch (error) {
       this.logger.error(
-        `Failed to cleanup stale Redis connections - pattern: ${pattern}, keysScanned: ${stats.keysScanned}`,
+        `Failed to cleanup stale Redis connections - jobId: ${jobId}, durationMs: ${Date.now() - startMs}, pattern: ${pattern}, keysScanned: ${stats.keysScanned}`,
         error instanceof Error ? error.stack : String(error),
       );
     }
@@ -409,6 +412,9 @@ export class RedisCleanupJob {
    */
   @Cron(CronExpression.EVERY_DAY_AT_1AM)
   async fullValidationCleanup(): Promise<void> {
+    const startMs = Date.now();
+    const jobId = `redis-cleanup-daily:${new Date().toISOString()}`;
+
     let client;
     try {
       client = this.redisService.getClient();
@@ -497,7 +503,7 @@ export class RedisCleanupJob {
             ? Math.round(stats.totalValidationTimeMs / stats.keysValidated)
             : 0;
         this.logger.log(
-          `Full validation cleanup completed - keysScanned: ${stats.keysScanned}, keysValidated: ${stats.keysValidated}, staleRemoved: ${stats.staleRemoved}, activeRemaining: ${stats.activeRemaining}, avgValidationTimeMs: ${avgValidationTime}`,
+          `Full validation cleanup completed - jobId: ${jobId}, durationMs: ${Date.now() - startMs}, keysScanned: ${stats.keysScanned}, keysValidated: ${stats.keysValidated}, staleRemoved: ${stats.staleRemoved}, activeRemaining: ${stats.activeRemaining}, avgValidationTimeMs: ${avgValidationTime}`,
         );
       }
 
@@ -513,7 +519,7 @@ export class RedisCleanupJob {
       }
     } catch (error) {
       this.logger.error(
-        `Failed to perform full validation cleanup - pattern: ${pattern}, keysScanned: ${stats.keysScanned}`,
+        `Failed to perform full validation cleanup - jobId: ${jobId}, durationMs: ${Date.now() - startMs}, pattern: ${pattern}, keysScanned: ${stats.keysScanned}`,
         error instanceof Error ? error.stack : String(error),
       );
     }

@@ -14,6 +14,10 @@ import { ProfileRole } from '@/modules/access-control/entities/profile-role.enti
 import { DefaultRoles } from '@/modules/access-control/constants/roles';
 import { SeederException } from '@/shared/common/exceptions/custom.exceptions';
 import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
+import { WalletService } from '@/modules/finance/services/wallet.service';
+import { WalletOwnerType } from '@/modules/finance/enums/wallet-owner-type.enum';
+import { RequestContext } from '@/shared/common/context/request.context';
+import { Locale } from '@/shared/common/enums/locale.enum';
 
 @Injectable()
 export class DatabaseSeeder {
@@ -56,6 +60,9 @@ export class DatabaseSeeder {
         [systemUser, superAdminUser],
         systemUser.id,
       );
+
+      // Create wallets for seeder accounts (since we use raw SQL, events aren't emitted)
+      await this.createSeederWallets([systemUser, superAdminUser]);
     } catch (error) {
       this.logger.error('Error during seeding', error);
       throw error;
@@ -289,7 +296,8 @@ export class DatabaseSeeder {
   private async createUserProfilesAndStaff(users: User[]): Promise<void> {
     this.logger.log('Creating user profiles and staff records...');
 
-    for (const user of users) {
+    for (let index = 0; index < users.length; index++) {
+      const user = users[index];
       // Create both admin and user profile in a single transaction
       await this.dataSource.transaction(async (transactionalEntityManager) => {
         // Generate UUIDs for both admin and profile
@@ -317,9 +325,16 @@ export class DatabaseSeeder {
 
         // Insert user profile linking user to admin
         await transactionalEntityManager.query(
-          `INSERT INTO user_profiles (id, "userId", "profileType", "profileRefId", "createdBy", "createdAt", "updatedAt") 
-           VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
-          [profileUuid, user.id, ProfileType.ADMIN, adminUuid, user.createdBy],
+          `INSERT INTO user_profiles (id, "userId", "profileType", "profileRefId", "createdBy", "createdAt", "updatedAt", "code") 
+           VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), $6)`,
+          [
+            profileUuid,
+            user.id,
+            ProfileType.ADMIN,
+            adminUuid,
+            user.createdBy,
+            `ADMIN-25-00000${index + 1}`,
+          ],
         );
 
         // Re-enable foreign key constraints
@@ -441,5 +456,60 @@ export class DatabaseSeeder {
         superAdmin.id,
       );
     }
+  }
+
+  /**
+   * Create wallets for seeder accounts
+   * Since seeder uses raw SQL, events aren't emitted, so we need to create wallets manually
+   * Uses ModuleRef to lazily get WalletService to avoid circular dependencies
+   */
+  private async createSeederWallets(users: User[]): Promise<void> {
+    this.logger.log('Creating wallets for seeder accounts...');
+
+    // Lazily get WalletService to avoid circular dependencies
+    const walletService = this.moduleRef.get(WalletService, { strict: false });
+
+    // Get system user ID for createdBy field
+    const systemUser = users.find((u) => u.phone === '01000000000');
+    const systemUserId = systemUser?.id || SYSTEM_USER_ID;
+
+    // Set up RequestContext with system user ID so BaseEntity hooks can set createdBy
+    await RequestContext.run(
+      {
+        userId: systemUserId,
+        locale: Locale.EN,
+      },
+      async () => {
+        for (const user of users) {
+          try {
+            // Find user profiles for this user
+            const userProfiles = await this.dataSource
+              .getRepository(UserProfile)
+              .find({
+                where: { userId: user.id },
+              });
+
+            // Create wallet for each user profile
+            for (const profile of userProfiles) {
+              await walletService.getWallet(
+                profile.id,
+                WalletOwnerType.USER_PROFILE,
+              );
+              this.logger.debug(
+                `Wallet created for seeder profile: ${profile.id} (${profile.profileType})`,
+              );
+            }
+          } catch (error) {
+            this.logger.error(
+              `Failed to create wallet for seeder user ${user.id}`,
+              error instanceof Error ? error.stack : String(error),
+            );
+            // Don't throw - wallet creation failure shouldn't break seeding
+          }
+        }
+      },
+    );
+
+    this.logger.log('Wallets created for seeder accounts');
   }
 }

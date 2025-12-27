@@ -13,12 +13,12 @@ import { SessionsController } from './controllers/sessions.controller';
 import { SessionsService } from './services/sessions.service';
 import { SessionsRepository } from './repositories/sessions.repository';
 import { SessionValidationService } from './services/session-validation.service';
-import { SessionCleanupJob } from './jobs/session-cleanup.job';
 import { SessionActivityListener } from './listeners/session-activity.listener';
 import { GroupEventsListener } from './listeners/group-events.listener';
 import { ClassEventsListener } from './listeners/class-events.listener';
 import { SessionPaymentListener } from './listeners/session-payment-listener';
 import { SessionAttendanceListener } from './listeners/session-attendance-listener';
+import { SessionsCleanupJob } from './jobs/sessions-cleanup.job';
 
 @Module({
   imports: [
@@ -39,7 +39,7 @@ import { SessionAttendanceListener } from './listeners/session-attendance-listen
     SessionsService,
     SessionValidationService,
     // Jobs
-    SessionCleanupJob,
+    SessionsCleanupJob,
     // Listeners
     SessionActivityListener,
     GroupEventsListener,

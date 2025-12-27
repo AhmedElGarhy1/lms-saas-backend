@@ -30,6 +30,7 @@ import { addMinutes, addDays, startOfDay, getDay, isBefore } from 'date-fns';
 import { ScheduleItemsRepository } from '@/modules/classes/repositories/schedule-items.repository';
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
 import { DayOfWeek } from '@/modules/classes/enums/day-of-week.enum';
+import { ClassStatus } from '@/modules/classes/enums/class-status.enum';
 import {
   CalendarSessionsResponseDto,
   CalendarSessionItem,
@@ -108,6 +109,11 @@ export class SessionsService extends BaseService {
     const group = await this.groupsRepository.findByIdOrThrow(groupId, [
       'class',
     ]);
+
+    // Sessions can only be created/materialized when the parent class is ACTIVE
+    if (group.class.status !== ClassStatus.ACTIVE) {
+      throw new BusinessLogicException('t.messages.validationFailed');
+    }
 
     // Check if user can bypass center internal access
     // If bypass is true, skip branch and class access validation
@@ -281,6 +287,11 @@ export class SessionsService extends BaseService {
       ['class'],
     );
 
+    // Virtual check-in materializes a real session: require ACTIVE class
+    if (group.class.status !== ClassStatus.ACTIVE) {
+      throw new BusinessLogicException('t.messages.validationFailed');
+    }
+
     // Find matching schedule item using optimized database query
     const match =
       (await this.sessionsRepository.findMatchingScheduleItemForStartSession(
@@ -452,6 +463,11 @@ export class SessionsService extends BaseService {
       resolved.groupId,
       ['class'],
     );
+
+    // Virtual cancel materializes a tombstone record: require ACTIVE class
+    if (group.class.status !== ClassStatus.ACTIVE) {
+      throw new BusinessLogicException('t.messages.validationFailed');
+    }
 
     // Find matching schedule item using optimized database query
     // This validates that startTime matches a schedule item
@@ -839,8 +855,13 @@ export class SessionsService extends BaseService {
     groups.forEach((group) => groupMap.set(group.id, group));
 
     // Calculate virtual sessions from schedule items
+    const activeScheduleItems = scheduleItems.filter((si) => {
+      const group = groupMap.get(si.groupId);
+      return group?.class?.status === ClassStatus.ACTIVE;
+    });
+
     const virtualSessions = this.calculateVirtualSessions(
-      scheduleItems,
+      activeScheduleItems,
       groupMap,
       startDate,
       endDate,

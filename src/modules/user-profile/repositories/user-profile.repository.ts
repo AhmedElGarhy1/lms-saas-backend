@@ -74,6 +74,15 @@ export class UserProfileRepository extends BaseRepository<UserProfile> {
     });
   }
 
+  async findActiveStudentProfileByCode(
+    code: string,
+  ): Promise<UserProfile | null> {
+    // Soft-deleted user_profiles are excluded by default (unless withDeleted is used)
+    return this.getRepository().findOne({
+      where: { code, profileType: ProfileType.STUDENT },
+    });
+  }
+
   /**
    * Gets a profile reference entity by ID and type
    * @param profileRefId The ID of the profile reference entity

@@ -22,9 +22,13 @@ import { Session } from '@/modules/sessions/entities/session.entity';
 @Index(['userId'])
 @Index(['profileType'])
 @Index(['userId', 'profileType'])
+@Index(['code'], { unique: true })
 export class UserProfile extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   userId: string;
+
+  @Column({ type: 'varchar', length: 20 })
+  code: string;
 
   @Column({ type: 'varchar', length: 20 })
   profileType: ProfileType;

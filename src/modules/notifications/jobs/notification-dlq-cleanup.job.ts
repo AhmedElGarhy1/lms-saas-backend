@@ -33,7 +33,13 @@ export class NotificationDlqCleanupJob {
    */
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async cleanupOldFailedJobs(): Promise<void> {
-    this.logger.log('Starting DLQ cleanup job');
+    const startMs = Date.now();
+    const jobId = `notification-dlq-cleanup:${new Date().toISOString()}`;
+
+    this.logger.log('Starting DLQ cleanup job', {
+      jobId,
+      retentionDays: this.retentionDays,
+    });
 
     // Create RequestContext with system user ID for consistency and activity logging
     // RequestContext.run() creates a new async context that persists for all async operations
@@ -43,8 +49,6 @@ export class NotificationDlqCleanupJob {
         locale: Locale.EN,
       },
       async () => {
-        const startTime = Date.now();
-
         try {
           // Calculate cutoff date
           const cutoffDate = new Date();
@@ -76,7 +80,7 @@ export class NotificationDlqCleanupJob {
           // Persist cleanup run timestamp
           await this.persistCleanupRun();
 
-          const duration = Date.now() - startTime;
+          const duration = Date.now() - startMs;
 
           this.logger.log('DLQ cleanup completed', {
             deletedCount,
@@ -96,7 +100,7 @@ export class NotificationDlqCleanupJob {
           }
         } catch (error) {
           this.logger.error(
-            `DLQ cleanup job failed - retentionDays: ${this.retentionDays}, duration: ${Date.now() - startTime}`,
+            `DLQ cleanup job failed - jobId: ${jobId}, retentionDays: ${this.retentionDays}, durationMs: ${Date.now() - startMs}`,
             error instanceof Error ? error.stack : String(error),
           );
           throw error; // Re-throw to ensure cron framework knows it failed

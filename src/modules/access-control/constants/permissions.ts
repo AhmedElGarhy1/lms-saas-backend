@@ -778,6 +778,28 @@ export const PERMISSIONS = {
       scope: PermissionScope.ADMIN,
     },
   },
+
+  // ===== FINANCE PERMISSIONS =====
+  FINANCE: {
+    MANAGE_FINANCE: {
+      action: 'finance:manage-finance',
+      name: 't.permissions.finance.manageFinance.name',
+      group: 'finance',
+      scope: PermissionScope.ADMIN,
+    },
+    CASH_DEPOSIT: {
+      action: 'finance:cash-deposit',
+      name: 't.permissions.finance.cashDeposit.name',
+      group: 'finance',
+      scope: PermissionScope.CENTER,
+    },
+    VIEW_CASHBOX: {
+      action: 'finance:view-cashbox',
+      name: 't.permissions.finance.viewCashbox.name',
+      group: 'finance',
+      scope: PermissionScope.CENTER,
+    },
+  },
 } as const;
 
 export type PermissionsObject = typeof PERMISSIONS;

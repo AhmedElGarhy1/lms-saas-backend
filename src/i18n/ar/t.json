@@ -105,6 +105,8 @@
     "count": "العدد",
     "session": "جلسة",
     "sessions": "جلسات",
+    "attendance": "الحضور",
+    "attendances": "الحضور",
     "sessionType": "نوع الجلسة",
     "extraSession": "جلسة إضافية",
     "scheduledSession": "جلسة مجدولة",
@@ -213,6 +215,7 @@
     "accessDenied": "ليس لديك صلاحية للوصول إلى {resource}",
     "alreadyExists": "{resource} مع {field} '{value}' موجود بالفعل",
     "alreadyDeleted": "{resource} محذوف بالفعل",
+    "attendanceAlreadyRecorded": "تم تسجيل الحضور بالفعل لهذا الطالب في هذه الجلسة",
     "expired": "{resource} منتهي الصلاحية",
     "fieldInvalid": "{field} غير صحيح",
     "fieldRequired": "{field} مطلوب",
@@ -1291,6 +1294,17 @@
     "system": {
       "healthCheck": {
         "name": "فحص صحة النظام"
+      }
+    },
+    "finance": {
+      "manageFinance": {
+        "name": "إدارة المالية"
+      },
+      "cashDeposit": {
+        "name": "إيداع نقدي"
+      },
+      "viewCashbox": {
+        "name": "عرض الصندوق النقدي"
       }
     }
   }

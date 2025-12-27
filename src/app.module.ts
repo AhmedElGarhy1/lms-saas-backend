@@ -16,6 +16,7 @@ import { LevelsModule } from '@/modules/levels/levels.module';
 import { SubjectsModule } from '@/modules/subjects/subjects.module';
 import { ClassesModule } from '@/modules/classes/classes.module';
 import { SessionsModule } from '@/modules/sessions/sessions.module';
+import { AttendanceModule } from '@/modules/attendance/attendance.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { SharedModule } from '@/shared/shared.module';
@@ -59,6 +60,7 @@ import { validateEnv } from './shared/config/env.validation';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RateLimitModule } from './modules/rate-limit/rate-limit.module';
 import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limit-config.interface';
+import { FinanceModule } from './modules/finance/finance.module';
 
 @Module({
   imports: [
@@ -114,11 +116,13 @@ import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limi
     SubjectsModule,
     ClassesModule,
     SessionsModule,
+    AttendanceModule,
     ActivityLogModule,
     SeederModule,
     LocaleModule,
     HealthModule,
     NotificationModule,
+    FinanceModule,
     RateLimitModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: () => ({

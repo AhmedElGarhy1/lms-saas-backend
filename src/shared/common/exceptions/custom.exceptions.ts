@@ -258,6 +258,20 @@ export class BusinessLogicException<
   }
 }
 
+export class InsufficientFundsException<
+  P extends I18nPath = I18nPath,
+> extends BaseTranslatableException<P> {
+  constructor(translationKey: P, translationArgs?: OptionalArgs<P>) {
+    super(
+      HttpStatus.BAD_REQUEST,
+      ErrorCode.INSUFFICIENT_FUNDS,
+      'Insufficient Funds',
+      translationKey,
+      translationArgs,
+    );
+  }
+}
+
 export class ScheduleConflictException<
   P extends I18nPath = I18nPath,
 > extends BaseTranslatableException<P> {

@@ -107,6 +107,7 @@ export type TranslationArgs = {
   't.messages.alreadyIs': { resource: string; state: string };
   't.messages.archived': { resource: string };
   't.messages.assigned': { resource: string };
+  't.messages.attendanceAlreadyRecorded': Record<string, never>;
   't.messages.bulkActionNotImplemented': { action: string; item: string };
   't.messages.bulkDeleteNotImplemented': { item: string };
   't.messages.bulkExportNotImplemented': { item: string };
@@ -289,6 +290,9 @@ export type TranslationArgs = {
   't.permissions.classes.readAll.name': Record<string, never>;
   't.permissions.classes.restore.name': Record<string, never>;
   't.permissions.classes.update.name': Record<string, never>;
+  't.permissions.finance.cashDeposit.name': Record<string, never>;
+  't.permissions.finance.manageFinance.name': Record<string, never>;
+  't.permissions.finance.viewCashbox.name': Record<string, never>;
   't.permissions.groups.create.name': Record<string, never>;
   't.permissions.groups.delete.name': Record<string, never>;
   't.permissions.groups.manageGroupStudentAccess.name': Record<string, never>;
@@ -396,6 +400,8 @@ export type TranslationArgs = {
   't.resources.amount': Record<string, never>;
   't.resources.arabic': Record<string, never>;
   't.resources.assignedUsers': Record<string, never>;
+  't.resources.attendance': Record<string, never>;
+  't.resources.attendances': Record<string, never>;
   't.resources.avatar': Record<string, never>;
   't.resources.basicInformation': Record<string, never>;
   't.resources.branch': Record<string, never>;
@@ -830,6 +836,7 @@ export type TranslationArgs = {
   't.validation.isDateString.message': { field: string };
   't.validation.isEnum.message': { field: string };
   't.validation.isInt.message': { field: string };
+  't.validation.isIso8601.message': { field: string };
   't.validation.isNumber.message': { field: string };
   't.validation.isString.message': { field: string };
   't.validation.isUuid.message': { item: string };

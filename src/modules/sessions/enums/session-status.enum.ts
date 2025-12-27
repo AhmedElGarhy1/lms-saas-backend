@@ -4,4 +4,5 @@ export enum SessionStatus {
   CONDUCTING = 'CONDUCTING',
   FINISHED = 'FINISHED',
   CANCELED = 'CANCELED',
+  MISSED = 'MISSED',
 }

@@ -397,7 +397,7 @@ export class UserService extends BaseService {
     userProfileId: string,
     actor: ActorUser,
     includeDeleted = false,
-  ) {
+  ): Promise<UserResponseDto | null> {
     return this.userRepository.findStudentUserByProfileId(
       userProfileId,
       actor,
@@ -416,7 +416,7 @@ export class UserService extends BaseService {
     userProfileId: string,
     actor: ActorUser,
     includeDeleted = false,
-  ) {
+  ): Promise<UserResponseDto | null> {
     return this.userRepository.findTeacherUserByProfileId(
       userProfileId,
       actor,

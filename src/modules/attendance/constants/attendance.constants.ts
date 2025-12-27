@@ -1,0 +1,1 @@
+export const ATTENDANCE_LATE_GRACE_MINUTES = 10;

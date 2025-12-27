@@ -113,6 +113,8 @@
     "count": "Count",
     "session": "Session",
     "sessions": "Sessions",
+    "attendance": "Attendance",
+    "attendances": "Attendances",
     "sessionType": "Session Type",
     "extraSession": "Extra Session",
     "scheduledSession": "Scheduled Session",
@@ -212,6 +214,7 @@
     "accessDenied": "You do not have permission to access {resource}",
     "alreadyExists": "{resource} with {field} '{value}' already exists",
     "alreadyDeleted": "{resource} is already deleted",
+    "attendanceAlreadyRecorded": "Attendance already recorded for this student in this session",
     "expired": "{resource} has expired",
     "fieldInvalid": "Invalid {field}",
     "fieldRequired": "{field} is required",
@@ -1290,6 +1293,17 @@
     "system": {
       "healthCheck": {
         "name": "System Health Check"
+      }
+    },
+    "finance": {
+      "manageFinance": {
+        "name": "Manage Finance"
+      },
+      "cashDeposit": {
+        "name": "Cash Deposit"
+      },
+      "viewCashbox": {
+        "name": "View Cashbox"
       }
     }
   }
