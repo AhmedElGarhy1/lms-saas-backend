@@ -46,6 +46,12 @@ export class ContextGuard implements CanActivate {
     }
 
     const request: IRequest = context.switchToHttp().getRequest();
+
+    // Only apply context validation to API routes
+    if (!request.url.startsWith('/api')) {
+      return true;
+    }
+
     // const centerId = (request.get('x-center-id') ??
     //   request.centerId ??
     //   (request.body as { centerId?: string })?.centerId ??

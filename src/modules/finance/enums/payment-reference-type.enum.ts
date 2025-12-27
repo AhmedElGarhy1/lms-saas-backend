@@ -1,0 +1,5 @@
+export enum PaymentReferenceType {
+  TRANSACTION = 'TRANSACTION',
+  CASH_TRANSACTION = 'CASH_TRANSACTION',
+}
+

@@ -63,6 +63,11 @@ export class CacheInterceptor implements NestInterceptor {
   ): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest<Request>();
 
+    // Only apply caching to API routes
+    if (!request.url.startsWith('/api')) {
+      return next.handle();
+    }
+
     // Only process GET requests
     if (request.method !== 'GET') {
       return next.handle();

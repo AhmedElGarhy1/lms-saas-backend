@@ -34,6 +34,12 @@ interface ErrorWithStatus {
 export class PerformanceInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest<RequestWithUser>();
+
+    // Only apply performance logging to API routes
+    if (!request.url.startsWith('/api')) {
+      return next.handle();
+    }
+
     const response = context.switchToHttp().getResponse<Response>();
     const startTime = Date.now();
 

@@ -57,6 +57,12 @@ export class ETagInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest<Request>();
+
+    // Only apply ETag processing to API routes
+    if (!request.url.startsWith('/api')) {
+      return next.handle();
+    }
+
     const response = context.switchToHttp().getResponse<Response>();
 
     // Skip ETag for non-GET requests (ETags are typically used for caching GET responses)

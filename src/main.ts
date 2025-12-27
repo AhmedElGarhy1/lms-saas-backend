@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { RequestMethod } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
@@ -71,8 +72,8 @@ async function bootstrap() {
         example: '550e8400-e29b-41d4-a716-446655440000',
       },
     })
-    .addServer('http://localhost:3000', 'Development server')
-    .addServer('https://api.lms-saas.com', 'Production server')
+    .addServer('http://localhost:3000/api/v1', 'Development server')
+    .addServer('https://api.lms-saas.com/api/v1', 'Production server')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -84,6 +85,18 @@ async function bootstrap() {
   // );
 
   // console.log('OpenAPI spec exported to', `${__dirname}/openapi.json`);
+
+  // Set global prefix for API versioning
+  app.setGlobalPrefix('/api/v1', {
+    // Exclude routes that don't need the prefix (like metrics, health checks, etc.)
+    exclude: [
+      { path: 'metrics', method: RequestMethod.GET },
+      { path: 'health', method: RequestMethod.GET },
+      { path: 'health/(.*)', method: RequestMethod.ALL }, // All health-related routes
+      { path: 'docs', method: RequestMethod.GET },
+      { path: 'docs/(.*)', method: RequestMethod.GET }, // Swagger docs paths
+    ],
+  });
 
   // Configure Redis adapter for Socket.IO (horizontal scaling)
   const redisService = app.get(RedisService);

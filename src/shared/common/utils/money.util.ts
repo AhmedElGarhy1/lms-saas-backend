@@ -118,6 +118,21 @@ export class Money {
   }
 
   /**
+   * Round to 2 decimal places (for currency safety)
+   */
+  round(): Money {
+    return new Money(this.value.toDecimalPlaces(2, Decimal.ROUND_HALF_UP));
+  }
+
+  /**
+   * Ensure currency precision (always round to 2 decimals)
+   * This should be called before any database operation
+   */
+  toCurrencyPrecision(): Money {
+    return this.round();
+  }
+
+  /**
    * Get the underlying Decimal value (for advanced operations)
    */
   toDecimal(): Decimal {
@@ -137,5 +152,8 @@ export class Money {
   static from(value: number | string | Decimal): Money {
     return new Money(value);
   }
-}
 
+  toJSON(): number {
+    return this.value.toNumber();
+  }
+}

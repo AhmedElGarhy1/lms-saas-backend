@@ -132,6 +132,7 @@
 [x] access control for sessions module
 [x] calender ui doesn't fit many!
 [x] calender doesn't have filters
+[ ] transfer within account
 
 ? what will happen if class deleted?
 ? what will happen if group deleted?

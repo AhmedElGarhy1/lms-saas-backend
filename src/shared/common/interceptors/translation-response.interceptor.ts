@@ -40,6 +40,13 @@ export class TranslationResponseInterceptor implements NestInterceptor {
    * @returns Observable with translated response
    */
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const request = context.switchToHttp().getRequest<Request>();
+
+    // Only apply translation to API routes
+    if (!request.url.startsWith('/api')) {
+      return next.handle();
+    }
+
     return next.handle().pipe(
       map((data: unknown) => {
         // Handle ApiResponse objects (created by ResponseInterceptor from ControllerResponse)

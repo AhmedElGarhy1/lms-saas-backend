@@ -1,0 +1,84 @@
+import { Injectable } from '@nestjs/common';
+import { CashTransactionRepository } from '../repositories/cash-transaction.repository';
+import { CashTransaction } from '../entities/cash-transaction.entity';
+import { CashTransactionDirection } from '../enums/cash-transaction-direction.enum';
+import { CashTransactionType } from '../enums/cash-transaction-type.enum';
+import { Money } from '@/shared/common/utils/money.util';
+import { BaseService } from '@/shared/common/services/base.service';
+import { Transactional } from '@nestjs-cls/transactional';
+import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+
+@Injectable()
+export class CashTransactionService extends BaseService {
+  constructor(
+    private readonly cashTransactionRepository: CashTransactionRepository,
+  ) {
+    super();
+  }
+
+  /**
+   * Create a cash transaction record
+   */
+  @Transactional()
+  async createCashTransaction(
+    branchId: string,
+    cashboxId: string,
+    amount: Money,
+    direction: CashTransactionDirection,
+    receivedByProfileId: string,
+    type: CashTransactionType,
+  ): Promise<CashTransaction> {
+    return this.cashTransactionRepository.create({
+      branchId,
+      cashboxId,
+      amount,
+      direction,
+      receivedByProfileId,
+      type,
+    });
+  }
+
+  /**
+   * Reverse a cash transaction (for cancellation)
+   */
+  @Transactional()
+  async reverseCashTransaction(
+    cashTransactionId: string,
+  ): Promise<CashTransaction> {
+    const cashTransaction =
+      await this.cashTransactionRepository.findOne(cashTransactionId);
+
+    if (!cashTransaction) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.cashTransaction',
+        identifier: 't.resources.identifier',
+        value: cashTransactionId,
+      });
+    }
+
+    // Create reverse transaction with opposite direction
+    const reverseDirection =
+      cashTransaction.direction === CashTransactionDirection.IN
+        ? CashTransactionDirection.OUT
+        : CashTransactionDirection.IN;
+
+    return this.createCashTransaction(
+      cashTransaction.branchId,
+      cashTransaction.cashboxId,
+      cashTransaction.amount,
+      reverseDirection,
+      cashTransaction.receivedByProfileId,
+      cashTransaction.type,
+    );
+  }
+
+  /**
+   * Check if cash transaction exists (for reference validation)
+   */
+  async cashTransactionExists(cashTransactionId: string): Promise<boolean> {
+    const cashTransaction =
+      await this.cashTransactionRepository.findOne(cashTransactionId);
+    return cashTransaction !== null;
+  }
+}
+

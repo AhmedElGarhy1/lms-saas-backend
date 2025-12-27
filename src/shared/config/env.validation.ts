@@ -91,6 +91,67 @@ export const env = cleanEnv(process.env, {
     desc: 'Phone verification expires in minutes (default: 10)',
     default: 10,
   }),
+
+  // Payment Gateway Configuration (Paymob)
+  PAYMENT_GATEWAY_TYPE: str({
+    desc: 'Payment gateway type',
+    choices: ['paymob'],
+    default: 'paymob',
+  }),
+  PAYMOB_API_KEY: str({
+    desc: 'Paymob API Key for authentication (from Settings → Account Info)',
+  }),
+  PAYMOB_PUBLIC_KEY: str({
+    desc: 'Paymob Public Key',
+  }),
+  PAYMOB_SECRET_KEY: str({
+    desc: 'Paymob Secret Key for API authentication',
+  }),
+  PAYMOB_HMAC_SECRET: str({
+    desc: 'Paymob HMAC Secret for webhook signature validation (different from API secret!)',
+  }),
+
+  // Paymob Integration IDs for different payment methods
+  PAYMOB_CARD_INTEGRATION_ID: str({
+    desc: 'Paymob Integration ID for Credit Cards',
+  }),
+  PAYMOB_WALLET_INTEGRATION_ID: str({
+    desc: 'Paymob Integration ID for Mobile Wallets (Vodafone Cash, etc.)',
+  }),
+  PAYMOB_PAYPAL_INTEGRATION_ID: str({
+    desc: 'Paymob Integration ID for PayPal (optional)',
+    default: '',
+  }),
+
+  // Iframe ID for hosted checkout
+  PAYMOB_IFRAME_ID: str({
+    desc: 'Paymob Iframe ID for hosted credit card checkout',
+    default: '',
+  }),
+
+  // Legacy field for backward compatibility
+  PAYMOB_INTEGRATION_ID: str({
+    desc: 'Legacy Paymob Integration ID (use specific IDs above)',
+    default: '',
+  }),
+  PAYMOB_NOTIFICATION_URL: str({
+    desc: 'Paymob webhook notification URL',
+    default: '',
+  }),
+  PAYMOB_REDIRECTION_URL: str({
+    desc: 'Paymob payment success redirection URL',
+    default: '',
+  }),
+  PAYMOB_TEST_MODE: bool({
+    desc: 'Enable Paymob test mode',
+    default: true,
+  }),
+
+  // Base URL for webhook URL construction
+  BASE_URL: str({
+    desc: 'Base URL for the application',
+    default: 'http://localhost:3000',
+  }),
 });
 
 /**

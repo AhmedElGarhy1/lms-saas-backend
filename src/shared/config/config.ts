@@ -11,6 +11,7 @@ export const Config = {
     frontendUrl: env.FRONTEND_URL,
     nodeEnv: env.NODE_ENV,
     isProd: env.isProd,
+    baseUrl: env.BASE_URL,
   },
 
   database: {
@@ -58,6 +59,31 @@ export const Config = {
   auth: {
     passwordResetExpiresHours: env.PASSWORD_RESET_EXPIRES_HOURS,
     phoneVerificationExpiresMinutes: env.PHONE_VERIFICATION_EXPIRES_MINUTES,
+  },
+
+  payment: {
+    gatewayType: env.PAYMENT_GATEWAY_TYPE,
+    paymob: {
+      apiKey: env.PAYMOB_API_KEY,
+      publicKey: env.PAYMOB_PUBLIC_KEY,
+      secretKey: env.PAYMOB_SECRET_KEY,
+      hmacSecret: env.PAYMOB_HMAC_SECRET,
+
+      // Integration IDs for different payment methods
+      cardIntegrationId: env.PAYMOB_CARD_INTEGRATION_ID,
+      walletIntegrationId: env.PAYMOB_WALLET_INTEGRATION_ID,
+      paypalIntegrationId: env.PAYMOB_PAYPAL_INTEGRATION_ID,
+
+      // Iframe ID for hosted checkout
+      iframeId: env.PAYMOB_IFRAME_ID,
+
+      // Legacy field for backward compatibility
+      integrationId: env.PAYMOB_INTEGRATION_ID,
+
+      notificationUrl: env.PAYMOB_NOTIFICATION_URL,
+      redirectionUrl: env.PAYMOB_REDIRECTION_URL,
+      testMode: env.PAYMOB_TEST_MODE,
+    },
   },
 
   notification: {

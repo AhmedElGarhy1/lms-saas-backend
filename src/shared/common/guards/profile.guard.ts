@@ -40,6 +40,11 @@ export class ProfileGuard implements CanActivate {
 
     const request: IRequest = context.switchToHttp().getRequest();
 
+    // Only apply profile validation to API routes
+    if (!request.url.startsWith('/api')) {
+      return true;
+    }
+
     const userProfileId = (request.get('x-user-profile-id') ??
       request.userProfileId ??
       (request.body as { userProfileId?: string })?.userProfileId ??

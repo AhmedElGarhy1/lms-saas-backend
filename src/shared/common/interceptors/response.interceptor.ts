@@ -17,6 +17,12 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest<Request>();
+
+    // Only apply response transformation to API routes
+    if (!request.url.startsWith('/api')) {
+      return next.handle();
+    }
+
     const startTime = Date.now();
 
     return next.handle().pipe(

@@ -25,46 +25,51 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     if (isPublic) {
       return true;
     }
+    const request = context.switchToHttp().getRequest<Request>();
+    // Only apply JWT validation to API routes
+    if (!request.url.startsWith('/api')) {
+      return true;
+    }
     return super.canActivate(context);
   }
 
-  handleRequest(
-    err: any,
-    user: any,
-    info: any,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _context: ExecutionContext,
-  ): any {
-    if (err || !user) {
-      // Log more details for debugging
-      if (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        const errorStack = err instanceof Error ? err.stack : undefined;
-        this.logger.warn(
-          `JWT authentication failed: ${errorMessage}`,
-          errorStack,
-        );
-      }
-      if (info) {
-        this.logger.warn(`JWT info: ${JSON.stringify(info)}`);
-      }
+  // handleRequest(
+  //   err: any,
+  //   user: any,
+  //   info: any,
+  //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  //   _context: ExecutionContext,
+  // ): any {
+  //   if (err || !user) {
+  //     // Log more details for debugging
+  //     if (err) {
+  //       const errorMessage = err instanceof Error ? err.message : String(err);
+  //       const errorStack = err instanceof Error ? err.stack : undefined;
+  //       this.logger.warn(
+  //         `JWT authentication failed: ${errorMessage}`,
+  //         errorStack,
+  //       );
+  //     }
+  //     if (info) {
+  //       this.logger.warn(`JWT info: ${JSON.stringify(info)}`);
+  //     }
 
-      // If err is already an HttpException (e.g., BusinessLogicException from phone verification),
-      // preserve it so the actual error message is returned to the client
-      if (err instanceof HttpException) {
-        throw err;
-      }
+  //     // If err is already an HttpException (e.g., BusinessLogicException from phone verification),
+  //     // preserve it so the actual error message is returned to the client
+  //     if (err instanceof HttpException) {
+  //       throw err;
+  //     }
 
-      // For other errors (token expired, invalid signature, etc.), store translation key
-      // Translation happens in TranslationResponseInterceptor
-      throw new UnauthorizedException({
-        message: {
-          key: 't.messages.fieldInvalidOrExpired',
-          args: { field: 'token' },
-        },
-      });
-    }
+  //     // For other errors (token expired, invalid signature, etc.), store translation key
+  //     // Translation happens in TranslationResponseInterceptor
+  //     throw new UnauthorizedException({
+  //       message: {
+  //         key: 't.messages.fieldInvalidOrExpired',
+  //         args: { field: 'token' },
+  //       },
+  //     });
+  //   }
 
-    return user;
-  }
+  //   return user;
+  // }
 }
