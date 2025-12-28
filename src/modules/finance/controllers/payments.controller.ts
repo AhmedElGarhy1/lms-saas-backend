@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -8,8 +8,6 @@ import {
 } from '@nestjs/swagger';
 import { Transactional } from '@nestjs-cls/transactional';
 import { PaymentService } from '../services/payment.service';
-import { PaymentStateMachineService } from '../services/payment-state-machine.service';
-import { UpdatePaymentDto } from '../dto/update-payment.dto';
 import { PaginatePaymentDto } from '../dto/paginate-payment.dto';
 import { InitiatePaymentDto } from '../dto/initiate-payment.dto';
 import { RefundPaymentDto } from '../dto/refund-payment.dto';
@@ -36,7 +34,6 @@ import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 export class PaymentsController {
   constructor(
     private readonly paymentService: PaymentService,
-    private readonly paymentStateMachineService: PaymentStateMachineService,
     private readonly paymentGatewayService: PaymentGatewayService,
     private readonly accessControlHelperService: AccessControlHelperService,
   ) {}
@@ -74,48 +71,6 @@ export class PaymentsController {
     };
   }
 
-  @Patch(':id/status')
-  @Permissions(PERMISSIONS.FINANCE.MANAGE_FINANCE)
-  @Transactional()
-  @ApiOperation({
-    summary: 'Update payment status',
-    description: 'Update payment status (admin only)',
-  })
-  @ApiParam({ name: 'id', description: 'Payment ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Payment status updated successfully',
-  })
-  async updatePaymentStatus(
-    @Param('id') id: string,
-    @Body() dto: UpdatePaymentDto,
-  ): Promise<ControllerResponse<Payment>> {
-    if (!dto.status) {
-      throw new Error('Status is required');
-    }
-
-    const { userProfileId } = RequestContext.get();
-    if (!userProfileId) {
-      throw new Error('User profile ID not found in context');
-    }
-
-    // Use the state machine to validate and execute the transition
-    const payment =
-      await this.paymentStateMachineService.validateAndExecuteTransition(
-        id,
-        dto.status,
-        userProfileId,
-        dto.reason, // Optional reason for admin overrides
-      );
-
-    return {
-      data: payment,
-      message: {
-        key: 't.messages.updated',
-        args: { resource: 't.resources.item' },
-      },
-    };
-  }
 
   @Post('initiate')
   @Permissions(PERMISSIONS.FINANCE.MANAGE_FINANCE)

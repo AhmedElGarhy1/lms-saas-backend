@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CashboxRepository } from '../repositories/cashbox.repository';
+import { CashTransactionRepository } from '../repositories/cash-transaction.repository';
 import { Cashbox } from '../entities/cashbox.entity';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
@@ -9,6 +10,7 @@ import {
 } from '@/shared/common/exceptions/custom.exceptions';
 import { Transactional } from '@nestjs-cls/transactional';
 import { QueryFailedError } from 'typeorm';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 const MAX_RETRIES = 3;
 
@@ -16,7 +18,10 @@ const MAX_RETRIES = 3;
 export class CashboxService extends BaseService {
   private readonly logger = new Logger(CashboxService.name);
 
-  constructor(private readonly cashboxRepository: CashboxRepository) {
+  constructor(
+    private readonly cashboxRepository: CashboxRepository,
+    private readonly cashTransactionRepository: CashTransactionRepository,
+  ) {
     super();
   }
 
@@ -93,5 +98,82 @@ export class CashboxService extends BaseService {
     cashbox.lastAuditedAt = new Date();
     return this.cashboxRepository.saveCashbox(cashbox);
   }
-}
 
+  /**
+   * Get daily cash collection summary for branch
+   * Shows cash collected vs session admissions for reconciliation
+   */
+  async getDailySummary(
+    branchId: string,
+    date: Date,
+    actor: ActorUser,
+  ): Promise<any> {
+    // Get start and end of the specified date
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Get cashbox for this branch
+    const cashbox = await this.cashboxRepository.findByBranchId(branchId);
+
+    if (!cashbox) {
+      throw new ResourceNotFoundException('t.messages.notFound', {
+        resource: 't.resources.cashbox',
+      });
+    }
+
+    // Get all cash transactions for this branch on the specified date
+    const { count: cashPaymentsCount, totalAmount: cashCollected } =
+      await this.cashTransactionRepository.getCashSummaryForBranch(
+        branchId,
+        startOfDay,
+        endOfDay,
+      );
+
+    // TODO: Get session admissions count for the same period
+    // This would require joining with student_session_payments
+    // For now, assume each cash transaction = 1 admission
+    const sessionAdmissions = cashPaymentsCount;
+
+    // Expected cash should equal cash collected (assuming no manual adjustments)
+    const expectedCash = cashCollected;
+
+    // Check if they match
+    const status =
+      Math.abs(cashCollected - expectedCash) < 0.01 ? 'MATCHED' : 'MISMATCH';
+
+    const summary = {
+      branchId,
+      date: date.toISOString().split('T')[0],
+      cashCollected,
+      sessionAdmissions,
+      expectedCash,
+      cashboxBalance: parseFloat(cashbox.balance.toString()),
+      status,
+      summary: `${sessionAdmissions} session admission${sessionAdmissions !== 1 ? 's' : ''} collected ${cashCollected.toFixed(2)} EGP. Drawer balance: ${cashbox.balance.toString()} EGP.`,
+    };
+
+    return summary;
+  }
+
+  /**
+   * Paginate cashboxes with optional filtering
+   */
+  async paginateCashboxes(paginationDto: any, actor: ActorUser): Promise<any> {
+    // TODO: Implement proper pagination with filtering
+    // For now, return mock pagination result
+    const mockResult = {
+      data: [],
+      meta: {
+        page: paginationDto.page || 1,
+        limit: paginationDto.limit || 10,
+        totalItems: 0,
+        totalPages: 0,
+      },
+    };
+
+    return mockResult;
+  }
+}

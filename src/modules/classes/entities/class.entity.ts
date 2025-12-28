@@ -18,6 +18,7 @@ import { TeacherPaymentStrategy } from './teacher-payment-strategy.entity';
 import { ClassStaff } from './class-staff.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 import { ClassStatus } from '../enums/class-status.enum';
+import { AbsenteePolicy } from '../enums/absentee-policy.enum';
 import { ScheduleItem } from './schedule-item.entity';
 import { Session } from '@/modules/sessions/entities/session.entity';
 
@@ -40,6 +41,14 @@ export class Class extends SoftBaseEntity {
     default: ClassStatus.PENDING_TEACHER_APPROVAL,
   })
   status: ClassStatus;
+
+  @Column({
+    type: 'varchar',
+    length: 20,
+    default: AbsenteePolicy.FLEXIBLE,
+    comment: 'Payment policy for absent students: STRICT (auto-pay), FLEXIBLE (pay-on-attend), MANUAL (admin decides)',
+  })
+  absenteePolicy: AbsenteePolicy;
 
   @Column({ type: 'uuid' })
   levelId: string;

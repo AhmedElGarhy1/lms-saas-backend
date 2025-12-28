@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { SessionsRepository } from '../repositories/sessions.repository';
 import { SessionValidationService } from './session-validation.service';
 import { BaseService } from '@/shared/common/services/base.service';
@@ -10,6 +10,8 @@ import {
   SessionUpdatedEvent,
   SessionDeletedEvent,
   SessionCanceledEvent,
+  SessionCheckedInEvent,
+  SessionFinishedEvent,
 } from '../events/session.events';
 import { Session } from '../entities/session.entity';
 import { CreateSessionDto } from '../dto/create-session.dto';
@@ -31,6 +33,7 @@ import { ScheduleItemsRepository } from '@/modules/classes/repositories/schedule
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
 import { DayOfWeek } from '@/modules/classes/enums/day-of-week.enum';
 import { ClassStatus } from '@/modules/classes/enums/class-status.enum';
+import { AbsenteePolicy } from '@/modules/classes/enums/absentee-policy.enum';
 import {
   CalendarSessionsResponseDto,
   CalendarSessionItem,
@@ -65,6 +68,7 @@ type MergedSession = Session | VirtualSession;
 
 @Injectable()
 export class SessionsService extends BaseService {
+  private readonly logger = new Logger(SessionsService.name);
   constructor(
     private readonly sessionsRepository: SessionsRepository,
     private readonly sessionValidationService: SessionValidationService,
@@ -253,6 +257,12 @@ export class SessionsService extends BaseService {
           await this.typeSafeEventEmitter.emitAsync(
             SessionEvents.UPDATED,
             new SessionUpdatedEvent(updatedSession, actor, actor.centerId!),
+          );
+
+          // Emit CHECKED_IN event to trigger automatic payment finalization
+          await this.typeSafeEventEmitter.emitAsync(
+            SessionEvents.CHECKED_IN,
+            new SessionCheckedInEvent(updatedSession, actor),
           );
 
           return updatedSession;

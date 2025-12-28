@@ -4,6 +4,7 @@ import {
   Post,
   Put,
   Delete,
+  Patch,
   Body,
   Param,
   Query,
@@ -19,6 +20,8 @@ import { SessionIdParamDto } from '../dto/session-id-param.dto';
 import { StartSessionDto } from '../dto/start-session.dto';
 import { CheckInSessionDto } from '../dto/check-in-session.dto';
 import { CancelSessionDto } from '../dto/cancel-session.dto';
+import { TransitionStatusDto } from '../dto/transition-status.dto';
+import { SessionStatus } from '../enums/session-status.enum';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { GetUser } from '@/shared/common/decorators';
@@ -34,7 +37,8 @@ export class SessionsController {
 
   @Post('check-in')
   @ApiOperation({
-    summary: 'Check-in a session (materialize virtual to real or update existing)',
+    summary:
+      'Check-in a session (materialize virtual to real or update existing)',
     description:
       'Checks-in a session by either materializing a virtual session slot into a real database record, or updating an existing SCHEDULED session to CHECKING_IN. Accepts either a real session UUID or a virtual session ID from the calendar.',
   })
@@ -331,6 +335,111 @@ export class SessionsController {
     });
   }
 
+  @Patch(':sessionId/status')
+  @ApiOperation({
+    summary: 'Transition session status with business logic',
+    description:
+      'Unified endpoint for all session status changes with validation and side effects. Triggers enrollment finalization automatically.',
+  })
+  @ApiParam({ name: 'sessionId', description: 'Session ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Session status transitioned successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid status transition or session state',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Session not found',
+  })
+  @Permissions(PERMISSIONS.SESSIONS.UPDATE)
+  @Transactional()
+  @SerializeOptions({ type: SessionResponseDto })
+  async transitionStatus(
+    @Param() params: SessionIdParamDto,
+    @Body() dto: TransitionStatusDto,
+    @GetUser() actor: ActorUser,
+  ) {
+    // Get current session to validate transition
+    const currentSession = await this.sessionsService.getSession(
+      params.sessionId,
+      actor,
+    );
+
+    // Validate transition is allowed
+    this.validateStatusTransition(currentSession.status, dto.status);
+
+    // Execute transition with side effects
+    switch (`${currentSession.status}→${dto.status}`) {
+      case `${SessionStatus.SCHEDULED}→${SessionStatus.CHECKING_IN}`:
+        return await this.handleCheckIn(params.sessionId, actor);
+      case `${SessionStatus.CHECKING_IN}→${SessionStatus.CONDUCTING}`:
+        return await this.handleStart(params.sessionId, actor);
+      case `${SessionStatus.CONDUCTING}→${SessionStatus.FINISHED}`:
+        return await this.handleFinish(params.sessionId, actor);
+      default:
+        throw new Error(
+          `Invalid status transition: ${currentSession.status} → ${dto.status}`,
+        );
+    }
+  }
+
+  private async handleCheckIn(sessionId: string, actor: ActorUser) {
+    const result = await this.sessionsService.checkInSession(sessionId, actor);
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.session' },
+    });
+  }
+
+  private async handleStart(sessionId: string, actor: ActorUser) {
+    const result = await this.sessionsService.startSession(sessionId, actor);
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.session' },
+    });
+  }
+
+  private async handleFinish(sessionId: string, actor: ActorUser) {
+    const result = await this.sessionsService.finishSession(sessionId, actor);
+    return ControllerResponse.success(result, {
+      key: 't.messages.updated',
+      args: { resource: 't.resources.session' },
+    });
+  }
+
+  private validateStatusTransition(
+    currentStatus: SessionStatus,
+    newStatus: SessionStatus,
+  ): void {
+    const allowedTransitions: Record<SessionStatus, SessionStatus[]> = {
+      [SessionStatus.SCHEDULED]: [
+        SessionStatus.CHECKING_IN,
+        SessionStatus.CANCELED,
+      ],
+      [SessionStatus.CHECKING_IN]: [
+        SessionStatus.CONDUCTING,
+        SessionStatus.CANCELED,
+      ],
+      [SessionStatus.CONDUCTING]: [
+        SessionStatus.FINISHED,
+        SessionStatus.CANCELED,
+      ],
+      [SessionStatus.FINISHED]: [], // Terminal state
+      [SessionStatus.CANCELED]: [SessionStatus.SCHEDULED], // Allow rescheduling
+      [SessionStatus.MISSED]: [], // Terminal state
+    };
+
+    const allowed = allowedTransitions[currentStatus] || [];
+    if (!allowed.includes(newStatus)) {
+      throw new Error(
+        `Invalid status transition: ${currentStatus} → ${newStatus}`,
+      );
+    }
+  }
+
   @Post(':sessionId/schedule')
   @ApiOperation({
     summary: 'Reschedule a canceled session',
@@ -399,4 +508,6 @@ export class SessionsController {
       args: { resource: 't.resources.session' },
     });
   }
+
+  // ===== BOOKING INTEGRATION ENDPOINTS =====
 }

@@ -35,6 +35,28 @@ export class SessionCanceledEvent {
   ) {}
 }
 
+export class SessionCheckedInEvent {
+  constructor(
+    public readonly session: Session,
+    public readonly actor: ActorUser,
+  ) {}
+
+  get centerId(): string {
+    return this.actor.centerId!;
+  }
+}
+
+export class SessionFinishedEvent {
+  constructor(
+    public readonly session: Session,
+    public readonly actor: ActorUser,
+  ) {}
+
+  get centerId(): string {
+    return this.actor.centerId!;
+  }
+}
+
 export class SessionsBulkDeletedEvent {
   constructor(
     public readonly sessionIds: string[],

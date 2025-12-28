@@ -22,6 +22,7 @@ import {
   ClassStatusChangedEvent,
 } from '../events/class.events';
 import { ClassStatus } from '../enums/class-status.enum';
+import { AbsenteePolicy } from '../enums/absentee-policy.enum';
 import {
   getAvailableStatuses,
   isValidTransition,
@@ -659,5 +660,40 @@ export class ClassesService extends BaseService {
     });
 
     return classEntity;
+  }
+
+  /**
+   * Update absentee policy for a class
+   */
+  async updateAbsenteePolicy(
+    classId: string,
+    absenteePolicy: AbsenteePolicy,
+    actor: ActorUser,
+  ): Promise<Class> {
+    // Get and validate class access
+    const classEntity = await this.getClass(classId, actor);
+
+    // Update the absentee policy
+    const updatedClass = await this.classesRepository.update(classId, {
+      absenteePolicy,
+    });
+
+    if (!updatedClass) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.class',
+        identifier: 't.resources.identifier',
+        value: classId,
+      });
+    }
+
+    // Emit event
+    this.typeSafeEventEmitter.emit(ClassEvents.UPDATED, new ClassUpdatedEvent(
+      updatedClass,
+      actor,
+      updatedClass.centerId,
+      ['absenteePolicy']
+    ));
+
+    return updatedClass;
   }
 }

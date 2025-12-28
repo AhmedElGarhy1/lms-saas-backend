@@ -42,6 +42,7 @@ import { ClassActivityListener } from './listeners/class-activity.listener';
 import { GroupActivityListener } from './listeners/group-activity.listener';
 import { ClassStatusUpdateJob } from './jobs/class-status-update.job';
 import { Center } from '@/modules/centers/entities/center.entity';
+import { AbsenteePolicy } from './enums/absentee-policy.enum';
 
 @Module({
   imports: [

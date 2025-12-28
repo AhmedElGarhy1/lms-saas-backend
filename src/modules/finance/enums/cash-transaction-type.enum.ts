@@ -2,5 +2,5 @@ export enum CashTransactionType {
   DEPOSIT = 'DEPOSIT',
   EXPENSE = 'EXPENSE',
   WITHDRAWAL = 'WITHDRAWAL',
+  SESSION_PAYMENT = 'SESSION_PAYMENT',
 }
-

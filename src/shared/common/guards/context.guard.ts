@@ -17,6 +17,12 @@ import { NO_CONTEXT_KEY } from '../decorators/no-context.decorator';
 import { ProfileSelectionRequiredException } from '../exceptions/custom.exceptions';
 import { CentersRepository } from '@/modules/centers/repositories/centers.repository';
 import { DEFAULT_TIMEZONE } from '../constants/timezone.constants';
+import { ProfileType } from '../enums/profile-type.enum';
+import { STUDENT_ONLY_KEY } from '../decorators/student-only.decorator';
+import { TEACHER_ONLY_KEY } from '../decorators/teacher-only.decorator';
+import { PARENT_ONLY_KEY } from '../decorators/parent-only.decorator';
+import { STAFF_ONLY_KEY } from '../decorators/staff-only.decorator';
+import { MANAGERIAL_ONLY_KEY } from '../decorators/managerial-only.decorator';
 
 @Injectable()
 export class ContextGuard implements CanActivate {
@@ -52,10 +58,27 @@ export class ContextGuard implements CanActivate {
       return true;
     }
 
-    // const centerId = (request.get('x-center-id') ??
-    //   request.centerId ??
-    //   (request.body as { centerId?: string })?.centerId ??
-    //   (request.query as { centerId?: string })?.centerId) as string;
+    // Check profile-specific decorators
+    const studentOnly = this.reflector.getAllAndOverride<boolean>(
+      STUDENT_ONLY_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    const teacherOnly = this.reflector.getAllAndOverride<boolean>(
+      TEACHER_ONLY_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    const parentOnly = this.reflector.getAllAndOverride<boolean>(
+      PARENT_ONLY_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    const staffOnly = this.reflector.getAllAndOverride<boolean>(
+      STAFF_ONLY_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    const managerialOnly = this.reflector.getAllAndOverride<boolean>(
+      MANAGERIAL_ONLY_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     const centerId = (request.get('x-center-id') ?? request.centerId) as string;
 
@@ -79,6 +102,7 @@ export class ContextGuard implements CanActivate {
     if (noContext) {
       return true;
     }
+
     const { userProfileId, userProfileType } = RequestContext.get();
     if (!userProfileId) {
       throw new ProfileSelectionRequiredException('t.messages.fieldRequired', {
@@ -94,12 +118,112 @@ export class ContextGuard implements CanActivate {
       });
     }
 
-    await this.accessControlHelperService.validateAdminAndCenterAccess({
+    // Validate profile-specific access
+    await this.validateProfileSpecificAccess({
       userProfileId,
+      userProfileType,
       centerId,
+      studentOnly,
+      teacherOnly,
+      parentOnly,
+      staffOnly,
+      managerialOnly,
     });
 
-    // Fetch center to get timezone
+    // Handle timezone for center-based users (staff/admin)
+    if (
+      centerId &&
+      (staffOnly ||
+        managerialOnly ||
+        (!studentOnly && !teacherOnly && !parentOnly))
+    ) {
+      await this.setCenterTimezone(centerId);
+    } else {
+      // For non-center users, set default timezone
+      RequestContext.set({ timezone: DEFAULT_TIMEZONE });
+    }
+
+    // Set the userId, centerId, branchId in the request context
+    RequestContext.set({
+      centerId: user.centerId,
+      branchId,
+    });
+
+    return true;
+  }
+
+  private async validateProfileSpecificAccess({
+    userProfileId,
+    userProfileType,
+    centerId,
+    studentOnly,
+    teacherOnly,
+    parentOnly,
+    staffOnly,
+    managerialOnly,
+  }: {
+    userProfileId: string;
+    userProfileType: ProfileType;
+    centerId?: string;
+    studentOnly?: boolean;
+    teacherOnly?: boolean;
+    parentOnly?: boolean;
+    staffOnly?: boolean;
+    managerialOnly?: boolean;
+  }) {
+    // Check profile-specific restrictions
+    if (studentOnly && userProfileType !== ProfileType.STUDENT) {
+      throw new ForbiddenException({
+        message: { key: 't.messages.accessDenied' },
+      });
+    }
+    if (teacherOnly && userProfileType !== ProfileType.TEACHER) {
+      throw new ForbiddenException({
+        message: { key: 't.messages.accessDenied' },
+      });
+    }
+    if (parentOnly && userProfileType !== ProfileType.PARENT) {
+      throw new ForbiddenException({
+        message: { key: 't.messages.accessDenied' },
+      });
+    }
+    if (staffOnly && userProfileType !== ProfileType.STAFF) {
+      throw new ForbiddenException({
+        message: { key: 't.messages.accessDenied' },
+      });
+    }
+    if (
+      managerialOnly &&
+      userProfileType !== ProfileType.STAFF &&
+      userProfileType !== ProfileType.ADMIN
+    ) {
+      throw new ForbiddenException({
+        message: { key: 't.messages.accessDenied' },
+      });
+    }
+
+    // For users who need center access (staff/admin or general access), validate center access
+    const requiresCenterAccess =
+      staffOnly ||
+      managerialOnly ||
+      (!studentOnly && !teacherOnly && !parentOnly);
+
+    if (requiresCenterAccess) {
+      if (!centerId) {
+        throw new ForbiddenException({
+          message: { key: 't.messages.centerIdRequired' },
+        });
+      }
+
+      await this.accessControlHelperService.validateAdminAndCenterAccess({
+        userProfileId,
+        centerId,
+      });
+    }
+    // For students, teachers, parents - no center access validation needed
+  }
+
+  private async setCenterTimezone(centerId: string) {
     let timezone = DEFAULT_TIMEZONE;
     if (centerId) {
       try {
@@ -121,13 +245,6 @@ export class ContextGuard implements CanActivate {
       }
     }
 
-    // Set the userId, centerId, branchId, and timezone in the request context
-    RequestContext.set({
-      centerId: user.centerId,
-      branchId,
-      timezone,
-    });
-
-    return true;
+    RequestContext.set({ timezone });
   }
 }

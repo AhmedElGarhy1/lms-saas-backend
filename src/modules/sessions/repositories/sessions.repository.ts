@@ -28,6 +28,30 @@ export class SessionsRepository extends BaseRepository<Session> {
   }
 
   /**
+   * Find session by ID with relations
+   */
+  async findByIdWithRelations(sessionId: string, relations: string[] = []): Promise<Session> {
+    const queryBuilder = this.getRepository().createQueryBuilder('session');
+
+    // Add relations dynamically
+    for (const relation of relations) {
+      queryBuilder.leftJoinAndSelect(`session.${relation}`, relation.replace('.', '_'));
+    }
+
+    const session = await queryBuilder.where('session.id = :id', { id: sessionId }).getOne();
+
+    if (!session) {
+      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
+        resource: 't.resources.session',
+        identifier: 't.resources.identifier',
+        value: sessionId,
+      });
+    }
+
+    return session;
+  }
+
+  /**
    * Generic method to find sessions with flexible filters and relations
    * This method reduces method explosion by allowing dynamic query building
    * @param filters - Filter criteria for sessions

@@ -61,6 +61,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { RateLimitModule } from './modules/rate-limit/rate-limit.module';
 import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limit-config.interface';
 import { FinanceModule } from './modules/finance/finance.module';
+import { PackagesModule } from './modules/packages/packages.module';
+import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
 
 @Module({
   imports: [
@@ -123,6 +125,8 @@ import { FinanceModule } from './modules/finance/finance.module';
     HealthModule,
     NotificationModule,
     FinanceModule,
+    PackagesModule,
+    EnrollmentsModule,
     RateLimitModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: () => ({

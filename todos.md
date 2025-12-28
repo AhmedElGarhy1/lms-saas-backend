@@ -139,6 +139,8 @@
 ? what will happen if branch deleted?
 ? what will happen if session deleted?
 
+[ ] cleanup dependacy injection and fix everything
+
 [ ] consider adding withDetailes flag and use it in backend
 [ ] submodule for permissions, RoleName, sortable columns, other is okay
 [ ] activity log decorator

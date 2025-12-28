@@ -24,15 +24,18 @@ import { CashTransactionService } from './services/cash-transaction.service';
 import { WebhookService } from './services/webhook.service';
 import { PaymentCleanupService } from './services/payment-cleanup.service';
 import { PaymentStateMachineService } from './services/payment-state-machine.service';
+import { ReportsService } from './services/reports.service';
 import { PaymentsController } from './controllers/payments.controller';
 import { WalletsController } from './controllers/wallets.controller';
 import { CashboxesController } from './controllers/cashboxes.controller';
 import { FinanceActionsController } from './controllers/finance-actions.controller';
 import { WebhooksController } from './controllers/webhooks.controller';
+import { ReportsController } from './controllers/reports.controller';
 import { CentersModule } from '../centers/centers.module';
 import { UserProfileModule } from '../user-profile/user-profile.module';
 import { SharedModule } from '@/shared/shared.module';
 import { AccessControlModule } from '../access-control/access-control.module';
+import { EnrollmentsModule } from '../enrollments/enrollments.module';
 import { UserProfileListener } from './listeners/user-profile.listener';
 import { BranchListener } from './listeners/branch.listener';
 import { FinanceMonitorService } from './monitoring/finance-monitor.service';
@@ -76,6 +79,7 @@ import { UserModule } from '../user/user.module';
     UserProfileModule,
     SharedModule,
     AccessControlModule,
+    EnrollmentsModule,
     UserModule,
   ],
   controllers: [
@@ -84,6 +88,7 @@ import { UserModule } from '../user/user.module';
     CashboxesController,
     FinanceActionsController,
     WebhooksController,
+    ReportsController,
   ],
   providers: [
     // Metrics providers
@@ -137,6 +142,7 @@ import { UserModule } from '../user/user.module';
     WebhookService,
     PaymentCleanupService,
     PaymentStateMachineService,
+    ReportsService,
     FinanceMonitorService,
     UserProfileListener,
     BranchListener,
@@ -161,6 +167,7 @@ import { UserModule } from '../user/user.module';
     WebhookService,
     PaymentCleanupService,
     PaymentStateMachineService,
+    ReportsService,
     FinanceMonitorService,
   ],
 })
