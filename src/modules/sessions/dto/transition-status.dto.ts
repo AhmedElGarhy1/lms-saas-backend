@@ -1,6 +1,6 @@
 import { IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { SessionStatus } from '../enums/session-status.enum';
+import { SessionStatus } from '@/modules/sessions/enums/session-status.enum';
 
 export class TransitionStatusDto {
   @ApiProperty({

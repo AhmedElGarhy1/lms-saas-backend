@@ -12,6 +12,7 @@ import { UserModule } from '@/modules/user/user.module';
 import { UserProfileModule } from '@/modules/user-profile/user-profile.module';
 import { Session } from '@/modules/sessions/entities/session.entity';
 import { AttendanceAbsentBackfillJob } from './jobs/attendance-absent-backfill.job';
+import { StudentBillingModule } from '@/modules/student-billing/student-billing.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AttendanceAbsentBackfillJob } from './jobs/attendance-absent-backfill.j
     CentersModule,
     UserModule,
     UserProfileModule,
+    StudentBillingModule,
   ],
   controllers: [AttendanceController],
   providers: [

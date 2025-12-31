@@ -13,9 +13,11 @@ import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
 import { AdminExportedEvent } from '../events/admin.events';
+import { AdminOnly } from '@/shared/common/decorators';
 
 @ApiTags('Admin Actions')
 @Controller('admin/actions')
+@AdminOnly()
 export class AdminActionsController {
   constructor(
     private readonly adminService: AdminService,

@@ -4,6 +4,7 @@ import { ApiTags, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import {
   CreateApiResponses,
   DeleteApiResponses,
+  ManagerialOnly,
 } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { RolesService } from '../services/roles.service';
@@ -16,6 +17,7 @@ import { AssignRoleDto } from '../dto/assign-role.dto';
 @ApiTags('Roles')
 @Controller('roles/assign')
 @ApiBearerAuth()
+@ManagerialOnly()
 export class RoleAssignController {
   constructor(private readonly rolesService: RolesService) {}
 

@@ -8,12 +8,14 @@ import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity
 
 export class CashDepositDto {
   @ApiProperty({
-    description: 'Branch ID (where the cash deposit is recorded)',
+    description: 'Branch ID (where the cash deposit is recorded, optional, defaults to actor\'s branch)',
     example: 'uuid',
+    required: false,
   })
+  @IsOptional()
   @IsUUID(4)
   @BelongsToBranch(Branch)
-  branchId: string;
+  branchId?: string;
 
   @ApiProperty({
     description: 'Deposit amount',
@@ -25,12 +27,11 @@ export class CashDepositDto {
   amount: number;
 
   @ApiProperty({
-    description: 'Student profile ID (who is paying the cash)',
+    description: 'Sender ID (who is paying the cash)',
     example: 'uuid',
   })
   @IsUUID(4)
-  @Exists(UserProfile)
-  payerProfileId: string;
+  senderId: string;
 
   @ApiProperty({
     description: 'Idempotency key (UUID or string) to prevent duplicate deposits',

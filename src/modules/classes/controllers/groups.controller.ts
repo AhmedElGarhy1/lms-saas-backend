@@ -24,7 +24,7 @@ import { PaginateGroupsDto } from '../dto/paginate-groups.dto';
 import { GroupIdParamDto } from '../dto/group-id-param.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { GetUser } from '@/shared/common/decorators';
+import { GetUser, ManagerialOnly } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UpdateApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
@@ -35,6 +35,7 @@ import { CreateApiResponses } from '@/shared/common/decorators';
 
 @ApiTags('Groups')
 @Controller('groups')
+@ManagerialOnly()
 export class GroupsController {
   constructor(private readonly groupsService: GroupsService) {}
 

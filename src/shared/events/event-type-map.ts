@@ -99,7 +99,6 @@ import {
   SessionUpdatedEvent,
   SessionDeletedEvent,
   SessionCanceledEvent,
-  SessionCheckedInEvent,
   SessionFinishedEvent,
   SessionsBulkDeletedEvent,
   SessionConflictDetectedEvent,
@@ -222,7 +221,6 @@ export type EventTypeMap = {
   [SessionEvents.UPDATED]: SessionUpdatedEvent;
   [SessionEvents.DELETED]: SessionDeletedEvent;
   [SessionEvents.CANCELED]: SessionCanceledEvent;
-  [SessionEvents.CHECKED_IN]: SessionCheckedInEvent;
   [SessionEvents.FINISHED]: SessionFinishedEvent;
   [SessionEvents.BULK_DELETED]: SessionsBulkDeletedEvent;
   [SessionEvents.CONFLICT_DETECTED]: SessionConflictDetectedEvent;

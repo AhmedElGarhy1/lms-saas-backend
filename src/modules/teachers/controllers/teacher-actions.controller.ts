@@ -13,9 +13,11 @@ import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { TeacherEvents } from '@/shared/events/teacher.events.enum';
 import { TeacherExportedEvent } from '../events/teacher.events';
+import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiTags('Teacher Actions')
 @Controller('teachers/actions')
+@ManagerialOnly()
 export class TeacherActionsController {
   constructor(
     private readonly teacherService: TeacherService,

@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { BranchesService } from '../services/branches.service';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { CenterActivityType } from '../enums/center-activity-type.enum';
 import { CreateCenterBranchEvent } from '../events/center.events';
 import { CenterEvents } from '@/shared/events/center.events.enum';
 import {
@@ -17,7 +15,6 @@ import { BranchEvents } from '@/shared/events/branch.events.enum';
 export class BranchListener {
   constructor(
     private readonly branchesService: BranchesService,
-    private readonly activityLogService: ActivityLogService,
   ) {}
 
   @OnEvent(CenterEvents.CREATE_BRANCH)
@@ -33,69 +30,21 @@ export class BranchListener {
 
   @OnEvent(BranchEvents.CREATED)
   async handleBranchCreated(event: BranchCreatedEvent) {
-    const { branch } = event;
-
-    // Log activity for branch creation
-    // Object action (on branch), no specific user affected
-    await this.activityLogService.log(
-      CenterActivityType.BRANCH_CREATED,
-      {
-        branchId: branch.id,
-        centerId: branch.centerId,
-        city: branch.city,
-        address: branch.address,
-        email: branch.email,
-      },
-      null, // Object action, no target user
-    );
+    // Activity logging removed
   }
 
   @OnEvent(BranchEvents.UPDATED)
   async handleBranchUpdated(event: BranchUpdatedEvent) {
-    const { branchId, centerId } = event;
-
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    // Object action (on branch), no specific user affected
-    await this.activityLogService.log(
-      CenterActivityType.BRANCH_UPDATED,
-      {
-        branchId,
-        centerId,
-        updatedFields: Object.keys(event.updates),
-      },
-      null, // Object action, no target user
-    );
+    // Activity logging removed
   }
 
   @OnEvent(BranchEvents.DELETED)
   async handleBranchDeleted(event: BranchDeletedEvent) {
-    const { branchId, centerId } = event;
-
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    // Object action (on branch), no specific user affected
-    await this.activityLogService.log(
-      CenterActivityType.BRANCH_DELETED,
-      {
-        branchId,
-        centerId,
-      },
-      null, // Object action, no target user
-    );
+    // Activity logging removed
   }
 
   @OnEvent(BranchEvents.RESTORED)
   async handleBranchRestored(event: BranchRestoredEvent) {
-    const { branchId, centerId } = event;
-
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    // Object action (on branch), no specific user affected
-    await this.activityLogService.log(
-      CenterActivityType.BRANCH_RESTORED,
-      {
-        branchId,
-        centerId,
-      },
-      null, // Object action, no target user
-    );
+    // Activity logging removed
   }
 }

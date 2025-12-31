@@ -16,7 +16,7 @@ import {
   ApiOperation,
   ApiBody,
 } from '@nestjs/swagger';
-import {} from '@/shared/common/decorators';
+import { ManagerialOnly } from '@/shared/common/decorators/managerial-only.decorator';
 import { RolesService } from '../services/roles.service';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
@@ -42,6 +42,7 @@ import { ControllerResponse } from '@/shared/common/dto/controller-response.dto'
 @ApiTags('Roles')
 @Controller('roles/actions')
 @ApiBearerAuth()
+@ManagerialOnly()
 export class RolesActionsController {
   constructor(
     private readonly rolesService: RolesService,

@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { TeacherActivityType } from '../enums/teacher-activity-type.enum';
 import { TeacherEvents } from '@/shared/events/teacher.events.enum';
 import { TeacherCreatedEvent } from '../events/teacher.events';
 
@@ -13,21 +11,10 @@ import { TeacherCreatedEvent } from '../events/teacher.events';
  */
 @Injectable()
 export class TeacherActivityListener {
-  constructor(private readonly activityLogService: ActivityLogService) {}
+  constructor() {}
 
   @OnEvent(TeacherEvents.CREATED)
   async handleTeacherCreated(event: TeacherCreatedEvent) {
-    const { user, teacher, centerId } = event;
-
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      TeacherActivityType.TEACHER_CREATED,
-      {
-        teacherId: teacher.id,
-        phone: user.phone,
-        centerId: centerId,
-      },
-      user.id,
-    );
+    // Activity logging removed
   }
 }

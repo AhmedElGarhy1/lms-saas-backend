@@ -11,10 +11,12 @@ import { NotificationLogRepository } from '../repositories/notification-log.repo
 import { GetNotificationHistoryDto } from '../dto/notification-history.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { NotificationLog } from '../entities/notification-log.entity';
+import { AdminOnly } from '@/shared/common/decorators';
 
 @Controller('notifications/history')
 @ApiTags('Notifications - History')
 @ApiBearerAuth()
+@AdminOnly()
 export class NotificationHistoryController {
   constructor(private readonly logRepository: NotificationLogRepository) {}
 

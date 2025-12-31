@@ -9,13 +9,14 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { isUUID } from 'class-validator';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { IRequest } from '../interfaces/request.interface';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { RequestContext } from '../context/request.context';
-import { NO_CONTEXT_KEY } from '../decorators/no-context.decorator';
 import { ProfileSelectionRequiredException } from '../exceptions/custom.exceptions';
 import { CentersRepository } from '@/modules/centers/repositories/centers.repository';
+import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { DEFAULT_TIMEZONE } from '../constants/timezone.constants';
 import { ProfileType } from '../enums/profile-type.enum';
 import { STUDENT_ONLY_KEY } from '../decorators/student-only.decorator';
@@ -23,6 +24,8 @@ import { TEACHER_ONLY_KEY } from '../decorators/teacher-only.decorator';
 import { PARENT_ONLY_KEY } from '../decorators/parent-only.decorator';
 import { STAFF_ONLY_KEY } from '../decorators/staff-only.decorator';
 import { MANAGERIAL_ONLY_KEY } from '../decorators/managerial-only.decorator';
+import { NOP_PROFILE_KEY } from '../decorators/no-profile.decorator';
+import { NO_CONTEXT_KEY } from '../decorators/no-context';
 
 @Injectable()
 export class ContextGuard implements CanActivate {
@@ -33,25 +36,58 @@ export class ContextGuard implements CanActivate {
     private readonly accessControlHelperService: AccessControlHelperService,
     @Inject(forwardRef(() => CentersRepository))
     private readonly centersRepository: CentersRepository,
+    @Inject(forwardRef(() => BranchAccessService))
+    private readonly branchAccessService: BranchAccessService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request: IRequest = context.switchToHttp().getRequest();
+    const centerId = (request.get('x-center-id') ?? request.centerId) as string;
+    const branchId = (request.get('x-branch-id') ?? request.branchId) as string;
+
+    // Validate centerId format if provided
+    if (centerId && !isUUID(centerId)) {
+      throw new ForbiddenException({
+        message: {
+          key: 't.validation.isUuid.message',
+          args: { item: 't.resources.center' },
+        },
+      });
+    }
+
+    // Validate branchId format if provided
+    if (branchId && !isUUID(branchId)) {
+      throw new ForbiddenException({
+        message: {
+          key: 't.validation.isUuid.message',
+          args: { item: 't.resources.branch' },
+        },
+      });
+    }
+
     // Check if the endpoint is public
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
+    if (isPublic) {
+      return true;
+    }
+    const isNoProfile = this.reflector.getAllAndOverride<boolean>(
+      NOP_PROFILE_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    if (isNoProfile) {
+      return true;
+    }
 
     const noContext = this.reflector.getAllAndOverride<boolean>(
       NO_CONTEXT_KEY,
       [context.getHandler(), context.getClass()],
     );
-
-    if (isPublic) {
+    if (noContext) {
       return true;
     }
-
-    const request: IRequest = context.switchToHttp().getRequest();
 
     // Only apply context validation to API routes
     if (!request.url.startsWith('/api')) {
@@ -80,28 +116,17 @@ export class ContextGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
-    const centerId = (request.get('x-center-id') ?? request.centerId) as string;
-
-    // Extract branchId from params, query, or body (priority: params > query > body)
-    const branchId =
-      (request.params as { branchId?: string })?.branchId ??
-      (request.query as { branchId?: string })?.branchId ??
-      (request.body as { branchId?: string })?.branchId;
-
     const user = request.user;
     if (!user) {
       throw new ForbiddenException({
         message: { key: 't.messages.notAuthenticated' },
       });
     }
+
     user.centerId = centerId;
+    user.branchId = branchId;
 
     request.user = user;
-
-    // first pass centerId
-    if (noContext) {
-      return true;
-    }
 
     const { userProfileId, userProfileType } = RequestContext.get();
     if (!userProfileId) {
@@ -109,6 +134,7 @@ export class ContextGuard implements CanActivate {
         field: 't.resources.profileSelection',
       });
     }
+
     if (!userProfileType) {
       throw new InternalServerErrorException({
         message: {
@@ -123,6 +149,7 @@ export class ContextGuard implements CanActivate {
       userProfileId,
       userProfileType,
       centerId,
+      branchId,
       studentOnly,
       teacherOnly,
       parentOnly,
@@ -131,22 +158,12 @@ export class ContextGuard implements CanActivate {
     });
 
     // Handle timezone for center-based users (staff/admin)
-    if (
-      centerId &&
-      (staffOnly ||
-        managerialOnly ||
-        (!studentOnly && !teacherOnly && !parentOnly))
-    ) {
-      await this.setCenterTimezone(centerId);
-    } else {
-      // For non-center users, set default timezone
-      RequestContext.set({ timezone: DEFAULT_TIMEZONE });
-    }
+    await this.setCenterTimezone(centerId);
 
     // Set the userId, centerId, branchId in the request context
     RequestContext.set({
       centerId: user.centerId,
-      branchId,
+      branchId: branchId,
     });
 
     return true;
@@ -156,6 +173,7 @@ export class ContextGuard implements CanActivate {
     userProfileId,
     userProfileType,
     centerId,
+    branchId,
     studentOnly,
     teacherOnly,
     parentOnly,
@@ -165,6 +183,7 @@ export class ContextGuard implements CanActivate {
     userProfileId: string;
     userProfileType: ProfileType;
     centerId?: string;
+    branchId?: string;
     studentOnly?: boolean;
     teacherOnly?: boolean;
     parentOnly?: boolean;
@@ -202,46 +221,32 @@ export class ContextGuard implements CanActivate {
       });
     }
 
-    // For users who need center access (staff/admin or general access), validate center access
-    const requiresCenterAccess =
-      staffOnly ||
-      managerialOnly ||
-      (!studentOnly && !teacherOnly && !parentOnly);
-
-    if (requiresCenterAccess) {
-      if (!centerId) {
-        throw new ForbiddenException({
-          message: { key: 't.messages.centerIdRequired' },
-        });
-      }
-
+    if (
+      userProfileType === ProfileType.STAFF ||
+      userProfileType === ProfileType.ADMIN
+    ) {
       await this.accessControlHelperService.validateAdminAndCenterAccess({
         userProfileId,
         centerId,
       });
+
+      // Validate branch access if branchId is provided
+      if (branchId && centerId) {
+        await this.branchAccessService.validateBranchAccess({
+          userProfileId,
+          centerId,
+          branchId,
+        });
+      }
     }
-    // For students, teachers, parents - no center access validation needed
   }
 
   private async setCenterTimezone(centerId: string) {
     let timezone = DEFAULT_TIMEZONE;
     if (centerId) {
-      try {
-        const center = await this.centersRepository.findById(centerId);
-        if (center?.timezone) {
-          timezone = center.timezone;
-        } else {
-          this.logger.warn(
-            `Center ${centerId} found but has no timezone set, using default: ${DEFAULT_TIMEZONE}`,
-          );
-        }
-      } catch (error) {
-        // If center not found or error, use default timezone
-        // This ensures the guard doesn't fail if center lookup fails
-        this.logger.warn(
-          `Failed to fetch center timezone for centerId: ${centerId}, using default: ${DEFAULT_TIMEZONE}`,
-          error instanceof Error ? error.stack : undefined,
-        );
+      const center = await this.centersRepository.findById(centerId);
+      if (center?.timezone) {
+        timezone = center.timezone;
       }
     }
 

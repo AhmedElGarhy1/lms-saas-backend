@@ -2,8 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { OnEvent } from '@nestjs/event-emitter';
 import { AccessControlService } from '../services/access-control.service';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { CenterActivityType } from '@/modules/centers/enums/center-activity-type.enum';
 import {
   GrantCenterAccessEvent,
   RevokeCenterAccessEvent,
@@ -19,7 +17,6 @@ export class CenterAccessListener {
   constructor(
     private readonly moduleRef: ModuleRef,
     private readonly accessControlService: AccessControlService,
-    private readonly activityLogService: ActivityLogService,
   ) {}
 
   @OnEvent(AccessControlEvents.GRANT_CENTER_ACCESS)
@@ -40,18 +37,7 @@ export class CenterAccessListener {
       return;
     }
 
-    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      CenterActivityType.CENTER_ACCESS_GRANTED,
-      {
-        userProfileId,
-        centerId,
-        accessType: 'CENTER',
-      },
-      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
-      userProfileId, // Pass as targetUserProfileId for auto-resolution
-    );
+    // Activity logging removed
   }
 
   @OnEvent(AccessControlEvents.REVOKE_CENTER_ACCESS)
@@ -72,51 +58,16 @@ export class CenterAccessListener {
       return;
     }
 
-    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      CenterActivityType.CENTER_ACCESS_REVOKED,
-      {
-        userProfileId,
-        centerId,
-        accessType: 'CENTER',
-      },
-      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
-      userProfileId, // Pass as targetUserProfileId for auto-resolution
-    );
+    // Activity logging removed
   }
 
   @OnEvent(AccessControlEvents.ACTIVATE_CENTER_ACCESS)
   async handleActivateCenterAccess(event: ActivateCenterAccessEvent) {
-    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      CenterActivityType.CENTER_ACCESS_ACTIVATED,
-      {
-        userProfileId: event.userProfileId,
-        centerId: event.centerId,
-        isActive: event.isActive,
-        accessType: 'CENTER',
-      },
-      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
-      event.userProfileId, // Pass as targetUserProfileId for auto-resolution
-    );
+    // Activity logging removed
   }
 
   @OnEvent(AccessControlEvents.DEACTIVATE_CENTER_ACCESS)
   async handleDeactivateCenterAccess(event: DeactivateCenterAccessEvent) {
-    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      CenterActivityType.CENTER_ACCESS_DEACTIVATED,
-      {
-        userProfileId: event.userProfileId,
-        centerId: event.centerId,
-        isActive: event.isActive,
-        accessType: 'CENTER',
-      },
-      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
-      event.userProfileId, // Pass as targetUserProfileId for auto-resolution
-    );
+    // Activity logging removed
   }
 }

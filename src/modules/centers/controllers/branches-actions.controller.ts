@@ -24,10 +24,12 @@ import { BulkDeleteBranchesDto } from '../dto/bulk-delete-branches.dto';
 import { BulkRestoreBranchesDto } from '../dto/bulk-restore-branches.dto';
 import { BulkToggleBranchStatusDto } from '../dto/bulk-toggle-branch-status.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiBearerAuth()
 @ApiTags('Branches Actions')
 @Controller('centers/branches/actions')
+@ManagerialOnly()
 export class BranchesActionsController {
   constructor(
     private readonly branchesService: BranchesService,

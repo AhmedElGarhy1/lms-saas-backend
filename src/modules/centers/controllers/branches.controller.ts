@@ -16,7 +16,7 @@ import { CreateBranchDto } from '../dto/create-branch.dto';
 import { PaginateBranchesDto } from '../dto/paginate-branches.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { GetUser } from '@/shared/common/decorators';
+import { GetUser, ManagerialOnly } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UpdateApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
@@ -24,6 +24,7 @@ import { BranchIdParamDto } from '../dto/branch-id-param.dto';
 
 @ApiTags('Centers - Branches')
 @Controller('centers/branches')
+@ManagerialOnly()
 export class BranchesController {
   constructor(private readonly branchesService: BranchesService) {}
 

@@ -26,6 +26,7 @@ import {
   ReadApiResponses,
   UpdateApiResponses,
   DeleteApiResponses,
+  ManagerialOnly,
 } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { RolesService } from '../services/roles.service';
@@ -51,6 +52,7 @@ import { RoleIdParamDto } from '../dto/role-id-param.dto';
 @ApiTags('Roles')
 @Controller('roles')
 @ApiBearerAuth()
+@ManagerialOnly()
 export class RolesController {
   constructor(
     private readonly rolesService: RolesService,

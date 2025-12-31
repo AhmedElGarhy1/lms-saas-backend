@@ -683,6 +683,122 @@ export const PERMISSIONS = {
     },
   },
 
+  // ===== PACKAGES PERMISSIONS =====
+  PACKAGES: {
+    READ: {
+      action: 'packages:read',
+      name: 't.permissions.packages.read.name',
+      group: 'packages',
+      scope: PermissionScope.CENTER,
+    },
+    CREATE: {
+      action: 'packages:create',
+      name: 't.permissions.packages.create.name',
+      group: 'packages',
+      scope: PermissionScope.CENTER,
+    },
+    UPDATE: {
+      action: 'packages:update',
+      name: 't.permissions.packages.update.name',
+      group: 'packages',
+      scope: PermissionScope.CENTER,
+    },
+    DELETE: {
+      action: 'packages:delete',
+      name: 't.permissions.packages.delete.name',
+      group: 'packages',
+      scope: PermissionScope.CENTER,
+    },
+    RESTORE: {
+      action: 'packages:restore',
+      name: 't.permissions.packages.restore.name',
+      group: 'packages',
+      scope: PermissionScope.CENTER,
+    },
+    IMPORT: {
+      action: 'packages:import',
+      name: 't.permissions.packages.import.name',
+      group: 'packages',
+      scope: PermissionScope.CENTER,
+    },
+    EXPORT: {
+      action: 'packages:export',
+      name: 't.permissions.packages.export.name',
+      group: 'packages',
+      scope: PermissionScope.CENTER,
+    },
+  },
+
+  // ===== ENROLLMENTS PERMISSIONS =====
+  ENROLLMENTS: {
+    READ: {
+      action: 'enrollments:read',
+      name: 't.permissions.enrollments.read.name',
+      group: 'enrollments',
+      scope: PermissionScope.CENTER,
+    },
+    CREATE: {
+      action: 'enrollments:create',
+      name: 't.permissions.enrollments.create.name',
+      group: 'enrollments',
+      scope: PermissionScope.CENTER,
+    },
+    UPDATE: {
+      action: 'enrollments:update',
+      name: 't.permissions.enrollments.update.name',
+      group: 'enrollments',
+      scope: PermissionScope.CENTER,
+    },
+    DELETE: {
+      action: 'enrollments:delete',
+      name: 't.permissions.enrollments.delete.name',
+      group: 'enrollments',
+      scope: PermissionScope.CENTER,
+    },
+    REGISTER_CASH: {
+      action: 'enrollments:register-cash',
+      name: 't.permissions.enrollments.registerCash.name',
+      group: 'enrollments',
+      scope: PermissionScope.CENTER,
+    },
+    VIEW_HISTORY: {
+      action: 'enrollments:view-history',
+      name: 't.permissions.enrollments.viewHistory.name',
+      group: 'enrollments',
+      scope: PermissionScope.CENTER,
+    },
+    CHECK_IN: {
+      action: 'enrollments:check-in',
+      name: 't.permissions.enrollments.checkIn.name',
+      group: 'enrollments',
+      scope: PermissionScope.CENTER,
+    },
+    MARK_NO_SHOW: {
+      action: 'enrollments:mark-no-show',
+      name: 't.permissions.enrollments.markNoShow.name',
+      group: 'enrollments',
+      scope: PermissionScope.CENTER,
+    },
+    RESTORE: {
+      action: 'enrollments:restore',
+      name: 't.permissions.enrollments.restore.name',
+      group: 'enrollments',
+      scope: PermissionScope.CENTER,
+    },
+    IMPORT: {
+      action: 'enrollments:import',
+      name: 't.permissions.enrollments.import.name',
+      group: 'enrollments',
+      scope: PermissionScope.CENTER,
+    },
+    EXPORT: {
+      action: 'enrollments:export',
+      name: 't.permissions.enrollments.export.name',
+      group: 'enrollments',
+      scope: PermissionScope.CENTER,
+    },
+  },
+
   // ===== GROUPS PERMISSIONS =====
   GROUPS: {
     READ: {
@@ -752,12 +868,6 @@ export const PERMISSIONS = {
     DELETE: {
       action: 'sessions:delete',
       name: 't.permissions.sessions.delete.name',
-      group: 'sessions',
-      scope: PermissionScope.CENTER,
-    },
-    READ_ALL: {
-      action: 'sessions:read-all',
-      name: 't.permissions.sessions.readAll.name',
       group: 'sessions',
       scope: PermissionScope.CENTER,
     },

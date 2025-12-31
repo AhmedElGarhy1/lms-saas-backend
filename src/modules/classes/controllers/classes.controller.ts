@@ -20,7 +20,7 @@ import { ChangeClassStatusDto } from '../dto/change-class-status.dto';
 import { ClassStatus } from '../enums/class-status.enum';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { GetUser } from '@/shared/common/decorators';
+import { GetUser, ManagerialOnly } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UpdateApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
@@ -33,6 +33,7 @@ import { ApiBody } from '@nestjs/swagger';
 
 @ApiTags('Classes')
 @Controller('classes')
+@ManagerialOnly()
 export class ClassesController {
   constructor(private readonly classesService: ClassesService) {}
 
@@ -317,7 +318,8 @@ export class ClassesController {
   @Permissions(PERMISSIONS.CLASSES.UPDATE)
   @ApiOperation({
     summary: 'Update absentee payment policy for a class',
-    description: 'Set STRICT, FLEXIBLE, or MANUAL policy for handling absent students'
+    description:
+      'Set STRICT, FLEXIBLE, or MANUAL policy for handling absent students',
   })
   @ApiParam({ name: 'classId', description: 'Class ID' })
   @ApiResponse({

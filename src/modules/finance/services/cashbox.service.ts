@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CashboxRepository } from '../repositories/cashbox.repository';
 import { CashTransactionRepository } from '../repositories/cash-transaction.repository';
+import {
+  TransactionRepository,
+  TransactionStatement,
+} from '../repositories/transaction.repository';
+import { Transaction } from '../entities/transaction.entity';
+import { CashTransaction } from '../entities/cash-transaction.entity';
 import { Cashbox } from '../entities/cashbox.entity';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
@@ -11,6 +17,14 @@ import {
 import { Transactional } from '@nestjs-cls/transactional';
 import { QueryFailedError } from 'typeorm';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import {
+  CenterTreasuryStatsDto,
+  CenterStatementItemDto,
+  CenterCashStatementItemDto,
+} from '../dto/center-revenue-stats.dto';
+import { Pagination } from '@/shared/common/types/pagination.types';
+import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
+import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 
 const MAX_RETRIES = 3;
 
@@ -21,6 +35,7 @@ export class CashboxService extends BaseService {
   constructor(
     private readonly cashboxRepository: CashboxRepository,
     private readonly cashTransactionRepository: CashTransactionRepository,
+    private readonly transactionRepository: TransactionRepository,
   ) {
     super();
   }
@@ -90,75 +105,6 @@ export class CashboxService extends BaseService {
   }
 
   /**
-   * Record audit timestamp
-   */
-  @Transactional()
-  async audit(cashboxId: string): Promise<Cashbox> {
-    const cashbox = await this.cashboxRepository.findOneOrThrow(cashboxId);
-    cashbox.lastAuditedAt = new Date();
-    return this.cashboxRepository.saveCashbox(cashbox);
-  }
-
-  /**
-   * Get daily cash collection summary for branch
-   * Shows cash collected vs session admissions for reconciliation
-   */
-  async getDailySummary(
-    branchId: string,
-    date: Date,
-    actor: ActorUser,
-  ): Promise<any> {
-    // Get start and end of the specified date
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    // Get cashbox for this branch
-    const cashbox = await this.cashboxRepository.findByBranchId(branchId);
-
-    if (!cashbox) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.cashbox',
-      });
-    }
-
-    // Get all cash transactions for this branch on the specified date
-    const { count: cashPaymentsCount, totalAmount: cashCollected } =
-      await this.cashTransactionRepository.getCashSummaryForBranch(
-        branchId,
-        startOfDay,
-        endOfDay,
-      );
-
-    // TODO: Get session admissions count for the same period
-    // This would require joining with student_session_payments
-    // For now, assume each cash transaction = 1 admission
-    const sessionAdmissions = cashPaymentsCount;
-
-    // Expected cash should equal cash collected (assuming no manual adjustments)
-    const expectedCash = cashCollected;
-
-    // Check if they match
-    const status =
-      Math.abs(cashCollected - expectedCash) < 0.01 ? 'MATCHED' : 'MISMATCH';
-
-    const summary = {
-      branchId,
-      date: date.toISOString().split('T')[0],
-      cashCollected,
-      sessionAdmissions,
-      expectedCash,
-      cashboxBalance: parseFloat(cashbox.balance.toString()),
-      status,
-      summary: `${sessionAdmissions} session admission${sessionAdmissions !== 1 ? 's' : ''} collected ${cashCollected.toFixed(2)} EGP. Drawer balance: ${cashbox.balance.toString()} EGP.`,
-    };
-
-    return summary;
-  }
-
-  /**
    * Paginate cashboxes with optional filtering
    */
   async paginateCashboxes(paginationDto: any, actor: ActorUser): Promise<any> {
@@ -175,5 +121,44 @@ export class CashboxService extends BaseService {
     };
 
     return mockResult;
+  }
+
+  /**
+   * Get center treasury statistics including cashbox and wallet balances across all branches
+   */
+  async getCenterTreasuryStats(
+    centerId: string,
+  ): Promise<CenterTreasuryStatsDto> {
+    return this.cashboxRepository.getCenterTreasuryStats(centerId);
+  }
+
+  /**
+   * Get center wallet statement - all wallet transactions across branches in center
+   */
+  async getCenterStatement(
+    centerId: string,
+    paginationDto: PaginateTransactionDto,
+    branchId?: string,
+  ): Promise<Pagination<CenterStatementItemDto>> {
+    return this.cashboxRepository.getCenterStatement(
+      centerId,
+      paginationDto,
+      branchId,
+    );
+  }
+
+  /**
+   * Get center cash statement - all cash transactions across branches in center
+   */
+  async getCenterCashStatement(
+    centerId: string,
+    paginationDto: PaginateTransactionDto,
+    branchId?: string,
+  ): Promise<Pagination<CenterCashStatementItemDto>> {
+    return this.cashboxRepository.getCenterCashStatement(
+      centerId,
+      paginationDto,
+      branchId,
+    );
   }
 }

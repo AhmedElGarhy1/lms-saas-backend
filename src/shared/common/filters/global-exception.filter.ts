@@ -5,6 +5,8 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  Inject,
+  Optional,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import {
@@ -21,6 +23,8 @@ import { Locale } from '@/shared/common/enums/locale.enum';
 import { TranslationMessage } from '../types/translation.types';
 import { TranslatedErrorResponse } from '../types/translated-response.types';
 import { TRANSLATION_KEYS } from '../constants/database-errors.constants';
+import { EnterpriseLoggerService } from '../services/enterprise-logger.service';
+import { RequestContextService } from '../services/request-context.service';
 
 /**
  * Global exception filter
@@ -31,7 +35,15 @@ import { TRANSLATION_KEYS } from '../constants/database-errors.constants';
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger: Logger = new Logger(GlobalExceptionFilter.name);
 
-  constructor(private readonly translationService: TranslationService) {}
+  constructor(
+    private readonly translationService: TranslationService,
+    @Optional()
+    @Inject(EnterpriseLoggerService)
+    private readonly enterpriseLogger?: EnterpriseLoggerService,
+    @Optional()
+    @Inject(RequestContextService)
+    private readonly requestContext?: RequestContextService,
+  ) {}
 
   /**
    * Main exception handler
@@ -166,8 +178,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     errorResponse.method = request.method;
     errorResponse.timestamp = new Date().toISOString();
 
-    // Log the error
-    this.logError(exception, request, errorResponse);
+    // Log the error using enterprise logger if available, fallback to standard logging
+    if (this.enterpriseLogger && this.requestContext) {
+      this.logErrorEnterprise(exception, request, errorResponse);
+    } else {
+      this.logError(exception, request, errorResponse);
+    }
 
     // Translate TranslationMessage objects if they weren't translated by the interceptor
     // This is a fallback in case the interceptor didn't run or didn't translate
@@ -221,9 +237,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       response.status(status).json(errorResponse);
     } else {
       // Response already sent, just log the error
-      this.logger.error(
-        `Cannot send error response: headers already sent. Error: ${JSON.stringify(errorResponse)}`,
-      );
+      try {
+        this.logger.error(
+          `Cannot send error response: headers already sent. Error: ${JSON.stringify(errorResponse)}`,
+        );
+      } catch (loggerError) {
+        // Emergency fallback for headers sent logging
+        console.error('CRITICAL: Failed to log headers-sent error', {
+          errorResponse: errorResponse?.toString?.() || 'undefined',
+          loggerError: loggerError?.message,
+        });
+      }
     }
   }
 
@@ -286,13 +310,22 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     exception: unknown,
   ): EnhancedErrorResponse {
     // Log the exception for debugging (system log - stays in English)
-    if (exception instanceof Error) {
-      this.logger.error(
-        `Internal server error - ${exception.message}`,
-        exception.stack,
-      );
-    } else {
-      this.logger.error('Internal server error', String(exception));
+    try {
+      if (exception instanceof Error) {
+        const message = exception.message || 'Unknown error';
+        const stack = exception.stack || 'No stack trace available';
+        this.logger.error(`Internal server error - ${message}`, stack);
+      } else {
+        // Handle cases where exception is undefined, null, or not an Error instance
+        const errorMessage = exception
+          ? String(exception)
+          : 'Unknown error (exception is undefined/null)';
+        this.logger.error('Internal server error', errorMessage);
+      }
+    } catch (loggerError) {
+      // Fallback logging if the main logger fails
+      console.error('Failed to log internal server error:', loggerError);
+      console.error('Original exception:', exception);
     }
     // Store TranslationMessage object (translation happens in interceptor)
     // Use type assertion since TypeScript can't narrow conditional type with variable key
@@ -326,86 +359,145 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     return errorCodes[status] || ErrorCode.UNKNOWN_ERROR;
   }
 
+  /**
+   * Enterprise-grade error logging with comprehensive context
+   */
+  private logErrorEnterprise(
+    exception: unknown,
+    request: Request,
+    errorResponse: EnhancedErrorResponse,
+  ): void {
+    // Extract user from request if available
+    const user = (request as any).actor;
+
+    // Use enterprise logger for comprehensive error logging
+    this.enterpriseLogger!.logHttpException(
+      exception,
+      request,
+      errorResponse.statusCode,
+      user,
+    );
+  }
+
+  /**
+   * Legacy error logging method (kept for backward compatibility)
+   */
   private logError(
     exception: unknown,
     request: Request,
     errorResponse: EnhancedErrorResponse,
   ): void {
-    let logMessage: string;
+    try {
+      let logMessage: string;
 
-    // Extract message key from TranslationMessage object
-    if (
-      typeof errorResponse.message === 'object' &&
-      'key' in errorResponse.message
-    ) {
-      const translationMsg = errorResponse.message;
-      // If exception has translationKey, translate to English for logging
-      if (exception instanceof HttpException) {
-        const translatableException =
-          exception as unknown as TranslatableException;
-        if (translatableException.translationKey) {
-          // this.translateForLogging() automatically resolves nested translation keys
-          logMessage = this.translateForLogging(
-            translatableException.translationKey,
-            translatableException.translationArgs,
-          );
+      // Extract message key from TranslationMessage object
+      if (
+        typeof errorResponse?.message === 'object' &&
+        errorResponse.message !== null &&
+        'key' in errorResponse.message
+      ) {
+        const translationMsg = errorResponse.message;
+        // If exception has translationKey, translate to English for logging
+        if (exception instanceof HttpException) {
+          const translatableException =
+            exception as unknown as TranslatableException;
+          if (translatableException.translationKey) {
+            // this.translateForLogging() automatically resolves nested translation keys
+            logMessage = this.translateForLogging(
+              translatableException.translationKey,
+              translatableException.translationArgs,
+            );
+          } else {
+            logMessage = translationMsg.key;
+          }
         } else {
           logMessage = translationMsg.key;
         }
       } else {
-        logMessage = translationMsg.key;
+        // Fallback for unexpected message format
+        logMessage = String(errorResponse?.message || 'Unknown error');
       }
-    } else {
-      // Fallback for unexpected message format
-      logMessage = String(errorResponse.message);
-    }
 
-    const errorContext = {
-      method: request.method,
-      url: request.url,
-      userAgent: request.get('User-Agent'),
-      ip: request.ip,
-      statusCode: errorResponse.statusCode,
-      message: logMessage, // Use English translation for logging
-    };
+      const errorContext = {
+        method: request?.method || 'UNKNOWN',
+        url: request?.url || 'UNKNOWN',
+        userAgent: request?.get ? request.get('User-Agent') : 'UNKNOWN',
+        ip: request?.ip || 'UNKNOWN',
+        statusCode: errorResponse?.statusCode || 500,
+        message: logMessage, // Use English translation for logging
+      };
 
-    if (exception instanceof HttpException) {
-      // Check if there's an original error/stack preserved
-      const originalError = (exception as any).originalError;
-      const originalStack = (exception as any).originalStack;
+      if (exception instanceof HttpException) {
+        // Check if there's an original error/stack preserved
+        const originalError = (exception as any).originalError;
+        const originalStack = (exception as any).originalStack;
 
-      if (originalStack || originalError) {
-        // Log with full stack trace if available
-        this.logger.error(
-          `HTTP Exception occurred - ${JSON.stringify(errorContext)}`,
-          originalStack ||
-            (originalError instanceof Error
-              ? originalError.stack
-              : String(originalError)),
-        );
-      } else if (exception instanceof Error && exception.stack) {
-        // Log with exception's own stack trace
-        this.logger.error(
-          `HTTP Exception occurred - ${JSON.stringify(errorContext)}`,
-          exception.stack,
-        );
+        try {
+          if (originalStack || originalError) {
+            // Log with full stack trace if available
+            this.logger.error(
+              `HTTP Exception occurred - ${JSON.stringify(errorContext)}`,
+              originalStack ||
+                (originalError instanceof Error
+                  ? originalError.stack
+                  : String(originalError)),
+            );
+          } else if (exception instanceof Error && exception.stack) {
+            // Log with exception's own stack trace
+            this.logger.error(
+              `HTTP Exception occurred - ${JSON.stringify(errorContext)}`,
+              exception.stack,
+            );
+          } else {
+            // Fallback to warn if no stack trace available
+            this.logger.warn(
+              `HTTP Exception occurred - ${JSON.stringify(errorContext)}`,
+            );
+          }
+        } catch (loggerError) {
+          // Emergency fallback for HttpException logging
+          console.error('CRITICAL: Failed to log HttpException', {
+            errorContext,
+            exception: exception?.message || String(exception),
+            loggerError: loggerError?.message,
+          });
+        }
       } else {
-        // Fallback to warn if no stack trace available
-        this.logger.warn(
-          `HTTP Exception occurred - ${JSON.stringify(errorContext)}`,
-        );
+        try {
+          if (exception instanceof Error) {
+            this.logger.error(
+              `Unexpected error occurred - ${JSON.stringify(errorContext)}`,
+              exception.stack || String(exception),
+            );
+          } else {
+            this.logger.error(
+              `Unexpected error occurred - ${JSON.stringify({ ...errorContext, error: String(exception) })}`,
+            );
+          }
+        } catch (loggerError) {
+          // Emergency fallback for unexpected error logging
+          console.error('CRITICAL: Failed to log unexpected error', {
+            errorContext,
+            exception: String(exception),
+            loggerError: loggerError?.message,
+          });
+        }
       }
-    } else {
-      if (exception instanceof Error) {
-        this.logger.error(
-          `Unexpected error occurred - ${JSON.stringify(errorContext)}`,
-          exception.stack || String(exception),
-        );
-      } else {
-        this.logger.error(
-          `Unexpected error occurred - ${JSON.stringify({ ...errorContext, error: String(exception) })}`,
-        );
-      }
+    } catch (criticalError) {
+      // Ultimate fallback - prevents recursive error loop
+      console.error(
+        '🚨 CRITICAL: Exception filter logError method failed completely',
+        {
+          originalException: exception?.toString?.() || String(exception),
+          errorResponse: errorResponse?.toString?.() || 'undefined',
+          request: {
+            method: request?.method,
+            url: request?.url,
+            ip: request?.ip,
+          },
+          criticalError: criticalError?.message || String(criticalError),
+        },
+      );
     }
   }
 
@@ -428,10 +520,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         resolvedArgs as PathArgs<P>,
       );
     } catch (error) {
-      this.logger.warn(
-        `Translation failed for key: ${translationMsg.key}`,
-        error,
-      );
+      try {
+        this.logger.warn(
+          `Translation failed for key: ${translationMsg.key}`,
+          error,
+        );
+      } catch (loggerError) {
+        // Emergency fallback for translation error logging
+        console.error('CRITICAL: Failed to log translation error', {
+          translationKey: translationMsg.key,
+          originalError: error?.message,
+          loggerError: loggerError?.message,
+        });
+      }
       return translationMsg.key; // Fallback to key if translation fails
     }
   }

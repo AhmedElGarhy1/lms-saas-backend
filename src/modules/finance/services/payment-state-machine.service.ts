@@ -6,7 +6,10 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { Payment } from '../entities/payment.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { TransitionType } from '../enums/transition-type.enum';
-import { PaymentStateMachine, PaymentTransition } from '../state-machines/payment-state-machine';
+import {
+  PaymentStateMachine,
+  PaymentTransition,
+} from '../state-machines/payment-state-machine';
 import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 
 @Injectable()
@@ -33,24 +36,29 @@ export class PaymentStateMachineService {
     const payment = await this.paymentRepository.findOneOrThrow(paymentId);
 
     // 2. Validate the transition exists
-    const transition = PaymentStateMachine.getTransition(payment.status, targetStatus);
+    const transition = PaymentStateMachine.getTransition(
+      payment.status,
+      targetStatus,
+    );
     if (!transition) {
       throw new Error(
         `Invalid transition: ${payment.status} → ${targetStatus}. ` +
-        `Valid transitions from ${payment.status}: ${PaymentStateMachine.getValidTransitionsFrom(payment.status)
-          .map(t => t.to)
-          .join(', ')}`
+          `Valid transitions from ${payment.status}: ${PaymentStateMachine.getValidTransitionsFrom(
+            payment.status,
+          )
+            .map((t) => t.to)
+            .join(', ')}`,
       );
     }
 
     // 3. Validate permissions for override transitions
     if (transition.type === TransitionType.OVERRIDE) {
-      const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(userProfileId);
+      const isSuperAdmin =
+        await this.accessControlHelperService.isSuperAdmin(userProfileId);
       if (!isSuperAdmin) {
-        throw new InsufficientPermissionsException(
-          't.messages.accessDenied',
-          { resource: 'superadmin override' }
-        );
+        throw new InsufficientPermissionsException('t.messages.accessDenied', {
+          resource: 'superadmin override',
+        });
       }
     }
 
@@ -58,11 +66,17 @@ export class PaymentStateMachineService {
     const updatedPayment = await this.executeTransition(payment, transition);
 
     // 5. Log the status change
-    await this.logStatusChange(payment, updatedPayment, transition, userProfileId, reason);
+    await this.logStatusChange(
+      payment,
+      updatedPayment,
+      transition,
+      userProfileId,
+      reason,
+    );
 
     this.logger.log(
       `Payment ${paymentId} status changed: ${payment.status} → ${updatedPayment.status} ` +
-      `(${transition.type}) by user ${userProfileId}`
+        `(${transition.type}) by user ${userProfileId}`,
     );
 
     return updatedPayment;
@@ -91,7 +105,11 @@ export class PaymentStateMachineService {
   ): Promise<Payment> {
     switch (transition.businessLogic) {
       case 'completePayment':
-        return this.paymentService.completePayment(payment.id);
+        // For cash payments, the paidByProfileId is the sender (who physically paid)
+        // For wallet payments, we still need to provide it for consistency
+        const paidByProfileId = payment.senderType === 'USER_PROFILE' ? payment.senderId :
+                               payment.source === 'CASH' ? payment.senderId : payment.senderId;
+        return this.paymentService.completePayment(payment.id, paidByProfileId);
 
       case 'cancelPayment':
         return this.paymentService.cancelPayment(payment.id);
@@ -100,7 +118,9 @@ export class PaymentStateMachineService {
         return this.paymentService.refundInternalPayment(payment.id);
 
       default:
-        throw new Error(`Unknown standard transition logic: ${transition.businessLogic}`);
+        throw new Error(
+          `Unknown standard transition logic: ${transition.businessLogic}`,
+        );
     }
   }
 

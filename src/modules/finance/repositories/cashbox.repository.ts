@@ -3,7 +3,33 @@ import { Cashbox } from '../entities/cashbox.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
+import {
+  CenterTreasuryStatsDto,
+  CenterRevenueBranchDetailDto,
+  CenterStatementItemDto,
+  CenterCashStatementItemDto,
+} from '../dto/center-revenue-stats.dto';
+import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
+import { Money } from '@/shared/common/utils/money.util';
+import { Pagination } from '@/shared/common/types/pagination.types';
+import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
 
+import { Transaction } from '../entities/transaction.entity';
+import { CashTransaction } from '../entities/cash-transaction.entity';
+import { CashTransactionRepository } from './cash-transaction.repository';
+import { TransactionRepository } from './transaction.repository';
+
+// Define type for transaction with computed name fields
+type TransactionWithNames = Transaction & {
+  fromName?: string;
+  toName?: string;
+};
+
+// Define type for cash transaction with computed name fields
+type CashTransactionWithNames = CashTransaction & {
+  paidByName?: string;
+  receivedByName: string;
+};
 @Injectable()
 export class CashboxRepository extends BaseRepository<Cashbox> {
   constructor(
@@ -57,5 +83,318 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
     cashbox.balance = balance;
     return this.saveCashbox(cashbox);
   }
-}
 
+  /**
+   * Get center treasury statistics including cashbox and wallet balances across all branches
+   */
+  async getCenterTreasuryStats(
+    centerId: string,
+  ): Promise<CenterTreasuryStatsDto> {
+    // Single optimized query to get all branches with their aggregated balances
+    const query = this.getRepository()
+      .manager.createQueryBuilder()
+      .select([
+        'b.id as branchId',
+        'b.city as branchName',
+        'COALESCE(SUM(c.balance), 0) as cashboxBalance',
+        'COALESCE(SUM(w.balance), 0) as walletBalance',
+      ])
+      .from('branches', 'b')
+      .leftJoin('cashboxes', 'c', 'c.branchId = b.id')
+      .leftJoin(
+        'wallets',
+        'w',
+        'w.ownerId = b.id AND w.ownerType = :branchType',
+        { branchType: WalletOwnerType.BRANCH },
+      )
+      .where('b.centerId = :centerId', { centerId })
+      .andWhere('b.isActive = true')
+      .groupBy('b.id')
+      .addGroupBy('b.city')
+      .orderBy('b.id');
+
+    const results = await query.getRawMany();
+
+    if (results.length === 0) {
+      return {
+        total: Money.from(0),
+        cashbox: Money.from(0),
+        wallet: Money.from(0),
+        details: [],
+      };
+    }
+
+    // Calculate totals and build details
+    let totalCashbox = Money.from(0);
+    let totalWallet = Money.from(0);
+    const details: CenterRevenueBranchDetailDto[] = [];
+
+    for (const result of results) {
+      // Note: PostgreSQL returns lowercase column names
+      const cashboxBalance = Money.from(result.cashboxbalance || 0);
+      const walletBalance = Money.from(result.walletbalance || 0);
+
+      totalCashbox = totalCashbox.add(cashboxBalance);
+      totalWallet = totalWallet.add(walletBalance);
+
+      details.push({
+        branchId: result.branchid,
+        branchName: result.branchname,
+        cashbox: cashboxBalance,
+        wallet: walletBalance,
+      });
+    }
+
+    const total = totalCashbox.add(totalWallet);
+
+    return {
+      total,
+      cashbox: totalCashbox,
+      wallet: totalWallet,
+      details,
+    };
+  }
+
+  /**
+   * Get center wallet statement - all wallet transactions across branches in center
+   */
+
+  async getCenterStatement(
+    centerId: string,
+    paginationDto: PaginateTransactionDto,
+    branchId?: string,
+  ): Promise<Pagination<CenterStatementItemDto>> {
+    // Clean query using COALESCE for readable names
+    let queryBuilder = this.getRepository()
+      .manager.createQueryBuilder(Transaction, 'tx')
+      .select('tx') // Explicitly select the transaction data
+      .leftJoin('tx.fromWallet', 'fromWallet')
+      .leftJoin('tx.toWallet', 'toWallet')
+
+      // Joins for "From" side
+      .leftJoin(
+        'user_profiles',
+        'fromUserProfile',
+        'fromWallet.ownerId = fromUserProfile.id AND fromWallet.ownerType = :userProfileType',
+      )
+      .leftJoin('users', 'fromUser', 'fromUserProfile.userId = fromUser.id')
+      .leftJoin(
+        'branches',
+        'fromBranch',
+        'fromWallet.ownerId = fromBranch.id AND fromWallet.ownerType = :branchType',
+      )
+
+      // Joins for "To" side
+      .leftJoin(
+        'user_profiles',
+        'toUserProfile',
+        'toWallet.ownerId = toUserProfile.id AND toWallet.ownerType = :userProfileType',
+      )
+      .leftJoin('users', 'toUser', 'toUserProfile.userId = toUser.id')
+      .leftJoin(
+        'branches',
+        'toBranch',
+        'toWallet.ownerId = toBranch.id AND toWallet.ownerType = :branchType',
+      )
+
+      // Find transactions where branch wallets are involved
+      .where(
+        '(fromBranch.centerId = :centerId OR toBranch.centerId = :centerId)',
+      )
+      .andWhere('(fromBranch.isActive IS NULL OR fromBranch.isActive = true)')
+      .andWhere('(toBranch.isActive IS NULL OR toBranch.isActive = true)')
+      // Explicit condition to return only one transaction record per business transaction
+      // and ensure balanceAfter represents branch wallet balance
+      .andWhere(
+        `
+           ((toWallet.ownerId = toBranch.id AND toWallet.ownerType = :branchType AND tx.amount > 0)
+            OR
+            (fromWallet.ownerId = fromBranch.id AND fromWallet.ownerType = :branchType AND tx.amount < 0))`,
+      )
+
+      // Select human-readable names using COALESCE
+      .addSelect('COALESCE(fromUser.name, fromBranch.city)', 'from_name')
+      .addSelect('COALESCE(toUser.name, toBranch.city)', 'to_name')
+
+      .setParameters({
+        centerId,
+        branchType: WalletOwnerType.BRANCH,
+        userProfileType: WalletOwnerType.USER_PROFILE,
+      });
+
+    // Optional branch filter
+    if (branchId) {
+      queryBuilder = queryBuilder.andWhere(
+        '(fromBranch.id = :branchId OR toBranch.id = :branchId)',
+        { branchId },
+      );
+    }
+
+    // Get paginated results with computed fields (names) using TransactionRepository
+    const transactionRepo = new TransactionRepository(this.txHost);
+    const result = (await transactionRepo.paginate(
+      paginationDto,
+      {
+        searchableColumns: [], // No search for transactions
+        sortableColumns: ['createdAt', 'type', 'amount'],
+        defaultSortBy: ['createdAt', 'DESC'],
+      },
+      '', // Empty route - no links needed
+      queryBuilder,
+      {
+        includeComputedFields: true,
+        computedFieldsMapper: (
+          entity: Transaction,
+          raw: any,
+        ): TransactionWithNames => {
+          // Add computed name fields from COALESCE results
+          return {
+            ...entity,
+            fromName: raw.from_name,
+            toName: raw.to_name,
+          } as TransactionWithNames;
+        },
+      },
+    )) as Pagination<TransactionWithNames>;
+
+    // Transform to CenterStatementItemDto
+    const items: CenterStatementItemDto[] = result.items.map(
+      (transaction: TransactionWithNames) => ({
+        id: transaction.id,
+        createdAt: transaction.createdAt,
+        updatedAt: transaction.updatedAt,
+        createdBy: transaction.createdBy,
+        updatedBy: transaction.updatedBy,
+        fromWalletId: transaction.fromWalletId,
+        toWalletId: transaction.toWalletId,
+        amount: transaction.amount.toNumber(),
+        type: transaction.type,
+        correlationId: transaction.correlationId,
+        balanceAfter: transaction.balanceAfter.toNumber(),
+        fromName: transaction.fromName,
+        toName: transaction.toName,
+      }),
+    );
+
+    return {
+      ...result,
+      items,
+    };
+  }
+
+  /**
+   * Get center cash statement - all cash transactions across branches in center
+   */
+
+  async getCenterCashStatement(
+    centerId: string,
+    paginationDto: PaginateTransactionDto,
+    branchId?: string,
+  ): Promise<Pagination<CenterCashStatementItemDto>> {
+    // Build query with joins to get cash transaction and name information
+    let queryBuilder = this.getRepository()
+      .manager.createQueryBuilder(CashTransaction, 'ct')
+      .leftJoin('branches', 'b', 'ct.branchId = b.id')
+      // Join for paidByProfileId names (users)
+      .leftJoin(
+        'user_profiles',
+        'paidByProfile',
+        'ct.paidByProfileId = paidByProfile.id',
+      )
+      .leftJoin('users', 'paidByUser', 'paidByProfile.userId = paidByUser.id')
+      // Join for receivedByProfileId names (users)
+      .leftJoin(
+        'user_profiles',
+        'receivedByProfile',
+        'ct.receivedByProfileId = receivedByProfile.id',
+      )
+      .leftJoin(
+        'users',
+        'receivedByUser',
+        'receivedByProfile.userId = receivedByUser.id',
+      )
+      .where('b.centerId = :centerId', { centerId })
+      .andWhere('b.isActive = true')
+      // Select human-readable names
+      .addSelect('paidByUser.name', 'paidByName')
+      .addSelect('receivedByUser.name', 'receivedByName')
+      .setParameters({
+        centerId,
+      });
+
+    // Optional branch filter
+    if (branchId) {
+      queryBuilder = queryBuilder.andWhere('b.id = :branchId', { branchId });
+    }
+
+    // Apply filters from paginationDto
+    if (paginationDto.type) {
+      queryBuilder = queryBuilder.andWhere('ct.type = :type', {
+        type: paginationDto.type,
+      });
+    }
+
+    // Apply date filters
+    if (paginationDto.dateFrom) {
+      queryBuilder = queryBuilder.andWhere('ct.createdAt >= :dateFrom', {
+        dateFrom: paginationDto.dateFrom,
+      });
+    }
+    if (paginationDto.dateTo) {
+      queryBuilder = queryBuilder.andWhere('ct.createdAt < :dateTo', {
+        dateTo: paginationDto.dateTo,
+      });
+    }
+
+    // Get paginated results with computed fields (names) using CashTransactionRepository
+    const cashTransactionRepo = new CashTransactionRepository(this.txHost);
+    const result = (await cashTransactionRepo.paginate(
+      paginationDto,
+      {
+        searchableColumns: [], // No search for cash transactions
+        sortableColumns: ['createdAt', 'type', 'amount'],
+        defaultSortBy: ['createdAt', 'DESC'],
+      },
+      '', // Empty route - no links needed
+      queryBuilder,
+      {
+        includeComputedFields: true,
+        computedFieldsMapper: (
+          entity: CashTransaction,
+          raw: any,
+        ): CashTransactionWithNames => {
+          // Add computed name fields from joined data
+          return {
+            ...entity,
+            paidByName: raw.paidByName,
+            receivedByName: raw.receivedByName,
+          } as CashTransactionWithNames;
+        },
+      },
+    )) as Pagination<CashTransactionWithNames>;
+
+    // Transform to CenterCashStatementItemDto
+    const items: CenterCashStatementItemDto[] = result.items.map(
+      (transaction: CashTransactionWithNames) => ({
+        id: transaction.id,
+        createdAt: transaction.createdAt,
+        updatedAt: transaction.updatedAt,
+        branchId: transaction.branchId,
+        cashboxId: transaction.cashboxId,
+        amount: transaction.amount.toNumber(),
+        direction: transaction.direction,
+        type: transaction.type,
+        balanceAfter: transaction.balanceAfter.toNumber(),
+        paidByProfileId: transaction.paidByProfileId,
+        receivedByProfileId: transaction.receivedByProfileId,
+        paidByName: transaction.paidByName,
+        receivedByName: transaction.receivedByName,
+      }),
+    );
+
+    return {
+      ...result,
+      items,
+    };
+  }
+}

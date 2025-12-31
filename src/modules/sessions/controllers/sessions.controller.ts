@@ -24,14 +24,16 @@ import { TransitionStatusDto } from '../dto/transition-status.dto';
 import { SessionStatus } from '../enums/session-status.enum';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { GetUser } from '@/shared/common/decorators';
+import { GetUser, ManagerialOnly } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { SerializeOptions } from '@nestjs/common';
 import { SessionResponseDto } from '../dto/session-response.dto';
+import { NoContext } from '@/shared/common/decorators/no-context';
 
 @ApiTags('Sessions')
 @Controller('sessions')
+@ManagerialOnly()
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 
@@ -207,7 +209,8 @@ export class SessionsController {
     status: 400,
     description: 'Invalid date range or filters',
   })
-  @Permissions(PERMISSIONS.SESSIONS.READ)
+  // @Permissions(PERMISSIONS.SESSIONS.READ)
+  @NoContext()
   async getCalendarSessions(
     @Query() calendarDto: CalendarSessionsDto,
     @GetUser() actor: ActorUser,

@@ -50,14 +50,14 @@ export class PaymentRepository extends BaseRepository<Payment> {
   }
 
   /**
-   * Find payments by idempotency key and payer profile ID
+   * Find payments by idempotency key and sender ID
    */
   async findByIdempotencyKey(
     idempotencyKey: string,
-    payerProfileId: string,
+    senderId: string,
   ): Promise<Payment[]> {
     return this.getRepository().find({
-      where: { idempotencyKey, payerProfileId } as any,
+      where: { idempotencyKey, senderId } as any,
     });
   }
 

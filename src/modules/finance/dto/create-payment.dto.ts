@@ -29,12 +29,19 @@ export class CreatePaymentDto {
   amount: number;
 
   @ApiProperty({
-    description: 'Payer profile ID',
+    description: 'Sender ID',
     example: 'uuid',
   })
   @IsUUID(4)
-  @Exists(UserProfile)
-  payerProfileId: string;
+  senderId: string;
+
+  @ApiProperty({
+    description: 'Sender type',
+    enum: WalletOwnerType,
+    example: WalletOwnerType.USER_PROFILE,
+  })
+  @IsEnum(WalletOwnerType)
+  senderType: WalletOwnerType;
 
   @ApiProperty({
     description: 'Receiver ID',

@@ -61,12 +61,14 @@ export class CreateClassDto {
   teacherUserProfileId: string;
 
   @ApiProperty({
-    description: 'Branch ID',
+    description: 'Branch ID (optional, defaults to actor\'s branch)',
     example: 'uuid',
+    required: false,
   })
+  @IsOptional()
   @IsUUID(4)
   @BelongsToCenter(Branch)
-  branchId: string;
+  branchId?: string;
 
   @ApiProperty({
     description: 'Student payment strategy',

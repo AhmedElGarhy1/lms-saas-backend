@@ -1,21 +1,14 @@
 import { DataSource } from 'typeorm';
-import { Config } from './shared/config/config';
+import { getDatabaseConfig } from './shared/config/database.config';
 
 const migrationConfig = {
-  type: 'postgres' as const,
-  host: Config.database.host,
-  port: Config.database.port,
-  username: Config.database.username,
-  password: Config.database.password,
-  database: Config.database.name,
+  ...getDatabaseConfig(),
   synchronize: false,
   migrations: ['src/database/migrations/*.ts'],
   migrationsTableName: 'migrations',
-  entities: ['src/**/*.entity.ts'],
+  // Don't load entities for migrations - they can cause import issues
+  entities: [],
   logging: ['error', 'warn'],
-  extra: {
-    timezone: 'Z',
-  },
 };
 
 export default new DataSource(migrationConfig as any);

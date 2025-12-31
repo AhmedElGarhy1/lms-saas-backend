@@ -8,9 +8,11 @@ import { RequestImportOtpDto } from '../dto/request-import-otp.dto';
 import { VerifyUserImportDto } from '../dto/verify-user-import.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { RateLimit } from '@/modules/rate-limit/decorators/rate-limit.decorator';
+import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiTags('User Profile Import')
 @Controller('user-profiles/import')
+@ManagerialOnly()
 export class UserProfileImportController {
   constructor(
     private readonly userProfileImportService: UserProfileImportService,

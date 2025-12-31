@@ -11,31 +11,27 @@ import { PaymentService } from '../services/payment.service';
 import { PaginatePaymentDto } from '../dto/paginate-payment.dto';
 import { InitiatePaymentDto } from '../dto/initiate-payment.dto';
 import { RefundPaymentDto } from '../dto/refund-payment.dto';
+import { PaymentIdParamDto } from '../dto/payment-id-param.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { PaymentGatewayService } from '../adapters/payment-gateway.service';
-import { PaymentGatewayType, RefundPaymentResponse } from '../adapters/interfaces/payment-gateway.interface';
+import { RefundPaymentResponse } from '../adapters/interfaces/payment-gateway.interface';
 import { Payment } from '../entities/payment.entity';
-import { PaymentStatus } from '../enums/payment-status.enum';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { Money } from '@/shared/common/utils/money.util';
-import { RequestContext } from '@/shared/common/context/request.context';
-import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import {
-  InsufficientPermissionsException,
-  BusinessLogicException,
-} from '@/shared/common/exceptions/custom.exceptions';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
-import { NoContext } from '@/shared/common/decorators/no-context.decorator';
+import { ManagerialOnly, GetUser } from '@/shared/common/decorators';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
 
 @ApiTags('Payments')
 @ApiBearerAuth()
 @Controller('finance/payments')
+@ManagerialOnly()
 export class PaymentsController {
   constructor(
     private readonly paymentService: PaymentService,
     private readonly paymentGatewayService: PaymentGatewayService,
-    private readonly accessControlHelperService: AccessControlHelperService,
   ) {}
 
   @Get(':id')
@@ -43,22 +39,14 @@ export class PaymentsController {
   @ApiParam({ name: 'id', description: 'Payment ID' })
   @ApiResponse({ status: 200, description: 'Payment retrieved successfully' })
   async getPayment(
-    @Param('id') id: string,
+    @Param() params: PaymentIdParamDto,
+    @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<Payment>> {
-    const payment = await this.paymentService.getPayment(id);
+    const payment = await this.paymentService.getPayment(params.id);
 
-    // Validate ownership (payer can view their own payments, or admin)
-    const { userProfileId } = RequestContext.get();
-    if (!userProfileId) {
-      throw new Error('User profile ID not found in context');
-    }
-
-    const isSuperAdmin =
-      await this.accessControlHelperService.isSuperAdmin(userProfileId);
-    const isAdmin =
-      await this.accessControlHelperService.isAdmin(userProfileId);
-
-    if (payment.payerProfileId !== userProfileId && !isSuperAdmin && !isAdmin) {
+    // @ManagerialOnly decorator at class level already ensures user is STAFF or ADMIN
+    // Additional ownership check: user can view their own payments
+    if (payment.senderId !== actor.userProfileId) {
       throw new InsufficientPermissionsException('t.messages.accessDenied');
     }
 
@@ -72,51 +60,12 @@ export class PaymentsController {
   }
 
 
-  @Post('initiate')
-  @Permissions(PERMISSIONS.FINANCE.MANAGE_FINANCE)
-  @ApiOperation({
-    summary: 'Initiate external payment',
-    description: 'Initiate a payment through an external payment gateway (e.g., Paymob)',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Payment initiated successfully',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid payment data or gateway error',
-  })
-  async initiatePayment(
-    @Body() dto: InitiatePaymentDto,
-  ): Promise<ControllerResponse<{ payment: Payment; checkoutUrl: string; gatewayPaymentId: string }>> {
-    const { userProfileId } = RequestContext.get();
-    if (!userProfileId) {
-      throw new Error('User profile ID not found in context');
-    }
-
-    const result = await this.paymentService.initiateExternalPayment(
-      new Money(dto.amount / 100), // Convert from cents to currency units
-      userProfileId,
-      dto.currency,
-      dto.description,
-      dto.gateway,
-      dto.idempotencyKey,
-    );
-
-    return {
-      data: result,
-      message: {
-        key: 't.messages.created',
-        args: { resource: 't.resources.payment' },
-      },
-    };
-  }
-
   @Post(':id/refund')
   @Permissions(PERMISSIONS.FINANCE.MANAGE_FINANCE)
   @ApiOperation({
     summary: 'Refund a payment',
-    description: 'Process a refund for a completed external payment through the payment gateway',
+    description:
+      'Process a refund for a completed external payment through the payment gateway',
   })
   @ApiResponse({
     status: 200,
@@ -127,11 +76,14 @@ export class PaymentsController {
     description: 'Invalid refund request or payment not refundable',
   })
   async refundPayment(
-    @Param('id') paymentId: string,
+    @Param() params: PaymentIdParamDto,
     @Body() dto: RefundPaymentDto,
-  ): Promise<ControllerResponse<{ payment: Payment; refund: RefundPaymentResponse }>> {
+    @GetUser() actor: ActorUser,
+  ): Promise<
+    ControllerResponse<{ payment: Payment; refund: RefundPaymentResponse }>
+  > {
     const result = await this.paymentService.refundPayment(
-      paymentId,
+      params.id,
       new Money(dto.amount),
       dto.reason,
     );
@@ -154,27 +106,11 @@ export class PaymentsController {
   @ApiResponse({ status: 200, description: 'Payments retrieved successfully' })
   async listPayments(
     @Query() dto: PaginatePaymentDto,
+    @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<Pagination<Payment>>> {
-    const { userProfileId } = RequestContext.get();
-    if (!userProfileId) {
-      throw new Error('User profile ID not found in context');
-    }
-
-    const isSuperAdmin =
-      await this.accessControlHelperService.isSuperAdmin(userProfileId);
-    const isAdmin =
-      await this.accessControlHelperService.isAdmin(userProfileId);
-
-    const hasManageFinancePermission = isSuperAdmin || isAdmin;
-
-    // If no MANAGE_FINANCE permission, user can only see their own payments
-    if (!hasManageFinancePermission) {
-      if (!dto.payerProfileId) {
-        dto.payerProfileId = userProfileId;
-      } else if (dto.payerProfileId !== userProfileId) {
-        throw new InsufficientPermissionsException('t.messages.accessDenied');
-      }
-    }
+    // @ManagerialOnly decorator at class level already ensures user is STAFF or ADMIN
+    // For listing, allow viewing all payments (managerial privilege)
+    // No additional filtering needed since all users here are managerial
 
     const result = await this.paymentService.paginatePayments(dto);
 

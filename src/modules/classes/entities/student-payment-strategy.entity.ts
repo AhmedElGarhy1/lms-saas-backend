@@ -1,7 +1,6 @@
 import { Entity, Column, OneToOne, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Class } from './class.entity';
-import { StudentPaymentUnit } from '../enums/student-payment-unit.enum';
 
 @Entity('student_payment_strategies')
 @Index(['classId'])
@@ -17,28 +16,30 @@ export class StudentPaymentStrategy extends BaseEntity {
   @Column({ type: 'uuid' })
   branchId: string; // Denormalized from Class for performance and snapshot
 
-  @Column({
-    type: 'enum',
-    enum: StudentPaymentUnit,
-  })
-  per: StudentPaymentUnit;
+  @Column({ type: 'boolean', default: true })
+  includePackage: boolean; // Allow package purchases for this class
+
+  @Column({ type: 'boolean', default: true })
+  includeSession: boolean; // Allow per-session payments
 
   @Column({
     type: 'decimal',
     precision: 10,
     scale: 2,
-    transformer: {
-      // Convert database string to number when reading
-      from: (value: string | null): number | null => {
-        return value === null ? null : parseFloat(value);
-      },
-      // Convert number to string when writing
-      to: (value: number | null): string | null => {
-        return value === null ? null : value.toString();
-      },
-    },
+    nullable: true,
   })
-  amount: number;
+  sessionPrice?: number; // Price per session (when includeSession = true)
+
+  @Column({ type: 'boolean', default: false })
+  includeMonth: boolean; // Allow monthly subscriptions
+
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+  })
+  monthPrice?: number; // Monthly subscription price (when includeMonth = true)
 
   // Relations
   @OneToOne(() => Class, (classEntity) => classEntity.studentPaymentStrategy, {

@@ -29,10 +29,12 @@ import { BulkDeleteCentersDto } from '../dto/bulk-delete-centers.dto';
 import { BulkRestoreCentersDto } from '../dto/bulk-restore-centers.dto';
 import { BulkToggleCenterStatusDto } from '../dto/bulk-toggle-center-status.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiBearerAuth()
 @ApiTags('Centers Actions')
 @Controller('centers/actions')
+@ManagerialOnly()
 export class CentersActionsController {
   constructor(
     private readonly centersService: CentersService,

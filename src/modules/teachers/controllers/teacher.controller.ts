@@ -11,9 +11,11 @@ import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { UserResponseDto } from '@/modules/user/dto/user-response.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { UserProfileIdParamDto } from '@/modules/user-profile/dto/user-profile-id-param.dto';
+import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiTags('Teachers')
 @Controller('teachers')
+@ManagerialOnly()
 export class TeacherController {
   constructor(private readonly teacherService: TeacherService) {}
 

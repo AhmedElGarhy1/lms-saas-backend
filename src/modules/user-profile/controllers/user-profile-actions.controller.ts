@@ -20,10 +20,12 @@ import { UserProfileService } from '../services/user-profile.service';
 import { UserService } from '@/modules/user/services/user.service';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
+import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiBearerAuth()
 @ApiTags('User Profiles Actions')
 @Controller('user-profiles/actions')
+@ManagerialOnly()
 export class UserProfileActionsController {
   constructor(
     private readonly userProfileService: UserProfileService,

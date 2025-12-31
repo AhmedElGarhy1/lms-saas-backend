@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PaymentRepository } from '../repositories/payment.repository';
 import { Payment } from '../entities/payment.entity';
+import { Wallet } from '../entities/wallet.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
 import { PaymentSource } from '../enums/payment-source.enum';
@@ -78,7 +79,7 @@ export class PaymentService extends BaseService {
    * Implements idempotency check to prevent duplicate payments
    *
    * @param amount - Payment amount (must be positive)
-   * @param payerProfileId - Profile ID of the person making payment
+   * @param senderId - Profile ID of the person making payment
    * @param receiverId - ID of payment recipient (wallet owner)
    * @param receiverType - Type of recipient (USER_PROFILE, CENTER, etc.)
    * @param reason - Business reason for payment (SESSION, TOPUP, etc.)
@@ -110,7 +111,8 @@ export class PaymentService extends BaseService {
   @Transactional()
   async createPayment(
     amount: Money,
-    payerProfileId: string,
+    senderId: string,
+    senderType: WalletOwnerType,
     receiverId: string,
     receiverType: WalletOwnerType,
     reason: PaymentReason,
@@ -125,7 +127,7 @@ export class PaymentService extends BaseService {
       const existingPayments =
         await this.paymentRepository.findByIdempotencyKey(
           idempotencyKey,
-          payerProfileId,
+          senderId,
         );
 
       if (existingPayments.length > 0) {
@@ -134,18 +136,18 @@ export class PaymentService extends BaseService {
       }
     }
 
-    // If source is WALLET, lock the amount in payer's wallet
+    // If source is WALLET, lock the amount in sender's wallet
     if (source === PaymentSource.WALLET) {
-      // Get payer's wallet (assuming payer is a UserProfile)
-      const payerWallet = await this.walletService.getWallet(
-        payerProfileId,
-        WalletOwnerType.USER_PROFILE,
+      // Get sender's wallet
+      const senderWallet = await this.walletService.getWallet(
+        senderId,
+        senderType,
       );
 
       // Pre-check: Check if balance is sufficient (before acquiring lock)
       // This prevents database constraint violation errors
-      const availableBalance = payerWallet.balance.subtract(
-        payerWallet.lockedBalance,
+      const availableBalance = senderWallet.balance.subtract(
+        senderWallet.lockedBalance,
       );
       if (availableBalance.lessThan(amount)) {
         throw new InsufficientFundsException('t.messages.businessLogicError', {
@@ -156,15 +158,16 @@ export class PaymentService extends BaseService {
       // Move amount from balance to lockedBalance
       // Use wallet service methods to ensure pessimistic locking
       await this.walletService.updateBalance(
-        payerWallet.id,
+        senderWallet.id,
         amount.multiply(-1),
       );
-      await this.walletService.updateLockedBalance(payerWallet.id, amount);
+      await this.walletService.updateLockedBalance(senderWallet.id, amount);
     }
 
     const payment = await this.paymentRepository.create({
       amount,
-      payerProfileId,
+      senderId,
+      senderType,
       receiverId,
       receiverType,
       status: PaymentStatus.PENDING,
@@ -216,7 +219,10 @@ export class PaymentService extends BaseService {
    * Complete payment - mark as completed, trigger balance updates, set paidAt
    */
   @Transactional()
-  async completePayment(paymentId: string): Promise<Payment> {
+  async completePayment(
+    paymentId: string,
+    paidByProfileId: string,
+  ): Promise<Payment> {
     const payment = await this.paymentRepository.findOneOrThrow(paymentId);
 
     if (payment.status !== PaymentStatus.PENDING) {
@@ -230,28 +236,145 @@ export class PaymentService extends BaseService {
 
     // If source is WALLET, deduct from lockedBalance (already locked)
     if (payment.source === PaymentSource.WALLET) {
-      const payerWallet = await this.walletService.getWallet(
-        payment.payerProfileId,
-        WalletOwnerType.USER_PROFILE,
+      const senderWallet = await this.walletService.getWallet(
+        payment.senderId,
+        payment.senderType,
       );
 
-      // Deduct from lockedBalance
-      await this.walletService.updateLockedBalance(
-        payerWallet.id,
+      // Deduct from lockedBalance and get updated sender wallet
+      const updatedSenderWallet = await this.walletService.updateLockedBalance(
+        senderWallet.id,
         payment.amount.multiply(-1),
       );
 
-      // Add to receiver wallet
-      await this.walletService.updateBalance(
+      // Get or create receiver wallet (handles USER_PROFILE, BRANCH, etc.)
+      const receiverWallet = await this.walletService.getWallet(
         payment.receiverId,
+        payment.receiverType as WalletOwnerType,
+      );
+
+      // Add to receiver wallet and get updated receiver wallet
+      const updatedReceiverWallet = await this.walletService.updateBalance(
+        receiverWallet.id,
         payment.amount,
       );
+
+      // Create transaction records for audit trail with correct balances
+      await this.createWalletTransactionRecords(
+        payment,
+        updatedSenderWallet,
+        updatedReceiverWallet,
+        payment.amount,
+      );
+    }
+
+    // Handle cash payments - create cash transaction records
+    if (payment.source === PaymentSource.CASH) {
+      await this.createCashTransactionRecords(payment, paidByProfileId);
     }
 
     // Update payment status
     payment.status = PaymentStatus.COMPLETED;
     payment.paidAt = new Date();
     return await this.paymentRepository.savePayment(payment);
+  }
+
+  /**
+   * Create transaction records for wallet payment completion
+   */
+  private async createWalletTransactionRecords(
+    payment: Payment,
+    senderWallet: Wallet,
+    receiverWallet: Wallet,
+    amount: Money,
+  ): Promise<void> {
+    const correlationId = payment.correlationId || randomUUID();
+
+    // Determine transaction type based on payment reason
+    let transactionType: TransactionType;
+    switch (payment.reason) {
+      case PaymentReason.SUBSCRIPTION:
+        transactionType = TransactionType.STUDENT_PAYMENT;
+        break;
+      case PaymentReason.SESSION:
+        transactionType = TransactionType.STUDENT_PAYMENT;
+        break;
+      case PaymentReason.INTERNAL_TRANSFER:
+        transactionType = TransactionType.INTERNAL_TRANSFER;
+        break;
+      case PaymentReason.TOPUP:
+        transactionType = TransactionType.TOPUP;
+        break;
+      default:
+        transactionType = TransactionType.INTERNAL_TRANSFER;
+    }
+
+    // Create debit transaction (sender)
+    await this.transactionService.createTransaction(
+      senderWallet.id,
+      receiverWallet.id,
+      amount.multiply(-1), // Negative for debit
+      transactionType,
+      correlationId,
+      senderWallet.balance, // Balance after debit
+    );
+
+    // Create credit transaction (receiver)
+    await this.transactionService.createTransaction(
+      senderWallet.id,
+      receiverWallet.id,
+      amount, // Positive for credit
+      transactionType,
+      correlationId,
+      receiverWallet.balance, // Balance after credit
+    );
+  }
+
+  /**
+   * Create cash transaction records for cash payment completion
+   */
+  private async createCashTransactionRecords(
+    payment: Payment,
+    paidByProfileId: string,
+  ): Promise<void> {
+    // For cash payments, we need to determine which branch and cashbox to use
+    // Since cash payments in billing go to branches, we'll use the receiverId as branchId
+    const branchId = payment.receiverId; // Branch that receives the payment
+
+    // Get or create cashbox for the branch
+    const cashbox = await this.cashboxService.getCashbox(branchId);
+
+    // Determine cash transaction type based on payment reason
+    let cashTransactionType: CashTransactionType;
+    switch (payment.reason) {
+      case PaymentReason.SUBSCRIPTION:
+        cashTransactionType = CashTransactionType.MONTHLY_PAYMENT;
+        break;
+      case PaymentReason.SESSION:
+        cashTransactionType = CashTransactionType.SESSION_PAYMENT;
+        break;
+      default:
+        cashTransactionType = CashTransactionType.DEPOSIT;
+    }
+
+    // Create cash transaction (money coming into cashbox)
+    const cashTransaction =
+      await this.cashTransactionService.createCashTransaction(
+        branchId,
+        cashbox.id,
+        payment.amount,
+        CashTransactionDirection.IN,
+        payment.createdByProfileId, // Who processed the payment (receivedBy)
+        cashTransactionType,
+        paidByProfileId, // Who paid the cash (payer)
+      );
+
+    // Update cashbox balance
+    await this.cashboxService.updateBalance(cashbox.id, payment.amount);
+
+    // Update payment with cash transaction reference
+    payment.referenceType = PaymentReferenceType.CASH_TRANSACTION;
+    payment.referenceId = cashTransaction.id;
   }
 
   /**
@@ -267,17 +390,22 @@ export class PaymentService extends BaseService {
 
     // Reverse balances for internal payments
     if (payment.source === PaymentSource.WALLET) {
-      const payerWallet = await this.walletService.getWallet(
-        payment.payerProfileId,
-        WalletOwnerType.USER_PROFILE,
+      const senderWallet = await this.walletService.getWallet(
+        payment.senderId,
+        payment.senderType,
       );
-      const updatedPayerWallet = await this.walletService.updateBalance(
-        payerWallet.id,
+      const updatedSenderWallet = await this.walletService.updateBalance(
+        senderWallet.id,
         payment.amount,
       );
 
-      const updatedReceiverWallet = await this.walletService.updateBalance(
+      // Get receiver wallet and reverse the amount
+      const receiverWallet = await this.walletService.getWallet(
         payment.receiverId,
+        payment.receiverType as WalletOwnerType,
+      );
+      const updatedReceiverWallet = await this.walletService.updateBalance(
+        receiverWallet.id,
         payment.amount.multiply(-1),
       );
 
@@ -287,7 +415,7 @@ export class PaymentService extends BaseService {
       // Transaction for original receiver (now giving back money)
       await this.transactionService.createTransaction(
         payment.receiverId, // fromWalletId (receiver giving back)
-        payment.payerProfileId, // toWalletId (payer getting back)
+        payment.senderId, // toWalletId (payer getting back)
         payment.amount.multiply(-1), // Negative amount (debit from receiver)
         TransactionType.INTERNAL_TRANSFER,
         correlationId,
@@ -297,11 +425,11 @@ export class PaymentService extends BaseService {
       // Transaction for original payer (getting money back)
       await this.transactionService.createTransaction(
         payment.receiverId, // fromWalletId (receiver giving back)
-        payment.payerProfileId, // toWalletId (payer getting back)
+        payment.senderId, // toWalletId (payer getting back)
         payment.amount, // Positive amount (credit to payer)
         TransactionType.INTERNAL_TRANSFER,
         correlationId,
-        updatedPayerWallet.balance, // Balance after for payer
+        updatedSenderWallet.balance, // Balance after for sender
       );
     } else if (payment.source === PaymentSource.CASH) {
       if (
@@ -334,14 +462,14 @@ export class PaymentService extends BaseService {
       payment.status === PaymentStatus.PENDING &&
       payment.source === PaymentSource.WALLET
     ) {
-      const payerWallet = await this.walletService.getWallet(
-        payment.payerProfileId,
-        WalletOwnerType.USER_PROFILE,
+      const senderWallet = await this.walletService.getWallet(
+        payment.senderId,
+        payment.senderType,
       );
 
       // Move amount from lockedBalance back to balance
       await this.walletService.moveFromLockedToBalance(
-        payerWallet.id,
+        senderWallet.id,
         payment.amount,
       );
     }
@@ -351,7 +479,7 @@ export class PaymentService extends BaseService {
       if (payment.source === PaymentSource.WALLET) {
         // Reverse wallet balances
         const payerWallet = await this.walletService.getWallet(
-          payment.payerProfileId,
+          payment.senderId,
           WalletOwnerType.USER_PROFILE,
         );
         await this.walletService.updateBalance(payerWallet.id, payment.amount);
@@ -382,76 +510,12 @@ export class PaymentService extends BaseService {
   }
 
   /**
-   * Process cash deposit - Student pays cash
-   * @param reason - Payment reason (SESSION for cash deposit, TOPUP for wallet top-up)
-   */
-  @Transactional()
-  async processCashDeposit(
-    branchId: string,
-    amount: Money,
-    payerProfileId: string,
-    receiverId: string,
-    receiverType: WalletOwnerType,
-    receivedByProfileId: string,
-    reason: PaymentReason,
-    idempotencyKey?: string,
-  ): Promise<Payment> {
-    // Idempotency check: If idempotencyKey provided, check for existing payment
-    if (idempotencyKey) {
-      const existingPayments =
-        await this.paymentRepository.findByIdempotencyKey(
-          idempotencyKey,
-          payerProfileId,
-        );
-
-      if (existingPayments.length > 0) {
-        // Return existing payment instead of creating duplicate
-        return existingPayments[0];
-      }
-    }
-    // Get or create cashbox
-    const cashbox = await this.cashboxService.getCashbox(branchId);
-
-    // Create cash transaction (Direction: IN)
-    const cashTransaction =
-      await this.cashTransactionService.createCashTransaction(
-        branchId,
-        cashbox.id,
-        amount,
-        CashTransactionDirection.IN,
-        receivedByProfileId,
-        CashTransactionType.DEPOSIT,
-      );
-
-    // Update cashbox balance
-    await this.cashboxService.updateBalance(cashbox.id, amount);
-
-    // Create payment (Status: COMPLETED, Source: CASH)
-    const payment = await this.paymentRepository.create({
-      amount,
-      payerProfileId,
-      receiverId,
-      receiverType,
-      status: PaymentStatus.COMPLETED,
-      reason,
-      source: PaymentSource.CASH,
-      referenceType: PaymentReferenceType.CASH_TRANSACTION,
-      referenceId: cashTransaction.id,
-      ...(idempotencyKey && { idempotencyKey }),
-      paidAt: new Date(),
-      createdByProfileId: this.getCreatedByProfileId(),
-    });
-
-    return payment;
-  }
-
-  /**
    * Process wallet topup - User adds credit to their own wallet via external payment
    */
   @Transactional()
   async processWalletTopup(
     amount: Money,
-    payerProfileId: string,
+    senderId: string,
     idempotencyKey?: string,
   ): Promise<Payment> {
     // Idempotency check: If idempotencyKey provided, check for existing payment
@@ -459,7 +523,7 @@ export class PaymentService extends BaseService {
       const existingPayments =
         await this.paymentRepository.findByIdempotencyKey(
           idempotencyKey,
-          payerProfileId,
+          senderId,
         );
 
       if (existingPayments.length > 0) {
@@ -470,7 +534,7 @@ export class PaymentService extends BaseService {
 
     // Get or create user's wallet
     const userWallet = await this.walletService.getWallet(
-      payerProfileId,
+      senderId,
       WalletOwnerType.USER_PROFILE,
     );
 
@@ -483,7 +547,7 @@ export class PaymentService extends BaseService {
     // Create payment (Status: COMPLETED, Source: EXTERNAL for external payment)
     const payment = await this.paymentRepository.create({
       amount,
-      payerProfileId,
+      senderId,
       receiverId: userWallet.id,
       receiverType: WalletOwnerType.USER_PROFILE,
       status: PaymentStatus.COMPLETED,
@@ -514,7 +578,7 @@ export class PaymentService extends BaseService {
   @Transactional()
   async initiateExternalPayment(
     amount: Money,
-    payerProfileId: string,
+    senderId: string,
     currency: string = 'EGP',
     description?: string,
     gatewayType: PaymentGatewayType = PaymentGatewayType.PAYMOB,
@@ -530,7 +594,7 @@ export class PaymentService extends BaseService {
       const existingPayments =
         await this.paymentRepository.findByIdempotencyKey(
           idempotencyKey,
-          payerProfileId,
+          senderId,
         );
 
       if (existingPayments.length > 0) {
@@ -554,8 +618,8 @@ export class PaymentService extends BaseService {
     // Create payment record with PENDING status
     const payment = await this.paymentRepository.create({
       amount,
-      payerProfileId,
-      receiverId: payerProfileId, // For topups, receiver is same as payer
+      senderId,
+      receiverId: senderId, // For topups, receiver is same as payer
       receiverType: WalletOwnerType.USER_PROFILE,
       status: PaymentStatus.PENDING,
       reason: PaymentReason.TOPUP,
@@ -573,7 +637,7 @@ export class PaymentService extends BaseService {
 
     try {
       // Fetch user profile data for customer details (with user relation)
-      const userProfile = await this.userProfileService.findOne(payerProfileId);
+      const userProfile = await this.userProfileService.findOne(senderId);
       // Load user relation if not already loaded
       const user =
         userProfile?.user ||
@@ -604,7 +668,7 @@ export class PaymentService extends BaseService {
         methodType,
         metadata: {
           paymentId: payment.id,
-          payerProfileId,
+          senderId,
           correlationId: payment.correlationId,
         },
       };
@@ -748,7 +812,7 @@ export class PaymentService extends BaseService {
 
       // For completed payments, credit the user's wallet
       const userWallet = await this.walletService.getWallet(
-        payment.payerProfileId,
+        payment.senderId,
         WalletOwnerType.USER_PROFILE,
       );
 
@@ -833,7 +897,7 @@ export class PaymentService extends BaseService {
     // CRITICAL SAFETY CHECK: Ensure student still has these funds in their wallet
     // If they've spent the money on sessions, we cannot refund it
     const userWallet = await this.walletService.getWallet(
-      payment.payerProfileId,
+      payment.senderId,
       WalletOwnerType.USER_PROFILE,
     );
 
@@ -886,7 +950,7 @@ export class PaymentService extends BaseService {
 
       // Debit the wallet (remove the refunded amount)
       const userWallet = await this.walletService.getWallet(
-        payment.payerProfileId,
+        payment.senderId,
         WalletOwnerType.USER_PROFILE,
       );
 
@@ -941,7 +1005,7 @@ export class PaymentService extends BaseService {
     fromWalletId: string,
     toWalletId: string,
     amount: Money,
-    payerProfileId: string,
+    senderId: string,
     receiverId: string,
     receiverType: WalletOwnerType,
   ): Promise<Payment> {
@@ -978,7 +1042,7 @@ export class PaymentService extends BaseService {
     // Create payment (Status: COMPLETED, Source: WALLET)
     const payment = await this.paymentRepository.create({
       amount,
-      payerProfileId,
+      senderId,
       receiverId,
       receiverType,
       status: PaymentStatus.COMPLETED,
@@ -1005,7 +1069,7 @@ export class PaymentService extends BaseService {
       amount: Money;
       type: TransactionType;
     }>,
-    payerProfileId: string,
+    senderId: string,
     receiverId: string,
     receiverType: WalletOwnerType,
     reason: PaymentReason,
@@ -1054,7 +1118,7 @@ export class PaymentService extends BaseService {
     // Create payment with correlationId
     const payment = await this.paymentRepository.create({
       amount: totalAmount,
-      payerProfileId,
+      senderId,
       receiverId,
       receiverType,
       status: PaymentStatus.COMPLETED,
@@ -1095,9 +1159,9 @@ export class PaymentService extends BaseService {
     if (dto.source) {
       queryBuilder.andWhere('payment.source = :source', { source: dto.source });
     }
-    if (dto.payerProfileId) {
-      queryBuilder.andWhere('payment.payerProfileId = :payerProfileId', {
-        payerProfileId: dto.payerProfileId,
+    if (dto.senderId) {
+      queryBuilder.andWhere('payment.senderId = :senderId', {
+        senderId: dto.senderId,
       });
     }
 

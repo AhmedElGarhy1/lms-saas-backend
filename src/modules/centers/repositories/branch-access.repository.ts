@@ -24,7 +24,7 @@ export class BranchAccessRepository extends BaseRepository<BranchAccess> {
 
   async grantBranchAccess(data: BranchAccessDto) {
     // Database unique constraint will handle uniqueness
-    return this.create({ ...data, isActive: true });
+    return this.create(data);
   }
 
   async revokeBranchAccess(data: BranchAccessDto) {

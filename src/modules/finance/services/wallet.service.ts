@@ -24,8 +24,7 @@ import { TransactionType } from '../enums/transaction-type.enum';
 import { randomUUID } from 'crypto';
 import { TransactionService } from './transaction.service';
 import { FinanceMonitorService } from '../monitoring/finance-monitor.service';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { FinanceActivityType } from '../enums/finance-activity-type.enum';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 const MAX_RETRIES = 3;
 
@@ -40,7 +39,6 @@ export class WalletService extends BaseService {
     private readonly userProfileRepository: UserProfileRepository,
     private readonly transactionService: TransactionService,
     private readonly financeMonitorService: FinanceMonitorService,
-    private readonly activityLogService: ActivityLogService,
   ) {
     super();
   }
@@ -110,34 +108,7 @@ export class WalletService extends BaseService {
       // Save within transaction (automatically committed by @Transactional)
       const savedWallet = await this.walletRepository.saveWallet(lockedWallet);
 
-      // Audit log the balance change
-      try {
-        const balanceChange = amount.toNumber();
-        const activityType =
-          balanceChange > 0
-            ? FinanceActivityType.WALLET_CREDITED
-            : FinanceActivityType.WALLET_DEBITED;
-
-        await this.activityLogService.log(
-          activityType,
-          {
-            walletId: walletId,
-            amount: Math.abs(balanceChange),
-            previousBalance: lockedWallet.balance.subtract(amount).toString(),
-            newBalance: savedWallet.balance.toString(),
-            ownerId: lockedWallet.ownerId,
-            ownerType: lockedWallet.ownerType,
-          },
-          lockedWallet.ownerId, // targetUserId
-        );
-      } catch (logError) {
-        // Log audit failure but don't fail the transaction
-        this.logger.warn('Failed to log wallet balance change activity', {
-          walletId,
-          amount: amount.toString(),
-          error: logError.message,
-        });
-      }
+      // Activity logging removed
 
       return savedWallet;
     } catch (error) {
@@ -263,13 +234,11 @@ export class WalletService extends BaseService {
    * Transactions where wallet is toWalletId are positive
    * Validates ownership: owner can view their own statement, admins can view any statement
    */
-  async getWalletStatement(walletId: string): Promise<TransactionStatement[]> {
+  async getWalletStatement(
+    walletId: string,
+    userProfileId: string,
+  ): Promise<TransactionStatement[]> {
     const wallet = await this.walletRepository.findOneOrThrow(walletId);
-    const { userProfileId } = RequestContext.get();
-
-    if (!userProfileId) {
-      throw new Error('User profile ID not found in context');
-    }
 
     // Owner can always access
     if (wallet.ownerId !== userProfileId) {
@@ -294,21 +263,19 @@ export class WalletService extends BaseService {
   async getWalletStatementPaginated(
     walletId: string,
     dto: PaginateTransactionDto,
+    actor: ActorUser,
   ): Promise<Pagination<TransactionStatement>> {
     const wallet = await this.walletRepository.findOneOrThrow(walletId);
-    const { userProfileId } = RequestContext.get();
-
-    if (!userProfileId) {
-      throw new Error('User profile ID not found in context');
-    }
 
     // Owner can always access
-    if (wallet.ownerId !== userProfileId) {
+    if (wallet.ownerId !== actor.userProfileId) {
       // Check if admin/super admin
-      const isSuperAdmin =
-        await this.accessControlHelperService.isSuperAdmin(userProfileId);
-      const isAdmin =
-        await this.accessControlHelperService.isAdmin(userProfileId);
+      const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+        actor.userProfileId,
+      );
+      const isAdmin = await this.accessControlHelperService.isAdmin(
+        actor.userProfileId,
+      );
 
       if (!isSuperAdmin && !isAdmin) {
         throw new InsufficientPermissionsException('t.messages.accessDenied');
@@ -509,44 +476,7 @@ export class WalletService extends BaseService {
       transferType,
     );
 
-    // Audit log the transfer
-    try {
-      await this.activityLogService.log(
-        FinanceActivityType.WALLET_TRANSFER_SENT,
-        {
-          amount: amount.toString(),
-          fromWalletId: fromWallet.id,
-          toWalletId: toWallet.id,
-          fromProfileId,
-          toProfileId,
-          correlationId,
-          senderBalanceAfter: updatedFromWallet.balance.toString(),
-          receiverBalanceAfter: updatedToWallet.balance.toString(),
-        },
-        fromProfile.userId, // targetUserId
-      );
-
-      await this.activityLogService.log(
-        FinanceActivityType.WALLET_TRANSFER_RECEIVED,
-        {
-          amount: amount.toString(),
-          fromWalletId: fromWallet.id,
-          toWalletId: toWallet.id,
-          fromProfileId,
-          toProfileId,
-          correlationId,
-          senderBalanceAfter: updatedFromWallet.balance.toString(),
-          receiverBalanceAfter: updatedToWallet.balance.toString(),
-        },
-        toProfile.userId, // targetUserId
-      );
-    } catch (logError) {
-      this.logger.warn('Failed to log wallet transfer activity', {
-        correlationId,
-        amount: amount.toString(),
-        error: logError.message,
-      });
-    }
+    // Activity logging removed
 
     return {
       fromWallet: updatedFromWallet,

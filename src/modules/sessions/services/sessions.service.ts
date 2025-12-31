@@ -10,8 +10,6 @@ import {
   SessionUpdatedEvent,
   SessionDeletedEvent,
   SessionCanceledEvent,
-  SessionCheckedInEvent,
-  SessionFinishedEvent,
 } from '../events/session.events';
 import { Session } from '../entities/session.entity';
 import { CreateSessionDto } from '../dto/create-session.dto';
@@ -93,7 +91,13 @@ export class SessionsService extends BaseService {
     paginateDto: PaginateSessionsDto,
     actor: ActorUser,
   ): Promise<Pagination<Session>> {
-    return this.sessionsRepository.paginateSessions(paginateDto, actor);
+    // If no branchId specified, default to actor's branch to show only relevant sessions
+    const dtoWithDefaults = {
+      ...paginateDto,
+      branchId: paginateDto.branchId || actor.branchId,
+    };
+
+    return this.sessionsRepository.paginateSessions(dtoWithDefaults, actor);
   }
 
   /**
@@ -257,12 +261,6 @@ export class SessionsService extends BaseService {
           await this.typeSafeEventEmitter.emitAsync(
             SessionEvents.UPDATED,
             new SessionUpdatedEvent(updatedSession, actor, actor.centerId!),
-          );
-
-          // Emit CHECKED_IN event to trigger automatic payment finalization
-          await this.typeSafeEventEmitter.emitAsync(
-            SessionEvents.CHECKED_IN,
-            new SessionCheckedInEvent(updatedSession, actor),
           );
 
           return updatedSession;

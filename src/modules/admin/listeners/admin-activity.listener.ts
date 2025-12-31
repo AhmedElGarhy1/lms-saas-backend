@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { AdminActivityType } from '../enums/admin-activity-type.enum';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
 import { AdminCreatedEvent } from '../events/admin.events';
 
@@ -13,20 +11,10 @@ import { AdminCreatedEvent } from '../events/admin.events';
  */
 @Injectable()
 export class AdminActivityListener {
-  constructor(private readonly activityLogService: ActivityLogService) {}
+  constructor() {}
 
   @OnEvent(AdminEvents.CREATED)
   async handleAdminCreated(event: AdminCreatedEvent) {
-    const { user, admin, roleId } = event;
-
-    await this.activityLogService.log(
-      AdminActivityType.ADMIN_CREATED,
-      {
-        adminId: admin.id,
-        phone: user.phone,
-        roleId: roleId,
-      },
-      user.id,
-    );
+    // Activity logging removed
   }
 }

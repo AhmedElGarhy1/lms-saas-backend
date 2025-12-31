@@ -18,10 +18,12 @@ import { BulkOperationResult } from '@/shared/common/services/bulk-operation.ser
 import { BulkDeleteLevelsDto } from '../dto/bulk-delete-levels.dto';
 import { BulkRestoreLevelsDto } from '../dto/bulk-restore-levels.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiBearerAuth()
 @ApiTags('Levels Actions')
 @Controller('levels/actions')
+@ManagerialOnly()
 export class LevelsActionsController {
   constructor(
     private readonly levelsService: LevelsService,

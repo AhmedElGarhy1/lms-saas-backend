@@ -6,8 +6,6 @@ import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Permission } from '@/modules/access-control/entities/permission.entity';
 import { ALL_PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
@@ -25,7 +23,6 @@ export class DatabaseSeeder {
 
   constructor(
     private readonly dataSource: DataSource,
-    private readonly activityLogService: ActivityLogService,
     private readonly moduleRef: ModuleRef,
   ) {}
 
@@ -300,40 +297,58 @@ export class DatabaseSeeder {
       const user = users[index];
       // Create both admin and user profile in a single transaction
       await this.dataSource.transaction(async (transactionalEntityManager) => {
-        // Generate UUIDs for both admin and profile
-        const adminResult = await transactionalEntityManager.query(
-          'SELECT gen_random_uuid() as id',
-        );
-        const profileResult = await transactionalEntityManager.query(
-          'SELECT gen_random_uuid() as id',
-        );
+        // Special handling for system user - use fixed UUIDs
+        const isSystemUser = user.id === SYSTEM_USER_ID;
 
-        const adminUuid = adminResult[0].id;
-        const profileUuid = profileResult[0].id;
+        let adminUuid: string;
+        let profileUuid: string;
+
+        if (isSystemUser) {
+          // Use fixed UUIDs for system user
+          adminUuid = SYSTEM_USER_ID;
+          profileUuid = SYSTEM_USER_ID;
+        } else {
+          // Generate random UUIDs for regular users
+          const adminResult = await transactionalEntityManager.query(
+            'SELECT gen_random_uuid() as id',
+          );
+          const profileResult = await transactionalEntityManager.query(
+            'SELECT gen_random_uuid() as id',
+          );
+
+          adminUuid = adminResult[0].id;
+          profileUuid = profileResult[0].id;
+        }
 
         // Temporarily disable foreign key constraints
         await transactionalEntityManager.query(
           'SET session_replication_role = replica',
         );
 
-        // Insert admin record first
-        await transactionalEntityManager.query(
-          `INSERT INTO admins (id, "createdBy", "createdAt", "updatedAt") 
-             VALUES ($1, $2, NOW(), NOW())`,
-          [adminUuid, user.createdBy],
-        );
+        // Skip admin record creation for system user (it doesn't need one)
+        if (!isSystemUser) {
+          // Insert admin record first
+          await transactionalEntityManager.query(
+            `INSERT INTO admins (id, "createdBy", "createdAt", "updatedAt")
+               VALUES ($1, $2, NOW(), NOW())`,
+            [adminUuid, user.createdBy],
+          );
+        }
 
-        // Insert user profile linking user to admin
+        // Insert user profile linking user to admin (or self for system user)
+        const profileCode = isSystemUser ? 'SYS001' : `ADMIN-25-00000${index + 1}`;
+        const profileRefId = isSystemUser ? SYSTEM_USER_ID : adminUuid;
+
         await transactionalEntityManager.query(
-          `INSERT INTO user_profiles (id, "userId", "profileType", "profileRefId", "createdBy", "createdAt", "updatedAt", "code") 
+          `INSERT INTO user_profiles (id, "userId", "profileType", "profileRefId", "createdBy", "createdAt", "updatedAt", "code")
            VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), $6)`,
           [
             profileUuid,
             user.id,
             ProfileType.ADMIN,
-            adminUuid,
+            profileRefId,
             user.createdBy,
-            `ADMIN-25-00000${index + 1}`,
+            profileCode,
           ],
         );
 
@@ -423,17 +438,7 @@ export class DatabaseSeeder {
           where: { userId: systemUser.id, profileType: ProfileType.ADMIN },
         });
 
-      await this.activityLogService.log(
-        UserActivityType.USER_CREATED,
-        {
-          targetProfileId: systemUserProfile?.id,
-          userPhone: systemUser.phone,
-          userName: systemUser.name,
-          createdBy,
-          seeder: true,
-        },
-        systemUser.id,
-      );
+      // Activity logging removed
     }
 
     // Log superadmin user creation activity
@@ -444,17 +449,7 @@ export class DatabaseSeeder {
           where: { userId: superAdmin.id, profileType: ProfileType.ADMIN },
         });
 
-      await this.activityLogService.log(
-        UserActivityType.USER_CREATED,
-        {
-          targetProfileId: superAdminProfile?.id,
-          userPhone: superAdmin.phone,
-          userName: superAdmin.name,
-          createdBy,
-          seeder: true,
-        },
-        superAdmin.id,
-      );
+      // Activity logging removed
     }
   }
 

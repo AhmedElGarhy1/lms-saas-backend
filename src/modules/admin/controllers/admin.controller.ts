@@ -1,6 +1,6 @@
 import { Controller, Get, Query, Param } from '@nestjs/common';
 import { ApiTags, ApiParam } from '@nestjs/swagger';
-import { ReadApiResponses } from '@/shared/common/decorators';
+import { AdminOnly, ReadApiResponses } from '@/shared/common/decorators';
 import { SerializeOptions } from '@nestjs/common';
 import { PaginateAdminDto } from '../dto/paginate-admin.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
@@ -14,6 +14,7 @@ import { UserProfileIdParamDto } from '@/modules/user-profile/dto/user-profile-i
 
 @ApiTags('Admin')
 @Controller('admin')
+@AdminOnly()
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 

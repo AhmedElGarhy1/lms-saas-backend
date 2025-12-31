@@ -3,9 +3,12 @@ import {
   Injectable,
   ArgumentMetadata,
   BadRequestException,
+  Inject,
+  Optional,
 } from '@nestjs/common';
 import { validate, ValidationError } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
+import { Request } from 'express';
 import {
   ErrorDetail,
   EnhancedErrorResponse,
@@ -15,6 +18,8 @@ import { I18nPath } from '@/generated/i18n.generated';
 import { PathArgs } from '@/generated/i18n-type-map.generated';
 import { TranslationMessage } from '../types/translation.types';
 import { TimezoneService } from '../services/timezone.service';
+import { EnterpriseLoggerService } from '../services/enterprise-logger.service';
+import { REQUEST } from '@nestjs/core';
 
 /**
  * Custom validation pipe that transforms class-validator errors
@@ -22,6 +27,10 @@ import { TimezoneService } from '../services/timezone.service';
  */
 @Injectable()
 export class CustomValidationPipe implements PipeTransform {
+  constructor(
+    @Optional() @Inject(EnterpriseLoggerService) private readonly enterpriseLogger?: EnterpriseLoggerService,
+    @Optional() @Inject(REQUEST) private readonly request?: Request,
+  ) {}
   /**
    * Transforms and validates the incoming value.
    *
@@ -54,6 +63,15 @@ export class CustomValidationPipe implements PipeTransform {
         timestamp: new Date().toISOString(),
         details: validationErrors,
       };
+
+      // Log validation errors with enterprise logger if available
+      if (this.enterpriseLogger && this.request) {
+        this.enterpriseLogger.logValidationError(
+          this.request,
+          validationErrors,
+          (this.request as any).actor,
+        );
+      }
 
       throw new BadRequestException(errorResponse);
     }

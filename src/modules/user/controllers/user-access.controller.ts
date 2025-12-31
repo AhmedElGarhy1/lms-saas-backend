@@ -21,10 +21,12 @@ import { BulkOperationService } from '@/shared/common/services/bulk-operation.se
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiBearerAuth()
 @ApiTags('User Access')
 @Controller('users/access')
+@ManagerialOnly()
 export class UserAccessController {
   constructor(
     private readonly accessControlService: AccessControlService,

@@ -12,7 +12,6 @@ import { WalletService } from '../services/wallet.service';
 import { Wallet } from '../entities/wallet.entity';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
-import { RequestContext } from '@/shared/common/context/request.context';
 import { TransactionStatement } from '../repositories/transaction.repository';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
@@ -20,6 +19,10 @@ import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { WalletTotalDto } from '../dto/wallet-total.dto';
 import { WalletTransferDto } from '../dto/wallet-transfer.dto';
+import { WalletOwnerParamsDto } from '../dto/wallet-owner-params.dto';
+import { WalletIdParamDto } from '../dto/wallet-id-param.dto';
+import { AdminOnly, ManagerialOnly, GetUser } from '@/shared/common/decorators';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @ApiTags('Wallets')
 @ApiBearerAuth()
@@ -36,14 +39,11 @@ export class WalletsController {
     description: 'View own wallet balance and details. Read-only operation.',
   })
   @ApiResponse({ status: 200, description: 'Wallet retrieved successfully' })
-  async getMyWallet(): Promise<ControllerResponse<Wallet>> {
-    const ctx = RequestContext.get();
-    if (!ctx.userProfileId) {
-      throw new Error('User profile ID not found in context');
-    }
-
+  async getMyWallet(
+    @GetUser() actor: ActorUser,
+  ): Promise<ControllerResponse<Wallet>> {
     const wallet = await this.walletService.getWallet(
-      ctx.userProfileId,
+      actor.userProfileId,
       WalletOwnerType.USER_PROFILE,
     );
 
@@ -68,15 +68,11 @@ export class WalletsController {
   })
   async getMyWalletStatement(
     @Query() dto: PaginateTransactionDto,
+    @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<Pagination<TransactionStatement>>> {
-    const ctx = RequestContext.get();
-    if (!ctx.userProfileId) {
-      throw new Error('User profile ID not found in context');
-    }
-
     // Get user's wallet first to obtain wallet ID
     const wallet = await this.walletService.getWallet(
-      ctx.userProfileId,
+      actor.userProfileId,
       WalletOwnerType.USER_PROFILE,
     );
 
@@ -84,6 +80,7 @@ export class WalletsController {
     const statement = await this.walletService.getWalletStatementPaginated(
       wallet.id,
       dto,
+      actor,
     );
 
     return {
@@ -108,26 +105,15 @@ export class WalletsController {
     enum: WalletOwnerType,
   })
   @ApiResponse({ status: 200, description: 'Wallet retrieved successfully' })
+  @AdminOnly()
   async getWallet(
-    @Param('ownerId') ownerId: string,
-    @Param('ownerType') ownerType: WalletOwnerType,
+    @Param() params: WalletOwnerParamsDto,
+    @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<Wallet>> {
-    const wallet = await this.walletService.getWallet(ownerId, ownerType);
-
-    // Validate ownership (owner can view their own wallet, or admin)
-    const { userProfileId } = RequestContext.get();
-    if (!userProfileId) {
-      throw new Error('User profile ID not found in context');
-    }
-
-    const isSuperAdmin =
-      await this.accessControlHelperService.isSuperAdmin(userProfileId);
-    const isAdmin =
-      await this.accessControlHelperService.isAdmin(userProfileId);
-
-    if (wallet.ownerId !== userProfileId && !isSuperAdmin && !isAdmin) {
-      throw new InsufficientPermissionsException('t.messages.accessDenied');
-    }
+    const wallet = await this.walletService.getWallet(
+      params.ownerId,
+      params.ownerType,
+    );
 
     return {
       data: wallet,
@@ -149,14 +135,17 @@ export class WalletsController {
     status: 200,
     description: 'Wallet statement retrieved successfully',
   })
+  @ManagerialOnly()
   async getWalletStatement(
-    @Param('walletId') walletId: string,
+    @Param() params: WalletIdParamDto,
     @Query() dto: PaginateTransactionDto,
+    @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<Pagination<TransactionStatement>>> {
     // Ownership validation is done in service layer
     const statement = await this.walletService.getWalletStatementPaginated(
-      walletId,
+      params.walletId,
       dto,
+      actor,
     );
 
     return {
@@ -178,13 +167,10 @@ export class WalletsController {
     status: 200,
     description: 'Total balance retrieved successfully',
   })
-  async getWalletTotal(): Promise<ControllerResponse<WalletTotalDto>> {
-    const ctx = RequestContext.get();
-    if (!ctx.userId) {
-      throw new Error('User ID not found in context');
-    }
-
-    const total = await this.walletService.getUserTotalBalance(ctx.userId);
+  async getWalletTotal(
+    @GetUser() actor: ActorUser,
+  ): Promise<ControllerResponse<WalletTotalDto>> {
+    const total = await this.walletService.getUserTotalBalance(actor.id);
 
     return {
       data: total,
@@ -208,17 +194,13 @@ export class WalletsController {
   })
   async transferBetweenWallets(
     @Body() dto: WalletTransferDto,
+    @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<{ correlationId: string }>> {
-    const ctx = RequestContext.get();
-    if (!ctx.userId) {
-      throw new Error('User ID not found in context');
-    }
-
     const result = await this.walletService.transferBetweenWallets(
       dto.fromProfileId,
       dto.toProfileId,
       Money.from(dto.amount),
-      ctx.userId,
+      actor.id,
       dto.idempotencyKey,
     );
 

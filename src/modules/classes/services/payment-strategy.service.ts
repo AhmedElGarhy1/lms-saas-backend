@@ -16,6 +16,17 @@ export class PaymentStrategyService extends BaseService {
   }
 
   /**
+   * Get student payment strategy for a class.
+   * Returns the pricing configuration for students in this class.
+   *
+   * @param classId - The class ID
+   * @returns Student payment strategy or null if not found
+   */
+  async getStudentPaymentStrategyForClass(classId: string) {
+    return this.studentPaymentStrategyRepository.findByClassId(classId);
+  }
+
+  /**
    * Create payment strategies for a class.
    * Creates both student and teacher payment strategies.
    * Validation is handled automatically by NestJS validation pipe via DTO decorators.
@@ -37,8 +48,11 @@ export class PaymentStrategyService extends BaseService {
       classId,
       centerId,
       branchId,
-      per: studentStrategy.per,
-      amount: studentStrategy.amount,
+      includePackage: studentStrategy.includePackage,
+      includeSession: studentStrategy.includeSession,
+      sessionPrice: studentStrategy.sessionPrice,
+      includeMonth: studentStrategy.includeMonth,
+      monthPrice: studentStrategy.monthPrice,
     });
 
     await this.teacherPaymentStrategyRepository.create({
@@ -76,8 +90,11 @@ export class PaymentStrategyService extends BaseService {
     }
 
     await this.studentPaymentStrategyRepository.update(existingStrategy.id, {
-      per: strategy.per,
-      amount: strategy.amount,
+      includePackage: strategy.includePackage,
+      includeSession: strategy.includeSession,
+      sessionPrice: strategy.sessionPrice,
+      includeMonth: strategy.includeMonth,
+      monthPrice: strategy.monthPrice,
     });
   }
 

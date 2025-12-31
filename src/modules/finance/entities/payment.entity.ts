@@ -9,8 +9,8 @@ import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 
 @Entity('payments')
-@Index(['payerProfileId'])
-@Index(['payerProfileId', 'createdAt']) // Composite index for payment history queries
+@Index(['senderId', 'senderType'])
+@Index(['senderId', 'createdAt']) // Composite index for payment history queries
 @Index(['receiverId', 'receiverType'])
 @Index(['status'])
 @Index(['referenceType', 'referenceId'])
@@ -36,7 +36,10 @@ export class Payment extends BaseEntity {
   amount: Money;
 
   @Column({ type: 'uuid' })
-  payerProfileId: string;
+  senderId: string;
+
+  @Column({ type: 'varchar', length: 20 })
+  senderType: WalletOwnerType;
 
   @Column({ type: 'uuid' })
   receiverId: string;
@@ -77,9 +80,4 @@ export class Payment extends BaseEntity {
 
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, any>;
-
-  // Relations
-  @ManyToOne(() => UserProfile)
-  @JoinColumn({ name: 'payerProfileId' })
-  payerProfile: UserProfile;
 }

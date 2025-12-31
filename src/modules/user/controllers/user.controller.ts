@@ -9,7 +9,6 @@ import { ControllerResponse } from '@/shared/common/dto/controller-response.dto'
 import { UserService } from '../services/user.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
-import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 
 @ApiTags('Users')
@@ -21,7 +20,6 @@ export class UserController {
   @UpdateApiResponses('Update current user information')
   @ApiBody({ type: UpdateUserDto })
   @SerializeOptions({ type: UserResponseDto })
-  @NoContext()
   @NoProfile()
   @Transactional()
   async updateCurrentUser(

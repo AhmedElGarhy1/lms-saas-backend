@@ -132,8 +132,19 @@
 [x] access control for sessions module
 [x] calender ui doesn't fit many!
 [x] calender doesn't have filters
-[ ] transfer within account
+[ ] proper permissions implementaion
+[ ] student billing display in sidebar and in session attendance throw for money
+[ ] add proper and detailed throw from backend errors
+[ ] always use TrnaslationObject in exceptions not even translationKey
 
+[ ] implement branch as in permissions to display sidebar
+[ ] implement filteration for branche in paginations
+[ ] check if we need to remove some actions in branch context
+[ ] grant branch access for staff created withing branch context
+[ ] check why center branch or user not created in center creation
+[ ] in grant access internally we need first to valiate if user has higher permission so he doesn't need access and grasful return
+[ ] transfer within account
+[ ] user profile /me endpoint doesn't reutrn center because it doesn't pass contextGuard
 ? what will happen if class deleted?
 ? what will happen if group deleted?
 ? what will happen if branch deleted?
@@ -141,6 +152,7 @@
 
 [ ] cleanup dependacy injection and fix everything
 
+[ ] gravana and some monitoring
 [ ] consider adding withDetailes flag and use it in backend
 [ ] submodule for permissions, RoleName, sortable columns, other is okay
 [ ] activity log decorator

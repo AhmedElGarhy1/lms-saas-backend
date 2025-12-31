@@ -22,7 +22,6 @@ import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.mo
 import { SharedModule } from '@/shared/shared.module';
 import { SeederModule } from '@/database/seeder.module';
 import { LocaleModule } from '@/modules/locale/locale.module';
-import { PerformanceInterceptor } from '@/shared/common/interceptors/performance.interceptor';
 import { GlobalExceptionFilter } from '@/shared/common/filters/global-exception.filter';
 import { TypeOrmExceptionFilter } from '@/shared/common/filters/typeorm-exception.filter';
 import { ResponseInterceptor } from '@/shared/common/interceptors/response.interceptor';
@@ -36,6 +35,7 @@ import { ContextGuard } from '@/shared/common/guards/context.guard';
 import { PermissionsGuard } from '@/shared/common/guards/permissions.guard';
 import { DatabaseModule } from './shared/modules/database/database.module';
 import { AccessControlHelperService } from './modules/access-control/services/access-control-helper.service';
+import { BranchAccessService } from './modules/centers/services/branch-access.service';
 import { ContextMiddleware } from './shared/common/middleware/context.middleware';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RolesService } from './modules/access-control/services/roles.service';
@@ -48,6 +48,9 @@ import { UserProfileModule } from './modules/user-profile/user-profile.module';
 import { StaffModule } from './modules/staff/staff.module';
 import { StudentsModule } from './modules/students/students.module';
 import { TeachersModule } from './modules/teachers/teachers.module';
+import { RequestContextService } from './shared/common/services/request-context.service';
+import { EnterpriseLoggerService } from './shared/common/services/enterprise-logger.service';
+import { RequestLoggingInterceptor } from './shared/common/interceptors/request-logging.interceptor';
 import { AdminModule } from './modules/admin/admin.module';
 import { ProfileGuard } from './shared/common/guards/profile.guard';
 import { PhoneVerificationGuard } from './shared/common/guards/phone-verification.guard';
@@ -61,8 +64,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { RateLimitModule } from './modules/rate-limit/rate-limit.module';
 import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limit-config.interface';
 import { FinanceModule } from './modules/finance/finance.module';
-import { PackagesModule } from './modules/packages/packages.module';
-import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
+import { StudentBillingModule } from './modules/student-billing/student-billing.module';
 
 @Module({
   imports: [
@@ -125,8 +127,7 @@ import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
     HealthModule,
     NotificationModule,
     FinanceModule,
-    PackagesModule,
-    EnrollmentsModule,
+    StudentBillingModule,
     RateLimitModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: () => ({
@@ -166,9 +167,19 @@ import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
   ],
   controllers: [],
   providers: [
+    // Request context and enterprise logging services
+    RequestContextService,
+    EnterpriseLoggerService,
+
     {
       provide: APP_INTERCEPTOR,
-      useClass: PerformanceInterceptor,
+      useFactory: (
+        enterpriseLogger: EnterpriseLoggerService,
+        requestContext: RequestContextService,
+      ) => {
+        return new RequestLoggingInterceptor(enterpriseLogger, requestContext);
+      },
+      inject: [EnterpriseLoggerService, RequestContextService],
     },
     {
       provide: APP_INTERCEPTOR,
@@ -186,13 +197,14 @@ import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
     },
-    {
-      provide: APP_FILTER,
-      useClass: GlobalExceptionFilter,
-    },
+    // TypeORM filter must come first to convert database errors before global filter
     {
       provide: APP_FILTER,
       useClass: TypeOrmExceptionFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
     },
     {
       provide: APP_PIPE,
@@ -223,13 +235,20 @@ import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
         reflector: Reflector,
         accessControlHelperService: AccessControlHelperService,
         centersRepository: CentersRepository,
+        branchAccessService: BranchAccessService,
       ) =>
         new ContextGuard(
           reflector,
           accessControlHelperService,
           centersRepository,
+          branchAccessService,
         ),
-      inject: [Reflector, AccessControlHelperService, CentersRepository],
+      inject: [
+        Reflector,
+        AccessControlHelperService,
+        CentersRepository,
+        BranchAccessService,
+      ],
     },
     {
       provide: APP_GUARD,

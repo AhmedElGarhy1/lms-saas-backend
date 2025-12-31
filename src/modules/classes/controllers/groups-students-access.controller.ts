@@ -15,9 +15,11 @@ import { ControllerResponse } from '@/shared/common/dto/controller-response.dto'
 import { GroupStudentService } from '../services/group-student.service';
 import { SerializeOptions } from '@nestjs/common';
 import { GroupStudent } from '../entities/group-student.entity';
+import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiTags('Groups - Students Access')
 @Controller('groups/students/access')
+@ManagerialOnly()
 export class GroupsStudentsAccessController {
   constructor(private readonly groupStudentService: GroupStudentService) {}
 

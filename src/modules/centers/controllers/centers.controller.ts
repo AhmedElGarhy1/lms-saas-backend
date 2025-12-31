@@ -27,8 +27,8 @@ import { CreateCenterDto } from '../dto/create-center.dto';
 import { UpdateCenterRequestDto } from '../dto/update-center.dto';
 import { CenterResponseDto } from '../dto/center-response.dto';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 import { CenterIdParamDto } from '../dto/center-id-param.dto';
+import { ManagerialOnly } from '@/shared/common/decorators/managerial-only.decorator';
 
 @Controller('centers')
 @ApiTags('Centers')
@@ -41,6 +41,7 @@ export class CentersController {
   @ApiBody({ type: CreateCenterDto })
   @Permissions(PERMISSIONS.CENTER.CREATE)
   @Transactional()
+  @ManagerialOnly()
   async createCenter(
     @Body() dto: CreateCenterDto,
     @GetUser() actor: ActorUser,
@@ -56,7 +57,6 @@ export class CentersController {
   @Get()
   @ReadApiResponses('List centers with pagination, search, and filtering')
   @SerializeOptions({ type: CenterResponseDto })
-  @NoContext()
   async listCenters(
     @Query() query: PaginateCentersDto,
     @GetUser() actor: ActorUser,
@@ -71,6 +71,7 @@ export class CentersController {
   @Get(':id')
   @ReadApiResponses('Get center by ID')
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
+  @ManagerialOnly()
   async getCenterById(
     @Param() params: CenterIdParamDto,
     @GetUser() actor: ActorUser,
@@ -92,6 +93,7 @@ export class CentersController {
   @ApiBody({ type: UpdateCenterRequestDto })
   @Permissions(PERMISSIONS.CENTER.UPDATE)
   @Transactional()
+  @ManagerialOnly()
   async updateCenter(
     @Param() params: CenterIdParamDto,
     @Body() dto: UpdateCenterRequestDto,
@@ -114,6 +116,7 @@ export class CentersController {
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @Permissions(PERMISSIONS.CENTER.DELETE)
   @Transactional()
+  @ManagerialOnly()
   async deleteCenter(
     @Param() params: CenterIdParamDto,
     @GetUser() actor: ActorUser,
@@ -131,6 +134,7 @@ export class CentersController {
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @Permissions(PERMISSIONS.CENTER.RESTORE)
   @Transactional()
+  @ManagerialOnly()
   async restoreCenter(
     @Param() params: CenterIdParamDto,
     @GetUser() actor: ActorUser,
@@ -151,6 +155,7 @@ export class CentersController {
   })
   @Permissions(PERMISSIONS.CENTER.ACTIVATE)
   @Transactional()
+  @ManagerialOnly()
   async toggleCenterStatus(
     @Param() params: CenterIdParamDto,
     @Body() body: { isActive: boolean },

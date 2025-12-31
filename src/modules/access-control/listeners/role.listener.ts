@@ -2,8 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { OnEvent } from '@nestjs/event-emitter';
 import { RolesService } from '../services/roles.service';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { RoleActivityType } from '../enums/role-activity-type.enum';
 import {
   AssignRoleEvent,
   RevokeRoleEvent,
@@ -29,7 +27,6 @@ export class RoleListener {
   constructor(
     private readonly moduleRef: ModuleRef,
     private readonly rolesService: RolesService,
-    private readonly activityLogService: ActivityLogService,
     private readonly profileRoleRepository: ProfileRoleRepository,
     private readonly rolesRepository: RolesRepository,
   ) {}
@@ -60,18 +57,7 @@ export class RoleListener {
       return;
     }
 
-    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      RoleActivityType.ROLE_ASSIGNED,
-      {
-        userProfileId,
-        roleId,
-        centerId,
-      },
-      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
-      userProfileId, // Pass as targetUserProfileId for auto-resolution
-    );
+    // Activity logging removed
   }
 
   @OnEvent(AccessControlEvents.REVOKE_ROLE)
@@ -100,32 +86,12 @@ export class RoleListener {
       return;
     }
 
-    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      RoleActivityType.ROLE_REMOVED,
-      {
-        userProfileId,
-        centerId,
-      },
-      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
-      userProfileId, // Pass as targetUserProfileId for auto-resolution
-    );
+    // Activity logging removed
   }
 
   @OnEvent(RoleEvents.CREATED)
   async handleRoleCreated(event: CreateRoleEvent) {
-    // Role creation doesn't have a specific target user, pass null
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      RoleActivityType.ROLE_CREATED,
-      {
-        roleId: event.role.id,
-        roleName: event.role.name,
-        centerId: event.role.centerId,
-      },
-      null,
-    );
+    // Activity logging removed
   }
 
   @OnEvent(CenterEvents.ASSIGN_OWNER)
@@ -173,16 +139,7 @@ export class RoleListener {
 
   @OnEvent(RoleEvents.UPDATED)
   async handleRoleUpdated(event: UpdateRoleEvent) {
-    // Role update doesn't have a specific target user, pass null
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      RoleActivityType.ROLE_UPDATED,
-      {
-        roleId: event.roleId,
-        updatedFields: Object.keys(event.updates),
-      },
-      null,
-    );
+    // Activity logging removed
   }
 
   @OnEvent(RoleEvents.DELETED)
@@ -215,42 +172,16 @@ export class RoleListener {
       return;
     }
 
-    // Role deletion doesn't have a specific target user, pass null
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      RoleActivityType.ROLE_DELETED,
-      {
-        roleId: event.roleId,
-      },
-      null,
-    );
+    // Activity logging removed
   }
 
   @OnEvent(RoleEvents.RESTORED)
   async handleRoleRestored(event: RestoreRoleEvent) {
-    // Role restore doesn't have a specific target user, pass null
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      RoleActivityType.ROLE_RESTORED,
-      {
-        roleId: event.roleId,
-      },
-      null,
-    );
+    // Activity logging removed
   }
 
   @OnEvent(RoleEvents.EXPORTED)
   async handleRoleExported(event: RoleExportedEvent) {
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      RoleActivityType.ROLE_EXPORTED,
-      {
-        format: event.format,
-        filename: event.filename,
-        recordCount: event.recordCount,
-        filters: event.filters,
-      },
-      null,
-    );
+    // Activity logging removed
   }
 }

@@ -6,8 +6,6 @@ import {
   StudentExportedEvent,
 } from '../events/student.events';
 import { StudentEvents } from '@/shared/events/student.events.enum';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { StudentActivityType } from '../enums/student-activity-type.enum';
 import { UserEvents } from '@/shared/events/user.events.enum';
 import {
   GrantCenterAccessEvent,
@@ -23,7 +21,6 @@ import { RequestPhoneVerificationEvent } from '@/modules/auth/events/auth.events
 export class StudentListener {
   constructor(
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-    private readonly activityLogService: ActivityLogService,
   ) {}
 
   @OnEvent(StudentEvents.CREATE)
@@ -76,16 +73,6 @@ export class StudentListener {
 
   @OnEvent(StudentEvents.EXPORTED)
   async handleStudentExported(event: StudentExportedEvent) {
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      StudentActivityType.STUDENT_EXPORTED,
-      {
-        format: event.format,
-        filename: event.filename,
-        recordCount: event.recordCount,
-        filters: event.filters,
-      },
-      null,
-    );
+    // Activity logging removed
   }
 }

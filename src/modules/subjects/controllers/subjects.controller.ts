@@ -17,7 +17,7 @@ import { UpdateSubjectDto } from '../dto/update-subject.dto';
 import { PaginateSubjectsDto } from '../dto/paginate-subjects.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { GetUser } from '@/shared/common/decorators';
+import { GetUser, ManagerialOnly } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UpdateApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
@@ -27,6 +27,7 @@ import { SubjectIdParamDto } from '../dto/subject-id-param.dto';
 
 @ApiTags('Subjects')
 @Controller('subjects')
+@ManagerialOnly()
 export class SubjectsController {
   constructor(private readonly subjectsService: SubjectsService) {}
 

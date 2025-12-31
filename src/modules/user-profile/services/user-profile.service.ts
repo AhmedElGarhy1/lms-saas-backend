@@ -58,7 +58,10 @@ export class UserProfileService extends BaseService {
     });
   }
 
-  async getCurrentUserProfile(actor: ActorUser): Promise<ProfileResponseDto> {
+  async getCurrentUserProfile(
+    actor: ActorUser,
+    centerId: string,
+  ): Promise<ProfileResponseDto> {
     // Get user with profile
     const user = await this.userService.findOne(actor.id);
     if (!user) {
@@ -88,15 +91,23 @@ export class UserProfileService extends BaseService {
     actor.userProfileId = userProfile.id;
     actor.profileType = userProfile.profileType;
 
-    if (actor.centerId) {
-      const profileRole = await this.accessControlHelperService.getProfileRole(
-        actor.userProfileId,
-        actor.centerId,
-      );
-      returnData.role = profileRole?.role?.name ?? null;
-      returnData.center = await this.centerService.findCenterById(
-        actor.centerId,
-      );
+    if (centerId) {
+      await this.accessControlHelperService.validateCenterAccess({
+        userProfileId: actor.userProfileId,
+        centerId,
+      });
+      if (
+        actor.profileType === ProfileType.STAFF ||
+        actor.profileType === ProfileType.ADMIN
+      ) {
+        const profileRole =
+          await this.accessControlHelperService.getProfileRole(
+            actor.userProfileId,
+            centerId,
+          );
+        returnData.role = profileRole?.role?.name ?? null;
+      }
+      returnData.center = await this.centerService.findCenterById(centerId);
     }
     if (!returnData.role) {
       const profileRole = await this.accessControlHelperService.getProfileRole(

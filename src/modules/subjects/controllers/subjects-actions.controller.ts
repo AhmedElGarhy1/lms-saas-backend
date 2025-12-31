@@ -18,10 +18,12 @@ import { BulkOperationResult } from '@/shared/common/services/bulk-operation.ser
 import { BulkDeleteSubjectsDto } from '../dto/bulk-delete-subjects.dto';
 import { BulkRestoreSubjectsDto } from '../dto/bulk-restore-subjects.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiBearerAuth()
 @ApiTags('Subjects Actions')
 @Controller('subjects/actions')
+@ManagerialOnly()
 export class SubjectsActionsController {
   constructor(
     private readonly subjectsService: SubjectsService,

@@ -19,7 +19,6 @@ import { ClassEventsListener } from './listeners/class-events.listener';
 import { SessionPaymentListener } from './listeners/session-payment-listener';
 import { SessionAttendanceListener } from './listeners/session-attendance-listener';
 import { SessionsCleanupJob } from './jobs/sessions-cleanup.job';
-import { PackagesModule } from '@/modules/packages/packages.module';
 
 @Module({
   imports: [

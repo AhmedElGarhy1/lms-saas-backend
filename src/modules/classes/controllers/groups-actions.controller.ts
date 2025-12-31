@@ -33,10 +33,12 @@ import { Class } from '../entities/class.entity';
 import { Branch } from '@/modules/centers/entities/branch.entity';
 import { Group } from '../entities/group.entity';
 import { ExportMapper } from '@/shared/common/services/export.service';
+import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiBearerAuth()
 @ApiTags('Groups Actions')
 @Controller('groups/actions')
+@ManagerialOnly()
 export class GroupsActionsController {
   constructor(
     private readonly groupsService: GroupsService,

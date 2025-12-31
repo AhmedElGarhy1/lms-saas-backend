@@ -57,7 +57,13 @@ export class GroupsService extends BaseService {
     paginateDto: PaginateGroupsDto,
     actor: ActorUser,
   ): Promise<Pagination<Group>> {
-    return this.groupsRepository.paginateGroups(paginateDto, actor);
+    // If no branchId specified, default to actor's branch to show only relevant groups
+    const dtoWithDefaults = {
+      ...paginateDto,
+      branchId: paginateDto.branchId || actor.branchId,
+    };
+
+    return this.groupsRepository.paginateGroups(dtoWithDefaults, actor);
   }
 
   /**

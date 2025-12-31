@@ -17,7 +17,7 @@ import { UpdateLevelDto } from '../dto/update-level.dto';
 import { PaginateLevelsDto } from '../dto/paginate-levels.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { GetUser } from '@/shared/common/decorators';
+import { GetUser, ManagerialOnly } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UpdateApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
@@ -27,6 +27,7 @@ import { LevelIdParamDto } from '../dto/level-id-param.dto';
 
 @ApiTags('Levels')
 @Controller('levels')
+@ManagerialOnly()
 export class LevelsController {
   constructor(private readonly levelsService: LevelsService) {}
 

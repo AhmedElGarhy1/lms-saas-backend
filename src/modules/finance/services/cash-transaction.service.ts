@@ -7,11 +7,13 @@ import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Transactional } from '@nestjs-cls/transactional';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { CashboxRepository } from '../repositories/cashbox.repository';
 
 @Injectable()
 export class CashTransactionService extends BaseService {
   constructor(
     private readonly cashTransactionRepository: CashTransactionRepository,
+    private readonly cashboxRepository: CashboxRepository,
   ) {
     super();
   }
@@ -27,13 +29,25 @@ export class CashTransactionService extends BaseService {
     direction: CashTransactionDirection,
     receivedByProfileId: string,
     type: CashTransactionType,
+    paidByProfileId?: string,
   ): Promise<CashTransaction> {
+    // Get current cashbox balance to calculate balanceAfter
+    const cashbox = await this.cashboxRepository.findOneOrThrow(cashboxId);
+    const currentBalance = cashbox.balance;
+
+    // Calculate balance after this transaction
+    const balanceAfter = direction === CashTransactionDirection.IN
+      ? currentBalance.add(amount)
+      : currentBalance.subtract(amount);
+
     return this.cashTransactionRepository.create({
       branchId,
       cashboxId,
       amount,
+      balanceAfter,
       direction,
       receivedByProfileId,
+      paidByProfileId,
       type,
     });
   }

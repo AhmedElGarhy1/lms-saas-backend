@@ -13,9 +13,11 @@ import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { StaffEvents } from '@/shared/events/staff.events.enum';
 import { StaffExportedEvent } from '../events/staff.events';
+import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiTags('Staff Actions')
 @Controller('staff/actions')
+@ManagerialOnly()
 export class StaffActionsController {
   constructor(
     private readonly staffService: StaffService,

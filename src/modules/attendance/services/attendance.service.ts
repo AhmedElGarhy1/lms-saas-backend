@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AttendanceRepository } from '../repositories/attendance.repository';
 import { SessionsRepository } from '@/modules/sessions/repositories/sessions.repository';
 import { SessionStatus } from '@/modules/sessions/enums/session-status.enum';
@@ -17,14 +17,17 @@ import { ATTENDANCE_LATE_GRACE_MINUTES } from '../constants/attendance.constants
 import { Attendance } from '../entities/attendance.entity';
 import { UserService } from '@/modules/user/services/user.service';
 import { SessionRosterStudentDto } from '../dto/session-roster-response.dto';
+
 import { AttendanceResponseDto } from '../dto/attendance-response.dto';
 import { UserProfileRepository } from '@/modules/user-profile/repositories/user-profile.repository';
 import { PaginateSessionRosterDto } from '../dto/paginate-session-roster.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { SessionAttendanceStatsDto } from '../dto/session-attendance-stats.dto';
+import { StudentBillingService } from '@/modules/student-billing/services/student-billing.service';
 
 @Injectable()
 export class AttendanceService {
+  private readonly logger = new Logger(AttendanceService.name);
   constructor(
     private readonly attendanceRepository: AttendanceRepository,
     private readonly sessionsRepository: SessionsRepository,
@@ -34,6 +37,7 @@ export class AttendanceService {
     private readonly classAccessService: ClassAccessService,
     private readonly userService: UserService,
     private readonly userProfileRepository: UserProfileRepository,
+    private readonly studentBillingService: StudentBillingService,
   ) {}
 
   private async resolveStudentUserProfileIdFromCode(
@@ -150,6 +154,18 @@ export class AttendanceService {
       throw new BusinessLogicException('t.messages.validationFailed');
     }
 
+    // Check billing access - student must have paid for this session or have active monthly subscription
+    const hasBillingAccess =
+      await this.studentBillingService.checkStudentAccess(
+        studentUserProfileId,
+        group.classId,
+        sessionId,
+      );
+
+    if (!hasBillingAccess) {
+      throw new BusinessLogicException('t.messages.validationFailed');
+    }
+
     const now = new Date();
     const status = this.computeStatus(now, session.startTime);
 
@@ -159,12 +175,11 @@ export class AttendanceService {
     );
 
     if (existing) {
-      throw new ResourceAlreadyExistsException(
-        't.messages.alreadyExists',
-      );
+      throw new ResourceAlreadyExistsException('t.messages.alreadyExists');
     }
 
     let attendance: Attendance;
+    // TODO: handle this properly without try catch
     try {
       attendance = await this.attendanceRepository.create({
         centerId: session.centerId,
@@ -181,9 +196,7 @@ export class AttendanceService {
       // Race-safe: if another request inserted the record first, return deterministic 409.
       const err = e as QueryFailedError & { code?: string };
       if (err?.code === '23505') {
-        throw new ResourceAlreadyExistsException(
-          't.messages.alreadyExists',
-        );
+        throw new ResourceAlreadyExistsException('t.messages.alreadyExists');
       }
       throw e;
     }
@@ -216,6 +229,18 @@ export class AttendanceService {
       throw new BusinessLogicException('t.messages.validationFailed');
     }
 
+    // Check billing access - student must have paid for this session or have active monthly subscription
+    const hasBillingAccess =
+      await this.studentBillingService.checkStudentAccess(
+        studentUserProfileId,
+        group.classId,
+        sessionId,
+      );
+
+    if (!hasBillingAccess) {
+      throw new BusinessLogicException('t.messages.validationFailed');
+    }
+
     const now = new Date();
     const status = AttendanceStatus.PRESENT;
 
@@ -225,9 +250,7 @@ export class AttendanceService {
     );
 
     if (existing) {
-      throw new ResourceAlreadyExistsException(
-        't.messages.alreadyExists',
-      );
+      throw new ResourceAlreadyExistsException('t.messages.alreadyExists');
     }
 
     let attendance: Attendance;
@@ -246,9 +269,7 @@ export class AttendanceService {
     } catch (e) {
       const err = e as QueryFailedError & { code?: string };
       if (err?.code === '23505') {
-        throw new ResourceAlreadyExistsException(
-          't.messages.alreadyExists',
-        );
+        throw new ResourceAlreadyExistsException('t.messages.alreadyExists');
       }
       throw e;
     }

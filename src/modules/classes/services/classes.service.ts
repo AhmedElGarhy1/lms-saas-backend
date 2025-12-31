@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { CreateClassDto } from '../dto/create-class.dto';
 import { UpdateClassDto } from '../dto/update-class.dto';
 import { PaginateClassesDto } from '../dto/paginate-classes.dto';
@@ -66,7 +66,13 @@ export class ClassesService extends BaseService {
     paginateDto: PaginateClassesDto,
     actor: ActorUser,
   ): Promise<Pagination<Class>> {
-    return this.classesRepository.paginateClasses(paginateDto, actor);
+    // If no branchId specified, default to actor's branch to show only relevant classes
+    const dtoWithDefaults = {
+      ...paginateDto,
+      branchId: paginateDto.branchId || actor.branchId,
+    };
+
+    return this.classesRepository.paginateClasses(dtoWithDefaults, actor);
   }
 
   /**
@@ -117,6 +123,21 @@ export class ClassesService extends BaseService {
       centerId: centerId,
     });
 
+    // Determine target branch: use provided branchId or fallback to actor's branch
+    const targetBranchId = createClassDto.branchId || actor.branchId;
+    if (!targetBranchId) {
+      throw new ForbiddenException({
+        message: { key: 't.messages.branchRequired' },
+      });
+    }
+
+    // Validate actor has branch access to the target branch
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: centerId,
+      branchId: targetBranchId,
+    });
+
     const { studentPaymentStrategy, teacherPaymentStrategy, ...classData } =
       createClassDto;
 
@@ -124,17 +145,18 @@ export class ClassesService extends BaseService {
     const classDataWithUtcDates = {
       ...classData,
       centerId: actor.centerId!,
+      branchId: targetBranchId,
     };
 
     const classEntity = await this.classesRepository.create(
       classDataWithUtcDates,
     );
 
-    // Pass centerId (from actor) and branchId (from validated DTO) for snapshot
+    // Pass centerId (from actor) and branchId (from validated target branch) for snapshot
     await this.paymentStrategyService.createStrategiesForClass(
       classEntity.id,
       centerId,
-      createClassDto.branchId,
+      targetBranchId,
       studentPaymentStrategy,
       teacherPaymentStrategy,
     );
@@ -159,10 +181,10 @@ export class ClassesService extends BaseService {
     actor: ActorUser,
   ): Promise<Class> {
     const classEntity = await this.findClassAndValidateAccess(
-        classId,
+      classId,
       actor,
-        false,
-      );
+      false,
+    );
 
     await this.classValidationService.validateClassUpdate(
       classId,
@@ -288,10 +310,10 @@ export class ClassesService extends BaseService {
     actor: ActorUser,
   ): Promise<Class> {
     const classEntity = await this.findClassAndValidateAccess(
-        classId,
+      classId,
       actor,
-        false,
-      );
+      false,
+    );
 
     // Validate class status allows payment strategy updates
     if (
@@ -687,12 +709,12 @@ export class ClassesService extends BaseService {
     }
 
     // Emit event
-    this.typeSafeEventEmitter.emit(ClassEvents.UPDATED, new ClassUpdatedEvent(
-      updatedClass,
-      actor,
-      updatedClass.centerId,
-      ['absenteePolicy']
-    ));
+    this.typeSafeEventEmitter.emit(
+      ClassEvents.UPDATED,
+      new ClassUpdatedEvent(updatedClass, actor, updatedClass.centerId, [
+        'absenteePolicy',
+      ]),
+    );
 
     return updatedClass;
   }

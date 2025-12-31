@@ -8,7 +8,6 @@ import { ActivityLogExportMapper } from '@/shared/common/mappers/activity-log-ex
 import { ExportActivityLogsDto } from '../dto/export-activity-logs.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { ExportFormat } from '@/shared/common/dto';
-import { ActivityLogActivityType } from '../enums/activity-log-activity-type.enum';
 import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ReadApiResponses } from '@/shared/common/decorators';
@@ -16,12 +15,10 @@ import { ControllerResponse } from '@/shared/common/dto/controller-response.dto'
 import { ActivityLogTypesResponseDto } from '../dto/activity-log-types-response.dto';
 import { SerializeOptions } from '@nestjs/common';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
-import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 
 @ApiTags('Activity Logs')
 @Controller('activity-logs')
 @NoProfile()
-@NoContext()
 export class ActivityLogController {
   constructor(
     private readonly activityLogService: ActivityLogService,
@@ -77,17 +74,7 @@ export class ActivityLogController {
       res,
     );
 
-    // Log activity for exporting activity logs (system-level action, no specific target user)
-    await this.activityLogService.log(
-      ActivityLogActivityType.ACTIVITY_LOG_EXPORTED,
-      {
-        format,
-        filename: baseFilename,
-        recordCount: activityLogs.length,
-        filters: query,
-      },
-      null,
-    );
+    // Activity logging removed
 
     return data;
   }

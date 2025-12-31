@@ -19,6 +19,7 @@ import { TranslationService } from '@/shared/common/services/translation.service
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { UserProfileIdParamDto } from '@/modules/access-control/dto/user-profile-id-param.dto';
+import { AdminOnly, ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiBearerAuth()
 @ApiTags('Centers Access')
@@ -39,6 +40,7 @@ export class CentersAccessController {
   @ApiBody({ type: ToggleUserStatusRequestDto })
   @Permissions(PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS)
   @Transactional()
+  @ManagerialOnly()
   async toggleCenterAccessStatus(
     @Param() params: UserProfileIdParamDto,
     @Body() dto: ToggleUserStatusRequestDto,
@@ -67,6 +69,7 @@ export class CentersAccessController {
   @CreateApiResponses('Grant center access to a user')
   @ApiBody({ type: CenterAccessDto })
   @Transactional()
+  @AdminOnly()
   async grantCenterAccess(
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
@@ -87,6 +90,7 @@ export class CentersAccessController {
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @ApiBody({ type: CenterAccessDto })
   @Transactional()
+  @AdminOnly()
   async revokeStaffCenterAccess(
     @Body() dto: CenterAccessDto,
     @GetUser() actor: ActorUser,
@@ -111,6 +115,7 @@ export class CentersAccessController {
   })
   @Permissions(PERMISSIONS.STAFF.DELETE_CENTER_ACCESS)
   @Transactional()
+  @ManagerialOnly()
   async deleteCenterAccess(
     @Param() params: UserProfileIdParamDto,
     @GetUser() actor: ActorUser,
@@ -130,6 +135,7 @@ export class CentersAccessController {
   @UpdateApiResponses('Restore center access')
   @Permissions(PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS)
   @Transactional()
+  @ManagerialOnly()
   async restoreCenterAccess(
     @Param() params: UserProfileIdParamDto,
     @GetUser() actor: ActorUser,

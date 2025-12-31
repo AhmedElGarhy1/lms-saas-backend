@@ -22,6 +22,7 @@ import { BulkRestoreCenterAccessDto } from '@/modules/access-control/dto/bulk-re
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
+import { AdminOnly, ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiBearerAuth()
 @ApiTags('Centers Access Actions')
@@ -41,6 +42,7 @@ export class CentersAccessActionsController {
     type: BulkOperationResultDto,
   })
   @Transactional()
+  @AdminOnly()
   async bulkGrantCenterAccess(
     @Body() dto: BulkGrantCenterAccessDto,
     @GetUser() actor: ActorUser,
@@ -78,6 +80,7 @@ export class CentersAccessActionsController {
     type: BulkOperationResultDto,
   })
   @Transactional()
+  @AdminOnly()
   async bulkRevokeCenterAccess(
     @Body() dto: BulkRevokeCenterAccessDto,
     @GetUser() actor: ActorUser,
@@ -118,6 +121,7 @@ export class CentersAccessActionsController {
   })
   @Permissions(PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS)
   @Transactional()
+  @ManagerialOnly()
   async bulkToggleCenterAccessStatus(
     @Body() dto: BulkToggleCenterAccessStatusDto,
     @GetUser() actor: ActorUser,
@@ -156,6 +160,7 @@ export class CentersAccessActionsController {
   })
   @Permissions(PERMISSIONS.STAFF.DELETE_CENTER_ACCESS)
   @Transactional()
+  @ManagerialOnly()
   async bulkDeleteCenterAccess(
     @Body() dto: BulkDeleteCenterAccessDto,
     @GetUser() actor: ActorUser,
@@ -193,6 +198,7 @@ export class CentersAccessActionsController {
   })
   @Permissions(PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS)
   @Transactional()
+  @ManagerialOnly()
   async bulkRestoreCenterAccess(
     @Body() dto: BulkRestoreCenterAccessDto,
     @GetUser() actor: ActorUser,

@@ -9,6 +9,7 @@ import { Money } from '@/shared/common/utils/money.util';
 @Entity('cash_transactions')
 @Index(['branchId'])
 @Index(['cashboxId'])
+@Index(['paidByProfileId'])
 @Index(['direction'])
 @Index(['type'])
 @Index(['createdAt'])
@@ -36,11 +37,32 @@ export class CashTransaction extends BaseEntity {
   })
   amount: Money;
 
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    comment: 'Cashbox balance after this transaction was applied',
+    transformer: {
+      from: (value: string | null): Money | null => {
+        return value === null ? null : Money.from(value);
+      },
+      to: (value: Money | number | string | null): string | null => {
+        if (value === null) return null;
+        if (value instanceof Money) return value.toString();
+        return Money.from(value).toString();
+      },
+    },
+  })
+  balanceAfter: Money;
+
   @Column({ type: 'varchar', length: 10 })
   direction: CashTransactionDirection;
 
   @Column({ type: 'uuid' })
   receivedByProfileId: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  paidByProfileId?: string;
 
   @Column({ type: 'varchar', length: 20 })
   type: CashTransactionType;
@@ -55,5 +77,9 @@ export class CashTransaction extends BaseEntity {
   @ManyToOne(() => UserProfile)
   @JoinColumn({ name: 'receivedByProfileId' })
   receivedByProfile: UserProfile;
+
+  @ManyToOne(() => UserProfile, { nullable: true })
+  @JoinColumn({ name: 'paidByProfileId' })
+  paidByProfile?: UserProfile;
 }
 

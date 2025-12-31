@@ -30,7 +30,6 @@ import { GetUser } from '@/shared/common/decorators/get-user.decorator';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { RefreshJwtGuard } from '../guards/refresh-jwt.guard';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
-import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 import { NoPhoneVerification } from '@/shared/common/decorators/no-phone-verification.decorator';
 import { VerificationTokenRepository } from '../repositories/verification-token.repository';
 
@@ -111,7 +110,6 @@ export class AuthController {
   @UpdateApiResponses('Request phone verification')
   @ApiBody({ type: RequestPhoneVerificationRequestDto })
   @NoProfile()
-  @NoContext()
   @NoPhoneVerification()
   async requestPhoneVerification(
     @Body() dto: RequestPhoneVerificationRequestDto,
@@ -129,7 +127,6 @@ export class AuthController {
   @UpdateApiResponses('Verify phone number with OTP code')
   @ApiBody({ type: VerifyPhoneRequestDto })
   @NoProfile()
-  @NoContext()
   @Transactional()
   @NoPhoneVerification()
   async verifyPhone(
@@ -180,7 +177,6 @@ export class AuthController {
   @CreateApiResponses('Setup two-factor authentication')
   @Transactional()
   @NoProfile()
-  @NoContext()
   async setup2FA(@GetUser() actor: ActorUser) {
     const result = await this.authService.setupTwoFactor(actor);
 
@@ -196,7 +192,6 @@ export class AuthController {
   @ApiBody({ type: TwoFAVerifyRequestDto })
   @Transactional()
   @NoProfile()
-  @NoContext()
   async enable2FA(
     @Body() dto: TwoFAVerifyRequestDto,
     @GetUser() actor: ActorUser,
@@ -214,7 +209,6 @@ export class AuthController {
   @ApiBody({ type: TwoFAVerifyRequestDto })
   @Transactional()
   @NoProfile()
-  @NoContext()
   async disable2FA(
     @Body() dto: TwoFAVerifyRequestDto,
     @GetUser() actor: ActorUser,
@@ -231,7 +225,6 @@ export class AuthController {
   @UpdateApiResponses('User logout')
   @Transactional()
   @NoProfile()
-  @NoContext()
   async logout(@GetUser() user: ActorUser) {
     const result = await this.authService.logout(user);
 
@@ -244,7 +237,6 @@ export class AuthController {
   @UpdateApiResponses('Change password')
   @ApiBody({ type: ChangePasswordRequestDto })
   @ApiOperation({ summary: 'Change user password' })
-  @NoContext()
   @NoProfile()
   @Transactional()
   async changePassword(

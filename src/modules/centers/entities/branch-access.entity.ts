@@ -19,9 +19,6 @@ export class BranchAccess extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   centerId: string;
 
-  @Column({ type: 'boolean', default: true })
-  isActive: boolean;
-
   // Relations
   @ManyToOne(() => UserProfile, (userProfile) => userProfile.branchAccess, {
     onDelete: 'CASCADE',

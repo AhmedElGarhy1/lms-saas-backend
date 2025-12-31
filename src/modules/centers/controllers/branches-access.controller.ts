@@ -13,9 +13,11 @@ import { BulkOperationResult } from '@/shared/common/services/bulk-operation.ser
 import { BulkGrantBranchAccessDto } from '@/modules/centers/dto/bulk-grant-branch-access.dto';
 import { BulkRevokeBranchAccessDto } from '@/modules/centers/dto/bulk-revoke-branch-access.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiTags('Centers - Branches')
 @Controller('centers/branches/access')
+@ManagerialOnly()
 export class BranchesAccessController {
   constructor(
     private readonly branchAccessService: BranchAccessService,

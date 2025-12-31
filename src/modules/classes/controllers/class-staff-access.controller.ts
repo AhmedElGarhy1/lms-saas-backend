@@ -15,9 +15,11 @@ import { ControllerResponse } from '@/shared/common/dto/controller-response.dto'
 import { ClassStaffService } from '../services/class-staff.service';
 import { SerializeOptions } from '@nestjs/common';
 import { ClassStaffResponseDto } from '../dto/class-staff-response.dto';
+import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiTags('Classes - Staff Access')
 @Controller('classes/staff/access')
+@ManagerialOnly()
 export class ClassStaffAccessController {
   constructor(private readonly classStaffService: ClassStaffService) {}
 

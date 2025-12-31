@@ -2,8 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { OnEvent } from '@nestjs/event-emitter';
 import { AccessControlService } from '../services/access-control.service';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { UserActivityType } from '@/modules/user/enums/user-activity-type.enum';
 import {
   GrantUserAccessEvent,
   RevokeUserAccessEvent,
@@ -17,7 +15,6 @@ export class UserAccessListener {
   constructor(
     private readonly moduleRef: ModuleRef,
     private readonly accessControlService: AccessControlService,
-    private readonly activityLogService: ActivityLogService,
   ) {}
 
   @OnEvent(AccessControlEvents.GRANT_USER_ACCESS)
@@ -39,19 +36,7 @@ export class UserAccessListener {
       return;
     }
 
-    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      UserActivityType.USER_ACCESS_GRANTED,
-      {
-        granterUserProfileId,
-        targetUserProfileId,
-        centerId,
-        accessType: 'USER',
-      },
-      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
-      targetUserProfileId, // Pass as targetUserProfileId for auto-resolution
-    );
+    // Activity logging removed
   }
 
   @OnEvent(AccessControlEvents.REVOKE_USER_ACCESS)
@@ -73,18 +58,6 @@ export class UserAccessListener {
       return;
     }
 
-    // targetUserId will be automatically resolved from targetUserProfileId by ActivityLogService
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      UserActivityType.USER_ACCESS_REVOKED,
-      {
-        granterUserProfileId,
-        targetUserProfileId,
-        centerId,
-        accessType: 'USER',
-      },
-      event.targetUserId ?? null, // Pass if provided, otherwise ActivityLogService will fetch from targetUserProfileId
-      targetUserProfileId, // Pass as targetUserProfileId for auto-resolution
-    );
+    // Activity logging removed
   }
 }

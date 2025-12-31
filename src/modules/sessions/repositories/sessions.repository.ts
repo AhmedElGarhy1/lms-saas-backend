@@ -13,6 +13,7 @@ import { SelectQueryBuilder } from 'typeorm';
 import { subHours } from 'date-fns';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 @Injectable()
 export class SessionsRepository extends BaseRepository<Session> {
@@ -30,15 +31,23 @@ export class SessionsRepository extends BaseRepository<Session> {
   /**
    * Find session by ID with relations
    */
-  async findByIdWithRelations(sessionId: string, relations: string[] = []): Promise<Session> {
+  async findByIdWithRelations(
+    sessionId: string,
+    relations: string[] = [],
+  ): Promise<Session> {
     const queryBuilder = this.getRepository().createQueryBuilder('session');
 
     // Add relations dynamically
     for (const relation of relations) {
-      queryBuilder.leftJoinAndSelect(`session.${relation}`, relation.replace('.', '_'));
+      queryBuilder.leftJoinAndSelect(
+        `session.${relation}`,
+        relation.replace('.', '_'),
+      );
     }
 
-    const session = await queryBuilder.where('session.id = :id', { id: sessionId }).getOne();
+    const session = await queryBuilder
+      .where('session.id = :id', { id: sessionId })
+      .getOne();
 
     if (!session) {
       throw new ResourceNotFoundException('t.messages.withIdNotFound', {
@@ -350,19 +359,36 @@ export class SessionsRepository extends BaseRepository<Session> {
       );
 
     if (!canBypassCenterInternalAccess) {
-      queryBuilder
-        .leftJoin('class.classStaff', 'classStaff')
-        .andWhere('classStaff.userProfileId = :userProfileId', {
-          userProfileId: actor.userProfileId,
-        });
+      if (actor.profileType === ProfileType.STAFF) {
+        queryBuilder
+          .leftJoin('class.classStaff', 'classStaff')
+          .andWhere('classStaff.userProfileId = :userProfileId', {
+            userProfileId: actor.userProfileId,
+          });
 
-      // Branch access filtering
-      queryBuilder.andWhere(
-        'session.branchId IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true)',
-        {
-          userProfileId: actor.userProfileId,
-        },
-      );
+        queryBuilder.andWhere(
+          'session.branchId IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId)',
+          {
+            userProfileId: actor.userProfileId,
+          },
+        );
+      } else if (actor.profileType === ProfileType.TEACHER) {
+        queryBuilder.andWhere(
+          'class.teacherUserProfileId = :teacherUserProfileId',
+          {
+            teacherUserProfileId: actor.userProfileId,
+          },
+        );
+      } else if (actor.profileType === ProfileType.STUDENT) {
+        queryBuilder
+          .leftJoin('group.groupStudents', 'groupStudents')
+          .andWhere(
+            'groupStudents.studentUserProfileId = :studentUserProfileId',
+            {
+              studentUserProfileId: actor.userProfileId,
+            },
+          );
+      }
     }
 
     // Apply date range filter - dates are already UTC Date objects (converted by @IsoUtcDate decorator)

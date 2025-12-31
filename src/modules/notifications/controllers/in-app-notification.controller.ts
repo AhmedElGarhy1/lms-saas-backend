@@ -13,14 +13,12 @@ import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { Notification } from '../entities/notification.entity';
-import { NoContext } from '@/shared/common/decorators/no-context.decorator';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 
 @ApiTags('In-App Notifications')
 @Controller('notifications/in-app')
 @NoProfile()
-@NoContext()
 export class InAppNotificationController {
   constructor(
     private readonly inAppNotificationService: InAppNotificationService,

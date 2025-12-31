@@ -44,14 +44,8 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('LMS SaaS API')
     .setVersion('1.0.0')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-      },
-      'JWT-auth',
-    )
+    .addBearerAuth()
+    .addSecurityRequirements('bearer')
     .addGlobalParameters({
       in: 'header',
       required: false,
@@ -63,15 +57,26 @@ async function bootstrap() {
         example: 'ADMIN',
       },
     })
-    .addGlobalParameters({
-      in: 'header',
-      required: false,
-      name: 'x-center-id',
-      schema: {
-        type: 'string',
-        example: '550e8400-e29b-41d4-a716-446655440000',
+    .addGlobalParameters(
+      {
+        in: 'header',
+        required: false,
+        name: 'x-center-id',
+        schema: {
+          type: 'string',
+          example: '550e8400-e29b-41d4-a716-446655440000',
+        },
       },
-    })
+      {
+        in: 'header',
+        required: false,
+        name: 'x-branch-id',
+        schema: {
+          type: 'string',
+          example: '550e8400-e29b-41d4-a716-446655440001',
+        },
+      },
+    )
     .addServer('http://localhost:3000/api/v1', 'Development server')
     .addServer('https://api.lms-saas.com/api/v1', 'Production server')
     .build();

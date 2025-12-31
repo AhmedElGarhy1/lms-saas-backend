@@ -34,12 +34,12 @@ export class PaginatePaymentDto extends BasePaginationDto {
   source?: PaymentSource;
 
   @ApiProperty({
-    description: 'Filter by payer profile ID',
+    description: 'Filter by sender ID',
     example: 'uuid',
     required: false,
   })
   @IsOptional()
   @IsUUID(4)
-  payerProfileId?: string;
+  senderId?: string;
 }
 

@@ -6,7 +6,7 @@ import { ScanAttendanceDto } from '../dto/scan-attendance.dto';
 import { ManualAttendanceDto } from '../dto/manual-attendance.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
-import { GetUser } from '@/shared/common/decorators';
+import { GetUser, ManagerialOnly } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { SerializeOptions } from '@nestjs/common';
@@ -18,6 +18,7 @@ import { SessionAttendanceStatsDto } from '../dto/session-attendance-stats.dto';
 
 @ApiTags('Attendance')
 @Controller('attendance')
+@ManagerialOnly()
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 

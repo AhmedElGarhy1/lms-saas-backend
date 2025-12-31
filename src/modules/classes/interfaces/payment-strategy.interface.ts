@@ -1,5 +1,4 @@
 import { TeacherPaymentUnit } from '../enums/teacher-payment-unit.enum';
-import { StudentPaymentUnit } from '../enums/student-payment-unit.enum';
 
 /**
  * Teacher payment strategy
@@ -15,13 +14,15 @@ export interface TeacherPaymentStrategy {
 }
 
 /**
- * Student payment strategy
- * - SESSION: amount per session
- * - HOUR: amount per hour
- * - MONTH: amount per month
- * - CLASS: total amount for the full class period (1 payment)
+ * Student payment strategy - granular payment options
+ * - includePackage: allow package purchases
+ * - includeSession: allow per-session payments (with sessionPrice)
+ * - includeMonth: allow monthly subscriptions (with monthPrice)
  */
 export interface StudentPaymentStrategy {
-  per: StudentPaymentUnit;
-  amount: number;
+  includePackage: boolean;
+  includeSession: boolean;
+  sessionPrice?: number;
+  includeMonth: boolean;
+  monthPrice?: number;
 }
