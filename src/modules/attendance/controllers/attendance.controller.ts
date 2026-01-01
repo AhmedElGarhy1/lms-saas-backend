@@ -36,10 +36,7 @@ export class AttendanceController {
       dto.studentCode,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.updated',
-      args: { resource: 't.resources.session' },
-    });
+    return ControllerResponse.success(result, 'Resource updated successfully');
   }
 
   @Post('manual')
@@ -56,10 +53,7 @@ export class AttendanceController {
       dto.studentCode,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.updated',
-      args: { resource: 't.resources.session' },
-    });
+    return ControllerResponse.success(result, 'Resource updated successfully');
   }
 
   @Get('sessions/:sessionId/roster')
@@ -77,10 +71,7 @@ export class AttendanceController {
       query,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.session' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Get('sessions/:sessionId/stats')
@@ -96,9 +87,6 @@ export class AttendanceController {
       params.sessionId,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.session' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 }

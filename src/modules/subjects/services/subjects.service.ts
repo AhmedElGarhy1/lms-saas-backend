@@ -34,11 +34,7 @@ export class SubjectsService extends BaseService {
       : await this.subjectsRepository.findOne(subjectId);
 
     if (!subject) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.subject',
-        identifier: 't.resources.identifier',
-        value: subjectId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     return subject;
@@ -77,11 +73,7 @@ export class SubjectsService extends BaseService {
     const subject =
       await this.subjectsRepository.findOneSoftDeletedById(subjectId);
     if (!subject) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.subject',
-        identifier: 't.resources.identifier',
-        value: subjectId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     await this.subjectsRepository.restore(subjectId);

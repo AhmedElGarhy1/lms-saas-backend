@@ -61,9 +61,10 @@ export class GroupExportMapper implements ExportMapper<Group, GroupExportData> {
         : '';
 
     // Get student count from computed field if available, otherwise from relation (for backward compatibility)
+    type GroupWithStudentCount = Group & { studentsCount?: number };
 
     const studentsCount =
-      (group as any).studentsCount ?? group.groupStudents?.length ?? 0;
+      (group as GroupWithStudentCount).studentsCount ?? group.groupStudents?.length ?? 0;
 
     return {
       id: group.id,

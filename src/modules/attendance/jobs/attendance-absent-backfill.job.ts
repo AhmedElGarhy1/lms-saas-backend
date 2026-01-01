@@ -93,7 +93,7 @@ export class AttendanceAbsentBackfillJob {
         {
           jobId,
           durationMs: Date.now() - startMs,
-        } as any,
+        },
       );
       throw error;
     }

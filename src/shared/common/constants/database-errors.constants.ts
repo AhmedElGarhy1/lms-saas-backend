@@ -21,22 +21,21 @@ export function isDatabaseErrorCode(
 }
 
 /**
- * Common translation keys
- * Centralizes translation key definitions to avoid typos
+ * Common error messages
+ * Centralizes error message definitions for consistency
  */
-export const TRANSLATION_KEYS = {
+export const ERROR_MESSAGES = {
   ERRORS: {
-    DUPLICATE_FIELD: 't.messages.duplicateField',
-    RESOURCE_NOT_FOUND: 't.messages.notFound',
-    RELATED_ENTITY_MISSING_OR_INVALID:
-      't.messages.relatedEntityMissingOrInvalid',
-    TEMPORARY_DATABASE_CONFLICT: 't.messages.temporaryDatabaseConflict',
-    DATABASE_OPERATION_FAILED: 't.messages.databaseOperationFailed',
-    SCHEDULE_CONFLICT: 't.messages.scheduleConflict.description', // For exclusion constraint violations (overlapping sessions)
-    GENERIC_ERROR: 't.messages.genericError',
-    INTERNAL_SERVER_ERROR: 't.messages.internalServerError',
-    SERVICE_UNAVAILABLE: 't.messages.serviceUnavailable',
-    BUSINESS_LOGIC_ERROR: 't.messages.businessLogicError',
-    REQUIRED_FIELD: 't.messages.fieldRequired',
+    DUPLICATE_FIELD: 'Duplicate field value',
+    RESOURCE_NOT_FOUND: 'Resource not found',
+    RELATED_ENTITY_MISSING_OR_INVALID: 'Related entity is missing or invalid',
+    TEMPORARY_DATABASE_CONFLICT: 'Temporary database conflict',
+    DATABASE_OPERATION_FAILED: 'Database operation failed',
+    SCHEDULE_CONFLICT: 'Schedule conflict detected', // For exclusion constraint violations (overlapping sessions)
+    GENERIC_ERROR: 'An error occurred',
+    INTERNAL_SERVER_ERROR: 'Internal server error',
+    SERVICE_UNAVAILABLE: 'Service unavailable',
+    BUSINESS_LOGIC_ERROR: 'Business logic error',
+    REQUIRED_FIELD: 'Field is required',
   },
 } as const;

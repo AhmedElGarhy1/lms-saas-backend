@@ -1,6 +1,5 @@
 import { join } from 'path';
 import { existsSync } from 'fs';
-import { NotificationTemplatePath } from '../types/templates.generated';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import {
   getChannelExtension,
@@ -16,7 +15,7 @@ import {
  * @note For WhatsApp channel, templates are reference-only and located in whatsapp-templates/ at project root
  */
 export function getTemplatePath(
-  template: NotificationTemplatePath | string,
+  template: string,
   locale: string = 'en',
   channel?: NotificationChannel,
 ): string {
@@ -77,7 +76,7 @@ export function getTemplatePath(
  * @returns True if template exists, false otherwise
  */
 export function templateExists(
-  template: NotificationTemplatePath | string,
+  template: string,
   locale: string = 'en',
   channel?: NotificationChannel,
 ): boolean {

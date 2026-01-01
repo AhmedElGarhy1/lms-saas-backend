@@ -49,10 +49,7 @@ export class WalletsController {
 
     return {
       data: wallet,
-      message: {
-        key: 't.messages.found',
-        args: { resource: 't.resources.item' },
-      },
+      message: 'Wallet retrieved successfully',
     };
   }
 
@@ -85,10 +82,7 @@ export class WalletsController {
 
     return {
       data: statement,
-      message: {
-        key: 't.messages.found',
-        args: { resource: 't.resources.item' },
-      },
+      message: 'Wallet statement retrieved successfully',
     };
   }
 
@@ -117,10 +111,7 @@ export class WalletsController {
 
     return {
       data: wallet,
-      message: {
-        key: 't.messages.found',
-        args: { resource: 't.resources.item' },
-      },
+      message: 'Wallet retrieved successfully',
     };
   }
 
@@ -150,10 +141,7 @@ export class WalletsController {
 
     return {
       data: statement,
-      message: {
-        key: 't.messages.found',
-        args: { resource: 't.resources.item' },
-      },
+      message: 'Wallet statement retrieved successfully',
     };
   }
 
@@ -174,10 +162,7 @@ export class WalletsController {
 
     return {
       data: total,
-      message: {
-        key: 't.messages.found',
-        args: { resource: 't.resources.item' },
-      },
+      message: 'Wallet total retrieved successfully',
     };
   }
 
@@ -206,10 +191,7 @@ export class WalletsController {
 
     return {
       data: { correlationId: result.correlationId },
-      message: {
-        key: 't.messages.success',
-        args: { resource: 'Transfer completed' },
-      },
+      message: 'Wallet transfer completed successfully',
     };
   }
 }

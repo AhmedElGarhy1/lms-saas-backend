@@ -1,5 +1,6 @@
 import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
+import { IRequest } from '../../../shared/common/interfaces/request.interface';
 import { WebhookAttemptRepository } from '../repositories/webhook-attempt.repository';
 import { WebhookProvider } from '../enums/webhook-provider.enum';
 import { WebhookStatus } from '../enums/webhook-status.enum';
@@ -51,7 +52,7 @@ export class IdempotencyMiddleware implements NestMiddleware {
       }
 
       // Add idempotency info to request for later use
-      (req as any).webhookIdempotency = {
+      (req as IRequest).webhookIdempotency = {
         provider,
         externalId,
         existingAttempt,

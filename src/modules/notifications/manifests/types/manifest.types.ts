@@ -1,7 +1,6 @@
 import { NotificationType } from '../../enums/notification-type.enum';
 import { NotificationChannel } from '../../enums/notification-channel.enum';
 import { NotificationGroup } from '../../enums/notification-group.enum';
-import { NotificationTemplatePath } from '../../types/templates.generated';
 
 /**
  * Configuration for a single notification channel
@@ -9,18 +8,17 @@ import { NotificationTemplatePath } from '../../types/templates.generated';
  *
  * Note: For EMAIL, SMS: template is a file path (e.g., 'email/auth/otp')
  * Note: For WHATSAPP: template is a Meta template name (e.g., 'otp_verification')
- * Note: For IN_APP: template is optional - translations come from t.json using NotificationType enum value
+ * Note: For IN_APP: template is optional - translations come from notifications.json using NotificationType enum value
  */
 export interface ChannelManifest {
   /**
    * Template configuration:
    * - For EMAIL, SMS: File path relative to src/i18n/notifications/{locale}/{channel}/
-   *   Should be from generated NotificationTemplatePath type for type safety.
    * - For WHATSAPP: Meta Business API template name (pre-approved template name)
    *   Must match exactly what is approved in your WhatsApp Business account.
    * - For IN_APP: Optional - if not provided, uses i18n system with NotificationType enum value as key
    */
-  template?: NotificationTemplatePath | string;
+  template?: string;
   /** Email subject (required for EMAIL channel) */
   subject?: string;
 }

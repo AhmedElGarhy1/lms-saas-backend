@@ -50,10 +50,7 @@ export class CashboxesController {
       params.centerId,
     );
 
-    return ControllerResponse.success(stats, {
-      key: 't.messages.found',
-      args: { resource: 'Treasury stats' },
-    });
+    return ControllerResponse.success(stats, 'Data retrieved successfully');
   }
 
   @Get(':centerId/statement')
@@ -84,10 +81,7 @@ export class CashboxesController {
       branchId,
     );
 
-    return ControllerResponse.success(statement, {
-      key: 't.messages.found',
-      args: { resource: 'Center statement' },
-    });
+    return ControllerResponse.success(statement, 'Data retrieved successfully');
   }
 
   @Get(':centerId/cash-statement')
@@ -118,9 +112,6 @@ export class CashboxesController {
       branchId,
     );
 
-    return ControllerResponse.success(statement, {
-      key: 't.messages.found',
-      args: { resource: 'Center cash statement' },
-    });
+    return ControllerResponse.success(statement, 'Data retrieved successfully');
   }
 }

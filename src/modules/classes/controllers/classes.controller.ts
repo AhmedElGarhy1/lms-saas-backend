@@ -53,10 +53,7 @@ export class ClassesController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.class' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Get(':classId')
@@ -81,10 +78,7 @@ export class ClassesController {
       actor,
       true,
     ); // includeDeleted: true for API endpoints
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.class' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Post()
@@ -105,10 +99,7 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.classesService.createClass(createClassDto, actor);
-    return ControllerResponse.success(result, {
-      key: 't.messages.created',
-      args: { resource: 't.resources.class' },
-    });
+    return ControllerResponse.success(result, 'Resource created successfully');
   }
 
   @Put(':classId')
@@ -135,10 +126,7 @@ export class ClassesController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.updated',
-      args: { resource: 't.resources.class' },
-    });
+    return ControllerResponse.success(result, 'Resource updated successfully');
   }
 
   @Delete(':classId')
@@ -159,10 +147,7 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.classesService.deleteClass(params.classId, actor);
-    return ControllerResponse.message({
-      key: 't.messages.deleted',
-      args: { resource: 't.resources.class' },
-    });
+    return ControllerResponse.message('Resource deleted successfully');
   }
 
   @Get(':classId/available-statuses')
@@ -193,10 +178,7 @@ export class ClassesController {
       params.classId,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.status' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Patch(':classId/status')
@@ -227,10 +209,7 @@ export class ClassesController {
       changeStatusDto,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.updated',
-      args: { resource: 't.resources.class' },
-    });
+    return ControllerResponse.success(result, 'Resource updated successfully');
   }
 
   @Patch(':classId/restore')
@@ -244,10 +223,7 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.classesService.restoreClass(params.classId, actor);
-    return ControllerResponse.message({
-      key: 't.messages.restored',
-      args: { resource: 't.resources.class' },
-    });
+    return ControllerResponse.message('Operation completed successfully');
   }
 
   @Put(':classId/student-payment')
@@ -275,10 +251,7 @@ export class ClassesController {
       dto,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.updated',
-      args: { resource: 't.resources.studentPaymentStrategy' },
-    });
+    return ControllerResponse.success(result, 'Resource updated successfully');
   }
 
   @Put(':classId/teacher-payment')
@@ -306,10 +279,7 @@ export class ClassesController {
       dto,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.updated',
-      args: { resource: 't.resources.teacherPaymentStrategy' },
-    });
+    return ControllerResponse.success(result, 'Resource updated successfully');
   }
 
   // ===== ABSENTEE POLICY ENDPOINTS =====
@@ -338,9 +308,6 @@ export class ClassesController {
       dto.absenteePolicy,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.updated',
-      args: { resource: 't.resources.absenteePolicy' },
-    });
+    return ControllerResponse.success(result, 'Resource updated successfully');
   }
 }

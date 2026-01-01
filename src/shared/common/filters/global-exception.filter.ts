@@ -9,34 +9,27 @@ import {
   Optional,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { IRequest } from '../interfaces/request.interface';
 import {
   EnhancedErrorResponse,
-  TranslatableException,
   ErrorDetail,
 } from '../exceptions/custom.exceptions';
 import { ErrorCode } from '../enums/error-codes.enum';
-import { TranslationService } from '@/shared/common/services/translation.service';
-import { I18nPath } from '@/generated/i18n.generated';
-import { PathArgs } from '@/generated/i18n-type-map.generated';
 import { formatRemainingTime } from '@/modules/rate-limit/utils/rate-limit-time-formatter';
-import { Locale } from '@/shared/common/enums/locale.enum';
-import { TranslationMessage } from '../types/translation.types';
-import { TranslatedErrorResponse } from '../types/translated-response.types';
-import { TRANSLATION_KEYS } from '../constants/database-errors.constants';
+import { ERROR_MESSAGES } from '../constants/database-errors.constants';
 import { EnterpriseLoggerService } from '../services/enterprise-logger.service';
 import { RequestContextService } from '../services/request-context.service';
 
 /**
  * Global exception filter
  * Catches all exceptions and converts them to standardized format
- * Handles translation as fallback if TranslationResponseInterceptor didn't run
+ * Handles error responses with translation keys
  */
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger: Logger = new Logger(GlobalExceptionFilter.name);
 
   constructor(
-    private readonly translationService: TranslationService,
     @Optional()
     @Inject(EnterpriseLoggerService)
     private readonly enterpriseLogger?: EnterpriseLoggerService,
@@ -72,12 +65,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
       const exceptionResponse = exception.getResponse();
 
-      // Check if exception has translationKey property (custom exceptions)
-      const translatableException =
-        exception as unknown as TranslatableException;
-      const hasTranslationKey =
-        translatableException.translationKey !== undefined;
-
       // If it's already our custom exception format, use it
       if (
         typeof exceptionResponse === 'object' &&
@@ -86,76 +73,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       ) {
         errorResponse = exceptionResponse as EnhancedErrorResponse;
 
-        // Check if message is already translated (string) - if so, use it as-is
-        // TranslationResponseInterceptor should have translated it before this filter runs
-        const isAlreadyTranslated = typeof errorResponse.message === 'string';
-
-        // If message is already translated, use it as-is - don't overwrite
-        // If message is a TranslationMessage object, it means the interceptor didn't translate it
-        // In that case, we should NOT overwrite it - the interceptor should have handled it
-        // Only set translation keys if message is missing entirely (edge case)
-        if (
-          !isAlreadyTranslated &&
-          !errorResponse.message &&
-          hasTranslationKey &&
-          translatableException.translationKey
-        ) {
-          // Message is missing - set TranslationMessage object
-          // Use type assertion since TypeScript can't narrow the conditional type here
-          errorResponse.message = (
-            translatableException.translationArgs
-              ? {
-                  key: translatableException.translationKey,
-                  args: translatableException.translationArgs,
-                }
-              : {
-                  key: translatableException.translationKey,
-                }
-          ) as TranslationMessage;
+        // Ensure message is a string
+        if (typeof errorResponse.message !== 'string') {
+          errorResponse.message = 'An error occurred';
         }
-
-        // Create error details for unique constraint violations if not already present
-        // Only if details don't exist and exception has the necessary info
-        if (
-          hasTranslationKey &&
-          translatableException.translationKey ===
-            TRANSLATION_KEYS.ERRORS.DUPLICATE_FIELD &&
-          translatableException.translationArgs &&
-          (!errorResponse.details || errorResponse.details.length === 0)
-        ) {
-          // Extract field and value from args if they exist (runtime check)
-          const args = translatableException.translationArgs as
-            | Record<string, unknown>
-            | undefined;
-          const field = args?.field as string | undefined;
-          const value: unknown = args?.value;
-
-          // Extract field name from translation key if it's a key
-          const fieldName =
-            typeof field === 'string' && field.startsWith('t.')
-              ? field.replace(
-                  /^t\.(common\.(labels|resources)|resources)\./,
-                  '',
-                )
-              : typeof field === 'string'
-                ? field
-                : 'field';
-
-          errorResponse.details = [
-            {
-              field: fieldName,
-              value: value || '',
-              message:
-                errorResponse.message ||
-                ({
-                  key: translatableException.translationKey,
-                  args: translatableException.translationArgs,
-                } as TranslationMessage),
-            },
-          ];
-        }
-        // If already translated (string), use it as-is (interceptor already translated it)
-        // If message is a TranslationMessage object, keep it as-is (should have been translated by interceptor)
       } else {
         // Convert standard NestJS exceptions to our format
         errorResponse = this.convertToStandardFormat(
@@ -185,23 +106,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.logError(exception, request, errorResponse);
     }
 
-    // Translate TranslationMessage objects if they weren't translated by the interceptor
-    // This is a fallback in case the interceptor didn't run or didn't translate
-    if (
-      typeof errorResponse.message === 'object' &&
-      errorResponse.message !== null &&
-      'key' in errorResponse.message
-    ) {
-      const translationMsg = errorResponse.message;
-      const translatedMessage = this.translateMessage(translationMsg);
-      // Convert to TranslatedErrorResponse type after translation
-      const translatedResponse =
-        errorResponse as unknown as TranslatedErrorResponse;
-      translatedResponse.message = translatedMessage;
-      errorResponse = translatedResponse as unknown as EnhancedErrorResponse;
-    }
-
-    // Translate details messages if they weren't translated
+    // Send the error response
     if (Array.isArray(errorResponse.details)) {
       errorResponse.details = errorResponse.details.map(
         (detail: ErrorDetail) => {
@@ -210,12 +115,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             detail.message !== null &&
             'key' in detail.message
           ) {
-            const translationMsg = detail.message;
-            const translatedMessage = this.translateMessage(translationMsg);
+            // Use plain string message directly
             return {
               field: detail.field,
               value: detail.value,
-              message: translatedMessage,
+              message:
+                typeof detail.message === 'string'
+                  ? detail.message
+                  : 'Validation error',
             };
           }
           // If already a string, keep it as-is
@@ -228,7 +135,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
                 : String(detail.message),
           };
         },
-      ) as any; // Type assertion needed because details array type changes after translation
+      );
     }
 
     // Send the standardized response (translated)
@@ -273,26 +180,22 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       retryAfter = (exceptionResponse as { retryAfter?: number })?.retryAfter;
     }
 
-    // Store TranslationMessage object (translation happens in interceptor)
-    // For rate limit, use translation key; for others, convert string to TranslationMessage
-    let message: TranslationMessage;
+    // Generate plain English error message
+    let message: string;
     if (status === 429 && retryAfter) {
-      // Rate limit with retry after - use translation key
+      // Rate limit with retry after
       const remainingTime = formatRemainingTime(retryAfter);
-      message = {
-        key: 't.messages.rateLimitExceeded',
-        args: { time: remainingTime },
-      };
+      message = `Rate limit exceeded. Try again in ${remainingTime}`;
     } else if (typeof rawMessage === 'string' && rawMessage.startsWith('t.')) {
-      // Already a translation key - use type assertion since key is dynamic
-      // TypeScript cannot determine at compile time if this key requires args
-      message = { key: rawMessage as I18nPath } as TranslationMessage;
+      // Translation key - convert to plain English
+      message = rawMessage
+        .replace('t.messages.', '')
+        .replace(/([A-Z])/g, ' $1')
+        .toLowerCase();
     } else {
-      // Not a translation key, convert to generic error message
-      message = {
-        key: 't.messages.errorWithMessage',
-        args: { message: rawMessage },
-      };
+      // Use raw message or generic error
+      message =
+        typeof rawMessage === 'string' ? rawMessage : 'An error occurred';
     }
 
     return {
@@ -327,11 +230,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       console.error('Failed to log internal server error:', loggerError);
       console.error('Original exception:', exception);
     }
-    // Store TranslationMessage object (translation happens in interceptor)
-    // Use type assertion since TypeScript can't narrow conditional type with variable key
-    const message: TranslationMessage = {
-      key: TRANSLATION_KEYS.ERRORS.INTERNAL_SERVER_ERROR,
-    } as TranslationMessage;
+    // Use plain English error message
+    const message = 'Internal server error';
 
     return {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -368,7 +268,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     errorResponse: EnhancedErrorResponse,
   ): void {
     // Extract user from request if available
-    const user = (request as any).actor;
+    const user = (request as IRequest).actor;
 
     // Use enterprise logger for comprehensive error logging
     this.enterpriseLogger!.logHttpException(
@@ -390,29 +290,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     try {
       let logMessage: string;
 
-      // Extract message key from TranslationMessage object
-      if (
-        typeof errorResponse?.message === 'object' &&
-        errorResponse.message !== null &&
-        'key' in errorResponse.message
-      ) {
-        const translationMsg = errorResponse.message;
-        // If exception has translationKey, translate to English for logging
-        if (exception instanceof HttpException) {
-          const translatableException =
-            exception as unknown as TranslatableException;
-          if (translatableException.translationKey) {
-            // this.translateForLogging() automatically resolves nested translation keys
-            logMessage = this.translateForLogging(
-              translatableException.translationKey,
-              translatableException.translationArgs,
-            );
-          } else {
-            logMessage = translationMsg.key;
-          }
-        } else {
-          logMessage = translationMsg.key;
-        }
+      // Use plain string message
+      if (typeof errorResponse?.message === 'string') {
+        logMessage = errorResponse.message;
       } else {
         // Fallback for unexpected message format
         logMessage = String(errorResponse?.message || 'Unknown error');
@@ -428,9 +308,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       };
 
       if (exception instanceof HttpException) {
-        // Check if there's an original error/stack preserved
-        const originalError = (exception as any).originalError;
-        const originalStack = (exception as any).originalStack;
+        // Check if there's an original error/stack preserved (accessing internal HttpException properties)
+        const originalError = (exception as { originalError?: unknown })
+          .originalError;
+        const originalStack = (exception as { originalStack?: string })
+          .originalStack;
 
         try {
           if (originalStack || originalError) {
@@ -502,143 +384,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   }
 
   /**
-   * Translate a TranslationMessage object
+   * Handle TranslationMessage objects (now just returns the key since translation system is removed)
    * @param translationMsg - Translation message object with key and optional args
-   * @returns The translated string, or the key if translation fails
+   * @returns The key (translation system removed)
    */
-  private translateMessage<P extends I18nPath>(
-    translationMsg: TranslationMessage<P>,
-  ): string {
-    try {
-      // Resolve nested translation keys in args (simple recursive translation)
-      const resolvedArgs =
-        'args' in translationMsg && translationMsg.args
-          ? this.resolveArgs(translationMsg.args)
-          : undefined;
-      return this.translationService.translate(
-        translationMsg.key,
-        resolvedArgs as PathArgs<P>,
-      );
-    } catch (error) {
-      try {
-        this.logger.warn(
-          `Translation failed for key: ${translationMsg.key}`,
-          error,
-        );
-      } catch (loggerError) {
-        // Emergency fallback for translation error logging
-        console.error('CRITICAL: Failed to log translation error', {
-          translationKey: translationMsg.key,
-          originalError: error?.message,
-          loggerError: loggerError?.message,
-        });
-      }
-      return translationMsg.key; // Fallback to key if translation fails
-    }
-  }
-
-  /**
-   * Recursively resolve nested translation keys in args
-   * Simple inline method - translates any string starting with 't.'
-   * @param args - Arguments object that may contain translation keys
-   * @returns Resolved arguments with translation keys translated to strings
-   * Note: Returns Record<string, any> for runtime flexibility, but is type-safe at call sites
-   */
-  private resolveArgs(args: PathArgs<I18nPath>): Record<string, any> {
-    if (!args || typeof args !== 'object' || Array.isArray(args)) {
-      return {};
-    }
-
-    const resolved: Record<string, any> = {};
-
-    for (const [key, value] of Object.entries(args)) {
-      if (typeof value === 'string' && value.startsWith('t.')) {
-        // Translate nested translation key - simple and direct
-        try {
-          resolved[key] = this.translationService.translate(value as I18nPath);
-        } catch {
-          resolved[key] = value; // Fallback to key if translation fails
-        }
-      } else if (
-        typeof value === 'object' &&
-        value !== null &&
-        !Array.isArray(value)
-      ) {
-        // Recursively resolve nested objects
-        resolved[key] = this.resolveArgs(value);
-      } else {
-        // Keep other values as-is (primitives, arrays, etc.)
-        resolved[key] = value;
-      }
-    }
-
-    return resolved;
-  }
-
-  /**
-   * Translate a key to English for logging purposes
-   * Always uses 'en' locale regardless of request context
-   * Automatically resolves nested translation keys in args
-   * @param key Translation key
-   * @param args Optional arguments (may contain nested translation keys)
-   */
-  private translateForLogging<P extends I18nPath>(
-    key: P,
-    args?: PathArgs<P>,
-  ): string {
-    try {
-      // Resolve nested translation keys to English before translating
-      const resolvedArgs = args ? this.resolveArgsForLogging(args) : undefined;
-      return this.translationService.translateWithLocale(
-        key,
-        resolvedArgs as PathArgs<P>,
-        Locale.EN,
-      );
-    } catch {
-      // Fallback to key if translation fails
-      return key;
-    }
-  }
-
-  /**
-   * Recursively resolve nested translation keys in args for logging (English only)
-   * Simple inline method - translates any string starting with 't.' to English
-   * @param args - Arguments object that may contain translation keys
-   * @returns Resolved arguments with translation keys translated to English strings
-   * Note: Returns Record<string, any> for runtime flexibility, but is type-safe at call sites
-   */
-  private resolveArgsForLogging(args: PathArgs<I18nPath>): Record<string, any> {
-    if (!args || typeof args !== 'object' || Array.isArray(args)) {
-      return {};
-    }
-
-    const resolved: Record<string, any> = {};
-
-    for (const [key, value] of Object.entries(args)) {
-      if (typeof value === 'string' && value.startsWith('t.')) {
-        // Translate nested translation keys to English - simple and direct
-        try {
-          resolved[key] = this.translationService.translateWithLocale(
-            value as I18nPath,
-            undefined,
-            Locale.EN,
-          );
-        } catch {
-          resolved[key] = value; // Fallback to key if translation fails
-        }
-      } else if (
-        typeof value === 'object' &&
-        value !== null &&
-        !Array.isArray(value)
-      ) {
-        // Recursively resolve nested objects
-        resolved[key] = this.resolveArgsForLogging(value);
-      } else {
-        // Keep other values as-is (primitives, arrays, etc.)
-        resolved[key] = value;
-      }
-    }
-
-    return resolved;
-  }
 }

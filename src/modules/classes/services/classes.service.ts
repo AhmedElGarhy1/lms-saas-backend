@@ -267,12 +267,7 @@ export class ClassesService extends BaseService {
       classEntity.status !== ClassStatus.PENDING_TEACHER_APPROVAL &&
       classEntity.status !== ClassStatus.NOT_STARTED
     ) {
-      throw new BusinessLogicException(
-        't.messages.cannotUpdatePaymentStrategy',
-        {
-          status: classEntity.status,
-        } as any,
-      );
+      throw new BusinessLogicException('Cannot update payment strategy for class in current status');
     }
 
     // Update student payment strategy (throws error if doesn't exist)
@@ -320,12 +315,7 @@ export class ClassesService extends BaseService {
       classEntity.status !== ClassStatus.PENDING_TEACHER_APPROVAL &&
       classEntity.status !== ClassStatus.NOT_STARTED
     ) {
-      throw new BusinessLogicException(
-        't.messages.cannotUpdatePaymentStrategy',
-        {
-          status: classEntity.status,
-        } as any,
-      );
+      throw new BusinessLogicException('Cannot update payment strategy for class in current status');
     }
 
     // Update teacher payment strategy (throws error if doesn't exist)
@@ -487,10 +477,7 @@ export class ClassesService extends BaseService {
 
     // Validate transition is allowed
     if (!isValidTransition(oldStatus, newStatus)) {
-      throw new BusinessLogicException('t.messages.invalidStatusTransition', {
-        from: oldStatus,
-        to: newStatus,
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Validate 24-hour grace period for reverting CANCELED/FINISHED to ACTIVE
@@ -503,10 +490,7 @@ export class ClassesService extends BaseService {
       const timeSinceUpdate = Date.now() - classEntity.updatedAt.getTime();
 
       if (timeSinceUpdate >= gracePeriodMs) {
-        throw new BusinessLogicException('t.messages.gracePeriodExpired', {
-          resource: 't.resources.class',
-          hours: '24',
-        });
+        throw new BusinessLogicException("Operation failed");
       }
     }
 
@@ -556,7 +540,7 @@ export class ClassesService extends BaseService {
     actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!classIds || classIds.length === 0) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     return await this.bulkOperationService.executeBulk(
@@ -584,7 +568,7 @@ export class ClassesService extends BaseService {
     actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!classIds || classIds.length === 0) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     return await this.bulkOperationService.executeBulk(
@@ -652,20 +636,12 @@ export class ClassesService extends BaseService {
       await this.classesRepository.findOneSoftDeletedById(classId);
 
     if (!classEntity) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.class',
-        identifier: 't.resources.identifier',
-        value: classId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     const centerId = actor.centerId;
     if (!centerId || classEntity.centerId !== centerId) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.class',
-        identifier: 't.resources.identifier',
-        value: classId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Branch Access
@@ -701,11 +677,7 @@ export class ClassesService extends BaseService {
     });
 
     if (!updatedClass) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.class',
-        identifier: 't.resources.identifier',
-        value: classId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Emit event

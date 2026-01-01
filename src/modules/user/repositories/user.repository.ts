@@ -223,11 +223,7 @@ export class UserRepository extends BaseRepository<User> {
           );
       } else {
         throw new InsufficientPermissionsException(
-          't.messages.actionUnauthorized',
-          {
-            action: 't.buttons.view',
-            resource: 't.resources.user',
-          },
+          'Insufficient permissions to view user',
         );
       }
     }
@@ -578,11 +574,7 @@ export class UserRepository extends BaseRepository<User> {
           );
       } else {
         throw new InsufficientPermissionsException(
-          't.messages.actionUnauthorized',
-          {
-            action: 't.buttons.view',
-            resource: 't.resources.user',
-          },
+          'Insufficient permissions to view user',
         );
       }
     }
@@ -674,11 +666,7 @@ export class UserRepository extends BaseRepository<User> {
 
     if (!isAdmin)
       throw new InsufficientPermissionsException(
-        't.messages.actionUnauthorized',
-        {
-          action: 't.buttons.view',
-          resource: 't.resources.user',
-        },
+        'Insufficient permissions to view user',
       );
     if (isSuperAdmin) {
       // do nothing
@@ -866,11 +854,7 @@ export class UserRepository extends BaseRepository<User> {
     } else {
       if (!isSuperAdmin && !isAdmin) {
         throw new InsufficientPermissionsException(
-          't.messages.actionUnauthorized',
-          {
-            action: 't.buttons.view',
-            resource: 't.resources.user',
-          },
+          'Insufficient permissions to view user',
         );
       }
     }
@@ -1038,11 +1022,7 @@ export class UserRepository extends BaseRepository<User> {
     } else {
       if (!isSuperAdmin && !isAdmin) {
         throw new InsufficientPermissionsException(
-          't.messages.actionUnauthorized',
-          {
-            action: 't.buttons.view',
-            resource: 't.resources.user',
-          },
+          'Insufficient permissions to view user',
         );
       }
     }
@@ -1107,11 +1087,7 @@ export class UserRepository extends BaseRepository<User> {
 
     if (!isAdmin) {
       throw new InsufficientPermissionsException(
-        't.messages.actionUnauthorized',
-        {
-          action: 't.buttons.view',
-          resource: 't.resources.user',
-        },
+        'Insufficient permissions to view user',
       );
     }
 

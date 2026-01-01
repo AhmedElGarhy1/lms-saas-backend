@@ -60,7 +60,7 @@ export class ClassStatusUpdateJob {
       this.logger.error(
         'Class status update job failed',
         error instanceof Error ? error.stack : String(error),
-        { jobId, durationMs: Date.now() - startMs } as any,
+        { jobId, durationMs: Date.now() - startMs },
       );
       throw error;
     }
@@ -98,8 +98,6 @@ export class ClassStatusUpdateJob {
           where: {
             centerId: center.id,
             status: ClassStatus.NOT_STARTED,
-            startDate: LessThanOrEqual(now), // Comparing UTC to UTC
-            deletedAt: IsNull(),
           },
         });
 

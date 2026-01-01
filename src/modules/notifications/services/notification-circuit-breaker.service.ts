@@ -166,7 +166,14 @@ export class NotificationCircuitBreakerService extends BaseService {
       }
     >
   > {
-    const status: Record<NotificationChannel, any> = {} as any;
+    type ChannelStatus = {
+      state: CircuitState;
+      failureCount: number;
+      lastFailureTime: Date | null;
+      isHealthy: boolean;
+    };
+
+    const status = {} as Record<NotificationChannel, ChannelStatus>;
 
     for (const channel of Object.values(NotificationChannel)) {
       const state = await this.getCircuitState(channel);

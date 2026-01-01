@@ -109,13 +109,7 @@ export class ClassesActionsController {
       actor,
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.class',
-      },
-    });
+    return ControllerResponse.success(result, 'Bulk operation completed successfully');
   }
 
   @Post('bulk/restore')
@@ -137,12 +131,6 @@ export class ClassesActionsController {
       actor,
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.class',
-      },
-    });
+    return ControllerResponse.success(result, 'Bulk operation completed successfully');
   }
 }

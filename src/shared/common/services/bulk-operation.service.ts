@@ -2,12 +2,9 @@ import { Injectable, Logger, HttpException } from '@nestjs/common';
 import pLimit from 'p-limit';
 import { BaseService } from './base.service';
 import {
-  TranslatableException,
   ErrorDetail,
   EnhancedErrorResponse,
 } from '../exceptions/custom.exceptions';
-import { I18nPath } from '@/generated/i18n.generated';
-import { PathArgs } from '@/generated/i18n-type-map.generated';
 import { ErrorCode } from '../enums/error-codes.enum';
 
 export interface BulkOperationOptions {
@@ -18,9 +15,7 @@ export interface BulkOperationOptions {
 export interface BulkOperationError {
   id: string;
   code?: ErrorCode;
-  error: string; // Translation key or error message
-  translationKey?: I18nPath;
-  translationArgs?: PathArgs<I18nPath>;
+  error: string; // Error message
   details?: unknown; // Generic structured error details from ErrorDetail array
   stack?: string; // Only in development mode
 }
@@ -147,8 +142,7 @@ export class BulkOperationService extends BaseService {
     };
 
     if (error instanceof Error) {
-      // Check if it's a translatable exception with a translationKey
-      const translatableError = error as unknown as TranslatableException;
+      // Extract error details
       const httpException = error as unknown as HttpException;
 
       // Extract error code and details from HttpException response if available
@@ -173,19 +167,7 @@ export class BulkOperationService extends BaseService {
       }
 
       // Extract translation key and args if it's a translatable exception
-      if (
-        translatableError.translationKey &&
-        typeof translatableError.translationKey === 'string'
-      ) {
-        errorDetail.translationKey = translatableError.translationKey;
-        errorDetail.error = translatableError.translationKey; // Store key for translation
-        errorDetail.translationArgs = translatableError.translationArgs;
-
-        this.logger.warn(
-          `Bulk operation failed for ID ${id}: ${translatableError.translationKey}`,
-          translatableError.translationArgs || {},
-        );
-      } else {
+      {
         // Use the error message as-is for non-translatable errors
         errorDetail.error = error.message;
         this.logger.warn(

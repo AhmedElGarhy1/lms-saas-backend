@@ -159,12 +159,6 @@ export class HealthService extends BaseService {
         version: this.version,
         environment: this.environment,
         checks: {
-          database: {
-            status: 'unhealthy',
-            responseTime: 0,
-            connections: { active: 0, idle: 0, total: 0 },
-            errors: [error.message],
-          },
           memory: {
             status: 'unhealthy',
             usage: { total: 0, used: 0, free: 0, percentage: 0 },
@@ -177,8 +171,8 @@ export class HealthService extends BaseService {
           },
           cpu: {
             status: 'unhealthy',
-            usage: { current: 0, average: 0, cores: 0 },
             load: { '1min': 0, '5min': 0, '15min': 0 },
+            usage: { current: 0, average: 0, cores: 0 },
             threshold: { warning: 80, critical: 95 },
           },
           cache: {
@@ -187,6 +181,11 @@ export class HealthService extends BaseService {
             size: 0,
             keys: 0,
             memoryUsage: 0,
+          },
+          database: {
+            status: 'unhealthy',
+            responseTime: 0,
+            connections: { active: 0, idle: 0, total: 0 },
             errors: [error.message],
           },
           external: [],

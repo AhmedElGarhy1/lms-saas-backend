@@ -29,12 +29,7 @@ function IsDateToNotInFuture(validationOptions?: ValidationOptions) {
       propertyName: propertyName,
       options: validationOptions,
       validator: {
-        validate(value: any, args: ValidationArguments) {
-          // Only validate if dateTo is present
-          if (!value) {
-            return true; // Optional field, skip validation if not present
-          }
-
+        validate(value: any) {
           // dateTo must be less than or equal to current time
           const now = new Date();
           return value.getTime() <= now.getTime();

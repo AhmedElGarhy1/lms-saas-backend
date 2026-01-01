@@ -66,23 +66,17 @@ export class ProfileGuard implements CanActivate {
     }
 
     if (!userProfileId) {
-      throw new ProfileSelectionRequiredException('t.messages.fieldRequired', {
-        field: 't.resources.profileSelection',
-      });
+      throw new ProfileSelectionRequiredException("Profile selection is required");
     }
     const profile = await this.userProfileService.findForUser(
       user.id,
       userProfileId,
     );
     if (!profile) {
-      throw new ProfileSelectionRequiredException('t.messages.fieldRequired', {
-        field: 't.resources.profileSelection',
-      });
+      throw new ProfileSelectionRequiredException("Profile selection is required");
     }
     if (!profile.isActive) {
-      throw new InactiveProfileException('t.messages.inactive', {
-        resource: 't.resources.profile',
-      });
+      throw new InactiveProfileException('Profile is inactive');
     }
 
     user.profileType = profile.profileType;

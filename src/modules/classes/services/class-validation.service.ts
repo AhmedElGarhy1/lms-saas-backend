@@ -36,12 +36,7 @@ export class ClassValidationService extends BaseService {
       const startDateChanged =
         newStartDateUtc.getTime() !== currentStartDateUtc.getTime();
       if (startDateChanged && currentClass.status !== ClassStatus.NOT_STARTED) {
-        throw new BusinessLogicException(
-          't.messages.cannotUpdateStartDateWhenNotNotStarted',
-          {
-            status: currentClass.status,
-          },
-        );
+        throw new BusinessLogicException('Cannot update start date when class is not in NOT_STARTED status');
       }
     }
 

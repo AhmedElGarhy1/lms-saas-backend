@@ -63,11 +63,7 @@ export class CashTransactionService extends BaseService {
       await this.cashTransactionRepository.findOne(cashTransactionId);
 
     if (!cashTransaction) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.cashTransaction',
-        identifier: 't.resources.identifier',
-        value: cashTransactionId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Create reverse transaction with opposite direction

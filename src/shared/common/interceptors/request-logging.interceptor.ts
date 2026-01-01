@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Observable, tap } from 'rxjs';
 import { Request, Response } from 'express';
+import { IRequest } from '../interfaces/request.interface';
 import { EnterpriseLoggerService } from '../services/enterprise-logger.service';
 import { RequestContextService } from '../services/request-context.service';
 import { ActorUser } from '../types/actor-user.type';
@@ -25,7 +26,7 @@ export class RequestLoggingInterceptor implements NestInterceptor {
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest<Request>();
+    const request = context.switchToHttp().getRequest<Request>() as IRequest;
     const response = context.switchToHttp().getResponse<Response>();
 
     // Set correlation ID in response headers for client tracking
@@ -40,8 +41,8 @@ export class RequestLoggingInterceptor implements NestInterceptor {
     this.enterpriseLogger.logRequestStart(request, user);
 
     // Add correlation ID to request for use in services
-    (request as any).correlationId = correlationId;
-    (request as any).requestId = this.requestContext.getRequestId();
+    request.correlationId = correlationId;
+    request.requestId = this.requestContext.getRequestId();
 
     return next.handle().pipe(
       tap({
@@ -64,14 +65,7 @@ export class RequestLoggingInterceptor implements NestInterceptor {
           } catch (loggerError) {
             // Fallback logging if the main logger fails
             console.error('CRITICAL: Failed to log HttpException:', {
-              errorContext: {
-                method: request.method,
-                url: request.url,
-                userAgent: request.get('User-Agent'),
-                ip: request.ip,
-                statusCode: error.status || 500,
-                message: error.message || 'Unknown error',
-              },
+              errorContext: 'Error occurred',
               exception: error.message || error,
               loggerError: loggerError?.message || String(loggerError),
             });
@@ -91,8 +85,8 @@ export class RequestLoggingInterceptor implements NestInterceptor {
     }
 
     // Check if user is in request object (set by other interceptors)
-    if ((request as any).actor) {
-      return (request as any).actor as ActorUser;
+    if ((request as unknown as IRequest).actor) {
+      return (request as unknown as IRequest).actor;
     }
 
     return undefined;

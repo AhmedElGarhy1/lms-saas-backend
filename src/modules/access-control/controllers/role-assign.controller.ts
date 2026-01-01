@@ -28,10 +28,7 @@ export class RoleAssignController {
   @Transactional()
   async assignRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
     const result = await this.rolesService.assignRoleValidate(dto, user);
-    return ControllerResponse.success(result, {
-      key: 't.messages.assigned',
-      args: { resource: 't.resources.role' },
-    });
+    return ControllerResponse.success(result, 'Role assigned successfully');
   }
 
   @Delete()
@@ -41,9 +38,6 @@ export class RoleAssignController {
   @Transactional()
   async removeRole(@Body() dto: AssignRoleDto, @GetUser() user: ActorUser) {
     const result = await this.rolesService.removeUserRoleValidate(dto, user);
-    return ControllerResponse.success(result, {
-      key: 't.messages.removed',
-      args: { resource: 't.resources.role' },
-    });
+    return ControllerResponse.success(result, 'Role removed successfully');
   }
 }

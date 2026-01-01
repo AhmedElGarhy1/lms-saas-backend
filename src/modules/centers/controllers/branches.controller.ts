@@ -42,10 +42,7 @@ export class BranchesController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.branch' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Get(':branchId')
@@ -68,10 +65,7 @@ export class BranchesController {
       actor,
       true,
     ); // includeDeleted: true for API endpoints
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.branch' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Post()
@@ -94,10 +88,7 @@ export class BranchesController {
       createBranchDto,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.created',
-      args: { resource: 't.resources.branch' },
-    });
+    return ControllerResponse.success(result, 'Resource created successfully');
   }
 
   @Put(':branchId')
@@ -123,10 +114,7 @@ export class BranchesController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.updated',
-      args: { resource: 't.resources.branch' },
-    });
+    return ControllerResponse.success(result, 'Resource updated successfully');
   }
 
   @Delete(':branchId')
@@ -147,10 +135,7 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.branchesService.deleteBranch(params.branchId, actor);
-    return ControllerResponse.message({
-      key: 't.messages.deleted',
-      args: { resource: 't.resources.branch' },
-    });
+    return ControllerResponse.message('Resource deleted successfully');
   }
 
   @Patch(':branchId/status')
@@ -176,10 +161,7 @@ export class BranchesController {
       body.isActive,
       actor,
     );
-    return ControllerResponse.message({
-      key: 't.messages.updated',
-      args: { resource: 't.resources.branch' },
-    });
+    return ControllerResponse.message('Resource updated successfully');
   }
 
   @Patch(':branchId/restore')
@@ -192,9 +174,6 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.branchesService.restoreBranch(params.branchId, actor);
-    return ControllerResponse.message({
-      key: 't.messages.restored',
-      args: { resource: 't.resources.branch' },
-    });
+    return ControllerResponse.message('Operation completed successfully');
   }
 }

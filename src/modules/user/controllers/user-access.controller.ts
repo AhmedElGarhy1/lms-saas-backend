@@ -44,10 +44,7 @@ export class UserAccessController {
     // Validation is now handled in AccessControlService.grantUserAccessValidate
     await this.accessControlService.grantUserAccessValidate(dto, actor);
 
-    return ControllerResponse.message({
-      key: 't.messages.granted',
-      args: { resource: 't.resources.userAccess' },
-    });
+    return ControllerResponse.message('Operation completed successfully');
   }
 
   @Delete()
@@ -60,10 +57,7 @@ export class UserAccessController {
   ) {
     await this.accessControlService.revokeUserAccessValidate(dto, actor);
 
-    return ControllerResponse.message({
-      key: 't.messages.revoked',
-      args: { resource: 't.resources.userAccess' },
-    });
+    return ControllerResponse.message('Operation completed successfully');
   }
 
   @Post('bulk/grant')
@@ -95,13 +89,7 @@ export class UserAccessController {
       },
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.userAccess',
-      },
-    });
+    return ControllerResponse.success(result, 'Bulk operation completed successfully');
   }
 
   @Post('bulk/revoke')
@@ -133,12 +121,6 @@ export class UserAccessController {
       },
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.userAccess',
-      },
-    });
+    return ControllerResponse.success(result, 'Bulk operation completed successfully');
   }
 }

@@ -4,7 +4,6 @@ import {
   ScheduleConflictException,
   ErrorDetail,
 } from '@/shared/common/exceptions/custom.exceptions';
-import { TranslationMessage } from '@/generated/i18n-type-map.generated';
 import { ScheduleItemDto } from '../dto/schedule-item.dto';
 import { DayOfWeek } from '../enums/day-of-week.enum';
 import { BaseService } from '@/shared/common/services/base.service';
@@ -76,7 +75,7 @@ export class ScheduleService extends BaseService {
         const interval1 = createInterval(dayItems[i]);
         for (let j = i + 1; j < dayItems.length; j++) {
           if (areIntervalsOverlapping(interval1, createInterval(dayItems[j]))) {
-            throw new BusinessLogicException('t.messages.validationFailed');
+            throw new BusinessLogicException('Validation failed');
           }
         }
       }
@@ -174,10 +173,7 @@ export class ScheduleService extends BaseService {
         details.push({
           field: 'teacher',
           value: teacherConflict,
-          message: {
-            key: 't.messages.validationFailed',
-            args: {},
-          } as TranslationMessage,
+          message: 'Validation failed',
         });
       }
     }
@@ -198,10 +194,7 @@ export class ScheduleService extends BaseService {
             ...studentConflicts.map((conflict) => ({
               field: 'student',
               value: conflict,
-              message: {
-                key: 't.messages.validationFailed',
-                args: {},
-              } as TranslationMessage,
+              message: 'Validation failed',
             })),
           );
         }

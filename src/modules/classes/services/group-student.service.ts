@@ -85,9 +85,7 @@ export class GroupStudentService extends BaseService {
       (group.class.status === ClassStatus.CANCELED ||
         group.class.status === ClassStatus.FINISHED)
     ) {
-      throw new BusinessLogicException('t.messages.cannotEnrollInClass', {
-        status: group.class.status,
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Validate actor has ClassStaff access to the parent class
@@ -103,10 +101,7 @@ export class GroupStudentService extends BaseService {
       );
 
     if (existingActiveAssignment) {
-      throw new BusinessLogicException('t.messages.alreadyIs', {
-        resource: 't.resources.student',
-        state: 'assigned to group',
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     const existingGroupIds =
@@ -117,10 +112,7 @@ export class GroupStudentService extends BaseService {
       );
 
     if (existingGroupIds.length > 0) {
-      throw new BusinessLogicException('t.messages.alreadyIs', {
-        resource: 't.resources.student',
-        state: 'assigned to class',
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     const scheduleItems = await this.scheduleItemsRepository.findByGroupId(
@@ -133,7 +125,7 @@ export class GroupStudentService extends BaseService {
       }));
 
       if (!group.class || !group.class.duration) {
-        throw new BusinessLogicException('t.messages.validationFailed');
+        throw new BusinessLogicException("Operation failed");
       }
 
       await this.scheduleService.validateScheduleConflicts(
@@ -210,7 +202,7 @@ export class GroupStudentService extends BaseService {
     skipWarning?: boolean,
   ): Promise<BulkOperationResult> {
     if (!userProfileIds || userProfileIds.length === 0) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     return await this.bulkOperationService.executeBulk(
@@ -245,7 +237,7 @@ export class GroupStudentService extends BaseService {
     actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!studentUserProfileIds || studentUserProfileIds.length === 0) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     const centerId = actor.centerId!;
@@ -290,9 +282,7 @@ export class GroupStudentService extends BaseService {
             studentUserProfileId,
           );
         if (!groupStudent) {
-          throw new ResourceNotFoundException('t.messages.notFound', {
-            resource: 't.resources.groupStudent',
-          });
+          throw new ResourceNotFoundException("Operation failed");
         }
 
         await this.groupStudentsRepository.update(groupStudent.id, {

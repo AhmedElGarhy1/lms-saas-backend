@@ -42,11 +42,7 @@ export class BranchesService extends BaseService {
       : await this.branchesRepository.findOne(branchId);
 
     if (!branch) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.branch',
-        identifier: 't.resources.identifier',
-        value: branchId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Validate actor has branch access
@@ -111,11 +107,7 @@ export class BranchesService extends BaseService {
   ): Promise<void> {
     const branch = await this.branchesRepository.findOne(branchId);
     if (!branch) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.branch',
-        identifier: 't.resources.identifier',
-        value: branchId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Validate actor has branch access
@@ -143,11 +135,7 @@ export class BranchesService extends BaseService {
     const branch =
       await this.branchesRepository.findOneSoftDeletedById(branchId);
     if (!branch) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.branch',
-        identifier: 't.resources.identifier',
-        value: branchId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Validate actor has branch access

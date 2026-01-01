@@ -52,10 +52,7 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.groupsService.paginateGroups(paginateDto, actor);
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.group' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Get(':groupId')
@@ -80,10 +77,7 @@ export class GroupsController {
       actor,
       true,
     ); // includeDeleted: true for API endpoints
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.group' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Post()
@@ -104,10 +98,7 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.groupsService.createGroup(createGroupDto, actor);
-    return ControllerResponse.success(result, {
-      key: 't.messages.created',
-      args: { resource: 't.resources.group' },
-    });
+    return ControllerResponse.success(result, 'Resource created successfully');
   }
 
   @Put(':groupId')
@@ -134,10 +125,7 @@ export class GroupsController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.updated',
-      args: { resource: 't.resources.group' },
-    });
+    return ControllerResponse.success(result, 'Resource updated successfully');
   }
 
   @Delete(':groupId')
@@ -158,10 +146,7 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.groupsService.deleteGroup(params.groupId, actor);
-    return ControllerResponse.message({
-      key: 't.messages.deleted',
-      args: { resource: 't.resources.group' },
-    });
+    return ControllerResponse.message('Resource deleted successfully');
   }
 
   @Patch(':groupId/restore')
@@ -175,9 +160,6 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.groupsService.restoreGroup(params.groupId, actor);
-    return ControllerResponse.message({
-      key: 't.messages.restored',
-      args: { resource: 't.resources.group' },
-    });
+    return ControllerResponse.message('Operation completed successfully');
   }
 }

@@ -129,9 +129,7 @@ export class NotificationRepository extends BaseRepository<Notification> {
       where: { id: notificationId, userId },
     });
     if (!notification) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.notification',
-      });
+      throw new ResourceNotFoundException('Operation failed');
     }
     await repo.update({ id: notificationId }, { readAt: new Date() });
   }
@@ -199,7 +197,7 @@ export class NotificationRepository extends BaseRepository<Notification> {
       where: {
         userId,
         isArchived: true,
-      } as any,
+      },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,

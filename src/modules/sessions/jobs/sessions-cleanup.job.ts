@@ -83,7 +83,7 @@ export class SessionsCleanupJob {
         {
           jobId,
           durationMs: Date.now() - startMs,
-        } as any,
+        },
       );
       throw error;
     }

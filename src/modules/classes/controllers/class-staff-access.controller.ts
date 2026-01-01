@@ -93,13 +93,7 @@ export class ClassStaffAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.classStaffAccess',
-      },
-    });
+    return ControllerResponse.success(result, 'Bulk operation completed successfully');
   }
 
   @Post('bulk/revoke')
@@ -124,13 +118,7 @@ export class ClassStaffAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.classStaffAccess',
-      },
-    });
+    return ControllerResponse.success(result, 'Bulk operation completed successfully');
   }
 
   @Get(':classId')
@@ -149,9 +137,6 @@ export class ClassStaffAccessController {
       params.classId,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.classStaffAccess' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 }

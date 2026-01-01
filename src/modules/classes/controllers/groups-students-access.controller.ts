@@ -47,10 +47,7 @@ export class GroupsStudentsAccessController {
       groupStudentAccessDto,
       actor,
     );
-    return ControllerResponse.message({
-      key: 't.messages.assigned',
-      args: { resource: 't.resources.groupStudent' },
-    });
+    return ControllerResponse.message('Operation completed successfully');
   }
 
   @Delete()
@@ -74,10 +71,7 @@ export class GroupsStudentsAccessController {
       [groupStudentAccessDto.userProfileId],
       actor,
     );
-    return ControllerResponse.message({
-      key: 't.messages.removed',
-      args: { resource: 't.resources.groupStudent' },
-    });
+    return ControllerResponse.message('Operation completed successfully');
   }
 
   @Post('bulk/grant')
@@ -103,13 +97,7 @@ export class GroupsStudentsAccessController {
       dto.skipWarning,
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.groupStudent',
-      },
-    });
+    return ControllerResponse.success(result, 'Bulk operation completed successfully');
   }
 
   @Post('bulk/revoke')
@@ -134,13 +122,7 @@ export class GroupsStudentsAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.groupStudent',
-      },
-    });
+    return ControllerResponse.success(result, 'Bulk operation completed successfully');
   }
 
   @Get(':groupId')
@@ -159,9 +141,6 @@ export class GroupsStudentsAccessController {
       params.groupId,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.groupStudent' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 }

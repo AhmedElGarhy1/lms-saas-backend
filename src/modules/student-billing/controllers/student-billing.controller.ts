@@ -33,10 +33,7 @@ export class StudentBillingController {
   ): Promise<ControllerResponse<StudentClassSubscription>> {
     const subscription =
       await this.billingService.createMonthlySubscription(dto);
-    return ControllerResponse.success(subscription, {
-      key: 't.messages.created',
-      args: { resource: 't.resources.subscription' },
-    });
+    return ControllerResponse.success(subscription, 'Resource created successfully');
   }
 
   @Post('session-charges')
@@ -46,10 +43,7 @@ export class StudentBillingController {
     @Body() dto: CreateSessionChargeDto,
   ): Promise<ControllerResponse<StudentSessionCharge>> {
     const charge = await this.billingService.createSessionCharge(dto);
-    return ControllerResponse.success(charge, {
-      key: 't.messages.created',
-      args: { resource: 't.resources.sessionCharge' },
-    });
+    return ControllerResponse.success(charge, 'Resource created successfully');
   }
 
   @Get('records')
@@ -61,9 +55,6 @@ export class StudentBillingController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(records, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.billingRecords' },
-    });
+    return ControllerResponse.success(records, 'Data retrieved successfully');
   }
 }

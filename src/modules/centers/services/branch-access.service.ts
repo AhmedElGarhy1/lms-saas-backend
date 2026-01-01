@@ -98,9 +98,7 @@ export class BranchAccessService extends BaseService {
         centerId: data.centerId,
         branchId: data.branchId,
       });
-      throw new BranchAccessDeniedException('t.messages.accessDenied', {
-        resource: 't.resources.branch',
-      });
+      throw new BranchAccessDeniedException('Branch access denied');
     }
   }
 
@@ -212,26 +210,19 @@ export class BranchAccessService extends BaseService {
 
     const profile = await this.userProfileService.findOne(data.userProfileId);
     if (!profile) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.profile',
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     if (
       profile.profileType !== ProfileType.STAFF &&
       profile.profileType !== ProfileType.ADMIN
     ) {
-      throw new BusinessLogicException('t.messages.onlyForStaffAndAdmin', {
-        resource: 't.resources.branchAccess',
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     const canAccess = await this.canBranchAccess(data);
     if (canAccess) {
-      throw new BusinessLogicException('t.messages.alreadyIs', {
-        resource: 't.resources.profile',
-        state: 'assigned to branch',
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     return await this.branchAccessRepository.grantBranchAccess(data);

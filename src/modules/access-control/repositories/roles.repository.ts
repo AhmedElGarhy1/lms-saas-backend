@@ -57,11 +57,7 @@ export class RolesRepository extends BaseRepository<Role> {
     const { rolePermissions, ...roleData } = data;
     const role = await this.update(roleId, roleData);
     if (!role) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.role',
-        identifier: 't.resources.identifier',
-        value: roleId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
     const existingRolePermissions =
       await this.rolePermissionRepository.findMany({

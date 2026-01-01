@@ -27,11 +27,7 @@ export class LevelsService extends BaseService {
       : await this.levelsRepository.findOne(levelId);
 
     if (!level) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.level',
-        identifier: 't.resources.identifier',
-        value: levelId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     return level;
@@ -62,11 +58,7 @@ export class LevelsService extends BaseService {
   async restoreLevel(levelId: string, actor: ActorUser): Promise<void> {
     const level = await this.levelsRepository.findOneSoftDeletedById(levelId);
     if (!level) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.level',
-        identifier: 't.resources.identifier',
-        value: levelId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     await this.levelsRepository.restore(levelId);

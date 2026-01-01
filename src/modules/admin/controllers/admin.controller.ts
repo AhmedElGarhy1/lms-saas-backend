@@ -27,10 +27,7 @@ export class AdminController {
     @GetUser() actorUser: ActorUser,
   ) {
     const result = await this.adminService.paginateAdmins(query, actorUser);
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.admin' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Get(':id')
@@ -47,9 +44,6 @@ export class AdminController {
       actorUser,
       true, // includeDeleted: true for API endpoints
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.admin' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 }

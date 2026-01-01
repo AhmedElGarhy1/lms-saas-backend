@@ -2,13 +2,6 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_INTERCEPTOR, APP_FILTER, APP_PIPE, APP_GUARD } from '@nestjs/core';
 import { Reflector } from '@nestjs/core';
-import {
-  AcceptLanguageResolver,
-  I18nJsonLoader,
-  I18nModule,
-  QueryResolver,
-} from 'nestjs-i18n';
-import { intlMessageFormatter } from './shared/common/formatters/intl-message-formatter';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { UserModule } from '@/modules/user/user.module';
 import { CentersModule } from '@/modules/centers/centers.module';
@@ -21,11 +14,9 @@ import { AccessControlModule } from '@/modules/access-control/access-control.mod
 import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { SharedModule } from '@/shared/shared.module';
 import { SeederModule } from '@/database/seeder.module';
-import { LocaleModule } from '@/modules/locale/locale.module';
 import { GlobalExceptionFilter } from '@/shared/common/filters/global-exception.filter';
 import { TypeOrmExceptionFilter } from '@/shared/common/filters/typeorm-exception.filter';
 import { ResponseInterceptor } from '@/shared/common/interceptors/response.interceptor';
-import { TranslationResponseInterceptor } from '@/shared/common/interceptors/translation-response.interceptor';
 import { ETagInterceptor } from '@/shared/common/interceptors/etag.interceptor';
 import { CacheInterceptor } from '@/shared/common/interceptors/cache.interceptor';
 import { CacheModule } from '@/shared/modules/cache/cache.module';
@@ -41,8 +32,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RolesService } from './modules/access-control/services/roles.service';
 import { CentersRepository } from './modules/centers/repositories/centers.repository';
 import { join } from 'path';
-import { UserLocaleResolver } from './shared/resolvers/user-locale.resolver';
-import { Locale } from './shared/common/enums/locale.enum';
 import { HealthModule } from './modules/health';
 import { UserProfileModule } from './modules/user-profile/user-profile.module';
 import { StaffModule } from './modules/staff/staff.module';
@@ -80,22 +69,6 @@ import { StudentBillingModule } from './modules/student-billing/student-billing.
       validate: validateEnv,
     }),
     DatabaseModule,
-    I18nModule.forRoot({
-      fallbackLanguage: Locale.AR,
-      loader: I18nJsonLoader,
-      loaderOptions: {
-        path: join(__dirname, '/i18n/'),
-        watch: true,
-        includeSubfolders: false,
-      },
-      typesOutputPath: join(__dirname, '../src/generated/i18n.generated.ts'),
-      formatter: intlMessageFormatter,
-      resolvers: [
-        { use: QueryResolver, options: ['lang'] },
-        UserLocaleResolver,
-        AcceptLanguageResolver,
-      ],
-    }),
     SharedModule,
     RedisModule,
     CacheModule,
@@ -123,7 +96,6 @@ import { StudentBillingModule } from './modules/student-billing/student-billing.
     AttendanceModule,
     ActivityLogModule,
     SeederModule,
-    LocaleModule,
     HealthModule,
     NotificationModule,
     FinanceModule,
@@ -180,10 +152,6 @@ import { StudentBillingModule } from './modules/student-billing/student-billing.
         return new RequestLoggingInterceptor(enterpriseLogger, requestContext);
       },
       inject: [EnterpriseLoggerService, RequestContextService],
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: TranslationResponseInterceptor,
     },
     {
       provide: APP_INTERCEPTOR,

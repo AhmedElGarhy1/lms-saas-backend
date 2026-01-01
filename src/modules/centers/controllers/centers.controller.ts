@@ -48,10 +48,7 @@ export class CentersController {
   ) {
     const result = await this.centersService.createCenter(dto, actor);
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.created',
-      args: { resource: 't.resources.center' },
-    });
+    return ControllerResponse.success(result, 'Resource created successfully');
   }
 
   @Get()
@@ -62,10 +59,7 @@ export class CentersController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.centersService.paginateCenters(query, actor);
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.center' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Get(':id')
@@ -81,10 +75,7 @@ export class CentersController {
       actor,
       true,
     ); // includeDeleted: true for API endpoints
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.center' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Put(':id')
@@ -105,10 +96,7 @@ export class CentersController {
       actor,
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.updated',
-      args: { resource: 't.resources.center' },
-    });
+    return ControllerResponse.success(result, 'Resource updated successfully');
   }
 
   @Delete(':id')
@@ -123,10 +111,7 @@ export class CentersController {
   ) {
     await this.centersService.deleteCenter(params.id, actor);
 
-    return ControllerResponse.message({
-      key: 't.messages.deleted',
-      args: { resource: 't.resources.center' },
-    });
+    return ControllerResponse.message('Resource deleted successfully');
   }
 
   @Patch(':id/restore')
@@ -141,10 +126,7 @@ export class CentersController {
   ) {
     await this.centersService.restoreCenter(params.id, actor);
 
-    return ControllerResponse.message({
-      key: 't.messages.restored',
-      args: { resource: 't.resources.center' },
-    });
+    return ControllerResponse.message('Operation completed successfully');
   }
 
   @Patch(':id/status')
@@ -167,9 +149,6 @@ export class CentersController {
       actor,
     );
 
-    return ControllerResponse.message({
-      key: 't.messages.updated',
-      args: { resource: 't.resources.center' },
-    });
+    return ControllerResponse.message('Resource updated successfully');
   }
 }

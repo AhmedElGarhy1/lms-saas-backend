@@ -198,7 +198,7 @@ export class NotificationValidator implements OnModuleInit {
             continue;
           }
 
-          // Special handling for IN_APP channel - validate t.json structure instead of file paths
+          // Special handling for IN_APP channel - validate notifications.json structure instead of file paths
           if (channel === NotificationChannel.IN_APP) {
             // Use notification type enum value directly (e.g., "OTP", "PASSWORD_RESET")
             const notificationKey = type; // type is already the enum value string
@@ -290,10 +290,8 @@ export class NotificationValidator implements OnModuleInit {
           // Validate template path against generated type (if using explicit template)
           // TypeScript already enforces this at compile time, but add runtime check for safety
           if (config.template) {
-            // If explicit template is provided, it should be in NotificationTemplatePath type
-            // This is mainly for documentation - TypeScript already enforces it at compile time
-            // Runtime validation: template existence is already checked above
-            // Type safety is enforced by TypeScript when using NotificationTemplatePath
+            // If explicit template is provided, template existence is validated above
+            // No additional type checking needed since templates are resolved dynamically
             void config.template;
           }
 

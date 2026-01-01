@@ -52,35 +52,24 @@ export class RefreshJwtStrategy extends PassportStrategy(
       const refreshToken = req.body?.refreshToken;
 
       if (!refreshToken) {
-        throw new AuthenticationFailedException('t.messages.notFound', {
-          resource: 't.resources.refreshToken',
-        });
+        throw new AuthenticationFailedException("Operation failed");
       }
 
       // Validate that this is a refresh token
       if (payload.type !== 'refresh') {
-        throw new AuthenticationFailedException('t.messages.fieldInvalid', {
-          field: 't.resources.tokenType',
-        });
+        throw new AuthenticationFailedException("Operation failed");
       }
 
       // Get user and verify they have a stored refresh token
       const user = await this.userService.findOne(payload.sub, true);
       if (!user || !user.hashedRt) {
-        throw new AccessDeniedException('t.messages.accessDenied', {
-          resource: 't.resources.refreshToken',
-        });
+        throw new AccessDeniedException("Operation failed");
       }
 
       // Compare the provided token with the stored hashed token
       const rtMatches = await bcrypt.compare(refreshToken, user.hashedRt);
       if (!rtMatches) {
-        throw new AuthenticationFailedException(
-          't.messages.fieldInvalidOrExpired',
-          {
-            field: 'token',
-          },
-        );
+        throw new AuthenticationFailedException('Invalid or expired token');
       }
 
       return {
@@ -91,21 +80,15 @@ export class RefreshJwtStrategy extends PassportStrategy(
       // Handle JWT-specific errors
       const jwtError = error as JwtError;
       if (jwtError?.name === 'TokenExpiredError') {
-        throw new AuthenticationFailedException('t.messages.expired', {
-          resource: 't.resources.refreshToken',
-        });
+        throw new AuthenticationFailedException("Operation failed");
       } else if (jwtError?.name === 'JsonWebTokenError') {
-        throw new AuthenticationFailedException('t.messages.fieldInvalid', {
-          field: 'refresh token',
-        });
+        throw new AuthenticationFailedException("Operation failed");
       } else if (jwtError?.name === 'NotBeforeError') {
-        throw new AuthenticationFailedException('t.messages.operationError', {
-          reason: 'token is not active yet',
-        });
+        throw new AuthenticationFailedException("Operation failed");
       } else if (error instanceof AuthenticationFailedException) {
         throw error;
       } else {
-        throw new AuthenticationFailedException('t.messages.validationFailed');
+        throw new AuthenticationFailedException("Operation failed");
       }
     }
   }

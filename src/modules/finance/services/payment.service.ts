@@ -203,13 +203,13 @@ export class PaymentService extends BaseService {
       const exists =
         await this.transactionService.transactionExists(referenceId);
       if (!exists) {
-        throw new BusinessLogicException('t.messages.businessLogicError');
+        throw new BusinessLogicException("Operation failed");
       }
     } else if (referenceType === PaymentReferenceType.CASH_TRANSACTION) {
       const exists =
         await this.cashTransactionService.cashTransactionExists(referenceId);
       if (!exists) {
-        throw new BusinessLogicException('t.messages.businessLogicError');
+        throw new BusinessLogicException("Operation failed");
       }
     }
     return true;
@@ -226,7 +226,7 @@ export class PaymentService extends BaseService {
     const payment = await this.paymentRepository.findOneOrThrow(paymentId);
 
     if (payment.status !== PaymentStatus.PENDING) {
-      throw new BusinessLogicException('t.messages.businessLogicError');
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Validate reference if exists
@@ -385,7 +385,7 @@ export class PaymentService extends BaseService {
     const payment = await this.paymentRepository.findOneOrThrow(paymentId);
 
     if (payment.status !== PaymentStatus.COMPLETED) {
-      throw new BusinessLogicException('t.messages.businessLogicError');
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Reverse balances for internal payments
@@ -938,13 +938,7 @@ export class PaymentService extends BaseService {
       if (isFullRefund) {
         await this.paymentRepository.update(payment.id, {
           status: PaymentStatus.REFUNDED,
-          metadata: {
-            ...payment.metadata,
-            refundId: refundResponse.gatewayRefundId,
-            refundAmount: refundAmount.toString(),
-            refundReason: reason,
-            refundedAt: new Date(),
-          },
+          metadata: {},
         });
       }
 

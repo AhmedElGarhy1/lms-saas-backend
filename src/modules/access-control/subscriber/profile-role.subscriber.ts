@@ -42,26 +42,17 @@ export class ProfileRoleSubscriber
     if (profileRole.roleId) {
       const role = await this.rolesRepository.findOne(profileRole.roleId);
       if (!role)
-        throw new BusinessLogicException('t.messages.withIdNotFound', {
-          resource: 't.resources.role',
-          identifier: 't.resources.identifier',
-          value: profileRole.roleId,
-        });
+        throw new BusinessLogicException("Operation failed");
 
       const profile = await this.accessControlHelperService.findUserProfile(
         profileRole.userProfileId,
       );
       if (!profile)
-        throw new BusinessLogicException('t.messages.notFound', {
-          resource: 't.resources.profile',
-        });
+        throw new BusinessLogicException("Operation failed");
 
       if (profileRole.centerId) {
         if (profile?.profileType === ProfileType.ADMIN) {
-          throw new BusinessLogicException('t.messages.cannotBeAssociated', {
-            resource1: 't.resources.role',
-            resource2: 't.resources.center',
-          });
+          throw new BusinessLogicException("Operation failed");
         } else if (profile?.profileType === ProfileType.STAFF) {
           // check center access
           await this.accessControlHelperService.validateCenterAccess({

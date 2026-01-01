@@ -249,7 +249,7 @@ export class WalletService extends BaseService {
         await this.accessControlHelperService.isAdmin(userProfileId);
 
       if (!isSuperAdmin && !isAdmin) {
-        throw new InsufficientPermissionsException('t.messages.accessDenied');
+        throw new InsufficientPermissionsException("Operation failed");
       }
     }
 
@@ -278,7 +278,7 @@ export class WalletService extends BaseService {
       );
 
       if (!isSuperAdmin && !isAdmin) {
-        throw new InsufficientPermissionsException('t.messages.accessDenied');
+        throw new InsufficientPermissionsException("Operation failed");
       }
     }
 

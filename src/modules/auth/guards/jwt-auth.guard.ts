@@ -60,14 +60,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   //       throw err;
   //     }
 
-  //     // For other errors (token expired, invalid signature, etc.), store translation key
-  //     // Translation happens in TranslationResponseInterceptor
-  //     throw new UnauthorizedException({
-  //       message: {
-  //         key: 't.messages.fieldInvalidOrExpired',
-  //         args: { field: 'token' },
-  //       },
-  //     });
   //   }
 
   //   return user;

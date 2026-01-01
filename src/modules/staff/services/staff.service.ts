@@ -35,11 +35,7 @@ export class StaffService extends BaseService {
       includeDeleted,
     );
     if (!user) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.staff',
-        identifier: 't.resources.identifier',
-        value: userProfileId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
     return user;
   }

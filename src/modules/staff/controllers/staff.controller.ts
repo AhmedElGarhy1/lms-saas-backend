@@ -29,10 +29,7 @@ export class StaffController {
   ) {
     const result = await this.staffService.paginateStaff(query, actorUser);
     // Wrap in ControllerResponse for consistent messaging
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.staff' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Get(':id')
@@ -49,9 +46,6 @@ export class StaffController {
       actorUser,
       true, // includeDeleted: true for API endpoints
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.staff' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 }

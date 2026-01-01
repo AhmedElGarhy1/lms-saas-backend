@@ -213,11 +213,7 @@ export class GroupsRepository extends BaseRepository<Group> {
   ): Promise<GroupWithStudentCount> {
     const group = await this.findGroupWithRelations(id, includeDeleted);
     if (!group) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.group',
-        identifier: 't.resources.identifier',
-        value: id,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
     return group;
   }

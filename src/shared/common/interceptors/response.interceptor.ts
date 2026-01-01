@@ -9,7 +9,6 @@ import { map } from 'rxjs/operators';
 import { Request } from 'express';
 import { ApiResponseBuilder } from '../dto/api-response.dto';
 import { ControllerResponse } from '../dto/controller-response.dto';
-import { TranslationMessage } from '../types/translation.types';
 
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
@@ -74,10 +73,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
               total: number;
               totalPages: number;
             },
-            {
-              key: 't.messages.found',
-              args: { resource: 't.resources.resource' },
-            },
+            'Data retrieved successfully',
             requestId,
             processingTime,
           );
@@ -88,108 +84,58 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
           this.getSuccessMessage(request.method, data),
           requestId,
           processingTime,
-        ) as any;
+        );
       }),
     );
   }
 
-  private getSuccessMessage(
-    method: string,
-    data: any,
-  ): string | TranslationMessage {
+  private getSuccessMessage(method: string, data: any): string {
     // If data already has a message, use it (for custom responses)
     if (data && typeof data === 'object' && 'message' in data) {
       return data.message;
     }
 
-    // Store translation keys only - TranslationResponseInterceptor will translate them
-    // If data is null/undefined (common for DELETE operations), provide appropriate message key
+    // Store translation keys for consistent API responses
+    // If data is null/undefined (common for DELETE operations), provide appropriate message
     if (!data) {
-      const messages: Record<string, TranslationMessage> = {
-        DELETE: {
-          key: 't.messages.deleted',
-          args: { resource: 't.resources.resource' },
-        },
-        PATCH: {
-          key: 't.messages.updated',
-          args: { resource: 't.resources.resource' },
-        },
-        PUT: {
-          key: 't.messages.updated',
-          args: { resource: 't.resources.resource' },
-        },
-        POST: {
-          key: 't.messages.created',
-          args: { resource: 't.resources.resource' },
-        },
+      const messages: Record<string, string> = {
+        DELETE: 'Resource deleted successfully',
+        PATCH: 'Resource updated successfully',
+        PUT: 'Resource updated successfully',
+        POST: 'Resource created successfully',
       };
-      return (
-        messages[method] || {
-          key: 't.messages.operationSuccess',
-        }
-      );
+      return messages[method] || 'Operation completed successfully';
     }
 
-    // For arrays, provide count-specific message key
+    // For arrays, provide count-specific message
     if (Array.isArray(data)) {
-      return {
-        key: 't.messages.found',
-        args: { resource: 't.resources.resource' },
-      };
+      return 'Data retrieved successfully';
     }
 
     // For objects with ID (created resources)
     if (method === 'POST' && data && data.id) {
-      return {
-        key: 't.messages.created',
-        args: { resource: 't.resources.resource' },
-      };
+      return 'Resource created successfully';
     }
 
     // For update operations
     if ((method === 'PUT' || method === 'PATCH') && data) {
-      return {
-        key: 't.messages.updated',
-        args: { resource: 't.resources.resource' },
-      };
+      return 'Resource updated successfully';
     }
 
     // For delete operations
     if (method === 'DELETE') {
-      return {
-        key: 't.messages.deleted',
-        args: { resource: 't.resources.resource' },
-      };
+      return 'Resource deleted successfully';
     }
 
     // Default messages by method
-    const messages: Record<string, TranslationMessage> = {
-      GET: {
-        key: 't.messages.found',
-        args: { resource: 't.resources.resource' },
-      },
-      POST: {
-        key: 't.messages.created',
-        args: { resource: 't.resources.resource' },
-      },
-      PUT: {
-        key: 't.messages.updated',
-        args: { resource: 't.resources.resource' },
-      },
-      PATCH: {
-        key: 't.messages.updated',
-        args: { resource: 't.resources.resource' },
-      },
-      DELETE: {
-        key: 't.messages.deleted',
-        args: { resource: 't.resources.resource' },
-      },
+    const messages: Record<string, string> = {
+      GET: 'Resource found successfully',
+      POST: 'Resource created successfully',
+      PUT: 'Resource updated successfully',
+      PATCH: 'Resource updated successfully',
+      DELETE: 'Resource deleted successfully',
     };
 
-    return (
-      messages[method] || {
-        key: 't.messages.operationSuccess',
-      }
-    );
+    return messages[method] || 'Operation completed successfully';
   }
 }

@@ -65,11 +65,7 @@ export class UserProfileService extends BaseService {
     // Get user with profile
     const user = await this.userService.findOne(actor.id);
     if (!user) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.user',
-        identifier: 't.resources.identifier',
-        value: actor.id,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Determine context based on centerId
@@ -82,11 +78,7 @@ export class UserProfileService extends BaseService {
     if (!actor.userProfileId) return returnData;
     const userProfile = await this.findOne(actor.userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.profile',
-        identifier: 't.resources.identifier',
-        value: actor.userProfileId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
     actor.userProfileId = userProfile.id;
     actor.profileType = userProfile.profileType;
@@ -121,9 +113,7 @@ export class UserProfileService extends BaseService {
       actor.profileType,
     );
     if (!profile) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.profile',
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     returnData.profile = profile;
@@ -140,11 +130,7 @@ export class UserProfileService extends BaseService {
     // Get userProfile to determine profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.profile',
-        identifier: 't.resources.identifier',
-        value: userProfileId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Check permission based on profileType
@@ -170,11 +156,7 @@ export class UserProfileService extends BaseService {
     // Get the user profile to find the profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.profile',
-        identifier: 't.resources.identifier',
-        value: userProfileId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Check permission based on profileType
@@ -216,11 +198,7 @@ export class UserProfileService extends BaseService {
       : await this.userProfileRepository.findOne(userProfileId);
 
     if (!profile) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.profile',
-        identifier: 't.resources.identifier',
-        value: userProfileId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // If actor is provided, validate user access (centerId is optional)
@@ -246,10 +224,7 @@ export class UserProfileService extends BaseService {
       profileType,
     );
     if (existingProfile) {
-      throw new ValidationFailedException('t.messages.alreadyHas', [], {
-        resource: 't.resources.user',
-        what: `t.resources.${profileType.toLowerCase()}Profile`,
-      });
+      throw new ValidationFailedException('User already has this profile type');
     }
 
     const code = await this.userProfileCodeService.generate(profileType);
@@ -286,11 +261,7 @@ export class UserProfileService extends BaseService {
     // Get userProfile to determine profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.profile',
-        identifier: 't.resources.identifier',
-        value: userProfileId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Check permission based on profileType
@@ -308,19 +279,11 @@ export class UserProfileService extends BaseService {
       await this.userProfileRepository.findOneSoftDeletedById(userProfileId);
 
     if (!deletedProfile) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.profile',
-        identifier: 't.resources.identifier',
-        value: userProfileId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     if (!deletedProfile.deletedAt) {
-      throw new BusinessLogicException('t.messages.actionNotAllowed', {
-        action: 't.buttons.restore',
-        resource: 't.resources.profile',
-        reason: 'it is not deleted',
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Check permission based on profileType

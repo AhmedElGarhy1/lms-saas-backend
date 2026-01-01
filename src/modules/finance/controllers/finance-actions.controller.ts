@@ -56,10 +56,7 @@ export class FinanceActionsController {
 
     return {
       data: result,
-      message: {
-        key: 't.messages.created',
-        args: { resource: 't.resources.payment' },
-      },
+      message: "Operation completed successfully",
     };
   }
 }

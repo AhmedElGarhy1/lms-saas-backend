@@ -1,4 +1,4 @@
-import { DataSource } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import { getDatabaseConfig } from './shared/config/database.config';
 
 const migrationConfig = {
@@ -11,4 +11,4 @@ const migrationConfig = {
   logging: ['error', 'warn'],
 };
 
-export default new DataSource(migrationConfig as any);
+export default new DataSource(migrationConfig as unknown as DataSourceOptions);

@@ -47,10 +47,7 @@ export class SubjectsController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.subject' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Get(':subjectId')
@@ -75,10 +72,7 @@ export class SubjectsController {
       actor,
       true,
     ); // includeDeleted: true for API endpoints
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.subject' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Post()
@@ -102,10 +96,7 @@ export class SubjectsController {
       createSubjectDto,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.created',
-      args: { resource: 't.resources.subject' },
-    });
+    return ControllerResponse.success(result, 'Resource created successfully');
   }
 
   @Put(':subjectId')
@@ -132,10 +123,7 @@ export class SubjectsController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.updated',
-      args: { resource: 't.resources.subject' },
-    });
+    return ControllerResponse.success(result, 'Resource updated successfully');
   }
 
   @Delete(':subjectId')
@@ -156,10 +144,7 @@ export class SubjectsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.subjectsService.deleteSubject(params.subjectId, actor);
-    return ControllerResponse.message({
-      key: 't.messages.deleted',
-      args: { resource: 't.resources.subject' },
-    });
+    return ControllerResponse.message('Resource deleted successfully');
   }
 
   @Patch(':subjectId/restore')
@@ -177,9 +162,6 @@ export class SubjectsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.subjectsService.restoreSubject(params.subjectId, actor);
-    return ControllerResponse.message({
-      key: 't.messages.restored',
-      args: { resource: 't.resources.subject' },
-    });
+    return ControllerResponse.message('Operation completed successfully');
   }
 }

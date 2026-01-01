@@ -151,13 +151,7 @@ export class GroupsActionsController {
       actor,
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.group',
-      },
-    });
+    return ControllerResponse.success(result, 'Bulk operation completed successfully');
   }
 
   @Post('bulk/restore')
@@ -179,13 +173,7 @@ export class GroupsActionsController {
       actor,
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.group',
-      },
-    });
+    return ControllerResponse.success(result, 'Bulk operation completed successfully');
   }
 
   @Post('bulk/assign-students')
@@ -208,12 +196,6 @@ export class GroupsActionsController {
       actor,
       dto.skipWarning,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.student',
-      },
-    });
+    return ControllerResponse.success(result, 'Bulk operation completed successfully');
   }
 }

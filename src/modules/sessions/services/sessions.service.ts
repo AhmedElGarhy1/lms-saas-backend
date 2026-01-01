@@ -154,10 +154,7 @@ export class SessionsService extends BaseService {
     // Validate date is in the future (UTC comparison - mathematically identical to zoned comparison)
     const now = new Date();
     if (isBefore(startTime, now)) {
-      throw new BusinessLogicException(
-        't.messages.sessionDateMustBeInFuture',
-        {} as any,
-      );
+      throw new BusinessLogicException('Session date must be in the future');
     }
 
     // Calculate endTime from startTime + duration using date-fns
@@ -172,12 +169,7 @@ export class SessionsService extends BaseService {
       );
 
     if (teacherConflict) {
-      throw new BusinessLogicException(
-        't.messages.scheduleConflict.description',
-        {
-          resource: 't.resources.session',
-        },
-      );
+      throw new BusinessLogicException('Schedule conflict detected for session');
     }
 
     // Validate group conflict (overlapping sessions in same group)
@@ -189,12 +181,7 @@ export class SessionsService extends BaseService {
       );
 
     if (groupConflict) {
-      throw new BusinessLogicException(
-        't.messages.scheduleConflict.description',
-        {
-          resource: 't.resources.session',
-        },
-      );
+      throw new BusinessLogicException('Schedule conflict detected for session');
     }
 
     // Extract centerId, branchId, and classId from validated group entity for snapshot
@@ -274,14 +261,10 @@ export class SessionsService extends BaseService {
 
         case SessionStatus.CANCELED:
           // Can't check-in a canceled session
-          throw new BusinessLogicException('t.messages.validationFailed', {
-            resource: 't.resources.session',
-          } as any);
+          throw new BusinessLogicException('Session validation failed');
 
         default:
-          throw new BusinessLogicException('t.messages.validationFailed', {
-            resource: 't.resources.session',
-          } as any);
+          throw new BusinessLogicException('Session validation failed');
       }
     }
 
@@ -314,9 +297,7 @@ export class SessionsService extends BaseService {
       } | null;
 
     if (!match) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        resource: 't.resources.session',
-      } as any);
+      throw new BusinessLogicException('Validation failed');
     }
 
     // Normalize calculated start time (strip milliseconds for exact matching)
@@ -376,9 +357,7 @@ export class SessionsService extends BaseService {
 
     // 2. Strict flow: virtual sessions must be checked-in first (to materialize a real session record)
     if (!resolved.isReal || !resolved.realSession) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        resource: 't.resources.session',
-      } as any);
+      throw new BusinessLogicException('Validation failed');
     }
 
     // 3. Handle real session
@@ -397,9 +376,7 @@ export class SessionsService extends BaseService {
 
       case SessionStatus.SCHEDULED:
         // Must check-in first
-        throw new BusinessLogicException('t.messages.validationFailed', {
-          resource: 't.resources.session',
-        } as any);
+        throw new BusinessLogicException('Validation failed');
 
       case SessionStatus.CONDUCTING:
       case SessionStatus.FINISHED:
@@ -408,14 +385,10 @@ export class SessionsService extends BaseService {
 
       case SessionStatus.CANCELED:
         // Can't start a canceled session
-        throw new BusinessLogicException('t.messages.validationFailed', {
-          resource: 't.resources.session',
-        } as any);
+        throw new BusinessLogicException('Validation failed');
 
       default:
-        throw new BusinessLogicException('t.messages.validationFailed', {
-          resource: 't.resources.session',
-        } as any);
+        throw new BusinessLogicException('Validation failed');
     }
   }
 
@@ -492,9 +465,7 @@ export class SessionsService extends BaseService {
       } | null;
 
     if (!match) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        resource: 't.resources.session',
-      } as any);
+      throw new BusinessLogicException('Validation failed');
     }
 
     // Double-check if session exists (race condition protection)
@@ -560,9 +531,7 @@ export class SessionsService extends BaseService {
     // Only SCHEDULED sessions can have their times changed
     if (session.status !== SessionStatus.SCHEDULED) {
       const currentStatus = session.status;
-      throw new BusinessLogicException('t.messages.cannotUpdateSession', {
-        status: currentStatus,
-      });
+      throw new BusinessLogicException('Cannot update session');
     }
 
     // Fetch group with class to get teacherUserProfileId
@@ -613,10 +582,7 @@ export class SessionsService extends BaseService {
           );
 
         if (teacherConflict) {
-          throw new BusinessLogicException(
-            't.messages.scheduleConflict.description',
-            { resource: 't.resources.session' },
-          );
+          throw new BusinessLogicException('Schedule conflict detected for session');
         }
       }
 
@@ -630,10 +596,7 @@ export class SessionsService extends BaseService {
         );
 
       if (groupConflict) {
-        throw new BusinessLogicException(
-          't.messages.scheduleConflict.description',
-          { resource: 't.resources.session' },
-        );
+        throw new BusinessLogicException('Schedule conflict detected for session');
       }
     }
 
@@ -676,9 +639,7 @@ export class SessionsService extends BaseService {
 
     // Validate current status is CONDUCTING
     if (session.status !== SessionStatus.CONDUCTING) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        resource: 't.resources.session',
-      } as any);
+      throw new BusinessLogicException('Validation failed');
     }
 
     // Fetch group with class for access validation
@@ -732,9 +693,7 @@ export class SessionsService extends BaseService {
 
     // Validate current status is CANCELED
     if (session.status !== SessionStatus.CANCELED) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        resource: 't.resources.session',
-      } as any);
+      throw new BusinessLogicException('Validation failed');
     }
 
     // Fetch group with class for access validation
@@ -955,9 +914,7 @@ export class SessionsService extends BaseService {
       // 2. Parse virtual ID
       const parsed = parseVirtualSessionId(sessionId);
       if (!parsed) {
-        throw new BusinessLogicException('t.messages.validationFailed', {
-          resource: 't.resources.session',
-        } as any);
+        throw new BusinessLogicException('Validation failed');
       }
 
       const { groupId, startTime, scheduleItemId } = parsed;
@@ -969,9 +926,7 @@ export class SessionsService extends BaseService {
 
       // Verify group belongs to actor's center
       if (group.centerId !== actor.centerId) {
-        throw new BusinessLogicException('t.messages.validationFailed', {
-          resource: 't.resources.session',
-        } as any);
+        throw new BusinessLogicException('Validation failed');
       }
 
       // Check if user can bypass center internal access (super admin, center owner, or admin with center access)
@@ -1038,9 +993,7 @@ export class SessionsService extends BaseService {
 
       // Verify group belongs to actor's center
       if (group.centerId !== actor.centerId) {
-        throw new BusinessLogicException('t.messages.validationFailed', {
-          resource: 't.resources.session',
-        } as any);
+        throw new BusinessLogicException('Validation failed');
       }
 
       // Check if user can bypass center internal access (super admin, center owner, or admin with center access)
@@ -1273,9 +1226,7 @@ export class SessionsService extends BaseService {
 
     // 3. Handle virtual session - construct Session object
     if (!resolved.scheduleItemId) {
-      throw new BusinessLogicException('t.messages.validationFailed', {
-        resource: 't.resources.session',
-      } as any);
+      throw new BusinessLogicException('Validation failed');
     }
 
     const group = await this.groupsRepository.findByIdOrThrow(

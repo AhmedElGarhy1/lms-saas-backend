@@ -47,7 +47,7 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
    */
   async findByBranchId(branchId: string): Promise<Cashbox | null> {
     return this.getRepository().findOne({
-      where: { branchId } as any,
+      where: { branchId },
     });
   }
 

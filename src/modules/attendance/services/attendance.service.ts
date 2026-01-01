@@ -45,7 +45,7 @@ export class AttendanceService {
   ): Promise<string> {
     // Backend bouncer: scan endpoint only accepts Student codes.
     if (!studentCode.startsWith('STU-')) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     const profile =
@@ -54,7 +54,7 @@ export class AttendanceService {
       );
 
     if (!profile) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     return profile.id;
@@ -67,7 +67,7 @@ export class AttendanceService {
       session.status !== SessionStatus.CHECKING_IN &&
       session.status !== SessionStatus.CONDUCTING
     ) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     const group = await this.groupsRepository.findByIdOrThrow(session.groupId, [
@@ -107,7 +107,7 @@ export class AttendanceService {
     );
 
     if (!studentUser) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     const codeVal = (
@@ -151,7 +151,7 @@ export class AttendanceService {
     );
 
     if (!membership) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Check billing access - student must have paid for this session or have active monthly subscription
@@ -163,7 +163,7 @@ export class AttendanceService {
       );
 
     if (!hasBillingAccess) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     const now = new Date();
@@ -175,7 +175,7 @@ export class AttendanceService {
     );
 
     if (existing) {
-      throw new ResourceAlreadyExistsException('t.messages.alreadyExists');
+      throw new ResourceAlreadyExistsException("Operation failed");
     }
 
     let attendance: Attendance;
@@ -196,7 +196,7 @@ export class AttendanceService {
       // Race-safe: if another request inserted the record first, return deterministic 409.
       const err = e as QueryFailedError & { code?: string };
       if (err?.code === '23505') {
-        throw new ResourceAlreadyExistsException('t.messages.alreadyExists');
+        throw new ResourceAlreadyExistsException("Operation failed");
       }
       throw e;
     }
@@ -226,7 +226,7 @@ export class AttendanceService {
     );
 
     if (!membership) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Check billing access - student must have paid for this session or have active monthly subscription
@@ -238,7 +238,7 @@ export class AttendanceService {
       );
 
     if (!hasBillingAccess) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     const now = new Date();
@@ -250,7 +250,7 @@ export class AttendanceService {
     );
 
     if (existing) {
-      throw new ResourceAlreadyExistsException('t.messages.alreadyExists');
+      throw new ResourceAlreadyExistsException("Operation failed");
     }
 
     let attendance: Attendance;
@@ -269,7 +269,7 @@ export class AttendanceService {
     } catch (e) {
       const err = e as QueryFailedError & { code?: string };
       if (err?.code === '23505') {
-        throw new ResourceAlreadyExistsException('t.messages.alreadyExists');
+        throw new ResourceAlreadyExistsException("Operation failed");
       }
       throw e;
     }

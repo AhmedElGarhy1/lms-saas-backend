@@ -109,13 +109,7 @@ export class ClassAccessService extends BaseService {
         userProfileId: data.userProfileId,
         classId: data.classId,
       });
-      throw new InsufficientPermissionsException(
-        't.messages.actionUnauthorized',
-        {
-          action: 't.buttons.view',
-          resource: 't.resources.class',
-        },
-      );
+      throw new InsufficientPermissionsException('Insufficient permissions to view class');
     }
   }
 

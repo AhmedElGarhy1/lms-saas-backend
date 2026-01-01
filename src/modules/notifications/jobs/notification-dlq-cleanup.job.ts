@@ -57,9 +57,7 @@ export class NotificationDlqCleanupJob {
           // Get count of entries to be deleted (for logging)
           // Use repository methods instead of accessing protected getRepository()
           const totalFailed = await this.logRepository.findMany({
-            where: {
-              status: NotificationStatus.FAILED,
-            },
+            where: { status: NotificationStatus.FAILED },
           });
 
           const oldEntries = totalFailed.filter(
@@ -122,9 +120,7 @@ export class NotificationDlqCleanupJob {
     cutoffDate.setDate(cutoffDate.getDate() - this.retentionDays);
 
     const allFailed = await this.logRepository.findMany({
-      where: {
-        status: NotificationStatus.FAILED,
-      },
+      where: { status: NotificationStatus.FAILED },
       order: { createdAt: 'ASC' },
     });
 

@@ -24,7 +24,7 @@ export class PaymentRepository extends BaseRepository<Payment> {
    */
   async findByStatus(status: PaymentStatus): Promise<Payment[]> {
     return this.getRepository().find({
-      where: { status } as any,
+      where: { status },
     });
   }
 
@@ -36,7 +36,7 @@ export class PaymentRepository extends BaseRepository<Payment> {
     referenceId: string,
   ): Promise<Payment | null> {
     return this.getRepository().findOne({
-      where: { referenceType, referenceId } as any,
+      where: { referenceType, referenceId },
     });
   }
 
@@ -45,7 +45,7 @@ export class PaymentRepository extends BaseRepository<Payment> {
    */
   async findByCorrelationId(correlationId: string): Promise<Payment[]> {
     return this.getRepository().find({
-      where: { correlationId } as any,
+      where: { correlationId },
     });
   }
 
@@ -57,20 +57,22 @@ export class PaymentRepository extends BaseRepository<Payment> {
     senderId: string,
   ): Promise<Payment[]> {
     return this.getRepository().find({
-      where: { idempotencyKey, senderId } as any,
+      where: { idempotencyKey, senderId },
     });
   }
 
   /**
    * Find payment by gateway payment ID
    */
-  async findByGatewayPaymentId(gatewayPaymentId: string): Promise<Payment | null> {
+  async findByGatewayPaymentId(
+    gatewayPaymentId: string,
+  ): Promise<Payment | null> {
     return this.getRepository().findOne({
       where: {
         metadata: {
           gatewayPaymentId,
-        } as any,
-      } as any,
+        },
+      },
     });
   }
 
@@ -91,8 +93,10 @@ export class PaymentRepository extends BaseRepository<Payment> {
   /**
    * Update payment status
    */
-  async updatePaymentStatus(paymentId: string, status: PaymentStatus): Promise<void> {
+  async updatePaymentStatus(
+    paymentId: string,
+    status: PaymentStatus,
+  ): Promise<void> {
     await this.getRepository().update(paymentId, { status });
   }
 }
-

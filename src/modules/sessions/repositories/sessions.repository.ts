@@ -50,11 +50,7 @@ export class SessionsRepository extends BaseRepository<Session> {
       .getOne();
 
     if (!session) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.session',
-        identifier: 't.resources.identifier',
-        value: sessionId,
-      });
+      throw new ResourceNotFoundException('Operation failed');
     }
 
     return session;
@@ -71,10 +67,10 @@ export class SessionsRepository extends BaseRepository<Session> {
     filters: {
       groupId?: string;
       scheduleItemId?: string;
-      status?: SessionStatus;
+      status?: any;
       startTimeFrom?: Date;
       startTimeTo?: Date;
-      startTimeAfter?: Date; // For future sessions
+      startTimeAfter?: Date;
       excludeSessionId?: string;
     },
     relations?: string[],
@@ -317,11 +313,7 @@ export class SessionsRepository extends BaseRepository<Session> {
       .getOne();
 
     if (!session) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.session',
-        identifier: 't.resources.identifier',
-        value: sessionId,
-      });
+      throw new ResourceNotFoundException('Operation failed');
     }
 
     return session;

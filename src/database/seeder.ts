@@ -142,7 +142,7 @@ export class DatabaseSeeder {
           where: { id: userUuid },
         });
         if (!user) {
-          throw new SeederException('t.messages.seederFailed');
+          throw new SeederException('Seeder operation failed');
         }
         return user;
       },
@@ -214,7 +214,7 @@ export class DatabaseSeeder {
           where: { id: userUuid },
         });
         if (!user) {
-          throw new SeederException('t.messages.seederFailed');
+          throw new SeederException('Seeder operation failed');
         }
         return user;
       },
@@ -265,8 +265,8 @@ export class DatabaseSeeder {
     // Create only essential global roles
     const globalRoles = [
       {
-        name: 't.roles.superAdmin.name',
-        description: 't.roles.superAdmin.description',
+        name: 'Super Administrator',
+        description: 'Super Administrator role with full system access',
         type: 'ADMIN',
         createdBy,
         readOnly: true,

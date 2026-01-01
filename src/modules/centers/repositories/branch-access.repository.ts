@@ -30,9 +30,7 @@ export class BranchAccessRepository extends BaseRepository<BranchAccess> {
   async revokeBranchAccess(data: BranchAccessDto) {
     const existingAccess = await this.findBranchAccess(data);
     if (!existingAccess) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.branchAccess',
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     await this.remove(existingAccess.id);

@@ -47,15 +47,12 @@ export class PaymentsController {
     // @ManagerialOnly decorator at class level already ensures user is STAFF or ADMIN
     // Additional ownership check: user can view their own payments
     if (payment.senderId !== actor.userProfileId) {
-      throw new InsufficientPermissionsException('t.messages.accessDenied');
+      throw new InsufficientPermissionsException('Insufficient permissions');
     }
 
     return {
       data: payment,
-      message: {
-        key: 't.messages.found',
-        args: { resource: 't.resources.item' },
-      },
+      message: "Payment processed successfully",
     };
   }
 
@@ -90,10 +87,7 @@ export class PaymentsController {
 
     return {
       data: result,
-      message: {
-        key: 't.messages.success',
-        args: {},
-      },
+      message: 'Payment refunded successfully',
     };
   }
 
@@ -114,9 +108,6 @@ export class PaymentsController {
 
     const result = await this.paymentService.paginatePayments(dto);
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.item' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 }

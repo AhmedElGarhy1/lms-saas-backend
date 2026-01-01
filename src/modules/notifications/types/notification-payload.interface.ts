@@ -64,6 +64,8 @@ export interface WhatsAppNotificationPayload extends BaseNotificationPayload {
       text: string;
     }>;
   };
+  /** Message ID returned by WhatsApp API (set by adapter after sending) */
+  whatsappMessageId?: string;
 }
 
 /**

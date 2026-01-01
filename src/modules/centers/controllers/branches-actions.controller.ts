@@ -98,13 +98,7 @@ export class BranchesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.branch',
-      },
-    });
+    return ControllerResponse.success(result, 'Bulk operation completed successfully');
   }
 
   @Post('bulk/restore')
@@ -129,13 +123,7 @@ export class BranchesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.branch',
-      },
-    });
+    return ControllerResponse.success(result, 'Bulk operation completed successfully');
   }
 
   @Post('bulk/status')
@@ -164,12 +152,6 @@ export class BranchesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.bulkOperationSuccess',
-      args: {
-        count: result.success.toString(),
-        item: 't.resources.branch',
-      },
-    });
+    return ControllerResponse.success(result, 'Bulk operation completed successfully');
   }
 }

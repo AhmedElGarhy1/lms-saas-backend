@@ -26,7 +26,7 @@ export class WebhookAttemptRepository extends BaseRepository<WebhookAttempt> {
     externalId: string,
   ): Promise<WebhookAttempt | null> {
     return this.getRepository().findOne({
-      where: { provider, externalId } as any,
+      where: { provider, externalId },
     });
   }
 
@@ -36,7 +36,9 @@ export class WebhookAttemptRepository extends BaseRepository<WebhookAttempt> {
   async findPendingRetries(): Promise<WebhookAttempt[]> {
     return this.getRepository()
       .createQueryBuilder('attempt')
-      .where('attempt.status = :status', { status: WebhookStatus.RETRY_SCHEDULED })
+      .where('attempt.status = :status', {
+        status: WebhookStatus.RETRY_SCHEDULED,
+      })
       .andWhere('attempt.nextRetryAt <= :now', { now: new Date() })
       .getMany();
   }

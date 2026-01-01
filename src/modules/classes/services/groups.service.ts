@@ -127,9 +127,7 @@ export class GroupsService extends BaseService {
       classEntity.status === ClassStatus.CANCELED ||
       classEntity.status === ClassStatus.FINISHED
     ) {
-      throw new BusinessLogicException('t.messages.cannotCreateGroupInClass', {
-        status: classEntity.status,
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Validate actor has branch access to the class's branch
@@ -344,19 +342,11 @@ export class GroupsService extends BaseService {
     // Manual validation needed: BelongsToCenter only checks active groups
     const group = await this.groupsRepository.findOneSoftDeletedById(groupId);
     if (!group) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.group',
-        identifier: 't.resources.identifier',
-        value: groupId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
     const centerId = actor.centerId;
     if (!centerId || group.centerId !== centerId) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.group',
-        identifier: 't.resources.identifier',
-        value: groupId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Validate actor has branch access to the group's branch
@@ -396,7 +386,7 @@ export class GroupsService extends BaseService {
     actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!groupIds || groupIds.length === 0) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     return await this.bulkOperationService.executeBulk(
@@ -424,7 +414,7 @@ export class GroupsService extends BaseService {
     actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!groupIds || groupIds.length === 0) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     return await this.bulkOperationService.executeBulk(

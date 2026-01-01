@@ -37,7 +37,7 @@ export class CenterUpdatedResolver
     // Fetch actor/user
     const actor = (await this.userService.findOne(intent.actorId))!;
 
-    const phone = this.extractPhone(actor);
+    const phone = actor.getPhone();
 
     const locale = this.extractLocale(actor);
 

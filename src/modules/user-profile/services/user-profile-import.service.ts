@@ -24,7 +24,7 @@ import { UserEvents } from '@/shared/events/user.events.enum';
 import { UserImportedEvent } from '@/modules/user/events/user.events';
 import { RequestImportOtpDto } from '../dto/request-import-otp.dto';
 import { UserProfilePermissionService } from '@/modules/access-control/services/user-profile-permission.service';
-import { TranslationService } from '@/shared/common/services/translation.service';
+// TranslationService removed - no longer needed after translation removal
 
 @Injectable()
 export class UserProfileImportService extends BaseService {
@@ -41,7 +41,6 @@ export class UserProfileImportService extends BaseService {
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly userProfilePermissionService: UserProfilePermissionService,
-    private readonly translationService: TranslationService,
   ) {
     super();
   }
@@ -102,20 +101,14 @@ export class UserProfileImportService extends BaseService {
       // Case 1: centerId is provided
       // If user has BOTH profile AND center access → throw error (nothing to do)
       if (existingProfile && hasCenterAccess) {
-        throw new ResourceAlreadyExistsException('t.messages.alreadyHas', {
-          resource: 't.resources.user',
-          what: 't.resources.access',
-        });
+        throw new ResourceAlreadyExistsException('Operation failed');
       }
       // Otherwise OK: will create profile and/or add center access
     } else {
       // Case 2: centerId is NOT provided
       if (existingProfile) {
         // User already has profile → nothing to do (can't add center access without centerId)
-        throw new ResourceAlreadyExistsException('t.messages.alreadyHas', {
-          resource: 't.resources.user',
-          what: 't.resources.profile',
-        });
+        throw new ResourceAlreadyExistsException('Operation failed');
       }
       // Otherwise OK: will create profile only (no center access)
     }
@@ -286,9 +279,7 @@ export class UserProfileImportService extends BaseService {
   private async findUserByPhone(phone: string): Promise<User> {
     const user = await this.userService.findUserByPhone(phone);
     if (!user) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.user',
-      });
+      throw new ResourceNotFoundException('Operation failed');
     }
     return user;
   }

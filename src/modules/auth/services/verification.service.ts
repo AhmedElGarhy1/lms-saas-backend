@@ -114,16 +114,12 @@ export class VerificationService extends BaseService {
     );
 
     if (!verificationToken) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.verificationCode',
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     if (verificationToken.expiresAt < new Date()) {
       await this.verificationTokenRepository.deleteById(verificationToken.id);
-      throw new ValidationFailedException('t.messages.expired', [], {
-        resource: 't.resources.verificationCode',
-      });
+      throw new ValidationFailedException("Validation failed", );
     }
 
     return verificationToken;

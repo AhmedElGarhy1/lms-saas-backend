@@ -48,26 +48,17 @@ export class UserProfilePermissionService extends BaseService {
     if (userProfileId) {
       // Validate that userProfileId is actually a UUID before querying
       if (!isUUID(userProfileId)) {
-        throw new ResourceNotFoundException('t.messages.fieldInvalidFormat', {
-          field: 't.resources.profile',
-        });
+        throw new ResourceNotFoundException("Operation failed");
       }
 
       const profile = await this.userProfileService.findOne(userProfileId);
       if (!profile) {
-        throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-          resource: 't.resources.profile',
-          identifier: 't.resources.identifier',
-          value: userProfileId,
-        });
+        throw new ResourceNotFoundException("Operation failed");
       }
       return profile.profileType;
     }
 
-    throw new ResourceNotFoundException('t.messages.requiredOneOf', {
-      field1: 't.resources.profileType',
-      field2: 't.resources.profile',
-    });
+    throw new ResourceNotFoundException("Operation failed");
   }
 
   /**
@@ -132,9 +123,7 @@ export class UserProfilePermissionService extends BaseService {
           ];
       }
     } else {
-      throw new ResourceNotFoundException('t.messages.fieldInvalid', {
-        field: 't.resources.profileType',
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Check if actor has the required permission
@@ -186,9 +175,7 @@ export class UserProfilePermissionService extends BaseService {
         profileType = profileTypeOrId;
       } else {
         // Invalid string - neither UUID nor ProfileType
-        throw new ResourceNotFoundException('t.messages.fieldInvalid', {
-          field: 't.resources.profileType',
-        });
+        throw new ResourceNotFoundException("Operation failed");
       }
     } else {
       // It's already a ProfileType enum
@@ -358,18 +345,9 @@ export class UserProfilePermissionService extends BaseService {
     } else if (resolvedProfileType === ProfileType.ADMIN) {
       permissionKey = 'GRANT_ADMIN_ACCESS';
     } else if (resolvedProfileType === ProfileType.STUDENT) {
-      throw new InsufficientPermissionsException(
-        't.messages.actionNotAllowed',
-        {
-          action: 't.buttons.grantResourceAccess',
-          resource: 't.resources.student',
-          reason: 't.messages.cannotGrantAccess',
-        },
-      );
+      throw new InsufficientPermissionsException('Cannot grant access to student resource');
     } else {
-      throw new ResourceNotFoundException('t.messages.fieldInvalid', {
-        field: 't.resources.profileType',
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     await this.checkPermission(

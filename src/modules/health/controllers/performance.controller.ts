@@ -24,10 +24,7 @@ export class PerformanceController {
   })
   getDatabasePerformance() {
     const result = this.databasePerformanceService.getPerformanceStats();
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.data' },
-    });
+    return ControllerResponse.success(result, 'Performance metrics retrieved successfully');
   }
 
   @Get('transactions')
@@ -38,10 +35,7 @@ export class PerformanceController {
   })
   getTransactionPerformance() {
     const result = this.databasePerformanceService.getTransactionMetrics();
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.data' },
-    });
+    return ControllerResponse.success(result, 'Performance metrics retrieved successfully');
   }
 
   @Get('health')
@@ -64,22 +58,13 @@ export class PerformanceController {
             : 'healthy',
       timestamp: new Date().toISOString(),
       database: {
-        status: 'connected',
-        averageQueryTime: `${dbStats.averageDuration}ms`,
         slowQueries: dbStats.slowQueries,
         totalQueries: dbStats.totalQueries,
       },
-      transactions: {
-        status: 'operational',
-        totalMethods: Object.keys(transactionStats).length,
-        errorRate: this.calculateOverallErrorRate(transactionStats),
-      },
+      transactions: "Transaction performance metrics",
       alerts: alertStats,
     };
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.data' },
-    });
+    return ControllerResponse.success(result, 'Performance metrics retrieved successfully');
   }
 
   @Get('alerts')
@@ -88,12 +73,9 @@ export class PerformanceController {
     status: 200,
     description: 'Active alerts retrieved successfully',
   })
-  getActiveAlerts() {
+  async getActiveAlerts() {
     const result = this.alertsService.getActiveAlerts();
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.data' },
-    });
+    return ControllerResponse.success(result, 'Performance metrics retrieved successfully');
   }
 
   @Get('stats')
@@ -102,7 +84,7 @@ export class PerformanceController {
     status: 200,
     description: 'Performance statistics retrieved successfully',
   })
-  getPerformanceStats() {
+  async getPerformanceStats() {
     const result = {
       database: this.databasePerformanceService.getPerformanceStats(),
       transactions: this.transactionInterceptor.getPerformanceStats(),
@@ -113,10 +95,7 @@ export class PerformanceController {
         nodeVersion: process.version,
       },
     };
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.data' },
-    });
+    return ControllerResponse.success(result, 'Performance metrics retrieved successfully');
   }
 
   @Post('alerts/resolve/:alertId')
@@ -125,12 +104,9 @@ export class PerformanceController {
     status: 200,
     description: 'Alert resolved successfully',
   })
-  resolveAlert(@Body('alertId') alertId: string) {
-    void this.alertsService.resolveAlert(alertId);
-    return ControllerResponse.message({
-      key: 't.messages.updated',
-      args: { resource: 't.resources.alert' },
-    });
+  async resolveAlert(@Body('alertId') alertId: string) {
+    await this.alertsService.resolveAlert(alertId);
+    return ControllerResponse.message('Alert resolved successfully');
   }
 
   private calculateOverallErrorRate(

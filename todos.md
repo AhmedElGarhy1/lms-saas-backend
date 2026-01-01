@@ -133,9 +133,9 @@
 [x] calender ui doesn't fit many!
 [x] calender doesn't have filters
 [ ] proper permissions implementaion
-[ ] student billing display in sidebar and in session attendance throw for money
 [ ] add proper and detailed throw from backend errors
-[ ] always use TrnaslationObject in exceptions not even translationKey
+[ ] student billing display in sidebar and in session attendance throw for money
+[ ] remove translations from backend and keep it only in notifications
 
 [ ] implement branch as in permissions to display sidebar
 [ ] implement filteration for branche in paginations

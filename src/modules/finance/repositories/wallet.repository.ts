@@ -26,7 +26,7 @@ export class WalletRepository extends BaseRepository<Wallet> {
     ownerType: WalletOwnerType,
   ): Promise<Wallet | null> {
     return this.getRepository().findOne({
-      where: { ownerId, ownerType } as any,
+      where: { ownerId, ownerType },
     });
   }
 

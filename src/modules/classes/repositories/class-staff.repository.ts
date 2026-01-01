@@ -143,9 +143,7 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
   async revokeClassStaffAccess(data: ClassStaffAccessDto): Promise<ClassStaff> {
     const existingAccess = await this.findClassStaffAccess(data);
     if (!existingAccess) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.classStaffAccess',
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     const leftAt = new Date();

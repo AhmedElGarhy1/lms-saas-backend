@@ -10,6 +10,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from '@nestjs/swagger';
 import { WebhookService } from '../services/webhook.service';
 import { PaymobWebhookPayload } from '../dto/webhook-payload.dto';
+import { WebhookProvider } from '../enums/webhook-provider.enum';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 
 @ApiTags('Webhooks')
@@ -49,7 +50,7 @@ export class WebhooksController {
         `paymob-${Date.now()}`;
 
       const result = await this.webhookService.processWebhook(
-        'PAYMOB' as any,
+        WebhookProvider.PAYMOB,
         externalId,
         payload,
         hmac || '',
@@ -57,15 +58,8 @@ export class WebhooksController {
       );
 
       return {
-        data: {
-          processed: true,
-          attemptId: result.id,
-          status: result.status,
-        },
-        message: {
-          key: 't.messages.success',
-          args: {},
-        },
+        data: null,
+        message: 'Webhook processed successfully',
       };
     } catch (error) {
       this.logger.error('Paymob webhook processing failed', error);
@@ -76,10 +70,7 @@ export class WebhooksController {
           processed: false,
           error: error instanceof Error ? error.message : 'Unknown error',
         },
-        message: {
-          key: 't.messages.error',
-          args: {},
-        },
+        message: 'Webhook processing failed',
       };
     }
   }

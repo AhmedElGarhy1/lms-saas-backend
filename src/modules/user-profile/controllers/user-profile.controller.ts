@@ -52,10 +52,7 @@ export class UserProfileController {
   ) {
     await this.userProfileService.createProfile(dto, actorUser);
 
-    return ControllerResponse.success(null, {
-      key: 't.messages.created',
-      args: { resource: 't.resources.profile' },
-    });
+    return ControllerResponse.success(null, 'Resource created successfully');
   }
 
   @Get('me')
@@ -73,10 +70,7 @@ export class UserProfileController {
       centerId,
     );
 
-    return ControllerResponse.success(profile, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.profile' },
-    });
+    return ControllerResponse.success(profile, 'Data retrieved successfully');
   }
 
   @Get()
@@ -86,10 +80,7 @@ export class UserProfileController {
     // Currently returns the actor user's profiles; can be expanded later
     const profiles = await this.userProfileService.listProfiles(actor);
 
-    return ControllerResponse.success(profiles, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.profiles' },
-    });
+    return ControllerResponse.success(profiles, 'Data retrieved successfully');
   }
 
   @Get(':id')
@@ -105,10 +96,7 @@ export class UserProfileController {
       actorUser,
       true, // includeDeleted: true for API endpoints
     );
-    return ControllerResponse.success(profile, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.profile' },
-    });
+    return ControllerResponse.success(profile, 'Data retrieved successfully');
   }
 
   @Patch(':id/status')
@@ -127,10 +115,7 @@ export class UserProfileController {
 
     return ControllerResponse.success(
       { id: params.id, isActive: dto.isActive },
-      {
-        key: 't.messages.updated',
-        args: { resource: 't.resources.profile' },
-      },
+      'Resource updated successfully',
     );
   }
 
@@ -148,10 +133,7 @@ export class UserProfileController {
     // Note: Activity logging should be handled by event listeners if UserProfileService emits events
     return ControllerResponse.success(
       { id: params.id },
-      {
-        key: 't.messages.deleted',
-        args: { resource: 't.resources.profile' },
-      },
+      'Resource deleted successfully',
     );
   }
 
@@ -169,10 +151,7 @@ export class UserProfileController {
     // Note: Activity logging should be handled by event listeners if UserProfileService emits events
     return ControllerResponse.success(
       { id: params.id },
-      {
-        key: 't.messages.restored',
-        args: { resource: 't.resources.profile' },
-      },
+      'Resource restored successfully',
     );
   }
 }

@@ -39,7 +39,7 @@ export class TransactionRepository extends BaseRepository<Transaction> {
    */
   async findByWallet(walletId: string): Promise<Transaction[]> {
     return this.getRepository().find({
-      where: [{ fromWalletId: walletId }, { toWalletId: walletId }] as any,
+      where: [{ fromWalletId: walletId }, { toWalletId: walletId }],
     });
   }
 
@@ -77,7 +77,7 @@ export class TransactionRepository extends BaseRepository<Transaction> {
    */
   async findByCorrelationId(correlationId: string): Promise<Transaction[]> {
     return this.getRepository().find({
-      where: { correlationId } as any,
+      where: { correlationId },
     });
   }
 

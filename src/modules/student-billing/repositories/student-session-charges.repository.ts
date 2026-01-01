@@ -24,11 +24,7 @@ export class StudentSessionChargesRepository extends BaseRepository<StudentSessi
     sessionId: string,
   ): Promise<StudentSessionCharge | null> {
     return this.getRepository().findOne({
-      where: {
-        studentUserProfileId,
-        sessionId,
-        status: ChargeStatus.PAID,
-      },
+      where: { studentUserProfileId, sessionId },
     });
   }
 
@@ -37,11 +33,7 @@ export class StudentSessionChargesRepository extends BaseRepository<StudentSessi
     sessionId: string,
   ): Promise<StudentSessionCharge | null> {
     return this.getRepository().findOne({
-      where: {
-        studentUserProfileId,
-        sessionId,
-        status: ChargeStatus.PAID,
-      },
+      where: { studentUserProfileId, sessionId },
     });
   }
 

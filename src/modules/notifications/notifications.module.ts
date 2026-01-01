@@ -11,6 +11,7 @@ import { Notification } from './entities/notification.entity';
 import { NotificationService } from './services/notification.service';
 import { NotificationSenderService } from './services/notification-sender.service';
 import { NotificationTemplateService } from './services/notification-template.service';
+import { NotificationTranslationService } from './services/notification-translation.service';
 import { NotificationProcessor } from './processors/notification.processor';
 import { NotificationTriggerProcessor } from './processors/notification-trigger.processor';
 import { NotificationLogRepository } from './repositories/notification-log.repository';
@@ -144,6 +145,7 @@ import { NotificationIntentService } from './services/notification-intent.servic
     NotificationService,
     NotificationSenderService,
     NotificationTemplateService,
+    NotificationTranslationService,
     NotificationProcessor,
     NotificationTriggerProcessor,
     NotificationLogRepository,

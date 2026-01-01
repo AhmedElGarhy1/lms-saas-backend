@@ -104,9 +104,7 @@ export class ClassesRepository extends BaseRepository<Class> {
           },
         );
       } else {
-        throw new AccessDeniedException('t.messages.accessDenied', {
-          resource: 't.resources.class',
-        });
+        throw new AccessDeniedException('Operation failed');
       }
     }
 
@@ -383,11 +381,7 @@ export class ClassesRepository extends BaseRepository<Class> {
   ): Promise<Class> {
     const classEntity = await this.findClassWithRelations(id, includeDeleted);
     if (!classEntity) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.class',
-        identifier: 't.resources.identifier',
-        value: id,
-      });
+      throw new ResourceNotFoundException('Operation failed');
     }
     return classEntity;
   }

@@ -259,11 +259,13 @@ export class RequestContextService {
    */
   clone(): RequestContextService {
     const cloned = new RequestContextService();
-    // Copy immutable properties
-    (cloned as any).correlationId = this.correlationId;
-    (cloned as any).requestId = this.requestId;
-    (cloned as any).startTime = this.startTime;
-    (cloned as any).startTimeISO = this.startTimeISO;
+    // Copy immutable properties using Object.assign to bypass readonly restrictions
+    Object.assign(cloned, {
+      correlationId: this.correlationId,
+      requestId: this.requestId,
+      startTime: this.startTime,
+      startTimeISO: this.startTimeISO,
+    });
 
     // Copy mutable properties
     cloned.userId = this.userId;

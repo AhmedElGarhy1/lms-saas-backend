@@ -1,5 +1,6 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
+import { IRequest } from '../../../shared/common/interfaces/request.interface';
 
 /**
  * Middleware to preserve raw request body for webhook signature verification
@@ -22,7 +23,7 @@ export class RawBodyMiddleware implements NestMiddleware {
 
       req.on('end', () => {
         // Store raw body in request object for signature verification
-        (req as any).rawBody = data;
+        (req as IRequest).rawBody = Buffer.from(data, 'utf8');
         next();
       });
     } else {

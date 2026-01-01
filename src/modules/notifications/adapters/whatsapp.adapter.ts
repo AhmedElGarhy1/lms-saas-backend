@@ -109,7 +109,7 @@ export class WhatsAppAdapter
 
       // Store message ID in result (will be used by notification sender service)
       // The message ID will be stored in notification log metadata by the sender service
-      (payload as any).whatsappMessageId = result.messageId;
+      payload.whatsappMessageId = result.messageId;
 
       // Track metrics
       await this.metricsService.incrementSent(

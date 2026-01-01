@@ -158,12 +158,8 @@ export class PayloadBuilderService {
       return {
         ...basePayload,
         actorId: basePayload.actorId,
-        data: {
-          templateName: channelConfig.template, // Unified template field
-          templateLanguage: basePayload.locale,
-          templateParameters,
-        },
-      } as WhatsAppNotificationPayload;
+        data: templateParameters,
+      } as unknown as WhatsAppNotificationPayload;
     }
 
     if (channel === NotificationChannel.IN_APP) {

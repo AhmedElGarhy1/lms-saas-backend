@@ -64,10 +64,7 @@ export class RolesController {
   @ReadApiResponses('Get my permissions')
   async getMyPermissions(@GetUser() actor: ActorUser) {
     const result = await this.rolesService.getMyPermissions(actor);
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.permission' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Get('permissions')
@@ -78,10 +75,7 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.permissionService.getPermissions(actor, scope);
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.role' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Post()
@@ -95,10 +89,7 @@ export class RolesController {
   ) {
     const result = await this.rolesService.createRole(dto, actor);
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.created',
-      args: { resource: 't.resources.role' },
-    });
+    return ControllerResponse.success(result, 'Resource created successfully');
   }
 
   @Get()
@@ -112,10 +103,7 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.rolesService.paginateRoles(query, actor);
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.role' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Get(':roleId')
@@ -126,10 +114,7 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.rolesService.findById(params.roleId, actor, true); // includeDeleted: true for API endpoints
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.role' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Put(':roleId')
@@ -145,10 +130,7 @@ export class RolesController {
   ) {
     const result = await this.rolesService.updateRole(params.roleId, dto, user);
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.updated',
-      args: { resource: 't.resources.role' },
-    });
+    return ControllerResponse.success(result, 'Resource updated successfully');
   }
 
   @Delete(':roleId')
@@ -162,10 +144,7 @@ export class RolesController {
   ) {
     const result = await this.rolesService.deleteRole(params.roleId, user);
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.deleted',
-      args: { resource: 't.resources.role' },
-    });
+    return ControllerResponse.success(result, 'Resource deleted successfully');
   }
 
   @Patch(':roleId/restore')
@@ -179,10 +158,7 @@ export class RolesController {
   ) {
     await this.rolesService.restoreRole(params.roleId, user);
 
-    return ControllerResponse.message({
-      key: 't.messages.restored',
-      args: { resource: 't.resources.role' },
-    });
+    return ControllerResponse.message('Operation completed successfully');
   }
 
   // ===== EXPORT FUNCTIONALITY =====

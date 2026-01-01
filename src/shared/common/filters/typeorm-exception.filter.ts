@@ -22,7 +22,7 @@ import {
 } from '../exceptions/custom.exceptions';
 import {
   DATABASE_ERROR_CODES,
-  TRANSLATION_KEYS,
+  ERROR_MESSAGES,
   isDatabaseErrorCode,
 } from '../constants/database-errors.constants';
 
@@ -46,7 +46,7 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof EntityNotFoundError) {
       httpException = new ResourceNotFoundException(
-        TRANSLATION_KEYS.ERRORS.RESOURCE_NOT_FOUND,
+        ERROR_MESSAGES.ERRORS.RESOURCE_NOT_FOUND,
       );
     } else if (exception instanceof QueryFailedError) {
       interface PostgresDriverError {
@@ -76,10 +76,7 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
         // Extract field name from error detail for translation
         // Pass field as translation key - GlobalExceptionFilter will translate it
         httpException = new ResourceAlreadyExistsException(
-          TRANSLATION_KEYS.ERRORS.DUPLICATE_FIELD,
-          {
-            field: `t.resources.${field || 'field'}`,
-          },
+          'Resource already exists',
         );
       } else if (
         isDatabaseErrorCode(code, DATABASE_ERROR_CODES.EXCLUSION_VIOLATION)
@@ -92,15 +89,12 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
         // Check if this is the session overlap constraint
         if (constraintName.includes('groupId_timeRange_exclusion')) {
           httpException = new BusinessLogicException(
-            TRANSLATION_KEYS.ERRORS.SCHEDULE_CONFLICT,
-            {
-              resource: 't.resources.session',
-            },
+            'Schedule conflict detected',
           );
         } else {
           // Generic exclusion violation
           httpException = new BusinessLogicException(
-            TRANSLATION_KEYS.ERRORS.DATABASE_OPERATION_FAILED,
+            ERROR_MESSAGES.ERRORS.DATABASE_OPERATION_FAILED,
           );
         }
       } else if (
@@ -108,17 +102,17 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
       ) {
         // Foreign key violation
         httpException = new BusinessLogicException(
-          TRANSLATION_KEYS.ERRORS.RELATED_ENTITY_MISSING_OR_INVALID,
+          ERROR_MESSAGES.ERRORS.RELATED_ENTITY_MISSING_OR_INVALID,
         );
       } else if (isDatabaseErrorCode(code, DATABASE_ERROR_CODES.DEADLOCK)) {
         // Deadlock/transaction conflict
         httpException = new ServiceUnavailableException(
-          TRANSLATION_KEYS.ERRORS.TEMPORARY_DATABASE_CONFLICT,
+          ERROR_MESSAGES.ERRORS.TEMPORARY_DATABASE_CONFLICT,
         );
       } else {
         // Unknown database error
         httpException = new BusinessLogicException(
-          TRANSLATION_KEYS.ERRORS.DATABASE_OPERATION_FAILED,
+          ERROR_MESSAGES.ERRORS.DATABASE_OPERATION_FAILED,
         );
       }
     } else {

@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request, Response } from 'express';
+import { IRequest } from '../../../shared/common/interfaces/request.interface';
 import { RateLimitService } from '../services/rate-limit.service';
 import { RateLimitConfig } from '../interfaces/rate-limit-config.interface';
 import {
@@ -131,7 +132,7 @@ export class RateLimitGuard implements CanActivate {
    */
   private buildKey(request: Request): string {
     // Try to get user ID from request (if authenticated)
-    const user = (request as any).user;
+    const user = (request as IRequest).user;
     if (user?.id) {
       return `user:${user.id}`;
     }

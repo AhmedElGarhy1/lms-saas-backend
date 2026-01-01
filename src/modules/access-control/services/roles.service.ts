@@ -73,18 +73,10 @@ export class RolesService extends BaseService {
   ) {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.role',
-        identifier: 't.resources.identifier',
-        value: roleId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
     if (role.readOnly) {
-      throw new BusinessLogicException('t.messages.actionNotAllowed', {
-        action: 't.buttons.update',
-        resource: 't.resources.role',
-        reason: 't.messages.readOnly',
-      });
+      throw new BusinessLogicException("Operation failed");
     }
     if (!role.isSameScope(actor.centerId)) {
       this.logger.warn('Role update failed - insufficient permissions', {
@@ -92,13 +84,7 @@ export class RolesService extends BaseService {
         actorId: actor.userProfileId,
         centerId: actor.centerId,
       });
-      throw new InsufficientPermissionsException(
-        't.messages.actionUnauthorized',
-        {
-          action: 't.buttons.update',
-          resource: 't.resources.role',
-        },
-      );
+      throw new InsufficientPermissionsException('Insufficient permissions to update role');
     }
 
     const updatedRole = await this.rolesRepository.updateRole(roleId, data);
@@ -115,18 +101,10 @@ export class RolesService extends BaseService {
   async deleteRole(roleId: string, actor: ActorUser) {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.role',
-        identifier: 't.resources.identifier',
-        value: roleId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
     if (role.readOnly) {
-      throw new BusinessLogicException('t.messages.actionNotAllowed', {
-        action: 't.buttons.delete',
-        resource: 't.resources.role',
-        reason: 't.messages.readOnly',
-      });
+      throw new BusinessLogicException("Operation failed");
     }
     if (!role?.isSameScope(actor.centerId)) {
       this.logger.warn('Role deletion failed - insufficient permissions', {
@@ -134,13 +112,7 @@ export class RolesService extends BaseService {
         actorId: actor.userProfileId,
         centerId: actor.centerId,
       });
-      throw new InsufficientPermissionsException(
-        't.messages.actionUnauthorized',
-        {
-          action: 't.buttons.delete',
-          resource: 't.resources.role',
-        },
-      );
+      throw new InsufficientPermissionsException('Insufficient permissions to delete role');
     }
 
     await this.rolesRepository.softRemove(roleId);
@@ -166,18 +138,14 @@ export class RolesService extends BaseService {
       data.userProfileId,
     );
     if (!profile) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.profile',
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     if (
       profile.profileType !== ProfileType.STAFF &&
       profile.profileType !== ProfileType.ADMIN
     ) {
-      throw new BusinessLogicException('t.messages.onlyForStaffAndAdmin', {
-        resource: 't.resources.role',
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     return this.assignRole(data);
@@ -222,13 +190,7 @@ export class RolesService extends BaseService {
           actorId: actor.userProfileId,
           centerId: actor.centerId,
         });
-        throw new InsufficientPermissionsException(
-          't.messages.actionUnauthorized',
-          {
-            action: 't.buttons.view',
-            resource: 't.resources.role',
-          },
-        );
+        throw new InsufficientPermissionsException('Insufficient permissions to view role');
       }
     }
 
@@ -243,20 +205,12 @@ export class RolesService extends BaseService {
     // First check if the role exists
     const role = await this.rolesRepository.findOneSoftDeleted({ id: roleId });
     if (!role) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.role',
-        identifier: 't.resources.identifier',
-        value: roleId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Check if the role is already active (not deleted)
     if (!role.deletedAt) {
-      throw new BusinessLogicException('t.messages.actionNotAllowed', {
-        action: 't.buttons.restore',
-        resource: 't.resources.role',
-        reason: 'it is not deleted',
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Restore the role

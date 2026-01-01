@@ -26,11 +26,7 @@ export class StudentClassSubscriptionsRepository extends BaseRepository<StudentC
     const now = new Date();
     return this.getRepository()
       .findOne({
-        where: {
-          studentUserProfileId,
-          classId,
-          status: SubscriptionStatus.ACTIVE,
-        },
+        where: { studentUserProfileId, classId },
       })
       .then((subscription) => {
         if (!subscription) return null;
@@ -50,12 +46,7 @@ export class StudentClassSubscriptionsRepository extends BaseRepository<StudentC
     monthYear: string,
   ): Promise<StudentClassSubscription | null> {
     return this.getRepository().findOne({
-      where: {
-        studentUserProfileId,
-        classId,
-        monthYear,
-        status: SubscriptionStatus.ACTIVE,
-      },
+      where: { classId, monthYear },
     });
   }
 

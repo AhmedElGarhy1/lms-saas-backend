@@ -75,12 +75,7 @@ export class AccessControlService extends BaseService {
       });
 
     if (!IHaveAccessToGranterUser) {
-      throw new InsufficientPermissionsException(
-        't.messages.accessDeniedToResource',
-        {
-          resource: 't.resources.user',
-        },
-      );
+      throw new InsufficientPermissionsException('Access denied to user');
     }
 
     const IHaveAccessToTargetUser =
@@ -91,12 +86,7 @@ export class AccessControlService extends BaseService {
       });
 
     if (!IHaveAccessToTargetUser) {
-      throw new InsufficientPermissionsException(
-        't.messages.accessDeniedToResource',
-        {
-          resource: 't.resources.user',
-        },
-      );
+      throw new InsufficientPermissionsException('Access denied to user');
     }
 
     const isGranterSuperAdmin =
@@ -104,12 +94,7 @@ export class AccessControlService extends BaseService {
         body.granterUserProfileId,
       );
     if (isGranterSuperAdmin) {
-      throw new InsufficientPermissionsException(
-        't.messages.accessDeniedToResource',
-        {
-          resource: 't.resources.user',
-        },
-      );
+      throw new InsufficientPermissionsException('Access denied to user');
     }
 
     const canAccess = await this.accessControlHelperService.canUserAccess({
@@ -119,10 +104,7 @@ export class AccessControlService extends BaseService {
     });
 
     if (canAccess) {
-      throw new BusinessLogicException('t.messages.alreadyHas', {
-        resource: 't.resources.user',
-        what: 't.resources.access',
-      });
+      throw new BusinessLogicException('User already has access');
     }
 
     await this.grantUserAccess(body);
@@ -164,10 +146,7 @@ export class AccessControlService extends BaseService {
         },
       );
       throw new InsufficientPermissionsException(
-        't.messages.accessDeniedToResource',
-        {
-          resource: 't.resources.user',
-        },
+        'Access denied to user resource',
       );
     }
 
@@ -185,10 +164,7 @@ export class AccessControlService extends BaseService {
         centerId,
       });
       throw new InsufficientPermissionsException(
-        't.messages.accessDeniedToResource',
-        {
-          resource: 't.resources.user',
-        },
+        'Access denied to user resource',
       );
     }
 
@@ -196,12 +172,7 @@ export class AccessControlService extends BaseService {
     const canAccess = await this.accessControlHelperService.canUserAccess(body);
 
     if (!canAccess) {
-      throw new InsufficientPermissionsException(
-        't.messages.accessDeniedToResource',
-        {
-          resource: 't.resources.access',
-        },
-      );
+      throw new InsufficientPermissionsException('Access denied to resource');
     }
 
     await this.revokeUserAccess(body);
@@ -230,10 +201,7 @@ export class AccessControlService extends BaseService {
       });
 
     if (canCenterAccess) {
-      throw new BusinessLogicException('t.messages.alreadyHas', {
-        resource: 't.resources.centerAccess',
-        what: 't.resources.access',
-      });
+      throw new BusinessLogicException('Already has center access');
     }
 
     return await this.centerAccessRepository.grantCenterAccess(dto);
@@ -268,9 +236,7 @@ export class AccessControlService extends BaseService {
       });
 
     if (!canCenterAccess) {
-      throw new BusinessLogicException('t.messages.notFound', {
-        resource: 't.resources.centerAccess',
-      });
+      throw new BusinessLogicException('Center access not found');
     }
 
     return await this.centerAccessRepository.revokeCenterAccess(dto);
@@ -298,38 +264,20 @@ export class AccessControlService extends BaseService {
 
     const profile = await this.userProfileService.findOne(body.userProfileId);
     if (!profile) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.profile',
-        identifier: 't.resources.identifier',
-        value: body.userProfileId,
-      });
+      throw new ResourceNotFoundException('Profile not found');
     }
 
-    let requiredPermission: {
-      action: string;
-      scope: PermissionScope;
-    };
+    let requiredPermission: { action: string; scope: PermissionScope };
     if (profile.profileType === ProfileType.STAFF) {
-      requiredPermission = PERMISSIONS.STAFF.DELETE_CENTER_ACCESS as {
-        action: string;
-        scope: PermissionScope;
-      };
+      requiredPermission = PERMISSIONS.STAFF.DELETE_CENTER_ACCESS;
     } else if (profile.profileType === ProfileType.STUDENT) {
-      requiredPermission = PERMISSIONS.STUDENT.DELETE_CENTER_ACCESS as {
-        action: string;
-        scope: PermissionScope;
-      };
+      requiredPermission = PERMISSIONS.STUDENT.DELETE_CENTER_ACCESS;
     } else if (profile.profileType === ProfileType.TEACHER) {
-      requiredPermission = PERMISSIONS.TEACHER.DELETE_CENTER_ACCESS as {
-        action: string;
-        scope: PermissionScope;
-      };
+      requiredPermission = PERMISSIONS.TEACHER.DELETE_CENTER_ACCESS;
     } else {
-      throw new BusinessLogicException('t.messages.actionNotAllowed', {
-        action: 't.buttons.delete',
-        resource: 't.resources.centerAccess',
-        reason: 'Unsupported profile type',
-      });
+      throw new BusinessLogicException(
+        'Delete action not allowed for center access: Unsupported profile type',
+      );
     }
 
     const hasPermission = await this.rolesService.hasPermission(
@@ -340,9 +288,7 @@ export class AccessControlService extends BaseService {
     );
 
     if (!hasPermission) {
-      throw new InsufficientPermissionsException(
-        't.messages.insufficientPermissions',
-      );
+      throw new InsufficientPermissionsException('Insufficient permissions');
     }
 
     // Check if target user is an admin - prevent deletion of admin center access
@@ -350,24 +296,18 @@ export class AccessControlService extends BaseService {
       body.userProfileId,
     );
     if (isTargetAdmin) {
-      throw new BusinessLogicException('t.messages.actionNotAllowed', {
-        action: 't.buttons.delete',
-        resource: 't.resources.centerAccess',
-        reason: 'Admin users cannot have center access deleted',
-      });
+      throw new BusinessLogicException(
+        'Delete action not allowed for center access: Admin users cannot have center access deleted',
+      );
     }
 
     const centerAccess =
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.centerAccess',
-      });
+      throw new ResourceNotFoundException('Center access not found');
     }
     if (centerAccess.deletedAt) {
-      throw new BusinessLogicException('t.messages.alreadyDeleted', {
-        resource: 't.resources.centerAccess',
-      });
+      throw new BusinessLogicException('Center access already deleted');
     }
 
     await this.centerAccessRepository.softRemove(centerAccess.id);
@@ -387,17 +327,10 @@ export class AccessControlService extends BaseService {
 
     const profile = await this.userProfileService.findOne(body.userProfileId);
     if (!profile) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.profile',
-        identifier: 't.resources.identifier',
-        value: body.userProfileId,
-      });
+      throw new ResourceNotFoundException('Profile not found');
     }
 
-    let requiredPermission: {
-      action: string;
-      scope: PermissionScope;
-    };
+    let requiredPermission: { action: string; scope: PermissionScope };
     if (profile.profileType === ProfileType.STAFF) {
       requiredPermission = PERMISSIONS.STAFF.RESTORE_CENTER_ACCESS;
     } else if (profile.profileType === ProfileType.STUDENT) {
@@ -405,11 +338,9 @@ export class AccessControlService extends BaseService {
     } else if (profile.profileType === ProfileType.TEACHER) {
       requiredPermission = PERMISSIONS.TEACHER.RESTORE_CENTER_ACCESS;
     } else {
-      throw new BusinessLogicException('t.messages.actionNotAllowed', {
-        action: 't.buttons.restore',
-        resource: 't.resources.centerAccess',
-        reason: 'Unsupported profile type',
-      });
+      throw new BusinessLogicException(
+        'Restore action not allowed for center access: Unsupported profile type',
+      );
     }
 
     const hasPermission = await this.rolesService.hasPermission(
@@ -420,9 +351,7 @@ export class AccessControlService extends BaseService {
     );
 
     if (!hasPermission) {
-      throw new InsufficientPermissionsException(
-        't.messages.insufficientPermissions',
-      );
+      throw new InsufficientPermissionsException('Insufficient permissions');
     }
 
     const centerAccess = await this.accessControlHelperService.findCenterAccess(
@@ -430,16 +359,12 @@ export class AccessControlService extends BaseService {
       true,
     );
     if (!centerAccess) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.centerAccess',
-      });
+      throw new ResourceNotFoundException('Center access not found');
     }
     if (!centerAccess.deletedAt) {
-      throw new BusinessLogicException('t.messages.actionNotAllowed', {
-        action: 't.buttons.restore',
-        resource: 't.resources.centerAccess',
-        reason: 't.messages.notDeleted',
-      });
+      throw new BusinessLogicException(
+        'Restore action not allowed for center access: Not deleted',
+      );
     }
     await this.centerAccessRepository.restore(centerAccess.id);
   }
@@ -459,17 +384,10 @@ export class AccessControlService extends BaseService {
 
     const profile = await this.userProfileService.findOne(body.userProfileId);
     if (!profile) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.profile',
-        identifier: 't.resources.identifier',
-        value: body.userProfileId,
-      });
+      throw new ResourceNotFoundException('Profile not found');
     }
 
-    let requiredPermission: {
-      action: string;
-      scope: PermissionScope;
-    };
+    let requiredPermission: { action: string; scope: PermissionScope };
     if (profile.profileType === ProfileType.STAFF) {
       requiredPermission = PERMISSIONS.STAFF.ACTIVATE_CENTER_ACCESS;
     } else if (profile.profileType === ProfileType.STUDENT) {
@@ -477,11 +395,9 @@ export class AccessControlService extends BaseService {
     } else if (profile.profileType === ProfileType.TEACHER) {
       requiredPermission = PERMISSIONS.TEACHER.ACTIVATE_CENTER_ACCESS;
     } else {
-      throw new BusinessLogicException('t.messages.actionNotAllowed', {
-        action: isActive ? 't.buttons.enable' : 't.buttons.disable',
-        resource: 't.resources.centerAccess',
-        reason: 'Unsupported profile type',
-      });
+      throw new BusinessLogicException(
+        `${isActive ? 'Enable' : 'Disable'} action not allowed for center access: Unsupported profile type`,
+      );
     }
 
     const hasPermission = await this.rolesService.hasPermission(
@@ -492,9 +408,7 @@ export class AccessControlService extends BaseService {
     );
 
     if (!hasPermission) {
-      throw new InsufficientPermissionsException(
-        't.messages.insufficientPermissions',
-      );
+      throw new InsufficientPermissionsException('Insufficient permissions');
     }
 
     // Check if target user is an admin - prevent deactivation of admin center access
@@ -503,20 +417,16 @@ export class AccessControlService extends BaseService {
         body.userProfileId,
       );
       if (isTargetAdmin) {
-        throw new BusinessLogicException('t.messages.actionNotAllowed', {
-          action: 't.buttons.disable',
-          resource: 't.resources.centerAccess',
-          reason: 'Admin users cannot have center access deactivated',
-        });
+        throw new BusinessLogicException(
+          'Disable action not allowed for center access: Admin users cannot have center access deactivated',
+        );
       }
     }
 
     const centerAccess =
       await this.accessControlHelperService.findCenterAccess(body);
     if (!centerAccess) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.centerAccess',
-      });
+      throw new ResourceNotFoundException('Center access not found');
     }
     await this.centerAccessRepository.update(centerAccess.id, { isActive });
 

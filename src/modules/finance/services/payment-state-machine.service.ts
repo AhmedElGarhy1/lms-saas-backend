@@ -56,9 +56,7 @@ export class PaymentStateMachineService {
       const isSuperAdmin =
         await this.accessControlHelperService.isSuperAdmin(userProfileId);
       if (!isSuperAdmin) {
-        throw new InsufficientPermissionsException('t.messages.accessDenied', {
-          resource: 'superadmin override',
-        });
+        throw new InsufficientPermissionsException("Operation failed");
       }
     }
 

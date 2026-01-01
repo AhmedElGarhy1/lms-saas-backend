@@ -34,10 +34,7 @@ export class InAppNotificationController {
       actor.id,
       query,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.notification' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Get('unread')
@@ -54,10 +51,7 @@ export class InAppNotificationController {
         profileId,
       );
 
-    return ControllerResponse.success(notifications, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.notification' },
-    });
+    return ControllerResponse.success(notifications, 'Data retrieved successfully');
   }
 
   @Get('unread/count')
@@ -79,10 +73,7 @@ export class InAppNotificationController {
         profileType: profileType ?? null,
         profileId: profileId ?? null,
       },
-      {
-        key: 't.messages.found',
-        args: { resource: 't.resources.notification' },
-      },
+      'Data retrieved successfully',
     );
   }
 
@@ -94,10 +85,7 @@ export class InAppNotificationController {
       dto.notificationIds,
       actor.id,
     );
-    return ControllerResponse.message({
-      key: 't.messages.updated',
-      args: { resource: 't.resources.notification' },
-    });
+    return ControllerResponse.message('Resource updated successfully');
   }
 
   @Put('read-all')
@@ -113,10 +101,7 @@ export class InAppNotificationController {
       profileType,
       profileId,
     );
-    return ControllerResponse.message({
-      key: 't.messages.updated',
-      args: { resource: 't.resources.notification' },
-    });
+    return ControllerResponse.message('Resource updated successfully');
   }
 
   @Put(':id/archive')
@@ -127,10 +112,7 @@ export class InAppNotificationController {
     @Param() params: NotificationIdParamDto,
   ) {
     await this.inAppNotificationService.archive(actor.id, params.id);
-    return ControllerResponse.message({
-      key: 't.messages.archived',
-      args: { resource: 't.resources.notification' },
-    });
+    return ControllerResponse.message('Operation completed successfully');
   }
 
   @Get('archived')

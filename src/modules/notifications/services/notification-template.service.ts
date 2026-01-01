@@ -13,8 +13,7 @@ import {
   getNotificationI18nKey,
   NOTIFICATION_FIELDS,
 } from '../utils/notification-i18n.util';
-import { TranslationService } from '@/shared/common/services/translation.service';
-import { I18nPath } from '@/generated/i18n.generated';
+import { NotificationTranslationService } from './notification-translation.service';
 
 @Injectable()
 export class NotificationTemplateService extends BaseService {
@@ -24,7 +23,7 @@ export class NotificationTemplateService extends BaseService {
 
   constructor(
     private readonly templateCache: InMemoryTemplateCacheService,
-    private readonly translationService: TranslationService,
+    private readonly translationService: NotificationTranslationService,
   ) {
     super();
   }
@@ -154,19 +153,19 @@ export class NotificationTemplateService extends BaseService {
 
   /**
    * Render JSON template using i18n engine for translations
-   * For IN_APP channel, translations are loaded from t.json notifications namespace
+   * For IN_APP channel, translations are loaded from notifications.json
    * @param content - JSON template content (minimal structure, translations come from i18n)
    * @param data - Data to inject into translations
    * @param locale - Locale code for translation
    * @param notificationType - Notification type enum value (used to build i18n key)
    * @returns Parsed and validated JSON object with translated content
    */
-  private renderJsonTemplate(
+  private async renderJsonTemplate(
     content: string,
     data: Record<string, unknown>,
     locale: string = 'en',
     notificationType: NotificationType,
-  ): object {
+  ): Promise<object> {
     try {
       // Parse the JSON structure (should be minimal now, just structure)
       const template = JSON.parse(content) as {
@@ -190,12 +189,8 @@ export class NotificationTemplateService extends BaseService {
       let translatedMessage: string;
 
       try {
-        // Type-safe translation with locale override
-        // Note: Notification keys are dynamically generated (notifications.{type}.{field}),
-        // so we use type assertion for I18nPath compatibility
-        translatedTitle = this.translationService.translateWithLocale(
-          titleKey as I18nPath,
-          (data || {}) as any,
+        translatedTitle = await this.translationService.translate(
+          titleKey,
           locale,
         );
       } catch (error) {
@@ -215,12 +210,8 @@ export class NotificationTemplateService extends BaseService {
       }
 
       try {
-        // Type-safe translation with locale override
-        // Note: Notification keys are dynamically generated (notifications.{type}.{field}),
-        // so we use type assertion for I18nPath compatibility
-        translatedMessage = this.translationService.translateWithLocale(
-          messageKey as I18nPath,
-          (data || {}) as any,
+        translatedMessage = await this.translationService.translate(
+          messageKey,
           locale,
         );
       } catch (error) {
@@ -310,7 +301,7 @@ export class NotificationTemplateService extends BaseService {
         title: '',
         message: '',
       });
-      return this.renderJsonTemplate(
+      return await this.renderJsonTemplate(
         defaultJsonContent,
         data,
         locale,
@@ -364,7 +355,7 @@ export class NotificationTemplateService extends BaseService {
           `NotificationType is required for JSON template rendering (IN_APP channel)`,
         );
       }
-      return this.renderJsonTemplate(
+      return await this.renderJsonTemplate(
         templateContent,
         data,
         locale,

@@ -67,11 +67,7 @@ export class UserService extends BaseService {
     const { userId, dto } = params;
     const user = await this.findOne(userId, true);
     if (!user) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.user',
-        identifier: 't.resources.identifier',
-        value: userId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Verify current password
@@ -80,9 +76,7 @@ export class UserService extends BaseService {
       user.password,
     );
     if (!isCurrentPasswordValid) {
-      throw new ValidationFailedException('t.messages.fieldInvalid', [], {
-        field: 't.resources.currentPassword',
-      });
+      throw new ValidationFailedException("Validation failed", );
     }
 
     // Check if 2FA is enabled
@@ -90,9 +84,7 @@ export class UserService extends BaseService {
       // If OTP code not provided, send OTP and throw exception
       if (!dto.code) {
         await this.verificationService.sendTwoFactorOTP(user.id || '');
-        throw new OtpRequiredException('t.messages.fieldRequired', {
-          field: 'OTP code',
-        });
+        throw new OtpRequiredException('OTP code is required');
       }
 
       // OTP code provided, verify it
@@ -108,9 +100,7 @@ export class UserService extends BaseService {
           phone: user.phone,
           error: error instanceof Error ? error.message : String(error),
         });
-        throw new AuthenticationFailedException('t.messages.operationError', {
-          reason: 'authentication failed',
-        });
+        throw new AuthenticationFailedException("Operation failed");
       }
     }
 
@@ -188,24 +178,14 @@ export class UserService extends BaseService {
     // First check if the user exists
     const user = await this.userRepository.findOne(userId);
     if (!user) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.user',
-        identifier: 't.resources.identifier',
-        value: userId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException(
-        't.messages.actionUnauthorized',
-        {
-          action: 't.buttons.delete',
-          resource: 't.resources.user',
-        },
-      );
+      throw new InsufficientPermissionsException('Insufficient permissions to delete user');
     }
     await this.userRepository.softRemove(userId);
 
@@ -220,24 +200,14 @@ export class UserService extends BaseService {
     // First check if the user exists
     const user = await this.userRepository.findOneSoftDeletedById(userId);
     if (!user) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.user',
-        identifier: 't.resources.identifier',
-        value: userId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException(
-        't.messages.actionUnauthorized',
-        {
-          action: 't.buttons.restore',
-          resource: 't.resources.user',
-        },
-      );
+      throw new InsufficientPermissionsException('Insufficient permissions to restore user');
     }
 
     // Restore user
@@ -272,11 +242,7 @@ export class UserService extends BaseService {
     // First check if the user exists
     const user = await this.userRepository.findOne(userId);
     if (!user) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.user',
-        identifier: 't.resources.identifier',
-        value: userId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Then check if current user can activate/deactivate the target user
@@ -314,9 +280,7 @@ export class UserService extends BaseService {
     // Get userId from profile for command emission
     const profile = await this.userProfileService.findOne(userProfileId);
     if (!profile) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.profile',
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Emit event after work is done
@@ -454,9 +418,7 @@ export class UserService extends BaseService {
     // Find user by profileId - need to get user from profile
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.profile',
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
     return this.userRepository.findOne(userProfile.userId);
   }
@@ -518,9 +480,7 @@ export class UserService extends BaseService {
     // Find user by profileId
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.profile',
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Call updateUser which will handle the work and emit event
@@ -534,22 +494,14 @@ export class UserService extends BaseService {
     // Find user by profileId
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.profile',
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException(
-        't.messages.actionUnauthorized',
-        {
-          action: 't.buttons.delete',
-          resource: 't.resources.user',
-        },
-      );
+      throw new InsufficientPermissionsException('Insufficient permissions to delete user');
     }
 
     await this.userRepository.softRemove(userProfile.userId);
@@ -562,22 +514,14 @@ export class UserService extends BaseService {
     // Find user by profileId
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException('t.messages.notFound', {
-        resource: 't.resources.profile',
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException(
-        't.messages.actionUnauthorized',
-        {
-          action: 't.buttons.delete',
-          resource: 't.resources.user',
-        },
-      );
+      throw new InsufficientPermissionsException('Insufficient permissions to delete user');
     }
 
     await this.userRepository.restore(userProfile.userId);

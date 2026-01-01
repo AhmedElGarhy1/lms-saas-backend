@@ -51,10 +51,7 @@ export class ExportService extends BaseService {
 
       return {
         success: true,
-        message: {
-          key: 't.messages.exported',
-          args: { resource: 'CSV' },
-        },
+        message: 'Export completed successfully',
         filename: `${filename}.csv`,
         format: 'csv',
         recordCount: data.length,
@@ -96,10 +93,7 @@ export class ExportService extends BaseService {
 
       return {
         success: true,
-        message: {
-          key: 't.messages.exported',
-          args: { resource: 'XLSX' },
-        },
+        message: 'Export completed successfully',
         filename: `${filename}.xlsx`,
         format: 'xlsx',
         recordCount: data.length,
@@ -138,10 +132,7 @@ export class ExportService extends BaseService {
 
       return {
         success: true,
-        message: {
-          key: 't.messages.exported',
-          args: { resource: 'JSON' },
-        },
+        message: 'Export completed successfully',
         filename: `${filename}.json`,
         format: 'json',
         recordCount: data.length,

@@ -92,9 +92,7 @@ export class SessionValidationService extends BaseService {
     const session = await this.sessionsRepository.findOneOrThrow(sessionId);
 
     if (session.status !== SessionStatus.SCHEDULED) {
-      throw new BusinessLogicException('t.messages.cannotDeleteSession', {
-        status: session.status,
-      });
+      throw new BusinessLogicException('Operation failed');
     }
 
     // Only extra sessions (isExtraSession: true) can be deleted
@@ -121,9 +119,9 @@ export class SessionValidationService extends BaseService {
 
     if (session.status !== SessionStatus.SCHEDULED) {
       // Type assertion needed because translation types may not be regenerated yet
-      throw new BusinessLogicException('t.messages.cannotCancelSession', {
-        status: session.status,
-      } as any);
+      throw new BusinessLogicException(
+        'Cannot cancel session in current status',
+      );
     }
   }
 }

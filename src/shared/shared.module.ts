@@ -8,7 +8,7 @@ import { ActivityLogModule } from './modules/activity-log/activity-log.module';
 import { TypeOrmExceptionFilter } from './common/filters/typeorm-exception.filter';
 import { RedisModule } from './modules/redis/redis.module';
 import { TypeSafeEventEmitter } from './services/type-safe-event-emitter.service';
-import { TranslationService } from './common/services/translation.service';
+// TranslationService removed - no longer needed after translation removal
 import { CacheKeyBuilderService } from './common/services/cache-key-builder.service';
 
 @Global()
@@ -21,7 +21,6 @@ import { CacheKeyBuilderService } from './common/services/cache-key-builder.serv
     BulkOperationService,
     TypeOrmExceptionFilter,
     TypeSafeEventEmitter,
-    TranslationService,
     CacheKeyBuilderService,
   ],
   exports: [
@@ -32,7 +31,6 @@ import { CacheKeyBuilderService } from './common/services/cache-key-builder.serv
     ConfigModule,
     RedisModule,
     TypeSafeEventEmitter,
-    TranslationService,
     CacheKeyBuilderService,
   ],
 })

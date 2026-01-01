@@ -54,11 +54,7 @@ export class TeacherService extends BaseService {
       includeDeleted,
     );
     if (!user) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.teacher',
-        identifier: 't.resources.identifier',
-        value: userProfileId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
     return user;
   }

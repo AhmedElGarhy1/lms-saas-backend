@@ -82,11 +82,7 @@ export class PaymentStrategyService extends BaseService {
       await this.studentPaymentStrategyRepository.findByClassId(classId);
 
     if (!existingStrategy) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.studentPaymentStrategy',
-        identifier: 't.resources.identifier',
-        value: classId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     await this.studentPaymentStrategyRepository.update(existingStrategy.id, {
@@ -116,11 +112,7 @@ export class PaymentStrategyService extends BaseService {
       await this.teacherPaymentStrategyRepository.findByClassId(classId);
 
     if (!existingStrategy) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.teacherPaymentStrategy',
-        identifier: 't.resources.identifier',
-        value: classId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     await this.teacherPaymentStrategyRepository.update(existingStrategy.id, {

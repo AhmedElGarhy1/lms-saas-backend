@@ -54,11 +54,7 @@ export class CentersService extends BaseService {
       ? await this.centersRepository.findOneSoftDeletedById(centerId)
       : await this.centersRepository.findOne(centerId);
     if (!center) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.center',
-        identifier: 't.resources.identifier',
-        value: centerId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // If actor is provided, validate center access
@@ -76,9 +72,7 @@ export class CentersService extends BaseService {
     // Validate timezone if provided
     const timezone = dto.timezone || DEFAULT_TIMEZONE;
     if (!isValidTimezone(timezone)) {
-      throw new BusinessLogicException('t.messages.fieldInvalid', {
-        field: 'timezone',
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Create the center
@@ -111,29 +105,19 @@ export class CentersService extends BaseService {
   ): Promise<Center> {
     const center = await this.findCenterById(centerId, actor);
     if (!center) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.center',
-        identifier: 't.resources.identifier',
-        value: centerId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     if (dto.name && dto.name !== center.name) {
       const existingCenter = await this.centersRepository.findByName(dto.name);
       if (existingCenter) {
-        throw new BusinessLogicException('t.messages.alreadyExists', {
-          resource: 't.resources.center',
-          field: 'name',
-          value: dto.name,
-        });
+        throw new BusinessLogicException("Operation failed");
       }
     }
 
     // Validate timezone if provided
     if (dto.timezone !== undefined && !isValidTimezone(dto.timezone)) {
-      throw new BusinessLogicException('t.messages.fieldInvalid', {
-        field: 'timezone',
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     const updatedCenter = await this.centersRepository.updateCenter(
@@ -141,11 +125,7 @@ export class CentersService extends BaseService {
       dto,
     );
     if (!updatedCenter) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.center',
-        identifier: 't.resources.identifier',
-        value: centerId,
-      });
+      throw new ResourceNotFoundException("Operation failed");
     }
 
     // Emit event after work is done
@@ -174,11 +154,7 @@ export class CentersService extends BaseService {
     const center = await this.findCenterById(centerId, actor, true);
 
     if (!center.deletedAt) {
-      throw new BusinessLogicException('t.messages.actionNotAllowed', {
-        action: 't.buttons.restore',
-        resource: 't.resources.center',
-        reason: 'it is not deleted',
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     await this.centersRepository.restore(centerId);

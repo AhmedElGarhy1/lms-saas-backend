@@ -15,7 +15,7 @@ import {
   ToggleUserStatusRequestDto,
   ToggleUserStatusResponseDto,
 } from '@/modules/user/dto/toggle-user-status.dto';
-import { TranslationService } from '@/shared/common/services/translation.service';
+// TranslationService removed - no longer needed after translation removal
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { UserProfileIdParamDto } from '@/modules/access-control/dto/user-profile-id-param.dto';
@@ -25,10 +25,7 @@ import { AdminOnly, ManagerialOnly } from '@/shared/common/decorators';
 @ApiTags('Centers Access')
 @Controller('centers/access')
 export class CentersAccessController {
-  constructor(
-    private readonly accessControlService: AccessControlService,
-    private readonly translationService: TranslationService,
-  ) {}
+  constructor(private readonly accessControlService: AccessControlService) {}
 
   @Patch(':userProfileId/status')
   @UpdateApiResponses('Toggle center access active status')
@@ -57,10 +54,9 @@ export class CentersAccessController {
 
     return {
       id: params.userProfileId,
-      message: this.translationService.translate(
-        dto.isActive ? 't.messages.activated' : 't.messages.deactivated',
-        { resource: 't.resources.centerAccess' },
-      ),
+      message: dto.isActive
+        ? 'Center access activated'
+        : 'Center access deactivated',
       isActive: dto.isActive,
     };
   }
@@ -79,10 +75,10 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.granted',
-      args: { resource: 't.resources.centerAccess' },
-    });
+    return ControllerResponse.success(
+      result,
+      'Operation completed successfully',
+    );
   }
 
   @Delete()
@@ -100,10 +96,10 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.revoked',
-      args: { resource: 't.resources.centerAccess' },
-    });
+    return ControllerResponse.success(
+      result,
+      'Operation completed successfully',
+    );
   }
 
   @Delete(':userProfileId')
@@ -125,10 +121,7 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.deleted',
-      args: { resource: 't.resources.centerAccess' },
-    });
+    return ControllerResponse.success(result, 'Resource deleted successfully');
   }
 
   @Patch(':userProfileId/restore')
@@ -145,9 +138,9 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, {
-      key: 't.messages.restored',
-      args: { resource: 't.resources.centerAccess' },
-    });
+    return ControllerResponse.success(
+      result,
+      'Operation completed successfully',
+    );
   }
 }

@@ -1,5 +1,6 @@
 import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { IRequest } from '../interfaces/request.interface';
 import { RequestContextService } from './request-context.service';
 import { ActorUser } from '../types/actor-user.type';
 
@@ -214,7 +215,7 @@ export class EnterpriseLoggerService extends Logger {
    */
   private buildFallbackContext(request: Request, user?: ActorUser): Record<string, any> {
     const context: Record<string, any> = {
-      requestId: (request as any).id || 'unknown',
+      requestId: (request as IRequest).id || 'unknown',
       correlationId: 'unknown',
       timestamp: new Date().toISOString(),
     };

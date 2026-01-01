@@ -8,18 +8,16 @@ import {
 } from '@nestjs/common';
 import { validate, ValidationError } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
-import { Request } from 'express';
+import { IRequest } from '../interfaces/request.interface';
 import {
   ErrorDetail,
   EnhancedErrorResponse,
 } from '../exceptions/custom.exceptions';
 import { ErrorCode } from '../enums/error-codes.enum';
-import { I18nPath } from '@/generated/i18n.generated';
-import { PathArgs } from '@/generated/i18n-type-map.generated';
-import { TranslationMessage } from '../types/translation.types';
 import { TimezoneService } from '../services/timezone.service';
 import { EnterpriseLoggerService } from '../services/enterprise-logger.service';
 import { REQUEST } from '@nestjs/core';
+import type { Request } from 'express';
 
 /**
  * Custom validation pipe that transforms class-validator errors
@@ -58,7 +56,7 @@ export class CustomValidationPipe implements PipeTransform {
 
       const errorResponse: EnhancedErrorResponse = {
         statusCode: 400,
-        message: { key: 't.messages.validationFailed' } as TranslationMessage,
+        message: 'Validation failed',
         code: ErrorCode.VALIDATION_FAILED,
         timestamp: new Date().toISOString(),
         details: validationErrors,
@@ -69,7 +67,7 @@ export class CustomValidationPipe implements PipeTransform {
         this.enterpriseLogger.logValidationError(
           this.request,
           validationErrors,
-          (this.request as any).actor,
+          (this.request as unknown as IRequest).actor,
         );
       }
 
@@ -110,24 +108,15 @@ export class CustomValidationPipe implements PipeTransform {
       if (error.constraints) {
         const constraintKeys = Object.keys(error.constraints);
         for (const constraintKey of constraintKeys) {
-          const translatedMessage = this.getValidationMessage(
+          const errorMessage = this.getValidationMessage(
             error.property,
             constraintKey,
-          );
-
-          const args = this.getValidationMessageArgs(
-            error.property,
-            constraintKey,
-            error.constraints,
           );
 
           const errorDetail: ErrorDetail = {
             field: error.property,
             value: error.value,
-            message: {
-              key: translatedMessage,
-              args: args as PathArgs<I18nPath>,
-            },
+            message: errorMessage,
           };
           result.push(errorDetail);
         }
@@ -149,122 +138,39 @@ export class CustomValidationPipe implements PipeTransform {
   }
 
   /**
-   * Maps class-validator constraint keys to i18n translation keys.
+   * Maps class-validator constraint keys to plain English validation messages.
    *
    * @param field The field name
    * @param constraintKey The constraint key from class-validator
-   * @returns The i18n translation key
+   * @returns The validation error message
    */
-  private getValidationMessage(field: string, constraintKey: string): I18nPath {
-    // Map class-validator constraint keys to translation keys
-    const constraintMap: Record<string, I18nPath> = {
-      isNotEmpty: 't.validation.required.message',
-      isEmail: 't.validation.email.invalid',
-      isPhoneNumber: 't.validation.phone.invalid',
-      isStrongPassword: 't.validation.password.invalid',
-      matches: 't.validation.invalid.message', // Generic invalid message, not password-specific
-      minLength: 't.validation.minLength.message',
-      maxLength: 't.validation.maxLength.message',
-      arrayMinSize: 't.validation.arrayMinSize.message',
-      arrayMaxSize: 't.validation.arrayMaxSize.message',
-      isUuid: 't.validation.isUuid.message',
-      isString: 't.validation.isString.message',
-      isBoolean: 't.validation.isBoolean.message',
-      isEnum: 't.validation.isEnum.message',
-      isDateString: 't.validation.isDateString.message',
-      isIso8601OrDate: 't.validation.isIso8601.message',
-      isISO8601: 't.validation.isIso8601.message',
-      isArray: 't.validation.isArray.message',
-      isNumber: 't.validation.isNumber.message',
-      isInt: 't.validation.isInt.message',
-      min: 't.validation.min.message',
-      max: 't.validation.max.message',
+  private getValidationMessage(field: string, constraintKey: string): string {
+    // Map class-validator constraint keys to plain English messages
+    const constraintMap: Record<string, string> = {
+      isNotEmpty: `${field} is required`,
+      isEmail: 'Invalid email format',
+      isPhoneNumber: 'Invalid phone number format',
+      isStrongPassword: 'Password does not meet strength requirements',
+      matches: 'Invalid format',
+      minLength: `${field} is too short`,
+      maxLength: `${field} is too long`,
+      arrayMinSize: 'Not enough items',
+      arrayMaxSize: 'Too many items',
+      isUuid: 'Invalid UUID format',
+      isString: 'Must be a string',
+      isBoolean: 'Must be a boolean',
+      isEnum: 'Invalid value',
+      isDateString: 'Invalid date format',
+      isIso8601OrDate: 'Invalid date format',
+      isISO8601: 'Invalid date format',
+      isArray: 'Must be an array',
+      isNumber: 'Must be a number',
+      isInt: 'Must be an integer',
+      min: `${field} is too small`,
+      max: `${field} is too large`,
     };
 
-    return (
-      constraintMap[constraintKey] ||
-      ('t.validation.invalid.message' as I18nPath)
-    );
+    return constraintMap[constraintKey] || 'Invalid value';
   }
 
-  /**
-   * Gets the arguments for validation message translation.
-   *
-   * @param field The field name
-   * @param constraintKey The constraint key
-   * @param constraints All constraints for the field
-   * @returns Arguments object for the translation, or undefined
-   */
-  private getValidationMessageArgs(
-    field: string,
-    constraintKey: string,
-    constraints: Record<string, string>,
-  ): Record<string, string | number> | undefined {
-    const constraintValue = constraints[constraintKey];
-    const fieldLabelKey = `t.resources.${field}`;
-
-    // Safely extract numeric constraint values
-    const getNumericValue = (): number => {
-      if (typeof constraintValue === 'number') {
-        return constraintValue;
-      }
-      if (typeof constraintValue === 'string') {
-        const parsed = Number.parseFloat(constraintValue);
-        return Number.isNaN(parsed) ? 0 : parsed;
-      }
-      return 0;
-    };
-
-    // Map constraint keys to their required args
-    const argsMap: Record<string, () => Record<string, string | number>> = {
-      isNotEmpty: () => ({ field: fieldLabelKey as I18nPath }),
-      minLength: () => ({
-        field: fieldLabelKey as I18nPath,
-        min: getNumericValue(),
-      }),
-      maxLength: () => ({
-        field: fieldLabelKey as I18nPath,
-        max: getNumericValue(),
-      }),
-      arrayMinSize: () => {
-        const baseField = field.replace(/[Ii]ds?$/, '');
-        const itemLabelKey = `t.resources.${baseField}`;
-        return {
-          min: getNumericValue() || 1,
-          item: itemLabelKey as I18nPath,
-        };
-      },
-      arrayMaxSize: () => {
-        const baseField = field.replace(/[Ii]ds?$/, '');
-        const itemLabelKey = `t.resources.${baseField}`;
-        return {
-          max: getNumericValue() || 100,
-          item: itemLabelKey as I18nPath,
-        };
-      },
-      isUuid: () => {
-        const baseField = field.replace(/[Ii]ds?$/, '');
-        const itemLabelKey = `t.resources.${baseField}`;
-        return { item: itemLabelKey as I18nPath };
-      },
-      isString: () => ({ field: fieldLabelKey }),
-      isBoolean: () => ({ field: fieldLabelKey }),
-      isEnum: () => ({ field: fieldLabelKey }),
-      isDateString: () => ({ field: fieldLabelKey }),
-      isArray: () => ({ field: fieldLabelKey }),
-      isNumber: () => ({ field: fieldLabelKey }),
-      isInt: () => ({ field: fieldLabelKey }),
-      min: () => ({
-        field: fieldLabelKey as I18nPath,
-        min: getNumericValue(),
-      }),
-      max: () => ({
-        field: fieldLabelKey as I18nPath,
-        max: getNumericValue(),
-      }),
-    };
-
-    const handler = argsMap[constraintKey];
-    return handler ? handler() : { field: fieldLabelKey as I18nPath };
-  }
 }

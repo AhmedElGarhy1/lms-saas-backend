@@ -64,7 +64,7 @@ export class StudentBillingService extends BaseService {
       );
 
     if (!paymentStrategy?.monthPrice) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     const amount = paymentStrategy.monthPrice;
@@ -83,7 +83,7 @@ export class StudentBillingService extends BaseService {
       );
 
     if (existingSubscription) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Create payment based on payment source
@@ -123,7 +123,7 @@ export class StudentBillingService extends BaseService {
         undefined, // reference ID
       );
     } else {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Create subscription
@@ -170,7 +170,7 @@ export class StudentBillingService extends BaseService {
       );
 
     if (!paymentStrategy?.sessionPrice) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     const amount = paymentStrategy.sessionPrice;
@@ -184,7 +184,7 @@ export class StudentBillingService extends BaseService {
       );
 
     if (existingCharge) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Create payment based on payment source
@@ -216,7 +216,7 @@ export class StudentBillingService extends BaseService {
         `Session charge for ${session.startTime.toISOString()}`, // correlation ID
       );
     } else {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Create session charge

@@ -6,4 +6,10 @@ export interface IRequest extends Request {
   branchId?: string;
   userProfileId?: string;
   user: ActorUser;
+  actor?: ActorUser;
+  correlationId?: string;
+  requestId?: string;
+  webhookIdempotency?: any;
+  rawBody?: Buffer;
+  id?: string;
 }

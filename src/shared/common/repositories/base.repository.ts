@@ -284,10 +284,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   /**
    * Apply where conditions to query builder.
    * Supports standard TypeORM FindOptionsWhere patterns:
-   * - Simple equality: { field: value }
+   * - Simple equality: "Error occurred"
    * - Arrays (IN clause): { field: [value1, value2] }
-   * - Null checks: { field: null } or { field: undefined }
-   * - TypeORM operators: { field: In([...]) } - extracts values from In() operator
+   * - Null checks: "Error occurred" or { field: undefined }
+   * - TypeORM operators: "Error occurred" - extracts values from In() operator
    *
    * @param queryBuilder Query builder (Select, Update, or Delete)
    * @param where Where conditions to apply
@@ -308,10 +308,8 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         ? queryBuilder.alias
         : this.getRepository().metadata.tableName;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const qb = queryBuilder as any;
+    const qb = queryBuilder;
 
-    /* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
     Object.entries(where).forEach(([key, value], index) => {
       const parameterName = `${key}_${index}`;
 
@@ -530,11 +528,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   ): Promise<T> {
     const entity = await this.findById(id, relations, withDeleted);
     if (!entity) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.resource',
-        identifier: 't.resources.identifier',
-        value: id,
-      });
+      throw new ResourceNotFoundException('Operation failed');
     }
     return entity;
   }
@@ -550,11 +544,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   async findOneOrThrow(id: string): Promise<T> {
     const entity = await this.findOne(id);
     if (!entity) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.resource',
-        identifier: 't.resources.identifier',
-        value: id,
-      });
+      throw new ResourceNotFoundException('Operation failed');
     }
     return entity;
   }
@@ -639,11 +629,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   async updateThrow(id: string, data: DeepPartial<T>): Promise<T> {
     const entity = await this.update(id, data);
     if (!entity) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.resource',
-        identifier: 't.resources.identifier',
-        value: id,
-      });
+      throw new ResourceNotFoundException('Operation failed');
     }
     return entity;
   }
@@ -665,11 +651,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       where: { id } as unknown as FindOptionsWhere<T>,
     });
     if (!entity) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.resource',
-        identifier: 't.resources.identifier',
-        value: id,
-      });
+      throw new ResourceNotFoundException('Operation failed');
     }
 
     await repo.softRemove(entity);
@@ -692,11 +674,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       where: { id } as unknown as FindOptionsWhere<T>,
     });
     if (!entity) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.resource',
-        identifier: 't.resources.identifier',
-        value: id,
-      });
+      throw new ResourceNotFoundException('Operation failed');
     }
 
     await repo.remove(entity);
@@ -721,11 +699,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     });
 
     if (!entity) {
-      throw new ResourceNotFoundException('t.messages.withIdNotFound', {
-        resource: 't.resources.resource',
-        identifier: 't.resources.identifier',
-        value: id,
-      });
+      throw new ResourceNotFoundException('Operation failed');
     }
 
     await repo.recover(entity);
@@ -758,22 +732,22 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     if (paginationDto.dateFrom && paginationDto.dateTo) {
       // Both dates provided - use range query (>= start AND < end) to preserve index usage
       // CRITICAL: Use < for end (exclusive) to include all records on dateTo
-        queryBuilder.andWhere(`${alias}.${dateField} >= :dateFrom`, {
-          dateFrom: paginationDto.dateFrom,
-        });
+      queryBuilder.andWhere(`${alias}.${dateField} >= :dateFrom`, {
+        dateFrom: paginationDto.dateFrom,
+      });
       queryBuilder.andWhere(`${alias}.${dateField} < :dateTo`, {
-          dateTo: paginationDto.dateTo,
-        });
+        dateTo: paginationDto.dateTo,
+      });
     } else if (paginationDto.dateFrom) {
       // Only dateFrom provided
-        queryBuilder.andWhere(`${alias}.${dateField} >= :dateFrom`, {
-          dateFrom: paginationDto.dateFrom,
-        });
+      queryBuilder.andWhere(`${alias}.${dateField} >= :dateFrom`, {
+        dateFrom: paginationDto.dateFrom,
+      });
     } else if (paginationDto.dateTo) {
       // Only dateTo provided - use < for end (exclusive) to include all records on dateTo
-        queryBuilder.andWhere(`${alias}.${dateField} < :dateTo`, {
-          dateTo: paginationDto.dateTo,
-        });
+      queryBuilder.andWhere(`${alias}.${dateField} < :dateTo`, {
+        dateTo: paginationDto.dateTo,
+      });
     }
   }
 

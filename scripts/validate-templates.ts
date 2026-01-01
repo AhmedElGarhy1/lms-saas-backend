@@ -97,7 +97,7 @@ async function validateTemplates(): Promise<ValidationResult> {
           continue; // Skip template file validation for WhatsApp
         }
 
-        // Special handling for IN_APP channel - validate t.json structure instead of file paths
+        // Special handling for IN_APP channel - validate notifications.json structure instead of file paths
         if (channel === NotificationChannel.IN_APP) {
           // Use notification type enum value directly (e.g., "OTP", "PASSWORD_RESET")
           const notificationKey = type; // type is already the enum value string

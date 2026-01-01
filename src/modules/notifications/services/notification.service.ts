@@ -94,11 +94,11 @@ export class NotificationService extends BaseService {
   async trigger(
     type: NotificationType,
     options: {
-      audience: AudienceId;
-      templateVariables: Record<string, unknown>;
-      recipients: RecipientInfo[];
-      channels?: NotificationChannel[];
-      actorId?: string; // Actor who triggered the notification (for createdBy field)
+      audience: string;
+      templateVariables: Record<string, any>;
+      recipients: any[];
+      channels: any[] | undefined;
+      actorId?: string;
     },
   ): Promise<BulkNotificationResult> {
     const { audience, templateVariables, recipients, channels, actorId } =

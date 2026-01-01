@@ -92,9 +92,7 @@ export class ClassStaffService extends BaseService {
       classEntity.status === ClassStatus.CANCELED ||
       classEntity.status === ClassStatus.FINISHED
     ) {
-      throw new BusinessLogicException('t.messages.cannotAssignStaffToClass', {
-        status: classEntity.status,
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Validate target staff member has branch access to the class's branch
@@ -106,10 +104,7 @@ export class ClassStaffService extends BaseService {
 
     const canAccess = await this.classAccessService.canClassAccess(data);
     if (canAccess) {
-      throw new BusinessLogicException('t.messages.alreadyIs', {
-        resource: 't.resources.staff',
-        state: 'assigned to class',
-      });
+      throw new BusinessLogicException("Operation failed");
     }
 
     // Extract branchId from validated class entity for snapshot
@@ -176,7 +171,7 @@ export class ClassStaffService extends BaseService {
     actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!userProfileIds || userProfileIds.length === 0) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     return await this.bulkOperationService.executeBulk(
@@ -210,7 +205,7 @@ export class ClassStaffService extends BaseService {
     actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!userProfileIds || userProfileIds.length === 0) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw new BusinessLogicException("Operation failed");
     }
 
     return await this.bulkOperationService.executeBulk(

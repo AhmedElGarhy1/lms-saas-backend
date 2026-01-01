@@ -21,7 +21,7 @@ export class CashTransactionRepository extends BaseRepository<CashTransaction> {
    */
   async findByCashbox(cashboxId: string): Promise<CashTransaction[]> {
     return this.getRepository().find({
-      where: { cashboxId } as any,
+      where: { cashboxId },
     });
   }
 
@@ -30,7 +30,7 @@ export class CashTransactionRepository extends BaseRepository<CashTransaction> {
    */
   async findByBranch(branchId: string): Promise<CashTransaction[]> {
     return this.getRepository().find({
-      where: { branchId } as any,
+      where: { branchId },
     });
   }
 }

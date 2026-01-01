@@ -130,9 +130,7 @@ export class ContextGuard implements CanActivate {
 
     const { userProfileId, userProfileType } = RequestContext.get();
     if (!userProfileId) {
-      throw new ProfileSelectionRequiredException('t.messages.fieldRequired', {
-        field: 't.resources.profileSelection',
-      });
+      throw new ProfileSelectionRequiredException('Profile selection is required');
     }
 
     if (!userProfileType) {

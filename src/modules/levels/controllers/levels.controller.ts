@@ -44,10 +44,7 @@ export class LevelsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.levelsService.paginateLevels(paginateDto, actor);
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.level' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Get(':levelId')
@@ -72,10 +69,7 @@ export class LevelsController {
       actor,
       true,
     ); // includeDeleted: true for API endpoints
-    return ControllerResponse.success(result, {
-      key: 't.messages.found',
-      args: { resource: 't.resources.level' },
-    });
+    return ControllerResponse.success(result, 'Data retrieved successfully');
   }
 
   @Post()
@@ -96,10 +90,7 @@ export class LevelsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.levelsService.createLevel(createLevelDto, actor);
-    return ControllerResponse.success(result, {
-      key: 't.messages.created',
-      args: { resource: 't.resources.level' },
-    });
+    return ControllerResponse.success(result, 'Resource created successfully');
   }
 
   @Put(':levelId')
@@ -126,10 +117,7 @@ export class LevelsController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, {
-      key: 't.messages.updated',
-      args: { resource: 't.resources.level' },
-    });
+    return ControllerResponse.success(result, 'Resource updated successfully');
   }
 
   @Delete(':levelId')
@@ -150,10 +138,7 @@ export class LevelsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.levelsService.deleteLevel(params.levelId, actor);
-    return ControllerResponse.message({
-      key: 't.messages.deleted',
-      args: { resource: 't.resources.level' },
-    });
+    return ControllerResponse.message('Resource deleted successfully');
   }
 
   @Patch(':levelId/restore')
@@ -167,9 +152,6 @@ export class LevelsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.levelsService.restoreLevel(params.levelId, actor);
-    return ControllerResponse.message({
-      key: 't.messages.restored',
-      args: { resource: 't.resources.level' },
-    });
+    return ControllerResponse.message('Operation completed successfully');
   }
 }
