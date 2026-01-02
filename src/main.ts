@@ -87,7 +87,10 @@ async function bootstrap() {
       },
     )
     .addServer('http://localhost:3000/api/v1', 'Development server')
-    .addServer('https://api.lms-saas.com/api/v1', 'Production server')
+    .addServer(
+      'lms-saas-backend-production-5e39.up.railway.app/api/v1',
+      'Production server',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

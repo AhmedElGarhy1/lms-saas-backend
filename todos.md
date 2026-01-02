@@ -136,7 +136,10 @@
 [x] add proper and detailed throw from backend errors
 [ ] proper permissions implementaion
 [ ] student billing display in sidebar and in session attendance throw for money
-
+[ ] check absentee-policy implementation and do we need it or not
+[ ] at the end of session before finish display students didn't attend for action
+[ ] bulk unassgin student from group
+[ ] remove sessions statues we have status single endpoint
 [ ] implement branch as in permissions to display sidebar
 [ ] implement filteration for branche in paginations
 [ ] check if we need to remove some actions in branch context
@@ -173,3 +176,39 @@
 [ ] you can only delete session you created isExtra other you can only cancle them (no soft deleted here)
 
 [ ] invetation flow and update invite user flow
+
+[permission] [userProfile] [endpoint]
+@@Finance
+Payments
+[no] [all] GET - /finance/payments/{id} - Get payment by ID
+TODO [] [] POST - /finance/payments/{id}/refund - Refund a payment
+TODO [] [] GET - /finance/payments - List payments (paginated)
+
+Wallets
+[no] [all] GET - /finance/wallets/me - Get current user wallet
+[no] [all] GET - /finance/wallets/total - Get total balance across all user wallets
+[no] [all] GET - /finance/wallets/me/statement - Get current user wallet statement
+[view wallet statement] [] GET - /finance/wallets/{walletId}/statement - Get paginated wallet statement with signed transaction amounts
+[view wallets] [admin] GET - /finance/wallets/{ownerId}/{ownerType} - Get wallet by owner ID and type
+[remove] [remove] POST - /finance/wallets/transfer - Transfer money between user profiles
+
+Center Revenue
+[view treasury] [manager] GET - /finance/centers/{centerId}/treasury - Get center treasury statistics
+[view wallet statement] [manager] GET - /finance/centers/{centerId}/statement - Get center wallet statement
+[view cash statement] [manager] GET - /finance/centers/{centerId}/cash-statement - Get center cash statement
+
+Finance Actions
+[no] [all] POST - /finance/wallet-topup - Initiate wallet top-up via Paymob
+
+Webhooks
+[no] [all] POST - /finance/webhooks/paymob - Paymob webhook endpoint
+======================
+
+@@StudentBilling
+[create subscription] [marager] POST - /billing/students/subscriptions/cash
+[no] [student] POST - /billing/students/subscriptions/wallet
+[create subscription] [marager] POST - /billing/students/session-charges/cash
+[no] [student] POST - /billing/students/session-charges/wallet
+?[] [] GET - /billing/students/records
+?shoule we add subscriptions GET and for whom
+?should we add session-charges GET and for whom
