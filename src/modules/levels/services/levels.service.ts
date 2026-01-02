@@ -5,7 +5,7 @@ import { PaginateLevelsDto } from '../dto/paginate-levels.dto';
 import { LevelsRepository } from '../repositories/levels.repository';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { LevelsErrors } from '../exceptions/levels.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
@@ -27,7 +27,7 @@ export class LevelsService extends BaseService {
       : await this.levelsRepository.findOne(levelId);
 
     if (!level) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw LevelsErrors.levelNotFound();
     }
 
     return level;
@@ -58,7 +58,7 @@ export class LevelsService extends BaseService {
   async restoreLevel(levelId: string, actor: ActorUser): Promise<void> {
     const level = await this.levelsRepository.findOneSoftDeletedById(levelId);
     if (!level) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw LevelsErrors.levelNotFound();
     }
 
     await this.levelsRepository.restore(levelId);

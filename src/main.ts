@@ -70,6 +70,15 @@ async function bootstrap() {
       {
         in: 'header',
         required: false,
+        name: 'x-user-profile-id',
+        schema: {
+          type: 'string',
+          example: '550e8400-e29b-41d4-a716-446655440002',
+        },
+      },
+      {
+        in: 'header',
+        required: false,
         name: 'x-branch-id',
         schema: {
           type: 'string',

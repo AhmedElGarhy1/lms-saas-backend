@@ -4,7 +4,8 @@ import { PaginateBranchesDto } from '../dto/paginate-branches.dto';
 import { BranchesRepository } from '../repositories/branches.repository';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { CentersErrors } from '../exceptions/centers.errors';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import {
   BranchCreatedEvent,
   BranchUpdatedEvent,
@@ -42,7 +43,7 @@ export class BranchesService extends BaseService {
       : await this.branchesRepository.findOne(branchId);
 
     if (!branch) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw CentersErrors.branchNotFound();
     }
 
     // Validate actor has branch access
@@ -107,7 +108,7 @@ export class BranchesService extends BaseService {
   ): Promise<void> {
     const branch = await this.branchesRepository.findOne(branchId);
     if (!branch) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw CentersErrors.branchNotFound();
     }
 
     // Validate actor has branch access
@@ -135,7 +136,7 @@ export class BranchesService extends BaseService {
     const branch =
       await this.branchesRepository.findOneSoftDeletedById(branchId);
     if (!branch) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw CentersErrors.branchNotFound();
     }
 
     // Validate actor has branch access

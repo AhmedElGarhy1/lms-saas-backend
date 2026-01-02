@@ -1,10 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Response } from 'express';
 import { ExportResponseDto } from '../dto/export-response.dto';
-import {
-  ExportFormatNotSupportedException,
-  ExportDataUnavailableException,
-} from '../exceptions/custom.exceptions';
+import { CommonErrors } from '../exceptions/common.errors';
 import { ExportFormat } from '../dto';
 import { BaseService } from './base.service';
 
@@ -165,10 +162,7 @@ export class ExportService extends BaseService {
       case 'json':
         return this.exportToJson(data, mapper, options.filename, res);
       default:
-        throw new ExportFormatNotSupportedException(
-          options.format,
-          't.messages.exportFormatNotSupported',
-        );
+        throw CommonErrors.validationFailed('export_format', options.format);
     }
   }
 
@@ -184,17 +178,12 @@ export class ExportService extends BaseService {
   ): ExportResponseDto {
     // Validate format
     if (!this.isValidFormat(format)) {
-      throw new ExportFormatNotSupportedException(
-        format,
-        't.messages.exportFormatNotSupported',
-      );
+      throw CommonErrors.validationFailed('export_format', format);
     }
 
     // Check for empty data
     if (!data || data.length === 0) {
-      throw new ExportDataUnavailableException(
-        't.messages.exportDataUnavailable',
-      );
+      throw CommonErrors.validationFailed('export_data', 'empty');
     }
 
     // Generate filename with timestamp
@@ -208,10 +197,7 @@ export class ExportService extends BaseService {
     } else if (format === ExportFormat.JSON) {
       return this.exportToJson(data, mapper, finalFilename, res);
     } else {
-      throw new ExportFormatNotSupportedException(
-        format,
-        't.messages.exportFormatNotSupported',
-      );
+      throw CommonErrors.validationFailed('export_format', format);
     }
   }
 

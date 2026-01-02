@@ -2,11 +2,7 @@ import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserProfile } from '../entities/user-profile.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { BaseService } from '@/shared/common/services/base.service';
-import {
-  ResourceNotFoundException,
-  ValidationFailedException,
-  BusinessLogicException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { UserProfileErrors } from '../exceptions/user-profile.errors';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ProfileResponseDto } from '../dto/profile-response.dto';
 import { UpdateUserDto } from '@/modules/user/dto/update-user.dto';
@@ -65,7 +61,7 @@ export class UserProfileService extends BaseService {
     // Get user with profile
     const user = await this.userService.findOne(actor.id);
     if (!user) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserProfileErrors.userProfileNotFound();
     }
 
     // Determine context based on centerId
@@ -78,7 +74,7 @@ export class UserProfileService extends BaseService {
     if (!actor.userProfileId) return returnData;
     const userProfile = await this.findOne(actor.userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserProfileErrors.userProfileNotFound();
     }
     actor.userProfileId = userProfile.id;
     actor.profileType = userProfile.profileType;
@@ -113,7 +109,7 @@ export class UserProfileService extends BaseService {
       actor.profileType,
     );
     if (!profile) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserProfileErrors.userProfileNotFound();
     }
 
     returnData.profile = profile;
@@ -130,7 +126,7 @@ export class UserProfileService extends BaseService {
     // Get userProfile to determine profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserProfileErrors.userProfileNotFound();
     }
 
     // Check permission based on profileType
@@ -156,7 +152,7 @@ export class UserProfileService extends BaseService {
     // Get the user profile to find the profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserProfileErrors.userProfileNotFound();
     }
 
     // Check permission based on profileType
@@ -198,7 +194,7 @@ export class UserProfileService extends BaseService {
       : await this.userProfileRepository.findOne(userProfileId);
 
     if (!profile) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserProfileErrors.userProfileNotFound();
     }
 
     // If actor is provided, validate user access (centerId is optional)
@@ -224,7 +220,7 @@ export class UserProfileService extends BaseService {
       profileType,
     );
     if (existingProfile) {
-      throw new ValidationFailedException('User already has this profile type');
+      throw UserProfileErrors.userProfileInvalidData();
     }
 
     const code = await this.userProfileCodeService.generate(profileType);
@@ -261,7 +257,7 @@ export class UserProfileService extends BaseService {
     // Get userProfile to determine profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserProfileErrors.userProfileNotFound();
     }
 
     // Check permission based on profileType
@@ -279,11 +275,11 @@ export class UserProfileService extends BaseService {
       await this.userProfileRepository.findOneSoftDeletedById(userProfileId);
 
     if (!deletedProfile) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserProfileErrors.userProfileNotFound();
     }
 
     if (!deletedProfile.deletedAt) {
-      throw new BusinessLogicException("Operation failed");
+      throw UserProfileErrors.userProfileInvalidData();
     }
 
     // Check permission based on profileType

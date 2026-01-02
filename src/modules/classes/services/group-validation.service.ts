@@ -4,7 +4,6 @@ import { ClassesRepository } from '../repositories/classes.repository';
 import { GroupStudentsRepository } from '../repositories/group-students.repository';
 import { ScheduleService } from './schedule.service';
 import { Class } from '../entities/class.entity';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
 import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()

@@ -3,7 +3,7 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { HealthService, HealthStatus } from '../services/health.service';
 import { Public } from '@/shared/common/decorators/public.decorator';
-import { SystemNotReadyException } from '@/shared/common/exceptions/custom.exceptions';
+import { SystemErrors } from '@/shared/common/exceptions/system.exception';
 
 @ApiTags('Health - System Status')
 @Controller('health')
@@ -49,7 +49,7 @@ export class HealthController {
     if (health.status === 'healthy') {
       return { status: 'ready', timestamp: health.timestamp };
     } else {
-      throw new SystemNotReadyException('System is not ready');
+      throw SystemErrors.systemNotReady();
     }
   }
 }

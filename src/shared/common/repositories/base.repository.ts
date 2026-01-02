@@ -10,7 +10,8 @@ import {
   FindOptionsWhere,
 } from 'typeorm';
 import { Injectable, Logger } from '@nestjs/common';
-import { ResourceNotFoundException } from '../exceptions/custom.exceptions';
+import { CommonErrors } from '../exceptions/common.errors';
+import { SystemErrors } from '../exceptions/system.exception';
 import { Pagination } from '../types/pagination.types';
 import { BasePaginationDto } from '../dto/base-pagination.dto';
 import { TransactionHost } from '@nestjs-cls/transactional';
@@ -54,7 +55,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         `Repository transaction context is missing - entity: ${this.getEntityClass().name}`,
         new Error('Transaction context not available'),
       );
-      throw new Error('Transaction context is not available');
+      throw SystemErrors.internalServerError({
+        operation: 'transaction_context_access',
+        error: 'transaction_context_not_available',
+      });
     }
     return this.txHost.tx.getRepository(this.getEntityClass());
   }
@@ -71,7 +75,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         `Entity manager transaction context is missing - entity: ${this.getEntityClass().name}`,
         new Error('Transaction context not available'),
       );
-      throw new Error('Transaction context is not available');
+      throw SystemErrors.internalServerError({
+        operation: 'transaction_context_access',
+        error: 'transaction_context_not_available',
+      });
     }
     return this.txHost.tx;
   }
@@ -91,7 +98,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     options: BulkOperationOptions = {},
   ): Promise<T[]> {
     if (!entities || entities.length === 0) {
-      throw new Error('Entities array cannot be empty');
+      throw SystemErrors.internalServerError({
+        operation: 'bulk_operation_validation',
+        error: 'entities_array_empty',
+      });
     }
 
     const repo = this.getRepository();
@@ -147,7 +157,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    *
    * @param data Array of objects containing id and data to update
    * @returns Array of updated entities
-   * @throws ResourceNotFoundException if any entity is not found
+   * @throws SystemException if any entity is not found
    */
   async updateMany(data: { id: string; data: DeepPartial<T> }[]): Promise<T[]> {
     const results = await Promise.all(
@@ -176,7 +186,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     options: BulkOperationOptions = {},
   ): Promise<number> {
     if (!where || Object.keys(where).length === 0) {
-      throw new Error('Where condition cannot be empty');
+      throw SystemErrors.internalServerError({
+        operation: 'query_validation',
+        error: 'where_condition_empty',
+      });
     }
 
     const repo = this.getRepository();
@@ -228,7 +241,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     options: BulkOperationOptions = {},
   ): Promise<number> {
     if (!where || Object.keys(where).length === 0) {
-      throw new Error('Where condition cannot be empty');
+      throw SystemErrors.internalServerError({
+        operation: 'query_validation',
+        error: 'where_condition_empty',
+      });
     }
 
     const repo = this.getRepository();
@@ -458,7 +474,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    */
   async create(data: Partial<T>): Promise<T> {
     if (!data || typeof data !== 'object') {
-      throw new Error('Data must be a valid object');
+      throw SystemErrors.internalServerError({
+        operation: 'data_validation',
+        error: 'invalid_data_object',
+      });
     }
 
     const repo = this.getRepository();
@@ -475,7 +494,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    */
   async findOne(id: string): Promise<T | null> {
     if (!id || typeof id !== 'string' || id.trim().length === 0) {
-      throw new Error('ID must be a non-empty string');
+      throw SystemErrors.internalServerError({
+        operation: 'id_validation',
+        error: 'invalid_id_string',
+      });
     }
     return this.getRepository().findOne({
       where: { id } as unknown as FindOptionsWhere<T>,
@@ -497,7 +519,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     withDeleted?: boolean,
   ): Promise<T | null> {
     if (!id || typeof id !== 'string' || id.trim().length === 0) {
-      throw new Error('ID must be a non-empty string');
+      throw SystemErrors.internalServerError({
+        operation: 'id_validation',
+        error: 'invalid_id_string',
+      });
     }
     const options: any = {
       where: { id } as unknown as FindOptionsWhere<T>,
@@ -518,7 +543,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    * @param relations Optional array of relation names to load
    * @param withDeleted Optional flag to include soft-deleted entities
    * @returns Entity with relations (never null)
-   * @throws ResourceNotFoundException if entity not found
+   * @throws SystemException if entity not found
    * @throws Error if ID is invalid
    */
   async findByIdOrThrow(
@@ -528,7 +553,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   ): Promise<T> {
     const entity = await this.findById(id, relations, withDeleted);
     if (!entity) {
-      throw new ResourceNotFoundException('Operation failed');
+      throw CommonErrors.emergencyNotFound(
+        this.constructor.name.replace('Repository', '').toLowerCase(),
+        id,
+      );
     }
     return entity;
   }
@@ -538,13 +566,16 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    *
    * @param id Entity ID
    * @returns Entity (never null)
-   * @throws ResourceNotFoundException if entity not found
+   * @throws SystemException if entity not found
    * @throws Error if ID is invalid
    */
   async findOneOrThrow(id: string): Promise<T> {
     const entity = await this.findOne(id);
     if (!entity) {
-      throw new ResourceNotFoundException('Operation failed');
+      throw CommonErrors.emergencyNotFound(
+        this.constructor.name.replace('Repository', '').toLowerCase(),
+        id,
+      );
     }
     return entity;
   }
@@ -558,7 +589,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    */
   async findOneSoftDeletedById(id: string): Promise<T | null> {
     if (!id || typeof id !== 'string' || id.trim().length === 0) {
-      throw new Error('ID must be a non-empty string');
+      throw SystemErrors.internalServerError({
+        operation: 'id_validation',
+        error: 'invalid_id_string',
+      });
     }
     return this.getRepository().findOne({
       where: { id } as unknown as FindOptionsWhere<T>,
@@ -598,10 +632,16 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    */
   async update(id: string, data: DeepPartial<T>): Promise<T | null> {
     if (!id || typeof id !== 'string' || id.trim().length === 0) {
-      throw new Error('ID must be a non-empty string');
+      throw SystemErrors.internalServerError({
+        operation: 'id_validation',
+        error: 'invalid_id_string',
+      });
     }
     if (!data || typeof data !== 'object') {
-      throw new Error('Update data must be a valid object');
+      throw SystemErrors.internalServerError({
+        operation: 'update_validation',
+        error: 'invalid_update_data',
+      });
     }
 
     const repo = this.getRepository();
@@ -623,13 +663,16 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    * @param id Entity ID
    * @param data Data to update
    * @returns Updated entity (never null)
-   * @throws ResourceNotFoundException if entity not found
+   * @throws SystemException if entity not found
    * @throws Error if ID or data is invalid
    */
   async updateThrow(id: string, data: DeepPartial<T>): Promise<T> {
     const entity = await this.update(id, data);
     if (!entity) {
-      throw new ResourceNotFoundException('Operation failed');
+      throw CommonErrors.emergencyNotFound(
+        this.constructor.name.replace('Repository', '').toLowerCase(),
+        id,
+      );
     }
     return entity;
   }
@@ -638,12 +681,15 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    * Soft delete an entity by ID (sets deletedAt timestamp).
    *
    * @param id Entity ID
-   * @throws ResourceNotFoundException if entity not found
+   * @throws SystemException if entity not found
    * @throws Error if ID is invalid
    */
   async softRemove(id: string): Promise<void> {
     if (!id || typeof id !== 'string' || id.trim().length === 0) {
-      throw new Error('ID must be a non-empty string');
+      throw SystemErrors.internalServerError({
+        operation: 'id_validation',
+        error: 'invalid_id_string',
+      });
     }
 
     const repo = this.getRepository();
@@ -651,7 +697,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       where: { id } as unknown as FindOptionsWhere<T>,
     });
     if (!entity) {
-      throw new ResourceNotFoundException('Operation failed');
+      throw CommonErrors.emergencyNotFound(
+        this.constructor.name.replace('Repository', '').toLowerCase(),
+        id,
+      );
     }
 
     await repo.softRemove(entity);
@@ -661,12 +710,15 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    * Hard delete an entity by ID (permanently removes from database).
    *
    * @param id Entity ID
-   * @throws ResourceNotFoundException if entity not found
+   * @throws SystemException if entity not found
    * @throws Error if ID is invalid
    */
   async remove(id: string): Promise<void> {
     if (!id || typeof id !== 'string' || id.trim().length === 0) {
-      throw new Error('ID must be a non-empty string');
+      throw SystemErrors.internalServerError({
+        operation: 'id_validation',
+        error: 'invalid_id_string',
+      });
     }
 
     const repo = this.getRepository();
@@ -674,7 +726,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
       where: { id } as unknown as FindOptionsWhere<T>,
     });
     if (!entity) {
-      throw new ResourceNotFoundException('Operation failed');
+      throw CommonErrors.emergencyNotFound(
+        this.constructor.name.replace('Repository', '').toLowerCase(),
+        id,
+      );
     }
 
     await repo.remove(entity);
@@ -684,12 +739,15 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
    * Restore a soft-deleted entity by ID (removes deletedAt timestamp).
    *
    * @param id Entity ID
-   * @throws ResourceNotFoundException if entity not found
+   * @throws SystemException if entity not found
    * @throws Error if ID is invalid
    */
   async restore(id: string): Promise<void> {
     if (!id || typeof id !== 'string' || id.trim().length === 0) {
-      throw new Error('ID must be a non-empty string');
+      throw SystemErrors.internalServerError({
+        operation: 'id_validation',
+        error: 'invalid_id_string',
+      });
     }
 
     const repo = this.getRepository();
@@ -699,7 +757,10 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     });
 
     if (!entity) {
-      throw new ResourceNotFoundException('Operation failed');
+      throw CommonErrors.emergencyNotFound(
+        this.constructor.name.replace('Repository', '').toLowerCase(),
+        id,
+      );
     }
 
     await repo.recover(entity);

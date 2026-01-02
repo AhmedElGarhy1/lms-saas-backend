@@ -13,7 +13,7 @@ import { NotificationChannel } from '../enums/notification-channel.enum';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { GetInAppNotificationsDto } from '../dto/in-app-notification.dto';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { NotificationErrors } from '../exceptions/notification-errors';
 import { Config } from '@/shared/config/config';
 import { WebSocketConfig } from '../config/notification.config';
 
@@ -82,7 +82,7 @@ export class InAppNotificationService extends BaseService {
     const notification =
       await this.notificationRepository.findOne(notificationId);
     if (!notification || notification.userId !== userId) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw NotificationErrors.notificationAccessDenied();
     }
 
     await this.notificationRepository.markAsRead(notificationId, userId);
@@ -128,7 +128,7 @@ export class InAppNotificationService extends BaseService {
     const notification =
       await this.notificationRepository.findOne(notificationId);
     if (!notification || notification.userId !== userId) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw NotificationErrors.notificationAccessDenied();
     }
     await this.notificationRepository.update(notificationId, {
       isArchived: true,

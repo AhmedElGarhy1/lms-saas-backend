@@ -6,7 +6,8 @@ import {
   DataSource,
 } from 'typeorm';
 import { ProfileRole } from '../entities/profile-role.entity';
-import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import { AccessControlErrors } from '../exceptions/access-control.errors';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 import { RolesRepository } from '../repositories/roles.repository';
 import { AccessControlHelperService } from '../services/access-control-helper.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
@@ -42,17 +43,17 @@ export class ProfileRoleSubscriber
     if (profileRole.roleId) {
       const role = await this.rolesRepository.findOne(profileRole.roleId);
       if (!role)
-        throw new BusinessLogicException("Operation failed");
+        throw AccessControlErrors.roleNotFound();
 
       const profile = await this.accessControlHelperService.findUserProfile(
         profileRole.userProfileId,
       );
       if (!profile)
-        throw new BusinessLogicException("Operation failed");
+        throw UserProfileErrors.userProfileNotFound();
 
       if (profileRole.centerId) {
         if (profile?.profileType === ProfileType.ADMIN) {
-          throw new BusinessLogicException("Operation failed");
+          throw AccessControlErrors.invalidProfileType();
         } else if (profile?.profileType === ProfileType.STAFF) {
           // check center access
           await this.accessControlHelperService.validateCenterAccess({

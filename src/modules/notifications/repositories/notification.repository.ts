@@ -8,7 +8,7 @@ import { FindManyOptions, In, MoreThanOrEqual } from 'typeorm';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { GetInAppNotificationsDto } from '../dto/in-app-notification.dto';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { NotificationErrors } from '../exceptions/notification-errors';
 
 @Injectable()
 export class NotificationRepository extends BaseRepository<Notification> {
@@ -129,7 +129,7 @@ export class NotificationRepository extends BaseRepository<Notification> {
       where: { id: notificationId, userId },
     });
     if (!notification) {
-      throw new ResourceNotFoundException('Operation failed');
+      throw NotificationErrors.notificationNotFound();
     }
     await repo.update({ id: notificationId }, { readAt: new Date() });
   }

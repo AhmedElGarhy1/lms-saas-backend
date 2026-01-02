@@ -7,7 +7,7 @@ import { ScheduleItemDto } from '../dto/schedule-item.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Class } from '../entities/class.entity';
-import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import { ClassesErrors } from '../exceptions/classes.errors';
 import { ClassStatus } from '../enums/class-status.enum';
 import { TimezoneService } from '@/shared/common/services/timezone.service';
 
@@ -36,7 +36,7 @@ export class ClassValidationService extends BaseService {
       const startDateChanged =
         newStartDateUtc.getTime() !== currentStartDateUtc.getTime();
       if (startDateChanged && currentClass.status !== ClassStatus.NOT_STARTED) {
-        throw new BusinessLogicException('Cannot update start date when class is not in NOT_STARTED status');
+        throw ClassesErrors.classStartDateUpdateForbidden();
       }
     }
 
@@ -60,8 +60,9 @@ export class ClassValidationService extends BaseService {
    * @param newDuration - The new duration value
    * @param teacherUserProfileId - The teacher's user profile ID
    * @param skipWarning - If true, student conflicts are silently skipped
-   * @throws BusinessLogicException if schedule conflicts are detected, with structured conflict data in ErrorDetail[]
+   * @throws ClassesErrors.scheduleConflict() if schedule conflicts are detected
    */
+  // TODO: fix this bad performance method
   async validateDurationUpdateConflicts(
     classId: string,
     newDuration: number,

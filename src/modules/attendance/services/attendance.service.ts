@@ -2,10 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AttendanceRepository } from '../repositories/attendance.repository';
 import { SessionsRepository } from '@/modules/sessions/repositories/sessions.repository';
 import { SessionStatus } from '@/modules/sessions/enums/session-status.enum';
-import {
-  BusinessLogicException,
-  ResourceAlreadyExistsException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { AttendanceErrors } from '../exceptions/attendance.errors';
 import { QueryFailedError } from 'typeorm';
 import { GroupsRepository } from '@/modules/classes/repositories/groups.repository';
 import { GroupStudentsRepository } from '@/modules/classes/repositories/group-students.repository';
@@ -45,7 +42,7 @@ export class AttendanceService {
   ): Promise<string> {
     // Backend bouncer: scan endpoint only accepts Student codes.
     if (!studentCode.startsWith('STU-')) {
-      throw new BusinessLogicException("Operation failed");
+      throw AttendanceErrors.attendanceInvalidStudentCode();
     }
 
     const profile =
@@ -54,7 +51,7 @@ export class AttendanceService {
       );
 
     if (!profile) {
-      throw new BusinessLogicException("Operation failed");
+      throw AttendanceErrors.attendanceStudentNotEnrolled();
     }
 
     return profile.id;
@@ -67,7 +64,7 @@ export class AttendanceService {
       session.status !== SessionStatus.CHECKING_IN &&
       session.status !== SessionStatus.CONDUCTING
     ) {
-      throw new BusinessLogicException("Operation failed");
+      throw AttendanceErrors.attendanceSessionNotCompleted();
     }
 
     const group = await this.groupsRepository.findByIdOrThrow(session.groupId, [
@@ -107,7 +104,7 @@ export class AttendanceService {
     );
 
     if (!studentUser) {
-      throw new BusinessLogicException("Operation failed");
+      throw AttendanceErrors.attendanceStudentNotEnrolled();
     }
 
     const codeVal = (
@@ -151,7 +148,7 @@ export class AttendanceService {
     );
 
     if (!membership) {
-      throw new BusinessLogicException("Operation failed");
+      throw AttendanceErrors.attendanceStudentNotEnrolled();
     }
 
     // Check billing access - student must have paid for this session or have active monthly subscription
@@ -163,7 +160,7 @@ export class AttendanceService {
       );
 
     if (!hasBillingAccess) {
-      throw new BusinessLogicException("Operation failed");
+      throw AttendanceErrors.attendanceManualEntryDenied();
     }
 
     const now = new Date();
@@ -175,7 +172,7 @@ export class AttendanceService {
     );
 
     if (existing) {
-      throw new ResourceAlreadyExistsException("Operation failed");
+      throw AttendanceErrors.attendanceAlreadyExists();
     }
 
     let attendance: Attendance;
@@ -196,7 +193,7 @@ export class AttendanceService {
       // Race-safe: if another request inserted the record first, return deterministic 409.
       const err = e as QueryFailedError & { code?: string };
       if (err?.code === '23505') {
-        throw new ResourceAlreadyExistsException("Operation failed");
+        throw AttendanceErrors.attendanceAlreadyExists();
       }
       throw e;
     }
@@ -226,7 +223,7 @@ export class AttendanceService {
     );
 
     if (!membership) {
-      throw new BusinessLogicException("Operation failed");
+      throw AttendanceErrors.attendanceStudentNotEnrolled();
     }
 
     // Check billing access - student must have paid for this session or have active monthly subscription
@@ -238,7 +235,7 @@ export class AttendanceService {
       );
 
     if (!hasBillingAccess) {
-      throw new BusinessLogicException("Operation failed");
+      throw AttendanceErrors.attendanceManualEntryDenied();
     }
 
     const now = new Date();
@@ -250,7 +247,7 @@ export class AttendanceService {
     );
 
     if (existing) {
-      throw new ResourceAlreadyExistsException("Operation failed");
+      throw AttendanceErrors.attendanceAlreadyExists();
     }
 
     let attendance: Attendance;
@@ -269,7 +266,7 @@ export class AttendanceService {
     } catch (e) {
       const err = e as QueryFailedError & { code?: string };
       if (err?.code === '23505') {
-        throw new ResourceAlreadyExistsException("Operation failed");
+        throw AttendanceErrors.attendanceAlreadyExists();
       }
       throw e;
     }

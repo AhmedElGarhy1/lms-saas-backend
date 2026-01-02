@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateClassDto } from '../dto/create-class.dto';
 import { UpdateClassDto } from '../dto/update-class.dto';
 import { PaginateClassesDto } from '../dto/paginate-classes.dto';
@@ -7,7 +7,8 @@ import { ClassValidationService } from './class-validation.service';
 import { PaymentStrategyService } from './payment-strategy.service';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { ClassesErrors } from '../exceptions/classes.errors';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
@@ -32,7 +33,6 @@ import { ClassAccessService } from './class-access.service';
 import { Transactional } from '@nestjs-cls/transactional';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
-import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
 import { StudentPaymentStrategyDto } from '../dto/student-payment-strategy.dto';
 import { TeacherPaymentStrategyDto } from '../dto/teacher-payment-strategy.dto';
 
@@ -83,7 +83,7 @@ export class ClassesService extends BaseService {
    * @param actor - The user performing the action
    * @param includeDeleted - Whether to include soft-deleted classes
    * @returns Class entity with all relations (groups, level, subject, teacher, etc.)
-   * @throws ResourceNotFoundException if class doesn't exist
+   * @throws ClassesErrors.classNotFound() if class doesn't exist
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
   async getClass(
@@ -101,7 +101,7 @@ export class ClassesService extends BaseService {
    * @param createClassDto - Class creation data including payment strategies
    * @param actor - The user performing the action
    * @returns Created class entity with all relations loaded
-   * @throws BusinessLogicException if validation fails
+   * @throws ClassesErrors.classValidationFailed() if validation fails
    */
   @Transactional()
   async createClass(
@@ -126,9 +126,7 @@ export class ClassesService extends BaseService {
     // Determine target branch: use provided branchId or fallback to actor's branch
     const targetBranchId = createClassDto.branchId || actor.branchId;
     if (!targetBranchId) {
-      throw new ForbiddenException({
-        message: { key: 't.messages.branchRequired' },
-      });
+      throw ClassesErrors.classBranchRequired();
     }
 
     // Validate actor has branch access to the target branch
@@ -235,8 +233,9 @@ export class ClassesService extends BaseService {
    * @param studentStrategy - Student payment strategy data
    * @param actor - The user performing the action
    * @returns Updated class entity with all relations loaded
-   * @throws ResourceNotFoundException if class or payment strategy doesn't exist
-   * @throws BusinessLogicException if class status doesn't allow payment updates
+   * @throws ClassesErrors.classNotFound() if class doesn't exist
+   * @throws ClassesErrors.paymentStrategyNotFound() if payment strategy doesn't exist
+   * @throws ClassesErrors.paymentStrategyUpdateDenied() if class status doesn't allow payment updates
    */
   @Transactional()
   async updateStudentPaymentStrategy(
@@ -267,7 +266,7 @@ export class ClassesService extends BaseService {
       classEntity.status !== ClassStatus.PENDING_TEACHER_APPROVAL &&
       classEntity.status !== ClassStatus.NOT_STARTED
     ) {
-      throw new BusinessLogicException('Cannot update payment strategy for class in current status');
+      throw ClassesErrors.paymentStrategyUpdateDenied();
     }
 
     // Update student payment strategy (throws error if doesn't exist)
@@ -295,8 +294,9 @@ export class ClassesService extends BaseService {
    * @param teacherStrategy - Teacher payment strategy data
    * @param actor - The user performing the action
    * @returns Updated class entity with all relations loaded
-   * @throws ResourceNotFoundException if class or payment strategy doesn't exist
-   * @throws BusinessLogicException if class status doesn't allow payment updates
+   * @throws ClassesErrors.classNotFound() if class doesn't exist
+   * @throws ClassesErrors.paymentStrategyNotFound() if payment strategy doesn't exist
+   * @throws ClassesErrors.paymentStrategyUpdateDenied() if class status doesn't allow payment updates
    */
   @Transactional()
   async updateTeacherPaymentStrategy(
@@ -315,7 +315,7 @@ export class ClassesService extends BaseService {
       classEntity.status !== ClassStatus.PENDING_TEACHER_APPROVAL &&
       classEntity.status !== ClassStatus.NOT_STARTED
     ) {
-      throw new BusinessLogicException('Cannot update payment strategy for class in current status');
+      throw ClassesErrors.paymentStrategyUpdateDenied();
     }
 
     // Update teacher payment strategy (throws error if doesn't exist)
@@ -340,7 +340,7 @@ export class ClassesService extends BaseService {
    *
    * @param classId - The class ID to delete
    * @param actor - The user performing the action
-   * @throws ResourceNotFoundException if class doesn't exist
+   * @throws ClassesErrors.classNotFound() if class doesn't exist
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
   async deleteClass(classId: string, actor: ActorUser): Promise<void> {
@@ -372,7 +372,7 @@ export class ClassesService extends BaseService {
    *
    * @param classId - The class ID to restore
    * @param actor - The user performing the action
-   * @throws ResourceNotFoundException if class doesn't exist
+   * @throws ClassesErrors.classNotFound() if class doesn't exist
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
   async restoreClass(classId: string, actor: ActorUser): Promise<void> {
@@ -397,7 +397,7 @@ export class ClassesService extends BaseService {
    * @param classId - The class ID
    * @param actor - The user performing the action
    * @returns Array of available ClassStatus values
-   * @throws ResourceNotFoundException if class doesn't exist
+   * @throws ClassesErrors.classNotFound() if class doesn't exist
    */
   async getAvailableStatuses(
     classId: string,
@@ -461,8 +461,8 @@ export class ClassesService extends BaseService {
    * @param changeStatusDto - DTO containing new status and optional reason
    * @param actor - The user performing the action
    * @returns Updated class entity
-   * @throws ResourceNotFoundException if class doesn't exist
-   * @throws BusinessLogicException if transition is not allowed
+   * @throws ClassesErrors.classNotFound() if class doesn't exist
+   * @throws ClassesErrors.classStatusTransitionInvalid() if transition is not allowed
    */
   @Transactional()
   async changeClassStatus(
@@ -477,7 +477,7 @@ export class ClassesService extends BaseService {
 
     // Validate transition is allowed
     if (!isValidTransition(oldStatus, newStatus)) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.classStatusTransitionInvalid();
     }
 
     // Validate 24-hour grace period for reverting CANCELED/FINISHED to ACTIVE
@@ -490,7 +490,7 @@ export class ClassesService extends BaseService {
       const timeSinceUpdate = Date.now() - classEntity.updatedAt.getTime();
 
       if (timeSinceUpdate >= gracePeriodMs) {
-        throw new BusinessLogicException("Operation failed");
+        throw ClassesErrors.classStatusChangeGracePeriodExpired();
       }
     }
 
@@ -532,7 +532,7 @@ export class ClassesService extends BaseService {
    * @param classIds - Array of class IDs to delete
    * @param actor - The user performing the action
    * @returns BulkOperationResult with success/failure details for each class
-   * @throws BusinessLogicException if classIds array is empty
+   * @throws CommonErrors.bulkOperationFailed() if classIds array is empty
    */
   @Transactional()
   async bulkDeleteClasses(
@@ -540,7 +540,7 @@ export class ClassesService extends BaseService {
     actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!classIds || classIds.length === 0) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.classValidationFailed();
     }
 
     return await this.bulkOperationService.executeBulk(
@@ -560,7 +560,7 @@ export class ClassesService extends BaseService {
    * @param classIds - Array of class IDs to restore
    * @param actor - The user performing the action
    * @returns BulkOperationResult with success/failure details for each class
-   * @throws BusinessLogicException if classIds array is empty
+   * @throws CommonErrors.bulkOperationFailed() if classIds array is empty
    */
   @Transactional()
   async bulkRestoreClasses(
@@ -568,7 +568,7 @@ export class ClassesService extends BaseService {
     actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!classIds || classIds.length === 0) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.classValidationFailed();
     }
 
     return await this.bulkOperationService.executeBulk(
@@ -588,7 +588,7 @@ export class ClassesService extends BaseService {
    * @param actor - The user performing the action
    * @param includeDeleted - Whether to include soft-deleted classes (default: false)
    * @returns Class entity with all relations loaded
-   * @throws ResourceNotFoundException if class doesn't exist
+   * @throws ClassesErrors.classNotFound() if class doesn't exist
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
   private async findClassAndValidateAccess(
@@ -625,7 +625,7 @@ export class ClassesService extends BaseService {
    * @param classId - The class ID
    * @param actor - The user performing the action
    * @returns Class entity
-   * @throws ResourceNotFoundException if class doesn't exist or doesn't belong to actor's center
+   * @throws ClassesErrors.classNotFound() if class doesn't exist or doesn't belong to actor's center
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
   private async findSoftDeletedClassAndValidateAccess(
@@ -636,12 +636,12 @@ export class ClassesService extends BaseService {
       await this.classesRepository.findOneSoftDeletedById(classId);
 
     if (!classEntity) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw ClassesErrors.classNotFound();
     }
 
     const centerId = actor.centerId;
     if (!centerId || classEntity.centerId !== centerId) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw ClassesErrors.classAccessDenied();
     }
 
     // Branch Access
@@ -677,7 +677,7 @@ export class ClassesService extends BaseService {
     });
 
     if (!updatedClass) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw ClassesErrors.classNotFound();
     }
 
     // Emit event

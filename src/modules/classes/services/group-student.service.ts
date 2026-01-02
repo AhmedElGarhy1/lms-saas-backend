@@ -2,14 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { GroupsRepository } from '../repositories/groups.repository';
 import { GroupStudentsRepository } from '../repositories/group-students.repository';
 import { ScheduleItemsRepository } from '../repositories/schedule-items.repository';
-import { GroupValidationService } from './group-validation.service';
 import { ScheduleService } from './schedule.service';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import {
-  ResourceNotFoundException,
-  BusinessLogicException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { ClassesErrors } from '../exceptions/classes.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
@@ -21,7 +17,6 @@ import { GroupStudent } from '../entities/group-student.entity';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { GroupStudentAccessDto } from '../dto/group-student-access.dto';
 import { ClassStatus } from '../enums/class-status.enum';
-import { TimezoneService } from '@/shared/common/services/timezone.service';
 
 @Injectable()
 export class GroupStudentService extends BaseService {
@@ -29,7 +24,6 @@ export class GroupStudentService extends BaseService {
     private readonly groupsRepository: GroupsRepository,
     private readonly groupStudentsRepository: GroupStudentsRepository,
     private readonly scheduleItemsRepository: ScheduleItemsRepository,
-    private readonly groupValidationService: GroupValidationService,
     private readonly scheduleService: ScheduleService,
     private readonly bulkOperationService: BulkOperationService,
     private readonly accessControlHelperService: AccessControlHelperService,
@@ -51,8 +45,9 @@ export class GroupStudentService extends BaseService {
    *
    * @param data - GroupStudentAccessDto containing groupId and userProfileId
    * @param actor - The user performing the action
-   * @throws ResourceNotFoundException if group doesn't exist or actor lacks access
-   * @throws BusinessLogicException if student is already assigned, wrong profile type, or schedule conflict
+   * @throws ClassesErrors.groupNotFound() if group doesn't exist or actor lacks access
+   * @throws ClassesErrors.studentAlreadyAssignedToGroup() if student is already assigned
+   * @throws ClassesErrors.studentInvalidTypeForGroupAssignment() if wrong profile type
    */
   async assignStudentToGroup(
     data: GroupStudentAccessDto,
@@ -85,7 +80,7 @@ export class GroupStudentService extends BaseService {
       (group.class.status === ClassStatus.CANCELED ||
         group.class.status === ClassStatus.FINISHED)
     ) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.classCannotModifyCompleted();
     }
 
     // Validate actor has ClassStaff access to the parent class
@@ -101,7 +96,7 @@ export class GroupStudentService extends BaseService {
       );
 
     if (existingActiveAssignment) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.studentAlreadyAssignedToGroup();
     }
 
     const existingGroupIds =
@@ -112,7 +107,7 @@ export class GroupStudentService extends BaseService {
       );
 
     if (existingGroupIds.length > 0) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.studentAlreadyAssignedToGroup();
     }
 
     const scheduleItems = await this.scheduleItemsRepository.findByGroupId(
@@ -125,7 +120,7 @@ export class GroupStudentService extends BaseService {
       }));
 
       if (!group.class || !group.class.duration) {
-        throw new BusinessLogicException("Operation failed");
+        throw ClassesErrors.groupValidationFailed();
       }
 
       await this.scheduleService.validateScheduleConflicts(
@@ -156,7 +151,7 @@ export class GroupStudentService extends BaseService {
    * @param groupId - The group ID (path parameter, validated by DTO)
    * @param actor - The user performing the action
    * @returns Array of GroupStudent assignments
-   * @throws ResourceNotFoundException if group doesn't exist or doesn't belong to actor's center
+   * @throws ClassesErrors.groupNotFound() if group doesn't exist or doesn't belong to actor's center
    */
   async getGroupStudents(
     groupId: string,
@@ -192,7 +187,7 @@ export class GroupStudentService extends BaseService {
    * @param actor - The user performing the action
    * @param skipWarning - If true, student conflicts are silently skipped
    * @returns BulkOperationResult with success/failure details for each student
-   * @throws BusinessLogicException if userProfileIds array is empty
+   * @throws ClassesErrors.groupValidationFailed() if userProfileIds array is empty
    */
   @Transactional()
   async bulkAssignStudentsToGroup(
@@ -202,7 +197,7 @@ export class GroupStudentService extends BaseService {
     skipWarning?: boolean,
   ): Promise<BulkOperationResult> {
     if (!userProfileIds || userProfileIds.length === 0) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.groupValidationFailed();
     }
 
     return await this.bulkOperationService.executeBulk(
@@ -228,7 +223,7 @@ export class GroupStudentService extends BaseService {
    * @param studentUserProfileIds - Array of student user profile IDs to remove
    * @param actor - The user performing the action
    * @returns BulkOperationResult with success/failure details for each student
-   * @throws BusinessLogicException if studentUserProfileIds array is empty
+   * @throws ClassesErrors.groupValidationFailed() if studentUserProfileIds array is empty
    */
   @Transactional()
   async removeStudentsFromGroup(
@@ -237,7 +232,7 @@ export class GroupStudentService extends BaseService {
     actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!studentUserProfileIds || studentUserProfileIds.length === 0) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.groupValidationFailed();
     }
 
     const centerId = actor.centerId!;
@@ -282,7 +277,7 @@ export class GroupStudentService extends BaseService {
             studentUserProfileId,
           );
         if (!groupStudent) {
-          throw new ResourceNotFoundException("Operation failed");
+          throw ClassesErrors.groupStudentNotAssigned();
         }
 
         await this.groupStudentsRepository.update(groupStudent.id, {

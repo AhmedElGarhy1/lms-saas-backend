@@ -1,8 +1,5 @@
 import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
-import {
-  InsufficientPermissionsException,
-  ResourceNotFoundException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { AccessControlErrors } from '../exceptions/access-control.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
@@ -10,6 +7,7 @@ import { RolesService } from './roles.service';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 import { PERMISSIONS } from '../constants/permissions';
 import { isUUID } from 'class-validator';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 
 @Injectable()
 export class UserProfilePermissionService extends BaseService {
@@ -48,17 +46,17 @@ export class UserProfilePermissionService extends BaseService {
     if (userProfileId) {
       // Validate that userProfileId is actually a UUID before querying
       if (!isUUID(userProfileId)) {
-        throw new ResourceNotFoundException("Operation failed");
+        throw AccessControlErrors.userProfileNotFound();
       }
 
       const profile = await this.userProfileService.findOne(userProfileId);
       if (!profile) {
-        throw new ResourceNotFoundException("Operation failed");
+        throw AccessControlErrors.userProfileNotFound();
       }
       return profile.profileType;
     }
 
-    throw new ResourceNotFoundException("Operation failed");
+    throw CommonErrors.emergencyNotFound('user_profile', userProfileId);
   }
 
   /**
@@ -123,7 +121,7 @@ export class UserProfilePermissionService extends BaseService {
           ];
       }
     } else {
-      throw new ResourceNotFoundException("Operation failed");
+      throw AccessControlErrors.invalidProfileType();
     }
 
     // Check if actor has the required permission
@@ -135,8 +133,8 @@ export class UserProfilePermissionService extends BaseService {
     );
 
     if (!hasPermission) {
-      throw new InsufficientPermissionsException(
-        't.messages.insufficientPermissions',
+      throw AccessControlErrors.missingPermission(
+        `${requiredPermission.action}:${requiredPermission.scope}`,
       );
     }
   }
@@ -175,7 +173,7 @@ export class UserProfilePermissionService extends BaseService {
         profileType = profileTypeOrId;
       } else {
         // Invalid string - neither UUID nor ProfileType
-        throw new ResourceNotFoundException("Operation failed");
+        throw AccessControlErrors.userProfileNotFound();
       }
     } else {
       // It's already a ProfileType enum
@@ -345,9 +343,9 @@ export class UserProfilePermissionService extends BaseService {
     } else if (resolvedProfileType === ProfileType.ADMIN) {
       permissionKey = 'GRANT_ADMIN_ACCESS';
     } else if (resolvedProfileType === ProfileType.STUDENT) {
-      throw new InsufficientPermissionsException('Cannot grant access to student resource');
+      throw AccessControlErrors.missingPermission('GRANT_STUDENT_ACCESS');
     } else {
-      throw new ResourceNotFoundException("Operation failed");
+      throw AccessControlErrors.invalidProfileType();
     }
 
     await this.checkPermission(

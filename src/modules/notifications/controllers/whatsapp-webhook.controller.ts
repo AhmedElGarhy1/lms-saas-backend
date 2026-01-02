@@ -10,10 +10,9 @@ import {
   Res,
   Req,
 } from '@nestjs/common';
-import {
-  AuthenticationFailedException,
-  ValidationFailedException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
+import { NotificationErrors } from '../exceptions/notification-errors';
+import { DomainException } from '@/shared/common/exceptions/domain.exception';
 import { Request, Response } from 'express';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { Public } from '@/shared/common/decorators/public.decorator';
@@ -112,7 +111,7 @@ export class WhatsAppWebhookController {
       const isValid = this.signatureService.verifySignature(rawBody, signature);
       if (!isValid) {
         this.logger.warn('Webhook signature verification failed');
-        throw new AuthenticationFailedException("Operation failed");
+        throw NotificationErrors.webhookSignatureInvalid();
       }
 
       // Enqueue webhook event for async processing
@@ -146,10 +145,7 @@ export class WhatsAppWebhookController {
       );
 
       // Re-throw to return appropriate HTTP status
-      if (error instanceof AuthenticationFailedException) {
-        throw error;
-      }
-      if (error instanceof ValidationFailedException) {
+      if (error instanceof DomainException) {
         throw error;
       }
 

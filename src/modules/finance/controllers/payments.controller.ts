@@ -22,7 +22,8 @@ import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { ManagerialOnly, GetUser } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
+import { FinanceErrors } from '../exceptions/finance.errors';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 
 @ApiTags('Payments')
 @ApiBearerAuth()
@@ -47,15 +48,11 @@ export class PaymentsController {
     // @ManagerialOnly decorator at class level already ensures user is STAFF or ADMIN
     // Additional ownership check: user can view their own payments
     if (payment.senderId !== actor.userProfileId) {
-      throw new InsufficientPermissionsException('Insufficient permissions');
+      throw FinanceErrors.paymentOwnershipRequired();
     }
 
-    return {
-      data: payment,
-      message: "Payment processed successfully",
-    };
+    return ControllerResponse.success(payment);
   }
-
 
   @Post(':id/refund')
   @Permissions(PERMISSIONS.FINANCE.MANAGE_FINANCE)
@@ -85,10 +82,7 @@ export class PaymentsController {
       dto.reason,
     );
 
-    return {
-      data: result,
-      message: 'Payment refunded successfully',
-    };
+    return ControllerResponse.success(result);
   }
 
   @Get()
@@ -108,6 +102,6 @@ export class PaymentsController {
 
     const result = await this.paymentService.paginatePayments(dto);
 
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 }

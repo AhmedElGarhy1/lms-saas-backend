@@ -6,7 +6,7 @@ import { CashTransactionType } from '../enums/cash-transaction-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Transactional } from '@nestjs-cls/transactional';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { FinanceErrors } from '../exceptions/finance.errors';
 import { CashboxRepository } from '../repositories/cashbox.repository';
 
 @Injectable()
@@ -63,7 +63,7 @@ export class CashTransactionService extends BaseService {
       await this.cashTransactionRepository.findOne(cashTransactionId);
 
     if (!cashTransaction) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw FinanceErrors.cashTransactionNotFound();
     }
 
     // Create reverse transaction with opposite direction

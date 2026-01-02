@@ -18,7 +18,7 @@ import { CalendarSessionsDto } from '../dto/calendar-sessions.dto';
 import { PaginateSessionsDto } from '../dto/paginate-sessions.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { SessionStatus } from '../enums/session-status.enum';
-import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import { SessionsErrors } from '../exceptions/sessions.errors';
 import { Transactional } from '@nestjs-cls/transactional';
 import { GroupsRepository } from '@/modules/classes/repositories/groups.repository';
 import { TimezoneService } from '@/shared/common/services/timezone.service';
@@ -120,7 +120,7 @@ export class SessionsService extends BaseService {
 
     // Sessions can only be created/materialized when the parent class is ACTIVE
     if (group.class.status !== ClassStatus.ACTIVE) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw SessionsErrors.sessionClassNotActive();
     }
 
     // Check if user can bypass center internal access
@@ -154,7 +154,7 @@ export class SessionsService extends BaseService {
     // Validate date is in the future (UTC comparison - mathematically identical to zoned comparison)
     const now = new Date();
     if (isBefore(startTime, now)) {
-      throw new BusinessLogicException('Session date must be in the future');
+      throw SessionsErrors.sessionStartTimePast();
     }
 
     // Calculate endTime from startTime + duration using date-fns
@@ -169,7 +169,7 @@ export class SessionsService extends BaseService {
       );
 
     if (teacherConflict) {
-      throw new BusinessLogicException('Schedule conflict detected for session');
+      throw SessionsErrors.sessionScheduleConflict();
     }
 
     // Validate group conflict (overlapping sessions in same group)
@@ -181,7 +181,7 @@ export class SessionsService extends BaseService {
       );
 
     if (groupConflict) {
-      throw new BusinessLogicException('Schedule conflict detected for session');
+      throw SessionsErrors.sessionScheduleConflict();
     }
 
     // Extract centerId, branchId, and classId from validated group entity for snapshot
@@ -224,7 +224,7 @@ export class SessionsService extends BaseService {
    * @param sessionId - Session ID (UUID or virtual ID)
    * @param actor - Actor performing the action
    * @returns Created or updated session
-   * @throws BusinessLogicException if session cannot be checked-in
+   * @throws SessionsErrors.sessionCheckInInvalidStatus() if session cannot be checked-in
    */
   @Transactional()
   async checkInSession(sessionId: string, actor: ActorUser): Promise<Session> {
@@ -261,10 +261,10 @@ export class SessionsService extends BaseService {
 
         case SessionStatus.CANCELED:
           // Can't check-in a canceled session
-          throw new BusinessLogicException('Session validation failed');
+          throw SessionsErrors.sessionCheckInInvalidStatus();
 
         default:
-          throw new BusinessLogicException('Session validation failed');
+          throw SessionsErrors.sessionCheckInInvalidStatus();
       }
     }
 
@@ -280,7 +280,7 @@ export class SessionsService extends BaseService {
 
     // Virtual check-in materializes a real session: require ACTIVE class
     if (group.class.status !== ClassStatus.ACTIVE) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw SessionsErrors.sessionClassNotActive();
     }
 
     // Find matching schedule item using optimized database query
@@ -297,7 +297,7 @@ export class SessionsService extends BaseService {
       } | null;
 
     if (!match) {
-      throw new BusinessLogicException('Validation failed');
+      throw SessionsErrors.sessionScheduleItemNotFound();
     }
 
     // Normalize calculated start time (strip milliseconds for exact matching)
@@ -348,7 +348,7 @@ export class SessionsService extends BaseService {
    * @param sessionId - Session ID (UUID or virtual ID)
    * @param actor - Actor performing the action
    * @returns Created or updated session
-   * @throws BusinessLogicException if session cannot be started
+   * @throws SessionsErrors.sessionStartInvalidStatus() if session cannot be started
    */
   @Transactional()
   async startSession(sessionId: string, actor: ActorUser): Promise<Session> {
@@ -357,7 +357,7 @@ export class SessionsService extends BaseService {
 
     // 2. Strict flow: virtual sessions must be checked-in first (to materialize a real session record)
     if (!resolved.isReal || !resolved.realSession) {
-      throw new BusinessLogicException('Validation failed');
+      throw SessionsErrors.sessionNotCheckedIn();
     }
 
     // 3. Handle real session
@@ -376,7 +376,7 @@ export class SessionsService extends BaseService {
 
       case SessionStatus.SCHEDULED:
         // Must check-in first
-        throw new BusinessLogicException('Validation failed');
+        throw SessionsErrors.sessionStartInvalidStatus();
 
       case SessionStatus.CONDUCTING:
       case SessionStatus.FINISHED:
@@ -385,10 +385,10 @@ export class SessionsService extends BaseService {
 
       case SessionStatus.CANCELED:
         // Can't start a canceled session
-        throw new BusinessLogicException('Validation failed');
+        throw SessionsErrors.sessionStartInvalidStatus();
 
       default:
-        throw new BusinessLogicException('Validation failed');
+        throw SessionsErrors.sessionStartInvalidStatus();
     }
   }
 
@@ -447,7 +447,7 @@ export class SessionsService extends BaseService {
 
     // Virtual cancel materializes a tombstone record: require ACTIVE class
     if (group.class.status !== ClassStatus.ACTIVE) {
-      throw new BusinessLogicException('t.messages.validationFailed');
+      throw SessionsErrors.sessionClassNotActive();
     }
 
     // Find matching schedule item using optimized database query
@@ -465,7 +465,7 @@ export class SessionsService extends BaseService {
       } | null;
 
     if (!match) {
-      throw new BusinessLogicException('Validation failed');
+      throw SessionsErrors.sessionScheduleItemNotFound();
     }
 
     // Double-check if session exists (race condition protection)
@@ -531,7 +531,7 @@ export class SessionsService extends BaseService {
     // Only SCHEDULED sessions can have their times changed
     if (session.status !== SessionStatus.SCHEDULED) {
       const currentStatus = session.status;
-      throw new BusinessLogicException('Cannot update session');
+      throw SessionsErrors.sessionCannotUpdate();
     }
 
     // Fetch group with class to get teacherUserProfileId
@@ -560,7 +560,7 @@ export class SessionsService extends BaseService {
     // Validate date is in the future (UTC comparison - mathematically identical to zoned comparison)
     const now = new Date();
     if (isBefore(newStartTime, now)) {
-      throw new BusinessLogicException('t.messages.sessionDateMustBeInFuture');
+      throw SessionsErrors.sessionStartTimePast();
     }
 
     // Calculate endTime from startTime + duration using date-fns
@@ -582,7 +582,7 @@ export class SessionsService extends BaseService {
           );
 
         if (teacherConflict) {
-          throw new BusinessLogicException('Schedule conflict detected for session');
+          throw SessionsErrors.sessionScheduleConflict();
         }
       }
 
@@ -596,7 +596,7 @@ export class SessionsService extends BaseService {
         );
 
       if (groupConflict) {
-        throw new BusinessLogicException('Schedule conflict detected for session');
+        throw SessionsErrors.sessionScheduleConflict();
       }
     }
 
@@ -639,7 +639,7 @@ export class SessionsService extends BaseService {
 
     // Validate current status is CONDUCTING
     if (session.status !== SessionStatus.CONDUCTING) {
-      throw new BusinessLogicException('Validation failed');
+      throw SessionsErrors.sessionStatusInvalidForOperation();
     }
 
     // Fetch group with class for access validation
@@ -693,7 +693,7 @@ export class SessionsService extends BaseService {
 
     // Validate current status is CANCELED
     if (session.status !== SessionStatus.CANCELED) {
-      throw new BusinessLogicException('Validation failed');
+      throw SessionsErrors.sessionStatusInvalidForOperation();
     }
 
     // Fetch group with class for access validation
@@ -914,7 +914,7 @@ export class SessionsService extends BaseService {
       // 2. Parse virtual ID
       const parsed = parseVirtualSessionId(sessionId);
       if (!parsed) {
-        throw new BusinessLogicException('Validation failed');
+        throw SessionsErrors.sessionInvalidIdFormat();
       }
 
       const { groupId, startTime, scheduleItemId } = parsed;
@@ -926,7 +926,7 @@ export class SessionsService extends BaseService {
 
       // Verify group belongs to actor's center
       if (group.centerId !== actor.centerId) {
-        throw new BusinessLogicException('Validation failed');
+        throw SessionsErrors.sessionAccessDenied();
       }
 
       // Check if user can bypass center internal access (super admin, center owner, or admin with center access)
@@ -993,7 +993,7 @@ export class SessionsService extends BaseService {
 
       // Verify group belongs to actor's center
       if (group.centerId !== actor.centerId) {
-        throw new BusinessLogicException('Validation failed');
+        throw SessionsErrors.sessionAccessDenied();
       }
 
       // Check if user can bypass center internal access (super admin, center owner, or admin with center access)
@@ -1226,7 +1226,7 @@ export class SessionsService extends BaseService {
 
     // 3. Handle virtual session - construct Session object
     if (!resolved.scheduleItemId) {
-      throw new BusinessLogicException('Validation failed');
+      throw SessionsErrors.sessionScheduleItemInvalid();
     }
 
     const group = await this.groupsRepository.findByIdOrThrow(

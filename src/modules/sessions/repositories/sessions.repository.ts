@@ -12,7 +12,7 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { SelectQueryBuilder } from 'typeorm';
 import { subHours } from 'date-fns';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { SessionsErrors } from '../exceptions/sessions.errors';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 @Injectable()
@@ -50,7 +50,7 @@ export class SessionsRepository extends BaseRepository<Session> {
       .getOne();
 
     if (!session) {
-      throw new ResourceNotFoundException('Operation failed');
+      throw SessionsErrors.sessionNotFound();
     }
 
     return session;
@@ -298,7 +298,7 @@ export class SessionsRepository extends BaseRepository<Session> {
    *
    * @param sessionId - Session ID
    * @returns Session with relations (group, branch, class, teacher, teacher.user)
-   * @throws ResourceNotFoundException if session doesn't exist
+   * @throws SessionsErrors.sessionNotFound() if session doesn't exist
    */
   async findSessionWithRelationsOrThrow(sessionId: string): Promise<Session> {
     const session = await this.getRepository()
@@ -313,7 +313,7 @@ export class SessionsRepository extends BaseRepository<Session> {
       .getOne();
 
     if (!session) {
-      throw new ResourceNotFoundException('Operation failed');
+      throw SessionsErrors.sessionNotFound();
     }
 
     return session;

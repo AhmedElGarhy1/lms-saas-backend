@@ -5,7 +5,7 @@ import { PaginateSubjectsDto } from '../dto/paginate-subjects.dto';
 import { SubjectsRepository } from '../repositories/subjects.repository';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { SubjectsErrors } from '../exceptions/subjects.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
@@ -34,7 +34,7 @@ export class SubjectsService extends BaseService {
       : await this.subjectsRepository.findOne(subjectId);
 
     if (!subject) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw SubjectsErrors.subjectNotFound();
     }
 
     return subject;
@@ -73,7 +73,7 @@ export class SubjectsService extends BaseService {
     const subject =
       await this.subjectsRepository.findOneSoftDeletedById(subjectId);
     if (!subject) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw SubjectsErrors.subjectNotFound();
     }
 
     await this.subjectsRepository.restore(subjectId);

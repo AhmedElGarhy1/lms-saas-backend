@@ -53,7 +53,7 @@ export class ClassesController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get(':classId')
@@ -78,7 +78,7 @@ export class ClassesController {
       actor,
       true,
     ); // includeDeleted: true for API endpoints
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post()
@@ -99,7 +99,7 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.classesService.createClass(createClassDto, actor);
-    return ControllerResponse.success(result, 'Resource created successfully');
+    return ControllerResponse.success(result);
   }
 
   @Put(':classId')
@@ -126,7 +126,7 @@ export class ClassesController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Delete(':classId')
@@ -147,7 +147,7 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.classesService.deleteClass(params.classId, actor);
-    return ControllerResponse.message('Resource deleted successfully');
+    return ControllerResponse.success(null);
   }
 
   @Get(':classId/available-statuses')
@@ -178,7 +178,7 @@ export class ClassesController {
       params.classId,
       actor,
     );
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Patch(':classId/status')
@@ -209,7 +209,7 @@ export class ClassesController {
       changeStatusDto,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Patch(':classId/restore')
@@ -223,7 +223,7 @@ export class ClassesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.classesService.restoreClass(params.classId, actor);
-    return ControllerResponse.message('Operation completed successfully');
+    return ControllerResponse.success(null);
   }
 
   @Put(':classId/student-payment')
@@ -251,7 +251,7 @@ export class ClassesController {
       dto,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Put(':classId/teacher-payment')
@@ -279,7 +279,7 @@ export class ClassesController {
       dto,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   // ===== ABSENTEE POLICY ENDPOINTS =====
@@ -308,6 +308,6 @@ export class ClassesController {
       dto.absenteePolicy,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 }

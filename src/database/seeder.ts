@@ -10,7 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '@/modules/access-control/entities/role.entity';
 import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
 import { DefaultRoles } from '@/modules/access-control/constants/roles';
-import { SeederException } from '@/shared/common/exceptions/custom.exceptions';
+import { SystemErrors } from '@/shared/common/exceptions/system.exception';
 import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
 import { WalletService } from '@/modules/finance/services/wallet.service';
 import { WalletOwnerType } from '@/modules/finance/enums/wallet-owner-type.enum';
@@ -142,7 +142,10 @@ export class DatabaseSeeder {
           where: { id: userUuid },
         });
         if (!user) {
-          throw new SeederException('Seeder operation failed');
+          throw SystemErrors.internalServerError({
+            operation: 'seeder_create_user',
+            userId: userUuid,
+          });
         }
         return user;
       },
@@ -214,7 +217,10 @@ export class DatabaseSeeder {
           where: { id: userUuid },
         });
         if (!user) {
-          throw new SeederException('Seeder operation failed');
+          throw SystemErrors.internalServerError({
+            operation: 'seeder_create_user',
+            userId: userUuid,
+          });
         }
         return user;
       },

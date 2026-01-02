@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import {
-  BusinessLogicException,
-  ScheduleConflictException,
-  ErrorDetail,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { ClassesErrors } from '../exceptions/classes.errors';
+import { ErrorDetail } from '@/shared/common/exceptions/error.types';
 import { ScheduleItemDto } from '../dto/schedule-item.dto';
 import { DayOfWeek } from '../enums/day-of-week.enum';
 import { BaseService } from '@/shared/common/services/base.service';
@@ -37,7 +34,7 @@ export class ScheduleService extends BaseService {
    *
    * @param items - Array of schedule items to validate
    * @param duration - Duration in minutes (from class)
-   * @throws BusinessLogicException if items have overlaps
+   * @throws ClassesErrors.scheduleOverlap() if items have overlaps
    */
   validateScheduleItems(items: ScheduleItemDto[], duration: number): void {
     const getReferenceDateForDay = (day: DayOfWeek): Date => {
@@ -75,7 +72,7 @@ export class ScheduleService extends BaseService {
         const interval1 = createInterval(dayItems[i]);
         for (let j = i + 1; j < dayItems.length; j++) {
           if (areIntervalsOverlapping(interval1, createInterval(dayItems[j]))) {
-            throw new BusinessLogicException('Validation failed');
+            throw ClassesErrors.scheduleOverlap();
           }
         }
       }
@@ -158,8 +155,6 @@ export class ScheduleService extends BaseService {
   ): Promise<void> {
     this.validateScheduleItems(scheduleItems, duration);
 
-    const details: ErrorDetail[] = [];
-
     // Check teacher conflicts - always throw if found (blocking)
     if (options.teacherUserProfileId) {
       const teacherConflict = await this.checkTeacherScheduleConflicts(
@@ -170,11 +165,11 @@ export class ScheduleService extends BaseService {
       );
 
       if (teacherConflict) {
-        details.push({
-          field: 'teacher',
-          value: teacherConflict,
-          message: 'Validation failed',
-        });
+        throw ClassesErrors.teacherScheduleConflict(
+          teacherConflict.teacherName,
+          teacherConflict.teacherUserProfileId,
+          teacherConflict.conflicts,
+        );
       }
     }
 
@@ -188,25 +183,18 @@ export class ScheduleService extends BaseService {
       );
 
       if (studentConflicts.length > 0) {
-        // If skipWarning is true, silently skip student conflicts (don't add to details)
+        // If skipWarning is true, silently skip student conflicts (don't throw)
         if (!options.skipWarning) {
-          details.push(
-            ...studentConflicts.map((conflict) => ({
-              field: 'student',
-              value: conflict,
-              message: 'Validation failed',
-            })),
+          // For multiple student conflicts, throw the first one as an example
+          // In a real implementation, you might want to collect all and throw a batch error
+          const firstConflict = studentConflicts[0];
+          throw ClassesErrors.studentScheduleConflict(
+            firstConflict.studentName,
+            firstConflict.studentUserProfileId,
+            firstConflict.conflicts,
           );
         }
       }
-    }
-
-    // Throw if there are any conflicts (teacher conflicts always included, student conflicts only if skipWarning is false)
-    if (details.length > 0) {
-      throw new ScheduleConflictException(
-        't.messages.validationFailed',
-        details,
-      );
     }
   }
 

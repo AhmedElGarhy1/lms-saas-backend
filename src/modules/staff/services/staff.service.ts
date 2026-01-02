@@ -3,7 +3,7 @@ import { StaffRepository } from '../repositories/staff.repository';
 import { UserService } from '@/modules/user/services/user.service';
 import { PaginateStaffDto } from '../dto/paginate-staff.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { StaffErrors } from '../exceptions/staff.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
@@ -35,7 +35,7 @@ export class StaffService extends BaseService {
       includeDeleted,
     );
     if (!user) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw StaffErrors.staffNotFound();
     }
     return user;
   }

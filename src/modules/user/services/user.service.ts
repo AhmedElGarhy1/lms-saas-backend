@@ -1,11 +1,7 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
-import {
-  ResourceNotFoundException,
-  InsufficientPermissionsException,
-  ValidationFailedException,
-  OtpRequiredException,
-  AuthenticationFailedException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { UserErrors } from '../exceptions/user.errors';
+import { CommonErrors } from '../../../shared/common/exceptions/common.errors';
+import { AuthErrors } from '@/modules/auth/exceptions/auth.errors';
 import * as bcrypt from 'bcrypt';
 import { UserRepository } from '../repositories/user.repository';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
@@ -67,7 +63,7 @@ export class UserService extends BaseService {
     const { userId, dto } = params;
     const user = await this.findOne(userId, true);
     if (!user) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserErrors.userNotFound();
     }
 
     // Verify current password
@@ -76,7 +72,7 @@ export class UserService extends BaseService {
       user.password,
     );
     if (!isCurrentPasswordValid) {
-      throw new ValidationFailedException("Validation failed", );
+      throw UserErrors.currentPasswordInvalid();
     }
 
     // Check if 2FA is enabled
@@ -84,7 +80,7 @@ export class UserService extends BaseService {
       // If OTP code not provided, send OTP and throw exception
       if (!dto.code) {
         await this.verificationService.sendTwoFactorOTP(user.id || '');
-        throw new OtpRequiredException('OTP code is required');
+        throw AuthErrors.otpRequired();
       }
 
       // OTP code provided, verify it
@@ -100,7 +96,7 @@ export class UserService extends BaseService {
           phone: user.phone,
           error: error instanceof Error ? error.message : String(error),
         });
-        throw new AuthenticationFailedException("Operation failed");
+        throw AuthErrors.otpInvalid();
       }
     }
 
@@ -178,14 +174,14 @@ export class UserService extends BaseService {
     // First check if the user exists
     const user = await this.userRepository.findOne(userId);
     if (!user) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserErrors.userNotFound();
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException('Insufficient permissions to delete user');
+      throw UserErrors.userDeletionForbidden();
     }
     await this.userRepository.softRemove(userId);
 
@@ -200,14 +196,14 @@ export class UserService extends BaseService {
     // First check if the user exists
     const user = await this.userRepository.findOneSoftDeletedById(userId);
     if (!user) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserErrors.userNotFound();
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException('Insufficient permissions to restore user');
+      throw UserErrors.userRestorationForbidden();
     }
 
     // Restore user
@@ -242,7 +238,7 @@ export class UserService extends BaseService {
     // First check if the user exists
     const user = await this.userRepository.findOne(userId);
     if (!user) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserErrors.userNotFound();
     }
 
     // Then check if current user can activate/deactivate the target user
@@ -280,7 +276,7 @@ export class UserService extends BaseService {
     // Get userId from profile for command emission
     const profile = await this.userProfileService.findOne(userProfileId);
     if (!profile) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserErrors.userNotFound();
     }
 
     // Emit event after work is done
@@ -295,10 +291,9 @@ export class UserService extends BaseService {
     isActive: boolean,
     actor: ActorUser,
   ): Promise<void> {
-    if (!actor.centerId)
-      throw new ForbiddenException(
-        'You are not authorized to toggle this center access',
-      );
+    if (!actor.centerId) {
+      throw UserErrors.userCenterRequired();
+    }
     await this.accessControlService.activateCenterAccess(
       {
         centerId: actor.centerId,
@@ -418,7 +413,7 @@ export class UserService extends BaseService {
     // Find user by profileId - need to get user from profile
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserErrors.userNotFound();
     }
     return this.userRepository.findOne(userProfile.userId);
   }
@@ -480,7 +475,7 @@ export class UserService extends BaseService {
     // Find user by profileId
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserErrors.userNotFound();
     }
 
     // Call updateUser which will handle the work and emit event
@@ -494,14 +489,14 @@ export class UserService extends BaseService {
     // Find user by profileId
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserErrors.userNotFound();
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException('Insufficient permissions to delete user');
+      throw UserErrors.userDeletionForbidden();
     }
 
     await this.userRepository.softRemove(userProfile.userId);
@@ -514,14 +509,14 @@ export class UserService extends BaseService {
     // Find user by profileId
     const userProfile = await this.userProfileService.findOne(userProfileId);
     if (!userProfile) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserErrors.userNotFound();
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
     if (!isSuperAdmin) {
-      throw new InsufficientPermissionsException('Insufficient permissions to delete user');
+      throw UserErrors.userRestorationForbidden();
     }
 
     await this.userRepository.restore(userProfile.userId);

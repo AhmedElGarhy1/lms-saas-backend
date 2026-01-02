@@ -3,10 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserRepository } from '@/modules/user/repositories/user.repository';
 import { Config } from '@/shared/config/config';
-import {
-  AuthenticationFailedException,
-  BusinessLogicException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { AuthErrors } from '../exceptions/auth.errors';
 
 export interface JwtPayload {
   sub: string;
@@ -28,21 +25,21 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: JwtPayload) {
-    // Ensure this is an access token, not a refresh token
-    if (payload.type !== 'access') {
-      throw new AuthenticationFailedException("Operation failed");
+    // Ensure payload has required sub claim
+    if (!payload.sub) {
+      // A missing sub claim in JWT is an authentication failure
+      throw AuthErrors.authenticationFailed();
     }
 
     const user = await this.userRepository.findOne(payload.sub);
 
     if (!user) {
-      // Changed from ResourceNotFoundException to AuthenticationFailedException
-      // A missing user during JWT validation is an authentication failure, not a 404
-      throw new AuthenticationFailedException("Operation failed");
+      // A missing user during JWT validation is an authentication failure
+      throw AuthErrors.authenticationFailed();
     }
 
     if (!user.isActive) {
-      throw new BusinessLogicException("Operation failed");
+      throw AuthErrors.accountDisabled();
     }
 
     // Phone verification is now handled by PhoneVerificationGuard

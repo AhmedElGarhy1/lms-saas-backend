@@ -14,7 +14,7 @@ import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { TransactionStatement } from '../repositories/transaction.repository';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { WalletTotalDto } from '../dto/wallet-total.dto';
@@ -47,10 +47,7 @@ export class WalletsController {
       WalletOwnerType.USER_PROFILE,
     );
 
-    return {
-      data: wallet,
-      message: 'Wallet retrieved successfully',
-    };
+    return ControllerResponse.success(wallet);
   }
 
   @Get('me/statement')
@@ -80,10 +77,7 @@ export class WalletsController {
       actor,
     );
 
-    return {
-      data: statement,
-      message: 'Wallet statement retrieved successfully',
-    };
+    return ControllerResponse.success(statement);
   }
 
   @Get(':ownerId/:ownerType')
@@ -109,10 +103,7 @@ export class WalletsController {
       params.ownerType,
     );
 
-    return {
-      data: wallet,
-      message: 'Wallet retrieved successfully',
-    };
+    return ControllerResponse.success(wallet);
   }
 
   @Get(':walletId/statement')
@@ -139,10 +130,7 @@ export class WalletsController {
       actor,
     );
 
-    return {
-      data: statement,
-      message: 'Wallet statement retrieved successfully',
-    };
+    return ControllerResponse.success(statement);
   }
 
   @Get('total')
@@ -160,10 +148,7 @@ export class WalletsController {
   ): Promise<ControllerResponse<WalletTotalDto>> {
     const total = await this.walletService.getUserTotalBalance(actor.id);
 
-    return {
-      data: total,
-      message: 'Wallet total retrieved successfully',
-    };
+    return ControllerResponse.success(total);
   }
 
   @Post('transfer')
@@ -189,9 +174,6 @@ export class WalletsController {
       dto.idempotencyKey,
     );
 
-    return {
-      data: { correlationId: result.correlationId },
-      message: 'Wallet transfer completed successfully',
-    };
+    return ControllerResponse.success({ correlationId: result.correlationId });
   }
 }

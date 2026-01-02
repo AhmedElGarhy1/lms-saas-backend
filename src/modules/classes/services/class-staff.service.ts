@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ClassStaffRepository } from '../repositories/class-staff.repository';
 import { ClassAccessService } from './class-access.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import { ClassesErrors } from '../exceptions/classes.errors';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ClassStaff } from '../entities/class-staff.entity';
 import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
@@ -33,7 +34,7 @@ export class ClassStaffService extends BaseService {
    * @param classId - The class ID
    * @param actor - The user performing the action
    * @returns Array of ClassStaff assignments
-   * @throws ResourceNotFoundException if class doesn't exist
+   * @throws ClassesErrors.classNotFound() if class doesn't exist
    * @throws InsufficientPermissionsException if actor doesn't have permission
    */
   async getClassStaff(
@@ -59,8 +60,8 @@ export class ClassStaffService extends BaseService {
    * @param data - ClassStaffAccessDto containing userProfileId and classId
    * @param actor - The user performing the action (centerId is taken from actor)
    * @returns Created ClassStaff assignment
-   * @throws ResourceNotFoundException if profile doesn't exist
-   * @throws BusinessLogicException if profile is not STAFF, doesn't have center access, or already assigned
+   * @throws AccessControlErrors.userProfileNotFound() if profile doesn't exist
+   * @throws ClassesErrors.classStaffAlreadyAssigned() if already assigned
    */
   async assignStaffToClass(
     data: ClassStaffAccessDto,
@@ -92,7 +93,7 @@ export class ClassStaffService extends BaseService {
       classEntity.status === ClassStatus.CANCELED ||
       classEntity.status === ClassStatus.FINISHED
     ) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.classStatusDoesNotAllowStaffAssignment();
     }
 
     // Validate target staff member has branch access to the class's branch
@@ -104,7 +105,7 @@ export class ClassStaffService extends BaseService {
 
     const canAccess = await this.classAccessService.canClassAccess(data);
     if (canAccess) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.staffAlreadyAssignedToClass();
     }
 
     // Extract branchId from validated class entity for snapshot
@@ -162,7 +163,7 @@ export class ClassStaffService extends BaseService {
    * @param userProfileIds - Array of staff user profile IDs to assign
    * @param actor - The user performing the action
    * @returns BulkOperationResult with success/failure details for each staff member
-   * @throws BusinessLogicException if userProfileIds array is empty
+   * @throws CommonErrors.bulkOperationFailed() if userProfileIds array is empty
    */
   @Transactional()
   async bulkAssignStaffToClass(
@@ -171,7 +172,7 @@ export class ClassStaffService extends BaseService {
     actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!userProfileIds || userProfileIds.length === 0) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.classValidationFailed();
     }
 
     return await this.bulkOperationService.executeBulk(
@@ -196,7 +197,7 @@ export class ClassStaffService extends BaseService {
    * @param userProfileIds - Array of staff user profile IDs to remove
    * @param actor - The user performing the action
    * @returns BulkOperationResult with success/failure details for each staff member
-   * @throws BusinessLogicException if userProfileIds array is empty
+   * @throws CommonErrors.bulkOperationFailed() if userProfileIds array is empty
    */
   @Transactional()
   async bulkRemoveStaffFromClass(
@@ -205,7 +206,7 @@ export class ClassStaffService extends BaseService {
     actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!userProfileIds || userProfileIds.length === 0) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.classValidationFailed();
     }
 
     return await this.bulkOperationService.executeBulk(

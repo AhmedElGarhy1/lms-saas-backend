@@ -50,7 +50,7 @@ export class CashboxesController {
       params.centerId,
     );
 
-    return ControllerResponse.success(stats, 'Data retrieved successfully');
+    return ControllerResponse.success(stats);
   }
 
   @Get(':centerId/statement')
@@ -81,7 +81,7 @@ export class CashboxesController {
       branchId,
     );
 
-    return ControllerResponse.success(statement, 'Data retrieved successfully');
+    return ControllerResponse.success(statement);
   }
 
   @Get(':centerId/cash-statement')
@@ -112,6 +112,6 @@ export class CashboxesController {
       branchId,
     );
 
-    return ControllerResponse.success(statement, 'Data retrieved successfully');
+    return ControllerResponse.success(statement);
   }
 }

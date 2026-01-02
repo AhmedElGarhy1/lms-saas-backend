@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UserInfo } from '../entities/user-info.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { UserErrors } from '../exceptions/user.errors';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 
@@ -31,7 +31,7 @@ export class UserInfoRepository extends BaseRepository<UserInfo> {
       where: { userId },
     });
     if (!userInfo) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserErrors.userInfoNotFound();
     }
 
     await this.getRepository().update(userInfo.id, userInfoData);

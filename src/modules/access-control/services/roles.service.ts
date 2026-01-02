@@ -1,9 +1,6 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  InsufficientPermissionsException,
-  ResourceNotFoundException,
-  BusinessLogicException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { AccessControlErrors } from '../exceptions/access-control.errors';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { RolesRepository } from '../repositories/roles.repository';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { CreateRoleRequestDto } from '../dto/create-role.dto';
@@ -73,10 +70,10 @@ export class RolesService extends BaseService {
   ) {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw AccessControlErrors.roleNotFound();
     }
     if (role.readOnly) {
-      throw new BusinessLogicException("Operation failed");
+      throw AccessControlErrors.cannotModifySystemRole();
     }
     if (!role.isSameScope(actor.centerId)) {
       this.logger.warn('Role update failed - insufficient permissions', {
@@ -84,7 +81,7 @@ export class RolesService extends BaseService {
         actorId: actor.userProfileId,
         centerId: actor.centerId,
       });
-      throw new InsufficientPermissionsException('Insufficient permissions to update role');
+      throw AccessControlErrors.missingPermission('MANAGE_ROLES');
     }
 
     const updatedRole = await this.rolesRepository.updateRole(roleId, data);
@@ -101,10 +98,10 @@ export class RolesService extends BaseService {
   async deleteRole(roleId: string, actor: ActorUser) {
     const role = await this.rolesRepository.findOne(roleId);
     if (!role) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw AccessControlErrors.roleNotFound();
     }
     if (role.readOnly) {
-      throw new BusinessLogicException("Operation failed");
+      throw AccessControlErrors.cannotModifySystemRole();
     }
     if (!role?.isSameScope(actor.centerId)) {
       this.logger.warn('Role deletion failed - insufficient permissions', {
@@ -112,7 +109,7 @@ export class RolesService extends BaseService {
         actorId: actor.userProfileId,
         centerId: actor.centerId,
       });
-      throw new InsufficientPermissionsException('Insufficient permissions to delete role');
+      throw AccessControlErrors.missingPermission('MANAGE_ROLES');
     }
 
     await this.rolesRepository.softRemove(roleId);
@@ -138,14 +135,14 @@ export class RolesService extends BaseService {
       data.userProfileId,
     );
     if (!profile) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw AccessControlErrors.userProfileNotFound();
     }
 
     if (
       profile.profileType !== ProfileType.STAFF &&
       profile.profileType !== ProfileType.ADMIN
     ) {
-      throw new BusinessLogicException("Operation failed");
+      throw AccessControlErrors.invalidProfileTypeForRoleAssignment();
     }
 
     return this.assignRole(data);
@@ -190,7 +187,7 @@ export class RolesService extends BaseService {
           actorId: actor.userProfileId,
           centerId: actor.centerId,
         });
-        throw new InsufficientPermissionsException('Insufficient permissions to view role');
+        throw AccessControlErrors.missingPermission('MANAGE_ROLES');
       }
     }
 
@@ -205,12 +202,12 @@ export class RolesService extends BaseService {
     // First check if the role exists
     const role = await this.rolesRepository.findOneSoftDeleted({ id: roleId });
     if (!role) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw AccessControlErrors.roleNotFound();
     }
 
     // Check if the role is already active (not deleted)
     if (!role.deletedAt) {
-      throw new BusinessLogicException("Operation failed");
+      throw AccessControlErrors.roleAlreadyActive();
     }
 
     // Restore the role

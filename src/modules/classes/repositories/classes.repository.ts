@@ -9,10 +9,8 @@ import { ScheduleConflictQueryBuilder } from '../utils/schedule-conflict-query-b
 import { Group } from '../entities/group.entity';
 import { GroupStudent } from '../entities/group-student.entity';
 import { TeacherConflictDto } from '../dto/schedule-conflict.dto';
-import {
-  AccessDeniedException,
-  ResourceNotFoundException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
+import { ClassesErrors } from '../exceptions/classes.errors';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
@@ -104,7 +102,7 @@ export class ClassesRepository extends BaseRepository<Class> {
           },
         );
       } else {
-        throw new AccessDeniedException('Operation failed');
+        throw ClassesErrors.cannotAccessClasses();
       }
     }
 
@@ -373,7 +371,7 @@ export class ClassesRepository extends BaseRepository<Class> {
    * @param id - The class ID
    * @param includeDeleted - Whether to include soft-deleted classes
    * @returns Class with all relations
-   * @throws ResourceNotFoundException if class not found
+   * @throws ClassesErrors.classNotFound() if class not found
    */
   async findClassWithRelationsOrThrow(
     id: string,
@@ -381,7 +379,7 @@ export class ClassesRepository extends BaseRepository<Class> {
   ): Promise<Class> {
     const classEntity = await this.findClassWithRelations(id, includeDeleted);
     if (!classEntity) {
-      throw new ResourceNotFoundException('Operation failed');
+      throw ClassesErrors.classNotFound();
     }
     return classEntity;
   }

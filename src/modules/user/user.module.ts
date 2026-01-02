@@ -9,8 +9,10 @@ import { AuthModule } from '@/modules/auth/auth.module';
 import { UserProfileModule } from '@/modules/user-profile/user-profile.module';
 import { UserController } from './controllers/user.controller';
 import { UserAccessController } from './controllers/user-access.controller';
+import { LocaleController } from './controllers/locale.controller';
 import { UserService } from './services/user.service';
 import { UserInfoService } from './services/user-info.service';
+import { LocaleService } from './services/locale.service';
 import { UserRepository } from './repositories/user.repository';
 import { UserInfoRepository } from './repositories/user-info.repository';
 import { UserActivityListener } from './listeners//user-activity.listener';
@@ -26,14 +28,15 @@ import { ClassesModule } from '../classes/classes.module';
     ClassesModule,
     ActivityLogModule,
   ],
-  controllers: [UserController, UserAccessController],
+  controllers: [UserController, UserAccessController, LocaleController],
   providers: [
     UserService,
     UserInfoService,
+    LocaleService,
     UserRepository,
     UserInfoRepository,
     UserActivityListener,
   ],
-  exports: [UserService, UserInfoService, UserRepository, UserInfoRepository],
+  exports: [UserService, UserInfoService, LocaleService, UserRepository, UserInfoRepository],
 })
 export class UserModule {}

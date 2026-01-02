@@ -10,10 +10,7 @@ import { CashTransaction } from '../entities/cash-transaction.entity';
 import { Cashbox } from '../entities/cashbox.entity';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
-import {
-  ResourceNotFoundException,
-  InsufficientFundsException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { FinanceErrors } from '../exceptions/finance.errors';
 import { Transactional } from '@nestjs-cls/transactional';
 import { QueryFailedError } from 'typeorm';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
@@ -73,9 +70,11 @@ export class CashboxService extends BaseService {
       // Pre-check: Prevent negative balance (before save to avoid DB constraint violation)
       const newBalance = cashbox.balance.add(amount);
       if (newBalance.isNegative()) {
-        throw new InsufficientFundsException('t.messages.businessLogicError', {
-          message: 'Insufficient cashbox balance',
-        } as never);
+        throw FinanceErrors.insufficientFunds(
+          cashbox.balance.toNumber(),
+          amount.toNumber(),
+          'EGP'
+        );
       }
 
       // Perform balance update using Money utility

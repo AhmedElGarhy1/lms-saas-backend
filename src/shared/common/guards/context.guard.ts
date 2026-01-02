@@ -2,8 +2,6 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
-  ForbiddenException,
-  InternalServerErrorException,
   Inject,
   forwardRef,
   Logger,
@@ -14,7 +12,7 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { IRequest } from '../interfaces/request.interface';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { RequestContext } from '../context/request.context';
-import { ProfileSelectionRequiredException } from '../exceptions/custom.exceptions';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 import { CentersRepository } from '@/modules/centers/repositories/centers.repository';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { DEFAULT_TIMEZONE } from '../constants/timezone.constants';
@@ -26,6 +24,10 @@ import { STAFF_ONLY_KEY } from '../decorators/staff-only.decorator';
 import { MANAGERIAL_ONLY_KEY } from '../decorators/managerial-only.decorator';
 import { NOP_PROFILE_KEY } from '../decorators/no-profile.decorator';
 import { NO_CONTEXT_KEY } from '../decorators/no-context';
+import { CommonErrors } from '../exceptions/common.errors';
+import { SystemErrors } from '../exceptions/system.exception';
+import { AccessControlErrors } from '@/modules/access-control/exceptions/access-control.errors';
+import { AuthErrors } from '@/modules/auth/exceptions/auth.errors';
 
 @Injectable()
 export class ContextGuard implements CanActivate {
@@ -47,22 +49,12 @@ export class ContextGuard implements CanActivate {
 
     // Validate centerId format if provided
     if (centerId && !isUUID(centerId)) {
-      throw new ForbiddenException({
-        message: {
-          key: 't.validation.isUuid.message',
-          args: { item: 't.resources.center' },
-        },
-      });
+      throw CommonErrors.validationFailed('center_id', centerId);
     }
 
     // Validate branchId format if provided
     if (branchId && !isUUID(branchId)) {
-      throw new ForbiddenException({
-        message: {
-          key: 't.validation.isUuid.message',
-          args: { item: 't.resources.branch' },
-        },
-      });
+      throw CommonErrors.validationFailed('branch_id', branchId);
     }
 
     // Check if the endpoint is public
@@ -118,9 +110,7 @@ export class ContextGuard implements CanActivate {
 
     const user = request.user;
     if (!user) {
-      throw new ForbiddenException({
-        message: { key: 't.messages.notAuthenticated' },
-      });
+      throw AuthErrors.authenticationRequired();
     }
 
     user.centerId = centerId;
@@ -130,15 +120,13 @@ export class ContextGuard implements CanActivate {
 
     const { userProfileId, userProfileType } = RequestContext.get();
     if (!userProfileId) {
-      throw new ProfileSelectionRequiredException('Profile selection is required');
+      throw UserProfileErrors.userProfileSelectionRequired();
     }
 
     if (!userProfileType) {
-      throw new InternalServerErrorException({
-        message: {
-          key: 't.messages.notFound',
-          args: { resource: 't.resources.profileType' },
-        },
+      throw SystemErrors.internalServerError({
+        operation: 'context_validation',
+        error: 'profile_type_missing',
       });
     }
 
@@ -190,33 +178,23 @@ export class ContextGuard implements CanActivate {
   }) {
     // Check profile-specific restrictions
     if (studentOnly && userProfileType !== ProfileType.STUDENT) {
-      throw new ForbiddenException({
-        message: { key: 't.messages.accessDenied' },
-      });
+      throw AccessControlErrors.missingPermission('STUDENT_ACCESS');
     }
     if (teacherOnly && userProfileType !== ProfileType.TEACHER) {
-      throw new ForbiddenException({
-        message: { key: 't.messages.accessDenied' },
-      });
+      throw AccessControlErrors.missingPermission('TEACHER_ACCESS');
     }
     if (parentOnly && userProfileType !== ProfileType.PARENT) {
-      throw new ForbiddenException({
-        message: { key: 't.messages.accessDenied' },
-      });
+      throw AccessControlErrors.missingPermission('PARENT_ACCESS');
     }
     if (staffOnly && userProfileType !== ProfileType.STAFF) {
-      throw new ForbiddenException({
-        message: { key: 't.messages.accessDenied' },
-      });
+      throw AccessControlErrors.missingPermission('STAFF_ACCESS');
     }
     if (
       managerialOnly &&
       userProfileType !== ProfileType.STAFF &&
       userProfileType !== ProfileType.ADMIN
     ) {
-      throw new ForbiddenException({
-        message: { key: 't.messages.accessDenied' },
-      });
+      throw AccessControlErrors.missingPermission('MANAGERIAL_ACCESS');
     }
 
     if (

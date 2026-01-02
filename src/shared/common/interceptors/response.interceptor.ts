@@ -51,7 +51,6 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
           const controllerResponse = data as ControllerResponse<any>;
           return ApiResponseBuilder.success(
             controllerResponse.data,
-            controllerResponse.message,
             requestId,
             processingTime,
           );
@@ -73,7 +72,6 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
               total: number;
               totalPages: number;
             },
-            'Data retrieved successfully',
             requestId,
             processingTime,
           );
@@ -81,61 +79,10 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
         // For single items, arrays, or null/undefined responses, use standard success response
         return ApiResponseBuilder.success(
           data || null, // Ensure we handle null/undefined gracefully
-          this.getSuccessMessage(request.method, data),
           requestId,
           processingTime,
         );
       }),
     );
-  }
-
-  private getSuccessMessage(method: string, data: any): string {
-    // If data already has a message, use it (for custom responses)
-    if (data && typeof data === 'object' && 'message' in data) {
-      return data.message;
-    }
-
-    // Store translation keys for consistent API responses
-    // If data is null/undefined (common for DELETE operations), provide appropriate message
-    if (!data) {
-      const messages: Record<string, string> = {
-        DELETE: 'Resource deleted successfully',
-        PATCH: 'Resource updated successfully',
-        PUT: 'Resource updated successfully',
-        POST: 'Resource created successfully',
-      };
-      return messages[method] || 'Operation completed successfully';
-    }
-
-    // For arrays, provide count-specific message
-    if (Array.isArray(data)) {
-      return 'Data retrieved successfully';
-    }
-
-    // For objects with ID (created resources)
-    if (method === 'POST' && data && data.id) {
-      return 'Resource created successfully';
-    }
-
-    // For update operations
-    if ((method === 'PUT' || method === 'PATCH') && data) {
-      return 'Resource updated successfully';
-    }
-
-    // For delete operations
-    if (method === 'DELETE') {
-      return 'Resource deleted successfully';
-    }
-
-    // Default messages by method
-    const messages: Record<string, string> = {
-      GET: 'Resource found successfully',
-      POST: 'Resource created successfully',
-      PUT: 'Resource updated successfully',
-      PATCH: 'Resource updated successfully',
-      DELETE: 'Resource deleted successfully',
-    };
-
-    return messages[method] || 'Operation completed successfully';
   }
 }

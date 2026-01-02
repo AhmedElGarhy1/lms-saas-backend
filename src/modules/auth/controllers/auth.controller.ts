@@ -61,7 +61,7 @@ export class AuthController {
   async login(@Body() loginDto: LoginRequestDto) {
     const result = await this.authService.login(loginDto);
 
-    return ControllerResponse.success(result, 'Login completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Public()
@@ -73,7 +73,7 @@ export class AuthController {
   async resendLoginOTP(@Body() dto: LoginRequestDto) {
     await this.authService.resendLoginOTP(dto.phone, dto.password);
 
-    return ControllerResponse.success(null, 'Message sent successfully');
+    return ControllerResponse.success(null);
   }
 
   @Public()
@@ -95,7 +95,7 @@ export class AuthController {
     const userId = req.user.sub;
 
     const result = await this.authService.refresh(userId);
-    return ControllerResponse.success(result, 'Login completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('request-phone-verification')
@@ -109,7 +109,7 @@ export class AuthController {
   ) {
     await this.authService.requestPhoneVerification(dto.userId, dto.phone);
 
-    return ControllerResponse.success(null, 'Message sent successfully');
+    return ControllerResponse.success(null);
   }
 
   @Post('verify-phone')
@@ -125,7 +125,7 @@ export class AuthController {
   ) {
     await this.authService.verifyPhone(dto.code, dto.userId || user.id);
 
-    return ControllerResponse.success(null, 'Operation completed successfully');
+    return ControllerResponse.success(null);
   }
 
   @Post('forgot-password')
@@ -139,7 +139,7 @@ export class AuthController {
   ) {
     const result = await this.authService.forgotPassword(dto, actor);
 
-    return ControllerResponse.success(result, 'Message sent successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('reset-password')
@@ -151,7 +151,7 @@ export class AuthController {
   async resetPassword(@Body() dto: ResetPasswordRequestDto) {
     const result = await this.authService.resetPassword(dto);
 
-    return ControllerResponse.success(result, 'Login completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('setup-2fa')
@@ -162,7 +162,7 @@ export class AuthController {
   async setup2FA(@GetUser() actor: ActorUser) {
     const result = await this.authService.setupTwoFactor(actor);
 
-    return ControllerResponse.success(result, 'Message sent successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('enable-2fa')
@@ -177,7 +177,7 @@ export class AuthController {
   ) {
     const result = await this.authService.enableTwoFactor(dto.code, actor);
 
-    return ControllerResponse.success(result, 'Operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('disable-2fa')
@@ -191,7 +191,7 @@ export class AuthController {
   ) {
     const result = await this.authService.disableTwoFactor(dto.code, actor);
 
-    return ControllerResponse.success(result, 'Operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('logout')
@@ -201,7 +201,7 @@ export class AuthController {
   async logout(@GetUser() user: ActorUser) {
     const result = await this.authService.logout(user);
 
-    return ControllerResponse.success(result, 'Login completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Patch('change-password')
@@ -219,7 +219,7 @@ export class AuthController {
       dto,
     });
 
-    return ControllerResponse.success(result, 'Login completed successfully');
+    return ControllerResponse.success(result);
   }
 
   /**
@@ -237,6 +237,6 @@ export class AuthController {
   })
   async getVerificationTokens() {
     const tokens = await this.verificationTokenRepository.findAll();
-    return ControllerResponse.success(tokens, 'Data retrieved successfully');
+    return ControllerResponse.success(tokens);
   }
 }

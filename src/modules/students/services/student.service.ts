@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UserService } from '@/modules/user/services/user.service';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { StudentsErrors } from '../exceptions/students.errors';
 import { PaginateStudentDto } from '../dto/paginate-student.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { BaseService } from '@/shared/common/services/base.service';
@@ -31,7 +31,7 @@ export class StudentService extends BaseService {
       includeDeleted,
     );
     if (!user) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw StudentsErrors.studentNotFound();
     }
     return user;
   }

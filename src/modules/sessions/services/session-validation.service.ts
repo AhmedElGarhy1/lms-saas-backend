@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { SessionsRepository } from '../repositories/sessions.repository';
 import { BaseService } from '@/shared/common/services/base.service';
-import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import { SessionsErrors } from '../exceptions/sessions.errors';
 import { SessionStatus } from '../enums/session-status.enum';
 
 @Injectable()
@@ -86,42 +86,37 @@ export class SessionValidationService extends BaseService {
    * TODO: Check if payments exist (placeholder for future)
    * TODO: Check if attendance exists (placeholder for future)
    * @param sessionId - Session ID to validate
-   * @throws BusinessLogicException if session cannot be deleted
+   * @throws SessionsErrors.sessionCannotModifyCompleted() if session cannot be deleted
    */
   async validateSessionDeletion(sessionId: string): Promise<void> {
     const session = await this.sessionsRepository.findOneOrThrow(sessionId);
 
     if (session.status !== SessionStatus.SCHEDULED) {
-      throw new BusinessLogicException('Operation failed');
+      throw SessionsErrors.sessionCannotModifyCompleted();
     }
 
     // Only extra sessions (isExtraSession: true) can be deleted
     // Scheduled sessions (isExtraSession: false) must be canceled instead
     if (!session.isExtraSession) {
-      throw new BusinessLogicException(
-        't.messages.cannotDeleteScheduledSession',
-      );
+      throw SessionsErrors.sessionCannotModifyCompleted();
     }
 
     // TODO: Check if payments exist
     // TODO: Check if attendance exists
-    // If payments or attendance exist, throw BusinessLogicException
+    // If payments or attendance exist, throw SessionsErrors.sessionCannotModifyCompleted()
   }
 
   /**
    * Validate if a session can be canceled
    * Only SCHEDULED sessions can be canceled
    * @param sessionId - Session ID to validate
-   * @throws BusinessLogicException if session cannot be canceled
+   * @throws SessionsErrors.sessionCancelFailed() if session cannot be canceled
    */
   async validateSessionCancellation(sessionId: string): Promise<void> {
     const session = await this.sessionsRepository.findOneOrThrow(sessionId);
 
     if (session.status !== SessionStatus.SCHEDULED) {
-      // Type assertion needed because translation types may not be regenerated yet
-      throw new BusinessLogicException(
-        'Cannot cancel session in current status',
-      );
+      throw SessionsErrors.sessionCancelFailed();
     }
   }
 }

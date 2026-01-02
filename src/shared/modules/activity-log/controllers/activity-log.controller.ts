@@ -86,6 +86,6 @@ export class ActivityLogController {
   getActivityLogTypes() {
     const types = this.activityLogService.getAllActivityLogTypes();
 
-    return ControllerResponse.success(types, 'Data retrieved successfully');
+    return ControllerResponse.success(types);
   }
 }

@@ -47,7 +47,7 @@ export class SubjectsController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get(':subjectId')
@@ -72,7 +72,7 @@ export class SubjectsController {
       actor,
       true,
     ); // includeDeleted: true for API endpoints
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post()
@@ -96,7 +96,7 @@ export class SubjectsController {
       createSubjectDto,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource created successfully');
+    return ControllerResponse.success(result);
   }
 
   @Put(':subjectId')
@@ -123,7 +123,7 @@ export class SubjectsController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Delete(':subjectId')
@@ -144,7 +144,7 @@ export class SubjectsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.subjectsService.deleteSubject(params.subjectId, actor);
-    return ControllerResponse.message('Resource deleted successfully');
+    return ControllerResponse.success(null);
   }
 
   @Patch(':subjectId/restore')
@@ -162,6 +162,6 @@ export class SubjectsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.subjectsService.restoreSubject(params.subjectId, actor);
-    return ControllerResponse.message('Operation completed successfully');
+    return ControllerResponse.success(null);
   }
 }

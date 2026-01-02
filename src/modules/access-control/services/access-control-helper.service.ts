@@ -1,11 +1,6 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  InsufficientPermissionsException,
-  AdminScopeAccessDeniedException,
-  CenterAccessDeniedException,
-  CenterAccessInactiveException,
-  InactiveCenterException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
+import { AccessControlErrors } from '../exceptions/access-control.errors';
 import { In } from 'typeorm';
 import { UserAccess } from '../entities/user-access.entity';
 import { ProfileRoleRepository } from '../repositories/profile-role.repository';
@@ -94,7 +89,7 @@ export class AccessControlHelperService extends BaseService {
       return;
     }
     this.logger.warn('Admin access validation failed', { userProfileId });
-    throw new AdminScopeAccessDeniedException('Admin scope access denied');
+    throw AccessControlErrors.cannotModifyAdminCenterAccess();
   }
 
   async getProfileRole(userProfileId: string, centerId?: string) {
@@ -397,7 +392,7 @@ export class AccessControlHelperService extends BaseService {
         targetUserProfileId: data.targetUserProfileId,
         centerId: data.centerId,
       });
-      throw new InsufficientPermissionsException('Access denied to user');
+      throw AccessControlErrors.cannotAccessUserRecords();
     }
   }
 
@@ -492,7 +487,7 @@ export class AccessControlHelperService extends BaseService {
           centerName: center.name,
         },
       );
-      throw new InactiveCenterException('Center is inactive');
+      throw AccessControlErrors.centerAccessAlreadyInactive();
     }
 
     // Check if user has access to the center
@@ -502,7 +497,7 @@ export class AccessControlHelperService extends BaseService {
         userProfileId: data.userProfileId,
         centerId: data.centerId,
       });
-      throw new CenterAccessDeniedException('Center access denied');
+      throw AccessControlErrors.cannotAccessUserRecords();
     }
 
     // Retrieve from cache if available (only cached for non-deleted records)
@@ -527,7 +522,7 @@ export class AccessControlHelperService extends BaseService {
         userProfileId: data.userProfileId,
         centerId: data.centerId,
       });
-      throw new CenterAccessInactiveException('Center access inactive');
+      throw AccessControlErrors.centerAccessAlreadyInactive();
     }
   }
 

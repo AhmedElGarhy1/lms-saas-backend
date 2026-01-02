@@ -41,9 +41,6 @@ export class ApiResponse<T> {
   @ApiProperty({ description: 'Response data' })
   data: T;
 
-  @ApiProperty({ description: 'Optional message for the user' })
-  message?: string;
-
   @ApiProperty({ description: 'Response metadata' })
   meta: ApiResponseMeta;
 }
@@ -57,9 +54,6 @@ export class ErrorApiResponse {
   @ApiProperty({ description: 'Whether the request was successful' })
   success: false;
 
-  @ApiProperty({ description: 'Error message (translated)' })
-  message: string;
-
   @ApiProperty({ description: 'Error details for debugging' })
   details?: Record<string, any>;
 
@@ -71,14 +65,12 @@ export class ErrorApiResponse {
 export class ApiResponseBuilder {
   static success<T>(
     data: T,
-    message?: string,
     requestId?: string,
     processingTime?: number,
   ): ApiResponse<T> {
     return {
       success: true,
       data,
-      message,
       meta: {
         timestamp: new Date().toISOString(),
         requestId: requestId || this.generateRequestId(),
@@ -96,14 +88,12 @@ export class ApiResponseBuilder {
       total: number;
       totalPages: number;
     },
-    message?: string,
     requestId?: string,
     processingTime?: number,
   ): PaginatedApiResponse<T> {
     return {
       success: true,
       data,
-      message,
       pagination: {
         ...pagination,
         hasNext: pagination.page < pagination.totalPages,
@@ -119,13 +109,11 @@ export class ApiResponseBuilder {
   }
 
   static error(
-    message: string,
     details?: Record<string, any>,
     requestId?: string,
   ): ErrorApiResponse {
     return {
       success: false,
-      message,
       details,
       meta: {
         timestamp: new Date().toISOString(),

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ErrorCode } from '../enums/error-codes.enum';
+import { AllErrorCodes } from '../enums/error-codes';
 
 export class BulkOperationErrorDto {
   @ApiProperty({ description: 'The ID that failed' })
@@ -7,11 +7,10 @@ export class BulkOperationErrorDto {
 
   @ApiProperty({
     description: 'Error code',
-    enum: ErrorCode,
     required: false,
-    example: ErrorCode.VALIDATION_FAILED,
+    example: 'GEN_002',
   })
-  code?: ErrorCode;
+  code?: AllErrorCodes;
 
   @ApiProperty({
     description: 'Translated user-friendly error message',

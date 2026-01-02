@@ -1,8 +1,7 @@
 import { Injectable, Inject, forwardRef, Logger } from '@nestjs/common';
-import {
-  ResourceNotFoundException,
-  ValidationFailedException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { DomainException, DomainErrors } from '@/shared/common/exceptions/domain.exception';
+import { AuthErrorCode } from '../enums/auth.codes';
+import { AuthErrors } from '../exceptions/auth.errors';
 import { VerificationTokenRepository } from '../repositories/verification-token.repository';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Config } from '@/shared/config/config';
@@ -114,12 +113,12 @@ export class VerificationService extends BaseService {
     );
 
     if (!verificationToken) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw AuthErrors.otpInvalid();
     }
 
     if (verificationToken.expiresAt < new Date()) {
       await this.verificationTokenRepository.deleteById(verificationToken.id);
-      throw new ValidationFailedException("Validation failed", );
+      throw AuthErrors.otpExpired();
     }
 
     return verificationToken;

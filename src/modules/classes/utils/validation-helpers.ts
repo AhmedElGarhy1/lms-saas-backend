@@ -1,4 +1,4 @@
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { ClassesErrors } from '../exceptions/classes.errors';
 
 /**
  * Validation helper utilities for classes module.
@@ -12,7 +12,7 @@ export class ValidationHelpers {
    * @param resourceId - The ID of the resource (for error messages)
    * @param centerId - The center ID to validate against
    * @param resourceName - The translation key for the resource name
-   * @throws ResourceNotFoundException if resource doesn't exist or doesn't belong to center
+   * @throws ClassesErrors.resourceAccessDenied() if resource doesn't exist or doesn't belong to center
    */
   static validateResourceExistsAndBelongsToCenter<
     T extends { centerId: string },
@@ -23,11 +23,11 @@ export class ValidationHelpers {
     resourceName: string,
   ): asserts resource is T {
     if (!resource) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw ClassesErrors.resourceAccessDenied();
     }
 
     if (resource.centerId !== centerId) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw ClassesErrors.resourceAccessDenied();
     }
   }
 }

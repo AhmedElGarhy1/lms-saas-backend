@@ -44,7 +44,7 @@ export class UserAccessController {
     // Validation is now handled in AccessControlService.grantUserAccessValidate
     await this.accessControlService.grantUserAccessValidate(dto, actor);
 
-    return ControllerResponse.message('Operation completed successfully');
+    return ControllerResponse.success(null);
   }
 
   @Delete()
@@ -57,7 +57,7 @@ export class UserAccessController {
   ) {
     await this.accessControlService.revokeUserAccessValidate(dto, actor);
 
-    return ControllerResponse.message('Operation completed successfully');
+    return ControllerResponse.success(null);
   }
 
   @Post('bulk/grant')
@@ -89,7 +89,7 @@ export class UserAccessController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('bulk/revoke')
@@ -121,6 +121,6 @@ export class UserAccessController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 }

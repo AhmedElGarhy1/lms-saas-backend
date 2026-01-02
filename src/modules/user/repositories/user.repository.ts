@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
+import { UserErrors } from '../exceptions/user.errors';
 import { User } from '../entities/user.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { Pagination } from '@/shared/common/types/pagination.types';
@@ -22,6 +23,7 @@ import * as _ from 'lodash';
 import { ClassAccessService } from '@/modules/classes/services/class-access.service';
 import { GroupStudentsRepository } from '@/modules/classes/repositories/group-students.repository';
 import { In, IsNull } from 'typeorm';
+import { AccessControlErrors } from '@/modules/access-control/exceptions/access-control.errors';
 
 @Injectable()
 export class UserRepository extends BaseRepository<User> {
@@ -222,9 +224,7 @@ export class UserRepository extends BaseRepository<User> {
             { userProfileId: actor.userProfileId, centerId },
           );
       } else {
-        throw new InsufficientPermissionsException(
-          'Insufficient permissions to view user',
-        );
+        throw AccessControlErrors.cannotAccessUserRecords();
       }
     }
 
@@ -573,9 +573,7 @@ export class UserRepository extends BaseRepository<User> {
             { userProfileId: actor.userProfileId, centerId },
           );
       } else {
-        throw new InsufficientPermissionsException(
-          'Insufficient permissions to view user',
-        );
+        throw AccessControlErrors.cannotAccessUserRecords();
       }
     }
 
@@ -664,10 +662,7 @@ export class UserRepository extends BaseRepository<User> {
       actor.userProfileId,
     );
 
-    if (!isAdmin)
-      throw new InsufficientPermissionsException(
-        'Insufficient permissions to view user',
-      );
+    if (!isAdmin) throw AccessControlErrors.cannotAccessUserRecords();
     if (isSuperAdmin) {
       // do nothing
     } else {
@@ -853,9 +848,7 @@ export class UserRepository extends BaseRepository<User> {
       }
     } else {
       if (!isSuperAdmin && !isAdmin) {
-        throw new InsufficientPermissionsException(
-          'Insufficient permissions to view user',
-        );
+        throw AccessControlErrors.cannotAccessUserRecords();
       }
     }
 
@@ -1021,9 +1014,7 @@ export class UserRepository extends BaseRepository<User> {
       }
     } else {
       if (!isSuperAdmin && !isAdmin) {
-        throw new InsufficientPermissionsException(
-          'Insufficient permissions to view user',
-        );
+        throw AccessControlErrors.cannotAccessUserRecords();
       }
     }
 
@@ -1086,9 +1077,7 @@ export class UserRepository extends BaseRepository<User> {
     );
 
     if (!isAdmin) {
-      throw new InsufficientPermissionsException(
-        'Insufficient permissions to view user',
-      );
+      throw AccessControlErrors.cannotAccessUserRecords();
     }
 
     if (!isSuperAdmin) {

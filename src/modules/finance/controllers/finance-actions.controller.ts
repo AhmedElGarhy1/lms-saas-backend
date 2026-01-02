@@ -54,9 +54,6 @@ export class FinanceActionsController {
       dto.methodType, // Payment method type
     );
 
-    return {
-      data: result,
-      message: "Operation completed successfully",
-    };
+    return ControllerResponse.success(result);
   }
 }

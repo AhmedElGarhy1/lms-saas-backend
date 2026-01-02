@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { In, IsNull } from 'typeorm';
-import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
+import { ClassesErrors } from '../exceptions/classes.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ClassStaffRepository } from '../repositories/class-staff.repository';
 import { GroupStudentsRepository } from '../repositories/group-students.repository';
@@ -80,12 +81,12 @@ export class ClassAccessService extends BaseService {
   /**
    * Validates that a user has ClassStaff assignment for a specific class.
    * Only validates if the user is STAFF (non-STAFF users don't need class access validation).
-   * Throws InsufficientPermissionsException if access is denied.
+   * Throws DomainException if access is denied.
    *
    * @param data - ClassStaffAccessDto
    * @param config - Configuration options for validation
    * @param config.includeLeft - Whether to include assignments where leftAt is not null (default: false)
-   * @throws InsufficientPermissionsException if user doesn't have ClassStaff assignment
+   * @throws DomainException if user doesn't have ClassStaff assignment
    */
   async validateClassAccess(
     data: ClassStaffAccessDto,
@@ -109,7 +110,7 @@ export class ClassAccessService extends BaseService {
         userProfileId: data.userProfileId,
         classId: data.classId,
       });
-      throw new InsufficientPermissionsException('Insufficient permissions to view class');
+      throw ClassesErrors.cannotAccessClass();
     }
   }
 

@@ -2,18 +2,15 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
-  ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { IRequest } from '../interfaces/request.interface';
 import { RequestContext } from '../context/request.context';
 import { NOP_PROFILE_KEY } from '../decorators/no-profile.decorator';
-import {
-  InactiveProfileException,
-  ProfileSelectionRequiredException,
-} from '../exceptions/custom.exceptions';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
+import { AuthErrors } from '@/modules/auth/exceptions/auth.errors';
 
 @Injectable()
 export class ProfileGuard implements CanActivate {
@@ -52,9 +49,7 @@ export class ProfileGuard implements CanActivate {
 
     const user = request.user;
     if (!user) {
-      throw new ForbiddenException({
-        message: { key: 't.messages.notAuthenticated' },
-      });
+      throw AuthErrors.authenticationRequired();
     }
 
     user.userProfileId = userProfileId;
@@ -66,17 +61,17 @@ export class ProfileGuard implements CanActivate {
     }
 
     if (!userProfileId) {
-      throw new ProfileSelectionRequiredException("Profile selection is required");
+      throw UserProfileErrors.userProfileSelectionRequired();
     }
     const profile = await this.userProfileService.findForUser(
       user.id,
       userProfileId,
     );
     if (!profile) {
-      throw new ProfileSelectionRequiredException("Profile selection is required");
+      throw UserProfileErrors.userProfileSelectionRequired();
     }
     if (!profile.isActive) {
-      throw new InactiveProfileException('Profile is inactive');
+      throw UserProfileErrors.userProfileInactive();
     }
 
     user.profileType = profile.profileType;

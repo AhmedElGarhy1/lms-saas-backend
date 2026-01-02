@@ -1,0 +1,46 @@
+export enum UserErrorCode {
+  // User existence and lookup
+  USER_NOT_FOUND = 'USR_001',
+  USER_ALREADY_EXISTS = 'USR_002',
+  EMAIL_ALREADY_EXISTS = 'USR_003',
+
+  // User status and lifecycle
+  USER_INACTIVE = 'USR_004',
+  USER_DELETED = 'USR_005',
+  USER_SUSPENDED = 'USR_006',
+
+  // Password operations
+  PASSWORD_RESET_EXPIRED = 'USR_008',
+  PASSWORD_RESET_INVALID = 'USR_009',
+  CURRENT_PASSWORD_INVALID = 'USR_010',
+
+  // Profile operations
+  PROFILE_UPDATE_FORBIDDEN = 'USR_011',
+  PROFILE_INCOMPLETE = 'USR_012',
+
+  // Role and permissions
+  ROLE_ASSIGNMENT_FORBIDDEN = 'USR_013',
+  ROLE_CHANGE_FORBIDDEN = 'USR_014',
+
+  // User creation and import
+  USER_CREATION_FORBIDDEN = 'USR_016',
+  USER_IMPORT_FAILED = 'USR_017',
+
+
+  // Settings and preferences
+  USER_SETTINGS_INVALID = 'USR_022',
+  PREFERENCE_UPDATE_FAILED = 'USR_023',
+
+  // Deletion and restoration
+  USER_DELETION_FORBIDDEN = 'USR_024',
+  USER_RESTORATION_FORBIDDEN = 'USR_025',
+  USER_CANNOT_DELETE_SELF = 'USR_026',
+
+  // Validation
+  USER_DATA_INVALID = 'USR_027',
+  PHONE_ALREADY_EXISTS = 'USR_028',
+
+  // Access control
+  USER_INFO_NOT_FOUND = 'USR_029',
+  USER_CENTER_REQUIRED = 'USR_030',
+}

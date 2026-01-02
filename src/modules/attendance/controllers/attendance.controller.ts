@@ -36,7 +36,7 @@ export class AttendanceController {
       dto.studentCode,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('manual')
@@ -53,7 +53,7 @@ export class AttendanceController {
       dto.studentCode,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get('sessions/:sessionId/roster')
@@ -71,7 +71,7 @@ export class AttendanceController {
       query,
       actor,
     );
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get('sessions/:sessionId/stats')
@@ -87,6 +87,6 @@ export class AttendanceController {
       params.sessionId,
       actor,
     );
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 }

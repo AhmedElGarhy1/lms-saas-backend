@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { BranchAccess } from '../entities/branch-access.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { BranchAccessDto } from '../dto/branch-access.dto';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { CentersErrors } from '../exceptions/centers.errors';
+import { SystemErrors } from '@/shared/common/exceptions/system.exception';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 
@@ -30,7 +31,7 @@ export class BranchAccessRepository extends BaseRepository<BranchAccess> {
   async revokeBranchAccess(data: BranchAccessDto) {
     const existingAccess = await this.findBranchAccess(data);
     if (!existingAccess) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw CentersErrors.branchAccessNotFound();
     }
 
     await this.remove(existingAccess.id);

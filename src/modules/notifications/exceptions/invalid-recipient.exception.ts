@@ -1,9 +1,9 @@
-import { InternalInvalidOperationException } from '@/shared/common/exceptions/custom.exceptions';
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 /**
  * Exception thrown when recipient validation fails
  */
-export class InvalidRecipientException extends InternalInvalidOperationException {
+export class InvalidRecipientException extends HttpException {
   constructor(
     message: string,
     public readonly validationErrors?: Array<{
@@ -11,7 +11,14 @@ export class InvalidRecipientException extends InternalInvalidOperationException
       message: string;
     }>,
   ) {
-    super(`Recipient validation failed: ${message}`);
+    super(
+      {
+        error: 'Invalid Recipient',
+        message: `Recipient validation failed: ${message}`,
+        validationErrors,
+      },
+      HttpStatus.BAD_REQUEST,
+    );
   }
 
   /**

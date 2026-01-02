@@ -40,8 +40,8 @@ export const SYSTEM_ROLES: Partial<Role>[] = [
 // ADMIN Roles (Global scope, centerId = null)
 export const ADMIN_ROLES: Partial<Role>[] = [
   {
-    name: 't.roles.superAdmin.name',
-    description: 't.roles.superAdmin.description',
+    name: 'Super Administrator',
+    description: 'Super Administrator role with full system access',
     rolePermissions: [], // All permissions
     centerId: undefined,
     readOnly: true,

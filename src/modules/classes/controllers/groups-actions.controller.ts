@@ -151,7 +151,7 @@ export class GroupsActionsController {
       actor,
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('bulk/restore')
@@ -173,7 +173,7 @@ export class GroupsActionsController {
       actor,
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('bulk/assign-students')
@@ -196,6 +196,6 @@ export class GroupsActionsController {
       actor,
       dto.skipWarning,
     );
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 }

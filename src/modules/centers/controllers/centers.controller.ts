@@ -48,7 +48,7 @@ export class CentersController {
   ) {
     const result = await this.centersService.createCenter(dto, actor);
 
-    return ControllerResponse.success(result, 'Resource created successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get()
@@ -59,7 +59,7 @@ export class CentersController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.centersService.paginateCenters(query, actor);
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get(':id')
@@ -75,7 +75,7 @@ export class CentersController {
       actor,
       true,
     ); // includeDeleted: true for API endpoints
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Put(':id')
@@ -96,7 +96,7 @@ export class CentersController {
       actor,
     );
 
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Delete(':id')
@@ -111,7 +111,7 @@ export class CentersController {
   ) {
     await this.centersService.deleteCenter(params.id, actor);
 
-    return ControllerResponse.message('Resource deleted successfully');
+    return ControllerResponse.success(null);
   }
 
   @Patch(':id/restore')
@@ -126,7 +126,7 @@ export class CentersController {
   ) {
     await this.centersService.restoreCenter(params.id, actor);
 
-    return ControllerResponse.message('Operation completed successfully');
+    return ControllerResponse.success(null);
   }
 
   @Patch(':id/status')
@@ -149,6 +149,6 @@ export class CentersController {
       actor,
     );
 
-    return ControllerResponse.message('Resource updated successfully');
+    return ControllerResponse.success(null);
   }
 }

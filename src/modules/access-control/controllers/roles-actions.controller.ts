@@ -119,7 +119,7 @@ export class RolesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('bulk/restore')
@@ -144,7 +144,7 @@ export class RolesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('bulk/assign')
@@ -174,7 +174,7 @@ export class RolesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Delete('bulk/remove')
@@ -204,6 +204,6 @@ export class RolesActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 }

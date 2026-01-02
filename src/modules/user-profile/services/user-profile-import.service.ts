@@ -1,8 +1,5 @@
 import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
-import {
-  ResourceNotFoundException,
-  ResourceAlreadyExistsException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { UserProfileErrors } from '../exceptions/user-profile.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { User } from '@/modules/user/entities/user.entity';
@@ -101,14 +98,14 @@ export class UserProfileImportService extends BaseService {
       // Case 1: centerId is provided
       // If user has BOTH profile AND center access → throw error (nothing to do)
       if (existingProfile && hasCenterAccess) {
-        throw new ResourceAlreadyExistsException('Operation failed');
+        throw UserProfileErrors.userProfileAlreadyExistsWithCenterAccess();
       }
       // Otherwise OK: will create profile and/or add center access
     } else {
       // Case 2: centerId is NOT provided
       if (existingProfile) {
         // User already has profile → nothing to do (can't add center access without centerId)
-        throw new ResourceAlreadyExistsException('Operation failed');
+        throw UserProfileErrors.userProfileAlreadyExists();
       }
       // Otherwise OK: will create profile only (no center access)
     }
@@ -279,7 +276,7 @@ export class UserProfileImportService extends BaseService {
   private async findUserByPhone(phone: string): Promise<User> {
     const user = await this.userService.findUserByPhone(phone);
     if (!user) {
-      throw new ResourceNotFoundException('Operation failed');
+      throw UserProfileErrors.userProfileNotFound();
     }
     return user;
   }

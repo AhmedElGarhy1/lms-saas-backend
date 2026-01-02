@@ -42,7 +42,7 @@ export class BranchesController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get(':branchId')
@@ -65,7 +65,7 @@ export class BranchesController {
       actor,
       true,
     ); // includeDeleted: true for API endpoints
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post()
@@ -88,7 +88,7 @@ export class BranchesController {
       createBranchDto,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource created successfully');
+    return ControllerResponse.success(result);
   }
 
   @Put(':branchId')
@@ -114,7 +114,7 @@ export class BranchesController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Delete(':branchId')
@@ -135,7 +135,7 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.branchesService.deleteBranch(params.branchId, actor);
-    return ControllerResponse.message('Resource deleted successfully');
+    return ControllerResponse.success(null);
   }
 
   @Patch(':branchId/status')
@@ -161,7 +161,7 @@ export class BranchesController {
       body.isActive,
       actor,
     );
-    return ControllerResponse.message('Resource updated successfully');
+    return ControllerResponse.success(null);
   }
 
   @Patch(':branchId/restore')
@@ -174,6 +174,6 @@ export class BranchesController {
     @GetUser() actor: ActorUser,
   ) {
     await this.branchesService.restoreBranch(params.branchId, actor);
-    return ControllerResponse.message('Operation completed successfully');
+    return ControllerResponse.success(null);
   }
 }

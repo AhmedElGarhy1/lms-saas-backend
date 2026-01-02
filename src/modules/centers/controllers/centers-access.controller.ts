@@ -75,10 +75,7 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(
-      result,
-      'Operation completed successfully',
-    );
+    return ControllerResponse.success(result);
   }
 
   @Delete()
@@ -96,10 +93,7 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(
-      result,
-      'Operation completed successfully',
-    );
+    return ControllerResponse.success(result);
   }
 
   @Delete(':userProfileId')
@@ -121,7 +115,7 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, 'Resource deleted successfully');
+    return ControllerResponse.success(result);
   }
 
   @Patch(':userProfileId/restore')
@@ -138,9 +132,6 @@ export class CentersAccessController {
       actor,
     );
 
-    return ControllerResponse.success(
-      result,
-      'Operation completed successfully',
-    );
+    return ControllerResponse.success(result);
   }
 }

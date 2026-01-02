@@ -29,7 +29,7 @@ import { StudentBillingRecordsRepository } from '../repositories/student-billing
 import { StudentClassSubscriptionsRepository } from '../repositories/student-class-subscriptions.repository';
 import { StudentSessionChargesRepository } from '../repositories/student-session-charges.repository';
 import { BaseService } from '@/shared/common/services/base.service';
-import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import { StudentBillingErrors } from '../exceptions/student-billing.errors';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @Injectable()
@@ -64,7 +64,7 @@ export class StudentBillingService extends BaseService {
       );
 
     if (!paymentStrategy?.monthPrice) {
-      throw new BusinessLogicException("Operation failed");
+      throw StudentBillingErrors.subscriptionPaymentStrategyMissing();
     }
 
     const amount = paymentStrategy.monthPrice;
@@ -83,7 +83,7 @@ export class StudentBillingService extends BaseService {
       );
 
     if (existingSubscription) {
-      throw new BusinessLogicException("Operation failed");
+      throw StudentBillingErrors.subscriptionAlreadyExists();
     }
 
     // Create payment based on payment source
@@ -123,7 +123,7 @@ export class StudentBillingService extends BaseService {
         undefined, // reference ID
       );
     } else {
-      throw new BusinessLogicException("Operation failed");
+      throw StudentBillingErrors.subscriptionInvalidPaymentSource();
     }
 
     // Create subscription
@@ -170,7 +170,7 @@ export class StudentBillingService extends BaseService {
       );
 
     if (!paymentStrategy?.sessionPrice) {
-      throw new BusinessLogicException("Operation failed");
+      throw StudentBillingErrors.sessionChargePaymentStrategyMissing();
     }
 
     const amount = paymentStrategy.sessionPrice;
@@ -184,7 +184,7 @@ export class StudentBillingService extends BaseService {
       );
 
     if (existingCharge) {
-      throw new BusinessLogicException("Operation failed");
+      throw StudentBillingErrors.sessionChargeAlreadyExists();
     }
 
     // Create payment based on payment source
@@ -216,7 +216,7 @@ export class StudentBillingService extends BaseService {
         `Session charge for ${session.startTime.toISOString()}`, // correlation ID
       );
     } else {
-      throw new BusinessLogicException("Operation failed");
+      throw StudentBillingErrors.sessionChargeInvalidPaymentSource();
     }
 
     // Create session charge

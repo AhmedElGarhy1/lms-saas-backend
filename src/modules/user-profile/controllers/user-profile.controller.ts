@@ -52,7 +52,7 @@ export class UserProfileController {
   ) {
     await this.userProfileService.createProfile(dto, actorUser);
 
-    return ControllerResponse.success(null, 'Resource created successfully');
+    return ControllerResponse.success(null);
   }
 
   @Get('me')
@@ -70,7 +70,7 @@ export class UserProfileController {
       centerId,
     );
 
-    return ControllerResponse.success(profile, 'Data retrieved successfully');
+    return ControllerResponse.success(profile);
   }
 
   @Get()
@@ -80,7 +80,7 @@ export class UserProfileController {
     // Currently returns the actor user's profiles; can be expanded later
     const profiles = await this.userProfileService.listProfiles(actor);
 
-    return ControllerResponse.success(profiles, 'Data retrieved successfully');
+    return ControllerResponse.success(profiles);
   }
 
   @Get(':id')
@@ -96,7 +96,7 @@ export class UserProfileController {
       actorUser,
       true, // includeDeleted: true for API endpoints
     );
-    return ControllerResponse.success(profile, 'Data retrieved successfully');
+    return ControllerResponse.success(profile);
   }
 
   @Patch(':id/status')
@@ -113,10 +113,10 @@ export class UserProfileController {
     // Use UserService method which handles event emission
     await this.userService.activateProfileUser(params.id, dto.isActive, actor);
 
-    return ControllerResponse.success(
-      { id: params.id, isActive: dto.isActive },
-      'Resource updated successfully',
-    );
+    return ControllerResponse.success({
+      id: params.id,
+      isActive: dto.isActive,
+    });
   }
 
   @Delete(':id')
@@ -131,10 +131,7 @@ export class UserProfileController {
   ) {
     await this.userProfileService.deleteUserProfile(params.id, actorUser);
     // Note: Activity logging should be handled by event listeners if UserProfileService emits events
-    return ControllerResponse.success(
-      { id: params.id },
-      'Resource deleted successfully',
-    );
+    return ControllerResponse.success({ id: params.id });
   }
 
   @Patch(':id/restore')
@@ -149,9 +146,6 @@ export class UserProfileController {
   ) {
     await this.userProfileService.restoreUserProfile(params.id, actorUser);
     // Note: Activity logging should be handled by event listeners if UserProfileService emits events
-    return ControllerResponse.success(
-      { id: params.id },
-      'Resource restored successfully',
-    );
+    return ControllerResponse.success({ id: params.id });
   }
 }

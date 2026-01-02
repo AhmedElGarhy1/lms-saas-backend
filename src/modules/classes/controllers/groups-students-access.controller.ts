@@ -47,7 +47,7 @@ export class GroupsStudentsAccessController {
       groupStudentAccessDto,
       actor,
     );
-    return ControllerResponse.message('Operation completed successfully');
+    return ControllerResponse.success(null);
   }
 
   @Delete()
@@ -71,7 +71,7 @@ export class GroupsStudentsAccessController {
       [groupStudentAccessDto.userProfileId],
       actor,
     );
-    return ControllerResponse.message('Operation completed successfully');
+    return ControllerResponse.success(null);
   }
 
   @Post('bulk/grant')
@@ -97,7 +97,7 @@ export class GroupsStudentsAccessController {
       dto.skipWarning,
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('bulk/revoke')
@@ -122,7 +122,7 @@ export class GroupsStudentsAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get(':groupId')
@@ -141,6 +141,6 @@ export class GroupsStudentsAccessController {
       params.groupId,
       actor,
     );
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 }

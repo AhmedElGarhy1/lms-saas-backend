@@ -132,10 +132,10 @@
 [x] access control for sessions module
 [x] calender ui doesn't fit many!
 [x] calender doesn't have filters
+[x] remove translations from backend and keep it only in notifications
+[x] add proper and detailed throw from backend errors
 [ ] proper permissions implementaion
-[ ] add proper and detailed throw from backend errors
 [ ] student billing display in sidebar and in session attendance throw for money
-[ ] remove translations from backend and keep it only in notifications
 
 [ ] implement branch as in permissions to display sidebar
 [ ] implement filteration for branche in paginations
@@ -145,6 +145,8 @@
 [ ] in grant access internally we need first to valiate if user has higher permission so he doesn't need access and grasful return
 [ ] transfer within account
 [ ] user profile /me endpoint doesn't reutrn center because it doesn't pass contextGuard
+[ ] kashier instead of paymob
+[ ] translations cleanup
 ? what will happen if class deleted?
 ? what will happen if group deleted?
 ? what will happen if branch deleted?

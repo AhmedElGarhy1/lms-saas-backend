@@ -9,10 +9,8 @@ import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
-import {
-  BusinessLogicException,
-  InsufficientFundsException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { FinanceErrors } from '../exceptions/finance.errors';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { Transactional } from '@nestjs-cls/transactional';
 import { RequestContext } from '@/shared/common/context/request.context';
 import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
@@ -150,9 +148,11 @@ export class PaymentService extends BaseService {
         senderWallet.lockedBalance,
       );
       if (availableBalance.lessThan(amount)) {
-        throw new InsufficientFundsException('t.messages.businessLogicError', {
-          message: 'Insufficient balance',
-        } as never);
+        throw FinanceErrors.insufficientFunds(
+          availableBalance.toNumber(),
+          amount.toNumber(),
+          'EGP',
+        );
       }
 
       // Move amount from balance to lockedBalance
@@ -203,13 +203,13 @@ export class PaymentService extends BaseService {
       const exists =
         await this.transactionService.transactionExists(referenceId);
       if (!exists) {
-        throw new BusinessLogicException("Operation failed");
+        throw FinanceErrors.paymentReferenceInvalid();
       }
     } else if (referenceType === PaymentReferenceType.CASH_TRANSACTION) {
       const exists =
         await this.cashTransactionService.cashTransactionExists(referenceId);
       if (!exists) {
-        throw new BusinessLogicException("Operation failed");
+        throw FinanceErrors.paymentReferenceInvalid();
       }
     }
     return true;
@@ -226,7 +226,7 @@ export class PaymentService extends BaseService {
     const payment = await this.paymentRepository.findOneOrThrow(paymentId);
 
     if (payment.status !== PaymentStatus.PENDING) {
-      throw new BusinessLogicException("Operation failed");
+      throw FinanceErrors.paymentNotPending();
     }
 
     // Validate reference if exists
@@ -385,7 +385,7 @@ export class PaymentService extends BaseService {
     const payment = await this.paymentRepository.findOneOrThrow(paymentId);
 
     if (payment.status !== PaymentStatus.COMPLETED) {
-      throw new BusinessLogicException("Operation failed");
+      throw FinanceErrors.paymentNotCompleted();
     }
 
     // Reverse balances for internal payments
@@ -610,9 +610,7 @@ export class PaymentService extends BaseService {
 
     // Validate currency support
     if (!this.paymentGatewayService.supportsCurrency(currency, gatewayType)) {
-      throw new BusinessLogicException('t.messages.businessLogicError', {
-        message: `Currency ${currency} not supported by ${gatewayType}`,
-      } as never);
+      throw FinanceErrors.paymentCurrencyNotSupported(currency, gatewayType);
     }
 
     // Create payment record with PENDING status
@@ -724,37 +722,25 @@ export class PaymentService extends BaseService {
         error.message.includes('Integration ID') ||
         error.message.includes('configuration error')
       ) {
-        throw new BusinessLogicException('t.messages.businessLogicError', {
-          message:
-            'Payment service is currently unavailable. Please contact support.',
-        } as never);
+        throw FinanceErrors.paymentServiceUnavailable();
       }
 
       if (
         error.message.includes('authentication failed') ||
         error.message.includes('Invalid API key')
       ) {
-        throw new BusinessLogicException('t.messages.businessLogicError', {
-          message:
-            'Payment service is temporarily unavailable. Please try again later.',
-        } as never);
+        throw FinanceErrors.paymentServiceUnavailable();
       }
 
       if (
         error.message.includes('billing_data') ||
         error.message.includes('email')
       ) {
-        throw new BusinessLogicException('t.messages.businessLogicError', {
-          message:
-            'Payment setup failed. Please ensure your profile information is complete.',
-        } as never);
+        throw FinanceErrors.paymentSetupFailed();
       }
 
       // For other errors, provide a generic message
-      throw new BusinessLogicException('t.messages.businessLogicError', {
-        message:
-          'Payment could not be processed. Please try again or contact support.',
-      } as never);
+      throw FinanceErrors.paymentProcessingFailed();
     }
   }
 
@@ -774,9 +760,7 @@ export class PaymentService extends BaseService {
     const payment =
       await this.paymentRepository.findByGatewayPaymentId(gatewayPaymentId);
     if (!payment) {
-      throw new BusinessLogicException('t.messages.businessLogicError', {
-        message: `Payment not found for gateway payment ID: ${gatewayPaymentId}`,
-      } as never);
+      throw FinanceErrors.paymentNotFoundByGatewayId(gatewayPaymentId);
     }
 
     // Check if payment is already processed
@@ -865,30 +849,25 @@ export class PaymentService extends BaseService {
 
     // Validate payment can be refunded
     if (payment.status !== PaymentStatus.COMPLETED) {
-      throw new BusinessLogicException('t.messages.businessLogicError', {
-        message: `Payment ${paymentId} is not in a refundable state. Current status: ${payment.status}`,
-      } as never);
+      throw FinanceErrors.paymentNotRefundable(paymentId, payment.status);
     }
 
     if (payment.source !== PaymentSource.EXTERNAL) {
-      throw new BusinessLogicException('t.messages.businessLogicError', {
-        message: `Payment ${paymentId} is not an external payment and cannot be refunded through payment gateway`,
-      } as never);
+      throw FinanceErrors.paymentNotExternal(paymentId);
     }
 
     // Validate refund amount
     if (refundAmount.greaterThan(payment.amount)) {
-      throw new BusinessLogicException('t.messages.businessLogicError', {
-        message: `Refund amount ${refundAmount.toString()} exceeds payment amount ${payment.amount.toString()}`,
-      } as never);
+      throw FinanceErrors.refundAmountExceedsPayment(
+        refundAmount.toString(),
+        payment.amount.toString(),
+      );
     }
 
     // Get gateway payment ID from metadata
     const gatewayPaymentId = payment.metadata?.gatewayPaymentId;
     if (!gatewayPaymentId) {
-      throw new BusinessLogicException('t.messages.businessLogicError', {
-        message: `Payment ${paymentId} does not have gateway payment ID for refund`,
-      } as never);
+      throw FinanceErrors.paymentMissingGatewayId(paymentId);
     }
 
     // Record refund request for monitoring
@@ -910,9 +889,10 @@ export class PaymentService extends BaseService {
         'paymob',
         'failed',
       );
-      throw new BusinessLogicException('t.messages.businessLogicError', {
-        message: `Cannot refund ${refundAmount.toString()}: Student has insufficient available balance (${availableBalance.toString()}). Funds may have been spent on sessions.`,
-      } as never);
+      throw FinanceErrors.insufficientRefundBalance(
+        refundAmount.toString(),
+        availableBalance.toString(),
+      );
     }
 
     try {

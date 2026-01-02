@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { ExportDataUnavailableException } from '../exceptions/custom.exceptions';
+import { CommonErrors } from '../exceptions/common.errors';
 
 /**
  * Converts any array of objects into an Excel (XLSX) file Buffer.
@@ -10,9 +10,7 @@ export function exportToXlsx<T extends Record<string, any>>(
   sheetName = 'Sheet1',
 ): Buffer {
   if (!data || data.length === 0) {
-    throw new ExportDataUnavailableException(
-      't.messages.exportDataUnavailable',
-    );
+    throw CommonErrors.validationFailed('export_data', 'empty');
   }
 
   const worksheet = XLSX.utils.json_to_sheet(data);

@@ -1,13 +1,9 @@
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY, PermissionsMetadata } from '../decorators';
 import { IRequest } from '../interfaces/request.interface';
 import { RolesService } from '@/modules/access-control/services/roles.service';
+import { AuthErrors } from '@/modules/auth/exceptions/auth.errors';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -30,9 +26,7 @@ export class PermissionsGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
-      throw new ForbiddenException({
-        message: { key: 't.messages.notAuthenticated' },
-      });
+      throw AuthErrors.authenticationRequired();
     }
 
     const hasPermission = await this.rolesService.hasPermission(

@@ -1,8 +1,6 @@
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
-import {
-  ResourceNotFoundException,
-  BusinessLogicException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { CentersErrors } from '../exceptions/centers.errors';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { CentersRepository } from '../repositories/centers.repository';
 import { Center } from '../entities/center.entity';
 import { CreateCenterDto } from '../dto/create-center.dto';
@@ -54,7 +52,7 @@ export class CentersService extends BaseService {
       ? await this.centersRepository.findOneSoftDeletedById(centerId)
       : await this.centersRepository.findOne(centerId);
     if (!center) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw CentersErrors.centerNotFound();
     }
 
     // If actor is provided, validate center access
@@ -72,7 +70,7 @@ export class CentersService extends BaseService {
     // Validate timezone if provided
     const timezone = dto.timezone || DEFAULT_TIMEZONE;
     if (!isValidTimezone(timezone)) {
-      throw new BusinessLogicException("Operation failed");
+      throw CentersErrors.centerValidationFailed();
     }
 
     // Create the center
@@ -105,19 +103,19 @@ export class CentersService extends BaseService {
   ): Promise<Center> {
     const center = await this.findCenterById(centerId, actor);
     if (!center) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw CentersErrors.centerNotFound();
     }
 
     if (dto.name && dto.name !== center.name) {
       const existingCenter = await this.centersRepository.findByName(dto.name);
       if (existingCenter) {
-        throw new BusinessLogicException("Operation failed");
+        throw CentersErrors.centerAlreadyExists();
       }
     }
 
     // Validate timezone if provided
     if (dto.timezone !== undefined && !isValidTimezone(dto.timezone)) {
-      throw new BusinessLogicException("Operation failed");
+      throw CentersErrors.centerValidationFailed();
     }
 
     const updatedCenter = await this.centersRepository.updateCenter(
@@ -125,7 +123,7 @@ export class CentersService extends BaseService {
       dto,
     );
     if (!updatedCenter) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw CentersErrors.centerNotFound();
     }
 
     // Emit event after work is done
@@ -154,7 +152,7 @@ export class CentersService extends BaseService {
     const center = await this.findCenterById(centerId, actor, true);
 
     if (!center.deletedAt) {
-      throw new BusinessLogicException("Operation failed");
+      throw CentersErrors.centerAlreadyActive();
     }
 
     await this.centersRepository.restore(centerId);

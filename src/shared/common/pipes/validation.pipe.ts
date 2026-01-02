@@ -1,34 +1,25 @@
-import {
-  PipeTransform,
-  Injectable,
-  ArgumentMetadata,
-  BadRequestException,
-  Inject,
-  Optional,
-} from '@nestjs/common';
+import { PipeTransform, Injectable, ArgumentMetadata } from '@nestjs/common';
 import { validate, ValidationError } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
-import { IRequest } from '../interfaces/request.interface';
-import {
-  ErrorDetail,
-  EnhancedErrorResponse,
-} from '../exceptions/custom.exceptions';
-import { ErrorCode } from '../enums/error-codes.enum';
-import { TimezoneService } from '../services/timezone.service';
-import { EnterpriseLoggerService } from '../services/enterprise-logger.service';
-import { REQUEST } from '@nestjs/core';
-import type { Request } from 'express';
+import { CommonErrors } from '../exceptions/common.errors';
+
+// Performance: Pre-compiled regex patterns
+const NUMERIC_EXTRACTOR = /(\d+(?:\.\d+)?)/;
+const LENGTH_RANGE_EXTRACTOR = /min.*?(\d+).*?max.*?(\d+)/;
+const BYTE_RANGE_EXTRACTOR = /min.*?(\d+).*?max.*?(\d+)/;
 
 /**
  * Custom validation pipe that transforms class-validator errors
- * into structured error responses with i18n support.
+ * into structured error responses with constraint codes.
+ *
+ * Features:
+ * - Dual-source parameter extraction (contexts first, regex fallback)
+ * - Array index support for nested validation
+ * - Performance-optimized regex patterns
+ * - Comprehensive constraint parameter extraction
  */
 @Injectable()
 export class CustomValidationPipe implements PipeTransform {
-  constructor(
-    @Optional() @Inject(EnterpriseLoggerService) private readonly enterpriseLogger?: EnterpriseLoggerService,
-    @Optional() @Inject(REQUEST) private readonly request?: Request,
-  ) {}
   /**
    * Transforms and validates the incoming value.
    *
@@ -45,33 +36,29 @@ export class CustomValidationPipe implements PipeTransform {
       return value;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const object = plainToInstance(metatype, value);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const errors = await validate(object);
 
     if (errors.length > 0) {
-      const validationErrors: ErrorDetail[] =
-        this.flattenValidationErrors(errors);
+      // Extract constraint names with parameters and array index support
+      const validationConstraints = this.extractConstraintNames(errors);
 
-      const errorResponse: EnhancedErrorResponse = {
-        statusCode: 400,
-        message: 'Validation failed',
-        code: ErrorCode.VALIDATION_FAILED,
-        timestamp: new Date().toISOString(),
-        details: validationErrors,
-      };
-
-      // Log validation errors with enterprise logger if available
-      if (this.enterpriseLogger && this.request) {
-        this.enterpriseLogger.logValidationError(
-          this.request,
-          validationErrors,
-          (this.request as unknown as IRequest).actor,
-        );
+      // Group constraints by field with their parameters
+      const groupedConstraints: Record<
+        string,
+        Array<{ constraint: string; params?: Record<string, any> }>
+      > = {};
+      for (const item of validationConstraints) {
+        if (!groupedConstraints[item.field]) {
+          groupedConstraints[item.field] = [];
+        }
+        groupedConstraints[item.field].push({
+          constraint: item.constraint,
+          ...(item.params && { params: item.params }),
+        });
       }
 
-      throw new BadRequestException(errorResponse);
+      throw CommonErrors.validationErrors(groupedConstraints);
     }
 
     return object;
@@ -95,42 +82,72 @@ export class CustomValidationPipe implements PipeTransform {
   }
 
   /**
-   * Flattens nested validation errors into a flat array.
+   * Extracts constraint names with basic parameters from validation errors.
+   * Supports array indices for complex nested validation (e.g., phones[2].number).
    *
    * @param errors Array of validation errors
-   * @returns Flattened array of error details
+   * @param parentPath Current path in the object hierarchy
+   * @param isInArray Whether we're currently processing an array element
+   * @returns Array of field-constraint objects with parameters
    */
-  private flattenValidationErrors(errors: ValidationError[]): ErrorDetail[] {
-    const result: ErrorDetail[] = [];
+  private extractConstraintNames(
+    errors: ValidationError[],
+    parentPath = '',
+    isInArray = false,
+  ): Array<{
+    field: string;
+    constraint: string;
+    params?: Record<string, any>;
+  }> {
+    const result: Array<{
+      field: string;
+      constraint: string;
+      params?: Record<string, any>;
+    }> = [];
 
     for (const error of errors) {
-      // Process all constraints, not just the first one
+      // Build the current field path
+      let currentPath: string;
+
+      // Handle array indices - if property is a number and we're in an array context
+      if (isInArray && /^\d+$/.test(error.property)) {
+        // This is an array element, reconstruct the path
+        currentPath = parentPath
+          ? `${parentPath}[${error.property}]`
+          : `[${error.property}]`;
+      } else {
+        // Regular property or nested object
+        currentPath = parentPath
+          ? `${parentPath}.${error.property}`
+          : error.property;
+      }
+
+      // Process all constraints for this field
       if (error.constraints) {
         const constraintKeys = Object.keys(error.constraints);
         for (const constraintKey of constraintKeys) {
-          const errorMessage = this.getValidationMessage(
-            error.property,
+          const params = this.extractBasicConstraintParams(
             constraintKey,
+            error,
           );
-
-          const errorDetail: ErrorDetail = {
-            field: error.property,
-            value: error.value,
-            message: errorMessage,
-          };
-          result.push(errorDetail);
+          result.push({
+            field: currentPath,
+            constraint: constraintKey,
+            ...(params && Object.keys(params).length > 0 && { params }),
+          });
         }
       }
 
       // Handle nested validation errors
       if (error.children && error.children.length > 0) {
-        const nestedErrors = this.flattenValidationErrors(error.children);
-        // Prefix nested field names with parent field
-        const prefixedErrors = nestedErrors.map((nestedError) => ({
-          ...nestedError,
-          field: `${error.property}.${nestedError.field}`,
-        }));
-        result.push(...prefixedErrors);
+        // Determine if we're entering an array context
+        const enteringArray = /^\d+$/.test(error.children[0]?.property || '');
+        const nestedConstraints = this.extractConstraintNames(
+          error.children,
+          currentPath,
+          enteringArray,
+        );
+        result.push(...nestedConstraints);
       }
     }
 
@@ -138,39 +155,120 @@ export class CustomValidationPipe implements PipeTransform {
   }
 
   /**
-   * Maps class-validator constraint keys to plain English validation messages.
+   * Extracts basic parameters for common constraints using dual-source strategy.
    *
-   * @param field The field name
-   * @param constraintKey The constraint key from class-validator
-   * @returns The validation error message
+   * Strategy:
+   * 1. FIRST: Check error.contexts (developer intent - most reliable)
+   * 2. FALLBACK: Regex parsing of constraint messages (automation)
+   *
+   * This ensures reliability even with custom validation messages.
    */
-  private getValidationMessage(field: string, constraintKey: string): string {
-    // Map class-validator constraint keys to plain English messages
-    const constraintMap: Record<string, string> = {
-      isNotEmpty: `${field} is required`,
-      isEmail: 'Invalid email format',
-      isPhoneNumber: 'Invalid phone number format',
-      isStrongPassword: 'Password does not meet strength requirements',
-      matches: 'Invalid format',
-      minLength: `${field} is too short`,
-      maxLength: `${field} is too long`,
-      arrayMinSize: 'Not enough items',
-      arrayMaxSize: 'Too many items',
-      isUuid: 'Invalid UUID format',
-      isString: 'Must be a string',
-      isBoolean: 'Must be a boolean',
-      isEnum: 'Invalid value',
-      isDateString: 'Invalid date format',
-      isIso8601OrDate: 'Invalid date format',
-      isISO8601: 'Invalid date format',
-      isArray: 'Must be an array',
-      isNumber: 'Must be a number',
-      isInt: 'Must be an integer',
-      min: `${field} is too small`,
-      max: `${field} is too large`,
-    };
+  private extractBasicConstraintParams(
+    constraintKey: string,
+    error: ValidationError,
+  ): Record<string, any> | undefined {
+    // PHASE 1: Check contexts first (developer explicitly provided parameters)
+    if (error.contexts && error.contexts[constraintKey]) {
+      const contextParams = error.contexts[constraintKey];
+      // Ensure we return a plain object
+      return typeof contextParams === 'object'
+        ? { ...contextParams }
+        : { value: contextParams };
+    }
 
-    return constraintMap[constraintKey] || 'Invalid value';
+    // PHASE 2: Fallback to regex parsing (automation)
+    const params: Record<string, any> = {};
+    const constraintMessage = error.constraints?.[constraintKey] || '';
+
+    switch (constraintKey) {
+      case 'minLength':
+      case 'maxLength':
+        const lengthMatch = constraintMessage.match(NUMERIC_EXTRACTOR);
+        if (lengthMatch) {
+          params[constraintKey === 'minLength' ? 'min' : 'max'] = parseInt(
+            lengthMatch[1],
+            10,
+          );
+        }
+        break;
+
+      case 'min':
+      case 'max':
+        const valueMatch = constraintMessage.match(NUMERIC_EXTRACTOR);
+        if (valueMatch) {
+          params[constraintKey] = parseFloat(valueMatch[1]);
+        }
+        break;
+
+      case 'arrayMinSize':
+      case 'arrayMaxSize':
+        const arraySizeMatch = constraintMessage.match(NUMERIC_EXTRACTOR);
+        if (arraySizeMatch) {
+          params[constraintKey === 'arrayMinSize' ? 'min' : 'max'] = parseInt(
+            arraySizeMatch[1],
+            10,
+          );
+        }
+        break;
+
+      case 'length':
+        const rangeMatch = constraintMessage.match(LENGTH_RANGE_EXTRACTOR);
+        if (rangeMatch) {
+          params.min = parseInt(rangeMatch[1], 10);
+          params.max = parseInt(rangeMatch[2], 10);
+        }
+        break;
+
+      case 'isDivisibleBy':
+        const divisibleMatch = constraintMessage.match(NUMERIC_EXTRACTOR);
+        if (divisibleMatch) {
+          params.divisor = parseFloat(divisibleMatch[1]);
+        }
+        break;
+
+      case 'isByteLength':
+        const byteRangeMatch = constraintMessage.match(BYTE_RANGE_EXTRACTOR);
+        if (byteRangeMatch) {
+          params.minBytes = parseInt(byteRangeMatch[1], 10);
+          params.maxBytes = parseInt(byteRangeMatch[2], 10);
+        }
+        break;
+
+      case 'isEnum':
+        // Extract enum values from message: "must be one of the following values: admin, user"
+        const enumPart = constraintMessage.split(': ')[1];
+        if (enumPart) {
+          params.allowedValues = enumPart.split(', ').map((v) => v.trim());
+        }
+        break;
+
+      case 'matches':
+        // For regex patterns, client needs to know from DTO
+        break;
+
+      case 'isIn':
+      case 'isNotIn':
+        // Extract allowed/forbidden values if present in message
+        const valuesPart = constraintMessage.split(': ')[1];
+        if (valuesPart) {
+          params.values = valuesPart.split(', ').map((v) => v.trim());
+        }
+        break;
+
+      case 'arrayContains':
+      case 'arrayNotContains':
+        // Try to extract required values from message
+        const arrayValuesPart = constraintMessage.split(': ')[1];
+        if (arrayValuesPart) {
+          params.requiredValues = arrayValuesPart
+            .split(', ')
+            .map((v) => v.trim());
+        }
+        break;
+
+      // Other constraints like isEmail, isNotEmpty, isString, etc. don't need parameters
+    }
+
+    return Object.keys(params).length > 0 ? params : undefined;
   }
-
 }

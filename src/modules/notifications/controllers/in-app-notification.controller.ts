@@ -34,7 +34,7 @@ export class InAppNotificationController {
       actor.id,
       query,
     );
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get('unread')
@@ -51,7 +51,7 @@ export class InAppNotificationController {
         profileId,
       );
 
-    return ControllerResponse.success(notifications, 'Data retrieved successfully');
+    return ControllerResponse.success(notifications);
   }
 
   @Get('unread/count')
@@ -67,14 +67,11 @@ export class InAppNotificationController {
       profileId,
     );
 
-    return ControllerResponse.success(
-      {
-        count,
-        profileType: profileType ?? null,
-        profileId: profileId ?? null,
-      },
-      'Data retrieved successfully',
-    );
+    return ControllerResponse.success({
+      count,
+      profileType: profileType ?? null,
+      profileId: profileId ?? null,
+    });
   }
 
   @Put('read')
@@ -85,7 +82,7 @@ export class InAppNotificationController {
       dto.notificationIds,
       actor.id,
     );
-    return ControllerResponse.message('Resource updated successfully');
+    return ControllerResponse.success(null);
   }
 
   @Put('read-all')
@@ -101,7 +98,7 @@ export class InAppNotificationController {
       profileType,
       profileId,
     );
-    return ControllerResponse.message('Resource updated successfully');
+    return ControllerResponse.success(null);
   }
 
   @Put(':id/archive')
@@ -112,7 +109,7 @@ export class InAppNotificationController {
     @Param() params: NotificationIdParamDto,
   ) {
     await this.inAppNotificationService.archive(actor.id, params.id);
-    return ControllerResponse.message('Operation completed successfully');
+    return ControllerResponse.success(null);
   }
 
   @Get('archived')

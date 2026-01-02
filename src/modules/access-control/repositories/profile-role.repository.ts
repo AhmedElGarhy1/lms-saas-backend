@@ -1,13 +1,10 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { In, IsNull } from 'typeorm';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { ProfileRole } from '../entities/profile-role.entity';
 import { Role } from '../entities/role.entity';
 import { DefaultRoles } from '../constants/roles';
+import { AccessControlErrors } from '../exceptions/access-control.errors';
 import { AssignRoleDto } from '../dto/assign-role.dto';
 import { Permission } from '../entities/permission.entity';
 import { PermissionRepository } from './permission.repository';
@@ -191,9 +188,7 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
     const role = await roleRepo.findOneBy({ id: data.roleId });
 
     if (!role?.isSameScope(data.centerId)) {
-      throw new ForbiddenException(
-        'You are not authorized to assign this role',
-      );
+      throw AccessControlErrors.missingPermission('ASSIGN_ROLES');
     }
 
     const repo = this.getRepository();
@@ -218,9 +213,7 @@ export class ProfileRoleRepository extends BaseRepository<ProfileRole> {
     }
 
     if (!existingProfileRole.role.isSameScope(data.centerId)) {
-      throw new ForbiddenException(
-        'You are not authorized to remove this role',
-      );
+      throw AccessControlErrors.missingPermission('REMOVE_ROLES');
     }
 
     await this.remove(existingProfileRole.id);

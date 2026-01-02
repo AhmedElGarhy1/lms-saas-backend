@@ -4,7 +4,7 @@ import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { ClassesErrors } from '../exceptions/classes.errors';
 import { IsNull } from 'typeorm';
 import { TimezoneService } from '@/shared/common/services/timezone.service';
 
@@ -143,7 +143,7 @@ export class ClassStaffRepository extends BaseRepository<ClassStaff> {
   async revokeClassStaffAccess(data: ClassStaffAccessDto): Promise<ClassStaff> {
     const existingAccess = await this.findClassStaffAccess(data);
     if (!existingAccess) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw ClassesErrors.classStaffAccessNotFound();
     }
 
     const leftAt = new Date();

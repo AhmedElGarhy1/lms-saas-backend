@@ -102,7 +102,7 @@ export class BranchesAccessController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('bulk/revoke')
@@ -134,6 +134,6 @@ export class BranchesAccessController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 }

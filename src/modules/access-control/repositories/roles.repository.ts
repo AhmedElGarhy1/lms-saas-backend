@@ -7,7 +7,7 @@ import { RoleResponseDto } from '../dto/role-response.dto';
 import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { CreateRoleRequestDto } from '../dto/create-role.dto';
 import { RolePermissionRepository } from './role-permission.repository';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { AccessControlErrors } from '../exceptions/access-control.errors';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { In } from 'typeorm';
@@ -57,7 +57,7 @@ export class RolesRepository extends BaseRepository<Role> {
     const { rolePermissions, ...roleData } = data;
     const role = await this.update(roleId, roleData);
     if (!role) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw AccessControlErrors.roleNotFound();
     }
     const existingRolePermissions =
       await this.rolePermissionRepository.findMany({

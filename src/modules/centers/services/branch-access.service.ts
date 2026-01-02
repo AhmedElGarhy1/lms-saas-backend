@@ -1,9 +1,7 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  BranchAccessDeniedException,
-  BusinessLogicException,
-  ResourceNotFoundException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { CentersErrors } from '../exceptions/centers.errors';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 import { BranchAccessRepository } from '../repositories/branch-access.repository';
 import { BranchAccessDto } from '../dto/branch-access.dto';
@@ -98,7 +96,7 @@ export class BranchAccessService extends BaseService {
         centerId: data.centerId,
         branchId: data.branchId,
       });
-      throw new BranchAccessDeniedException('Branch access denied');
+      throw CentersErrors.branchAccessDenied();
     }
   }
 
@@ -192,8 +190,8 @@ export class BranchAccessService extends BaseService {
    * @param data - BranchAccessDto containing userProfileId, centerId, and branchId
    * @param actor - The user performing the action
    * @returns Created BranchAccess assignment
-   * @throws ResourceNotFoundException if profile doesn't exist
-   * @throws BusinessLogicException if profile is not STAFF/ADMIN or already assigned
+   * @throws CommonErrors.emergencyNotFound() if profile doesn't exist
+   * @throws CentersErrors.profileInvalidTypeForBranchAccess() if profile is not STAFF/ADMIN or already assigned
    */
   async assignProfileToBranch(
     data: BranchAccessDto,
@@ -210,19 +208,19 @@ export class BranchAccessService extends BaseService {
 
     const profile = await this.userProfileService.findOne(data.userProfileId);
     if (!profile) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw UserProfileErrors.userProfileNotFound();
     }
 
     if (
       profile.profileType !== ProfileType.STAFF &&
       profile.profileType !== ProfileType.ADMIN
     ) {
-      throw new BusinessLogicException("Operation failed");
+      throw CentersErrors.profileInvalidTypeForBranchAccess();
     }
 
     const canAccess = await this.canBranchAccess(data);
     if (canAccess) {
-      throw new BusinessLogicException("Operation failed");
+      throw CentersErrors.profileInvalidTypeForBranchAccess();
     }
 
     return await this.branchAccessRepository.grantBranchAccess(data);

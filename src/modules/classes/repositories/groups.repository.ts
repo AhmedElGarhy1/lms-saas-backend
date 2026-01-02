@@ -6,7 +6,7 @@ import { Pagination } from '@/shared/common/types/pagination.types';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { GroupStudent } from '../entities/group-student.entity';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { ClassesErrors } from '../exceptions/classes.errors';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 
@@ -205,7 +205,7 @@ export class GroupsRepository extends BaseRepository<Group> {
    * @param id - The group ID
    * @param includeDeleted - Whether to include soft-deleted groups
    * @returns Group with all relations
-   * @throws ResourceNotFoundException if group not found
+   * @throws ClassesErrors.groupNotFound() if group not found
    */
   async findGroupWithRelationsOrThrow(
     id: string,
@@ -213,7 +213,7 @@ export class GroupsRepository extends BaseRepository<Group> {
   ): Promise<GroupWithStudentCount> {
     const group = await this.findGroupWithRelations(id, includeDeleted);
     if (!group) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw ClassesErrors.groupNotFound();
     }
     return group;
   }

@@ -24,7 +24,7 @@ export class PerformanceController {
   })
   getDatabasePerformance() {
     const result = this.databasePerformanceService.getPerformanceStats();
-    return ControllerResponse.success(result, 'Performance metrics retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get('transactions')
@@ -35,7 +35,7 @@ export class PerformanceController {
   })
   getTransactionPerformance() {
     const result = this.databasePerformanceService.getTransactionMetrics();
-    return ControllerResponse.success(result, 'Performance metrics retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get('health')
@@ -61,10 +61,10 @@ export class PerformanceController {
         slowQueries: dbStats.slowQueries,
         totalQueries: dbStats.totalQueries,
       },
-      transactions: "Transaction performance metrics",
+      transactions: 'Transaction performance metrics',
       alerts: alertStats,
     };
-    return ControllerResponse.success(result, 'Performance metrics retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get('alerts')
@@ -75,7 +75,7 @@ export class PerformanceController {
   })
   async getActiveAlerts() {
     const result = this.alertsService.getActiveAlerts();
-    return ControllerResponse.success(result, 'Performance metrics retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get('stats')
@@ -95,7 +95,7 @@ export class PerformanceController {
         nodeVersion: process.version,
       },
     };
-    return ControllerResponse.success(result, 'Performance metrics retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('alerts/resolve/:alertId')
@@ -106,7 +106,7 @@ export class PerformanceController {
   })
   async resolveAlert(@Body('alertId') alertId: string) {
     await this.alertsService.resolveAlert(alertId);
-    return ControllerResponse.message('Alert resolved successfully');
+    return ControllerResponse.success(null);
   }
 
   private calculateOverallErrorRate(

@@ -5,20 +5,16 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-  Inject,
-  Optional,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { IRequest } from '../interfaces/request.interface';
+import { StandardizedErrorResponse } from '../exceptions/error.types';
 import {
-  EnhancedErrorResponse,
-  ErrorDetail,
-} from '../exceptions/custom.exceptions';
-import { ErrorCode } from '../enums/error-codes.enum';
-import { formatRemainingTime } from '@/modules/rate-limit/utils/rate-limit-time-formatter';
-import { ERROR_MESSAGES } from '../constants/database-errors.constants';
-import { EnterpriseLoggerService } from '../services/enterprise-logger.service';
-import { RequestContextService } from '../services/request-context.service';
+  DomainException,
+  SystemException,
+} from '../exceptions/domain.exception';
+import { AllErrorCodes, CommonErrorCode } from '../enums/error-codes';
+import { AuthErrorCode } from '@/modules/auth/enums/auth.codes';
+import { AccessControlErrorCode } from '@/modules/access-control/enums/access-control.codes';
 
 /**
  * Global exception filter
@@ -28,15 +24,6 @@ import { RequestContextService } from '../services/request-context.service';
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger: Logger = new Logger(GlobalExceptionFilter.name);
-
-  constructor(
-    @Optional()
-    @Inject(EnterpriseLoggerService)
-    private readonly enterpriseLogger?: EnterpriseLoggerService,
-    @Optional()
-    @Inject(RequestContextService)
-    private readonly requestContext?: RequestContextService,
-  ) {}
 
   /**
    * Main exception handler
@@ -49,9 +36,91 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let status: number;
-    let errorResponse: EnhancedErrorResponse;
+    let errorResponse: StandardizedErrorResponse;
 
-    if (exception instanceof HttpException) {
+    // Handle DomainException and SystemException first
+    if (
+      exception instanceof DomainException ||
+      exception instanceof SystemException
+    ) {
+      const exceptionResponse = exception.getResponse() as any;
+      status = exception.getStatus();
+
+      let details: any[] | undefined;
+      if (
+        exception instanceof DomainException &&
+        exception.details &&
+        exception.details.length > 0
+      ) {
+        details = exception.details;
+      } else if (exception instanceof SystemException && exception.metadata) {
+        details = [exception.metadata];
+      }
+
+      // Include debugging information in development mode
+      const isDevelopment = process.env.NODE_ENV !== 'production';
+      const debugInfo = isDevelopment
+        ? {
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV || 'development',
+            requestId: (request as any).requestId,
+            correlationId: (request as any).correlationId,
+          }
+        : undefined;
+
+      const stackTrace =
+        isDevelopment && exception instanceof Error
+          ? this.formatStackTrace(exception.stack)
+          : undefined;
+
+      errorResponse = {
+        success: false,
+        error: {
+          code: exceptionResponse.errorCode,
+          ...(details && { details }),
+          ...(stackTrace && { stack: stackTrace }),
+          ...(debugInfo && { debug: debugInfo }),
+        },
+      };
+
+      // Log detailed error information to console in development mode
+      if (isDevelopment) {
+        console.error('\n🚨 DEVELOPMENT ERROR DETAILS:');
+        console.error('='.repeat(80));
+        console.error(`❌ Code: ${exceptionResponse.errorCode}`);
+        console.error(`📍 Path: ${request.method} ${request.url}`);
+        if (exception.message) {
+          console.error(`💬 Message: ${exception.message}`);
+        }
+        if (details && details.length > 0) {
+          console.error('📋 Details:', JSON.stringify(details, null, 2));
+        }
+        if (stackTrace && stackTrace.length > 0) {
+          console.error('🔍 Stack Trace:');
+          stackTrace.forEach((line, index) => {
+            console.error(`  ${index + 1}. ${line}`);
+          });
+        }
+        console.error('='.repeat(80));
+        console.error('');
+      }
+
+      // Log differently based on exception type
+      if (exception instanceof DomainException) {
+        this.logger.warn(`Domain error: ${exception.errorCode}`, {
+          code: exception.errorCode,
+          details: exception.details,
+          path: request.url,
+        });
+      } else if (exception instanceof SystemException) {
+        this.logger.error(`System error: ${exception.errorCode}`, {
+          code: exception.errorCode,
+          metadata: exception.metadata,
+          path: request.url,
+          stack: exception.stack,
+        });
+      }
+    } else if (exception instanceof HttpException) {
       status = exception.getStatus();
 
       // Handle 304 Not Modified specially - don't send error response body
@@ -65,80 +134,109 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
       const exceptionResponse = exception.getResponse();
 
-      // If it's already our custom exception format, use it
-      if (
-        typeof exceptionResponse === 'object' &&
-        'code' in exceptionResponse &&
-        'message' in exceptionResponse
-      ) {
-        errorResponse = exceptionResponse as EnhancedErrorResponse;
+      // Include debugging information in development mode
+      const isDevelopment = process.env.NODE_ENV !== 'production';
+      const debugInfo = isDevelopment
+        ? {
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV || 'development',
+            requestId: (request as any).requestId,
+            correlationId: (request as any).correlationId,
+          }
+        : undefined;
 
-        // Ensure message is a string
-        if (typeof errorResponse.message !== 'string') {
-          errorResponse.message = 'An error occurred';
+      const stackTrace =
+        isDevelopment && exception instanceof Error
+          ? this.formatStackTrace(exception.stack)
+          : undefined;
+
+      // Convert all exceptions to standardized minimal format
+      errorResponse = {
+        success: false,
+        error: {
+          code: this.getGenericErrorCode(status),
+          ...(stackTrace && { stack: stackTrace }),
+          ...(debugInfo && { debug: debugInfo }),
+        },
+      };
+
+      // Log detailed error information to console in development mode
+      if (isDevelopment) {
+        console.error('\n🚨 DEVELOPMENT ERROR DETAILS:');
+        console.error('='.repeat(80));
+        console.error(`❌ Code: ${this.getGenericErrorCode(status)}`);
+        console.error(`📍 Path: ${request.method} ${request.url}`);
+        console.error(`🔢 Status: ${status}`);
+        if (exception.message) {
+          console.error(`💬 Message: ${exception.message}`);
         }
-      } else {
-        // Convert standard NestJS exceptions to our format
-        errorResponse = this.convertToStandardFormat(
-          status,
-          exceptionResponse,
-          request,
-        );
+        if (stackTrace && stackTrace.length > 0) {
+          console.error('🔍 Stack Trace:');
+          stackTrace.forEach((line, index) => {
+            console.error(`  ${index + 1}. ${line}`);
+          });
+        }
+        console.error('='.repeat(80));
+        console.error('');
       }
     } else {
       // Handle unexpected errors
       status = HttpStatus.INTERNAL_SERVER_ERROR;
-      errorResponse = this.createInternalServerErrorResponse(
-        request,
-        exception,
-      );
-    }
 
-    // Add request metadata
-    errorResponse.path = request.url;
-    errorResponse.method = request.method;
-    errorResponse.timestamp = new Date().toISOString();
-
-    // Log the error using enterprise logger if available, fallback to standard logging
-    if (this.enterpriseLogger && this.requestContext) {
-      this.logErrorEnterprise(exception, request, errorResponse);
-    } else {
-      this.logError(exception, request, errorResponse);
-    }
-
-    // Send the error response
-    if (Array.isArray(errorResponse.details)) {
-      errorResponse.details = errorResponse.details.map(
-        (detail: ErrorDetail) => {
-          if (
-            typeof detail.message === 'object' &&
-            detail.message !== null &&
-            'key' in detail.message
-          ) {
-            // Use plain string message directly
-            return {
-              field: detail.field,
-              value: detail.value,
-              message:
-                typeof detail.message === 'string'
-                  ? detail.message
-                  : 'Validation error',
-            };
+      // Include debugging information in development mode
+      const isDevelopment = process.env.NODE_ENV !== 'production';
+      const debugInfo = isDevelopment
+        ? {
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV || 'development',
+            requestId: (request as any).requestId,
+            correlationId: (request as any).correlationId,
           }
-          // If already a string, keep it as-is
-          return {
-            field: detail.field,
-            value: detail.value,
-            message:
-              typeof detail.message === 'string'
-                ? detail.message
-                : String(detail.message),
-          };
+        : undefined;
+
+      const stackTrace =
+        isDevelopment && exception instanceof Error
+          ? this.formatStackTrace(exception.stack)
+          : undefined;
+
+      errorResponse = {
+        success: false,
+        error: {
+          code: CommonErrorCode.INTERNAL_SERVER_ERROR,
+          ...(stackTrace && { stack: stackTrace }),
+          ...(debugInfo && { debug: debugInfo }),
         },
-      );
+      };
+
+      // Log detailed error information to console in development mode
+      if (isDevelopment) {
+        console.error('\n🚨 DEVELOPMENT ERROR DETAILS (UNEXPECTED):');
+        console.error('='.repeat(80));
+        console.error(`❌ Code: ${CommonErrorCode.INTERNAL_SERVER_ERROR}`);
+        console.error(`📍 Path: ${request.method} ${request.url}`);
+        console.error(`🔢 Status: ${status}`);
+        console.error(`💬 Type: Unexpected Error`);
+        if (exception && typeof exception === 'object') {
+          console.error(
+            `🔍 Exception:`,
+            exception.constructor?.name || 'Unknown',
+          );
+          if (exception instanceof Error && exception.message) {
+            console.error(`💬 Message: ${exception.message}`);
+          }
+        }
+        if (stackTrace && stackTrace.length > 0) {
+          console.error('🔍 Stack Trace:');
+          stackTrace.forEach((line, index) => {
+            console.error(`  ${index + 1}. ${line}`);
+          });
+        }
+        console.error('='.repeat(80));
+        console.error('');
+      }
     }
 
-    // Send the standardized response (translated)
+    // Send the standardized response
     // Check if response has already been sent (e.g., by ETagInterceptor with 304)
     if (!response.headersSent && !response.finished) {
       response.status(status).json(errorResponse);
@@ -158,228 +256,22 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
   }
 
-  private convertToStandardFormat(
-    status: number,
-    exceptionResponse: string | object,
-    request: Request,
-  ): EnhancedErrorResponse {
-    const rawMessage =
-      typeof exceptionResponse === 'string'
-        ? exceptionResponse
-        : (exceptionResponse as { message?: string })?.message ||
-          'An error occurred';
-
-    // Extract retryAfter from rate limit exception (if present)
-    // Rate limit guard already provides retryAfter in the exception response
-    let retryAfter: number | undefined;
-    if (
-      status === 429 && // HttpStatus.TOO_MANY_REQUESTS
-      typeof exceptionResponse === 'object' &&
-      exceptionResponse !== null
-    ) {
-      retryAfter = (exceptionResponse as { retryAfter?: number })?.retryAfter;
-    }
-
-    // Generate plain English error message
-    let message: string;
-    if (status === 429 && retryAfter) {
-      // Rate limit with retry after
-      const remainingTime = formatRemainingTime(retryAfter);
-      message = `Rate limit exceeded. Try again in ${remainingTime}`;
-    } else if (typeof rawMessage === 'string' && rawMessage.startsWith('t.')) {
-      // Translation key - convert to plain English
-      message = rawMessage
-        .replace('t.messages.', '')
-        .replace(/([A-Z])/g, ' $1')
-        .toLowerCase();
-    } else {
-      // Use raw message or generic error
-      message =
-        typeof rawMessage === 'string' ? rawMessage : 'An error occurred';
-    }
-
-    return {
-      statusCode: status,
-      message,
-      code: this.getErrorCode(status),
-      timestamp: new Date().toISOString(),
-      path: request.url,
-      method: request.method,
-    };
-  }
-
-  private createInternalServerErrorResponse(
-    request: Request,
-    exception: unknown,
-  ): EnhancedErrorResponse {
-    // Log the exception for debugging (system log - stays in English)
-    try {
-      if (exception instanceof Error) {
-        const message = exception.message || 'Unknown error';
-        const stack = exception.stack || 'No stack trace available';
-        this.logger.error(`Internal server error - ${message}`, stack);
-      } else {
-        // Handle cases where exception is undefined, null, or not an Error instance
-        const errorMessage = exception
-          ? String(exception)
-          : 'Unknown error (exception is undefined/null)';
-        this.logger.error('Internal server error', errorMessage);
-      }
-    } catch (loggerError) {
-      // Fallback logging if the main logger fails
-      console.error('Failed to log internal server error:', loggerError);
-      console.error('Original exception:', exception);
-    }
-    // Use plain English error message
-    const message = 'Internal server error';
-
-    return {
-      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      message,
-      code: ErrorCode.INTERNAL_SERVER_ERROR,
-      timestamp: new Date().toISOString(),
-      path: request.url,
-      method: request.method,
-    };
-  }
-
-  private getErrorCode(status: number): ErrorCode {
-    const errorCodes: Record<number, ErrorCode> = {
-      [HttpStatus.BAD_REQUEST]: ErrorCode.BAD_REQUEST,
-      [HttpStatus.UNAUTHORIZED]: ErrorCode.UNAUTHORIZED,
-      [HttpStatus.FORBIDDEN]: ErrorCode.FORBIDDEN,
-      [HttpStatus.NOT_FOUND]: ErrorCode.NOT_FOUND,
-      [HttpStatus.CONFLICT]: ErrorCode.CONFLICT,
-      [HttpStatus.UNPROCESSABLE_ENTITY]: ErrorCode.UNPROCESSABLE_ENTITY,
-      [HttpStatus.TOO_MANY_REQUESTS]: ErrorCode.TOO_MANY_REQUESTS,
-      [HttpStatus.INTERNAL_SERVER_ERROR]: ErrorCode.INTERNAL_SERVER_ERROR,
-      [HttpStatus.SERVICE_UNAVAILABLE]: ErrorCode.SERVICE_UNAVAILABLE,
-    };
-
-    return errorCodes[status] || ErrorCode.UNKNOWN_ERROR;
-  }
-
-  /**
-   * Enterprise-grade error logging with comprehensive context
-   */
-  private logErrorEnterprise(
-    exception: unknown,
-    request: Request,
-    errorResponse: EnhancedErrorResponse,
-  ): void {
-    // Extract user from request if available
-    const user = (request as IRequest).actor;
-
-    // Use enterprise logger for comprehensive error logging
-    this.enterpriseLogger!.logHttpException(
-      exception,
-      request,
-      errorResponse.statusCode,
-      user,
-    );
-  }
-
-  /**
-   * Legacy error logging method (kept for backward compatibility)
-   */
-  private logError(
-    exception: unknown,
-    request: Request,
-    errorResponse: EnhancedErrorResponse,
-  ): void {
-    try {
-      let logMessage: string;
-
-      // Use plain string message
-      if (typeof errorResponse?.message === 'string') {
-        logMessage = errorResponse.message;
-      } else {
-        // Fallback for unexpected message format
-        logMessage = String(errorResponse?.message || 'Unknown error');
-      }
-
-      const errorContext = {
-        method: request?.method || 'UNKNOWN',
-        url: request?.url || 'UNKNOWN',
-        userAgent: request?.get ? request.get('User-Agent') : 'UNKNOWN',
-        ip: request?.ip || 'UNKNOWN',
-        statusCode: errorResponse?.statusCode || 500,
-        message: logMessage, // Use English translation for logging
-      };
-
-      if (exception instanceof HttpException) {
-        // Check if there's an original error/stack preserved (accessing internal HttpException properties)
-        const originalError = (exception as { originalError?: unknown })
-          .originalError;
-        const originalStack = (exception as { originalStack?: string })
-          .originalStack;
-
-        try {
-          if (originalStack || originalError) {
-            // Log with full stack trace if available
-            this.logger.error(
-              `HTTP Exception occurred - ${JSON.stringify(errorContext)}`,
-              originalStack ||
-                (originalError instanceof Error
-                  ? originalError.stack
-                  : String(originalError)),
-            );
-          } else if (exception instanceof Error && exception.stack) {
-            // Log with exception's own stack trace
-            this.logger.error(
-              `HTTP Exception occurred - ${JSON.stringify(errorContext)}`,
-              exception.stack,
-            );
-          } else {
-            // Fallback to warn if no stack trace available
-            this.logger.warn(
-              `HTTP Exception occurred - ${JSON.stringify(errorContext)}`,
-            );
-          }
-        } catch (loggerError) {
-          // Emergency fallback for HttpException logging
-          console.error('CRITICAL: Failed to log HttpException', {
-            errorContext,
-            exception: exception?.message || String(exception),
-            loggerError: loggerError?.message,
-          });
-        }
-      } else {
-        try {
-          if (exception instanceof Error) {
-            this.logger.error(
-              `Unexpected error occurred - ${JSON.stringify(errorContext)}`,
-              exception.stack || String(exception),
-            );
-          } else {
-            this.logger.error(
-              `Unexpected error occurred - ${JSON.stringify({ ...errorContext, error: String(exception) })}`,
-            );
-          }
-        } catch (loggerError) {
-          // Emergency fallback for unexpected error logging
-          console.error('CRITICAL: Failed to log unexpected error', {
-            errorContext,
-            exception: String(exception),
-            loggerError: loggerError?.message,
-          });
-        }
-      }
-    } catch (criticalError) {
-      // Ultimate fallback - prevents recursive error loop
-      console.error(
-        '🚨 CRITICAL: Exception filter logError method failed completely',
-        {
-          originalException: exception?.toString?.() || String(exception),
-          errorResponse: errorResponse?.toString?.() || 'undefined',
-          request: {
-            method: request?.method,
-            url: request?.url,
-            ip: request?.ip,
-          },
-          criticalError: criticalError?.message || String(criticalError),
-        },
-      );
+  private getGenericErrorCode(status: number): AllErrorCodes {
+    switch (status) {
+      case 400:
+        return CommonErrorCode.VALIDATION_FAILED;
+      case 401:
+        return AuthErrorCode.AUTHENTICATION_FAILED;
+      case 403:
+        return AccessControlErrorCode.MISSING_PERMISSION;
+      case 404:
+        return CommonErrorCode.RESOURCE_NOT_FOUND;
+      case 429:
+        return CommonErrorCode.TOO_MANY_ATTEMPTS;
+      case 500:
+        return CommonErrorCode.INTERNAL_SERVER_ERROR;
+      default:
+        return CommonErrorCode.INTERNAL_SERVER_ERROR;
     }
   }
 
@@ -388,4 +280,24 @@ export class GlobalExceptionFilter implements ExceptionFilter {
    * @param translationMsg - Translation message object with key and optional args
    * @returns The key (translation system removed)
    */
+
+  /**
+   * Format stack trace for development mode responses
+   */
+  private formatStackTrace(stack: string | undefined): string[] | null {
+    if (!stack) return null;
+
+    // Split stack into lines and clean up
+    const lines = stack
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    // Remove the first line (usually "Error: message") since we show message separately
+    if (lines.length > 0 && lines[0].startsWith('Error:')) {
+      lines.shift();
+    }
+
+    return lines;
+  }
 }

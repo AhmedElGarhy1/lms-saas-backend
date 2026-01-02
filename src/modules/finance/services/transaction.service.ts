@@ -4,7 +4,7 @@ import { Transaction } from '../entities/transaction.entity';
 import { TransactionType } from '../enums/transaction-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
-import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
+import { FinanceErrors } from '../exceptions/finance.errors';
 import { Transactional } from '@nestjs-cls/transactional';
 import { randomUUID } from 'crypto';
 
@@ -33,7 +33,7 @@ export class TransactionService extends BaseService {
     balanceAfter?: Money,
   ): Promise<Transaction> {
     if (!balanceAfter) {
-      throw new Error('balanceAfter is required for transaction integrity');
+      throw FinanceErrors.transactionBalanceRequired();
     }
 
     return this.transactionRepository.create({
@@ -89,9 +89,7 @@ export class TransactionService extends BaseService {
       await this.transactionRepository.findByCorrelationId(correlationId);
 
     if (transactions.length === 0) {
-      throw new BusinessLogicException('t.messages.businessLogicError', {
-        message: 'No transactions found for correlation ID',
-      } as never);
+      throw FinanceErrors.transactionNotFound();
     }
 
     const total = transactions.reduce(
@@ -100,9 +98,10 @@ export class TransactionService extends BaseService {
     );
 
     if (!total.equals(expectedAmount)) {
-      throw new BusinessLogicException('t.messages.businessLogicError', {
-        message: `Transaction sum ${total.toString()} does not match payment amount ${expectedAmount.toString()}`,
-      } as never);
+      throw FinanceErrors.transactionAmountMismatch(
+        total.toNumber(),
+        expectedAmount.toNumber(),
+      );
     }
 
     return true;
@@ -116,7 +115,7 @@ export class TransactionService extends BaseService {
     const transaction = await this.transactionRepository.findOne(transactionId);
 
     if (!transaction) {
-      throw new Error(`Transaction not found: ${transactionId}`);
+      throw FinanceErrors.transactionNotFound();
     }
 
     // Create reverse transaction

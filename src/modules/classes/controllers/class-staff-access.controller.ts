@@ -93,7 +93,7 @@ export class ClassStaffAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('bulk/revoke')
@@ -118,7 +118,7 @@ export class ClassStaffAccessController {
       actor,
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get(':classId')
@@ -137,6 +137,6 @@ export class ClassStaffAccessController {
       params.classId,
       actor,
     );
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 }

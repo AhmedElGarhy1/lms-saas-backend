@@ -4,11 +4,8 @@ import { Wallet } from '../entities/wallet.entity';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
-import {
-  InsufficientFundsException,
-  InsufficientPermissionsException,
-  BusinessLogicException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { FinanceErrors } from '../exceptions/finance.errors';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { Transactional } from '@nestjs-cls/transactional';
 import { QueryFailedError } from 'typeorm';
 import {
@@ -97,9 +94,11 @@ export class WalletService extends BaseService {
       // Pre-check: Prevent negative balance (before save to avoid DB constraint violation)
       const newBalance = lockedWallet.balance.add(amount);
       if (newBalance.isNegative()) {
-        throw new InsufficientFundsException('t.messages.businessLogicError', {
-          message: 'Insufficient balance',
-        } as never);
+        throw FinanceErrors.insufficientFunds(
+          lockedWallet.balance.toNumber(),
+          amount.toNumber(),
+          'EGP',
+        );
       }
 
       // Perform balance update using Money utility with currency precision
@@ -161,9 +160,11 @@ export class WalletService extends BaseService {
       // Pre-check: Prevent negative locked balance
       const newLockedBalance = wallet.lockedBalance.add(amount);
       if (newLockedBalance.isNegative()) {
-        throw new InsufficientFundsException('t.messages.businessLogicError', {
-          message: 'Insufficient locked balance',
-        } as never);
+        throw FinanceErrors.insufficientFunds(
+          wallet.lockedBalance.toNumber(),
+          amount.toNumber(),
+          'EGP',
+        );
       }
 
       wallet.lockedBalance = newLockedBalance;
@@ -202,9 +203,11 @@ export class WalletService extends BaseService {
 
       // Pre-check: Ensure lockedBalance has enough
       if (wallet.lockedBalance.lessThan(amount)) {
-        throw new InsufficientFundsException('t.messages.businessLogicError', {
-          message: 'Insufficient locked balance',
-        } as never);
+        throw FinanceErrors.insufficientFunds(
+          wallet.lockedBalance.toNumber(),
+          amount.toNumber(),
+          'EGP',
+        );
       }
 
       // Move amount from lockedBalance to balance with currency precision
@@ -249,7 +252,7 @@ export class WalletService extends BaseService {
         await this.accessControlHelperService.isAdmin(userProfileId);
 
       if (!isSuperAdmin && !isAdmin) {
-        throw new InsufficientPermissionsException("Operation failed");
+        throw FinanceErrors.walletAccessDenied();
       }
     }
 
@@ -278,7 +281,7 @@ export class WalletService extends BaseService {
       );
 
       if (!isSuperAdmin && !isAdmin) {
-        throw new InsufficientPermissionsException("Operation failed");
+        throw FinanceErrors.walletAccessDenied();
       }
     }
 
@@ -403,15 +406,11 @@ export class WalletService extends BaseService {
     ]);
 
     if (fromProfile.userId !== userId || toProfile.userId !== userId) {
-      throw new BusinessLogicException('t.messages.businessLogicError', {
-        message: 'Both profiles must belong to the same user',
-      } as never);
+      throw FinanceErrors.transferProfilesDifferentUsers();
     }
 
     if (fromProfileId === toProfileId) {
-      throw new BusinessLogicException('t.messages.businessLogicError', {
-        message: 'Cannot transfer to the same profile',
-      } as never);
+      throw FinanceErrors.transferSameProfile();
     }
 
     // Get both wallets
@@ -422,8 +421,10 @@ export class WalletService extends BaseService {
 
     // Check sufficient balance
     if (fromWallet.balance.lessThan(amount)) {
-      throw new InsufficientFundsException(
-        't.messages.insufficientPermissions',
+      throw FinanceErrors.insufficientFunds(
+        fromWallet.balance.toNumber(),
+        amount.toNumber(),
+        'EGP',
       );
     }
 

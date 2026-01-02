@@ -10,7 +10,9 @@ import {
   PaymentStateMachine,
   PaymentTransition,
 } from '../state-machines/payment-state-machine';
-import { InsufficientPermissionsException } from '@/shared/common/exceptions/custom.exceptions';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
+import { FinanceErrors } from '../exceptions/finance.errors';
+import { SystemErrors } from '@/shared/common/exceptions/system.exception';
 
 @Injectable()
 export class PaymentStateMachineService {
@@ -41,13 +43,13 @@ export class PaymentStateMachineService {
       targetStatus,
     );
     if (!transition) {
-      throw new Error(
-        `Invalid transition: ${payment.status} → ${targetStatus}. ` +
-          `Valid transitions from ${payment.status}: ${PaymentStateMachine.getValidTransitionsFrom(
-            payment.status,
-          )
-            .map((t) => t.to)
-            .join(', ')}`,
+      const validTransitions = PaymentStateMachine.getValidTransitionsFrom(
+        payment.status,
+      ).map((t) => t.to);
+      throw FinanceErrors.paymentStatusTransitionInvalid(
+        payment.status,
+        targetStatus,
+        validTransitions,
       );
     }
 
@@ -56,7 +58,7 @@ export class PaymentStateMachineService {
       const isSuperAdmin =
         await this.accessControlHelperService.isSuperAdmin(userProfileId);
       if (!isSuperAdmin) {
-        throw new InsufficientPermissionsException("Operation failed");
+        throw FinanceErrors.paymentOverrideDenied();
       }
     }
 
@@ -105,8 +107,12 @@ export class PaymentStateMachineService {
       case 'completePayment':
         // For cash payments, the paidByProfileId is the sender (who physically paid)
         // For wallet payments, we still need to provide it for consistency
-        const paidByProfileId = payment.senderType === 'USER_PROFILE' ? payment.senderId :
-                               payment.source === 'CASH' ? payment.senderId : payment.senderId;
+        const paidByProfileId =
+          payment.senderType === 'USER_PROFILE'
+            ? payment.senderId
+            : payment.source === 'CASH'
+              ? payment.senderId
+              : payment.senderId;
         return this.paymentService.completePayment(payment.id, paidByProfileId);
 
       case 'cancelPayment':
@@ -116,9 +122,7 @@ export class PaymentStateMachineService {
         return this.paymentService.refundInternalPayment(payment.id);
 
       default:
-        throw new Error(
-          `Unknown standard transition logic: ${transition.businessLogic}`,
-        );
+        throw SystemErrors.unknownTransitionLogic(transition.businessLogic);
     }
   }
 

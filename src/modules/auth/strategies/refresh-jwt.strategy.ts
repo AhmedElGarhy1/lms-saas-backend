@@ -6,10 +6,9 @@ import { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../../user/services/user.service';
 import * as bcrypt from 'bcrypt';
-import {
-  AuthenticationFailedException,
-  AccessDeniedException,
-} from '@/shared/common/exceptions/custom.exceptions';
+import { AuthErrors } from '../exceptions/auth.errors';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
+import { DomainException } from '@/shared/common/exceptions/domain.exception';
 
 export interface RefreshJwtPayload {
   sub: string;
@@ -52,24 +51,24 @@ export class RefreshJwtStrategy extends PassportStrategy(
       const refreshToken = req.body?.refreshToken;
 
       if (!refreshToken) {
-        throw new AuthenticationFailedException("Operation failed");
+        throw AuthErrors.invalidCredentials();
       }
 
       // Validate that this is a refresh token
       if (payload.type !== 'refresh') {
-        throw new AuthenticationFailedException("Operation failed");
+        throw AuthErrors.invalidCredentials();
       }
 
       // Get user and verify they have a stored refresh token
       const user = await this.userService.findOne(payload.sub, true);
       if (!user || !user.hashedRt) {
-        throw new AccessDeniedException("Operation failed");
+        throw AuthErrors.refreshTokenNotFound();
       }
 
       // Compare the provided token with the stored hashed token
       const rtMatches = await bcrypt.compare(refreshToken, user.hashedRt);
       if (!rtMatches) {
-        throw new AuthenticationFailedException('Invalid or expired token');
+        throw AuthErrors.invalidCredentials();
       }
 
       return {
@@ -80,15 +79,15 @@ export class RefreshJwtStrategy extends PassportStrategy(
       // Handle JWT-specific errors
       const jwtError = error as JwtError;
       if (jwtError?.name === 'TokenExpiredError') {
-        throw new AuthenticationFailedException("Operation failed");
+        throw AuthErrors.sessionExpired();
       } else if (jwtError?.name === 'JsonWebTokenError') {
-        throw new AuthenticationFailedException("Operation failed");
+        throw AuthErrors.invalidCredentials();
       } else if (jwtError?.name === 'NotBeforeError') {
-        throw new AuthenticationFailedException("Operation failed");
-      } else if (error instanceof AuthenticationFailedException) {
+        throw AuthErrors.invalidCredentials();
+      } else if (error instanceof DomainException) {
         throw error;
       } else {
-        throw new AuthenticationFailedException("Operation failed");
+        throw AuthErrors.invalidCredentials();
       }
     }
   }

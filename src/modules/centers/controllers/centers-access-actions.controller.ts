@@ -62,7 +62,7 @@ export class CentersAccessActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('bulk/revoke')
@@ -94,7 +94,7 @@ export class CentersAccessActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('bulk/status')
@@ -129,7 +129,7 @@ export class CentersAccessActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('bulk/delete')
@@ -161,7 +161,7 @@ export class CentersAccessActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('bulk/restore')
@@ -193,6 +193,6 @@ export class CentersAccessActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 }

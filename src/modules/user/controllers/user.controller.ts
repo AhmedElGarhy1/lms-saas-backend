@@ -28,6 +28,6 @@ export class UserController {
   ) {
     const user = await this.userService.updateUser(actor.id, dto, actor);
 
-    return ControllerResponse.success(user, 'Resource updated successfully');
+    return ControllerResponse.success(user);
   }
 }

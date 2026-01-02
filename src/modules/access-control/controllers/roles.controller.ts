@@ -64,7 +64,7 @@ export class RolesController {
   @ReadApiResponses('Get my permissions')
   async getMyPermissions(@GetUser() actor: ActorUser) {
     const result = await this.rolesService.getMyPermissions(actor);
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get('permissions')
@@ -75,7 +75,7 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.permissionService.getPermissions(actor, scope);
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post()
@@ -89,7 +89,7 @@ export class RolesController {
   ) {
     const result = await this.rolesService.createRole(dto, actor);
 
-    return ControllerResponse.success(result, 'Resource created successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get()
@@ -103,7 +103,7 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.rolesService.paginateRoles(query, actor);
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get(':roleId')
@@ -114,7 +114,7 @@ export class RolesController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.rolesService.findById(params.roleId, actor, true); // includeDeleted: true for API endpoints
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Put(':roleId')
@@ -130,7 +130,7 @@ export class RolesController {
   ) {
     const result = await this.rolesService.updateRole(params.roleId, dto, user);
 
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Delete(':roleId')
@@ -144,7 +144,7 @@ export class RolesController {
   ) {
     const result = await this.rolesService.deleteRole(params.roleId, user);
 
-    return ControllerResponse.success(result, 'Resource deleted successfully');
+    return ControllerResponse.success(result);
   }
 
   @Patch(':roleId/restore')
@@ -158,7 +158,7 @@ export class RolesController {
   ) {
     await this.rolesService.restoreRole(params.roleId, user);
 
-    return ControllerResponse.message('Operation completed successfully');
+    return ControllerResponse.success(null);
   }
 
   // ===== EXPORT FUNCTIONALITY =====

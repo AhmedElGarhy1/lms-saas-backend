@@ -109,7 +109,7 @@ export class ClassesActionsController {
       actor,
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('bulk/restore')
@@ -131,6 +131,6 @@ export class ClassesActionsController {
       actor,
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 }

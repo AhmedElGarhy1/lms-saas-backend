@@ -29,7 +29,7 @@ export class TeacherController {
   ) {
     const result = await this.teacherService.paginateTeachers(query, actorUser);
     // Wrap in ControllerResponse for consistent messaging
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get(':id')
@@ -46,6 +46,6 @@ export class TeacherController {
       actorUser,
       true, // includeDeleted: true for API endpoints
     );
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 }

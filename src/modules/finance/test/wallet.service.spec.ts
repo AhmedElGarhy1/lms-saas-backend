@@ -8,7 +8,8 @@ import { TransactionService } from '../services/transaction.service';
 import { Wallet } from '../entities/wallet.entity';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
-import { InsufficientFundsException } from '@/shared/common/exceptions/custom.exceptions';
+import { DomainException } from '@/shared/common/exceptions/domain.exception';
+import { FinanceErrorCode } from '../enums/finance.codes';
 
 describe('WalletService', () => {
   let service: WalletService;
@@ -114,12 +115,20 @@ describe('WalletService', () => {
       expect(result.balance.equals(Money.from(150.0))).toBe(true);
     });
 
-    it('should throw InsufficientFundsException for negative balance', async () => {
+    it('should throw DomainException for negative balance', async () => {
       walletRepository.findOneWithLock.mockResolvedValue(mockWallet);
 
       await expect(
         service.updateBalance('wallet-123', Money.from(-150.0)),
-      ).rejects.toThrow(InsufficientFundsException);
+      ).rejects.toThrow(DomainException);
+
+      await expect(
+        service.updateBalance('wallet-123', Money.from(-150.0)),
+      ).rejects.toThrow(
+        expect.objectContaining({
+          errorCode: FinanceErrorCode.INSUFFICIENT_FUNDS,
+        }),
+      );
     });
   });
 

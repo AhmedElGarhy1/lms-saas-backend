@@ -68,7 +68,7 @@ export class SessionsController {
       checkInSessionDto.sessionId,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('start')
@@ -101,7 +101,7 @@ export class SessionsController {
       startSessionDto.sessionId,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('cancel')
@@ -133,7 +133,7 @@ export class SessionsController {
       cancelSessionDto.sessionId,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post()
@@ -158,7 +158,7 @@ export class SessionsController {
       createSessionDto,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource created successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get()
@@ -177,7 +177,7 @@ export class SessionsController {
       paginateDto,
       actor,
     );
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get('calendar')
@@ -204,7 +204,7 @@ export class SessionsController {
       calendarDto,
       actor,
     );
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get(':sessionId')
@@ -240,7 +240,7 @@ export class SessionsController {
       params.sessionId,
       actor,
     );
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Put(':sessionId')
@@ -275,7 +275,7 @@ export class SessionsController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post(':sessionId/finish')
@@ -308,7 +308,7 @@ export class SessionsController {
       params.sessionId,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Patch(':sessionId/status')
@@ -364,17 +364,17 @@ export class SessionsController {
 
   private async handleCheckIn(sessionId: string, actor: ActorUser) {
     const result = await this.sessionsService.checkInSession(sessionId, actor);
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   private async handleStart(sessionId: string, actor: ActorUser) {
     const result = await this.sessionsService.startSession(sessionId, actor);
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   private async handleFinish(sessionId: string, actor: ActorUser) {
     const result = await this.sessionsService.finishSession(sessionId, actor);
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   private validateStatusTransition(
@@ -437,7 +437,7 @@ export class SessionsController {
       params.sessionId,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Delete(':sessionId')
@@ -467,7 +467,7 @@ export class SessionsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.sessionsService.deleteSession(params.sessionId, actor);
-    return ControllerResponse.message('Resource deleted successfully');
+    return ControllerResponse.success(null);
   }
 
   // ===== BOOKING INTEGRATION ENDPOINTS =====

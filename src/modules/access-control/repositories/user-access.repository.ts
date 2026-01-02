@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { UserAccess } from '../entities/user-access.entity';
 import { UserAccessDto } from '@/modules/user/dto/user-access.dto';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { AccessControlErrors } from '../exceptions/access-control.errors';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { In } from 'typeorm';
@@ -45,8 +45,7 @@ export class UserAccessRepository extends BaseRepository<UserAccess> {
         ...(body.centerId && { centerId: body.centerId }),
       },
     });
-    if (!userAccess)
-      throw new ResourceNotFoundException("Operation failed");
+    if (!userAccess) throw AccessControlErrors.userAccessNotFound();
     await this.getRepository().remove(userAccess);
   }
 

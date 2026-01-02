@@ -1,11 +1,8 @@
 import { Injectable, Logger, HttpException } from '@nestjs/common';
 import pLimit from 'p-limit';
 import { BaseService } from './base.service';
-import {
-  ErrorDetail,
-  EnhancedErrorResponse,
-} from '../exceptions/custom.exceptions';
-import { ErrorCode } from '../enums/error-codes.enum';
+import { DomainException } from '../exceptions/domain.exception';
+import { AllErrorCodes } from '../enums/error-codes';
 
 export interface BulkOperationOptions {
   concurrency?: number; // Default: 10, minimum: 1
@@ -14,9 +11,9 @@ export interface BulkOperationOptions {
 
 export interface BulkOperationError {
   id: string;
-  code?: ErrorCode;
+  code?: AllErrorCodes;
   error: string; // Error message
-  details?: unknown; // Generic structured error details from ErrorDetail array
+  details?: unknown; // Generic structured error details
   stack?: string; // Only in development mode
 }
 
@@ -141,9 +138,15 @@ export class BulkOperationService extends BaseService {
       error: 'Unknown error',
     };
 
-    if (error instanceof Error) {
-      // Extract error details
+    if (error instanceof DomainException) {
+      // Handle DomainException (new error system)
+      errorDetail.code = error.errorCode;
+      errorDetail.error = error.message;
+      errorDetail.details = error.details;
+    } else if (error instanceof Error) {
+      // Extract error details from HttpException
       const httpException = error as unknown as HttpException;
+      errorDetail.error = error.message;
 
       // Extract error code and details from HttpException response if available
       if (
@@ -151,17 +154,15 @@ export class BulkOperationService extends BaseService {
         typeof httpException.getResponse === 'function'
       ) {
         const response = httpException.getResponse() as
-          | EnhancedErrorResponse
+          | { code?: AllErrorCodes; details?: unknown }
           | string;
         if (typeof response === 'object' && 'code' in response) {
           if (response.code) {
             errorDetail.code = response.code;
           }
-          // Extract details from response (where BaseTranslatableException stores them)
-          if (response.details && Array.isArray(response.details)) {
-            errorDetail.details = this.extractStructuredDetails(
-              response.details,
-            );
+          // Extract details from response
+          if (response.details) {
+            errorDetail.details = response.details;
           }
         }
       }
@@ -193,35 +194,8 @@ export class BulkOperationService extends BaseService {
    * @param details - Array of ErrorDetail objects
    * @returns Structured error details object
    */
-  private extractStructuredDetails(details: ErrorDetail[]): unknown {
-    if (!details || details.length === 0) {
-      return undefined;
-    }
-
-    // Convert ErrorDetail array to a structured object
-    // Each detail's value is preserved, allowing any module to provide structured data
-    const structuredDetails: Record<string, unknown> = {};
-
-    for (const detail of details) {
-      if (detail.field && detail.value !== undefined) {
-        // Use field as key, value as the structured data
-        // This allows any module to provide any structure in the value
-        structuredDetails[detail.field] = detail.value;
-      }
-    }
-
-    // If only one detail, return its value directly for simpler structure
-    // Otherwise return the structured object
-    if (
-      details.length === 1 &&
-      details[0].field &&
-      details[0].value !== undefined
-    ) {
-      return details[0].value;
-    }
-
-    return Object.keys(structuredDetails).length > 0
-      ? structuredDetails
-      : undefined;
+  private extractStructuredDetails(details: unknown): unknown {
+    // DomainException.details is already in the correct format
+    return details;
   }
 }

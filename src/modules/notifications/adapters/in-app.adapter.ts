@@ -17,7 +17,7 @@ import {
 } from '../events/notification.events';
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
-import { InvalidOperationException } from '@/shared/common/exceptions/custom.exceptions';
+import { NotificationErrors } from '../exceptions/notification-errors';
 import { buildStandardizedMetadata } from '../utils/metadata-builder.util';
 import { RenderedNotification } from '../manifests/types/manifest.types';
 
@@ -59,7 +59,7 @@ export class InAppAdapter
   async send(payload: InAppNotificationPayload): Promise<void> {
     // Type system ensures channel is IN_APP, no runtime check needed
     if (!payload.userId) {
-      throw new InvalidOperationException('userId field is required');
+      throw NotificationErrors.missingNotificationContent('in_app', 'userId');
     }
 
     const startTime = Date.now();

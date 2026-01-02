@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { CenterAccess } from '../entities/center-access.entity';
 import { CenterAccessDto } from '../dto/center-access.dto';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { AccessControlErrors } from '../exceptions/access-control.errors';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { In } from 'typeorm';
@@ -37,7 +37,7 @@ export class CenterAccessRepository extends BaseRepository<CenterAccess> {
   async revokeCenterAccess(data: CenterAccessDto) {
     const existingAccess = await this.findCenterAccess(data, true);
     if (!existingAccess) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw AccessControlErrors.centerAccessNotFound();
     }
 
     return this.getRepository().remove(existingAccess);

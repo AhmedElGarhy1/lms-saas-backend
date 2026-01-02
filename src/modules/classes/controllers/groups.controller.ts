@@ -52,7 +52,7 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.groupsService.paginateGroups(paginateDto, actor);
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get(':groupId')
@@ -77,7 +77,7 @@ export class GroupsController {
       actor,
       true,
     ); // includeDeleted: true for API endpoints
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post()
@@ -98,7 +98,7 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.groupsService.createGroup(createGroupDto, actor);
-    return ControllerResponse.success(result, 'Resource created successfully');
+    return ControllerResponse.success(result);
   }
 
   @Put(':groupId')
@@ -125,7 +125,7 @@ export class GroupsController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Delete(':groupId')
@@ -146,7 +146,7 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.groupsService.deleteGroup(params.groupId, actor);
-    return ControllerResponse.message('Resource deleted successfully');
+    return ControllerResponse.success(null);
   }
 
   @Patch(':groupId/restore')
@@ -160,6 +160,6 @@ export class GroupsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.groupsService.restoreGroup(params.groupId, actor);
-    return ControllerResponse.message('Operation completed successfully');
+    return ControllerResponse.success(null);
   }
 }

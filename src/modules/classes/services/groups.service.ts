@@ -7,7 +7,8 @@ import { GroupValidationService } from './group-validation.service';
 import { GroupScheduleService } from './group-schedule.service';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { ClassesErrors } from '../exceptions/classes.errors';
+import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Group } from '../entities/group.entity';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
@@ -22,7 +23,6 @@ import { Transactional } from '@nestjs-cls/transactional';
 import { ClassAccessService } from './class-access.service';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
-import { BusinessLogicException } from '@/shared/common/exceptions/custom.exceptions';
 import { ClassStatus } from '../enums/class-status.enum';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { ScheduleItemsRepository } from '../repositories/schedule-items.repository';
@@ -73,7 +73,7 @@ export class GroupsService extends BaseService {
    * @param actor - The user performing the action
    * @param includeDeleted - Whether to include soft-deleted groups
    * @returns Group entity with all relations (scheduleItems, class, branch, center)
-   * @throws ResourceNotFoundException if group doesn't exist
+   * @throws ClassesErrors.groupNotFound() if group doesn't exist
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
   async getGroup(
@@ -109,7 +109,7 @@ export class GroupsService extends BaseService {
    * @param createGroupDto - Group creation data including schedule items
    * @param actor - The user performing the action
    * @returns Created group entity with all relations loaded
-   * @throws BusinessLogicException if validation fails or schedule conflicts detected
+   * @throws ClassesErrors.groupValidationFailed() if validation fails or schedule conflicts detected
    */
   @Transactional()
   async createGroup(
@@ -127,7 +127,7 @@ export class GroupsService extends BaseService {
       classEntity.status === ClassStatus.CANCELED ||
       classEntity.status === ClassStatus.FINISHED
     ) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.groupCreationNotAllowedForClassStatus();
     }
 
     // Validate actor has branch access to the class's branch
@@ -299,7 +299,7 @@ export class GroupsService extends BaseService {
    *
    * @param groupId - The group ID to delete
    * @param actor - The user performing the action
-   * @throws ResourceNotFoundException if group doesn't exist
+   * @throws ClassesErrors.groupNotFound() if group doesn't exist
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
   async deleteGroup(groupId: string, actor: ActorUser): Promise<void> {
@@ -335,18 +335,18 @@ export class GroupsService extends BaseService {
    *
    * @param groupId - The group ID to restore
    * @param actor - The user performing the action
-   * @throws ResourceNotFoundException if group doesn't exist
+   * @throws ClassesErrors.groupNotFound() if group doesn't exist
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
   async restoreGroup(groupId: string, actor: ActorUser): Promise<void> {
     // Manual validation needed: BelongsToCenter only checks active groups
     const group = await this.groupsRepository.findOneSoftDeletedById(groupId);
     if (!group) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw ClassesErrors.groupNotFound();
     }
     const centerId = actor.centerId;
     if (!centerId || group.centerId !== centerId) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw ClassesErrors.classAccessDenied();
     }
 
     // Validate actor has branch access to the group's branch
@@ -378,7 +378,7 @@ export class GroupsService extends BaseService {
    * @param groupIds - Array of group IDs to delete
    * @param actor - The user performing the action
    * @returns BulkOperationResult with success/failure details for each group
-   * @throws BusinessLogicException if groupIds array is empty
+   * @throws CommonErrors.bulkOperationFailed() if groupIds array is empty
    */
   @Transactional()
   async bulkDeleteGroups(
@@ -386,7 +386,7 @@ export class GroupsService extends BaseService {
     actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!groupIds || groupIds.length === 0) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.groupValidationFailed();
     }
 
     return await this.bulkOperationService.executeBulk(
@@ -406,7 +406,7 @@ export class GroupsService extends BaseService {
    * @param groupIds - Array of group IDs to restore
    * @param actor - The user performing the action
    * @returns BulkOperationResult with success/failure details for each group
-   * @throws BusinessLogicException if groupIds array is empty
+   * @throws CommonErrors.bulkOperationFailed() if groupIds array is empty
    */
   @Transactional()
   async bulkRestoreGroups(
@@ -414,7 +414,7 @@ export class GroupsService extends BaseService {
     actor: ActorUser,
   ): Promise<BulkOperationResult> {
     if (!groupIds || groupIds.length === 0) {
-      throw new BusinessLogicException("Operation failed");
+      throw ClassesErrors.groupValidationFailed();
     }
 
     return await this.bulkOperationService.executeBulk(

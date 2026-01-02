@@ -1,0 +1,11 @@
+/**
+ * Attendance-related error codes (ATD_xxx)
+ * Only codes actually used in the codebase
+ */
+export enum AttendanceErrorCode {
+  ATTENDANCE_SESSION_NOT_COMPLETED = 'ATD_007',
+  ATTENDANCE_STUDENT_NOT_ENROLLED = 'ATD_008',
+  ATTENDANCE_INVALID_STUDENT_CODE = 'ATD_014',
+  ATTENDANCE_MANUAL_ENTRY_DENIED = 'ATD_012',
+  ATTENDANCE_ALREADY_EXISTS = 'ATD_015',
+}

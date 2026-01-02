@@ -8,13 +8,9 @@ import {
 import { RolePermission } from '../entities/role-permission.entity';
 import { PermissionRepository } from '../repositories/permission.repository';
 import { PermissionScope } from '../constants/permissions';
+import { AccessControlErrors } from '../exceptions/access-control.errors';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { RequestContext } from '@/shared/common/context/request.context';
-import {
-  ResourceNotFoundException,
-  ValidationFailedException,
-  BusinessLogicException,
-} from '@/shared/common/exceptions/custom.exceptions';
 
 @EventSubscriber()
 export class RolePermissionSubscriber
@@ -48,15 +44,14 @@ export class RolePermissionSubscriber
       const permission = await this.permissionRepository.findOne(
         rolePermission.permissionId,
       );
-      if (!permission)
-        throw new ResourceNotFoundException("Operation failed");
+      if (!permission) throw AccessControlErrors.permissionNotFound();
 
       if (centerId) {
         if (
           rolePermission.permissionScope === PermissionScope.ADMIN ||
           rolePermission.permissionScope === PermissionScope.BOTH
         ) {
-          throw new BusinessLogicException("Operation failed");
+          throw AccessControlErrors.invalidProfileType();
         }
       }
 
@@ -65,7 +60,7 @@ export class RolePermissionSubscriber
         permission.scope !== rolePermission.permissionScope &&
         permission.scope !== PermissionScope.BOTH
       ) {
-        throw new ValidationFailedException('Permission scope does not match');
+        throw AccessControlErrors.invalidProfileType();
       }
     }
   }

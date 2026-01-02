@@ -52,7 +52,7 @@ export class LevelsActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post('bulk/restore')
@@ -77,6 +77,6 @@ export class LevelsActionsController {
       },
     );
 
-    return ControllerResponse.success(result, 'Bulk operation completed successfully');
+    return ControllerResponse.success(result);
   }
 }

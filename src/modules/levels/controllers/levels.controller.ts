@@ -44,7 +44,7 @@ export class LevelsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.levelsService.paginateLevels(paginateDto, actor);
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Get(':levelId')
@@ -69,7 +69,7 @@ export class LevelsController {
       actor,
       true,
     ); // includeDeleted: true for API endpoints
-    return ControllerResponse.success(result, 'Data retrieved successfully');
+    return ControllerResponse.success(result);
   }
 
   @Post()
@@ -90,7 +90,7 @@ export class LevelsController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.levelsService.createLevel(createLevelDto, actor);
-    return ControllerResponse.success(result, 'Resource created successfully');
+    return ControllerResponse.success(result);
   }
 
   @Put(':levelId')
@@ -117,7 +117,7 @@ export class LevelsController {
       data,
       actor,
     );
-    return ControllerResponse.success(result, 'Resource updated successfully');
+    return ControllerResponse.success(result);
   }
 
   @Delete(':levelId')
@@ -138,7 +138,7 @@ export class LevelsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.levelsService.deleteLevel(params.levelId, actor);
-    return ControllerResponse.message('Resource deleted successfully');
+    return ControllerResponse.success(null);
   }
 
   @Patch(':levelId/restore')
@@ -152,6 +152,6 @@ export class LevelsController {
     @GetUser() actor: ActorUser,
   ) {
     await this.levelsService.restoreLevel(params.levelId, actor);
-    return ControllerResponse.message('Operation completed successfully');
+    return ControllerResponse.success(null);
   }
 }

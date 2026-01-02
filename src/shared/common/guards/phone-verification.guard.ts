@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { NO_PHONE_VERIFICATION_KEY } from '../decorators/no-phone-verification.decorator';
 import { IRequest } from '../interfaces/request.interface';
-import { PhoneNotVerifiedException } from '../exceptions/custom.exceptions';
+import { AuthErrors } from '@/modules/auth/exceptions/auth.errors';
 
 /**
  * Phone Verification Guard
@@ -46,7 +46,7 @@ export class PhoneVerificationGuard implements CanActivate {
 
     // Check if user's phone is verified
     if (!user.phoneVerified) {
-      throw new PhoneNotVerifiedException('t.messages.phoneNotVerified');
+      throw AuthErrors.phoneNotVerified();
     }
 
     return true;

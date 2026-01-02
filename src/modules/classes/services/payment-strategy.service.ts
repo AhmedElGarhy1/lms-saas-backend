@@ -3,7 +3,7 @@ import { StudentPaymentStrategyDto } from '../dto/student-payment-strategy.dto';
 import { TeacherPaymentStrategyDto } from '../dto/teacher-payment-strategy.dto';
 import { StudentPaymentStrategyRepository } from '../repositories/student-payment-strategy.repository';
 import { TeacherPaymentStrategyRepository } from '../repositories/teacher-payment-strategy.repository';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { ClassesErrors } from '../exceptions/classes.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 
 @Injectable()
@@ -72,7 +72,7 @@ export class PaymentStrategyService extends BaseService {
    *
    * @param classId - The class ID
    * @param strategy - Student payment strategy data
-   * @throws ResourceNotFoundException if payment strategy doesn't exist
+   * @throws ClassesErrors.paymentStrategyNotFound() if payment strategy doesn't exist
    */
   async updateStudentStrategy(
     classId: string,
@@ -82,7 +82,7 @@ export class PaymentStrategyService extends BaseService {
       await this.studentPaymentStrategyRepository.findByClassId(classId);
 
     if (!existingStrategy) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw ClassesErrors.paymentStrategyNotFound();
     }
 
     await this.studentPaymentStrategyRepository.update(existingStrategy.id, {
@@ -102,7 +102,7 @@ export class PaymentStrategyService extends BaseService {
    *
    * @param classId - The class ID
    * @param strategy - Teacher payment strategy data
-   * @throws ResourceNotFoundException if payment strategy doesn't exist
+   * @throws ClassesErrors.paymentStrategyNotFound() if payment strategy doesn't exist
    */
   async updateTeacherStrategy(
     classId: string,
@@ -112,7 +112,7 @@ export class PaymentStrategyService extends BaseService {
       await this.teacherPaymentStrategyRepository.findByClassId(classId);
 
     if (!existingStrategy) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw ClassesErrors.paymentStrategyNotFound();
     }
 
     await this.teacherPaymentStrategyRepository.update(existingStrategy.id, {

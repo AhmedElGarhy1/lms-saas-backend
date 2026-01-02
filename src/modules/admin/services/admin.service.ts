@@ -6,7 +6,7 @@ import { PaginateAdminDto } from '../dto/paginate-admin.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { User } from '@/modules/user/entities/user.entity';
 import { BaseService } from '@/shared/common/services/base.service';
-import { ResourceNotFoundException } from '@/shared/common/exceptions/custom.exceptions';
+import { AdminErrors } from '../exceptions/admin.errors';
 
 @Injectable()
 export class AdminService extends BaseService {
@@ -38,7 +38,7 @@ export class AdminService extends BaseService {
       includeDeleted,
     );
     if (!user) {
-      throw new ResourceNotFoundException("Operation failed");
+      throw AdminErrors.adminNotFound();
     }
     return user;
   }

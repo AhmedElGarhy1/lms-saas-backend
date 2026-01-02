@@ -57,21 +57,14 @@ export class WebhooksController {
         ipAddress,
       );
 
-      return {
-        data: null,
-        message: 'Webhook processed successfully',
-      };
+      return ControllerResponse.success(null);
     } catch (error) {
       this.logger.error('Paymob webhook processing failed', error);
 
       // Return 200 to prevent Paymob from retrying (idempotent)
-      return {
-        data: {
-          processed: false,
-          error: error instanceof Error ? error.message : 'Unknown error',
-        },
-        message: 'Webhook processing failed',
-      };
+      return ControllerResponse.success({
+        processed: false,
+      });
     }
   }
 }
