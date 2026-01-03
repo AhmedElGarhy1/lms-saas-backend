@@ -11,6 +11,7 @@ export enum PaymentGatewayMethod {
   CARD = 'CARD',
   MOBILE_WALLET = 'MOBILE_WALLET',
   PAYPAL = 'PAYPAL',
+  TEST = 'TEST', // For testing purposes - simulates payment without calling gateway
 }
 
 export interface PaymentGatewayConfig {

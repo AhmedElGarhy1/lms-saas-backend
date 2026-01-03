@@ -15,6 +15,10 @@ import {
 } from '../entities/student-billing-record.entity';
 import { CreateMonthlySubscriptionDto } from '../dto/create-monthly-subscription.dto';
 import { CreateSessionChargeDto } from '../dto/create-session-charge.dto';
+import {
+  CreateStudentChargeDto,
+  ChargeType,
+} from '../dto/create-student-charge.dto';
 import { PaginateStudentBillingRecordsDto } from '../dto/paginate-student-billing-records.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { PaymentService } from '@/modules/finance/services/payment.service';
@@ -247,6 +251,46 @@ export class StudentBillingService extends BaseService {
     );
 
     return savedCharge;
+  }
+
+  /**
+   * Create a student charge (subscription or session) with specified payment source
+   */
+  @Transactional()
+  async createStudentCharge(
+    dto: CreateStudentChargeDto,
+    paymentSource: PaymentSource,
+  ): Promise<StudentClassSubscription | StudentSessionCharge> {
+    if (dto.type === ChargeType.SUBSCRIPTION) {
+      if (!dto.classId || !dto.monthYear) {
+        throw new Error(
+          'classId and monthYear are required for subscription charges',
+        );
+      }
+
+      const subscriptionDto: CreateMonthlySubscriptionDto = {
+        studentUserProfileId: dto.studentUserProfileId,
+        classId: dto.classId,
+        paymentSource,
+        monthYear: dto.monthYear,
+      };
+
+      return this.createMonthlySubscription(subscriptionDto);
+    } else if (dto.type === ChargeType.SESSION) {
+      if (!dto.sessionId) {
+        throw new Error('sessionId is required for session charges');
+      }
+
+      const chargeDto: CreateSessionChargeDto = {
+        studentUserProfileId: dto.studentUserProfileId,
+        sessionId: dto.sessionId,
+        paymentSource,
+      };
+
+      return this.createSessionCharge(chargeDto);
+    }
+
+    throw new Error('Invalid charge type');
   }
 
   /**

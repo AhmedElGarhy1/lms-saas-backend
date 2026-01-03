@@ -55,29 +55,4 @@ export class PermissionService extends BaseService {
       throw error;
     }
   }
-
-  /**
-   * Get permissions grouped by their group name
-   * @param actor The user performing the action
-   * @param scope Optional permission scope filter
-   * @returns Permissions grouped by group name
-   */
-  async getPermissionsGrouped(
-    actor: ActorUser,
-    scope?: PermissionScope,
-  ): Promise<Record<string, Permission[]>> {
-    const permissions = await this.getPermissions(actor, scope);
-
-    return permissions.reduce(
-      (acc, permission) => {
-        const group = permission.group || 'other';
-        if (!acc[group]) {
-          acc[group] = [];
-        }
-        acc[group].push(permission);
-        return acc;
-      },
-      {} as Record<string, Permission[]>,
-    );
-  }
 }

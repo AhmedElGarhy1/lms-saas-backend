@@ -27,8 +27,8 @@ import { PaymentStateMachineService } from './services/payment-state-machine.ser
 import { PaymentsController } from './controllers/payments.controller';
 import { WalletsController } from './controllers/wallets.controller';
 import { CashboxesController } from './controllers/cashboxes.controller';
-import { FinanceActionsController } from './controllers/finance-actions.controller';
 import { WebhooksController } from './controllers/webhooks.controller';
+import { MeController } from './controllers/me.controller';
 import { CentersModule } from '../centers/centers.module';
 import { UserProfileModule } from '../user-profile/user-profile.module';
 import { SharedModule } from '@/shared/shared.module';
@@ -82,8 +82,8 @@ import { UserModule } from '../user/user.module';
     PaymentsController,
     WalletsController,
     CashboxesController,
-    FinanceActionsController,
     WebhooksController,
+    MeController,
   ],
   providers: [
     // Metrics providers

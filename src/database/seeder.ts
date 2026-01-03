@@ -248,10 +248,7 @@ export class DatabaseSeeder {
     this.logger.log('Creating permissions...');
 
     const permissionEntities = ALL_PERMISSIONS.map((permission) => ({
-      name: permission.name,
       action: permission.action,
-      description: permission.name,
-      group: permission.group,
       scope: permission.scope,
     }));
 
@@ -342,7 +339,9 @@ export class DatabaseSeeder {
         }
 
         // Insert user profile linking user to admin (or self for system user)
-        const profileCode = isSystemUser ? 'SYS001' : `ADMIN-25-00000${index + 1}`;
+        const profileCode = isSystemUser
+          ? 'SYS001'
+          : `ADMIN-25-00000${index + 1}`;
         const profileRefId = isSystemUser ? SYSTEM_USER_ID : adminUuid;
 
         await transactionalEntityManager.query(

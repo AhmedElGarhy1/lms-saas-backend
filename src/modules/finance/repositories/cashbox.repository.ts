@@ -13,6 +13,7 @@ import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
+import { CenterStatementQueryDto } from '../dto/center-statement-query.dto';
 
 import { Transaction } from '../entities/transaction.entity';
 import { CashTransaction } from '../entities/cash-transaction.entity';
@@ -29,6 +30,8 @@ type TransactionWithNames = Transaction & {
 type CashTransactionWithNames = CashTransaction & {
   paidByName?: string;
   receivedByName: string;
+  paidByUserId?: string;
+  receivedByUserId: string;
 };
 @Injectable()
 export class CashboxRepository extends BaseRepository<Cashbox> {
@@ -89,6 +92,8 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
    */
   async getCenterTreasuryStats(
     centerId: string,
+    dateFrom?: Date,
+    dateTo?: Date,
   ): Promise<CenterTreasuryStatsDto> {
     // Single optimized query to get all branches with their aggregated balances
     const query = this.getRepository()
@@ -160,9 +165,8 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
    */
 
   async getCenterStatement(
-    centerId: string,
-    paginationDto: PaginateTransactionDto,
-    branchId?: string,
+    centerId: string | undefined,
+    query: CenterStatementQueryDto,
   ): Promise<Pagination<CenterStatementItemDto>> {
     // Clean query using COALESCE for readable names
     let queryBuilder = this.getRepository()
@@ -198,14 +202,10 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
       )
 
       // Find transactions where branch wallets are involved
-      .where(
-        '(fromBranch.centerId = :centerId OR toBranch.centerId = :centerId)',
-      )
-      .andWhere('(fromBranch.isActive IS NULL OR fromBranch.isActive = true)')
-      .andWhere('(toBranch.isActive IS NULL OR toBranch.isActive = true)')
+
       // Explicit condition to return only one transaction record per business transaction
       // and ensure balanceAfter represents branch wallet balance
-      .andWhere(
+      .where(
         `
            ((toWallet.ownerId = toBranch.id AND toWallet.ownerType = :branchType AND tx.amount > 0)
             OR
@@ -217,23 +217,31 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
       .addSelect('COALESCE(toUser.name, toBranch.city)', 'to_name')
 
       .setParameters({
-        centerId,
+        ...(centerId && { centerId }),
         branchType: WalletOwnerType.BRANCH,
         userProfileType: WalletOwnerType.USER_PROFILE,
+        ...(query.branchId && { branchId: query.branchId }),
       });
 
+    if (centerId) {
+      queryBuilder = queryBuilder.andWhere(
+        '(fromBranch.centerId = :centerId OR toBranch.centerId = :centerId)',
+        { centerId },
+      );
+    }
+
     // Optional branch filter
-    if (branchId) {
+    if (query.branchId) {
       queryBuilder = queryBuilder.andWhere(
         '(fromBranch.id = :branchId OR toBranch.id = :branchId)',
-        { branchId },
+        { branchId: query.branchId },
       );
     }
 
     // Get paginated results with computed fields (names) using TransactionRepository
     const transactionRepo = new TransactionRepository(this.txHost);
     const result = (await transactionRepo.paginate(
-      paginationDto,
+      query,
       {
         searchableColumns: [], // No search for transactions
         sortableColumns: ['createdAt', 'type', 'amount'],
@@ -287,9 +295,8 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
    */
 
   async getCenterCashStatement(
-    centerId: string,
-    paginationDto: PaginateTransactionDto,
-    branchId?: string,
+    centerId: string | undefined,
+    query: CenterStatementQueryDto,
   ): Promise<Pagination<CenterCashStatementItemDto>> {
     // Build query with joins to get cash transaction and name information
     let queryBuilder = this.getRepository()
@@ -313,43 +320,36 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
         'receivedByUser',
         'receivedByProfile.userId = receivedByUser.id',
       )
-      .where('b.centerId = :centerId', { centerId })
-      .andWhere('b.isActive = true')
       // Select human-readable names
       .addSelect('paidByUser.name', 'paidByName')
+      .addSelect('paidByUser.id', 'paidByUserId')
       .addSelect('receivedByUser.name', 'receivedByName')
-      .setParameters({
+      .addSelect('receivedByUser.id', 'receivedByUserId');
+
+    if (centerId) {
+      queryBuilder = queryBuilder.andWhere('b.centerId = :centerId', {
         centerId,
       });
+    }
 
     // Optional branch filter
-    if (branchId) {
-      queryBuilder = queryBuilder.andWhere('b.id = :branchId', { branchId });
+    if (query.branchId) {
+      queryBuilder = queryBuilder.andWhere('b.id = :branchId', {
+        branchId: query.branchId,
+      });
     }
 
-    // Apply filters from paginationDto
-    if (paginationDto.type) {
+    // Apply filters from query (which extends PaginateTransactionDto)
+    if (query.type) {
       queryBuilder = queryBuilder.andWhere('ct.type = :type', {
-        type: paginationDto.type,
-      });
-    }
-
-    // Apply date filters
-    if (paginationDto.dateFrom) {
-      queryBuilder = queryBuilder.andWhere('ct.createdAt >= :dateFrom', {
-        dateFrom: paginationDto.dateFrom,
-      });
-    }
-    if (paginationDto.dateTo) {
-      queryBuilder = queryBuilder.andWhere('ct.createdAt < :dateTo', {
-        dateTo: paginationDto.dateTo,
+        type: query.type,
       });
     }
 
     // Get paginated results with computed fields (names) using CashTransactionRepository
     const cashTransactionRepo = new CashTransactionRepository(this.txHost);
     const result = (await cashTransactionRepo.paginate(
-      paginationDto,
+      query,
       {
         searchableColumns: [], // No search for cash transactions
         sortableColumns: ['createdAt', 'type', 'amount'],
@@ -368,6 +368,8 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
             ...entity,
             paidByName: raw.paidByName,
             receivedByName: raw.receivedByName,
+            paidByUserId: raw.paidByUserId,
+            receivedByUserId: raw.receivedByUserId,
           } as CashTransactionWithNames;
         },
       },

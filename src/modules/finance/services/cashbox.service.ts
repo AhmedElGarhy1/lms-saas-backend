@@ -21,6 +21,7 @@ import {
 } from '../dto/center-revenue-stats.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
+import { CenterStatementQueryDto } from '../dto/center-statement-query.dto';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 
 const MAX_RETRIES = 3;
@@ -73,7 +74,7 @@ export class CashboxService extends BaseService {
         throw FinanceErrors.insufficientFunds(
           cashbox.balance.toNumber(),
           amount.toNumber(),
-          'EGP'
+          'EGP',
         );
       }
 
@@ -127,22 +128,26 @@ export class CashboxService extends BaseService {
    */
   async getCenterTreasuryStats(
     centerId: string,
+    dateFrom?: Date,
+    dateTo?: Date,
   ): Promise<CenterTreasuryStatsDto> {
-    return this.cashboxRepository.getCenterTreasuryStats(centerId);
+    return this.cashboxRepository.getCenterTreasuryStats(
+      centerId,
+      dateFrom,
+      dateTo,
+    );
   }
 
   /**
    * Get center wallet statement - all wallet transactions across branches in center
    */
   async getCenterStatement(
-    centerId: string,
-    paginationDto: PaginateTransactionDto,
-    branchId?: string,
+    centerId: string | undefined,
+    query: CenterStatementQueryDto,
   ): Promise<Pagination<CenterStatementItemDto>> {
     return this.cashboxRepository.getCenterStatement(
       centerId,
-      paginationDto,
-      branchId,
+      query,
     );
   }
 
@@ -150,14 +155,12 @@ export class CashboxService extends BaseService {
    * Get center cash statement - all cash transactions across branches in center
    */
   async getCenterCashStatement(
-    centerId: string,
-    paginationDto: PaginateTransactionDto,
-    branchId?: string,
+    centerId: string | undefined,
+    query: CenterStatementQueryDto,
   ): Promise<Pagination<CenterCashStatementItemDto>> {
     return this.cashboxRepository.getCenterCashStatement(
       centerId,
-      paginationDto,
-      branchId,
+      query,
     );
   }
 }

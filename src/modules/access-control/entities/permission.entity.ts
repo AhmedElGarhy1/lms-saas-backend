@@ -15,16 +15,7 @@ export class Permission extends BaseEntity {
   id: string;
 
   @Column()
-  name: string;
-
-  @Column()
   action: string;
-
-  @Column({ nullable: true })
-  description?: string;
-
-  @Column({ type: 'varchar', length: 50 })
-  group: string;
 
   @Column({
     type: 'varchar',
@@ -36,7 +27,6 @@ export class Permission extends BaseEntity {
   @OneToMany(() => Center, (center) => center.id, { nullable: true })
   centerId: string | null;
 
-  
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }

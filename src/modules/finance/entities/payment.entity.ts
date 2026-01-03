@@ -1,6 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
-import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
 import { PaymentSource } from '../enums/payment-source.enum';

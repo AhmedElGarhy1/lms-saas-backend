@@ -1,6 +1,10 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { PaymentGatewayFactory } from './payment-gateway.factory';
-import { PaymentGatewayType } from './interfaces/payment-gateway.interface';
+import {
+  PaymentGatewayType,
+  PaymentGatewayMethod,
+} from './interfaces/payment-gateway.interface';
+import { Money } from '@/shared/common/utils/money.util';
 
 export { PaymentGatewayType };
 import {
@@ -40,6 +44,21 @@ export class PaymentGatewayService {
     request: CreatePaymentRequest,
     gatewayType?: PaymentGatewayType,
   ): Promise<CreatePaymentResponse> {
+    // Handle TEST method - simulate payment without calling actual gateway
+    if (request.methodType === PaymentGatewayMethod.TEST) {
+      this.logger.log(
+        `TEST: Simulating payment creation: ${request.amount.toString()} ${request.currency}`,
+      );
+
+      // Return mock response for testing
+      return {
+        gatewayPaymentId: `test_${request.orderId}_${Date.now()}`,
+        checkoutUrl: `https://test-payment-gateway.com/checkout/${request.orderId}`,
+        clientSecret: `test_secret_${request.orderId}`,
+        status: 'pending',
+      };
+    }
+
     const gateway = this.getGateway(gatewayType);
     const gatewayName = gateway.getName();
 
@@ -101,6 +120,21 @@ export class PaymentGatewayService {
     gatewayPaymentId: string,
     gatewayType?: PaymentGatewayType,
   ): Promise<PaymentStatusResponse> {
+    // Handle TEST method - simulate successful payment status
+    if (gatewayPaymentId.startsWith('test_')) {
+      this.logger.log(
+        `TEST: Simulating payment status check: ${gatewayPaymentId} - COMPLETED`,
+      );
+
+      return {
+        gatewayPaymentId,
+        status: 'completed',
+        amount: Money.from(0), // Mock amount for testing
+        currency: 'EGP', // Default currency
+        paidAt: new Date(),
+      };
+    }
+
     const gateway = this.getGateway(gatewayType);
     const gatewayName = gateway.getName();
 

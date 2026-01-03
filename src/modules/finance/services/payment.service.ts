@@ -10,7 +10,6 @@ import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
 import { FinanceErrors } from '../exceptions/finance.errors';
-import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { Transactional } from '@nestjs-cls/transactional';
 import { RequestContext } from '@/shared/common/context/request.context';
 import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
@@ -25,6 +24,7 @@ import { randomUUID } from 'crypto';
 import { PaginatePaymentDto } from '../dto/paginate-payment.dto';
 import { SelectQueryBuilder } from 'typeorm';
 import { Pagination } from '@/shared/common/types/pagination.types';
+import { UserPaymentStatementItemDto } from '../dto/payment-statement.dto';
 import { PaymentGatewayService } from '../adapters/payment-gateway.service';
 import {
   PaymentGatewayType,
@@ -38,6 +38,11 @@ import {
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
 import { UserService } from '@/modules/user/services/user.service';
 import { FinanceMonitorService } from '../monitoring/finance-monitor.service';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { Center } from '@/modules/centers/entities/center.entity';
+import { Branch } from '@/modules/centers/entities/branch.entity';
 
 @Injectable()
 export class PaymentService extends BaseService {
@@ -53,6 +58,7 @@ export class PaymentService extends BaseService {
     private readonly userProfileService: UserProfileService,
     private readonly userService: UserService,
     private readonly financeMonitor: FinanceMonitorService,
+    private readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super();
   }
@@ -617,6 +623,7 @@ export class PaymentService extends BaseService {
     const payment = await this.paymentRepository.create({
       amount,
       senderId,
+      senderType: WalletOwnerType.USER_PROFILE, // User profile is the sender (initiating payment)
       receiverId: senderId, // For topups, receiver is same as payer
       receiverType: WalletOwnerType.USER_PROFILE,
       status: PaymentStatus.PENDING,
@@ -677,7 +684,71 @@ export class PaymentService extends BaseService {
         gatewayType,
       );
 
-      // Update payment with gateway details
+      // For TEST method, auto-complete the payment immediately
+      if (methodType === PaymentGatewayMethod.TEST) {
+        // Update payment with gateway details (don't set COMPLETED yet)
+        await this.paymentRepository.update(payment.id, {
+          metadata: {
+            ...payment.metadata,
+            gatewayPaymentId: gatewayResponse.gatewayPaymentId,
+            checkoutUrl: gatewayResponse.checkoutUrl,
+            clientSecret: gatewayResponse.clientSecret,
+            testPayment: true, // Mark as test payment
+          },
+        });
+
+        // Complete the TEST payment immediately (direct completion)
+        // Get the updated payment and complete it
+        const updatedPayment = await this.paymentRepository.findOneOrThrow(
+          payment.id,
+        );
+
+        // Update payment status to COMPLETED
+        await this.paymentRepository.update(updatedPayment.id, {
+          status: PaymentStatus.COMPLETED,
+          paidAt: new Date(),
+          metadata: {
+            ...updatedPayment.metadata,
+            processedAt: new Date(),
+          },
+        });
+
+        // Credit the user's wallet (same as normal payment completion)
+        const userWallet = await this.walletService.getWallet(
+          updatedPayment.senderId,
+          WalletOwnerType.USER_PROFILE,
+        );
+
+        const amountToCredit = amount;
+        const updatedWallet = await this.walletService.updateBalance(
+          userWallet.id,
+          amountToCredit,
+        );
+
+        // Create transaction record (same as normal payment completion)
+        await this.transactionService.createTransaction(
+          null, // fromWalletId (external payment)
+          userWallet.id, // toWalletId
+          amountToCredit,
+          TransactionType.TOPUP,
+          updatedPayment.correlationId || updatedPayment.id,
+          updatedWallet.balance,
+        );
+
+        this.logger.log(
+          `TEST: Payment ${updatedPayment.id} completed, wallet credited ${amountToCredit.toString()}`,
+        );
+
+        this.logger.log(`TEST: External payment auto-completed: ${payment.id}`);
+
+        return {
+          payment: await this.paymentRepository.findOneOrThrow(payment.id), // Get updated payment
+          checkoutUrl: gatewayResponse.checkoutUrl,
+          gatewayPaymentId: gatewayResponse.gatewayPaymentId,
+        };
+      }
+
+      // Update payment with gateway details (normal flow)
       await this.paymentRepository.update(payment.id, {
         metadata: {
           ...payment.metadata,
@@ -1119,6 +1190,7 @@ export class PaymentService extends BaseService {
    */
   async paginatePayments(
     dto: PaginatePaymentDto,
+    actor: ActorUser,
   ): Promise<Pagination<Payment>> {
     const queryBuilder: SelectQueryBuilder<Payment> =
       this.paymentRepository.createQueryBuilder('payment');
@@ -1133,10 +1205,24 @@ export class PaymentService extends BaseService {
     if (dto.source) {
       queryBuilder.andWhere('payment.source = :source', { source: dto.source });
     }
-    if (dto.senderId) {
-      queryBuilder.andWhere('payment.senderId = :senderId', {
-        senderId: dto.senderId,
-      });
+
+    if (actor.centerId) {
+      if (!actor.centerId) {
+        throw Error('Center ID is required');
+      }
+      queryBuilder
+        .leftJoin(Branch, 'branch', 'branch.centerId = :centerId', {
+          centerId: actor.centerId,
+        })
+        .andWhere(
+          '((branch.id = payment.receiverId AND payment.receiverType = :branchType) OR (branch.id = payment.senderId AND payment.senderType = :branchType))',
+          {
+            branchType: WalletOwnerType.BRANCH,
+          },
+        );
+    } else if (actor.profileType === ProfileType.ADMIN) {
+    } else {
+      throw Error('You are not authorized to access this resource');
     }
 
     return this.paymentRepository.paginate(
@@ -1149,6 +1235,31 @@ export class PaymentService extends BaseService {
       '/finance/payments',
       queryBuilder,
     );
+  }
+
+  /**
+   * Get user payments statement with enhanced data including names
+   */
+  async getUserPaymentsPaginated(
+    userId: string,
+    dto: PaginatePaymentDto,
+    centerId?: string,
+  ): Promise<Pagination<UserPaymentStatementItemDto>> {
+    return this.paymentRepository.getUserPaymentsPaginated(
+      userId,
+      dto,
+      centerId,
+    );
+  }
+
+  /**
+   * Paginate payments with enhanced data including names (for admin/managerial users)
+   */
+  async paginatePaymentsEnhanced(
+    dto: PaginatePaymentDto,
+    actor: ActorUser,
+  ): Promise<Pagination<UserPaymentStatementItemDto>> {
+    return this.paymentRepository.getAllPaymentsPaginated(dto, actor);
   }
 
   /**

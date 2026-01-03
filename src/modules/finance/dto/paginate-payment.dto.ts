@@ -1,9 +1,13 @@
-import { IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
 import { PaymentSource } from '../enums/payment-source.enum';
+import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
+import { Exists } from '@/shared/common/decorators/exists.decorator';
+import { Center } from '@/modules/centers/entities/center.entity';
+import { Transform } from 'class-transformer';
 
 export class PaginatePaymentDto extends BasePaginationDto {
   @ApiProperty({
@@ -32,14 +36,4 @@ export class PaginatePaymentDto extends BasePaginationDto {
   @IsOptional()
   @IsEnum(PaymentSource)
   source?: PaymentSource;
-
-  @ApiProperty({
-    description: 'Filter by sender ID',
-    example: 'uuid',
-    required: false,
-  })
-  @IsOptional()
-  @IsUUID(4)
-  senderId?: string;
 }
-

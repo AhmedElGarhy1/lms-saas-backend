@@ -6,6 +6,7 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { Money } from '@/shared/common/utils/money.util';
+import { UserWalletStatementItemDto } from '../dto/wallet-statement.dto';
 
 /**
  * Transaction with signed amount for statement calculations
@@ -21,6 +22,14 @@ export interface TransactionStatement {
   correlationId: string;
   createdAt: Date;
 }
+
+// Define type for transaction with computed name fields
+type TransactionWithNames = Transaction & {
+  fromName?: string;
+  toName?: string;
+  fromUserId?: string;
+  toUserId?: string;
+};
 
 @Injectable()
 export class TransactionRepository extends BaseRepository<Transaction> {
@@ -175,6 +184,134 @@ export class TransactionRepository extends BaseRepository<Transaction> {
         next: '',
         last: '',
       },
+    };
+  }
+
+  /**
+   * Get user wallet statement with enhanced data including names - query-based pagination
+   */
+  async getUserWalletStatementPaginated(
+    walletId: string,
+    dto: PaginateTransactionDto,
+  ): Promise<Pagination<UserWalletStatementItemDto>> {
+    // Build query with joins to get transaction and user name information
+    const queryBuilder = this.getRepository()
+      .manager.createQueryBuilder(Transaction, 't')
+      .leftJoin('wallets', 'fw', 't.fromWalletId = fw.id')
+      .leftJoin('wallets', 'tw', 't.toWalletId = tw.id')
+      // Join for from wallet owner names (users)
+      .leftJoin(
+        'user_profiles',
+        'fromProfile',
+        'fw.ownerId = fromProfile.id AND fw.ownerType = :userProfileType',
+        { userProfileType: 'USER_PROFILE' },
+      )
+      .leftJoin('users', 'fromUser', 'fromProfile.userId = fromUser.id')
+      // Join for to wallet owner names (users)
+      .leftJoin(
+        'user_profiles',
+        'toProfile',
+        'tw.ownerId = toProfile.id AND tw.ownerType = :userProfileType',
+        { userProfileType: 'USER_PROFILE' },
+      )
+      .leftJoin('users', 'toUser', 'toProfile.userId = toUser.id')
+      .where('(t.fromWalletId = :walletId OR t.toWalletId = :walletId)', {
+        walletId,
+      })
+      // Select human-readable names and user IDs
+      .addSelect('fromUser.name', 'fromName')
+      .addSelect('fromUser.id', 'fromUserId')
+      .addSelect('toUser.name', 'toName')
+      .addSelect('toUser.id', 'toUserId')
+      .setParameters({
+        walletId,
+        userProfileType: 'USER_PROFILE',
+      });
+
+    // Apply filters from dto
+    if (dto.type) {
+      queryBuilder.andWhere('t.type = :type', { type: dto.type });
+    }
+    if (dto.correlationId) {
+      queryBuilder.andWhere('t.correlationId = :correlationId', {
+        correlationId: dto.correlationId,
+      });
+    }
+
+    // Apply date filters
+    if (dto.dateFrom) {
+      queryBuilder.andWhere('t.createdAt >= :dateFrom', {
+        dateFrom: dto.dateFrom,
+      });
+    }
+    if (dto.dateTo) {
+      queryBuilder.andWhere('t.createdAt < :dateTo', {
+        dateTo: dto.dateTo,
+      });
+    }
+
+    // Get paginated results with computed fields using the repository's paginate method
+    const result = (await this.paginate(
+      dto,
+      {
+        searchableColumns: [],
+        sortableColumns: ['createdAt', 'type', 'amount'],
+        defaultSortBy: ['createdAt', 'DESC'],
+      },
+      '',
+      queryBuilder,
+      {
+        includeComputedFields: true,
+        computedFieldsMapper: (
+          entity: Transaction,
+          raw: any,
+        ): TransactionWithNames => {
+          // Add computed name fields from joined data
+          return {
+            ...entity,
+            fromName: raw.fromName,
+            toName: raw.toName,
+            fromUserId: raw.fromUserId,
+            toUserId: raw.toUserId,
+          } as TransactionWithNames;
+        },
+      },
+    )) as Pagination<TransactionWithNames>;
+
+    // Transform to UserWalletStatementItemDto
+    const items: UserWalletStatementItemDto[] = result.items.map(
+      (transaction: TransactionWithNames) => {
+        // Sign convention: negative if wallet is sender, positive if receiver
+        const signedAmount =
+          transaction.fromWalletId === walletId
+            ? transaction.amount.multiply(-1) // Outgoing: negative
+            : transaction.amount; // Incoming: positive
+
+        // Determine user's role in the transaction
+        const userRole: 'sender' | 'receiver' =
+          transaction.fromWalletId === walletId ? 'sender' : 'receiver';
+
+        return {
+          id: transaction.id,
+          createdAt: transaction.createdAt,
+          updatedAt: transaction.updatedAt,
+          fromWalletId: transaction.fromWalletId,
+          toWalletId: transaction.toWalletId,
+          amount: transaction.amount.toNumber(),
+          signedAmount: signedAmount.toNumber(),
+          balanceAfter: transaction.balanceAfter.toNumber(),
+          type: transaction.type,
+          correlationId: transaction.correlationId,
+          fromName: transaction.fromName,
+          toName: transaction.toName,
+          userRole,
+        };
+      },
+    );
+
+    return {
+      ...result,
+      items,
     };
   }
 }

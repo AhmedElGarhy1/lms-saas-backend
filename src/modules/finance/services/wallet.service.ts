@@ -12,6 +12,7 @@ import {
   TransactionRepository,
   TransactionStatement,
 } from '../repositories/transaction.repository';
+import { UserWalletStatementItemDto } from '../dto/wallet-statement.dto';
 import { RequestContext } from '@/shared/common/context/request.context';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
@@ -267,7 +268,7 @@ export class WalletService extends BaseService {
     walletId: string,
     dto: PaginateTransactionDto,
     actor: ActorUser,
-  ): Promise<Pagination<TransactionStatement>> {
+  ): Promise<Pagination<UserWalletStatementItemDto>> {
     const wallet = await this.walletRepository.findOneOrThrow(walletId);
 
     // Owner can always access
@@ -285,7 +286,7 @@ export class WalletService extends BaseService {
       }
     }
 
-    return await this.transactionRepository.getWalletStatementPaginated(
+    return await this.transactionRepository.getUserWalletStatementPaginated(
       walletId,
       dto,
     );

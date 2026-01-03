@@ -10,8 +10,8 @@ import {
 } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { StudentBillingService } from '../services/student-billing.service';
-import { CreateMonthlySubscriptionDto } from '../dto/create-monthly-subscription.dto';
-import { CreateSessionChargeDto } from '../dto/create-session-charge.dto';
+import { CreateStudentChargeDto } from '../dto/create-student-charge.dto';
+import { PaymentSource } from '../entities/student-class-subscription.entity';
 import { StudentClassSubscription } from '../entities/student-class-subscription.entity';
 import { StudentSessionCharge } from '../entities/student-session-charge.entity';
 import { StudentBillingRecord } from '../entities/student-billing-record.entity';
@@ -19,33 +19,48 @@ import { PaginateStudentBillingRecordsDto } from '../dto/paginate-student-billin
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { GetUser } from '@/shared/common/decorators';
+import { ManagerialOnly, GetUser } from '@/shared/common/decorators';
+import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
+import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 
+@ManagerialOnly()
 @Controller('billing/students')
 export class StudentBillingController {
   constructor(private readonly billingService: StudentBillingService) {}
 
-  @Post('subscriptions')
+  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_CHARGE)
+  @Post('charge/cash')
   @Transactional()
   @HttpCode(HttpStatus.CREATED)
-  async createMonthlySubscription(
-    @Body() dto: CreateMonthlySubscriptionDto,
-  ): Promise<ControllerResponse<StudentClassSubscription>> {
-    const subscription =
-      await this.billingService.createMonthlySubscription(dto);
-    return ControllerResponse.success(subscription);
+  async createCashCharge(
+    @Body() dto: CreateStudentChargeDto,
+  ): Promise<
+    ControllerResponse<StudentClassSubscription | StudentSessionCharge>
+  > {
+    const result = await this.billingService.createStudentCharge(
+      dto,
+      PaymentSource.CASH,
+    );
+    return ControllerResponse.success(result);
   }
 
-  @Post('session-charges')
+  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_CHARGE)
+  @Post('charge/wallet')
   @Transactional()
   @HttpCode(HttpStatus.CREATED)
-  async createSessionCharge(
-    @Body() dto: CreateSessionChargeDto,
-  ): Promise<ControllerResponse<StudentSessionCharge>> {
-    const charge = await this.billingService.createSessionCharge(dto);
-    return ControllerResponse.success(charge);
+  async createWalletCharge(
+    @Body() dto: CreateStudentChargeDto,
+  ): Promise<
+    ControllerResponse<StudentClassSubscription | StudentSessionCharge>
+  > {
+    const result = await this.billingService.createStudentCharge(
+      dto,
+      PaymentSource.WALLET,
+    );
+    return ControllerResponse.success(result);
   }
 
+  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_RECORDS)
   @Get('records')
   async getStudentBillingRecords(
     @Query() paginateDto: PaginateStudentBillingRecordsDto,

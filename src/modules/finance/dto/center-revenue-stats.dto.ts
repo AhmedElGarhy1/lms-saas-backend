@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Money } from '@/shared/common/utils/money.util';
+import { DateRangeDto } from '@/shared/common/dto/date-range.dto';
 
 export class CenterRevenueBranchDetailDto {
   @ApiProperty({ description: 'Branch ID' })
@@ -134,6 +135,50 @@ export class CenterCashStatementItemDto {
 
   @ApiProperty({ description: 'Readable name of who received' })
   receivedByName: string;
+}
+
+export class UserCashStatementItemDto {
+  @ApiProperty({ description: 'Cash transaction ID' })
+  id: string;
+
+  @ApiProperty({ description: 'Transaction creation timestamp' })
+  createdAt: Date;
+
+  @ApiProperty({ description: 'Transaction update timestamp' })
+  updatedAt: Date;
+
+  @ApiProperty({ description: 'Branch ID where transaction occurred' })
+  branchId: string;
+
+  @ApiProperty({ description: 'Cashbox ID' })
+  cashboxId: string;
+
+  @ApiProperty({ description: 'Transaction amount' })
+  amount: number;
+
+  @ApiProperty({ description: 'Transaction direction' })
+  direction: string;
+
+  @ApiProperty({ description: 'Transaction type' })
+  type: string;
+
+  @ApiProperty({ description: 'Balance after transaction' })
+  balanceAfter: number;
+
+  @ApiProperty({ description: 'Profile ID who paid', nullable: true })
+  paidByProfileId?: string;
+
+  @ApiProperty({ description: 'Profile ID who received' })
+  receivedByProfileId: string;
+
+  @ApiProperty({ description: 'Readable name of who paid', nullable: true })
+  paidByName?: string;
+
+  @ApiProperty({ description: 'Readable name of who received' })
+  receivedByName: string;
+
+  @ApiProperty({ description: 'User role in transaction (payer/receiver)' })
+  userRole: 'payer' | 'receiver';
 }
 
 export class CenterIdParamDto {

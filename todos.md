@@ -178,37 +178,11 @@
 [ ] invetation flow and update invite user flow
 
 [permission] [userProfile] [endpoint]
-@@Finance
-Payments
-[no] [all] GET - /finance/payments/{id} - Get payment by ID
-TODO [] [] POST - /finance/payments/{id}/refund - Refund a payment
-TODO [] [] GET - /finance/payments - List payments (paginated)
+[finance.view_payments] [managers] [GET /finance/payments]
+[finance.view_treasury] [managers] [GET /finance/centers/{centerId}/treasury]
+[finance.view_wallet_statement] [managers] [GET /finance/centers/statements]
+[finance.view_cash_statement] [managers] [GET /finance/centers/cash-statements]
+[finance.view_student_charge] [managers] [POST /billing/students/charge/cash]
+[finance.view_student_records] [managers] [POST /billing/students/records]
 
-Wallets
-[no] [all] GET - /finance/wallets/me - Get current user wallet
-[no] [all] GET - /finance/wallets/total - Get total balance across all user wallets
-[no] [all] GET - /finance/wallets/me/statement - Get current user wallet statement
-[view wallet statement] [] GET - /finance/wallets/{walletId}/statement - Get paginated wallet statement with signed transaction amounts
-[view wallets] [admin] GET - /finance/wallets/{ownerId}/{ownerType} - Get wallet by owner ID and type
-[remove] [remove] POST - /finance/wallets/transfer - Transfer money between user profiles
-
-Center Revenue
-[view treasury] [manager] GET - /finance/centers/{centerId}/treasury - Get center treasury statistics
-[view wallet statement] [manager] GET - /finance/centers/{centerId}/statement - Get center wallet statement
-[view cash statement] [manager] GET - /finance/centers/{centerId}/cash-statement - Get center cash statement
-
-Finance Actions
-[no] [all] POST - /finance/wallet-topup - Initiate wallet top-up via Paymob
-
-Webhooks
-[no] [all] POST - /finance/webhooks/paymob - Paymob webhook endpoint
-======================
-
-@@StudentBilling
-[create subscription] [marager] POST - /billing/students/subscriptions/cash
-[no] [student] POST - /billing/students/subscriptions/wallet
-[create subscription] [marager] POST - /billing/students/session-charges/cash
-[no] [student] POST - /billing/students/session-charges/wallet
-?[] [] GET - /billing/students/records
-?shoule we add subscriptions GET and for whom
-?should we add session-charges GET and for whom
+<!-- [finance.view_daily_cash] [managers] [POST /billing/students/records] -->

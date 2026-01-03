@@ -7,11 +7,12 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ManagerialOnly } from '@/shared/common/decorators';
-import { CashboxService } from '../services/cashbox.service';
-import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
+import { ManagerialOnly, GetUser } from '@/shared/common/decorators';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
+import { CashboxService } from '../services/cashbox.service';
+import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import {
   CenterTreasuryStatsDto,
   CenterIdParamDto,
@@ -19,9 +20,8 @@ import {
   CenterCashStatementItemDto,
 } from '../dto/center-revenue-stats.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
-import { Transaction } from '../entities/transaction.entity';
-import { CashTransaction } from '../entities/cash-transaction.entity';
-import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
+import { CenterStatementQueryDto } from '../dto/center-statement-query.dto';
+import { DateRangeDto } from '@/shared/common/dto/date-range.dto';
 
 @ApiTags('Center Revenue')
 @ApiBearerAuth()
@@ -30,14 +30,26 @@ import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
 export class CashboxesController {
   constructor(private readonly cashboxService: CashboxService) {}
 
+  @Permissions(PERMISSIONS.FINANCE.VIEW_TREASURY)
   @Get(':centerId/treasury')
-  @Permissions(PERMISSIONS.FINANCE.VIEW_CASHBOX)
   @ApiOperation({
     summary: 'Get center treasury statistics',
     description:
-      'Get aggregated treasury statistics for a center including cashbox and wallet balances across all branches.',
+      'Get aggregated treasury statistics for a center including cashbox and wallet balances across all branches. Optional date range filtering.',
   })
   @ApiParam({ name: 'centerId', description: 'Center ID' })
+  @ApiQuery({
+    name: 'dateFrom',
+    description: 'Filter from date (ISO 8601 format)',
+    required: false,
+    type: Date,
+  })
+  @ApiQuery({
+    name: 'dateTo',
+    description: 'Filter to date (ISO 8601 format)',
+    required: false,
+    type: Date,
+  })
   @ApiResponse({
     status: 200,
     description: 'Treasury statistics retrieved successfully',
@@ -45,71 +57,60 @@ export class CashboxesController {
   })
   async getCenterTreasuryStats(
     @Param() params: CenterIdParamDto,
+    @Query() dateRange: DateRangeDto,
   ): Promise<ControllerResponse<CenterTreasuryStatsDto>> {
     const stats = await this.cashboxService.getCenterTreasuryStats(
       params.centerId,
+      dateRange.dateFrom,
+      dateRange.dateTo,
     );
 
     return ControllerResponse.success(stats);
   }
 
-  @Get(':centerId/statement')
-  @Permissions(PERMISSIONS.FINANCE.VIEW_CASHBOX)
+  @Permissions(PERMISSIONS.FINANCE.VIEW_WALLET_STATEMENT)
+  @Get('statements')
   @ApiOperation({
-    summary: 'Get center wallet statement',
+    summary: 'Get center wallet statements',
     description:
-      'Get paginated wallet statement for all branches in a center. Optional branchId filter.',
-  })
-  @ApiParam({ name: 'centerId', description: 'Center ID' })
-  @ApiQuery({
-    name: 'branchId',
-    description: 'Optional branch ID filter',
-    required: false,
+      'Get paginated wallet statements for centers. Auto-filters by actor center if available, otherwise returns all centers.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Center statement retrieved successfully',
+    description: 'Center statements retrieved successfully',
   })
-  async getCenterStatement(
-    @Param() params: CenterIdParamDto,
-    @Query() paginationDto: PaginateTransactionDto,
-    @Query('branchId') branchId?: string,
+  async getCenterStatements(
+    @Query() query: CenterStatementQueryDto,
+    @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<Pagination<CenterStatementItemDto>>> {
+    const centerId = actor.centerId;
     const statement = await this.cashboxService.getCenterStatement(
-      params.centerId,
-      paginationDto,
-      branchId,
+      centerId,
+      query,
     );
 
     return ControllerResponse.success(statement);
   }
 
-  @Get(':centerId/cash-statement')
-  @Permissions(PERMISSIONS.FINANCE.VIEW_CASHBOX)
+  @Permissions(PERMISSIONS.FINANCE.VIEW_CASH_STATEMENT)
+  @Get('cash-statement')
   @ApiOperation({
-    summary: 'Get center cash statement',
+    summary: 'Get center cash statements',
     description:
-      'Get paginated cash transaction statement for all branches in a center. Optional branchId filter.',
-  })
-  @ApiParam({ name: 'centerId', description: 'Center ID' })
-  @ApiQuery({
-    name: 'branchId',
-    description: 'Optional branch ID filter',
-    required: false,
+      'Get paginated cash transaction statements for centers. Auto-filters by actor center if available, otherwise returns all centers.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Center cash statement retrieved successfully',
+    description: 'Center cash statements retrieved successfully',
   })
-  async getCenterCashStatement(
-    @Param() params: CenterIdParamDto,
-    @Query() paginationDto: PaginateTransactionDto,
-    @Query('branchId') branchId?: string,
+  async getCenterCashStatements(
+    @Query() query: CenterStatementQueryDto,
+    @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<Pagination<CenterCashStatementItemDto>>> {
+    const centerId = actor.centerId;
     const statement = await this.cashboxService.getCenterCashStatement(
-      params.centerId,
-      paginationDto,
-      branchId,
+      centerId,
+      query,
     );
 
     return ControllerResponse.success(statement);

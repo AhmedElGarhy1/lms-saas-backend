@@ -12,7 +12,6 @@ import { WalletService } from '../services/wallet.service';
 import { Wallet } from '../entities/wallet.entity';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
-import { TransactionStatement } from '../repositories/transaction.repository';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
@@ -21,6 +20,7 @@ import { WalletTotalDto } from '../dto/wallet-total.dto';
 import { WalletTransferDto } from '../dto/wallet-transfer.dto';
 import { WalletOwnerParamsDto } from '../dto/wallet-owner-params.dto';
 import { WalletIdParamDto } from '../dto/wallet-id-param.dto';
+import { UserWalletStatementItemDto } from '../dto/wallet-statement.dto';
 import { AdminOnly, ManagerialOnly, GetUser } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 
@@ -32,53 +32,6 @@ export class WalletsController {
     private readonly walletService: WalletService,
     private readonly accessControlHelperService: AccessControlHelperService,
   ) {}
-
-  @Get('me')
-  @ApiOperation({
-    summary: 'Get current user wallet',
-    description: 'View own wallet balance and details. Read-only operation.',
-  })
-  @ApiResponse({ status: 200, description: 'Wallet retrieved successfully' })
-  async getMyWallet(
-    @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<Wallet>> {
-    const wallet = await this.walletService.getWallet(
-      actor.userProfileId,
-      WalletOwnerType.USER_PROFILE,
-    );
-
-    return ControllerResponse.success(wallet);
-  }
-
-  @Get('me/statement')
-  @ApiOperation({
-    summary: 'Get current user wallet statement',
-    description:
-      'View own wallet statement with signed transaction amounts. Shows detailed transaction history with pagination.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Wallet statement retrieved successfully',
-  })
-  async getMyWalletStatement(
-    @Query() dto: PaginateTransactionDto,
-    @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<Pagination<TransactionStatement>>> {
-    // Get user's wallet first to obtain wallet ID
-    const wallet = await this.walletService.getWallet(
-      actor.userProfileId,
-      WalletOwnerType.USER_PROFILE,
-    );
-
-    // Then get the paginated statement (ownership validation is done in service layer)
-    const statement = await this.walletService.getWalletStatementPaginated(
-      wallet.id,
-      dto,
-      actor,
-    );
-
-    return ControllerResponse.success(statement);
-  }
 
   @Get(':ownerId/:ownerType')
   @ApiOperation({
@@ -110,7 +63,7 @@ export class WalletsController {
   @ApiOperation({
     summary: 'Get paginated wallet statement with signed transaction amounts',
     description:
-      'View wallet statement with pagination. Users can view their own statement, admins can view any statement.',
+      'View wallet statement with signed amounts, user names, and role information. Users can view their own statement, admins can view any statement.',
   })
   @ApiParam({ name: 'walletId', description: 'Wallet ID' })
   @ApiResponse({
@@ -122,7 +75,7 @@ export class WalletsController {
     @Param() params: WalletIdParamDto,
     @Query() dto: PaginateTransactionDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<Pagination<TransactionStatement>>> {
+  ): Promise<ControllerResponse<Pagination<UserWalletStatementItemDto>>> {
     // Ownership validation is done in service layer
     const statement = await this.walletService.getWalletStatementPaginated(
       params.walletId,
@@ -133,47 +86,29 @@ export class WalletsController {
     return ControllerResponse.success(statement);
   }
 
-  @Get('total')
-  @ApiOperation({
-    summary: 'Get total balance across all user wallets',
-    description:
-      'Get aggregated balance information across all wallets owned by the current user.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Total balance retrieved successfully',
-  })
-  async getWalletTotal(
-    @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<WalletTotalDto>> {
-    const total = await this.walletService.getUserTotalBalance(actor.id);
+  // @Post('transfer')
+  // @Transactional()
+  // @ApiOperation({
+  //   summary: 'Transfer money between user profiles',
+  //   description:
+  //     'Transfer money from one user profile wallet to another user profile wallet. Both profiles must belong to the same user.',
+  // })
+  // @ApiResponse({
+  //   status: 201,
+  //   description: 'Transfer completed successfully',
+  // })
+  // async transferBetweenWallets(
+  //   @Body() dto: WalletTransferDto,
+  //   @GetUser() actor: ActorUser,
+  // ): Promise<ControllerResponse<{ correlationId: string }>> {
+  //   const result = await this.walletService.transferBetweenWallets(
+  //     dto.fromProfileId,
+  //     dto.toProfileId,
+  //     Money.from(dto.amount),
+  //     actor.id,
+  //     dto.idempotencyKey,
+  //   );
 
-    return ControllerResponse.success(total);
-  }
-
-  @Post('transfer')
-  @Transactional()
-  @ApiOperation({
-    summary: 'Transfer money between user profiles',
-    description:
-      'Transfer money from one user profile wallet to another user profile wallet. Both profiles must belong to the same user.',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Transfer completed successfully',
-  })
-  async transferBetweenWallets(
-    @Body() dto: WalletTransferDto,
-    @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<{ correlationId: string }>> {
-    const result = await this.walletService.transferBetweenWallets(
-      dto.fromProfileId,
-      dto.toProfileId,
-      Money.from(dto.amount),
-      actor.id,
-      dto.idempotencyKey,
-    );
-
-    return ControllerResponse.success({ correlationId: result.correlationId });
-  }
+  //   return ControllerResponse.success({ correlationId: result.correlationId });
+  // }
 }
