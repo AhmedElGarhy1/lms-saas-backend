@@ -23,11 +23,7 @@ import {
   ClassStatusChangedEvent,
 } from '../events/class.events';
 import { ClassStatus } from '../enums/class-status.enum';
-import { AbsenteePolicy } from '../enums/absentee-policy.enum';
-import {
-  getAvailableStatuses,
-  isValidTransition,
-} from '../utils/class-status-transition.util';
+import { ClassStateMachine } from '../state-machines/class-state-machine';
 import { ChangeClassStatusDto } from '../dto/change-class-status.dto';
 import { ClassAccessService } from './class-access.service';
 import { Transactional } from '@nestjs-cls/transactional';
@@ -47,6 +43,7 @@ export class ClassesService extends BaseService {
     private readonly bulkOperationService: BulkOperationService,
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly branchAccessService: BranchAccessService,
+    private readonly classStateMachine: ClassStateMachine,
   ) {
     super();
   }
@@ -404,7 +401,7 @@ export class ClassesService extends BaseService {
     actor: ActorUser,
   ): Promise<ClassStatus[]> {
     const classEntity = await this.getClass(classId, actor);
-    return getAvailableStatuses(classEntity.status);
+    return this.classStateMachine.getValidStatusesFrom(classEntity.status);
   }
 
   /**
@@ -476,7 +473,7 @@ export class ClassesService extends BaseService {
     const reason = changeStatusDto.reason;
 
     // Validate transition is allowed
-    if (!isValidTransition(oldStatus, newStatus)) {
+    if (!this.classStateMachine.isValidTransition(oldStatus, newStatus)) {
       throw ClassesErrors.classStatusTransitionInvalid();
     }
 
@@ -658,36 +655,5 @@ export class ClassesService extends BaseService {
     });
 
     return classEntity;
-  }
-
-  /**
-   * Update absentee policy for a class
-   */
-  async updateAbsenteePolicy(
-    classId: string,
-    absenteePolicy: AbsenteePolicy,
-    actor: ActorUser,
-  ): Promise<Class> {
-    // Get and validate class access
-    const classEntity = await this.getClass(classId, actor);
-
-    // Update the absentee policy
-    const updatedClass = await this.classesRepository.update(classId, {
-      absenteePolicy,
-    });
-
-    if (!updatedClass) {
-      throw ClassesErrors.classNotFound();
-    }
-
-    // Emit event
-    this.typeSafeEventEmitter.emit(
-      ClassEvents.UPDATED,
-      new ClassUpdatedEvent(updatedClass, actor, updatedClass.centerId, [
-        'absenteePolicy',
-      ]),
-    );
-
-    return updatedClass;
   }
 }

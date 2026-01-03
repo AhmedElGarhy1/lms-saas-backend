@@ -1,20 +1,22 @@
+import { Injectable } from '@nestjs/common';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { TransitionType } from '../enums/transition-type.enum';
+import { BaseTransition, BaseStateMachine } from '@/shared/state-machines';
 
-export interface PaymentTransition {
-  from: PaymentStatus;
-  to: PaymentStatus;
+export interface PaymentTransition extends BaseTransition<PaymentStatus> {
   type: TransitionType;
   requiresSuperAdmin: boolean;
-  businessLogic: string;
-  description: string;
 }
 
 /**
  * Payment State Machine Definition
  * Defines all valid payment status transitions
  */
-export class PaymentStateMachine {
+@Injectable()
+export class PaymentStateMachine extends BaseStateMachine<
+  PaymentStatus,
+  PaymentTransition
+> {
   private static readonly TRANSITIONS: PaymentTransition[] = [
     // STANDARD TRANSITIONS (Logic-Driven - Money + Label)
     {
@@ -70,59 +72,65 @@ export class PaymentStateMachine {
   ];
 
   /**
-   * Get valid transition for given from/to statuses
+   * Get all payment transitions (required by base class)
    */
-  static getTransition(from: PaymentStatus, to: PaymentStatus): PaymentTransition | null {
-    return this.TRANSITIONS.find(
-      transition => transition.from === from && transition.to === to
-    ) || null;
+  protected getTransitions(): PaymentTransition[] {
+    return PaymentStateMachine.TRANSITIONS;
   }
 
   /**
-   * Get all valid transitions from a given status
+   * Execute business logic for transitions (required by base class)
    */
-  static getValidTransitionsFrom(from: PaymentStatus): PaymentTransition[] {
-    return this.TRANSITIONS.filter(transition => transition.from === from);
-  }
-
-  /**
-   * Get all valid transitions to a given status
-   */
-  static getValidTransitionsTo(to: PaymentStatus): PaymentTransition[] {
-    return this.TRANSITIONS.filter(transition => transition.to === to);
-  }
-
-  /**
-   * Check if a transition is valid
-   */
-  static isValidTransition(from: PaymentStatus, to: PaymentStatus): boolean {
-    return this.getTransition(from, to) !== null;
+  protected async executeBusinessLogic(
+    logic: string,
+    context: any,
+  ): Promise<any> {
+    switch (logic) {
+      case 'completePayment':
+        return this.completePayment(context);
+      case 'cancelPayment':
+        return this.cancelPayment(context);
+      case 'refundPayment':
+        return this.refundPayment(context);
+      case 'override':
+        return this.handleOverride(context);
+      default:
+        throw new Error(`Unknown payment business logic: ${logic}`);
+    }
   }
 
   /**
    * Get all standard transitions (logic-driven)
    */
-  static getStandardTransitions(): PaymentTransition[] {
-    return this.TRANSITIONS.filter(t => t.type === TransitionType.STANDARD);
+  getStandardTransitions(): PaymentTransition[] {
+    return this.getTransitions().filter(
+      (t) => t.type === TransitionType.STANDARD,
+    );
   }
 
   /**
    * Get all override transitions (superadmin only)
    */
-  static getOverrideTransitions(): PaymentTransition[] {
-    return this.TRANSITIONS.filter(t => t.type === TransitionType.OVERRIDE);
+  getOverrideTransitions(): PaymentTransition[] {
+    return this.getTransitions().filter(
+      (t) => t.type === TransitionType.OVERRIDE,
+    );
   }
 
-  /**
-   * Get transition matrix for documentation
-   */
-  static getTransitionMatrix(): Record<string, PaymentTransition[]> {
-    const matrix: Record<string, PaymentTransition[]> = {};
+  // Business logic methods (to be implemented by the payment service)
+  private async completePayment(context: any): Promise<any> {
+    throw new Error('completePayment must be implemented by payment service');
+  }
 
-    Object.values(PaymentStatus).forEach(status => {
-      matrix[status] = this.getValidTransitionsFrom(status);
-    });
+  private async cancelPayment(context: any): Promise<any> {
+    throw new Error('cancelPayment must be implemented by payment service');
+  }
 
-    return matrix;
+  private async refundPayment(context: any): Promise<any> {
+    throw new Error('refundPayment must be implemented by payment service');
+  }
+
+  private async handleOverride(context: any): Promise<any> {
+    throw new Error('handleOverride must be implemented by payment service');
   }
 }

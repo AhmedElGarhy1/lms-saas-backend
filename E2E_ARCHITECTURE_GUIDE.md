@@ -70,23 +70,13 @@ enum SessionStatus {
 #### **Session Management**
 
 ```
-POST   /sessions/check-in          # Staff: Start check-in period
-POST   /sessions/start             # Staff: Begin session
-POST   /sessions/cancel            # Staff: Cancel session
 POST   /sessions                    # Staff: Create extra session
 GET    /sessions                    # Staff: List sessions (paginated)
 GET    /sessions/calendar           # All: Get calendar view
 GET    /sessions/:id                # All: Get session details
 PUT    /sessions/:id                # Staff: Update session
+PATCH  /sessions/:id/status         # Staff: Unified status transition (check-in, start, finish, cancel, reschedule)
 DELETE /sessions/:id                # Staff: Delete session
-```
-
-#### **State Machine (NEW)**
-
-```
-PATCH  /sessions/:id/status         # Staff: Unified status transition
-POST   /sessions/:id/finish         # Staff: Mark session finished
-POST   /sessions/:id/schedule       # Staff: Reschedule cancelled session
 ```
 
 ### **🔄 Session Lifecycle Events**
@@ -161,14 +151,6 @@ POST   /enrollments/:id/no-show      # Staff: Mark as absent
 ```
 
 #### **Attendance Policies**
-
-```typescript
-enum AbsenteePolicy {
-  STRICT = 'STRICT', // Auto-charge all (guaranteed revenue)
-  FLEXIBLE = 'FLEXIBLE', // Only charge attendees
-  MANUAL = 'MANUAL', // Admin decides
-}
-```
 
 ---
 
@@ -328,9 +310,7 @@ POST   /finance/webhooks/paymob               # Payment gateway webhook
 5. ENROLLMENT FINALIZATION (Automatic)
    SessionCheckedInListener receives event
    ↓
-   Apply class AbsenteePolicy:
-   - STRICT: Mark all LOCKED → PAID
-   - FLEXIBLE: PAID stay PAID, LOCKED → NO_SHOW
+   Process enrollment finalization
 
 6. ATTENDANCE TRACKING (Staff)
    POST /enrollments/:id/check-in → Mark as attended
@@ -438,7 +418,7 @@ sequenceDiagram
     participant EM as Enrollments Module
     participant FM as Finance Module
 
-    Staff->>API: POST /sessions/check-in
+    Staff->>API: PATCH /sessions/:id/status (CHECKING_IN)
     SM-->>Staff: Session ready for check-in
 
     Note over EM: Student arrives

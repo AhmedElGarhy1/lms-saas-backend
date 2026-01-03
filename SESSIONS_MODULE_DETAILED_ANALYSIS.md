@@ -69,14 +69,11 @@ src/modules/sessions/
 
 | Method | Route                           | Permission        | Status  | Notes                                       |
 | ------ | ------------------------------- | ----------------- | ------- | ------------------------------------------- |
-| POST   | `/sessions/start`               | `SESSIONS.UPDATE` | ✅ Used | Materializes virtual sessions               |
-| POST   | `/sessions/cancel`              | `SESSIONS.UPDATE` | ✅ Used | Creates tombstone for virtual sessions      |
 | POST   | `/sessions`                     | `SESSIONS.CREATE` | ✅ Used | Creates extra/manual sessions               |
 | GET    | `/sessions/calendar`            | `SESSIONS.READ`   | ✅ Used | Returns calendar view with virtual sessions |
 | GET    | `/sessions/:sessionId`          | `SESSIONS.READ`   | ✅ Used | Handles both real and virtual IDs           |
 | PUT    | `/sessions/:sessionId`          | `SESSIONS.UPDATE` | ✅ Used | Updates session (title, times)              |
-| POST   | `/sessions/:sessionId/finish`   | `SESSIONS.UPDATE` | ✅ Used | CONDUCTING → FINISHED                       |
-| POST   | `/sessions/:sessionId/schedule` | `SESSIONS.UPDATE` | ✅ Used | CANCELED → SCHEDULED                        |
+| PATCH  | `/sessions/:sessionId/status`   | `SESSIONS.UPDATE` | ✅ Used | Unified status transitions (check-in, start, finish, cancel, reschedule) |
 | DELETE | `/sessions/:sessionId`          | `SESSIONS.DELETE` | ✅ Used | Only extra sessions                         |
 
 **Findings:**

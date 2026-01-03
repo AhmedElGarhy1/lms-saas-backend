@@ -28,7 +28,6 @@ import { SerializeOptions } from '@nestjs/common';
 import { ClassResponseDto } from '../dto/class-response.dto';
 import { StudentPaymentStrategyDto } from '../dto/student-payment-strategy.dto';
 import { TeacherPaymentStrategyDto } from '../dto/teacher-payment-strategy.dto';
-import { UpdateAbsenteePolicyDto } from '../dto/update-absentee-policy.dto';
 import { ApiBody } from '@nestjs/swagger';
 
 @ApiTags('Classes')
@@ -282,32 +281,4 @@ export class ClassesController {
     return ControllerResponse.success(result);
   }
 
-  // ===== ABSENTEE POLICY ENDPOINTS =====
-
-  @Put(':classId/absentee-policy')
-  @Permissions(PERMISSIONS.CLASSES.UPDATE)
-  @ApiOperation({
-    summary: 'Update absentee payment policy for a class',
-    description:
-      'Set STRICT, FLEXIBLE, or MANUAL policy for handling absent students',
-  })
-  @ApiParam({ name: 'classId', description: 'Class ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Absentee policy updated successfully',
-  })
-  @Transactional()
-  @SerializeOptions({ type: ClassResponseDto })
-  async updateAbsenteePolicy(
-    @Param() params: ClassIdParamDto,
-    @Body() dto: UpdateAbsenteePolicyDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.classesService.updateAbsenteePolicy(
-      params.classId,
-      dto.absenteePolicy,
-      actor,
-    );
-    return ControllerResponse.success(result);
-  }
 }

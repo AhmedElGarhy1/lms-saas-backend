@@ -17,11 +17,9 @@ import { UpdateSessionDto } from '../dto/update-session.dto';
 import { CalendarSessionsDto } from '../dto/calendar-sessions.dto';
 import { PaginateSessionsDto } from '../dto/paginate-sessions.dto';
 import { SessionIdParamDto } from '../dto/session-id-param.dto';
-import { StartSessionDto } from '../dto/start-session.dto';
-import { CheckInSessionDto } from '../dto/check-in-session.dto';
-import { CancelSessionDto } from '../dto/cancel-session.dto';
 import { TransitionStatusDto } from '../dto/transition-status.dto';
-import { SessionStatus } from '../enums/session-status.enum';
+import { SessionStateMachine } from '../state-machines/session-state-machine';
+import { Inject } from '@nestjs/common';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { GetUser, ManagerialOnly } from '@/shared/common/decorators';
@@ -35,106 +33,10 @@ import { NoContext } from '@/shared/common/decorators/no-context';
 @Controller('sessions')
 @ManagerialOnly()
 export class SessionsController {
-  constructor(private readonly sessionsService: SessionsService) {}
-
-  @Post('check-in')
-  @ApiOperation({
-    summary:
-      'Check-in a session (materialize virtual to real or update existing)',
-    description:
-      'Checks-in a session by either materializing a virtual session slot into a real database record, or updating an existing SCHEDULED session to CHECKING_IN. Accepts either a real session UUID or a virtual session ID from the calendar.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Session checked-in successfully',
-  })
-  @ApiResponse({
-    status: 400,
-    description:
-      'Invalid session ID, no matching scheduled session found, or cannot check-in canceled session',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Insufficient permissions',
-  })
-  @Permissions(PERMISSIONS.SESSIONS.UPDATE)
-  @Transactional()
-  @SerializeOptions({ type: SessionResponseDto })
-  async checkInSession(
-    @Body() checkInSessionDto: CheckInSessionDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.sessionsService.checkInSession(
-      checkInSessionDto.sessionId,
-      actor,
-    );
-    return ControllerResponse.success(result);
-  }
-
-  @Post('start')
-  @ApiOperation({
-    summary: 'Start a session (materialize virtual to real or update existing)',
-    description:
-      'Starts a session by updating an existing CHECKING_IN session to CONDUCTING. Accepts a real session UUID. Virtual sessions must be checked-in first to materialize a real session record.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Session started successfully',
-  })
-  @ApiResponse({
-    status: 400,
-    description:
-      'Invalid session ID, too early to start session, no matching scheduled session found, or cannot start canceled session',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Insufficient permissions',
-  })
-  @Permissions(PERMISSIONS.SESSIONS.UPDATE)
-  @Transactional()
-  @SerializeOptions({ type: SessionResponseDto })
-  async startSession(
-    @Body() startSessionDto: StartSessionDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.sessionsService.startSession(
-      startSessionDto.sessionId,
-      actor,
-    );
-    return ControllerResponse.success(result);
-  }
-
-  @Post('cancel')
-  @ApiOperation({
-    summary: 'Cancel a session (create tombstone or update existing)',
-    description:
-      'Cancels a session by creating a tombstone record for virtual slots or updating existing real sessions to CANCELLED status. Accepts either a real session UUID or a virtual session ID from the calendar.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Session cancelled successfully',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid session ID or no matching scheduled session found',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Insufficient permissions',
-  })
-  @Permissions(PERMISSIONS.SESSIONS.UPDATE)
-  @Transactional()
-  @SerializeOptions({ type: SessionResponseDto })
-  async cancelSession(
-    @Body() cancelSessionDto: CancelSessionDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.sessionsService.cancelSession(
-      cancelSessionDto.sessionId,
-      actor,
-    );
-    return ControllerResponse.success(result);
-  }
+  constructor(
+    private readonly sessionsService: SessionsService,
+    private readonly sessionStateMachine: SessionStateMachine,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create an extra/manual session' })
@@ -278,44 +180,11 @@ export class SessionsController {
     return ControllerResponse.success(result);
   }
 
-  @Post(':sessionId/finish')
-  @ApiOperation({
-    summary: 'Finish a session',
-    description:
-      'Marks a session as finished. Only allows transition from CONDUCTING to FINISHED status.',
-  })
-  @ApiParam({ name: 'sessionId', description: 'Session ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Session finished successfully',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Session is not in CONDUCTING status',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Session not found',
-  })
-  @Permissions(PERMISSIONS.SESSIONS.UPDATE)
-  @Transactional()
-  @SerializeOptions({ type: SessionResponseDto })
-  async finishSession(
-    @Param() params: SessionIdParamDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.sessionsService.finishSession(
-      params.sessionId,
-      actor,
-    );
-    return ControllerResponse.success(result);
-  }
-
   @Patch(':sessionId/status')
   @ApiOperation({
     summary: 'Transition session status with business logic',
     description:
-      'Unified endpoint for all session status changes with validation and side effects. Triggers enrollment finalization automatically.',
+      'Unified endpoint for all session status changes with validation and side effects. Handles check-in, start, finish, cancel, and reschedule transitions. Triggers enrollment finalization automatically.',
   })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
   @ApiResponse({
@@ -345,20 +214,30 @@ export class SessionsController {
     );
 
     // Validate transition is allowed
-    this.validateStatusTransition(currentSession.status, dto.status);
+    const transition = this.sessionStateMachine.getTransition(
+      currentSession.status,
+      dto.status,
+    );
+    if (!transition) {
+      throw new Error(
+        `Invalid status transition: ${currentSession.status} → ${dto.status}`,
+      );
+    }
 
-    // Execute transition with side effects
-    switch (`${currentSession.status}→${dto.status}`) {
-      case `${SessionStatus.SCHEDULED}→${SessionStatus.CHECKING_IN}`:
+    // Execute transition with side effects based on business logic
+    switch (transition.businessLogic) {
+      case 'checkInSession':
         return await this.handleCheckIn(params.sessionId, actor);
-      case `${SessionStatus.CHECKING_IN}→${SessionStatus.CONDUCTING}`:
+      case 'startSession':
         return await this.handleStart(params.sessionId, actor);
-      case `${SessionStatus.CONDUCTING}→${SessionStatus.FINISHED}`:
+      case 'finishSession':
         return await this.handleFinish(params.sessionId, actor);
+      case 'cancelSession':
+        return await this.handleCancel(params.sessionId, actor);
+      case 'scheduleSession':
+        return await this.handleSchedule(params.sessionId, actor);
       default:
-        throw new Error(
-          `Invalid status transition: ${currentSession.status} → ${dto.status}`,
-        );
+        throw new Error(`Unknown business logic: ${transition.businessLogic}`);
     }
   }
 
@@ -377,66 +256,13 @@ export class SessionsController {
     return ControllerResponse.success(result);
   }
 
-  private validateStatusTransition(
-    currentStatus: SessionStatus,
-    newStatus: SessionStatus,
-  ): void {
-    const allowedTransitions: Record<SessionStatus, SessionStatus[]> = {
-      [SessionStatus.SCHEDULED]: [
-        SessionStatus.CHECKING_IN,
-        SessionStatus.CANCELED,
-      ],
-      [SessionStatus.CHECKING_IN]: [
-        SessionStatus.CONDUCTING,
-        SessionStatus.CANCELED,
-      ],
-      [SessionStatus.CONDUCTING]: [
-        SessionStatus.FINISHED,
-        SessionStatus.CANCELED,
-      ],
-      [SessionStatus.FINISHED]: [], // Terminal state
-      [SessionStatus.CANCELED]: [SessionStatus.SCHEDULED], // Allow rescheduling
-      [SessionStatus.MISSED]: [], // Terminal state
-    };
-
-    const allowed = allowedTransitions[currentStatus] || [];
-    if (!allowed.includes(newStatus)) {
-      throw new Error(
-        `Invalid status transition: ${currentStatus} → ${newStatus}`,
-      );
-    }
+  private async handleCancel(sessionId: string, actor: ActorUser) {
+    const result = await this.sessionsService.cancelSession(sessionId, actor);
+    return ControllerResponse.success(result);
   }
 
-  @Post(':sessionId/schedule')
-  @ApiOperation({
-    summary: 'Reschedule a canceled session',
-    description:
-      'Reschedules a previously canceled session. Only allows transition from CANCELED to SCHEDULED status.',
-  })
-  @ApiParam({ name: 'sessionId', description: 'Session ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Session rescheduled successfully',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Session is not in CANCELED status',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Session not found',
-  })
-  @Permissions(PERMISSIONS.SESSIONS.UPDATE)
-  @Transactional()
-  @SerializeOptions({ type: SessionResponseDto })
-  async scheduleSession(
-    @Param() params: SessionIdParamDto,
-    @GetUser() actor: ActorUser,
-  ) {
-    const result = await this.sessionsService.scheduleSession(
-      params.sessionId,
-      actor,
-    );
+  private async handleSchedule(sessionId: string, actor: ActorUser) {
+    const result = await this.sessionsService.scheduleSession(sessionId, actor);
     return ControllerResponse.success(result);
   }
 

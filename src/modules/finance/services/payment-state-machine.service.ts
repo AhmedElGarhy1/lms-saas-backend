@@ -10,7 +10,6 @@ import {
   PaymentStateMachine,
   PaymentTransition,
 } from '../state-machines/payment-state-machine';
-import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { FinanceErrors } from '../exceptions/finance.errors';
 import { SystemErrors } from '@/shared/common/exceptions/system.exception';
 
@@ -23,6 +22,7 @@ export class PaymentStateMachineService {
     private readonly paymentStatusChangeRepository: PaymentStatusChangeRepository,
     private readonly paymentService: PaymentService,
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly paymentStateMachine: PaymentStateMachine,
   ) {}
 
   /**
@@ -38,14 +38,14 @@ export class PaymentStateMachineService {
     const payment = await this.paymentRepository.findOneOrThrow(paymentId);
 
     // 2. Validate the transition exists
-    const transition = PaymentStateMachine.getTransition(
+    const transition = this.paymentStateMachine.getTransition(
       payment.status,
       targetStatus,
     );
     if (!transition) {
-      const validTransitions = PaymentStateMachine.getValidTransitionsFrom(
-        payment.status,
-      ).map((t) => t.to);
+      const validTransitions = this.paymentStateMachine
+        .getValidTransitionsFrom(payment.status)
+        .map((t) => t.to);
       throw FinanceErrors.paymentStatusTransitionInvalid(
         payment.status,
         targetStatus,
@@ -168,20 +168,20 @@ export class PaymentStateMachineService {
    * Get transition matrix for API documentation
    */
   getTransitionMatrix() {
-    return PaymentStateMachine.getTransitionMatrix();
+    return this.paymentStateMachine.getTransitionMatrix();
   }
 
   /**
    * Get valid transitions from a given status
    */
   getValidTransitionsFrom(status: PaymentStatus): PaymentTransition[] {
-    return PaymentStateMachine.getValidTransitionsFrom(status);
+    return this.paymentStateMachine.getValidTransitionsFrom(status);
   }
 
   /**
    * Check if a transition is valid
    */
   isValidTransition(from: PaymentStatus, to: PaymentStatus): boolean {
-    return PaymentStateMachine.isValidTransition(from, to);
+    return this.paymentStateMachine.isValidTransition(from, to);
   }
 }

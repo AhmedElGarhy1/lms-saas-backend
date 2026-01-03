@@ -31,7 +31,6 @@ import { ScheduleItemsRepository } from '@/modules/classes/repositories/schedule
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
 import { DayOfWeek } from '@/modules/classes/enums/day-of-week.enum';
 import { ClassStatus } from '@/modules/classes/enums/class-status.enum';
-import { AbsenteePolicy } from '@/modules/classes/enums/absentee-policy.enum';
 import {
   CalendarSessionsResponseDto,
   CalendarSessionItem,

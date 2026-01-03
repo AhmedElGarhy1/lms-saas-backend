@@ -134,12 +134,14 @@
 [x] calender doesn't have filters
 [x] remove translations from backend and keep it only in notifications
 [x] add proper and detailed throw from backend errors
-[ ] proper permissions implementaion
-[ ] student billing display in sidebar and in session attendance throw for money
-[ ] check absentee-policy implementation and do we need it or not
-[ ] at the end of session before finish display students didn't attend for action
+[x] action doesn't resolve or reject (ex: login button doesn't return back to not loading state)
+[x] proper permissions implementaion
+[x] student billing display in sidebar
+[x] check absentee-policy implementation and do we need it or not
+[x] remove sessions statues we have status single endpoint
+[ ] in session attendance throw for money
+[ ] at the end of session before finish display students didn't attend for action and remove the cron job
 [ ] bulk unassgin student from group
-[ ] remove sessions statues we have status single endpoint
 [ ] implement branch as in permissions to display sidebar
 [ ] implement filteration for branche in paginations
 [ ] check if we need to remove some actions in branch context
@@ -177,12 +179,5 @@
 
 [ ] invetation flow and update invite user flow
 
-[permission] [userProfile] [endpoint]
-[finance.view_payments] [managers] [GET /finance/payments]
-[finance.view_treasury] [managers] [GET /finance/centers/{centerId}/treasury]
-[finance.view_wallet_statement] [managers] [GET /finance/centers/statements]
-[finance.view_cash_statement] [managers] [GET /finance/centers/cash-statements]
-[finance.view_student_charge] [managers] [POST /billing/students/charge/cash]
-[finance.view_student_records] [managers] [POST /billing/students/records]
-
+<!-- [permission] [userProfile] [endpoint] -->
 <!-- [finance.view_daily_cash] [managers] [POST /billing/students/records] -->

@@ -24,6 +24,7 @@ import { CashTransactionService } from './services/cash-transaction.service';
 import { WebhookService } from './services/webhook.service';
 import { PaymentCleanupService } from './services/payment-cleanup.service';
 import { PaymentStateMachineService } from './services/payment-state-machine.service';
+import { PaymentStateMachine } from './state-machines/payment-state-machine';
 import { PaymentsController } from './controllers/payments.controller';
 import { WalletsController } from './controllers/wallets.controller';
 import { CashboxesController } from './controllers/cashboxes.controller';
@@ -137,6 +138,7 @@ import { UserModule } from '../user/user.module';
     WebhookService,
     PaymentCleanupService,
     PaymentStateMachineService,
+    PaymentStateMachine,
     FinanceMonitorService,
     UserProfileListener,
     BranchListener,
