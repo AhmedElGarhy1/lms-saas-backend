@@ -8,6 +8,7 @@ import { Session } from '@/modules/sessions/entities/session.entity';
 export enum ChargeType {
   SUBSCRIPTION = 'SUBSCRIPTION',
   SESSION = 'SESSION',
+  CLASS = 'CLASS',
 }
 
 export class CreateStudentChargeDto {
@@ -27,13 +28,15 @@ export class CreateStudentChargeDto {
   @IsUserProfile(ProfileType.STUDENT)
   studentUserProfileId: string;
 
-  // For subscription charges - required when type is SUBSCRIPTION
+  // For subscription and class charges - required when type is SUBSCRIPTION or CLASS
   @ApiProperty({
-    description: 'Class ID (required for subscription charges)',
+    description: 'Class ID (required for subscription and class charges)',
     example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     required: false,
   })
-  @ValidateIf(o => o.type === ChargeType.SUBSCRIPTION)
+  @ValidateIf(
+    (o) => o.type === ChargeType.SUBSCRIPTION || o.type === ChargeType.CLASS,
+  )
   @IsUUID()
   @BelongsToCenter(Class)
   classId?: string;
@@ -44,7 +47,7 @@ export class CreateStudentChargeDto {
     example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     required: false,
   })
-  @ValidateIf(o => o.type === ChargeType.SESSION)
+  @ValidateIf((o) => o.type === ChargeType.SESSION)
   @IsUUID()
   @BelongsToCenter(Session)
   sessionId?: string;
@@ -55,18 +58,19 @@ export class CreateStudentChargeDto {
     example: 2024,
     required: false,
   })
-  @ValidateIf(o => o.type === ChargeType.SUBSCRIPTION)
+  @ValidateIf((o) => o.type === ChargeType.SUBSCRIPTION)
   @IsInt()
   @Min(2020)
   @Max(2030)
   year?: number;
 
   @ApiProperty({
-    description: 'Month for subscription (1-12, required for subscription charges)',
+    description:
+      'Month for subscription (1-12, required for subscription charges)',
     example: 1,
     required: false,
   })
-  @ValidateIf(o => o.type === ChargeType.SUBSCRIPTION)
+  @ValidateIf((o) => o.type === ChargeType.SUBSCRIPTION)
   @IsInt()
   @Min(1)
   @Max(12)

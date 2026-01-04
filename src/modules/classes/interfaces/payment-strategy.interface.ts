@@ -15,12 +15,10 @@ export interface TeacherPaymentStrategy {
 
 /**
  * Student payment strategy - granular payment options
- * - includePackage: allow package purchases
  * - includeSession: allow per-session payments (with sessionPrice)
  * - includeMonth: allow monthly subscriptions (with monthPrice)
  */
 export interface StudentPaymentStrategy {
-  includePackage: boolean;
   includeSession: boolean;
   sessionPrice?: number;
   includeMonth: boolean;

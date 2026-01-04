@@ -35,4 +35,34 @@ export class StudentBillingErrors extends BaseErrorHelpers {
   static sessionChargeInvalidPaymentSource(): DomainException {
     return this.createNoDetails(StudentBillingErrorCode.SESSION_CHARGE_INVALID_PAYMENT_SOURCE);
   }
+
+  // Payment strategy validation errors
+  static monthlySubscriptionsNotAllowed(): DomainException {
+    return this.createNoDetails(StudentBillingErrorCode.MONTHLY_SUBSCRIPTIONS_NOT_ALLOWED);
+  }
+
+  static sessionChargesNotAllowed(): DomainException {
+    return this.createNoDetails(StudentBillingErrorCode.SESSION_CHARGES_NOT_ALLOWED);
+  }
+
+  static sessionPaymentsNotConfigured(): DomainException {
+    return this.createNoDetails(StudentBillingErrorCode.SESSION_PAYMENTS_NOT_CONFIGURED);
+  }
+
+  static monthlyPaymentsNotConfigured(): DomainException {
+    return this.createNoDetails(StudentBillingErrorCode.MONTHLY_PAYMENTS_NOT_CONFIGURED);
+  }
+
+  // Class charge errors
+  static classChargesNotAllowed(): DomainException {
+    return this.createNoDetails(StudentBillingErrorCode.CLASS_CHARGES_NOT_ALLOWED);
+  }
+
+  static classPaymentsNotConfigured(): DomainException {
+    return this.createNoDetails(StudentBillingErrorCode.CLASS_PAYMENTS_NOT_CONFIGURED);
+  }
+
+  static classChargeAlreadyExists(): DomainException {
+    return this.createNoDetails(StudentBillingErrorCode.CLASS_CHARGE_ALREADY_EXISTS);
+  }
 }

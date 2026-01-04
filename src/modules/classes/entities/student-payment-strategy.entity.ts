@@ -17,9 +17,6 @@ export class StudentPaymentStrategy extends BaseEntity {
   branchId: string; // Denormalized from Class for performance and snapshot
 
   @Column({ type: 'boolean', default: true })
-  includePackage: boolean; // Allow package purchases for this class
-
-  @Column({ type: 'boolean', default: true })
   includeSession: boolean; // Allow per-session payments
 
   @Column({
@@ -40,6 +37,17 @@ export class StudentPaymentStrategy extends BaseEntity {
     nullable: true,
   })
   monthPrice?: number; // Monthly subscription price (when includeMonth = true)
+
+  @Column({ type: 'boolean', default: false })
+  includeClass: boolean; // Allow one-time class charges
+
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+  })
+  classPrice?: number; // One-time class charge price (when includeClass = true)
 
   // Relations
   @OneToOne(() => Class, (classEntity) => classEntity.studentPaymentStrategy, {

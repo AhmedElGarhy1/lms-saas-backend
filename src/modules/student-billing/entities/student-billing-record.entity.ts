@@ -9,10 +9,12 @@ import {
 } from 'typeorm';
 import { Money } from '@/shared/common/utils/money.util';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
+import { StudentPaymentStrategy } from '@/modules/classes/entities/student-payment-strategy.entity';
 
-export enum BillingRecordType {
+export enum StudentBillingType {
   MONTHLY = 'MONTHLY',
   SESSION = 'SESSION',
+  CLASS = 'CLASS',
 }
 
 export enum PaymentSource {
@@ -29,16 +31,12 @@ export class StudentBillingRecord {
   @Index()
   studentUserProfileId: string;
 
+  @Column()
+  type: StudentBillingType; // Type of billing: session/monthly/class
+
   @Column('uuid')
   @Index()
-  classId: string;
-
-  @Column('uuid', { nullable: true })
-  @Index()
-  sessionId?: string; // null for monthly records
-
-  @Column()
-  type: BillingRecordType;
+  refId: string; // Reference ID (strategy ID for all types)
 
   @Column()
   paymentSource: PaymentSource;
@@ -67,4 +65,8 @@ export class StudentBillingRecord {
   @ManyToOne(() => UserProfile)
   @JoinColumn({ name: 'studentUserProfileId' })
   studentUserProfile: UserProfile;
+
+  @ManyToOne(() => StudentPaymentStrategy)
+  @JoinColumn({ name: 'refId' })
+  strategy: StudentPaymentStrategy;
 }

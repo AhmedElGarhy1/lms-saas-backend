@@ -383,13 +383,74 @@ if (error.code === 'CLS_038') {
 
 ## 📊 Attendance Errors (ATD_xxx)
 
-| Code    | Enum                            | Description                                                         | Parameters | Example                                           |
-| ------- | ------------------------------- | ------------------------------------------------------------------- | ---------- | ------------------------------------------------- |
-| ATD_007 | ATTENDANCE_SESSION_NOT_ACTIVE   | Session not in active state (CHECKING_IN/CONDUCTING) for attendance | None       | `AttendanceErrors.attendanceSessionNotActive()`   |
-| ATD_008 | ATTENDANCE_STUDENT_NOT_ENROLLED | Student not enrolled in group                                       | None       | `AttendanceErrors.attendanceStudentNotEnrolled()` |
-| ATD_012 | ATTENDANCE_PAYMENT_REQUIRED     | Student payment required for session access                         | None       | `AttendanceErrors.attendancePaymentRequired()`    |
-| ATD_014 | ATTENDANCE_INVALID_STUDENT_CODE | Student code format invalid                                         | None       | `AttendanceErrors.attendanceInvalidStudentCode()` |
-| ATD_015 | ATTENDANCE_ALREADY_EXISTS       | Attendance record already exists                                    | None       | `AttendanceErrors.attendanceAlreadyExists()`      |
+| Code    | Enum                            | Description                                                         | Parameters                                     | Example                                           |
+| ------- | ------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------- |
+| ATD_007 | ATTENDANCE_SESSION_NOT_ACTIVE   | Session not in active state (CHECKING_IN/CONDUCTING) for attendance | None                                           | `AttendanceErrors.attendanceSessionNotActive()`   |
+| ATD_008 | ATTENDANCE_STUDENT_NOT_ENROLLED | Student not enrolled in group                                       | None                                           | `AttendanceErrors.attendanceStudentNotEnrolled()` |
+| ATD_012 | ATTENDANCE_PAYMENT_REQUIRED     | Student payment required for session access                         | `availablePaymentOptions`, `hasPaymentOptions` | `AttendanceErrors.attendancePaymentRequired()`    |
+| ATD_014 | ATTENDANCE_INVALID_STUDENT_CODE | Student code format invalid                                         | None                                           | `AttendanceErrors.attendanceInvalidStudentCode()` |
+| ATD_015 | ATTENDANCE_ALREADY_EXISTS       | Attendance record already exists                                    | None                                           | `AttendanceErrors.attendanceAlreadyExists()`      |
+
+### 🎯 Detailed Payment Required Error (ATD_012)
+
+**ATD_012** includes structured payment strategy data so frontend can format messages appropriately:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ATD_012",
+    "details": [
+      {
+        "availablePaymentOptions": [
+          {
+            "type": "session",
+            "price": 200
+          },
+          {
+            "type": "monthly",
+            "price": 1500
+          },
+          {
+            "type": "class",
+            "price": 2500
+          }
+        ],
+        "hasPaymentOptions": true
+      }
+    ]
+  }
+}
+```
+
+**Frontend Usage:**
+
+```javascript
+if (error.code === 'ATD_012') {
+  // DomainException wraps details in an array
+  const { availablePaymentOptions, hasPaymentOptions } = error.details[0];
+
+  if (!hasPaymentOptions) {
+    showError('Payment required but no payment options are configured.');
+    return;
+  }
+
+  const formattedOptions = availablePaymentOptions.map((option) => {
+    if (option.type === 'session') {
+      return `Session payment: ${option.price}`;
+    } else if (option.type === 'monthly') {
+      return `Monthly subscription: ${option.price}`;
+    } else if (option.type === 'class') {
+      return `Class charge: ${option.price}`;
+    }
+  });
+
+  showError(
+    `Payment required for attendance. Available options: ${formattedOptions.join(', ')}`,
+  );
+}
+}
+```
 
 ## 📚 Levels Errors (LVL_xxx)
 
@@ -502,6 +563,13 @@ if (error.code === 'CLS_038') {
 | SBL_004 | SESSION_CHARGE_PAYMENT_STRATEGY_MISSING | Session charge payment strategy missing           | None       | `StudentBillingErrors.sessionChargePaymentStrategyMissing()` |
 | SBL_005 | SESSION_CHARGE_ALREADY_EXISTS           | Student already paid for this session             | None       | `StudentBillingErrors.sessionChargeAlreadyExists()`          |
 | SBL_006 | SESSION_CHARGE_INVALID_PAYMENT_SOURCE   | Invalid payment source for session charge         | None       | `StudentBillingErrors.sessionChargeInvalidPaymentSource()`   |
+| SBL_007 | MONTHLY_SUBSCRIPTIONS_NOT_ALLOWED       | Monthly subscriptions not allowed for this class  | None       | `StudentBillingErrors.monthlySubscriptionsNotAllowed()`      |
+| SBL_008 | SESSION_CHARGES_NOT_ALLOWED             | Session charges not allowed for this class        | None       | `StudentBillingErrors.sessionChargesNotAllowed()`            |
+| SBL_009 | SESSION_PAYMENTS_NOT_CONFIGURED         | Session payments not configured for this class    | None       | `StudentBillingErrors.sessionPaymentsNotConfigured()`        |
+| SBL_010 | MONTHLY_PAYMENTS_NOT_CONFIGURED         | Monthly payments not configured for this class    | None       | `StudentBillingErrors.monthlyPaymentsNotConfigured()`        |
+| SBL_011 | CLASS_CHARGES_NOT_ALLOWED               | Class charges not allowed for this class          | None       | `StudentBillingErrors.classChargesNotAllowed()`              |
+| SBL_012 | CLASS_PAYMENTS_NOT_CONFIGURED           | Class payments not configured for this class      | None       | `StudentBillingErrors.classPaymentsNotConfigured()`          |
+| SBL_013 | CLASS_CHARGE_ALREADY_EXISTS             | Student already has a class charge for this class | None       | `StudentBillingErrors.classChargeAlreadyExists()`            |
 
 ## 🔔 Notification Errors (NTN_xxx)
 
@@ -1138,7 +1206,20 @@ enum StudentBillingErrorCode {
   SUBSCRIPTION_INVALID_PAYMENT_SOURCE = 'SBL_003',
   SESSION_CHARGE_PAYMENT_STRATEGY_MISSING = 'SBL_004',
   SESSION_CHARGE_ALREADY_EXISTS = 'SBL_005',
-  SESSION_CHARGE_INVALID_PAYMENT_SOURCE = 'SBL_006'
+  SESSION_CHARGE_INVALID_PAYMENT_SOURCE = 'SBL_006',
+  MONTHLY_SUBSCRIPTIONS_NOT_ALLOWED = 'SBL_007',
+  SESSION_CHARGES_NOT_ALLOWED = 'SBL_008',
+  SESSION_PAYMENTS_NOT_CONFIGURED = 'SBL_009',
+  MONTHLY_PAYMENTS_NOT_CONFIGURED = 'SBL_010',
+  CLASS_CHARGES_NOT_ALLOWED = 'SBL_011',
+  CLASS_PAYMENTS_NOT_CONFIGURED = 'SBL_012',
+  CLASS_CHARGE_ALREADY_EXISTS = 'SBL_013'
+}
+
+enum StudentBillingType {
+  MONTHLY = 'MONTHLY',
+  SESSION = 'SESSION',
+  CLASS = 'CLASS'
 }
 
 enum NotificationErrorCode {

@@ -5,6 +5,7 @@ import { StudentPaymentStrategyRepository } from '../repositories/student-paymen
 import { TeacherPaymentStrategyRepository } from '../repositories/teacher-payment-strategy.repository';
 import { ClassesErrors } from '../exceptions/classes.errors';
 import { BaseService } from '@/shared/common/services/base.service';
+import { str } from 'envalid';
 
 @Injectable()
 export class PaymentStrategyService extends BaseService {
@@ -48,19 +49,14 @@ export class PaymentStrategyService extends BaseService {
       classId,
       centerId,
       branchId,
-      includePackage: studentStrategy.includePackage,
-      includeSession: studentStrategy.includeSession,
-      sessionPrice: studentStrategy.sessionPrice,
-      includeMonth: studentStrategy.includeMonth,
-      monthPrice: studentStrategy.monthPrice,
+      ...studentStrategy,
     });
 
     await this.teacherPaymentStrategyRepository.create({
       classId,
       centerId,
       branchId,
-      per: teacherStrategy.per,
-      amount: teacherStrategy.amount,
+      ...teacherStrategy,
     });
   }
 
@@ -85,13 +81,10 @@ export class PaymentStrategyService extends BaseService {
       throw ClassesErrors.paymentStrategyNotFound();
     }
 
-    await this.studentPaymentStrategyRepository.update(existingStrategy.id, {
-      includePackage: strategy.includePackage,
-      includeSession: strategy.includeSession,
-      sessionPrice: strategy.sessionPrice,
-      includeMonth: strategy.includeMonth,
-      monthPrice: strategy.monthPrice,
-    });
+    await this.studentPaymentStrategyRepository.update(
+      existingStrategy.id,
+      strategy,
+    );
   }
 
   /**
@@ -115,9 +108,9 @@ export class PaymentStrategyService extends BaseService {
       throw ClassesErrors.paymentStrategyNotFound();
     }
 
-    await this.teacherPaymentStrategyRepository.update(existingStrategy.id, {
-      per: strategy.per,
-      amount: strategy.amount,
-    });
+    await this.teacherPaymentStrategyRepository.update(
+      existingStrategy.id,
+      strategy,
+    );
   }
 }

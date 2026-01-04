@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { StudentBillingRecord } from '../entities/student-billing-record.entity';
+import { StudentBillingRecord, StudentBillingType } from '../entities/student-billing-record.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';
@@ -75,5 +75,18 @@ export class StudentBillingRecordsRepository extends BaseRepository<StudentBilli
     billingRecord: StudentBillingRecord,
   ): Promise<StudentBillingRecord> {
     return this.getRepository().save(billingRecord);
+  }
+
+  async findSessionBillingRecord(
+    studentUserProfileId: string,
+    strategyId: string,
+  ): Promise<StudentBillingRecord | null> {
+    return this.getRepository().findOne({
+      where: {
+        studentUserProfileId,
+        refId: strategyId,
+        type: StudentBillingType.SESSION,
+      },
+    });
   }
 }

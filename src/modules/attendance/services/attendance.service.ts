@@ -138,7 +138,10 @@ export class AttendanceService {
       );
 
     if (!hasBillingAccess) {
-      throw AttendanceErrors.attendancePaymentRequired();
+      // Get payment strategy details for better error message
+      const paymentStrategy =
+        await this.studentBillingService.getClassPaymentStrategy(group.classId);
+      throw AttendanceErrors.attendancePaymentRequired(paymentStrategy);
     }
 
     const now = new Date();
@@ -207,7 +210,10 @@ export class AttendanceService {
       );
 
     if (!hasBillingAccess) {
-      throw AttendanceErrors.attendancePaymentRequired();
+      // Get payment strategy details for better error message
+      const paymentStrategy =
+        await this.studentBillingService.getClassPaymentStrategy(group.classId);
+      throw AttendanceErrors.attendancePaymentRequired(paymentStrategy);
     }
 
     const now = new Date();

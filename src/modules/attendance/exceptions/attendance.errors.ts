@@ -31,9 +31,39 @@ export class AttendanceErrors extends BaseErrorHelpers {
   }
 
   // Permission errors
-  static attendancePaymentRequired(): DomainException {
-    return this.createNoDetails(
+  static attendancePaymentRequired(paymentStrategy?: any): DomainException {
+    if (!paymentStrategy) {
+      return this.createNoDetails(
+        AttendanceErrorCode.ATTENDANCE_PAYMENT_REQUIRED,
+      );
+    }
+
+    const paymentOptions = [];
+    if (paymentStrategy.includeSession) {
+      paymentOptions.push({
+        type: 'session',
+        price: paymentStrategy.sessionPrice
+      });
+    }
+    if (paymentStrategy.includeMonth) {
+      paymentOptions.push({
+        type: 'monthly',
+        price: paymentStrategy.monthPrice
+      });
+    }
+    if (paymentStrategy.includeClass) {
+      paymentOptions.push({
+        type: 'class',
+        price: paymentStrategy.classPrice
+      });
+    }
+
+    return this.createWithDetails(
       AttendanceErrorCode.ATTENDANCE_PAYMENT_REQUIRED,
+      {
+        availablePaymentOptions: paymentOptions,
+        hasPaymentOptions: paymentOptions.length > 0
+      },
     );
   }
 

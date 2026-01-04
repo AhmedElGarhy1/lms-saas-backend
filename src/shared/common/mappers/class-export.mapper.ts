@@ -48,11 +48,14 @@ export class ClassExportMapper implements ExportMapper<Class, ClassExportData> {
       duration: classEntity.duration || 0,
       studentPaymentStrategy: classEntity.studentPaymentStrategy
         ? JSON.stringify({
-            includePackage: classEntity.studentPaymentStrategy.includePackage,
             includeSession: classEntity.studentPaymentStrategy.includeSession,
-            sessionPrice: classEntity.studentPaymentStrategy.sessionPrice ? Number(classEntity.studentPaymentStrategy.sessionPrice) : null,
+            sessionPrice: classEntity.studentPaymentStrategy.sessionPrice
+              ? Number(classEntity.studentPaymentStrategy.sessionPrice)
+              : null,
             includeMonth: classEntity.studentPaymentStrategy.includeMonth,
-            monthPrice: classEntity.studentPaymentStrategy.monthPrice ? Number(classEntity.studentPaymentStrategy.monthPrice) : null,
+            monthPrice: classEntity.studentPaymentStrategy.monthPrice
+              ? Number(classEntity.studentPaymentStrategy.monthPrice)
+              : null,
           })
         : '',
       teacherPaymentStrategy: classEntity.teacherPaymentStrategy
