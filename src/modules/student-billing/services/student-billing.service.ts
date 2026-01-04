@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { Transactional } from '@nestjs-cls/transactional';
 import {
   StudentClassSubscription,
@@ -73,17 +74,13 @@ export class StudentBillingService extends BaseService {
 
     const amount = paymentStrategy.monthPrice;
 
-    // Calculate subscription dates based on monthYear
-    const [year, month] = dto.monthYear.split('-').map(Number);
-    const startDate = new Date(year, month - 1, 1); // First day of month
-    const endDate = new Date(year, month, 0); // Last day of month
-
     // Check for duplicate subscription for the same month
     const existingSubscription =
       await this.subscriptionRepo.findExistingSubscription(
         dto.studentUserProfileId,
         dto.classId,
-        dto.monthYear,
+        dto.year,
+        dto.month,
       );
 
     if (existingSubscription) {
@@ -103,18 +100,9 @@ export class StudentBillingService extends BaseService {
         FinancePaymentSource.WALLET,
         undefined, // reference type
         undefined, // reference ID
+        randomUUID(), // correlation ID
       );
     } else if (dto.paymentSource === PaymentSource.CASH) {
-      console.log(
-        Money.from(amount),
-        dto.studentUserProfileId, // payer profile ID
-        classEntity.branchId, // receiver ID (branch)
-        WalletOwnerType.BRANCH, // receiver type
-        PaymentReason.SUBSCRIPTION,
-        FinancePaymentSource.CASH,
-        undefined, // reference type
-        undefined, // reference ID
-      );
       payment = await this.paymentService.createPayment(
         Money.from(amount),
         dto.studentUserProfileId, // sender ID
@@ -125,6 +113,7 @@ export class StudentBillingService extends BaseService {
         FinancePaymentSource.CASH,
         undefined, // reference type
         undefined, // reference ID
+        randomUUID(), // correlation ID
       );
     } else {
       throw StudentBillingErrors.subscriptionInvalidPaymentSource();
@@ -132,9 +121,11 @@ export class StudentBillingService extends BaseService {
 
     // Create subscription
     const savedSubscription = await this.subscriptionRepo.createSubscription({
-      ...dto,
-      startDate,
-      endDate,
+      studentUserProfileId: dto.studentUserProfileId,
+      classId: dto.classId,
+      month: dto.month,
+      year: dto.year,
+      paymentSource: dto.paymentSource,
       paymentId: payment.id,
     });
 
@@ -204,7 +195,7 @@ export class StudentBillingService extends BaseService {
         FinancePaymentSource.WALLET,
         undefined, // reference type
         undefined, // reference ID
-        `Session charge for ${session.startTime.toISOString()}`, // correlation ID
+        randomUUID(), // correlation ID
       );
     } else if (dto.paymentSource === PaymentSource.CASH) {
       payment = await this.paymentService.createPayment(
@@ -217,7 +208,7 @@ export class StudentBillingService extends BaseService {
         FinancePaymentSource.CASH,
         undefined, // reference type
         undefined, // reference ID
-        `Session charge for ${session.startTime.toISOString()}`, // correlation ID
+        randomUUID(), // correlation ID
       );
     } else {
       throw StudentBillingErrors.sessionChargeInvalidPaymentSource();
@@ -262,9 +253,9 @@ export class StudentBillingService extends BaseService {
     paymentSource: PaymentSource,
   ): Promise<StudentClassSubscription | StudentSessionCharge> {
     if (dto.type === ChargeType.SUBSCRIPTION) {
-      if (!dto.classId || !dto.monthYear) {
+      if (!dto.classId || dto.year === undefined || dto.month === undefined) {
         throw new Error(
-          'classId and monthYear are required for subscription charges',
+          'classId, year, and month are required for subscription charges',
         );
       }
 
@@ -272,7 +263,8 @@ export class StudentBillingService extends BaseService {
         studentUserProfileId: dto.studentUserProfileId,
         classId: dto.classId,
         paymentSource,
-        monthYear: dto.monthYear,
+        year: dto.year,
+        month: dto.month,
       };
 
       return this.createMonthlySubscription(subscriptionDto);

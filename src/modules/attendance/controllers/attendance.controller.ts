@@ -33,7 +33,7 @@ export class AttendanceController {
   async scan(@Body() dto: ScanAttendanceDto, @GetUser() actor: ActorUser) {
     const result = await this.attendanceService.scan(
       dto.sessionId,
-      dto.studentCode,
+      dto.studentUserProfileId,
       actor,
     );
     return ControllerResponse.success(result);
@@ -50,7 +50,7 @@ export class AttendanceController {
   async manual(@Body() dto: ManualAttendanceDto, @GetUser() actor: ActorUser) {
     const result = await this.attendanceService.manualMark(
       dto.sessionId,
-      dto.studentCode,
+      dto.studentUserProfileId,
       actor,
     );
     return ControllerResponse.success(result);

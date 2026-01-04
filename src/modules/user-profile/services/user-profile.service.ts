@@ -184,6 +184,20 @@ export class UserProfileService extends BaseService {
     return this.userProfileRepository.findForUser(userId, userProfileId);
   }
 
+  /**
+   * Optimized lookup by userProfileId or studentCode
+   * Returns minimal data for performance
+   */
+  async lookupProfile(identifier: string): Promise<{ userProfileId: string; code: string }> {
+    const result = await this.userProfileRepository.findProfileLookupData(identifier);
+
+    if (!result) {
+      throw UserProfileErrors.userProfileNotFound();
+    }
+
+    return result;
+  }
+
   async findOne(
     userProfileId: string,
     actor?: ActorUser,

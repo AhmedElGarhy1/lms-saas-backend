@@ -7,7 +7,7 @@ export * from './exists.decorator';
 export * from './get-user.decorator';
 export * from './is-iso-datetime.decorator';
 export * from './is-profile-code.decorator';
-export * from './is-profile-type.decorator';
+export * from './is-user-profile.decorator';
 export * from './is-timezone.decorator';
 export * from './log-activity.decorator';
 export * from './managerial-only.decorator';

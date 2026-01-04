@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
-import { Exists, BelongsToCenter } from '@/shared/common/decorators';
+import { BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Class } from '@/modules/classes/entities/class.entity';
-import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 
 export class StudentClassParamsDto {
   @ApiProperty({
@@ -10,7 +10,7 @@ export class StudentClassParamsDto {
     example: 'uuid',
   })
   @IsUUID()
-  @Exists(UserProfile)
+  @IsUserProfile(ProfileType.STUDENT)
   studentUserProfileId: string;
 
   @ApiProperty({

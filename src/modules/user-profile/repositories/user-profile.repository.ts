@@ -8,7 +8,7 @@ import { Teacher } from '@/modules/teachers/entities/teacher.entity';
 import { Student } from '@/modules/students/entities/student.entity';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
-
+import { isUUID } from 'class-validator';
 @Injectable()
 export class UserProfileRepository extends BaseRepository<UserProfile> {
   constructor(
@@ -81,6 +81,31 @@ export class UserProfileRepository extends BaseRepository<UserProfile> {
     return this.getRepository().findOne({
       where: { code, profileType: ProfileType.STUDENT },
     });
+  }
+
+  /**
+   * Optimized lookup that returns only userProfileId and code
+   * Uses QueryBuilder for better performance
+   */
+  async findProfileLookupData(
+    identifier: string,
+  ): Promise<{ userProfileId: string; code: string } | null> {
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('profile')
+      .select(['profile.id AS "userProfileId"', 'profile.code AS code']);
+
+    // Check if identifier is a UUID (userProfileId) or student code
+
+    if (isUUID(identifier)) {
+      // Treat as userProfileId
+      queryBuilder.where('profile.id = :identifier', { identifier });
+    } else {
+      // Treat as code (all profiles have codes)
+      queryBuilder.where('profile.code = :identifier', { identifier });
+    }
+
+    const result = await queryBuilder.getRawOne();
+    return result || null;
   }
 
   /**

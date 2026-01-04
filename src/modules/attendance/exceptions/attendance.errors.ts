@@ -10,9 +10,9 @@ import { AttendanceErrorCode } from '../enums/attendance.codes';
  */
 export class AttendanceErrors extends BaseErrorHelpers {
   // Session and validation errors
-  static attendanceSessionNotCompleted(): DomainException {
+  static attendanceSessionNotActive(): DomainException {
     return this.createNoDetails(
-      AttendanceErrorCode.ATTENDANCE_SESSION_NOT_COMPLETED,
+      AttendanceErrorCode.ATTENDANCE_SESSION_NOT_ACTIVE,
     );
   }
 
@@ -31,9 +31,9 @@ export class AttendanceErrors extends BaseErrorHelpers {
   }
 
   // Permission errors
-  static attendanceManualEntryDenied(): DomainException {
+  static attendancePaymentRequired(): DomainException {
     return this.createNoDetails(
-      AttendanceErrorCode.ATTENDANCE_MANUAL_ENTRY_DENIED,
+      AttendanceErrorCode.ATTENDANCE_PAYMENT_REQUIRED,
     );
   }
 

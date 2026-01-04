@@ -7,6 +7,7 @@ import { DatabaseService } from '../../database.service';
 import { getDatabaseConfig } from '../../config/database.config';
 import { ExistsConstraint } from '../../common/validators/exists.constraint';
 import { BelongsToCenterConstraint } from '../../common/validators/belongs-to-center.constraint';
+import { IsUserProfileConstraint } from '@/shared/common/validators/is-user-profile.constraint';
 
 @Module({
   imports: [
@@ -30,7 +31,17 @@ import { BelongsToCenterConstraint } from '../../common/validators/belongs-to-ce
       ],
     }),
   ],
-  providers: [DatabaseService, ExistsConstraint, BelongsToCenterConstraint],
-  exports: [DatabaseService, ExistsConstraint, BelongsToCenterConstraint],
+  providers: [
+    DatabaseService,
+    ExistsConstraint,
+    BelongsToCenterConstraint,
+    IsUserProfileConstraint,
+  ],
+  exports: [
+    DatabaseService,
+    ExistsConstraint,
+    BelongsToCenterConstraint,
+    IsUserProfileConstraint,
+  ],
 })
 export class DatabaseModule {}

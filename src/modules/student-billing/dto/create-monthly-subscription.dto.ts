@@ -1,23 +1,54 @@
-import { IsUUID, IsEnum, IsString, Matches } from 'class-validator';
+import { IsUUID, IsEnum, IsInt, Min, Max } from 'class-validator';
 import { PaymentSource } from '../entities/student-class-subscription.entity';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
+import { BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Class } from '@/modules/classes/entities/class.entity';
-import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
-import { BelongsToCenter } from '@/shared/common/decorators';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateMonthlySubscriptionDto {
+  @ApiProperty({
+    description: 'Student user profile ID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
   @IsUUID()
-  @Exists(UserProfile)
+  @IsUserProfile(ProfileType.STUDENT)
   studentUserProfileId: string;
 
+  @ApiProperty({
+    description: 'Class ID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
   @IsUUID()
   @BelongsToCenter(Class)
   classId: string;
 
+  @ApiProperty({
+    description: 'Payment source',
+    enum: PaymentSource,
+    example: PaymentSource.WALLET,
+  })
   @IsEnum(PaymentSource)
   paymentSource: PaymentSource;
 
-  @IsString()
-  @Matches(/^\d{4}-\d{2}$/, { message: 'monthYear must be in format YYYY-MM' })
-  monthYear: string;
+  @ApiProperty({
+    description: 'Subscription year',
+    example: 2024,
+    minimum: 2020,
+    maximum: 2030,
+  })
+  @IsInt()
+  @Min(2020)
+  @Max(2030)
+  year: number;
+
+  @ApiProperty({
+    description: 'Subscription month (1-12)',
+    example: 12,
+    minimum: 1,
+    maximum: 12,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  month: number;
 }

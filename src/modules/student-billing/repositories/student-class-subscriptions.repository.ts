@@ -6,7 +6,6 @@ import {
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';
-
 @Injectable()
 export class StudentClassSubscriptionsRepository extends BaseRepository<StudentClassSubscription> {
   constructor(
@@ -24,29 +23,33 @@ export class StudentClassSubscriptionsRepository extends BaseRepository<StudentC
     classId: string,
   ): Promise<StudentClassSubscription | null> {
     const now = new Date();
-    return this.getRepository()
-      .findOne({
-        where: { studentUserProfileId, classId },
-      })
-      .then((subscription) => {
-        if (!subscription) return null;
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
 
-        // Check if subscription is within date range
-        if (subscription.startDate <= now && subscription.endDate >= now) {
-          return subscription;
-        }
-
-        return null;
-      });
+    return this.getRepository().findOne({
+      where: {
+        studentUserProfileId,
+        classId,
+        year: currentYear,
+        month: currentMonth,
+        status: SubscriptionStatus.ACTIVE,
+      },
+    });
   }
 
   async findExistingSubscription(
     studentUserProfileId: string,
     classId: string,
-    monthYear: string,
+    year: number,
+    month: number,
   ): Promise<StudentClassSubscription | null> {
     return this.getRepository().findOne({
-      where: { classId, monthYear },
+      where: {
+        studentUserProfileId,
+        classId,
+        year,
+        month,
+      },
     });
   }
 

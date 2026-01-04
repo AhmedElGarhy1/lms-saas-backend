@@ -8,7 +8,6 @@ import { ActivityLogModule } from './modules/activity-log/activity-log.module';
 import { TypeOrmExceptionFilter } from './common/filters/typeorm-exception.filter';
 import { RedisModule } from './modules/redis/redis.module';
 import { TypeSafeEventEmitter } from './services/type-safe-event-emitter.service';
-// TranslationService removed - no longer needed after translation removal
 import { CacheKeyBuilderService } from './common/services/cache-key-builder.service';
 
 @Global()

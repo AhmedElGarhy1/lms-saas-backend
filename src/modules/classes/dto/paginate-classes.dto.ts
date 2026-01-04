@@ -1,7 +1,8 @@
 import { IsOptional, IsUUID, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
-import { BelongsToCenter } from '@/shared/common/decorators/belongs-to-center.decorator';
+import { BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Branch } from '@/modules/centers/entities/branch.entity';
 import { ClassStatus } from '../enums/class-status.enum';
 
@@ -37,6 +38,7 @@ export class PaginateClassesDto extends BasePaginationDto {
   })
   @IsOptional()
   @IsUUID(4)
+  @IsUserProfile(ProfileType.TEACHER)
   teacherUserProfileId?: string;
 
   @ApiProperty({

@@ -2,8 +2,8 @@ import { IsOptional, IsEnum, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { BillingRecordType } from '../entities/student-billing-record.entity';
-import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
-import { Exists } from '@/shared/common/decorators';
+import { IsUserProfile } from '@/shared/common/decorators';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 export class PaginateStudentBillingRecordsDto extends BasePaginationDto {
   @ApiProperty({
@@ -21,6 +21,6 @@ export class PaginateStudentBillingRecordsDto extends BasePaginationDto {
   })
   @IsOptional()
   @IsUUID()
-  @Exists(UserProfile)
+  @IsUserProfile(ProfileType.STUDENT)
   studentUserProfileId?: string;
 }

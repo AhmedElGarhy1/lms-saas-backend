@@ -32,11 +32,13 @@ export class StudentClassSubscription {
   @Index()
   classId: string;
 
-  @Column('date')
-  startDate: Date;
+  @Column('int')
+  @Index()
+  month: number; // 1-12 (calendar month)
 
-  @Column('date')
-  endDate: Date;
+  @Column('int')
+  @Index()
+  year: number; // e.g., 2024, 2025
 
   @Column({
     type: 'simple-enum',
@@ -53,12 +55,6 @@ export class StudentClassSubscription {
 
   @Column('uuid')
   paymentId: string; // References Finance.Payment
-
-  // Month-Year field for calendar month logic (e.g., "2025-12")
-  // This makes checking for duplicate subscriptions for the same month much faster
-  @Column('varchar', { length: 7 }) // Format: YYYY-MM
-  @Index()
-  monthYear: string;
 
   @CreateDateColumn()
   createdAt: Date;

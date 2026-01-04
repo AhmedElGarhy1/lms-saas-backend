@@ -5,7 +5,7 @@ import {
   PaginateUsersDto,
 } from '@/modules/user/dto/paginate-users.dto';
 import { Transform } from 'class-transformer';
-import { IsProfileType } from '@/shared/common/decorators/is-profile-type.decorator';
+import { IsUserProfile } from '@/shared/common/decorators';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 export class PaginateTeacherDto extends PaginateUsersDto {
@@ -29,7 +29,7 @@ export class PaginateTeacherDto extends PaginateUsersDto {
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @IsOptional()
-  @IsProfileType(ProfileType.STAFF)
+  @IsUserProfile(ProfileType.STAFF)
   staffProfileId?: string;
 
   @ApiPropertyOptional({

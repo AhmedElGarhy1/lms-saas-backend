@@ -383,13 +383,13 @@ if (error.code === 'CLS_038') {
 
 ## 📊 Attendance Errors (ATD_xxx)
 
-| Code    | Enum                             | Description                                          | Parameters | Example                                            |
-| ------- | -------------------------------- | ---------------------------------------------------- | ---------- | -------------------------------------------------- |
-| ATD_007 | ATTENDANCE_SESSION_NOT_COMPLETED | Session not in valid state for attendance operations | None       | `AttendanceErrors.attendanceSessionNotCompleted()` |
-| ATD_008 | ATTENDANCE_STUDENT_NOT_ENROLLED  | Student not enrolled in group                        | None       | `AttendanceErrors.attendanceStudentNotEnrolled()`  |
-| ATD_012 | ATTENDANCE_MANUAL_ENTRY_DENIED   | Manual attendance entry not allowed                  | None       | `AttendanceErrors.attendanceManualEntryDenied()`   |
-| ATD_014 | ATTENDANCE_INVALID_STUDENT_CODE  | Student code format invalid                          | None       | `AttendanceErrors.attendanceInvalidStudentCode()`  |
-| ATD_015 | ATTENDANCE_ALREADY_EXISTS        | Attendance record already exists                     | None       | `AttendanceErrors.attendanceAlreadyExists()`       |
+| Code    | Enum                            | Description                                                         | Parameters | Example                                           |
+| ------- | ------------------------------- | ------------------------------------------------------------------- | ---------- | ------------------------------------------------- |
+| ATD_007 | ATTENDANCE_SESSION_NOT_ACTIVE   | Session not in active state (CHECKING_IN/CONDUCTING) for attendance | None       | `AttendanceErrors.attendanceSessionNotActive()`   |
+| ATD_008 | ATTENDANCE_STUDENT_NOT_ENROLLED | Student not enrolled in group                                       | None       | `AttendanceErrors.attendanceStudentNotEnrolled()` |
+| ATD_012 | ATTENDANCE_PAYMENT_REQUIRED     | Student payment required for session access                         | None       | `AttendanceErrors.attendancePaymentRequired()`    |
+| ATD_014 | ATTENDANCE_INVALID_STUDENT_CODE | Student code format invalid                                         | None       | `AttendanceErrors.attendanceInvalidStudentCode()` |
+| ATD_015 | ATTENDANCE_ALREADY_EXISTS       | Attendance record already exists                                    | None       | `AttendanceErrors.attendanceAlreadyExists()`      |
 
 ## 📚 Levels Errors (LVL_xxx)
 
@@ -1076,9 +1076,9 @@ enum SessionsErrorCode {
 
 ```javascript
 enum AttendanceErrorCode {
-  ATTENDANCE_SESSION_NOT_COMPLETED = 'ATD_007',
+  ATTENDANCE_SESSION_NOT_ACTIVE = 'ATD_007',
   ATTENDANCE_STUDENT_NOT_ENROLLED = 'ATD_008',
-  ATTENDANCE_MANUAL_ENTRY_DENIED = 'ATD_012',
+  ATTENDANCE_PAYMENT_REQUIRED = 'ATD_012',
   ATTENDANCE_INVALID_STUDENT_CODE = 'ATD_014',
   ATTENDANCE_ALREADY_EXISTS = 'ATD_015'
 }

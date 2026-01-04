@@ -1,8 +1,8 @@
 import { IsOptional, IsEnum, IsDateString, IsUUID } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { SessionStatus } from '../enums/session-status.enum';
-import { BelongsToBranch } from '@/shared/common/decorators/belongs-to-branch.decorator';
-import { BelongsToCenter } from '@/shared/common/decorators/belongs-to-center.decorator';
+import { BelongsToBranch, BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Group } from '@/modules/classes/entities/group.entity';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { Branch } from '@/modules/centers/entities/branch.entity';
@@ -45,6 +45,7 @@ export class SessionFiltersDto {
   })
   @IsOptional()
   @IsUUID(4)
+  @IsUserProfile(ProfileType.TEACHER)
   teacherUserProfileId?: string;
 
   @ApiPropertyOptional({
@@ -53,6 +54,7 @@ export class SessionFiltersDto {
   })
   @IsOptional()
   @IsUUID(4)
+  @IsUserProfile(ProfileType.STUDENT)
   studentUserProfileId?: string;
 
   @ApiPropertyOptional({

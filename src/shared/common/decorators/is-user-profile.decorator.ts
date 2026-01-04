@@ -1,9 +1,9 @@
 import { registerDecorator, ValidationOptions } from 'class-validator';
-import { IsProfileTypeConstraint } from '../validators/is-profile-type.constraint';
+import { IsUserProfileConstraint } from '../validators/is-user-profile.constraint';
 import { ProfileType } from '../enums/profile-type.enum';
 
-export function IsProfileType(
-  profileType: ProfileType,
+export function IsUserProfile(
+  profileType?: ProfileType,
   validationOptions?: ValidationOptions,
 ) {
   return function (object: object, propertyName: string) {
@@ -12,7 +12,7 @@ export function IsProfileType(
       propertyName: propertyName,
       options: validationOptions,
       constraints: [profileType],
-      validator: IsProfileTypeConstraint,
+      validator: IsUserProfileConstraint,
     });
   };
 }

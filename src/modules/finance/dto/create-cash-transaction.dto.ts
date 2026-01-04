@@ -2,10 +2,8 @@ import { IsUUID, IsEnum, IsNumber, Min, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { CashTransactionDirection } from '../enums/cash-transaction-direction.enum';
 import { CashTransactionType } from '../enums/cash-transaction-type.enum';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
+import { Exists, IsUserProfile } from '@/shared/common/decorators';
 import { Cashbox } from '../entities/cashbox.entity';
-import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
-import { IsProfileType } from '@/shared/common/decorators/is-profile-type.decorator';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 export class CreateCashTransactionDto {
@@ -56,8 +54,7 @@ export class CreateCashTransactionDto {
     example: 'uuid',
   })
   @IsUUID(4)
-  @Exists(UserProfile)
-  @IsProfileType(ProfileType.STAFF)
+  @IsUserProfile(ProfileType.STAFF)
   receivedByProfileId: string;
 
   @ApiProperty({
@@ -66,6 +63,6 @@ export class CreateCashTransactionDto {
     required: true,
   })
   @IsUUID(4)
-  @Exists(UserProfile)
+  @IsUserProfile()
   paidByProfileId: string;
 }

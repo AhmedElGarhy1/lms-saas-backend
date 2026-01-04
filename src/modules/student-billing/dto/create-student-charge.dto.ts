@@ -1,8 +1,7 @@
-import { IsUUID, IsEnum, IsString, Matches, IsOptional, ValidateIf } from 'class-validator';
+import { IsUUID, IsEnum, IsInt, Min, Max, ValidateIf } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { BelongsToCenter } from '@/shared/common/decorators';
-import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
+import { BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { Session } from '@/modules/sessions/entities/session.entity';
 
@@ -25,7 +24,7 @@ export class CreateStudentChargeDto {
     example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
   })
   @IsUUID()
-  @Exists(UserProfile)
+  @IsUserProfile(ProfileType.STUDENT)
   studentUserProfileId: string;
 
   // For subscription charges - required when type is SUBSCRIPTION
@@ -52,12 +51,24 @@ export class CreateStudentChargeDto {
 
   // For subscription charges - required when type is SUBSCRIPTION
   @ApiProperty({
-    description: 'Month and year for subscription (YYYY-MM format, required for subscription charges)',
-    example: '2024-01',
+    description: 'Year for subscription (required for subscription charges)',
+    example: 2024,
     required: false,
   })
   @ValidateIf(o => o.type === ChargeType.SUBSCRIPTION)
-  @IsString()
-  @Matches(/^\d{4}-\d{2}$/, { message: 'monthYear must be in format YYYY-MM' })
-  monthYear?: string;
+  @IsInt()
+  @Min(2020)
+  @Max(2030)
+  year?: number;
+
+  @ApiProperty({
+    description: 'Month for subscription (1-12, required for subscription charges)',
+    example: 1,
+    required: false,
+  })
+  @ValidateIf(o => o.type === ChargeType.SUBSCRIPTION)
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  month?: number;
 }

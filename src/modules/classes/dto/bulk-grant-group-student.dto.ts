@@ -7,8 +7,7 @@ import {
   IsOptional,
   IsBoolean,
 } from 'class-validator';
-import { BelongsToBranch } from '@/shared/common/decorators/belongs-to-branch.decorator';
-import { IsProfileType } from '@/shared/common/decorators/is-profile-type.decorator';
+import { BelongsToBranch, IsUserProfile } from '@/shared/common/decorators';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Group } from '../entities/group.entity';
 
@@ -35,7 +34,7 @@ export class BulkGrantGroupStudentDto {
     each: true,
     message: 'Each user profile ID must be a valid UUID',
   })
-  @IsProfileType(ProfileType.STUDENT, { each: true })
+  @IsUserProfile(ProfileType.STUDENT)
   userProfileIds: string[];
 
   @ApiPropertyOptional({

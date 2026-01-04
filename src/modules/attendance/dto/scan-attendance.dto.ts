@@ -1,14 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsUUID } from 'class-validator';
-import { IsProfileCode } from '@/shared/common/decorators';
+import { IsUUID } from 'class-validator';
+import { IsUserProfile } from '@/shared/common/decorators';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 
 export class ScanAttendanceDto {
   @ApiProperty({ description: 'Real session UUID' })
   @IsUUID()
   sessionId: string;
 
-  @ApiProperty({ description: 'Student code (e.g. STU-25-000001)' })
-  @IsString()
-  @IsProfileCode({ allowedPrefixes: ['STU'] })
-  studentCode: string;
+  @ApiProperty({
+    description:
+      'User Profile ID (UUID) - must be a valid, active STUDENT profile',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @IsUUID()
+  @IsUserProfile(ProfileType.STUDENT)
+  studentUserProfileId: string;
 }

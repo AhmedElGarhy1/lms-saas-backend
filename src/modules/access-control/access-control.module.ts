@@ -30,7 +30,6 @@ import { CenterAccessListener } from './listeners/center-access.listener';
 import { BranchAccessListener } from './listeners/branch-access.listener';
 import { RoleListener } from './listeners/role.listener';
 import { UserProfileModule } from '../user-profile/user-profile.module';
-import { IsProfileTypeConstraint } from '@/shared/common/validators/is-profile-type.constraint';
 
 @Global()
 @Module({
@@ -67,14 +66,12 @@ import { IsProfileTypeConstraint } from '@/shared/common/validators/is-profile-t
     CenterAccessListener,
     BranchAccessListener,
     RoleListener,
-    IsProfileTypeConstraint,
   ],
   exports: [
     AccessControlService,
     AccessControlHelperService,
     RolesService,
     UserProfilePermissionService,
-    IsProfileTypeConstraint,
   ],
 })
 export class AccessControlModule {}

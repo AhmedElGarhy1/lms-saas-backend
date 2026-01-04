@@ -13,15 +13,12 @@ import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { TeacherPaymentStrategyDto } from './teacher-payment-strategy.dto';
 import { StudentPaymentStrategyDto } from './student-payment-strategy.dto';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { BelongsToCenter } from '@/shared/common/decorators/belongs-to-center.decorator';
-import { IsProfileType } from '@/shared/common/decorators/is-profile-type.decorator';
+import { BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
 import { IsoUtcDate } from '@/shared/common/decorators/is-iso-datetime.decorator';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Level } from '@/modules/levels/entities/level.entity';
 import { Subject } from '@/modules/subjects/entities/subject.entity';
 import { Branch } from '@/modules/centers/entities/branch.entity';
-import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 
 export class CreateClassDto {
   @ApiProperty({
@@ -56,8 +53,7 @@ export class CreateClassDto {
     example: 'uuid',
   })
   @IsUUID(4)
-  @Exists(UserProfile)
-  @IsProfileType(ProfileType.TEACHER)
+  @IsUserProfile(ProfileType.TEACHER)
   teacherUserProfileId: string;
 
   @ApiProperty({

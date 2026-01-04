@@ -37,26 +37,6 @@ export class AttendanceService {
     private readonly studentBillingService: StudentBillingService,
   ) {}
 
-  private async resolveStudentUserProfileIdFromCode(
-    studentCode: string,
-  ): Promise<string> {
-    // Backend bouncer: scan endpoint only accepts Student codes.
-    if (!studentCode.startsWith('STU-')) {
-      throw AttendanceErrors.attendanceInvalidStudentCode();
-    }
-
-    const profile =
-      await this.userProfileRepository.findActiveStudentProfileByCode(
-        studentCode,
-      );
-
-    if (!profile) {
-      throw AttendanceErrors.attendanceStudentNotEnrolled();
-    }
-
-    return profile.id;
-  }
-
   private async validateSessionAndAccess(sessionId: string, actor: ActorUser) {
     const session = await this.sessionsRepository.findOneOrThrow(sessionId);
 
@@ -64,7 +44,7 @@ export class AttendanceService {
       session.status !== SessionStatus.CHECKING_IN &&
       session.status !== SessionStatus.CONDUCTING
     ) {
-      throw AttendanceErrors.attendanceSessionNotCompleted();
+      throw AttendanceErrors.attendanceSessionNotActive();
     }
 
     const group = await this.groupsRepository.findByIdOrThrow(session.groupId, [
@@ -132,11 +112,9 @@ export class AttendanceService {
 
   async scan(
     sessionId: string,
-    studentCode: string,
+    userProfileId: string,
     actor: ActorUser,
   ): Promise<AttendanceResponseDto> {
-    const studentUserProfileId =
-      await this.resolveStudentUserProfileIdFromCode(studentCode);
     const { session, group } = await this.validateSessionAndAccess(
       sessionId,
       actor,
@@ -144,7 +122,7 @@ export class AttendanceService {
 
     const membership = await this.groupStudentsRepository.findByGroupAndStudent(
       group.id,
-      studentUserProfileId,
+      userProfileId,
     );
 
     if (!membership) {
@@ -154,13 +132,13 @@ export class AttendanceService {
     // Check billing access - student must have paid for this session or have active monthly subscription
     const hasBillingAccess =
       await this.studentBillingService.checkStudentAccess(
-        studentUserProfileId,
+        userProfileId,
         group.classId,
         sessionId,
       );
 
     if (!hasBillingAccess) {
-      throw AttendanceErrors.attendanceManualEntryDenied();
+      throw AttendanceErrors.attendancePaymentRequired();
     }
 
     const now = new Date();
@@ -168,7 +146,7 @@ export class AttendanceService {
 
     const existing = await this.attendanceRepository.findBySessionAndStudent(
       sessionId,
-      studentUserProfileId,
+      userProfileId,
     );
 
     if (existing) {
@@ -183,7 +161,7 @@ export class AttendanceService {
         branchId: session.branchId,
         groupId: session.groupId,
         sessionId: session.id,
-        studentUserProfileId,
+        studentUserProfileId: userProfileId,
         status,
         lastScannedAt: now,
         isManuallyMarked: false,
@@ -198,20 +176,14 @@ export class AttendanceService {
       throw e;
     }
 
-    return this.toAttendanceResponseDto(
-      attendance,
-      studentUserProfileId,
-      actor,
-    );
+    return this.toAttendanceResponseDto(attendance, userProfileId, actor);
   }
 
   async manualMark(
     sessionId: string,
-    studentCode: string,
+    userProfileId: string,
     actor: ActorUser,
   ): Promise<AttendanceResponseDto> {
-    const studentUserProfileId =
-      await this.resolveStudentUserProfileIdFromCode(studentCode);
     const { session, group } = await this.validateSessionAndAccess(
       sessionId,
       actor,
@@ -219,7 +191,7 @@ export class AttendanceService {
 
     const membership = await this.groupStudentsRepository.findByGroupAndStudent(
       group.id,
-      studentUserProfileId,
+      userProfileId,
     );
 
     if (!membership) {
@@ -229,13 +201,13 @@ export class AttendanceService {
     // Check billing access - student must have paid for this session or have active monthly subscription
     const hasBillingAccess =
       await this.studentBillingService.checkStudentAccess(
-        studentUserProfileId,
+        userProfileId,
         group.classId,
         sessionId,
       );
 
     if (!hasBillingAccess) {
-      throw AttendanceErrors.attendanceManualEntryDenied();
+      throw AttendanceErrors.attendancePaymentRequired();
     }
 
     const now = new Date();
@@ -243,7 +215,7 @@ export class AttendanceService {
 
     const existing = await this.attendanceRepository.findBySessionAndStudent(
       sessionId,
-      studentUserProfileId,
+      userProfileId,
     );
 
     if (existing) {
@@ -257,7 +229,7 @@ export class AttendanceService {
         branchId: session.branchId,
         groupId: session.groupId,
         sessionId: session.id,
-        studentUserProfileId,
+        studentUserProfileId: userProfileId,
         status,
         lastScannedAt: now,
         isManuallyMarked: true,
@@ -271,11 +243,7 @@ export class AttendanceService {
       throw e;
     }
 
-    return this.toAttendanceResponseDto(
-      attendance,
-      studentUserProfileId,
-      actor,
-    );
+    return this.toAttendanceResponseDto(attendance, userProfileId, actor);
   }
 
   async getSessionRoster(

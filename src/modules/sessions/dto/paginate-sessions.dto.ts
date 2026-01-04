@@ -9,9 +9,9 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
-import { BelongsToBranch } from '@/shared/common/decorators/belongs-to-branch.decorator';
-import { BelongsToCenter } from '@/shared/common/decorators/belongs-to-center.decorator';
+import { BelongsToBranch, BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
 import { IsoUtcDate } from '@/shared/common/decorators/is-iso-datetime.decorator';
+import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Group } from '@/modules/classes/entities/group.entity';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { Branch } from '@/modules/centers/entities/branch.entity';
@@ -90,6 +90,7 @@ export class PaginateSessionsDto extends BasePaginationDto {
   })
   @IsOptional()
   @IsUUID(4)
+  @IsUserProfile(ProfileType.TEACHER)
   teacherUserProfileId?: string;
 
   @ApiProperty({
@@ -98,6 +99,7 @@ export class PaginateSessionsDto extends BasePaginationDto {
   })
   @IsOptional()
   @IsUUID(4)
+  @IsUserProfile(ProfileType.STUDENT)
   studentUserProfileId?: string;
 
   @ApiProperty({

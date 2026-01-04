@@ -8,7 +8,7 @@ import {
   Delete,
   Req,
 } from '@nestjs/common';
-import { ApiTags, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiParam, ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
   CreateApiResponses,
   ReadApiResponses,
@@ -30,6 +30,9 @@ import { CreateUserProfileDto } from '../dto/create-user-profile.dto';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { UserProfileIdParamDto } from '../dto/user-profile-id-param.dto';
 import { ProfileResponseDto } from '../dto/profile-response.dto';
+import { ProfileLookupParamDto } from '../dto/profile-lookup-param.dto';
+import { ProfileLookupResponseDto } from '../dto/profile-lookup-response.dto';
+import { Cacheable } from '@/shared/common/decorators/cache.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { IRequest } from '@/shared/common/interfaces/request.interface';
 
@@ -40,6 +43,32 @@ export class UserProfileController {
     private readonly userProfileService: UserProfileService,
     private readonly userService: UserService,
   ) {}
+
+  @Get('lookup/:id')
+  @ApiOperation({
+    summary: 'Lookup user profile by ID or student code',
+    description: 'Returns userProfileId and code. Accepts UUID (userProfileId) or student code. No authentication required.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User Profile ID (UUID) or Student Code',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile found successfully',
+    type: ProfileLookupResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Profile not found',
+  })
+  @SerializeOptions({ type: ProfileLookupResponseDto })
+  @Cacheable(86400) // 24 hours cache for immutable data
+  async lookupProfile(@Param() params: ProfileLookupParamDto) {
+    const result = await this.userProfileService.lookupProfile(params.id);
+    return ControllerResponse.success(result);
+  }
 
   @Post()
   @CreateApiResponses('Create a new user profile')

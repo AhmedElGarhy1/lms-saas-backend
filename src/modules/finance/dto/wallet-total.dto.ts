@@ -1,4 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsUUID } from 'class-validator';
+import { IsUserProfile } from '@/shared/common/decorators';
 import { Money } from '@/shared/common/utils/money.util';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 
@@ -7,6 +9,8 @@ export class WalletDetailDto {
     description: 'User profile ID',
     example: 'uuid-1',
   })
+  @IsUUID()
+  @IsUserProfile()
   userProfileId: string;
 
   @ApiProperty({
