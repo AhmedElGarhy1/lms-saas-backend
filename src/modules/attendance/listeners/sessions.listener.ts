@@ -1,22 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SessionEvents } from '@/shared/events/sessions.events.enum';
-import { SessionUpdatedEvent } from '@/modules/sessions/events/session.events';
-import { SessionStatus } from '@/modules/sessions/enums/session-status.enum';
+import { SessionFinishedEvent } from '@/modules/sessions/events/session.events';
 import { AttendanceService } from '../services/attendance.service';
 
 @Injectable()
-export class AttendanceSessionListener {
-  private readonly logger = new Logger(AttendanceSessionListener.name);
+export class SessionListener {
+  private readonly logger = new Logger(SessionListener.name);
 
   constructor(private readonly attendanceService: AttendanceService) {}
 
-  @OnEvent(SessionEvents.UPDATED)
-  async handleSessionUpdated(event: SessionUpdatedEvent) {
-    if (event.session.status !== SessionStatus.FINISHED) {
-      return;
-    }
-
+  @OnEvent(SessionEvents.FINISHED)
+  async handleSessionFinished(event: SessionFinishedEvent) {
     const inserted =
       await this.attendanceService.autoMarkAbsenteesOnSessionFinished(
         event.session.id,

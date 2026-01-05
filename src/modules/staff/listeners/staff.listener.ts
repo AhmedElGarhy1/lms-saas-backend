@@ -1,13 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import {
-  CreateStaffEvent,
-  StaffCreatedEvent,
-  StaffExportedEvent,
-} from '../events/staff.events';
+import { CreateStaffEvent, StaffCreatedEvent } from '../events/staff.events';
 import { StaffEvents } from '@/shared/events/staff.events.enum';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { StaffActivityType } from '../enums/staff-activity-type.enum';
 import { UserEvents } from '@/shared/events/user.events.enum';
 import {
   GrantCenterAccessEvent,
@@ -22,10 +16,7 @@ import { RequestPhoneVerificationEvent } from '@/modules/auth/events/auth.events
 
 @Injectable()
 export class StaffListener {
-  constructor(
-    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-    private readonly activityLogService: ActivityLogService,
-  ) {}
+  constructor(private readonly typeSafeEventEmitter: TypeSafeEventEmitter) {}
 
   @OnEvent(StaffEvents.CREATE)
   async handleCreateStaff(event: CreateStaffEvent) {
@@ -79,20 +70,5 @@ export class StaffListener {
         // Verification failures are logged by VerificationListener
       }
     }
-  }
-
-  @OnEvent(StaffEvents.EXPORTED)
-  async handleStaffExported(event: StaffExportedEvent) {
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      StaffActivityType.STAFF_EXPORTED,
-      {
-        format: event.format,
-        filename: event.filename,
-        recordCount: event.recordCount,
-        filters: event.filters,
-      },
-      null,
-    );
   }
 }

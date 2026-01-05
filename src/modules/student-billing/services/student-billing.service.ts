@@ -24,7 +24,7 @@ import {
 } from '../dto/create-student-charge.dto';
 import { PaginateStudentBillingRecordsDto } from '../dto/paginate-student-billing-records.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
-import { PaymentService } from '@/modules/finance/services/payment.service';
+import { PaymentService, ExecutePaymentRequest } from '@/modules/finance/services/payment.service';
 import { PaymentReason } from '@/modules/finance/enums/payment-reason.enum';
 import { PaymentSource as FinancePaymentSource } from '@/modules/finance/enums/payment-source.enum';
 import { WalletOwnerType } from '@/modules/finance/enums/wallet-owner-type.enum';
@@ -207,36 +207,20 @@ export class StudentBillingService extends BaseService {
     }
 
     // Create payment based on payment source
-    let payment;
-    if (dto.paymentSource === PaymentSource.WALLET) {
-      payment = await this.paymentService.createPayment(
-        Money.from(amount),
-        dto.studentUserProfileId, // sender ID
-        WalletOwnerType.USER_PROFILE, // sender type
-        classEntity.branchId, // receiver ID (branch)
-        WalletOwnerType.BRANCH, // receiver type
-        PaymentReason.SUBSCRIPTION,
-        FinancePaymentSource.WALLET,
-        undefined, // reference type
-        undefined, // reference ID
-        randomUUID(), // correlation ID
-      );
-    } else if (dto.paymentSource === PaymentSource.CASH) {
-      payment = await this.paymentService.createPayment(
-        Money.from(amount),
-        dto.studentUserProfileId, // sender ID
-        WalletOwnerType.USER_PROFILE, // sender type
-        classEntity.branchId, // receiver ID (branch)
-        WalletOwnerType.BRANCH, // receiver type
-        PaymentReason.SUBSCRIPTION,
-        FinancePaymentSource.CASH,
-        undefined, // reference type
-        undefined, // reference ID
-        randomUUID(), // correlation ID
-      );
-    } else {
-      throw StudentBillingErrors.subscriptionInvalidPaymentSource();
-    }
+    // Execute payment using unified API
+    const paymentRequest: ExecutePaymentRequest = {
+      amount: Money.from(amount),
+      senderId: dto.studentUserProfileId,
+      senderType: WalletOwnerType.USER_PROFILE,
+      receiverId: classEntity.branchId,
+      receiverType: WalletOwnerType.BRANCH,
+      reason: PaymentReason.SUBSCRIPTION,
+      source: dto.paymentSource === PaymentSource.WALLET ? FinancePaymentSource.WALLET : FinancePaymentSource.CASH,
+      correlationId: randomUUID(),
+    };
+
+    const paymentResult = await this.paymentService.createAndExecutePayment(paymentRequest);
+    const payment = paymentResult.payment;
 
     // Get payment strategy for billing record
     const paymentStrategy =
@@ -262,12 +246,6 @@ export class StudentBillingService extends BaseService {
       paymentSource: dto.paymentSource,
       amount: Money.from(amount),
     });
-
-    // Complete the payment to finalize the transaction
-    await this.paymentService.completePayment(
-      payment.id,
-      dto.studentUserProfileId,
-    );
 
     return savedSubscription;
   }
@@ -301,37 +279,20 @@ export class StudentBillingService extends BaseService {
       throw StudentBillingErrors.sessionChargeAlreadyExists();
     }
 
-    // Create payment based on payment source
-    let payment;
-    if (dto.paymentSource === PaymentSource.WALLET) {
-      payment = await this.paymentService.createPayment(
-        Money.from(amount),
-        dto.studentUserProfileId, // sender ID
-        WalletOwnerType.USER_PROFILE, // sender type
-        session.branchId, // receiver ID (branch)
-        WalletOwnerType.BRANCH, // receiver type
-        PaymentReason.SESSION,
-        FinancePaymentSource.WALLET,
-        undefined, // reference type
-        undefined, // reference ID
-        randomUUID(), // correlation ID
-      );
-    } else if (dto.paymentSource === PaymentSource.CASH) {
-      payment = await this.paymentService.createPayment(
-        Money.from(amount),
-        dto.studentUserProfileId, // sender ID
-        WalletOwnerType.USER_PROFILE, // sender type
-        session.branchId, // receiver ID (branch)
-        WalletOwnerType.BRANCH, // receiver type
-        PaymentReason.SESSION,
-        FinancePaymentSource.CASH,
-        undefined, // reference type
-        undefined, // reference ID
-        randomUUID(), // correlation ID
-      );
-    } else {
-      throw StudentBillingErrors.sessionChargeInvalidPaymentSource();
-    }
+    // Execute payment using unified API
+    const paymentRequest: ExecutePaymentRequest = {
+      amount: Money.from(amount),
+      senderId: dto.studentUserProfileId,
+      senderType: WalletOwnerType.USER_PROFILE,
+      receiverId: session.branchId,
+      receiverType: WalletOwnerType.BRANCH,
+      reason: PaymentReason.SESSION,
+      source: dto.paymentSource === PaymentSource.WALLET ? FinancePaymentSource.WALLET : FinancePaymentSource.CASH,
+      correlationId: randomUUID(),
+    };
+
+    const paymentResult = await this.paymentService.createAndExecutePayment(paymentRequest);
+    const payment = paymentResult.payment;
 
     // Get payment strategy for billing record
     const paymentStrategy =
@@ -358,12 +319,6 @@ export class StudentBillingService extends BaseService {
       paymentSource: dto.paymentSource,
       amount: Money.from(amount),
     });
-
-    // Complete the payment to finalize the transaction
-    await this.paymentService.completePayment(
-      payment.id,
-      dto.studentUserProfileId,
-    );
 
     return savedCharge;
   }
@@ -396,37 +351,20 @@ export class StudentBillingService extends BaseService {
       throw StudentBillingErrors.classChargeAlreadyExists();
     }
 
-    // Create payment based on payment source
-    let payment;
-    if (dto.paymentSource === PaymentSource.WALLET) {
-      payment = await this.paymentService.createPayment(
-        Money.from(amount),
-        dto.studentUserProfileId, // sender ID
-        WalletOwnerType.USER_PROFILE, // sender type
-        classEntity.branchId, // receiver ID (branch)
-        WalletOwnerType.BRANCH, // receiver type
-        PaymentReason.CLASS, // We'll need to add this to PaymentReason enum
-        FinancePaymentSource.WALLET,
-        undefined, // reference type
-        undefined, // reference ID
-        randomUUID(), // correlation ID
-      );
-    } else if (dto.paymentSource === PaymentSource.CASH) {
-      payment = await this.paymentService.createPayment(
-        Money.from(amount),
-        dto.studentUserProfileId, // sender ID
-        WalletOwnerType.USER_PROFILE, // sender type
-        classEntity.branchId, // receiver ID (branch)
-        WalletOwnerType.BRANCH, // receiver type
-        PaymentReason.CLASS, // We'll need to add this to PaymentReason enum
-        FinancePaymentSource.CASH,
-        undefined, // reference type
-        undefined, // reference ID
-        randomUUID(), // correlation ID
-      );
-    } else {
-      throw StudentBillingErrors.sessionChargeInvalidPaymentSource(); // Reuse this error
-    }
+    // Execute payment using unified API
+    const paymentRequest: ExecutePaymentRequest = {
+      amount: Money.from(amount),
+      senderId: dto.studentUserProfileId,
+      senderType: WalletOwnerType.USER_PROFILE,
+      receiverId: classEntity.branchId,
+      receiverType: WalletOwnerType.BRANCH,
+      reason: PaymentReason.CLASS,
+      source: dto.paymentSource === PaymentSource.WALLET ? FinancePaymentSource.WALLET : FinancePaymentSource.CASH,
+      correlationId: randomUUID(),
+    };
+
+    const paymentResult = await this.paymentService.createAndExecutePayment(paymentRequest);
+    const payment = paymentResult.payment;
 
     // Get payment strategy for billing record
     const paymentStrategy =
@@ -452,12 +390,6 @@ export class StudentBillingService extends BaseService {
       paymentSource: dto.paymentSource,
       amount: Money.from(amount),
     });
-
-    // Complete the payment to finalize the transaction
-    await this.paymentService.completePayment(
-      payment.id,
-      dto.studentUserProfileId,
-    );
 
     return savedCharge;
   }

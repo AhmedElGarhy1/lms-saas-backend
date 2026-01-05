@@ -13,9 +13,7 @@ import { BranchEvents } from '@/shared/events/branch.events.enum';
 
 @Injectable()
 export class BranchListener {
-  constructor(
-    private readonly branchesService: BranchesService,
-  ) {}
+  constructor(private readonly branchesService: BranchesService) {}
 
   @OnEvent(CenterEvents.CREATE_BRANCH)
   async handleCreateCenterBranch(event: CreateCenterBranchEvent) {

@@ -230,9 +230,9 @@ export class SessionsRepository extends BaseRepository<Session> {
     }
 
     if (filters.teacherUserProfileId) {
-      // Filter by teacher user profile ID via class join (already joined above)
+      // Filter by teacher user profile ID (now denormalized on session)
       queryBuilder.andWhere(
-        'class.teacherUserProfileId = :teacherUserProfileId',
+        'session.teacherUserProfileId = :teacherUserProfileId',
         {
           teacherUserProfileId: filters.teacherUserProfileId,
         },
@@ -366,7 +366,7 @@ export class SessionsRepository extends BaseRepository<Session> {
         );
       } else if (actor.profileType === ProfileType.TEACHER) {
         queryBuilder.andWhere(
-          'class.teacherUserProfileId = :teacherUserProfileId',
+          'session.teacherUserProfileId = :teacherUserProfileId',
           {
             teacherUserProfileId: actor.userProfileId,
           },
@@ -412,9 +412,9 @@ export class SessionsRepository extends BaseRepository<Session> {
     }
 
     if (dto.teacherUserProfileId) {
-      // Filter by teacher user profile ID via class join
+      // Filter by teacher user profile ID (now denormalized on session)
       queryBuilder.andWhere(
-        'class.teacherUserProfileId = :teacherUserProfileId',
+        'session.teacherUserProfileId = :teacherUserProfileId',
         {
           teacherUserProfileId: dto.teacherUserProfileId,
         },
@@ -510,9 +510,7 @@ export class SessionsRepository extends BaseRepository<Session> {
   ): Promise<Session[]> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('session')
-      .leftJoin('session.group', 'group')
-      .leftJoin('group.class', 'class')
-      .where('class.teacherUserProfileId = :teacherUserProfileId', {
+      .where('session.teacherUserProfileId = :teacherUserProfileId', {
         teacherUserProfileId,
       })
       .andWhere(

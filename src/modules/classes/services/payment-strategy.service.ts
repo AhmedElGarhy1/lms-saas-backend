@@ -28,6 +28,17 @@ export class PaymentStrategyService extends BaseService {
   }
 
   /**
+   * Get teacher payment strategy for a class.
+   * Returns the payment configuration for teachers in this class.
+   *
+   * @param classId - The class ID
+   * @returns Teacher payment strategy or null if not found
+   */
+  async getTeacherPaymentStrategyForClass(classId: string) {
+    return this.teacherPaymentStrategyRepository.findByClassId(classId);
+  }
+
+  /**
    * Create payment strategies for a class.
    * Creates both student and teacher payment strategies.
    * Validation is handled automatically by NestJS validation pipe via DTO decorators.

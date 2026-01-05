@@ -1,12 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CashboxRepository } from '../repositories/cashbox.repository';
 import { CashTransactionRepository } from '../repositories/cash-transaction.repository';
-import {
-  TransactionRepository,
-  TransactionStatement,
-} from '../repositories/transaction.repository';
-import { Transaction } from '../entities/transaction.entity';
-import { CashTransaction } from '../entities/cash-transaction.entity';
+import { TransactionRepository } from '../repositories/transaction.repository';
 import { Cashbox } from '../entities/cashbox.entity';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
@@ -20,9 +15,7 @@ import {
   CenterCashStatementItemDto,
 } from '../dto/center-revenue-stats.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
-import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
 import { CenterStatementQueryDto } from '../dto/center-statement-query.dto';
-import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 
 const MAX_RETRIES = 3;
 
@@ -71,10 +64,9 @@ export class CashboxService extends BaseService {
       // Pre-check: Prevent negative balance (before save to avoid DB constraint violation)
       const newBalance = cashbox.balance.add(amount);
       if (newBalance.isNegative()) {
-        throw FinanceErrors.insufficientFunds(
+        throw FinanceErrors.insufficientCashBalance(
           cashbox.balance.toNumber(),
           amount.toNumber(),
-          'EGP',
         );
       }
 
@@ -145,10 +137,7 @@ export class CashboxService extends BaseService {
     centerId: string | undefined,
     query: CenterStatementQueryDto,
   ): Promise<Pagination<CenterStatementItemDto>> {
-    return this.cashboxRepository.getCenterStatement(
-      centerId,
-      query,
-    );
+    return this.cashboxRepository.getCenterStatement(centerId, query);
   }
 
   /**
@@ -158,9 +147,6 @@ export class CashboxService extends BaseService {
     centerId: string | undefined,
     query: CenterStatementQueryDto,
   ): Promise<Pagination<CenterCashStatementItemDto>> {
-    return this.cashboxRepository.getCenterCashStatement(
-      centerId,
-      query,
-    );
+    return this.cashboxRepository.getCenterCashStatement(centerId, query);
   }
 }

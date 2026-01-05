@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PaymentRepository } from '../repositories/payment.repository';
 import { Payment } from '../entities/payment.entity';
 import { Wallet } from '../entities/wallet.entity';
+import { Transaction } from '../entities/transaction.entity';
+import { CashTransaction } from '../entities/cash-transaction.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
 import { PaymentSource } from '../enums/payment-source.enum';
@@ -18,7 +20,6 @@ import { CashboxService } from './cashbox.service';
 import { TransactionService } from './transaction.service';
 import { CashTransactionService } from './cash-transaction.service';
 import { CashTransactionDirection } from '../enums/cash-transaction-direction.enum';
-import { CashTransactionType } from '../enums/cash-transaction-type.enum';
 import { TransactionType } from '../enums/transaction-type.enum';
 import { randomUUID } from 'crypto';
 import { PaginatePaymentDto } from '../dto/paginate-payment.dto';
@@ -41,8 +42,38 @@ import { FinanceMonitorService } from '../monitoring/finance-monitor.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { Center } from '@/modules/centers/entities/center.entity';
 import { Branch } from '@/modules/centers/entities/branch.entity';
+
+// DTOs for the unified payment execution API
+export interface ExecutePaymentRequest {
+  amount: Money;
+  senderId: string;
+  senderType: WalletOwnerType;
+  receiverId: string;
+  receiverType: WalletOwnerType;
+  reason: PaymentReason;
+  source: PaymentSource;
+  correlationId?: string;
+  idempotencyKey?: string;
+  metadata?: Record<string, any>;
+  referenceType?: PaymentReferenceType;
+  referenceId?: string;
+}
+
+export interface ExecutePaymentResponse {
+  payment: Payment;
+  transactions: Transaction[];
+  cashTransactions?: CashTransaction[];
+  executionDetails: {
+    walletOperations?: {
+      senderWalletUpdated: boolean;
+      receiverWalletUpdated: boolean;
+    };
+    cashOperations?: {
+      cashboxUpdated: boolean;
+    };
+  };
+}
 
 @Injectable()
 export class PaymentService extends BaseService {
@@ -154,10 +185,9 @@ export class PaymentService extends BaseService {
         senderWallet.lockedBalance,
       );
       if (availableBalance.lessThan(amount)) {
-        throw FinanceErrors.insufficientFunds(
+        throw FinanceErrors.insufficientWalletBalance(
           availableBalance.toNumber(),
           amount.toNumber(),
-          'EGP',
         );
       }
 
@@ -271,12 +301,17 @@ export class PaymentService extends BaseService {
         updatedSenderWallet,
         updatedReceiverWallet,
         payment.amount,
+        payment.id, // paymentId
       );
     }
 
     // Handle cash payments - create cash transaction records
     if (payment.source === PaymentSource.CASH) {
-      await this.createCashTransactionRecords(payment, paidByProfileId);
+      await this.createCashTransactionRecords(
+        payment,
+        paidByProfileId,
+        payment.id,
+      );
     }
 
     // Update payment status
@@ -293,27 +328,14 @@ export class PaymentService extends BaseService {
     senderWallet: Wallet,
     receiverWallet: Wallet,
     amount: Money,
+    paymentId?: string,
   ): Promise<void> {
     const correlationId = payment.correlationId || randomUUID();
 
     // Determine transaction type based on payment reason
-    let transactionType: TransactionType;
-    switch (payment.reason) {
-      case PaymentReason.SUBSCRIPTION:
-        transactionType = TransactionType.STUDENT_PAYMENT;
-        break;
-      case PaymentReason.SESSION:
-        transactionType = TransactionType.STUDENT_PAYMENT;
-        break;
-      case PaymentReason.INTERNAL_TRANSFER:
-        transactionType = TransactionType.INTERNAL_TRANSFER;
-        break;
-      case PaymentReason.TOPUP:
-        transactionType = TransactionType.TOPUP;
-        break;
-      default:
-        transactionType = TransactionType.INTERNAL_TRANSFER;
-    }
+    const transactionType = this.mapPaymentReasonToTransactionType(
+      payment.reason,
+    );
 
     // Create debit transaction (sender)
     await this.transactionService.createTransaction(
@@ -323,6 +345,7 @@ export class PaymentService extends BaseService {
       transactionType,
       correlationId,
       senderWallet.balance, // Balance after debit
+      paymentId,
     );
 
     // Create credit transaction (receiver)
@@ -333,6 +356,7 @@ export class PaymentService extends BaseService {
       transactionType,
       correlationId,
       receiverWallet.balance, // Balance after credit
+      paymentId,
     );
   }
 
@@ -342,6 +366,7 @@ export class PaymentService extends BaseService {
   private async createCashTransactionRecords(
     payment: Payment,
     paidByProfileId: string,
+    paymentId?: string,
   ): Promise<void> {
     // For cash payments, we need to determine which branch and cashbox to use
     // Since cash payments in billing go to branches, we'll use the receiverId as branchId
@@ -350,18 +375,11 @@ export class PaymentService extends BaseService {
     // Get or create cashbox for the branch
     const cashbox = await this.cashboxService.getCashbox(branchId);
 
-    // Determine cash transaction type based on payment reason
-    let cashTransactionType: CashTransactionType;
-    switch (payment.reason) {
-      case PaymentReason.SUBSCRIPTION:
-        cashTransactionType = CashTransactionType.MONTHLY_PAYMENT;
-        break;
-      case PaymentReason.SESSION:
-        cashTransactionType = CashTransactionType.SESSION_PAYMENT;
-        break;
-      default:
-        cashTransactionType = CashTransactionType.DEPOSIT;
-    }
+    // Determine transaction type for cash transaction
+    const cashTransactionType = this.mapPaymentReasonToTransactionType(
+      payment.reason,
+      true,
+    );
 
     // Create cash transaction (money coming into cashbox)
     const cashTransaction =
@@ -373,6 +391,7 @@ export class PaymentService extends BaseService {
         payment.createdByProfileId, // Who processed the payment (receivedBy)
         cashTransactionType,
         paidByProfileId, // Who paid the cash (payer)
+        paymentId, // paymentId
       );
 
     // Update cashbox balance
@@ -1270,5 +1289,374 @@ export class PaymentService extends BaseService {
       .createQueryBuilder('payment')
       .where('payment.correlationId = :correlationId', { correlationId })
       .getOne();
+  }
+
+  /**
+   * Unified payment execution method - handles all payment types automatically
+   * Creates payment, executes financial operations, and completes the transaction
+   */
+  @Transactional()
+  async createAndExecutePayment(
+    request: ExecutePaymentRequest,
+    actorId?: string,
+  ): Promise<ExecutePaymentResponse> {
+    this.logger.log(
+      `Executing payment: ${request.amount} from ${request.senderId} to ${request.receiverId}`,
+    );
+
+    // 1. Validate request
+    await this.validateExecutePaymentRequest(request);
+
+    // 2. Create payment record
+    const payment = await this.createPaymentRecord(request);
+
+    // 3. Execute financial operations
+    const executionResult = await this.executePaymentOperations(payment);
+
+    // 4. Complete payment
+    const completedPayment = await this.completeExecutedPayment(
+      payment,
+      executionResult,
+    );
+
+    // 5. Log success
+    await this.logPaymentExecution(completedPayment, executionResult);
+
+    // 6. Return comprehensive response
+    return {
+      payment: completedPayment,
+      transactions: executionResult.transactions,
+      cashTransactions: executionResult.cashTransactions,
+      executionDetails: {
+        walletOperations:
+          executionResult.transactions.length > 0
+            ? {
+                senderWalletUpdated: true,
+                receiverWalletUpdated: true,
+              }
+            : undefined,
+        cashOperations:
+          executionResult.cashTransactions &&
+          executionResult.cashTransactions.length > 0
+            ? {
+                cashboxUpdated: true,
+              }
+            : undefined,
+      },
+    };
+  }
+
+  /**
+   * Validate payment execution request
+   */
+  private async validateExecutePaymentRequest(
+    request: ExecutePaymentRequest,
+  ): Promise<void> {
+    // Amount validation
+    if (
+      !request.amount ||
+      request.amount.isNegative() ||
+      request.amount.isZero()
+    ) {
+      throw FinanceErrors.invalidPaymentAmount();
+    }
+
+    // Basic field validation
+    if (!request.senderId || !request.receiverId) {
+      throw FinanceErrors.invalidPaymentData();
+    }
+
+    // Source-specific validation
+    if (request.source === PaymentSource.WALLET) {
+      await this.validateWalletPaymentExecution(request);
+    } else if (request.source === PaymentSource.CASH) {
+      await this.validateCashPaymentExecution(request);
+    } else {
+      throw FinanceErrors.unsupportedPaymentSource();
+    }
+
+    // Idempotency check
+    if (request.idempotencyKey) {
+      const existingPayment = await this.paymentRepository.findByIdempotencyKey(
+        request.idempotencyKey,
+        request.senderId,
+      );
+      if (existingPayment.length > 0) {
+        throw FinanceErrors.paymentAlreadyExists();
+      }
+    }
+  }
+
+  /**
+   * Validate wallet payment execution
+   */
+  private async validateWalletPaymentExecution(
+    request: ExecutePaymentRequest,
+  ): Promise<void> {
+    // Get sender wallet and check balance
+    const senderWallet = await this.walletService.getWallet(
+      request.senderId,
+      request.senderType,
+    );
+
+    if (senderWallet.balance.lessThan(request.amount)) {
+      throw FinanceErrors.insufficientWalletBalance(
+        senderWallet.balance.toNumber(),
+        request.amount.toNumber(),
+      );
+    }
+
+    // Ensure receiver wallet exists
+    await this.walletService.getWallet(
+      request.receiverId,
+      request.receiverType,
+    );
+  }
+
+  /**
+   * Validate cash payment execution
+   */
+  private async validateCashPaymentExecution(
+    request: ExecutePaymentRequest,
+  ): Promise<void> {
+    // For cash payments, validate based on direction
+    if (request.senderType === WalletOwnerType.BRANCH) {
+      // Branch is paying out cash - check cashbox balance
+      const cashbox = await this.cashboxService.getCashbox(request.senderId);
+      if (cashbox.balance.lessThan(request.amount)) {
+        throw FinanceErrors.insufficientCashBalance(
+          cashbox.balance.toNumber(),
+          request.amount.toNumber(),
+        );
+      }
+    }
+    // For cash payments received by branch, we don't need to validate balance
+  }
+
+  /**
+   * Create payment record
+   */
+  private async createPaymentRecord(
+    request: ExecutePaymentRequest,
+  ): Promise<Payment> {
+    return await this.paymentRepository.create({
+      amount: request.amount,
+      senderId: request.senderId,
+      senderType: request.senderType,
+      receiverId: request.receiverId,
+      receiverType: request.receiverType,
+      status: PaymentStatus.PENDING, // Will be completed after execution
+      reason: request.reason,
+      source: request.source,
+      referenceType: request.referenceType,
+      referenceId: request.referenceId,
+      correlationId: request.correlationId,
+      idempotencyKey: request.idempotencyKey,
+      metadata: request.metadata,
+      createdByProfileId: this.getCreatedByProfileId(),
+    });
+  }
+
+  /**
+   * Execute financial operations based on payment source
+   */
+  private async executePaymentOperations(payment: Payment): Promise<{
+    transactions: Transaction[];
+    cashTransactions?: CashTransaction[];
+  }> {
+    if (payment.source === PaymentSource.WALLET) {
+      return await this.executeWalletPaymentOperations(payment);
+    } else if (payment.source === PaymentSource.CASH) {
+      return await this.executeCashPaymentOperations(payment);
+    } else {
+      throw FinanceErrors.unsupportedPaymentSource();
+    }
+  }
+
+  /**
+   * Execute wallet payment operations
+   */
+  private async executeWalletPaymentOperations(payment: Payment): Promise<{
+    transactions: Transaction[];
+    cashTransactions?: CashTransaction[];
+  }> {
+    // Get wallets
+    const [senderWallet, receiverWallet] = await Promise.all([
+      this.walletService.getWallet(payment.senderId, payment.senderType),
+      this.walletService.getWallet(payment.receiverId, payment.receiverType),
+    ]);
+
+    // Execute balance transfers
+    const [updatedSenderWallet, updatedReceiverWallet] = await Promise.all([
+      this.walletService.updateBalance(
+        senderWallet.id,
+        payment.amount.multiply(-1),
+      ),
+      this.walletService.updateBalance(receiverWallet.id, payment.amount),
+    ]);
+
+    // Create transaction records
+    const correlationId = payment.correlationId || randomUUID();
+
+    const debitTransaction = await this.transactionService.createTransaction(
+      senderWallet.id,
+      receiverWallet.id,
+      payment.amount.multiply(-1), // Negative for debit
+      this.mapPaymentReasonToTransactionType(payment.reason),
+      correlationId,
+      updatedSenderWallet.balance,
+      payment.id,
+    );
+
+    const creditTransaction = await this.transactionService.createTransaction(
+      senderWallet.id,
+      receiverWallet.id,
+      payment.amount, // Positive for credit
+      this.mapPaymentReasonToTransactionType(payment.reason),
+      correlationId,
+      updatedReceiverWallet.balance,
+      payment.id,
+    );
+
+    return {
+      transactions: [debitTransaction, creditTransaction],
+    };
+  }
+
+  /**
+   * Execute cash payment operations
+   */
+  private async executeCashPaymentOperations(payment: Payment): Promise<{
+    transactions: Transaction[];
+    cashTransactions: CashTransaction[];
+  }> {
+    let cashboxId: string;
+    let direction: CashTransactionDirection;
+    let receivedByProfileId: string;
+    let paidByProfileId: string | undefined;
+    let balanceAfter: Money;
+
+    if (payment.senderType === WalletOwnerType.BRANCH) {
+      // Branch paying out cash (teacher payout, refund, etc.)
+      const cashbox = await this.cashboxService.getCashbox(payment.senderId);
+      cashboxId = cashbox.id;
+      direction = CashTransactionDirection.OUT;
+      receivedByProfileId = payment.receiverId; // Teacher receives cash
+      paidByProfileId = payment.createdByProfileId; // Admin who processed
+
+      // Update cashbox balance (reduce) and get the new balance
+      const updatedCashbox = await this.cashboxService.updateBalance(
+        cashboxId,
+        payment.amount.multiply(-1),
+      );
+      balanceAfter = updatedCashbox.balance;
+    } else if (payment.receiverType === WalletOwnerType.BRANCH) {
+      // Someone paying cash to branch (student payment, etc.)
+      const cashbox = await this.cashboxService.getCashbox(payment.receiverId);
+      cashboxId = cashbox.id;
+      direction = CashTransactionDirection.IN;
+      receivedByProfileId = payment.createdByProfileId || payment.senderId; // Admin who received
+      paidByProfileId = payment.senderId; // Student who paid
+
+      // Update cashbox balance (increase) and get the new balance
+      const updatedCashbox = await this.cashboxService.updateBalance(
+        cashboxId,
+        payment.amount,
+      );
+      balanceAfter = updatedCashbox.balance;
+    } else {
+      throw FinanceErrors.invalidCashPaymentConfiguration();
+    }
+
+    // Determine transaction type for cash transaction
+    const cashTransactionType = this.mapPaymentReasonToTransactionType(
+      payment.reason,
+      true,
+    );
+
+    // Create cash transaction record
+    const cashTransaction =
+      await this.cashTransactionService.createCashTransaction(
+        payment.senderType === WalletOwnerType.BRANCH
+          ? payment.senderId
+          : payment.receiverId,
+        cashboxId,
+        payment.amount,
+        direction,
+        receivedByProfileId,
+        cashTransactionType, // Use unified transaction type
+        paidByProfileId,
+        payment.id, // paymentId
+        balanceAfter, // balanceAfter
+      );
+
+    return {
+      transactions: [],
+      cashTransactions: [cashTransaction],
+    };
+  }
+
+  /**
+   * Complete executed payment
+   */
+  private async completeExecutedPayment(
+    payment: Payment,
+    executionResult: {
+      transactions: Transaction[];
+      cashTransactions?: CashTransaction[];
+    },
+  ): Promise<Payment> {
+    // Update payment status
+    payment.status = PaymentStatus.COMPLETED;
+    payment.paidAt = new Date();
+
+    // Save updated payment
+    return await this.paymentRepository.savePayment(payment);
+  }
+
+  /**
+   * Log payment execution for monitoring
+   */
+  private async logPaymentExecution(
+    payment: Payment,
+    result: {
+      transactions: Transaction[];
+      cashTransactions?: CashTransaction[];
+    },
+  ): Promise<void> {
+    this.logger.log(`Payment executed successfully`, {
+      paymentId: payment.id,
+      reason: payment.reason,
+      source: payment.source,
+      amount: payment.amount.toString(),
+      transactionCount: result.transactions.length,
+      cashTransactionCount: result.cashTransactions?.length || 0,
+    });
+  }
+
+  /**
+   * Map payment reason to cash transaction type
+   */
+  private mapPaymentReasonToTransactionType(
+    reason: PaymentReason,
+    isCashTransaction: boolean = false,
+  ): TransactionType {
+    switch (reason) {
+      case PaymentReason.TEACHER_PAYOUT:
+        return TransactionType.TEACHER_PAYOUT;
+      case PaymentReason.SUBSCRIPTION:
+      case PaymentReason.SESSION:
+        return TransactionType.STUDENT_BILL;
+      case PaymentReason.INTERNAL_TRANSFER:
+        return TransactionType.INTERNAL_TRANSFER;
+      case PaymentReason.TOPUP:
+        return TransactionType.TOPUP;
+      case PaymentReason.CLASS:
+        return TransactionType.STUDENT_BILL; // Class payments are also student bills
+      default:
+        return isCashTransaction
+          ? TransactionType.CASH_DEPOSIT
+          : TransactionType.INTERNAL_TRANSFER;
+    }
   }
 }

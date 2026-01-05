@@ -6,7 +6,6 @@ import {
   AdminExportedEvent,
 } from '../events/admin.events';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { AdminActivityType } from '../enums/admin-activity-type.enum';
 import { UserEvents } from '@/shared/events/user.events.enum';
 import {
@@ -21,10 +20,7 @@ import { RequestPhoneVerificationEvent } from '@/modules/auth/events/auth.events
 
 @Injectable()
 export class AdminListener {
-  constructor(
-    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-    private readonly activityLogService: ActivityLogService,
-  ) {}
+  constructor(private readonly typeSafeEventEmitter: TypeSafeEventEmitter) {}
 
   @OnEvent(AdminEvents.CREATE)
   async handleCreateAdmin(event: CreateAdminEvent) {
@@ -77,17 +73,5 @@ export class AdminListener {
   }
 
   @OnEvent(AdminEvents.EXPORTED)
-  async handleAdminExported(event: AdminExportedEvent) {
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      AdminActivityType.ADMIN_EXPORTED,
-      {
-        format: event.format,
-        filename: event.filename,
-        recordCount: event.recordCount,
-        filters: event.filters,
-      },
-      null,
-    );
-  }
+  async handleAdminExported(event: AdminExportedEvent) {}
 }

@@ -39,21 +39,10 @@ export class AccessControlService extends BaseService {
     super();
   }
 
-  async grantUserAccess(body: UserAccessDto): Promise<void> {
-    await this.userAccessRepository.grantUserAccess(body);
-  }
-
-  async grantUserAccessInternal(body: UserAccessDto): Promise<void> {
-    await this.userAccessRepository.grantUserAccess(body);
-  }
-
-  async revokeUserAccess(body: UserAccessDto): Promise<void> {
-    await this.userAccessRepository.revokeUserAccess(body);
-  }
-
-  async grantUserAccessValidate(
+  async grantUserAccess(
     body: UserAccessDto,
     actor: ActorUser,
+    skipExsitance: boolean = false,
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
     body.centerId = centerId;
@@ -100,16 +89,17 @@ export class AccessControlService extends BaseService {
       centerId: body.centerId,
     });
 
-    if (canAccess) {
+    if (canAccess && !skipExsitance) {
       throw AccessControlErrors.userAlreadyHasAccess();
     }
 
-    await this.grantUserAccess(body);
+    await this.userAccessRepository.grantUserAccess(body);
   }
 
-  async revokeUserAccessValidate(
+  async revokeUserAccess(
     body: UserAccessDto,
     actor: ActorUser,
+    skipExsitance: boolean = false,
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
     body.centerId = centerId;
@@ -164,16 +154,20 @@ export class AccessControlService extends BaseService {
     // Check if access exists
     const canAccess = await this.accessControlHelperService.canUserAccess(body);
 
-    if (!canAccess) {
+    if (!canAccess && !skipExsitance) {
       throw AccessControlErrors.cannotAccessUserRecords();
     }
 
-    await this.revokeUserAccess(body);
+    await this.userAccessRepository.revokeUserAccess(body);
   }
 
   // Center Access Management Methods
 
-  async grantCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
+  async grantCenterAccess(
+    dto: CenterAccessDto,
+    actor: ActorUser,
+    skipExsitance: boolean = false,
+  ) {
     // i have access to the center
     await this.accessControlHelperService.validateCenterAccess({
       userProfileId: actor.userProfileId,
@@ -193,14 +187,18 @@ export class AccessControlService extends BaseService {
         centerId: dto.centerId ?? actor.centerId,
       });
 
-    if (canCenterAccess) {
+    if (canCenterAccess && !skipExsitance) {
       throw AccessControlErrors.centerAccessAlreadyExists();
     }
 
     return await this.centerAccessRepository.grantCenterAccess(dto);
   }
 
-  async revokeCenterAccess(dto: CenterAccessDto, actor: ActorUser) {
+  async revokeCenterAccess(
+    dto: CenterAccessDto,
+    actor: ActorUser,
+    skipExsitance: boolean = false,
+  ) {
     // i have access to the center
     await this.accessControlHelperService.validateCenterAccess({
       userProfileId: actor.userProfileId,
@@ -228,7 +226,7 @@ export class AccessControlService extends BaseService {
         centerId: dto.centerId ?? actor.centerId,
       });
 
-    if (!canCenterAccess) {
+    if (!canCenterAccess && !skipExsitance) {
       throw AccessControlErrors.centerAccessNotFound();
     }
 

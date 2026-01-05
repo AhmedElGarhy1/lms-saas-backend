@@ -32,14 +32,11 @@ import { ClassStaffAccessController } from './controllers/class-staff-access.con
 import { GroupsStudentsAccessController } from './controllers/groups-students-access.controller';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { SharedModule } from '@/shared/shared.module';
-import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { LevelsModule } from '@/modules/levels/levels.module';
 import { SubjectsModule } from '@/modules/subjects/subjects.module';
 import { CentersModule } from '@/modules/centers/centers.module';
 import { UserProfileModule } from '@/modules/user-profile/user-profile.module';
 import { SessionsModule } from '@/modules/sessions/sessions.module';
-import { ClassActivityListener } from './listeners/class-activity.listener';
-import { GroupActivityListener } from './listeners/group-activity.listener';
 import { ClassStatusUpdateJob } from './jobs/class-status-update.job';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { ClassStateMachine } from './state-machines/class-state-machine';
@@ -59,7 +56,6 @@ import { ClassStateMachine } from './state-machines/class-state-machine';
     forwardRef(() => AccessControlModule),
     forwardRef(() => SessionsModule),
     SharedModule,
-    ActivityLogModule,
     LevelsModule,
     SubjectsModule,
     CentersModule,
@@ -92,8 +88,6 @@ import { ClassStateMachine } from './state-machines/class-state-machine';
     TeacherPaymentStrategyRepository,
     ClassStaffRepository,
     ClassStateMachine,
-    ClassActivityListener,
-    GroupActivityListener,
     ClassStatusUpdateJob,
   ],
   exports: [

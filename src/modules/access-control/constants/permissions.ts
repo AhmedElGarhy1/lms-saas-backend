@@ -541,6 +541,18 @@ export const PERMISSIONS = {
     },
   },
 
+  // ===== TEACHER PAYOUTS PERMISSIONS =====
+  TEACHER_PAYOUTS: {
+    VIEW_PAYOUTS: {
+      action: 'teacher-payouts:view-payouts',
+      scope: PermissionScope.CENTER,
+    },
+    UPDATE_PAYOUT_STATUS: {
+      action: 'teacher-payouts:update-payout-status',
+      scope: PermissionScope.CENTER,
+    },
+  },
+
   // ===== FINANCE PERMISSIONS =====
   FINANCE: {
     // Payment management

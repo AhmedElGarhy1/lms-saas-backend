@@ -1,12 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { OnEvent } from '@nestjs/event-emitter';
 import { AccessControlService } from '../services/access-control.service';
 import {
   GrantCenterAccessEvent,
   RevokeCenterAccessEvent,
-  ActivateCenterAccessEvent,
-  DeactivateCenterAccessEvent,
 } from '../events/access-control.events';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 
@@ -14,10 +11,7 @@ import { AccessControlEvents } from '@/shared/events/access-control.events.enum'
 export class CenterAccessListener {
   private readonly logger: Logger = new Logger(CenterAccessListener.name);
 
-  constructor(
-    private readonly moduleRef: ModuleRef,
-    private readonly accessControlService: AccessControlService,
-  ) {}
+  constructor(private readonly accessControlService: AccessControlService) {}
 
   @OnEvent(AccessControlEvents.GRANT_CENTER_ACCESS)
   async handleGrantCenterAccess(event: GrantCenterAccessEvent) {
@@ -28,6 +22,7 @@ export class CenterAccessListener {
       await this.accessControlService.grantCenterAccess(
         { userProfileId, centerId },
         actor,
+        true,
       );
     } catch (error: unknown) {
       this.logger.error(
@@ -49,6 +44,7 @@ export class CenterAccessListener {
       await this.accessControlService.revokeCenterAccess(
         { userProfileId, centerId },
         actor,
+        true,
       );
     } catch (error: unknown) {
       this.logger.error(
@@ -58,16 +54,6 @@ export class CenterAccessListener {
       return;
     }
 
-    // Activity logging removed
-  }
-
-  @OnEvent(AccessControlEvents.ACTIVATE_CENTER_ACCESS)
-  async handleActivateCenterAccess(event: ActivateCenterAccessEvent) {
-    // Activity logging removed
-  }
-
-  @OnEvent(AccessControlEvents.DEACTIVATE_CENTER_ACCESS)
-  async handleDeactivateCenterAccess(event: DeactivateCenterAccessEvent) {
     // Activity logging removed
   }
 }

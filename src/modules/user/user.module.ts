@@ -4,7 +4,6 @@ import { User } from './entities/user.entity';
 import { UserInfo } from './entities/user-info.entity';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { CentersModule } from '@/modules/centers/centers.module';
-import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { UserProfileModule } from '@/modules/user-profile/user-profile.module';
 import { UserController } from './controllers/user.controller';
@@ -15,7 +14,6 @@ import { UserInfoService } from './services/user-info.service';
 import { LocaleService } from './services/locale.service';
 import { UserRepository } from './repositories/user.repository';
 import { UserInfoRepository } from './repositories/user-info.repository';
-import { UserActivityListener } from './listeners//user-activity.listener';
 import { ClassesModule } from '../classes/classes.module';
 
 @Module({
@@ -26,7 +24,6 @@ import { ClassesModule } from '../classes/classes.module';
     forwardRef(() => AuthModule),
     forwardRef(() => UserProfileModule),
     ClassesModule,
-    ActivityLogModule,
   ],
   controllers: [UserController, UserAccessController, LocaleController],
   providers: [
@@ -35,7 +32,6 @@ import { ClassesModule } from '../classes/classes.module';
     LocaleService,
     UserRepository,
     UserInfoRepository,
-    UserActivityListener,
   ],
   exports: [UserService, UserInfoService, LocaleService, UserRepository, UserInfoRepository],
 })

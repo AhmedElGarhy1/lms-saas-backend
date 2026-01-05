@@ -1,19 +1,24 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Cashbox } from './cashbox.entity';
+import { Payment } from './payment.entity';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { CashTransactionDirection } from '../enums/cash-transaction-direction.enum';
-import { CashTransactionType } from '../enums/cash-transaction-type.enum';
+import { TransactionType } from '../enums/transaction-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 
 @Entity('cash_transactions')
 @Index(['branchId'])
 @Index(['cashboxId'])
+@Index(['paymentId'])
 @Index(['paidByProfileId'])
 @Index(['direction'])
 @Index(['type'])
 @Index(['createdAt'])
 export class CashTransaction extends BaseEntity {
+  @Column({ type: 'uuid' })
+  paymentId: string;
+
   @Column({ type: 'uuid' })
   branchId: string;
 
@@ -65,9 +70,13 @@ export class CashTransaction extends BaseEntity {
   paidByProfileId?: string;
 
   @Column({ type: 'varchar', length: 20 })
-  type: CashTransactionType;
+  type: TransactionType;
 
   // Relations
+  @ManyToOne(() => Payment, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'paymentId' })
+  payment: Payment;
+
   @ManyToOne(() => Cashbox, {
     onDelete: 'CASCADE',
   })

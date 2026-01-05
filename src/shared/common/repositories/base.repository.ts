@@ -97,13 +97,6 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     entities: Partial<T>[],
     options: BulkOperationOptions = {},
   ): Promise<T[]> {
-    if (!entities || entities.length === 0) {
-      throw SystemErrors.internalServerError({
-        operation: 'bulk_operation_validation',
-        error: 'entities_array_empty',
-      });
-    }
-
     const repo = this.getRepository();
     const { batchSize = 100, onProgress } = options;
     const total = entities.length;

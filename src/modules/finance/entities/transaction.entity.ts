@@ -1,17 +1,22 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Wallet } from './wallet.entity';
+import { Payment } from './payment.entity';
 import { TransactionType } from '../enums/transaction-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 
 @Entity('transactions')
 @Index(['fromWalletId'])
 @Index(['toWalletId'])
+@Index(['paymentId'])
 @Index(['type'])
 @Index(['correlationId'])
 @Index(['createdAt'])
 @Index(['correlationId', 'createdAt'])
 export class Transaction extends BaseEntity {
+  @Column({ type: 'uuid' })
+  paymentId: string;
+
   @Column({ type: 'uuid', nullable: true })
   fromWalletId?: string;
 
@@ -60,6 +65,10 @@ export class Transaction extends BaseEntity {
   balanceAfter: Money;
 
   // Relations
+  @ManyToOne(() => Payment, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'paymentId' })
+  payment: Payment;
+
   @ManyToOne(() => Wallet, { nullable: true })
   @JoinColumn({ name: 'fromWalletId' })
   fromWallet?: Wallet;

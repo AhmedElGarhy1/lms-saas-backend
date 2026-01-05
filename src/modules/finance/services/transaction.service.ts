@@ -29,14 +29,16 @@ export class TransactionService extends BaseService {
     toWalletId: string | null,
     amount: Money,
     type: TransactionType,
-    correlationId?: string,
-    balanceAfter?: Money,
+    correlationId: string,
+    balanceAfter: Money,
+    paymentId?: string,
   ): Promise<Transaction> {
     if (!balanceAfter) {
       throw FinanceErrors.transactionBalanceRequired();
     }
 
     return this.transactionRepository.create({
+      paymentId,
       fromWalletId: fromWalletId || undefined,
       toWalletId: toWalletId || undefined,
       amount,
@@ -118,12 +120,14 @@ export class TransactionService extends BaseService {
       throw FinanceErrors.transactionNotFound();
     }
 
-    // Create reverse transaction
+    // Create reverse transaction with zero balance (will be updated by wallet service)
     return this.createTransaction(
       transaction.toWalletId || null,
       transaction.fromWalletId || null,
       transaction.amount,
       transaction.type,
+      randomUUID(), // New correlation ID for reverse
+      Money.zero(), // Default balance, will be updated if wallet exists
     );
   }
 

@@ -65,37 +65,61 @@ This guide helps frontend developers handle API errors from the LMS system. Each
 
 ## 💰 Financial Errors
 
-| Error Code     | User Message                                  | Available Parameters                                |
-| -------------- | --------------------------------------------- | --------------------------------------------------- |
-| `FIN_PAY_001`  | Insufficient funds in your wallet.            | `currentBalance`, `requiredAmount`, `currency`      |
-| `FIN_PAY_002`  | Wallet not found.                             | None                                                |
-| `FIN_PAY_003`  | Cashbox not found.                            | None                                                |
-| `FIN_PAY_004`  | Payment service temporarily unavailable.      | None                                                |
-| `FIN_PAY_005`  | Transaction failed. Please try again.         | None                                                |
-| `FIN_PAY_006`  | Invalid payment reference.                    | None                                                |
-| `FIN_PAY_007`  | Payment not completed.                        | None                                                |
-| `FIN_PAY_008`  | Payment already refunded.                     | None                                                |
-| `FIN_PAY_009`  | Payment status invalid.                       | None                                                |
-| `FIN_PAY_010`  | Currency not supported.                       | `currency`, `gateway`                               |
-| `FIN_PAY_011`  | Payment service unavailable.                  | None                                                |
-| `FIN_PAY_012`  | Payment setup failed.                         | None                                                |
-| `FIN_PAY_013`  | Payment processing failed.                    | None                                                |
-| `FIN_PAY_014`  | Payment not found.                            | `gatewayPaymentId`                                  |
-| `FIN_PAY_015`  | Payment not eligible for refund.              | `paymentId`, `currentStatus`                        |
-| `FIN_PAY_016`  | Payment not eligible for refund.              | `paymentId`                                         |
-| `FIN_PAY_017`  | Refund amount exceeds payment.                | `refundAmount`, `paymentAmount`                     |
-| `FIN_PAY_018`  | Payment reference missing.                    | `paymentId`                                         |
-| `FIN_PAY_019`  | Insufficient balance for refund.              | `refundAmount`, `availableBalance`                  |
-| `FIN_PAY_020`  | Invalid payment operation.                    | `currentStatus`, `targetStatus`, `validTransitions` |
-| `FIN_PAY_021`  | Operation not allowed.                        | None                                                |
-| `FIN_PAY_022`  | Payment ownership required.                   | None                                                |
-| `FIN_PAY_023`  | Wallet access denied.                         | None                                                |
-| `FIN_TXN_001`  | Transaction not found.                        | None                                                |
-| `FIN_TXN_002`  | Transaction amount mismatch.                  | `actualAmount`, `expectedAmount`                    |
-| `FIN_TXN_003`  | Transaction data incomplete.                  | None                                                |
-| `FIN_CTXN_001` | Cash transaction not found.                   | None                                                |
-| `FIN_XFER_001` | Transfer not allowed between different users. | None                                                |
-| `FIN_XFER_002` | Cannot transfer to the same account.          | None                                                |
+| Error Code    | User Message                             | Available Parameters                                |
+| ------------- | ---------------------------------------- | --------------------------------------------------- |
+| `FIN_PAY_001` | ❌ REMOVED - Use specific balance errors | None                                                |
+| `FIN_PAY_002` | Wallet not found.                        | None                                                |
+| `FIN_PAY_003` | Cashbox not found.                       | None                                                |
+| `FIN_PAY_004` | Payment service temporarily unavailable. | None                                                |
+| `FIN_PAY_005` | Transaction failed. Please try again.    | None                                                |
+| `FIN_PAY_006` | Invalid payment reference.               | None                                                |
+| `FIN_PAY_007` | Payment not completed.                   | None                                                |
+| `FIN_PAY_008` | Payment already refunded.                | None                                                |
+| `FIN_PAY_009` | Payment status invalid.                  | None                                                |
+| `FIN_PAY_010` | Currency not supported.                  | `currency`, `gateway`                               |
+| `FIN_PAY_011` | Payment service unavailable.             | None                                                |
+| `FIN_PAY_012` | Payment setup failed.                    | None                                                |
+| `FIN_PAY_013` | Payment processing failed.               | None                                                |
+| `FIN_PAY_014` | Payment not found.                       | `gatewayPaymentId`                                  |
+| `FIN_PAY_015` | Payment not eligible for refund.         | `paymentId`, `currentStatus`                        |
+| `FIN_PAY_016` | Payment not eligible for refund.         | `paymentId`                                         |
+| `FIN_PAY_017` | Refund amount exceeds payment.           | `refundAmount`, `paymentAmount`                     |
+| `FIN_PAY_018` | Payment reference missing.               | `paymentId`                                         |
+| `FIN_PAY_019` | Insufficient balance for refund.         | `refundAmount`, `availableBalance`                  |
+| `FIN_PAY_020` | Invalid payment operation.               | `currentStatus`, `targetStatus`, `validTransitions` |
+| `FIN_PAY_021` | Operation not allowed.                   | None                                                |
+| `FIN_PAY_022` | Payment ownership required.              | None                                                |
+| `FIN_PAY_023` | Wallet access denied.                    | None                                                |
+| `FIN_PAY_024` | Payment execution failed.                | `message`                                           |
+| `FIN_PAY_025` | Invalid payment amount.                  | None                                                |
+| `FIN_PAY_026` | Invalid payment data.                    | None                                                |
+| `FIN_PAY_027` | Payment source not supported.            | None                                                |
+| `FIN_PAY_028` | Payment already exists.                  | None                                                |
+| `FIN_PAY_029` | Insufficient wallet balance.             | `currentBalance`, `requiredAmount`                  |
+| `FIN_PAY_030` | Insufficient cash balance.               | `currentBalance`, `requiredAmount`                  |
+| `FIN_PAY_031` | Invalid cash payment configuration.      | None                                                |
+
+### 🔄 Unified Transaction Types
+
+```javascript
+enum TransactionType {
+  STUDENT_BILL = 'STUDENT_BILL',           // All student payments (wallet + cash)
+  TEACHER_PAYOUT = 'TEACHER_PAYOUT',       // All teacher compensation (wallet + cash)
+  INTERNAL_TRANSFER = 'INTERNAL_TRANSFER', // All system transfers (wallet + cash)
+  TOPUP = 'TOPUP',                         // Balance additions
+  REFUND = 'REFUND',                       // Payment reversals
+  CASH_DEPOSIT = 'CASH_DEPOSIT',            // Cash received into system
+  CASH_WITHDRAWAL = 'CASH_WITHDRAWAL',      // Cash paid out from system
+}
+```
+
+**Usage:** All transaction categorization (wallet and cash transactions)
+| `FIN_TXN_001` | Transaction not found. | None |
+| `FIN_TXN_002` | Transaction amount mismatch. | `actualAmount`, `expectedAmount` |
+| `FIN_TXN_003` | Transaction data incomplete. | None |
+| `FIN_CTXN_001` | Cash transaction not found. | None |
+| `FIN_XFER_001` | Transfer not allowed between different users. | None |
+| `FIN_XFER_002` | Cannot transfer to the same account. | None |
 
 **Example:** For `FIN_PAY_001`, frontend receives:
 
@@ -1335,14 +1359,11 @@ enum PaymentSource {
 
 ```javascript
 enum TransactionType {
-  STUDENT_PAYMENT = 'STUDENT_PAYMENT',
-  BRANCH_COLLECTION = 'BRANCH_COLLECTION',
-  TEACHER_SALARY = 'TEACHER_SALARY',
+  STUDENT_BILL = 'STUDENT_BILL',
   INTERNAL_TRANSFER = 'INTERNAL_TRANSFER',
+  TEACHER_PAYOUT = 'TEACHER_PAYOUT',
   TOPUP = 'TOPUP',
-  REFUND = 'REFUND',
-  SESSION_PAYMENT = 'SESSION_PAYMENT',
-  MONTHLY_PAYMENT = 'MONTHLY_PAYMENT'
+  REFUND = 'REFUND'
 }
 ```
 

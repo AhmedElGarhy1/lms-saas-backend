@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CashTransactionRepository } from '../repositories/cash-transaction.repository';
 import { CashTransaction } from '../entities/cash-transaction.entity';
 import { CashTransactionDirection } from '../enums/cash-transaction-direction.enum';
-import { CashTransactionType } from '../enums/cash-transaction-type.enum';
+import { TransactionType } from '../enums/transaction-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Transactional } from '@nestjs-cls/transactional';
@@ -28,23 +28,32 @@ export class CashTransactionService extends BaseService {
     amount: Money,
     direction: CashTransactionDirection,
     receivedByProfileId: string,
-    type: CashTransactionType,
-    paidByProfileId?: string,
+    type: TransactionType,
+    paidByProfileId: string | undefined,
+    paymentId?: string,
+    balanceAfter?: Money,
   ): Promise<CashTransaction> {
-    // Get current cashbox balance to calculate balanceAfter
-    const cashbox = await this.cashboxRepository.findOneOrThrow(cashboxId);
-    const currentBalance = cashbox.balance;
+    let finalBalanceAfter: Money;
 
-    // Calculate balance after this transaction
-    const balanceAfter = direction === CashTransactionDirection.IN
-      ? currentBalance.add(amount)
-      : currentBalance.subtract(amount);
+    if (balanceAfter !== undefined) {
+      // Use provided balanceAfter (already calculated by caller)
+      finalBalanceAfter = balanceAfter;
+    } else {
+      // Calculate balance after this transaction (legacy behavior)
+      const cashbox = await this.cashboxRepository.findOneOrThrow(cashboxId);
+      const currentBalance = cashbox.balance;
+      finalBalanceAfter =
+        direction === CashTransactionDirection.IN
+          ? currentBalance.add(amount)
+          : currentBalance.subtract(amount);
+    }
 
     return this.cashTransactionRepository.create({
+      paymentId,
       branchId,
       cashboxId,
       amount,
-      balanceAfter,
+      balanceAfter: finalBalanceAfter,
       direction,
       receivedByProfileId,
       paidByProfileId,
@@ -79,6 +88,7 @@ export class CashTransactionService extends BaseService {
       reverseDirection,
       cashTransaction.receivedByProfileId,
       cashTransaction.type,
+      cashTransaction.paidByProfileId,
     );
   }
 
@@ -91,4 +101,3 @@ export class CashTransactionService extends BaseService {
     return cashTransaction !== null;
   }
 }
-

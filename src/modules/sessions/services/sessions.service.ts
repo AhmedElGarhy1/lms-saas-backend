@@ -10,6 +10,7 @@ import {
   SessionUpdatedEvent,
   SessionDeletedEvent,
   SessionCanceledEvent,
+  SessionFinishedEvent,
 } from '../events/session.events';
 import { Session } from '../entities/session.entity';
 import { CreateSessionDto } from '../dto/create-session.dto';
@@ -189,6 +190,7 @@ export class SessionsService extends BaseService {
       centerId: group.centerId,
       branchId: group.branchId,
       classId: group.classId,
+      teacherUserProfileId,
       scheduleItemId: undefined, // Extra sessions don't have scheduleItemId
       title: createSessionDto.title,
       startTime,
@@ -320,6 +322,7 @@ export class SessionsService extends BaseService {
       centerId: group.centerId,
       branchId: group.branchId,
       classId: group.classId,
+      teacherUserProfileId: group.class.teacherUserProfileId,
       scheduleItemId: match.scheduleItemId,
       startTime: normalizedStartTime,
       endTime: match.calculatedEndTime,
@@ -494,6 +497,7 @@ export class SessionsService extends BaseService {
       centerId: group.centerId,
       branchId: group.branchId,
       classId: group.classId,
+      teacherUserProfileId: group.class.teacherUserProfileId,
       scheduleItemId: match.scheduleItemId,
       startTime: normalizedStartTime,
       endTime: match.calculatedEndTime,
@@ -673,6 +677,12 @@ export class SessionsService extends BaseService {
     await this.typeSafeEventEmitter.emitAsync(
       SessionEvents.UPDATED,
       new SessionUpdatedEvent(updatedSession, actor, actor.centerId!),
+    );
+
+    // Emit FINISHED event for teacher payouts and attendance finalization
+    await this.typeSafeEventEmitter.emitAsync(
+      SessionEvents.FINISHED,
+      new SessionFinishedEvent(updatedSession, actor),
     );
 
     return updatedSession;

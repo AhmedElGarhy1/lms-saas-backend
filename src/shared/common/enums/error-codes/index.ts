@@ -18,6 +18,7 @@ export { TeacherErrorCode } from '@/modules/teachers/enums/teachers.codes';
 export { AdminErrorCode } from '@/modules/admin/enums/admin.codes';
 export { UserProfileErrorCode } from '@/modules/user-profile/enums/user-profile.codes';
 export { StudentBillingErrorCode } from '@/modules/student-billing/enums/student-billing.codes';
+export { TeacherPayoutErrorCode } from '@/modules/teacher-payouts/enums/teacher-payout-error-codes';
 export { NotificationErrorCode } from '@/modules/notifications/enums/notification.codes';
 
 // Import types for union
@@ -38,6 +39,7 @@ import { TeacherErrorCode as TeacherCode } from '@/modules/teachers/enums/teache
 import { AdminErrorCode as AdminCode } from '@/modules/admin/enums/admin.codes';
 import { UserProfileErrorCode as UserProfileCode } from '@/modules/user-profile/enums/user-profile.codes';
 import { StudentBillingErrorCode as StudentBillingCode } from '@/modules/student-billing/enums/student-billing.codes';
+import { TeacherPayoutErrorCode as TeacherPayoutCode } from '@/modules/teacher-payouts/enums/teacher-payout-error-codes';
 import { NotificationErrorCode as NotificationCode } from '@/modules/notifications/enums/notification.codes';
 
 // Create the union type for type safety
@@ -59,4 +61,5 @@ export type AllErrorCodes =
   | AdminCode
   | UserProfileCode
   | StudentBillingCode
+  | TeacherPayoutCode
   | NotificationCode;

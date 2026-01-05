@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { OnEvent } from '@nestjs/event-emitter';
 import { AccessControlService } from '../services/access-control.service';
 import {
@@ -12,22 +11,24 @@ import { AccessControlEvents } from '@/shared/events/access-control.events.enum'
 export class UserAccessListener {
   private readonly logger: Logger = new Logger(UserAccessListener.name);
 
-  constructor(
-    private readonly moduleRef: ModuleRef,
-    private readonly accessControlService: AccessControlService,
-  ) {}
+  constructor(private readonly accessControlService: AccessControlService) {}
 
   @OnEvent(AccessControlEvents.GRANT_USER_ACCESS)
   async handleGrantUserAccess(event: GrantUserAccessEvent) {
-    const { granterUserProfileId, targetUserProfileId, centerId } = event;
+    const { granterUserProfileId, targetUserProfileId, centerId, actor } =
+      event;
 
     try {
       // Call service to grant access
-      await this.accessControlService.grantUserAccessInternal({
-        granterUserProfileId,
-        targetUserProfileId,
-        centerId,
-      });
+      await this.accessControlService.grantUserAccess(
+        {
+          granterUserProfileId,
+          targetUserProfileId,
+          centerId,
+        },
+        actor,
+        true,
+      );
     } catch (error: unknown) {
       this.logger.error(
         `Failed to grant user access - granterUserProfileId: ${granterUserProfileId}, targetUserProfileId: ${targetUserProfileId}, centerId: ${centerId}`,
@@ -41,15 +42,20 @@ export class UserAccessListener {
 
   @OnEvent(AccessControlEvents.REVOKE_USER_ACCESS)
   async handleRevokeUserAccess(event: RevokeUserAccessEvent) {
-    const { granterUserProfileId, targetUserProfileId, centerId } = event;
+    const { granterUserProfileId, targetUserProfileId, centerId, actor } =
+      event;
 
     try {
       // Call service to revoke access
-      await this.accessControlService.revokeUserAccess({
-        granterUserProfileId,
-        targetUserProfileId,
-        centerId,
-      });
+      await this.accessControlService.revokeUserAccess(
+        {
+          granterUserProfileId,
+          targetUserProfileId,
+          centerId,
+        },
+        actor,
+        true,
+      );
     } catch (error: unknown) {
       this.logger.error(
         `Failed to revoke user access - granterUserProfileId: ${granterUserProfileId}, targetUserProfileId: ${targetUserProfileId}, centerId: ${centerId}`,

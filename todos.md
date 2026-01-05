@@ -139,18 +139,14 @@
 [x] student billing display in sidebar
 [x] check absentee-policy implementation and do we need it or not
 [x] remove sessions statues we have status single endpoint
-[ ] in session attendance throw for money
+[x] in session attendance throw for money
+[x] bulk unassgin student from group
+[x] implement filteration for branche in paginations
+[x] check why center branch or user not created in center creation
+[x] in grant access internally we need first to valiate if user has higher permission so he doesn't need access and grasful return
+[x] user profile /me endpoint doesn't reutrn center because it doesn't pass contextGuard
 [ ] at the end of session before finish display students didn't attend for action and remove the cron job
-[ ] bulk unassgin student from group
-[ ] implement branch as in permissions to display sidebar
-[ ] implement filteration for branche in paginations
-[ ] check if we need to remove some actions in branch context
-[ ] grant branch access for staff created withing branch context
-[ ] check why center branch or user not created in center creation
-[ ] in grant access internally we need first to valiate if user has higher permission so he doesn't need access and grasful return
 [ ] transfer within account
-[ ] user profile /me endpoint doesn't reutrn center because it doesn't pass contextGuard
-[ ] kashier instead of paymob
 [ ] translations cleanup
 ? what will happen if class deleted?
 ? what will happen if group deleted?
@@ -158,7 +154,6 @@
 ? what will happen if session deleted?
 
 [ ] cleanup dependacy injection and fix everything
-
 [ ] gravana and some monitoring
 [ ] consider adding withDetailes flag and use it in backend
 [ ] submodule for permissions, RoleName, sortable columns, other is okay
@@ -170,7 +165,6 @@
 [ ] view modals in all modules
 [ ] inconsistant in case of deleted (unclear)
 [ ] update notifications to cover all existing modules events
-[ ] consider using prisma instead of typeorm
 [ ] implement access all resources permission
 [ ] import functioanlity
 [ ] multi profile for parents

@@ -5,14 +5,12 @@ import { UserModule } from '@/modules/user/user.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { SharedModule } from '@/shared/shared.module';
-import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { StaffController } from './controllers/staff.controller';
 import { StaffActionsController } from './controllers/staff-actions.controller';
 import { StaffService } from './services/staff.service';
 import { StaffRepository } from './repositories/staff.repository';
 import { StaffListener } from './listeners/staff.listener';
 import { CenterListener } from './listeners/center.listener';
-import { StaffActivityListener } from './listeners/staff-activity.listener';
 import { UserProfileModule } from '../user-profile/user-profile.module';
 
 @Module({
@@ -23,7 +21,6 @@ import { UserProfileModule } from '../user-profile/user-profile.module';
     forwardRef(() => AuthModule),
     UserProfileModule,
     SharedModule,
-    ActivityLogModule,
   ],
   controllers: [StaffController, StaffActionsController],
   providers: [
@@ -31,7 +28,6 @@ import { UserProfileModule } from '../user-profile/user-profile.module';
     StaffRepository,
     StaffListener,
     CenterListener,
-    StaffActivityListener,
   ],
   exports: [StaffService, StaffRepository],
 })

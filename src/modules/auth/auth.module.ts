@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { Config } from '@/shared/config/config';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthService } from './services/auth.service';
 import { VerificationService } from './services/verification.service';
 import { VerificationTokenRepository } from './repositories/verification-token.repository';
@@ -15,7 +14,6 @@ import { AccessJwtGuard } from './guards/access-jwt.guard';
 import { RefreshJwtGuard } from './guards/refresh-jwt.guard';
 import { UserModule } from '../user/user.module';
 import { UserRepository } from '../user/repositories/user.repository';
-import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { AuthListener } from './listeners/auth.listener';
 import { VerificationListener } from './listeners/verification.listener';
 import { ClassesModule } from '../classes/classes.module';
@@ -25,8 +23,6 @@ import { ClassesModule } from '../classes/classes.module';
     UserModule,
     ClassesModule,
     TypeOrmModule.forFeature([User, VerificationToken]),
-    ActivityLogModule,
-    EventEmitterModule,
     JwtModule.registerAsync({
       useFactory: () => ({
         secret: Config.jwt.secret,

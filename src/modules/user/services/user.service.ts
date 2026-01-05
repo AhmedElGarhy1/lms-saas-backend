@@ -22,7 +22,6 @@ import { PaginateTeacherDto } from '@/modules/teachers/dto/paginate-teacher.dto'
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { UserResponseDto } from '../dto/user-response.dto';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { PasswordChangedEvent } from '@/modules/auth/events/auth.events';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
@@ -50,7 +49,6 @@ export class UserService extends BaseService {
     private readonly userInfoService: UserInfoService,
     private readonly userProfileService: UserProfileService,
     private readonly centersService: CentersService,
-    private readonly activityLogService: ActivityLogService,
     private readonly eventEmitter: TypeSafeEventEmitter,
     private readonly verificationService: VerificationService,
   ) {

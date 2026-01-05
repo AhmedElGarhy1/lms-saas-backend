@@ -5,7 +5,10 @@ import { Repository } from 'typeorm';
 import { addMinutes, addDays, startOfDay, getDay } from 'date-fns';
 import { RequestContext } from '@/shared/common/context/request.context';
 import { Locale } from '@/shared/common/enums/locale.enum';
-import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
+import {
+  SYSTEM_USER_ID,
+  SYSTEM_ACTOR,
+} from '@/shared/common/constants/system-actor.constant';
 import { Session } from '../entities/session.entity';
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
 import { ClassStatus } from '@/modules/classes/enums/class-status.enum';
@@ -14,6 +17,13 @@ import { TimezoneService } from '@/shared/common/services/timezone.service';
 import { DEFAULT_TIMEZONE } from '@/shared/common/constants/timezone.constants';
 import { SessionStatus } from '../enums/session-status.enum';
 import { ATTENDANCE_LATE_GRACE_MINUTES } from '@/modules/attendance/constants/attendance.constants';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import {
+  SessionFinishedEvent,
+  SessionUpdatedEvent,
+} from '@/modules/sessions/events/session.events';
+import { SessionEvents } from '@/shared/events/sessions.events.enum';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 type ScheduleItemForCleanup = {
   id: string;
@@ -38,6 +48,7 @@ export class SessionsCleanupJob {
     private readonly sessionRepo: Repository<Session>,
     @InjectRepository(ScheduleItem)
     private readonly scheduleItemRepo: Repository<ScheduleItem>,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   @Cron(CronExpression.EVERY_30_MINUTES)
@@ -217,6 +228,23 @@ export class SessionsCleanupJob {
     );
 
     // 1) CHECKING_IN/CONDUCTING -> FINISHED
+    // First, get the sessions that will be updated
+    const sessionsToFinish = await this.sessionRepo
+      .createQueryBuilder('session')
+      .select([
+        'session.id',
+        'session.teacherUserProfileId',
+        'session.classId',
+        'session.groupId',
+      ])
+      .where(activeClassExists, { active: ClassStatus.ACTIVE })
+      .andWhere('"endTime" < :pastThreshold', { pastThreshold })
+      .andWhere('"status" IN (:...statuses)', {
+        statuses: [SessionStatus.CHECKING_IN, SessionStatus.CONDUCTING],
+      })
+      .getMany();
+
+    // Update sessions to FINISHED
     await this.sessionRepo
       .createQueryBuilder()
       .update(Session)
@@ -232,6 +260,37 @@ export class SessionsCleanupJob {
         statuses: [SessionStatus.CHECKING_IN, SessionStatus.CONDUCTING],
       })
       .execute();
+
+    // Emit events for finished sessions
+    for (const session of sessionsToFinish) {
+      const fullSession = await this.sessionRepo.findOne({
+        where: { id: session.id },
+        relations: ['class', 'group'],
+      });
+
+      if (fullSession) {
+        // Create system actor with the session's center ID
+        const systemActor: ActorUser = {
+          ...SYSTEM_ACTOR,
+          centerId: fullSession.centerId,
+        } as ActorUser;
+
+        // Emit both UPDATED and FINISHED events for compatibility
+        await this.typeSafeEventEmitter.emitAsync(
+          SessionEvents.UPDATED,
+          new SessionUpdatedEvent(
+            fullSession,
+            systemActor,
+            fullSession.centerId,
+          ),
+        );
+
+        await this.typeSafeEventEmitter.emitAsync(
+          SessionEvents.FINISHED,
+          new SessionFinishedEvent(fullSession, systemActor),
+        );
+      }
+    }
 
     // 2) All other past sessions (except CANCELED/FINISHED/MISSED) -> MISSED
     await this.sessionRepo

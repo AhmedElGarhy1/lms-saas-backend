@@ -21,6 +21,7 @@ import { CacheKeyBuilderService } from './common/services/cache-key-builder.serv
     TypeOrmExceptionFilter,
     TypeSafeEventEmitter,
     CacheKeyBuilderService,
+    EventEmitterModule,
   ],
   exports: [
     DatabaseService,
@@ -31,6 +32,7 @@ import { CacheKeyBuilderService } from './common/services/cache-key-builder.serv
     RedisModule,
     TypeSafeEventEmitter,
     CacheKeyBuilderService,
+    EventEmitterModule,
   ],
 })
 export class SharedModule {}

@@ -9,18 +9,6 @@ import { FinanceErrorCode } from '../enums/finance.codes';
  * Clean, simple, and maintainable error creation
  */
 export class FinanceErrors extends BaseErrorHelpers {
-  static insufficientFunds(
-    currentBalance: number,
-    requiredAmount: number,
-    currency: 'EGP' | 'USD' = 'EGP',
-  ): DomainException {
-    return this.createWithDetails(FinanceErrorCode.INSUFFICIENT_FUNDS, {
-      currentBalance,
-      requiredAmount,
-      currency,
-    });
-  }
-
   static walletNotFound(): DomainException {
     return this.createNoDetails(FinanceErrorCode.WALLET_NOT_FOUND);
   }
@@ -199,5 +187,59 @@ export class FinanceErrors extends BaseErrorHelpers {
 
   static walletAccessDenied(): DomainException {
     return this.createNoDetails(FinanceErrorCode.WALLET_ACCESS_DENIED);
+  }
+
+  // Payment execution errors
+  static paymentExecutionFailed(message?: string): DomainException {
+    return this.createWithDetails(FinanceErrorCode.PAYMENT_EXECUTION_FAILED, {
+      message: message || 'Payment execution failed',
+    });
+  }
+
+  static invalidPaymentAmount(): DomainException {
+    return this.createNoDetails(FinanceErrorCode.INVALID_PAYMENT_AMOUNT);
+  }
+
+  static invalidPaymentData(): DomainException {
+    return this.createNoDetails(FinanceErrorCode.INVALID_PAYMENT_DATA);
+  }
+
+  static unsupportedPaymentSource(): DomainException {
+    return this.createNoDetails(FinanceErrorCode.UNSUPPORTED_PAYMENT_SOURCE);
+  }
+
+  static paymentAlreadyExists(): DomainException {
+    return this.createNoDetails(FinanceErrorCode.PAYMENT_ALREADY_EXISTS);
+  }
+
+  static insufficientWalletBalance(
+    currentBalance?: number,
+    requiredAmount?: number,
+  ): DomainException {
+    return this.createWithDetails(
+      FinanceErrorCode.INSUFFICIENT_WALLET_BALANCE,
+      {
+        currentBalance,
+        requiredAmount,
+        balanceType: 'wallet',
+      },
+    );
+  }
+
+  static insufficientCashBalance(
+    currentBalance?: number,
+    requiredAmount?: number,
+  ): DomainException {
+    return this.createWithDetails(FinanceErrorCode.INSUFFICIENT_CASH_BALANCE, {
+      currentBalance,
+      requiredAmount,
+      balanceType: 'cash',
+    });
+  }
+
+  static invalidCashPaymentConfiguration(): DomainException {
+    return this.createNoDetails(
+      FinanceErrorCode.INVALID_CASH_PAYMENT_CONFIGURATION,
+    );
   }
 }

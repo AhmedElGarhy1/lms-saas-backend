@@ -13,9 +13,6 @@ import { SessionsController } from './controllers/sessions.controller';
 import { SessionsService } from './services/sessions.service';
 import { SessionsRepository } from './repositories/sessions.repository';
 import { SessionValidationService } from './services/session-validation.service';
-import { SessionActivityListener } from './listeners/session-activity.listener';
-import { GroupEventsListener } from './listeners/group-events.listener';
-import { ClassEventsListener } from './listeners/class-events.listener';
 import { SessionPaymentListener } from './listeners/session-payment-listener';
 import { SessionAttendanceListener } from './listeners/session-attendance-listener';
 import { SessionsCleanupJob } from './jobs/sessions-cleanup.job';
@@ -29,7 +26,7 @@ import { SessionStateMachine } from './state-machines/session-state-machine';
     forwardRef(() => ClassesModule),
     // Import CentersModule to access BranchAccessService
     CentersModule,
-    SharedModule, // For TypeSafeEventEmitter, ActivityLogModule, etc.
+    SharedModule, // For TypeSafeEventEmitter, etc.
     AccessControlModule, // For permissions
   ],
   controllers: [SessionsController],
@@ -44,9 +41,6 @@ import { SessionStateMachine } from './state-machines/session-state-machine';
     // Jobs
     SessionsCleanupJob,
     // Listeners
-    SessionActivityListener,
-    GroupEventsListener,
-    ClassEventsListener,
     SessionPaymentListener,
     SessionAttendanceListener,
   ],

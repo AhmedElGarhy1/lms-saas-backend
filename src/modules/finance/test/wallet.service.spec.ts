@@ -126,7 +126,7 @@ describe('WalletService', () => {
         service.updateBalance('wallet-123', Money.from(-150.0)),
       ).rejects.toThrow(
         expect.objectContaining({
-          errorCode: FinanceErrorCode.INSUFFICIENT_FUNDS,
+          errorCode: FinanceErrorCode.INSUFFICIENT_WALLET_BALANCE,
         }),
       );
     });

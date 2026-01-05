@@ -42,7 +42,7 @@ export class UserAccessController {
     @GetUser() actor: ActorUser,
   ) {
     // Validation is now handled in AccessControlService.grantUserAccessValidate
-    await this.accessControlService.grantUserAccessValidate(dto, actor);
+    await this.accessControlService.grantUserAccess(dto, actor);
 
     return ControllerResponse.success(null);
   }
@@ -55,7 +55,7 @@ export class UserAccessController {
     @Body() dto: UserAccessDto,
     @GetUser() actor: ActorUser,
   ) {
-    await this.accessControlService.revokeUserAccessValidate(dto, actor);
+    await this.accessControlService.revokeUserAccess(dto, actor);
 
     return ControllerResponse.success(null);
   }
@@ -81,10 +81,7 @@ export class UserAccessController {
           targetUserProfileId,
           centerId: dto.centerId,
         };
-        await this.accessControlService.grantUserAccessValidate(
-          userAccessDto,
-          actor,
-        );
+        await this.accessControlService.grantUserAccess(userAccessDto, actor);
         return { id: targetUserProfileId };
       },
     );
@@ -113,10 +110,7 @@ export class UserAccessController {
           targetUserProfileId,
           centerId: dto.centerId,
         };
-        await this.accessControlService.revokeUserAccessValidate(
-          userAccessDto,
-          actor,
-        );
+        await this.accessControlService.revokeUserAccess(userAccessDto, actor);
         return { id: targetUserProfileId };
       },
     );

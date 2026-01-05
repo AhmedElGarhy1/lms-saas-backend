@@ -54,6 +54,7 @@ import { RateLimitModule } from './modules/rate-limit/rate-limit.module';
 import { RateLimitStrategyType } from './modules/rate-limit/interfaces/rate-limit-config.interface';
 import { FinanceModule } from './modules/finance/finance.module';
 import { StudentBillingModule } from './modules/student-billing/student-billing.module';
+import { TeacherPayoutModule } from './modules/teacher-payouts/teacher-payouts.module';
 
 @Module({
   imports: [
@@ -100,6 +101,7 @@ import { StudentBillingModule } from './modules/student-billing/student-billing.
     NotificationModule,
     FinanceModule,
     StudentBillingModule,
+    TeacherPayoutModule,
     RateLimitModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: () => ({

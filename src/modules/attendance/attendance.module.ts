@@ -4,7 +4,7 @@ import { Attendance } from './entities/attendance.entity';
 import { AttendanceRepository } from './repositories/attendance.repository';
 import { AttendanceService } from './services/attendance.service';
 import { AttendanceController } from './controllers/attendance.controller';
-import { AttendanceSessionListener } from './listeners/session-finished.listener';
+import { SessionListener } from './listeners/sessions.listener';
 import { SessionsModule } from '@/modules/sessions/sessions.module';
 import { ClassesModule } from '@/modules/classes/classes.module';
 import { CentersModule } from '@/modules/centers/centers.module';
@@ -28,7 +28,7 @@ import { StudentBillingModule } from '@/modules/student-billing/student-billing.
   providers: [
     AttendanceRepository,
     AttendanceService,
-    AttendanceSessionListener,
+    SessionListener,
     AttendanceAbsentBackfillJob,
   ],
   exports: [AttendanceService, AttendanceRepository],

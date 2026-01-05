@@ -24,7 +24,6 @@ import { ProfileRoleSubscriber } from './subscriber/profile-role.subscriber';
 import { RolePermissionSubscriber } from './subscriber/role-permission.subscriber';
 import { UserModule } from '../user/user.module';
 import { CentersModule } from '../centers/centers.module';
-import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module';
 import { UserAccessListener } from './listeners/user-access.listener';
 import { CenterAccessListener } from './listeners/center-access.listener';
 import { BranchAccessListener } from './listeners/branch-access.listener';
@@ -45,7 +44,6 @@ import { UserProfileModule } from '../user-profile/user-profile.module';
     forwardRef(() => UserModule),
     forwardRef(() => CentersModule),
     forwardRef(() => UserProfileModule),
-    ActivityLogModule,
   ],
   controllers: [RoleAssignController, RolesActionsController, RolesController],
   providers: [

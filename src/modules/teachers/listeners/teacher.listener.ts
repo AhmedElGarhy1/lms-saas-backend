@@ -3,11 +3,8 @@ import { OnEvent } from '@nestjs/event-emitter';
 import {
   CreateTeacherEvent,
   TeacherCreatedEvent,
-  TeacherExportedEvent,
 } from '../events/teacher.events';
 import { TeacherEvents } from '@/shared/events/teacher.events.enum';
-import { ActivityLogService } from '@/shared/modules/activity-log/services/activity-log.service';
-import { TeacherActivityType } from '../enums/teacher-activity-type.enum';
 import { UserEvents } from '@/shared/events/user.events.enum';
 import {
   GrantCenterAccessEvent,
@@ -23,7 +20,6 @@ import { RequestPhoneVerificationEvent } from '@/modules/auth/events/auth.events
 export class TeacherListener {
   constructor(
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-    private readonly activityLogService: ActivityLogService,
   ) {}
 
   @OnEvent(TeacherEvents.CREATE)
@@ -74,18 +70,4 @@ export class TeacherListener {
     }
   }
 
-  @OnEvent(TeacherEvents.EXPORTED)
-  async handleTeacherExported(event: TeacherExportedEvent) {
-    // ActivityLogService is fault-tolerant, no try-catch needed
-    await this.activityLogService.log(
-      TeacherActivityType.TEACHER_EXPORTED,
-      {
-        format: event.format,
-        filename: event.filename,
-        recordCount: event.recordCount,
-        filters: event.filters,
-      },
-      null,
-    );
-  }
 }

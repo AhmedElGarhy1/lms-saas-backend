@@ -95,10 +95,9 @@ export class WalletService extends BaseService {
       // Pre-check: Prevent negative balance (before save to avoid DB constraint violation)
       const newBalance = lockedWallet.balance.add(amount);
       if (newBalance.isNegative()) {
-        throw FinanceErrors.insufficientFunds(
+        throw FinanceErrors.insufficientWalletBalance(
           lockedWallet.balance.toNumber(),
           amount.toNumber(),
-          'EGP',
         );
       }
 
@@ -161,10 +160,9 @@ export class WalletService extends BaseService {
       // Pre-check: Prevent negative locked balance
       const newLockedBalance = wallet.lockedBalance.add(amount);
       if (newLockedBalance.isNegative()) {
-        throw FinanceErrors.insufficientFunds(
+        throw FinanceErrors.insufficientWalletBalance(
           wallet.lockedBalance.toNumber(),
           amount.toNumber(),
-          'EGP',
         );
       }
 
@@ -204,10 +202,9 @@ export class WalletService extends BaseService {
 
       // Pre-check: Ensure lockedBalance has enough
       if (wallet.lockedBalance.lessThan(amount)) {
-        throw FinanceErrors.insufficientFunds(
+        throw FinanceErrors.insufficientWalletBalance(
           wallet.lockedBalance.toNumber(),
           amount.toNumber(),
-          'EGP',
         );
       }
 
@@ -422,10 +419,9 @@ export class WalletService extends BaseService {
 
     // Check sufficient balance
     if (fromWallet.balance.lessThan(amount)) {
-      throw FinanceErrors.insufficientFunds(
+      throw FinanceErrors.insufficientWalletBalance(
         fromWallet.balance.toNumber(),
         amount.toNumber(),
-        'EGP',
       );
     }
 

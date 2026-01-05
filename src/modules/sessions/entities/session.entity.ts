@@ -33,6 +33,9 @@ export class Session extends BaseEntity {
   @Column({ type: 'uuid' })
   classId: string; // Denormalized from Group for performance and snapshot
 
+  @Column({ type: 'uuid' })
+  teacherUserProfileId: string;
+
   @Column({ type: 'uuid', nullable: true })
   scheduleItemId?: string;
 

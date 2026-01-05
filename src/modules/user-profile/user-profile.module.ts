@@ -12,7 +12,6 @@ import { AccessControlModule } from '@/modules/access-control/access-control.mod
 import { CentersModule } from '@/modules/centers/centers.module'; // CentersService
 import { UserModule } from '@/modules/user/user.module'; // UserService
 import { AuthModule } from '@/modules/auth/auth.module'; // VerificationService
-import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.module'; // ActivityLogService
 import { UserProfileController } from './controllers/user-profile.controller';
 import { UserProfileImportController } from './controllers/user-profile-import.controller';
 import { UserProfileActionsController } from './controllers/user-profile-actions.controller';
@@ -37,7 +36,6 @@ import { UserProfileRepository } from './repositories/user-profile.repository';
     forwardRef(() => CentersModule), // CentersService
     forwardRef(() => UserModule), // UserService
     forwardRef(() => AuthModule), // VerificationService
-    ActivityLogModule, // ActivityLogService
   ],
   controllers: [
     UserProfileController,
