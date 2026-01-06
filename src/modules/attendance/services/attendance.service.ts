@@ -18,6 +18,7 @@ import { SessionRosterStudentDto } from '../dto/session-roster-response.dto';
 import { AttendanceResponseDto } from '../dto/attendance-response.dto';
 import { UserProfileRepository } from '@/modules/user-profile/repositories/user-profile.repository';
 import { PaginateSessionRosterDto } from '../dto/paginate-session-roster.dto';
+import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { SessionAttendanceStatsDto } from '../dto/session-attendance-stats.dto';
 import { StudentBillingService } from '@/modules/student-billing/services/student-billing.service';
@@ -98,7 +99,6 @@ export class AttendanceService {
       groupId: attendance.groupId,
       studentUserProfileId: attendance.studentUserProfileId,
       status: attendance.status,
-      lastScannedAt: attendance.lastScannedAt,
       isManuallyMarked: attendance.isManuallyMarked,
       markedByUserProfileId: attendance.markedByUserProfileId,
       student: {
@@ -166,7 +166,6 @@ export class AttendanceService {
         sessionId: session.id,
         studentUserProfileId: userProfileId,
         status,
-        lastScannedAt: now,
         isManuallyMarked: false,
         markedByUserProfileId: actor.userProfileId,
       });
@@ -216,7 +215,6 @@ export class AttendanceService {
       throw AttendanceErrors.attendancePaymentRequired(paymentStrategy);
     }
 
-    const now = new Date();
     const status = AttendanceStatus.PRESENT;
 
     const existing = await this.attendanceRepository.findBySessionAndStudent(
@@ -237,7 +235,6 @@ export class AttendanceService {
         sessionId: session.id,
         studentUserProfileId: userProfileId,
         status,
-        lastScannedAt: now,
         isManuallyMarked: true,
         markedByUserProfileId: actor.userProfileId,
       });
@@ -280,31 +277,11 @@ export class AttendanceService {
         page: query.page,
         limit: query.limit,
         search: query.search,
+        status: query.status,
       },
     );
 
     return roster;
-  }
-
-  async autoMarkAbsenteesOnSessionFinished(
-    sessionId: string,
-    actor: ActorUser,
-  ): Promise<number> {
-    const session = await this.sessionsRepository.findOneOrThrow(sessionId);
-
-    // If called redundantly, keep it safe (idempotent at SQL level anyway).
-    if (session.status !== SessionStatus.FINISHED) {
-      return 0;
-    }
-
-    return this.attendanceRepository.bulkInsertAbsentForMissingStudents({
-      sessionId: session.id,
-      groupId: session.groupId,
-      centerId: session.centerId,
-      branchId: session.branchId,
-      createdByUserId: actor.id,
-      markedByUserProfileId: actor.userProfileId,
-    });
   }
 
   async getSessionAttendanceStats(
@@ -327,15 +304,96 @@ export class AttendanceService {
       classId: group.classId,
     });
 
-    const stats = await this.attendanceRepository.getSessionAttendanceStats({
-      sessionId: session.id,
-      groupId: group.id,
-    });
+    const stats = {
+      totalStudents:
+        session.presentCount +
+        session.lateCount +
+        session.excusedCount +
+        session.absentCount,
+      present: session.presentCount,
+      late: session.lateCount,
+      excused: session.excusedCount,
+      absent: session.absentCount,
+    };
 
     return {
       sessionId: session.id,
       groupId: group.id,
       ...stats,
     };
+  }
+
+  async markAllAbsent(
+    sessionId: string,
+    actor: ActorUser,
+  ): Promise<{ markedCount: number; sessionId: string }> {
+    // Validate session and access
+    await this.validateSessionAndAccess(sessionId, actor);
+
+    const session = await this.sessionsRepository.findOneOrThrow(sessionId);
+
+    // Get all unmarked students (no pagination for bulk operation)
+    const unmarkedResult =
+      await this.attendanceRepository.paginateUnmarkedStudents({
+        sessionId,
+        groupId: session.groupId,
+        page: 1,
+        limit: 1000, // Large limit to get all students
+      });
+    const unmarkedStudents = unmarkedResult.items;
+
+    if (unmarkedStudents.length === 0) {
+      return { markedCount: 0, sessionId };
+    }
+
+    // Create ABSENT records for all unmarked students
+    const attendanceRecords: Partial<Attendance>[] = unmarkedStudents.map(
+      (student) => ({
+        centerId: session.centerId,
+        branchId: session.branchId,
+        groupId: session.groupId,
+        sessionId,
+        studentUserProfileId: student.studentUserProfileId,
+        status: AttendanceStatus.ABSENT,
+        isManuallyMarked: true,
+        markedByUserProfileId: actor.userProfileId,
+      }),
+    );
+
+    // Bulk insert attendance records
+    await this.attendanceRepository.bulkInsert(attendanceRecords);
+
+    this.logger.log(
+      `Marked ${attendanceRecords.length} students as absent for session ${sessionId}`,
+      { actorId: actor.userProfileId },
+    );
+
+    return { markedCount: attendanceRecords.length, sessionId };
+  }
+
+  async getUnmarkedStudents(
+    sessionId: string,
+    query: BasePaginationDto,
+    actor: ActorUser,
+  ): Promise<
+    Pagination<{
+      studentUserProfileId: string;
+      fullName: string;
+      studentCode?: string;
+    }>
+  > {
+    // Validate session and access
+    await this.validateSessionAndAccess(sessionId, actor);
+
+    const session = await this.sessionsRepository.findOneOrThrow(sessionId);
+
+    // Get paginated unmarked students
+    return this.attendanceRepository.paginateUnmarkedStudents({
+      sessionId,
+      groupId: session.groupId,
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+    });
   }
 }

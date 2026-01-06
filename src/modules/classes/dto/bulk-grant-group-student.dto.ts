@@ -34,7 +34,7 @@ export class BulkGrantGroupStudentDto {
     each: true,
     message: 'Each user profile ID must be a valid UUID',
   })
-  @IsUserProfile(ProfileType.STUDENT)
+  @IsUserProfile(ProfileType.STUDENT, { each: true })
   userProfileIds: string[];
 
   @ApiPropertyOptional({

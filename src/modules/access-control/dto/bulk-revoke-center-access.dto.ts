@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsUUID, ArrayMinSize, ArrayMaxSize } from 'class-validator';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
+import { Exists, IsUserProfile, CannotTargetSelf } from '@/shared/common/decorators';
 import { Center } from '@/modules/centers/entities/center.entity';
 
 export class BulkRevokeCenterAccessDto {
@@ -26,5 +26,7 @@ export class BulkRevokeCenterAccessDto {
     each: true,
     message: 'Each user profile ID must be a valid UUID',
   })
+  @IsUserProfile(undefined, { each: true })
+  @CannotTargetSelf({ each: true })
   userProfileIds: string[];
 }

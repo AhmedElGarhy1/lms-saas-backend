@@ -44,6 +44,8 @@ export enum FinanceErrorCode {
   INSUFFICIENT_WALLET_BALANCE = 'FIN_PAY_029',
   INSUFFICIENT_CASH_BALANCE = 'FIN_PAY_030',
   INVALID_CASH_PAYMENT_CONFIGURATION = 'FIN_PAY_031',
+  PAYMENT_NOT_FOUND = 'FIN_PAY_032',
+  INVALID_PAYMENT_OPERATION = 'FIN_PAY_033',
 
   // General finance errors
   // (No generic errors - use specific codes)

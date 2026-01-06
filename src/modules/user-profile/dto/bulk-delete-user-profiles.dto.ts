@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsUUID, ArrayMinSize, ArrayMaxSize } from 'class-validator';
+import { IsUserProfile, CannotTargetSelf } from '@/shared/common/decorators';
 
 export class BulkDeleteUserProfilesDto {
   @ApiProperty({
@@ -16,5 +17,7 @@ export class BulkDeleteUserProfilesDto {
     each: true,
     message: 'Each user profile ID must be a valid UUID',
   })
+  @IsUserProfile(undefined, { each: true })
+  @CannotTargetSelf({ each: true })
   userProfileIds: string[];
 }

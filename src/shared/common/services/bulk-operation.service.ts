@@ -2,7 +2,12 @@ import { Injectable, Logger, HttpException } from '@nestjs/common';
 import pLimit from 'p-limit';
 import { BaseService } from './base.service';
 import { DomainException } from '../exceptions/domain.exception';
-import { AllErrorCodes } from '../enums/error-codes';
+import {
+  AccessControlErrorCode,
+  AllErrorCodes,
+  AuthErrorCode,
+  CommonErrorCode,
+} from '../enums/error-codes';
 
 export interface BulkOperationOptions {
   concurrency?: number; // Default: 10, minimum: 1
@@ -11,8 +16,7 @@ export interface BulkOperationOptions {
 
 export interface BulkOperationError {
   id: string;
-  code?: AllErrorCodes;
-  error: string; // Error message
+  code: AllErrorCodes;
   details?: unknown; // Generic structured error details
   stack?: string; // Only in development mode
 }
@@ -95,8 +99,8 @@ export class BulkOperationService extends BaseService {
         const value = settledResult.value;
         if ('success' in value && value.success) {
           result.success++;
-        } else if ('error' in value) {
-          // Value is BulkOperationError
+        } else if ('id' in value && 'code' in value) {
+          // Value is BulkOperationError (has id and code)
           result.failed++;
           result.errors?.push(value);
         }
@@ -135,18 +139,16 @@ export class BulkOperationService extends BaseService {
   private extractErrorDetails(id: string, error: unknown): BulkOperationError {
     const errorDetail: BulkOperationError = {
       id,
-      error: 'Unknown error',
+      code: CommonErrorCode.INTERNAL_SERVER_ERROR, // Default fallback
     };
 
     if (error instanceof DomainException) {
       // Handle DomainException (new error system)
       errorDetail.code = error.errorCode;
-      errorDetail.error = error.message;
       errorDetail.details = error.details;
     } else if (error instanceof Error) {
       // Extract error details from HttpException
       const httpException = error as unknown as HttpException;
-      errorDetail.error = error.message;
 
       // Extract error code and details from HttpException response if available
       if (
@@ -165,27 +167,43 @@ export class BulkOperationService extends BaseService {
             errorDetail.details = response.details;
           }
         }
-      }
-
-      // Extract translation key and args if it's a translatable exception
-      {
-        // Use the error message as-is for non-translatable errors
-        errorDetail.error = error.message;
-        this.logger.warn(
-          `Bulk operation failed for ID ${id}: ${error.message}`,
-        );
+      } else {
+        // Fallback to generic error code based on HTTP status
+        errorDetail.code = this.getErrorCodeFromHttpException(httpException);
       }
 
       // Include stack trace only in development mode
       if (process.env.NODE_ENV !== 'production') {
         errorDetail.stack = error.stack;
       }
+
+      this.logger.warn(`Bulk operation failed for ID ${id}: ${error.message}`);
     } else {
-      errorDetail.error = String(error);
+      errorDetail.details = String(error);
       this.logger.warn(`Bulk operation failed for ID ${id}: ${String(error)}`);
     }
 
     return errorDetail;
+  }
+
+  private getErrorCodeFromHttpException(
+    httpException: HttpException,
+  ): AllErrorCodes {
+    const status = httpException.getStatus();
+    switch (status) {
+      case 400:
+        return CommonErrorCode.VALIDATION_FAILED;
+      case 401:
+        return AuthErrorCode.AUTHENTICATION_FAILED; // Authentication failed
+      case 403:
+        return AccessControlErrorCode.MISSING_PERMISSION; // Missing permission
+      case 404:
+        return CommonErrorCode.RESOURCE_NOT_FOUND;
+      case 429:
+        return CommonErrorCode.TOO_MANY_ATTEMPTS;
+      default:
+        return CommonErrorCode.INTERNAL_SERVER_ERROR;
+    }
   }
 
   /**

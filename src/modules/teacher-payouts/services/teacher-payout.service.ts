@@ -17,12 +17,17 @@ import { PaymentReason } from '@/modules/finance/enums/payment-reason.enum';
 import { PaymentSource as FinancePaymentSource } from '@/modules/finance/enums/payment-source.enum';
 import { WalletOwnerType } from '@/modules/finance/enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
+import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
+import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
+import { ClassAccessService } from '@/modules/classes/services/class-access.service';
 
 @Injectable()
 export class TeacherPayoutService extends BaseService {
   constructor(
     private readonly payoutRepository: TeacherPayoutRecordsRepository,
     private readonly paymentService: PaymentService,
+    private readonly branchAccessService: BranchAccessService,
+    private readonly classAccessService: ClassAccessService,
   ) {
     super();
   }
@@ -34,11 +39,24 @@ export class TeacherPayoutService extends BaseService {
     return this.payoutRepository.paginateTeacherPayouts(dto, actor);
   }
 
-  async getPayoutById(id: string): Promise<TeacherPayoutRecord> {
+  async getPayoutById(id: string, actor: ActorUser): Promise<TeacherPayoutRecord> {
     const payout = await this.payoutRepository.findById(id);
     if (!payout) {
       throw TeacherPayoutErrors.payoutNotFound();
     }
+
+    // Validate access to the payout's branch and class
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: payout.branchId,
+    });
+
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: payout.classId,
+    });
+
     return payout;
   }
 
@@ -63,9 +81,10 @@ export class TeacherPayoutService extends BaseService {
   async updatePayoutStatus(
     id: string,
     dto: UpdatePayoutStatusDto,
+    actor: ActorUser,
   ): Promise<TeacherPayoutRecord> {
     // Validate the payout exists
-    const payout = await this.getPayoutById(id);
+    const payout = await this.getPayoutById(id, actor);
 
     // Validate status transition
     this.validateStatusTransition(payout.status, dto.status);
@@ -110,6 +129,23 @@ export class TeacherPayoutService extends BaseService {
     }
   }
 
+  private getPaymentReasonForTeacherPayout(unitType: TeacherPaymentUnit): PaymentReason {
+    switch (unitType) {
+      case TeacherPaymentUnit.STUDENT:
+        return PaymentReason.TEACHER_STUDENT_PAYOUT;
+      case TeacherPaymentUnit.HOUR:
+        return PaymentReason.TEACHER_HOUR_PAYOUT;
+      case TeacherPaymentUnit.SESSION:
+        return PaymentReason.TEACHER_SESSION_PAYOUT;
+      case TeacherPaymentUnit.MONTH:
+        return PaymentReason.TEACHER_MONTHLY_PAYOUT;
+      case TeacherPaymentUnit.CLASS:
+        return PaymentReason.TEACHER_CLASS_PAYOUT;
+      default:
+        return PaymentReason.TEACHER_SESSION_PAYOUT; // fallback
+    }
+  }
+
   /**
    * Execute the actual payment transaction when payout status changes to PAID
    */
@@ -123,7 +159,7 @@ export class TeacherPayoutService extends BaseService {
       senderType: WalletOwnerType.BRANCH,
       receiverId: payout.teacherUserProfileId,
       receiverType: WalletOwnerType.USER_PROFILE,
-      reason: PaymentReason.TEACHER_PAYOUT,
+      reason: this.getPaymentReasonForTeacherPayout(payout.unitType),
       source: paymentSource,
       correlationId: payout.id,
     };

@@ -8,6 +8,7 @@ import { getDatabaseConfig } from '../../config/database.config';
 import { ExistsConstraint } from '../../common/validators/exists.constraint';
 import { BelongsToCenterConstraint } from '../../common/validators/belongs-to-center.constraint';
 import { IsUserProfileConstraint } from '@/shared/common/validators/is-user-profile.constraint';
+import { CannotTargetSelfConstraint } from '@/shared/common/validators/cannot-target-self.constraint';
 
 @Module({
   imports: [
@@ -36,12 +37,14 @@ import { IsUserProfileConstraint } from '@/shared/common/validators/is-user-prof
     ExistsConstraint,
     BelongsToCenterConstraint,
     IsUserProfileConstraint,
+    CannotTargetSelfConstraint,
   ],
   exports: [
     DatabaseService,
     ExistsConstraint,
     BelongsToCenterConstraint,
     IsUserProfileConstraint,
+    CannotTargetSelfConstraint,
   ],
 })
 export class DatabaseModule {}

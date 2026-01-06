@@ -5,10 +5,7 @@ import { Repository } from 'typeorm';
 import { addMinutes, addDays, startOfDay, getDay } from 'date-fns';
 import { RequestContext } from '@/shared/common/context/request.context';
 import { Locale } from '@/shared/common/enums/locale.enum';
-import {
-  SYSTEM_USER_ID,
-  SYSTEM_ACTOR,
-} from '@/shared/common/constants/system-actor.constant';
+import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
 import { Session } from '../entities/session.entity';
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
 import { ClassStatus } from '@/modules/classes/enums/class-status.enum';
@@ -18,12 +15,6 @@ import { DEFAULT_TIMEZONE } from '@/shared/common/constants/timezone.constants';
 import { SessionStatus } from '../enums/session-status.enum';
 import { ATTENDANCE_LATE_GRACE_MINUTES } from '@/modules/attendance/constants/attendance.constants';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
-import {
-  SessionFinishedEvent,
-  SessionUpdatedEvent,
-} from '@/modules/sessions/events/session.events';
-import { SessionEvents } from '@/shared/events/sessions.events.enum';
-import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 type ScheduleItemForCleanup = {
   id: string;
@@ -39,6 +30,7 @@ type ScheduleItemForCleanup = {
   centerTimezone: string | null;
 };
 
+// TODO: make it work correctly
 @Injectable()
 export class SessionsCleanupJob {
   private readonly logger = new Logger(SessionsCleanupJob.name);
@@ -75,7 +67,8 @@ export class SessionsCleanupJob {
             now,
           );
 
-          await this.updatePastSessions(now);
+          // Removed auto-finishing: await this.updatePastSessions(now);
+          // Teachers now manually finish sessions with complete attendance tracking
 
           this.logger.log('Sessions cleanup job completed', {
             jobId,
@@ -216,103 +209,6 @@ export class SessionsCleanupJob {
       `Virtual cleanup: inserted ${insertedTotal} MISSED sessions (candidates=${candidates.length})`,
     );
     return insertedTotal;
-  }
-
-  private async updatePastSessions(now: Date): Promise<void> {
-    const activeClassExists =
-      'EXISTS (SELECT 1 FROM "classes" c WHERE c.id = "classId" AND c.status = :active AND c."deletedAt" IS NULL)';
-
-    // Treat session as "past" only after endTime + gracePeriod
-    const pastThreshold = new Date(
-      now.getTime() - ATTENDANCE_LATE_GRACE_MINUTES * 60 * 1000,
-    );
-
-    // 1) CHECKING_IN/CONDUCTING -> FINISHED
-    // First, get the sessions that will be updated
-    const sessionsToFinish = await this.sessionRepo
-      .createQueryBuilder('session')
-      .select([
-        'session.id',
-        'session.teacherUserProfileId',
-        'session.classId',
-        'session.groupId',
-      ])
-      .where(activeClassExists, { active: ClassStatus.ACTIVE })
-      .andWhere('"endTime" < :pastThreshold', { pastThreshold })
-      .andWhere('"status" IN (:...statuses)', {
-        statuses: [SessionStatus.CHECKING_IN, SessionStatus.CONDUCTING],
-      })
-      .getMany();
-
-    // Update sessions to FINISHED
-    await this.sessionRepo
-      .createQueryBuilder()
-      .update(Session)
-      .set({
-        status: SessionStatus.FINISHED,
-        actualFinishTime: now,
-        updatedAt: now,
-        updatedBy: SYSTEM_USER_ID,
-      })
-      .where(activeClassExists, { active: ClassStatus.ACTIVE })
-      .andWhere('"endTime" < :pastThreshold', { pastThreshold })
-      .andWhere('"status" IN (:...statuses)', {
-        statuses: [SessionStatus.CHECKING_IN, SessionStatus.CONDUCTING],
-      })
-      .execute();
-
-    // Emit events for finished sessions
-    for (const session of sessionsToFinish) {
-      const fullSession = await this.sessionRepo.findOne({
-        where: { id: session.id },
-        relations: ['class', 'group'],
-      });
-
-      if (fullSession) {
-        // Create system actor with the session's center ID
-        const systemActor: ActorUser = {
-          ...SYSTEM_ACTOR,
-          centerId: fullSession.centerId,
-        } as ActorUser;
-
-        // Emit both UPDATED and FINISHED events for compatibility
-        await this.typeSafeEventEmitter.emitAsync(
-          SessionEvents.UPDATED,
-          new SessionUpdatedEvent(
-            fullSession,
-            systemActor,
-            fullSession.centerId,
-          ),
-        );
-
-        await this.typeSafeEventEmitter.emitAsync(
-          SessionEvents.FINISHED,
-          new SessionFinishedEvent(fullSession, systemActor),
-        );
-      }
-    }
-
-    // 2) All other past sessions (except CANCELED/FINISHED/MISSED) -> MISSED
-    await this.sessionRepo
-      .createQueryBuilder()
-      .update(Session)
-      .set({
-        status: SessionStatus.MISSED,
-        updatedAt: now,
-        updatedBy: SYSTEM_USER_ID,
-      })
-      .where(activeClassExists, { active: ClassStatus.ACTIVE })
-      .andWhere('"endTime" < :pastThreshold', { pastThreshold })
-      .andWhere('"status" NOT IN (:...finalStatuses)', {
-        finalStatuses: [
-          SessionStatus.CANCELED,
-          SessionStatus.FINISHED,
-          SessionStatus.MISSED,
-          SessionStatus.CHECKING_IN,
-          SessionStatus.CONDUCTING,
-        ],
-      })
-      .execute();
   }
 
   private getDatesForDayOfWeek(

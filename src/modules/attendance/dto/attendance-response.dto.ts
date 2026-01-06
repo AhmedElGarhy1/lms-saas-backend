@@ -44,15 +44,6 @@ export class AttendanceResponseDto {
   @Expose()
   status: AttendanceStatus;
 
-  @ApiProperty({
-    description: 'Last scanned time',
-    required: false,
-    type: Date,
-  })
-  @Expose()
-  @Type(() => Date)
-  lastScannedAt?: Date;
-
   @ApiProperty({ description: 'Whether it was marked manually' })
   @Expose()
   isManuallyMarked: boolean;

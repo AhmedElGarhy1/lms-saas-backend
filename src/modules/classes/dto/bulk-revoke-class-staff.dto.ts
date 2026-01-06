@@ -27,6 +27,6 @@ export class BulkRevokeClassStaffDto {
     each: true,
     message: 'Each user profile ID must be a valid UUID',
   })
-  @IsUserProfile(ProfileType.STAFF)
+  @IsUserProfile(ProfileType.STAFF, { each: true })
   userProfileIds: string[];
 }

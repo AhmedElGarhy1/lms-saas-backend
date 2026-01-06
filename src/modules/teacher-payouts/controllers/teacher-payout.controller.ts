@@ -38,8 +38,9 @@ export class TeacherPayoutController {
   @Get(':id')
   async getPayoutById(
     @Param('id') id: string,
+    @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<TeacherPayoutRecord>> {
-    const payout = await this.payoutService.getPayoutById(id);
+    const payout = await this.payoutService.getPayoutById(id, actor);
     return ControllerResponse.success(payout);
   }
 
@@ -49,8 +50,9 @@ export class TeacherPayoutController {
   async updatePayoutStatus(
     @Param('id') id: string,
     @Body() dto: UpdatePayoutStatusDto,
+    @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<TeacherPayoutRecord>> {
-    const payout = await this.payoutService.updatePayoutStatus(id, dto);
+    const payout = await this.payoutService.updatePayoutStatus(id, dto, actor);
     return ControllerResponse.success(payout);
   }
 }

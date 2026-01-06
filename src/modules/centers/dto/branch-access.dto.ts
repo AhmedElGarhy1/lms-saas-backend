@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
-import { BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
+import { BelongsToCenter, IsUserProfile, CannotTargetSelf } from '@/shared/common/decorators';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { Center } from '../entities/center.entity';
 import { Branch } from '../entities/branch.entity';
@@ -13,6 +13,7 @@ export class BranchAccessDto {
   })
   @IsUUID()
   @IsUserProfile(ProfileType.STAFF)
+  @CannotTargetSelf()
   userProfileId: string;
 
   @ApiProperty({

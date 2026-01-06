@@ -14,4 +14,5 @@ export enum CommonErrorCode {
   // Common domain errors - use for cross-cutting concerns
   RESOURCE_NOT_FOUND = 'GEN_001', // Generic resource not found
   VALIDATION_FAILED = 'GEN_002', // Generic validation failure
+  CANNOT_TARGET_SELF = 'GEN_007', // Cannot perform operation on yourself
 }

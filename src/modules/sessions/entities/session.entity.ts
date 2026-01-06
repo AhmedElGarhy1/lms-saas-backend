@@ -64,6 +64,19 @@ export class Session extends BaseEntity {
   @Column({ type: 'boolean', default: false })
   isExtraSession: boolean;
 
+  // Attendance Statistics (calculated when session finishes)
+  @Column({ type: 'integer', default: 0 })
+  presentCount: number;
+
+  @Column({ type: 'integer', default: 0 })
+  lateCount: number;
+
+  @Column({ type: 'integer', default: 0 })
+  excusedCount: number;
+
+  @Column({ type: 'integer', default: 0 })
+  absentCount: number;
+
   // Relations
   @ManyToOne(() => Group, (group) => group.sessions)
   @JoinColumn({ name: 'groupId' })

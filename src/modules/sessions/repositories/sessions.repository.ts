@@ -800,4 +800,44 @@ export class SessionsRepository extends BaseRepository<Session> {
       existingSessionStatus: row.existingSessionStatus || undefined,
     };
   }
+
+  async getUnmarkedStudentCount(
+    sessionId: string,
+    groupId: string,
+  ): Promise<number> {
+    const result = await this.getEntityManager().query<
+      Array<{ unmarkedCount: number }>
+    >(
+      `
+      SELECT COUNT(*)::int as "unmarkedCount"
+      FROM "group_students" gs
+      WHERE gs."groupId" = $1::uuid
+        AND gs."leftAt" IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM "attendance" a
+          WHERE a."sessionId" = $2::uuid
+            AND a."studentUserProfileId" = gs."studentUserProfileId"
+        )
+      `,
+      [groupId, sessionId],
+    );
+
+    return Number(result[0]?.unmarkedCount || 0);
+  }
+
+  async getTotalStudentsInGroup(groupId: string): Promise<number> {
+    const result = await this.getEntityManager().query<
+      Array<{ totalStudents: number }>
+    >(
+      `
+      SELECT COUNT(*)::int as "totalStudents"
+      FROM "group_students" gs
+      WHERE gs."groupId" = $1::uuid
+        AND gs."leftAt" IS NULL
+      `,
+      [groupId],
+    );
+
+    return Number(result[0]?.totalStudents || 0);
+  }
 }

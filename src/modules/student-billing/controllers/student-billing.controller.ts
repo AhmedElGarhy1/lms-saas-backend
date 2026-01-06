@@ -11,7 +11,6 @@ import {
 import { Transactional } from '@nestjs-cls/transactional';
 import { StudentBillingService } from '../services/student-billing.service';
 import { CreateStudentChargeDto } from '../dto/create-student-charge.dto';
-import { CreateClassChargeDto } from '../dto/create-class-charge.dto';
 import { PaymentSource } from '../entities/student-class-subscription.entity';
 import { StudentClassSubscription } from '../entities/student-class-subscription.entity';
 import { StudentSessionCharge } from '../entities/student-session-charge.entity';
@@ -36,6 +35,7 @@ export class StudentBillingController {
   @HttpCode(HttpStatus.CREATED)
   async createCashCharge(
     @Body() dto: CreateStudentChargeDto,
+    @GetUser() actor: ActorUser,
   ): Promise<
     ControllerResponse<
       StudentClassSubscription | StudentSessionCharge | StudentClassCharge
@@ -44,6 +44,7 @@ export class StudentBillingController {
     const result = await this.billingService.createStudentCharge(
       dto,
       PaymentSource.CASH,
+      actor,
     );
     return ControllerResponse.success(result);
   }
@@ -54,6 +55,7 @@ export class StudentBillingController {
   @HttpCode(HttpStatus.CREATED)
   async createWalletCharge(
     @Body() dto: CreateStudentChargeDto,
+    @GetUser() actor: ActorUser,
   ): Promise<
     ControllerResponse<
       StudentClassSubscription | StudentSessionCharge | StudentClassCharge
@@ -62,33 +64,8 @@ export class StudentBillingController {
     const result = await this.billingService.createStudentCharge(
       dto,
       PaymentSource.WALLET,
+      actor,
     );
-    return ControllerResponse.success(result);
-  }
-
-  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_CHARGE)
-  @Post('classes/:classId/charges/cash')
-  @Transactional()
-  @HttpCode(HttpStatus.CREATED)
-  async createClassChargeCash(
-    @Param('classId') classId: string,
-    @Body() dto: CreateClassChargeDto,
-  ): Promise<ControllerResponse<StudentClassCharge>> {
-    dto.classId = classId; // Override with path param
-    const result = await this.billingService.createClassCharge(dto);
-    return ControllerResponse.success(result);
-  }
-
-  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_CHARGE)
-  @Post('classes/:classId/charges/wallet')
-  @Transactional()
-  @HttpCode(HttpStatus.CREATED)
-  async createClassChargeWallet(
-    @Param('classId') classId: string,
-    @Body() dto: CreateClassChargeDto,
-  ): Promise<ControllerResponse<StudentClassCharge>> {
-    dto.classId = classId; // Override with path param
-    const result = await this.billingService.createClassCharge(dto);
     return ControllerResponse.success(result);
   }
 

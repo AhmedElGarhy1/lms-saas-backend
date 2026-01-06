@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { TeacherPayoutRecord, PaymentSource } from '../entities/teacher-payout-record.entity';
+import {
+  TeacherPayoutRecord,
+  PaymentSource,
+} from '../entities/teacher-payout-record.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';
@@ -7,11 +10,13 @@ import { PaginateTeacherPayoutsDto } from '../dto/paginate-teacher-payouts.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { PayoutStatus } from '../enums/payout-status.enum';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 
 @Injectable()
 export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayoutRecord> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    private readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super(txHost);
   }
@@ -24,7 +29,30 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
     dto: PaginateTeacherPayoutsDto,
     actor: ActorUser,
   ): Promise<Pagination<TeacherPayoutRecord>> {
-    const queryBuilder = this.getRepository().createQueryBuilder('payout');
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('payout')
+      .leftJoin('payout.class', 'class')
+      .leftJoin('class.classStaff', 'classStaff')
+      .leftJoin(
+        'class.branches',
+        'branchAccess',
+        'branchAccess.userProfileId = :userProfileId AND branchAccess.isActive = true',
+        { userProfileId: actor.userProfileId },
+      );
+
+    // Access control: Filter by class staff and branch access for non-bypass users
+    const canBypassCenterInternalAccess =
+      await this.accessControlHelperService.bypassCenterInternalAccess(
+        actor.userProfileId,
+        actor.centerId,
+      );
+
+    if (!canBypassCenterInternalAccess) {
+      queryBuilder.andWhere(
+        '(classStaff.userProfileId = :userProfileId OR branchAccess.branchId IS NOT NULL)',
+        { userProfileId: actor.userProfileId },
+      );
+    }
 
     // Apply filters
     if (dto.teacherUserProfileId) {
@@ -83,7 +111,9 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
     });
   }
 
-  async findByTeacher(teacherUserProfileId: string): Promise<TeacherPayoutRecord[]> {
+  async findByTeacher(
+    teacherUserProfileId: string,
+  ): Promise<TeacherPayoutRecord[]> {
     return this.getRepository().find({
       where: { teacherUserProfileId },
       order: { createdAt: 'DESC' },
@@ -101,7 +131,7 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
     id: string,
     status: PayoutStatus,
     paymentId?: string,
-    paymentSource?: PaymentSource
+    paymentSource?: PaymentSource,
   ): Promise<TeacherPayoutRecord> {
     await this.getRepository().update(id, {
       status,
@@ -121,7 +151,9 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
     return this.getRepository().save(payout);
   }
 
-  async createPayout(payoutData: Partial<TeacherPayoutRecord>): Promise<TeacherPayoutRecord> {
+  async createPayout(
+    payoutData: Partial<TeacherPayoutRecord>,
+  ): Promise<TeacherPayoutRecord> {
     const payout = this.getRepository().create(payoutData);
     return this.savePayout(payout);
   }

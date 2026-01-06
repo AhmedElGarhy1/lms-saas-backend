@@ -7,7 +7,7 @@ export enum DefaultRoles {
 }
 
 export const createOwnerRoleData = (centerId: string) => ({
-  name: 'Owner',
+  name: DefaultRoles.OWNER,
   description: 'Owner role with elevated permissions',
   rolePermissions: [],
   centerId: centerId,

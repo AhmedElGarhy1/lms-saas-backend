@@ -145,6 +145,8 @@
 [x] check why center branch or user not created in center creation
 [x] in grant access internally we need first to valiate if user has higher permission so he doesn't need access and grasful return
 [x] user profile /me endpoint doesn't reutrn center because it doesn't pass contextGuard
+[x] other types of teacher payouts
+[ ] class teacher payout type
 [ ] at the end of session before finish display students didn't attend for action and remove the cron job
 [ ] transfer within account
 [ ] translations cleanup

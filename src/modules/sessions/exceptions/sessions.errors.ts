@@ -93,4 +93,14 @@ export class SessionsErrors extends BaseErrorHelpers {
   static sessionInvalidIdFormat(): DomainException {
     return this.createNoDetails(SessionErrorCode.SESSION_INVALID_ID_FORMAT);
   }
+
+  static sessionCannotFinishWithUnmarkedStudents(details: {
+    unmarkedCount: number;
+    totalStudents: number;
+  }): DomainException {
+    return this.createWithDetails(
+      SessionErrorCode.SESSION_CANNOT_FINISH_WITH_UNMARKED_STUDENTS,
+      details,
+    );
+  }
 }

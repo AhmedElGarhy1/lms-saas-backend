@@ -32,15 +32,6 @@ export class SessionRosterStudentDto {
   })
   @Expose()
   isManuallyMarked?: boolean;
-
-  @ApiProperty({
-    description: 'Last scanned time',
-    required: false,
-    type: Date,
-  })
-  @Expose()
-  @Type(() => Date)
-  lastScannedAt?: Date;
 }
 
 export class SessionRosterResponseDto {

@@ -22,15 +22,18 @@ import { SessionStatus } from '../enums/session-status.enum';
 import { SessionsErrors } from '../exceptions/sessions.errors';
 import { Transactional } from '@nestjs-cls/transactional';
 import { GroupsRepository } from '@/modules/classes/repositories/groups.repository';
+import {
+  SessionVirtualizationService,
+  VirtualSession,
+  MergedSession,
+} from './session-virtualization.service';
 import { TimezoneService } from '@/shared/common/services/timezone.service';
 import { DEFAULT_TIMEZONE } from '@/shared/common/constants/timezone.constants';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { ClassAccessService } from '@/modules/classes/services/class-access.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { addMinutes, addDays, startOfDay, getDay, isBefore } from 'date-fns';
+import { addMinutes, isBefore } from 'date-fns';
 import { ScheduleItemsRepository } from '@/modules/classes/repositories/schedule-items.repository';
-import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
-import { DayOfWeek } from '@/modules/classes/enums/day-of-week.enum';
 import { ClassStatus } from '@/modules/classes/enums/class-status.enum';
 import {
   CalendarSessionsResponseDto,
@@ -43,27 +46,6 @@ import {
   isVirtualSessionId,
 } from '../utils/virtual-session-id.util';
 
-/**
- * Virtual session interface for sessions calculated from schedule items
- */
-interface VirtualSession {
-  id: undefined;
-  groupId: string;
-  scheduleItemId: string;
-  title?: undefined;
-  startTime: Date; // UTC
-  endTime: Date; // UTC
-  status: SessionStatus.SCHEDULED;
-  isExtraSession: false;
-  actualStartTime?: Date;
-  actualFinishTime?: Date;
-}
-
-/**
- * Merged session type - either virtual or real
- */
-type MergedSession = Session | VirtualSession;
-
 @Injectable()
 export class SessionsService extends BaseService {
   private readonly logger = new Logger(SessionsService.name);
@@ -72,6 +54,7 @@ export class SessionsService extends BaseService {
     private readonly sessionValidationService: SessionValidationService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly groupsRepository: GroupsRepository,
+    private readonly sessionVirtualizationService: SessionVirtualizationService,
     private readonly branchAccessService: BranchAccessService,
     private readonly classAccessService: ClassAccessService,
     private readonly scheduleItemsRepository: ScheduleItemsRepository,
@@ -645,6 +628,23 @@ export class SessionsService extends BaseService {
       throw SessionsErrors.sessionStatusInvalidForOperation();
     }
 
+    // Check for unmarked students - all students must have attendance records
+    const unmarkedCount = await this.sessionsRepository.getUnmarkedStudentCount(
+      sessionId,
+      session.groupId,
+    );
+
+    if (unmarkedCount > 0) {
+      // Get total students count from group_students table
+      const totalStudents =
+        await this.sessionsRepository.getTotalStudentsInGroup(session.groupId);
+
+      throw SessionsErrors.sessionCannotFinishWithUnmarkedStudents({
+        unmarkedCount,
+        totalStudents,
+      });
+    }
+
     // Fetch group with class for access validation
     const group = await this.groupsRepository.findByIdOrThrow(session.groupId, [
       'class',
@@ -665,6 +665,7 @@ export class SessionsService extends BaseService {
 
     // Update status to FINISHED and capture actual finish time
     const actualFinishTime = new Date();
+
     const updatedSession = await this.sessionsRepository.updateThrow(
       sessionId,
       {
@@ -836,15 +837,19 @@ export class SessionsService extends BaseService {
       return group?.class?.status === ClassStatus.ACTIVE;
     });
 
-    const virtualSessions = this.calculateVirtualSessions(
-      activeScheduleItems,
-      groupMap,
-      startDate,
-      endDate,
-    );
+    const virtualSessions =
+      this.sessionVirtualizationService.calculateVirtualSessions(
+        activeScheduleItems,
+        groupMap,
+        startDate,
+        endDate,
+      );
 
     // Merge real and virtual sessions (real sessions override virtual ones)
-    const mergedSessions = this.mergeSessions(realSessions, virtualSessions);
+    const mergedSessions = this.sessionVirtualizationService.mergeSessions(
+      realSessions,
+      virtualSessions,
+    );
 
     // Apply status filter if provided
     let filteredSessions = mergedSessions;
@@ -883,8 +888,10 @@ export class SessionsService extends BaseService {
         endTime: session.endTime.toISOString(),
         status: session.status,
         groupId: session.groupId,
-        actualStartTime: session.actualStartTime,
-        actualFinishTime: session.actualFinishTime,
+        actualStartTime:
+          'actualStartTime' in session ? session.actualStartTime : undefined,
+        actualFinishTime:
+          'actualFinishTime' in session ? session.actualFinishTime : undefined,
         isExtraSession: session.isExtraSession,
       };
     });
@@ -1036,182 +1043,6 @@ export class SessionsService extends BaseService {
         scheduleItemId: realSession.scheduleItemId,
       };
     }
-  }
-
-  /**
-   * Calculate virtual sessions from schedule items
-   * @param scheduleItems - Schedule items to calculate sessions from
-   * @param groupMap - Map of groups with class relations loaded
-   * @param startDate - Start date (inclusive, UTC)
-   * @param endDate - End date (exclusive, UTC)
-   * @returns Array of virtual sessions
-   */
-  private calculateVirtualSessions(
-    scheduleItems: ScheduleItem[],
-    groupMap: Map<string, Group>,
-    startDate: Date,
-    endDate: Date,
-  ): VirtualSession[] {
-    const virtualSessions: VirtualSession[] = [];
-
-    for (const scheduleItem of scheduleItems) {
-      const group = groupMap.get(scheduleItem.groupId);
-      if (!group || !group.class) {
-        continue; // Skip if group/class not found
-      }
-
-      const classEntity = group.class;
-
-      // Effective start date should be the later of query startDate or class startDate
-      const effectiveStartDate = new Date(
-        Math.max(startDate.getTime(), classEntity.startDate.getTime()),
-      );
-
-      // Cap endDate to class endDate if it exists
-      let effectiveEndDate = endDate;
-      if (classEntity.endDate) {
-        effectiveEndDate = new Date(
-          Math.min(endDate.getTime(), classEntity.endDate.getTime()),
-        );
-      }
-
-      // If effective end date is before effective start date, skip
-      if (effectiveEndDate <= effectiveStartDate) {
-        continue;
-      }
-
-      // Get all dates matching the day of week in the range (starting from class startDate)
-      const dates = this.getDatesForDayOfWeek(
-        effectiveStartDate,
-        effectiveEndDate,
-        scheduleItem.day,
-      );
-
-      for (const date of dates) {
-        // Fetch Center's timezone from entity relationship (Group → Class → Center)
-        // Fallback to DEFAULT_TIMEZONE if center timezone is not available
-        const timezone = group.class.center?.timezone || DEFAULT_TIMEZONE;
-
-        // Calculate startTime: Convert social time (HH:mm in center timezone) to physical UTC
-        // date is UTC Date, scheduleItem.startTime is HH:mm string in center timezone
-        const sessionStartTime = TimezoneService.combineDateAndTime(
-          date,
-          scheduleItem.startTime,
-          timezone,
-        );
-
-        // Calculate endTime using UTC math (adding minutes to UTC startTime)
-        // This correctly handles sessions that cross calendar day boundaries
-        // UTC math is universal: 60 minutes is 60 minutes everywhere
-        const sessionEndTime = addMinutes(
-          sessionStartTime,
-          classEntity.duration,
-        );
-
-        virtualSessions.push({
-          id: undefined,
-          groupId: scheduleItem.groupId,
-          scheduleItemId: scheduleItem.id,
-          title: undefined,
-          startTime: sessionStartTime,
-          endTime: sessionEndTime,
-          status: SessionStatus.SCHEDULED,
-          isExtraSession: false,
-        });
-      }
-    }
-
-    return virtualSessions;
-  }
-
-  /**
-   * Get all dates for a specific day of week within a date range
-   * Uses timezone-aware day matching to ensure schedule items match correctly
-   *
-   * @param startDate - Start date (inclusive, UTC)
-   * @param endDate - End date (exclusive, UTC)
-   * @param dayOfWeek - Day of week (Mon, Tue, Wed, etc.)
-   * @returns Array of dates matching the day of week
-   */
-  private getDatesForDayOfWeek(
-    startDate: Date,
-    endDate: Date,
-    dayOfWeek: DayOfWeek,
-  ): Date[] {
-    const dates: Date[] = [];
-    const dayMap: Record<DayOfWeek, number> = {
-      [DayOfWeek.MON]: 1,
-      [DayOfWeek.TUE]: 2,
-      [DayOfWeek.WED]: 3,
-      [DayOfWeek.THU]: 4,
-      [DayOfWeek.FRI]: 5,
-      [DayOfWeek.SAT]: 6,
-      [DayOfWeek.SUN]: 0,
-    };
-
-    const targetDay = dayMap[dayOfWeek];
-    let currentDate = startOfDay(startDate);
-
-    // endDate is exclusive, so we continue while currentDate < endDate
-    while (currentDate.getTime() < endDate.getTime()) {
-      // Use date-fns getDay() on UTC dates (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-      if (getDay(currentDate) === targetDay) {
-        dates.push(currentDate);
-      }
-      currentDate = addDays(currentDate, 1);
-    }
-
-    return dates;
-  }
-
-  /**
-   * Merge real and virtual sessions
-   * Real sessions override virtual ones for the same time slot (same groupId + startTime)
-   *
-   * @param realSessions - Real sessions from database
-   * @param virtualSessions - Virtual sessions calculated from schedule items
-   * @returns Merged array of sessions, sorted by startTime
-   */
-  private mergeSessions(
-    realSessions: Session[],
-    virtualSessions: VirtualSession[],
-  ): MergedSession[] {
-    const mergedMap = new Map<string, MergedSession>();
-
-    // Add all virtual sessions to map (keyed by groupId + startTime in milliseconds)
-    for (const virtualSession of virtualSessions) {
-      const key = this.getSessionKey(
-        virtualSession.groupId,
-        virtualSession.startTime,
-      );
-      mergedMap.set(key, virtualSession);
-    }
-
-    // Override with real sessions where they exist
-    for (const realSession of realSessions) {
-      const key = this.getSessionKey(
-        realSession.groupId,
-        realSession.startTime,
-      );
-      mergedMap.set(key, realSession as MergedSession);
-    }
-
-    // Convert map values to array and sort by startTime
-    return Array.from(mergedMap.values()).sort(
-      (a, b) => a.startTime.getTime() - b.startTime.getTime(),
-    );
-  }
-
-  /**
-   * Generate a unique key for a session based on groupId and startTime
-   * Used to match virtual and real sessions for merging
-   *
-   * @param groupId - Group ID
-   * @param startTime - Session start time
-   * @returns Unique key string
-   */
-  private getSessionKey(groupId: string, startTime: Date): string {
-    return `${groupId}:${startTime.getTime()}`;
   }
 
   /**

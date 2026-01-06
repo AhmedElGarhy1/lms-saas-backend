@@ -10,11 +10,14 @@ import { GetUser, ManagerialOnly } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { SerializeOptions } from '@nestjs/common';
+import { Pagination } from '@/shared/common/types/pagination.types';
 import { AttendanceResponseDto } from '../dto/attendance-response.dto';
 import { AttendanceSessionIdParamDto } from '../dto/session-id-param.dto';
 import { SessionRosterStudentDto } from '../dto/session-roster-response.dto';
 import { PaginateSessionRosterDto } from '../dto/paginate-session-roster.dto';
+import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { SessionAttendanceStatsDto } from '../dto/session-attendance-stats.dto';
+import { MarkAllAbsentResponseDto } from '../dto/mark-all-absent-response.dto';
 
 @ApiTags('Attendance')
 @Controller('attendance')
@@ -84,6 +87,92 @@ export class AttendanceController {
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.attendanceService.getSessionAttendanceStats(
+      params.sessionId,
+      actor,
+    );
+    return ControllerResponse.success(result);
+  }
+
+  @Get('sessions/:sessionId/unmarked-students')
+  @ApiOperation({
+    summary: 'Get students who have no attendance records for the session',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of unmarked students',
+    schema: {
+      type: 'object',
+      properties: {
+        items: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              studentUserProfileId: { type: 'string' },
+              fullName: { type: 'string' },
+              studentCode: { type: 'string' },
+            },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            totalItems: { type: 'number' },
+            itemCount: { type: 'number' },
+            itemsPerPage: { type: 'number' },
+            totalPages: { type: 'number' },
+            currentPage: { type: 'number' },
+          },
+        },
+        links: {
+          type: 'object',
+          properties: {
+            first: { type: 'string' },
+            last: { type: 'string' },
+            next: { type: 'string' },
+            previous: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @Permissions(PERMISSIONS.SESSIONS.READ)
+  async getUnmarkedStudents(
+    @Param() params: AttendanceSessionIdParamDto,
+    @Query() query: BasePaginationDto,
+    @GetUser() actor: ActorUser,
+  ): Promise<
+    ControllerResponse<
+      Pagination<{
+        studentUserProfileId: string;
+        fullName: string;
+        studentCode?: string;
+      }>
+    >
+  > {
+    const result = await this.attendanceService.getUnmarkedStudents(
+      params.sessionId,
+      query,
+      actor,
+    );
+    return ControllerResponse.success(result);
+  }
+
+  @Post('sessions/:sessionId/mark-all-absent')
+  @ApiOperation({ summary: 'Mark all unmarked students as absent for session' })
+  @ApiResponse({
+    status: 200,
+    description: 'All unmarked students marked as absent',
+    type: MarkAllAbsentResponseDto,
+  })
+  @Permissions(PERMISSIONS.SESSIONS.UPDATE)
+  @Transactional()
+  @SerializeOptions({ type: MarkAllAbsentResponseDto })
+  async markAllAbsent(
+    @Param() params: AttendanceSessionIdParamDto,
+    @GetUser() actor: ActorUser,
+  ): Promise<ControllerResponse<MarkAllAbsentResponseDto>> {
+    const result = await this.attendanceService.markAllAbsent(
       params.sessionId,
       actor,
     );

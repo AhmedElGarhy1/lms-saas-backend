@@ -13,6 +13,7 @@ import { StudentClassChargesRepository } from './repositories/student-class-char
 import { FinanceModule } from '@/modules/finance/finance.module';
 import { SessionsModule } from '@/modules/sessions/sessions.module';
 import { ClassesModule } from '@/modules/classes/classes.module';
+import { CentersModule } from '../centers/centers.module';
 
 @Module({
   imports: [
@@ -20,11 +21,11 @@ import { ClassesModule } from '@/modules/classes/classes.module';
       StudentClassSubscription,
       StudentSessionCharge,
       StudentClassCharge,
-      StudentBillingRecord,
     ]),
     FinanceModule,
     forwardRef(() => SessionsModule),
     forwardRef(() => ClassesModule),
+    CentersModule,
   ],
   controllers: [StudentBillingController],
   providers: [

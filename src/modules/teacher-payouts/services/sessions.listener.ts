@@ -56,7 +56,9 @@ export class SessionsListener {
       return; // No payout strategy configured
     }
 
-    // Only handle SESSION, STUDENT, HOUR types (not MONTH/CLASS)
+    // Only handle session-based payout types (SESSION, STUDENT, HOUR)
+    // MONTH payouts are handled by MonthlyTeacherPayoutJob
+    // CLASS payouts are handled by class completion logic (TBD)
     if (
       ![
         TeacherPaymentUnit.SESSION,
@@ -65,7 +67,7 @@ export class SessionsListener {
       ].includes(strategy.per)
     ) {
       this.logger.debug(
-        `Skipping payout for unsupported unit type: ${strategy.per}`,
+        `Skipping payout for non-session-based unit type: ${strategy.per}`,
       );
       return;
     }
@@ -109,12 +111,11 @@ export class SessionsListener {
 
       case TeacherPaymentUnit.STUDENT:
         // Count present students
-        const stats = await this.attendanceRepository.getSessionAttendanceStats(
-          {
+        const stats =
+          await this.attendanceRepository.calculateSessionAttendanceStats({
             sessionId: session.id,
             groupId: session.groupId,
-          },
-        );
+          });
         return stats.present;
 
       case TeacherPaymentUnit.HOUR:

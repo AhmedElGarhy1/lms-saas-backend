@@ -1,6 +1,7 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
+import { PaymentType } from '../enums/payment-type.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
 import { PaymentSource } from '../enums/payment-source.enum';
 import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
@@ -52,6 +53,13 @@ export class Payment extends BaseEntity {
     default: PaymentStatus.PENDING,
   })
   status: PaymentStatus;
+
+  @Column({
+    type: 'varchar',
+    length: 20,
+    default: PaymentType.INTERNAL,
+  })
+  type: PaymentType;
 
   @Column({ type: 'varchar', length: 30 })
   reason: PaymentReason;

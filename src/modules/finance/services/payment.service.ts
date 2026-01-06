@@ -5,6 +5,7 @@ import { Wallet } from '../entities/wallet.entity';
 import { Transaction } from '../entities/transaction.entity';
 import { CashTransaction } from '../entities/cash-transaction.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
+import { PaymentType } from '../enums/payment-type.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
 import { PaymentSource } from '../enums/payment-source.enum';
 import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
@@ -53,6 +54,7 @@ export interface ExecutePaymentRequest {
   receiverType: WalletOwnerType;
   reason: PaymentReason;
   source: PaymentSource;
+  type?: PaymentType; // Defaults to INTERNAL
   correlationId?: string;
   idempotencyKey?: string;
   metadata?: Record<string, any>;
@@ -135,7 +137,7 @@ export class PaymentService extends BaseService {
    *   userProfileId,
    *   teacherProfileId,
    *   WalletOwnerType.USER_PROFILE,
-   *   PaymentReason.SESSION,
+   *   PaymentReason.SESSION_FEE,
    *   PaymentSource.WALLET,
    *   undefined, // no reference
    *   undefined, // no referenceId
@@ -1439,13 +1441,16 @@ export class PaymentService extends BaseService {
   private async createPaymentRecord(
     request: ExecutePaymentRequest,
   ): Promise<Payment> {
+    const paymentType = request.type || PaymentType.INTERNAL;
+
     return await this.paymentRepository.create({
       amount: request.amount,
       senderId: request.senderId,
       senderType: request.senderType,
       receiverId: request.receiverId,
       receiverType: request.receiverType,
-      status: PaymentStatus.PENDING, // Will be completed after execution
+      status: paymentType === PaymentType.INTERNAL ? PaymentStatus.COMPLETED : PaymentStatus.PENDING,
+      type: paymentType,
       reason: request.reason,
       source: request.source,
       referenceType: request.referenceType,
@@ -1606,9 +1611,12 @@ export class PaymentService extends BaseService {
       cashTransactions?: CashTransaction[];
     },
   ): Promise<Payment> {
-    // Update payment status
-    payment.status = PaymentStatus.COMPLETED;
-    payment.paidAt = new Date();
+    // Only complete INTERNAL payments immediately
+    // EXTERNAL payments remain PENDING until confirmed by provider
+    if (payment.type === PaymentType.INTERNAL) {
+      payment.status = PaymentStatus.COMPLETED;
+      payment.paidAt = new Date();
+    }
 
     // Save updated payment
     return await this.paymentRepository.savePayment(payment);
@@ -1635,6 +1643,66 @@ export class PaymentService extends BaseService {
   }
 
   /**
+   * Complete external payment (called by webhooks/callbacks)
+   */
+  async completeExternalPayment(
+    paymentId: string,
+    externalReference?: string,
+  ): Promise<Payment> {
+    const payment = await this.paymentRepository.findById(paymentId);
+
+    if (!payment) {
+      throw FinanceErrors.paymentNotFound();
+    }
+
+    if (payment.type !== PaymentType.EXTERNAL) {
+      throw FinanceErrors.invalidPaymentOperation('Cannot complete non-external payment');
+    }
+
+    if (payment.status !== PaymentStatus.PENDING) {
+      throw FinanceErrors.invalidPaymentOperation('Payment is not in pending status');
+    }
+
+    // Mark as completed
+    payment.status = PaymentStatus.COMPLETED;
+    payment.paidAt = new Date();
+
+    if (externalReference) {
+      payment.metadata = { ...payment.metadata, externalReference };
+    }
+
+    return await this.paymentRepository.savePayment(payment);
+  }
+
+  /**
+   * Fail external payment
+   */
+  async failExternalPayment(
+    paymentId: string,
+    failureReason: string,
+  ): Promise<Payment> {
+    const payment = await this.paymentRepository.findById(paymentId);
+
+    if (!payment) {
+      throw FinanceErrors.paymentNotFound();
+    }
+
+    if (payment.type !== PaymentType.EXTERNAL) {
+      throw FinanceErrors.invalidPaymentOperation('Cannot fail non-external payment');
+    }
+
+    if (payment.status !== PaymentStatus.PENDING) {
+      throw FinanceErrors.invalidPaymentOperation('Payment is not in pending status');
+    }
+
+    // Mark as failed
+    payment.status = PaymentStatus.FAILED;
+    payment.metadata = { ...payment.metadata, failureReason };
+
+    return await this.paymentRepository.savePayment(payment);
+  }
+
+  /**
    * Map payment reason to cash transaction type
    */
   private mapPaymentReasonToTransactionType(
@@ -1642,17 +1710,26 @@ export class PaymentService extends BaseService {
     isCashTransaction: boolean = false,
   ): TransactionType {
     switch (reason) {
-      case PaymentReason.TEACHER_PAYOUT:
+      // Teacher payouts
+      case PaymentReason.TEACHER_STUDENT_PAYOUT:
+      case PaymentReason.TEACHER_HOUR_PAYOUT:
+      case PaymentReason.TEACHER_SESSION_PAYOUT:
+      case PaymentReason.TEACHER_MONTHLY_PAYOUT:
+      case PaymentReason.TEACHER_CLASS_PAYOUT:
         return TransactionType.TEACHER_PAYOUT;
-      case PaymentReason.SUBSCRIPTION:
-      case PaymentReason.SESSION:
+
+      // Student fees
+      case PaymentReason.MONTHLY_FEE:
+      case PaymentReason.SESSION_FEE:
         return TransactionType.STUDENT_BILL;
+      case PaymentReason.CLASS_FEE:
+        return TransactionType.STUDENT_BILL; // Class payments are also student bills
+
+      // Other transactions
       case PaymentReason.INTERNAL_TRANSFER:
         return TransactionType.INTERNAL_TRANSFER;
       case PaymentReason.TOPUP:
         return TransactionType.TOPUP;
-      case PaymentReason.CLASS:
-        return TransactionType.STUDENT_BILL; // Class payments are also student bills
       default:
         return isCashTransaction
           ? TransactionType.CASH_DEPOSIT

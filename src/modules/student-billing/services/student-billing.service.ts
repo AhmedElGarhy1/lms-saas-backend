@@ -32,6 +32,8 @@ import { Money } from '@/shared/common/utils/money.util';
 import { ClassesService } from '@/modules/classes/services/classes.service';
 import { PaymentStrategyService } from '@/modules/classes/services/payment-strategy.service';
 import { SessionsRepository } from '@/modules/sessions/repositories/sessions.repository';
+import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
+import { ClassAccessService } from '@/modules/classes/services/class-access.service';
 import { StudentBillingRecordsRepository } from '../repositories/student-billing-records.repository';
 import { StudentClassSubscriptionsRepository } from '../repositories/student-class-subscriptions.repository';
 import { StudentSessionChargesRepository } from '../repositories/student-session-charges.repository';
@@ -51,6 +53,8 @@ export class StudentBillingService extends BaseService {
     private classesService: ClassesService,
     private paymentStrategyService: PaymentStrategyService,
     private sessionsRepository: SessionsRepository,
+    private branchAccessService: BranchAccessService,
+    private classAccessService: ClassAccessService,
   ) {
     super();
   }
@@ -183,7 +187,22 @@ export class StudentBillingService extends BaseService {
   @Transactional()
   async createMonthlySubscription(
     dto: CreateMonthlySubscriptionDto,
+    actor?: ActorUser,
   ): Promise<StudentClassSubscription> {
+    // ✅ VALIDATE: Access control for staff users
+    if (actor) {
+      const classEntity = await this.classesService.findOneOrThrow(dto.classId);
+      await this.branchAccessService.validateBranchAccess({
+        userProfileId: actor.userProfileId,
+        centerId: actor.centerId!,
+        branchId: classEntity.branchId,
+      });
+      await this.classAccessService.validateClassAccess({
+        userProfileId: actor.userProfileId,
+        classId: dto.classId,
+      });
+    }
+
     // ✅ VALIDATE: Check if monthly subscriptions are allowed
     await this.validateMonthlySubscriptionAllowed(dto.classId);
 
@@ -214,7 +233,7 @@ export class StudentBillingService extends BaseService {
       senderType: WalletOwnerType.USER_PROFILE,
       receiverId: classEntity.branchId,
       receiverType: WalletOwnerType.BRANCH,
-      reason: PaymentReason.SUBSCRIPTION,
+      reason: PaymentReason.MONTHLY_FEE,
       source: dto.paymentSource === PaymentSource.WALLET ? FinancePaymentSource.WALLET : FinancePaymentSource.CASH,
       correlationId: randomUUID(),
     };
@@ -286,7 +305,7 @@ export class StudentBillingService extends BaseService {
       senderType: WalletOwnerType.USER_PROFILE,
       receiverId: session.branchId,
       receiverType: WalletOwnerType.BRANCH,
-      reason: PaymentReason.SESSION,
+      reason: PaymentReason.SESSION_FEE,
       source: dto.paymentSource === PaymentSource.WALLET ? FinancePaymentSource.WALLET : FinancePaymentSource.CASH,
       correlationId: randomUUID(),
     };
@@ -330,7 +349,22 @@ export class StudentBillingService extends BaseService {
   @Transactional()
   async createClassCharge(
     dto: CreateClassChargeDto,
+    actor?: ActorUser,
   ): Promise<StudentClassCharge> {
+    // ✅ VALIDATE: Access control for staff users
+    if (actor) {
+      const classEntity = await this.classesService.findOneOrThrow(dto.classId);
+      await this.branchAccessService.validateBranchAccess({
+        userProfileId: actor.userProfileId,
+        centerId: actor.centerId!,
+        branchId: classEntity.branchId,
+      });
+      await this.classAccessService.validateClassAccess({
+        userProfileId: actor.userProfileId,
+        classId: dto.classId,
+      });
+    }
+
     // ✅ VALIDATE: Check if class charges are allowed
     await this.validateClassChargeAllowed(dto.classId);
 
@@ -358,7 +392,7 @@ export class StudentBillingService extends BaseService {
       senderType: WalletOwnerType.USER_PROFILE,
       receiverId: classEntity.branchId,
       receiverType: WalletOwnerType.BRANCH,
-      reason: PaymentReason.CLASS,
+      reason: PaymentReason.CLASS_FEE,
       source: dto.paymentSource === PaymentSource.WALLET ? FinancePaymentSource.WALLET : FinancePaymentSource.CASH,
       correlationId: randomUUID(),
     };
@@ -401,9 +435,35 @@ export class StudentBillingService extends BaseService {
   async createStudentCharge(
     dto: CreateStudentChargeDto,
     paymentSource: PaymentSource,
+    actor: ActorUser,
   ): Promise<
     StudentClassSubscription | StudentSessionCharge | StudentClassCharge
   > {
+    // Validate access based on charge type
+    if (dto.type === ChargeType.SUBSCRIPTION) {
+      if (!dto.classId) {
+        throw new Error('classId is required for subscription charges');
+      }
+
+      // Validate class access for staff users
+      const classEntity = await this.classesService.findOneOrThrow(dto.classId);
+      await this.branchAccessService.validateBranchAccess({
+        userProfileId: actor.userProfileId,
+        centerId: actor.centerId!,
+        branchId: classEntity.branchId,
+      });
+      await this.classAccessService.validateClassAccess({
+        userProfileId: actor.userProfileId,
+        classId: dto.classId,
+      });
+    } else if (dto.type === ChargeType.SESSION) {
+      if (!dto.sessionId) {
+        throw new Error('sessionId is required for session charges');
+      }
+
+      // Session access validation will be handled by the session service
+    }
+
     if (dto.type === ChargeType.SUBSCRIPTION) {
       if (!dto.classId || dto.year === undefined || dto.month === undefined) {
         throw new Error(

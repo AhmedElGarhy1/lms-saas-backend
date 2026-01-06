@@ -33,9 +33,6 @@ export class Attendance extends BaseEntity {
   @Column({ type: 'varchar', length: 20 })
   status: AttendanceStatus;
 
-  @Column({ type: 'timestamptz', nullable: true })
-  lastScannedAt?: Date;
-
   @Column({ type: 'boolean', default: false })
   isManuallyMarked: boolean;
 

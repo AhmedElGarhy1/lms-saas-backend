@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsUUID, ArrayMinSize, ArrayMaxSize } from 'class-validator';
+import { IsUserProfile } from '@/shared/common/decorators';
 
 export class BulkRestoreUserProfilesDto {
   @ApiProperty({
@@ -16,5 +17,6 @@ export class BulkRestoreUserProfilesDto {
     each: true,
     message: 'Each user profile ID must be a valid UUID',
   })
+  @IsUserProfile(undefined, { each: true })
   userProfileIds: string[];
 }

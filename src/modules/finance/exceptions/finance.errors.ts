@@ -242,4 +242,15 @@ export class FinanceErrors extends BaseErrorHelpers {
       FinanceErrorCode.INVALID_CASH_PAYMENT_CONFIGURATION,
     );
   }
+
+  static paymentNotFound(): DomainException {
+    return this.createNoDetails(FinanceErrorCode.PAYMENT_NOT_FOUND);
+  }
+
+  static invalidPaymentOperation(message?: string): DomainException {
+    return this.createWithDetails(
+      FinanceErrorCode.INVALID_PAYMENT_OPERATION,
+      message,
+    );
+  }
 }

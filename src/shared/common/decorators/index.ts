@@ -13,6 +13,7 @@ export * from './log-activity.decorator';
 export * from './managerial-only.decorator';
 export * from './no-etag.decorator';
 export * from './no-phone-verification.decorator';
+export * from './cannot-target-self.decorator';
 export * from './no-profile.decorator';
 export * from './pagination-docs.decorator';
 export * from './parent-only.decorator';

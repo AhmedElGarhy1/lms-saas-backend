@@ -67,4 +67,12 @@ export class DomainErrors {
       },
     ]);
   }
+
+  static cannotTargetSelf(operation?: string): DomainException {
+    return new DomainException(CommonErrorCode.CANNOT_TARGET_SELF, [
+      {
+        operation: operation || 'unknown',
+      },
+    ]);
+  }
 }

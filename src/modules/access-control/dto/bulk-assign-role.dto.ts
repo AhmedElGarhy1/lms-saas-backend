@@ -6,7 +6,11 @@ import {
   ArrayMinSize,
   ArrayMaxSize,
 } from 'class-validator';
-import { Exists, IsUserProfile } from '@/shared/common/decorators';
+import {
+  Exists,
+  IsUserProfile,
+  CannotTargetSelf,
+} from '@/shared/common/decorators';
 import { Role } from '../entities/role.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 
@@ -33,7 +37,8 @@ export class BulkAssignRoleDto {
     each: true,
     message: 'Each user profile ID must be a valid UUID',
   })
-  @IsUserProfile()
+  @IsUserProfile(undefined, { each: true })
+  @CannotTargetSelf({ each: true })
   userProfileIds: string[];
 
   @ApiProperty({

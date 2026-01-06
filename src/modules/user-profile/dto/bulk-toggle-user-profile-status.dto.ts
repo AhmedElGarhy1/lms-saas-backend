@@ -6,6 +6,7 @@ import {
   ArrayMinSize,
   ArrayMaxSize,
 } from 'class-validator';
+import { IsUserProfile } from '@/shared/common/decorators';
 
 export class BulkToggleUserProfileStatusDto {
   @ApiProperty({
@@ -22,6 +23,7 @@ export class BulkToggleUserProfileStatusDto {
     each: true,
     message: 'Each user profile ID must be a valid UUID',
   })
+  @IsUserProfile(undefined, { each: true })
   userProfileIds: string[];
 
   @ApiProperty({
