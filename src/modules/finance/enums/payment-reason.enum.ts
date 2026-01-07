@@ -14,5 +14,6 @@ export enum PaymentReason {
   // Other
   INTERNAL_TRANSFER = 'INTERNAL_TRANSFER',
   WITHDRAWAL = 'WITHDRAWAL',
+  DEPOSIT = 'DEPOSIT',
   TOPUP = 'TOPUP',
 }

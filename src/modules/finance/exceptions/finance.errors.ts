@@ -71,6 +71,14 @@ export class FinanceErrors extends BaseErrorHelpers {
     return this.createNoDetails(FinanceErrorCode.PAYMENT_NOT_COMPLETED);
   }
 
+  static paymentAlreadyCompleted(): DomainException {
+    return this.createNoDetails(FinanceErrorCode.PAYMENT_ALREADY_COMPLETED);
+  }
+
+  static invalidAmount(): DomainException {
+    return this.createNoDetails(FinanceErrorCode.INVALID_PAYMENT_AMOUNT);
+  }
+
   static paymentAlreadyRefunded(): DomainException {
     return this.createNoDetails(FinanceErrorCode.PAYMENT_ALREADY_REFUNDED);
   }

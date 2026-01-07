@@ -5,7 +5,6 @@ import { StudentPaymentStrategyRepository } from '../repositories/student-paymen
 import { TeacherPaymentStrategyRepository } from '../repositories/teacher-payment-strategy.repository';
 import { ClassesErrors } from '../exceptions/classes.errors';
 import { BaseService } from '@/shared/common/services/base.service';
-import { str } from 'envalid';
 
 @Injectable()
 export class PaymentStrategyService extends BaseService {

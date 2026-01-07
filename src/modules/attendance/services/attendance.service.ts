@@ -99,7 +99,6 @@ export class AttendanceService {
       groupId: attendance.groupId,
       studentUserProfileId: attendance.studentUserProfileId,
       status: attendance.status,
-      isManuallyMarked: attendance.isManuallyMarked,
       markedByUserProfileId: attendance.markedByUserProfileId,
       student: {
         studentUserProfileId,
@@ -110,7 +109,7 @@ export class AttendanceService {
     };
   }
 
-  async scan(
+  async markAttendance(
     sessionId: string,
     userProfileId: string,
     actor: ActorUser,
@@ -125,6 +124,8 @@ export class AttendanceService {
       userProfileId,
     );
 
+    console.log('membership', membership);
+
     if (!membership) {
       throw AttendanceErrors.attendanceStudentNotEnrolled();
     }
@@ -136,6 +137,8 @@ export class AttendanceService {
         group.classId,
         sessionId,
       );
+
+    console.log('hasBillingAccess', hasBillingAccess);
 
     if (!hasBillingAccess) {
       // Get payment strategy details for better error message
@@ -166,79 +169,10 @@ export class AttendanceService {
         sessionId: session.id,
         studentUserProfileId: userProfileId,
         status,
-        isManuallyMarked: false,
         markedByUserProfileId: actor.userProfileId,
       });
     } catch (e) {
       // Race-safe: if another request inserted the record first, return deterministic 409.
-      const err = e as QueryFailedError & { code?: string };
-      if (err?.code === '23505') {
-        throw AttendanceErrors.attendanceAlreadyExists();
-      }
-      throw e;
-    }
-
-    return this.toAttendanceResponseDto(attendance, userProfileId, actor);
-  }
-
-  async manualMark(
-    sessionId: string,
-    userProfileId: string,
-    actor: ActorUser,
-  ): Promise<AttendanceResponseDto> {
-    const { session, group } = await this.validateSessionAndAccess(
-      sessionId,
-      actor,
-    );
-
-    const membership = await this.groupStudentsRepository.findByGroupAndStudent(
-      group.id,
-      userProfileId,
-    );
-
-    if (!membership) {
-      throw AttendanceErrors.attendanceStudentNotEnrolled();
-    }
-
-    // Check billing access - student must have paid for this session or have active monthly subscription
-    const hasBillingAccess =
-      await this.studentBillingService.checkStudentAccess(
-        userProfileId,
-        group.classId,
-        sessionId,
-      );
-
-    if (!hasBillingAccess) {
-      // Get payment strategy details for better error message
-      const paymentStrategy =
-        await this.studentBillingService.getClassPaymentStrategy(group.classId);
-      throw AttendanceErrors.attendancePaymentRequired(paymentStrategy);
-    }
-
-    const status = AttendanceStatus.PRESENT;
-
-    const existing = await this.attendanceRepository.findBySessionAndStudent(
-      sessionId,
-      userProfileId,
-    );
-
-    if (existing) {
-      throw AttendanceErrors.attendanceAlreadyExists();
-    }
-
-    let attendance: Attendance;
-    try {
-      attendance = await this.attendanceRepository.create({
-        centerId: session.centerId,
-        branchId: session.branchId,
-        groupId: session.groupId,
-        sessionId: session.id,
-        studentUserProfileId: userProfileId,
-        status,
-        isManuallyMarked: true,
-        markedByUserProfileId: actor.userProfileId,
-      });
-    } catch (e) {
       const err = e as QueryFailedError & { code?: string };
       if (err?.code === '23505') {
         throw AttendanceErrors.attendanceAlreadyExists();
@@ -355,7 +289,6 @@ export class AttendanceService {
         sessionId,
         studentUserProfileId: student.studentUserProfileId,
         status: AttendanceStatus.ABSENT,
-        isManuallyMarked: true,
         markedByUserProfileId: actor.userProfileId,
       }),
     );

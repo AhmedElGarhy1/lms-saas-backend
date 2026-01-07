@@ -33,9 +33,6 @@ export class Attendance extends BaseEntity {
   @Column({ type: 'varchar', length: 20 })
   status: AttendanceStatus;
 
-  @Column({ type: 'boolean', default: false })
-  isManuallyMarked: boolean;
-
   @Column({ type: 'uuid', nullable: true })
   markedByUserProfileId?: string;
 

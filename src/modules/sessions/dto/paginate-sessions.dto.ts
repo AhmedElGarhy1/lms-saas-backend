@@ -7,6 +7,7 @@ import {
   ValidationOptions,
   ValidationArguments,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { BelongsToBranch, BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
@@ -16,6 +17,7 @@ import { Group } from '@/modules/classes/entities/group.entity';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { Branch } from '@/modules/centers/entities/branch.entity';
 import { SessionStatus } from '../enums/session-status.enum';
+import { StudentPaymentType } from '@/modules/classes/enums/student-payment-type.enum';
 
 /**
  * Custom validator to ensure dateTo is not in the future (for sessions pagination)
@@ -110,4 +112,19 @@ export class PaginateSessionsDto extends BasePaginationDto {
   @IsOptional()
   @IsEnum(SessionStatus)
   status?: SessionStatus;
+
+  @ApiProperty({
+    description: 'Filter sessions by the student payment type of their class',
+    enum: StudentPaymentType,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(StudentPaymentType)
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.toUpperCase();
+    }
+    return value as StudentPaymentType;
+  })
+  studentPaymentType?: StudentPaymentType;
 }

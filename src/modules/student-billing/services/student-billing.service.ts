@@ -2,19 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Transactional } from '@nestjs-cls/transactional';
 import {
-  StudentClassSubscription,
-  SubscriptionStatus,
-  PaymentSource,
-} from '../entities/student-class-subscription.entity';
-import {
-  StudentSessionCharge,
-  ChargeStatus,
-} from '../entities/student-session-charge.entity';
-import { StudentClassCharge } from '../entities/student-class-charge.entity';
-import {
-  StudentBillingRecord,
-  StudentBillingType,
-} from '../entities/student-billing-record.entity';
+  StudentCharge,
+  StudentChargeType,
+  StudentChargeStatus,
+} from '../entities/student-charge.entity';
+import { PaymentSource } from '../entities/student-charge.entity';
 import { CreateMonthlySubscriptionDto } from '../dto/create-monthly-subscription.dto';
 import { CreateSessionChargeDto } from '../dto/create-session-charge.dto';
 import { CreateClassChargeDto } from '../dto/create-class-charge.dto';
@@ -24,7 +16,10 @@ import {
 } from '../dto/create-student-charge.dto';
 import { PaginateStudentBillingRecordsDto } from '../dto/paginate-student-billing-records.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
-import { PaymentService, ExecutePaymentRequest } from '@/modules/finance/services/payment.service';
+import {
+  PaymentService,
+  ExecutePaymentRequest,
+} from '@/modules/finance/services/payment.service';
 import { PaymentReason } from '@/modules/finance/enums/payment-reason.enum';
 import { PaymentSource as FinancePaymentSource } from '@/modules/finance/enums/payment-source.enum';
 import { WalletOwnerType } from '@/modules/finance/enums/wallet-owner-type.enum';
@@ -34,27 +29,23 @@ import { PaymentStrategyService } from '@/modules/classes/services/payment-strat
 import { SessionsRepository } from '@/modules/sessions/repositories/sessions.repository';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { ClassAccessService } from '@/modules/classes/services/class-access.service';
-import { StudentBillingRecordsRepository } from '../repositories/student-billing-records.repository';
-import { StudentClassSubscriptionsRepository } from '../repositories/student-class-subscriptions.repository';
-import { StudentSessionChargesRepository } from '../repositories/student-session-charges.repository';
-import { StudentClassChargesRepository } from '../repositories/student-class-charges.repository';
+import { StudentChargesRepository } from '../repositories/student-charges.repository';
 import { BaseService } from '@/shared/common/services/base.service';
 import { StudentBillingErrors } from '../exceptions/student-billing.errors';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 
 @Injectable()
 export class StudentBillingService extends BaseService {
   constructor(
-    private subscriptionRepo: StudentClassSubscriptionsRepository,
-    private sessionChargeRepo: StudentSessionChargesRepository,
-    private classChargesRepository: StudentClassChargesRepository,
-    private billingRecordsRepository: StudentBillingRecordsRepository,
+    private chargesRepository: StudentChargesRepository,
     private paymentService: PaymentService,
     private classesService: ClassesService,
     private paymentStrategyService: PaymentStrategyService,
     private sessionsRepository: SessionsRepository,
     private branchAccessService: BranchAccessService,
     private classAccessService: ClassAccessService,
+    private accessControlHelperService: AccessControlHelperService,
   ) {
     super();
   }
@@ -173,10 +164,11 @@ export class StudentBillingService extends BaseService {
     studentUserProfileId: string,
     classId: string,
   ): Promise<boolean> {
-    const paidCharge = await this.classChargesRepository.findPaidClassCharge(
-      studentUserProfileId,
-      classId,
-    );
+    const paidCharge =
+      await this.chargesRepository.findClassChargeByStudentAndClass(
+        studentUserProfileId,
+        classId,
+      );
     return !!paidCharge;
   }
 
@@ -187,8 +179,8 @@ export class StudentBillingService extends BaseService {
   @Transactional()
   async createMonthlySubscription(
     dto: CreateMonthlySubscriptionDto,
-    actor?: ActorUser,
-  ): Promise<StudentClassSubscription> {
+    actor: ActorUser,
+  ): Promise<StudentCharge> {
     // ✅ VALIDATE: Access control for staff users
     if (actor) {
       const classEntity = await this.classesService.findOneOrThrow(dto.classId);
@@ -214,11 +206,11 @@ export class StudentBillingService extends BaseService {
 
     // Check for duplicate subscription for the same month
     const existingSubscription =
-      await this.subscriptionRepo.findExistingSubscription(
+      await this.chargesRepository.findActiveMonthlySubscription(
         dto.studentUserProfileId,
         dto.classId,
-        dto.year,
         dto.month,
+        dto.year,
       );
 
     if (existingSubscription) {
@@ -234,11 +226,17 @@ export class StudentBillingService extends BaseService {
       receiverId: classEntity.branchId,
       receiverType: WalletOwnerType.BRANCH,
       reason: PaymentReason.MONTHLY_FEE,
-      source: dto.paymentSource === PaymentSource.WALLET ? FinancePaymentSource.WALLET : FinancePaymentSource.CASH,
+      source:
+        dto.paymentSource === PaymentSource.WALLET
+          ? FinancePaymentSource.WALLET
+          : FinancePaymentSource.CASH,
       correlationId: randomUUID(),
     };
 
-    const paymentResult = await this.paymentService.createAndExecutePayment(paymentRequest);
+    const paymentResult = await this.paymentService.createAndExecutePayment(
+      paymentRequest,
+      actor,
+    );
     const payment = paymentResult.payment;
 
     // Get payment strategy for billing record
@@ -247,26 +245,22 @@ export class StudentBillingService extends BaseService {
         dto.classId,
       );
 
-    // Create subscription
-    const savedSubscription = await this.subscriptionRepo.createSubscription({
+    // Create unified monthly charge
+    const savedCharge = await this.chargesRepository.createCharge({
       studentUserProfileId: dto.studentUserProfileId,
+      chargeType: StudentChargeType.SUBSCRIPTION,
+      centerId: classEntity.centerId,
+      branchId: classEntity.branchId,
       classId: dto.classId,
       month: dto.month,
       year: dto.year,
+      amount,
       paymentSource: dto.paymentSource,
       paymentId: payment.id,
+      status: StudentChargeStatus.COMPLETED,
     });
 
-    // Create billing record for reporting
-    await this.billingRecordsRepository.createBillingRecord({
-      studentUserProfileId: dto.studentUserProfileId,
-      type: StudentBillingType.MONTHLY,
-      refId: paymentStrategy!.id, // Reference the strategy
-      paymentSource: dto.paymentSource,
-      amount: Money.from(amount),
-    });
-
-    return savedSubscription;
+    return savedCharge;
   }
 
   /**
@@ -276,10 +270,23 @@ export class StudentBillingService extends BaseService {
   @Transactional()
   async createSessionCharge(
     dto: CreateSessionChargeDto,
-  ): Promise<StudentSessionCharge> {
+    actor: ActorUser,
+  ): Promise<StudentCharge> {
     // Get session information
     const session = await this.sessionsRepository.findOneOrThrow(dto.sessionId);
     const classId = session.classId;
+
+    // ✅ VALIDATE: Access control for staff users
+    const classEntity = await this.classesService.findOneOrThrow(classId);
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: classEntity.branchId,
+    });
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: classId,
+    });
 
     // ✅ VALIDATE: Check if session charges are allowed
     await this.validateSessionChargeAllowed(classId);
@@ -289,7 +296,7 @@ export class StudentBillingService extends BaseService {
 
     // Check if student already paid for this session
     const existingCharge =
-      await this.sessionChargeRepo.findExistingSessionCharge(
+      await this.chargesRepository.findSessionChargeByStudentAndSession(
         dto.studentUserProfileId,
         dto.sessionId,
       );
@@ -306,11 +313,17 @@ export class StudentBillingService extends BaseService {
       receiverId: session.branchId,
       receiverType: WalletOwnerType.BRANCH,
       reason: PaymentReason.SESSION_FEE,
-      source: dto.paymentSource === PaymentSource.WALLET ? FinancePaymentSource.WALLET : FinancePaymentSource.CASH,
+      source:
+        dto.paymentSource === PaymentSource.WALLET
+          ? FinancePaymentSource.WALLET
+          : FinancePaymentSource.CASH,
       correlationId: randomUUID(),
     };
 
-    const paymentResult = await this.paymentService.createAndExecutePayment(paymentRequest);
+    const paymentResult = await this.paymentService.createAndExecutePayment(
+      paymentRequest,
+      actor,
+    );
     const payment = paymentResult.payment;
 
     // Get payment strategy for billing record
@@ -319,24 +332,18 @@ export class StudentBillingService extends BaseService {
         classId,
       );
 
-    // Create session charge
-    const savedCharge = await this.sessionChargeRepo.createSessionCharge({
+    // Create unified charge
+    const savedCharge = await this.chargesRepository.createCharge({
       studentUserProfileId: dto.studentUserProfileId,
-      sessionId: dto.sessionId,
+      chargeType: StudentChargeType.SESSION,
+      centerId: session.centerId,
+      branchId: session.branchId,
       classId,
+      sessionId: dto.sessionId,
       amount,
       paymentSource: dto.paymentSource,
       paymentId: payment.id,
-      paidAt: new Date(),
-    });
-
-    // Create billing record for reporting
-    await this.billingRecordsRepository.createBillingRecord({
-      studentUserProfileId: dto.studentUserProfileId,
-      type: StudentBillingType.SESSION,
-      refId: paymentStrategy!.id, // Reference the strategy
-      paymentSource: dto.paymentSource,
-      amount: Money.from(amount),
+      status: StudentChargeStatus.COMPLETED,
     });
 
     return savedCharge;
@@ -349,8 +356,8 @@ export class StudentBillingService extends BaseService {
   @Transactional()
   async createClassCharge(
     dto: CreateClassChargeDto,
-    actor?: ActorUser,
-  ): Promise<StudentClassCharge> {
+    actor: ActorUser,
+  ): Promise<StudentCharge> {
     // ✅ VALIDATE: Access control for staff users
     if (actor) {
       const classEntity = await this.classesService.findOneOrThrow(dto.classId);
@@ -376,7 +383,7 @@ export class StudentBillingService extends BaseService {
 
     // Check if student already paid for this class
     const existingCharge =
-      await this.classChargesRepository.findExistingClassCharge(
+      await this.chargesRepository.findClassChargeByStudentAndClass(
         dto.studentUserProfileId,
         dto.classId,
       );
@@ -393,11 +400,17 @@ export class StudentBillingService extends BaseService {
       receiverId: classEntity.branchId,
       receiverType: WalletOwnerType.BRANCH,
       reason: PaymentReason.CLASS_FEE,
-      source: dto.paymentSource === PaymentSource.WALLET ? FinancePaymentSource.WALLET : FinancePaymentSource.CASH,
+      source:
+        dto.paymentSource === PaymentSource.WALLET
+          ? FinancePaymentSource.WALLET
+          : FinancePaymentSource.CASH,
       correlationId: randomUUID(),
     };
 
-    const paymentResult = await this.paymentService.createAndExecutePayment(paymentRequest);
+    const paymentResult = await this.paymentService.createAndExecutePayment(
+      paymentRequest,
+      actor,
+    );
     const payment = paymentResult.payment;
 
     // Get payment strategy for billing record
@@ -406,23 +419,17 @@ export class StudentBillingService extends BaseService {
         dto.classId,
       );
 
-    // Create class charge
-    const savedCharge = await this.classChargesRepository.createClassCharge({
+    // Create unified class charge
+    const savedCharge = await this.chargesRepository.createCharge({
       studentUserProfileId: dto.studentUserProfileId,
+      chargeType: StudentChargeType.CLASS,
+      centerId: classEntity.centerId,
+      branchId: classEntity.branchId,
       classId: dto.classId,
       amount,
       paymentSource: dto.paymentSource,
       paymentId: payment.id,
-      paidAt: new Date(),
-    });
-
-    // Create billing record for reporting
-    await this.billingRecordsRepository.createBillingRecord({
-      studentUserProfileId: dto.studentUserProfileId,
-      type: StudentBillingType.CLASS,
-      refId: paymentStrategy!.id, // Reference the strategy
-      paymentSource: dto.paymentSource,
-      amount: Money.from(amount),
+      status: StudentChargeStatus.COMPLETED,
     });
 
     return savedCharge;
@@ -436,9 +443,7 @@ export class StudentBillingService extends BaseService {
     dto: CreateStudentChargeDto,
     paymentSource: PaymentSource,
     actor: ActorUser,
-  ): Promise<
-    StudentClassSubscription | StudentSessionCharge | StudentClassCharge
-  > {
+  ): Promise<StudentCharge> {
     // Validate access based on charge type
     if (dto.type === ChargeType.SUBSCRIPTION) {
       if (!dto.classId) {
@@ -479,7 +484,7 @@ export class StudentBillingService extends BaseService {
         month: dto.month,
       };
 
-      return this.createMonthlySubscription(subscriptionDto);
+      return this.createMonthlySubscription(subscriptionDto, actor);
     } else if (dto.type === ChargeType.SESSION) {
       if (!dto.sessionId) {
         throw new Error('sessionId is required for session charges');
@@ -491,7 +496,7 @@ export class StudentBillingService extends BaseService {
         paymentSource,
       };
 
-      return this.createSessionCharge(chargeDto);
+      return this.createSessionCharge(chargeDto, actor);
     } else if (dto.type === ChargeType.CLASS) {
       if (!dto.classId) {
         throw new Error('classId is required for class charges');
@@ -503,7 +508,7 @@ export class StudentBillingService extends BaseService {
         paymentSource,
       };
 
-      return this.createClassCharge(chargeDto);
+      return this.createClassCharge(chargeDto, actor);
     }
 
     throw new Error('Invalid charge type');
@@ -527,38 +532,52 @@ export class StudentBillingService extends BaseService {
     classId: string,
     sessionId?: string,
   ): Promise<boolean> {
-    // First check if student has active monthly subscription for this class
-    const activeSubscription = await this.getActiveSubscription(
-      studentUserProfileId,
-      classId,
-    );
-    if (activeSubscription) {
-      return true;
-    }
-
     // Check if class charges are enabled for this class
     const paymentStrategy =
       await this.paymentStrategyService.getStudentPaymentStrategyForClass(
         classId,
       );
-    if (paymentStrategy?.includeClass) {
-      // Class charges are enabled - check if student has paid
-      const hasPaidClassCharge = await this.hasPaidClassCharge(
-        studentUserProfileId,
-        classId,
-      );
-      if (hasPaidClassCharge) {
+
+    if (paymentStrategy?.includeMonth) {
+      // First check if student has active monthly subscription for this class
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
+      const currentYear = currentDate.getFullYear();
+
+      const activeSubscription =
+        await this.chargesRepository.findActiveMonthlySubscription(
+          studentUserProfileId,
+          classId,
+          currentMonth,
+          currentYear,
+        );
+      if (activeSubscription) {
         return true;
       }
     }
 
-    // If no monthly subscription and class charges not paid (or not enabled),
-    // check if they paid for session access under this strategy
-    if (sessionId && paymentStrategy) {
-      return this.hasPaidForSessionAccess(
-        studentUserProfileId,
-        paymentStrategy.id,
-      );
+    if (paymentStrategy?.includeClass) {
+      // Class charges are enabled - check if student has paid
+      const classCharge =
+        await this.chargesRepository.findClassChargeByStudentAndClass(
+          studentUserProfileId,
+          classId,
+        );
+      if (classCharge) {
+        return true;
+      }
+    }
+
+    // Check if they paid for session access
+    if (paymentStrategy?.includeSession && sessionId) {
+      const sessionCharge =
+        await this.chargesRepository.findSessionChargeByStudentAndSession(
+          studentUserProfileId,
+          sessionId,
+        );
+      if (sessionCharge) {
+        return true;
+      }
     }
 
     return false;
@@ -570,10 +589,16 @@ export class StudentBillingService extends BaseService {
   async getActiveSubscription(
     studentUserProfileId: string,
     classId: string,
-  ): Promise<StudentClassSubscription | null> {
-    return this.subscriptionRepo.findActiveSubscription(
+  ): Promise<StudentCharge | null> {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
+    const currentYear = currentDate.getFullYear();
+
+    return this.chargesRepository.findActiveMonthlySubscription(
       studentUserProfileId,
       classId,
+      currentMonth,
+      currentYear,
     );
   }
 
@@ -582,56 +607,85 @@ export class StudentBillingService extends BaseService {
    */
   async hasPaidForSessionAccess(
     studentUserProfileId: string,
-    strategyId: string,
+    sessionId: string,
   ): Promise<boolean> {
-    // Check if student has session billing under this strategy
-    // This means paying once gives access to all sessions under that strategy
-    const record = await this.billingRecordsRepository.findSessionBillingRecord(
-      studentUserProfileId,
-      strategyId,
-    );
-    return !!record;
+    const charge =
+      await this.chargesRepository.findSessionChargeByStudentAndSession(
+        studentUserProfileId,
+        sessionId,
+      );
+    return !!charge;
   }
 
   /**
    * Cancel a subscription (for refunds or other reasons)
    */
   async cancelSubscription(subscriptionId: string): Promise<void> {
-    const subscription =
-      await this.subscriptionRepo.findSubscriptionById(subscriptionId);
+    const charge = await this.chargesRepository.findById(subscriptionId);
 
-    if (!subscription) {
+    if (!charge || charge.chargeType !== StudentChargeType.SUBSCRIPTION) {
       throw new NotFoundException('Subscription not found');
     }
 
-    subscription.status = SubscriptionStatus.CANCELLED;
-    await this.subscriptionRepo.saveSubscription(subscription);
+    charge.status = StudentChargeStatus.CANCELLED;
+    await this.chargesRepository.saveCharge(charge);
   }
 
   /**
    * Cancel a session charge (for refunds)
    */
   async cancelSessionCharge(chargeId: string): Promise<void> {
-    const charge = await this.sessionChargeRepo.findSessionChargeById(chargeId);
+    const charge = await this.chargesRepository.findById(chargeId);
 
-    if (!charge) {
+    if (!charge || charge.chargeType !== StudentChargeType.SESSION) {
       throw new NotFoundException('Session charge not found');
     }
 
-    charge.status = ChargeStatus.CANCELLED;
-    await this.sessionChargeRepo.saveSessionCharge(charge);
+    charge.status = StudentChargeStatus.CANCELLED;
+    await this.chargesRepository.saveCharge(charge);
   }
 
   /**
-   * Get billing records for a student (for reporting)
+   * Get student charges with pagination and filtering
    */
   async getStudentBillingRecords(
     paginateDto: PaginateStudentBillingRecordsDto,
     actor: ActorUser,
-  ): Promise<Pagination<StudentBillingRecord>> {
-    return this.billingRecordsRepository.paginateStudentBillingRecords(
+  ): Promise<Pagination<StudentCharge>> {
+    if (!actor.centerId) {
+      throw new Error('Center ID is required for billing access');
+    }
+
+    // Center access is validated at guard level, additional validation here ensures data integrity
+    // For center-wide billing access, no specific branch/class validation needed
+
+    return this.chargesRepository.getPaginatedChargesForCenter(
+      actor.centerId,
       paginateDto,
-      actor,
+      {
+        studentUserProfileId: paginateDto.studentUserProfileId,
+        chargeType: paginateDto.chargeType,
+        dateFrom: paginateDto.dateFrom,
+        dateTo: paginateDto.dateTo,
+      },
     );
+  }
+
+  async getStudentBillingRecordById(
+    id: string,
+    actor: ActorUser,
+  ): Promise<StudentCharge> {
+    const charge = await this.chargesRepository.findById(id);
+
+    if (!charge) {
+      throw StudentBillingErrors.billingRecordNotFound();
+    }
+
+    this.accessControlHelperService.validateCenterAccess({
+      userProfileId: actor.userProfileId,
+      centerId: charge.centerId,
+    });
+
+    return charge;
   }
 }

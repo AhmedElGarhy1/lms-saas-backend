@@ -4,17 +4,19 @@ import {
   Column,
   Index,
   CreateDateColumn,
-  JoinColumn,
-  ManyToOne,
 } from 'typeorm';
-import { Money } from '@/shared/common/utils/money.util';
-import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
-import { StudentPaymentStrategy } from '@/modules/classes/entities/student-payment-strategy.entity';
 
-export enum StudentBillingType {
-  MONTHLY = 'MONTHLY',
+export enum StudentChargeType {
   SESSION = 'SESSION',
+  MONTHLY = 'MONTHLY',
   CLASS = 'CLASS',
+}
+
+export enum StudentChargeStatus {
+  PENDING = 'PENDING',
+  COMPLETED = 'COMPLETED',
+  REFUNDED = 'REFUNDED',
+  CANCELLED = 'CANCELLED',
 }
 
 export enum PaymentSource {
@@ -22,8 +24,8 @@ export enum PaymentSource {
   CASH = 'CASH',
 }
 
-@Entity('student_billing_records')
-export class StudentBillingRecord {
+@Entity('student_charges')
+export class StudentCharge {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -31,42 +33,54 @@ export class StudentBillingRecord {
   @Index()
   studentUserProfileId: string;
 
-  @Column()
-  type: StudentBillingType; // Type of billing: session/monthly/class
-
-  @Column('uuid')
+  // Type discriminator
+  @Column({ type: 'simple-enum', enum: StudentChargeType })
   @Index()
-  refId: string; // Reference ID (strategy ID for all types)
+  chargeType: StudentChargeType;
 
-  @Column()
+  // Common payment fields
+  @Column('decimal', { precision: 10, scale: 2 })
+  amount: number;
+
+  @Column({ type: 'simple-enum', enum: PaymentSource })
   paymentSource: PaymentSource;
 
+  @Column('uuid', { nullable: true })
+  paymentId?: string;
+
   @Column({
-    type: 'decimal',
-    precision: 12,
-    scale: 2,
-    transformer: {
-      from: (value: string | null): Money | null => {
-        return value === null ? null : Money.from(value);
-      },
-      to: (value: Money | number | string | null): string | null => {
-        if (value === null) return null;
-        if (value instanceof Money) return value.toString();
-        return Money.from(value).toString();
-      },
-    },
+    type: 'simple-enum',
+    enum: StudentChargeStatus,
+    default: StudentChargeStatus.PENDING,
   })
-  amount: Money;
+  @Index()
+  status: StudentChargeStatus;
+
+  // Type-specific fields (nullable based on chargeType)
+  @Column('uuid', { nullable: true })
+  @Index()
+  sessionId?: string; // Only for SESSION charges
+
+  @Column('uuid', { nullable: true })
+  @Index()
+  classId?: string; // For SESSION/MONTHLY/CLASS charges
+
+  @Column('int', { nullable: true })
+  month?: number; // Only for MONTHLY charges (1-12)
+
+  @Column('int', { nullable: true })
+  year?: number; // Only for MONTHLY charges
+
+  // Audit fields
+  @Column('timestamptz', { nullable: true })
+  refundedAt?: Date;
+
+  @Column('text', { nullable: true })
+  refundReason?: string;
 
   @CreateDateColumn()
   createdAt: Date;
 
-  // Relations
-  @ManyToOne(() => UserProfile)
-  @JoinColumn({ name: 'studentUserProfileId' })
-  studentUserProfile: UserProfile;
-
-  @ManyToOne(() => StudentPaymentStrategy)
-  @JoinColumn({ name: 'refId' })
-  strategy: StudentPaymentStrategy;
+  @Column({ type: 'timestamp', nullable: true })
+  updatedAt?: Date;
 }

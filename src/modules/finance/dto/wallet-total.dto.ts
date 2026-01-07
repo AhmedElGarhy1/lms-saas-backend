@@ -32,17 +32,6 @@ export class WalletDetailDto {
   })
   balance: Money;
 
-  @ApiProperty({
-    description: 'Wallet bonus balance',
-    example: { value: '10.00' },
-  })
-  bonusBalance: Money;
-
-  @ApiProperty({
-    description: 'Wallet locked balance',
-    example: { value: '5.00' },
-  })
-  lockedBalance: Money;
 }
 
 export class WalletTotalDto {
@@ -52,17 +41,6 @@ export class WalletTotalDto {
   })
   totalBalance: Money;
 
-  @ApiProperty({
-    description: 'Total bonus balance across all user wallets',
-    example: { value: '25.00' },
-  })
-  totalBonusBalance: Money;
-
-  @ApiProperty({
-    description: 'Total locked balance across all user wallets',
-    example: { value: '10.00' },
-  })
-  totalLockedBalance: Money;
 
   @ApiProperty({
     description: 'Number of wallets included in the total',

@@ -32,13 +32,7 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
     const queryBuilder = this.getRepository()
       .createQueryBuilder('payout')
       .leftJoin('payout.class', 'class')
-      .leftJoin('class.classStaff', 'classStaff')
-      .leftJoin(
-        'class.branches',
-        'branchAccess',
-        'branchAccess.userProfileId = :userProfileId AND branchAccess.isActive = true',
-        { userProfileId: actor.userProfileId },
-      );
+      .where('class.centerId = :centerId', { centerId: actor.centerId });
 
     // Access control: Filter by class staff and branch access for non-bypass users
     const canBypassCenterInternalAccess =
@@ -48,10 +42,18 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
       );
 
     if (!canBypassCenterInternalAccess) {
-      queryBuilder.andWhere(
-        '(classStaff.userProfileId = :userProfileId OR branchAccess.branchId IS NOT NULL)',
-        { userProfileId: actor.userProfileId },
-      );
+      queryBuilder
+        .leftJoin('class.branch', 'branch')
+        .leftJoin('branch.branchAccess', 'branchAccess')
+        .andWhere(
+          'branchAccess.userProfileId = :userProfileId AND branchAccess.isActive = true',
+          { userProfileId: actor.userProfileId },
+        )
+        .leftJoin('payout.teacher', 'teacherProfile')
+        .leftJoin('teacherProfile.accessTarget', 'targetAccess')
+        .andWhere('targetAccess.id = :userProfileId', {
+          userProfileId: actor.userProfileId,
+        });
     }
 
     // Apply filters

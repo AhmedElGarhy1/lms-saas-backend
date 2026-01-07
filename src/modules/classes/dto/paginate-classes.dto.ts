@@ -5,6 +5,8 @@ import { BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Branch } from '@/modules/centers/entities/branch.entity';
 import { ClassStatus } from '../enums/class-status.enum';
+import { StudentPaymentType } from '../enums/student-payment-type.enum';
+import { Transform } from 'class-transformer';
 
 export class PaginateClassesDto extends BasePaginationDto {
   @ApiProperty({
@@ -49,4 +51,19 @@ export class PaginateClassesDto extends BasePaginationDto {
   @IsOptional()
   @IsEnum(ClassStatus)
   status?: ClassStatus;
+
+  @ApiProperty({
+    description: 'Filter classes by student payment type',
+    enum: StudentPaymentType,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(StudentPaymentType)
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.toUpperCase();
+    }
+    return value as StudentPaymentType;
+  })
+  studentPaymentType?: StudentPaymentType;
 }

@@ -30,6 +30,7 @@ import { WalletsController } from './controllers/wallets.controller';
 import { CashboxesController } from './controllers/cashboxes.controller';
 import { WebhooksController } from './controllers/webhooks.controller';
 import { MeController } from './controllers/me.controller';
+import { BranchController } from './controllers/branch.controller';
 import { CentersModule } from '../centers/centers.module';
 import { UserProfileModule } from '../user-profile/user-profile.module';
 import { SharedModule } from '@/shared/shared.module';
@@ -48,6 +49,16 @@ import { PaymentGatewayService } from './adapters/payment-gateway.service';
 import { PaymobAdapter } from './adapters/paymob.adapter';
 import { PaymentGatewayCircuitBreaker } from './circuit-breaker/payment-gateway-circuit-breaker';
 import { UserModule } from '../user/user.module';
+
+// Import new specialized services
+import { PaymentCreatorService } from './services/payment-creator.service';
+import { PaymentExecutorService } from './services/payment-executor.service';
+import { PaymentRefundService } from './services/payment-refund.service';
+import { ExternalPaymentService } from './services/external-payment.service';
+import { PaymentQueryService } from './services/payment-query.service';
+import { PaymentOrchestratorService } from './services/payment-orchestrator.service';
+import { BranchWithdrawalService } from './services/branch-withdrawal.service';
+import { BranchDepositService } from './services/branch-deposit.service';
 
 @Module({
   imports: [
@@ -85,6 +96,7 @@ import { UserModule } from '../user/user.module';
     CashboxesController,
     WebhooksController,
     MeController,
+    BranchController,
   ],
   providers: [
     // Metrics providers
@@ -142,6 +154,16 @@ import { UserModule } from '../user/user.module';
     FinanceMonitorService,
     UserProfileListener,
     BranchListener,
+
+    // New specialized payment services
+    PaymentCreatorService,
+    PaymentExecutorService,
+    PaymentRefundService,
+    ExternalPaymentService,
+    PaymentQueryService,
+    PaymentOrchestratorService,
+    BranchWithdrawalService,
+    BranchDepositService,
   ],
   exports: [
     // Payment Gateway Adapters

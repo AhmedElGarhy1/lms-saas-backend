@@ -35,6 +35,13 @@ export class PermissionsGuard implements CanActivate {
       requiredPermissions.scope,
       user.centerId,
     );
+    console.log(
+      user.userProfileId,
+      requiredPermissions.permission,
+      requiredPermissions.scope,
+      user.centerId,
+    );
+    console.log(hasPermission);
 
     return !!hasPermission;
   }

@@ -14,6 +14,7 @@ import { ClassesErrors } from '../exceptions/classes.errors';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { StudentPaymentType } from '../enums/student-payment-type.enum';
 
 export interface ClassWithComputedFields extends Class {
   groupsCount: number;
@@ -46,6 +47,7 @@ export class ClassesRepository extends BaseRepository<Class> {
       .leftJoinAndSelect('class.teacher', 'teacher')
       .leftJoin('teacher.user', 'teacherUser')
       .leftJoin('class.branch', 'branch')
+      .leftJoin('class.studentPaymentStrategy', 'studentPaymentStrategy')
       // Add name and id fields as selections
       .addSelect([
         'level.id',
@@ -139,6 +141,36 @@ export class ClassesRepository extends BaseRepository<Class> {
       queryBuilder.andWhere('class.status = :status', {
         status: paginateDto.status,
       });
+    }
+
+    // Apply student payment type filter
+    if (paginateDto.studentPaymentType) {
+      switch (paginateDto.studentPaymentType) {
+        case 'SESSION':
+          queryBuilder.andWhere(
+            'studentPaymentStrategy.includeSession = :includeSession',
+            {
+              includeSession: true,
+            },
+          );
+          break;
+        case 'MONTHLY':
+          queryBuilder.andWhere(
+            'studentPaymentStrategy.includeMonth = :includeMonth',
+            {
+              includeMonth: true,
+            },
+          );
+          break;
+        case 'CLASS':
+          queryBuilder.andWhere(
+            'studentPaymentStrategy.includeClass = :includeClass',
+            {
+              includeClass: true,
+            },
+          );
+          break;
+      }
     }
 
     // Apply search filter (from base repository logic)

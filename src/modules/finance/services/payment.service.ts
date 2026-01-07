@@ -45,6 +45,14 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Branch } from '@/modules/centers/entities/branch.entity';
 
+// Import the new specialized services
+import { PaymentCreatorService } from './payment-creator.service';
+import { PaymentExecutorService } from './payment-executor.service';
+import { PaymentRefundService } from './payment-refund.service';
+import { ExternalPaymentService } from './external-payment.service';
+import { PaymentQueryService } from './payment-query.service';
+import { PaymentOrchestratorService } from './payment-orchestrator.service';
+
 // DTOs for the unified payment execution API
 export interface ExecutePaymentRequest {
   amount: Money;
@@ -87,11 +95,13 @@ export class PaymentService extends BaseService {
     private readonly cashboxService: CashboxService,
     private readonly transactionService: TransactionService,
     private readonly cashTransactionService: CashTransactionService,
-    private readonly paymentGatewayService: PaymentGatewayService,
-    private readonly userProfileService: UserProfileService,
-    private readonly userService: UserService,
-    private readonly financeMonitor: FinanceMonitorService,
-    private readonly accessControlHelperService: AccessControlHelperService,
+    // New specialized services
+    private readonly paymentCreator: PaymentCreatorService,
+    private readonly paymentExecutor: PaymentExecutorService,
+    private readonly paymentRefunder: PaymentRefundService,
+    private readonly externalPaymentService: ExternalPaymentService,
+    private readonly paymentQuery: PaymentQueryService,
+    private readonly paymentOrchestrator: PaymentOrchestratorService,
   ) {
     super();
   }
@@ -181,25 +191,19 @@ export class PaymentService extends BaseService {
         senderType,
       );
 
-      // Pre-check: Check if balance is sufficient (before acquiring lock)
-      // This prevents database constraint violation errors
-      const availableBalance = senderWallet.balance.subtract(
-        senderWallet.lockedBalance,
-      );
-      if (availableBalance.lessThan(amount)) {
+      // Pre-check: Check if balance is sufficient
+      if (senderWallet.balance.lessThan(amount)) {
         throw FinanceErrors.insufficientWalletBalance(
-          availableBalance.toNumber(),
+          senderWallet.balance.toNumber(),
           amount.toNumber(),
         );
       }
 
-      // Move amount from balance to lockedBalance
-      // Use wallet service methods to ensure pessimistic locking
+      // Debit the sender's balance
       await this.walletService.updateBalance(
         senderWallet.id,
         amount.multiply(-1),
       );
-      await this.walletService.updateLockedBalance(senderWallet.id, amount);
     }
 
     const payment = await this.paymentRepository.create({
@@ -225,8 +229,57 @@ export class PaymentService extends BaseService {
    * Get payment by ID
    */
   async getPayment(paymentId: string): Promise<Payment> {
-    const payment = await this.paymentRepository.findOneOrThrow(paymentId);
-    return payment;
+    return await this.paymentRepository.findOneOrThrow(paymentId);
+  }
+
+  async getPaymentById(paymentId: string): Promise<Payment> {
+    return this.getPayment(paymentId);
+  }
+
+  async createAndExecutePayment(
+    request: ExecutePaymentRequest,
+    actor: ActorUser,
+  ): Promise<ExecutePaymentResponse> {
+    // Delegate to the orchestrator service
+    return await this.paymentOrchestrator.createAndExecutePayment(
+      request,
+      actor,
+    );
+  }
+
+  async refundPayment(
+    paymentId: string,
+    refundAmount: Money,
+    reason?: string,
+  ): Promise<{ payment: Payment; refund: any }> {
+    // Delegate to the orchestrator service
+    return await this.paymentOrchestrator.refundPayment(
+      paymentId,
+      refundAmount,
+      reason,
+    );
+  }
+
+  async getUserPaymentsPaginated(
+    userId: string,
+    dto: PaginatePaymentDto,
+    centerId?: string,
+  ): Promise<Pagination<UserPaymentStatementItemDto>> {
+    return await this.paymentRepository.getUserPaymentsPaginated(
+      userId,
+      dto,
+      centerId,
+    );
+  }
+
+  async paginatePayments(
+    paginateDto: PaginatePaymentDto,
+    actor: ActorUser,
+  ): Promise<Pagination<UserPaymentStatementItemDto>> {
+    return await this.paymentRepository.getAllPaymentsPaginated(
+      paginateDto,
+      actor,
+    );
   }
 
   /**
@@ -279,8 +332,8 @@ export class PaymentService extends BaseService {
         payment.senderType,
       );
 
-      // Deduct from lockedBalance and get updated sender wallet
-      const updatedSenderWallet = await this.walletService.updateLockedBalance(
+      // Debit from sender wallet and get updated sender wallet
+      const updatedSenderWallet = await this.walletService.updateBalance(
         senderWallet.id,
         payment.amount.multiply(-1),
       );
@@ -380,7 +433,6 @@ export class PaymentService extends BaseService {
     // Determine transaction type for cash transaction
     const cashTransactionType = this.mapPaymentReasonToTransactionType(
       payment.reason,
-      true,
     );
 
     // Create cash transaction (money coming into cashbox)
@@ -484,22 +536,7 @@ export class PaymentService extends BaseService {
       return payment; // Already cancelled
     }
 
-    // If payment was PENDING and source is WALLET, move amount back from lockedBalance to balance
-    if (
-      payment.status === PaymentStatus.PENDING &&
-      payment.source === PaymentSource.WALLET
-    ) {
-      const senderWallet = await this.walletService.getWallet(
-        payment.senderId,
-        payment.senderType,
-      );
-
-      // Move amount from lockedBalance back to balance
-      await this.walletService.moveFromLockedToBalance(
-        senderWallet.id,
-        payment.amount,
-      );
-    }
+    // For PENDING payments, no balance changes were made yet, so nothing to reverse
 
     // If payment was COMPLETED, reverse the balances
     if (payment.status === PaymentStatus.COMPLETED) {
@@ -607,6 +644,7 @@ export class PaymentService extends BaseService {
     amount: Money,
     senderId: string,
     currency: string = 'EGP',
+    actor: ActorUser,
     description?: string,
     gatewayType: PaymentGatewayType = PaymentGatewayType.PAYMOB,
     idempotencyKey?: string,
@@ -616,1000 +654,66 @@ export class PaymentService extends BaseService {
     checkoutUrl: string;
     gatewayPaymentId: string;
   }> {
-    // Idempotency check
-    if (idempotencyKey) {
-      const existingPayments =
-        await this.paymentRepository.findByIdempotencyKey(
-          idempotencyKey,
-          senderId,
-        );
-
-      if (existingPayments.length > 0) {
-        const existingPayment = existingPayments[0];
-        // Return existing payment details if found
-        return {
-          payment: existingPayment,
-          checkoutUrl: '', // Would need to be stored or retrieved
-          gatewayPaymentId: '', // Would need to be stored
-        };
-      }
-    }
-
-    // Validate currency support
-    if (!this.paymentGatewayService.supportsCurrency(currency, gatewayType)) {
-      throw FinanceErrors.paymentCurrencyNotSupported(currency, gatewayType);
-    }
-
-    // Create payment record with PENDING status
-    const payment = await this.paymentRepository.create({
+    // Delegate to the orchestrator service
+    return await this.paymentOrchestrator.initiateExternalPayment(
       amount,
       senderId,
-      senderType: WalletOwnerType.USER_PROFILE, // User profile is the sender (initiating payment)
-      receiverId: senderId, // For topups, receiver is same as payer
-      receiverType: WalletOwnerType.USER_PROFILE,
-      status: PaymentStatus.PENDING,
-      reason: PaymentReason.TOPUP,
-      source: PaymentSource.EXTERNAL,
-      referenceType: PaymentReferenceType.CASH_TRANSACTION, // Will be updated when completed
-      correlationId: randomUUID(),
+      actor,
+      currency,
+      description,
+      gatewayType,
       idempotencyKey,
-      createdByProfileId: this.getCreatedByProfileId(),
-      metadata: {
-        gateway: gatewayType,
-        currency,
-        description,
-      },
-    });
-
-    try {
-      // Fetch user profile data for customer details (with user relation)
-      const userProfile = await this.userProfileService.findOne(senderId);
-      // Load user relation if not already loaded
-      const user =
-        userProfile?.user ||
-        (await this.userService.findOne(userProfile?.userId));
-
-      // Use real phone number
-      const customerPhone = user?.phone || '';
-
-      // Use real name
-      const customerName = user?.name || '';
-
-      // Use placeholder email since User entity doesn't have email field
-      // TODO: Add email field to User entity for better UX
-      // const customerEmail = user?.phone
-      //   ? `user-${user.phone}@placeholder.local`
-      //   : 'customer@placeholder.local';
-      const customerEmail = 'gemater.g@gmail.com';
-
-      // Create payment gateway request
-      const gatewayRequest: CreatePaymentRequest = {
-        amount,
-        currency,
-        orderId: payment.id,
-        customerEmail,
-        customerPhone,
-        customerName,
-        description: description || `Payment ${payment.id}`,
-        methodType,
-        metadata: {
-          paymentId: payment.id,
-          senderId,
-          correlationId: payment.correlationId,
-        },
-      };
-
-      // Initiate payment through gateway
-      const gatewayResponse = await this.paymentGatewayService.createPayment(
-        gatewayRequest,
-        gatewayType,
-      );
-
-      // For TEST method, auto-complete the payment immediately
-      if (methodType === PaymentGatewayMethod.TEST) {
-        // Update payment with gateway details (don't set COMPLETED yet)
-        await this.paymentRepository.update(payment.id, {
-          metadata: {
-            ...payment.metadata,
-            gatewayPaymentId: gatewayResponse.gatewayPaymentId,
-            checkoutUrl: gatewayResponse.checkoutUrl,
-            clientSecret: gatewayResponse.clientSecret,
-            testPayment: true, // Mark as test payment
-          },
-        });
-
-        // Complete the TEST payment immediately (direct completion)
-        // Get the updated payment and complete it
-        const updatedPayment = await this.paymentRepository.findOneOrThrow(
-          payment.id,
-        );
-
-        // Update payment status to COMPLETED
-        await this.paymentRepository.update(updatedPayment.id, {
-          status: PaymentStatus.COMPLETED,
-          paidAt: new Date(),
-          metadata: {
-            ...updatedPayment.metadata,
-            processedAt: new Date(),
-          },
-        });
-
-        // Credit the user's wallet (same as normal payment completion)
-        const userWallet = await this.walletService.getWallet(
-          updatedPayment.senderId,
-          WalletOwnerType.USER_PROFILE,
-        );
-
-        const amountToCredit = amount;
-        const updatedWallet = await this.walletService.updateBalance(
-          userWallet.id,
-          amountToCredit,
-        );
-
-        // Create transaction record (same as normal payment completion)
-        await this.transactionService.createTransaction(
-          null, // fromWalletId (external payment)
-          userWallet.id, // toWalletId
-          amountToCredit,
-          TransactionType.TOPUP,
-          updatedPayment.correlationId || updatedPayment.id,
-          updatedWallet.balance,
-        );
-
-        this.logger.log(
-          `TEST: Payment ${updatedPayment.id} completed, wallet credited ${amountToCredit.toString()}`,
-        );
-
-        this.logger.log(`TEST: External payment auto-completed: ${payment.id}`);
-
-        return {
-          payment: await this.paymentRepository.findOneOrThrow(payment.id), // Get updated payment
-          checkoutUrl: gatewayResponse.checkoutUrl,
-          gatewayPaymentId: gatewayResponse.gatewayPaymentId,
-        };
-      }
-
-      // Update payment with gateway details (normal flow)
-      await this.paymentRepository.update(payment.id, {
-        metadata: {
-          ...payment.metadata,
-          gatewayPaymentId: gatewayResponse.gatewayPaymentId,
-          checkoutUrl: gatewayResponse.checkoutUrl,
-          clientSecret: gatewayResponse.clientSecret,
-        },
-      });
-
-      this.logger.log(
-        `External payment initiated: ${payment.id} via ${gatewayType}`,
-      );
-
-      return {
-        payment,
-        checkoutUrl: gatewayResponse.checkoutUrl,
-        gatewayPaymentId: gatewayResponse.gatewayPaymentId,
-      };
-    } catch (error) {
-      // Update payment status to FAILED if gateway call fails
-      await this.paymentRepository.update(payment.id, {
-        status: PaymentStatus.FAILED,
-        metadata: {
-          ...payment.metadata,
-          failureReason: error.message,
-          failedAt: new Date(),
-        },
-      });
-
-      this.financeMonitor.recordPaymentFailed(
-        'Paymob validation error',
-        'paymob_validation_error',
-      );
-
-      this.logger.error(
-        `Failed to initiate external payment: ${payment.id}`,
-        error,
-      );
-
-      // Re-throw with user-friendly messages for specific Paymob errors
-      if (
-        error.message.includes('Integration ID') ||
-        error.message.includes('configuration error')
-      ) {
-        throw FinanceErrors.paymentServiceUnavailable();
-      }
-
-      if (
-        error.message.includes('authentication failed') ||
-        error.message.includes('Invalid API key')
-      ) {
-        throw FinanceErrors.paymentServiceUnavailable();
-      }
-
-      if (
-        error.message.includes('billing_data') ||
-        error.message.includes('email')
-      ) {
-        throw FinanceErrors.paymentSetupFailed();
-      }
-
-      // For other errors, provide a generic message
-      throw FinanceErrors.paymentProcessingFailed();
-    }
+      methodType,
+    );
   }
 
-  /**
-   * Process completed external payment (called from webhook or gateway callback)
-   * This completes the payment and credits the user's wallet
-   */
-  @Transactional()
-  async processExternalPaymentCompletion(
-    gatewayPaymentId: string,
-    gatewayType: PaymentGatewayType,
-    status: 'completed' | 'failed' | 'cancelled',
-    paidAmount?: Money,
-    failureReason?: string,
-  ): Promise<Payment> {
-    // Find payment by gateway payment ID
-    const payment =
-      await this.paymentRepository.findByGatewayPaymentId(gatewayPaymentId);
-    if (!payment) {
-      throw FinanceErrors.paymentNotFoundByGatewayId(gatewayPaymentId);
-    }
-
-    // Check if payment is already processed
-    if (payment.status === PaymentStatus.COMPLETED) {
-      this.logger.log(`Payment already completed: ${payment.id}`);
-      return payment;
-    }
-
-    if (payment.status === PaymentStatus.FAILED) {
-      this.logger.log(`Payment already failed: ${payment.id}`);
-      return payment;
-    }
-
-    // Update payment status
-    const updateData: any = {
-      status:
-        status === 'completed'
-          ? PaymentStatus.COMPLETED
-          : status === 'failed'
-            ? PaymentStatus.FAILED
-            : status === 'cancelled'
-              ? PaymentStatus.CANCELLED
-              : PaymentStatus.PENDING,
-      metadata: {
-        ...payment.metadata,
-        processedAt: new Date(),
-        failureReason,
-      },
-    };
-
-    if (status === 'completed') {
-      updateData.paidAt = new Date();
-
-      // For completed payments, credit the user's wallet
-      const userWallet = await this.walletService.getWallet(
-        payment.senderId,
-        WalletOwnerType.USER_PROFILE,
-      );
-
-      const amountToCredit = paidAmount || payment.amount;
-
-      // Credit the wallet
-      const updatedWallet = await this.walletService.updateBalance(
-        userWallet.id,
-        amountToCredit,
-      );
-
-      // Create transaction record
-      await this.transactionService.createTransaction(
-        null, // fromWalletId (external)
-        userWallet.id, // toWalletId
-        amountToCredit,
-        TransactionType.TOPUP,
-        payment.correlationId || payment.id,
-        updatedWallet.balance,
-      );
-
-      updateData.metadata.creditedAmount = amountToCredit.toString();
-      updateData.metadata.walletId = userWallet.id;
-    }
-
-    const updatedPayment = await this.paymentRepository.updateThrow(
-      payment.id,
-      updateData,
-    );
-
-    this.logger.log(
-      `External payment ${status}: ${payment.id} via ${gatewayType}`,
-    );
-
-    return updatedPayment;
-  }
-
-  /**
-   * Process refund through payment gateway
-   * This refunds money back to the customer's original payment method
-   */
-  @Transactional()
-  async refundPayment(
+  async completeExternalPayment(
     paymentId: string,
-    refundAmount: Money,
-    reason?: string,
-  ): Promise<{ payment: Payment; refund: RefundPaymentResponse }> {
-    // Find the original payment
-    const payment = await this.paymentRepository.findOneOrThrow(paymentId);
-
-    // Validate payment can be refunded
-    if (payment.status !== PaymentStatus.COMPLETED) {
-      throw FinanceErrors.paymentNotRefundable(paymentId, payment.status);
-    }
-
-    if (payment.source !== PaymentSource.EXTERNAL) {
-      throw FinanceErrors.paymentNotExternal(paymentId);
-    }
-
-    // Validate refund amount
-    if (refundAmount.greaterThan(payment.amount)) {
-      throw FinanceErrors.refundAmountExceedsPayment(
-        refundAmount.toString(),
-        payment.amount.toString(),
-      );
-    }
-
-    // Get gateway payment ID from metadata
-    const gatewayPaymentId = payment.metadata?.gatewayPaymentId;
-    if (!gatewayPaymentId) {
-      throw FinanceErrors.paymentMissingGatewayId(paymentId);
-    }
-
-    // Record refund request for monitoring
-    this.financeMonitor.recordRefundRequested(refundAmount, 'paymob');
-
-    // CRITICAL SAFETY CHECK: Ensure student still has these funds in their wallet
-    // If they've spent the money on sessions, we cannot refund it
-    const userWallet = await this.walletService.getWallet(
-      payment.senderId,
-      WalletOwnerType.USER_PROFILE,
+    externalReference?: string,
+  ): Promise<Payment> {
+    return await this.externalPaymentService.completeExternalPayment(
+      paymentId,
+      externalReference,
     );
-
-    const availableBalance = userWallet.balance.subtract(
-      userWallet.lockedBalance,
-    );
-    if (availableBalance.lessThan(refundAmount)) {
-      this.financeMonitor.recordRefundProcessed(
-        refundAmount,
-        'paymob',
-        'failed',
-      );
-      throw FinanceErrors.insufficientRefundBalance(
-        refundAmount.toString(),
-        availableBalance.toString(),
-      );
-    }
-
-    try {
-      // Process refund through payment gateway
-      const refundRequest: RefundPaymentRequest = {
-        gatewayPaymentId,
-        amount: refundAmount,
-        reason,
-      };
-
-      const refundResponse =
-        await this.paymentGatewayService.refundPayment(refundRequest);
-
-      // Record successful refund
-      this.financeMonitor.recordRefundProcessed(
-        refundAmount,
-        'paymob',
-        'success',
-      );
-
-      // Update payment status to REFUNDED if full refund
-      const isFullRefund = refundAmount.equals(payment.amount);
-      if (isFullRefund) {
-        await this.paymentRepository.update(payment.id, {
-          status: PaymentStatus.REFUNDED,
-          metadata: {},
-        });
-      }
-
-      // Debit the wallet (remove the refunded amount)
-      const userWallet = await this.walletService.getWallet(
-        payment.senderId,
-        WalletOwnerType.USER_PROFILE,
-      );
-
-      const updatedWallet = await this.walletService.updateBalance(
-        userWallet.id,
-        refundAmount.multiply(-1), // Debit the refunded amount
-      );
-
-      // Create transaction record for refund
-      await this.transactionService.createTransaction(
-        userWallet.id, // fromWalletId (user's wallet)
-        null, // toWalletId (external)
-        refundAmount.multiply(-1), // Negative amount (debit)
-        TransactionType.REFUND,
-        payment.correlationId || payment.id,
-        updatedWallet.balance,
-      );
-
-      this.logger.log(
-        `Payment refund processed: ${paymentId}, amount: ${refundAmount.toString()}`,
-      );
-
-      return {
-        payment: await this.paymentRepository.findOneOrThrow(paymentId),
-        refund: refundResponse,
-      };
-    } catch (error) {
-      // Record failed refund
-      this.financeMonitor.recordRefundProcessed(
-        refundAmount,
-        'paymob',
-        'failed',
-      );
-
-      this.logger.error(`Payment refund failed: ${paymentId}`, {
-        refundAmount: refundAmount.toString(),
-        error: error.message,
-      });
-      throw error;
-    }
   }
 
-  /**
-   * @internal
-   * Process wallet transfer - Internal transfer
-   * This method is for service-to-service calls only.
-   * Frontend should never call this directly.
-   * Wallet transfers should be triggered internally by business modules (e.g., SessionsModule).
-   */
-  @Transactional()
-  async processWalletTransfer(
-    fromWalletId: string,
-    toWalletId: string,
-    amount: Money,
-    senderId: string,
-    receiverId: string,
-    receiverType: WalletOwnerType,
+  async failExternalPayment(
+    paymentId: string,
+    failureReason: string,
   ): Promise<Payment> {
-    // Update both wallets atomically
-    const fromWallet = await this.walletService.updateBalance(
-      fromWalletId,
-      amount.multiply(-1),
+    return await this.externalPaymentService.failExternalPayment(
+      paymentId,
+      failureReason,
     );
-    const toWallet = await this.walletService.updateBalance(toWalletId, amount);
+  }
 
-    // Create transaction records for both wallets with balance snapshots
-    const correlationId = randomUUID();
-
-    // Transaction for sender (debit)
-    const debitTransaction = await this.transactionService.createTransaction(
-      fromWalletId,
-      toWalletId,
-      amount.multiply(-1), // Negative amount for debit
-      TransactionType.INTERNAL_TRANSFER,
-      correlationId,
-      fromWallet.balance, // Balance after debit
-    );
-
-    // Transaction for receiver (credit)
-    await this.transactionService.createTransaction(
-      fromWalletId,
-      toWalletId,
-      amount, // Positive amount for credit
-      TransactionType.INTERNAL_TRANSFER,
-      correlationId,
-      toWallet.balance, // Balance after credit
-    );
-
-    // Create payment (Status: COMPLETED, Source: WALLET)
-    const payment = await this.paymentRepository.create({
+  async processExternalPaymentCompletion(
+    gatewayReference: string,
+    gatewayType: any,
+    status: 'completed' | 'failed' | 'cancelled',
+    amount?: Money,
+    failureReason?: string,
+  ): Promise<Payment | null> {
+    // Create gateway data object from parameters
+    const gatewayData = {
+      status,
       amount,
-      senderId,
-      receiverId,
-      receiverType,
-      status: PaymentStatus.COMPLETED,
-      reason: PaymentReason.INTERNAL_TRANSFER,
-      source: PaymentSource.WALLET,
-      referenceType: PaymentReferenceType.TRANSACTION,
-      referenceId: debitTransaction.id, // Reference the debit transaction
-      correlationId,
-      paidAt: new Date(),
-      createdByProfileId: this.getCreatedByProfileId(),
-    });
-
-    return payment;
-  }
-
-  /**
-   * Process split payment - Handle split payments with correlationId validation
-   */
-  @Transactional()
-  async processSplitPayment(
-    transactions: Array<{
-      fromWalletId?: string;
-      toWalletId?: string;
-      amount: Money;
-      type: TransactionType;
-    }>,
-    senderId: string,
-    receiverId: string,
-    receiverType: WalletOwnerType,
-    reason: PaymentReason,
-    correlationId?: string,
-  ): Promise<Payment> {
-    const sharedCorrelationId = correlationId || randomUUID();
-
-    // Calculate total amount
-    const totalAmount = transactions.reduce(
-      (sum, tx) => sum.add(tx.amount),
-      Money.zero(),
-    );
-
-    // Update wallets and collect balance snapshots
-    const transactionsWithBalances = [];
-    for (const tx of transactions) {
-      let balanceAfter: Money | undefined;
-
-      if (tx.fromWalletId) {
-        const updatedWallet = await this.walletService.updateBalance(
-          tx.fromWalletId,
-          tx.amount.multiply(-1),
-        );
-        balanceAfter = updatedWallet.balance;
-      } else if (tx.toWalletId) {
-        const updatedWallet = await this.walletService.updateBalance(
-          tx.toWalletId,
-          tx.amount,
-        );
-        balanceAfter = updatedWallet.balance;
-      }
-
-      transactionsWithBalances.push({
-        ...tx,
-        balanceAfter: balanceAfter!,
-      });
-    }
-
-    // Create split transactions with balance snapshots
-    const createdTransactions =
-      await this.transactionService.createSplitTransactions(
-        transactionsWithBalances,
-        sharedCorrelationId,
-      );
-
-    // Create payment with correlationId
-    const payment = await this.paymentRepository.create({
-      amount: totalAmount,
-      senderId,
-      receiverId,
-      receiverType,
-      status: PaymentStatus.COMPLETED,
-      reason,
-      source: PaymentSource.WALLET,
-      referenceType: PaymentReferenceType.TRANSACTION,
-      referenceId: createdTransactions[0]?.id,
-      correlationId: sharedCorrelationId,
-      paidAt: new Date(),
-      createdByProfileId: this.getCreatedByProfileId(),
-    });
-
-    // Validate correlation sum
-    await this.transactionService.validateCorrelationSum(
-      sharedCorrelationId,
-      totalAmount,
-    );
-
-    return payment;
-  }
-
-  /**
-   * Paginate payments
-   */
-  async paginatePayments(
-    dto: PaginatePaymentDto,
-    actor: ActorUser,
-  ): Promise<Pagination<Payment>> {
-    const queryBuilder: SelectQueryBuilder<Payment> =
-      this.paymentRepository.createQueryBuilder('payment');
-
-    // Apply filters
-    if (dto.status) {
-      queryBuilder.andWhere('payment.status = :status', { status: dto.status });
-    }
-    if (dto.reason) {
-      queryBuilder.andWhere('payment.reason = :reason', { reason: dto.reason });
-    }
-    if (dto.source) {
-      queryBuilder.andWhere('payment.source = :source', { source: dto.source });
-    }
-
-    if (actor.centerId) {
-      if (!actor.centerId) {
-        throw Error('Center ID is required');
-      }
-      queryBuilder
-        .leftJoin(Branch, 'branch', 'branch.centerId = :centerId', {
-          centerId: actor.centerId,
-        })
-        .andWhere(
-          '((branch.id = payment.receiverId AND payment.receiverType = :branchType) OR (branch.id = payment.senderId AND payment.senderType = :branchType))',
-          {
-            branchType: WalletOwnerType.BRANCH,
-          },
-        );
-    } else if (actor.profileType === ProfileType.ADMIN) {
-    } else {
-      throw Error('You are not authorized to access this resource');
-    }
-
-    return this.paymentRepository.paginate(
-      dto,
-      {
-        searchableColumns: ['reason', 'status'],
-        sortableColumns: ['createdAt', 'amount', 'status'],
-        defaultSortBy: ['createdAt', 'DESC'],
-      },
-      '/finance/payments',
-      queryBuilder,
-    );
-  }
-
-  /**
-   * Get user payments statement with enhanced data including names
-   */
-  async getUserPaymentsPaginated(
-    userId: string,
-    dto: PaginatePaymentDto,
-    centerId?: string,
-  ): Promise<Pagination<UserPaymentStatementItemDto>> {
-    return this.paymentRepository.getUserPaymentsPaginated(
-      userId,
-      dto,
-      centerId,
-    );
-  }
-
-  /**
-   * Paginate payments with enhanced data including names (for admin/managerial users)
-   */
-  async paginatePaymentsEnhanced(
-    dto: PaginatePaymentDto,
-    actor: ActorUser,
-  ): Promise<Pagination<UserPaymentStatementItemDto>> {
-    return this.paymentRepository.getAllPaymentsPaginated(dto, actor);
-  }
-
-  /**
-   * Find payment by correlation ID (used for webhook processing)
-   */
-  async findByCorrelationId(correlationId: string): Promise<Payment | null> {
-    return this.paymentRepository
-      .createQueryBuilder('payment')
-      .where('payment.correlationId = :correlationId', { correlationId })
-      .getOne();
-  }
-
-  /**
-   * Unified payment execution method - handles all payment types automatically
-   * Creates payment, executes financial operations, and completes the transaction
-   */
-  @Transactional()
-  async createAndExecutePayment(
-    request: ExecutePaymentRequest,
-    actorId?: string,
-  ): Promise<ExecutePaymentResponse> {
-    this.logger.log(
-      `Executing payment: ${request.amount} from ${request.senderId} to ${request.receiverId}`,
-    );
-
-    // 1. Validate request
-    await this.validateExecutePaymentRequest(request);
-
-    // 2. Create payment record
-    const payment = await this.createPaymentRecord(request);
-
-    // 3. Execute financial operations
-    const executionResult = await this.executePaymentOperations(payment);
-
-    // 4. Complete payment
-    const completedPayment = await this.completeExecutedPayment(
-      payment,
-      executionResult,
-    );
-
-    // 5. Log success
-    await this.logPaymentExecution(completedPayment, executionResult);
-
-    // 6. Return comprehensive response
-    return {
-      payment: completedPayment,
-      transactions: executionResult.transactions,
-      cashTransactions: executionResult.cashTransactions,
-      executionDetails: {
-        walletOperations:
-          executionResult.transactions.length > 0
-            ? {
-                senderWalletUpdated: true,
-                receiverWalletUpdated: true,
-              }
-            : undefined,
-        cashOperations:
-          executionResult.cashTransactions &&
-          executionResult.cashTransactions.length > 0
-            ? {
-                cashboxUpdated: true,
-              }
-            : undefined,
-      },
+      failureReason,
+      gatewayType,
     };
-  }
 
-  /**
-   * Validate payment execution request
-   */
-  private async validateExecutePaymentRequest(
-    request: ExecutePaymentRequest,
-  ): Promise<void> {
-    // Amount validation
-    if (
-      !request.amount ||
-      request.amount.isNegative() ||
-      request.amount.isZero()
-    ) {
-      throw FinanceErrors.invalidPaymentAmount();
-    }
-
-    // Basic field validation
-    if (!request.senderId || !request.receiverId) {
-      throw FinanceErrors.invalidPaymentData();
-    }
-
-    // Source-specific validation
-    if (request.source === PaymentSource.WALLET) {
-      await this.validateWalletPaymentExecution(request);
-    } else if (request.source === PaymentSource.CASH) {
-      await this.validateCashPaymentExecution(request);
-    } else {
-      throw FinanceErrors.unsupportedPaymentSource();
-    }
-
-    // Idempotency check
-    if (request.idempotencyKey) {
-      const existingPayment = await this.paymentRepository.findByIdempotencyKey(
-        request.idempotencyKey,
-        request.senderId,
-      );
-      if (existingPayment.length > 0) {
-        throw FinanceErrors.paymentAlreadyExists();
-      }
-    }
-  }
-
-  /**
-   * Validate wallet payment execution
-   */
-  private async validateWalletPaymentExecution(
-    request: ExecutePaymentRequest,
-  ): Promise<void> {
-    // Get sender wallet and check balance
-    const senderWallet = await this.walletService.getWallet(
-      request.senderId,
-      request.senderType,
-    );
-
-    if (senderWallet.balance.lessThan(request.amount)) {
-      throw FinanceErrors.insufficientWalletBalance(
-        senderWallet.balance.toNumber(),
-        request.amount.toNumber(),
-      );
-    }
-
-    // Ensure receiver wallet exists
-    await this.walletService.getWallet(
-      request.receiverId,
-      request.receiverType,
+    return await this.externalPaymentService.processExternalPaymentCompletion(
+      gatewayReference,
+      gatewayData,
     );
   }
 
   /**
-   * Validate cash payment execution
-   */
-  private async validateCashPaymentExecution(
-    request: ExecutePaymentRequest,
-  ): Promise<void> {
-    // For cash payments, validate based on direction
-    if (request.senderType === WalletOwnerType.BRANCH) {
-      // Branch is paying out cash - check cashbox balance
-      const cashbox = await this.cashboxService.getCashbox(request.senderId);
-      if (cashbox.balance.lessThan(request.amount)) {
-        throw FinanceErrors.insufficientCashBalance(
-          cashbox.balance.toNumber(),
-          request.amount.toNumber(),
-        );
-      }
-    }
-    // For cash payments received by branch, we don't need to validate balance
-  }
-
-  /**
-   * Create payment record
-   */
-  private async createPaymentRecord(
-    request: ExecutePaymentRequest,
-  ): Promise<Payment> {
-    const paymentType = request.type || PaymentType.INTERNAL;
-
-    return await this.paymentRepository.create({
-      amount: request.amount,
-      senderId: request.senderId,
-      senderType: request.senderType,
-      receiverId: request.receiverId,
-      receiverType: request.receiverType,
-      status: paymentType === PaymentType.INTERNAL ? PaymentStatus.COMPLETED : PaymentStatus.PENDING,
-      type: paymentType,
-      reason: request.reason,
-      source: request.source,
-      referenceType: request.referenceType,
-      referenceId: request.referenceId,
-      correlationId: request.correlationId,
-      idempotencyKey: request.idempotencyKey,
-      metadata: request.metadata,
-      createdByProfileId: this.getCreatedByProfileId(),
-    });
-  }
-
-  /**
-   * Execute financial operations based on payment source
-   */
-  private async executePaymentOperations(payment: Payment): Promise<{
-    transactions: Transaction[];
-    cashTransactions?: CashTransaction[];
-  }> {
-    if (payment.source === PaymentSource.WALLET) {
-      return await this.executeWalletPaymentOperations(payment);
-    } else if (payment.source === PaymentSource.CASH) {
-      return await this.executeCashPaymentOperations(payment);
-    } else {
-      throw FinanceErrors.unsupportedPaymentSource();
-    }
-  }
-
-  /**
-   * Execute wallet payment operations
-   */
-  private async executeWalletPaymentOperations(payment: Payment): Promise<{
-    transactions: Transaction[];
-    cashTransactions?: CashTransaction[];
-  }> {
-    // Get wallets
-    const [senderWallet, receiverWallet] = await Promise.all([
-      this.walletService.getWallet(payment.senderId, payment.senderType),
-      this.walletService.getWallet(payment.receiverId, payment.receiverType),
-    ]);
-
-    // Execute balance transfers
-    const [updatedSenderWallet, updatedReceiverWallet] = await Promise.all([
-      this.walletService.updateBalance(
-        senderWallet.id,
-        payment.amount.multiply(-1),
-      ),
-      this.walletService.updateBalance(receiverWallet.id, payment.amount),
-    ]);
-
-    // Create transaction records
-    const correlationId = payment.correlationId || randomUUID();
-
-    const debitTransaction = await this.transactionService.createTransaction(
-      senderWallet.id,
-      receiverWallet.id,
-      payment.amount.multiply(-1), // Negative for debit
-      this.mapPaymentReasonToTransactionType(payment.reason),
-      correlationId,
-      updatedSenderWallet.balance,
-      payment.id,
-    );
-
-    const creditTransaction = await this.transactionService.createTransaction(
-      senderWallet.id,
-      receiverWallet.id,
-      payment.amount, // Positive for credit
-      this.mapPaymentReasonToTransactionType(payment.reason),
-      correlationId,
-      updatedReceiverWallet.balance,
-      payment.id,
-    );
-
-    return {
-      transactions: [debitTransaction, creditTransaction],
-    };
-  }
-
-  /**
-   * Execute cash payment operations
-   */
-  private async executeCashPaymentOperations(payment: Payment): Promise<{
-    transactions: Transaction[];
-    cashTransactions: CashTransaction[];
-  }> {
-    let cashboxId: string;
-    let direction: CashTransactionDirection;
-    let receivedByProfileId: string;
-    let paidByProfileId: string | undefined;
-    let balanceAfter: Money;
-
-    if (payment.senderType === WalletOwnerType.BRANCH) {
-      // Branch paying out cash (teacher payout, refund, etc.)
-      const cashbox = await this.cashboxService.getCashbox(payment.senderId);
-      cashboxId = cashbox.id;
-      direction = CashTransactionDirection.OUT;
-      receivedByProfileId = payment.receiverId; // Teacher receives cash
-      paidByProfileId = payment.createdByProfileId; // Admin who processed
-
-      // Update cashbox balance (reduce) and get the new balance
-      const updatedCashbox = await this.cashboxService.updateBalance(
-        cashboxId,
-        payment.amount.multiply(-1),
-      );
-      balanceAfter = updatedCashbox.balance;
-    } else if (payment.receiverType === WalletOwnerType.BRANCH) {
-      // Someone paying cash to branch (student payment, etc.)
-      const cashbox = await this.cashboxService.getCashbox(payment.receiverId);
-      cashboxId = cashbox.id;
-      direction = CashTransactionDirection.IN;
-      receivedByProfileId = payment.createdByProfileId || payment.senderId; // Admin who received
-      paidByProfileId = payment.senderId; // Student who paid
-
-      // Update cashbox balance (increase) and get the new balance
-      const updatedCashbox = await this.cashboxService.updateBalance(
-        cashboxId,
-        payment.amount,
-      );
-      balanceAfter = updatedCashbox.balance;
-    } else {
-      throw FinanceErrors.invalidCashPaymentConfiguration();
-    }
-
-    // Determine transaction type for cash transaction
-    const cashTransactionType = this.mapPaymentReasonToTransactionType(
-      payment.reason,
-      true,
-    );
-
-    // Create cash transaction record
-    const cashTransaction =
-      await this.cashTransactionService.createCashTransaction(
-        payment.senderType === WalletOwnerType.BRANCH
-          ? payment.senderId
-          : payment.receiverId,
-        cashboxId,
-        payment.amount,
-        direction,
-        receivedByProfileId,
-        cashTransactionType, // Use unified transaction type
-        paidByProfileId,
-        payment.id, // paymentId
-        balanceAfter, // balanceAfter
-      );
-
-    return {
-      transactions: [],
-      cashTransactions: [cashTransaction],
-    };
-  }
-
-  /**
-   * Complete executed payment
+   * Complete an executed payment
    */
   private async completeExecutedPayment(
     payment: Payment,
-    executionResult: {
-      transactions: Transaction[];
-      cashTransactions?: CashTransaction[];
-    },
+    executionResult: any,
   ): Promise<Payment> {
     // Only complete INTERNAL payments immediately
     // EXTERNAL payments remain PENDING until confirmed by provider
@@ -1627,113 +731,38 @@ export class PaymentService extends BaseService {
    */
   private async logPaymentExecution(
     payment: Payment,
-    result: {
-      transactions: Transaction[];
-      cashTransactions?: CashTransaction[];
-    },
+    result: any,
   ): Promise<void> {
     this.logger.log(`Payment executed successfully`, {
       paymentId: payment.id,
-      reason: payment.reason,
-      source: payment.source,
-      amount: payment.amount.toString(),
-      transactionCount: result.transactions.length,
-      cashTransactionCount: result.cashTransactions?.length || 0,
+      amount: payment.amount.toNumber(),
+      senderId: payment.senderId,
+      receiverId: payment.receiverId,
     });
   }
 
   /**
-   * Complete external payment (called by webhooks/callbacks)
-   */
-  async completeExternalPayment(
-    paymentId: string,
-    externalReference?: string,
-  ): Promise<Payment> {
-    const payment = await this.paymentRepository.findById(paymentId);
-
-    if (!payment) {
-      throw FinanceErrors.paymentNotFound();
-    }
-
-    if (payment.type !== PaymentType.EXTERNAL) {
-      throw FinanceErrors.invalidPaymentOperation('Cannot complete non-external payment');
-    }
-
-    if (payment.status !== PaymentStatus.PENDING) {
-      throw FinanceErrors.invalidPaymentOperation('Payment is not in pending status');
-    }
-
-    // Mark as completed
-    payment.status = PaymentStatus.COMPLETED;
-    payment.paidAt = new Date();
-
-    if (externalReference) {
-      payment.metadata = { ...payment.metadata, externalReference };
-    }
-
-    return await this.paymentRepository.savePayment(payment);
-  }
-
-  /**
-   * Fail external payment
-   */
-  async failExternalPayment(
-    paymentId: string,
-    failureReason: string,
-  ): Promise<Payment> {
-    const payment = await this.paymentRepository.findById(paymentId);
-
-    if (!payment) {
-      throw FinanceErrors.paymentNotFound();
-    }
-
-    if (payment.type !== PaymentType.EXTERNAL) {
-      throw FinanceErrors.invalidPaymentOperation('Cannot fail non-external payment');
-    }
-
-    if (payment.status !== PaymentStatus.PENDING) {
-      throw FinanceErrors.invalidPaymentOperation('Payment is not in pending status');
-    }
-
-    // Mark as failed
-    payment.status = PaymentStatus.FAILED;
-    payment.metadata = { ...payment.metadata, failureReason };
-
-    return await this.paymentRepository.savePayment(payment);
-  }
-
-  /**
-   * Map payment reason to cash transaction type
+   * Map payment reason to transaction type
    */
   private mapPaymentReasonToTransactionType(
     reason: PaymentReason,
-    isCashTransaction: boolean = false,
   ): TransactionType {
     switch (reason) {
-      // Teacher payouts
+      case PaymentReason.TOPUP:
+        return TransactionType.TOPUP;
+      case PaymentReason.SESSION_FEE:
+      case PaymentReason.MONTHLY_FEE:
+      case PaymentReason.CLASS_FEE:
+        return TransactionType.STUDENT_BILL;
       case PaymentReason.TEACHER_STUDENT_PAYOUT:
       case PaymentReason.TEACHER_HOUR_PAYOUT:
       case PaymentReason.TEACHER_SESSION_PAYOUT:
       case PaymentReason.TEACHER_MONTHLY_PAYOUT:
       case PaymentReason.TEACHER_CLASS_PAYOUT:
         return TransactionType.TEACHER_PAYOUT;
-
-      // Student fees
-      case PaymentReason.MONTHLY_FEE:
-      case PaymentReason.SESSION_FEE:
-        return TransactionType.STUDENT_BILL;
-      case PaymentReason.CLASS_FEE:
-        return TransactionType.STUDENT_BILL; // Class payments are also student bills
-
-      // Other transactions
       case PaymentReason.INTERNAL_TRANSFER:
-        return TransactionType.INTERNAL_TRANSFER;
-      case PaymentReason.TOPUP:
-        return TransactionType.TOPUP;
       default:
-        return isCashTransaction
-          ? TransactionType.CASH_DEPOSIT
-          : TransactionType.INTERNAL_TRANSFER;
+        return TransactionType.INTERNAL_TRANSFER;
     }
   }
 }

@@ -14,6 +14,7 @@ import { subHours } from 'date-fns';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { SessionsErrors } from '../exceptions/sessions.errors';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { StudentPaymentType } from '@/modules/classes/enums/student-payment-type.enum';
 
 @Injectable()
 export class SessionsRepository extends BaseRepository<Session> {
@@ -182,6 +183,7 @@ export class SessionsRepository extends BaseRepository<Session> {
       .leftJoinAndSelect('group.class', 'class')
       .leftJoinAndSelect('class.teacher', 'teacher')
       .leftJoinAndSelect('teacher.user', 'teacherUser')
+      .leftJoinAndSelect('class.studentPaymentStrategy', 'studentPaymentStrategy')
       // Filter by center using denormalized field (no join needed)
       .where('session.centerId = :centerId', { centerId });
 
@@ -257,6 +259,31 @@ export class SessionsRepository extends BaseRepository<Session> {
       queryBuilder.andWhere('session.status = :status', {
         status: filters.status,
       });
+    }
+
+    // Filter by student payment type
+    const filtersWithPaymentType = filters as PaginateSessionsDto & {
+      studentPaymentType?: StudentPaymentType;
+    };
+
+    if (filtersWithPaymentType.studentPaymentType) {
+      switch (filtersWithPaymentType.studentPaymentType) {
+        case 'SESSION':
+          queryBuilder.andWhere('studentPaymentStrategy.includeSession = :includeSession', {
+            includeSession: true,
+          });
+          break;
+        case 'MONTHLY':
+          queryBuilder.andWhere('studentPaymentStrategy.includeMonth = :includeMonth', {
+            includeMonth: true,
+          });
+          break;
+        case 'CLASS':
+          queryBuilder.andWhere('studentPaymentStrategy.includeClass = :includeClass', {
+            includeClass: true,
+          });
+          break;
+      }
     }
 
     // Handle dateFrom/dateTo if present (only in CalendarSessionsDto, not SessionFiltersDto)

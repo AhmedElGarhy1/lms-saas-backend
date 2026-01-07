@@ -539,6 +539,10 @@ export const PERMISSIONS = {
       action: 'student-billing:view-student-records',
       scope: PermissionScope.CENTER,
     },
+    REFUND_BILLING: {
+      action: 'student-billing:refund-billing',
+      scope: PermissionScope.CENTER,
+    },
   },
 
   // ===== TEACHER PAYOUTS PERMISSIONS =====
@@ -572,6 +576,26 @@ export const PERMISSIONS = {
     },
     VIEW_CASH_STATEMENT: {
       action: 'finance:view-cash-statement',
+      scope: PermissionScope.CENTER,
+    },
+
+    // Branch withdrawals
+    BRANCH_WALLET_WITHDRAW: {
+      action: 'finance:branch-wallet-withdraw',
+      scope: PermissionScope.CENTER,
+    },
+    BRANCH_CASH_WITHDRAW: {
+      action: 'finance:branch-cash-withdraw',
+      scope: PermissionScope.CENTER,
+    },
+
+    // Branch deposits
+    BRANCH_WALLET_DEPOSIT: {
+      action: 'finance:branch-wallet-deposit',
+      scope: PermissionScope.CENTER,
+    },
+    BRANCH_CASH_DEPOSIT: {
+      action: 'finance:branch-cash-deposit',
       scope: PermissionScope.CENTER,
     },
   },

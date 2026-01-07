@@ -12,7 +12,6 @@ interface RosterRow {
   studentCode: string | null;
   attendanceId: string | null;
   attendanceStatus: AttendanceStatus | null;
-  isManuallyMarked: boolean | null;
 }
 
 @Injectable()
@@ -42,6 +41,28 @@ export class AttendanceRepository extends BaseRepository<Attendance> {
     });
   }
 
+  async countAttendanceByStudentAndClass(
+    studentUserProfileId: string,
+    classId: string,
+    sinceDate?: Date,
+  ): Promise<number> {
+    let query = this.getRepository()
+      .createQueryBuilder('attendance')
+      .leftJoin('attendance.session', 'session')
+      .where('attendance.studentUserProfileId = :studentId', {
+        studentId: studentUserProfileId,
+      })
+      .andWhere('session.classId = :classId', { classId });
+
+    if (sinceDate) {
+      query = query.andWhere('attendance.createdAt >= :sinceDate', {
+        sinceDate,
+      });
+    }
+
+    return query.getCount();
+  }
+
   async paginateRosterWithAttendance(params: {
     sessionId: string;
     groupId: string;
@@ -56,7 +77,6 @@ export class AttendanceRepository extends BaseRepository<Attendance> {
       studentCode?: string;
       attendanceId?: string;
       attendanceStatus?: AttendanceStatus;
-      isManuallyMarked?: boolean;
     }>
   > {
     const { sessionId, groupId, status } = params;
@@ -107,7 +127,6 @@ export class AttendanceRepository extends BaseRepository<Attendance> {
       studentCode: attendance.student?.code || undefined,
       attendanceId: attendance.id,
       attendanceStatus: attendance.status,
-      isManuallyMarked: attendance.isManuallyMarked,
     }));
 
     const totalPages = Math.ceil(totalItems / limit);

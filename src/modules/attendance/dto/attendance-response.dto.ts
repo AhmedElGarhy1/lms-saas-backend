@@ -44,10 +44,6 @@ export class AttendanceResponseDto {
   @Expose()
   status: AttendanceStatus;
 
-  @ApiProperty({ description: 'Whether it was marked manually' })
-  @Expose()
-  isManuallyMarked: boolean;
-
   // TODO: remove this we already have createdBy and updatedBy
   @ApiProperty({
     description: 'Marked by staff userProfileId',

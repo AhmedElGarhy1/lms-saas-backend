@@ -3,7 +3,6 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Transactional } from '@nestjs-cls/transactional';
 import { AttendanceService } from '../services/attendance.service';
 import { ScanAttendanceDto } from '../dto/scan-attendance.dto';
-import { ManualAttendanceDto } from '../dto/manual-attendance.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { GetUser, ManagerialOnly } from '@/shared/common/decorators';
@@ -25,33 +24,18 @@ import { MarkAllAbsentResponseDto } from '../dto/mark-all-absent-response.dto';
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
-  @Post('scan')
+  @Post('mark')
   @ApiOperation({
-    summary: 'Scan attendance (present/late) for a student in a session',
+    summary: 'Mark attendance for a student in a session',
+    description:
+      'Records student attendance with automatic status computation based on session timing',
   })
   @ApiResponse({ status: 200, description: 'Attendance recorded successfully' })
   @Permissions(PERMISSIONS.SESSIONS.UPDATE)
   @Transactional()
   @SerializeOptions({ type: AttendanceResponseDto })
-  async scan(@Body() dto: ScanAttendanceDto, @GetUser() actor: ActorUser) {
-    const result = await this.attendanceService.scan(
-      dto.sessionId,
-      dto.studentUserProfileId,
-      actor,
-    );
-    return ControllerResponse.success(result);
-  }
-
-  @Post('manual')
-  @ApiOperation({
-    summary: 'Manually mark attendance for a student in a session',
-  })
-  @ApiResponse({ status: 200, description: 'Attendance recorded successfully' })
-  @Permissions(PERMISSIONS.SESSIONS.UPDATE)
-  @Transactional()
-  @SerializeOptions({ type: AttendanceResponseDto })
-  async manual(@Body() dto: ManualAttendanceDto, @GetUser() actor: ActorUser) {
-    const result = await this.attendanceService.manualMark(
+  async mark(@Body() dto: ScanAttendanceDto, @GetUser() actor: ActorUser) {
+    const result = await this.attendanceService.markAttendance(
       dto.sessionId,
       dto.studentUserProfileId,
       actor,

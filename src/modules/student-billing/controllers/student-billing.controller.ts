@@ -10,12 +10,11 @@ import {
 } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { StudentBillingService } from '../services/student-billing.service';
+import { StudentBillingRefundService } from '../services/student-billing-refund.service';
 import { CreateStudentChargeDto } from '../dto/create-student-charge.dto';
-import { PaymentSource } from '../entities/student-class-subscription.entity';
-import { StudentClassSubscription } from '../entities/student-class-subscription.entity';
-import { StudentSessionCharge } from '../entities/student-session-charge.entity';
-import { StudentClassCharge } from '../entities/student-class-charge.entity';
-import { StudentBillingRecord } from '../entities/student-billing-record.entity';
+import { RefundStudentBillingDto } from '../dto/refund-student-billing.dto';
+import { PaymentSource } from '../entities/student-charge.entity';
+import { StudentCharge } from '../entities/student-charge.entity';
 import { PaginateStudentBillingRecordsDto } from '../dto/paginate-student-billing-records.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
@@ -27,7 +26,10 @@ import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 @ManagerialOnly()
 @Controller('billing/students')
 export class StudentBillingController {
-  constructor(private readonly billingService: StudentBillingService) {}
+  constructor(
+    private readonly billingService: StudentBillingService,
+    private readonly billingRefundService: StudentBillingRefundService,
+  ) {}
 
   @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_CHARGE)
   @Post('charge/cash')
@@ -36,11 +38,7 @@ export class StudentBillingController {
   async createCashCharge(
     @Body() dto: CreateStudentChargeDto,
     @GetUser() actor: ActorUser,
-  ): Promise<
-    ControllerResponse<
-      StudentClassSubscription | StudentSessionCharge | StudentClassCharge
-    >
-  > {
+  ): Promise<ControllerResponse<StudentCharge>> {
     const result = await this.billingService.createStudentCharge(
       dto,
       PaymentSource.CASH,
@@ -56,11 +54,7 @@ export class StudentBillingController {
   async createWalletCharge(
     @Body() dto: CreateStudentChargeDto,
     @GetUser() actor: ActorUser,
-  ): Promise<
-    ControllerResponse<
-      StudentClassSubscription | StudentSessionCharge | StudentClassCharge
-    >
-  > {
+  ): Promise<ControllerResponse<StudentCharge>> {
     const result = await this.billingService.createStudentCharge(
       dto,
       PaymentSource.WALLET,
@@ -74,11 +68,41 @@ export class StudentBillingController {
   async getStudentBillingRecords(
     @Query() paginateDto: PaginateStudentBillingRecordsDto,
     @GetUser() actor: ActorUser,
-  ): Promise<ControllerResponse<Pagination<StudentBillingRecord>>> {
+  ): Promise<ControllerResponse<Pagination<StudentCharge>>> {
     const records = await this.billingService.getStudentBillingRecords(
       paginateDto,
       actor,
     );
     return ControllerResponse.success(records);
+  }
+
+  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_RECORDS)
+  @Get('records/:id')
+  async getStudentBillingRecordById(
+    @Param('id') id: string,
+    @GetUser() actor: ActorUser,
+  ): Promise<ControllerResponse<StudentCharge>> {
+    const record = await this.billingService.getStudentBillingRecordById(
+      id,
+      actor,
+    );
+
+    return ControllerResponse.success(record);
+  }
+
+  @Permissions(PERMISSIONS.STUDENT_BILLING.REFUND_BILLING)
+  @Post('records/:id/refund')
+  @HttpCode(HttpStatus.OK)
+  async refundStudentBilling(
+    @Param('id') billingRecordId: string,
+    @Body() dto: RefundStudentBillingDto,
+    @GetUser() actor: ActorUser,
+  ): Promise<ControllerResponse<StudentCharge>> {
+    const result = await this.billingRefundService.refundStudentBilling(
+      billingRecordId,
+      dto.reason,
+      actor,
+    );
+    return ControllerResponse.success(result);
   }
 }

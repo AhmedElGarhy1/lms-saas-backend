@@ -52,8 +52,7 @@ export class MeController {
   @Get('wallet/total')
   @ApiOperation({
     summary: 'Get my total wallet balance',
-    description:
-      'Get aggregated balance information across all my wallets.',
+    description: 'Get aggregated balance information across all my wallets.',
   })
   @ApiResponse({
     status: 200,
@@ -95,7 +94,6 @@ export class MeController {
     return ControllerResponse.success(statement);
   }
 
-
   @Get('payments')
   @ApiOperation({
     summary: 'Get my payments statement',
@@ -111,7 +109,7 @@ export class MeController {
     @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<Pagination<UserPaymentStatementItemDto>>> {
     const result = await this.paymentService.getUserPaymentsPaginated(
-      actor.id,
+      actor.userProfileId,
       dto,
       actor.centerId,
     );
@@ -147,6 +145,7 @@ export class MeController {
       Money.from(dto.amount),
       actor.userProfileId, // payer is current user
       'EGP', // Default to EGP, can be made configurable
+      actor, // Pass the actor
       'Wallet Top-up', // Description
       undefined, // gatewayType - defaults to Paymob
       dto.idempotencyKey,

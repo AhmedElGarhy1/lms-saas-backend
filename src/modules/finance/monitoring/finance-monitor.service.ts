@@ -142,26 +142,16 @@ export class FinanceMonitorService {
   updateWalletBalance(
     walletId: string,
     balance: Money,
-    lockedBalance: Money,
   ): void {
     try {
       this.walletBalanceGauge.set(
-        { wallet_id: walletId, type: 'available' },
-        balance.subtract(lockedBalance).toNumber(),
-      );
-      this.walletBalanceGauge.set(
-        { wallet_id: walletId, type: 'locked' },
-        lockedBalance.toNumber(),
-      );
-      this.walletBalanceGauge.set(
-        { wallet_id: walletId, type: 'total' },
+        { wallet_id: walletId, type: 'balance' },
         balance.toNumber(),
       );
     } catch (error) {
       this.logger.warn('Failed to update wallet balance metrics', {
         wallet_id: walletId,
         balance: balance.toString(),
-        locked_balance: lockedBalance.toString(),
         error: error.message,
       });
     }

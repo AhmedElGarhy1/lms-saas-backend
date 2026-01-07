@@ -21,8 +21,6 @@ describe('WalletService', () => {
     ownerId: 'user-123',
     ownerType: WalletOwnerType.USER_PROFILE,
     balance: Money.from(100.0),
-    bonusBalance: Money.zero(),
-    lockedBalance: Money.from(20.0),
     createdAt: new Date(),
     updatedAt: new Date(),
   };

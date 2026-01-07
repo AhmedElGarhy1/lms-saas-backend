@@ -84,10 +84,7 @@ export class PaymentsController {
     @Query() dto: PaginatePaymentDto,
     @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<Pagination<UserPaymentStatementItemDto>>> {
-    const result = await this.paymentService.paginatePaymentsEnhanced(
-      dto,
-      actor,
-    );
+    const result = await this.paymentService.paginatePayments(dto, actor);
 
     return ControllerResponse.success(result);
   }

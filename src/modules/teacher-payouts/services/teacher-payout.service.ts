@@ -20,6 +20,7 @@ import { Money } from '@/shared/common/utils/money.util';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { ClassAccessService } from '@/modules/classes/services/class-access.service';
+import { SYSTEM_ACTOR } from '@/shared/common/constants/system-actor.constant';
 
 @Injectable()
 export class TeacherPayoutService extends BaseService {
@@ -39,7 +40,10 @@ export class TeacherPayoutService extends BaseService {
     return this.payoutRepository.paginateTeacherPayouts(dto, actor);
   }
 
-  async getPayoutById(id: string, actor: ActorUser): Promise<TeacherPayoutRecord> {
+  async getPayoutById(
+    id: string,
+    actor: ActorUser,
+  ): Promise<TeacherPayoutRecord> {
     const payout = await this.payoutRepository.findById(id);
     if (!payout) {
       throw TeacherPayoutErrors.payoutNotFound();
@@ -119,9 +123,8 @@ export class TeacherPayoutService extends BaseService {
     newStatus: PayoutStatus,
   ): void {
     const validTransitions: Record<PayoutStatus, PayoutStatus[]> = {
-      [PayoutStatus.PENDING]: [PayoutStatus.PAID, PayoutStatus.REJECTED],
+      [PayoutStatus.PENDING]: [PayoutStatus.PAID],
       [PayoutStatus.PAID]: [], // Terminal state
-      [PayoutStatus.REJECTED]: [], // Terminal state
     };
 
     if (!validTransitions[currentStatus]?.includes(newStatus)) {
@@ -129,7 +132,9 @@ export class TeacherPayoutService extends BaseService {
     }
   }
 
-  private getPaymentReasonForTeacherPayout(unitType: TeacherPaymentUnit): PaymentReason {
+  private getPaymentReasonForTeacherPayout(
+    unitType: TeacherPaymentUnit,
+  ): PaymentReason {
     switch (unitType) {
       case TeacherPaymentUnit.STUDENT:
         return PaymentReason.TEACHER_STUDENT_PAYOUT;
@@ -164,7 +169,10 @@ export class TeacherPayoutService extends BaseService {
       correlationId: payout.id,
     };
 
-    const result = await this.paymentService.createAndExecutePayment(request);
+    const result = await this.paymentService.createAndExecutePayment(
+      request,
+      SYSTEM_ACTOR,
+    );
     return result.payment;
   }
 

@@ -25,13 +25,6 @@ export class SessionRosterStudentDto {
   })
   @Expose()
   attendanceId?: string;
-
-  @ApiProperty({
-    description: 'Whether it was marked manually',
-    required: false,
-  })
-  @Expose()
-  isManuallyMarked?: boolean;
 }
 
 export class SessionRosterResponseDto {

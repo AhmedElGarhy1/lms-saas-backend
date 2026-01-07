@@ -9,6 +9,7 @@ import { GroupStudent } from '../entities/group-student.entity';
 import { ClassesErrors } from '../exceptions/classes.errors';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { ClassStatus } from '../enums/class-status.enum';
 
 export interface GroupWithStudentCount extends Group {
   studentsCount: number;
@@ -86,6 +87,12 @@ export class GroupsRepository extends BaseRepository<Group> {
     if (paginateDto.branchId) {
       queryBuilder.andWhere('group.branchId = :branchId', {
         branchId: paginateDto.branchId,
+      });
+    }
+
+    if (paginateDto.activeClassesOnly) {
+      queryBuilder.andWhere('class.status = :activeStatus', {
+        activeStatus: ClassStatus.ACTIVE,
       });
     }
 
