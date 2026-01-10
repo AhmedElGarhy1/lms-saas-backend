@@ -3,7 +3,7 @@ import { Transactional } from '@nestjs-cls/transactional';
 import { Money } from '@/shared/common/utils/money.util';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
-import { PaymentSource } from '../enums/payment-source.enum';
+import { PaymentMethod } from '../enums/payment-method.enum';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { FinanceErrors } from '../exceptions/finance.errors';
 import { DepositResult } from '../interfaces/withdrawal.interface';
@@ -50,11 +50,10 @@ export class BranchDepositService {
           senderType: WalletOwnerType.USER_PROFILE,
           receiverId: branchId,
           receiverType: WalletOwnerType.BRANCH,
-          reason: PaymentReason.DEPOSIT,
-          source: PaymentSource.CASH,
+          reason: PaymentReason.BRANCH_DEPOSIT,
+          source: PaymentMethod.WALLET,
           correlationId: randomUUID(),
           metadata: {
-            depositType: 'wallet',
             notes,
           },
         },
@@ -136,11 +135,10 @@ export class BranchDepositService {
           senderType: WalletOwnerType.USER_PROFILE,
           receiverId: branchId,
           receiverType: WalletOwnerType.BRANCH,
-          reason: PaymentReason.DEPOSIT,
-          source: PaymentSource.CASH, // This will trigger cash transaction creation
+          reason: PaymentReason.BRANCH_DEPOSIT,
+          source: PaymentMethod.CASH, // This will trigger cash transaction creation
           correlationId: randomUUID(),
           metadata: {
-            depositType: 'cashbox',
             notes,
           },
         },

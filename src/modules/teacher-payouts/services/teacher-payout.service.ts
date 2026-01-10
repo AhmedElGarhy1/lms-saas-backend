@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { TeacherPayoutRecordsRepository } from '../repositories/teacher-payout-records.repository';
 import { TeacherPayoutRecord } from '../entities/teacher-payout-record.entity';
 import { PaginateTeacherPayoutsDto } from '../dto/paginate-teacher-payouts.dto';
@@ -14,16 +14,20 @@ import {
   ExecutePaymentRequest,
 } from '@/modules/finance/services/payment.service';
 import { PaymentReason } from '@/modules/finance/enums/payment-reason.enum';
-import { PaymentSource as FinancePaymentSource } from '@/modules/finance/enums/payment-source.enum';
+import { PaymentMethod as FinancePaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { WalletOwnerType } from '@/modules/finance/enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
+import { Class } from '@/modules/classes/entities/class.entity';
+import { TeacherPaymentStrategyDto } from '@/modules/classes/dto/teacher-payment-strategy.dto';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { ClassAccessService } from '@/modules/classes/services/class-access.service';
 import { SYSTEM_ACTOR } from '@/shared/common/constants/system-actor.constant';
 
 @Injectable()
 export class TeacherPayoutService extends BaseService {
+  private readonly logger = new Logger(TeacherPayoutService.name);
+
   constructor(
     private readonly payoutRepository: TeacherPayoutRecordsRepository,
     private readonly paymentService: PaymentService,
@@ -77,9 +81,142 @@ export class TeacherPayoutService extends BaseService {
       year: dto.year,
       branchId: dto.branchId,
       centerId: dto.centerId,
-      status: PayoutStatus.PENDING,
+      status:
+        dto.unitType === TeacherPaymentUnit.CLASS
+          ? PayoutStatus.INSTALLMENT
+          : PayoutStatus.PENDING,
       paymentSource: undefined, // Will be set when paying
+      totalPaid: dto.totalPaid || Money.zero(), // Start with nothing paid
+      lastPaymentAmount: dto.lastPaymentAmount, // Last payment amount
     });
+  }
+
+  // CLASS payout specific methods
+  async createClassPayout(
+    classEntity: Class,
+    strategy: TeacherPaymentStrategyDto,
+    initialPaymentAmount?: number,
+    paymentMethod?: FinancePaymentMethod,
+  ): Promise<TeacherPayoutRecord> {
+    const payout = await this.createPayout({
+      teacherUserProfileId: classEntity.teacherUserProfileId,
+      unitType: TeacherPaymentUnit.CLASS,
+      unitPrice: strategy.amount, // Total class amount
+      unitCount: 1,
+      classId: classEntity.id,
+      branchId: classEntity.branchId,
+      centerId: classEntity.centerId,
+      totalPaid: Money.zero(), // Start with zero paid
+      lastPaymentAmount: undefined, // No payments yet
+    });
+
+    // If initial payment amount is specified, pay the first installment
+    this.logger.log(
+      `Creating CLASS payout for class ${classEntity.id}, initialPaymentAmount: ${initialPaymentAmount}`,
+    );
+    if (initialPaymentAmount && initialPaymentAmount > 0) {
+      this.logger.log(
+        `Executing initial payment of ${initialPaymentAmount} for class ${classEntity.id}`,
+      );
+
+      // Execute payment using specified method (default to WALLET)
+      const paymentMethodToUse = paymentMethod || FinancePaymentMethod.WALLET;
+      await this.executeInstallmentPayment(
+        payout,
+        initialPaymentAmount,
+        paymentMethodToUse,
+      );
+    }
+
+    return payout;
+  }
+
+  async getClassPayout(
+    classId: string,
+    teacherUserProfileId?: string,
+  ): Promise<TeacherPayoutRecord | null> {
+    return this.payoutRepository.getClassPayout(classId, teacherUserProfileId);
+  }
+
+  async payClassInstallment(
+    payoutId: string,
+    installmentAmount: number,
+    paymentMethod: FinancePaymentMethod,
+    actor: ActorUser,
+  ): Promise<TeacherPayoutRecord> {
+    const payout = await this.getPayoutById(payoutId, actor);
+
+    // Validate it's a CLASS payout
+    if (payout.unitType !== TeacherPaymentUnit.CLASS) {
+      throw TeacherPayoutErrors.invalidPayoutType();
+    }
+
+    // Validate installment amount
+    const payoutTotalAmount = payout.unitPrice
+      ? Money.from(payout.unitPrice)
+      : Money.zero();
+    const remaining = payoutTotalAmount.subtract(payout.totalPaid);
+    if (Money.from(installmentAmount).greaterThan(remaining)) {
+      throw TeacherPayoutErrors.payoutAmountExceedsRemaining();
+    }
+
+    if (Money.from(installmentAmount).lessThanOrEqual(Money.zero())) {
+      throw TeacherPayoutErrors.invalidPayoutAmount();
+    }
+
+    // Execute the installment payment
+    return this.executeInstallmentPayment(
+      payout,
+      installmentAmount,
+      paymentMethod,
+    );
+  }
+
+  /**
+   * Execute installment payment for CLASS payouts
+   * Updates payout record and handles status transitions
+   */
+  private async executeInstallmentPayment(
+    payout: TeacherPayoutRecord,
+    paymentAmount: number,
+    paymentMethod: FinancePaymentMethod,
+  ): Promise<TeacherPayoutRecord> {
+    // Create a temporary payout record for payment (needed by existing flow)
+    const tempPayoutForPayment = {
+      ...payout,
+      unitPrice: paymentAmount, // Use the payment amount for calculation
+      unitCount: 1,
+    };
+
+    // Execute payment
+    const payment = await this.executePaymentTransaction(
+      tempPayoutForPayment,
+      paymentMethod,
+    );
+
+    this.logger.log(
+      `Payment executed successfully: ${payment.id}, amount: ${payment.amount}, method: ${paymentMethod}`,
+    );
+
+    // Update the actual payout record
+    payout.totalPaid = payout.totalPaid.add(Money.from(paymentAmount));
+    payout.lastPaymentAmount = Money.from(paymentAmount); // Last payment amount
+    payout.paymentId = payment.id;
+    payout.paymentSource = paymentMethod;
+
+    // Check if fully paid
+    const totalAmount = payout.unitPrice
+      ? Money.from(payout.unitPrice)
+      : Money.zero();
+    payout.status = payout.totalPaid.greaterThanOrEqual(totalAmount)
+      ? PayoutStatus.PAID
+      : PayoutStatus.INSTALLMENT;
+
+    this.logger.log(
+      `Updated payout record: totalPaid=${payout.totalPaid}, lastPaymentAmount=${payout.lastPaymentAmount}, status=${payout.status}`,
+    );
+
+    return this.payoutRepository.savePayout(payout);
   }
 
   async updatePayoutStatus(
@@ -123,7 +260,8 @@ export class TeacherPayoutService extends BaseService {
     newStatus: PayoutStatus,
   ): void {
     const validTransitions: Record<PayoutStatus, PayoutStatus[]> = {
-      [PayoutStatus.PENDING]: [PayoutStatus.PAID],
+      [PayoutStatus.PENDING]: [PayoutStatus.PAID], // SESSION/HOUR: PENDING → PAID
+      [PayoutStatus.INSTALLMENT]: [PayoutStatus.PAID], // CLASS: INSTALLMENT → PAID
       [PayoutStatus.PAID]: [], // Terminal state
     };
 
@@ -156,10 +294,10 @@ export class TeacherPayoutService extends BaseService {
    */
   private async executePaymentTransaction(
     payout: TeacherPayoutRecord,
-    paymentSource: FinancePaymentSource,
+    paymentSource: FinancePaymentMethod,
   ) {
     const request: ExecutePaymentRequest = {
-      amount: new Money(payout.unitPrice * payout.unitCount),
+      amount: new Money((payout.unitPrice || 0) * payout.unitCount),
       senderId: payout.branchId,
       senderType: WalletOwnerType.BRANCH,
       receiverId: payout.teacherUserProfileId,

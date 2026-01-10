@@ -1,12 +1,12 @@
 export enum TransactionType {
-  // Business transaction types (unified for wallet and cash)
+  // Business transaction types
   STUDENT_BILL = 'STUDENT_BILL', // All student payments
   TEACHER_PAYOUT = 'TEACHER_PAYOUT', // All teacher compensation
   INTERNAL_TRANSFER = 'INTERNAL_TRANSFER', // All system transfers
   TOPUP = 'TOPUP', // Balance additions
   REFUND = 'REFUND', // Payment reversals
 
-  // Cash-specific operations
-  CASH_DEPOSIT = 'CASH_DEPOSIT', // Cash received into system
-  CASH_WITHDRAWAL = 'CASH_WITHDRAWAL', // Cash paid out from system
+  // Branch wallet operations
+  BRANCH_WITHDRAWAL = 'BRANCH_WITHDRAWAL', // Branch wallet withdrawals (branch → staff)
+  BRANCH_DEPOSIT = 'BRANCH_DEPOSIT', // Branch wallet deposits (staff → branch)
 }

@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { PaymentReason } from '../enums/payment-reason.enum';
-import { PaymentSource } from '../enums/payment-source.enum';
+import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { Exists } from '@/shared/common/decorators/exists.decorator';
@@ -70,11 +70,11 @@ export class CreatePaymentDto {
 
   @ApiProperty({
     description: 'Payment source',
-    enum: PaymentSource,
-    example: PaymentSource.WALLET,
+    enum: PaymentMethod,
+    example: PaymentMethod.WALLET,
   })
-  @IsEnum(PaymentSource)
-  source: PaymentSource;
+  @IsEnum(PaymentMethod)
+  source: PaymentMethod;
 
   @ApiProperty({
     description: 'Reference type (if payment references a transaction)',

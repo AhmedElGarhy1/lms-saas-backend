@@ -212,7 +212,7 @@ export class FinanceErrors extends BaseErrorHelpers {
     return this.createNoDetails(FinanceErrorCode.INVALID_PAYMENT_DATA);
   }
 
-  static unsupportedPaymentSource(): DomainException {
+  static unsupportedPaymentMethod(): DomainException {
     return this.createNoDetails(FinanceErrorCode.UNSUPPORTED_PAYMENT_SOURCE);
   }
 
@@ -220,18 +220,8 @@ export class FinanceErrors extends BaseErrorHelpers {
     return this.createNoDetails(FinanceErrorCode.PAYMENT_ALREADY_EXISTS);
   }
 
-  static insufficientWalletBalance(
-    currentBalance?: number,
-    requiredAmount?: number,
-  ): DomainException {
-    return this.createWithDetails(
-      FinanceErrorCode.INSUFFICIENT_WALLET_BALANCE,
-      {
-        currentBalance,
-        requiredAmount,
-        balanceType: 'wallet',
-      },
-    );
+  static insufficientWalletBalance(): DomainException {
+    return this.createNoDetails(FinanceErrorCode.INSUFFICIENT_WALLET_BALANCE);
   }
 
   static insufficientCashBalance(

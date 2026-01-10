@@ -13,6 +13,7 @@ import { StudentBillingService } from '../services/student-billing.service';
 import { StudentBillingRefundService } from '../services/student-billing-refund.service';
 import { CreateStudentChargeDto } from '../dto/create-student-charge.dto';
 import { RefundStudentBillingDto } from '../dto/refund-student-billing.dto';
+import { PayClassInstallmentDto } from '../dto/pay-class-installment.dto';
 import { PaymentSource } from '../entities/student-charge.entity';
 import { StudentCharge } from '../entities/student-charge.entity';
 import { PaginateStudentBillingRecordsDto } from '../dto/paginate-student-billing-records.dto';
@@ -101,6 +102,70 @@ export class StudentBillingController {
     const result = await this.billingRefundService.refundStudentBilling(
       billingRecordId,
       dto.reason,
+      actor,
+    );
+    return ControllerResponse.success(result);
+  }
+
+  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_CHARGE)
+  @Post('classes/pay-installment/cash')
+  @Transactional()
+  @HttpCode(HttpStatus.OK)
+  async payClassInstallmentCash(
+    @Body() dto: PayClassInstallmentDto,
+    @GetUser() actor: ActorUser,
+  ): Promise<ControllerResponse<StudentCharge>> {
+    const result = await this.billingService.payClassInstallment(
+      dto.classId,
+      dto.studentUserProfileId,
+      dto.amount,
+      PaymentSource.CASH,
+      actor,
+    );
+    return ControllerResponse.success(result);
+  }
+
+  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_CHARGE)
+  @Post('classes/pay-installment/wallet')
+  @Transactional()
+  @HttpCode(HttpStatus.OK)
+  async payClassInstallmentWallet(
+    @Body() dto: PayClassInstallmentDto,
+    @GetUser() actor: ActorUser,
+  ): Promise<ControllerResponse<StudentCharge>> {
+    const result = await this.billingService.payClassInstallment(
+      dto.classId,
+      dto.studentUserProfileId,
+      dto.amount,
+      PaymentSource.WALLET,
+      actor,
+    );
+    return ControllerResponse.success(result);
+  }
+
+  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_RECORDS)
+  @Get('classes/:classId/students/:studentUserProfileId/progress')
+  async getClassChargeProgress(
+    @Param('classId') classId: string,
+    @Param('studentUserProfileId') studentUserProfileId: string,
+    @GetUser() actor: ActorUser,
+  ): Promise<ControllerResponse<any>> {
+    const result = await this.billingService.getClassChargeProgress(
+      studentUserProfileId,
+      classId,
+      actor,
+    );
+    return ControllerResponse.success(result);
+  }
+
+  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_RECORDS)
+  @Get('students/:studentUserProfileId/progress/summary')
+  async getStudentBillingSummary(
+    @Param('studentUserProfileId') studentUserProfileId: string,
+    @GetUser() actor: ActorUser,
+  ): Promise<ControllerResponse<any>> {
+    const result = await this.billingService.getStudentBillingSummary(
+      studentUserProfileId,
       actor,
     );
     return ControllerResponse.success(result);

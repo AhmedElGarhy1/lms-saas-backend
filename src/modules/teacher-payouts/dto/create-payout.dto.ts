@@ -1,4 +1,5 @@
 import { IsUUID, IsEnum, IsNumber, Min, IsOptional } from 'class-validator';
+import { Money } from '@/shared/common/utils/money.util';
 import { ApiProperty } from '@nestjs/swagger';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
 
@@ -19,12 +20,14 @@ export class CreatePayoutDto {
   unitType: TeacherPaymentUnit;
 
   @ApiProperty({
-    description: 'Price per unit',
-    example: 50.0,
+    description: 'Total amount for CLASS payouts',
+    example: 500.0,
+    required: false,
   })
+  @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  unitPrice: number;
+  unitPrice?: number;
 
   @ApiProperty({
     description: 'Number of units',
@@ -91,4 +94,20 @@ export class CreatePayoutDto {
   @IsOptional()
   @IsUUID()
   centerId: string;
+
+  @ApiProperty({
+    description: 'Total paid amount (optional)',
+    example: '0.00',
+    required: false,
+  })
+  @IsOptional()
+  totalPaid?: Money;
+
+  @ApiProperty({
+    description: 'Last payment amount (optional)',
+    example: '100.00',
+    required: false,
+  })
+  @IsOptional()
+  lastPaymentAmount?: Money;
 }

@@ -1,10 +1,9 @@
-import { IsUUID, IsEnum, IsNumber, Min, IsOptional } from 'class-validator';
-import { PaymentSource } from '../entities/student-charge.entity';
+import { IsNumber, IsPositive, IsUUID } from 'class-validator';
 import { BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Class } from '@/modules/classes/entities/class.entity';
 
-export class CreateClassChargeDto {
+export class PayClassInstallmentDto {
   @IsUUID()
   @IsUserProfile(ProfileType.STUDENT)
   studentUserProfileId: string;
@@ -13,10 +12,9 @@ export class CreateClassChargeDto {
   @BelongsToCenter(Class)
   classId: string;
 
-  @IsEnum(PaymentSource)
-  paymentSource: PaymentSource;
-
   @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  initialPaymentAmount: number; // Required: Initial payment amount for installment payments
+  @IsPositive()
+  amount: number;
+
+  // Removed paymentSource - now handled by separate endpoints
 }

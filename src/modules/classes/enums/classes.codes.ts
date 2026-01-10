@@ -1,6 +1,7 @@
 export enum ClassErrorCode {
   // Class existence and lookup errors
   CLASS_NOT_FOUND = 'CLS_001',
+  CLASS_ALREADY_EXISTS = 'CLS_002',
 
   // Class status and lifecycle errors
   CLASS_STATUS_TRANSITION_INVALID = 'CLS_005',

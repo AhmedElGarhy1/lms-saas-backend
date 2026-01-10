@@ -23,4 +23,16 @@ export class TeacherPayoutErrors extends BaseErrorHelpers {
   static payoutAlreadyExists(): DomainException {
     return this.createNoDetails(TeacherPayoutErrorCode.PAYOUT_ALREADY_EXISTS);
   }
+
+  static invalidPayoutType(): DomainException {
+    return this.createNoDetails(TeacherPayoutErrorCode.PAYOUT_INVALID_TYPE);
+  }
+
+  static payoutAmountExceedsRemaining(): DomainException {
+    return this.createNoDetails(TeacherPayoutErrorCode.PAYOUT_AMOUNT_EXCEEDS_REMAINING);
+  }
+
+  static invalidPayoutAmount(): DomainException {
+    return this.createNoDetails(TeacherPayoutErrorCode.PAYOUT_INVALID_AMOUNT);
+  }
 }

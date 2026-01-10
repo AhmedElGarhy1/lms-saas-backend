@@ -7,6 +7,7 @@ import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { Money } from '@/shared/common/utils/money.util';
 import { UserWalletStatementItemDto } from '../dto/wallet-statement.dto';
+import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 
 /**
  * Transaction with signed amount for statement calculations
@@ -274,6 +275,170 @@ export class TransactionRepository extends BaseRepository<Transaction> {
             fromUserId: raw.fromUserId,
             toUserId: raw.toUserId,
           } as TransactionWithNames;
+        },
+      },
+    )) as Pagination<TransactionWithNames>;
+
+    // Transform to UserWalletStatementItemDto
+    const items: UserWalletStatementItemDto[] = result.items.map(
+      (transaction: TransactionWithNames) => {
+        // Sign convention: negative if wallet is sender, positive if receiver
+        const signedAmount =
+          transaction.fromWalletId === walletId
+            ? transaction.amount.multiply(-1) // Outgoing: negative
+            : transaction.amount; // Incoming: positive
+
+        // Determine user's role in the transaction
+        const userRole: 'sender' | 'receiver' =
+          transaction.fromWalletId === walletId ? 'sender' : 'receiver';
+
+        return {
+          id: transaction.id,
+          createdAt: transaction.createdAt,
+          updatedAt: transaction.updatedAt,
+          fromWalletId: transaction.fromWalletId,
+          toWalletId: transaction.toWalletId,
+          amount: transaction.amount.toNumber(),
+          signedAmount: signedAmount.toNumber(),
+          balanceAfter: transaction.balanceAfter.toNumber(),
+          type: transaction.type,
+          correlationId: transaction.correlationId,
+          fromName: transaction.fromName,
+          toName: transaction.toName,
+          userRole,
+        };
+      },
+    );
+
+    return {
+      ...result,
+      items,
+    };
+  }
+
+  /**
+   * Unified wallet statement implementation - single source of truth
+   * Handles both USER_PROFILE and BRANCH wallet owners, avoids transaction duplicates
+   */
+  async getUnifiedWalletStatementPaginated(
+    walletId: string,
+    dto: PaginateTransactionDto,
+  ): Promise<Pagination<UserWalletStatementItemDto>> {
+    const queryBuilder = this.getRepository()
+      .manager.createQueryBuilder(Transaction, 't')
+      .leftJoin('wallets', 'fw', 't.fromWalletId = fw.id')
+      .leftJoin('wallets', 'tw', 't.toWalletId = tw.id')
+
+      // From side: user profiles
+      .leftJoin(
+        'user_profiles',
+        'fromUserProfile',
+        'fw.ownerId = fromUserProfile.id AND fw.ownerType = :userProfileType',
+      )
+      .leftJoin('users', 'fromUser', 'fromUserProfile.userId = fromUser.id')
+
+      // From side: branches
+      .leftJoin(
+        'branches',
+        'fromBranch',
+        'fw.ownerId = fromBranch.id AND fw.ownerType = :branchType',
+      )
+      .leftJoin(
+        'centers',
+        'fromCenter',
+        'fromBranch.centerId = fromCenter.id',
+      )
+
+      // To side: user profiles
+      .leftJoin(
+        'user_profiles',
+        'toUserProfile',
+        'tw.ownerId = toUserProfile.id AND tw.ownerType = :userProfileType',
+      )
+      .leftJoin('users', 'toUser', 'toUserProfile.userId = toUser.id')
+
+      // To side: branches
+      .leftJoin(
+        'branches',
+        'toBranch',
+        'tw.ownerId = toBranch.id AND tw.ownerType = :branchType',
+      )
+      .leftJoin(
+        'centers',
+        'toCenter',
+        'toBranch.centerId = toCenter.id',
+      )
+
+      // Optimized WHERE condition: avoid duplicates by showing only one side per transaction
+      // For the target wallet, show transactions where it's the recipient (positive amount)
+      // OR where it's the sender but amount is negative (indicating outgoing)
+      .where(
+        `
+          ((t.toWalletId = :walletId AND t.amount > 0)
+           OR
+           (t.fromWalletId = :walletId AND t.amount < 0))
+        `,
+        { walletId },
+      )
+
+      // Use COALESCE to get names from either users or branches
+      .addSelect(
+        "COALESCE(fromUser.name, CONCAT(fromCenter.name, CONCAT(' - ', fromBranch.city)))",
+        'fromName',
+      )
+      .addSelect(
+        "COALESCE(toUser.name, CONCAT(toCenter.name, CONCAT(' - ', toBranch.city)))",
+        'toName',
+      )
+
+      .setParameters({
+        walletId,
+        userProfileType: WalletOwnerType.USER_PROFILE,
+        branchType: WalletOwnerType.BRANCH,
+      });
+
+    // Apply filters
+    if (dto.type) {
+      queryBuilder.andWhere('t.type = :type', { type: dto.type });
+    }
+    if (dto.correlationId) {
+      queryBuilder.andWhere('t.correlationId = :correlationId', {
+        correlationId: dto.correlationId,
+      });
+    }
+
+    // Apply date filters
+    if (dto.dateFrom) {
+      queryBuilder.andWhere('t.createdAt >= :dateFrom', {
+        dateFrom: dto.dateFrom,
+      });
+    }
+    if (dto.dateTo) {
+      queryBuilder.andWhere('t.createdAt < :dateTo', {
+        dateTo: dto.dateTo,
+      });
+    }
+
+    // Get paginated results with computed fields using the repository's paginate method
+    const result = (await this.paginate(
+      dto,
+      {
+        searchableColumns: [],
+        sortableColumns: ['createdAt', 'type', 'amount'],
+        defaultSortBy: ['createdAt', 'DESC'],
+      },
+      '',
+      queryBuilder,
+      {
+        includeComputedFields: true,
+        computedFieldsMapper: (
+          entity: Transaction,
+          raw: any,
+        ): TransactionWithNames => {
+          return Object.assign(entity, {
+            fromName: raw.fromName,
+            toName: raw.toName,
+          }) as TransactionWithNames;
         },
       },
     )) as Pagination<TransactionWithNames>;

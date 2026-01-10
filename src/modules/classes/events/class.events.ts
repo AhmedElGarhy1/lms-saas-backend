@@ -2,12 +2,15 @@ import { Class } from '../entities/class.entity';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { BaseEvent } from '@/shared/common/base/base-event';
 import { ClassStatus } from '../enums/class-status.enum';
+import { TeacherPaymentStrategyDto } from '../dto/teacher-payment-strategy.dto';
 
 export class ClassCreatedEvent {
   constructor(
     public readonly classEntity: Class,
     public readonly actor: ActorUser,
     public readonly centerId: string,
+    public readonly teacherPaymentStrategy?: TeacherPaymentStrategyDto,
+    public readonly initialPaymentAmount?: number,
   ) {}
 }
 

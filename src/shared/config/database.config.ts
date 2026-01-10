@@ -9,7 +9,7 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => ({
   password: Config.database.password,
   database: Config.database.name,
   autoLoadEntities: true,
-  synchronize: true,
+  synchronize: false,
   logging: ['error', 'warn'], // Only log errors and warnings
   extra: {
     timezone: 'Z', // Force UTC for all timestamps

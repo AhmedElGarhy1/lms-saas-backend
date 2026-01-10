@@ -3,7 +3,7 @@ import { Transactional } from '@nestjs-cls/transactional';
 import { Payment } from '../entities/payment.entity';
 import { PaymentType } from '../enums/payment-type.enum';
 import { PaymentStatus } from '../enums/payment-status.enum';
-import { PaymentSource } from '../enums/payment-source.enum';
+import { PaymentMethod } from '../enums/payment-method.enum';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { TransactionType } from '../enums/transaction-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
@@ -41,7 +41,7 @@ export class PaymentRefundService {
     }
 
     // Reverse balances for internal payments
-    if (payment.source === PaymentSource.WALLET) {
+    if (payment.source === PaymentMethod.WALLET) {
       await this.reverseWalletBalances(payment);
     }
 

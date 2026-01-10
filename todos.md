@@ -146,10 +146,22 @@
 [x] in grant access internally we need first to valiate if user has higher permission so he doesn't need access and grasful return
 [x] user profile /me endpoint doesn't reutrn center because it doesn't pass contextGuard
 [x] other types of teacher payouts
-[ ] class teacher payout type
-[ ] at the end of session before finish display students didn't attend for action and remove the cron job
-[ ] transfer within account
+[x] at the end of session before finish display students didn't attend for action and remove the cron job
+[x] transfer within account
+[x] class teacher payout type
+[x] student class installments
+[ ] refactor all confirmation dialogs for nicer alert
 [ ] translations cleanup
+[ ] page for creating user and adding him to group in the same place for staff
+[ ] staff payouts
+[ ] daily revenue
+[ ] application fees
+[ ] money reqeusted from all students (foce all or any one want)
+[ ] aws S3 for storage and add the ablity to attach and user profile pic
+[ ] topup and withdraw in reality
+[ ] center settings
+? constrains for user withdraw/deposit limit
+? constrains for branch withdraw/deposit limit
 ? what will happen if class deleted?
 ? what will happen if group deleted?
 ? what will happen if branch deleted?

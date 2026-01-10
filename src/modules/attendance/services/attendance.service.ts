@@ -93,6 +93,35 @@ export class AttendanceService {
     ).userProfile?.code;
     const studentCode = typeof codeVal === 'string' ? codeVal : undefined;
 
+    // Check for outstanding class installments
+    let paymentStatus;
+    try {
+      // Get the group to find the classId
+      const group = await this.groupsRepository.findByIdOrThrow(attendance.groupId, [
+        'class',
+      ]);
+
+      // Check for outstanding class installments
+      const progress = await this.studentBillingService.getClassChargeProgress(
+        studentUserProfileId,
+        group.classId,
+        actor,
+      );
+
+      // Only show payment status for class charges that are still in installment
+      if (progress.payoutType === 'CLASS' && progress.payoutStatus === 'INSTALLMENT') {
+        paymentStatus = {
+          hasOutstandingInstallments: true,
+          outstandingAmount: progress.remaining,
+          totalAmount: progress.totalAmount,
+          progress: progress.progress,
+        };
+      }
+    } catch (error) {
+      // If payment check fails, just don't include payment status
+      // This ensures attendance marking still works even if billing check fails
+    }
+
     return {
       id: attendance.id,
       sessionId: attendance.sessionId,
@@ -106,6 +135,7 @@ export class AttendanceService {
         studentCode,
         photoUrl: undefined,
       },
+      paymentStatus,
     };
   }
 

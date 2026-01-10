@@ -14,6 +14,10 @@ export class ClassesErrors extends BaseErrorHelpers {
     return this.createNoDetails(ClassErrorCode.CLASS_NOT_FOUND);
   }
 
+  static classAlreadyExists(): DomainException {
+    return this.createNoDetails(ClassErrorCode.CLASS_ALREADY_EXISTS);
+  }
+
   // Class status and lifecycle errors
   static classStatusTransitionInvalid(): DomainException {
     return this.createNoDetails(ClassErrorCode.CLASS_STATUS_TRANSITION_INVALID);

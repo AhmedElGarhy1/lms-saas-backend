@@ -15,7 +15,7 @@ import { WalletService } from './wallet.service';
 import { Money } from '@/shared/common/utils/money.util';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
-import { PaymentSource } from '../enums/payment-source.enum';
+import { PaymentMethod } from '../enums/payment-method.enum';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
 
@@ -27,7 +27,7 @@ interface InitiateExternalPaymentRequest {
   receiverId: string;
   receiverType: WalletOwnerType;
   reason: PaymentReason;
-  source: PaymentSource;
+  source: PaymentMethod;
   idempotencyKey?: string;
   correlationId?: string;
   metadata?: Record<string, any>;

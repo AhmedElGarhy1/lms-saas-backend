@@ -1,4 +1,4 @@
-import { IsUUID, IsEnum, IsInt, Min, Max, ValidateIf } from 'class-validator';
+import { IsUUID, IsEnum, IsInt, IsNumber, Min, Max, ValidateIf } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
@@ -75,4 +75,16 @@ export class CreateStudentChargeDto {
   @Min(1)
   @Max(12)
   month?: number;
+
+  // For class charges - required when type is CLASS
+  @ApiProperty({
+    description: 'Initial payment amount for class charges (required for class charges)',
+    example: 500,
+    minimum: 0,
+    required: false,
+  })
+  @ValidateIf((o) => o.type === ChargeType.CLASS)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  initialPaymentAmount?: number;
 }

@@ -7,7 +7,7 @@ import { CashTransaction } from '../entities/cash-transaction.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentType } from '../enums/payment-type.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
-import { PaymentSource } from '../enums/payment-source.enum';
+import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
@@ -20,7 +20,10 @@ import { WalletService } from './wallet.service';
 import { CashboxService } from './cashbox.service';
 import { TransactionService } from './transaction.service';
 import { CashTransactionService } from './cash-transaction.service';
-import { CashTransactionDirection } from '../enums/cash-transaction-direction.enum';
+import {
+  CashTransactionDirection,
+  CashTransactionType,
+} from '../enums/cash-transaction-direction.enum';
 import { TransactionType } from '../enums/transaction-type.enum';
 import { randomUUID } from 'crypto';
 import { PaginatePaymentDto } from '../dto/paginate-payment.dto';
@@ -61,7 +64,7 @@ export interface ExecutePaymentRequest {
   receiverId: string;
   receiverType: WalletOwnerType;
   reason: PaymentReason;
-  source: PaymentSource;
+  source: PaymentMethod;
   type?: PaymentType; // Defaults to INTERNAL
   correlationId?: string;
   idempotencyKey?: string;
@@ -148,7 +151,7 @@ export class PaymentService extends BaseService {
    *   teacherProfileId,
    *   WalletOwnerType.USER_PROFILE,
    *   PaymentReason.SESSION_FEE,
-   *   PaymentSource.WALLET,
+   *   PaymentMethod.WALLET,
    *   undefined, // no reference
    *   undefined, // no referenceId
    *   undefined, // auto-generate correlationId
@@ -163,7 +166,7 @@ export class PaymentService extends BaseService {
     receiverId: string,
     receiverType: WalletOwnerType,
     reason: PaymentReason,
-    source: PaymentSource,
+    source: PaymentMethod,
     referenceType?: PaymentReferenceType,
     referenceId?: string,
     correlationId?: string,
@@ -184,7 +187,7 @@ export class PaymentService extends BaseService {
     }
 
     // If source is WALLET, lock the amount in sender's wallet
-    if (source === PaymentSource.WALLET) {
+    if (source === PaymentMethod.WALLET) {
       // Get sender's wallet
       const senderWallet = await this.walletService.getWallet(
         senderId,
@@ -193,10 +196,7 @@ export class PaymentService extends BaseService {
 
       // Pre-check: Check if balance is sufficient
       if (senderWallet.balance.lessThan(amount)) {
-        throw FinanceErrors.insufficientWalletBalance(
-          senderWallet.balance.toNumber(),
-          amount.toNumber(),
-        );
+        throw FinanceErrors.insufficientWalletBalance();
       }
 
       // Debit the sender's balance
@@ -265,21 +265,21 @@ export class PaymentService extends BaseService {
     dto: PaginatePaymentDto,
     centerId?: string,
   ): Promise<Pagination<UserPaymentStatementItemDto>> {
-    return await this.paymentRepository.getUserPaymentsPaginated(
+    return await this.paymentRepository.getPaymentsPaginated(dto, undefined, {
       userId,
-      dto,
       centerId,
-    );
+      includeAll: false,
+    });
   }
 
-  async paginatePayments(
-    paginateDto: PaginatePaymentDto,
-    actor: ActorUser,
+  async getCenterPaymentsPaginated(
+    centerId: string | undefined,
+    dto: PaginatePaymentDto,
   ): Promise<Pagination<UserPaymentStatementItemDto>> {
-    return await this.paymentRepository.getAllPaymentsPaginated(
-      paginateDto,
-      actor,
-    );
+    return await this.paymentRepository.getPaymentsPaginated(dto, undefined, {
+      centerId,
+      includeAll: true, // Show all payments for the center
+    });
   }
 
   /**
@@ -326,7 +326,7 @@ export class PaymentService extends BaseService {
     }
 
     // If source is WALLET, deduct from lockedBalance (already locked)
-    if (payment.source === PaymentSource.WALLET) {
+    if (payment.source === PaymentMethod.WALLET) {
       const senderWallet = await this.walletService.getWallet(
         payment.senderId,
         payment.senderType,
@@ -361,7 +361,7 @@ export class PaymentService extends BaseService {
     }
 
     // Handle cash payments - create cash transaction records
-    if (payment.source === PaymentSource.CASH) {
+    if (payment.source === PaymentMethod.CASH) {
       await this.createCashTransactionRecords(
         payment,
         paidByProfileId,
@@ -431,9 +431,7 @@ export class PaymentService extends BaseService {
     const cashbox = await this.cashboxService.getCashbox(branchId);
 
     // Determine transaction type for cash transaction
-    const cashTransactionType = this.mapPaymentReasonToTransactionType(
-      payment.reason,
-    );
+    const cashTransactionType = CashTransactionType.BRANCH_DEPOSIT;
 
     // Create cash transaction (money coming into cashbox)
     const cashTransaction =
@@ -468,7 +466,7 @@ export class PaymentService extends BaseService {
     }
 
     // Reverse balances for internal payments
-    if (payment.source === PaymentSource.WALLET) {
+    if (payment.source === PaymentMethod.WALLET) {
       const senderWallet = await this.walletService.getWallet(
         payment.senderId,
         payment.senderType,
@@ -510,7 +508,7 @@ export class PaymentService extends BaseService {
         correlationId,
         updatedSenderWallet.balance, // Balance after for sender
       );
-    } else if (payment.source === PaymentSource.CASH) {
+    } else if (payment.source === PaymentMethod.CASH) {
       if (
         payment.referenceType === PaymentReferenceType.CASH_TRANSACTION &&
         payment.referenceId
@@ -540,7 +538,7 @@ export class PaymentService extends BaseService {
 
     // If payment was COMPLETED, reverse the balances
     if (payment.status === PaymentStatus.COMPLETED) {
-      if (payment.source === PaymentSource.WALLET) {
+      if (payment.source === PaymentMethod.WALLET) {
         // Reverse wallet balances
         const payerWallet = await this.walletService.getWallet(
           payment.senderId,
@@ -556,7 +554,7 @@ export class PaymentService extends BaseService {
           receiverWallet.id,
           payment.amount.multiply(-1),
         );
-      } else if (payment.source === PaymentSource.CASH) {
+      } else if (payment.source === PaymentMethod.CASH) {
         // Reverse cash transaction if exists
         if (
           payment.referenceType === PaymentReferenceType.CASH_TRANSACTION &&
@@ -616,7 +614,7 @@ export class PaymentService extends BaseService {
       receiverType: WalletOwnerType.USER_PROFILE,
       status: PaymentStatus.COMPLETED,
       reason: PaymentReason.TOPUP,
-      source: PaymentSource.EXTERNAL, // External payment gateway
+      source: PaymentMethod.EXTERNAL, // External payment gateway
       ...(idempotencyKey && { idempotencyKey }),
       paidAt: new Date(),
       createdByProfileId: this.getCreatedByProfileId(),

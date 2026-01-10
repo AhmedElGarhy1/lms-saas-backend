@@ -40,6 +40,7 @@ import { SessionsModule } from '@/modules/sessions/sessions.module';
 import { ClassStatusUpdateJob } from './jobs/class-status-update.job';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { ClassStateMachine } from './state-machines/class-state-machine';
+import { TeacherPayoutModule } from '@/modules/teacher-payouts/teacher-payouts.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { ClassStateMachine } from './state-machines/class-state-machine';
     SubjectsModule,
     CentersModule,
     UserProfileModule,
+    forwardRef(() => TeacherPayoutModule),
   ],
   controllers: [
     ClassesController,

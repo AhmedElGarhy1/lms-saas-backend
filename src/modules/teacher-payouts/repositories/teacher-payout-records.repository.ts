@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  TeacherPayoutRecord,
-  PaymentSource,
-} from '../entities/teacher-payout-record.entity';
+import { TeacherPayoutRecord } from '../entities/teacher-payout-record.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';
@@ -11,6 +8,8 @@ import { Pagination } from '@/shared/common/types/pagination.types';
 import { PayoutStatus } from '../enums/payout-status.enum';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
+import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
 
 @Injectable()
 export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayoutRecord> {
@@ -133,7 +132,7 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
     id: string,
     status: PayoutStatus,
     paymentId?: string,
-    paymentSource?: PaymentSource,
+    paymentSource?: PaymentMethod,
   ): Promise<TeacherPayoutRecord> {
     await this.getRepository().update(id, {
       status,
@@ -158,5 +157,38 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
   ): Promise<TeacherPayoutRecord> {
     const payout = this.getRepository().create(payoutData);
     return this.savePayout(payout);
+  }
+
+  // CLASS payout specific methods
+  async getClassPayout(
+    classId: string,
+    teacherUserProfileId?: string,
+  ): Promise<TeacherPayoutRecord | null> {
+    const where: any = {
+      classId,
+      unitType: TeacherPaymentUnit.CLASS,
+    };
+
+    if (teacherUserProfileId) {
+      where.teacherUserProfileId = teacherUserProfileId;
+    }
+
+    return this.getRepository().findOne({
+      where,
+      relations: ['teacher', 'class'],
+    });
+  }
+
+  async getTeacherClassPayouts(
+    teacherUserProfileId: string,
+  ): Promise<TeacherPayoutRecord[]> {
+    return this.getRepository().find({
+      where: {
+        teacherUserProfileId,
+        unitType: TeacherPaymentUnit.CLASS,
+      },
+      relations: ['class'],
+      order: { createdAt: 'DESC' },
+    });
   }
 }

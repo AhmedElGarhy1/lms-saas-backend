@@ -1,7 +1,7 @@
 import { IsEnum, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { PayoutStatus } from '../enums/payout-status.enum';
-import { PaymentSource } from '../entities/teacher-payout-record.entity';
+import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 
 export class UpdatePayoutStatusDto {
   @ApiProperty({
@@ -13,13 +13,13 @@ export class UpdatePayoutStatusDto {
   status: PayoutStatus;
 
   @ApiProperty({
-    description: 'Payment source (required when approving payout to PAID)',
-    enum: PaymentSource,
+    description: 'Payment method (required when approving payout to PAID)',
+    enum: PaymentMethod,
     required: false,
   })
   @IsOptional()
-  @IsEnum(PaymentSource)
-  paymentSource?: PaymentSource;
+  @IsEnum(PaymentMethod)
+  paymentSource?: PaymentMethod;
 
   paymentId?: string; // Internal field for storing payment transaction ID
 }

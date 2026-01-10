@@ -6,7 +6,7 @@ import { SessionEvents } from '@/shared/events/sessions.events.enum';
 import { SessionStatus } from '@/modules/sessions/enums/session-status.enum';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
 import { PaymentStrategyService } from '@/modules/classes/services/payment-strategy.service';
-import { AttendanceRepository } from '@/modules/attendance/repositories/attendance.repository';
+// import { AttendanceRepository } from '@/modules/attendance/repositories/attendance.repository';
 import { Session } from '@/modules/sessions/entities/session.entity';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class SessionsListener {
   constructor(
     private readonly teacherPayoutService: TeacherPayoutService,
     private readonly paymentStrategyService: PaymentStrategyService,
-    private readonly attendanceRepository: AttendanceRepository,
+    // private readonly attendanceRepository: AttendanceRepository, // Temporarily disabled due to circular dependency
   ) {}
 
   @OnEvent(SessionEvents.FINISHED)
@@ -110,13 +110,12 @@ export class SessionsListener {
         return 1;
 
       case TeacherPaymentUnit.STUDENT:
-        // Count present students
-        const stats =
-          await this.attendanceRepository.calculateSessionAttendanceStats({
-            sessionId: session.id,
-            groupId: session.groupId,
-          });
-        return stats.present;
+        // Count present students - temporarily disabled due to circular dependency
+        // TODO: Re-enable when circular dependency is resolved
+        this.logger.warn(
+          `STUDENT payment unit calculation disabled for session ${session.id} due to circular dependency`,
+        );
+        return 0;
 
       case TeacherPaymentUnit.HOUR:
         // Calculate session duration in hours

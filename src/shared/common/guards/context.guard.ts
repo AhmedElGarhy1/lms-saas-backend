@@ -28,6 +28,7 @@ import { CommonErrors } from '../exceptions/common.errors';
 import { SystemErrors } from '../exceptions/system.exception';
 import { AccessControlErrors } from '@/modules/access-control/exceptions/access-control.errors';
 import { AuthErrors } from '@/modules/auth/exceptions/auth.errors';
+import { ADMIN_ONLY_KEY } from '../decorators';
 
 @Injectable()
 export class ContextGuard implements CanActivate {
@@ -107,7 +108,10 @@ export class ContextGuard implements CanActivate {
       MANAGERIAL_ONLY_KEY,
       [context.getHandler(), context.getClass()],
     );
-
+    const adminOnly = this.reflector.getAllAndOverride<boolean>(
+      ADMIN_ONLY_KEY,
+      [context.getHandler(), context.getClass()],
+    );
     const user = request.user;
     if (!user) {
       throw AuthErrors.authenticationRequired();
@@ -141,6 +145,7 @@ export class ContextGuard implements CanActivate {
       parentOnly,
       staffOnly,
       managerialOnly,
+      adminOnly,
     });
 
     // Handle timezone for center-based users (staff/admin)
@@ -165,16 +170,18 @@ export class ContextGuard implements CanActivate {
     parentOnly,
     staffOnly,
     managerialOnly,
+    adminOnly,
   }: {
     userProfileId: string;
     userProfileType: ProfileType;
     centerId?: string;
     branchId?: string;
-    studentOnly?: boolean;
-    teacherOnly?: boolean;
-    parentOnly?: boolean;
-    staffOnly?: boolean;
-    managerialOnly?: boolean;
+    studentOnly: boolean;
+    teacherOnly: boolean;
+    parentOnly: boolean;
+    staffOnly: boolean;
+    managerialOnly: boolean;
+    adminOnly: boolean;
   }) {
     // Check profile-specific restrictions
     if (studentOnly && userProfileType !== ProfileType.STUDENT) {
@@ -189,6 +196,9 @@ export class ContextGuard implements CanActivate {
     if (staffOnly && userProfileType !== ProfileType.STAFF) {
       throw AccessControlErrors.missingPermission('STAFF_ACCESS');
     }
+    if (adminOnly && userProfileType !== ProfileType.ADMIN) {
+      throw AccessControlErrors.missingPermission('ADMIN_ACCESS');
+    }
     if (
       managerialOnly &&
       userProfileType !== ProfileType.STAFF &&
@@ -198,8 +208,9 @@ export class ContextGuard implements CanActivate {
     }
 
     if (
-      userProfileType === ProfileType.STAFF ||
-      userProfileType === ProfileType.ADMIN
+      (userProfileType === ProfileType.STAFF ||
+        userProfileType === ProfileType.ADMIN) &&
+      (managerialOnly || staffOnly || adminOnly)
     ) {
       await this.accessControlHelperService.validateAdminAndCenterAccess({
         userProfileId,

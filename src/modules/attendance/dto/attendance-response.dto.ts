@@ -56,4 +56,22 @@ export class AttendanceResponseDto {
   @Expose()
   @Type(() => AttendanceStudentCardDto)
   student: AttendanceStudentCardDto;
+
+  @ApiProperty({
+    description: 'Payment status for outstanding class installments',
+    required: false,
+    example: {
+      hasOutstandingInstallments: true,
+      outstandingAmount: 500.00,
+      totalAmount: 2000.00,
+      progress: 75.00
+    }
+  })
+  @Expose()
+  paymentStatus?: {
+    hasOutstandingInstallments: boolean;
+    outstandingAmount: number;
+    totalAmount: number;
+    progress: number;
+  };
 }

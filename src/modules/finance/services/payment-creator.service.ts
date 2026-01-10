@@ -3,7 +3,7 @@ import { Transactional } from '@nestjs-cls/transactional';
 import { Payment } from '../entities/payment.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentType } from '../enums/payment-type.enum';
-import { PaymentSource } from '../enums/payment-source.enum';
+import { PaymentMethod } from '../enums/payment-method.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { FinanceErrors } from '../exceptions/finance.errors';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
@@ -83,19 +83,15 @@ export class PaymentCreatorService {
     }
 
     // Wallet-specific validations
-    if (request.source === PaymentSource.WALLET) {
+    if (request.source === PaymentMethod.WALLET) {
       const senderWallet = await this.walletService.getWallet(
         request.senderId,
         request.senderType,
       );
 
       if (senderWallet.balance.lessThan(request.amount)) {
-        throw FinanceErrors.insufficientWalletBalance(
-          senderWallet.balance.toNumber(),
-          request.amount.toNumber(),
-        );
+        throw FinanceErrors.insufficientWalletBalance();
       }
     }
   }
-
 }

@@ -15,6 +15,7 @@ export enum StudentChargeType {
 
 export enum StudentChargeStatus {
   PENDING = 'PENDING',
+  INSTALLMENT = 'INSTALLMENT',
   COMPLETED = 'COMPLETED',
   REFUNDED = 'REFUNDED',
   CANCELLED = 'CANCELLED',
@@ -52,6 +53,12 @@ export class StudentCharge extends BaseEntity {
   // Common payment fields
   @Column('decimal', { precision: 10, scale: 2 })
   amount: number;
+
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  totalPaid: number;
+
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  lastPaymentAmount?: number;
 
   @Column({ type: 'simple-enum', enum: PaymentSource })
   paymentSource: PaymentSource;

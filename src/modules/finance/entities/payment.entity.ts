@@ -3,7 +3,7 @@ import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentType } from '../enums/payment-type.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
-import { PaymentSource } from '../enums/payment-source.enum';
+import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
@@ -65,7 +65,7 @@ export class Payment extends BaseEntity {
   reason: PaymentReason;
 
   @Column({ type: 'varchar', length: 20 })
-  source: PaymentSource;
+  source: PaymentMethod;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
   referenceType?: PaymentReferenceType;

@@ -15,7 +15,7 @@ import { PaymentQueryService } from './payment-query.service';
 import { PaymentRepository } from '../repositories/payment.repository';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
-import { PaymentSource } from '../enums/payment-source.enum';
+import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentType } from '../enums/payment-type.enum';
 
@@ -142,7 +142,7 @@ export class PaymentOrchestratorService {
         receiverId: senderId, // For top-ups, receiver is same as sender
         receiverType: WalletOwnerType.USER_PROFILE,
         reason: PaymentReason.TOPUP,
-        source: PaymentSource.EXTERNAL,
+        source: PaymentMethod.EXTERNAL,
         idempotencyKey,
         correlationId: randomUUID(),
         metadata: {

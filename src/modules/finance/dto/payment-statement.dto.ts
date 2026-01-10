@@ -13,6 +13,11 @@ export class UserPaymentStatementItemDto {
   @ApiProperty({ description: 'Payment amount' })
   amount: number;
 
+  @ApiProperty({
+    description: 'Signed payment amount (negative for sent payments, positive for received payments)',
+  })
+  signedAmount: number;
+
   @ApiProperty({ description: 'Payment status' })
   status: string;
 

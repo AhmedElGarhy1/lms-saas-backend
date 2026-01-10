@@ -55,19 +55,45 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
     });
   }
 
-  // Class charge queries
-  async findClassChargeByStudentAndClass(
+  // Find active class charge (for progress tracking) - includes INSTALLMENT status
+  async findActiveClassChargeByStudentAndClass(
     studentUserProfileId: string,
     classId: string,
   ): Promise<StudentCharge | null> {
-    return this.getRepository().findOne({
-      where: {
-        studentUserProfileId,
-        classId,
+    return this.getRepository()
+      .createQueryBuilder('charge')
+      .where('charge.studentUserProfileId = :studentId', {
+        studentId: studentUserProfileId,
+      })
+      .andWhere('charge.classId = :classId', { classId })
+      .andWhere('charge.chargeType = :chargeType', {
         chargeType: StudentChargeType.CLASS,
-        status: StudentChargeStatus.COMPLETED,
-      },
-    });
+      })
+      .andWhere('charge.status IN (:...statuses)', {
+        statuses: [
+          StudentChargeStatus.COMPLETED,
+          StudentChargeStatus.INSTALLMENT,
+        ],
+      })
+      .getOne();
+  }
+
+  // Find all active charges for a student (for summary)
+  async findActiveChargesByStudent(
+    studentUserProfileId: string,
+  ): Promise<StudentCharge[]> {
+    return this.getRepository()
+      .createQueryBuilder('charge')
+      .where('charge.studentUserProfileId = :studentId', {
+        studentId: studentUserProfileId,
+      })
+      .andWhere('charge.status IN (:...statuses)', {
+        statuses: [
+          StudentChargeStatus.COMPLETED,
+          StudentChargeStatus.INSTALLMENT,
+        ],
+      })
+      .getMany();
   }
 
   // Generic charge creation

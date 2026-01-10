@@ -21,7 +21,7 @@ import {
   ExecutePaymentRequest,
 } from '@/modules/finance/services/payment.service';
 import { PaymentReason } from '@/modules/finance/enums/payment-reason.enum';
-import { PaymentSource as FinancePaymentSource } from '@/modules/finance/enums/payment-source.enum';
+import { PaymentMethod as FinancePaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { WalletOwnerType } from '@/modules/finance/enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { ClassesService } from '@/modules/classes/services/classes.service';
@@ -164,12 +164,12 @@ export class StudentBillingService extends BaseService {
     studentUserProfileId: string,
     classId: string,
   ): Promise<boolean> {
-    const paidCharge =
-      await this.chargesRepository.findClassChargeByStudentAndClass(
+    const activeCharge =
+      await this.chargesRepository.findActiveClassChargeByStudentAndClass(
         studentUserProfileId,
         classId,
       );
-    return !!paidCharge;
+    return !!activeCharge;
   }
 
   /**
@@ -228,8 +228,8 @@ export class StudentBillingService extends BaseService {
       reason: PaymentReason.MONTHLY_FEE,
       source:
         dto.paymentSource === PaymentSource.WALLET
-          ? FinancePaymentSource.WALLET
-          : FinancePaymentSource.CASH,
+          ? FinancePaymentMethod.WALLET
+          : FinancePaymentMethod.CASH,
       correlationId: randomUUID(),
     };
 
@@ -261,6 +261,241 @@ export class StudentBillingService extends BaseService {
     });
 
     return savedCharge;
+  }
+
+  /**
+   * Pay an installment for an existing class charge
+   * Handles additional payments towards a class charge
+   */
+  @Transactional()
+  async payClassInstallment(
+    classId: string,
+    studentUserProfileId: string,
+    installmentAmount: number,
+    paymentSource: PaymentSource,
+    actor: ActorUser,
+  ): Promise<StudentCharge> {
+    // ✅ VALIDATE: Access control for staff users
+    const classEntity = await this.classesService.findOneOrThrow(classId);
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: classEntity.branchId,
+    });
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId,
+    });
+
+    // Find existing class charge
+    const classCharge =
+      await this.chargesRepository.findActiveClassChargeByStudentAndClass(
+        studentUserProfileId,
+        classId,
+      );
+
+    if (!classCharge) {
+      throw StudentBillingErrors.classChargeNotFound();
+    }
+
+    if (classCharge.status === StudentChargeStatus.COMPLETED) {
+      throw StudentBillingErrors.classAlreadyFullyPaid();
+    }
+
+    if (classCharge.status !== StudentChargeStatus.INSTALLMENT) {
+      throw StudentBillingErrors.invalidChargeStatus();
+    }
+
+    // Calculate new total paid
+    const newTotalPaid = Money.from(classCharge.totalPaid).add(
+      Money.from(installmentAmount),
+    );
+
+    // Check if this payment would exceed the total amount
+    if (newTotalPaid.greaterThan(Money.from(classCharge.amount))) {
+      throw StudentBillingErrors.paymentExceedsTotalAmount();
+    }
+
+    // Execute payment using unified API
+    const paymentRequest: ExecutePaymentRequest = {
+      amount: Money.from(installmentAmount),
+      senderId: studentUserProfileId,
+      senderType: WalletOwnerType.USER_PROFILE,
+      receiverId: classEntity.branchId,
+      receiverType: WalletOwnerType.BRANCH,
+      reason: PaymentReason.CLASS_FEE,
+      source:
+        paymentSource === PaymentSource.WALLET
+          ? FinancePaymentMethod.WALLET
+          : FinancePaymentMethod.CASH,
+      correlationId: randomUUID(),
+    };
+
+    const paymentResult = await this.paymentService.createAndExecutePayment(
+      paymentRequest,
+      actor,
+    );
+    const payment = paymentResult.payment;
+
+    // Update charge with new payment
+    classCharge.totalPaid = newTotalPaid.toNumber();
+    classCharge.lastPaymentAmount = installmentAmount;
+    classCharge.paymentId = payment.id;
+    classCharge.paymentSource = paymentSource;
+    classCharge.updatedAt = new Date();
+
+    // Check if fully paid
+    if (newTotalPaid.equals(Money.from(classCharge.amount))) {
+      classCharge.status = StudentChargeStatus.COMPLETED;
+    }
+
+    return this.chargesRepository.saveCharge(classCharge);
+  }
+
+  /**
+   * Get class charge progress for a student
+   */
+  async getClassChargeProgress(
+    studentUserProfileId: string,
+    classId: string,
+    actor: ActorUser,
+  ): Promise<{
+    totalAmount: number;
+    totalPaid: number;
+    remaining: number;
+    progress: number;
+    lastPayment?: number;
+    payoutType: StudentChargeType;
+    payoutStatus: StudentChargeStatus;
+  }> {
+    // ✅ VALIDATE: Access control for staff users
+    const classEntity = await this.classesService.findOneOrThrow(classId);
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: classEntity.branchId,
+    });
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId,
+    });
+
+    // Find active class charge (COMPLETED or INSTALLMENT)
+    const classCharge =
+      await this.chargesRepository.findActiveClassChargeByStudentAndClass(
+        studentUserProfileId,
+        classId,
+      );
+
+    if (!classCharge) {
+      throw StudentBillingErrors.classChargeNotFound();
+    }
+
+    const totalAmount = Money.from(classCharge.amount);
+    const totalPaid = Money.from(classCharge.totalPaid);
+    const remaining = totalAmount.subtract(totalPaid);
+    const progress = totalPaid
+      .divide(totalAmount.toNumber())
+      .multiply(100)
+      .toNumber();
+
+    return {
+      totalAmount: totalAmount.toNumber(),
+      totalPaid: totalPaid.toNumber(),
+      remaining: remaining.toNumber(),
+      progress: Math.round(progress * 100) / 100, // Round to 2 decimal places
+      lastPayment: classCharge.lastPaymentAmount, // Match teacher format
+      payoutType: classCharge.chargeType, // Match teacher format
+      payoutStatus: classCharge.status, // Match teacher format
+    };
+  }
+
+  /**
+   * Get student billing summary for all charges
+   */
+  async getStudentBillingSummary(
+    studentUserProfileId: string,
+    actor: ActorUser,
+  ): Promise<any> {
+    // Get all active charges for the student
+    const charges =
+      await this.chargesRepository.findActiveChargesByStudent(
+        studentUserProfileId,
+      );
+
+    const summary = {
+      totalCharges: charges.length,
+      totalAmount: Money.zero(),
+      totalPaid: Money.zero(),
+      totalRemaining: Money.zero(),
+      overallProgress: 0,
+      byType: {} as Record<string, any>,
+    };
+
+    for (const charge of charges) {
+      const totalAmount = Money.from(charge.amount);
+      const totalPaid = Money.from(charge.totalPaid);
+
+      summary.totalAmount = summary.totalAmount.add(totalAmount);
+      summary.totalPaid = summary.totalPaid.add(totalPaid);
+      summary.totalRemaining = summary.totalRemaining.add(
+        totalAmount.subtract(totalPaid).isNegative()
+          ? Money.zero()
+          : totalAmount.subtract(totalPaid),
+      );
+
+      // Group by charge type
+      const type = charge.chargeType;
+      if (!summary.byType[type]) {
+        summary.byType[type] = {
+          count: 0,
+          totalAmount: Money.zero(),
+          totalPaid: Money.zero(),
+          totalRemaining: Money.zero(),
+          progress: 0,
+        };
+      }
+
+      summary.byType[type].count += 1;
+      summary.byType[type].totalAmount =
+        summary.byType[type].totalAmount.add(totalAmount);
+      summary.byType[type].totalPaid =
+        summary.byType[type].totalPaid.add(totalPaid);
+      summary.byType[type].totalRemaining = summary.byType[
+        type
+      ].totalRemaining.add(
+        totalAmount.subtract(totalPaid).isNegative()
+          ? Money.zero()
+          : totalAmount.subtract(totalPaid),
+      );
+    }
+
+    // Calculate overall progress
+    summary.overallProgress = summary.totalAmount.greaterThan(Money.zero())
+      ? (summary.totalPaid.toNumber() / summary.totalAmount.toNumber()) * 100
+      : 0;
+
+    // Convert Money objects to numbers for response
+    const response = {
+      ...summary,
+      totalAmount: summary.totalAmount.toNumber(),
+      totalPaid: summary.totalPaid.toNumber(),
+      totalRemaining: summary.totalRemaining.toNumber(),
+    };
+
+    // Calculate progress by type
+    for (const type of Object.keys(summary.byType)) {
+      const typeData = summary.byType[type];
+      typeData.totalAmount = typeData.totalAmount.toNumber();
+      typeData.totalPaid = typeData.totalPaid.toNumber();
+      typeData.totalRemaining = typeData.totalRemaining.toNumber();
+      typeData.progress =
+        typeData.totalAmount > 0
+          ? (typeData.totalPaid / typeData.totalAmount) * 100
+          : 0;
+    }
+
+    return response;
   }
 
   /**
@@ -315,8 +550,8 @@ export class StudentBillingService extends BaseService {
       reason: PaymentReason.SESSION_FEE,
       source:
         dto.paymentSource === PaymentSource.WALLET
-          ? FinancePaymentSource.WALLET
-          : FinancePaymentSource.CASH,
+          ? FinancePaymentMethod.WALLET
+          : FinancePaymentMethod.CASH,
       correlationId: randomUUID(),
     };
 
@@ -379,11 +614,11 @@ export class StudentBillingService extends BaseService {
     const classEntity = await this.classesService.findOneOrThrow(dto.classId);
 
     // ✅ GET PRICE: Use validated class-configured price
-    const amount = await this.getValidatedClassPrice(dto.classId);
+    const totalAmount = await this.getValidatedClassPrice(dto.classId);
 
     // Check if student already paid for this class
     const existingCharge =
-      await this.chargesRepository.findClassChargeByStudentAndClass(
+      await this.chargesRepository.findActiveClassChargeByStudentAndClass(
         dto.studentUserProfileId,
         dto.classId,
       );
@@ -392,9 +627,17 @@ export class StudentBillingService extends BaseService {
       throw StudentBillingErrors.classChargeAlreadyExists();
     }
 
+    // Initial payment amount is required and provided by the client
+    const initialPaymentAmount = dto.initialPaymentAmount;
+
+    // Validate initial payment doesn't exceed total amount
+    if (initialPaymentAmount > totalAmount) {
+      throw StudentBillingErrors.paymentExceedsTotalAmount();
+    }
+
     // Execute payment using unified API
     const paymentRequest: ExecutePaymentRequest = {
-      amount: Money.from(amount),
+      amount: Money.from(initialPaymentAmount),
       senderId: dto.studentUserProfileId,
       senderType: WalletOwnerType.USER_PROFILE,
       receiverId: classEntity.branchId,
@@ -402,8 +645,8 @@ export class StudentBillingService extends BaseService {
       reason: PaymentReason.CLASS_FEE,
       source:
         dto.paymentSource === PaymentSource.WALLET
-          ? FinancePaymentSource.WALLET
-          : FinancePaymentSource.CASH,
+          ? FinancePaymentMethod.WALLET
+          : FinancePaymentMethod.CASH,
       correlationId: randomUUID(),
     };
 
@@ -419,17 +662,27 @@ export class StudentBillingService extends BaseService {
         dto.classId,
       );
 
-    // Create unified class charge
+    // Determine initial status - COMPLETED if fully paid, INSTALLMENT if partial
+    const isFullyPaid = Money.from(initialPaymentAmount).equals(
+      Money.from(totalAmount),
+    );
+    const initialStatus = isFullyPaid
+      ? StudentChargeStatus.COMPLETED
+      : StudentChargeStatus.INSTALLMENT;
+
+    // Create unified class charge with installment tracking
     const savedCharge = await this.chargesRepository.createCharge({
       studentUserProfileId: dto.studentUserProfileId,
       chargeType: StudentChargeType.CLASS,
       centerId: classEntity.centerId,
       branchId: classEntity.branchId,
       classId: dto.classId,
-      amount,
+      amount: totalAmount, // Total class cost
+      totalPaid: initialPaymentAmount, // Initial payment made
+      lastPaymentAmount: initialPaymentAmount, // Initial payment amount
       paymentSource: dto.paymentSource,
       paymentId: payment.id,
-      status: StudentChargeStatus.COMPLETED,
+      status: initialStatus, // COMPLETED if fully paid, INSTALLMENT if partial
     });
 
     return savedCharge;
@@ -506,6 +759,7 @@ export class StudentBillingService extends BaseService {
         studentUserProfileId: dto.studentUserProfileId,
         classId: dto.classId,
         paymentSource,
+        initialPaymentAmount: dto.initialPaymentAmount!,
       };
 
       return this.createClassCharge(chargeDto, actor);
@@ -557,9 +811,9 @@ export class StudentBillingService extends BaseService {
     }
 
     if (paymentStrategy?.includeClass) {
-      // Class charges are enabled - check if student has paid
+      // Class charges are enabled - check if student has active class charge
       const classCharge =
-        await this.chargesRepository.findClassChargeByStudentAndClass(
+        await this.chargesRepository.findActiveClassChargeByStudentAndClass(
           studentUserProfileId,
           classId,
         );

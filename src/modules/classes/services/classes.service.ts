@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateClassDto } from '../dto/create-class.dto';
 import { UpdateClassDto } from '../dto/update-class.dto';
 import { PaginateClassesDto } from '../dto/paginate-classes.dto';
@@ -31,9 +31,13 @@ import { BulkOperationService } from '@/shared/common/services/bulk-operation.se
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { StudentPaymentStrategyDto } from '../dto/student-payment-strategy.dto';
 import { TeacherPaymentStrategyDto } from '../dto/teacher-payment-strategy.dto';
+import { TeacherPaymentUnit } from '../enums/teacher-payment-unit.enum';
+import { TeacherPayoutService } from '@/modules/teacher-payouts/services/teacher-payout.service';
 
 @Injectable()
 export class ClassesService extends BaseService {
+  private readonly logger = new Logger(ClassesService.name);
+
   constructor(
     private readonly classesRepository: ClassesRepository,
     private readonly classValidationService: ClassValidationService,
@@ -44,6 +48,7 @@ export class ClassesService extends BaseService {
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly branchAccessService: BranchAccessService,
     private readonly classStateMachine: ClassStateMachine,
+    private readonly teacherPayoutService: TeacherPayoutService,
   ) {
     super();
   }
@@ -133,6 +138,20 @@ export class ClassesService extends BaseService {
       branchId: targetBranchId,
     });
 
+    // Check if a class with the same combination already exists
+    const existingClass =
+      await this.classesRepository.findClassByUniqueCombination(
+        centerId,
+        targetBranchId,
+        createClassDto.teacherUserProfileId,
+        createClassDto.levelId,
+        createClassDto.subjectId,
+      );
+
+    if (existingClass) {
+      throw ClassesErrors.classAlreadyExists();
+    }
+
     const { studentPaymentStrategy, teacherPaymentStrategy, ...classData } =
       createClassDto;
 
@@ -160,6 +179,24 @@ export class ClassesService extends BaseService {
       await this.classesRepository.findClassWithRelationsOrThrow(
         classEntity.id,
       );
+
+    // Create CLASS payout record if teacher payment strategy is CLASS
+    if (teacherPaymentStrategy.per === TeacherPaymentUnit.CLASS) {
+      try {
+        await this.teacherPayoutService.createClassPayout(
+          classWithRelations,
+          teacherPaymentStrategy,
+          teacherPaymentStrategy.initialPaymentAmount,
+          teacherPaymentStrategy.paymentMethod,
+        );
+      } catch (error) {
+        // Log error but don't fail class creation
+        this.logger.error(
+          `Failed to create initial CLASS payout for class ${classEntity.id}:`,
+          error,
+        );
+      }
+    }
 
     await this.typeSafeEventEmitter.emitAsync(
       ClassEvents.CREATED,

@@ -4,7 +4,7 @@ import { Money } from '@/shared/common/utils/money.util';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
 import { TransactionType } from '../enums/transaction-type.enum';
-import { PaymentSource } from '../enums/payment-source.enum';
+import { PaymentMethod } from '../enums/payment-method.enum';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { FinanceErrors } from '../exceptions/finance.errors';
 import { WithdrawalResult } from '../interfaces/withdrawal.interface';
@@ -52,11 +52,10 @@ export class BranchWithdrawalService {
           senderType: WalletOwnerType.BRANCH,
           receiverId: staffId,
           receiverType: WalletOwnerType.USER_PROFILE,
-          reason: PaymentReason.WITHDRAWAL,
-          source: PaymentSource.WALLET,
+          reason: PaymentReason.BRANCH_WITHDRAWAL,
+          source: PaymentMethod.WALLET,
           correlationId: randomUUID(),
           metadata: {
-            withdrawalType: 'wallet',
             notes,
           },
         },
@@ -113,11 +112,10 @@ export class BranchWithdrawalService {
           senderType: WalletOwnerType.BRANCH,
           receiverId: staffId,
           receiverType: WalletOwnerType.USER_PROFILE,
-          reason: PaymentReason.WITHDRAWAL,
-          source: PaymentSource.CASH, // This will trigger cash transaction creation
+          reason: PaymentReason.BRANCH_WITHDRAWAL,
+          source: PaymentMethod.CASH, // This will trigger cash transaction creation
           correlationId: randomUUID(),
           metadata: {
-            withdrawalType: 'cashbox',
             notes,
           },
         },

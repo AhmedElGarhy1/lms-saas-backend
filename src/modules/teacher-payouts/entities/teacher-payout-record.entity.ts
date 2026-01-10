@@ -15,11 +15,8 @@ import { Branch } from '@/modules/centers/entities/branch.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
 import { PayoutStatus } from '../enums/payout-status.enum';
-
-export enum PaymentSource {
-  WALLET = 'WALLET',
-  CASH = 'CASH',
-}
+import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
+import { Money } from '@/shared/common/utils/money.util';
 
 @Entity('teacher_payout_records')
 @Index(['teacherUserProfileId', 'status']) // For efficient queries
@@ -35,9 +32,9 @@ export class TeacherPayoutRecord {
   @Column({ type: 'enum', enum: TeacherPaymentUnit })
   unitType: TeacherPaymentUnit;
 
-  // Financial Duo
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  unitPrice: number;
+  // Financial fields
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  unitPrice?: number; // Total amount for CLASS payouts
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   unitCount: number;
@@ -63,11 +60,46 @@ export class TeacherPayoutRecord {
   @Column('uuid')
   centerId: string; // Denormalized: Center owning the branch
 
-  @Column({ type: 'enum', enum: PaymentSource, nullable: true })
-  paymentSource?: PaymentSource; // WALLET or CASH, null initially
+  @Column({ type: 'enum', enum: PaymentMethod, nullable: true })
+  paymentSource?: PaymentMethod; // WALLET or CASH, null initially
 
   @Column({ type: 'uuid', nullable: true })
   paymentId?: string;
+
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    default: 0,
+    transformer: {
+      from: (value: string): Money => Money.from(value),
+      to: (value: Money | number | string): string => {
+        if (value instanceof Money) return value.toString();
+        return Money.from(value).toString();
+      },
+    },
+  })
+  totalPaid: Money; // Cumulative amount paid so far
+
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+    transformer: {
+      from: (value: string | null): Money | null => {
+        return value === null ? null : Money.from(value);
+      },
+      to: (
+        value: Money | number | string | null | undefined,
+      ): string | null => {
+        if (value == null) return null; // handles both null and undefined
+        if (value instanceof Money) return value.toString();
+        return Money.from(value).toString();
+      },
+    },
+  })
+  lastPaymentAmount?: Money; // Most recent payment amount
 
   @CreateDateColumn()
   createdAt: Date;

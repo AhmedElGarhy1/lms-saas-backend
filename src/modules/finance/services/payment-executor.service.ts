@@ -3,17 +3,21 @@ import { Transactional } from '@nestjs-cls/transactional';
 import { Payment } from '../entities/payment.entity';
 import { Transaction } from '../entities/transaction.entity';
 import { CashTransaction } from '../entities/cash-transaction.entity';
-import { PaymentSource } from '../enums/payment-source.enum';
+import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
 import { WalletService } from './wallet.service';
 import { TransactionService } from './transaction.service';
 import { CashTransactionService } from './cash-transaction.service';
 import { CashboxService } from './cashbox.service';
 import { FinanceErrors } from '../exceptions/finance.errors';
-import { CashTransactionDirection } from '../enums/cash-transaction-direction.enum';
+import {
+  CashTransactionDirection,
+  CashTransactionType,
+} from '../enums/cash-transaction-direction.enum';
 import { TransactionType } from '../enums/transaction-type.enum';
 import { randomUUID } from 'crypto';
 import { PaymentGatewayService } from '../adapters/payment-gateway.service';
+import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 
 export interface ExecutionResult {
   transactions: Transaction[];
@@ -37,12 +41,12 @@ export class PaymentExecutorService {
    */
   @Transactional()
   async executePayment(payment: Payment): Promise<ExecutionResult> {
-    if (payment.source === PaymentSource.WALLET) {
+    if (payment.source === PaymentMethod.WALLET) {
       return await this.executeWalletPayment(payment);
-    } else if (payment.source === PaymentSource.CASH) {
+    } else if (payment.source === PaymentMethod.CASH) {
       return await this.executeCashPayment(payment);
     } else {
-      throw new Error(`Unsupported payment source: ${payment.source}`);
+      throw new Error(`Unsupported payment method: ${payment.source}`);
     }
   }
 
@@ -57,6 +61,14 @@ export class PaymentExecutorService {
       this.walletService.getWallet(payment.senderId, payment.senderType),
       this.walletService.getWallet(payment.receiverId, payment.receiverType),
     ]);
+
+    // Validate sender wallet balance
+    if (senderWallet.balance.lessThan(payment.amount)) {
+      this.logger.error(
+        `Insufficient balance for wallet payment: ${senderWallet.balance.toString()} < ${payment.amount.toString()}`,
+      );
+      throw FinanceErrors.insufficientWalletBalance();
+    }
 
     // Execute balance transfers: Move from sender's balance to receiver's balance
     const [updatedSenderWallet, updatedReceiverWallet] = await Promise.all([
@@ -99,27 +111,9 @@ export class PaymentExecutorService {
    * Execute cash payment operations
    */
   private async executeCashPayment(payment: Payment): Promise<ExecutionResult> {
-    const metadata = payment.metadata || {};
-
-    if (metadata.withdrawalType === 'cashbox') {
-      return await this.executeCashboxWithdrawal(payment);
-    } else if (metadata.depositType === 'cashbox') {
-      return await this.executeCashboxDeposit(payment);
-    } else if (metadata.depositType === 'wallet') {
-      return await this.executeWalletDeposit(payment);
-    } else {
-      // Handle other cash operations (student billing, etc.)
-      return { transactions: [] };
-    }
-  }
-
-  /**
-   * Execute cashbox withdrawal: Branch cashbox → Staff wallet
-   */
-  private async executeCashboxWithdrawal(
-    payment: Payment,
-  ): Promise<ExecutionResult> {
-    // Get cashbox for the branch
+    // Determine cash operation based on branch position (sender vs receiver)
+    if (payment.senderType === WalletOwnerType.BRANCH) {
+      // Branch is sending money → Cash OUT from cashbox (withdrawal)
     const cashbox = await this.cashboxService.getCashbox(payment.senderId);
 
     // Validate cashbox balance
@@ -127,20 +121,10 @@ export class PaymentExecutorService {
       throw FinanceErrors.insufficientCashBalance();
     }
 
-    // Get/create receiver wallet
-    const receiverWallet = await this.walletService.getWallet(
-      payment.receiverId,
-      payment.receiverType,
-    );
-
-    // Update balances
+      // Update cashbox balance (decrease - cash is taken out)
     const updatedCashbox = await this.cashboxService.updateBalance(
       cashbox.id,
       payment.amount.multiply(-1), // Debit cashbox
-    );
-    const updatedReceiverWallet = await this.walletService.updateBalance(
-      receiverWallet.id,
-      payment.amount, // Credit receiver wallet
     );
 
     // Create cash transaction (OUT from cashbox)
@@ -151,120 +135,21 @@ export class PaymentExecutorService {
         payment.amount,
         CashTransactionDirection.OUT,
         payment.receiverId, // receivedBy (staff)
-        TransactionType.CASH_WITHDRAWAL,
+          CashTransactionType.BRANCH_WITHDRAWAL,
         payment.receiverId, // paidBy (staff taking cash)
         payment.id,
-      );
-
-    // Create wallet transaction (credit to staff wallet)
-    const walletTransaction = await this.transactionService.createTransaction(
-      null, // fromWalletId (cash withdrawal)
-      receiverWallet.id, // toWalletId
-      payment.amount, // positive for credit
-      TransactionType.CASH_WITHDRAWAL,
-      payment.correlationId || randomUUID(),
-      updatedReceiverWallet.balance,
-      payment.id,
+          updatedCashbox.balance, // Pass the updated balance
     );
 
     return {
-      transactions: [walletTransaction],
+        transactions: [], // No transaction records for cash operations
       cashTransactions: [cashTransaction],
     };
-  }
-
-  /**
-   * Execute wallet deposit: Staff wallet → Branch wallet
-   */
-  private async executeWalletDeposit(
-    payment: Payment,
-  ): Promise<ExecutionResult> {
-    // Get sender wallet (staff)
-    const senderWallet = await this.walletService.getWallet(
-      payment.senderId,
-      payment.senderType,
-    );
-
-    // Validate sender wallet balance
-    if (senderWallet.balance.lessThan(payment.amount)) {
-      this.logger.error(
-        `Insufficient balance for wallet deposit: ${senderWallet.balance.toString()} < ${payment.amount.toString()}`,
-      );
-      throw FinanceErrors.insufficientWalletBalance();
-    }
-
-    // Get receiver wallet (branch)
-    const receiverWallet = await this.walletService.getWallet(
-      payment.receiverId,
-      payment.receiverType,
-    );
-
-    // Update balances
-    const updatedSenderWallet = await this.walletService.updateBalance(
-      senderWallet.id,
-      payment.amount.multiply(-1), // Debit sender wallet
-    );
-
-    const updatedReceiverWallet = await this.walletService.updateBalance(
-      receiverWallet.id,
-      payment.amount, // Credit receiver wallet
-    );
-
-    // Create transaction records
-    const correlationId = payment.correlationId || randomUUID();
-
-    const debitTransaction = await this.transactionService.createTransaction(
-      senderWallet.id, // fromWalletId
-      receiverWallet.id, // toWalletId
-      payment.amount.multiply(-1), // Negative for debit
-      this.mapPaymentReasonToTransactionType(payment.reason),
-      correlationId,
-      updatedSenderWallet.balance,
-      payment.id,
-    );
-
-    const creditTransaction = await this.transactionService.createTransaction(
-      senderWallet.id, // fromWalletId
-      receiverWallet.id, // toWalletId
-      payment.amount, // Positive for credit
-      this.mapPaymentReasonToTransactionType(payment.reason),
-      correlationId,
-      updatedReceiverWallet.balance,
-      payment.id,
-    );
-
-    this.logger.log(`Wallet deposit completed for payment ${payment.id}`);
-
-    return {
-      transactions: [debitTransaction, creditTransaction],
-    };
-  }
-
-  /**
-   * Execute cashbox deposit: Staff wallet → Branch cashbox
-   */
-  private async executeCashboxDeposit(
-    payment: Payment,
-  ): Promise<ExecutionResult> {
-    // Get sender wallet
-    const senderWallet = await this.walletService.getWallet(
-      payment.senderId,
-      payment.senderType,
-    );
-
-    // Validate sender wallet balance
-    if (senderWallet.balance.lessThan(payment.amount)) {
-      throw FinanceErrors.insufficientWalletBalance();
-    }
-
-    // Get cashbox for the branch
+    } else if (payment.receiverType === WalletOwnerType.BRANCH) {
+      // Branch is receiving money → Cash IN to cashbox (deposit)
     const cashbox = await this.cashboxService.getCashbox(payment.receiverId);
 
-    // Update balances
-    const updatedSenderWallet = await this.walletService.updateBalance(
-      senderWallet.id,
-      payment.amount.multiply(-1), // Debit sender wallet
-    );
+      // Update cashbox balance (increase - cash is added)
     const updatedCashbox = await this.cashboxService.updateBalance(
       cashbox.id,
       payment.amount, // Credit cashbox
@@ -278,28 +163,22 @@ export class PaymentExecutorService {
         payment.amount,
         CashTransactionDirection.IN,
         payment.senderId, // receivedBy (staff depositing)
-        TransactionType.CASH_DEPOSIT,
+          CashTransactionType.BRANCH_DEPOSIT,
         payment.senderId, // paidBy (staff depositing)
         payment.id,
-      );
-
-    // Create wallet transaction (debit from staff wallet)
-    const walletTransaction = await this.transactionService.createTransaction(
-      senderWallet.id, // fromWalletId
-      null, // toWalletId (cash deposit)
-      payment.amount.multiply(-1), // negative for debit
-      TransactionType.CASH_DEPOSIT,
-      payment.correlationId || randomUUID(),
-      updatedSenderWallet.balance,
-      payment.id,
+          updatedCashbox.balance, // Pass the updated balance
     );
 
-    this.logger.log(`Cashbox deposit completed for payment ${payment.id}`);
+      this.logger.log(`Cashbox operation completed for payment ${payment.id}`);
 
     return {
-      transactions: [walletTransaction],
+        transactions: [], // No transaction records for cash operations
       cashTransactions: [cashTransaction],
     };
+    } else {
+      // Handle other cash operations (not involving branches)
+      return { transactions: [] };
+    }
   }
 
   /**
@@ -309,9 +188,22 @@ export class PaymentExecutorService {
     switch (reason) {
       case PaymentReason.TOPUP:
         return TransactionType.TOPUP;
-      case PaymentReason.WITHDRAWAL:
-      case PaymentReason.DEPOSIT:
+      case PaymentReason.BRANCH_WITHDRAWAL:
+        return TransactionType.BRANCH_WITHDRAWAL;
+      case PaymentReason.BRANCH_DEPOSIT:
+        return TransactionType.BRANCH_DEPOSIT;
       case PaymentReason.INTERNAL_TRANSFER:
+        return TransactionType.INTERNAL_TRANSFER;
+      case PaymentReason.SESSION_FEE:
+      case PaymentReason.MONTHLY_FEE:
+      case PaymentReason.CLASS_FEE:
+        return TransactionType.STUDENT_BILL;
+      case PaymentReason.TEACHER_STUDENT_PAYOUT:
+      case PaymentReason.TEACHER_HOUR_PAYOUT:
+      case PaymentReason.TEACHER_SESSION_PAYOUT:
+      case PaymentReason.TEACHER_MONTHLY_PAYOUT:
+      case PaymentReason.TEACHER_CLASS_PAYOUT:
+        return TransactionType.TEACHER_PAYOUT;
       default:
         return TransactionType.INTERNAL_TRANSFER;
     }

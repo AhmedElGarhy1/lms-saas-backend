@@ -17,7 +17,7 @@ import { SessionAttendanceListener } from './listeners/session-attendance-listen
   imports: [
     TypeOrmModule.forFeature([Attendance, Session]),
     forwardRef(() => SessionsModule),
-    ClassesModule,
+    forwardRef(() => ClassesModule),
     CentersModule,
     UserModule,
     UserProfileModule,

@@ -1,126 +1,3 @@
-import { Injectable } from '@nestjs/common';
-import { Payment } from '../entities/payment.entity';
-import { BaseRepository } from '@/shared/common/repositories/base.repository';
-import { TransactionHost } from '@nestjs-cls/transactional';
-import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
-import { PaymentStatus } from '../enums/payment-status.enum';
-import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
-import { SelectQueryBuilder } from 'typeorm';
-import { PaginatePaymentDto } from '../dto/paginate-payment.dto';
-import { Pagination } from '@/shared/common/types/pagination.types';
-import { UserPaymentStatementItemDto } from '../dto/payment-statement.dto';
-import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
-
-// Define type for payment with computed name fields
-type PaymentWithNames = Payment & {
-  senderName: string;
-  receiverName: string;
-  senderProfileId?: string;
-  senderUserId?: string;
-  receiverProfileId?: string;
-  receiverUserId?: string;
-};
-
-@Injectable()
-export class PaymentRepository extends BaseRepository<Payment> {
-  constructor(
-    protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
-  ) {
-    super(txHost);
-  }
-
-  protected getEntityClass(): typeof Payment {
-    return Payment;
-  }
-
-  /**
-   * Find payments by status
-   */
-  async findByStatus(status: PaymentStatus): Promise<Payment[]> {
-    return this.getRepository().find({
-      where: { status },
-    });
-  }
-
-  /**
-   * Find payment by reference type and ID
-   */
-  async findByReference(
-    referenceType: PaymentReferenceType,
-    referenceId: string,
-  ): Promise<Payment | null> {
-    return this.getRepository().findOne({
-      where: { referenceType, referenceId },
-    });
-  }
-
-  /**
-   * Find payments by correlation ID (for split payments)
-   */
-  async findByCorrelationId(correlationId: string): Promise<Payment[]> {
-    return this.getRepository().find({
-      where: { correlationId },
-    });
-  }
-
-  /**
-   * Find payments by idempotency key and sender ID
-   */
-  async findByIdempotencyKey(
-    idempotencyKey: string,
-    senderId: string,
-  ): Promise<Payment[]> {
-    return this.getRepository().find({
-      where: { idempotencyKey, senderId },
-    });
-  }
-
-  /**
-   * Find payment by gateway payment ID
-   */
-  async findByGatewayPaymentId(
-    gatewayPaymentId: string,
-  ): Promise<Payment | null> {
-    return this.getRepository().findOne({
-      where: {
-        metadata: {
-          gatewayPaymentId,
-        },
-      },
-    });
-  }
-
-  /**
-   * Save payment entity
-   */
-  async savePayment(payment: Payment): Promise<Payment> {
-    return this.getRepository().save(payment);
-  }
-
-  /**
-   * Create query builder for pagination
-   */
-  createQueryBuilder(alias: string): SelectQueryBuilder<Payment> {
-    return this.getRepository().createQueryBuilder(alias);
-  }
-
-  /**
-   * Update payment status
-   */
-  async updatePaymentStatus(
-    paymentId: string,
-    status: PaymentStatus,
-  ): Promise<void> {
-    await this.getRepository().update(paymentId, { status });
-  }
-
-  /**
-   * Unified payments pagination method - single source of truth
-   * Handles both user-specific and admin views
-   */
-  async getPaymentsPaginated(
-    dto: PaginatePaymentDto,
     actor?: ActorUser,
     options?: {
       userId?: string;
@@ -196,7 +73,7 @@ export class PaymentRepository extends BaseRepository<Payment> {
       }
     }
 
-      // Select human-readable names and user IDs
+    // Select human-readable names and user IDs
     queryBuilder
       .addSelect(
         "COALESCE(senderUser.name, CONCAT(senderCenter.name, CONCAT(' - ', senderBranch.city)))",
@@ -213,8 +90,8 @@ export class PaymentRepository extends BaseRepository<Payment> {
 
     // Set parameters
     const parameters: any = {
-        userProfileType: 'USER_PROFILE',
-        branchType: 'BRANCH',
+      userProfileType: 'USER_PROFILE',
+      branchType: 'BRANCH',
     };
     if (options?.userId) parameters.userId = options.userId;
     if (centerId) parameters.centerId = centerId;
@@ -262,27 +139,18 @@ export class PaymentRepository extends BaseRepository<Payment> {
     const items: UserPaymentStatementItemDto[] = result.items.map(
       (payment: PaymentWithNames) => {
         // Determine user's role in the payment
-        let userRole: 'sender' | 'receiver' = 'sender'; // Default
+        let userRole: 'sender' | 'receiver' = 'sender'; // Default for admin view
 
         if (!options?.includeAll && options?.userId) {
-          // For user-specific view, determine role based on profile IDs
-          if (payment.senderProfileId === options.userId) {
-            userRole = 'sender';
-          } else if (payment.receiverProfileId === options.userId) {
-            userRole = 'receiver';
-          } else {
-            userRole = 'receiver'; // Default fallback
-          }
-        } else if (options?.includeAll) {
-          // For admin/center views, determine role based on whether center is sending or receiving
-          userRole = payment.senderType === 'BRANCH' ? 'sender' : 'receiver';
+          // For user-specific view, determine role based on profile ID match
+          userRole =
+            payment.senderProfileId === options.userId ? 'sender' : 'receiver';
         }
 
         // Calculate signed amount based on user role
-        const signedAmount =
-          userRole === 'sender'
-            ? -payment.amount.toNumber() // Negative for sent payments
-            : payment.amount.toNumber(); // Positive for received payments
+        const signedAmount = userRole === 'sender'
+          ? -payment.amount.toNumber()  // Negative for sent payments
+          : payment.amount.toNumber();  // Positive for received payments
 
         return {
           id: payment.id,

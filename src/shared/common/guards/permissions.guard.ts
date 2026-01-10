@@ -4,6 +4,7 @@ import { PERMISSIONS_KEY, PermissionsMetadata } from '../decorators';
 import { IRequest } from '../interfaces/request.interface';
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { AuthErrors } from '@/modules/auth/exceptions/auth.errors';
+import { PermissionScope } from '@/modules/access-control/constants/permissions';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -29,19 +30,16 @@ export class PermissionsGuard implements CanActivate {
       throw AuthErrors.authenticationRequired();
     }
 
+    const scope = user.centerId
+      ? PermissionScope.CENTER
+      : PermissionScope.ADMIN;
+
     const hasPermission = await this.rolesService.hasPermission(
       user.userProfileId,
       requiredPermissions.permission,
-      requiredPermissions.scope,
+      scope,
       user.centerId,
     );
-    console.log(
-      user.userProfileId,
-      requiredPermissions.permission,
-      requiredPermissions.scope,
-      user.centerId,
-    );
-    console.log(hasPermission);
 
     return !!hasPermission;
   }

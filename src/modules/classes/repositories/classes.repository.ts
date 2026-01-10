@@ -16,11 +16,6 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { StudentPaymentType } from '../enums/student-payment-type.enum';
 
-export interface ClassWithComputedFields extends Class {
-  groupsCount: number;
-  studentsCount: number;
-}
-
 @Injectable()
 export class ClassesRepository extends BaseRepository<Class> {
   constructor(
@@ -34,10 +29,7 @@ export class ClassesRepository extends BaseRepository<Class> {
     return Class;
   }
 
-  async paginateClasses(
-    paginateDto: PaginateClassesDto,
-    actor: ActorUser,
-  ): Promise<Pagination<ClassWithComputedFields>> {
+  async paginateClasses(paginateDto: PaginateClassesDto, actor: ActorUser) {
     const centerId = actor.centerId!;
     const queryBuilder = this.getRepository()
       .createQueryBuilder('class')
@@ -47,7 +39,14 @@ export class ClassesRepository extends BaseRepository<Class> {
       .leftJoinAndSelect('class.teacher', 'teacher')
       .leftJoin('teacher.user', 'teacherUser')
       .leftJoin('class.branch', 'branch')
-      .leftJoin('class.studentPaymentStrategy', 'studentPaymentStrategy')
+      .leftJoinAndSelect(
+        'class.studentPaymentStrategy',
+        'studentPaymentStrategy',
+      )
+      .leftJoinAndSelect(
+        'class.teacherPaymentStrategy',
+        'teacherPaymentStrategy',
+      )
       // Add name and id fields as selections
       .addSelect([
         'level.id',
@@ -181,7 +180,7 @@ export class ClassesRepository extends BaseRepository<Class> {
     }
 
     // Get paginated results with computed fields (counts)
-    return (await this.paginate(
+    return await this.paginate(
       paginateDto,
       {
         searchableColumns: [
@@ -195,25 +194,7 @@ export class ClassesRepository extends BaseRepository<Class> {
       },
       '/classes',
       queryBuilder,
-      {
-        includeComputedFields: true,
-        computedFieldsMapper: (
-          entity: Class,
-          raw: any,
-        ): ClassWithComputedFields => {
-          // Map computed counts from raw data
-          const groupsCount = parseInt(String(raw.groupsCount || '0'), 10);
-          const studentsCount = parseInt(String(raw.studentsCount || '0'), 10);
-
-          // Return entity with computed fields added
-          return {
-            ...entity,
-            groupsCount,
-            studentsCount,
-          } as ClassWithComputedFields;
-        },
-      },
-    )) as Pagination<ClassWithComputedFields>;
+    );
   }
 
   async findClassWithRelations(
@@ -414,5 +395,23 @@ export class ClassesRepository extends BaseRepository<Class> {
       throw ClassesErrors.classNotFound();
     }
     return classEntity;
+  }
+
+  async findClassByUniqueCombination(
+    centerId: string,
+    branchId: string,
+    teacherUserProfileId: string,
+    levelId: string,
+    subjectId: string,
+  ): Promise<Class | null> {
+    return this.getRepository().findOne({
+      where: {
+        centerId,
+        branchId,
+        teacherUserProfileId,
+        levelId,
+        subjectId,
+      },
+    });
   }
 }

@@ -3,8 +3,10 @@ import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Cashbox } from './cashbox.entity';
 import { Payment } from './payment.entity';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
-import { CashTransactionDirection } from '../enums/cash-transaction-direction.enum';
-import { TransactionType } from '../enums/transaction-type.enum';
+import {
+  CashTransactionDirection,
+  CashTransactionType,
+} from '../enums/cash-transaction-direction.enum';
 import { Money } from '@/shared/common/utils/money.util';
 
 @Entity('cash_transactions')
@@ -70,7 +72,7 @@ export class CashTransaction extends BaseEntity {
   paidByProfileId?: string;
 
   @Column({ type: 'varchar', length: 20 })
-  type: TransactionType;
+  type: CashTransactionType;
 
   // Relations
   @ManyToOne(() => Payment, { onDelete: 'CASCADE' })
@@ -91,4 +93,3 @@ export class CashTransaction extends BaseEntity {
   @JoinColumn({ name: 'paidByProfileId' })
   paidByProfile?: UserProfile;
 }
-

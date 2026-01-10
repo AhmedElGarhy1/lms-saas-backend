@@ -12,6 +12,7 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { CashboxService } from '../services/cashbox.service';
+import { PaymentService } from '../services/payment.service';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import {
   CenterTreasuryStatsDto,
@@ -19,6 +20,7 @@ import {
   CenterStatementItemDto,
   CenterCashStatementItemDto,
 } from '../dto/center-revenue-stats.dto';
+import { UserPaymentStatementItemDto } from '../dto/payment-statement.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { CenterStatementQueryDto } from '../dto/center-statement-query.dto';
 import { DateRangeDto } from '@/shared/common/dto/date-range.dto';
@@ -28,7 +30,10 @@ import { DateRangeDto } from '@/shared/common/dto/date-range.dto';
 @Controller('finance/centers')
 @ManagerialOnly()
 export class CashboxesController {
-  constructor(private readonly cashboxService: CashboxService) {}
+  constructor(
+    private readonly cashboxService: CashboxService,
+    private readonly paymentService: PaymentService,
+  ) {}
 
   @Permissions(PERMISSIONS.FINANCE.VIEW_TREASURY)
   @Get(':centerId/treasury')
@@ -90,6 +95,30 @@ export class CashboxesController {
     );
 
     return ControllerResponse.success(statement);
+  }
+
+  @Permissions(PERMISSIONS.FINANCE.VIEW_PAYMENTS)
+  @Get('payments')
+  @ApiOperation({
+    summary: 'Get center payment records',
+    description:
+      'Get paginated payment records for centers. Auto-filters by actor center if available.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Center payments retrieved successfully',
+  })
+  async getCenterPayments(
+    @Query() query: CenterStatementQueryDto,
+    @GetUser() actor: ActorUser,
+  ): Promise<ControllerResponse<Pagination<UserPaymentStatementItemDto>>> {
+    const centerId = actor.centerId;
+    const payments = await this.paymentService.getCenterPaymentsPaginated(
+      centerId,
+      query,
+    );
+
+    return ControllerResponse.success(payments);
   }
 
   @Permissions(PERMISSIONS.FINANCE.VIEW_CASH_STATEMENT)

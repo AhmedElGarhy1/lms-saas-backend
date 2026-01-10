@@ -8,12 +8,12 @@ import { FinanceErrors } from '../exceptions/finance.errors';
 import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { Transactional } from '@nestjs-cls/transactional';
 import { QueryFailedError } from 'typeorm';
+import { Transaction } from '../entities/transaction.entity';
 import {
   TransactionRepository,
   TransactionStatement,
 } from '../repositories/transaction.repository';
 import { UserWalletStatementItemDto } from '../dto/wallet-statement.dto';
-import { RequestContext } from '@/shared/common/context/request.context';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
@@ -93,10 +93,7 @@ export class WalletService extends BaseService {
       // Pre-check: Prevent negative balance (before save to avoid DB constraint violation)
       const newBalance = lockedWallet.balance.add(amount);
       if (newBalance.isNegative()) {
-        throw FinanceErrors.insufficientWalletBalance(
-          lockedWallet.balance.toNumber(),
-          amount.toNumber(),
-        );
+        throw FinanceErrors.insufficientWalletBalance();
       }
 
       // Perform balance update using Money utility with currency precision
@@ -128,7 +125,6 @@ export class WalletService extends BaseService {
       throw error;
     }
   }
-
 
   /**
    * Get wallet statement with signed transaction amounts
@@ -184,7 +180,18 @@ export class WalletService extends BaseService {
       }
     }
 
-    return await this.transactionRepository.getUserWalletStatementPaginated(
+    return await this.getUnifiedWalletStatement(walletId, dto);
+  }
+
+  /**
+   * Unified wallet statement implementation with optimized query and proper name resolution
+   * Handles both USER_PROFILE and BRANCH wallet owners, avoids transaction duplicates
+   */
+  private async getUnifiedWalletStatement(
+    walletId: string,
+    dto: PaginateTransactionDto,
+  ): Promise<Pagination<UserWalletStatementItemDto>> {
+    return await this.transactionRepository.getUnifiedWalletStatementPaginated(
       walletId,
       dto,
     );
@@ -294,10 +301,7 @@ export class WalletService extends BaseService {
 
     // Check sufficient balance
     if (fromWallet.balance.lessThan(amount)) {
-      throw FinanceErrors.insufficientWalletBalance(
-        fromWallet.balance.toNumber(),
-        amount.toNumber(),
-      );
+      throw FinanceErrors.insufficientWalletBalance();
     }
 
     // Perform the transfer atomically
