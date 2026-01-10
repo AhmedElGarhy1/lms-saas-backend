@@ -100,57 +100,62 @@ export class TransactionRepository extends BaseRepository<Transaction> {
     walletId: string,
     dto: PaginateTransactionDto,
   ): Promise<Pagination<TransactionStatement>> {
-    // For now, get all transactions and manually paginate
-    // TODO: Implement proper query-based pagination for better performance
-    const allTransactions = await this.findByWallet(walletId);
+    // Build query with proper database-level filtering and pagination
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('transaction')
+      .where(
+        'transaction.fromWalletId = :walletId OR transaction.toWalletId = :walletId',
+        {
+          walletId,
+        },
+      );
 
-    // Apply filters
-    let filteredTransactions = allTransactions;
+    // Apply filters at database level
     if (dto.type) {
-      filteredTransactions = filteredTransactions.filter(
-        (tx) => tx.type === dto.type,
-      );
+      queryBuilder.andWhere('transaction.type = :type', { type: dto.type });
     }
+
     if (dto.correlationId) {
-      filteredTransactions = filteredTransactions.filter(
-        (tx) => tx.correlationId === dto.correlationId,
-      );
+      queryBuilder.andWhere('transaction.correlationId = :correlationId', {
+        correlationId: dto.correlationId,
+      });
     }
 
-    // Apply date filters
+    // Apply date range filters
     if (dto.dateFrom) {
-      filteredTransactions = filteredTransactions.filter(
-        (tx) => tx.createdAt >= dto.dateFrom!,
-      );
-    }
-    if (dto.dateTo) {
-      filteredTransactions = filteredTransactions.filter(
-        (tx) => tx.createdAt <= dto.dateTo!,
-      );
+      queryBuilder.andWhere('transaction.createdAt >= :dateFrom', {
+        dateFrom: dto.dateFrom,
+      });
     }
 
-    // Sort (default: createdAt DESC)
+    if (dto.dateTo) {
+      queryBuilder.andWhere('transaction.createdAt <= :dateTo', {
+        dateTo: dto.dateTo,
+      });
+    }
+
+    // Apply sorting (default: createdAt DESC)
     const sortField = dto.sortBy?.[0]?.[0] || 'createdAt';
     const sortOrder = dto.sortBy?.[0]?.[1] || 'DESC';
-    filteredTransactions.sort((a, b) => {
-      const aVal = a[sortField as keyof Transaction] || 0;
-      const bVal = b[sortField as keyof Transaction] || 0;
-      if (aVal < bVal) return sortOrder === 'ASC' ? -1 : 1;
-      if (aVal > bVal) return sortOrder === 'ASC' ? 1 : -1;
-      return 0;
-    });
-
-    // Manual pagination
-    const total = filteredTransactions.length;
-    const startIndex = ((dto.page || 1) - 1) * (dto.limit || 10);
-    const endIndex = startIndex + (dto.limit || 10);
-    const paginatedTransactions = filteredTransactions.slice(
-      startIndex,
-      endIndex,
+    queryBuilder.orderBy(
+      `transaction.${sortField}`,
+      sortOrder as 'ASC' | 'DESC',
     );
 
+    // Get total count for pagination
+    const total = await queryBuilder.getCount();
+
+    // Apply pagination
+    const page = dto.page || 1;
+    const limit = dto.limit || 10;
+    const offset = (page - 1) * limit;
+    queryBuilder.skip(offset).take(limit);
+
+    // Execute query
+    const transactions = await queryBuilder.getMany();
+
     // Transform to TransactionStatement format
-    const transformedItems = paginatedTransactions.map((tx: Transaction) => {
+    const transformedItems = transactions.map((tx: Transaction) => {
       // Sign convention: negative if wallet is sender, positive if receiver
       const signedAmount =
         tx.fromWalletId === walletId
@@ -175,9 +180,9 @@ export class TransactionRepository extends BaseRepository<Transaction> {
       meta: {
         totalItems: total,
         itemCount: transformedItems.length,
-        itemsPerPage: dto.limit || 10,
-        totalPages: Math.ceil(total / (dto.limit || 10)),
-        currentPage: dto.page || 1,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
       },
       links: {
         first: '',
@@ -343,11 +348,7 @@ export class TransactionRepository extends BaseRepository<Transaction> {
         'fromBranch',
         'fw.ownerId = fromBranch.id AND fw.ownerType = :branchType',
       )
-      .leftJoin(
-        'centers',
-        'fromCenter',
-        'fromBranch.centerId = fromCenter.id',
-      )
+      .leftJoin('centers', 'fromCenter', 'fromBranch.centerId = fromCenter.id')
 
       // To side: user profiles
       .leftJoin(
@@ -363,11 +364,7 @@ export class TransactionRepository extends BaseRepository<Transaction> {
         'toBranch',
         'tw.ownerId = toBranch.id AND tw.ownerType = :branchType',
       )
-      .leftJoin(
-        'centers',
-        'toCenter',
-        'toBranch.centerId = toCenter.id',
-      )
+      .leftJoin('centers', 'toCenter', 'toBranch.centerId = toCenter.id')
 
       // Optimized WHERE condition: avoid duplicates by showing only one side per transaction
       // For the target wallet, show transactions where it's the recipient (positive amount)

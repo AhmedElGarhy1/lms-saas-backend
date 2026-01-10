@@ -44,14 +44,6 @@ export class AttendanceResponseDto {
   @Expose()
   status: AttendanceStatus;
 
-  // TODO: remove this we already have createdBy and updatedBy
-  @ApiProperty({
-    description: 'Marked by staff userProfileId',
-    required: false,
-  })
-  @Expose()
-  markedByUserProfileId?: string;
-
   @ApiProperty({ description: 'Student identity card info' })
   @Expose()
   @Type(() => AttendanceStudentCardDto)
@@ -62,10 +54,10 @@ export class AttendanceResponseDto {
     required: false,
     example: {
       hasOutstandingInstallments: true,
-      outstandingAmount: 500.00,
-      totalAmount: 2000.00,
-      progress: 75.00
-    }
+      outstandingAmount: 500.0,
+      totalAmount: 2000.0,
+      progress: 75.0,
+    },
   })
   @Expose()
   paymentStatus?: {

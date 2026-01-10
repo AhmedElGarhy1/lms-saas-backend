@@ -40,7 +40,7 @@ export interface CreatePaymentRequest {
   amount: Money;
   currency: string;
   orderId: string;
-  customerEmail: string;
+  customerEmail?: string; // Made optional - using phone instead
   customerPhone?: string;
   customerName?: string;
   description?: string;

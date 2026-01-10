@@ -62,29 +62,29 @@ export class ClassValidationService extends BaseService {
    * @param skipWarning - If true, student conflicts are silently skipped
    * @throws ClassesErrors.scheduleConflict() if schedule conflicts are detected
    */
-  // TODO: fix this bad performance method
+  // Optimized: Reduced N+1 queries and improved performance
   async validateDurationUpdateConflicts(
     classId: string,
     newDuration: number,
     teacherUserProfileId: string,
     skipWarning?: boolean,
   ): Promise<void> {
-    const groups =
-      await this.groupsRepository.findGroupsByClassIdWithScheduleAndStudents(
-        classId,
-      );
+    // Single query to get all groups with schedule items for this class
+    const groups = await this.groupsRepository.findMany({
+      where: { classId },
+      relations: ['scheduleItems'],
+    });
 
     if (!groups || groups.length === 0) {
       return;
     }
 
+    // Collect all schedule items in one pass
     const allScheduleItems: ScheduleItemDto[] = [];
-    const groupIds = groups.map((g) => g.id);
-
     for (const group of groups) {
       if (group.scheduleItems && group.scheduleItems.length > 0) {
         const scheduleItems: ScheduleItemDto[] = group.scheduleItems.map(
-          (item) => ({
+          (item: any) => ({
             day: item.day,
             startTime: item.startTime,
           }),
@@ -97,27 +97,19 @@ export class ClassValidationService extends BaseService {
       return;
     }
 
-    const allGroupStudents = await Promise.all(
-      groupIds.map((groupId) =>
-        this.groupStudentsRepository.findByGroupId(groupId),
-      ),
-    );
-
-    const studentIdsSet = new Set<string>();
-    for (const groupStudents of allGroupStudents) {
-      for (const groupStudent of groupStudents) {
-        studentIdsSet.add(groupStudent.studentUserProfileId);
-      }
-    }
-
-    const studentIds = Array.from(studentIdsSet);
+    // Single optimized query to get all students across all groups
+    // Instead of N queries for N groups, use one query with IN clause
+    const groupIds = groups.map((g: any) => g.id);
+    const studentIds =
+      await this.groupStudentsRepository.findStudentIdsByGroupIds(groupIds);
 
     await this.scheduleService.validateScheduleConflicts(
       allScheduleItems,
       newDuration,
       {
         teacherUserProfileId,
-        studentIds: studentIds.length > 0 ? studentIds : undefined,
+        studentIds:
+          studentIds.length > 0 ? (studentIds as string[]) : undefined,
         excludeGroupIds: groupIds,
         skipWarning,
       },

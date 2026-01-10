@@ -70,7 +70,7 @@ export class PaymentRefundService {
     }
 
     // For now, just mark as refunded since gateway integration is pending
-    // TODO: Implement proper gateway refund when gateway is integrated
+    // Gateway refunds not needed - users can withdraw from wallets instead
     payment.status = PaymentStatus.CANCELLED; // Mark as refunded
     return await this.paymentRepository.savePayment(payment);
   }

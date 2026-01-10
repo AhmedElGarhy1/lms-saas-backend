@@ -36,6 +36,24 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
   }
 
   /**
+   * Find all student IDs for multiple groups - optimized query
+   */
+  async findStudentIdsByGroupIds(groupIds: string[]): Promise<string[]> {
+    if (groupIds.length === 0) {
+      return [];
+    }
+
+    const results = await this.getRepository()
+      .createQueryBuilder('gs')
+      .where('gs.groupId IN (:...groupIds)', { groupIds })
+      .andWhere('gs.leftAt IS NULL')
+      .select('DISTINCT gs.studentUserProfileId', 'studentUserProfileId')
+      .getRawMany<{ studentUserProfileId: string }>();
+
+    return results.map(r => r.studentUserProfileId);
+  }
+
+  /**
    * Find all group IDs for a student in a given class.
    * Pure data access method - returns data only, no business logic interpretation.
    * Uses denormalized classId field for better performance.

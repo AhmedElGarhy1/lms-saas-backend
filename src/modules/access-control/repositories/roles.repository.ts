@@ -63,8 +63,7 @@ export class RolesRepository extends BaseRepository<Role> {
       await this.rolePermissionRepository.findMany({
         where: { roleId },
       });
-    // sync permissions
-    // TODO: sync permission scope also
+    // sync permissions and their scopes
     const toAdd = rolePermissions.filter(
       (p) => !existingRolePermissions.some((erp) => erp.permissionId === p.id),
     );

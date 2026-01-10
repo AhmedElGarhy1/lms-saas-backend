@@ -68,7 +68,6 @@ export class BranchDepositService {
       timestamp: new Date(),
       transactionId:
         paymentResult.transactions[0]?.id || paymentResult.payment.id,
-      newBalance: Money.zero(), // TODO: Get actual balance from payment result
       notes,
     };
 
@@ -155,7 +154,6 @@ export class BranchDepositService {
         paymentResult.transactions[0]?.id ||
         paymentResult.cashTransactions?.[0]?.id ||
         paymentResult.payment.id,
-      newBalance: Money.zero(), // TODO: Get actual balance from payment result
       notes,
     };
 

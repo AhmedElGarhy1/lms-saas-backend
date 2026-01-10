@@ -20,8 +20,7 @@ export class IsUserProfileConstraint implements ValidatorConstraintInterface {
     if (!value) return true; // Let other validators handle null/undefined
 
     if (!this.dataSource) {
-      console.error('DataSource is not available in IsUserProfileConstraint');
-      return false;
+      throw new Error('DataSource is not available in IsUserProfileConstraint');
     }
 
     try {

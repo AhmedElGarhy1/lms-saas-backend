@@ -222,21 +222,4 @@ export class AuthController {
     return ControllerResponse.success(result);
   }
 
-  /**
-   * [TESTING ENDPOINT] Get all verification tokens
-   * This endpoint is for testing/debugging purposes only.
-   * TODO: Remove this endpoint before production deployment
-   */
-  @Public()
-  @Get('test/verification-tokens')
-  @ReadApiResponses('Get all verification tokens')
-  @ApiOperation({
-    summary: '[TESTING] Get all verification tokens - TO BE REMOVED',
-    description:
-      'Temporary endpoint for testing. Displays all verification tokens (OTP codes) in the database. This endpoint will be removed before production.',
-  })
-  async getVerificationTokens() {
-    const tokens = await this.verificationTokenRepository.findAll();
-    return ControllerResponse.success(tokens);
-  }
 }

@@ -42,19 +42,19 @@ export class AttendanceErrors extends BaseErrorHelpers {
     if (paymentStrategy.includeSession) {
       paymentOptions.push({
         type: 'session',
-        price: paymentStrategy.sessionPrice
+        price: paymentStrategy.sessionPrice,
       });
     }
     if (paymentStrategy.includeMonth) {
       paymentOptions.push({
         type: 'monthly',
-        price: paymentStrategy.monthPrice
+        price: paymentStrategy.monthPrice,
       });
     }
     if (paymentStrategy.includeClass) {
       paymentOptions.push({
         type: 'class',
-        price: paymentStrategy.classPrice
+        price: paymentStrategy.classPrice,
       });
     }
 
@@ -62,7 +62,7 @@ export class AttendanceErrors extends BaseErrorHelpers {
       AttendanceErrorCode.ATTENDANCE_PAYMENT_REQUIRED,
       {
         availablePaymentOptions: paymentOptions,
-        hasPaymentOptions: paymentOptions.length > 0
+        hasPaymentOptions: paymentOptions.length > 0,
       },
     );
   }
@@ -70,5 +70,10 @@ export class AttendanceErrors extends BaseErrorHelpers {
   // Duplicate/Exists errors
   static attendanceAlreadyExists(): DomainException {
     return this.createNoDetails(AttendanceErrorCode.ATTENDANCE_ALREADY_EXISTS);
+  }
+
+  // Creation errors
+  static attendanceCreationFailed(): DomainException {
+    return this.createNoDetails(AttendanceErrorCode.ATTENDANCE_CREATION_FAILED);
   }
 }

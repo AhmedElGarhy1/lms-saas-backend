@@ -97,25 +97,6 @@ export class CashboxService extends BaseService {
   }
 
   /**
-   * Paginate cashboxes with optional filtering
-   */
-  async paginateCashboxes(paginationDto: any, actor: ActorUser): Promise<any> {
-    // TODO: Implement proper pagination with filtering
-    // For now, return mock pagination result
-    const mockResult = {
-      data: [],
-      meta: {
-        page: paginationDto.page || 1,
-        limit: paginationDto.limit || 10,
-        totalItems: 0,
-        totalPages: 0,
-      },
-    };
-
-    return mockResult;
-  }
-
-  /**
    * Get center treasury statistics including cashbox and wallet balances across all branches
    */
   async getCenterTreasuryStats(

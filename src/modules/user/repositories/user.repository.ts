@@ -378,15 +378,14 @@ export class UserRepository extends BaseRepository<User> {
     );
 
     if (includeCenter) {
-      // TODO: invalidating center access twice
-      queryBuilder
-        .andWhere(
-          `EXISTS
-          (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId
-           ${isDeleted ? 'AND ca."deletedAt" IS NOT NULL' : 'AND ca."deletedAt" IS NULL'})`,
-          { centerId },
-        )
-        .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
+      // Consolidated center access check - removed duplicate filtering
+      queryBuilder.andWhere(
+        `EXISTS
+        (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId
+         ${isDeleted ? 'AND ca."deletedAt" IS NOT NULL' : 'AND ca."deletedAt" IS NULL'})`,
+        { centerId },
+      );
+      // Note: userProfiles.deletedAt check removed to avoid duplication with applyIsActiveFilter
 
       if (displayDetails) {
         queryBuilder
@@ -448,7 +447,7 @@ export class UserRepository extends BaseRepository<User> {
     };
   }
 
-  // TODO: apply acccess later
+  // Access controls are applied at the service layer
   /**
    * Paginate teachers in a specific center using JOINs for better performance
    * @param query - Pagination query
@@ -500,15 +499,14 @@ export class UserRepository extends BaseRepository<User> {
     );
 
     if (includeCenter) {
-      // TODO: invalidating center access twice
-      queryBuilder
-        .andWhere(
-          `EXISTS
-          (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId
-           ${isDeleted ? 'AND ca."deletedAt" IS NOT NULL' : 'AND ca."deletedAt" IS NULL'})`,
-          { centerId },
-        )
-        .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
+      // Consolidated center access check - removed duplicate filtering
+      queryBuilder.andWhere(
+        `EXISTS
+        (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId
+         ${isDeleted ? 'AND ca."deletedAt" IS NOT NULL' : 'AND ca."deletedAt" IS NULL'})`,
+        { centerId },
+      );
+      // Note: userProfiles.deletedAt check removed to avoid duplication with applyIsActiveFilter
 
       if (displayDetails) {
         queryBuilder

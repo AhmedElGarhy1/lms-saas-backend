@@ -55,7 +55,7 @@ export class RolePermissionSubscriber
         }
       }
 
-      // TODO: recheck this logic
+      // Validate permission scope compatibility
       if (
         permission.scope !== rolePermission.permissionScope &&
         permission.scope !== PermissionScope.BOTH

@@ -97,9 +97,10 @@ export class AttendanceService {
     let paymentStatus;
     try {
       // Get the group to find the classId
-      const group = await this.groupsRepository.findByIdOrThrow(attendance.groupId, [
-        'class',
-      ]);
+      const group = await this.groupsRepository.findByIdOrThrow(
+        attendance.groupId,
+        ['class'],
+      );
 
       // Check for outstanding class installments
       const progress = await this.studentBillingService.getClassChargeProgress(
@@ -109,7 +110,10 @@ export class AttendanceService {
       );
 
       // Only show payment status for class charges that are still in installment
-      if (progress.payoutType === 'CLASS' && progress.payoutStatus === 'INSTALLMENT') {
+      if (
+        progress.payoutType === 'CLASS' &&
+        progress.payoutStatus === 'INSTALLMENT'
+      ) {
         paymentStatus = {
           hasOutstandingInstallments: true,
           outstandingAmount: progress.remaining,
@@ -128,7 +132,6 @@ export class AttendanceService {
       groupId: attendance.groupId,
       studentUserProfileId: attendance.studentUserProfileId,
       status: attendance.status,
-      markedByUserProfileId: attendance.markedByUserProfileId,
       student: {
         studentUserProfileId,
         fullName: studentUser.name,
@@ -154,8 +157,6 @@ export class AttendanceService {
       userProfileId,
     );
 
-    console.log('membership', membership);
-
     if (!membership) {
       throw AttendanceErrors.attendanceStudentNotEnrolled();
     }
@@ -167,8 +168,6 @@ export class AttendanceService {
         group.classId,
         sessionId,
       );
-
-    console.log('hasBillingAccess', hasBillingAccess);
 
     if (!hasBillingAccess) {
       // Get payment strategy details for better error message
@@ -189,25 +188,41 @@ export class AttendanceService {
       throw AttendanceErrors.attendanceAlreadyExists();
     }
 
+    // Create attendance record with race condition protection
+    const attendanceData = {
+      centerId: session.centerId,
+      branchId: session.branchId,
+      groupId: session.groupId,
+      sessionId: session.id,
+      studentUserProfileId: userProfileId,
+      status,
+      markedByUserProfileId: actor.userProfileId,
+    };
+
     let attendance: Attendance;
-    // TODO: handle this properly without try catch
+
     try {
-      attendance = await this.attendanceRepository.create({
-        centerId: session.centerId,
-        branchId: session.branchId,
-        groupId: session.groupId,
-        sessionId: session.id,
-        studentUserProfileId: userProfileId,
-        status,
-        markedByUserProfileId: actor.userProfileId,
-      });
-    } catch (e) {
-      // Race-safe: if another request inserted the record first, return deterministic 409.
-      const err = e as QueryFailedError & { code?: string };
-      if (err?.code === '23505') {
-        throw AttendanceErrors.attendanceAlreadyExists();
+      // Attempt to create - this will either succeed or fail with constraint violation
+      attendance = await this.attendanceRepository.create(attendanceData);
+    } catch (error) {
+      // Handle race condition: check if another request created the record
+      const queryError = error as QueryFailedError & { code?: string };
+      if (queryError?.code === '23505') {
+        // Unique constraint violation - likely another request created this attendance
+        // Double-check if it now exists
+        const nowExists =
+          await this.attendanceRepository.findBySessionAndStudent(
+            sessionId,
+            userProfileId,
+          );
+        if (nowExists) {
+          throw AttendanceErrors.attendanceAlreadyExists();
+        }
+        // If it doesn't exist, this was a different constraint violation
+        throw AttendanceErrors.attendanceCreationFailed();
       }
-      throw e;
+      // Re-throw other database errors
+      throw error;
     }
 
     return this.toAttendanceResponseDto(attendance, userProfileId, actor);

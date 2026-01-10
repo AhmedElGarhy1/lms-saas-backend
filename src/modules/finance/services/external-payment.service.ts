@@ -18,6 +18,7 @@ import { PaymentReason } from '../enums/payment-reason.enum';
 import { PaymentMethod } from '../enums/payment-method.enum';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
+import { UserService } from '@/modules/user/services/user.service';
 
 // Define a local interface for external payment initiation
 interface InitiateExternalPaymentRequest {
@@ -41,6 +42,7 @@ export class ExternalPaymentService {
     private readonly paymentRepository: PaymentRepository,
     private readonly paymentGatewayService: PaymentGatewayService,
     private readonly walletService: WalletService,
+    private readonly userService: UserService,
   ) {}
 
   /**
@@ -83,13 +85,19 @@ export class ExternalPaymentService {
       const methodType =
         request.metadata?.methodType || PaymentGatewayMethod.CARD;
 
+      // Get real user data for payment gateway
+      const userProfile = await this.userService.findStudentUserByProfileId(
+        request.senderId,
+        actor,
+        false,
+      );
+
       // Prepare gateway payment request
       const gatewayRequest: CreatePaymentRequest = {
         amount: request.amount,
         currency: currency,
         orderId: payment.id,
-        customerEmail: `user_${request.senderId}@example.com`, // TODO: Get from user profile
-        customerName: `User ${request.senderId}`, // TODO: Get from user profile
+        customerPhone: userProfile?.phone, // Send actual phone number
         description: `${request.reason} - ${request.amount.toString()} ${currency}`,
         methodType: methodType,
         metadata: {

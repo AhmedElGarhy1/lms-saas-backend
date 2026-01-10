@@ -150,6 +150,7 @@
 [x] transfer within account
 [x] class teacher payout type
 [x] student class installments
+[ ] cleanup all Error() to be handled error exception
 [ ] refactor all confirmation dialogs for nicer alert
 [ ] translations cleanup
 [ ] page for creating user and adding him to group in the same place for staff
@@ -189,3 +190,31 @@
 
 <!-- [permission] [userProfile] [endpoint] -->
 <!-- [finance.view_daily_cash] [managers] [POST /billing/students/records] -->
+
+<!-- CRITICAL TODOs COMPLETED - 2026-01-10 -->
+
+[x] 🔴 Remove production testing endpoint (auth.controller.ts)
+[x] 🧹 Remove balance TODOs from finance services (branch-deposit.service.ts, branch-withdrawal.service.ts)
+[x] 📱 Fix payment gateway to send phone only (external-payment.service.ts)
+[x] 🧹 Remove all debug console.log statements (attendance, listeners, validators)
+
+<!-- PERFORMANCE OPTIMIZATIONS COMPLETED - 2026-01-10 -->
+
+[x] 🚀 Implement proper query-based pagination for wallet transactions (finance/repositories/transaction.repository.ts)
+[x] ⚡ Fix bad performance method in class validation (classes/services/class-validation.service.ts)
+[x] 🔄 Optimize N+1 queries in group students lookup
+[x] 📊 Add efficient student ID retrieval method to GroupStudentsRepository
+
+<!-- HIGH PRIORITY FIXES COMPLETED - 2026-01-10 -->
+
+[x] 🛠️ Improve error handling - remove try-catch anti-pattern (attendance.service.ts)
+[x] 🔄 Fix center access double invalidation (user.repository.ts)
+
+<!-- CODE CLEANUP COMPLETED - 2026-01-10 -->
+
+[x] 🧹 Remove redundant attendance field (markedByUserProfileId)
+[x] 🧹 Remove debug console.log statements from business logic
+[x] 🔍 Review and update role permission logic comments
+[x] 🔄 Remove outdated permission scope sync TODO (already implemented)
+[x] 📝 Update obsolete TODO comments
+[x] 🗑️ Remove unused paginateCashboxes method (not needed)

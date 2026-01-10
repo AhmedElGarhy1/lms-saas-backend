@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { AttendanceRepository } from '../repositories/attendance.repository';
 import { SessionsRepository } from '@/modules/sessions/repositories/sessions.repository';
@@ -11,6 +11,8 @@ import { SessionFinishedEvent } from '@/modules/sessions/events/session.events';
  */
 @Injectable()
 export class SessionAttendanceListener {
+  private readonly logger = new Logger(SessionAttendanceListener.name);
+
   constructor(
     private readonly attendanceRepository: AttendanceRepository,
     private readonly sessionsRepository: SessionsRepository,
@@ -31,7 +33,6 @@ export class SessionAttendanceListener {
           groupId: session.groupId,
         });
 
-      console.log(attendanceStats);
 
       const { present, late, excused, absent } = attendanceStats;
 
@@ -44,8 +45,8 @@ export class SessionAttendanceListener {
       });
     } catch (error) {
       // Log error but don't fail the session finish process
-      console.error(
-        `Failed to calculate attendance stats for session ${session.id}:`,
+      this.logger.error(
+        `Failed to calculate attendance stats for session ${session.id}`,
         error,
       );
     }

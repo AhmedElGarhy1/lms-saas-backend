@@ -7,7 +7,7 @@ export interface WithdrawalResult {
   staffId: string;
   timestamp: Date;
   transactionId: string;
-  newBalance: Money;
+  newBalance?: Money; // Made optional - not always available
   notes?: string;
 }
 
@@ -18,7 +18,7 @@ export interface DepositResult {
   staffId: string;
   timestamp: Date;
   transactionId: string;
-  newBalance: Money;
+  newBalance?: Money; // Made optional - not always available
   notes?: string;
 }
 
