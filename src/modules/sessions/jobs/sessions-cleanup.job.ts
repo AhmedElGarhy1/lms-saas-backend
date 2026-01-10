@@ -181,8 +181,8 @@ export class SessionsCleanupJob {
           actualFinishTime: undefined,
           createdAt: now,
           updatedAt: now,
-          createdBy: SYSTEM_USER_ID,
-          updatedBy: undefined,
+          createdByProfileId: SYSTEM_USER_ID,
+          updatedByProfileId: undefined,
         });
       }
     }

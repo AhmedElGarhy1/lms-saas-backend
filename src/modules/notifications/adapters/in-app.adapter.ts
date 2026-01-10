@@ -172,7 +172,7 @@ export class InAppAdapter
       readAt: undefined,
       channel: NotificationChannel.IN_APP,
       status: NotificationStatus.PENDING,
-      createdBy, // Set explicitly for queue context (no RequestContext)
+      createdByProfileId: createdBy, // Set explicitly for queue context (no RequestContext)
     });
   }
 

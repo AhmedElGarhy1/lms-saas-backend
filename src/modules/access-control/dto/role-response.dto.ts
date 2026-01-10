@@ -37,17 +37,17 @@ export class RoleResponseDto {
   @Type(() => Date)
   updatedAt: Date;
 
-  @ApiProperty({ description: 'Created by user ID' })
+  @ApiProperty({ description: 'Created by user profile ID' })
   @Expose()
-  createdBy: string;
+  createdByProfileId: string;
 
-  @ApiProperty({ description: 'Updated by user ID', required: false })
+  @ApiProperty({ description: 'Updated by user profile ID', required: false })
   @Expose()
-  updatedBy?: string;
+  updatedByProfileId?: string;
 
-  @ApiProperty({ description: 'Deleted by user ID', required: false })
+  @ApiProperty({ description: 'Deleted by user profile ID', required: false })
   @Expose()
-  deletedBy?: string;
+  deletedByProfileId?: string;
 
   @ApiProperty({ description: 'Deletion date', required: false })
   @Expose()

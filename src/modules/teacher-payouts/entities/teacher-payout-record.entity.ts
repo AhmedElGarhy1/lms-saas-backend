@@ -1,13 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  Index,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { Session } from '@/modules/sessions/entities/session.entity';
@@ -17,15 +8,13 @@ import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit
 import { PayoutStatus } from '../enums/payout-status.enum';
 import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { Money } from '@/shared/common/utils/money.util';
+import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('teacher_payout_records')
 @Index(['teacherUserProfileId', 'status']) // For efficient queries
 @Index(['classId'])
 @Index(['status'])
-export class TeacherPayoutRecord {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class TeacherPayoutRecord extends BaseEntity {
   @Column('uuid')
   teacherUserProfileId: string;
 
@@ -100,12 +89,6 @@ export class TeacherPayoutRecord {
     },
   })
   lastPaymentAmount?: Money; // Most recent payment amount
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 
   // Relations
   @ManyToOne(() => UserProfile)

@@ -218,3 +218,11 @@
 [x] 🔄 Remove outdated permission scope sync TODO (already implemented)
 [x] 📝 Update obsolete TODO comments
 [x] 🗑️ Remove unused paginateCashboxes method (not needed)
+
+<!-- ENTITY BASE CLASS AUDIT COMPLETED - 2026-01-10 -->
+
+[x] 🔍 Audit all entities for BaseEntity vs SoftBaseEntity usage
+[x] ✅ Add BaseEntity to TeacherPayoutRecord (financial audit trail)
+[x] ✅ Add BaseEntity to NotificationLog (operational visibility)
+[x] 🔧 Fix type casting issues in teacher-payout.service.ts
+[x] 🔄 Update seeder to use new BaseEntity field names (createdByProfileId, etc.)

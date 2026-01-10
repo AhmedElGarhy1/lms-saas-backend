@@ -1,19 +1,11 @@
-import {
-  Entity,
-  Column,
-  Index,
-  ManyToOne,
-  JoinColumn,
-  UpdateDateColumn,
-  CreateDateColumn,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '@/modules/user/entities/user.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationType } from '../enums/notification-type.enum';
+import { BaseEntity } from '@/shared/common/entities/base.entity';
 
 @Entity('notification_logs')
 @Index(['userId'])
@@ -26,10 +18,7 @@ import { NotificationType } from '../enums/notification-type.enum';
 @Index(['userId', 'centerId', 'status'])
 @Index(['userId', 'profileType', 'profileId'])
 @Index(['profileType', 'profileId'])
-export class NotificationLog {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class NotificationLog extends BaseEntity {
   @Column({ type: 'varchar', length: 100 })
   type: NotificationType;
 
@@ -67,7 +56,6 @@ export class NotificationLog {
   @Column({ type: 'int', default: 0 })
   retryCount: number;
 
-  
   @Column({ type: 'timestamptz', nullable: true })
   lastAttemptAt?: Date;
 
@@ -83,12 +71,4 @@ export class NotificationLog {
   @ManyToOne(() => Center, { nullable: true })
   @JoinColumn({ name: 'centerId' })
   center?: Center;
-
-  
-  @CreateDateColumn({ type: 'timestamptz' })
-  createdAt: Date;
-
-  
-  @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt: Date;
 }

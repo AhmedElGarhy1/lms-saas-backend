@@ -12,7 +12,7 @@ export interface CenterResponseExportData {
   createdAt: string;
   updatedAt: string;
   logo: string;
-  createdBy: string;
+  createdByProfileId: string;
   isCenterAccessible: boolean;
 }
 
@@ -31,7 +31,7 @@ export class CenterResponseExportMapper
       createdAt: center.createdAt?.toISOString() || '',
       updatedAt: center.updatedAt?.toISOString() || '',
       logo: center.logo || '',
-      createdBy: center.createdBy || '',
+      createdByProfileId: center.createdByProfileId || '',
       isCenterAccessible: center.isCenterAccessible || false,
     };
   }
@@ -48,7 +48,7 @@ export class CenterResponseExportMapper
       'Created At',
       'Updated At',
       'Logo',
-      'Created By',
+      'Created By Profile ID',
       'Is Center Accessible',
     ];
   }

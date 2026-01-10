@@ -22,13 +22,7 @@ import { SessionStatus } from '../enums/session-status.enum';
 import { SessionsErrors } from '../exceptions/sessions.errors';
 import { Transactional } from '@nestjs-cls/transactional';
 import { GroupsRepository } from '@/modules/classes/repositories/groups.repository';
-import {
-  SessionVirtualizationService,
-  VirtualSession,
-  MergedSession,
-} from './session-virtualization.service';
-import { TimezoneService } from '@/shared/common/services/timezone.service';
-import { DEFAULT_TIMEZONE } from '@/shared/common/constants/timezone.constants';
+import { SessionVirtualizationService } from './session-virtualization.service';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { ClassAccessService } from '@/modules/classes/services/class-access.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
@@ -1085,16 +1079,26 @@ export class SessionsService extends BaseService {
       centerId: group.centerId,
       branchId: group.branchId,
       classId: group.classId,
+      teacherUserProfileId: group.class.teacher.id, // From class teacher
       scheduleItemId: resolved.scheduleItemId,
       title: undefined,
       startTime: resolved.startTime,
       endTime: endTime,
+      actualStartTime: undefined,
+      actualFinishTime: undefined,
       status: SessionStatus.SCHEDULED,
       isExtraSession: false,
+      // Attendance statistics
+      presentCount: 0,
+      lateCount: 0,
+      excusedCount: 0,
+      absentCount: 0,
+      totalAttendees: 0,
+      // BaseEntity fields
       createdAt: resolved.startTime, // Use startTime as placeholder
       updatedAt: resolved.startTime, // Use startTime as placeholder
-      createdBy: actor.userProfileId, // Use actor as placeholder
-      updatedBy: undefined,
+      createdByProfileId: actor.userProfileId, // Use actor as placeholder
+      updatedByProfileId: undefined,
       // Attach relations to match the expected response structure
       group: {
         id: group.id,
@@ -1106,7 +1110,7 @@ export class SessionsService extends BaseService {
         name: group.class.name,
         teacher: group.class.teacher,
       },
-    } as Session;
+    } as unknown as Session;
 
     return virtualSession;
   }

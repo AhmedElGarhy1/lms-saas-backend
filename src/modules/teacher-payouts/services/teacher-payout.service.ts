@@ -186,7 +186,7 @@ export class TeacherPayoutService extends BaseService {
       ...payout,
       unitPrice: paymentAmount, // Use the payment amount for calculation
       unitCount: 1,
-    };
+    } as TeacherPayoutRecord;
 
     // Execute payment
     const payment = await this.executePaymentTransaction(

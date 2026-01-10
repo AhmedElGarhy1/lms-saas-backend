@@ -1,14 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CashboxRepository } from '../repositories/cashbox.repository';
-import { CashTransactionRepository } from '../repositories/cash-transaction.repository';
-import { TransactionRepository } from '../repositories/transaction.repository';
 import { Cashbox } from '../entities/cashbox.entity';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
 import { FinanceErrors } from '../exceptions/finance.errors';
 import { Transactional } from '@nestjs-cls/transactional';
 import { QueryFailedError } from 'typeorm';
-import { ActorUser } from '@/shared/common/types/actor-user.type';
 import {
   CenterTreasuryStatsDto,
   CenterStatementItemDto,
@@ -23,11 +20,7 @@ const MAX_RETRIES = 3;
 export class CashboxService extends BaseService {
   private readonly logger = new Logger(CashboxService.name);
 
-  constructor(
-    private readonly cashboxRepository: CashboxRepository,
-    private readonly cashTransactionRepository: CashTransactionRepository,
-    private readonly transactionRepository: TransactionRepository,
-  ) {
+  constructor(private readonly cashboxRepository: CashboxRepository) {
     super();
   }
 

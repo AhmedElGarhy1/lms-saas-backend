@@ -46,7 +46,7 @@ export class RolesRepository extends BaseRepository<Role> {
       rolePermissions.map((permission) => ({
         permissionId: permission.id,
         permissionScope: permission.scope,
-        userId: role.createdBy,
+        userId: role.createdByProfileId,
         roleId: role.id,
       })),
     );
@@ -89,7 +89,7 @@ export class RolesRepository extends BaseRepository<Role> {
         toAdd.map((rp) => ({
           permissionId: rp.id,
           permissionScope: rp.scope,
-          userId: role.createdBy,
+          userId: role.createdByProfileId,
           roleId: role.id,
         })),
       );

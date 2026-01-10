@@ -82,8 +82,6 @@ export class Payment extends BaseEntity {
   @Column({ type: 'timestamptz', nullable: true })
   paidAt?: Date;
 
-  @Column({ type: 'uuid' })
-  createdByProfileId: string;
 
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, any>;

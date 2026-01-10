@@ -8,8 +8,8 @@ export interface RoleResponseExportData {
   createdAt: string;
   updatedAt: string;
   centerId: string;
-  createdBy: string;
-  updatedBy: string;
+  createdByProfileId: string;
+  updatedByProfileId: string;
 }
 
 export class RoleResponseExportMapper
@@ -23,8 +23,8 @@ export class RoleResponseExportMapper
       createdAt: role.createdAt?.toISOString() || '',
       updatedAt: role.updatedAt?.toISOString() || '',
       centerId: role.centerId || '',
-      createdBy: role.createdBy || '',
-      updatedBy: role.updatedBy || '',
+      createdByProfileId: role.createdByProfileId || '',
+      updatedByProfileId: role.updatedByProfileId || '',
     };
   }
 
@@ -36,8 +36,8 @@ export class RoleResponseExportMapper
       'Created At',
       'Updated At',
       'Center ID',
-      'Created By',
-      'Updated By',
+      'Created By Profile ID',
+      'Updated By Profile ID',
     ];
   }
 }

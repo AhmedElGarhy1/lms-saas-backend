@@ -113,21 +113,21 @@ export class DatabaseSeeder {
 
         // Insert user first
         await transactionalEntityManager.query(
-          `INSERT INTO users (id, password, name, "isActive", "createdBy", "phone", "phoneVerified", "createdAt", "updatedAt") 
+          `INSERT INTO users (id, password, name, "isActive", "createdByProfileId", "phone", "phoneVerified", "createdAt", "updatedAt")
            VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW(), NOW())`,
           [
             userUuid,
             hashedPassword,
             'System User',
             true,
-            userUuid, // createdBy is self for system user
+            userUuid, // createdByProfileId is self for system user
             '01000000000',
           ],
         );
 
         // Insert user info with the correct user ID
         await transactionalEntityManager.query(
-          `INSERT INTO user_info (id, "userId", address, locale, "createdAt", "updatedAt", "createdBy", "updatedBy") 
+          `INSERT INTO user_info (id, "userId", address, locale, "createdAt", "updatedAt", "createdByProfileId", "updatedByProfileId")
            VALUES ($1, $2, $3, $4, NOW(), NOW(), $5, $6)`,
           [profileUuid, userUuid, 'System', 'en', userUuid, userUuid],
         );
@@ -181,7 +181,7 @@ export class DatabaseSeeder {
 
         // Insert user first
         await transactionalEntityManager.query(
-          `INSERT INTO users (id, password, name, "isActive", "createdBy", "phone", "phoneVerified", "createdAt", "updatedAt") 
+          `INSERT INTO users (id, password, name, "isActive", "createdByProfileId", "phone", "phoneVerified", "createdAt", "updatedAt")
            VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW(), NOW())`,
           [
             userUuid,
@@ -195,7 +195,7 @@ export class DatabaseSeeder {
 
         // Insert user info with the correct user ID
         await transactionalEntityManager.query(
-          `INSERT INTO user_info (id, "userId", address, locale, "createdAt", "updatedAt", "createdBy", "updatedBy") 
+          `INSERT INTO user_info (id, "userId", address, locale, "createdAt", "updatedAt", "createdByProfileId", "updatedByProfileId")
            VALUES ($1, $2, $3, $4, NOW(), NOW(), $5, $6)`,
           [
             profileUuid,
@@ -276,11 +276,20 @@ export class DatabaseSeeder {
       },
     ];
 
+    const now = new Date();
     const roleEntities = globalRoles.map((role) => ({
+      id: undefined, // Let DB generate
       name: role.name,
       description: role.description,
-      createdBy: role.createdBy,
+      centerId: undefined, // Global roles don't belong to a center
       readOnly: role.readOnly,
+      // BaseEntity fields
+      createdAt: now,
+      updatedAt: now,
+      createdByProfileId: role.createdBy,
+      updatedByProfileId: undefined,
+      deletedAt: undefined,
+      deletedByProfileId: undefined,
     }));
 
     await this.dataSource
@@ -332,9 +341,9 @@ export class DatabaseSeeder {
         if (!isSystemUser) {
           // Insert admin record first
           await transactionalEntityManager.query(
-            `INSERT INTO admins (id, "createdBy", "createdAt", "updatedAt")
+            `INSERT INTO admins (id, "createdByProfileId", "createdAt", "updatedAt")
                VALUES ($1, $2, NOW(), NOW())`,
-            [adminUuid, user.createdBy],
+            [adminUuid, user.createdByProfileId],
           );
         }
 
@@ -345,14 +354,14 @@ export class DatabaseSeeder {
         const profileRefId = isSystemUser ? SYSTEM_USER_ID : adminUuid;
 
         await transactionalEntityManager.query(
-          `INSERT INTO user_profiles (id, "userId", "profileType", "profileRefId", "createdBy", "createdAt", "updatedAt", "code")
+          `INSERT INTO user_profiles (id, "userId", "profileType", "profileRefId", "createdByProfileId", "createdAt", "updatedAt", "code")
            VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), $6)`,
           [
             profileUuid,
             user.id,
             ProfileType.ADMIN,
             profileRefId,
-            user.createdBy,
+            user.createdByProfileId,
             profileCode,
           ],
         );
@@ -398,7 +407,7 @@ export class DatabaseSeeder {
       await this.dataSource.getRepository(ProfileRole).save({
         userProfileId: systemUserProfile?.id || '',
         roleId: superAdminRole.id,
-        createdBy,
+        createdByProfileId: createdBy,
       });
       this.logger.log(
         `Assigned Super Administrator role to ${systemUser.phone}`,
@@ -416,7 +425,7 @@ export class DatabaseSeeder {
       await this.dataSource.getRepository(ProfileRole).save({
         userProfileId: superAdminProfile?.id || '',
         roleId: superAdminRole.id,
-        createdBy,
+        createdByProfileId: createdBy,
       });
       this.logger.log(
         `Assigned Super Administrator role to ${superAdminUser.phone}`,
@@ -474,9 +483,11 @@ export class DatabaseSeeder {
     const systemUserId = systemUser?.id || SYSTEM_USER_ID;
 
     // Set up RequestContext with system user ID so BaseEntity hooks can set createdBy
+    // Note: userProfileId will be set when creating specific profiles
     await RequestContext.run(
       {
         userId: systemUserId,
+        userProfileId: systemUserId, // For system operations, use same ID
         locale: Locale.EN,
       },
       async () => {

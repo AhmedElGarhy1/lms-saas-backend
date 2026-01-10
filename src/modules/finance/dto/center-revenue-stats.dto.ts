@@ -62,14 +62,14 @@ export class CenterStatementItemDto {
   @ApiProperty({ description: 'Transaction update timestamp' })
   updatedAt: Date;
 
-  @ApiProperty({ description: 'User ID who created the transaction' })
-  createdBy: string;
+  @ApiProperty({ description: 'User profile ID who created the transaction' })
+  createdByProfileId: string;
 
   @ApiProperty({
-    description: 'User ID who updated the transaction',
+    description: 'User profile ID who updated the transaction',
     nullable: true,
   })
-  updatedBy?: string;
+  updatedByProfileId?: string;
 
   @ApiProperty({ description: 'Sender wallet ID', nullable: true })
   fromWalletId?: string;

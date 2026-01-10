@@ -10,42 +10,40 @@ import {
 } from 'typeorm';
 import { RequestContext } from '../context/request.context';
 import { BaseEntity as BaseEntityTypeORM } from 'typeorm';
-import { User } from '@/modules/user/entities/user.entity';
+import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 
 export abstract class BaseEntity extends BaseEntityTypeORM {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
   @Column({ type: 'uuid' })
-  createdBy: string;
+  createdByProfileId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  updatedBy?: string;
+  updatedByProfileId?: string;
 
   // Relations
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'createdBy' })
-  creator: User;
+  @ManyToOne(() => UserProfile)
+  @JoinColumn({ name: 'createdByProfileId' })
+  creator: UserProfile;
 
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'updatedBy' })
-  updater?: User;
+  @ManyToOne(() => UserProfile, { nullable: true })
+  @JoinColumn({ name: 'updatedByProfileId' })
+  updater?: UserProfile;
 
   @BeforeInsert()
   protected setCreatedBy() {
     const ctx = RequestContext.get();
-    const userId = ctx.userId; // Fallback to userId for backward compatibility
+    const userProfileId = ctx.userProfileId;
 
-    if (userId) {
-      this.createdBy = userId;
+    if (userProfileId) {
+      this.createdByProfileId = userProfileId;
       this.createdAt = new Date();
     }
   }
@@ -53,10 +51,10 @@ export abstract class BaseEntity extends BaseEntityTypeORM {
   @BeforeUpdate()
   protected setUpdatedBy() {
     const ctx = RequestContext.get();
-    const userId = ctx.userId; // Fallback to userId for backward compatibility
+    const userProfileId = ctx.userProfileId;
 
-    if (userId) {
-      this.updatedBy = userId;
+    if (userProfileId) {
+      this.updatedByProfileId = userProfileId;
       this.updatedAt = new Date();
     }
   }

@@ -1,4 +1,4 @@
-import { User } from '@/modules/user/entities/user.entity';
+import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import {
   BeforeRemove,
   Column,
@@ -14,18 +14,18 @@ export abstract class SoftBaseEntity extends BaseEntity {
   deletedAt?: Date;
 
   @Column({ type: 'uuid', nullable: true })
-  deletedBy?: string;
+  deletedByProfileId?: string;
 
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'deletedBy' })
-  deleter?: User;
+  @ManyToOne(() => UserProfile, { nullable: true })
+  @JoinColumn({ name: 'deletedByProfileId' })
+  deleter?: UserProfile;
 
   @BeforeRemove()
   protected setDeletedBy() {
     const ctx = RequestContext.get();
-    const userId = ctx.userId; // Fallback to userId for backward compatibility
-    if (userId) {
-      this.deletedBy = userId;
+    const userProfileId = ctx.userProfileId;
+    if (userProfileId) {
+      this.deletedByProfileId = userProfileId;
       this.deletedAt = new Date();
     }
   }
