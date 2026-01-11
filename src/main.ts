@@ -11,6 +11,7 @@ import { TransactionPerformanceInterceptor } from './modules/health';
 import { RedisIoAdapter } from './modules/notifications/adapters/redis-io.adapter';
 import { RedisService } from './shared/modules/redis/redis.service';
 import { RateLimitService } from './modules/rate-limit/services/rate-limit.service';
+import { Config } from './shared/config/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -37,7 +38,7 @@ async function bootstrap() {
   app.use(helmet());
 
   app.enableCors({
-    origin: ['http://localhost:3001', 'https://lms-saas-khaki.vercel.app'],
+    origin: Config.auth.corsOrigins,
   });
 
   // Swagger setup

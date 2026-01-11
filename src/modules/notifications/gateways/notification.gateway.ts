@@ -18,6 +18,7 @@ import {
 } from '../config/notification-gateway.config';
 import { SocketData } from '../types/websocket.types';
 import { retryOperation } from '../utils/retry.util';
+import { Config } from '@/shared/config/config';
 
 /**
  * Maximum keys to process per reconciliation cycle to prevent blocking
@@ -31,7 +32,7 @@ const MAX_RECONCILE_CONNECTIONS = 10000;
 
 @WebSocketGateway({
   cors: {
-    origin: ['http://localhost:3001', 'https://lms-saas-khaki.vercel.app'],
+    origin: Config.auth.corsOrigins,
     credentials: true,
   },
   namespace: '/notifications',

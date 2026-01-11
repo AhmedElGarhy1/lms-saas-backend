@@ -59,6 +59,11 @@ export const Config = {
   auth: {
     passwordResetExpiresHours: env.PASSWORD_RESET_EXPIRES_HOURS,
     phoneVerificationExpiresMinutes: env.PHONE_VERIFICATION_EXPIRES_MINUTES,
+    corsOrigins: [
+      'https://www.hessity.com',
+      'http://localhost:3001',
+      'https://lms-saas-khaki.vercel.app',
+    ],
   },
 
   payment: {
