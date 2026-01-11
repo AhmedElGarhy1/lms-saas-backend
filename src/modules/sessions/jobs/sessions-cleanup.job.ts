@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThanOrEqual, In } from 'typeorm';
 import { addMinutes, addDays, startOfDay, getDay } from 'date-fns';
 import { RequestContext } from '@/shared/common/context/request.context';
 import { Locale } from '@/shared/common/enums/locale.enum';
@@ -67,6 +67,9 @@ export class SessionsCleanupJob {
             now,
           );
 
+          const updatedScheduledToMissed =
+            await this.markStaleScheduledSessionsAsMissed(now);
+
           // Removed auto-finishing: await this.updatePastSessions(now);
           // Teachers now manually finish sessions with complete attendance tracking
 
@@ -77,6 +80,7 @@ export class SessionsCleanupJob {
             windowEnd: windowEnd.toISOString(),
             graceMinutes: ATTENDANCE_LATE_GRACE_MINUTES,
             insertedMissed,
+            updatedScheduledToMissed,
           });
         },
       );
@@ -209,6 +213,48 @@ export class SessionsCleanupJob {
       `Virtual cleanup: inserted ${insertedTotal} MISSED sessions (candidates=${candidates.length})`,
     );
     return insertedTotal;
+  }
+
+  /**
+   * Mark scheduled sessions that haven't been started after their start time + grace period as MISSED
+   * This handles sessions that were created but never transitioned from SCHEDULED status
+   */
+  private async markStaleScheduledSessionsAsMissed(now: Date): Promise<number> {
+    const gracePeriodMs = 60 * 60 * 1000; // 1 hour grace period after start time
+    const cutoffTime = new Date(now.getTime() - gracePeriodMs);
+
+    // Find sessions that are still SCHEDULED but their start time + grace period has passed
+    const staleScheduledSessions = await this.sessionRepo.find({
+      where: {
+        status: SessionStatus.SCHEDULED,
+        startTime: LessThanOrEqual(cutoffTime),
+      },
+      select: ['id'],
+    });
+
+    if (staleScheduledSessions.length === 0) {
+      return 0;
+    }
+
+    const sessionIds = staleScheduledSessions.map((session) => session.id);
+
+    // Update status to MISSED
+    const updateResult = await this.sessionRepo.update(
+      { id: In(sessionIds) },
+      {
+        status: SessionStatus.MISSED,
+        updatedAt: now,
+        updatedByProfileId: SYSTEM_USER_ID,
+      },
+    );
+
+    const updatedCount = updateResult.affected || 0;
+
+    this.logger.log(
+      `Marked ${updatedCount} stale scheduled sessions as MISSED (cutoff: ${cutoffTime.toISOString()})`,
+    );
+
+    return updatedCount;
   }
 
   private getDatesForDayOfWeek(

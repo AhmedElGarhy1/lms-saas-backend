@@ -4,7 +4,6 @@ import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { SessionStatus } from '../enums/session-status.enum';
-import { SessionFiltersDto } from '../dto/session-filters.dto';
 import { CalendarSessionsDto } from '../dto/calendar-sessions.dto';
 import { PaginateSessionsDto } from '../dto/paginate-sessions.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
@@ -163,163 +162,6 @@ export class SessionsRepository extends BaseRepository<Session> {
   }
 
   /**
-   * Build a query builder with shared session filters
-   * Used by both pagination and calendar endpoints
-   *
-   * @param filters - Filter parameters (SessionFiltersDto, PaginateSessionsDto, or CalendarSessionsDto)
-   * @param actor - The user performing the action
-   * @returns Query builder with filters applied
-   */
-  private async buildSessionQueryBuilder(
-    filters: SessionFiltersDto | PaginateSessionsDto | CalendarSessionsDto,
-    actor: ActorUser,
-  ): Promise<SelectQueryBuilder<Session>> {
-    const centerId = actor.centerId!;
-    const queryBuilder = this.getRepository()
-      .createQueryBuilder('session')
-      // Join and select all required relations for consistent session response
-      .leftJoinAndSelect('session.group', 'group')
-      .leftJoinAndSelect('session.branch', 'branch')
-      .leftJoinAndSelect('group.class', 'class')
-      .leftJoinAndSelect('class.teacher', 'teacher')
-      .leftJoinAndSelect('teacher.user', 'teacherUser')
-      .leftJoinAndSelect('class.studentPaymentStrategy', 'studentPaymentStrategy')
-      // Filter by center using denormalized field (no join needed)
-      .where('session.centerId = :centerId', { centerId });
-
-    // Access control: Filter by class staff for non-bypass users
-    const canBypassCenterInternalAccess =
-      await this.accessControlHelperService.bypassCenterInternalAccess(
-        actor.userProfileId,
-        centerId,
-      );
-
-    if (!canBypassCenterInternalAccess) {
-      queryBuilder
-        .leftJoin('class.classStaff', 'classStaff')
-        .andWhere('classStaff.userProfileId = :userProfileId', {
-          userProfileId: actor.userProfileId,
-        });
-
-      // Branch access filtering
-      queryBuilder.andWhere(
-        'session.branchId IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true)',
-        {
-          userProfileId: actor.userProfileId,
-        },
-      );
-    }
-
-    // Apply filters
-    if (filters.groupId) {
-      queryBuilder.andWhere('session.groupId = :groupId', {
-        groupId: filters.groupId,
-      });
-    }
-
-    if (filters.classId) {
-      // Use denormalized field instead of joining through group
-      queryBuilder.andWhere('session.classId = :classId', {
-        classId: filters.classId,
-      });
-    }
-
-    if (filters.branchId) {
-      // Use denormalized field
-      queryBuilder.andWhere('session.branchId = :branchId', {
-        branchId: filters.branchId,
-      });
-    }
-
-    if (filters.teacherUserProfileId) {
-      // Filter by teacher user profile ID (now denormalized on session)
-      queryBuilder.andWhere(
-        'session.teacherUserProfileId = :teacherUserProfileId',
-        {
-          teacherUserProfileId: filters.teacherUserProfileId,
-        },
-      );
-    }
-
-    if (filters.studentUserProfileId) {
-      // Filter by student user profile ID via group_students join
-      // Only include active students (leftAt IS NULL)
-      queryBuilder
-        .leftJoin('group.groupStudents', 'groupStudents')
-        .andWhere(
-          'groupStudents.studentUserProfileId = :studentUserProfileId',
-          {
-            studentUserProfileId: filters.studentUserProfileId,
-          },
-        )
-        .andWhere('groupStudents.leftAt IS NULL');
-    }
-
-    if (filters.status !== undefined && filters.status !== null) {
-      queryBuilder.andWhere('session.status = :status', {
-        status: filters.status,
-      });
-    }
-
-    // Filter by student payment type
-    const filtersWithPaymentType = filters as PaginateSessionsDto & {
-      studentPaymentType?: StudentPaymentType;
-    };
-
-    if (filtersWithPaymentType.studentPaymentType) {
-      switch (filtersWithPaymentType.studentPaymentType) {
-        case 'SESSION':
-          queryBuilder.andWhere('studentPaymentStrategy.includeSession = :includeSession', {
-            includeSession: true,
-          });
-          break;
-        case 'MONTHLY':
-          queryBuilder.andWhere('studentPaymentStrategy.includeMonth = :includeMonth', {
-            includeMonth: true,
-          });
-          break;
-        case 'CLASS':
-          queryBuilder.andWhere('studentPaymentStrategy.includeClass = :includeClass', {
-            includeClass: true,
-          });
-          break;
-      }
-    }
-
-    // Handle dateFrom/dateTo if present (only in CalendarSessionsDto, not SessionFiltersDto)
-    // Dates are already UTC Date objects (converted by @IsIsoDateTime decorator)
-    // For calendar queries, extract date part and create range in center timezone
-    const filtersWithDates = filters as SessionFiltersDto & {
-      dateFrom?: Date;
-      dateTo?: Date;
-    };
-
-    if (filtersWithDates.dateFrom || filtersWithDates.dateTo) {
-      // Dates are already UTC Date objects (converted by @IsoUtcDate decorator)
-      // Use them directly - no timezone conversion needed
-      if (filtersWithDates.dateFrom && filtersWithDates.dateTo) {
-        queryBuilder
-          .andWhere('session.startTime >= :dateFrom', {
-            dateFrom: filtersWithDates.dateFrom,
-          })
-          .andWhere('session.startTime < :dateTo', {
-            dateTo: filtersWithDates.dateTo,
-          });
-      } else if (filtersWithDates.dateFrom) {
-        queryBuilder.andWhere('session.startTime >= :dateFrom', {
-          dateFrom: filtersWithDates.dateFrom,
-        });
-      } else if (filtersWithDates.dateTo) {
-        queryBuilder.andWhere('session.startTime < :dateTo', {
-          dateTo: filtersWithDates.dateTo,
-        });
-      }
-    }
-
-    return queryBuilder;
-  }
-
-  /**
    * Find a session by ID with all required relations loaded
    * Used for single session retrieval to ensure consistent response structure
    *
@@ -370,7 +212,7 @@ export class SessionsRepository extends BaseRepository<Session> {
       // Filter by center using denormalized field (no join needed for filtering)
       .where('session.centerId = :centerId', { centerId });
 
-    // Access control: Filter by class staff for non-bypass users
+    // Access control: Filter by class staff for non-bypass users (same as pagination)
     const canBypassCenterInternalAccess =
       await this.accessControlHelperService.bypassCenterInternalAccess(
         actor.userProfileId,
@@ -378,36 +220,19 @@ export class SessionsRepository extends BaseRepository<Session> {
       );
 
     if (!canBypassCenterInternalAccess) {
-      if (actor.profileType === ProfileType.STAFF) {
-        queryBuilder
-          .leftJoin('class.classStaff', 'classStaff')
-          .andWhere('classStaff.userProfileId = :userProfileId', {
-            userProfileId: actor.userProfileId,
-          });
+      queryBuilder
+        .leftJoin('class.classStaff', 'classStaff')
+        .andWhere('classStaff.userProfileId = :userProfileId', {
+          userProfileId: actor.userProfileId,
+        });
 
-        queryBuilder.andWhere(
-          'session.branchId IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId)',
-          {
-            userProfileId: actor.userProfileId,
-          },
-        );
-      } else if (actor.profileType === ProfileType.TEACHER) {
-        queryBuilder.andWhere(
-          'session.teacherUserProfileId = :teacherUserProfileId',
-          {
-            teacherUserProfileId: actor.userProfileId,
-          },
-        );
-      } else if (actor.profileType === ProfileType.STUDENT) {
-        queryBuilder
-          .leftJoin('group.groupStudents', 'groupStudents')
-          .andWhere(
-            'groupStudents.studentUserProfileId = :studentUserProfileId',
-            {
-              studentUserProfileId: actor.userProfileId,
-            },
-          );
-      }
+      // Branch access filtering
+      queryBuilder.andWhere(
+        'session.branchId IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true)',
+        {
+          userProfileId: actor.userProfileId,
+        },
+      );
     }
 
     // Apply date range filter - dates are already UTC Date objects (converted by @IsoUtcDate decorator)
@@ -485,10 +310,124 @@ export class SessionsRepository extends BaseRepository<Session> {
     paginateDto: PaginateSessionsDto,
     actor: ActorUser,
   ): Promise<Pagination<Session>> {
-    const queryBuilder = await this.buildSessionQueryBuilder(
-      paginateDto,
-      actor,
-    );
+    const centerId = actor.centerId!;
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('session')
+      // Join and select all required relations for consistent session response
+      .leftJoinAndSelect('session.group', 'group')
+      .leftJoinAndSelect('session.branch', 'branch')
+      .leftJoinAndSelect('group.class', 'class')
+      .leftJoinAndSelect('class.teacher', 'teacher')
+      .leftJoinAndSelect('teacher.user', 'teacherUser')
+      .leftJoinAndSelect(
+        'class.studentPaymentStrategy',
+        'studentPaymentStrategy',
+      )
+      // Filter by center using denormalized field (no join needed)
+      .where('session.centerId = :centerId', { centerId });
+
+    // Access control: Filter by class staff for non-bypass users
+    const canBypassCenterInternalAccess =
+      await this.accessControlHelperService.bypassCenterInternalAccess(
+        actor.userProfileId,
+        centerId,
+      );
+
+    if (!canBypassCenterInternalAccess) {
+      queryBuilder
+        .leftJoin('class.classStaff', 'classStaff')
+        .andWhere('classStaff.userProfileId = :userProfileId', {
+          userProfileId: actor.userProfileId,
+        });
+
+      // Branch access filtering
+      queryBuilder.andWhere(
+        'session.branchId IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true)',
+        {
+          userProfileId: actor.userProfileId,
+        },
+      );
+    }
+
+    // Apply paginateDto
+    if (paginateDto.groupId) {
+      queryBuilder.andWhere('session.groupId = :groupId', {
+        groupId: paginateDto.groupId,
+      });
+    }
+
+    if (paginateDto.classId) {
+      // Use denormalized field instead of joining through group
+      queryBuilder.andWhere('session.classId = :classId', {
+        classId: paginateDto.classId,
+      });
+    }
+
+    if (paginateDto.branchId) {
+      // Use denormalized field
+      queryBuilder.andWhere('session.branchId = :branchId', {
+        branchId: paginateDto.branchId,
+      });
+    }
+
+    if (paginateDto.teacherUserProfileId) {
+      // Filter by teacher user profile ID (now denormalized on session)
+      queryBuilder.andWhere(
+        'session.teacherUserProfileId = :teacherUserProfileId',
+        {
+          teacherUserProfileId: paginateDto.teacherUserProfileId,
+        },
+      );
+    }
+
+    if (paginateDto.studentUserProfileId) {
+      // Filter by student user profile ID via group_students join
+      // Only include active students (leftAt IS NULL)
+      queryBuilder
+        .leftJoin('group.groupStudents', 'groupStudents')
+        .andWhere(
+          'groupStudents.studentUserProfileId = :studentUserProfileId',
+          {
+            studentUserProfileId: paginateDto.studentUserProfileId,
+          },
+        )
+        .andWhere('groupStudents.leftAt IS NULL');
+    }
+
+    if (paginateDto.status !== undefined && paginateDto.status !== null) {
+      queryBuilder.andWhere('session.status = :status', {
+        status: paginateDto.status,
+      });
+    }
+
+    if (paginateDto.studentPaymentType) {
+      switch (paginateDto.studentPaymentType) {
+        case 'SESSION':
+          queryBuilder.andWhere(
+            'studentPaymentStrategy.includeSession = :includeSession',
+            {
+              includeSession: true,
+            },
+          );
+          break;
+        case 'MONTHLY':
+          queryBuilder.andWhere(
+            'studentPaymentStrategy.includeMonth = :includeMonth',
+            {
+              includeMonth: true,
+            },
+          );
+          break;
+        case 'CLASS':
+          queryBuilder.andWhere(
+            'studentPaymentStrategy.includeClass = :includeClass',
+            {
+              includeClass: true,
+            },
+          );
+          break;
+      }
+    }
 
     return this.paginate(
       paginateDto,

@@ -34,9 +34,7 @@ export type MergedSession = Session | VirtualSession;
  */
 @Injectable()
 export class SessionVirtualizationService {
-  constructor(
-    private readonly groupsRepository: GroupsRepository,
-  ) {}
+  constructor(private readonly groupsRepository: GroupsRepository) {}
 
   /**
    * Calculate virtual sessions from schedule items
