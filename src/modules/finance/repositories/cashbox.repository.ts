@@ -256,7 +256,7 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
       // Apply branch access filtering only if user cannot bypass
       if (!canBypass) {
         queryBuilder = queryBuilder.andWhere(
-          '(fromBranch.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true) OR toBranch.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true))',
+          '(fromBranch.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId) OR toBranch.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId))',
           { userProfileId: actor.userProfileId },
         );
       }

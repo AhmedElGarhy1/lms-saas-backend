@@ -202,7 +202,7 @@ export class PaymentRepository extends BaseRepository<Payment> {
         // Apply branch access filtering only if user cannot bypass
         if (!canBypass) {
           queryBuilder.andWhere(
-            '(senderBranch.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true) OR receiverBranch.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true))',
+            '(senderBranch.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId) OR receiverBranch.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId))',
             { userProfileId: actor.userProfileId },
           );
         }
