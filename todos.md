@@ -262,3 +262,8 @@
 [x] ✅ Add BaseEntity to NotificationLog (operational visibility)
 [x] 🔧 Fix type casting issues in teacher-payout.service.ts
 [x] 🔄 Update seeder to use new BaseEntity field names (createdByProfileId, etc.)
+
+[ ] cancle sessions passed
+[ ] automatic start class and automatic end class
+[ ] create class for hidden fields validation
+[ ] teacher payout per student doesn't work

@@ -37,7 +37,6 @@ import { SubjectsModule } from '@/modules/subjects/subjects.module';
 import { CentersModule } from '@/modules/centers/centers.module';
 import { UserProfileModule } from '@/modules/user-profile/user-profile.module';
 import { SessionsModule } from '@/modules/sessions/sessions.module';
-import { ClassStatusUpdateJob } from './jobs/class-status-update.job';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { ClassStateMachine } from './state-machines/class-state-machine';
 import { TeacherPayoutModule } from '@/modules/teacher-payouts/teacher-payouts.module';
@@ -90,7 +89,6 @@ import { TeacherPayoutModule } from '@/modules/teacher-payouts/teacher-payouts.m
     TeacherPaymentStrategyRepository,
     ClassStaffRepository,
     ClassStateMachine,
-    ClassStatusUpdateJob,
   ],
   exports: [
     ClassesService,

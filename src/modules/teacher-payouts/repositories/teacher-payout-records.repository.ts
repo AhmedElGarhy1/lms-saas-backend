@@ -44,10 +44,9 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
       queryBuilder
         .leftJoin('class.branch', 'branch')
         .leftJoin('branch.branchAccess', 'branchAccess')
-        .andWhere(
-          'branchAccess.userProfileId = :userProfileId AND branchAccess.isActive = true',
-          { userProfileId: actor.userProfileId },
-        )
+        .andWhere('branchAccess.userProfileId = :userProfileId', {
+          userProfileId: actor.userProfileId,
+        })
         .leftJoin('payout.teacher', 'teacherProfile')
         .leftJoin('teacherProfile.accessTarget', 'targetAccess')
         .andWhere('targetAccess.id = :userProfileId', {
