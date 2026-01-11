@@ -222,7 +222,7 @@ export class SessionsRepository extends BaseRepository<Session> {
 
       // Branch access filtering
       queryBuilder.andWhere(
-        'session.branchId IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true)',
+        'session.branchId IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId)',
         {
           userProfileId: actor.userProfileId,
         },
