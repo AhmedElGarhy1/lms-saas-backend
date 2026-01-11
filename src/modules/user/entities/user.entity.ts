@@ -6,12 +6,14 @@ import {
   Index,
   BeforeInsert,
   BeforeUpdate,
+  JoinColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
 import { VerificationToken } from '@/modules/auth/entities/verification-token.entity';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { UserInfo } from './user-info.entity';
+import { File } from '@/modules/file/entities/file.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('users')
@@ -38,9 +40,11 @@ export class User extends SoftBaseEntity {
   @Exclude()
   hashedRt: string | null;
 
-  
   @Column({ type: 'timestamptz', nullable: true })
   phoneVerified: Date | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  avatarFileId?: string; // Reference to file record for avatar
 
   @OneToMany(() => VerificationToken, (token) => token.user)
   verificationTokens: VerificationToken[];

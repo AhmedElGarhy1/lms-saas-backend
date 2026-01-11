@@ -2,7 +2,7 @@ import {
   DomainException,
   BaseErrorHelpers,
 } from '@/shared/common/exceptions/domain.exception';
-import { TeacherPayoutErrorCode } from '../enums/teacher-payout-error-codes';
+import { TeacherPayoutErrorCode } from '../enums/teacher-payouts.codes';
 
 /**
  * Teacher Payout module error helpers
@@ -17,7 +17,9 @@ export class TeacherPayoutErrors extends BaseErrorHelpers {
   }
 
   static payoutInvalidStatusTransition(): DomainException {
-    return this.createNoDetails(TeacherPayoutErrorCode.PAYOUT_INVALID_STATUS_TRANSITION);
+    return this.createNoDetails(
+      TeacherPayoutErrorCode.PAYOUT_INVALID_STATUS_TRANSITION,
+    );
   }
 
   static payoutAlreadyExists(): DomainException {
@@ -29,7 +31,9 @@ export class TeacherPayoutErrors extends BaseErrorHelpers {
   }
 
   static payoutAmountExceedsRemaining(): DomainException {
-    return this.createNoDetails(TeacherPayoutErrorCode.PAYOUT_AMOUNT_EXCEEDS_REMAINING);
+    return this.createNoDetails(
+      TeacherPayoutErrorCode.PAYOUT_AMOUNT_EXCEEDS_REMAINING,
+    );
   }
 
   static invalidPayoutAmount(): DomainException {

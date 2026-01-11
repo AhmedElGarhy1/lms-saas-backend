@@ -9,6 +9,7 @@ import { RolesService } from '@/modules/access-control/services/roles.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { UserInfoService } from './user-info.service';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
+import { FileService } from '@/modules/file/services/file.service';
 import { BaseService } from '@/shared/common/services/base.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import {
@@ -51,6 +52,7 @@ export class UserService extends BaseService {
     private readonly centersService: CentersService,
     private readonly eventEmitter: TypeSafeEventEmitter,
     private readonly verificationService: VerificationService,
+    private readonly fileService: FileService,
   ) {
     super();
   }
@@ -138,21 +140,39 @@ export class UserService extends BaseService {
   }
 
   async paginateStaff(params: PaginateUsersDto, actor: ActorUser) {
-    return this.userRepository.paginateStaff(params, actor);
+    const result = await this.userRepository.paginateStaff(params, actor);
+    await this.fileService.attachUrls(
+      result.items,
+      'avatarFileId',
+      'avatarUrl',
+    );
+    return result;
   }
 
   async paginateStudents(params: PaginateUsersDto, actor: ActorUser) {
-    return this.userRepository.paginateStudents(params, actor);
+    const result = await this.userRepository.paginateStudents(params, actor);
+    await this.fileService.attachUrls(
+      result.items,
+      'avatarFileId',
+      'avatarUrl',
+    );
+    return result;
   }
 
   async paginateTeachers(
     params: PaginateUsersDto,
     actor: ActorUser,
   ): Promise<Pagination<UserResponseDto>> {
-    return await this.userRepository.paginateTeachers(
+    const result = await this.userRepository.paginateTeachers(
       params as PaginateTeacherDto,
       actor,
     );
+    await this.fileService.attachUrls(
+      result.items,
+      'avatarFileId',
+      'avatarUrl',
+    );
+    return result;
   }
 
   async paginateUsers(params: PaginateUsersDto, actor: ActorUser) {
@@ -160,12 +180,23 @@ export class UserService extends BaseService {
     params.centerId = centerId;
 
     const result = await this.userRepository.paginateStaff(params, actor);
+    await this.fileService.attachUrls(
+      result.items,
+      'avatarFileId',
+      'avatarUrl',
+    );
 
     return result;
   }
 
   async paginateAdmins(params: PaginateUsersDto, actor: ActorUser) {
-    return this.userRepository.paginateAdmins(params, actor);
+    const result = await this.userRepository.paginateAdmins(params, actor);
+    await this.fileService.attachUrls(
+      result.items,
+      'avatarFileId',
+      'avatarUrl',
+    );
+    return result;
   }
 
   async deleteUser(userId: string, actor: ActorUser): Promise<void> {
@@ -454,6 +485,38 @@ export class UserService extends BaseService {
     await this.eventEmitter.emitAsync(
       UserEvents.UPDATED,
       new UserUpdatedEvent(updatedUser, updatedFields, actor),
+    );
+
+    return updatedUser;
+  }
+
+  /**
+   * Update user's avatar file reference
+   */
+  async updateUserAvatar(userId: string, avatarFileId: string): Promise<User> {
+    // Get current user to check for existing avatar
+    const currentUser = await this.userRepository.findOne(userId);
+    if (!currentUser) {
+      throw UserErrors.userNotFound();
+    }
+
+    // If user has existing avatar, clean it up
+    if (currentUser.avatarFileId && currentUser.avatarFileId !== avatarFileId) {
+      // Delete old avatar file from R2 and database
+      await this.fileService.deleteFile(currentUser.avatarFileId);
+    }
+
+    // Update user with new avatar
+    const updatedUser = await this.userRepository.update(userId, {
+      avatarFileId,
+    });
+
+    if (!updatedUser) {
+      throw UserErrors.userNotFound();
+    }
+
+    this.logger.log(
+      `Updated avatar for user: ${userId} with file: ${avatarFileId}`,
     );
 
     return updatedUser;

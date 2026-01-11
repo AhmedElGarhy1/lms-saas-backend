@@ -233,7 +233,7 @@ export class DatabaseSeeder {
     this.logger.log('Resetting database...');
 
     try {
-      // Drop all tables and recreate them
+      // Since synchronize is enabled globally, we can use it to reset
       await this.dataSource.dropDatabase();
       await this.dataSource.synchronize();
 

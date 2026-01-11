@@ -152,6 +152,20 @@ export const env = cleanEnv(process.env, {
     desc: 'Base URL for the application',
     default: 'http://localhost:3000',
   }),
+
+  // Cloudflare R2 Configuration (Optional - for file storage)
+  R2_ACCOUNT_ID: str({ desc: 'Cloudflare R2 Account ID', default: '' }),
+  R2_ACCESS_KEY_ID: str({ desc: 'R2 Access Key ID', default: '' }),
+  R2_SECRET_ACCESS_KEY: str({ desc: 'R2 Secret Access Key', default: '' }),
+  R2_BUCKET: str({ desc: 'R2 Bucket name', default: '' }),
+  R2_PRESIGNED_URL_EXPIRES: num({
+    default: 3600,
+    desc: 'Presigned URL expiration in seconds',
+  }),
+  R2_PUBLIC_URL_DOMAIN: str({
+    desc: 'R2 Public URL Domain (e.g., https://assets.hessity.com)',
+    default: '',
+  }),
 });
 
 /**

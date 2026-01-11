@@ -33,6 +33,12 @@ import { ClassesModule } from '../classes/classes.module';
     UserRepository,
     UserInfoRepository,
   ],
-  exports: [UserService, UserInfoService, LocaleService, UserRepository, UserInfoRepository],
+  exports: [
+    UserService,
+    UserInfoService,
+    LocaleService,
+    UserRepository,
+    UserInfoRepository,
+  ],
 })
 export class UserModule {}

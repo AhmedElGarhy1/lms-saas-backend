@@ -1,5 +1,5 @@
 import { IsUUID, IsEnum, IsNumber, Min, IsOptional } from 'class-validator';
-import { PaymentSource } from '../entities/student-charge.entity';
+import { PaymentSource } from '../enums';
 import { BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Class } from '@/modules/classes/entities/class.entity';

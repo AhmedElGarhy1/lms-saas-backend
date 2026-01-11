@@ -9,6 +9,7 @@ import { UpdateUserDto } from '@/modules/user/dto/update-user.dto';
 import { UpdateUserProfileDto } from '../dto/update-user-profile.dto';
 import { CreateUserProfileDto } from '../dto/create-user-profile.dto';
 import { UserService } from '@/modules/user/services/user.service';
+import { FileService } from '@/modules/file/services/file.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { RolesService } from '@/modules/access-control/services/roles.service';
 import { UserProfilePermissionService } from '@/modules/access-control/services/user-profile-permission.service';
@@ -37,6 +38,7 @@ export class UserProfileService extends BaseService {
     private readonly userProfileRepository: UserProfileRepository,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
+    private readonly fileService: FileService,
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly rolesService: RolesService,
@@ -63,6 +65,14 @@ export class UserProfileService extends BaseService {
     if (!user) {
       throw UserProfileErrors.userProfileNotFound();
     }
+
+    // Populate avatar URL
+    await this.fileService.attachUrls(
+      [user],           // Array with single user
+      'avatarFileId',   // Field containing file ID
+      'avatarUrl',      // Field to add URL to
+      true,             // Avatars are public
+    );
 
     // Determine context based on centerId
     const returnData: ProfileResponseDto = {

@@ -1,11 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { StudentChargesRepository } from '../repositories/student-charges.repository';
-import {
-  StudentCharge,
-  StudentChargeType,
-  StudentChargeStatus,
-} from '../entities/student-charge.entity';
+import { StudentCharge } from '../entities/student-charge.entity';
+import { StudentChargeType, StudentChargeStatus } from '../enums';
 import { AttendanceRepository } from '@/modules/attendance/repositories/attendance.repository';
 import { SessionsRepository } from '@/modules/sessions/repositories/sessions.repository';
 import { PaymentService } from '@/modules/finance/services/payment.service';

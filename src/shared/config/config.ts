@@ -97,4 +97,13 @@ export const Config = {
     // Only secure values remain here (none for websocket - all are numeric/config)
     // Access via WebSocketConfig from notification module instead
   },
+
+  r2: {
+    accountId: env.R2_ACCOUNT_ID,
+    accessKeyId: env.R2_ACCESS_KEY_ID,
+    secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+    bucket: env.R2_BUCKET,
+    presignedUrlExpires: env.R2_PRESIGNED_URL_EXPIRES,
+    publicUrlDomain: env.R2_PUBLIC_URL_DOMAIN,
+  },
 } as const;

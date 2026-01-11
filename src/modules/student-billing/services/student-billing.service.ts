@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Transactional } from '@nestjs-cls/transactional';
+import { StudentCharge } from '../entities/student-charge.entity';
 import {
-  StudentCharge,
   StudentChargeType,
   StudentChargeStatus,
-} from '../entities/student-charge.entity';
-import { PaymentSource } from '../entities/student-charge.entity';
+  PaymentSource,
+} from '../enums';
 import { CreateMonthlySubscriptionDto } from '../dto/create-monthly-subscription.dto';
 import { CreateSessionChargeDto } from '../dto/create-session-charge.dto';
 import { CreateClassChargeDto } from '../dto/create-class-charge.dto';

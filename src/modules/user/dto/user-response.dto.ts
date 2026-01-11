@@ -48,6 +48,13 @@ export class UserResponseDto {
   @Expose()
   isCenterAccessible?: boolean;
 
+  @ApiProperty({
+    description: 'User avatar URL',
+    required: false,
+  })
+  @Expose()
+  avatarUrl?: string;
+
   @ApiProperty({ description: 'Whether the user has role access' })
   @Expose()
   isRoleAccessible?: boolean;

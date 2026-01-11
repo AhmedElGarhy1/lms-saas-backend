@@ -14,7 +14,7 @@ import { StudentBillingRefundService } from '../services/student-billing-refund.
 import { CreateStudentChargeDto } from '../dto/create-student-charge.dto';
 import { RefundStudentBillingDto } from '../dto/refund-student-billing.dto';
 import { PayClassInstallmentDto } from '../dto/pay-class-installment.dto';
-import { PaymentSource } from '../entities/student-charge.entity';
+import { PaymentSource } from '../enums';
 import { StudentCharge } from '../entities/student-charge.entity';
 import { PaginateStudentBillingRecordsDto } from '../dto/paginate-student-billing-records.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';

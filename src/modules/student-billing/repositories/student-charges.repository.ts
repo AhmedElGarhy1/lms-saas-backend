@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import {
-  StudentCharge,
-  StudentChargeType,
-  StudentChargeStatus,
-} from '../entities/student-charge.entity';
+import { StudentCharge } from '../entities/student-charge.entity';
+import { StudentChargeType, StudentChargeStatus } from '../enums';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';

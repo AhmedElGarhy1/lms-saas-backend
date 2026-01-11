@@ -1,7 +1,7 @@
 import { IsOptional, IsEnum, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
-import { StudentChargeType } from '../entities/student-charge.entity';
+import { StudentChargeType } from '../enums';
 import { IsUserProfile } from '@/shared/common/decorators';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 

@@ -6,25 +6,11 @@ import {
   Index,
   CreateDateColumn,
 } from 'typeorm';
-
-export enum StudentChargeType {
-  SUBSCRIPTION = 'SUBSCRIPTION',
-  SESSION = 'SESSION',
-  CLASS = 'CLASS',
-}
-
-export enum StudentChargeStatus {
-  PENDING = 'PENDING',
-  INSTALLMENT = 'INSTALLMENT',
-  COMPLETED = 'COMPLETED',
-  REFUNDED = 'REFUNDED',
-  CANCELLED = 'CANCELLED',
-}
-
-export enum PaymentSource {
-  WALLET = 'WALLET',
-  CASH = 'CASH',
-}
+import {
+  StudentChargeType,
+  StudentChargeStatus,
+  PaymentSource,
+} from '../enums';
 
 @Entity('student_charges')
 export class StudentCharge extends BaseEntity {
