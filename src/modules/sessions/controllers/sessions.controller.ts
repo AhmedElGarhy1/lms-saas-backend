@@ -97,7 +97,6 @@ export class SessionsController {
     description: 'Invalid date range or filters',
   })
   // @Permissions(PERMISSIONS.SESSIONS.READ)
-  @NoContext()
   async getCalendarSessions(
     @Query() calendarDto: CalendarSessionsDto,
     @GetUser() actor: ActorUser,

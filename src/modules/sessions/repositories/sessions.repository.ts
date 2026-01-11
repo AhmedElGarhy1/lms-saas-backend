@@ -203,13 +203,6 @@ export class SessionsRepository extends BaseRepository<Session> {
     const centerId = actor.centerId!;
     const queryBuilder = this.getRepository()
       .createQueryBuilder('session')
-      // Join and select all required relations for consistent session response
-      .leftJoinAndSelect('session.group', 'group')
-      .leftJoinAndSelect('session.branch', 'branch')
-      .leftJoinAndSelect('group.class', 'class')
-      .leftJoinAndSelect('class.teacher', 'teacher')
-      .leftJoinAndSelect('teacher.user', 'teacherUser')
-      // Filter by center using denormalized field (no join needed for filtering)
       .where('session.centerId = :centerId', { centerId });
 
     // Access control: Filter by class staff for non-bypass users (same as pagination)
@@ -221,6 +214,7 @@ export class SessionsRepository extends BaseRepository<Session> {
 
     if (!canBypassCenterInternalAccess) {
       queryBuilder
+        .leftJoin('session.class', 'class')
         .leftJoin('class.classStaff', 'classStaff')
         .andWhere('classStaff.userProfileId = :userProfileId', {
           userProfileId: actor.userProfileId,
@@ -277,6 +271,7 @@ export class SessionsRepository extends BaseRepository<Session> {
       // Filter by student user profile ID via group_students join
       // Only include active students (leftAt IS NULL)
       queryBuilder
+        .leftJoin('session.group', 'group')
         .leftJoin('group.groupStudents', 'groupStudents')
         .andWhere(
           'groupStudents.studentUserProfileId = :studentUserProfileId',
