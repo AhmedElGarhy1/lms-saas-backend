@@ -1,4 +1,11 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Index,
+  OneToMany,
+} from 'typeorm';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { Group } from '@/modules/classes/entities/group.entity';
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
@@ -7,6 +14,8 @@ import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity
 import { Class } from '@/modules/classes/entities/class.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { Branch } from '@/modules/centers/entities/branch.entity';
+import { StudentCharge } from '@/modules/student-billing/entities/student-charge.entity';
+import { TeacherPayoutRecord } from '@/modules/teacher-payouts/entities/teacher-payout-record.entity';
 
 @Entity('sessions')
 @Index(['groupId'])
@@ -101,4 +110,13 @@ export class Session extends BaseEntity {
   @ManyToOne(() => ScheduleItem, (scheduleItem) => scheduleItem.sessions)
   @JoinColumn({ name: 'scheduleItemId' })
   scheduleItem: ScheduleItem;
+
+  @OneToMany(() => StudentCharge, (studentCharge) => studentCharge.session)
+  studentCharges: StudentCharge[];
+
+  @OneToMany(
+    () => TeacherPayoutRecord,
+    (teacherPayoutRecord) => teacherPayoutRecord.session,
+  )
+  teacherPayoutRecords: TeacherPayoutRecord[];
 }

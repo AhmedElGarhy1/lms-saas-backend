@@ -1,16 +1,15 @@
 import { BaseEntity } from '@/shared/common/entities/base.entity';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  Index,
-  CreateDateColumn,
-} from 'typeorm';
+import { Entity, Column, Index, JoinColumn, ManyToOne } from 'typeorm';
 import {
   StudentChargeType,
   StudentChargeStatus,
   PaymentSource,
 } from '../enums';
+import { Class } from '@/modules/classes/entities/class.entity';
+import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
+import { Session } from '@/modules/sessions/entities/session.entity';
+import { Branch } from '@/modules/centers/entities/branch.entity';
+import { Center } from '@/modules/centers/entities/center.entity';
 
 @Entity('student_charges')
 export class StudentCharge extends BaseEntity {
@@ -77,4 +76,24 @@ export class StudentCharge extends BaseEntity {
 
   @Column('text', { nullable: true })
   refundReason?: string;
+
+  @ManyToOne(() => Class, (classEntity) => classEntity.studentCharges)
+  @JoinColumn({ name: 'classId' })
+  class: Class;
+
+  @ManyToOne(() => Session, (session) => session.studentCharges)
+  @JoinColumn({ name: 'sessionId' })
+  session: Session;
+
+  @ManyToOne(() => UserProfile, (userProfile) => userProfile.studentCharges)
+  @JoinColumn({ name: 'studentUserProfileId' })
+  student: UserProfile;
+
+  @ManyToOne(() => Branch, (branch) => branch.studentCharges)
+  @JoinColumn({ name: 'branchId' })
+  branch: Branch;
+
+  @ManyToOne(() => Center, (center) => center.studentCharges)
+  @JoinColumn({ name: 'centerId' })
+  center: Center;
 }

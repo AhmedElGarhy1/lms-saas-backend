@@ -20,6 +20,8 @@ import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 import { ClassStatus } from '../enums/class-status.enum';
 import { ScheduleItem } from './schedule-item.entity';
 import { Session } from '@/modules/sessions/entities/session.entity';
+import { StudentCharge } from '@/modules/student-billing/entities/student-charge.entity';
+import { TeacherPayoutRecord } from '@/modules/teacher-payouts/entities/teacher-payout-record.entity';
 
 @Entity('classes')
 @Index(['centerId'])
@@ -40,7 +42,6 @@ export class Class extends SoftBaseEntity {
     default: ClassStatus.PENDING_TEACHER_APPROVAL,
   })
   status: ClassStatus;
-
 
   @Column({ type: 'uuid' })
   levelId: string;
@@ -118,4 +119,13 @@ export class Class extends SoftBaseEntity {
 
   @OneToMany(() => Session, (session) => session.class)
   sessions: Session[];
+
+  @OneToMany(() => StudentCharge, (studentCharge) => studentCharge.class)
+  studentCharges: StudentCharge[];
+
+  @OneToMany(
+    () => TeacherPayoutRecord,
+    (teacherPayoutRecord) => teacherPayoutRecord.class,
+  )
+  teacherPayoutRecords: TeacherPayoutRecord[];
 }

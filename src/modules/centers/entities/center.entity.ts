@@ -12,6 +12,9 @@ import { Group } from '@/modules/classes/entities/group.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
 import { Session } from '@/modules/sessions/entities/session.entity';
+import { ClassStaff } from '@/modules/classes/entities/class-staff.entity';
+import { TeacherPayoutRecord } from '@/modules/teacher-payouts/entities/teacher-payout-record.entity';
+import { StudentCharge } from '@/modules/student-billing/entities/student-charge.entity';
 
 @Entity('centers')
 @Index(['name'])
@@ -79,4 +82,16 @@ export class Center extends SoftBaseEntity {
 
   @OneToMany(() => Session, (session) => session.center)
   sessions: Session[];
+
+  @OneToMany(() => StudentCharge, (studentCharge) => studentCharge.center)
+  studentCharges: StudentCharge[];
+
+  @OneToMany(
+    () => TeacherPayoutRecord,
+    (teacherPayoutRecord) => teacherPayoutRecord.center,
+  )
+  teacherPayoutRecords: TeacherPayoutRecord[];
+
+  @OneToMany(() => ClassStaff, (classStaff) => classStaff.center)
+  classStaff: ClassStaff[];
 }

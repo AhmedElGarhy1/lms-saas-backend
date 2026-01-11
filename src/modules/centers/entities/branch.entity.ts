@@ -14,6 +14,9 @@ import { Group } from '@/modules/classes/entities/group.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 import { ScheduleItem } from '@/modules/classes/entities/schedule-item.entity';
 import { Session } from '@/modules/sessions/entities/session.entity';
+import { StudentCharge } from '@/modules/student-billing/entities/student-charge.entity';
+import { TeacherPayoutRecord } from '@/modules/teacher-payouts/entities/teacher-payout-record.entity';
+import { ClassStaff } from '@/modules/classes/entities/class-staff.entity';
 
 @Entity('branches')
 @Index(['centerId'])
@@ -57,6 +60,20 @@ export class Branch extends SoftBaseEntity {
 
   @OneToMany(() => Session, (session) => session.branch)
   sessions: Session[];
+
+  @OneToMany(() => StudentCharge, (studentCharge) => studentCharge.branch)
+  studentCharges: StudentCharge[];
+
+  @OneToMany(
+    () => TeacherPayoutRecord,
+    (teacherPayoutRecord) => teacherPayoutRecord.branch,
+  )
+  teacherPayoutRecords: TeacherPayoutRecord[];
+
+  @OneToMany(() => ClassStaff, (classStaff) => classStaff.branch)
+  classStaff: ClassStaff[];
+
+  @OneToMany(() => Session, (session) => session.branch)
 
   // virtual fields
   name: string;

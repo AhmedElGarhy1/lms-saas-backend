@@ -17,6 +17,8 @@ import { GroupStudent } from '@/modules/classes/entities/group-student.entity';
 import { ClassStaff } from '@/modules/classes/entities/class-staff.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 import { Session } from '@/modules/sessions/entities/session.entity';
+import { StudentCharge } from '@/modules/student-billing/entities/student-charge.entity';
+import { TeacherPayoutRecord } from '@/modules/teacher-payouts/entities/teacher-payout-record.entity';
 
 @Entity('user_profiles')
 @Index(['userId'])
@@ -69,4 +71,13 @@ export class UserProfile extends SoftBaseEntity {
 
   @OneToMany(() => Session, (session) => session.teacher)
   sessionsAsTeacher: Session[];
+
+  @OneToMany(() => StudentCharge, (studentCharge) => studentCharge.student)
+  studentCharges: StudentCharge[];
+
+  @OneToMany(
+    () => TeacherPayoutRecord,
+    (teacherPayoutRecord) => teacherPayoutRecord.teacher,
+  )
+  teacherPayoutRecords: TeacherPayoutRecord[];
 }

@@ -2,6 +2,8 @@ import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { Class } from './class.entity';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
+import { Branch } from '@/modules/centers/entities/branch.entity';
+import { Center } from '@/modules/centers/entities/center.entity';
 
 @Entity('class_staff')
 // Note: Unique constraint is now handled via partial unique index in the database
@@ -23,14 +25,12 @@ export class ClassStaff extends BaseEntity {
   @Column({ type: 'uuid' })
   branchId: string; // Denormalized from Class for performance and snapshot
 
-  
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
   })
   joinedAt: Date;
 
-  
   @Column({ type: 'timestamptz', nullable: true })
   leftAt?: Date;
 
@@ -46,4 +46,12 @@ export class ClassStaff extends BaseEntity {
   })
   @JoinColumn({ name: 'classId' })
   class: Class;
+
+  @ManyToOne(() => Branch, (branch) => branch.classStaff)
+  @JoinColumn({ name: 'branchId' })
+  branch: Branch;
+
+  @ManyToOne(() => Center, (center) => center.classStaff)
+  @JoinColumn({ name: 'centerId' })
+  center: Center;
 }
