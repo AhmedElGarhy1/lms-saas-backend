@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CashboxRepository } from '../repositories/cashbox.repository';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { Cashbox } from '../entities/cashbox.entity';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
@@ -94,14 +95,9 @@ export class CashboxService extends BaseService {
    */
   async getCenterTreasuryStats(
     centerId: string,
-    dateFrom?: Date,
-    dateTo?: Date,
+    actor: ActorUser,
   ): Promise<CenterTreasuryStatsDto> {
-    return this.cashboxRepository.getCenterTreasuryStats(
-      centerId,
-      dateFrom,
-      dateTo,
-    );
+    return this.cashboxRepository.getCenterTreasuryStats(centerId, actor);
   }
 
   /**
@@ -110,8 +106,9 @@ export class CashboxService extends BaseService {
   async getCenterStatement(
     centerId: string | undefined,
     query: CenterStatementQueryDto,
+    actor: ActorUser,
   ): Promise<Pagination<CenterStatementItemDto>> {
-    return this.cashboxRepository.getCenterStatement(centerId, query);
+    return this.cashboxRepository.getCenterStatement(centerId, query, actor);
   }
 
   /**

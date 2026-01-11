@@ -109,9 +109,8 @@ export class MeController {
     @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<Pagination<UserPaymentStatementItemDto>>> {
     const result = await this.paymentService.getUserPaymentsPaginated(
-      actor.userProfileId,
       dto,
-      actor.centerId,
+      actor,
     );
 
     return ControllerResponse.success(result);

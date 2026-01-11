@@ -3,6 +3,8 @@ import { Cashbox } from '../entities/cashbox.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import {
   CenterTreasuryStatsDto,
   CenterRevenueBranchDetailDto,
@@ -37,6 +39,7 @@ type CashTransactionWithNames = CashTransaction & {
 export class CashboxRepository extends BaseRepository<Cashbox> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    private readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super(txHost);
   }
@@ -92,8 +95,7 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
    */
   async getCenterTreasuryStats(
     centerId: string,
-    dateFrom?: Date,
-    dateTo?: Date,
+    actor: ActorUser,
   ): Promise<CenterTreasuryStatsDto> {
     // Single optimized query to get all branches with their aggregated balances
     const query = this.getRepository()
@@ -113,10 +115,24 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
         { branchType: WalletOwnerType.BRANCH },
       )
       .where('b.centerId = :centerId', { centerId })
-      .andWhere('b.isActive = true')
-      .groupBy('b.id')
-      .addGroupBy('b.city')
-      .orderBy('b.id');
+      .andWhere('b.isActive = true');
+
+    // Check if user can bypass center internal access
+    const canBypass =
+      await this.accessControlHelperService.bypassCenterInternalAccess(
+        actor.userProfileId,
+        centerId,
+      );
+
+    // Apply branch access filtering only if user cannot bypass
+    if (!canBypass) {
+      query.andWhere(
+        'b.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId)',
+        { userProfileId: actor.userProfileId },
+      );
+    }
+
+    query.groupBy('b.id').addGroupBy('b.city').orderBy('b.id');
 
     const results = await query.getRawMany();
 
@@ -167,6 +183,7 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
   async getCenterStatement(
     centerId: string | undefined,
     query: CenterStatementQueryDto,
+    actor: ActorUser,
   ): Promise<Pagination<CenterStatementItemDto>> {
     // Clean query using COALESCE for readable names
     let queryBuilder = this.getRepository()
@@ -228,6 +245,21 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
         '(fromBranch.centerId = :centerId OR toBranch.centerId = :centerId)',
         { centerId },
       );
+
+      // Check if user can bypass center internal access
+      const canBypass =
+        await this.accessControlHelperService.bypassCenterInternalAccess(
+          actor.userProfileId,
+          centerId,
+        );
+
+      // Apply branch access filtering only if user cannot bypass
+      if (!canBypass) {
+        queryBuilder = queryBuilder.andWhere(
+          '(fromBranch.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true) OR toBranch.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true))',
+          { userProfileId: actor.userProfileId },
+        );
+      }
     }
 
     // Optional branch filter

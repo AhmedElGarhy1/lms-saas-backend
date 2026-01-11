@@ -28,16 +28,13 @@ export class PaymentQueryService {
    * Get paginated payments for a specific user
    */
   async getUserPaymentsPaginated(
-    userProfileId: string,
     paginateDto: PaginatePaymentDto,
+    actor: ActorUser,
   ): Promise<Pagination<UserPaymentStatementItemDto>> {
     return await this.paymentRepository.getPaymentsPaginated(
       paginateDto,
-      undefined,
-      {
-        userId: userProfileId,
-        includeAll: false,
-      },
+      actor,
+      false,
     );
   }
 
@@ -51,9 +48,7 @@ export class PaymentQueryService {
     return await this.paymentRepository.getPaymentsPaginated(
       paginateDto,
       actor,
-      {
-        includeAll: true,
-      },
+      true,
     );
   }
 }

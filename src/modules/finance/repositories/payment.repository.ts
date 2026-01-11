@@ -3,6 +3,7 @@ import { Payment } from '../entities/payment.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
 import { SelectQueryBuilder } from 'typeorm';
@@ -26,6 +27,7 @@ type PaymentWithNames = Payment & {
 export class PaymentRepository extends BaseRepository<Payment> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    private readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super(txHost);
   }
@@ -121,12 +123,8 @@ export class PaymentRepository extends BaseRepository<Payment> {
    */
   async getPaymentsPaginated(
     dto: PaginatePaymentDto,
-    actor?: ActorUser,
-    options?: {
-      userId?: string;
-      centerId?: string;
-      includeAll?: boolean;
-    },
+    actor: ActorUser,
+    includeAll: boolean,
   ): Promise<Pagination<UserPaymentStatementItemDto>> {
     // Build query with joins to get payment and user name information
     const queryBuilder = this.getRepository()
@@ -176,23 +174,37 @@ export class PaymentRepository extends BaseRepository<Payment> {
       );
 
     // Apply user filtering (if not admin view)
-    if (!options?.includeAll && options?.userId) {
+    if (!includeAll) {
       queryBuilder.where(
         '((p.senderId = :userId AND p.senderType = :userProfileType) OR (p.receiverId = :userId AND p.receiverType = :userProfileType))',
-        { userId: options.userId, userProfileType: 'USER_PROFILE' },
+        { userId: actor.userProfileId, userProfileType: 'USER_PROFILE' },
       );
     }
 
     // Apply center filtering only for admin views (includeAll = true)
     // User views should show all payments regardless of center
     let centerId: string | undefined;
-    if (options?.includeAll) {
-      centerId = options?.centerId || actor?.centerId;
+    if (includeAll) {
+      centerId = actor.centerId;
       if (centerId) {
         queryBuilder.andWhere(
           '(senderBranch.centerId = :centerId OR receiverBranch.centerId = :centerId)',
           { centerId },
         );
+
+        // Check if user can bypass center internal access
+        const canBypass = await this.accessControlHelperService.bypassCenterInternalAccess(
+          actor.userProfileId,
+          centerId,
+        );
+
+        // Apply branch access filtering only if user cannot bypass
+        if (!canBypass) {
+          queryBuilder.andWhere(
+            '(senderBranch.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true) OR receiverBranch.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true))',
+            { userProfileId: actor.userProfileId }
+          );
+        }
       }
     }
 
@@ -215,9 +227,8 @@ export class PaymentRepository extends BaseRepository<Payment> {
     const parameters: any = {
         userProfileType: 'USER_PROFILE',
         branchType: 'BRANCH',
+        ...(centerId && { centerId }),
     };
-    if (options?.userId) parameters.userId = options.userId;
-    if (centerId) parameters.centerId = centerId;
     queryBuilder.setParameters(parameters);
 
     // Apply filters from dto
@@ -264,16 +275,16 @@ export class PaymentRepository extends BaseRepository<Payment> {
         // Determine user's role in the payment
         let userRole: 'sender' | 'receiver' = 'sender'; // Default
 
-        if (!options?.includeAll && options?.userId) {
+        if (!includeAll) {
           // For user-specific view, determine role based on profile IDs
-          if (payment.senderProfileId === options.userId) {
+          if (payment.senderProfileId === actor.userProfileId) {
             userRole = 'sender';
-          } else if (payment.receiverProfileId === options.userId) {
+          } else if (payment.receiverProfileId === actor.userProfileId) {
             userRole = 'receiver';
           } else {
             userRole = 'receiver'; // Default fallback
           }
-        } else if (options?.includeAll) {
+        } else {
           // For admin/center views, determine role based on whether center is sending or receiving
           userRole = payment.senderType === 'BRANCH' ? 'sender' : 'receiver';
         }

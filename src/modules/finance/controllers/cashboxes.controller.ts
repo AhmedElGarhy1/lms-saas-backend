@@ -62,12 +62,11 @@ export class CashboxesController {
   })
   async getCenterTreasuryStats(
     @Param() params: CenterIdParamDto,
-    @Query() dateRange: DateRangeDto,
+    @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<CenterTreasuryStatsDto>> {
     const stats = await this.cashboxService.getCenterTreasuryStats(
       params.centerId,
-      dateRange.dateFrom,
-      dateRange.dateTo,
+      actor,
     );
 
     return ControllerResponse.success(stats);
@@ -92,6 +91,7 @@ export class CashboxesController {
     const statement = await this.cashboxService.getCenterStatement(
       centerId,
       query,
+      actor,
     );
 
     return ControllerResponse.success(statement);
@@ -112,10 +112,9 @@ export class CashboxesController {
     @Query() query: CenterStatementQueryDto,
     @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<Pagination<UserPaymentStatementItemDto>>> {
-    const centerId = actor.centerId;
     const payments = await this.paymentService.getCenterPaymentsPaginated(
-      centerId,
       query,
+      actor,
     );
 
     return ControllerResponse.success(payments);

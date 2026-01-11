@@ -261,25 +261,17 @@ export class PaymentService extends BaseService {
   }
 
   async getUserPaymentsPaginated(
-    userId: string,
     dto: PaginatePaymentDto,
-    centerId?: string,
+    actor: ActorUser,
   ): Promise<Pagination<UserPaymentStatementItemDto>> {
-    return await this.paymentRepository.getPaymentsPaginated(dto, undefined, {
-      userId,
-      centerId,
-      includeAll: false,
-    });
+    return await this.paymentRepository.getPaymentsPaginated(dto, actor, false);
   }
 
   async getCenterPaymentsPaginated(
-    centerId: string | undefined,
     dto: PaginatePaymentDto,
+    actor: ActorUser,
   ): Promise<Pagination<UserPaymentStatementItemDto>> {
-    return await this.paymentRepository.getPaymentsPaginated(dto, undefined, {
-      centerId,
-      includeAll: true, // Show all payments for the center
-    });
+    return await this.paymentRepository.getPaymentsPaginated(dto, actor, true);
   }
 
   /**
