@@ -11,6 +11,7 @@ import { JwtPayload } from '@/modules/auth/strategies/jwt.strategy';
 import { RateLimitService } from '@/modules/rate-limit/services/rate-limit.service';
 import { notificationGatewayConfig } from '../config/notification-gateway.config';
 import { Config } from '@/shared/config/config';
+import { AuthErrors } from '@/modules/auth/exceptions/auth.errors';
 
 /**
  * Custom Socket.IO adapter that integrates Redis for horizontal scaling
@@ -205,7 +206,7 @@ export class RedisIoAdapter extends IoAdapter {
               `WebSocket connection rejected: No token provided - socketId: ${socket.id}, namespace: ${socket.nsp.name}`,
             );
           }
-          throw new Error('Unauthorized: No token provided');
+          throw AuthErrors.websocketNoToken();
         }
 
         // Verify JWT token
@@ -220,7 +221,7 @@ export class RedisIoAdapter extends IoAdapter {
               `WebSocket connection rejected: Invalid token type - socketId: ${socket.id}, namespace: ${socket.nsp.name}, tokenType: ${payload.type}`,
             );
           }
-          throw new Error('Unauthorized: Invalid token type');
+          throw AuthErrors.websocketInvalidTokenType();
         }
 
         // Verify user exists and is active
@@ -231,7 +232,7 @@ export class RedisIoAdapter extends IoAdapter {
               `WebSocket connection rejected: User not found - socketId: ${socket.id}, namespace: ${socket.nsp.name}, userId: ${payload.sub}`,
             );
           }
-          throw new Error('Unauthorized: User not found');
+          throw AuthErrors.userNotFound();
         }
 
         if (!user.isActive) {
@@ -240,7 +241,7 @@ export class RedisIoAdapter extends IoAdapter {
               `WebSocket connection rejected: User account is inactive - socketId: ${socket.id}, namespace: ${socket.nsp.name}, userId: ${payload.sub}`,
             );
           }
-          throw new Error('Unauthorized: User account is inactive');
+          throw AuthErrors.profileInactive();
         }
 
         // Step 3: User-based rate limiting (AFTER authentication) - Line 205-245

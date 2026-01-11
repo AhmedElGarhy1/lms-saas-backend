@@ -47,6 +47,10 @@ export class AuthErrors extends BaseErrorHelpers {
     return this.createNoDetails(AuthErrorCode.USER_NOT_FOUND);
   }
 
+  static profileInactive(): DomainException {
+    return this.createNoDetails(AuthErrorCode.PROFILE_INACTIVE);
+  }
+
   static sessionExpired(): DomainException {
     return this.createNoDetails(AuthErrorCode.SESSION_EXPIRED);
   }
@@ -83,5 +87,14 @@ export class AuthErrors extends BaseErrorHelpers {
 
   static authenticationRequired(): DomainException {
     return this.createNoDetails(AuthErrorCode.AUTHENTICATION_REQUIRED);
+  }
+
+  // WebSocket authentication errors
+  static websocketNoToken(): DomainException {
+    return this.createNoDetails(AuthErrorCode.WEBSOCKET_NO_TOKEN);
+  }
+
+  static websocketInvalidTokenType(): DomainException {
+    return this.createNoDetails(AuthErrorCode.WEBSOCKET_INVALID_TOKEN_TYPE);
   }
 }

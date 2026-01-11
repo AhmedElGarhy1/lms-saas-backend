@@ -10,13 +10,12 @@ This guide helps frontend developers handle API errors from the LMS system. Each
 | ---------- | ----------------------------------------------------------- | ------------------------------------- |
 | `AUTH_001` | Authentication failed. Please try again.                    | Generic auth failure                  |
 | `AUTH_002` | Invalid username or password.                               | Login credentials invalid             |
-| `AUTH_003` | Your account has been disabled. Please contact support.     | Account disabled by admin             |
-| `AUTH_004` | Account temporarily locked due to too many failed attempts. | Too many failed login attempts        |
+| `AUTH_003` | Account temporarily locked due to too many failed attempts. | Too many failed login attempts        |
+| `AUTH_004` | Your account has been disabled. Please contact support.     | Account disabled by admin             |
 | `AUTH_008` | Please verify your phone number before proceeding.          | Phone verification required           |
 | `AUTH_009` | Please enter your authentication code.                      | 2FA code required                     |
 | `AUTH_010` | Invalid authentication code.                                | 2FA code incorrect                    |
 | `AUTH_011` | Authentication code has expired. Please request a new one.  | 2FA code expired                      |
-| `AUTH_013` | An account with this information already exists.            | Duplicate account during registration |
 | `AUTH_014` | Account not found.                                          | User account doesn't exist            |
 | `AUTH_017` | Password reset required. Please reset your password.        | Password expired, reset needed        |
 | `AUTH_018` | Password reset link has expired. Please request a new one.  | Reset token expired                   |
@@ -33,41 +32,41 @@ This guide helps frontend developers handle API errors from the LMS system. Each
 | `AUTH_030` | Phone number is required.                                   | Missing phone parameter               |
 | `AUTH_031` | Session expired. Please login again.                        | Refresh token not found               |
 | `AUTH_032` | Please login to continue.                                   | Authentication required               |
+| `AUTH_033` | WebSocket authentication failed.                            | No token provided for WebSocket       |
+| `AUTH_034` | WebSocket authentication failed.                            | Invalid token type for WebSocket      |
 
 ## 👤 User Management Errors
 
-| Error Code | User Message                           |
-| ---------- | -------------------------------------- |
-| `USR_001`  | User not found.                        |
-| `USR_002`  | User already exists.                   |
-| `USR_003`  | Email address already in use.          |
-| `USR_004`  | Account is inactive.                   |
-| `USR_005`  | Account has been deleted.              |
-| `USR_006`  | Account is suspended.                  |
-| `USR_010`  | Current password is incorrect.         |
-| `USR_008`  | Password reset link has expired.       |
-| `USR_009`  | Invalid password reset link.           |
-| `USR_011`  | Profile update not allowed.            |
-| `USR_012`  | Profile is incomplete.                 |
-| `USR_013`  | Role assignment not allowed.           |
-| `USR_014`  | Role change not allowed.               |
-| `USR_016`  | User creation not allowed.             |
-| `USR_017`  | User import failed.                    |
-| `USR_018`  | Import failed. Please check your data. |
-| `USR_022`  | Invalid settings.                      |
-| `USR_023`  | Failed to update preferences.          |
-| `USR_024`  | User deletion not allowed.             |
-| `USR_026`  | Cannot delete your own account.        |
-| `USR_027`  | Invalid user data.                     |
-| `USR_028`  | Phone number already in use.           |
-| `USR_029`  | User information not found.            |
-| `USR_030`  | Center assignment required.            |
+| Error Code | User Message                     |
+| ---------- | -------------------------------- |
+| `USR_001`  | User not found.                  |
+| `USR_002`  | User already exists.             |
+| `USR_003`  | Email address already in use.    |
+| `USR_004`  | Account is inactive.             |
+| `USR_005`  | Account has been deleted.        |
+| `USR_006`  | Account is suspended.            |
+| `USR_010`  | Current password is incorrect.   |
+| `USR_008`  | Password reset link has expired. |
+| `USR_009`  | Invalid password reset link.     |
+| `USR_011`  | Profile update not allowed.      |
+| `USR_012`  | Profile is incomplete.           |
+| `USR_013`  | Role assignment not allowed.     |
+| `USR_014`  | Role change not allowed.         |
+| `USR_016`  | User creation not allowed.       |
+| `USR_017`  | User import failed.              |
+| `USR_022`  | Invalid settings.                |
+| `USR_023`  | Failed to update preferences.    |
+| `USR_024`  | User deletion not allowed.       |
+| `USR_026`  | Cannot delete your own account.  |
+| `USR_027`  | Invalid user data.               |
+| `USR_028`  | Phone number already in use.     |
+| `USR_029`  | User information not found.      |
+| `USR_030`  | Center assignment required.      |
 
 ## 💰 Financial Errors
 
 | Error Code    | User Message                             | Available Parameters                                |
 | ------------- | ---------------------------------------- | --------------------------------------------------- |
-| `FIN_PAY_001` | ❌ REMOVED - Use specific balance errors | None                                                |
 | `FIN_PAY_002` | Wallet not found.                        | None                                                |
 | `FIN_PAY_003` | Cashbox not found.                       | None                                                |
 | `FIN_PAY_004` | Payment service temporarily unavailable. | None                                                |
@@ -75,19 +74,19 @@ This guide helps frontend developers handle API errors from the LMS system. Each
 | `FIN_PAY_006` | Invalid payment reference.               | None                                                |
 | `FIN_PAY_007` | Payment not completed.                   | None                                                |
 | `FIN_PAY_008` | Payment already refunded.                | None                                                |
-| `FIN_PAY_009` | Payment status invalid.                  | None                                                |
+| `FIN_PAY_009` | Payment already completed.               | None                                                |
 | `FIN_PAY_010` | Currency not supported.                  | `currency`, `gateway`                               |
 | `FIN_PAY_011` | Payment service unavailable.             | None                                                |
 | `FIN_PAY_012` | Payment setup failed.                    | None                                                |
 | `FIN_PAY_013` | Payment processing failed.               | None                                                |
-| `FIN_PAY_014` | Payment not found.                       | `gatewayPaymentId`                                  |
+| `FIN_PAY_014` | Payment not found by gateway ID.         | `gatewayPaymentId`                                  |
 | `FIN_PAY_015` | Payment not eligible for refund.         | `paymentId`, `currentStatus`                        |
-| `FIN_PAY_016` | Payment not eligible for refund.         | `paymentId`                                         |
+| `FIN_PAY_016` | Payment not external.                    | `paymentId`                                         |
 | `FIN_PAY_017` | Refund amount exceeds payment.           | `refundAmount`, `paymentAmount`                     |
-| `FIN_PAY_018` | Payment reference missing.               | `paymentId`                                         |
+| `FIN_PAY_018` | Payment missing gateway ID.              | `paymentId`                                         |
 | `FIN_PAY_019` | Insufficient balance for refund.         | `refundAmount`, `availableBalance`                  |
-| `FIN_PAY_020` | Invalid payment operation.               | `currentStatus`, `targetStatus`, `validTransitions` |
-| `FIN_PAY_021` | Operation not allowed.                   | None                                                |
+| `FIN_PAY_020` | Payment status transition invalid.       | `currentStatus`, `targetStatus`, `validTransitions` |
+| `FIN_PAY_021` | Payment override denied.                 | None                                                |
 | `FIN_PAY_022` | Payment ownership required.              | None                                                |
 | `FIN_PAY_023` | Wallet access denied.                    | None                                                |
 | `FIN_PAY_024` | Payment execution failed.                | `message`                                           |
@@ -98,6 +97,8 @@ This guide helps frontend developers handle API errors from the LMS system. Each
 | `FIN_PAY_029` | Insufficient wallet balance.             | `currentBalance`, `requiredAmount`                  |
 | `FIN_PAY_030` | Insufficient cash balance.               | `currentBalance`, `requiredAmount`                  |
 | `FIN_PAY_031` | Invalid cash payment configuration.      | None                                                |
+| `FIN_PAY_032` | Payment not found.                       | None                                                |
+| `FIN_PAY_033` | Invalid payment operation.               | None                                                |
 
 ### 🔄 Unified Transaction Types
 
@@ -263,57 +264,71 @@ function getValidationMessage(field, constraint, params) {
 
 ## 🔐 Access Control Errors
 
-| Error Code | User Message                     |
-| ---------- | -------------------------------- |
-| `ACL_001`  | Profile not found.               |
-| `ACL_002`  | Access already granted.          |
-| `ACL_003`  | Center access not found.         |
-| `ACL_004`  | Center access already exists.    |
-| `ACL_005`  | Center access already removed.   |
-| `ACL_006`  | Center access already inactive.  |
-| `ACL_007`  | Role not found.                  |
-| `ACL_008`  | Role already exists.             |
-| `ACL_009`  | Permission not found.            |
-| `ACL_010`  | Permission already assigned.     |
-| `ACL_011`  | Cannot assign role to yourself.  |
-| `ACL_012`  | Insufficient privileges.         |
-| `ACL_013`  | Role already assigned.           |
-| `ACL_014`  | Role not assigned.               |
-| `ACL_015`  | System role cannot be modified.  |
-| `ACL_016`  | Role is currently in use.        |
-| `ACL_017`  | Invalid role operation.          |
-| `ACL_018`  | Invalid profile type for role.   |
-| `ACL_019`  | Role already active.             |
-| `ACL_020`  | Profile type not supported.      |
-| `ACL_021`  | Admin access cannot be removed.  |
-| `ACL_022`  | Center access already active.    |
-| `ACL_023`  | Admin access cannot be modified. |
-| `ACL_024`  | Invalid profile type.            |
-| `ACL_026`  | Access denied.                   |
-| `ACL_027`  | Access denied.                   |
-| `ACL_028`  | Access cannot be revoked.        |
-| `ACL_029`  | Access denied.                   |
-| `ACL_030`  | Permission denied.               |
-| `ACL_025`  | Access record not found.         |
+| Error Code | User Message                                 |
+| ---------- | -------------------------------------------- |
+| `ACL_001`  | User profile not found.                      |
+| `ACL_002`  | User already has access.                     |
+| `ACL_003`  | Center access not found.                     |
+| `ACL_004`  | Center access already exists.                |
+| `ACL_005`  | Center access already deleted.               |
+| `ACL_006`  | Center access already inactive.              |
+| `ACL_007`  | Role not found.                              |
+| `ACL_008`  | Role already exists.                         |
+| `ACL_009`  | Permission not found.                        |
+| `ACL_010`  | Permission already assigned.                 |
+| `ACL_011`  | Cannot assign role to yourself.              |
+| `ACL_012`  | Insufficient privileges for role assignment. |
+| `ACL_013`  | User already has role.                       |
+| `ACL_014`  | User does not have role.                     |
+| `ACL_015`  | Cannot modify system role.                   |
+| `ACL_016`  | Role is in use.                              |
+| `ACL_017`  | Invalid role status transition.              |
+| `ACL_018`  | Invalid profile type for role assignment.    |
+| `ACL_019`  | Role already active.                         |
+| `ACL_020`  | Unsupported profile type for center access.  |
+| `ACL_021`  | Cannot delete admin center access.           |
+| `ACL_022`  | Cannot restore active center access.         |
+| `ACL_023`  | Cannot modify admin center access.           |
+| `ACL_024`  | Invalid profile type.                        |
+| `ACL_025`  | User access not found.                       |
+| `ACL_026`  | Cannot access granter user.                  |
+| `ACL_027`  | Cannot access target user.                   |
+| `ACL_028`  | Cannot revoke user access.                   |
+| `ACL_029`  | Cannot access user records.                  |
+| `ACL_030`  | Missing permission.                          |
 
 ## 📚 Classes & Sessions Errors
 
-| Error Code | User Message                                         |
-| ---------- | ---------------------------------------------------- |
-| `CLS_001`  | Class not found.                                     |
-| `CLS_005`  | Invalid class operation.                             |
-| `CLS_006`  | Class is completed and cannot be modified.           |
-| `CLS_007`  | Class is cancelled and cannot be modified.           |
-| `CLS_008`  | Status change period has expired.                    |
-| `CLS_029`  | Access denied.                                       |
-| `CLS_031`  | Staff member already assigned.                       |
-| `CLS_032`  | Staff member not assigned.                           |
-| `CLS_033`  | Payment strategy not found.                          |
-| `CLS_034`  | Payment strategy cannot be changed.                  |
-| `CLS_036`  | Schedule conflict detected.                          |
-| `CLS_037`  | Schedule overlap detected.                           |
-| `CLS_038`  | Teacher schedule conflict with availability details. |
-| `CLS_041`  | Student schedule conflict with availability details. |
+| Error Code | User Message                                  |
+| ---------- | --------------------------------------------- |
+| `CLS_001`  | Class not found.                              |
+| `CLS_002`  | Class already exists.                         |
+| `CLS_005`  | Class status transition invalid.              |
+| `CLS_006`  | Cannot modify completed class.                |
+| `CLS_007`  | Cannot modify cancelled class.                |
+| `CLS_008`  | Class status change grace period expired.     |
+| `CLS_029`  | Class access denied.                          |
+| `CLS_031`  | Class staff already assigned.                 |
+| `CLS_032`  | Class staff not assigned.                     |
+| `CLS_033`  | Payment strategy not found.                   |
+| `CLS_034`  | Payment strategy update denied.               |
+| `CLS_036`  | Schedule conflict detected.                   |
+| `CLS_037`  | Schedule overlap detected.                    |
+| `CLS_038`  | Teacher schedule conflict.                    |
+| `CLS_041`  | Student schedule conflict.                    |
+| `CLS_046`  | Class validation failed.                      |
+| `CLS_047`  | Group validation failed.                      |
+| `CLS_048`  | Class start date update forbidden.            |
+| `CLS_049`  | Class status does not allow staff assignment. |
+| `CLS_050`  | Staff already assigned to class.              |
+| `CLS_051`  | Group creation not allowed for class status.  |
+| `CLS_052`  | Student invalid type for group assignment.    |
+| `CLS_053`  | Student already assigned to group.            |
+| `CLS_054`  | Resource access denied.                       |
+| `CLS_055`  | Class staff access not found.                 |
+| `CLS_056`  | Cannot access classes.                        |
+| `CLS_057`  | Cannot access class.                          |
+| `CLS_058`  | Class branch required.                        |
 
 ### 🎯 Detailed Schedule Conflict Errors
 
@@ -386,34 +401,36 @@ if (error.code === 'CLS_038') {
 | `CLS_058` | Branch selection required. |
 | `SES_001` | Session not found. |
 | `SES_002` | Session already exists. |
-| `SES_003` | Session is inactive. |
-| `SES_004` | Session has been deleted. |
-| `SES_005` | Invalid session operation. |
-| `SES_006` | Session is completed and cannot be modified. |
-| `SES_007` | Session is cancelled and cannot be modified. |
-| `SES_008` | Session start time cannot be in the past. |
-| `SES_017` | Failed to cancel session. |
-| `SES_019` | Class must be active for session operations. |
-| `SES_020` | Schedule conflict detected. |
-| `SES_021` | Invalid session status for check-in. |
-| `SES_022` | Schedule item not found. |
+| `SES_003` | Session inactive. |
+| `SES_004` | Session deleted. |
+| `SES_005` | Session status transition invalid. |
+| `SES_006` | Cannot modify completed session. |
+| `SES_007` | Cannot modify cancelled session. |
+| `SES_008` | Session start time cannot be in past. |
+| `SES_017` | Session cancel failed. |
+| `SES_019` | Session class not active. |
+| `SES_020` | Session schedule conflict. |
+| `SES_021` | Session check-in invalid status. |
+| `SES_022` | Session schedule item not found. |
 | `SES_023` | Session must be checked in before starting. |
-| `SES_024` | Invalid session status for starting. |
+| `SES_024` | Session start invalid status. |
 | `SES_025` | Session cannot be updated. |
-| `SES_026` | Invalid session operation. |
-| `SES_027` | Access denied. |
-| `SES_028` | Invalid schedule item. |
-| `SES_029` | Invalid session ID. |
+| `SES_026` | Session status invalid for operation. |
+| `SES_027` | Session access denied. |
+| `SES_028` | Session schedule item invalid. |
+| `SES_029` | Session invalid ID format. |
+| `SES_030` | Session cannot finish with unmarked students. |
 
 ## 📊 Attendance Errors (ATD_xxx)
 
-| Code    | Enum                            | Description                                                         | Parameters                                     | Example                                           |
-| ------- | ------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------- |
-| ATD_007 | ATTENDANCE_SESSION_NOT_ACTIVE   | Session not in active state (CHECKING_IN/CONDUCTING) for attendance | None                                           | `AttendanceErrors.attendanceSessionNotActive()`   |
-| ATD_008 | ATTENDANCE_STUDENT_NOT_ENROLLED | Student not enrolled in group                                       | None                                           | `AttendanceErrors.attendanceStudentNotEnrolled()` |
-| ATD_012 | ATTENDANCE_PAYMENT_REQUIRED     | Student payment required for session access                         | `availablePaymentOptions`, `hasPaymentOptions` | `AttendanceErrors.attendancePaymentRequired()`    |
-| ATD_014 | ATTENDANCE_INVALID_STUDENT_CODE | Student code format invalid                                         | None                                           | `AttendanceErrors.attendanceInvalidStudentCode()` |
-| ATD_015 | ATTENDANCE_ALREADY_EXISTS       | Attendance record already exists                                    | None                                           | `AttendanceErrors.attendanceAlreadyExists()`      |
+| Code    | Enum                            | Description                                 | Parameters                                     | Example                                           |
+| ------- | ------------------------------- | ------------------------------------------- | ---------------------------------------------- | ------------------------------------------------- |
+| ATD_007 | ATTENDANCE_SESSION_NOT_ACTIVE   | Session not in active state for attendance  | None                                           | `AttendanceErrors.attendanceSessionNotActive()`   |
+| ATD_008 | ATTENDANCE_STUDENT_NOT_ENROLLED | Student not enrolled in group               | None                                           | `AttendanceErrors.attendanceStudentNotEnrolled()` |
+| ATD_012 | ATTENDANCE_PAYMENT_REQUIRED     | Student payment required for session access | `availablePaymentOptions`, `hasPaymentOptions` | `AttendanceErrors.attendancePaymentRequired()`    |
+| ATD_014 | ATTENDANCE_INVALID_STUDENT_CODE | Student code format invalid                 | None                                           | `AttendanceErrors.attendanceInvalidStudentCode()` |
+| ATD_015 | ATTENDANCE_ALREADY_EXISTS       | Attendance record already exists            | None                                           | `AttendanceErrors.attendanceAlreadyExists()`      |
+| ATD_016 | ATTENDANCE_CREATION_FAILED      | Attendance creation failed                  | None                                           | `AttendanceErrors.attendanceCreationFailed()`     |
 
 ### 🎯 Detailed Payment Required Error (ATD_012)
 
@@ -475,6 +492,104 @@ if (error.code === 'ATD_012') {
 }
 }
 ```
+
+## 🏢 Centers Errors (CTR_xxx)
+
+| Code        | Enum                                   | Description                            | Parameters | Example                                             |
+| ----------- | -------------------------------------- | -------------------------------------- | ---------- | --------------------------------------------------- |
+| CTR_BRN_001 | BRANCH_NOT_FOUND                       | Branch not found                       | None       | `CentersErrors.branchNotFound()`                    |
+| CTR_BRN_002 | BRANCH_ALREADY_EXISTS                  | Branch already exists                  | None       | `CentersErrors.branchAlreadyExists()`               |
+| CTR_CTR_001 | CENTER_NOT_FOUND                       | Center not found                       | None       | `CentersErrors.centerNotFound()`                    |
+| CTR_CTR_002 | CENTER_ALREADY_EXISTS                  | Center already exists                  | None       | `CentersErrors.centerAlreadyExists()`               |
+| CTR_CTR_003 | CENTER_ALREADY_ACTIVE                  | Center already active                  | None       | `CentersErrors.centerAlreadyActive()`               |
+| CTR_ACC_001 | BRANCH_ACCESS_DENIED                   | Branch access denied                   | None       | `CentersErrors.branchAccessDenied()`                |
+| CTR_ACC_002 | BRANCH_ACCESS_ALREADY_GRANTED          | Branch access already granted          | None       | `CentersErrors.branchAccessAlreadyGranted()`        |
+| CTR_ACC_003 | BRANCH_ACCESS_NOT_GRANTED              | Branch access not granted              | None       | `CentersErrors.branchAccessNotGranted()`            |
+| CTR_ACC_004 | BRANCH_ACCESS_NOT_FOUND                | Branch access record not found         | None       | `CentersErrors.branchAccessNotFound()`              |
+| CTR_PRF_001 | PROFILE_INVALID_TYPE_FOR_BRANCH_ACCESS | Invalid profile type for branch access | None       | `CentersErrors.profileInvalidTypeForBranchAccess()` |
+| CTR_PRF_002 | PROFILE_ALREADY_HAS_BRANCH_ACCESS      | Profile already has branch access      | None       | `CentersErrors.profileAlreadyHasBranchAccess()`     |
+| CTR_VAL_001 | BRANCH_VALIDATION_FAILED               | Branch validation failed               | None       | `CentersErrors.branchValidationFailed()`            |
+| CTR_VAL_002 | CENTER_VALIDATION_FAILED               | Center validation failed               | None       | `CentersErrors.centerValidationFailed()`            |
+
+## 👨‍🏫 Staff Errors (STF_xxx)
+
+| Code    | Enum            | Description            | Parameters | Example                       |
+| ------- | --------------- | ---------------------- | ---------- | ----------------------------- |
+| STF_001 | STAFF_NOT_FOUND | Staff member not found | None       | `StaffErrors.staffNotFound()` |
+
+## 👨‍🎓 Students Errors (STD_xxx)
+
+| Code    | Enum              | Description       | Parameters | Example                            |
+| ------- | ----------------- | ----------------- | ---------- | ---------------------------------- |
+| STD_001 | STUDENT_NOT_FOUND | Student not found | None       | `StudentsErrors.studentNotFound()` |
+
+## 👨‍🏫 Teachers Errors (TCH_xxx)
+
+| Code    | Enum              | Description       | Parameters | Example                            |
+| ------- | ----------------- | ----------------- | ---------- | ---------------------------------- |
+| TCH_001 | TEACHER_NOT_FOUND | Teacher not found | None       | `TeachersErrors.teacherNotFound()` |
+
+## 👨‍💼 Admin Errors (ADM_xxx)
+
+| Code    | Enum            | Description     | Parameters | Example                       |
+| ------- | --------------- | --------------- | ---------- | ----------------------------- |
+| ADM_001 | ADMIN_NOT_FOUND | Admin not found | None       | `AdminErrors.adminNotFound()` |
+
+## 👤 User Profile Errors (UPF_xxx)
+
+| Code    | Enum                                           | Description                            | Parameters | Example                                                        |
+| ------- | ---------------------------------------------- | -------------------------------------- | ---------- | -------------------------------------------------------------- |
+| UPF_001 | USER_PROFILE_NOT_FOUND                         | User profile not found                 | None       | `UserProfileErrors.userProfileNotFound()`                      |
+| UPF_009 | USER_PROFILE_INVALID_DATA                      | User profile data validation failed    | None       | `UserProfileErrors.userProfileInvalidData()`                   |
+| UPF_011 | USER_PROFILE_SELECTION_REQUIRED                | User profile selection is required     | None       | `UserProfileErrors.userProfileSelectionRequired()`             |
+| UPF_012 | USER_PROFILE_INACTIVE                          | User profile is inactive               | None       | `UserProfileErrors.userProfileInactive()`                      |
+| UPF_013 | USER_PROFILE_ALREADY_EXISTS                    | User profile already exists            | None       | `UserProfileErrors.userProfileAlreadyExists()`                 |
+| UPF_014 | USER_PROFILE_ALREADY_EXISTS_WITH_CENTER_ACCESS | User profile exists with center access | None       | `UserProfileErrors.userProfileAlreadyExistsWithCenterAccess()` |
+
+## 💰 Student Billing Errors (SBL_xxx)
+
+| Code    | Enum                                    | Description                                       | Parameters | Example                                                      |
+| ------- | --------------------------------------- | ------------------------------------------------- | ---------- | ------------------------------------------------------------ |
+| SBL_001 | SUBSCRIPTION_PAYMENT_STRATEGY_MISSING   | Monthly subscription payment strategy missing     | None       | `StudentBillingErrors.subscriptionPaymentStrategyMissing()`  |
+| SBL_002 | SUBSCRIPTION_ALREADY_EXISTS             | Student already has active subscription for month | None       | `StudentBillingErrors.subscriptionAlreadyExists()`           |
+| SBL_003 | SUBSCRIPTION_INVALID_PAYMENT_SOURCE     | Invalid payment source for subscription           | None       | `StudentBillingErrors.subscriptionInvalidPaymentSource()`    |
+| SBL_004 | SESSION_CHARGE_PAYMENT_STRATEGY_MISSING | Session charge payment strategy missing           | None       | `StudentBillingErrors.sessionChargePaymentStrategyMissing()` |
+| SBL_005 | SESSION_CHARGE_ALREADY_EXISTS           | Student already paid for this session             | None       | `StudentBillingErrors.sessionChargeAlreadyExists()`          |
+| SBL_006 | SESSION_CHARGE_INVALID_PAYMENT_SOURCE   | Invalid payment source for session charge         | None       | `StudentBillingErrors.sessionChargeInvalidPaymentSource()`   |
+| SBL_007 | MONTHLY_SUBSCRIPTIONS_NOT_ALLOWED       | Monthly subscriptions not allowed for this class  | None       | `StudentBillingErrors.monthlySubscriptionsNotAllowed()`      |
+| SBL_008 | SESSION_CHARGES_NOT_ALLOWED             | Session charges not allowed for this class        | None       | `StudentBillingErrors.sessionChargesNotAllowed()`            |
+| SBL_009 | SESSION_PAYMENTS_NOT_CONFIGURED         | Session payments not configured for this class    | None       | `StudentBillingErrors.sessionPaymentsNotConfigured()`        |
+| SBL_010 | MONTHLY_PAYMENTS_NOT_CONFIGURED         | Monthly payments not configured for this class    | None       | `StudentBillingErrors.monthlyPaymentsNotConfigured()`        |
+| SBL_011 | CLASS_CHARGES_NOT_ALLOWED               | Class charges not allowed for this class          | None       | `StudentBillingErrors.classChargesNotAllowed()`              |
+| SBL_012 | CLASS_PAYMENTS_NOT_CONFIGURED           | Class payments not configured for this class      | None       | `StudentBillingErrors.classPaymentsNotConfigured()`          |
+| SBL_013 | CLASS_CHARGE_ALREADY_EXISTS             | Student already has a class charge for this class | None       | `StudentBillingErrors.classChargeAlreadyExists()`            |
+| SBL_014 | BILLING_RECORD_NOT_FOUND                | Billing record not found                          | None       | `StudentBillingErrors.billingRecordNotFound()`               |
+| SBL_015 | REFUND_VALIDATION_FAILED                | Refund validation failed                          | None       | `StudentBillingErrors.refundValidationFailed()`              |
+| SBL_016 | ALREADY_REFUNDED                        | Already refunded                                  | None       | `StudentBillingErrors.alreadyRefunded()`                     |
+| SBL_017 | REFUND_FAILED                           | Refund failed                                     | None       | `StudentBillingErrors.refundFailed()`                        |
+| SBL_018 | REFUND_UNSUPPORTED_PAYMENT_TYPE         | Refund unsupported payment type                   | None       | `StudentBillingErrors.refundUnsupportedPaymentType()`        |
+| SBL_019 | REFUND_PAYMENT_NOT_FOUND                | Refund payment not found                          | None       | `StudentBillingErrors.refundPaymentNotFound()`               |
+| SBL_020 | CLASS_CHARGE_NOT_FOUND                  | Class charge not found                            | None       | `StudentBillingErrors.classChargeNotFound()`                 |
+| SBL_021 | CLASS_ALREADY_FULLY_PAID                | Class already fully paid                          | None       | `StudentBillingErrors.classAlreadyFullyPaid()`               |
+| SBL_022 | INVALID_CHARGE_STATUS                   | Invalid charge status                             | None       | `StudentBillingErrors.invalidChargeStatus()`                 |
+| SBL_023 | PAYMENT_EXCEEDS_TOTAL_AMOUNT            | Payment exceeds total amount                      | None       | `StudentBillingErrors.paymentExceedsTotalAmount()`           |
+
+## 🔔 Notification Errors (NTN_xxx)
+
+| Code    | Enum                         | Description                           | Parameters                                  | Example                                           |
+| ------- | ---------------------------- | ------------------------------------- | ------------------------------------------- | ------------------------------------------------- |
+| NTN_001 | NOTIFICATION_NOT_FOUND       | Notification not found                | None                                        | `NotificationErrors.notificationNotFound()`       |
+| NTN_002 | NOTIFICATION_ACCESS_DENIED   | Notification access denied            | None                                        | `NotificationErrors.notificationAccessDenied()`   |
+| NTN_003 | TEMPLATE_RENDERING_FAILED    | Template rendering failed             | None                                        | `NotificationErrors.templateRenderingFailed()`    |
+| NTN_004 | INVALID_RECIPIENT            | Invalid notification recipient        | None                                        | `NotificationErrors.invalidRecipient()`           |
+| NTN_005 | NOTIFICATION_ALREADY_READ    | Notification already read             | None                                        | `NotificationErrors.notificationAlreadyRead()`    |
+| NTN_006 | NOTIFICATION_SENDING_FAILED  | Notification sending failed           | channel, error                              | `NotificationErrors.notificationSendingFailed()`  |
+| NTN_007 | CHANNEL_ADAPTER_FAILED       | Channel adapter operation failed      | channel, operation, error                   | `NotificationErrors.channelAdapterFailed()`       |
+| NTN_008 | INVALID_CHANNEL              | Invalid channel for adapter           | adapter, expectedChannel, receivedChannel   | `NotificationErrors.invalidChannel()`             |
+| NTN_009 | MISSING_NOTIFICATION_CONTENT | Required notification content missing | channel, contentType                        | `NotificationErrors.missingNotificationContent()` |
+| NTN_010 | MISSING_TEMPLATE_VARIABLES   | Required template variables missing   | notificationType, channel, missingVariables | `NotificationErrors.missingTemplateVariables()`   |
+| NTN_011 | WEBHOOK_SIGNATURE_INVALID    | Webhook signature validation failed   | None                                        | `NotificationErrors.webhookSignatureInvalid()`    |
+| NTN_012 | NOTIFICATION_LOG_NOT_FOUND   | Notification log not found            | None                                        | `NotificationErrors.notificationLogNotFound()`    |
 
 ## 📚 Levels Errors (LVL_xxx)
 
@@ -610,6 +725,7 @@ if (error.code === 'ATD_012') {
 | NTN_009 | MISSING_NOTIFICATION_CONTENT | Required notification content missing | channel, contentType                        | `NotificationErrors.missingNotificationContent()` |
 | NTN_010 | MISSING_TEMPLATE_VARIABLES   | Required template variables missing   | notificationType, channel, missingVariables | `NotificationErrors.missingTemplateVariables()`   |
 | NTN_011 | WEBHOOK_SIGNATURE_INVALID    | Webhook signature validation failed   | None                                        | `NotificationErrors.webhookSignatureInvalid()`    |
+| NTN_012 | NOTIFICATION_LOG_NOT_FOUND   | Notification log not found            | None                                        | `NotificationErrors.notificationLogNotFound()`    |
 
 ## 🔧 System Errors (SYS_xxx)
 
@@ -1269,33 +1385,37 @@ enum SystemErrorCode {
 }
 
 enum CommonErrorCode {
+  RESOURCE_NOT_FOUND = 'GEN_001',
+  VALIDATION_FAILED = 'GEN_002',
+  INSUFFICIENT_PERMISSIONS = 'GEN_003',
+  ACCESS_DENIED = 'GEN_004',
   ADMIN_ACCESS_DENIED = 'GEN_005',
   TOO_MANY_ATTEMPTS = 'GEN_006',
-  TOO_MANY_SESSIONS = 'GEN_007',
-  BULK_OPERATION_FAILED = 'GEN_008',
-  BULK_OPERATION_PARTIAL_SUCCESS = 'GEN_009',
-  RESOURCE_NOT_FOUND = 'GEN_001',
-  VALIDATION_FAILED = 'GEN_002'
+  CANNOT_TARGET_SELF = 'GEN_007'
 }
 ```
 
 ### 🎯 Error Code Structure
 
-- **AUTH_xxx**: Authentication & Authorization (001-032)
+- **AUTH_xxx**: Authentication & Authorization (001-034)
 - **USR_xxx**: User Management (001-030)
 - **FIN_xxx**: Financial Operations (PAY/TXN/CTXN/XFER prefixes)
 - **ACL_xxx**: Access Control & Permissions (001-030)
 - **CLS_xxx**: Classes Management (001-058)
-- **SES_xxx**: Sessions Management (001-029)
-- **ATD_xxx**: Attendance (007,008,012,014,015)
-- **LVL_xxx**: Levels (001-009)
-- **SBJ_xxx**: Subjects (001-009)
+- **SES_xxx**: Sessions Management (001-030)
+- **ATD_xxx**: Attendance (007-016)
 - **CTR_xxx**: Centers (BRN/CTR/ACC/PRF/VAL prefixes)
 - **UPF_xxx**: User Profiles (001,009,011-014)
-- **SBL_xxx**: Student Billing (001-006)
-- **NTN_xxx**: Notifications (001-011)
+- **SBL_xxx**: Student Billing (001-023)
+- **NTN_xxx**: Notifications (001-012)
+- **LVL_xxx**: Levels (001-009)
+- **SBJ_xxx**: Subjects (001)
+- **STF_xxx**: Staff Management (001)
+- **STD_xxx**: Students Management (001)
+- **TCH_xxx**: Teachers Management (001)
+- **ADM_xxx**: Admin Management (001)
 - **SYS_xxx**: System Errors (001-005)
-- **GEN_xxx**: Common/Generic Errors (001,002,005-009)
+- **GEN_xxx**: Common/Generic Errors (001-007)
 
 ---
 
@@ -1461,17 +1581,26 @@ const paymentFilters = {
 
 ## 📋 Quick Reference Summary
 
-| Category               | Error Codes                  | Common Patterns                 |
-| ---------------------- | ---------------------------- | ------------------------------- |
-| **Authentication**     | `AUTH_001-032`               | Login, registration, sessions   |
-| **User Management**    | `USR_001-030`                | Profile updates, permissions    |
-| **Financial**          | `FIN_xxx`                    | Payments, wallets, transactions |
-| **Access Control**     | `ACL_001-030`                | Roles, permissions, centers     |
-| **Classes & Sessions** | `CLS_001-058`, `SES_001-029` | Scheduling, attendance          |
-| **Validation**         | `GEN_002`                    | Form validation errors          |
-| **System**             | `SYS_001-005`                | Infrastructure issues           |
+| Category                           | Error Codes                  | Common Patterns                 |
+| ---------------------------------- | ---------------------------- | ------------------------------- |
+| **Authentication**                 | `AUTH_001-032`               | Login, registration, sessions   |
+| **User Management**                | `USR_001-030`                | Profile updates, permissions    |
+| **Financial**                      | `FIN_xxx`                    | Payments, wallets, transactions |
+| **Access Control**                 | `ACL_001-030`                | Roles, permissions, centers     |
+| **Classes & Sessions**             | `CLS_001-058`, `SES_001-030` | Scheduling, attendance          |
+| **Attendance**                     | `ATD_007-016`                | Student check-ins, payments     |
+| **Centers**                        | `CTR_xxx`                    | Branch/center management        |
+| **User Profiles**                  | `UPF_001-014`                | Profile operations              |
+| **Student Billing**                | `SBL_001-023`                | Payments, subscriptions         |
+| **Notifications**                  | `NTN_001-011`                | Messaging, templates            |
+| **Levels**                         | `LVL_001-009`                | Academic levels                 |
+| **Subjects**                       | `SBJ_001`                    | Academic subjects               |
+| **Staff/Students/Teachers/Admins** | `STF/TCH/STD/ADM_001`        | User type management            |
+| **Validation**                     | `GEN_002`                    | Form validation errors          |
+| **System**                         | `SYS_001-005`                | Infrastructure issues           |
+| **Generic**                        | `GEN_001-007`                | Common fallbacks                |
 
-**Total: 243 error codes covering all LMS operations**
+**Total: 300+ error codes covering all LMS operations**
 
 ---
 

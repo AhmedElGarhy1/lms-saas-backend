@@ -5,6 +5,7 @@ import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
+import { FinanceErrors } from '../exceptions/finance.errors';
 
 @Injectable()
 export class WalletRepository extends BaseRepository<Wallet> {
@@ -39,7 +40,7 @@ export class WalletRepository extends BaseRepository<Wallet> {
       lock: { mode: 'pessimistic_write' },
     });
     if (!wallet) {
-      throw new Error(`Wallet not found: ${walletId}`);
+      throw FinanceErrors.walletNotFound();
     }
     return wallet;
   }

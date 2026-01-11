@@ -34,6 +34,10 @@ export enum AuthErrorCode
   TWO_FACTOR_ALREADY_ENABLED = 'AUTH_027', // Trying to setup 2FA when already enabled
   TWO_FACTOR_ALREADY_SETUP = 'AUTH_028', // Trying to setup 2FA when already exists
 
+  // WebSocket authentication errors
+  WEBSOCKET_NO_TOKEN = 'AUTH_033', // No token provided for WebSocket
+  WEBSOCKET_INVALID_TOKEN_TYPE = 'AUTH_034', // Invalid token type for WebSocket
+
   // Validation errors
   MISSING_USER_IDENTIFIER = 'AUTH_029', // Missing userId or phone in request
   MISSING_PHONE_PARAMETER = 'AUTH_030', // Missing phone parameter

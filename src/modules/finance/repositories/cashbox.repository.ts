@@ -5,6 +5,7 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { FinanceErrors } from '../exceptions/finance.errors';
 import {
   CenterTreasuryStatsDto,
   CenterRevenueBranchDetailDto,
@@ -66,7 +67,7 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
       lock: { mode: 'pessimistic_write' },
     });
     if (!cashbox) {
-      throw new Error(`Cashbox not found: ${cashboxId}`);
+      throw FinanceErrors.cashboxNotFound();
     }
     return cashbox;
   }

@@ -10,6 +10,7 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
+import { TeacherPayoutErrors } from '../exceptions/teacher-payout.errors';
 
 @Injectable()
 export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayoutRecord> {
@@ -141,7 +142,7 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
 
     const updated = await this.findById(id);
     if (!updated) {
-      throw new Error(`Payout with id ${id} not found`);
+      throw TeacherPayoutErrors.payoutNotFound();
     }
 
     return updated;

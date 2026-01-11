@@ -9,6 +9,7 @@ import { NotificationType } from '../enums/notification-type.enum';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { GetNotificationHistoryDto } from '../dto/notification-history.dto';
 import { In } from 'typeorm';
+import { NotificationErrors } from '../exceptions/notification-errors';
 
 @Injectable()
 export class NotificationLogRepository extends BaseRepository<NotificationLog> {
@@ -266,7 +267,7 @@ export class NotificationLogRepository extends BaseRepository<NotificationLog> {
     const log = await repo.findOne({ where: { id } });
 
     if (!log) {
-      throw new Error(`Notification log not found: ${id}`);
+      throw NotificationErrors.notificationLogNotFound();
     }
 
     // Merge metadata if provided

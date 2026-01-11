@@ -15,6 +15,10 @@ export class NotificationErrors extends BaseErrorHelpers {
     return this.createNoDetails(NotificationErrorCode.NOTIFICATION_NOT_FOUND);
   }
 
+  static notificationLogNotFound(): DomainException {
+    return this.createNoDetails(NotificationErrorCode.NOTIFICATION_LOG_NOT_FOUND);
+  }
+
   static notificationAccessDenied(): DomainException {
     return this.createNoDetails(NotificationErrorCode.NOTIFICATION_ACCESS_DENIED);
   }
