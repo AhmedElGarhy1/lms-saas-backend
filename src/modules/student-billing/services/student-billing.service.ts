@@ -914,14 +914,8 @@ export class StudentBillingService extends BaseService {
     // For center-wide billing access, no specific branch/class validation needed
 
     return this.chargesRepository.getPaginatedChargesForCenter(
-      actor.centerId,
       paginateDto,
-      {
-        studentUserProfileId: paginateDto.studentUserProfileId,
-        chargeType: paginateDto.chargeType,
-        dateFrom: paginateDto.dateFrom,
-        dateTo: paginateDto.dateTo,
-      },
+      actor,
     );
   }
 

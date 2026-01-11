@@ -5,11 +5,14 @@ import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { PaginateStudentBillingRecordsDto } from '../dto/paginate-student-billing-records.dto';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 
 @Injectable()
 export class StudentChargesRepository extends BaseRepository<StudentCharge> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    private readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super(txHost);
   }
@@ -109,37 +112,51 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
    * Get paginated charges with filtering for a specific center
    */
   async getPaginatedChargesForCenter(
-    centerId: string,
-    paginateDto: any, // Using any to avoid circular import
-    filters: any = {},
+    paginateDto: PaginateStudentBillingRecordsDto, // Using any to avoid circular import
+    actor: ActorUser,
   ): Promise<any> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('charge')
-      .where('charge.centerId = :centerId', { centerId });
+      .where('charge.centerId = :centerId', { centerId: actor.centerId });
 
-    // Apply filters
-    if (filters.studentUserProfileId) {
-      queryBuilder.andWhere('charge.studentUserProfileId = :studentId', {
-        studentId: filters.studentUserProfileId,
+    const canBypassCenterInternalAccess =
+      await this.accessControlHelperService.bypassCenterInternalAccess(
+        actor.userProfileId,
+        actor.centerId,
+      );
+
+    if (!canBypassCenterInternalAccess) {
+      // check staff access with target class
+      queryBuilder.leftJoin('charge.class', 'class');
+      queryBuilder.leftJoin('class.classStaff', 'classStaff');
+      queryBuilder.andWhere('classStaff.userProfileId = :userProfileId', {
+        userProfileId: actor.userProfileId,
       });
     }
 
-    if (filters.chargeType) {
+    // Apply filters
+    if (paginateDto.studentUserProfileId) {
+      queryBuilder.andWhere('charge.studentUserProfileId = :studentId', {
+        studentId: paginateDto.studentUserProfileId,
+      });
+    }
+
+    if (paginateDto.chargeType) {
       queryBuilder.andWhere('charge.chargeType = :chargeType', {
-        chargeType: filters.chargeType,
+        chargeType: paginateDto.chargeType,
       });
     }
 
     // Apply date filters to createdAt field
-    if (filters.dateFrom) {
+    if (paginateDto.dateFrom) {
       queryBuilder.andWhere('charge.createdAt >= :dateFrom', {
-        dateFrom: filters.dateFrom,
+        dateFrom: paginateDto.dateFrom,
       });
     }
 
-    if (filters.dateTo) {
+    if (paginateDto.dateTo) {
       queryBuilder.andWhere('charge.createdAt <= :dateTo', {
-        dateTo: filters.dateTo,
+        dateTo: paginateDto.dateTo,
       });
     }
 
