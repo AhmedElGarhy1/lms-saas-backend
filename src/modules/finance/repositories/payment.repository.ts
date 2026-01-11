@@ -193,22 +193,23 @@ export class PaymentRepository extends BaseRepository<Payment> {
         );
 
         // Check if user can bypass center internal access
-        const canBypass = await this.accessControlHelperService.bypassCenterInternalAccess(
-          actor.userProfileId,
-          centerId,
-        );
+        const canBypass =
+          await this.accessControlHelperService.bypassCenterInternalAccess(
+            actor.userProfileId,
+            centerId,
+          );
 
         // Apply branch access filtering only if user cannot bypass
         if (!canBypass) {
           queryBuilder.andWhere(
             '(senderBranch.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true) OR receiverBranch.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId AND "isActive" = true))',
-            { userProfileId: actor.userProfileId }
+            { userProfileId: actor.userProfileId },
           );
         }
       }
     }
 
-      // Select human-readable names and user IDs
+    // Select human-readable names and user IDs
     queryBuilder
       .addSelect(
         "COALESCE(senderUser.name, CONCAT(senderCenter.name, CONCAT(' - ', senderBranch.city)))",
@@ -225,9 +226,9 @@ export class PaymentRepository extends BaseRepository<Payment> {
 
     // Set parameters
     const parameters: any = {
-        userProfileType: 'USER_PROFILE',
-        branchType: 'BRANCH',
-        ...(centerId && { centerId }),
+      userProfileType: 'USER_PROFILE',
+      branchType: 'BRANCH',
+      ...(centerId && { centerId }),
     };
     queryBuilder.setParameters(parameters);
 
