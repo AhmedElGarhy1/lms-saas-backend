@@ -155,6 +155,10 @@
 [x] cleanup all Error() to be handled error exception
 [x] translations cleanup
 [x] refactor all confirmation dialogs for nicer alert
+[x] database excpetions not hanled correctly
+[x] deactivate branchs
+[x] invalidate autocomplete
+[ ] hidden form fields treated as error
 [ ] page for creating user and adding him to group in the same place for staff
 [ ] staff payouts
 [ ] daily revenue

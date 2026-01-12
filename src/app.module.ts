@@ -15,7 +15,6 @@ import { ActivityLogModule } from '@/shared/modules/activity-log/activity-log.mo
 import { SharedModule } from '@/shared/shared.module';
 import { SeederModule } from '@/database/seeder.module';
 import { GlobalExceptionFilter } from '@/shared/common/filters/global-exception.filter';
-import { TypeOrmExceptionFilter } from '@/shared/common/filters/typeorm-exception.filter';
 import { ResponseInterceptor } from '@/shared/common/interceptors/response.interceptor';
 import { ETagInterceptor } from '@/shared/common/interceptors/etag.interceptor';
 import { CacheInterceptor } from '@/shared/common/interceptors/cache.interceptor';
@@ -172,10 +171,6 @@ import { FileModule } from './modules/file/file.module';
       useClass: CacheInterceptor,
     },
     // TypeORM filter must come first to convert database errors before global filter
-    {
-      provide: APP_FILTER,
-      useClass: TypeOrmExceptionFilter,
-    },
     {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,

@@ -73,8 +73,6 @@ export class Branch extends SoftBaseEntity {
   @OneToMany(() => ClassStaff, (classStaff) => classStaff.branch)
   classStaff: ClassStaff[];
 
-  @OneToMany(() => Session, (session) => session.branch)
-
   // virtual fields
   name: string;
 

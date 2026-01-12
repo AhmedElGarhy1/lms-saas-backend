@@ -5,7 +5,6 @@ import { DatabaseService } from './database.service';
 import { ExportService } from './common/services/export.service';
 import { BulkOperationService } from './common/services/bulk-operation.service';
 import { ActivityLogModule } from './modules/activity-log/activity-log.module';
-import { TypeOrmExceptionFilter } from './common/filters/typeorm-exception.filter';
 import { RedisModule } from './modules/redis/redis.module';
 import { TypeSafeEventEmitter } from './services/type-safe-event-emitter.service';
 import { CacheKeyBuilderService } from './common/services/cache-key-builder.service';
@@ -25,7 +24,6 @@ import { FileModule } from '@/modules/file/file.module';
     DatabaseService,
     ExportService,
     BulkOperationService,
-    TypeOrmExceptionFilter,
     TypeSafeEventEmitter,
     CacheKeyBuilderService,
     EventEmitterModule,

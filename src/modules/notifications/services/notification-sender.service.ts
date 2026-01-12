@@ -8,7 +8,10 @@ import {
   InAppAdapter,
 } from '../adapters';
 import { NotificationAdapter } from '../adapters/interfaces/notification-adapter.interface';
-import { NotificationPayload, WhatsAppNotificationPayload } from '../types/notification-payload.interface';
+import {
+  NotificationPayload,
+  WhatsAppNotificationPayload,
+} from '../types/notification-payload.interface';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationTemplateService } from './notification-template.service';
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
@@ -465,7 +468,8 @@ export class NotificationSenderService extends BaseService {
           payload.channel === NotificationChannel.WHATSAPP &&
           (finalPayload as WhatsAppNotificationPayload).whatsappMessageId
         ) {
-          whatsappMessageId = (finalPayload as WhatsAppNotificationPayload).whatsappMessageId;
+          whatsappMessageId = (finalPayload as WhatsAppNotificationPayload)
+            .whatsappMessageId;
         }
         const latency = Date.now() - startTime;
 

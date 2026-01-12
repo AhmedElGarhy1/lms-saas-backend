@@ -15,11 +15,27 @@ import {
 import { AllErrorCodes, CommonErrorCode } from '../enums/error-codes';
 import { AuthErrorCode } from '@/modules/auth/enums/auth.codes';
 import { AccessControlErrorCode } from '@/modules/access-control/enums/access-control.codes';
+import { EntityNotFoundError, QueryFailedError } from 'typeorm';
+import { CommonErrors } from '../exceptions/common.errors';
+import { SystemErrors } from '../exceptions/system.exception';
+import {
+  DATABASE_ERROR_CODES,
+  isDatabaseErrorCode,
+} from '../constants/database-errors.constants';
 
 /**
- * Global exception filter
- * Catches all exceptions and converts them to standardized format
- * Handles error responses with translation keys
+ * Unified Global Exception Filter
+ *
+ * Handles all exception types in a single, comprehensive filter:
+ * - TypeORM exceptions (QueryFailedError, EntityNotFoundError)
+ * - Application exceptions (DomainException, SystemException)
+ * - Unknown exceptions with fallback handling
+ *
+ * Converts database constraint violations (like unique constraints) to validation errors (400)
+ * while treating other database/system errors as internal server errors (500).
+ *
+ * Ensures consistent error formatting and proper HTTP status codes across all contexts,
+ * including transactional operations.
  */
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -38,7 +54,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let status: number;
     let errorResponse: StandardizedErrorResponse;
 
-    // Handle DomainException and SystemException first
+    // Handle TypeORM exceptions first (database-specific errors)
+    if (exception instanceof QueryFailedError) {
+      return this.handleQueryFailedError(exception, response);
+    }
+
+    if (exception instanceof EntityNotFoundError) {
+      return this.handleEntityNotFoundError(exception, response);
+    }
+
+    // Handle application exceptions (DomainException, SystemException)
     if (
       exception instanceof DomainException ||
       exception instanceof SystemException
@@ -273,6 +298,190 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       default:
         return CommonErrorCode.INTERNAL_SERVER_ERROR;
     }
+  }
+
+  /**
+   * Handle QueryFailedError exceptions (database errors)
+   * Converts unique constraint violations to validation errors (400)
+   * Other DB errors remain as system errors (500)
+   */
+  private handleQueryFailedError(
+    exception: QueryFailedError,
+    response: Response,
+  ): void {
+    interface PostgresDriverError {
+      code?: string;
+      errno?: number;
+      name?: string;
+      detail?: string;
+      constraint?: string;
+    }
+
+    const drv = (exception.driverError as PostgresDriverError) || {};
+    const code = drv.code || drv.errno || drv.name;
+
+    this.logger.debug(
+      `QueryFailedError: code=${code}, constraint=${drv.constraint}, message=${exception.message}`,
+    );
+
+    // Handle unique constraint violations as validation errors (400)
+    if (isDatabaseErrorCode(code, DATABASE_ERROR_CODES.UNIQUE_VIOLATION)) {
+      const detail = drv.detail || '';
+      const constraintName = drv.constraint || '';
+
+      let field = this.extractFieldFromConstraint(constraintName);
+      if (!field) {
+        const match = detail.match(/Key \((.+?)\)=\((.+?)\)/);
+        field = match ? match[1] : 'field';
+      }
+
+      // Create validation error response
+      const validationErrors = {
+        [field]: [
+          {
+            constraint: 'isUnique',
+          },
+        ],
+      };
+
+      const errorResponse: StandardizedErrorResponse = {
+        success: false,
+        error: {
+          code: CommonErrorCode.VALIDATION_FAILED,
+          details: [
+            {
+              validationErrors,
+            },
+          ],
+        },
+      };
+
+      response.status(HttpStatus.BAD_REQUEST).json(errorResponse);
+      return;
+    }
+
+    // Handle other database errors as system errors (500)
+    if (isDatabaseErrorCode(code, DATABASE_ERROR_CODES.EXCLUSION_VIOLATION)) {
+      const constraintName = drv.constraint || '';
+
+      // Check if this is the session overlap constraint
+      const isSessionOverlap = constraintName.includes(
+        'groupId_timeRange_exclusion',
+      );
+
+      const errorResponse: StandardizedErrorResponse = {
+        success: false,
+        error: {
+          code: CommonErrorCode.INTERNAL_SERVER_ERROR,
+          details: [
+            {
+              operation: isSessionOverlap
+                ? 'database_constraint_validation'
+                : 'database_operation',
+              error: isSessionOverlap
+                ? 'exclusion_constraint_violation'
+                : 'exclusion_violation',
+              constraint: drv.constraint,
+              component: 'database',
+            },
+          ],
+        },
+      };
+
+      response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(errorResponse);
+      return;
+    }
+
+    if (isDatabaseErrorCode(code, DATABASE_ERROR_CODES.FOREIGN_KEY_VIOLATION)) {
+      const errorResponse: StandardizedErrorResponse = {
+        success: false,
+        error: {
+          code: CommonErrorCode.INTERNAL_SERVER_ERROR,
+          details: [
+            {
+              operation: 'database_operation',
+              error: 'foreign_key_violation',
+              constraint: drv.constraint,
+              component: 'database',
+            },
+          ],
+        },
+      };
+
+      response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(errorResponse);
+      return;
+    }
+
+    if (isDatabaseErrorCode(code, DATABASE_ERROR_CODES.DEADLOCK)) {
+      const errorResponse: StandardizedErrorResponse = {
+        success: false,
+        error: {
+          code: CommonErrorCode.SERVICE_UNAVAILABLE,
+          details: [
+            {
+              operation: 'database_operation',
+              error: 'deadlock_detected',
+              component: 'database',
+            },
+          ],
+        },
+      };
+
+      response.status(HttpStatus.SERVICE_UNAVAILABLE).json(errorResponse);
+      return;
+    }
+
+    // Unknown database error
+    const errorResponse: StandardizedErrorResponse = {
+      success: false,
+      error: {
+        code: CommonErrorCode.INTERNAL_SERVER_ERROR,
+        details: [
+          {
+            operation: 'database_operation',
+            error: 'unknown_database_error',
+            code: code,
+            component: 'database',
+          },
+        ],
+      },
+    };
+
+    response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(errorResponse);
+  }
+
+  /**
+   * Handle EntityNotFoundError exceptions
+   */
+  private handleEntityNotFoundError(
+    exception: EntityNotFoundError,
+    response: Response,
+  ): void {
+    const errorResponse: StandardizedErrorResponse = {
+      success: false,
+      error: {
+        code: CommonErrorCode.INTERNAL_SERVER_ERROR,
+        details: [
+          {
+            operation: 'entity_not_found',
+            component: 'database',
+          },
+        ],
+      },
+    };
+
+    response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(errorResponse);
+  }
+
+  /**
+   * Extract field name from database constraint name
+   * @param constraintName - Database constraint name (e.g., "UQ_users_phone")
+   * @returns Field name or null if not found
+   */
+  private extractFieldFromConstraint(constraintName: string): string | null {
+    if (!constraintName) return null;
+    const match = constraintName.match(/(?:UQ|IDX)_\w+_(.+)/);
+    return match ? match[1] : null;
   }
 
   /**
