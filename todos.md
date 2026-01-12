@@ -151,10 +151,10 @@
 [x] class teacher payout type
 [x] student class installments
 [x] aws S3 for storage and add the ablity to attach and user profile pic
-[ ] add avatoar for ffrontend
-[ ] cleanup all Error() to be handled error exception
-[ ] refactor all confirmation dialogs for nicer alert
-[ ] translations cleanup
+[x] add avatoar for ffrontend
+[x] cleanup all Error() to be handled error exception
+[x] translations cleanup
+[x] refactor all confirmation dialogs for nicer alert
 [ ] page for creating user and adding him to group in the same place for staff
 [ ] staff payouts
 [ ] daily revenue
@@ -191,77 +191,6 @@
 
 <!-- [permission] [userProfile] [endpoint] -->
 <!-- [finance.view_daily_cash] [managers] [POST /billing/students/records] -->
-
-<!-- CRITICAL TODOs COMPLETED - 2026-01-10 -->
-
-[x] 🔴 Remove production testing endpoint (auth.controller.ts)
-[x] 🧹 Remove balance TODOs from finance services (branch-deposit.service.ts, branch-withdrawal.service.ts)
-[x] 📱 Fix payment gateway to send phone only (external-payment.service.ts)
-[x] 🧹 Remove all debug console.log statements (attendance, listeners, validators)
-
-<!-- PERFORMANCE OPTIMIZATIONS COMPLETED - 2026-01-10 -->
-
-[x] 🚀 Implement proper query-based pagination for wallet transactions (finance/repositories/transaction.repository.ts)
-[x] ⚡ Fix bad performance method in class validation (classes/services/class-validation.service.ts)
-[x] 🔄 Optimize N+1 queries in group students lookup
-[x] 📊 Add efficient student ID retrieval method to GroupStudentsRepository
-
-<!-- HIGH PRIORITY FIXES COMPLETED - 2026-01-10 -->
-
-[x] 🛠️ Improve error handling - remove try-catch anti-pattern (attendance.service.ts)
-[x] 🔄 Fix center access double invalidation (user.repository.ts)
-
-<!-- CODE CLEANUP COMPLETED - 2026-01-10 -->
-
-[x] 🧹 Remove redundant attendance field (markedByUserProfileId)
-[x] 🧹 Remove debug console.log statements from business logic
-[x] 🔍 Review and update role permission logic comments
-[x] 🔄 Remove outdated permission scope sync TODO (already implemented)
-[x] 📝 Update obsolete TODO comments
-[x] 🗑️ Remove unused paginateCashboxes method (not needed)
-
-<!-- ENTITY BASE CLASS AUDIT COMPLETED - 2026-01-10 -->
-
-[x] 🔄 Update seeder to use new BaseEntity field names (createdByProfileId, etc.)
-
-<!-- CLOUDFLARE R2 MODULE COMPLETED - 2026-01-10 -->
-
-[x] ☁️ Create Cloudflare R2 module with S3-compatible API
-[x] 🔧 Add R2 environment configuration
-[x] 📝 Implement R2 error codes and exceptions
-[x] 🔄 Create R2 service with upload/presigned/delete operations
-[x] 🌐 Add REST API controllers for file operations
-[x] 📋 Create DTOs for request/response validation
-[x] 🏗️ Integrate R2 module into main app
-[x] ✅ Build successful - R2 module ready for use
-[x] 🔧 Made R2 configuration optional (server starts without it)
-[x] 🧪 Tested R2 endpoints - properly integrated and accessible
-
-<!-- R2 MODULE CLEANUP COMPLETED - 2026-01-10 -->
-
-[x] 🗑️ Removed direct R2 controller endpoints (upload/presigned/delete)
-[x] 🗑️ Removed unused R2 DTOs (UploadFileDto, PresignedUrlDto, etc.)
-[x] 🔄 Converted R2Module to internal utility (no controllers, only service)
-[x] 🧹 Cleaned up empty directories (controllers/, dto/, entities/)
-[x] ✅ Build successful - clean R2 utility module ready
-
-<!-- FILE MANAGEMENT SYSTEM COMPLETED - 2026-01-10 -->
-
-[x] 📁 Created File entity for centralized file management
-[x] 🔗 Added avatarFileId field to User entity with File relation
-[x] 🔄 Created FileService with upload/presigned/delete operations
-[x] 🌐 Added user avatar upload endpoint (POST /api/v1/users/me/avatar)
-[x] 📊 Created file metadata tracking with rich information
-[x] 🔍 Added file querying by entity, type, and uploader
-[x] 🗃️ Created database migration for File entity and User avatar field
-[x] 🔧 Integrated FileModule with UserModule and AppModule
-[x] ✅ Build successful - File management system ready
-
-[x] 🔍 Audit all entities for BaseEntity vs SoftBaseEntity usage
-[x] ✅ Add BaseEntity to TeacherPayoutRecord (financial audit trail)
-[x] ✅ Add BaseEntity to NotificationLog (operational visibility)
-[x] 🔧 Fix type casting issues in teacher-payout.service.ts
-[x] 🔄 Update seeder to use new BaseEntity field names (createdByProfileId, etc.)
 
 [ ] cancle sessions passed
 [ ] automatic start class and automatic end class
