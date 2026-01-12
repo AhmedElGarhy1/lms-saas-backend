@@ -44,7 +44,7 @@ export class NotificationListener implements OnModuleInit {
     // The processor loops through audiences and calls resolver for each
     await this.intentService.enqueue(NotificationType.CENTER_CREATED, {
       centerId: event.center.id,
-      actorId: event.actor.id,
+      actorId: event.actor.userProfileId,
     });
   }
 
@@ -52,7 +52,7 @@ export class NotificationListener implements OnModuleInit {
     // Emit intent - resolver will fetch center and resolve recipients
     await this.intentService.enqueue(NotificationType.CENTER_UPDATED, {
       centerId: event.centerId,
-      actorId: event.actor.id,
+      actorId: event.actor.userProfileId,
     });
   }
 

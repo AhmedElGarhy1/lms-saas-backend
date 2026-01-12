@@ -155,9 +155,9 @@ export class InAppAdapter
     payload: InAppNotificationPayload,
     data: ExtractedNotificationData,
   ): Promise<Notification> {
-    // Set createdBy to actorId if provided, otherwise fallback to userId (recipient)
+    // Set createdBy to actorId if provided, otherwise use SYSTEM_USER_ID for system-generated notifications
     // This ensures notifications created in queue context (no RequestContext) have a valid createdBy
-    const createdBy = payload.actorId || payload.userId;
+    const createdBy = payload.actorId || SYSTEM_USER_ID;
 
     return this.notificationRepository.createNotification({
       userId: payload.userId,
