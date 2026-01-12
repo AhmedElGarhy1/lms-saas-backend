@@ -18,6 +18,7 @@ import { NotificationMetricsService } from './notification-metrics.service';
 import pLimit from 'p-limit';
 import { NotificationConfig } from '../config/notification.config';
 import { NotificationIdempotencyCacheService } from './notification-idempotency-cache.service';
+import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
 import { NotificationCircuitBreakerService } from './notification-circuit-breaker.service';
 import { isRecord, getStringProperty } from '../utils/type-guards.util';
 import {
@@ -346,6 +347,7 @@ export class NotificationSenderService extends BaseService {
             jobId: jobId, // Store jobId directly
             retryCount: 0,
             lastAttemptAt: new Date(),
+            createdByProfileId: SYSTEM_USER_ID, // Set system user for background job context
           });
         }
 

@@ -22,6 +22,7 @@ type ScheduleItemForCleanup = {
   centerId: string;
   branchId: string;
   classId: string;
+  teacherUserProfileId: string;
   day: DayOfWeek;
   startTime: string; // HH:mm
   classDuration: number;
@@ -121,6 +122,7 @@ export class SessionsCleanupJob {
         'c.duration as "classDuration"',
         'c.startDate as "classStartDate"',
         'c.endDate as "classEndDate"',
+        'c.teacherUserProfileId as "teacherUserProfileId"',
         'center.timezone as "centerTimezone"',
       ])
       .getRawMany<ScheduleItemForCleanup>();
@@ -176,6 +178,7 @@ export class SessionsCleanupJob {
           centerId: si.centerId,
           branchId: si.branchId,
           classId: si.classId,
+          teacherUserProfileId: si.teacherUserProfileId,
           scheduleItemId: si.id,
           startTime: normalized,
           endTime,

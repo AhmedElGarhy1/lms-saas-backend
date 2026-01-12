@@ -18,6 +18,7 @@ import {
 import { NotificationLogRepository } from '../repositories/notification-log.repository';
 import { NotificationMetricsService } from '../services/notification-metrics.service';
 import { NotificationErrors } from '../exceptions/notification-errors';
+import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
 import { buildStandardizedMetadata } from '../utils/metadata-builder.util';
 import { RenderedNotification } from '../manifests/types/manifest.types';
 
@@ -355,6 +356,7 @@ export class InAppAdapter
             : 'Unknown error',
         retryCount: deliveryResult.attempts - 1, // retryCount = attempts - 1 (first attempt doesn't count as retry)
         lastAttemptAt: new Date(),
+        createdByProfileId: SYSTEM_USER_ID, // Set system user for adapter context
       });
     } catch (logError) {
       // Don't fail notification delivery if logging fails
