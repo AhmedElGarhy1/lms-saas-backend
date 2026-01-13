@@ -20,8 +20,10 @@ function IsIso8601OrDate(validationOptions?: ValidationOptions) {
       options: validationOptions,
       validator: {
         validate(value: unknown): boolean {
+          // For required fields, null/undefined should fail validation
+          // @IsOptional() should be used for optional fields
           if (value === null || value === undefined) {
-            return true; // Let @IsOptional handle this
+            return false;
           }
 
           // If already a Date (after transformation), it's valid

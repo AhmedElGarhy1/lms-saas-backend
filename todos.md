@@ -158,7 +158,8 @@
 [x] database excpetions not hanled correctly
 [x] deactivate branchs
 [x] invalidate autocomplete
-[ ] hidden form fields treated as error
+[x] hidden form fields treated as error
+[x] for delete there is 2 confimations
 [ ] page for creating user and adding him to group in the same place for staff
 [ ] staff payouts
 [ ] daily revenue

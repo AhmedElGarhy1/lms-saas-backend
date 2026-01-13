@@ -24,7 +24,7 @@ function IsDateRangeValid(validationOptions?: ValidationOptions) {
           const obj = args.object as DateRangeDto;
           // Only validate if both dates are present
           if (!obj.dateFrom || !obj.dateTo) {
-            return true; // Let @IsoUtcDate handle required validation
+            return true; // Skip validation if either date is missing
           }
 
           // Compare Date objects - dateTo must be greater than dateFrom
