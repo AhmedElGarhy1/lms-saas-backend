@@ -124,6 +124,7 @@ export class UserService extends BaseService {
       name: dto.name,
       isActive: dto.isActive ?? true,
       phone: dto.phone,
+      phoneVerified: new Date(),
     });
 
     // Create user info with provided details or default

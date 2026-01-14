@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CommonErrors } from '@/shared/common/exceptions/common.errors';
-import { UserErrors } from '../exceptions/user.errors';
 import { User } from '../entities/user.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { Pagination } from '@/shared/common/types/pagination.types';
