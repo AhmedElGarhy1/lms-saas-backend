@@ -30,11 +30,7 @@ interface PaginationColumns {
 
 // User module pagination columns
 export const USER_PAGINATION_COLUMNS: PaginationColumns = {
-  searchableColumns: [
-    'name',
-    'phone',
-    'userProfiles.code',
-  ],
+  searchableColumns: ['name', 'phone', 'userProfiles.code'],
   sortableColumns: [...USER_SORTABLE_COLUMNS],
   dateRangeFields: ['createdAt', 'updatedAt'],
   defaultSortBy: ['createdAt', 'DESC'] as [string, 'ASC' | 'DESC'],
