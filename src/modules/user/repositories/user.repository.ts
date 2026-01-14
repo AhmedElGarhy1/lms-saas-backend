@@ -116,9 +116,7 @@ export class UserRepository extends BaseRepository<User> {
     this.applyIsActiveFilter(
       queryBuilder,
       params,
-      centerId && displayDetails
-        ? 'centerAccess.isActive'
-        : 'userProfiles.isActive',
+      centerId ? 'centerAccess.isActive' : 'userProfiles.isActive',
     );
 
     if (includeBranch) {
@@ -137,14 +135,32 @@ export class UserRepository extends BaseRepository<User> {
 
     if (includeCenter) {
       queryBuilder
-        .andWhere(
-          `EXISTS
-          (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId
-           ${isDeleted ? 'AND ca."deletedAt" IS NOT NULL' : 'AND ca."deletedAt" IS NULL'})`,
+        .leftJoinAndSelect(
+          'userProfiles.centerAccess',
+          'centerAccess',
+          `centerAccess.centerId = :centerId AND centerAccess.userProfileId = userProfiles.id AND ${isDeleted ? 'centerAccess.deletedAt IS NOT NULL' : 'centerAccess.deletedAt IS NULL'}`,
           { centerId },
         )
         .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
+    } else {
+      if (isDeleted) {
+        queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');
+      }
+    }
 
+    const canBypassCenterAccess =
+      await this.accessControlHelperService.bypassCenterInternalAccess(
+        actor.userProfileId,
+        centerId,
+      );
+
+    if (centerId) {
+      if (!canBypassCenterAccess) {
+        queryBuilder.andWhere(
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
+          { userProfileId: actor.userProfileId, centerId },
+        );
+      }
       if (displayDetails) {
         queryBuilder
           .leftJoinAndSelect(
@@ -154,28 +170,11 @@ export class UserRepository extends BaseRepository<User> {
             { centerId },
           )
           .leftJoinAndSelect('profileRoles.role', 'role');
-
-        queryBuilder
-          .withDeleted()
-          .andWhere('user.deletedAt IS NULL')
-          .leftJoinAndSelect(
-            'userProfiles.centerAccess',
-            'centerAccess',
-            `
-            "centerAccess"."centerId" = :centerId
-            AND "centerAccess"."userProfileId" = "userProfiles"."id"
-            `,
-            { centerId },
-          );
       }
       if (roleId && roleAccess !== AccessibleUsersEnum.ALL) {
         if (displayDetails) {
           queryBuilder.andWhere('role.id = :roleId', { roleId });
         } else {
-          // queryBuilder
-          //   .leftJoin('userProfiles.profileRoles', 'profileRoles')
-          //   .andWhere('profileRoles.roleId = :roleId', { roleId });
-
           queryBuilder.andWhere(
             `EXISTS (SELECT 1 FROM profile_roles pr WHERE pr."userProfileId" = "userProfiles".id AND pr."roleId" = :roleId AND pr."deletedAt" IS NULL)`,
             { roleId },
@@ -183,46 +182,17 @@ export class UserRepository extends BaseRepository<User> {
         }
       }
     } else {
-      if (isDeleted) {
-        queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');
-      }
-    }
-
-    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
-      actor.userProfileId,
-    );
-    const isAdmin = await this.accessControlHelperService.isAdmin(
-      actor.userProfileId,
-    );
-
-    if (centerId) {
-      const isCenterOwner = await this.accessControlHelperService.isCenterOwner(
-        actor.userProfileId,
-        centerId,
-      );
-      const isUser = await this.accessControlHelperService.isStaff(
+      const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
         actor.userProfileId,
       );
 
-      if (isUser && !isCenterOwner) {
-        queryBuilder.andWhere(
-          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
-          { userProfileId: actor.userProfileId, centerId },
-        );
-      }
-    } else {
       if (isSuperAdmin) {
         // super admin users have no access control - can see all users
-      } else if (isAdmin) {
-        queryBuilder
-          .andWhere(
-            `EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = "userProfiles".id AND ca."centerId" = :centerId AND ca."deletedAt" IS NULL)`,
-            { centerId },
-          )
-          .orWhere(
-            `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
-            { userProfileId: actor.userProfileId, centerId },
-          );
+      } else if (actor.profileType === ProfileType.ADMIN) {
+        queryBuilder.andWhere(
+          `EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = "userProfiles".id AND ca."centerId" = :centerId AND ca."deletedAt" IS NULL)`,
+          { centerId },
+        );
       } else {
         throw AccessControlErrors.cannotAccessUserRecords();
       }
@@ -372,35 +342,18 @@ export class UserRepository extends BaseRepository<User> {
     this.applyIsActiveFilter(
       queryBuilder,
       params,
-      centerId && displayDetails
-        ? 'centerAccess.isActive'
-        : 'userProfiles.isActive',
+      centerId ? 'centerAccess.isActive' : 'userProfiles.isActive',
     );
 
     if (includeCenter) {
-      // Consolidated center access check - removed duplicate filtering
-      queryBuilder.andWhere(
-        `EXISTS
-        (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId
-         ${isDeleted ? 'AND ca."deletedAt" IS NOT NULL' : 'AND ca."deletedAt" IS NULL'})`,
-        { centerId },
-      );
-      // Note: userProfiles.deletedAt check removed to avoid duplication with applyIsActiveFilter
-
-      if (displayDetails) {
-        queryBuilder
-          .withDeleted()
-          .andWhere('user.deletedAt IS NULL')
-          .leftJoinAndSelect(
-            'userProfiles.centerAccess',
-            'centerAccess',
-            `
-            "centerAccess"."centerId" = :centerId
-            AND "centerAccess"."userProfileId" = "userProfiles"."id"
-            `,
-            { centerId },
-          );
-      }
+      queryBuilder
+        .leftJoinAndSelect(
+          'userProfiles.centerAccess',
+          'centerAccess',
+          `centerAccess.centerId = :centerId AND centerAccess.userProfileId = userProfiles.id AND ${isDeleted ? 'centerAccess.deletedAt IS NOT NULL' : 'centerAccess.deletedAt IS NULL'}`,
+          { centerId },
+        )
+        .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
     } else {
       if (isDeleted) {
         queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');
@@ -493,35 +446,18 @@ export class UserRepository extends BaseRepository<User> {
     this.applyIsActiveFilter(
       queryBuilder,
       params,
-      centerId && displayDetails
-        ? 'centerAccess.isActive'
-        : 'userProfiles.isActive',
+      centerId ? 'centerAccess.isActive' : 'userProfiles.isActive',
     );
 
     if (includeCenter) {
-      // Consolidated center access check - removed duplicate filtering
-      queryBuilder.andWhere(
-        `EXISTS
-        (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = userProfiles.id AND ca."centerId" = :centerId
-         ${isDeleted ? 'AND ca."deletedAt" IS NOT NULL' : 'AND ca."deletedAt" IS NULL'})`,
-        { centerId },
-      );
-      // Note: userProfiles.deletedAt check removed to avoid duplication with applyIsActiveFilter
-
-      if (displayDetails) {
-        queryBuilder
-          .withDeleted()
-          .andWhere('user.deletedAt IS NULL')
-          .leftJoinAndSelect(
-            'userProfiles.centerAccess',
-            'centerAccess',
-            `
-            "centerAccess"."centerId" = :centerId
-            AND "centerAccess"."userProfileId" = "userProfiles"."id"
-            `,
-            { centerId },
-          );
-      }
+      queryBuilder
+        .leftJoinAndSelect(
+          'userProfiles.centerAccess',
+          'centerAccess',
+          `centerAccess.centerId = :centerId AND centerAccess.userProfileId = userProfiles.id AND ${isDeleted ? 'centerAccess.deletedAt IS NOT NULL' : 'centerAccess.deletedAt IS NULL'}`,
+          { centerId },
+        )
+        .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
     } else {
       if (isDeleted) {
         queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');
@@ -535,41 +471,31 @@ export class UserRepository extends BaseRepository<User> {
       );
     }
 
-    const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
-      actor.userProfileId,
-    );
-    const isAdmin = await this.accessControlHelperService.isAdmin(
-      actor.userProfileId,
-    );
-
-    if (centerId) {
-      const isCenterOwner = await this.accessControlHelperService.isCenterOwner(
+    const canBypassCenterAccess =
+      await this.accessControlHelperService.bypassCenterInternalAccess(
         actor.userProfileId,
         centerId,
       );
-      const isUser = await this.accessControlHelperService.isStaff(
-        actor.userProfileId,
-      );
 
-      if (isUser && !isCenterOwner) {
+    if (centerId) {
+      if (!canBypassCenterAccess) {
         queryBuilder.andWhere(
           `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
           { userProfileId: actor.userProfileId, centerId },
         );
       }
     } else {
+      const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
+        actor.userProfileId,
+      );
+
       if (isSuperAdmin) {
         // super admin users have no access control - can see all users
-      } else if (isAdmin) {
-        queryBuilder
-          .andWhere(
-            `EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = "userProfiles".id AND ca."centerId" = :centerId AND ca."deletedAt" IS NULL)`,
-            { centerId },
-          )
-          .orWhere(
-            `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
-            { userProfileId: actor.userProfileId, centerId },
-          );
+      } else if (actor.profileType === ProfileType.ADMIN) {
+        queryBuilder.andWhere(
+          `EXISTS (SELECT 1 FROM center_access ca WHERE ca."userProfileId" = "userProfiles".id AND ca."centerId" = :centerId AND ca."deletedAt" IS NULL)`,
+          { centerId },
+        );
       } else {
         throw AccessControlErrors.cannotAccessUserRecords();
       }
