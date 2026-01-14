@@ -19,7 +19,7 @@ export class UpdatePayoutStatusDto {
   })
   @IsOptional()
   @IsEnum(PaymentMethod)
-  paymentSource?: PaymentMethod;
+  paymentMethod?: PaymentMethod;
 
   paymentId?: string; // Internal field for storing payment transaction ID
 }

@@ -10,6 +10,7 @@ import { ClassesErrors } from '../exceptions/classes.errors';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ClassStatus } from '../enums/class-status.enum';
+import { GROUP_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 
 export interface GroupWithStudentCount extends Group {
   studentsCount: number;
@@ -98,11 +99,7 @@ export class GroupsRepository extends BaseRepository<Group> {
 
     return this.paginate(
       paginateDto,
-      {
-        searchableColumns: ['name'],
-        sortableColumns: ['name', 'createdAt', 'updatedAt'],
-        defaultSortBy: ['createdAt', 'DESC'],
-      },
+      GROUP_PAGINATION_COLUMNS,
       'groups',
       queryBuilder,
       {

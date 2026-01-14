@@ -5,7 +5,6 @@ import { StudentCharge } from '../entities/student-charge.entity';
 import {
   StudentChargeType,
   StudentChargeStatus,
-  PaymentSource,
 } from '../enums';
 import { CreateMonthlySubscriptionDto } from '../dto/create-monthly-subscription.dto';
 import { CreateSessionChargeDto } from '../dto/create-session-charge.dto';
@@ -21,7 +20,7 @@ import {
   ExecutePaymentRequest,
 } from '@/modules/finance/services/payment.service';
 import { PaymentReason } from '@/modules/finance/enums/payment-reason.enum';
-import { PaymentMethod as FinancePaymentMethod } from '@/modules/finance/enums/payment-method.enum';
+import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { WalletOwnerType } from '@/modules/finance/enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { ClassesService } from '@/modules/classes/services/classes.service';
@@ -226,10 +225,10 @@ export class StudentBillingService extends BaseService {
       receiverId: classEntity.branchId,
       receiverType: WalletOwnerType.BRANCH,
       reason: PaymentReason.MONTHLY_FEE,
-      source:
-        dto.paymentSource === PaymentSource.WALLET
-          ? FinancePaymentMethod.WALLET
-          : FinancePaymentMethod.CASH,
+      paymentMethod:
+        dto.paymentMethod === PaymentMethod.WALLET
+          ? PaymentMethod.WALLET
+          : PaymentMethod.CASH,
       correlationId: randomUUID(),
     };
 
@@ -255,7 +254,7 @@ export class StudentBillingService extends BaseService {
       month: dto.month,
       year: dto.year,
       amount,
-      paymentSource: dto.paymentSource,
+      paymentMethod: dto.paymentMethod,
       paymentId: payment.id,
       status: StudentChargeStatus.COMPLETED,
     });
@@ -272,7 +271,7 @@ export class StudentBillingService extends BaseService {
     classId: string,
     studentUserProfileId: string,
     installmentAmount: number,
-    paymentSource: PaymentSource,
+    paymentMethod: PaymentMethod,
     actor: ActorUser,
   ): Promise<StudentCharge> {
     // ✅ VALIDATE: Access control for staff users
@@ -324,10 +323,10 @@ export class StudentBillingService extends BaseService {
       receiverId: classEntity.branchId,
       receiverType: WalletOwnerType.BRANCH,
       reason: PaymentReason.CLASS_FEE,
-      source:
-        paymentSource === PaymentSource.WALLET
-          ? FinancePaymentMethod.WALLET
-          : FinancePaymentMethod.CASH,
+      paymentMethod:
+        paymentMethod === PaymentMethod.WALLET
+          ? PaymentMethod.WALLET
+          : PaymentMethod.CASH,
       correlationId: randomUUID(),
     };
 
@@ -341,7 +340,7 @@ export class StudentBillingService extends BaseService {
     classCharge.totalPaid = newTotalPaid.toNumber();
     classCharge.lastPaymentAmount = installmentAmount;
     classCharge.paymentId = payment.id;
-    classCharge.paymentSource = paymentSource;
+    classCharge.paymentMethod = paymentMethod;
     classCharge.updatedAt = new Date();
 
     // Check if fully paid
@@ -548,10 +547,10 @@ export class StudentBillingService extends BaseService {
       receiverId: session.branchId,
       receiverType: WalletOwnerType.BRANCH,
       reason: PaymentReason.SESSION_FEE,
-      source:
-        dto.paymentSource === PaymentSource.WALLET
-          ? FinancePaymentMethod.WALLET
-          : FinancePaymentMethod.CASH,
+      paymentMethod:
+        dto.paymentMethod === PaymentMethod.WALLET
+          ? PaymentMethod.WALLET
+          : PaymentMethod.CASH,
       correlationId: randomUUID(),
     };
 
@@ -576,7 +575,7 @@ export class StudentBillingService extends BaseService {
       classId,
       sessionId: dto.sessionId,
       amount,
-      paymentSource: dto.paymentSource,
+      paymentMethod: dto.paymentMethod,
       paymentId: payment.id,
       status: StudentChargeStatus.COMPLETED,
     });
@@ -643,10 +642,10 @@ export class StudentBillingService extends BaseService {
       receiverId: classEntity.branchId,
       receiverType: WalletOwnerType.BRANCH,
       reason: PaymentReason.CLASS_FEE,
-      source:
-        dto.paymentSource === PaymentSource.WALLET
-          ? FinancePaymentMethod.WALLET
-          : FinancePaymentMethod.CASH,
+      paymentMethod:
+        dto.paymentMethod === PaymentMethod.WALLET
+          ? PaymentMethod.WALLET
+          : PaymentMethod.CASH,
       correlationId: randomUUID(),
     };
 
@@ -680,7 +679,7 @@ export class StudentBillingService extends BaseService {
       amount: totalAmount, // Total class cost
       totalPaid: initialPaymentAmount, // Initial payment made
       lastPaymentAmount: initialPaymentAmount, // Initial payment amount
-      paymentSource: dto.paymentSource,
+      paymentMethod: dto.paymentMethod,
       paymentId: payment.id,
       status: initialStatus, // COMPLETED if fully paid, INSTALLMENT if partial
     });
@@ -694,7 +693,7 @@ export class StudentBillingService extends BaseService {
   @Transactional()
   async createStudentCharge(
     dto: CreateStudentChargeDto,
-    paymentSource: PaymentSource,
+    paymentMethod: PaymentMethod,
     actor: ActorUser,
   ): Promise<StudentCharge> {
     // Validate access based on charge type
@@ -732,7 +731,7 @@ export class StudentBillingService extends BaseService {
       const subscriptionDto: CreateMonthlySubscriptionDto = {
         studentUserProfileId: dto.studentUserProfileId,
         classId: dto.classId,
-        paymentSource,
+        paymentMethod,
         year: dto.year,
         month: dto.month,
       };
@@ -746,7 +745,7 @@ export class StudentBillingService extends BaseService {
       const chargeDto: CreateSessionChargeDto = {
         studentUserProfileId: dto.studentUserProfileId,
         sessionId: dto.sessionId,
-        paymentSource,
+        paymentMethod,
       };
 
       return this.createSessionCharge(chargeDto, actor);
@@ -758,7 +757,7 @@ export class StudentBillingService extends BaseService {
       const chargeDto: CreateClassChargeDto = {
         studentUserProfileId: dto.studentUserProfileId,
         classId: dto.classId,
-        paymentSource,
+        paymentMethod,
         initialPaymentAmount: dto.initialPaymentAmount!,
       };
 

@@ -8,7 +8,6 @@ import { SessionsRepository } from '@/modules/sessions/repositories/sessions.rep
 import { PaymentService } from '@/modules/finance/services/payment.service';
 import { StudentPaymentStrategyRepository } from '@/modules/classes/repositories/student-payment-strategy.repository';
 import { Payment } from '@/modules/finance/entities/payment.entity';
-import { PaymentType } from '@/modules/finance/enums/payment-type.enum';
 import { PaymentStatus } from '@/modules/finance/enums/payment-status.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
@@ -153,17 +152,11 @@ export class StudentBillingRefundService {
     charge: StudentCharge,
     reason: string,
   ): Promise<void> {
-    switch (payment.type) {
-      case PaymentType.INTERNAL:
-        await this.executeInternalRefund(payment, charge);
-        break;
-
-      case PaymentType.EXTERNAL:
-        await this.executeExternalRefund(payment, charge, reason);
-        break;
-
-      default:
-        throw StudentBillingErrors.refundFailed('Unsupported payment method');
+    // Check if payment is async (external) or sync (internal)
+    if (PaymentService.isAsyncPayment(payment)) {
+      await this.executeExternalRefund(payment, charge, reason);
+    } else {
+      await this.executeInternalRefund(payment, charge);
     }
   }
 

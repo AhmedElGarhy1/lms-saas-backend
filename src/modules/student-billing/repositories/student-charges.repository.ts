@@ -7,6 +7,7 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateStudentBillingRecordsDto } from '../dto/paginate-student-billing-records.dto';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { STUDENT_BILLING_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 
 @Injectable()
 export class StudentChargesRepository extends BaseRepository<StudentCharge> {
@@ -162,11 +163,7 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
 
     return this.paginate(
       paginateDto,
-      {
-        searchableColumns: [],
-        sortableColumns: ['createdAt', 'amount', 'chargeType'],
-        defaultSortBy: ['createdAt', 'DESC'],
-      },
+      STUDENT_BILLING_PAGINATION_COLUMNS,
       `billing/students/records`,
       queryBuilder,
     );

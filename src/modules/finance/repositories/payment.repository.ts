@@ -12,6 +12,7 @@ import { Pagination } from '@/shared/common/types/pagination.types';
 import { UserPaymentStatementItemDto } from '../dto/payment-statement.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
+import { PAYMENT_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 
 // Define type for payment with computed name fields
 type PaymentWithNames = Payment & {
@@ -239,18 +240,16 @@ export class PaymentRepository extends BaseRepository<Payment> {
     if (dto.reason) {
       queryBuilder.andWhere('p.reason = :reason', { reason: dto.reason });
     }
-    if (dto.source) {
-      queryBuilder.andWhere('p.source = :source', { source: dto.source });
+    if (dto.paymentMethod) {
+      queryBuilder.andWhere('p.paymentMethod = :paymentMethod', {
+        paymentMethod: dto.paymentMethod,
+      });
     }
 
     // Get paginated results with computed fields using the repository's paginate method
     const result = (await this.paginate(
       dto,
-      {
-        searchableColumns: [],
-        sortableColumns: ['createdAt', 'status', 'amount'],
-        defaultSortBy: ['createdAt', 'DESC'],
-      },
+      PAYMENT_PAGINATION_COLUMNS,
       '',
       queryBuilder,
       {
@@ -304,7 +303,7 @@ export class PaymentRepository extends BaseRepository<Payment> {
           signedAmount,
           status: payment.status,
           reason: payment.reason,
-          source: payment.source,
+          paymentMethod: payment.paymentMethod,
           senderId: payment.senderId,
           receiverId: payment.receiverId,
           correlationId: payment.correlationId,

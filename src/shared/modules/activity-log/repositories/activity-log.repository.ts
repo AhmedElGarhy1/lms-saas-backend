@@ -8,6 +8,7 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { Brackets } from 'typeorm';
+import { ACTIVITY_LOG_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 
 @Injectable()
 export class ActivityLogRepository extends BaseRepository<ActivityLog> {
@@ -58,11 +59,7 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog> {
 
     const results = await this.paginate(
       query,
-      {
-        searchableColumns: ['action', 'description'],
-        sortableColumns: ['createdAt', 'updatedAt'],
-        defaultSortBy: ['createdAt', 'DESC'],
-      },
+      ACTIVITY_LOG_PAGINATION_COLUMNS,
       '/activity-logs',
       qb,
     );

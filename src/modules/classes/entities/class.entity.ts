@@ -28,6 +28,7 @@ import { TeacherPayoutRecord } from '@/modules/teacher-payouts/entities/teacher-
 @Index(['branchId'])
 @Index(['levelId'])
 @Index(['subjectId'])
+@Index(['name', 'createdAt']) // For alphabetical + chronological sorting
 @Index(['teacherUserProfileId'])
 @Index(['centerId', 'branchId'])
 @Index(['status'])

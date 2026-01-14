@@ -19,6 +19,7 @@ import { Session } from '@/modules/sessions/entities/session.entity';
 @Index(['branchId'])
 @Index(['centerId'])
 @Index(['classId', 'centerId'])
+@Index(['name', 'createdAt']) // For alphabetical + chronological sorting
 export class Group extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   classId: string;

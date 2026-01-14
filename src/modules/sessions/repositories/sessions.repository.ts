@@ -13,6 +13,7 @@ import { subHours } from 'date-fns';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { SessionsErrors } from '../exceptions/sessions.errors';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { SESSION_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 import { StudentPaymentType } from '@/modules/classes/enums/student-payment-type.enum';
 
 @Injectable()
@@ -426,17 +427,7 @@ export class SessionsRepository extends BaseRepository<Session> {
 
     return this.paginate(
       paginateDto,
-      {
-        searchableColumns: ['title', 'group.name', 'class.name'],
-        sortableColumns: [
-          'startTime',
-          'endTime',
-          'createdAt',
-          'updatedAt',
-          'status',
-        ],
-        defaultSortBy: ['startTime', 'DESC'],
-      },
+      SESSION_PAGINATION_COLUMNS,
       '/sessions',
       queryBuilder,
     );

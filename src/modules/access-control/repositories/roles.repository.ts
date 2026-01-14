@@ -12,6 +12,7 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { In } from 'typeorm';
 import { RolePermission } from '../entities/role-permission.entity';
+import { ROLE_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> {
@@ -135,11 +136,7 @@ export class RolesRepository extends BaseRepository<Role> {
 
     const result = await this.paginate(
       query,
-      {
-        searchableColumns: ['name', 'description'],
-        sortableColumns: ['name', 'description', 'createdAt'],
-        defaultSortBy: ['name', 'ASC'],
-      },
+      ROLE_PAGINATION_COLUMNS,
       '/roles',
       queryBuilder,
     );

@@ -14,7 +14,7 @@ import {
   ExecutePaymentRequest,
 } from '@/modules/finance/services/payment.service';
 import { PaymentReason } from '@/modules/finance/enums/payment-reason.enum';
-import { PaymentMethod as FinancePaymentMethod } from '@/modules/finance/enums/payment-method.enum';
+import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { WalletOwnerType } from '@/modules/finance/enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
@@ -85,7 +85,7 @@ export class TeacherPayoutService extends BaseService {
         dto.unitType === TeacherPaymentUnit.CLASS
           ? PayoutStatus.INSTALLMENT
           : PayoutStatus.PENDING,
-      paymentSource: undefined, // Will be set when paying
+      paymentMethod: undefined, // Will be set when paying
       totalPaid: dto.totalPaid || Money.zero(), // Start with nothing paid
       lastPaymentAmount: dto.lastPaymentAmount, // Last payment amount
     });
@@ -96,7 +96,7 @@ export class TeacherPayoutService extends BaseService {
     classEntity: Class,
     strategy: TeacherPaymentStrategyDto,
     initialPaymentAmount?: number,
-    paymentMethod?: FinancePaymentMethod,
+    paymentMethod?: PaymentMethod,
   ): Promise<TeacherPayoutRecord> {
     const payout = await this.createPayout({
       teacherUserProfileId: classEntity.teacherUserProfileId,
@@ -120,7 +120,7 @@ export class TeacherPayoutService extends BaseService {
       );
 
       // Execute payment using specified method (default to WALLET)
-      const paymentMethodToUse = paymentMethod || FinancePaymentMethod.WALLET;
+      const paymentMethodToUse = paymentMethod || PaymentMethod.WALLET;
       await this.executeInstallmentPayment(
         payout,
         initialPaymentAmount,
@@ -141,7 +141,7 @@ export class TeacherPayoutService extends BaseService {
   async payClassInstallment(
     payoutId: string,
     installmentAmount: number,
-    paymentMethod: FinancePaymentMethod,
+    paymentMethod: PaymentMethod,
     actor: ActorUser,
   ): Promise<TeacherPayoutRecord> {
     const payout = await this.getPayoutById(payoutId, actor);
@@ -179,7 +179,7 @@ export class TeacherPayoutService extends BaseService {
   private async executeInstallmentPayment(
     payout: TeacherPayoutRecord,
     paymentAmount: number,
-    paymentMethod: FinancePaymentMethod,
+    paymentMethod: PaymentMethod,
   ): Promise<TeacherPayoutRecord> {
     // Create a temporary payout record for payment (needed by existing flow)
     const tempPayoutForPayment = {
@@ -202,7 +202,7 @@ export class TeacherPayoutService extends BaseService {
     payout.totalPaid = payout.totalPaid.add(Money.from(paymentAmount));
     payout.lastPaymentAmount = Money.from(paymentAmount); // Last payment amount
     payout.paymentId = payment.id;
-    payout.paymentSource = paymentMethod;
+    payout.paymentMethod = paymentMethod;
 
     // Check if fully paid
     const totalAmount = payout.unitPrice
@@ -232,14 +232,14 @@ export class TeacherPayoutService extends BaseService {
 
     // Execute payment when moving to PAID
     if (dto.status === PayoutStatus.PAID) {
-      if (!dto.paymentSource) {
+      if (!dto.paymentMethod) {
         throw TeacherPayoutErrors.payoutInvalidStatusTransition();
       }
 
       // Execute the actual payment transaction
       const payment = await this.executePaymentTransaction(
         payout,
-        dto.paymentSource,
+        dto.paymentMethod,
       );
 
       // Store the payment ID in the payout record
@@ -251,7 +251,7 @@ export class TeacherPayoutService extends BaseService {
       id,
       dto.status,
       dto.paymentId,
-      dto.paymentSource,
+      dto.paymentMethod,
     );
   }
 
@@ -294,7 +294,7 @@ export class TeacherPayoutService extends BaseService {
    */
   private async executePaymentTransaction(
     payout: TeacherPayoutRecord,
-    paymentSource: FinancePaymentMethod,
+    paymentMethod: PaymentMethod,
   ) {
     const request: ExecutePaymentRequest = {
       amount: new Money((payout.unitPrice || 0) * payout.unitCount),
@@ -303,7 +303,7 @@ export class TeacherPayoutService extends BaseService {
       receiverId: payout.teacherUserProfileId,
       receiverType: WalletOwnerType.USER_PROFILE,
       reason: this.getPaymentReasonForTeacherPayout(payout.unitType),
-      source: paymentSource,
+      paymentMethod: paymentMethod,
       correlationId: payout.id,
     };
 

@@ -33,7 +33,6 @@ export class PaymentExecutorService {
     private readonly transactionService: TransactionService,
     private readonly cashTransactionService: CashTransactionService,
     private readonly cashboxService: CashboxService,
-    private readonly paymentGatewayService: PaymentGatewayService,
   ) {}
 
   /**
@@ -41,12 +40,12 @@ export class PaymentExecutorService {
    */
   @Transactional()
   async executePayment(payment: Payment): Promise<ExecutionResult> {
-    if (payment.source === PaymentMethod.WALLET) {
+    if (payment.paymentMethod === PaymentMethod.WALLET) {
       return await this.executeWalletPayment(payment);
-    } else if (payment.source === PaymentMethod.CASH) {
+    } else if (payment.paymentMethod === PaymentMethod.CASH) {
       return await this.executeCashPayment(payment);
     } else {
-      throw new Error(`Unsupported payment method: ${payment.source}`);
+      throw new Error(`Unsupported payment method: ${payment.paymentMethod}`);
     }
   }
 
@@ -114,67 +113,67 @@ export class PaymentExecutorService {
     // Determine cash operation based on branch position (sender vs receiver)
     if (payment.senderType === WalletOwnerType.BRANCH) {
       // Branch is sending money → Cash OUT from cashbox (withdrawal)
-    const cashbox = await this.cashboxService.getCashbox(payment.senderId);
+      const cashbox = await this.cashboxService.getCashbox(payment.senderId);
 
-    // Validate cashbox balance
-    if (cashbox.balance.lessThan(payment.amount)) {
-      throw FinanceErrors.insufficientCashBalance();
-    }
+      // Validate cashbox balance
+      if (cashbox.balance.lessThan(payment.amount)) {
+        throw FinanceErrors.insufficientCashBalance();
+      }
 
       // Update cashbox balance (decrease - cash is taken out)
-    const updatedCashbox = await this.cashboxService.updateBalance(
-      cashbox.id,
-      payment.amount.multiply(-1), // Debit cashbox
-    );
-
-    // Create cash transaction (OUT from cashbox)
-    const cashTransaction =
-      await this.cashTransactionService.createCashTransaction(
-        payment.senderId, // branchId
+      const updatedCashbox = await this.cashboxService.updateBalance(
         cashbox.id,
-        payment.amount,
-        CashTransactionDirection.OUT,
-        payment.receiverId, // receivedBy (staff)
-          CashTransactionType.BRANCH_WITHDRAWAL,
-        payment.receiverId, // paidBy (staff taking cash)
-        payment.id,
-          updatedCashbox.balance, // Pass the updated balance
-    );
+        payment.amount.multiply(-1), // Debit cashbox
+      );
 
-    return {
+      // Create cash transaction (OUT from cashbox)
+      const cashTransaction =
+        await this.cashTransactionService.createCashTransaction(
+          payment.senderId, // branchId
+          cashbox.id,
+          payment.amount,
+          CashTransactionDirection.OUT,
+          payment.receiverId, // receivedBy (staff)
+          CashTransactionType.BRANCH_WITHDRAWAL,
+          payment.receiverId, // paidBy (staff taking cash)
+          payment.id,
+          updatedCashbox.balance, // Pass the updated balance
+        );
+
+      return {
         transactions: [], // No transaction records for cash operations
-      cashTransactions: [cashTransaction],
-    };
+        cashTransactions: [cashTransaction],
+      };
     } else if (payment.receiverType === WalletOwnerType.BRANCH) {
       // Branch is receiving money → Cash IN to cashbox (deposit)
-    const cashbox = await this.cashboxService.getCashbox(payment.receiverId);
+      const cashbox = await this.cashboxService.getCashbox(payment.receiverId);
 
       // Update cashbox balance (increase - cash is added)
-    const updatedCashbox = await this.cashboxService.updateBalance(
-      cashbox.id,
-      payment.amount, // Credit cashbox
-    );
-
-    // Create cash transaction (IN to cashbox)
-    const cashTransaction =
-      await this.cashTransactionService.createCashTransaction(
-        payment.receiverId, // branchId
+      const updatedCashbox = await this.cashboxService.updateBalance(
         cashbox.id,
-        payment.amount,
-        CashTransactionDirection.IN,
-        payment.senderId, // receivedBy (staff depositing)
+        payment.amount, // Credit cashbox
+      );
+
+      // Create cash transaction (IN to cashbox)
+      const cashTransaction =
+        await this.cashTransactionService.createCashTransaction(
+          payment.receiverId, // branchId
+          cashbox.id,
+          payment.amount,
+          CashTransactionDirection.IN,
+          payment.senderId, // receivedBy (staff depositing)
           CashTransactionType.BRANCH_DEPOSIT,
-        payment.senderId, // paidBy (staff depositing)
-        payment.id,
+          payment.senderId, // paidBy (staff depositing)
+          payment.id,
           updatedCashbox.balance, // Pass the updated balance
-    );
+        );
 
       this.logger.log(`Cashbox operation completed for payment ${payment.id}`);
 
-    return {
+      return {
         transactions: [], // No transaction records for cash operations
-      cashTransactions: [cashTransaction],
-    };
+        cashTransactions: [cashTransaction],
+      };
     } else {
       // Handle other cash operations (not involving branches)
       return { transactions: [] };

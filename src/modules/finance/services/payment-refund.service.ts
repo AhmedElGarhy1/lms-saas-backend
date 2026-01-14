@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { Payment } from '../entities/payment.entity';
-import { PaymentType } from '../enums/payment-type.enum';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentMethod } from '../enums/payment-method.enum';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
@@ -12,6 +11,7 @@ import { WalletService } from './wallet.service';
 import { TransactionService } from './transaction.service';
 import { PaymentRepository } from '../repositories/payment.repository';
 import { PaymentGatewayService } from '../adapters/payment-gateway.service';
+import { PaymentService } from './payment.service';
 import {
   RefundPaymentRequest,
   RefundPaymentResponse,
@@ -41,7 +41,7 @@ export class PaymentRefundService {
     }
 
     // Reverse balances for internal payments
-    if (payment.source === PaymentMethod.WALLET) {
+    if (payment.paymentMethod === PaymentMethod.WALLET) {
       await this.reverseWalletBalances(payment);
     }
 
@@ -65,7 +65,7 @@ export class PaymentRefundService {
       throw FinanceErrors.paymentNotCompleted();
     }
 
-    if (payment.type !== PaymentType.EXTERNAL) {
+    if (!PaymentService.isAsyncPayment(payment)) {
       throw FinanceErrors.invalidPaymentOperation('Can only refund external payments through gateway');
     }
 

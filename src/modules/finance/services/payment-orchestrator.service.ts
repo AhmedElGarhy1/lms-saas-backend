@@ -12,12 +12,12 @@ import { PaymentExecutorService } from './payment-executor.service';
 import { PaymentRefundService } from './payment-refund.service';
 import { ExternalPaymentService } from './external-payment.service';
 import { PaymentQueryService } from './payment-query.service';
+import { PaymentService } from './payment.service';
 import { PaymentRepository } from '../repositories/payment.repository';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
 import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentStatus } from '../enums/payment-status.enum';
-import { PaymentType } from '../enums/payment-type.enum';
 
 @Injectable()
 export class PaymentOrchestratorService {
@@ -51,9 +51,9 @@ export class PaymentOrchestratorService {
     // Step 2: Execute financial operations
     const executionResult = await this.paymentExecutor.executePayment(payment);
 
-    // Step 3: Complete payment (for internal payments that complete immediately)
+    // Step 3: Complete payment (for sync payments that complete immediately)
     const completedPayment =
-      payment.type === PaymentType.INTERNAL
+      !PaymentService.isAsyncPayment(payment)
         ? await this.completeExecutedPayment(payment, executionResult)
         : payment;
 
@@ -96,7 +96,7 @@ export class PaymentOrchestratorService {
   ): Promise<{ payment: Payment; refund: any }> {
     // For external payments, delegate to refund service
     const payment = await this.paymentQuery.getPayment(paymentId);
-    if (payment.type === PaymentType.EXTERNAL) {
+    if (PaymentService.isAsyncPayment(payment)) {
       const refundedPayment = await this.paymentRefunder.refundExternalPayment(
         paymentId,
         refundAmount,
@@ -142,7 +142,7 @@ export class PaymentOrchestratorService {
         receiverId: senderId, // For top-ups, receiver is same as sender
         receiverType: WalletOwnerType.USER_PROFILE,
         reason: PaymentReason.TOPUP,
-        source: PaymentMethod.EXTERNAL,
+        paymentMethod: PaymentMethod.EXTERNAL,
         idempotencyKey,
         correlationId: randomUUID(),
         metadata: {
@@ -176,7 +176,7 @@ export class PaymentOrchestratorService {
     const payment = await this.paymentQuery.getPayment(paymentId);
 
     // Handle different cancellation scenarios based on payment type and status
-    if (payment.type === PaymentType.EXTERNAL) {
+    if (PaymentService.isAsyncPayment(payment)) {
       return await this.externalPaymentService.failExternalPayment(
         paymentId,
         'Payment cancelled by user',
@@ -194,9 +194,9 @@ export class PaymentOrchestratorService {
     payment: Payment,
     executionResult: any,
   ): Promise<Payment> {
-    // Only complete INTERNAL payments immediately
-    // EXTERNAL payments remain PENDING until confirmed by provider
-    if (payment.type === PaymentType.INTERNAL) {
+    // Only complete sync payments immediately
+    // Async payments remain PENDING until confirmed by provider
+    if (!PaymentService.isAsyncPayment(payment)) {
       payment.status = PaymentStatus.COMPLETED;
       payment.paidAt = new Date();
     }

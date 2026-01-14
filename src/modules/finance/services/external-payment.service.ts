@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { Payment } from '../entities/payment.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
-import { PaymentType } from '../enums/payment-type.enum';
 import { FinanceErrors } from '../exceptions/finance.errors';
 import { PaymentRepository } from '../repositories/payment.repository';
 import { PaymentGatewayService } from '../adapters/payment-gateway.service';
@@ -19,6 +18,7 @@ import { PaymentMethod } from '../enums/payment-method.enum';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
 import { UserService } from '@/modules/user/services/user.service';
+import { PaymentService } from './payment.service';
 
 // Define a local interface for external payment initiation
 interface InitiateExternalPaymentRequest {
@@ -28,7 +28,7 @@ interface InitiateExternalPaymentRequest {
   receiverId: string;
   receiverType: WalletOwnerType;
   reason: PaymentReason;
-  source: PaymentMethod;
+  paymentMethod: PaymentMethod;
   idempotencyKey?: string;
   correlationId?: string;
   metadata?: Record<string, any>;
@@ -69,8 +69,7 @@ export class ExternalPaymentService {
       receiverId: request.receiverId,
       receiverType: request.receiverType,
       reason: request.reason,
-      source: request.source,
-      type: PaymentType.EXTERNAL,
+      paymentMethod: request.paymentMethod,
       status: PaymentStatus.PENDING,
       correlationId: request.correlationId,
       metadata: request.metadata,
@@ -211,7 +210,7 @@ export class ExternalPaymentService {
   ): Promise<Payment> {
     const payment = await this.paymentRepository.findOneOrThrow(paymentId);
 
-    if (payment.type !== PaymentType.EXTERNAL) {
+    if (!PaymentService.isAsyncPayment(payment)) {
       throw FinanceErrors.invalidPaymentOperation(
         'Cannot complete non-external payment',
       );
@@ -244,7 +243,7 @@ export class ExternalPaymentService {
   ): Promise<Payment> {
     const payment = await this.paymentRepository.findOneOrThrow(paymentId);
 
-    if (payment.type !== PaymentType.EXTERNAL) {
+    if (!PaymentService.isAsyncPayment(payment)) {
       throw FinanceErrors.invalidPaymentOperation(
         'Cannot fail non-external payment',
       );

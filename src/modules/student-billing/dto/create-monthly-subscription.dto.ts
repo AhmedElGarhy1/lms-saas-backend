@@ -1,5 +1,5 @@
 import { IsUUID, IsEnum, IsInt, Min, Max } from 'class-validator';
-import { PaymentSource } from '../enums';
+import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Class } from '@/modules/classes/entities/class.entity';
@@ -23,12 +23,12 @@ export class CreateMonthlySubscriptionDto {
   classId: string;
 
   @ApiProperty({
-    description: 'Payment source',
-    enum: PaymentSource,
-    example: PaymentSource.WALLET,
+    description: 'Payment method',
+    enum: PaymentMethod,
+    example: PaymentMethod.WALLET,
   })
-  @IsEnum(PaymentSource)
-  paymentSource: PaymentSource;
+  @IsEnum(PaymentMethod)
+  paymentMethod: PaymentMethod;
 
   @ApiProperty({
     description: 'Subscription year',

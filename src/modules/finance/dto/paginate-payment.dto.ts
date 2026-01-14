@@ -29,11 +29,11 @@ export class PaginatePaymentDto extends BasePaginationDto {
   reason?: PaymentReason;
 
   @ApiProperty({
-    description: 'Filter by payment source',
+    description: 'Filter by payment method',
     enum: PaymentMethod,
     required: false,
   })
   @IsOptional()
   @IsEnum(PaymentMethod)
-  source?: PaymentMethod;
+  paymentMethod?: PaymentMethod;
 }

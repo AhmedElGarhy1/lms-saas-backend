@@ -24,8 +24,8 @@ export class UserPaymentStatementItemDto {
   @ApiProperty({ description: 'Payment reason' })
   reason: string;
 
-  @ApiProperty({ description: 'Payment source' })
-  source: string;
+  @ApiProperty({ description: 'Payment method' })
+  paymentMethod: string;
 
   @ApiProperty({ description: 'Sender ID' })
   senderId: string;

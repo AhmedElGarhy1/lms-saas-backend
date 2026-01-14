@@ -5,6 +5,7 @@ import { PaginateLevelsDto } from '../dto/paginate-levels.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';
+import { LEVEL_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 
 @Injectable()
 export class LevelsRepository extends BaseRepository<Level> {
@@ -29,11 +30,7 @@ export class LevelsRepository extends BaseRepository<Level> {
 
     return this.paginate(
       paginateDto,
-      {
-        searchableColumns: ['name'],
-        sortableColumns: ['name', 'createdAt', 'updatedAt'],
-        defaultSortBy: ['name', 'ASC'],
-      },
+      LEVEL_PAGINATION_COLUMNS,
       'levels',
       queryBuilder,
     );

@@ -5,6 +5,7 @@ import { PaymentService } from './payment.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { Payment } from '../entities/payment.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
+import { PaymentMethod } from '../enums/payment-method.enum';
 import { TransitionType } from '../enums/transition-type.enum';
 import {
   PaymentStateMachine,
@@ -110,7 +111,7 @@ export class PaymentStateMachineService {
         const paidByProfileId =
           payment.senderType === 'USER_PROFILE'
             ? payment.senderId
-            : payment.source === 'CASH'
+            : payment.paymentMethod === PaymentMethod.CASH
               ? payment.senderId
               : payment.senderId;
         return this.paymentService.completePayment(payment.id, paidByProfileId);

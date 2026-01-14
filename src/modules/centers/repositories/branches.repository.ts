@@ -5,6 +5,7 @@ import { PaginateBranchesDto } from '../dto/paginate-branches.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';
+import { BRANCH_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 
 @Injectable()
 export class BranchesRepository extends BaseRepository<Branch> {
@@ -31,11 +32,7 @@ export class BranchesRepository extends BaseRepository<Branch> {
     this.applyIsActiveFilter(queryBuilder, paginateDto, 'branch.isActive');
     return this.paginate(
       paginateDto,
-      {
-        searchableColumns: ['city', 'address'],
-        sortableColumns: ['city', 'createdAt', 'updatedAt'],
-        defaultSortBy: ['createdAt', 'DESC'],
-      },
+      BRANCH_PAGINATION_COLUMNS,
       'centers/branches',
       queryBuilder,
     );

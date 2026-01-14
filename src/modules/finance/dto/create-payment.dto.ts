@@ -69,12 +69,12 @@ export class CreatePaymentDto {
   reason: PaymentReason;
 
   @ApiProperty({
-    description: 'Payment source',
+    description: 'Payment method',
     enum: PaymentMethod,
     example: PaymentMethod.WALLET,
   })
   @IsEnum(PaymentMethod)
-  source: PaymentMethod;
+  paymentMethod: PaymentMethod;
 
   @ApiProperty({
     description: 'Reference type (if payment references a transaction)',

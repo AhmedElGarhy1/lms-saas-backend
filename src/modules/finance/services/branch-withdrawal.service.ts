@@ -53,7 +53,7 @@ export class BranchWithdrawalService {
           receiverId: staffId,
           receiverType: WalletOwnerType.USER_PROFILE,
           reason: PaymentReason.BRANCH_WITHDRAWAL,
-          source: PaymentMethod.WALLET,
+          paymentMethod: PaymentMethod.WALLET,
           correlationId: randomUUID(),
           metadata: {
             notes,
@@ -112,7 +112,7 @@ export class BranchWithdrawalService {
           receiverId: staffId,
           receiverType: WalletOwnerType.USER_PROFILE,
           reason: PaymentReason.BRANCH_WITHDRAWAL,
-          source: PaymentMethod.CASH, // This will trigger cash transaction creation
+          paymentMethod: PaymentMethod.CASH, // This will trigger cash transaction creation
           correlationId: randomUUID(),
           metadata: {
             notes,

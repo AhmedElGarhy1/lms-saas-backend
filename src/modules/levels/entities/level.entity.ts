@@ -13,6 +13,7 @@ import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 @Entity('levels')
 @Index(['centerId'])
 @Index(['name', 'centerId'], { unique: true })
+@Index(['name', 'createdAt']) // For alphabetical + chronological sorting
 export class Level extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   centerId: string;

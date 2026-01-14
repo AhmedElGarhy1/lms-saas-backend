@@ -1,0 +1,23 @@
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class RemovePaymentTypeField1768429824607 implements MigrationInterface {
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        // Remove the redundant type column - sync/async behavior is now derived from paymentMethod
+        await queryRunner.query(`ALTER TABLE "payments" DROP COLUMN "type"`);
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        // Add back the type column with default value
+        await queryRunner.query(`ALTER TABLE "payments" ADD COLUMN "type" VARCHAR(20) DEFAULT 'INTERNAL'`);
+        // Update existing records to set correct type based on paymentMethod
+        await queryRunner.query(`
+            UPDATE "payments"
+            SET "type" = CASE
+                WHEN "paymentMethod" = 'EXTERNAL' THEN 'EXTERNAL'
+                ELSE 'INTERNAL'
+            END
+        `);
+    }
+
+}

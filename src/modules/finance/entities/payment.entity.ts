@@ -1,7 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
-import { PaymentType } from '../enums/payment-type.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
 import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
@@ -15,6 +14,7 @@ import { Money } from '@/shared/common/utils/money.util';
 @Index(['status'])
 @Index(['referenceType', 'referenceId'])
 @Index(['createdAt'])
+@Index(['amount']) // For amount-based sorting and filtering
 @Index(['correlationId'])
 @Index(['idempotencyKey'], { unique: true })
 export class Payment extends BaseEntity {
@@ -54,18 +54,11 @@ export class Payment extends BaseEntity {
   })
   status: PaymentStatus;
 
-  @Column({
-    type: 'varchar',
-    length: 20,
-    default: PaymentType.INTERNAL,
-  })
-  type: PaymentType;
-
   @Column({ type: 'varchar', length: 30 })
   reason: PaymentReason;
 
   @Column({ type: 'varchar', length: 20 })
-  source: PaymentMethod;
+  paymentMethod: PaymentMethod;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
   referenceType?: PaymentReferenceType;
@@ -81,7 +74,6 @@ export class Payment extends BaseEntity {
 
   @Column({ type: 'timestamptz', nullable: true })
   paidAt?: Date;
-
 
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, any>;

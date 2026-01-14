@@ -9,7 +9,7 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => ({
   password: Config.database.password,
   database: Config.database.name,
   autoLoadEntities: true,
-  synchronize: true, // Disable auto-sync, use migrations only
+  synchronize: false, // Disable auto-sync, use migrations only
   // migrations: ['dist/database/migrations/*.js'],
   logging: ['error'], // Only log errors
   extra: {

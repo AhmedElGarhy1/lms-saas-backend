@@ -3,8 +3,8 @@ import { Entity, Column, Index, JoinColumn, ManyToOne } from 'typeorm';
 import {
   StudentChargeType,
   StudentChargeStatus,
-  PaymentSource,
 } from '../enums';
+import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { Session } from '@/modules/sessions/entities/session.entity';
@@ -12,6 +12,8 @@ import { Branch } from '@/modules/centers/entities/branch.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 
 @Entity('student_charges')
+@Index(['amount']) // For amount-based sorting
+@Index(['createdAt']) // For chronological sorting
 export class StudentCharge extends BaseEntity {
   @Column('uuid')
   @Index()
@@ -45,8 +47,8 @@ export class StudentCharge extends BaseEntity {
   @Column('decimal', { precision: 10, scale: 2, nullable: true })
   lastPaymentAmount?: number;
 
-  @Column({ type: 'simple-enum', enum: PaymentSource })
-  paymentSource: PaymentSource;
+  @Column({ type: 'simple-enum', enum: PaymentMethod })
+  paymentMethod: PaymentMethod;
 
   @Column('uuid', { nullable: true })
   paymentId?: string;

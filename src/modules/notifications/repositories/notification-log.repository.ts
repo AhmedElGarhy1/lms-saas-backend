@@ -10,6 +10,7 @@ import { Pagination } from '@/shared/common/types/pagination.types';
 import { GetNotificationHistoryDto } from '../dto/notification-history.dto';
 import { In } from 'typeorm';
 import { NotificationErrors } from '../exceptions/notification-errors';
+import { NOTIFICATION_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 
 @Injectable()
 export class NotificationLogRepository extends BaseRepository<NotificationLog> {
@@ -86,11 +87,7 @@ export class NotificationLogRepository extends BaseRepository<NotificationLog> {
     // Use repository's paginate method (it handles dateFrom/dateTo automatically)
     return this.paginate(
       query,
-      {
-        searchableColumns: ['recipient'],
-        sortableColumns: ['createdAt', 'status', 'channel', 'type'],
-        defaultSortBy: ['createdAt', 'DESC'],
-      },
+      NOTIFICATION_PAGINATION_COLUMNS,
       '/notifications/history',
       queryBuilder,
     );

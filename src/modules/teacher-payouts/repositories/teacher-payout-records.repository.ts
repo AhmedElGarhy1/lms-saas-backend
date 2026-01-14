@@ -11,6 +11,7 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
 import { TeacherPayoutErrors } from '../exceptions/teacher-payout.errors';
+import { TEACHER_PAYOUT_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 
 @Injectable()
 export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayoutRecord> {
@@ -95,11 +96,7 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
 
     return this.paginate(
       dto,
-      {
-        searchableColumns: [],
-        sortableColumns: ['createdAt', 'unitPrice', 'unitCount'],
-        defaultSortBy: ['createdAt', 'DESC'],
-      },
+      TEACHER_PAYOUT_PAGINATION_COLUMNS,
       `payouts/teachers`,
       queryBuilder,
     );
@@ -132,12 +129,12 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
     id: string,
     status: PayoutStatus,
     paymentId?: string,
-    paymentSource?: PaymentMethod,
+    paymentMethod?: PaymentMethod,
   ): Promise<TeacherPayoutRecord> {
     await this.getRepository().update(id, {
       status,
       ...(paymentId && { paymentId }),
-      ...(paymentSource && { paymentSource }),
+      ...(paymentMethod && { paymentMethod }),
     });
 
     const updated = await this.findById(id);

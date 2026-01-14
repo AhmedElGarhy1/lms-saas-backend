@@ -5,7 +5,6 @@ import { Wallet } from '../entities/wallet.entity';
 import { Transaction } from '../entities/transaction.entity';
 import { CashTransaction } from '../entities/cash-transaction.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
-import { PaymentType } from '../enums/payment-type.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
 import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
@@ -27,7 +26,6 @@ import {
 import { TransactionType } from '../enums/transaction-type.enum';
 import { randomUUID } from 'crypto';
 import { PaginatePaymentDto } from '../dto/paginate-payment.dto';
-import { SelectQueryBuilder } from 'typeorm';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { UserPaymentStatementItemDto } from '../dto/payment-statement.dto';
 import { PaymentGatewayService } from '../adapters/payment-gateway.service';
@@ -35,18 +33,7 @@ import {
   PaymentGatewayType,
   PaymentGatewayMethod,
 } from '../adapters/interfaces/payment-gateway.interface';
-import {
-  CreatePaymentRequest,
-  RefundPaymentRequest,
-  RefundPaymentResponse,
-} from '../adapters/interfaces/payment-gateway.interface';
-import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
-import { UserService } from '@/modules/user/services/user.service';
-import { FinanceMonitorService } from '../monitoring/finance-monitor.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
-import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { Branch } from '@/modules/centers/entities/branch.entity';
 
 // Import the new specialized services
 import { PaymentCreatorService } from './payment-creator.service';
@@ -64,8 +51,7 @@ export interface ExecutePaymentRequest {
   receiverId: string;
   receiverType: WalletOwnerType;
   reason: PaymentReason;
-  source: PaymentMethod;
-  type?: PaymentType; // Defaults to INTERNAL
+  paymentMethod: PaymentMethod;
   correlationId?: string;
   idempotencyKey?: string;
   metadata?: Record<string, any>;
@@ -98,12 +84,7 @@ export class PaymentService extends BaseService {
     private readonly cashboxService: CashboxService,
     private readonly transactionService: TransactionService,
     private readonly cashTransactionService: CashTransactionService,
-    // New specialized services
-    private readonly paymentCreator: PaymentCreatorService,
-    private readonly paymentExecutor: PaymentExecutorService,
-    private readonly paymentRefunder: PaymentRefundService,
     private readonly externalPaymentService: ExternalPaymentService,
-    private readonly paymentQuery: PaymentQueryService,
     private readonly paymentOrchestrator: PaymentOrchestratorService,
   ) {
     super();
@@ -133,7 +114,7 @@ export class PaymentService extends BaseService {
    * @param receiverId - ID of payment recipient (wallet owner)
    * @param receiverType - Type of recipient (USER_PROFILE, CENTER, etc.)
    * @param reason - Business reason for payment (SESSION, TOPUP, etc.)
-   * @param source - Payment source (WALLET or CASH)
+   * @param paymentMethod - Payment method (WALLET, CASH, or EXTERNAL)
    * @param referenceType - Optional reference to transaction/cash-transaction
    * @param referenceId - Optional reference ID
    * @param correlationId - Optional correlation ID for split payments
@@ -166,7 +147,7 @@ export class PaymentService extends BaseService {
     receiverId: string,
     receiverType: WalletOwnerType,
     reason: PaymentReason,
-    source: PaymentMethod,
+    paymentMethod: PaymentMethod,
     referenceType?: PaymentReferenceType,
     referenceId?: string,
     correlationId?: string,
@@ -186,8 +167,8 @@ export class PaymentService extends BaseService {
       }
     }
 
-    // If source is WALLET, lock the amount in sender's wallet
-    if (source === PaymentMethod.WALLET) {
+    // If paymentMethod is WALLET, lock the amount in sender's wallet
+    if (paymentMethod === PaymentMethod.WALLET) {
       // Get sender's wallet
       const senderWallet = await this.walletService.getWallet(
         senderId,
@@ -214,7 +195,7 @@ export class PaymentService extends BaseService {
       receiverType,
       status: PaymentStatus.PENDING,
       reason,
-      source,
+      paymentMethod,
       referenceType,
       referenceId,
       correlationId: correlationId || randomUUID(),
@@ -318,7 +299,7 @@ export class PaymentService extends BaseService {
     }
 
     // If source is WALLET, deduct from lockedBalance (already locked)
-    if (payment.source === PaymentMethod.WALLET) {
+    if (payment.paymentMethod === PaymentMethod.WALLET) {
       const senderWallet = await this.walletService.getWallet(
         payment.senderId,
         payment.senderType,
@@ -353,7 +334,7 @@ export class PaymentService extends BaseService {
     }
 
     // Handle cash payments - create cash transaction records
-    if (payment.source === PaymentMethod.CASH) {
+    if (payment.paymentMethod === PaymentMethod.CASH) {
       await this.createCashTransactionRecords(
         payment,
         paidByProfileId,
@@ -458,7 +439,7 @@ export class PaymentService extends BaseService {
     }
 
     // Reverse balances for internal payments
-    if (payment.source === PaymentMethod.WALLET) {
+    if (payment.paymentMethod === PaymentMethod.WALLET) {
       const senderWallet = await this.walletService.getWallet(
         payment.senderId,
         payment.senderType,
@@ -500,7 +481,7 @@ export class PaymentService extends BaseService {
         correlationId,
         updatedSenderWallet.balance, // Balance after for sender
       );
-    } else if (payment.source === PaymentMethod.CASH) {
+    } else if (payment.paymentMethod === PaymentMethod.CASH) {
       if (
         payment.referenceType === PaymentReferenceType.CASH_TRANSACTION &&
         payment.referenceId
@@ -530,7 +511,7 @@ export class PaymentService extends BaseService {
 
     // If payment was COMPLETED, reverse the balances
     if (payment.status === PaymentStatus.COMPLETED) {
-      if (payment.source === PaymentMethod.WALLET) {
+      if (payment.paymentMethod === PaymentMethod.WALLET) {
         // Reverse wallet balances
         const payerWallet = await this.walletService.getWallet(
           payment.senderId,
@@ -546,7 +527,7 @@ export class PaymentService extends BaseService {
           receiverWallet.id,
           payment.amount.multiply(-1),
         );
-      } else if (payment.source === PaymentMethod.CASH) {
+      } else if (payment.paymentMethod === PaymentMethod.CASH) {
         // Reverse cash transaction if exists
         if (
           payment.referenceType === PaymentReferenceType.CASH_TRANSACTION &&
@@ -606,7 +587,7 @@ export class PaymentService extends BaseService {
       receiverType: WalletOwnerType.USER_PROFILE,
       status: PaymentStatus.COMPLETED,
       reason: PaymentReason.TOPUP,
-      source: PaymentMethod.EXTERNAL, // External payment gateway
+      paymentMethod: PaymentMethod.EXTERNAL, // External payment gateway
       ...(idempotencyKey && { idempotencyKey }),
       paidAt: new Date(),
       createdByProfileId: this.getCreatedByProfileId(),
@@ -705,9 +686,9 @@ export class PaymentService extends BaseService {
     payment: Payment,
     executionResult: any,
   ): Promise<Payment> {
-    // Only complete INTERNAL payments immediately
-    // EXTERNAL payments remain PENDING until confirmed by provider
-    if (payment.type === PaymentType.INTERNAL) {
+    // Only complete sync payments immediately
+    // Async payments remain PENDING until confirmed by provider
+    if (!PaymentService.isAsyncPayment(payment)) {
       payment.status = PaymentStatus.COMPLETED;
       payment.paidAt = new Date();
     }
@@ -754,5 +735,24 @@ export class PaymentService extends BaseService {
       default:
         return TransactionType.INTERNAL_TRANSFER;
     }
+  }
+
+  /**
+   * Static helper methods for payment logic
+   */
+  static isAsyncPaymentMethod(method: PaymentMethod): boolean {
+    return method === PaymentMethod.EXTERNAL;
+  }
+
+  static isAsyncPayment(payment: Payment): boolean {
+    return PaymentService.isAsyncPaymentMethod(payment.paymentMethod);
+  }
+
+  static getDefaultStatusForPaymentMethod(
+    method: PaymentMethod,
+  ): PaymentStatus {
+    return PaymentService.isAsyncPaymentMethod(method)
+      ? PaymentStatus.PENDING
+      : PaymentStatus.COMPLETED;
   }
 }

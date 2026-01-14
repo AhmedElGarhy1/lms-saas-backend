@@ -13,6 +13,7 @@ import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { ClassesErrors } from '../exceptions/classes.errors';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { CLASS_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { StudentPaymentType } from '../enums/student-payment-type.enum';
 
@@ -182,16 +183,7 @@ export class ClassesRepository extends BaseRepository<Class> {
     // Get paginated results with computed fields (counts)
     return await this.paginate(
       paginateDto,
-      {
-        searchableColumns: [
-          'name',
-          'level.name',
-          'subject.name',
-          'branch.city',
-        ],
-        sortableColumns: ['createdAt', 'updatedAt'],
-        defaultSortBy: ['createdAt', 'DESC'],
-      },
+      CLASS_PAGINATION_COLUMNS,
       '/classes',
       queryBuilder,
     );

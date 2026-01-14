@@ -14,6 +14,9 @@ import { BaseEntity } from '@/shared/common/entities/base.entity';
 @Index(['teacherUserProfileId', 'status']) // For efficient queries
 @Index(['classId'])
 @Index(['status'])
+@Index(['unitPrice']) // For price-based sorting
+@Index(['unitCount']) // For count-based sorting
+@Index(['createdAt']) // For chronological sorting
 export class TeacherPayoutRecord extends BaseEntity {
   @Column('uuid')
   teacherUserProfileId: string;
@@ -50,7 +53,7 @@ export class TeacherPayoutRecord extends BaseEntity {
   centerId: string; // Denormalized: Center owning the branch
 
   @Column({ type: 'enum', enum: PaymentMethod, nullable: true })
-  paymentSource?: PaymentMethod; // WALLET or CASH, null initially
+  paymentMethod?: PaymentMethod; // WALLET or CASH, null initially
 
   @Column({ type: 'uuid', nullable: true })
   paymentId?: string;

@@ -199,7 +199,6 @@ export class R2Service extends BaseService {
       throw R2Errors.uploadFailed('R2 is not configured');
     }
 
-    console.log('Config.r2.publicUrlDomain', Config.r2.publicUrlDomain);
     // Use custom domain if configured, otherwise fallback to Cloudflare R2 default
     if (Config.r2.publicUrlDomain) {
       return `${Config.r2.publicUrlDomain}/${key}`;

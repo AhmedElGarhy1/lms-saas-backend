@@ -19,6 +19,8 @@ import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 @Entity('users')
 @Index(['phone'], { unique: true })
 @Index(['isActive'])
+@Index(['name', 'createdAt']) // For alphabetical + chronological sorting
+@Index(['isActive', 'createdAt']) // For status + chronological sorting
 export class User extends SoftBaseEntity {
   @Column({ type: 'varchar', length: 12, unique: true })
   phone: string;

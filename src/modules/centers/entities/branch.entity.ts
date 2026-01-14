@@ -22,6 +22,7 @@ import { ClassStaff } from '@/modules/classes/entities/class-staff.entity';
 @Index(['centerId'])
 @Index(['isActive'])
 @Index(['city'])
+@Index(['city', 'createdAt']) // For alphabetical + chronological sorting
 @Index(['centerId', 'isActive'])
 export class Branch extends SoftBaseEntity {
   @Column({ type: 'uuid' })

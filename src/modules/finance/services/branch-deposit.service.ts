@@ -51,7 +51,7 @@ export class BranchDepositService {
           receiverId: branchId,
           receiverType: WalletOwnerType.BRANCH,
           reason: PaymentReason.BRANCH_DEPOSIT,
-          source: PaymentMethod.WALLET,
+          paymentMethod: PaymentMethod.WALLET,
           correlationId: randomUUID(),
           metadata: {
             notes,
@@ -135,7 +135,7 @@ export class BranchDepositService {
           receiverId: branchId,
           receiverType: WalletOwnerType.BRANCH,
           reason: PaymentReason.BRANCH_DEPOSIT,
-          source: PaymentMethod.CASH, // This will trigger cash transaction creation
+          paymentMethod: PaymentMethod.CASH, // This will trigger cash transaction creation
           correlationId: randomUUID(),
           metadata: {
             notes,

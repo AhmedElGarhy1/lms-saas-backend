@@ -18,6 +18,7 @@ import { StudentCharge } from '@/modules/student-billing/entities/student-charge
 
 @Entity('centers')
 @Index(['name'])
+@Index(['name', 'createdAt']) // For alphabetical + chronological sorting
 @Index(['email'], { where: 'email IS NOT NULL', unique: true })
 @Index(['phone'], { where: 'phone IS NOT NULL', unique: true })
 export class Center extends SoftBaseEntity {

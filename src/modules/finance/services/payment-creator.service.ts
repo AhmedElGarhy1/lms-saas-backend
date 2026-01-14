@@ -2,14 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { Payment } from '../entities/payment.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
-import { PaymentType } from '../enums/payment-type.enum';
 import { PaymentMethod } from '../enums/payment-method.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { FinanceErrors } from '../exceptions/finance.errors';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaymentRepository } from '../repositories/payment.repository';
 import { WalletService } from './wallet.service';
-import { ExecutePaymentRequest } from './payment.service';
+import { ExecutePaymentRequest, PaymentService } from './payment.service';
 
 @Injectable()
 export class PaymentCreatorService {
@@ -44,10 +43,7 @@ export class PaymentCreatorService {
     // Validate request
     await this.validatePaymentRequest(request);
 
-    // Determine payment type
-    const paymentType = request.type || PaymentType.INTERNAL;
-
-    // Create payment record
+    // Create payment record - status determined by payment method
     const payment = await this.paymentRepository.create({
       amount: request.amount,
       senderId: request.senderId,
@@ -55,12 +51,10 @@ export class PaymentCreatorService {
       receiverId: request.receiverId,
       receiverType: request.receiverType,
       reason: request.reason,
-      source: request.source,
-      type: paymentType,
-      status:
-        paymentType === PaymentType.INTERNAL
-          ? PaymentStatus.COMPLETED
-          : PaymentStatus.PENDING,
+      paymentMethod: request.paymentMethod,
+      status: PaymentService.getDefaultStatusForPaymentMethod(
+        request.paymentMethod,
+      ),
       correlationId: request.correlationId,
       metadata: request.metadata,
       referenceType: request.referenceType,
@@ -83,7 +77,7 @@ export class PaymentCreatorService {
     }
 
     // Wallet-specific validations
-    if (request.source === PaymentMethod.WALLET) {
+    if (request.paymentMethod === PaymentMethod.WALLET) {
       const senderWallet = await this.walletService.getWallet(
         request.senderId,
         request.senderType,

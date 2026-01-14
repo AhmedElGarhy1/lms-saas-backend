@@ -14,7 +14,7 @@ import { StudentBillingRefundService } from '../services/student-billing-refund.
 import { CreateStudentChargeDto } from '../dto/create-student-charge.dto';
 import { RefundStudentBillingDto } from '../dto/refund-student-billing.dto';
 import { PayClassInstallmentDto } from '../dto/pay-class-installment.dto';
-import { PaymentSource } from '../enums';
+import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { StudentCharge } from '../entities/student-charge.entity';
 import { PaginateStudentBillingRecordsDto } from '../dto/paginate-student-billing-records.dto';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
@@ -42,7 +42,7 @@ export class StudentBillingController {
   ): Promise<ControllerResponse<StudentCharge>> {
     const result = await this.billingService.createStudentCharge(
       dto,
-      PaymentSource.CASH,
+      PaymentMethod.CASH,
       actor,
     );
     return ControllerResponse.success(result);
@@ -58,7 +58,7 @@ export class StudentBillingController {
   ): Promise<ControllerResponse<StudentCharge>> {
     const result = await this.billingService.createStudentCharge(
       dto,
-      PaymentSource.WALLET,
+      PaymentMethod.WALLET,
       actor,
     );
     return ControllerResponse.success(result);
@@ -119,7 +119,7 @@ export class StudentBillingController {
       dto.classId,
       dto.studentUserProfileId,
       dto.amount,
-      PaymentSource.CASH,
+      PaymentMethod.CASH,
       actor,
     );
     return ControllerResponse.success(result);
@@ -137,7 +137,7 @@ export class StudentBillingController {
       dto.classId,
       dto.studentUserProfileId,
       dto.amount,
-      PaymentSource.WALLET,
+      PaymentMethod.WALLET,
       actor,
     );
     return ControllerResponse.success(result);

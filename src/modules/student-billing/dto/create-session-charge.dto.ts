@@ -1,5 +1,5 @@
 import { IsUUID, IsEnum } from 'class-validator';
-import { PaymentSource } from '../enums';
+import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Session } from '@/modules/sessions/entities/session.entity';
@@ -13,6 +13,6 @@ export class CreateSessionChargeDto {
   @BelongsToCenter(Session)
   sessionId: string;
 
-  @IsEnum(PaymentSource)
-  paymentSource: PaymentSource;
+  @IsEnum(PaymentMethod)
+  paymentMethod: PaymentMethod;
 }
