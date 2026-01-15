@@ -99,6 +99,9 @@ export class UserRepository extends BaseRepository<User> {
       centerId &&
       (!branchAccess || branchAccess === AccessibleUsersEnum.INCLUDE);
 
+    const includeRoleAccess =
+      roleId && (!roleAccess || roleAccess === AccessibleUsersEnum.INCLUDE);
+
     const includeClass =
       classId && (!classAccess || classAccess === AccessibleUsersEnum.INCLUDE);
 
@@ -136,30 +139,29 @@ export class UserRepository extends BaseRepository<User> {
         .leftJoinAndSelect(
           'userProfiles.centerAccess',
           'centerAccess',
-          `centerAccess.centerId = :centerId AND centerAccess.userProfileId = userProfiles.id AND ${isDeleted ? 'centerAccess.deletedAt IS NOT NULL' : 'centerAccess.deletedAt IS NULL'}`,
+          `centerAccess.centerId = :centerId AND centerAccess.userProfileId = userProfiles.id`,
           { centerId },
         )
-        .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
-    } else {
-      if (isDeleted) {
-        queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');
-      }
+        .andWhere(
+          `centerAccess.deletedAt IS ${isDeleted ? 'NOT NULL' : 'NULL'}`,
+        )
+        .andWhere('centerAccess.centerId = :centerId', { centerId });
     }
 
-    const canBypassCenterAccess =
-      await this.accessControlHelperService.bypassCenterInternalAccess(
-        actor.userProfileId,
-        centerId,
-      );
-
     if (centerId) {
-      queryBuilder.andWhere('centerAccess.centerId = :centerId', { centerId });
+      const canBypassCenterAccess =
+        await this.accessControlHelperService.bypassCenterInternalAccess(
+          actor.userProfileId,
+          centerId,
+        );
+
       if (!canBypassCenterAccess) {
         queryBuilder.andWhere(
           `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
           { userProfileId: actor.userProfileId, centerId },
         );
       }
+
       if (displayDetails) {
         queryBuilder
           .leftJoinAndSelect(
@@ -170,7 +172,8 @@ export class UserRepository extends BaseRepository<User> {
           )
           .leftJoinAndSelect('profileRoles.role', 'role');
       }
-      if (roleId && roleAccess !== AccessibleUsersEnum.ALL) {
+
+      if (includeRoleAccess) {
         if (displayDetails) {
           queryBuilder.andWhere('role.id = :roleId', { roleId });
         } else {
@@ -245,7 +248,6 @@ export class UserRepository extends BaseRepository<User> {
         centerId,
       );
     }
-
     if (centerId && centerAccess) {
       filteredItems = await this.applyCenterAccess(
         filteredItems,
@@ -253,7 +255,6 @@ export class UserRepository extends BaseRepository<User> {
         centerAccess,
       );
     }
-
     if (branchId && branchAccess && centerId) {
       filteredItems = await this.applyBranchAccess(
         filteredItems,
@@ -262,7 +263,6 @@ export class UserRepository extends BaseRepository<User> {
         centerId,
       );
     }
-
     if (classId && classAccess) {
       filteredItems = await this.applyClassAccessForStaff(
         filteredItems,
@@ -323,6 +323,11 @@ export class UserRepository extends BaseRepository<User> {
       .where('userProfiles.profileType = :profileType', {
         profileType: ProfileType.STUDENT,
       });
+    this.applyIsActiveFilter(
+      queryBuilder,
+      params,
+      centerId ? 'centerAccess.isActive' : 'userProfiles.isActive',
+    );
 
     if (includeGroup) {
       queryBuilder.andWhere(
@@ -337,29 +342,19 @@ export class UserRepository extends BaseRepository<User> {
         { classId },
       );
     }
-    if (centerId) {
-      queryBuilder.andWhere('centerAccess.centerId = :centerId', { centerId });
-    }
-
-    this.applyIsActiveFilter(
-      queryBuilder,
-      params,
-      centerId ? 'centerAccess.isActive' : 'userProfiles.isActive',
-    );
 
     if (includeCenter) {
       queryBuilder
         .leftJoinAndSelect(
           'userProfiles.centerAccess',
           'centerAccess',
-          `centerAccess.centerId = :centerId AND centerAccess.userProfileId = userProfiles.id AND ${isDeleted ? 'centerAccess.deletedAt IS NOT NULL' : 'centerAccess.deletedAt IS NULL'}`,
+          `centerAccess.centerId = :centerId AND centerAccess.userProfileId = userProfiles.id`,
           { centerId },
         )
-        .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
-    } else {
-      if (isDeleted) {
-        queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');
-      }
+        .andWhere(
+          `centerAccess.deletedAt IS ${isDeleted ? 'NOT NULL' : 'NULL'}`,
+        )
+        .andWhere('centerAccess.centerId = :centerId', { centerId });
     }
 
     const result = await this.paginate(
@@ -456,14 +451,13 @@ export class UserRepository extends BaseRepository<User> {
         .leftJoinAndSelect(
           'userProfiles.centerAccess',
           'centerAccess',
-          `centerAccess.centerId = :centerId AND centerAccess.userProfileId = userProfiles.id AND ${isDeleted ? 'centerAccess.deletedAt IS NOT NULL' : 'centerAccess.deletedAt IS NULL'}`,
+          `centerAccess.centerId = :centerId AND centerAccess.userProfileId = userProfiles.id`,
           { centerId },
         )
-        .andWhere('userProfiles.deletedAt IS NULL'); // always include non deleted users in center
-    } else {
-      if (isDeleted) {
-        queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');
-      }
+        .andWhere(
+          `centerAccess.deletedAt IS ${isDeleted ? 'NOT NULL' : 'NULL'}`,
+        )
+        .andWhere('centerAccess.centerId = :centerId', { centerId });
     }
 
     if (includeStaffProfile) {
@@ -473,14 +467,12 @@ export class UserRepository extends BaseRepository<User> {
       );
     }
 
-    const canBypassCenterAccess =
-      await this.accessControlHelperService.bypassCenterInternalAccess(
-        actor.userProfileId,
-        centerId,
-      );
-
     if (centerId) {
-      queryBuilder.andWhere('centerAccess.centerId = :centerId', { centerId });
+      const canBypassCenterAccess =
+        await this.accessControlHelperService.bypassCenterInternalAccess(
+          actor.userProfileId,
+          centerId,
+        );
 
       if (!canBypassCenterAccess) {
         queryBuilder.andWhere(
@@ -586,11 +578,9 @@ export class UserRepository extends BaseRepository<User> {
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
       actor.userProfileId,
     );
-    const isAdmin = await this.accessControlHelperService.isAdmin(
-      actor.userProfileId,
-    );
 
-    if (!isAdmin) throw AccessControlErrors.cannotAccessUserRecords();
+    if (actor.profileType !== ProfileType.ADMIN)
+      throw AccessControlErrors.cannotAccessUserRecords();
     if (isSuperAdmin) {
       // do nothing
     } else {
