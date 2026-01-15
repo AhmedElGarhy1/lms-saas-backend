@@ -164,6 +164,7 @@
 [ ] staff payouts
 [ ] daily revenue
 [ ] application fees
+[ ] sessions filters doesn't work
 [ ] money reqeusted from all students (foce all or any one want)
 [ ] topup and withdraw in reality
 [ ] center settings

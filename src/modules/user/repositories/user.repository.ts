@@ -153,6 +153,7 @@ export class UserRepository extends BaseRepository<User> {
       );
 
     if (centerId) {
+      queryBuilder.andWhere('centerAccess.centerId = :centerId', { centerId });
       if (!canBypassCenterAccess) {
         queryBuilder.andWhere(
           `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
@@ -336,6 +337,9 @@ export class UserRepository extends BaseRepository<User> {
         { classId },
       );
     }
+    if (centerId) {
+      queryBuilder.andWhere('centerAccess.centerId = :centerId', { centerId });
+    }
 
     this.applyIsActiveFilter(
       queryBuilder,
@@ -476,6 +480,8 @@ export class UserRepository extends BaseRepository<User> {
       );
 
     if (centerId) {
+      queryBuilder.andWhere('centerAccess.centerId = :centerId', { centerId });
+
       if (!canBypassCenterAccess) {
         queryBuilder.andWhere(
           `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
