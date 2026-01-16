@@ -48,13 +48,27 @@ export class StudentBillingRefundService {
       throw StudentBillingErrors.alreadyRefunded();
     }
 
-    // 3. Check if paymentId exists
-    if (!charge.paymentId) {
+    // 3. Load charge with payments relationship
+    const chargeWithPayments =
+      await this.chargesRepo.findByIdWithPayments(chargeId);
+    if (!chargeWithPayments) {
+      throw StudentBillingErrors.refundValidationFailed(
+        StudentChargeType.CLASS,
+      );
+    }
+
+    // 4. Check if any payments exist
+    if (
+      !chargeWithPayments.payments ||
+      chargeWithPayments.payments.length === 0
+    ) {
       throw StudentBillingErrors.refundPaymentNotFound(chargeId);
     }
 
-    // 4. Get payment details
-    const payment = await this.paymentService.getPaymentById(charge.paymentId);
+    // 5. Get the most recent payment (assuming we want to refund the latest one)
+    const payment = chargeWithPayments.payments.sort(
+      (a: Payment, b: Payment) => b.createdAt.getTime() - a.createdAt.getTime(),
+    )[0];
 
     // 5. Validate payment can be refunded
     if (payment.status !== PaymentStatus.COMPLETED) {

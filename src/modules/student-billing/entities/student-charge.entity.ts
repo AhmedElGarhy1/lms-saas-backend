@@ -1,5 +1,6 @@
 import { BaseEntity } from '@/shared/common/entities/base.entity';
-import { Entity, Column, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { Entity, Column, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Payment } from '@/modules/finance/entities/payment.entity';
 import {
   StudentChargeType,
   StudentChargeStatus,
@@ -47,12 +48,6 @@ export class StudentCharge extends BaseEntity {
   @Column('decimal', { precision: 10, scale: 2, nullable: true })
   lastPaymentAmount?: number;
 
-  @Column({ type: 'simple-enum', enum: PaymentMethod })
-  paymentMethod: PaymentMethod;
-
-  @Column('uuid', { nullable: true })
-  paymentId?: string;
-
   @Column({
     type: 'simple-enum',
     enum: StudentChargeStatus,
@@ -98,4 +93,8 @@ export class StudentCharge extends BaseEntity {
   @ManyToOne(() => Center, (center) => center.studentCharges)
   @JoinColumn({ name: 'centerId' })
   center: Center;
+
+  // Relationship to all payments made for this charge
+  @OneToMany(() => Payment, (payment) => payment.studentCharge)
+  payments: Payment[];
 }

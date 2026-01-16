@@ -94,12 +94,7 @@ export class CreatePaymentDto {
   @IsUUID(4)
   @Validate((object: CreatePaymentDto, value: string) => {
     if (!value) return true;
-    if (object.referenceType === PaymentReferenceType.TRANSACTION) {
-      return true; // Will be validated by custom validator if needed
-    }
-    if (object.referenceType === PaymentReferenceType.CASH_TRANSACTION) {
-      return true; // Will be validated by custom validator if needed
-    }
+    // Reference validation is now handled by the service layer
     return true;
   })
   referenceId?: string;

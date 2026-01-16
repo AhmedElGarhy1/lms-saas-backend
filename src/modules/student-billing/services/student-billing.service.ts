@@ -2,10 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Transactional } from '@nestjs-cls/transactional';
 import { StudentCharge } from '../entities/student-charge.entity';
-import {
-  StudentChargeType,
-  StudentChargeStatus,
-} from '../enums';
+import { StudentChargeType, StudentChargeStatus } from '../enums';
 import { CreateMonthlySubscriptionDto } from '../dto/create-monthly-subscription.dto';
 import { CreateSessionChargeDto } from '../dto/create-session-charge.dto';
 import { CreateClassChargeDto } from '../dto/create-class-charge.dto';
@@ -21,6 +18,7 @@ import {
 } from '@/modules/finance/services/payment.service';
 import { PaymentReason } from '@/modules/finance/enums/payment-reason.enum';
 import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
+import { PaymentReferenceType } from '@/modules/finance/enums/payment-reference-type.enum';
 import { WalletOwnerType } from '@/modules/finance/enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { ClassesService } from '@/modules/classes/services/classes.service';
@@ -216,8 +214,20 @@ export class StudentBillingService extends BaseService {
       throw StudentBillingErrors.subscriptionAlreadyExists();
     }
 
-    // Create payment based on payment source
-    // Execute payment using unified API
+    // Create the charge record first (in PENDING status)
+    const charge = await this.chargesRepository.createCharge({
+      studentUserProfileId: dto.studentUserProfileId,
+      chargeType: StudentChargeType.SUBSCRIPTION,
+      centerId: classEntity.centerId,
+      branchId: classEntity.branchId,
+      classId: dto.classId,
+      month: dto.month,
+      year: dto.year,
+      amount,
+      status: StudentChargeStatus.PENDING, // Start as pending
+    });
+
+    // Execute payment using unified API with charge reference
     const paymentRequest: ExecutePaymentRequest = {
       amount: Money.from(amount),
       senderId: dto.studentUserProfileId,
@@ -229,7 +239,8 @@ export class StudentBillingService extends BaseService {
         dto.paymentMethod === PaymentMethod.WALLET
           ? PaymentMethod.WALLET
           : PaymentMethod.CASH,
-      correlationId: randomUUID(),
+      referenceType: PaymentReferenceType.STUDENT_CHARGE,
+      referenceId: charge.id, // Now we have the charge ID
     };
 
     const paymentResult = await this.paymentService.createAndExecutePayment(
@@ -238,26 +249,12 @@ export class StudentBillingService extends BaseService {
     );
     const payment = paymentResult.payment;
 
-    // Get payment strategy for billing record
-    const paymentStrategy =
-      await this.paymentStrategyService.getStudentPaymentStrategyForClass(
-        dto.classId,
-      );
+    // Update charge status to COMPLETED after successful payment
+    charge.status = StudentChargeStatus.COMPLETED;
+    charge.totalPaid = amount;
+    charge.lastPaymentAmount = amount;
 
-    // Create unified monthly charge
-    const savedCharge = await this.chargesRepository.createCharge({
-      studentUserProfileId: dto.studentUserProfileId,
-      chargeType: StudentChargeType.SUBSCRIPTION,
-      centerId: classEntity.centerId,
-      branchId: classEntity.branchId,
-      classId: dto.classId,
-      month: dto.month,
-      year: dto.year,
-      amount,
-      paymentMethod: dto.paymentMethod,
-      paymentId: payment.id,
-      status: StudentChargeStatus.COMPLETED,
-    });
+    const savedCharge = await this.chargesRepository.saveCharge(charge);
 
     return savedCharge;
   }
@@ -327,7 +324,8 @@ export class StudentBillingService extends BaseService {
         paymentMethod === PaymentMethod.WALLET
           ? PaymentMethod.WALLET
           : PaymentMethod.CASH,
-      correlationId: randomUUID(),
+      referenceType: PaymentReferenceType.STUDENT_CHARGE,
+      referenceId: classCharge.id,
     };
 
     const paymentResult = await this.paymentService.createAndExecutePayment(
@@ -339,8 +337,6 @@ export class StudentBillingService extends BaseService {
     // Update charge with new payment
     classCharge.totalPaid = newTotalPaid.toNumber();
     classCharge.lastPaymentAmount = installmentAmount;
-    classCharge.paymentId = payment.id;
-    classCharge.paymentMethod = paymentMethod;
     classCharge.updatedAt = new Date();
 
     // Check if fully paid
@@ -539,7 +535,19 @@ export class StudentBillingService extends BaseService {
       throw StudentBillingErrors.sessionChargeAlreadyExists();
     }
 
-    // Execute payment using unified API
+    // Create the charge record first (in PENDING status)
+    const charge = await this.chargesRepository.createCharge({
+      studentUserProfileId: dto.studentUserProfileId,
+      chargeType: StudentChargeType.SESSION,
+      centerId: session.centerId,
+      branchId: session.branchId,
+      classId,
+      sessionId: dto.sessionId,
+      amount,
+      status: StudentChargeStatus.PENDING, // Start as pending
+    });
+
+    // Execute payment using unified API with charge reference
     const paymentRequest: ExecutePaymentRequest = {
       amount: Money.from(amount),
       senderId: dto.studentUserProfileId,
@@ -551,7 +559,8 @@ export class StudentBillingService extends BaseService {
         dto.paymentMethod === PaymentMethod.WALLET
           ? PaymentMethod.WALLET
           : PaymentMethod.CASH,
-      correlationId: randomUUID(),
+      referenceType: PaymentReferenceType.STUDENT_CHARGE,
+      referenceId: charge.id, // Now we have the charge ID
     };
 
     const paymentResult = await this.paymentService.createAndExecutePayment(
@@ -560,25 +569,12 @@ export class StudentBillingService extends BaseService {
     );
     const payment = paymentResult.payment;
 
-    // Get payment strategy for billing record
-    const paymentStrategy =
-      await this.paymentStrategyService.getStudentPaymentStrategyForClass(
-        classId,
-      );
+    // Update charge status to COMPLETED after successful payment
+    charge.status = StudentChargeStatus.COMPLETED;
+    charge.totalPaid = amount;
+    charge.lastPaymentAmount = amount;
 
-    // Create unified charge
-    const savedCharge = await this.chargesRepository.createCharge({
-      studentUserProfileId: dto.studentUserProfileId,
-      chargeType: StudentChargeType.SESSION,
-      centerId: session.centerId,
-      branchId: session.branchId,
-      classId,
-      sessionId: dto.sessionId,
-      amount,
-      paymentMethod: dto.paymentMethod,
-      paymentId: payment.id,
-      status: StudentChargeStatus.COMPLETED,
-    });
+    const savedCharge = await this.chargesRepository.saveCharge(charge);
 
     return savedCharge;
   }
@@ -634,7 +630,28 @@ export class StudentBillingService extends BaseService {
       throw StudentBillingErrors.paymentExceedsTotalAmount();
     }
 
-    // Execute payment using unified API
+    // Determine initial status - COMPLETED if fully paid, INSTALLMENT if partial
+    const isFullyPaid = Money.from(initialPaymentAmount).equals(
+      Money.from(totalAmount),
+    );
+    const initialStatus = isFullyPaid
+      ? StudentChargeStatus.COMPLETED
+      : StudentChargeStatus.INSTALLMENT;
+
+    // Create the charge record first
+    const charge = await this.chargesRepository.createCharge({
+      studentUserProfileId: dto.studentUserProfileId,
+      chargeType: StudentChargeType.CLASS,
+      centerId: classEntity.centerId,
+      branchId: classEntity.branchId,
+      classId: dto.classId,
+      amount: totalAmount, // Total class cost
+      totalPaid: initialPaymentAmount, // Initial payment made
+      lastPaymentAmount: initialPaymentAmount, // Initial payment amount
+      status: initialStatus, // COMPLETED if fully paid, INSTALLMENT if partial
+    });
+
+    // Execute payment using unified API with charge reference
     const paymentRequest: ExecutePaymentRequest = {
       amount: Money.from(initialPaymentAmount),
       senderId: dto.studentUserProfileId,
@@ -646,7 +663,8 @@ export class StudentBillingService extends BaseService {
         dto.paymentMethod === PaymentMethod.WALLET
           ? PaymentMethod.WALLET
           : PaymentMethod.CASH,
-      correlationId: randomUUID(),
+      referenceType: PaymentReferenceType.STUDENT_CHARGE,
+      referenceId: charge.id, // Now we have the charge ID
     };
 
     const paymentResult = await this.paymentService.createAndExecutePayment(
@@ -655,34 +673,7 @@ export class StudentBillingService extends BaseService {
     );
     const payment = paymentResult.payment;
 
-    // Get payment strategy for billing record
-    const paymentStrategy =
-      await this.paymentStrategyService.getStudentPaymentStrategyForClass(
-        dto.classId,
-      );
-
-    // Determine initial status - COMPLETED if fully paid, INSTALLMENT if partial
-    const isFullyPaid = Money.from(initialPaymentAmount).equals(
-      Money.from(totalAmount),
-    );
-    const initialStatus = isFullyPaid
-      ? StudentChargeStatus.COMPLETED
-      : StudentChargeStatus.INSTALLMENT;
-
-    // Create unified class charge with installment tracking
-    const savedCharge = await this.chargesRepository.createCharge({
-      studentUserProfileId: dto.studentUserProfileId,
-      chargeType: StudentChargeType.CLASS,
-      centerId: classEntity.centerId,
-      branchId: classEntity.branchId,
-      classId: dto.classId,
-      amount: totalAmount, // Total class cost
-      totalPaid: initialPaymentAmount, // Initial payment made
-      lastPaymentAmount: initialPaymentAmount, // Initial payment amount
-      paymentMethod: dto.paymentMethod,
-      paymentId: payment.id,
-      status: initialStatus, // COMPLETED if fully paid, INSTALLMENT if partial
-    });
+    const savedCharge = await this.chargesRepository.saveCharge(charge);
 
     return savedCharge;
   }

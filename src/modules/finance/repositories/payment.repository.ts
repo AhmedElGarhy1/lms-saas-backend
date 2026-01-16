@@ -58,6 +58,17 @@ export class PaymentRepository extends BaseRepository<Payment> {
     });
   }
 
+  async findByGatewayReference(gatewayReference: string): Promise<Payment | null> {
+    // Find gateway payments and check metadata
+    const payments = await this.getRepository().find({
+      where: { referenceType: PaymentReferenceType.GATEWAY_PAYMENT },
+    });
+
+    return payments.find(payment =>
+      payment.metadata?.gatewayResponse?.gatewayPaymentId === gatewayReference
+    ) || null;
+  }
+
   /**
    * Find payments by correlation ID (for split payments)
    */

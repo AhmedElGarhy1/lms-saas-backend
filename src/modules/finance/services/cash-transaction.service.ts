@@ -100,4 +100,11 @@ export class CashTransactionService extends BaseService {
       await this.cashTransactionRepository.findOne(cashTransactionId);
     return cashTransaction !== null;
   }
+
+  /**
+   * Find cash transaction by payment ID
+   */
+  async findByPaymentId(paymentId: string): Promise<CashTransaction | null> {
+    return this.cashTransactionRepository.findByPaymentId(paymentId);
+  }
 }

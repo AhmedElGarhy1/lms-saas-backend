@@ -263,19 +263,8 @@ export class PaymentService extends BaseService {
     referenceType: PaymentReferenceType,
     referenceId: string,
   ): Promise<boolean> {
-    if (referenceType === PaymentReferenceType.TRANSACTION) {
-      const exists =
-        await this.transactionService.transactionExists(referenceId);
-      if (!exists) {
-        throw FinanceErrors.paymentReferenceInvalid();
-      }
-    } else if (referenceType === PaymentReferenceType.CASH_TRANSACTION) {
-      const exists =
-        await this.cashTransactionService.cashTransactionExists(referenceId);
-      if (!exists) {
-        throw FinanceErrors.paymentReferenceInvalid();
-      }
-    }
+    // Note: Reference validation is now only needed for business entities
+    // Direct relationships (paymentId) handle Transaction/CashTransaction linking
     return true;
   }
 
@@ -422,9 +411,8 @@ export class PaymentService extends BaseService {
     // Update cashbox balance
     await this.cashboxService.updateBalance(cashbox.id, payment.amount);
 
-    // Update payment with cash transaction reference
-    payment.referenceType = PaymentReferenceType.CASH_TRANSACTION;
-    payment.referenceId = cashTransaction.id;
+    // Note: Payment is already linked to CashTransaction via paymentId field
+    // No need for redundant referenceType/referenceId
   }
 
   /**
@@ -482,12 +470,11 @@ export class PaymentService extends BaseService {
         updatedSenderWallet.balance, // Balance after for sender
       );
     } else if (payment.paymentMethod === PaymentMethod.CASH) {
-      if (
-        payment.referenceType === PaymentReferenceType.CASH_TRANSACTION &&
-        payment.referenceId
-      ) {
+      // For cash payments, find and reverse the associated cash transaction
+      const cashTransaction = await this.cashTransactionService.findByPaymentId(payment.id);
+      if (cashTransaction) {
         await this.cashTransactionService.reverseCashTransaction(
-          payment.referenceId,
+          cashTransaction.id,
         );
       }
     }
@@ -529,12 +516,10 @@ export class PaymentService extends BaseService {
         );
       } else if (payment.paymentMethod === PaymentMethod.CASH) {
         // Reverse cash transaction if exists
-        if (
-          payment.referenceType === PaymentReferenceType.CASH_TRANSACTION &&
-          payment.referenceId
-        ) {
+        const cashTransaction = await this.cashTransactionService.findByPaymentId(payment.id);
+        if (cashTransaction) {
           await this.cashTransactionService.reverseCashTransaction(
-            payment.referenceId,
+            cashTransaction.id,
           );
         }
       }

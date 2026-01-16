@@ -109,6 +109,13 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
     return this.getRepository().save(charge);
   }
 
+  async findByIdWithPayments(id: string): Promise<StudentCharge | null> {
+    return this.getRepository().findOne({
+      where: { id },
+      relations: ['payments'],
+    });
+  }
+
   /**
    * Get paginated charges with filtering for a specific center
    */

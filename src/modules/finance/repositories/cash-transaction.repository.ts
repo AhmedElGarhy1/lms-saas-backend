@@ -33,4 +33,13 @@ export class CashTransactionRepository extends BaseRepository<CashTransaction> {
       where: { branchId },
     });
   }
+
+  /**
+   * Find cash transaction by payment ID
+   */
+  async findByPaymentId(paymentId: string): Promise<CashTransaction | null> {
+    return this.getRepository().findOne({
+      where: { paymentId },
+    });
+  }
 }
