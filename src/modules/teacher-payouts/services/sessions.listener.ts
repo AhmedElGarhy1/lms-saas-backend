@@ -1,4 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { OnEvent } from '@nestjs/event-emitter';
 import { TeacherPayoutService } from './teacher-payout.service';
 import { SessionFinishedEvent } from '@/modules/sessions/events/session.events';
@@ -6,7 +8,6 @@ import { SessionEvents } from '@/shared/events/sessions.events.enum';
 import { SessionStatus } from '@/modules/sessions/enums/session-status.enum';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
 import { PaymentStrategyService } from '@/modules/classes/services/payment-strategy.service';
-// import { AttendanceRepository } from '@/modules/attendance/repositories/attendance.repository';
 import { Session } from '@/modules/sessions/entities/session.entity';
 
 @Injectable()
@@ -16,7 +17,7 @@ export class SessionsListener {
   constructor(
     private readonly teacherPayoutService: TeacherPayoutService,
     private readonly paymentStrategyService: PaymentStrategyService,
-    // private readonly attendanceRepository: AttendanceRepository, // Temporarily disabled due to circular dependency
+    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
   @OnEvent(SessionEvents.FINISHED)
@@ -100,6 +101,26 @@ export class SessionsListener {
     );
   }
 
+  private async calculateStudentUnitCount(session: Session): Promise<number> {
+    try {
+      const result = await this.dataSource.query(`
+        SELECT COUNT(*)::int as present_count
+        FROM attendance
+        WHERE "sessionId" = $1
+        AND status IN ($2, $3)  -- Only PRESENT and LATE (students who attended)
+        AND "deletedAt" IS NULL
+      `, [session.id, 'PRESENT', 'LATE']);
+
+      return result[0]?.present_count || 0;
+    } catch (error) {
+      this.logger.error(
+        `Failed to count present students for session ${session.id}:`,
+        error
+      );
+      return 0; // Fallback to 0 on error
+    }
+  }
+
   private async calculateUnitCount(
     session: Session,
     unitType: TeacherPaymentUnit,
@@ -110,12 +131,8 @@ export class SessionsListener {
         return 1;
 
       case TeacherPaymentUnit.STUDENT:
-        // Count present students - temporarily disabled due to circular dependency
-        // TODO: Re-enable when circular dependency is resolved
-        this.logger.warn(
-          `STUDENT payment unit calculation disabled for session ${session.id} due to circular dependency`,
-        );
-        return 0;
+        // Count present and late students (students who actually attended)
+        return await this.calculateStudentUnitCount(session);
 
       case TeacherPaymentUnit.HOUR:
         // Calculate session duration in hours
