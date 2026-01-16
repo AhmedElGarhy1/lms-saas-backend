@@ -84,11 +84,9 @@ export class ExternalPaymentService {
       const methodType =
         request.metadata?.methodType || PaymentGatewayMethod.CARD;
 
-      // Get real user data for payment gateway
-      const userProfile = await this.userService.findStudentUserByProfileId(
+      const user = await this.userService.findUserByProfileId(
         request.senderId,
         actor,
-        false,
       );
 
       // Prepare gateway payment request
@@ -96,7 +94,8 @@ export class ExternalPaymentService {
         amount: request.amount,
         currency: currency,
         orderId: payment.id,
-        customerPhone: userProfile?.phone, // Send actual phone number
+        customerName: user?.name, // Send actual user name
+        customerPhone: user?.phone, // Send actual phone number
         description: `${request.reason} - ${request.amount.toString()} ${currency}`,
         methodType: methodType,
         metadata: {

@@ -103,19 +103,22 @@ export class SessionsListener {
 
   private async calculateStudentUnitCount(session: Session): Promise<number> {
     try {
-      const result = await this.dataSource.query(`
+      const result = await this.dataSource.query(
+        `
         SELECT COUNT(*)::int as present_count
         FROM attendance
         WHERE "sessionId" = $1
         AND status IN ($2, $3)  -- Only PRESENT and LATE (students who attended)
         AND "deletedAt" IS NULL
-      `, [session.id, 'PRESENT', 'LATE']);
+      `,
+        [session.id, 'PRESENT', 'LATE'],
+      );
 
       return result[0]?.present_count || 0;
     } catch (error) {
       this.logger.error(
         `Failed to count present students for session ${session.id}:`,
-        error
+        error,
       );
       return 0; // Fallback to 0 on error
     }

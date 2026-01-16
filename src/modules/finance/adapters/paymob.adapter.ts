@@ -147,11 +147,14 @@ export class PaymobAdapter implements IPaymentGatewayAdapter {
         expiration: 3600, // 1 hour
         order_id: orderId,
         billing_data: {
-          first_name: request.customerName?.split(' ')[0] || 'Customer',
-          last_name:
-            request.customerName?.split(' ').slice(1).join(' ') || 'User',
-          email: request.customerEmail || 'customer@placeholder.local',
-          phone_number: request.customerPhone || '',
+          ...(request.customerName && {
+            first_name: request.customerName.split(' ')[0],
+            last_name: request.customerName.split(' ').slice(1).join(' ') || '',
+          }),
+          ...(request.customerPhone && {
+            phone_number: request.customerPhone,
+          }),
+          email: 'NA',
           apartment: 'NA',
           floor: 'NA',
           street: 'NA',
