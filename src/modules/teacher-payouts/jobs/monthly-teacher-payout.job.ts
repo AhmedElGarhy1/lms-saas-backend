@@ -43,6 +43,7 @@ export class MonthlyTeacherPayoutJob {
         {
           userId: SYSTEM_USER_ID,
           locale: Locale.EN,
+          userProfileId: SYSTEM_USER_ID,
         },
         async () => {
           const payoutsCreated = await this.processMonthlyPayouts(month, year);

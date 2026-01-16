@@ -186,6 +186,7 @@ export class ClassesService extends BaseService {
         await this.teacherPayoutService.createClassPayout(
           classWithRelations,
           teacherPaymentStrategy,
+          actor,
           teacherPaymentStrategy.initialPaymentAmount,
           teacherPaymentStrategy.paymentMethod,
         );

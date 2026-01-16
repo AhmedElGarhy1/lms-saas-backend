@@ -82,6 +82,7 @@ export class PaymentCreatorService {
         request.senderId,
         request.senderType,
       );
+      console.log('request.senderId', request.senderId);
 
       if (senderWallet.balance.lessThan(request.amount)) {
         throw FinanceErrors.insufficientWalletBalance();

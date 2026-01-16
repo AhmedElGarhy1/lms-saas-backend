@@ -15,6 +15,7 @@ import {
 } from '@/modules/finance/services/payment.service';
 import { PaymentReason } from '@/modules/finance/enums/payment-reason.enum';
 import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
+import { PaymentReferenceType } from '@/modules/finance/enums/payment-reference-type.enum';
 import { WalletOwnerType } from '@/modules/finance/enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
@@ -22,7 +23,6 @@ import { Class } from '@/modules/classes/entities/class.entity';
 import { TeacherPaymentStrategyDto } from '@/modules/classes/dto/teacher-payment-strategy.dto';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { ClassAccessService } from '@/modules/classes/services/class-access.service';
-import { SYSTEM_ACTOR } from '@/shared/common/constants/system-actor.constant';
 
 @Injectable()
 export class TeacherPayoutService extends BaseService {
@@ -85,7 +85,6 @@ export class TeacherPayoutService extends BaseService {
         dto.unitType === TeacherPaymentUnit.CLASS
           ? PayoutStatus.INSTALLMENT
           : PayoutStatus.PENDING,
-      paymentMethod: undefined, // Will be set when paying
       totalPaid: dto.totalPaid || Money.zero(), // Start with nothing paid
       lastPaymentAmount: dto.lastPaymentAmount, // Last payment amount
     });
@@ -95,6 +94,7 @@ export class TeacherPayoutService extends BaseService {
   async createClassPayout(
     classEntity: Class,
     strategy: TeacherPaymentStrategyDto,
+    actor: ActorUser,
     initialPaymentAmount?: number,
     paymentMethod?: PaymentMethod,
   ): Promise<TeacherPayoutRecord> {
@@ -125,6 +125,7 @@ export class TeacherPayoutService extends BaseService {
         payout,
         initialPaymentAmount,
         paymentMethodToUse,
+        actor,
       );
     }
 
@@ -169,6 +170,7 @@ export class TeacherPayoutService extends BaseService {
       payout,
       installmentAmount,
       paymentMethod,
+      actor,
     );
   }
 
@@ -180,6 +182,7 @@ export class TeacherPayoutService extends BaseService {
     payout: TeacherPayoutRecord,
     paymentAmount: number,
     paymentMethod: PaymentMethod,
+    actor: ActorUser,
   ): Promise<TeacherPayoutRecord> {
     // Create a temporary payout record for payment (needed by existing flow)
     const tempPayoutForPayment = {
@@ -192,6 +195,7 @@ export class TeacherPayoutService extends BaseService {
     const payment = await this.executePaymentTransaction(
       tempPayoutForPayment,
       paymentMethod,
+      actor,
     );
 
     this.logger.log(
@@ -201,8 +205,6 @@ export class TeacherPayoutService extends BaseService {
     // Update the actual payout record
     payout.totalPaid = payout.totalPaid.add(Money.from(paymentAmount));
     payout.lastPaymentAmount = Money.from(paymentAmount); // Last payment amount
-    payout.paymentId = payment.id;
-    payout.paymentMethod = paymentMethod;
 
     // Check if fully paid
     const totalAmount = payout.unitPrice
@@ -237,22 +239,13 @@ export class TeacherPayoutService extends BaseService {
       }
 
       // Execute the actual payment transaction
-      const payment = await this.executePaymentTransaction(
-        payout,
-        dto.paymentMethod,
-      );
+      await this.executePaymentTransaction(payout, dto.paymentMethod, actor);
 
-      // Store the payment ID in the payout record
-      dto.paymentId = payment.id;
+      // Payment is now linked via referenceType/referenceId - no need to store locally
     }
 
-    // Update status, payment source, and payment ID
-    return this.payoutRepository.updateStatus(
-      id,
-      dto.status,
-      dto.paymentId,
-      dto.paymentMethod,
-    );
+    // Update status only
+    return this.payoutRepository.updateStatus(id, dto.status);
   }
 
   private validateStatusTransition(
@@ -295,6 +288,7 @@ export class TeacherPayoutService extends BaseService {
   private async executePaymentTransaction(
     payout: TeacherPayoutRecord,
     paymentMethod: PaymentMethod,
+    actor: ActorUser,
   ) {
     const request: ExecutePaymentRequest = {
       amount: new Money((payout.unitPrice || 0) * payout.unitCount),
@@ -304,15 +298,17 @@ export class TeacherPayoutService extends BaseService {
       receiverType: WalletOwnerType.USER_PROFILE,
       reason: this.getPaymentReasonForTeacherPayout(payout.unitType),
       paymentMethod: paymentMethod,
-      correlationId: payout.id,
+      referenceType: PaymentReferenceType.TEACHER_PAYOUT,
+      referenceId: payout.id,
     };
 
     const result = await this.paymentService.createAndExecutePayment(
       request,
-      SYSTEM_ACTOR,
+      actor,
     );
     return result.payment;
   }
+
 
   // Helper methods for future use
   async getPendingPayouts(): Promise<TeacherPayoutRecord[]> {

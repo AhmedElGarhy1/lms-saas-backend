@@ -46,7 +46,9 @@ export class ClassPayoutListener implements OnModuleInit {
       await this.teacherPayoutService.createClassPayout(
         event.classEntity,
         event.teacherPaymentStrategy,
+        event.actor,
         event.teacherPaymentStrategy?.initialPaymentAmount,
+        event.teacherPaymentStrategy?.paymentMethod,
       );
 
       const message = event.teacherPaymentStrategy?.initialPaymentAmount

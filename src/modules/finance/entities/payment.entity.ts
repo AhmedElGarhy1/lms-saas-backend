@@ -6,6 +6,7 @@ import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
+import { TeacherPayoutRecord } from '@/modules/teacher-payouts/entities/teacher-payout-record.entity';
 
 @Entity('payments')
 @Index(['senderId', 'senderType'])
@@ -77,4 +78,11 @@ export class Payment extends BaseEntity {
 
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, any>;
+
+  // Relationship to teacher payout (for TEACHER_PAYOUT reference type)
+  @ManyToOne(() => TeacherPayoutRecord, (payout) => payout.payments, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'referenceId' })
+  teacherPayout?: TeacherPayoutRecord;
 }

@@ -128,13 +128,9 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
   async updateStatus(
     id: string,
     status: PayoutStatus,
-    paymentId?: string,
-    paymentMethod?: PaymentMethod,
   ): Promise<TeacherPayoutRecord> {
     await this.getRepository().update(id, {
       status,
-      ...(paymentId && { paymentId }),
-      ...(paymentMethod && { paymentMethod }),
     });
 
     const updated = await this.findById(id);

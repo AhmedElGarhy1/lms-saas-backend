@@ -1,4 +1,4 @@
-import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, Index, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { Session } from '@/modules/sessions/entities/session.entity';
@@ -6,7 +6,7 @@ import { Branch } from '@/modules/centers/entities/branch.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
 import { PayoutStatus } from '../enums/payout-status.enum';
-import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
+import { Payment } from '@/modules/finance/entities/payment.entity';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 
@@ -52,11 +52,6 @@ export class TeacherPayoutRecord extends BaseEntity {
   @Column('uuid')
   centerId: string; // Denormalized: Center owning the branch
 
-  @Column({ type: 'enum', enum: PaymentMethod, nullable: true })
-  paymentMethod?: PaymentMethod; // WALLET or CASH, null initially
-
-  @Column({ type: 'uuid', nullable: true })
-  paymentId?: string;
 
   @Column({
     type: 'decimal',
@@ -113,4 +108,8 @@ export class TeacherPayoutRecord extends BaseEntity {
   @ManyToOne(() => Center)
   @JoinColumn({ name: 'centerId' })
   center: Center;
+
+  // Relationship to all payments made for this payout
+  @OneToMany(() => Payment, (payment) => payment.teacherPayout)
+  payments: Payment[];
 }

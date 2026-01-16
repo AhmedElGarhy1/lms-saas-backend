@@ -115,8 +115,7 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
         'w.ownerId = b.id AND w.ownerType = :branchType',
         { branchType: WalletOwnerType.BRANCH },
       )
-      .where('b.centerId = :centerId', { centerId })
-      .andWhere('b.isActive = true');
+      .where('b.centerId = :centerId', { centerId });
 
     // Check if user can bypass center internal access
     const canBypass =
