@@ -309,7 +309,6 @@ export class TeacherPayoutService extends BaseService {
     return result.payment;
   }
 
-
   // Helper methods for future use
   async getPendingPayouts(): Promise<TeacherPayoutRecord[]> {
     return this.payoutRepository.findPendingPayouts();
