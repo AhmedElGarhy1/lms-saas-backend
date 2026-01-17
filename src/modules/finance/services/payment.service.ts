@@ -15,6 +15,7 @@ import { FinanceErrors } from '../exceptions/finance.errors';
 import { Transactional } from '@nestjs-cls/transactional';
 import { RequestContext } from '@/shared/common/context/request.context';
 import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { WalletService } from './wallet.service';
 import { CashboxService } from './cashbox.service';
 import { TransactionService } from './transaction.service';
@@ -80,6 +81,7 @@ export class PaymentService extends BaseService {
 
   constructor(
     private readonly paymentRepository: PaymentRepository,
+    private readonly accessControlHelperService: AccessControlHelperService,
     private readonly walletService: WalletService,
     private readonly cashboxService: CashboxService,
     private readonly transactionService: TransactionService,
@@ -253,6 +255,20 @@ export class PaymentService extends BaseService {
     actor: ActorUser,
   ): Promise<Pagination<UserPaymentStatementItemDto>> {
     return await this.paymentRepository.getPaymentsPaginated(dto, actor, true);
+  }
+
+  /**
+   * Get a payment with relations
+   * Payment details are relatively public since they're already filtered at the list level
+   */
+  async getPaymentWithRelations(
+    paymentId: string,
+    actor: ActorUser,
+  ): Promise<Payment> {
+    // Get the payment with relations - access control is handled at the list level
+    return await this.paymentRepository.findPaymentWithRelationsOrThrow(
+      paymentId,
+    );
   }
 
   /**

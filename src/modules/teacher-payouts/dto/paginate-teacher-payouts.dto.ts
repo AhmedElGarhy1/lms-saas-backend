@@ -1,4 +1,4 @@
-import { IsOptional, IsEnum, IsUUID, IsDateString } from 'class-validator';
+import { IsOptional, IsEnum, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
@@ -23,6 +23,14 @@ export class PaginateTeacherPayoutsDto extends BasePaginationDto {
   @IsOptional()
   @IsUUID()
   classId?: string;
+
+  @ApiProperty({
+    description: 'Filter by branch ID',
+    required: false,
+  })
+  @IsOptional()
+  @IsUUID()
+  branchId?: string;
 
   @ApiProperty({
     description: 'Filter by payout status',

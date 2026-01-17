@@ -30,6 +30,7 @@ import { CashboxesController } from './controllers/cashboxes.controller';
 import { WebhooksController } from './controllers/webhooks.controller';
 import { MeController } from './controllers/me.controller';
 import { BranchController } from './controllers/branch.controller';
+import { PaymentsController } from './controllers/payments.controller';
 import { CentersModule } from '../centers/centers.module';
 import { UserProfileModule } from '../user-profile/user-profile.module';
 import { SharedModule } from '@/shared/shared.module';
@@ -92,6 +93,7 @@ import { BranchDepositService } from './services/branch-deposit.service';
   controllers: [
     WalletsController,
     CashboxesController,
+    PaymentsController,
     WebhooksController,
     MeController,
     BranchController,

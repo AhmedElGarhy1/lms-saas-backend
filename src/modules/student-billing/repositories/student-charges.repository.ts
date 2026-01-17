@@ -125,6 +125,25 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
   ): Promise<any> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('charge')
+      // Join relations for name fields only (not full entities)
+      .leftJoin('charge.student', 'student')
+      .leftJoin('student.user', 'studentUser')
+      .leftJoin('charge.class', 'class')
+      .leftJoin('charge.branch', 'branch')
+      .leftJoin('charge.center', 'center')
+      // Add name and code fields as selections
+      .addSelect([
+        'student.id',
+        'student.code',
+        'studentUser.id',
+        'studentUser.name',
+        'class.id',
+        'class.name',
+        'branch.id',
+        'branch.city',
+        'center.id',
+        'center.name',
+      ])
       .where('charge.centerId = :centerId', { centerId: actor.centerId });
 
     const canBypassCenterInternalAccess =
@@ -135,9 +154,13 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
 
     if (!canBypassCenterInternalAccess) {
       // check staff access with target class
-      queryBuilder.leftJoin('charge.class', 'class');
-      queryBuilder.leftJoin('class.classStaff', 'classStaff');
-      queryBuilder.andWhere('classStaff.userProfileId = :userProfileId', {
+      queryBuilder
+      .leftJoin('class.classStaff', 'classStaff')
+      .andWhere('classStaff.userProfileId = :userProfileId', {
+        userProfileId: actor.userProfileId,
+      })
+      .leftJoin('branch.branchAccess', 'branchAccess')
+      .andWhere('branchAccess.userProfileId = :userProfileId', {
         userProfileId: actor.userProfileId,
       });
     }
@@ -152,6 +175,24 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
     if (paginateDto.chargeType) {
       queryBuilder.andWhere('charge.chargeType = :chargeType', {
         chargeType: paginateDto.chargeType,
+      });
+    }
+
+    if (paginateDto.status) {
+      queryBuilder.andWhere('charge.status = :status', {
+        status: paginateDto.status,
+      });
+    }
+
+    if (paginateDto.classId) {
+      queryBuilder.andWhere('charge.classId = :classId', {
+        classId: paginateDto.classId,
+      });
+    }
+
+    if (paginateDto.branchId) {
+      queryBuilder.andWhere('charge.branchId = :branchId', {
+        branchId: paginateDto.branchId,
       });
     }
 
@@ -174,5 +215,56 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
       `billing/students/records`,
       queryBuilder,
     );
+  }
+
+  /**
+   * Find a student charge with optimized relations loaded
+   * Only loads id and name/code fields for related entities
+   *
+   * @param chargeId - Student charge ID
+   * @returns StudentCharge with optimized relations
+   */
+  async findStudentChargeWithRelations(chargeId: string): Promise<StudentCharge | null> {
+    return this.getRepository()
+      .createQueryBuilder('charge')
+      // Join relations for name/code fields only (not full entities)
+      .leftJoin('charge.student', 'student')
+      .leftJoin('student.user', 'studentUser')
+      .leftJoin('charge.class', 'class')
+      .leftJoin('charge.session', 'session')
+      .leftJoin('charge.branch', 'branch')
+      .leftJoin('charge.center', 'center')
+      .leftJoinAndSelect('charge.payments', 'payments') // Include full payments for detailed view
+      // Add name and id fields as selections
+      .addSelect([
+        'student.id',
+        'student.code',
+        'studentUser.id',
+        'studentUser.name',
+        'class.id',
+        'class.name',
+        'session.id',
+        'branch.id',
+        'branch.city',
+        'center.id',
+        'center.name',
+      ])
+      .where('charge.id = :chargeId', { chargeId })
+      .getOne();
+  }
+
+  /**
+   * Find a student charge with optimized relations loaded or throw if not found
+   *
+   * @param chargeId - Student charge ID
+   * @returns StudentCharge with optimized relations
+   * @throws Student charge not found error
+   */
+  async findStudentChargeWithRelationsOrThrow(chargeId: string): Promise<StudentCharge> {
+    const charge = await this.findStudentChargeWithRelations(chargeId);
+    if (!charge) {
+      throw new Error(`Student charge with id ${chargeId} not found`);
+    }
+    return charge;
   }
 }

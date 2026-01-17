@@ -88,8 +88,16 @@ export class AttendanceRepository extends BaseRepository<Attendance> {
     // Build query builder for attendance records with relations
     let queryBuilder = this.getEntityManager()
       .createQueryBuilder('attendance', 'a')
-      .leftJoinAndSelect('a.student', 'up')
-      .leftJoinAndSelect('up.user', 'u')
+      // Join relations for name/code fields only (not full entities)
+      .leftJoin('a.student', 'up')
+      .leftJoin('up.user', 'u')
+      // Add name and code fields as selections
+      .addSelect([
+        'up.id',
+        'up.code',
+        'u.id',
+        'u.name',
+      ])
       .where('a.sessionId = :sessionId', { sessionId })
       .andWhere('a.groupId = :groupId', { groupId });
 
@@ -330,5 +338,52 @@ export class AttendanceRepository extends BaseRepository<Attendance> {
         previous: page > 1 ? buildLink(page - 1) : '',
       },
     };
+  }
+
+  /**
+   * Find an attendance record with optimized relations loaded
+   * Only loads id and name fields for related entities
+   *
+   * @param attendanceId - Attendance ID
+   * @returns Attendance with optimized relations
+   */
+  async findAttendanceWithRelations(attendanceId: string): Promise<Attendance | null> {
+    return this.getRepository()
+      .createQueryBuilder('attendance')
+      // Join relations for name fields only (not full entities)
+      .leftJoin('attendance.student', 'student')
+      .leftJoin('student.user', 'studentUser')
+      .leftJoin('attendance.session', 'session')
+      .leftJoin('attendance.group', 'group')
+      .leftJoin('attendance.branch', 'branch')
+      // Add name and id fields as selections
+      .addSelect([
+        'student.id',
+        'student.code',
+        'studentUser.id',
+        'studentUser.name',
+        'session.id',
+        'group.id',
+        'group.name',
+        'branch.id',
+        'branch.city',
+      ])
+      .where('attendance.id = :attendanceId', { attendanceId })
+      .getOne();
+  }
+
+  /**
+   * Find an attendance record with optimized relations loaded or throw if not found
+   *
+   * @param attendanceId - Attendance ID
+   * @returns Attendance with optimized relations
+   * @throws Attendance not found error
+   */
+  async findAttendanceWithRelationsOrThrow(attendanceId: string): Promise<Attendance> {
+    const attendance = await this.findAttendanceWithRelations(attendanceId);
+    if (!attendance) {
+      throw new Error(`Attendance record with id ${attendanceId} not found`);
+    }
+    return attendance;
   }
 }

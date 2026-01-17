@@ -25,7 +25,13 @@ export class SubjectsRepository extends BaseRepository<Subject> {
   ): Promise<Pagination<Subject>> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('subject')
-      .leftJoinAndSelect('subject.center', 'center')
+      // Join relations for name fields only (not full entities)
+      .leftJoin('subject.center', 'center')
+      // Add name and id fields as selections
+      .addSelect([
+        'center.id',
+        'center.name',
+      ])
       .where('subject.centerId = :centerId', { centerId });
 
     return this.paginate(
@@ -34,5 +40,41 @@ export class SubjectsRepository extends BaseRepository<Subject> {
       'subjects',
       queryBuilder,
     );
+  }
+
+  /**
+   * Find a subject with optimized relations loaded
+   * Only loads id and name fields for center relation
+   *
+   * @param subjectId - Subject ID
+   * @returns Subject with center.id and center.name only
+   */
+  async findSubjectWithRelations(subjectId: string): Promise<Subject | null> {
+    return this.getRepository()
+      .createQueryBuilder('subject')
+      // Join relations for name fields only (not full entities)
+      .leftJoin('subject.center', 'center')
+      // Add name and id fields as selections
+      .addSelect([
+        'center.id',
+        'center.name',
+      ])
+      .where('subject.id = :subjectId', { subjectId })
+      .getOne();
+  }
+
+  /**
+   * Find a subject with optimized relations loaded or throw if not found
+   *
+   * @param subjectId - Subject ID
+   * @returns Subject with center.id and center.name only
+   * @throws Subject not found error
+   */
+  async findSubjectWithRelationsOrThrow(subjectId: string): Promise<Subject> {
+    const subject = await this.findSubjectWithRelations(subjectId);
+    if (!subject) {
+      throw new Error(`Subject with id ${subjectId} not found`);
+    }
+    return subject;
   }
 }

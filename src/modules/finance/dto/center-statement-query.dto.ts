@@ -1,4 +1,4 @@
-import { IsOptional, IsUUID, IsBoolean } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginateTransactionDto } from './paginate-transaction.dto';
 
@@ -11,13 +11,4 @@ export class CenterStatementQueryDto extends PaginateTransactionDto {
   @IsOptional()
   @IsUUID()
   branchId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Include inactive branches in the results',
-    example: false,
-    default: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  includeInactive?: boolean;
 }

@@ -48,7 +48,7 @@ export class TeacherPayoutService extends BaseService {
     id: string,
     actor: ActorUser,
   ): Promise<TeacherPayoutRecord> {
-    const payout = await this.payoutRepository.findById(id);
+    const payout = await this.payoutRepository.findTeacherPayoutWithRelations(id);
     if (!payout) {
       throw TeacherPayoutErrors.payoutNotFound();
     }

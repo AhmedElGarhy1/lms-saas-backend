@@ -13,11 +13,5 @@ export class PaginateTransactionDto extends BasePaginationDto {
   @IsEnum(TransactionType)
   type?: TransactionType;
 
-  @ApiProperty({
-    description: 'Filter by correlation ID (for grouped transactions)',
-    example: 'uuid',
-    required: false,
-  })
-  @IsOptional()
-  correlationId?: string;
+ 
 }

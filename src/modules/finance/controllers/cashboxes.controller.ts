@@ -23,6 +23,7 @@ import {
 import { UserPaymentStatementItemDto } from '../dto/payment-statement.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { CenterStatementQueryDto } from '../dto/center-statement-query.dto';
+import { PaginatePaymentDto } from '../dto/paginate-payment.dto';
 import { DateRangeDto } from '@/shared/common/dto/date-range.dto';
 
 @ApiTags('Center Revenue')
@@ -102,14 +103,14 @@ export class CashboxesController {
   @ApiOperation({
     summary: 'Get center payment records',
     description:
-      'Get paginated payment records for centers. Auto-filters by actor center if available.',
+      'Get paginated payment records for centers. Auto-filters by actor center if available. Supports filtering by payment status, reason, and payment method.',
   })
   @ApiResponse({
     status: 200,
     description: 'Center payments retrieved successfully',
   })
   async getCenterPayments(
-    @Query() query: CenterStatementQueryDto,
+    @Query() query: PaginatePaymentDto,
     @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<Pagination<UserPaymentStatementItemDto>>> {
     const payments = await this.paymentService.getCenterPaymentsPaginated(
@@ -139,6 +140,7 @@ export class CashboxesController {
     const statement = await this.cashboxService.getCenterCashStatement(
       centerId,
       query,
+      actor,
     );
 
     return ControllerResponse.success(statement);

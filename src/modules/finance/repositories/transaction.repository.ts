@@ -115,11 +115,7 @@ export class TransactionRepository extends BaseRepository<Transaction> {
       queryBuilder.andWhere('transaction.type = :type', { type: dto.type });
     }
 
-    if (dto.correlationId) {
-      queryBuilder.andWhere('transaction.correlationId = :correlationId', {
-        correlationId: dto.correlationId,
-      });
-    }
+ 
 
     // Apply date range filters
     if (dto.dateFrom) {
@@ -238,11 +234,7 @@ export class TransactionRepository extends BaseRepository<Transaction> {
     if (dto.type) {
       queryBuilder.andWhere('t.type = :type', { type: dto.type });
     }
-    if (dto.correlationId) {
-      queryBuilder.andWhere('t.correlationId = :correlationId', {
-        correlationId: dto.correlationId,
-      });
-    }
+   
 
     // Apply date filters
     if (dto.dateFrom) {
@@ -398,11 +390,7 @@ export class TransactionRepository extends BaseRepository<Transaction> {
     if (dto.type) {
       queryBuilder.andWhere('t.type = :type', { type: dto.type });
     }
-    if (dto.correlationId) {
-      queryBuilder.andWhere('t.correlationId = :correlationId', {
-        correlationId: dto.correlationId,
-      });
-    }
+
 
     // Apply date filters
     if (dto.dateFrom) {

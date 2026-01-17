@@ -32,8 +32,25 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
   ): Promise<Pagination<TeacherPayoutRecord>> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('payout')
+      // Join relations for name fields only (not full entities)
+      .leftJoin('payout.teacher', 'teacher')
+      .leftJoin('teacher.user', 'teacherUser')
       .leftJoin('payout.class', 'class')
-      .where('class.centerId = :centerId', { centerId: actor.centerId });
+      .leftJoin('payout.branch', 'branch')
+      .leftJoin('payout.center', 'center')
+      // Add name and id fields as selections
+      .addSelect([
+        'teacher.id',
+        'teacherUser.id',
+        'teacherUser.name',
+        'class.id',
+        'class.name',
+        'branch.id',
+        'branch.city',
+        'center.id',
+        'center.name',
+      ])
+      .where('payout.centerId = :centerId', { centerId: actor.centerId });
 
     // Access control: Filter by class staff and branch access for non-bypass users
     const canBypassCenterInternalAccess =
@@ -44,13 +61,11 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
 
     if (!canBypassCenterInternalAccess) {
       queryBuilder
-        .leftJoin('class.branch', 'branch')
         .leftJoin('branch.branchAccess', 'branchAccess')
         .andWhere('branchAccess.userProfileId = :userProfileId', {
           userProfileId: actor.userProfileId,
         })
-        .leftJoin('payout.teacher', 'teacherProfile')
-        .leftJoin('teacherProfile.accessTarget', 'targetAccess')
+        .leftJoin('teacher.accessTarget', 'targetAccess')
         .andWhere('targetAccess.id = :userProfileId', {
           userProfileId: actor.userProfileId,
         });
@@ -66,6 +81,12 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
     if (dto.classId) {
       queryBuilder.andWhere('payout.classId = :classId', {
         classId: dto.classId,
+      });
+    }
+
+    if (dto.branchId) {
+      queryBuilder.andWhere('payout.branchId = :branchId', {
+        branchId: dto.branchId,
       });
     }
 
@@ -183,5 +204,55 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
       relations: ['class'],
       order: { createdAt: 'DESC' },
     });
+  }
+
+  /**
+   * Find a teacher payout record with optimized relations loaded
+   * Only loads id and name fields for related entities
+   *
+   * @param payoutId - Teacher payout record ID
+   * @returns TeacherPayoutRecord with optimized relations
+   */
+  async findTeacherPayoutWithRelations(payoutId: string): Promise<TeacherPayoutRecord | null> {
+    return this.getRepository()
+      .createQueryBuilder('payout')
+      // Join relations for name fields only (not full entities)
+      .leftJoin('payout.teacher', 'teacher')
+      .leftJoin('teacher.user', 'teacherUser')
+      .leftJoin('payout.class', 'class')
+      .leftJoin('payout.session', 'session')
+      .leftJoin('payout.branch', 'branch')
+      .leftJoin('payout.center', 'center')
+      .leftJoinAndSelect('payout.payments', 'payments') // Include full payments for detailed view
+      // Add name and id fields as selections
+      .addSelect([
+        'teacher.id',
+        'teacherUser.id',
+        'teacherUser.name',
+        'class.id',
+        'class.name',
+        'session.id',
+        'branch.id',
+        'branch.city',
+        'center.id',
+        'center.name',
+      ])
+      .where('payout.id = :payoutId', { payoutId })
+      .getOne();
+  }
+
+  /**
+   * Find a teacher payout record with optimized relations loaded or throw if not found
+   *
+   * @param payoutId - Teacher payout record ID
+   * @returns TeacherPayoutRecord with optimized relations
+   * @throws Teacher payout not found error
+   */
+  async findTeacherPayoutWithRelationsOrThrow(payoutId: string): Promise<TeacherPayoutRecord> {
+    const payout = await this.findTeacherPayoutWithRelations(payoutId);
+    if (!payout) {
+      throw new Error(`Teacher payout record with id ${payoutId} not found`);
+    }
+    return payout;
   }
 }

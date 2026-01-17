@@ -117,7 +117,8 @@ export class CashboxService extends BaseService {
   async getCenterCashStatement(
     centerId: string | undefined,
     query: CenterStatementQueryDto,
+    actor: ActorUser,
   ): Promise<Pagination<CenterCashStatementItemDto>> {
-    return this.cashboxRepository.getCenterCashStatement(centerId, query);
+    return this.cashboxRepository.getCenterCashStatement(centerId, query, actor);
   }
 }

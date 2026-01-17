@@ -173,12 +173,27 @@ export class SessionsRepository extends BaseRepository<Session> {
   async findSessionWithRelationsOrThrow(sessionId: string): Promise<Session> {
     const session = await this.getRepository()
       .createQueryBuilder('session')
-      // Join and select all required relations for consistent session response
-      .leftJoinAndSelect('session.group', 'group')
-      .leftJoinAndSelect('session.branch', 'branch')
-      .leftJoinAndSelect('group.class', 'class')
-      .leftJoinAndSelect('class.teacher', 'teacher')
-      .leftJoinAndSelect('teacher.user', 'teacherUser')
+      // Join relations for name fields only (not full entities)
+      .leftJoin('session.group', 'group')
+      .leftJoin('session.class', 'class')
+      .leftJoin('session.branch', 'branch')
+      .leftJoin('session.center', 'center')
+      .leftJoin('session.teacher', 'teacher')
+      .leftJoin('teacher.user', 'teacherUser')
+      // Add name and id fields as selections
+      .addSelect([
+        'group.id',
+        'group.name',
+        'class.id',
+        'class.name',
+        'branch.id',
+        'branch.city',
+        'center.id',
+        'center.name',
+        'teacher.id',
+        'teacherUser.id',
+        'teacherUser.name',
+      ])
       .where('session.id = :sessionId', { sessionId })
       .getOne();
 
@@ -309,16 +324,27 @@ export class SessionsRepository extends BaseRepository<Session> {
     const centerId = actor.centerId!;
     const queryBuilder = this.getRepository()
       .createQueryBuilder('session')
-      // Join and select all required relations for consistent session response
-      .leftJoinAndSelect('session.group', 'group')
-      .leftJoinAndSelect('session.branch', 'branch')
-      .leftJoinAndSelect('group.class', 'class')
-      .leftJoinAndSelect('class.teacher', 'teacher')
-      .leftJoinAndSelect('teacher.user', 'teacherUser')
-      .leftJoinAndSelect(
-        'class.studentPaymentStrategy',
-        'studentPaymentStrategy',
-      )
+      // Join relations for name fields only (not full entities)
+      .leftJoin('session.group', 'group')
+      .leftJoin('session.class', 'class')
+      .leftJoin('session.branch', 'branch')
+      .leftJoin('session.center', 'center')
+      .leftJoin('session.teacher', 'teacher')
+      .leftJoin('teacher.user', 'teacherUser')
+      // Add name and id fields as selections
+      .addSelect([
+        'group.id',
+        'group.name',
+        'class.id',
+        'class.name',
+        'branch.id',
+        'branch.city',
+        'center.id',
+        'center.name',
+        'teacher.id',
+        'teacherUser.id',
+        'teacherUser.name',
+      ])
       // Filter by center using denormalized field (no join needed)
       .where('session.centerId = :centerId', { centerId });
 

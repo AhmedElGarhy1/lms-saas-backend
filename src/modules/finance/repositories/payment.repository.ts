@@ -331,4 +331,114 @@ export class PaymentRepository extends BaseRepository<Payment> {
       items,
     };
   }
+
+  /**
+   * Find a payment with optimized relations loaded
+   * Only loads essential fields for related entities
+   *
+   * @param paymentId - Payment ID
+   * @returns Payment with optimized relations
+   */
+  async findPaymentWithRelations(paymentId: string): Promise<Payment | null> {
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('payment')
+      // Join for sender/receiver names (same as pagination)
+      .leftJoin(
+        'user_profiles',
+        'senderProfile',
+        'payment.senderId = senderProfile.id AND payment.senderType = :userProfileType',
+      )
+      .leftJoin('users', 'senderUser', 'senderProfile.userId = senderUser.id')
+      .leftJoin(
+        'branches',
+        'senderBranch',
+        'payment.senderId = senderBranch.id AND payment.senderType = :branchType',
+      )
+      .leftJoin('centers', 'senderCenter', 'senderBranch.centerId = senderCenter.id')
+      .leftJoin(
+        'user_profiles',
+        'receiverProfile',
+        'payment.receiverId = receiverProfile.id AND payment.receiverType = :userProfileType',
+      )
+      .leftJoin('users', 'receiverUser', 'receiverProfile.userId = receiverUser.id')
+      .leftJoin(
+        'branches',
+        'receiverBranch',
+        'payment.receiverId = receiverBranch.id AND payment.receiverType = :branchType',
+      )
+      .leftJoin('centers', 'receiverCenter', 'receiverBranch.centerId = receiverCenter.id')
+      // Join relations for essential fields only (not full entities)
+      .leftJoin('payment.teacherPayout', 'teacherPayout')
+      .leftJoin('payment.studentCharge', 'studentCharge')
+      .leftJoin('teacherPayout.teacher', 'teacherProfile')
+      .leftJoin('teacherProfile.user', 'teacherUser')
+      .leftJoin('studentCharge.student', 'studentProfile')
+      .leftJoin('studentProfile.user', 'studentUser')
+      .leftJoin('studentCharge.class', 'class')
+      .leftJoin('teacherPayout.class', 'teacherClass')
+      // Add sender/receiver names (same as pagination)
+      .addSelect(
+        "COALESCE(senderUser.name, CONCAT(senderCenter.name, CONCAT(' - ', senderBranch.city)))",
+        'senderName',
+      )
+      .addSelect(
+        "COALESCE(receiverUser.name, CONCAT(receiverCenter.name, CONCAT(' - ', receiverBranch.city)))",
+        'receiverName',
+      )
+      // Add essential fields as selections (avoid Money fields to prevent transformer issues)
+      .addSelect([
+        'teacherPayout.id',
+        'teacherPayout.unitType',
+        'teacherPayout.unitPrice', // This is a number, not Money
+        'teacherPayout.status',
+        'teacherProfile.id',
+        'teacherUser.name',
+        'studentCharge.id',
+        'studentCharge.chargeType',
+        'studentCharge.status',
+        'studentProfile.id',
+        'studentProfile.code',
+        'studentUser.name',
+        'class.id',
+        'class.name',
+        'teacherClass.id',
+        'teacherClass.name',
+      ])
+      // Set parameters for joins
+      .setParameters({
+        userProfileType: 'USER_PROFILE',
+        branchType: 'BRANCH',
+      })
+      .where('payment.id = :paymentId', { paymentId });
+
+    // Execute query and map computed fields
+    const rawResult = await queryBuilder.getRawAndEntities();
+    const payment = rawResult.entities[0];
+    const raw = rawResult.raw[0];
+
+    if (!payment) {
+      return null;
+    }
+
+    // Add computed name fields to the payment entity (same as pagination)
+    (payment as any).senderName = raw.senderName;
+    (payment as any).receiverName = raw.receiverName;
+
+    return payment;
+  }
+
+  /**
+   * Find a payment with optimized relations loaded or throw if not found
+   *
+   * @param paymentId - Payment ID
+   * @returns Payment with optimized relations
+   * @throws Payment not found error
+   */
+  async findPaymentWithRelationsOrThrow(paymentId: string): Promise<Payment> {
+    const payment = await this.findPaymentWithRelations(paymentId);
+    if (!payment) {
+      throw new Error(`Payment with id ${paymentId} not found`);
+    }
+    return payment;
+  }
 }

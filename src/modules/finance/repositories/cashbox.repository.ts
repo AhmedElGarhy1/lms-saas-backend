@@ -270,6 +270,15 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
       );
     }
 
+    // Apply transaction type filter
+    if (query.type) {
+      queryBuilder = queryBuilder.andWhere('tx.type = :type', {
+        type: query.type,
+      });
+    }
+
+ 
+
     // Get paginated results with computed fields (names) using TransactionRepository
     const transactionRepo = new TransactionRepository(this.txHost);
     const result = (await transactionRepo.paginate(
@@ -329,6 +338,7 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
   async getCenterCashStatement(
     centerId: string | undefined,
     query: CenterStatementQueryDto,
+    actor: ActorUser,
   ): Promise<Pagination<CenterCashStatementItemDto>> {
     // Build query with joins to get cash transaction and name information
     let queryBuilder = this.getRepository()
@@ -362,6 +372,21 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
       queryBuilder = queryBuilder.andWhere('b.centerId = :centerId', {
         centerId,
       });
+
+      // Check if user can bypass center internal access
+      const canBypass =
+        await this.accessControlHelperService.bypassCenterInternalAccess(
+          actor.userProfileId,
+          centerId,
+        );
+
+      // Apply branch access filtering only if user cannot bypass
+      if (!canBypass) {
+        queryBuilder = queryBuilder.andWhere(
+          'b.id IN (SELECT "branchId" FROM branch_access WHERE "userProfileId" = :userProfileId)',
+          { userProfileId: actor.userProfileId },
+        );
+      }
     }
 
     // Optional branch filter

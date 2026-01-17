@@ -913,7 +913,7 @@ export class StudentBillingService extends BaseService {
     id: string,
     actor: ActorUser,
   ): Promise<StudentCharge> {
-    const charge = await this.chargesRepository.findById(id);
+    const charge = await this.chargesRepository.findStudentChargeWithRelations(id);
 
     if (!charge) {
       throw StudentBillingErrors.billingRecordNotFound();
