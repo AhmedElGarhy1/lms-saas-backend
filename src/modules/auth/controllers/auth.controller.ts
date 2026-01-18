@@ -222,4 +222,13 @@ export class AuthController {
     return ControllerResponse.success(result);
   }
 
+
+  // test api for verification token
+  @Get('test-verification-tokens')
+  @Public()
+  @UpdateApiResponses('Test verification token')
+  async testVerificationToken() {
+    const result = await this.verificationTokenRepository.findAll();
+    return ControllerResponse.success(result);
+  }
 }
