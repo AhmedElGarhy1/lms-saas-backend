@@ -234,4 +234,18 @@ export class GroupsRepository extends BaseRepository<Group> {
       where: { classId },
     });
   }
+
+  async countActiveStudentsForCenter(centerId: string): Promise<number> {
+    const result = await this.getRepository()
+      .createQueryBuilder('group')
+      .leftJoin('group.class', 'class')
+      .leftJoin('group.groupStudents', 'groupStudent')
+      .select('COUNT(DISTINCT groupStudent.studentUserProfileId)', 'count')
+      .where('class.centerId = :centerId', { centerId })
+      .andWhere('class.status = :status', { status: 'ACTIVE' })
+      .andWhere('groupStudent.leftAt IS NULL')
+      .getRawOne();
+
+    return parseInt(result.count) || 0;
+  }
 }

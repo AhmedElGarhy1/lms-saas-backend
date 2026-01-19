@@ -818,4 +818,59 @@ export class SessionsRepository extends BaseRepository<Session> {
 
     return Number(result[0]?.totalStudents || 0);
   }
+
+  async countActiveTeachersForCenter(centerId: string): Promise<number> {
+    // Count distinct teachers assigned to classes that have sessions in the current month
+    const currentMonth = new Date();
+    currentMonth.setDate(1); // Start of current month
+    currentMonth.setHours(0, 0, 0, 0);
+
+    const nextMonth = new Date(currentMonth);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+    const result = await this.getRepository()
+      .createQueryBuilder('session')
+      .select('COUNT(DISTINCT session.teacherUserProfileId)', 'count')
+      .leftJoin('session.class', 'class')
+      .where('class.centerId = :centerId', { centerId })
+      .andWhere('session.startTime >= :startOfMonth', { startOfMonth: currentMonth })
+      .andWhere('session.startTime < :startOfNextMonth', { startOfNextMonth: nextMonth })
+      .andWhere('session.status IN (:...statuses)', { statuses: ['COMPLETED', 'IN_PROGRESS', 'SCHEDULED'] })
+      .getRawOne();
+
+    return parseInt(result.count) || 0;
+  }
+
+  async countActiveStudentsForCenter(centerId: string): Promise<number> {
+    // Count distinct students enrolled in groups that have classes with sessions in the current month
+    const currentMonth = new Date();
+    currentMonth.setDate(1); // Start of current month
+    currentMonth.setHours(0, 0, 0, 0);
+
+    const nextMonth = new Date(currentMonth);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+    const result = await this.getEntityManager().query<
+      Array<{ count: number }>
+    >(
+      `
+      SELECT COUNT(DISTINCT gs."studentUserProfileId")::int as count
+      FROM group_students gs
+      INNER JOIN groups g ON gs."groupId" = g.id
+      INNER JOIN classes c ON g."classId" = c.id
+      WHERE c."centerId" = $1::uuid
+        AND gs."leftAt" IS NULL
+        AND EXISTS (
+          SELECT 1 FROM sessions s
+          WHERE s."classId" = c.id
+            AND s."startTime" >= $2
+            AND s."startTime" < $3
+            AND s.status IN ('COMPLETED', 'IN_PROGRESS', 'SCHEDULED')
+        )
+      `,
+      [centerId, currentMonth, nextMonth],
+    );
+
+    return Number(result[0]?.count || 0);
+  }
 }

@@ -1116,4 +1116,12 @@ export class SessionsService extends BaseService {
 
     return virtualSession;
   }
+
+  async countActiveTeachersForCenter(centerId: string): Promise<number> {
+    return this.sessionsRepository.countActiveTeachersForCenter(centerId);
+  }
+
+  async countActiveStudentsForCenter(centerId: string): Promise<number> {
+    return this.sessionsRepository.countActiveStudentsForCenter(centerId);
+  }
 }

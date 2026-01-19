@@ -257,6 +257,17 @@ export class PaymentService extends BaseService {
     return await this.paymentRepository.getPaymentsPaginated(dto, actor, true);
   }
 
+  async getCenterFinancialMetricsForMonth(
+    centerId: string,
+    year: number,
+    month: number,
+  ): Promise<{
+    wallet: { revenue: Money; expenses: Money };
+    cash: { revenue: Money; expenses: Money };
+  }> {
+    return this.paymentRepository.getCenterFinancialMetricsForMonth(centerId, year, month);
+  }
+
   /**
    * Get a payment with relations
    * Payment details are relatively public since they're already filtered at the list level

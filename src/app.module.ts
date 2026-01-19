@@ -56,6 +56,7 @@ import { StudentBillingModule } from './modules/student-billing/student-billing.
 import { TeacherPayoutModule } from './modules/teacher-payouts/teacher-payouts.module';
 import { R2Module } from './modules/r2/r2.module';
 import { FileModule } from './modules/file/file.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -105,6 +106,7 @@ import { FileModule } from './modules/file/file.module';
     TeacherPayoutModule,
     R2Module,
     FileModule,
+    DashboardModule,
     RateLimitModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: () => ({

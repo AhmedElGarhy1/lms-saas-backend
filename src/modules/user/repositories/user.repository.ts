@@ -1309,4 +1309,43 @@ export class UserRepository extends BaseRepository<User> {
     }
     return filteredItems;
   }
+
+  async countStudentsForCenter(centerId: string): Promise<number> {
+    // Count students enrolled in groups that belong to classes in this center
+    const result = await this.getRepository()
+      .createQueryBuilder('user')
+      .leftJoin('user.userProfiles', 'userProfile', 'userProfile.profileType = :type', { type: ProfileType.STUDENT })
+      .leftJoin("userProfile.centerAccess", "centerAccess")
+      .where("centerAccess.centerId = :centerId", { centerId })
+      .select('COUNT(DISTINCT user.id)', 'count')
+      .getRawOne();
+
+    return parseInt(result.count) || 0;
+  }
+
+  async countTeachersForCenter(centerId: string): Promise<number> {
+    // Count teachers assigned to classes in this center
+    const result = await this.getRepository()
+      .createQueryBuilder('user')
+      .leftJoin('user.userProfiles', 'userProfile', 'userProfile.profileType = :type', { type: ProfileType.TEACHER })
+      .leftJoin("userProfile.centerAccess", "centerAccess")
+      .where('centerAccess.centerId = :centerId', { centerId })
+      .select('COUNT(DISTINCT user.id)', 'count')
+      .getRawOne();
+
+    return parseInt(result.count) || 0;
+  }
+
+  async countStaffForCenter(centerId: string): Promise<number> {
+    // Count staff assigned to classes in this center
+    const result = await this.getRepository()
+      .createQueryBuilder('user')
+      .leftJoin('user.userProfiles', 'userProfile', 'userProfile.profileType = :type', { type: ProfileType.STAFF })
+      .leftJoin("userProfile.centerAccess", "centerAccess")
+      .where('centerAccess.centerId = :centerId', { centerId })
+      .select('COUNT(DISTINCT user.id)', 'count')
+      .getRawOne();
+
+    return parseInt(result.count) || 0;
+  }
 }

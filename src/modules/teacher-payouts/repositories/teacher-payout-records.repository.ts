@@ -12,6 +12,7 @@ import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
 import { TeacherPayoutErrors } from '../exceptions/teacher-payout.errors';
 import { TEACHER_PAYOUT_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
+import { Money } from '@/shared/common/utils/money.util';
 
 @Injectable()
 export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayoutRecord> {
@@ -145,6 +146,33 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
       relations: ['teacher', 'class'],
     });
   }
+
+  async getPendingPayoutsForCenter(centerId: string): Promise<{ count: number; totalAmount: Money }> {
+    // Calculate pending amounts based on payout status:
+    // - PENDING: amount due = unitPrice
+    // - INSTALLMENT: amount due = unitPrice - totalPaid
+
+    const result = await this.getRepository()
+      .createQueryBuilder('payout')
+      .select('COUNT(payout.id)', 'count')
+      .addSelect(`
+        SUM(
+          CASE
+            WHEN payout.status = 'PENDING' THEN payout."unitPrice"
+            WHEN payout.status = 'INSTALLMENT' THEN GREATEST(payout."unitPrice" - payout."totalPaid", 0)
+            ELSE 100
+          END
+        )`, 'totalAmount')
+      .where('payout.centerId = :centerId', { centerId })
+      .andWhere('payout.status IN (:...statuses)', { statuses: [PayoutStatus.PENDING, PayoutStatus.INSTALLMENT] })
+      .getRawOne();
+
+    return {
+      count: parseInt(result.count) || 0,
+      totalAmount: new Money(parseFloat(result.totalAmount) || 0),
+    };
+  }
+
 
   async updateStatus(
     id: string,

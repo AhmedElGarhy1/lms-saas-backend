@@ -44,6 +44,10 @@ export class TeacherPayoutService extends BaseService {
     return this.payoutRepository.paginateTeacherPayouts(dto, actor);
   }
 
+  async getPendingPayoutsForCenter(centerId: string): Promise<{ count: number; totalAmount: Money }> {
+    return this.payoutRepository.getPendingPayoutsForCenter(centerId);
+  }
+
   async getPayoutById(
     id: string,
     actor: ActorUser,

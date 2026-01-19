@@ -6,13 +6,15 @@ import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-t
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
+import { PaymentReason } from '../enums/payment-reason.enum';
+import { PaymentMethod } from '../enums/payment-method.enum';
 import { SelectQueryBuilder } from 'typeorm';
 import { PaginatePaymentDto } from '../dto/paginate-payment.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { UserPaymentStatementItemDto } from '../dto/payment-statement.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { PAYMENT_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
+import { Money } from '@/shared/common/utils/money.util';
 
 // Define type for payment with computed name fields
 type PaymentWithNames = Payment & {
@@ -440,5 +442,70 @@ export class PaymentRepository extends BaseRepository<Payment> {
       throw new Error(`Payment with id ${paymentId} not found`);
     }
     return payment;
+  }
+
+  async getCenterFinancialMetricsForMonth(
+    centerId: string,
+    year: number,
+    month: number,
+  ): Promise<{
+    wallet: { revenue: Money; expenses: Money };
+    cash: { revenue: Money; expenses: Money };
+  }> {
+    // Define revenue and expense payment reasons
+    const revenueReasons = [
+      PaymentReason.SESSION_FEE,
+      PaymentReason.MONTHLY_FEE,
+      PaymentReason.CLASS_FEE,
+    ];
+
+    const expenseReasons = [
+      PaymentReason.TEACHER_STUDENT_PAYOUT,
+      PaymentReason.TEACHER_HOUR_PAYOUT,
+      PaymentReason.TEACHER_SESSION_PAYOUT,
+      PaymentReason.TEACHER_MONTHLY_PAYOUT,
+      PaymentReason.TEACHER_CLASS_PAYOUT,
+    ];
+
+    const result = await this.getRepository()
+      .createQueryBuilder('payment')
+      .leftJoin('payment.teacherPayout', 'teacherPayout')
+      .leftJoin('payment.studentCharge', 'studentCharge')
+      .select([
+        'payment.paymentMethod as "paymentMethod"',
+        'SUM(CASE WHEN payment.reason IN (:...revenueReasons) THEN payment.amount ELSE 0 END) as revenue',
+        'SUM(CASE WHEN payment.reason IN (:...expenseReasons) THEN payment.amount ELSE 0 END) as expenses',
+      ])
+      .where('(teacherPayout.centerId = :centerId OR studentCharge.centerId = :centerId)', { centerId })
+      .andWhere('payment.status = :status', { status: PaymentStatus.COMPLETED })
+      .andWhere('EXTRACT(YEAR FROM payment.createdAt) = :year', { year })
+      .andWhere('EXTRACT(MONTH FROM payment.createdAt) = :month', { month })
+      .setParameters({
+        revenueReasons,
+        expenseReasons,
+      })
+      .groupBy('payment.paymentMethod')
+      .getRawMany();
+
+    // Initialize results
+    const metrics = {
+      wallet: { revenue: new Money(0), expenses: new Money(0) },
+      cash: { revenue: new Money(0), expenses: new Money(0) },
+    };
+
+    // Parse results
+    for (const row of result) {
+      const method = row.paymentMethod as PaymentMethod;
+      const revenue = new Money(parseFloat(row.revenue) || 0);
+      const expenses = new Money(parseFloat(row.expenses) || 0);
+
+      if (method === PaymentMethod.WALLET) {
+        metrics.wallet = { revenue, expenses };
+      } else if (method === PaymentMethod.CASH) {
+        metrics.cash = { revenue, expenses };
+      }
+    }
+
+    return metrics;
   }
 }

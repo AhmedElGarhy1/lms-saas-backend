@@ -176,6 +176,18 @@ export class UserService extends BaseService {
     return result;
   }
 
+  async countStudentsForCenter(centerId: string): Promise<number> {
+    return this.userRepository.countStudentsForCenter(centerId);
+  }
+
+  async countTeachersForCenter(centerId: string): Promise<number> {
+    return this.userRepository.countTeachersForCenter(centerId);
+  }
+
+  async countStaffForCenter(centerId: string): Promise<number> {
+    return this.userRepository.countStaffForCenter(centerId);
+  }
+
   async paginateUsers(params: PaginateUsersDto, actor: ActorUser) {
     const centerId = params.centerId ?? actor.centerId;
     params.centerId = centerId;

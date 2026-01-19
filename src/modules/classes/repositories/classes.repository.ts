@@ -2,20 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { Class } from '../entities/class.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { PaginateClassesDto } from '../dto/paginate-classes.dto';
-import { Pagination } from '@/shared/common/types/pagination.types';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { ScheduleConflictQueryBuilder } from '../utils/schedule-conflict-query-builder';
 import { Group } from '../entities/group.entity';
 import { GroupStudent } from '../entities/group-student.entity';
 import { TeacherConflictDto } from '../dto/schedule-conflict.dto';
-import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { ClassesErrors } from '../exceptions/classes.errors';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { CLASS_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
-import { StudentPaymentType } from '../enums/student-payment-type.enum';
 
 @Injectable()
 export class ClassesRepository extends BaseRepository<Class> {
@@ -405,5 +402,17 @@ export class ClassesRepository extends BaseRepository<Class> {
         subjectId,
       },
     });
+  }
+
+  async countActiveTeachersForCenter(centerId: string): Promise<number> {
+    const result = await this.getRepository()
+      .createQueryBuilder('class')
+      .select('COUNT(DISTINCT class.teacherUserProfileId)', 'count')
+      .where('class.centerId = :centerId', { centerId })
+      .andWhere('class.status = :status', { status: 'ACTIVE' })
+      .andWhere('class.teacherUserProfileId IS NOT NULL')
+      .getRawOne();
+
+    return parseInt(result.count) || 0;
   }
 }
