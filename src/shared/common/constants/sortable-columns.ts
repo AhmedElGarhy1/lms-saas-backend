@@ -6,7 +6,6 @@
 // User Management
 export const USER_SORTABLE_COLUMNS = [
   'name',
-  'isActive',
   'createdAt',
   'updatedAt',
 ] as const;
@@ -14,7 +13,6 @@ export const USER_SORTABLE_COLUMNS = [
 // Center Management
 export const CENTER_SORTABLE_COLUMNS = [
   'name',
-  'isActive',
   'createdAt',
   'updatedAt',
 ] as const;
@@ -23,7 +21,6 @@ export const CENTER_SORTABLE_COLUMNS = [
 export const ROLE_SORTABLE_COLUMNS = [
   'name',
   'type',
-  'isActive',
   'createdAt',
   'updatedAt',
 ] as const;
