@@ -477,23 +477,20 @@ export class UserService extends BaseService {
     updateData: UpdateUserDto,
     actor: ActorUser,
   ): Promise<User> {
+    const {userInfo, ...userData} = updateData;
     await this.accessControlHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,
       targetUserProfileId: actor.userProfileId,
     });
-
     // Database unique constraint will handle phone uniqueness
-    if (updateData.userInfo) {
-      await this.userInfoService.updateUserInfo(userId, updateData.userInfo);
+    if (userInfo) {
+      await this.userInfoService.updateUserInfo(userId, userInfo);
     }
 
-    const updatedUser = (await this.userRepository.update(userId, updateData))!;
-
+    console.log('updating user', userId)
+    const updatedUser = (await this.userRepository.update(userId, userData))!;
     // Determine which fields were updated
-    const updatedFields = Object.keys(updateData).filter(
-      (key) => key !== 'userInfo' && updateData[key as keyof UpdateUserDto],
-    );
-
+    const updatedFields = Object.keys(userData);
     // Emit event after work is done
     await this.eventEmitter.emitAsync(
       UserEvents.UPDATED,
