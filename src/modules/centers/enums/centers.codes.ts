@@ -1,7 +1,6 @@
 export enum CentersErrorCode {
   // Branch errors
   BRANCH_NOT_FOUND = 'CTR_BRN_001',
-  BRANCH_ALREADY_EXISTS = 'CTR_BRN_002',
 
   // Center errors
   CENTER_NOT_FOUND = 'CTR_CTR_001',

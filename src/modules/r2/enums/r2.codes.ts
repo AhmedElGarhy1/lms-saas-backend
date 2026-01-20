@@ -3,7 +3,7 @@
  * Following the established pattern of module-specific error codes
  */
 export enum R2ErrorCode {
-  FILE_NOT_FOUND = 'R2_001',
+  // FILE_NOT_FOUND removed - use FileErrors.fileNotFound() instead
   UPLOAD_FAILED = 'R2_002',
   INVALID_FILE_TYPE = 'R2_003',
   FILE_TOO_LARGE = 'R2_004',

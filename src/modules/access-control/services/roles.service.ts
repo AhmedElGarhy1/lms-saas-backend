@@ -19,6 +19,7 @@ import {
 } from '../events/role.events';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 
 @Injectable()
 export class RolesService extends BaseService {
@@ -135,7 +136,7 @@ export class RolesService extends BaseService {
       data.userProfileId,
     );
     if (!profile) {
-      throw AccessControlErrors.userProfileNotFound();
+      throw UserProfileErrors.userProfileNotFound();
     }
 
     if (

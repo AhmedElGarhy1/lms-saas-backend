@@ -12,6 +12,7 @@ import { RateLimitService } from '@/modules/rate-limit/services/rate-limit.servi
 import { notificationGatewayConfig } from '../config/notification-gateway.config';
 import { Config } from '@/shared/config/config';
 import { AuthErrors } from '@/modules/auth/exceptions/auth.errors';
+import { UserErrors } from '@/modules/user/exceptions/user.errors';
 
 /**
  * Custom Socket.IO adapter that integrates Redis for horizontal scaling
@@ -232,7 +233,7 @@ export class RedisIoAdapter extends IoAdapter {
               `WebSocket connection rejected: User not found - socketId: ${socket.id}, namespace: ${socket.nsp.name}, userId: ${payload.sub}`,
             );
           }
-          throw AuthErrors.userNotFound();
+          throw UserErrors.userNotFound();
         }
 
         if (!user.isActive) {
@@ -241,7 +242,7 @@ export class RedisIoAdapter extends IoAdapter {
               `WebSocket connection rejected: User account is inactive - socketId: ${socket.id}, namespace: ${socket.nsp.name}, userId: ${payload.sub}`,
             );
           }
-          throw AuthErrors.profileInactive();
+          throw UserErrors.userInactive();
         }
 
         // Step 3: User-based rate limiting (AFTER authentication) - Line 205-245

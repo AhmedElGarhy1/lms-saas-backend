@@ -3,6 +3,8 @@ import {
   BaseErrorHelpers,
 } from '@/shared/common/exceptions/domain.exception';
 import { AuthErrorCode } from '../enums/auth.codes';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
+import { UserErrors } from '@/modules/user/exceptions/user.errors';
 
 /**
  * Auth-specific error helpers
@@ -43,13 +45,7 @@ export class AuthErrors extends BaseErrorHelpers {
     return this.createNoDetails(AuthErrorCode.PHONE_NOT_VERIFIED);
   }
 
-  static userNotFound(): DomainException {
-    return this.createNoDetails(AuthErrorCode.USER_NOT_FOUND);
-  }
 
-  static profileInactive(): DomainException {
-    return this.createNoDetails(AuthErrorCode.PROFILE_INACTIVE);
-  }
 
   static sessionExpired(): DomainException {
     return this.createNoDetails(AuthErrorCode.SESSION_EXPIRED);

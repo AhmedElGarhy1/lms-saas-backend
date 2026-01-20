@@ -3,16 +3,13 @@ import {
   BaseErrorHelpers,
 } from '@/shared/common/exceptions/domain.exception';
 import { AccessControlErrorCode } from '../enums/access-control.codes';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 
 /**
  * Access control-specific error helpers
  * Clean, simple, and maintainable error creation for roles, permissions, and access control
  */
 export class AccessControlErrors extends BaseErrorHelpers {
-  // User profile and permissions errors
-  static userProfileNotFound(): DomainException {
-    return this.createNoDetails(AccessControlErrorCode.USER_PROFILE_NOT_FOUND);
-  }
 
   static userAccessNotFound(): DomainException {
     return this.createNoDetails(AccessControlErrorCode.USER_ACCESS_NOT_FOUND);
@@ -71,12 +68,6 @@ export class AccessControlErrors extends BaseErrorHelpers {
     );
   }
 
-  static insufficientPrivilegesForRoleAssignment(): DomainException {
-    return this.createNoDetails(
-      AccessControlErrorCode.INSUFFICIENT_PRIVILEGES_FOR_ROLE_ASSIGNMENT,
-    );
-  }
-
   static userAlreadyHasRole(): DomainException {
     return this.createNoDetails(AccessControlErrorCode.USER_ALREADY_HAS_ROLE);
   }
@@ -92,16 +83,7 @@ export class AccessControlErrors extends BaseErrorHelpers {
     );
   }
 
-  static roleIsInUse(): DomainException {
-    return this.createNoDetails(AccessControlErrorCode.ROLE_IS_IN_USE);
-  }
-
-  static invalidRoleStatusTransition(): DomainException {
-    return this.createNoDetails(
-      AccessControlErrorCode.INVALID_ROLE_STATUS_TRANSITION,
-    );
-  }
-
+  
   static invalidProfileTypeForRoleAssignment(): DomainException {
     return this.createNoDetails(
       AccessControlErrorCode.INVALID_PROFILE_TYPE_FOR_ROLE_ASSIGNMENT,

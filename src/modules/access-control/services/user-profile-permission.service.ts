@@ -8,6 +8,7 @@ import { UserProfileService } from '@/modules/user-profile/services/user-profile
 import { PERMISSIONS } from '../constants/permissions';
 import { isUUID } from 'class-validator';
 import { CommonErrors } from '@/shared/common/exceptions/common.errors';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 
 @Injectable()
 export class UserProfilePermissionService extends BaseService {
@@ -46,12 +47,12 @@ export class UserProfilePermissionService extends BaseService {
     if (userProfileId) {
       // Validate that userProfileId is actually a UUID before querying
       if (!isUUID(userProfileId)) {
-        throw AccessControlErrors.userProfileNotFound();
+        throw UserProfileErrors.userProfileNotFound();
       }
 
       const profile = await this.userProfileService.findOne(userProfileId);
       if (!profile) {
-        throw AccessControlErrors.userProfileNotFound();
+        throw UserProfileErrors.userProfileNotFound();
       }
       return profile.profileType;
     }
@@ -173,7 +174,7 @@ export class UserProfilePermissionService extends BaseService {
         profileType = profileTypeOrId;
       } else {
         // Invalid string - neither UUID nor ProfileType
-        throw AccessControlErrors.userProfileNotFound();
+        throw UserProfileErrors.userProfileNotFound();
       }
     } else {
       // It's already a ProfileType enum

@@ -55,10 +55,6 @@ export class UserErrors extends BaseErrorHelpers {
     return this.createNoDetails(UserErrorCode.USER_RESTORATION_FORBIDDEN);
   }
 
-  static cannotDeleteSelf(): DomainException {
-    return this.createNoDetails(UserErrorCode.USER_CANNOT_DELETE_SELF);
-  }
-
   static userCreationForbidden(): DomainException {
     return this.createNoDetails(UserErrorCode.USER_CREATION_FORBIDDEN);
   }
@@ -68,9 +64,6 @@ export class UserErrors extends BaseErrorHelpers {
     return this.createNoDetails(UserErrorCode.PASSWORD_RESET_EXPIRED);
   }
 
-  static passwordResetInvalid(): DomainException {
-    return this.createNoDetails(UserErrorCode.PASSWORD_RESET_INVALID);
-  }
 
   // Profile operations
   static profileUpdateForbidden(): DomainException {

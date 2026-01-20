@@ -12,7 +12,7 @@ export enum AuthErrorCode
   OTP_EXPIRED = 'AUTH_011',
 
   // User management
-  USER_NOT_FOUND = 'AUTH_014',
+  // USER_NOT_FOUND removed - use UserErrors.userNotFound() instead
   PASSWORD_RESET_REQUIRED = 'AUTH_017',
   PASSWORD_RESET_EXPIRED = 'AUTH_018',
 
@@ -25,8 +25,6 @@ export enum AuthErrorCode
   REFRESH_TOKEN_EXPIRED = 'AUTH_023',
   REFRESH_TOKEN_NOT_FOUND = 'AUTH_031',
 
-  // Profile
-  PROFILE_INACTIVE = 'AUTH_024',
   PROFILE_SELECTION_REQUIRED = 'AUTH_025',
 
   // Two-factor authentication specific errors

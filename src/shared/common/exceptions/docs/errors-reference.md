@@ -16,14 +16,12 @@ This guide helps frontend developers handle API errors from the LMS system. Each
 | `AUTH_009` | Please enter your authentication code.                      | 2FA code required                     |
 | `AUTH_010` | Invalid authentication code.                                | 2FA code incorrect                    |
 | `AUTH_011` | Authentication code has expired. Please request a new one.  | 2FA code expired                      |
-| `AUTH_014` | Account not found.                                          | User account doesn't exist            |
 | `AUTH_017` | Password reset required. Please reset your password.        | Password expired, reset needed        |
 | `AUTH_018` | Password reset link has expired. Please request a new one.  | Reset token expired                   |
 | `AUTH_019` | Your session has expired. Please login again.               | JWT/session expired                   |
 | `AUTH_020` | Invalid session. Please login again.                        | Invalid JWT token                     |
 | `AUTH_022` | Session expired. Please login again.                        | Refresh token expired                 |
 | `AUTH_023` | Session expired. Please login again.                        | Refresh token invalid                 |
-| `AUTH_024` | Your profile is inactive. Please contact support.           | User profile deactivated              |
 | `AUTH_025` | Please select a profile to continue.                        | Multiple profiles, selection required |
 | `AUTH_026` | Two-factor authentication is required.                      | 2FA required but not enabled          |
 | `AUTH_027` | Two-factor authentication is already enabled.               | 2FA already active                    |
@@ -1093,14 +1091,13 @@ enum AuthErrorCode {
   OTP_REQUIRED = 'AUTH_009',
   OTP_INVALID = 'AUTH_010',
   OTP_EXPIRED = 'AUTH_011',
-  USER_NOT_FOUND = 'AUTH_014',
+  // USER_NOT_FOUND removed - use UserErrors.userNotFound() instead
   PASSWORD_RESET_REQUIRED = 'AUTH_017',
   PASSWORD_RESET_EXPIRED = 'AUTH_018',
   SESSION_EXPIRED = 'AUTH_019',
   SESSION_INVALID = 'AUTH_020',
   REFRESH_TOKEN_INVALID = 'AUTH_022',
   REFRESH_TOKEN_EXPIRED = 'AUTH_023',
-  PROFILE_INACTIVE = 'AUTH_024',
   PROFILE_SELECTION_REQUIRED = 'AUTH_025',
   TWO_FACTOR_NOT_ENABLED = 'AUTH_026',
   TWO_FACTOR_ALREADY_ENABLED = 'AUTH_027',
@@ -1182,7 +1179,7 @@ enum FinanceErrorCode {
 
 ```javascript
 enum AccessControlErrorCode {
-  USER_PROFILE_NOT_FOUND = 'ACL_001',
+  // USER_PROFILE_NOT_FOUND removed - use UserProfileErrors.userProfileNotFound() instead
   USER_ALREADY_HAS_ACCESS = 'ACL_002',
   CENTER_ACCESS_NOT_FOUND = 'ACL_003',
   CENTER_ACCESS_ALREADY_EXISTS = 'ACL_004',

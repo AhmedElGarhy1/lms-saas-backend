@@ -14,9 +14,6 @@ export class CentersErrors extends BaseErrorHelpers {
     return this.createNoDetails(CentersErrorCode.BRANCH_NOT_FOUND);
   }
 
-  static branchAlreadyExists(): DomainException {
-    return this.createNoDetails(CentersErrorCode.BRANCH_ALREADY_EXISTS);
-  }
 
   // Center errors
   static centerNotFound(): DomainException {

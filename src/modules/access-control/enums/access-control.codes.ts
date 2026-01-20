@@ -1,6 +1,6 @@
 export enum AccessControlErrorCode {
   // User profile and permissions errors
-  USER_PROFILE_NOT_FOUND = 'ACL_001',
+  // USER_PROFILE_NOT_FOUND removed - use UserProfileErrors.userProfileNotFound() instead
   USER_ACCESS_NOT_FOUND = 'ACL_025',
   USER_ALREADY_HAS_ACCESS = 'ACL_002',
 
@@ -18,14 +18,11 @@ export enum AccessControlErrorCode {
 
   // Assignment and management errors
   CANNOT_ASSIGN_ROLE_TO_SELF = 'ACL_011',
-  INSUFFICIENT_PRIVILEGES_FOR_ROLE_ASSIGNMENT = 'ACL_012',
   USER_ALREADY_HAS_ROLE = 'ACL_013',
   USER_DOES_NOT_HAVE_ROLE = 'ACL_014',
 
   // Status and state errors
   CANNOT_MODIFY_SYSTEM_ROLE = 'ACL_015',
-  ROLE_IS_IN_USE = 'ACL_016',
-  INVALID_ROLE_STATUS_TRANSITION = 'ACL_017',
   INVALID_PROFILE_TYPE_FOR_ROLE_ASSIGNMENT = 'ACL_018',
   ROLE_ALREADY_ACTIVE = 'ACL_019',
   UNSUPPORTED_PROFILE_TYPE_FOR_CENTER_ACCESS = 'ACL_020',

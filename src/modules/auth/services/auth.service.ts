@@ -26,6 +26,7 @@ import {
 } from '@/modules/auth/events/auth.events';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { UserErrors } from '@/modules/user/exceptions/user.errors';
 
 @Injectable()
 export class AuthService extends BaseService {
@@ -82,7 +83,7 @@ export class AuthService extends BaseService {
         this.logger.error(
           `User object missing or invalid ID for phone: ${dto.phone}`,
         );
-        throw AuthErrors.userNotFound();
+        throw UserErrors.userNotFound();
       }
 
       // Check if 2FA is enabled
@@ -114,7 +115,7 @@ export class AuthService extends BaseService {
       return this.completeLogin(user);
     } else {
       // User doesn't exist - return same error message to prevent enumeration
-      throw AuthErrors.userNotFound();
+      throw UserErrors.userNotFound();
     }
   }
 
@@ -162,7 +163,7 @@ export class AuthService extends BaseService {
     }
 
     if (!user) {
-      throw AuthErrors.userNotFound();
+      throw UserErrors.userNotFound();
     }
 
     // Send phone verification OTP (notification system will fetch phone)
@@ -253,7 +254,7 @@ export class AuthService extends BaseService {
     const user = await this.userService.findOne(actor.id, true);
 
     if (!user) {
-      throw AuthErrors.userNotFound();
+      throw UserErrors.userNotFound();
     }
 
     if (user.twoFactorEnabled) {
@@ -290,7 +291,7 @@ export class AuthService extends BaseService {
     const user = await this.userService.findOne(actor.id, true);
 
     if (!user) {
-      throw AuthErrors.userNotFound();
+      throw UserErrors.userNotFound();
     }
 
     if (!user.twoFactorEnabled) {
@@ -407,7 +408,7 @@ export class AuthService extends BaseService {
     // Get user (validation already done by strategy)
     const user = await this.userService.findOne(userId, true);
     if (!user) {
-      throw AuthErrors.userNotFound();
+      throw UserErrors.userNotFound();
     }
 
     // Generate new tokens

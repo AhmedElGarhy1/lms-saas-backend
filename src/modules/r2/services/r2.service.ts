@@ -16,6 +16,7 @@ import {
   FileInfo,
   PresignedUrlOptions,
 } from '../interfaces/r2-config.interface';
+import { FileErrors } from '@/modules/file/exceptions/file.errors';
 
 /**
  * Cloudflare R2 Service
@@ -212,7 +213,7 @@ export class R2Service extends BaseService {
    */
   async getFileInfo(key: string): Promise<FileInfo> {
     if (!this.s3Client) {
-      throw R2Errors.fileNotFound(key);
+      throw FileErrors.fileNotFound(key);
     }
 
     try {
@@ -235,7 +236,7 @@ export class R2Service extends BaseService {
       };
     } catch (error) {
       this.logger.error(`Failed to get file info: ${key}`, error);
-      throw R2Errors.fileNotFound(key);
+      throw FileErrors.fileNotFound(key);
     }
   }
 

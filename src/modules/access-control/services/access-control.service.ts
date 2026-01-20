@@ -20,6 +20,7 @@ import { RolesService } from './roles.service';
 import { PERMISSIONS, PermissionScope } from '../constants/permissions';
 import { UserProfilePermissionService } from './user-profile-permission.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 
 @Injectable()
 export class AccessControlService extends BaseService {
@@ -257,7 +258,7 @@ export class AccessControlService extends BaseService {
 
     const profile = await this.userProfileService.findOne(body.userProfileId);
     if (!profile) {
-      throw AccessControlErrors.userProfileNotFound();
+      throw UserProfileErrors.userProfileNotFound();
     }
 
     let requiredPermission: { action: string; scope: PermissionScope };
@@ -316,7 +317,7 @@ export class AccessControlService extends BaseService {
 
     const profile = await this.userProfileService.findOne(body.userProfileId);
     if (!profile) {
-      throw AccessControlErrors.userProfileNotFound();
+      throw UserProfileErrors.userProfileNotFound();
     }
 
     let requiredPermission: { action: string; scope: PermissionScope };
@@ -369,7 +370,7 @@ export class AccessControlService extends BaseService {
 
     const profile = await this.userProfileService.findOne(body.userProfileId);
     if (!profile) {
-      throw AccessControlErrors.userProfileNotFound();
+      throw UserProfileErrors.userProfileNotFound();
     }
 
     let requiredPermission: { action: string; scope: PermissionScope };
