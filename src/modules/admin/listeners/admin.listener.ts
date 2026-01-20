@@ -2,8 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
   CreateAdminEvent,
-  AdminCreatedEvent,
-  AdminExportedEvent,
 } from '../events/admin.events';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
 import { AdminActivityType } from '../enums/admin-activity-type.enum';
@@ -52,11 +50,6 @@ export class AdminListener {
       new UserCreatedEvent(user, userProfile, actor),
     );
 
-    // Emit profile creation event for activity logging
-    await this.typeSafeEventEmitter.emitAsync(
-      AdminEvents.CREATED,
-      new AdminCreatedEvent(user, userProfile, actor, admin, roleId),
-    );
 
     // Send phone verification OTP via event (notification service will fetch phone)
     if (user.phone && user.id) {
@@ -72,6 +65,4 @@ export class AdminListener {
     }
   }
 
-  @OnEvent(AdminEvents.EXPORTED)
-  async handleAdminExported(event: AdminExportedEvent) {}
 }

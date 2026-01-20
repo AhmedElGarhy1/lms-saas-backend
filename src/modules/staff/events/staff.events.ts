@@ -15,30 +15,3 @@ export class CreateStaffEvent {
     public readonly isCenterAccessActive?: boolean,
   ) {}
 }
-
-export class StaffCreatedEvent {
-  constructor(
-    public readonly user: User,
-    public readonly userProfile: UserProfile,
-    public readonly actor: ActorUser,
-    public readonly staff: Staff,
-    public readonly centerId?: string,
-    public readonly roleId?: string,
-  ) {}
-}
-
-/**
- * Event (result-focused, output-oriented)
- * Represents the fact that staff data was exported.
- */
-export class StaffExportedEvent extends BaseEvent {
-  constructor(
-    public readonly format: string,
-    public readonly filename: string,
-    public readonly recordCount: number,
-    public readonly filters: Record<string, any>,
-    actor: ActorUser,
-  ) {
-    super(actor);
-  }
-}

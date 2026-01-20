@@ -55,23 +55,15 @@ import {
 } from '@/modules/access-control/events/access-control.events';
 import {
   CreateAdminEvent,
-  AdminCreatedEvent,
-  AdminExportedEvent,
 } from '@/modules/admin/events/admin.events';
 import {
   CreateStaffEvent,
-  StaffCreatedEvent,
-  StaffExportedEvent,
 } from '@/modules/staff/events/staff.events';
 import {
   CreateStudentEvent,
-  StudentCreatedEvent,
-  StudentExportedEvent,
 } from '@/modules/students/events/student.events';
 import {
   CreateTeacherEvent,
-  TeacherCreatedEvent,
-  TeacherExportedEvent,
 } from '@/modules/teachers/events/teacher.events';
 import {
   ClassCreatedEvent,
@@ -177,23 +169,15 @@ export type EventTypeMap = {
 
   // Admin Events
   [AdminEvents.CREATE]: CreateAdminEvent;
-  [AdminEvents.CREATED]: AdminCreatedEvent;
-  [AdminEvents.EXPORTED]: AdminExportedEvent;
 
   // Staff Events
   [StaffEvents.CREATE]: CreateStaffEvent;
-  [StaffEvents.CREATED]: StaffCreatedEvent;
-  [StaffEvents.EXPORTED]: StaffExportedEvent;
 
   // Student Events
   [StudentEvents.CREATE]: CreateStudentEvent;
-  [StudentEvents.CREATED]: StudentCreatedEvent;
-  [StudentEvents.EXPORTED]: StudentExportedEvent;
 
   // Teacher Events
   [TeacherEvents.CREATE]: CreateTeacherEvent;
-  [TeacherEvents.CREATED]: TeacherCreatedEvent;
-  [TeacherEvents.EXPORTED]: TeacherExportedEvent;
 
   // Class Events
   [ClassEvents.CREATED]: ClassCreatedEvent;

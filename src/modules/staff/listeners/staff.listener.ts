@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { CreateStaffEvent, StaffCreatedEvent } from '../events/staff.events';
+import { CreateStaffEvent } from '../events/staff.events';
 import { StaffEvents } from '@/shared/events/staff.events.enum';
 import { UserEvents } from '@/shared/events/user.events.enum';
 import {
@@ -50,12 +50,6 @@ export class StaffListener {
     await this.typeSafeEventEmitter.emitAsync(
       UserEvents.CREATED,
       new UserCreatedEvent(user, userProfile, actor),
-    );
-
-    // Emit profile creation event for activity logging
-    await this.typeSafeEventEmitter.emitAsync(
-      StaffEvents.CREATED,
-      new StaffCreatedEvent(user, userProfile, actor, staff, centerId, roleId),
     );
 
     // Send phone verification OTP via event (notification service will fetch phone)

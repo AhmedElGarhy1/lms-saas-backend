@@ -12,7 +12,6 @@ import { ExportUsersDto } from '@/modules/user/dto/export-users.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { StudentEvents } from '@/shared/events/student.events.enum';
-import { StudentExportedEvent } from '../events/student.events';
 import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiTags('Student Actions')
@@ -61,18 +60,6 @@ export class StudentActionsController {
       format,
       baseFilename,
       res,
-    );
-
-    // Emit event for activity logging
-    await this.typeSafeEventEmitter.emitAsync(
-      StudentEvents.EXPORTED,
-      new StudentExportedEvent(
-        format,
-        baseFilename,
-        users.length,
-        query,
-        actor,
-      ),
     );
 
     return data;

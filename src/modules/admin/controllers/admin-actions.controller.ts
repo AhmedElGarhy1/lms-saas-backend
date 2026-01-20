@@ -12,7 +12,6 @@ import { ExportUsersDto } from '@/modules/user/dto/export-users.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
-import { AdminExportedEvent } from '../events/admin.events';
 import { AdminOnly } from '@/shared/common/decorators';
 
 @ApiTags('Admin Actions')
@@ -63,11 +62,6 @@ export class AdminActionsController {
       res,
     );
 
-    // Emit event for activity logging
-    await this.typeSafeEventEmitter.emitAsync(
-      AdminEvents.EXPORTED,
-      new AdminExportedEvent(format, baseFilename, users.length, query, actor),
-    );
 
     return data;
   }

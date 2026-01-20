@@ -167,6 +167,7 @@ export class AccessControlService extends BaseService {
     dto: CenterAccessDto,
     actor: ActorUser,
     skipExsitance: boolean = false,
+    skipUserAccessValidation: boolean = false,
   ) {
     // i have access to the center
     await this.accessControlHelperService.validateCenterAccess({
@@ -174,12 +175,13 @@ export class AccessControlService extends BaseService {
       centerId: dto.centerId ?? actor.centerId,
     });
     // i have access to the target user
+    if (!skipUserAccessValidation) {
     await this.accessControlHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,
       targetUserProfileId: dto.userProfileId,
       centerId: dto.centerId ?? actor.centerId,
     });
-
+  }
     // Check if access exists
     const canCenterAccess =
       await this.accessControlHelperService.canCenterAccess({

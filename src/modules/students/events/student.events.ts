@@ -15,28 +15,3 @@ export class CreateStudentEvent {
   ) {}
 }
 
-export class StudentCreatedEvent {
-  constructor(
-    public readonly user: User,
-    public readonly userProfile: UserProfile,
-    public readonly actor: ActorUser,
-    public readonly student: Student,
-    public readonly centerId?: string,
-  ) {}
-}
-
-/**
- * Event (result-focused, output-oriented)
- * Represents the fact that student data was exported.
- */
-export class StudentExportedEvent extends BaseEvent {
-  constructor(
-    public readonly format: string,
-    public readonly filename: string,
-    public readonly recordCount: number,
-    public readonly filters: Record<string, any>,
-    actor: ActorUser,
-  ) {
-    super(actor);
-  }
-}

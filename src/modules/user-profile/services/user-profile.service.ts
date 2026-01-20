@@ -333,15 +333,15 @@ export class UserProfileService extends BaseService {
     dto: CreateUserProfileDto,
     actor: ActorUser,
   ): Promise<UserProfile> {
-    const centerId = actor.centerId;
     // 1. Validate that actor has permission to create this profile type
     await this.userProfilePermissionService.canCreate(actor, dto.profileType);
+    
 
     const {isActive, ...userData} = dto;
 
     let isCenterAccessActive = true;
     let isUserProfileActive = true;
-    if (centerId) {
+    if (dto.centerId) {
       if(isActive !== undefined) {
         isCenterAccessActive = isActive;
       }
@@ -350,9 +350,6 @@ export class UserProfileService extends BaseService {
         isUserProfileActive = isActive;
       }
     }
-    console.log('isActive', isActive);
-    console.log('isCenterAccessActive', isCenterAccessActive);
-    console.log('isUserProfileActive', isUserProfileActive);
    
     // 2. Create User entity (includes UserInfo creation)
     const createdUser = await this.userService.createUser(userData);
@@ -370,6 +367,8 @@ export class UserProfileService extends BaseService {
       isUserProfileActive
     );
 
+    const centerId = actor.centerId ?? dto.centerId;
+
     // 5. Emit domain events for STAFF, STUDENT, TEACHER and ADMIN profiles
     // Access control, UserCreatedEvent, and phone verification are handled by listeners
     if (dto.profileType === ProfileType.STAFF) {
@@ -379,7 +378,6 @@ export class UserProfileService extends BaseService {
         ProfileType.STAFF,
       )) as Staff;
 
-      const centerId = dto.centerId ?? actor.centerId;
       await this.typeSafeEventEmitter.emitAsync(
         StaffEvents.CREATE,
         new CreateStaffEvent(
@@ -399,7 +397,6 @@ export class UserProfileService extends BaseService {
         ProfileType.STUDENT,
       )) as Student;
 
-      const centerId = dto.centerId ?? actor.centerId;
       await this.typeSafeEventEmitter.emitAsync(
         StudentEvents.CREATE,
         new CreateStudentEvent(
@@ -418,7 +415,6 @@ export class UserProfileService extends BaseService {
         ProfileType.TEACHER,
       )) as Teacher;
 
-      const centerId = dto.centerId ?? actor.centerId;
       await this.typeSafeEventEmitter.emitAsync(
         TeacherEvents.CREATE,
         new CreateTeacherEvent(

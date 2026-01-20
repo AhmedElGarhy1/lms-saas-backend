@@ -23,8 +23,6 @@ import { ClassExportMapper } from '@/shared/common/mappers/class-export.mapper';
 import { ExportClassesDto } from '../dto/export-classes.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
-import { ClassEvents } from '@/shared/events/classes.events.enum';
-import { ClassExportedEvent } from '../events/class.events';
 import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiBearerAuth()
@@ -73,18 +71,6 @@ export class ClassesActionsController {
       format,
       baseFilename,
       res,
-    );
-
-    // Emit event for activity logging
-    await this.typeSafeEventEmitter.emitAsync(
-      ClassEvents.EXPORTED,
-      new ClassExportedEvent(
-        format,
-        baseFilename,
-        classes.length,
-        query,
-        actor,
-      ),
     );
 
     return data;

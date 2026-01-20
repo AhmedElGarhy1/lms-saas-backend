@@ -11,8 +11,6 @@ import { UserResponseExportMapper } from '@/shared/common/mappers/user-response-
 import { ExportUsersDto } from '@/modules/user/dto/export-users.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
-import { StaffEvents } from '@/shared/events/staff.events.enum';
-import { StaffExportedEvent } from '../events/staff.events';
 import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiTags('Staff Actions')
@@ -61,12 +59,6 @@ export class StaffActionsController {
       format,
       baseFilename,
       res,
-    );
-
-    // Emit event for activity logging
-    await this.typeSafeEventEmitter.emitAsync(
-      StaffEvents.EXPORTED,
-      new StaffExportedEvent(format, baseFilename, users.length, query, actor),
     );
 
     return data;

@@ -23,6 +23,7 @@ export class CenterAccessListener {
         { userProfileId, centerId, isActive: isCenterAccessActive ?? true },
         actor,
         true,
+        true,
       );
     } catch (error: unknown) {
       this.logger.error(

@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
   CreateTeacherEvent,
-  TeacherCreatedEvent,
 } from '../events/teacher.events';
 import { TeacherEvents } from '@/shared/events/teacher.events.enum';
 import { UserEvents } from '@/shared/events/user.events.enum';
@@ -48,12 +47,6 @@ export class TeacherListener {
     await this.typeSafeEventEmitter.emitAsync(
       UserEvents.CREATED,
       new UserCreatedEvent(user, userProfile, actor),
-    );
-
-    // Emit profile creation event for activity logging
-    await this.typeSafeEventEmitter.emitAsync(
-      TeacherEvents.CREATED,
-      new TeacherCreatedEvent(user, userProfile, actor, teacher, centerId),
     );
 
     // Send phone verification OTP via event (notification service will fetch phone)

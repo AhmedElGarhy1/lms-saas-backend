@@ -2,8 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
   CreateStudentEvent,
-  StudentCreatedEvent,
-  StudentExportedEvent,
 } from '../events/student.events';
 import { StudentEvents } from '@/shared/events/student.events.enum';
 import { UserEvents } from '@/shared/events/user.events.enum';
@@ -51,12 +49,6 @@ export class StudentListener {
       new UserCreatedEvent(user, userProfile, actor),
     );
 
-    // Emit profile creation event for activity logging
-    await this.typeSafeEventEmitter.emitAsync(
-      StudentEvents.CREATED,
-      new StudentCreatedEvent(user, userProfile, actor, student, centerId),
-    );
-
     // Send phone verification OTP via event (notification service will fetch phone)
     if (user.phone && user.id) {
       try {
@@ -71,8 +63,4 @@ export class StudentListener {
     }
   }
 
-  @OnEvent(StudentEvents.EXPORTED)
-  async handleStudentExported(event: StudentExportedEvent) {
-    // Activity logging removed
-  }
 }

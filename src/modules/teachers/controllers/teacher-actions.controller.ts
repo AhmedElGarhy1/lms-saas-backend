@@ -11,8 +11,6 @@ import { UserResponseExportMapper } from '@/shared/common/mappers/user-response-
 import { ExportUsersDto } from '@/modules/user/dto/export-users.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
-import { TeacherEvents } from '@/shared/events/teacher.events.enum';
-import { TeacherExportedEvent } from '../events/teacher.events';
 import { ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiTags('Teacher Actions')
@@ -61,18 +59,6 @@ export class TeacherActionsController {
       format,
       baseFilename,
       res,
-    );
-
-    // Emit event for activity logging
-    await this.typeSafeEventEmitter.emitAsync(
-      TeacherEvents.EXPORTED,
-      new TeacherExportedEvent(
-        format,
-        baseFilename,
-        users.length,
-        query,
-        actor,
-      ),
     );
 
     return data;
