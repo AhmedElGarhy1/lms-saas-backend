@@ -60,7 +60,7 @@ export class AccessControlService extends BaseService {
         centerId,
       });
 
-    if (!IHaveAccessToGranterUser) {
+    if (!IHaveAccessToGranterUser && !skipExsitance) {
       throw AccessControlErrors.cannotAccessGranterUser();
     }
 
@@ -71,7 +71,7 @@ export class AccessControlService extends BaseService {
         centerId,
       });
 
-    if (!IHaveAccessToTargetUser) {
+    if (!IHaveAccessToTargetUser && !skipExsitance) {
       throw AccessControlErrors.cannotAccessUserRecords();
     }
 
@@ -79,7 +79,7 @@ export class AccessControlService extends BaseService {
       await this.accessControlHelperService.isSuperAdmin(
         body.granterUserProfileId,
       );
-    if (isGranterSuperAdmin) {
+    if (isGranterSuperAdmin && !skipExsitance) {
       throw AccessControlErrors.cannotAccessUserRecords();
     }
 

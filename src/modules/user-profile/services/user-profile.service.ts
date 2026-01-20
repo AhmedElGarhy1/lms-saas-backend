@@ -237,6 +237,7 @@ export class UserProfileService extends BaseService {
     userId: string,
     profileType: ProfileType,
     profileRefId: string,
+    isActive: boolean = true,
   ): Promise<UserProfile> {
     // Check if user already has this profile type
     const existingProfile = await this.findUserProfileByType(
@@ -253,6 +254,7 @@ export class UserProfileService extends BaseService {
       profileType,
       profileRefId,
       code,
+      isActive,
     });
 
     return userProfile;
@@ -331,11 +333,29 @@ export class UserProfileService extends BaseService {
     dto: CreateUserProfileDto,
     actor: ActorUser,
   ): Promise<UserProfile> {
+    const centerId = actor.centerId;
     // 1. Validate that actor has permission to create this profile type
     await this.userProfilePermissionService.canCreate(actor, dto.profileType);
 
+    const {isActive, ...userData} = dto;
+
+    let isCenterAccessActive = true;
+    let isUserProfileActive = true;
+    if (centerId) {
+      if(isActive !== undefined) {
+        isCenterAccessActive = isActive;
+      }
+    } else {
+      if(isActive !== undefined) {
+        isUserProfileActive = isActive;
+      }
+    }
+    console.log('isActive', isActive);
+    console.log('isCenterAccessActive', isCenterAccessActive);
+    console.log('isUserProfileActive', isUserProfileActive);
+   
     // 2. Create User entity (includes UserInfo creation)
-    const createdUser = await this.userService.createUser(dto);
+    const createdUser = await this.userService.createUser(userData);
 
     // 3. Get or create profileRefEntity (Staff/Admin/Teacher) based on profileType
     // Use existing profileRefId if provided, otherwise create new one
@@ -347,6 +367,7 @@ export class UserProfileService extends BaseService {
       createdUser.id,
       dto.profileType,
       profileRefId,
+      isUserProfileActive
     );
 
     // 5. Emit domain events for STAFF, STUDENT, TEACHER and ADMIN profiles
@@ -368,6 +389,7 @@ export class UserProfileService extends BaseService {
           staff,
           centerId,
           dto.roleId,
+          isCenterAccessActive
         ),
       );
     } else if (dto.profileType === ProfileType.STUDENT) {
@@ -386,6 +408,7 @@ export class UserProfileService extends BaseService {
           actor,
           student,
           centerId,
+          isCenterAccessActive
         ),
       );
     } else if (dto.profileType === ProfileType.TEACHER) {
@@ -404,6 +427,7 @@ export class UserProfileService extends BaseService {
           actor,
           teacher,
           centerId,
+          isCenterAccessActive
         ),
       );
     } else if (dto.profileType === ProfileType.ADMIN) {
@@ -421,6 +445,7 @@ export class UserProfileService extends BaseService {
           actor,
           admin,
           dto.roleId,
+          isCenterAccessActive
         ),
       );
     }

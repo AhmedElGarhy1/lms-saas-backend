@@ -20,4 +20,7 @@ export class CenterAccessDto {
   @IsUUID()
   @Exists(Center)
   centerId: string;
+
+  // private property
+  isActive?: boolean;
 }

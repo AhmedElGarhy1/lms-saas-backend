@@ -15,12 +15,12 @@ export class CenterAccessListener {
 
   @OnEvent(AccessControlEvents.GRANT_CENTER_ACCESS)
   async handleGrantCenterAccess(event: GrantCenterAccessEvent) {
-    const { userProfileId, centerId, actor } = event;
+    const { userProfileId, centerId, actor, isCenterAccessActive } = event;
 
     try {
       // Call service to grant access
       await this.accessControlService.grantCenterAccess(
-        { userProfileId, centerId },
+        { userProfileId, centerId, isActive: isCenterAccessActive ?? true },
         actor,
         true,
       );

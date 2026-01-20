@@ -11,6 +11,7 @@ export class CreateTeacherEvent {
     public readonly actor: ActorUser,
     public readonly teacher: Teacher,
     public readonly centerId?: string,
+    public readonly isCenterAccessActive?: boolean,
   ) {}
 }
 

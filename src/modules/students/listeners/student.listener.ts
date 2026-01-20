@@ -25,13 +25,13 @@ export class StudentListener {
 
   @OnEvent(StudentEvents.CREATE)
   async handleCreateStudent(event: CreateStudentEvent) {
-    const { user, userProfile, actor, student, centerId } = event;
+    const { user, userProfile, actor, student, centerId, isCenterAccessActive } = event;
 
     // Grant center access
     if (centerId) {
       await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.GRANT_CENTER_ACCESS,
-        new GrantCenterAccessEvent(userProfile.id, centerId, actor, user.id),
+        new GrantCenterAccessEvent(userProfile.id, centerId, actor, user.id, isCenterAccessActive),
       );
       await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.GRANT_USER_ACCESS,

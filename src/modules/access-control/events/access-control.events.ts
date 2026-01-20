@@ -7,6 +7,7 @@ export class GrantCenterAccessEvent {
     public readonly centerId: string,
     public readonly actor: ActorUser,
     public readonly targetUserId?: string, // Who was affected (the user getting access)
+    public readonly isCenterAccessActive?: boolean,
   ) {}
 }
 

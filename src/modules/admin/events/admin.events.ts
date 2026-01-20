@@ -11,6 +11,7 @@ export class CreateAdminEvent {
     public readonly actor: ActorUser,
     public readonly admin: Admin,
     public readonly roleId?: string,
+    public readonly isCenterAccessActive?: boolean,
   ) {}
 }
 

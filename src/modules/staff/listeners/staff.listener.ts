@@ -20,13 +20,13 @@ export class StaffListener {
 
   @OnEvent(StaffEvents.CREATE)
   async handleCreateStaff(event: CreateStaffEvent) {
-    const { user, userProfile, actor, staff, centerId, roleId } = event;
+    const { user, userProfile, actor, staff, centerId, roleId, isCenterAccessActive } = event;
 
     // Grant center access
     if (centerId) {
       await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.GRANT_CENTER_ACCESS,
-        new GrantCenterAccessEvent(userProfile.id, centerId, actor, user.id),
+        new GrantCenterAccessEvent(userProfile.id, centerId, actor, user.id, isCenterAccessActive),
       );
       await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.GRANT_USER_ACCESS,

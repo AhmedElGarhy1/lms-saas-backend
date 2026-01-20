@@ -11,6 +11,7 @@ export class CreateStudentEvent {
     public readonly actor: ActorUser,
     public readonly student: Student,
     public readonly centerId?: string,
+    public readonly isCenterAccessActive?: boolean,
   ) {}
 }
 

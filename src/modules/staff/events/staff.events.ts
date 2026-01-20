@@ -12,6 +12,7 @@ export class CreateStaffEvent {
     public readonly staff: Staff,
     public readonly centerId?: string,
     public readonly roleId?: string,
+    public readonly isCenterAccessActive?: boolean,
   ) {}
 }
 
