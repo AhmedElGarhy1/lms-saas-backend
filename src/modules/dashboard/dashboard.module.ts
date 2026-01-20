@@ -12,7 +12,9 @@ import { SessionsModule } from '../sessions/sessions.module';
 import { SharedModule } from '@/shared/shared.module';
 import { AccessControlModule } from '../access-control/access-control.module';
 import { CenterDashboardController } from './controllers/center-dashboard.controller';
+import { AdminDashboardController } from './controllers/admin-dashboard.controller';
 import { CenterDashboardService } from './services/center-dashboard.service';
+import { AdminDashboardService } from './services/admin-dashboard.service';
 import { UserModule } from '../user/user.module';
 
 @Module({
@@ -29,8 +31,8 @@ import { UserModule } from '../user/user.module';
     SharedModule,
     AccessControlModule,
   ],
-  controllers: [CenterDashboardController],
-  providers: [CenterDashboardService],
-  exports: [CenterDashboardService],
+  controllers: [CenterDashboardController, AdminDashboardController],
+  providers: [CenterDashboardService, AdminDashboardService],
+  exports: [CenterDashboardService, AdminDashboardService],
 })
 export class DashboardModule {}

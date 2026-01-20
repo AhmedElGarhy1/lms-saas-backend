@@ -600,6 +600,18 @@ export const PERMISSIONS = {
     },
   },
 
+  // ===== DASHBOARD & ANALYTICS PERMISSIONS =====
+  DASHBOARD: {
+    VIEW: {
+      action: 'dashboard:view',
+      scope: PermissionScope.CENTER,
+    },
+    VIEW_ALL_CENTERS: {
+      action: 'dashboard:view-all-centers',
+      scope: PermissionScope.ADMIN,
+    },
+  },
+
   // ===== SYSTEM PERMISSIONS =====
   SYSTEM: {
     HEALTH_CHECK: {
