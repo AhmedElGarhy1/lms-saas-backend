@@ -201,9 +201,7 @@ export class UserRepository extends BaseRepository<User> {
     }
 
     if (userProfileId) {
-      queryBuilder.andWhere('userProfiles.id != :userProfileId', {
-        userProfileId,
-      });
+      queryBuilder.andWhere('userProfiles.id != :val1', { val1: userProfileId });
       if (userAccess === AccessibleUsersEnum.INCLUDE) {
         queryBuilder.andWhere(
           `EXISTS (
@@ -607,8 +605,8 @@ export class UserRepository extends BaseRepository<User> {
     }
 
     if (userProfileId) {
-      queryBuilder.andWhere('"userProfiles".id != :userProfileId', {
-        userProfileId,
+      queryBuilder.andWhere('"userProfiles".id != :val1', {
+        val1: userProfileId,
       });
       if (userAccess === AccessibleUsersEnum.INCLUDE) {
         queryBuilder.andWhere(
