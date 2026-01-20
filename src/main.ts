@@ -77,15 +77,6 @@ async function bootstrap() {
           example: '550e8400-e29b-41d4-a716-446655440002',
         },
       },
-      {
-        in: 'header',
-        required: false,
-        name: 'x-branch-id',
-        schema: {
-          type: 'string',
-          example: '550e8400-e29b-41d4-a716-446655440001',
-        },
-      },
     )
     .addServer('http://localhost:3000/api/v1', 'Development server')
     .addServer(

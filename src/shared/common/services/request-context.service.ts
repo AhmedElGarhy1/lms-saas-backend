@@ -28,7 +28,6 @@ export class RequestContextService {
   private requestIP?: string;
   private userAgent?: string;
   private centerId?: string;
-  private branchId?: string;
 
   // Session context
   private sessionId?: string;
@@ -64,9 +63,6 @@ export class RequestContextService {
 
     // Get center ID from headers if present
     this.centerId = (request.headers['x-center-id'] as string) || undefined;
-
-    // Get branch ID from headers if present
-    this.branchId = (request.headers['x-branch-id'] as string) || undefined;
 
     // Get session ID from headers if present
     this.sessionId = (request.headers['x-session-id'] as string) || undefined;
@@ -110,7 +106,6 @@ export class RequestContextService {
     this.userName = user.name;
     this.profileType = user.profileType;
     this.centerId = user.centerId;
-    this.branchId = user.branchId;
   }
 
   /**
@@ -125,13 +120,6 @@ export class RequestContextService {
    */
   setCenterContext(centerId: string): void {
     this.centerId = centerId;
-  }
-
-  /**
-   * Set branch context
-   */
-  setBranchContext(branchId: string): void {
-    this.branchId = branchId;
   }
 
   /**
@@ -158,7 +146,6 @@ export class RequestContextService {
       ip: this.requestIP,
       userAgent: this.userAgent,
       centerId: this.centerId,
-      branchId: this.branchId,
       sessionId: this.sessionId,
     };
   }
@@ -195,7 +182,6 @@ export class RequestContextService {
     if (this.requestIP) context.ip = this.requestIP;
     if (this.userAgent) context.userAgent = this.userAgent;
     if (this.centerId) context.centerId = this.centerId;
-    if (this.branchId) context.branchId = this.branchId;
     if (this.sessionId) context.sessionId = this.sessionId;
 
     // Custom data
@@ -228,7 +214,6 @@ export class RequestContextService {
       requestId: this.requestId,
       userId: this.userId,
       centerId: this.centerId,
-      branchId: this.branchId,
       sessionId: this.sessionId,
       startTime: this.startTimeISO,
       duration: this.getDuration(),
@@ -278,7 +263,6 @@ export class RequestContextService {
     cloned.requestIP = this.requestIP;
     cloned.userAgent = this.userAgent;
     cloned.centerId = this.centerId;
-    cloned.branchId = this.branchId;
     cloned.sessionId = this.sessionId;
     cloned.tags = { ...this.tags };
     cloned.customData = { ...this.customData };

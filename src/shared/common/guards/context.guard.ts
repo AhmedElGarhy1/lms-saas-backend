@@ -46,18 +46,13 @@ export class ContextGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: IRequest = context.switchToHttp().getRequest();
     const centerId = (request.get('x-center-id') ?? request.centerId) as string;
-    const branchId = (request.get('x-branch-id') ?? request.branchId) as string;
 
     // Validate centerId format if provided
     if (centerId && !isUUID(centerId)) {
       throw CommonErrors.validationFailed('center_id', centerId);
     }
 
-    // Validate branchId format if provided
-    if (branchId && !isUUID(branchId)) {
-      throw CommonErrors.validationFailed('branch_id', branchId);
-    }
-
+ 
     // Check if the endpoint is public
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
@@ -118,7 +113,6 @@ export class ContextGuard implements CanActivate {
     }
 
     user.centerId = centerId;
-    user.branchId = branchId;
 
     request.user = user;
 
@@ -139,7 +133,6 @@ export class ContextGuard implements CanActivate {
       userProfileId,
       userProfileType,
       centerId,
-      branchId,
       studentOnly,
       teacherOnly,
       parentOnly,
@@ -154,7 +147,6 @@ export class ContextGuard implements CanActivate {
     // Set the userId, centerId, branchId in the request context
     RequestContext.set({
       centerId: user.centerId,
-      branchId: branchId,
     });
 
     return true;
@@ -164,7 +156,6 @@ export class ContextGuard implements CanActivate {
     userProfileId,
     userProfileType,
     centerId,
-    branchId,
     studentOnly,
     teacherOnly,
     parentOnly,
@@ -175,7 +166,6 @@ export class ContextGuard implements CanActivate {
     userProfileId: string;
     userProfileType: ProfileType;
     centerId?: string;
-    branchId?: string;
     studentOnly: boolean;
     teacherOnly: boolean;
     parentOnly: boolean;
@@ -216,15 +206,6 @@ export class ContextGuard implements CanActivate {
         userProfileId,
         centerId,
       });
-
-      // Validate branch access if branchId is provided
-      if (branchId && centerId) {
-        await this.branchAccessService.validateBranchAccess({
-          userProfileId,
-          centerId,
-          branchId,
-        });
-      }
     }
   }
 
