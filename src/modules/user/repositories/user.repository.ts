@@ -780,7 +780,6 @@ export class UserRepository extends BaseRepository<User> {
         .leftJoinAndSelect(
           'userProfiles.centerAccess',
           'centerAccess',
-          
         ).andWhere('centerAccess.centerId = :centerId', { centerId });
 
         if (!includeDeleted) {
@@ -798,7 +797,7 @@ export class UserRepository extends BaseRepository<User> {
     centerId,
    );
 
-   if (!canBypassCenterAccess) {
+   if (!canBypassCenterAccess && profileType !== ProfileType.STUDENT) {
     queryBuilder.andWhere(
       `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
       { userProfileId: actor.userProfileId, centerId },
