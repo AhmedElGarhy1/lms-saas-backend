@@ -497,7 +497,7 @@ export class AccessControlHelperService extends BaseService {
         userProfileId: data.userProfileId,
         centerId: data.centerId,
       });
-      throw AccessControlErrors.cannotAccessUserRecords();
+      throw AccessControlErrors.centerAccessNotFound();
     }
 
     // Retrieve from cache if available (only cached for non-deleted records)
