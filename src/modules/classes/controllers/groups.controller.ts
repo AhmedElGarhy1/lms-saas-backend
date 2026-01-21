@@ -70,7 +70,7 @@ export class GroupsController {
   @Permissions(PERMISSIONS.GROUPS.READ)
   @SerializeOptions({ type: GroupResponseDto })
   async getGroup(
-    @Param() params: GroupIdParamDto,
+    @Param() params: DeletedGroupIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.groupsService.getGroup(

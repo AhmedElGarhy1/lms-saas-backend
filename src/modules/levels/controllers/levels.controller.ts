@@ -62,7 +62,7 @@ export class LevelsController {
   @Permissions(PERMISSIONS.LEVELS.READ)
   @SerializeOptions({ type: LevelResponseDto })
   async getLevel(
-    @Param() params: LevelIdParamDto,
+    @Param() params: DeletedLevelIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.levelsService.getLevel(

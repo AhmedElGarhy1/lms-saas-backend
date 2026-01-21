@@ -118,7 +118,7 @@ export class UserProfileController {
   @ApiParam({ name: 'id', description: 'User Profile ID', type: String })
   @ManagerialOnly()
   async getProfile(
-    @Param() params: UserProfileIdParamDto,
+    @Param() params: DeletedUserProfileIdParamDto,
     @GetUser() actorUser: ActorUser,
   ) {
     const profile = await this.userProfileService.findOne(

@@ -58,7 +58,7 @@ export class BranchesController {
     description: 'Branch not found',
   })
   async getBranch(
-    @Param() params: BranchIdParamDto,
+    @Param() params: DeletedBranchIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.branchesService.getBranch(

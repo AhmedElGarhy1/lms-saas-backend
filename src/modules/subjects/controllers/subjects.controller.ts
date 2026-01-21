@@ -65,7 +65,7 @@ export class SubjectsController {
   @Permissions(PERMISSIONS.SUBJECTS.READ)
   @SerializeOptions({ type: SubjectResponseDto })
   async getSubject(
-    @Param() params: SubjectIdParamDto,
+    @Param() params: DeletedSubjectIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.subjectsService.getSubject(

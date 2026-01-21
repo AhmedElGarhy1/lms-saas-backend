@@ -68,7 +68,7 @@ export class CentersController {
   @ApiParam({ name: 'id', description: 'Center ID', type: String })
   @ManagerialOnly()
   async getCenterById(
-    @Param() params: CenterIdParamDto,
+    @Param() params: DeletedCenterIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.centersService.findCenterById(

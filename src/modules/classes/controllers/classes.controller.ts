@@ -70,7 +70,7 @@ export class ClassesController {
   @Permissions(PERMISSIONS.CLASSES.READ)
   @SerializeOptions({ type: ClassResponseDto })
   async getClass(
-    @Param() params: ClassIdParamDto,
+    @Param() params: DeletedClassIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.classesService.getClass(

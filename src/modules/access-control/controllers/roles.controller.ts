@@ -111,7 +111,7 @@ export class RolesController {
   @ReadApiResponses('Get role by ID')
   @ApiParam({ name: 'roleId', type: String })
   async getRoleById(
-    @Param() params: RoleIdParamDto,
+    @Param() params: DeletedRoleIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.rolesService.findById(params.roleId, actor, true); // includeDeleted: true for API endpoints
