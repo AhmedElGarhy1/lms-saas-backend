@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
+import { Entity, Column, ManyToOne, Index } from 'typeorm';
 import { BaseEntity } from '@/shared/common/entities/base.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
@@ -84,13 +84,11 @@ export class Payment extends BaseEntity {
   @ManyToOne(() => TeacherPayoutRecord, (payout) => payout.payments, {
     nullable: true,
   })
-  @JoinColumn({ name: 'referenceId' })
   teacherPayout?: TeacherPayoutRecord;
 
   // Relationship to student charge (for STUDENT_CHARGE reference type)
   @ManyToOne(() => StudentCharge, (charge) => charge.payments, {
     nullable: true,
   })
-  @JoinColumn({ name: 'referenceId' })
   studentCharge?: StudentCharge;
 }

@@ -120,17 +120,18 @@ export class UserRepository extends BaseRepository<User> {
       centerId ? 'centerAccess.isActive' : 'userProfiles.isActive',
     );
 
+
     if (includeBranch) {
       queryBuilder.andWhere(
-        'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = userProfiles.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId)',
-        { branchId, centerId },
+        'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = userProfiles.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId) OR EXISTS (SELECT 1 FROM profile_roles pr JOIN roles r ON r.id = pr."roleId" WHERE pr."userProfileId" = userProfiles.id AND pr."centerId" = :centerId AND r.name = :roleName)',
+        { branchId, centerId, roleName: DefaultRoles.OWNER },
       );
     }
 
     if (includeClass) {
       queryBuilder.andWhere(
-        'EXISTS (SELECT 1 FROM class_staff cs WHERE cs."userProfileId" = userProfiles.id AND cs."classId" = :classId AND cs."leftAt" IS NULL)',
-        { classId },
+        'EXISTS (SELECT 1 FROM class_staff cs WHERE cs."userProfileId" = userProfiles.id AND cs."classId" = :classId AND cs."leftAt" IS NULL) OR EXISTS (SELECT 1 FROM profile_roles pr JOIN roles r ON r.id = pr."roleId" WHERE pr."userProfileId" = userProfiles.id AND pr."centerId" = :centerId AND r.name = :roleName)',
+        { classId, centerId, roleName: DefaultRoles.OWNER },
       );
     }
 

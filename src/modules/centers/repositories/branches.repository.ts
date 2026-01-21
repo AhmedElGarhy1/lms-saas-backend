@@ -6,11 +6,14 @@ import { Pagination } from '@/shared/common/types/pagination.types';
 import { TransactionalAdapterTypeOrm } from '@nestjs-cls/transactional-adapter-typeorm';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { BRANCH_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
+import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @Injectable()
 export class BranchesRepository extends BaseRepository<Branch> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    private readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super(txHost);
   }
@@ -21,8 +24,9 @@ export class BranchesRepository extends BaseRepository<Branch> {
 
   async paginateBranches(
     paginateDto: PaginateBranchesDto,
-    centerId: string,
+    actor: ActorUser,
   ): Promise<Pagination<Branch>> {
+    const centerId = actor.centerId!;
     const queryBuilder = this.getRepository()
       .createQueryBuilder('branch')
       // Join relations for name fields only (not full entities)
@@ -34,6 +38,19 @@ export class BranchesRepository extends BaseRepository<Branch> {
         'center.name',
       ])
       .where('branch.centerId = :centerId', { centerId });
+
+      const canBypassCenterInternalAccess =
+        await this.accessControlHelperService.bypassCenterInternalAccess(
+          actor.userProfileId,
+          centerId,
+        );
+
+    if (!canBypassCenterInternalAccess) {
+      queryBuilder.andWhere('EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = :userProfileId AND ba."branchId" = branch.id AND ba."centerId" = :centerId)',{
+        userProfileId: actor.userProfileId,
+        centerId,
+      });
+    }
 
     this.applyIsActiveFilter(queryBuilder, paginateDto, 'branch.isActive');
     return this.paginate(

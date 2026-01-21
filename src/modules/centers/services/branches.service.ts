@@ -33,7 +33,7 @@ export class BranchesService extends BaseService {
   ): Promise<Pagination<any>> {
     return this.branchesRepository.paginateBranches(
       paginateDto,
-      actor.centerId!,
+      actor,
     );
   }
 

@@ -23,7 +23,7 @@
     "db:migrate": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d src/data-source.ts",
     "db:migrate:generate": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d src/data-source.ts",
     "db:migrate:revert": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d src/data-source.ts",
-    "seed": "ts-node -r tsconfig-paths/register src/database/seed.ts",
+    "be:carfull:seed:can:cause:data:loss": "ts-node -r tsconfig-paths/register src/database/seed.ts",
     "validate:notification-manifests": "ts-node -r tsconfig-paths/register scripts/validate-notification-manifests.ts",
     "validate:notification-manifests:warn": "set VALIDATE_WARN_ONLY=true && ts-node -r tsconfig-paths/register scripts/validate-notification-manifests.ts",
     "validate:notification-listeners": "ts-node -r tsconfig-paths/register scripts/validate-notification-listeners.ts",
