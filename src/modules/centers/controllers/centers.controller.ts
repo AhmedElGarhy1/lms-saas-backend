@@ -28,6 +28,7 @@ import { UpdateCenterRequestDto } from '../dto/update-center.dto';
 import { CenterResponseDto } from '../dto/center-response.dto';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { CenterIdParamDto } from '../dto/center-id-param.dto';
+import { DeletedCenterIdParamDto } from '../dto/deleted-center-id-param.dto';
 import { ManagerialOnly } from '@/shared/common/decorators/managerial-only.decorator';
 
 @Controller('centers')
@@ -121,7 +122,7 @@ export class CentersController {
   @Transactional()
   @ManagerialOnly()
   async restoreCenter(
-    @Param() params: CenterIdParamDto,
+    @Param() params: DeletedCenterIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     await this.centersService.restoreCenter(params.id, actor);

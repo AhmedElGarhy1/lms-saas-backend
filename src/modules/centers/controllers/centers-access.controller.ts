@@ -19,6 +19,7 @@ import {
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { UserProfileIdParamDto } from '@/modules/access-control/dto/user-profile-id-param.dto';
+import { DeletedUserProfileIdParamDto } from '@/modules/access-control/dto/deleted-user-profile-id-param.dto';
 import { AdminOnly, ManagerialOnly } from '@/shared/common/decorators';
 
 @ApiBearerAuth()
@@ -124,7 +125,7 @@ export class CentersAccessController {
   @Transactional()
   @ManagerialOnly()
   async restoreCenterAccess(
-    @Param() params: UserProfileIdParamDto,
+    @Param() params: DeletedUserProfileIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     const result = await this.accessControlService.restoreCenterAccess(

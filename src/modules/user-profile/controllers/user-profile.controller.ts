@@ -29,6 +29,7 @@ import { UpdateUserProfileStatusDto } from '../dto/update-user-profile-status.dt
 import { CreateUserProfileDto } from '../dto/create-user-profile.dto';
 import { NoProfile } from '@/shared/common/decorators/no-profile.decorator';
 import { UserProfileIdParamDto } from '../dto/user-profile-id-param.dto';
+import { DeletedUserProfileIdParamDto } from '../dto/deleted-user-profile-id-param.dto';
 import { ProfileResponseDto } from '../dto/profile-response.dto';
 import { ProfileLookupParamDto } from '../dto/profile-lookup-param.dto';
 import { ProfileLookupResponseDto } from '../dto/profile-lookup-response.dto';
@@ -170,7 +171,7 @@ export class UserProfileController {
   @Transactional()
   @ManagerialOnly()
   async restoreProfile(
-    @Param() params: UserProfileIdParamDto,
+    @Param() params: DeletedUserProfileIdParamDto,
     @GetUser() actorUser: ActorUser,
   ) {
     await this.userProfileService.restoreUserProfile(params.id, actorUser);

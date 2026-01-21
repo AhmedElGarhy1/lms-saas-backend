@@ -22,6 +22,7 @@ import { CreateGroupDto } from '../dto/create-group.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
 import { PaginateGroupsDto } from '../dto/paginate-groups.dto';
 import { GroupIdParamDto } from '../dto/group-id-param.dto';
+import { DeletedGroupIdParamDto } from '../dto/deleted-group-id-param.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { GetUser, ManagerialOnly } from '@/shared/common/decorators';
@@ -156,7 +157,7 @@ export class GroupsController {
   @Transactional()
   @SerializeOptions({ type: GroupResponseDto })
   async restoreGroup(
-    @Param() params: GroupIdParamDto,
+    @Param() params: DeletedGroupIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     await this.groupsService.restoreGroup(params.groupId, actor);

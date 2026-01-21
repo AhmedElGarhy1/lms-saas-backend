@@ -24,6 +24,7 @@ import { ControllerResponse } from '@/shared/common/dto/controller-response.dto'
 import { SerializeOptions } from '@nestjs/common';
 import { LevelResponseDto } from '../dto/level-response.dto';
 import { LevelIdParamDto } from '../dto/level-id-param.dto';
+import { DeletedLevelIdParamDto } from '../dto/deleted-level-id-param.dto';
 
 @ApiTags('Levels')
 @Controller('levels')
@@ -148,7 +149,7 @@ export class LevelsController {
   @Transactional()
   @SerializeOptions({ type: LevelResponseDto })
   async restoreLevel(
-    @Param() params: LevelIdParamDto,
+    @Param() params: DeletedLevelIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     await this.levelsService.restoreLevel(params.levelId, actor);

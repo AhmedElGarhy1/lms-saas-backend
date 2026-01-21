@@ -14,7 +14,7 @@ export class BelongsToBranchConstraint implements ValidatorConstraintInterface {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
   async validate(value: any, args: ValidationArguments): Promise<boolean> {
-    const [entityClass] = args.constraints as [EntityTarget<ObjectLiteral>];
+    const [entityClass, includeDeleted = false] = args.constraints as [EntityTarget<ObjectLiteral>, boolean];
     const centerId = RequestContext.get()?.centerId;
 
     if (!value) return true;
@@ -27,7 +27,10 @@ export class BelongsToBranchConstraint implements ValidatorConstraintInterface {
 
     try {
       const repo = this.dataSource.getRepository(entityClass);
-      const entity = await repo.findOne({ where: { id: value } });
+      const entity = await repo.findOne({
+        where: { id: value },
+        withDeleted: includeDeleted,
+      });
 
       if (!entity) return false;
 
@@ -37,6 +40,7 @@ export class BelongsToBranchConstraint implements ValidatorConstraintInterface {
       const branchRepo = this.dataSource.getRepository('Branch');
       const branch = await branchRepo.findOne({
         where: { id: entityBranchId },
+        withDeleted: includeDeleted,
       });
 
       if (!branch) return false;
@@ -49,7 +53,8 @@ export class BelongsToBranchConstraint implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments): string {
-    const [entityClass] = args.constraints as [EntityTarget<ObjectLiteral>];
-    return `${entityClass.constructor.name} with id "${args.value}" does not belong to a branch in the current center`;
+    const [entityClass, includeDeleted = false] = args.constraints as [EntityTarget<ObjectLiteral>, boolean];
+    const entityType = includeDeleted ? 'deleted ' : '';
+    return `${entityType}${entityClass.constructor.name} with id "${args.value}" does not belong to a branch in the current center`;
   }
 }

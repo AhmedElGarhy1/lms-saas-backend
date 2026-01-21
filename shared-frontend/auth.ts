@@ -25,6 +25,7 @@ export enum AuthErrorCode
   REFRESH_TOKEN_EXPIRED = 'AUTH_023',
   REFRESH_TOKEN_NOT_FOUND = 'AUTH_031',
 
+  // Profile
   PROFILE_SELECTION_REQUIRED = 'AUTH_025',
 
   // Two-factor authentication specific errors

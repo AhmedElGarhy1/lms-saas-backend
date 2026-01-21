@@ -13,9 +13,10 @@ export class ExistsConstraint implements ValidatorConstraintInterface {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
   async validate(value: any, args: ValidationArguments): Promise<boolean> {
-    const [entityClass, column = 'id'] = args.constraints as [
+    const [entityClass, column = 'id', includeDeleted = false] = args.constraints as [
       EntityTarget<ObjectLiteral>,
       string,
+      boolean,
     ];
     if (!value) return true;
 
@@ -26,7 +27,10 @@ export class ExistsConstraint implements ValidatorConstraintInterface {
 
     try {
       const repo = this.dataSource.getRepository(entityClass);
-      const exists = await repo.exists({ where: { [column]: value } });
+      const exists = await repo.exists({
+        where: { [column]: value },
+        withDeleted: includeDeleted,
+      });
       return !!exists;
     } catch (error) {
       console.error('Error in ExistsConstraint:', error);
@@ -35,10 +39,12 @@ export class ExistsConstraint implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments): string {
-    const [entityClass, column = 'id'] = args.constraints as [
+    const [entityClass, column = 'id', includeDeleted = false] = args.constraints as [
       EntityTarget<ObjectLiteral>,
       string,
+      boolean,
     ];
-    return `${entityClass.constructor.name} with ${column} "${args.value}" does not exist`;
+    const entityType = includeDeleted ? 'deleted ' : '';
+    return `${entityType}${entityClass.constructor.name} with ${column} "${args.value}" does not exist`;
   }
 }

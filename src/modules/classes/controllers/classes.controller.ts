@@ -16,6 +16,7 @@ import { CreateClassDto } from '../dto/create-class.dto';
 import { UpdateClassDto } from '../dto/update-class.dto';
 import { PaginateClassesDto } from '../dto/paginate-classes.dto';
 import { ClassIdParamDto } from '../dto/class-id-param.dto';
+import { DeletedClassIdParamDto } from '../dto/deleted-class-id-param.dto';
 import { ChangeClassStatusDto } from '../dto/change-class-status.dto';
 import { ClassStatus } from '../enums/class-status.enum';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
@@ -218,7 +219,7 @@ export class ClassesController {
   @Transactional()
   @SerializeOptions({ type: ClassResponseDto })
   async restoreClass(
-    @Param() params: ClassIdParamDto,
+    @Param() params: DeletedClassIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     await this.classesService.restoreClass(params.classId, actor);

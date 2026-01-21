@@ -48,6 +48,7 @@ import { RoleResponseExportMapper } from '@/shared/common/mappers/role-response-
 import { ExportRolesDto } from '../dto/export-roles.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { RoleIdParamDto } from '../dto/role-id-param.dto';
+import { DeletedRoleIdParamDto } from '../dto/deleted-role-id-param.dto';
 
 @ApiTags('Roles')
 @Controller('roles')
@@ -153,7 +154,7 @@ export class RolesController {
   @Permissions(PERMISSIONS.ROLES.RESTORE)
   @Transactional()
   async restoreRole(
-    @Param() params: RoleIdParamDto,
+    @Param() params: DeletedRoleIdParamDto,
     @GetUser() user: ActorUser,
   ) {
     await this.rolesService.restoreRole(params.roleId, user);

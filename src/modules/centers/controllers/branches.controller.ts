@@ -21,6 +21,7 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { UpdateApiResponses } from '@/shared/common/decorators';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 import { BranchIdParamDto } from '../dto/branch-id-param.dto';
+import { DeletedBranchIdParamDto } from '../dto/deleted-branch-id-param.dto';
 
 @ApiTags('Centers - Branches')
 @Controller('centers/branches')
@@ -170,7 +171,7 @@ export class BranchesController {
   @Permissions(PERMISSIONS.BRANCHES.RESTORE)
   @Transactional()
   async restoreBranch(
-    @Param() params: BranchIdParamDto,
+    @Param() params: DeletedBranchIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     await this.branchesService.restoreBranch(params.branchId, actor);

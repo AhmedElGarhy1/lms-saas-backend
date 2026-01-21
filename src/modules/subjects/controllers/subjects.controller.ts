@@ -24,6 +24,7 @@ import { ControllerResponse } from '@/shared/common/dto/controller-response.dto'
 import { SerializeOptions } from '@nestjs/common';
 import { SubjectResponseDto } from '../dto/subject-response.dto';
 import { SubjectIdParamDto } from '../dto/subject-id-param.dto';
+import { DeletedSubjectIdParamDto } from '../dto/deleted-subject-id-param.dto';
 
 @ApiTags('Subjects')
 @Controller('subjects')
@@ -158,7 +159,7 @@ export class SubjectsController {
   @Transactional()
   @SerializeOptions({ type: SubjectResponseDto })
   async restoreSubject(
-    @Param() params: SubjectIdParamDto,
+    @Param() params: DeletedSubjectIdParamDto,
     @GetUser() actor: ActorUser,
   ) {
     await this.subjectsService.restoreSubject(params.subjectId, actor);

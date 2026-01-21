@@ -11,7 +11,6 @@ export enum UserErrorCode
 
   // Password operations
   PASSWORD_RESET_EXPIRED = 'USR_008',
-  PASSWORD_RESET_INVALID = 'USR_009',
   CURRENT_PASSWORD_INVALID = 'USR_010',
 
   // Profile operations
@@ -34,7 +33,6 @@ export enum UserErrorCode
   // Deletion and restoration
   USER_DELETION_FORBIDDEN = 'USR_024',
   USER_RESTORATION_FORBIDDEN = 'USR_025',
-  USER_CANNOT_DELETE_SELF = 'USR_026',
 
   // Validation
   USER_DATA_INVALID = 'USR_027',
