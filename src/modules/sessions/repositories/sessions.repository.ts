@@ -8,13 +8,35 @@ import { CalendarSessionsDto } from '../dto/calendar-sessions.dto';
 import { PaginateSessionsDto } from '../dto/paginate-sessions.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-import { SelectQueryBuilder } from 'typeorm';
-import { subHours } from 'date-fns';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { SessionsErrors } from '../exceptions/sessions.errors';
-import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { SESSION_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 import { StudentPaymentType } from '@/modules/classes/enums/student-payment-type.enum';
+
+/**
+ * Raw query result from schedule item lookup queries
+ */
+interface ScheduleItemRawResult {
+  scheduleItemId: string;
+  calculatedStartTime: string | Date;
+  calculatedEndTime: string | Date;
+  existingSessionId?: string | null;
+  existingSessionStatus?: SessionStatus | null;
+}
+
+/**
+ * Raw query result for count queries
+ */
+interface CountRawResult {
+  count: string;
+}
+
+/**
+ * Raw query result for total students count
+ */
+interface TotalStudentsRawResult {
+  totalStudents: string;
+}
 
 @Injectable()
 export class SessionsRepository extends BaseRepository<Session> {
@@ -27,34 +49,6 @@ export class SessionsRepository extends BaseRepository<Session> {
 
   protected getEntityClass(): typeof Session {
     return Session;
-  }
-
-  /**
-   * Find session by ID with relations
-   */
-  async findByIdWithRelations(
-    sessionId: string,
-    relations: string[] = [],
-  ): Promise<Session> {
-    const queryBuilder = this.getRepository().createQueryBuilder('session');
-
-    // Add relations dynamically
-    for (const relation of relations) {
-      queryBuilder.leftJoinAndSelect(
-        `session.${relation}`,
-        relation.replace('.', '_'),
-      );
-    }
-
-    const session = await queryBuilder
-      .where('session.id = :id', { id: sessionId })
-      .getOne();
-
-    if (!session) {
-      throw SessionsErrors.sessionNotFound();
-    }
-
-    return session;
   }
 
   /**
@@ -100,7 +94,7 @@ export class SessionsRepository extends BaseRepository<Session> {
 
     if (filters.status !== undefined) {
       queryBuilder.andWhere('session.status = :status', {
-        status: filters.status,
+        status: filters.status as SessionStatus,
       });
     }
 
@@ -185,8 +179,6 @@ export class SessionsRepository extends BaseRepository<Session> {
       .leftJoin('creator.user', 'creatorUser')
       .leftJoin('session.updater', 'updater')
       .leftJoin('updater.user', 'updaterUser')
-      .leftJoin('session.deleter', 'deleter')
-      .leftJoin('deleter.user', 'deleterUser')
       // Add name and id fields as selections
       .addSelect([
         'group.id',
@@ -207,9 +199,6 @@ export class SessionsRepository extends BaseRepository<Session> {
         'updater.id',
         'updaterUser.id',
         'updaterUser.name',
-        'deleter.id',
-        'deleterUser.id',
-        'deleterUser.name',
       ])
       .where('session.id = :sessionId', { sessionId })
       .getOne();
@@ -348,13 +337,6 @@ export class SessionsRepository extends BaseRepository<Session> {
       .leftJoin('session.center', 'center')
       .leftJoin('session.teacher', 'teacher')
       .leftJoin('teacher.user', 'teacherUser')
-      // Audit relations
-      .leftJoin('session.creator', 'creator')
-      .leftJoin('creator.user', 'creatorUser')
-      .leftJoin('session.updater', 'updater')
-      .leftJoin('updater.user', 'updaterUser')
-      .leftJoin('session.deleter', 'deleter')
-      .leftJoin('deleter.user', 'deleterUser')
       // Add name and id fields as selections
       .addSelect([
         'group.id',
@@ -368,16 +350,6 @@ export class SessionsRepository extends BaseRepository<Session> {
         'teacher.id',
         'teacherUser.id',
         'teacherUser.name',
-        // Audit fields
-        'creator.id',
-        'creatorUser.id',
-        'creatorUser.name',
-        'updater.id',
-        'updaterUser.id',
-        'updaterUser.name',
-        'deleter.id',
-        'deleterUser.id',
-        'deleterUser.name',
       ])
       // Filter by center using denormalized field (no join needed)
       .where('session.centerId = :centerId', { centerId });
@@ -458,7 +430,7 @@ export class SessionsRepository extends BaseRepository<Session> {
 
     if (paginateDto.studentPaymentType) {
       switch (paginateDto.studentPaymentType) {
-        case 'SESSION':
+        case StudentPaymentType.SESSION:
           queryBuilder.andWhere(
             'studentPaymentStrategy.includeSession = :includeSession',
             {
@@ -466,7 +438,7 @@ export class SessionsRepository extends BaseRepository<Session> {
             },
           );
           break;
-        case 'MONTHLY':
+        case StudentPaymentType.MONTHLY:
           queryBuilder.andWhere(
             'studentPaymentStrategy.includeMonth = :includeMonth',
             {
@@ -474,7 +446,7 @@ export class SessionsRepository extends BaseRepository<Session> {
             },
           );
           break;
-        case 'CLASS':
+        case StudentPaymentType.CLASS:
           queryBuilder.andWhere(
             'studentPaymentStrategy.includeClass = :includeClass',
             {
@@ -625,7 +597,8 @@ export class SessionsRepository extends BaseRepository<Session> {
     existingSessionStatus?: SessionStatus;
   } | null> {
     const manager = this.getRepository().manager;
-    const result = (await manager.query(
+
+    const result = await manager.query(
       `
       -- CTE: Calculate session times once, reference everywhere
       -- This eliminates code duplication and prevents copy-paste errors
@@ -686,25 +659,19 @@ export class SessionsRepository extends BaseRepository<Session> {
       LIMIT 1
       `,
       [now, groupId],
-    )) as Array<{
-      scheduleItemId: string;
-      calculatedStartTime: string | Date;
-      calculatedEndTime: string | Date;
-      existingSessionId?: string | null;
-      existingSessionStatus?: SessionStatus | null;
-    }>;
+    );
 
     if (!result || result.length === 0) {
       return null;
     }
 
-    const row = result[0];
+    const row: ScheduleItemRawResult = result[0];
     return {
       scheduleItemId: row.scheduleItemId,
       calculatedStartTime: new Date(row.calculatedStartTime),
       calculatedEndTime: new Date(row.calculatedEndTime),
-      existingSessionId: row.existingSessionId || undefined,
-      existingSessionStatus: row.existingSessionStatus || undefined,
+      existingSessionId: row.existingSessionId ?? undefined,
+      existingSessionStatus: row.existingSessionStatus ?? undefined,
     };
   }
 
@@ -733,7 +700,7 @@ export class SessionsRepository extends BaseRepository<Session> {
     existingSessionStatus?: SessionStatus;
   } | null> {
     const manager = this.getRepository().manager;
-    const result = (await manager.query(
+    const result = await manager.query(
       `
       -- CTE: Calculate session times once, reference everywhere
       -- This eliminates code duplication and prevents copy-paste errors
@@ -791,25 +758,19 @@ export class SessionsRepository extends BaseRepository<Session> {
       LIMIT 1
       `,
       [scheduledStartTime, groupId],
-    )) as Array<{
-      scheduleItemId: string;
-      calculatedStartTime: string | Date;
-      calculatedEndTime: string | Date;
-      existingSessionId?: string | null;
-      existingSessionStatus?: SessionStatus | null;
-    }>;
+    );
 
     if (!result || result.length === 0) {
       return null;
     }
 
-    const row = result[0];
+    const row: ScheduleItemRawResult = result[0];
     return {
       scheduleItemId: row.scheduleItemId,
       calculatedStartTime: new Date(row.calculatedStartTime),
       calculatedEndTime: new Date(row.calculatedEndTime),
-      existingSessionId: row.existingSessionId || undefined,
-      existingSessionStatus: row.existingSessionStatus || undefined,
+      existingSessionId: row.existingSessionId ?? undefined,
+      existingSessionStatus: row.existingSessionStatus ?? undefined,
     };
   }
 
@@ -838,9 +799,7 @@ export class SessionsRepository extends BaseRepository<Session> {
   }
 
   async getTotalStudentsInGroup(groupId: string): Promise<number> {
-    const result = await this.getEntityManager().query<
-      Array<{ totalStudents: number }>
-    >(
+    const result = await this.getEntityManager().query(
       `
       SELECT COUNT(*)::int as "totalStudents"
       FROM "group_students" gs
@@ -850,7 +809,8 @@ export class SessionsRepository extends BaseRepository<Session> {
       [groupId],
     );
 
-    return Number(result[0]?.totalStudents || 0);
+    const row: TotalStudentsRawResult | undefined = result[0];
+    return Number(row?.totalStudents ?? 0);
   }
 
   async countActiveTeachersForCenter(centerId: string): Promise<number> {
@@ -867,12 +827,18 @@ export class SessionsRepository extends BaseRepository<Session> {
       .select('COUNT(DISTINCT session.teacherUserProfileId)', 'count')
       .leftJoin('session.class', 'class')
       .where('class.centerId = :centerId', { centerId })
-      .andWhere('session.startTime >= :startOfMonth', { startOfMonth: currentMonth })
-      .andWhere('session.startTime < :startOfNextMonth', { startOfNextMonth: nextMonth })
-      .andWhere('session.status IN (:...statuses)', { statuses: ['COMPLETED', 'IN_PROGRESS', 'SCHEDULED'] })
-      .getRawOne();
+      .andWhere('session.startTime >= :startOfMonth', {
+        startOfMonth: currentMonth,
+      })
+      .andWhere('session.startTime < :startOfNextMonth', {
+        startOfNextMonth: nextMonth,
+      })
+      .andWhere('session.status IN (:...statuses)', {
+        statuses: ['COMPLETED', 'IN_PROGRESS', 'SCHEDULED'],
+      })
+      .getRawOne<CountRawResult>();
 
-    return parseInt(result.count) || 0;
+    return parseInt(result?.count ?? '0', 10);
   }
 
   async countActiveStudentsForCenter(centerId: string): Promise<number> {

@@ -13,6 +13,28 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { CLASS_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
+import { StudentPaymentType } from '../enums/student-payment-type.enum';
+
+/**
+ * Class entity with groups relation and student count
+ */
+export type ClassWithGroups = Class & {
+  groups: Array<Group & { studentsCount: number }>;
+};
+
+/**
+ * Raw query result for count queries
+ */
+interface CountRawResult {
+  count: string;
+}
+
+/**
+ * Raw result from getRawAndEntities with student count
+ */
+interface RawGroupWithCount {
+  studentsCount: string;
+}
 
 @Injectable()
 export class ClassesRepository extends BaseRepository<Class> {
@@ -45,13 +67,6 @@ export class ClassesRepository extends BaseRepository<Class> {
         'class.teacherPaymentStrategy',
         'teacherPaymentStrategy',
       )
-      // Audit relations (creator, updater, deleter)
-      .leftJoin('class.creator', 'creator')
-      .leftJoin('creator.user', 'creatorUser')
-      .leftJoin('class.updater', 'updater')
-      .leftJoin('updater.user', 'updaterUser')
-      .leftJoin('class.deleter', 'deleter')
-      .leftJoin('deleter.user', 'deleterUser')
       // Add name and id fields as selections
       .addSelect([
         'level.id',
@@ -62,16 +77,6 @@ export class ClassesRepository extends BaseRepository<Class> {
         'teacherUser.name',
         'branch.id',
         'branch.city',
-        // Audit fields
-        'creator.id',
-        'creatorUser.id',
-        'creatorUser.name',
-        'updater.id',
-        'updaterUser.id',
-        'updaterUser.name',
-        'deleter.id',
-        'deleterUser.id',
-        'deleterUser.name',
       ])
       // Add count subqueries
       .addSelect(
@@ -160,7 +165,7 @@ export class ClassesRepository extends BaseRepository<Class> {
     // Apply student payment type filter
     if (paginateDto.studentPaymentType) {
       switch (paginateDto.studentPaymentType) {
-        case 'SESSION':
+        case StudentPaymentType.SESSION:
           queryBuilder.andWhere(
             'studentPaymentStrategy.includeSession = :includeSession',
             {
@@ -168,7 +173,7 @@ export class ClassesRepository extends BaseRepository<Class> {
             },
           );
           break;
-        case 'MONTHLY':
+        case StudentPaymentType.MONTHLY:
           queryBuilder.andWhere(
             'studentPaymentStrategy.includeMonth = :includeMonth',
             {
@@ -176,7 +181,7 @@ export class ClassesRepository extends BaseRepository<Class> {
             },
           );
           break;
-        case 'CLASS':
+        case StudentPaymentType.CLASS:
           queryBuilder.andWhere(
             'studentPaymentStrategy.includeClass = :includeClass',
             {
@@ -206,7 +211,7 @@ export class ClassesRepository extends BaseRepository<Class> {
   async findClassWithRelations(
     id: string,
     includeDeleted = false,
-  ): Promise<Class | null> {
+  ): Promise<ClassWithGroups | null> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('class')
       // Join relations for name fields only (not full entities)
@@ -285,17 +290,20 @@ export class ClassesRepository extends BaseRepository<Class> {
       )
       .getRawAndEntities()
       .then((result) =>
-        result.entities.map((group, i) => ({
-          ...group,
-          studentsCount: parseInt(result.raw[i].studentsCount || '0', 10),
-        })),
+        result.entities.map((group, i) => {
+          const raw = result.raw[i] as RawGroupWithCount;
+          return {
+            ...group,
+            studentsCount: parseInt(raw.studentsCount ?? '0', 10),
+          };
+        }),
       );
 
     // Return entity with computed fields and groups attached (groupsCount not needed since we return all groups)
     return {
       ...entity,
       groups,
-    } as any;
+    } as ClassWithGroups;
   }
 
   /**
@@ -445,8 +453,8 @@ export class ClassesRepository extends BaseRepository<Class> {
       .where('class.centerId = :centerId', { centerId })
       .andWhere('class.status = :status', { status: 'ACTIVE' })
       .andWhere('class.teacherUserProfileId IS NOT NULL')
-      .getRawOne();
+      .getRawOne<CountRawResult>();
 
-    return parseInt(result.count) || 0;
+    return parseInt(result?.count ?? '0', 10);
   }
 }

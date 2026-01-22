@@ -27,28 +27,8 @@ export class SubjectsRepository extends BaseRepository<Subject> {
       .createQueryBuilder('subject')
       // Join relations for name fields only (not full entities)
       .leftJoin('subject.center', 'center')
-      // Audit relations
-      .leftJoin('subject.creator', 'creator')
-      .leftJoin('creator.user', 'creatorUser')
-      .leftJoin('subject.updater', 'updater')
-      .leftJoin('updater.user', 'updaterUser')
-      .leftJoin('subject.deleter', 'deleter')
-      .leftJoin('deleter.user', 'deleterUser')
       // Add name and id fields as selections
-      .addSelect([
-        'center.id',
-        'center.name',
-        // Audit fields
-        'creator.id',
-        'creatorUser.id',
-        'creatorUser.name',
-        'updater.id',
-        'updaterUser.id',
-        'updaterUser.name',
-        'deleter.id',
-        'deleterUser.id',
-        'deleterUser.name',
-      ])
+      .addSelect(['center.id', 'center.name'])
       .where('subject.centerId = :centerId', { centerId });
 
     return this.paginate(
@@ -67,7 +47,10 @@ export class SubjectsRepository extends BaseRepository<Subject> {
    * @param includeDeleted - Whether to include soft-deleted subjects
    * @returns Subject with center.id and center.name only
    */
-  async findSubjectWithRelations(subjectId: string, includeDeleted: boolean = false): Promise<Subject | null> {
+  async findSubjectWithRelations(
+    subjectId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Subject | null> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('subject')
       // Join relations for name fields only (not full entities)
@@ -111,8 +94,14 @@ export class SubjectsRepository extends BaseRepository<Subject> {
    * @returns Subject with center.id and center.name only
    * @throws Subject not found error
    */
-  async findSubjectWithRelationsOrThrow(subjectId: string, includeDeleted: boolean = false): Promise<Subject> {
-    const subject = await this.findSubjectWithRelations(subjectId, includeDeleted);
+  async findSubjectWithRelationsOrThrow(
+    subjectId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Subject> {
+    const subject = await this.findSubjectWithRelations(
+      subjectId,
+      includeDeleted,
+    );
     if (!subject) {
       throw new Error(`Subject with id ${subjectId} not found`);
     }

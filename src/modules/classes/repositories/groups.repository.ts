@@ -16,6 +16,20 @@ export interface GroupWithStudentCount extends Group {
   studentsCount: number;
 }
 
+/**
+ * Raw query result for count queries
+ */
+interface CountRawResult {
+  count: string;
+}
+
+/**
+ * Raw result with student count
+ */
+interface RawWithStudentCount {
+  studentsCount: string;
+}
+
 @Injectable()
 export class GroupsRepository extends BaseRepository<Group> {
   constructor(
@@ -42,13 +56,6 @@ export class GroupsRepository extends BaseRepository<Group> {
       .leftJoin('group.center', 'center')
       // Load full scheduleItems
       .leftJoinAndSelect('group.scheduleItems', 'scheduleItems')
-      // Audit relations
-      .leftJoin('group.creator', 'creator')
-      .leftJoin('creator.user', 'creatorUser')
-      .leftJoin('group.updater', 'updater')
-      .leftJoin('updater.user', 'updaterUser')
-      .leftJoin('group.deleter', 'deleter')
-      .leftJoin('deleter.user', 'deleterUser')
       // Add id and name fields as selections
       .addSelect([
         'class.id',
@@ -58,16 +65,6 @@ export class GroupsRepository extends BaseRepository<Group> {
         'branch.city',
         'center.id',
         'center.name',
-        // Audit fields
-        'creator.id',
-        'creatorUser.id',
-        'creatorUser.name',
-        'updater.id',
-        'updaterUser.id',
-        'updaterUser.name',
-        'deleter.id',
-        'deleterUser.id',
-        'deleterUser.name',
       ])
       // Add student count subquery
       .addSelect(
@@ -121,9 +118,12 @@ export class GroupsRepository extends BaseRepository<Group> {
       queryBuilder,
       {
         includeComputedFields: true,
-        computedFieldsMapper: (entity: Group, raw: any): Group => {
+        computedFieldsMapper: (
+          entity: Group,
+          raw: RawWithStudentCount,
+        ): Group => {
           // Map computed student count from raw data
-          const studentsCount = parseInt(raw.studentsCount || '0', 10);
+          const studentsCount = parseInt(raw.studentsCount ?? '0', 10);
 
           // Return entity with computed field added
           return {
@@ -199,10 +199,10 @@ export class GroupsRepository extends BaseRepository<Group> {
     }
 
     const entity = entities[0];
-    const rawData = raw[0];
+    const rawData = raw[0] as RawWithStudentCount;
 
     // Map computed student count from raw data
-    const studentsCount = parseInt(rawData.studentsCount || '0', 10);
+    const studentsCount = parseInt(rawData.studentsCount ?? '0', 10);
 
     // Return entity with computed field added
     return {
@@ -278,8 +278,8 @@ export class GroupsRepository extends BaseRepository<Group> {
       .where('class.centerId = :centerId', { centerId })
       .andWhere('class.status = :status', { status: 'ACTIVE' })
       .andWhere('groupStudent.leftAt IS NULL')
-      .getRawOne();
+      .getRawOne<CountRawResult>();
 
-    return parseInt(result.count) || 0;
+    return parseInt(result?.count ?? '0', 10);
   }
 }

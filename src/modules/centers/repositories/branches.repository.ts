@@ -32,41 +32,24 @@ export class BranchesRepository extends BaseRepository<Branch> {
       // Join relations for name fields only (not full entities)
       .leftJoin('branch.center', 'center')
       .leftJoin('branch.branchAccess', 'branchAccess')
-      // Audit relations
-      .leftJoin('branch.creator', 'creator')
-      .leftJoin('creator.user', 'creatorUser')
-      .leftJoin('branch.updater', 'updater')
-      .leftJoin('updater.user', 'updaterUser')
-      .leftJoin('branch.deleter', 'deleter')
-      .leftJoin('deleter.user', 'deleterUser')
       // Add name and id fields as selections
-      .addSelect([
-        'center.id',
-        'center.name',
-        // Audit fields
-        'creator.id',
-        'creatorUser.id',
-        'creatorUser.name',
-        'updater.id',
-        'updaterUser.id',
-        'updaterUser.name',
-        'deleter.id',
-        'deleterUser.id',
-        'deleterUser.name',
-      ])
+      .addSelect(['center.id', 'center.name'])
       .where('branch.centerId = :centerId', { centerId });
 
-      const canBypassCenterInternalAccess =
-        await this.accessControlHelperService.bypassCenterInternalAccess(
-          actor.userProfileId,
-          centerId,
-        );
+    const canBypassCenterInternalAccess =
+      await this.accessControlHelperService.bypassCenterInternalAccess(
+        actor.userProfileId,
+        centerId,
+      );
 
     if (!canBypassCenterInternalAccess) {
-      queryBuilder.andWhere('EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = :userProfileId AND ba."branchId" = branch.id AND ba."centerId" = :centerId)',{
-        userProfileId: actor.userProfileId,
-        centerId,
-      });
+      queryBuilder.andWhere(
+        'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = :userProfileId AND ba."branchId" = branch.id AND ba."centerId" = :centerId)',
+        {
+          userProfileId: actor.userProfileId,
+          centerId,
+        },
+      );
     }
 
     this.applyIsActiveFilter(queryBuilder, paginateDto, 'branch.isActive');
@@ -86,7 +69,10 @@ export class BranchesRepository extends BaseRepository<Branch> {
    * @param includeDeleted - Whether to include soft-deleted branches
    * @returns Branch with center.id and center.name only
    */
-  async findBranchWithRelations(branchId: string, includeDeleted: boolean = false): Promise<Branch | null> {
+  async findBranchWithRelations(
+    branchId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Branch | null> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('branch')
       // Join relations for name fields only (not full entities)
@@ -130,7 +116,10 @@ export class BranchesRepository extends BaseRepository<Branch> {
    * @returns Branch with center.id and center.name only
    * @throws Branch not found error
    */
-  async findBranchWithRelationsOrThrow(branchId: string, includeDeleted: boolean = false): Promise<Branch> {
+  async findBranchWithRelationsOrThrow(
+    branchId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Branch> {
     const branch = await this.findBranchWithRelations(branchId, includeDeleted);
     if (!branch) {
       throw new Error(`Branch with id ${branchId} not found`);

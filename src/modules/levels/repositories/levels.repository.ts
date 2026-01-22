@@ -27,28 +27,8 @@ export class LevelsRepository extends BaseRepository<Level> {
       .createQueryBuilder('level')
       // Join relations for name fields only (not full entities)
       .leftJoin('level.center', 'center')
-      // Audit relations
-      .leftJoin('level.creator', 'creator')
-      .leftJoin('creator.user', 'creatorUser')
-      .leftJoin('level.updater', 'updater')
-      .leftJoin('updater.user', 'updaterUser')
-      .leftJoin('level.deleter', 'deleter')
-      .leftJoin('deleter.user', 'deleterUser')
       // Add name and id fields as selections
-      .addSelect([
-        'center.id',
-        'center.name',
-        // Audit fields
-        'creator.id',
-        'creatorUser.id',
-        'creatorUser.name',
-        'updater.id',
-        'updaterUser.id',
-        'updaterUser.name',
-        'deleter.id',
-        'deleterUser.id',
-        'deleterUser.name',
-      ])
+      .addSelect(['center.id', 'center.name'])
       .where('level.centerId = :centerId', { centerId });
 
     return this.paginate(
@@ -67,7 +47,10 @@ export class LevelsRepository extends BaseRepository<Level> {
    * @param includeDeleted - Whether to include soft-deleted levels
    * @returns Level with center.id and center.name only
    */
-  async findLevelWithRelations(levelId: string, includeDeleted: boolean = false): Promise<Level | null> {
+  async findLevelWithRelations(
+    levelId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Level | null> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('level')
       // Join relations for name fields only (not full entities)
@@ -111,7 +94,10 @@ export class LevelsRepository extends BaseRepository<Level> {
    * @returns Level with center.id and center.name only
    * @throws Level not found error
    */
-  async findLevelWithRelationsOrThrow(levelId: string, includeDeleted: boolean = false): Promise<Level> {
+  async findLevelWithRelationsOrThrow(
+    levelId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Level> {
     const level = await this.findLevelWithRelations(levelId, includeDeleted);
     if (!level) {
       throw new Error(`Level with id ${levelId} not found`);
