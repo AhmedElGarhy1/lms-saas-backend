@@ -18,38 +18,11 @@ This project uses [Husky](https://typicode.github.io/husky/) to enforce code qua
 - `*.json` - JSON files (formatted)
 - `*.md` - Markdown files (formatted)
 
-## Commit Message Hook
+## Commit Message
 
-**Validates commit message format**
+**No restrictions** - Write your commit messages however you like!
 
-### Format Required:
-
-```
-<type>(<scope>): <subject>
-```
-
-### Valid Types:
-
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code style changes (formatting, missing semicolons, etc)
-- `refactor`: Code refactoring
-- `perf`: Performance improvements
-- `test`: Adding or updating tests
-- `chore`: Maintenance tasks
-- `build`: Build system changes
-- `ci`: CI/CD changes
-- `revert`: Revert previous commit
-
-### Examples:
-
-```bash
-git commit -m "feat(auth): add JWT authentication"
-git commit -m "fix(user): resolve profile loading issue"
-git commit -m "docs: update API documentation"
-git commit -m "refactor(classes): simplify query logic"
-```
+The pre-commit hook will still ensure code quality, but commit messages are flexible.
 
 ## Bypassing Hooks (Not Recommended)
 
