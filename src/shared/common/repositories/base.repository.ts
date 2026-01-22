@@ -530,6 +530,66 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
   }
 
   /**
+   * Find a single entity by ID with audit relations (creator, updater, deleter).
+   * Only loads userProfile.id and userProfile.user.name for each audit relation.
+   *
+   * @param id Entity ID
+   * @param alias Entity alias for QueryBuilder (defaults to 'entity')
+   * @param withDeleted Optional flag to include soft-deleted entities
+   * @returns Entity with audit relations or null if not found
+   * @throws Error if ID is invalid
+   */
+  async findByIdWithAuditRelations(
+    id: string,
+    alias: string = 'entity',
+    withDeleted: boolean = false,
+  ): Promise<T | null> {
+    if (!id || typeof id !== 'string' || id.trim().length === 0) {
+      throw SystemErrors.internalServerError({
+        operation: 'id_validation',
+        error: 'invalid_id_string',
+      });
+    }
+
+    const qb = this.getRepository()
+      .createQueryBuilder(alias)
+      .leftJoin(`${alias}.creator`, 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin(`${alias}.updater`, 'updater')
+      .leftJoin('updater.user', 'updaterUser')
+      .addSelect([
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
+      ])
+      .where(`${alias}.id = :id`, { id });
+
+    // Check if entity has soft delete support (deleter relation)
+    const hasDeleter = this.getRepository().metadata.relations.some(
+      (rel) => rel.propertyName === 'deleter',
+    );
+
+    if (hasDeleter) {
+      qb.leftJoin(`${alias}.deleter`, 'deleter')
+        .leftJoin('deleter.user', 'deleterUser')
+        .addSelect([
+          'deleter.id',
+          'deleterUser.id',
+          'deleterUser.name',
+        ]);
+    }
+
+    if (withDeleted) {
+      qb.withDeleted();
+    }
+
+    return qb.getOne();
+  }
+
+  /**
    * Find a single entity by ID with optional relations loaded, or throw an error if not found.
    *
    * @param id Entity ID

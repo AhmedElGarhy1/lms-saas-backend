@@ -11,10 +11,7 @@ import {
 import { MetaWhatsAppProvider } from './providers/meta-whatsapp.provider';
 import pTimeout from 'p-timeout';
 import { Config } from '@/shared/config/config';
-import {
-  MissingNotificationContentException,
-  NotificationSendingFailedException,
-} from '../exceptions/notification.exceptions';
+import { NotificationErrors } from '../exceptions/notification-errors';
 
 @Injectable()
 export class WhatsAppAdapter
@@ -69,7 +66,7 @@ export class WhatsAppAdapter
 
     // Validate template structure
     if (!templateName || !templateLanguage || !templateParameters) {
-      throw new MissingNotificationContentException(
+      throw NotificationErrors.missingNotificationContent(
         NotificationChannel.WHATSAPP,
         'templateName, templateLanguage, or templateParameters',
       );
@@ -133,7 +130,7 @@ export class WhatsAppAdapter
       );
 
       // Re-throw error - global handler will log it
-      throw new NotificationSendingFailedException(
+      throw NotificationErrors.notificationSendingFailed(
         NotificationChannel.WHATSAPP,
         errorMessage,
       );

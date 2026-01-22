@@ -162,4 +162,70 @@ export class UserProfileRepository extends BaseRepository<UserProfile> {
     const savedEntity = await manager.save(entity);
     return savedEntity.id;
   }
+
+  /**
+   * Find a user profile with optimized relations loaded
+   * Includes user data and audit relations (creator, updater, deleter)
+   *
+   * @param userProfileId - User profile ID
+   * @param includeDeleted - Whether to include soft-deleted profiles
+   * @returns UserProfile with user and audit relations
+   */
+  async findUserProfileWithRelations(
+    userProfileId: string,
+    includeDeleted: boolean = false,
+  ): Promise<UserProfile | null> {
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('userProfile')
+      // Join user relation (full entity needed for profile view)
+      .leftJoinAndSelect('userProfile.user', 'user')
+      // Audit relations
+      .leftJoin('userProfile.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('userProfile.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
+      .leftJoin('userProfile.deleter', 'deleter')
+      .leftJoin('deleter.user', 'deleterUser')
+      // Add audit fields as selections
+      .addSelect([
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
+        'deleter.id',
+        'deleterUser.id',
+        'deleterUser.name',
+      ])
+      .where('userProfile.id = :userProfileId', { userProfileId });
+
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
+  }
+
+  /**
+   * Find a user profile with optimized relations loaded or throw if not found
+   *
+   * @param userProfileId - User profile ID
+   * @param includeDeleted - Whether to include soft-deleted profiles
+   * @returns UserProfile with user and audit relations
+   * @throws User profile not found error
+   */
+  async findUserProfileWithRelationsOrThrow(
+    userProfileId: string,
+    includeDeleted: boolean = false,
+  ): Promise<UserProfile> {
+    const userProfile = await this.findUserProfileWithRelations(
+      userProfileId,
+      includeDeleted,
+    );
+    if (!userProfile) {
+      throw new Error(`User profile with id ${userProfileId} not found`);
+    }
+    return userProfile;
+  }
 }

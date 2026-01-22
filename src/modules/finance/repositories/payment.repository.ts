@@ -339,9 +339,10 @@ export class PaymentRepository extends BaseRepository<Payment> {
    * Only loads essential fields for related entities
    *
    * @param paymentId - Payment ID
+   * @param includeDeleted - Reserved for future use (Payment doesn't have soft delete)
    * @returns Payment with optimized relations
    */
-  async findPaymentWithRelations(paymentId: string): Promise<Payment | null> {
+  async findPaymentWithRelations(paymentId: string, includeDeleted: boolean = false): Promise<Payment | null> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('payment')
       // Join for sender/receiver names (same as pagination)
@@ -378,6 +379,11 @@ export class PaymentRepository extends BaseRepository<Payment> {
       .leftJoin('studentProfile.user', 'studentUser')
       .leftJoin('studentCharge.class', 'class')
       .leftJoin('teacherPayout.class', 'teacherClass')
+      // Audit relations
+      .leftJoin('payment.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('payment.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
       // Add sender/receiver names (same as pagination)
       .addSelect(
         "COALESCE(senderUser.name, CONCAT(senderCenter.name, CONCAT(' - ', senderBranch.city)))",
@@ -405,6 +411,13 @@ export class PaymentRepository extends BaseRepository<Payment> {
         'class.name',
         'teacherClass.id',
         'teacherClass.name',
+        // Audit fields
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
       ])
       // Set parameters for joins
       .setParameters({
@@ -433,11 +446,12 @@ export class PaymentRepository extends BaseRepository<Payment> {
    * Find a payment with optimized relations loaded or throw if not found
    *
    * @param paymentId - Payment ID
+   * @param includeDeleted - Reserved for future use (Payment doesn't have soft delete)
    * @returns Payment with optimized relations
    * @throws Payment not found error
    */
-  async findPaymentWithRelationsOrThrow(paymentId: string): Promise<Payment> {
-    const payment = await this.findPaymentWithRelations(paymentId);
+  async findPaymentWithRelationsOrThrow(paymentId: string, includeDeleted: boolean = false): Promise<Payment> {
+    const payment = await this.findPaymentWithRelations(paymentId, includeDeleted);
     if (!payment) {
       throw new Error(`Payment with id ${paymentId} not found`);
     }

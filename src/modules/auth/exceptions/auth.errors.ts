@@ -45,7 +45,19 @@ export class AuthErrors extends BaseErrorHelpers {
     return this.createNoDetails(AuthErrorCode.PHONE_NOT_VERIFIED);
   }
 
+  // Password reset errors
+  static passwordResetRequired(): DomainException {
+    return this.createNoDetails(AuthErrorCode.PASSWORD_RESET_REQUIRED);
+  }
 
+  // Token errors
+  static refreshTokenInvalid(): DomainException {
+    return this.createNoDetails(AuthErrorCode.REFRESH_TOKEN_INVALID);
+  }
+
+  static refreshTokenExpired(): DomainException {
+    return this.createNoDetails(AuthErrorCode.REFRESH_TOKEN_EXPIRED);
+  }
 
   static sessionExpired(): DomainException {
     return this.createNoDetails(AuthErrorCode.SESSION_EXPIRED);

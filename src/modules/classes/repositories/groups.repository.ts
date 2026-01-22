@@ -42,6 +42,13 @@ export class GroupsRepository extends BaseRepository<Group> {
       .leftJoin('group.center', 'center')
       // Load full scheduleItems
       .leftJoinAndSelect('group.scheduleItems', 'scheduleItems')
+      // Audit relations
+      .leftJoin('group.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('group.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
+      .leftJoin('group.deleter', 'deleter')
+      .leftJoin('deleter.user', 'deleterUser')
       // Add id and name fields as selections
       .addSelect([
         'class.id',
@@ -51,6 +58,16 @@ export class GroupsRepository extends BaseRepository<Group> {
         'branch.city',
         'center.id',
         'center.name',
+        // Audit fields
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
+        'deleter.id',
+        'deleterUser.id',
+        'deleterUser.name',
       ])
       // Add student count subquery
       .addSelect(
@@ -130,6 +147,13 @@ export class GroupsRepository extends BaseRepository<Group> {
       .leftJoin('group.center', 'center')
       // Load full scheduleItems
       .leftJoinAndSelect('group.scheduleItems', 'scheduleItems')
+      // Audit relations
+      .leftJoin('group.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('group.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
+      .leftJoin('group.deleter', 'deleter')
+      .leftJoin('deleter.user', 'deleterUser')
       // Add id and name fields as selections
       .addSelect([
         'class.id',
@@ -139,6 +163,16 @@ export class GroupsRepository extends BaseRepository<Group> {
         'branch.city',
         'center.id',
         'center.name',
+        // Audit fields
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
+        'deleter.id',
+        'deleterUser.id',
+        'deleterUser.name',
       ])
       // Add student count subquery
       .addSelect(

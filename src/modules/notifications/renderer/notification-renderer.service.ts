@@ -8,8 +8,7 @@ import {
   RenderedNotification,
   NotificationManifest,
 } from '../manifests/types/manifest.types';
-import { MissingTemplateVariablesException } from '../exceptions/notification.exceptions';
-import { TemplateRenderingException } from '../exceptions/notification.exceptions';
+import { NotificationErrors } from '../exceptions/notification-errors';
 import { AudienceId } from '../types/audience.types';
 
 /**
@@ -159,10 +158,7 @@ export class NotificationRenderer extends BaseService {
             },
           );
         }
-        throw new TemplateRenderingException(
-          templatePath,
-          `Failed to render ${notificationType}:${channel}: ${errorMessage}. Fallback also failed: ${fallbackErrorMessage}`,
-        );
+        throw NotificationErrors.templateRenderingFailed();
       }
     }
 
@@ -214,7 +210,7 @@ export class NotificationRenderer extends BaseService {
     );
 
     if (missing.length > 0) {
-      throw new MissingTemplateVariablesException(type, channel, missing);
+      throw NotificationErrors.missingTemplateVariables(type, channel, missing);
     }
   }
 }

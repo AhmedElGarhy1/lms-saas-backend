@@ -27,10 +27,27 @@ export class SubjectsRepository extends BaseRepository<Subject> {
       .createQueryBuilder('subject')
       // Join relations for name fields only (not full entities)
       .leftJoin('subject.center', 'center')
+      // Audit relations
+      .leftJoin('subject.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('subject.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
+      .leftJoin('subject.deleter', 'deleter')
+      .leftJoin('deleter.user', 'deleterUser')
       // Add name and id fields as selections
       .addSelect([
         'center.id',
         'center.name',
+        // Audit fields
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
+        'deleter.id',
+        'deleterUser.id',
+        'deleterUser.name',
       ])
       .where('subject.centerId = :centerId', { centerId });
 
@@ -47,31 +64,55 @@ export class SubjectsRepository extends BaseRepository<Subject> {
    * Only loads id and name fields for center relation
    *
    * @param subjectId - Subject ID
+   * @param includeDeleted - Whether to include soft-deleted subjects
    * @returns Subject with center.id and center.name only
    */
-  async findSubjectWithRelations(subjectId: string): Promise<Subject | null> {
-    return this.getRepository()
+  async findSubjectWithRelations(subjectId: string, includeDeleted: boolean = false): Promise<Subject | null> {
+    const queryBuilder = this.getRepository()
       .createQueryBuilder('subject')
       // Join relations for name fields only (not full entities)
       .leftJoin('subject.center', 'center')
+      // Audit relations
+      .leftJoin('subject.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('subject.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
+      .leftJoin('subject.deleter', 'deleter')
+      .leftJoin('deleter.user', 'deleterUser')
       // Add name and id fields as selections
       .addSelect([
         'center.id',
         'center.name',
+        // Audit fields
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
+        'deleter.id',
+        'deleterUser.id',
+        'deleterUser.name',
       ])
-      .where('subject.id = :subjectId', { subjectId })
-      .getOne();
+      .where('subject.id = :subjectId', { subjectId });
+
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
   }
 
   /**
    * Find a subject with optimized relations loaded or throw if not found
    *
    * @param subjectId - Subject ID
+   * @param includeDeleted - Whether to include soft-deleted subjects
    * @returns Subject with center.id and center.name only
    * @throws Subject not found error
    */
-  async findSubjectWithRelationsOrThrow(subjectId: string): Promise<Subject> {
-    const subject = await this.findSubjectWithRelations(subjectId);
+  async findSubjectWithRelationsOrThrow(subjectId: string, includeDeleted: boolean = false): Promise<Subject> {
+    const subject = await this.findSubjectWithRelations(subjectId, includeDeleted);
     if (!subject) {
       throw new Error(`Subject with id ${subjectId} not found`);
     }

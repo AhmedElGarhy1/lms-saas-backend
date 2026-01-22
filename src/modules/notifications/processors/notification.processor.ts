@@ -11,7 +11,7 @@ import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { ChannelRetryStrategyService } from '../services/channel-retry-strategy.service';
 import { NotificationConfig } from '../config/notification.config';
-import { NotificationSendingFailedException } from '../exceptions/notification.exceptions';
+import { NotificationErrors } from '../exceptions/notification-errors';
 import { randomUUID } from 'crypto';
 import {
   isNotificationJobData,
@@ -126,7 +126,7 @@ export class NotificationProcessor extends WorkerHost {
           );
         }
 
-        throw new NotificationSendingFailedException(
+        throw NotificationErrors.notificationSendingFailed(
           channel,
           `All notification channels failed: ${errors}`,
         );

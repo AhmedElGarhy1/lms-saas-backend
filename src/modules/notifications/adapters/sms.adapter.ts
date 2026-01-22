@@ -7,10 +7,7 @@ import { TimeoutConfigService } from '../config/timeout.config';
 import * as twilio from 'twilio';
 import pTimeout from 'p-timeout';
 import { Config } from '@/shared/config/config';
-import {
-  MissingNotificationContentException,
-  NotificationSendingFailedException,
-} from '../exceptions/notification.exceptions';
+import { NotificationErrors } from '../exceptions/notification-errors';
 
 @Injectable()
 export class SmsAdapter
@@ -86,7 +83,7 @@ export class SmsAdapter
     const message = payload.data.content || payload.data.message || '';
 
     if (!message) {
-      throw new MissingNotificationContentException(
+      throw NotificationErrors.missingNotificationContent(
         NotificationChannel.SMS,
         'content',
       );
@@ -137,7 +134,7 @@ export class SmsAdapter
       );
 
       // Re-throw error - global handler will log it
-      throw new NotificationSendingFailedException(
+      throw NotificationErrors.notificationSendingFailed(
         NotificationChannel.SMS,
         errorMessage,
       );

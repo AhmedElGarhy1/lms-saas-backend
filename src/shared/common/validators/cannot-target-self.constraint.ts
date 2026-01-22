@@ -4,7 +4,7 @@ import {
   ValidationArguments,
 } from 'class-validator';
 import { Injectable } from '@nestjs/common';
-import { DomainErrors } from '../exceptions/domain.exception';
+import { CommonErrors } from '../exceptions/common.errors';
 
 @Injectable()
 @ValidatorConstraint({ name: 'cannotTargetSelf', async: false })
@@ -25,7 +25,7 @@ export class CannotTargetSelfConstraint implements ValidatorConstraintInterface 
 
     // Check if user is targeting themselves
     if (targetUserId === currentUserId) {
-      throw DomainErrors.cannotTargetSelf(args.property);
+      throw CommonErrors.cannotTargetSelf(args.property);
     }
 
     return true;

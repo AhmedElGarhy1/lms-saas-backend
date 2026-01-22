@@ -1,5 +1,5 @@
 import { Injectable, Inject, forwardRef, Logger } from '@nestjs/common';
-import { DomainException, DomainErrors } from '@/shared/common/exceptions/domain.exception';
+import { DomainException } from '@/shared/common/exceptions/domain.exception';
 import { AuthErrorCode } from '../enums/auth.codes';
 import { AuthErrors } from '../exceptions/auth.errors';
 import { VerificationTokenRepository } from '../repositories/verification-token.repository';

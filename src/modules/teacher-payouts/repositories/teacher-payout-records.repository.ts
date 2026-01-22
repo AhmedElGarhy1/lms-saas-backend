@@ -239,9 +239,10 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
    * Only loads id and name fields for related entities
    *
    * @param payoutId - Teacher payout record ID
+   * @param includeDeleted - Reserved for future use (TeacherPayoutRecord doesn't have soft delete)
    * @returns TeacherPayoutRecord with optimized relations
    */
-  async findTeacherPayoutWithRelations(payoutId: string): Promise<TeacherPayoutRecord | null> {
+  async findTeacherPayoutWithRelations(payoutId: string, includeDeleted: boolean = false): Promise<TeacherPayoutRecord | null> {
     return this.getRepository()
       .createQueryBuilder('payout')
       // Join relations for name fields only (not full entities)
@@ -252,6 +253,11 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
       .leftJoin('payout.branch', 'branch')
       .leftJoin('payout.center', 'center')
       .leftJoinAndSelect('payout.payments', 'payments') // Include full payments for detailed view
+      // Audit relations
+      .leftJoin('payout.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('payout.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
       // Add name and id fields as selections
       .addSelect([
         'teacher.id',
@@ -264,6 +270,13 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
         'branch.city',
         'center.id',
         'center.name',
+        // Audit fields
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
       ])
       .where('payout.id = :payoutId', { payoutId })
       .getOne();
@@ -273,11 +286,12 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
    * Find a teacher payout record with optimized relations loaded or throw if not found
    *
    * @param payoutId - Teacher payout record ID
+   * @param includeDeleted - Reserved for future use (TeacherPayoutRecord doesn't have soft delete)
    * @returns TeacherPayoutRecord with optimized relations
    * @throws Teacher payout not found error
    */
-  async findTeacherPayoutWithRelationsOrThrow(payoutId: string): Promise<TeacherPayoutRecord> {
-    const payout = await this.findTeacherPayoutWithRelations(payoutId);
+  async findTeacherPayoutWithRelationsOrThrow(payoutId: string, includeDeleted: boolean = false): Promise<TeacherPayoutRecord> {
+    const payout = await this.findTeacherPayoutWithRelations(payoutId, includeDeleted);
     if (!payout) {
       throw new Error(`Teacher payout record with id ${payoutId} not found`);
     }

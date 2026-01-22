@@ -32,10 +32,27 @@ export class BranchesRepository extends BaseRepository<Branch> {
       // Join relations for name fields only (not full entities)
       .leftJoin('branch.center', 'center')
       .leftJoin('branch.branchAccess', 'branchAccess')
+      // Audit relations
+      .leftJoin('branch.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('branch.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
+      .leftJoin('branch.deleter', 'deleter')
+      .leftJoin('deleter.user', 'deleterUser')
       // Add name and id fields as selections
       .addSelect([
         'center.id',
         'center.name',
+        // Audit fields
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
+        'deleter.id',
+        'deleterUser.id',
+        'deleterUser.name',
       ])
       .where('branch.centerId = :centerId', { centerId });
 
@@ -66,31 +83,55 @@ export class BranchesRepository extends BaseRepository<Branch> {
    * Only loads id and name fields for center relation
    *
    * @param branchId - Branch ID
+   * @param includeDeleted - Whether to include soft-deleted branches
    * @returns Branch with center.id and center.name only
    */
-  async findBranchWithRelations(branchId: string): Promise<Branch | null> {
-    return this.getRepository()
+  async findBranchWithRelations(branchId: string, includeDeleted: boolean = false): Promise<Branch | null> {
+    const queryBuilder = this.getRepository()
       .createQueryBuilder('branch')
       // Join relations for name fields only (not full entities)
       .leftJoin('branch.center', 'center')
+      // Audit relations
+      .leftJoin('branch.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('branch.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
+      .leftJoin('branch.deleter', 'deleter')
+      .leftJoin('deleter.user', 'deleterUser')
       // Add name and id fields as selections
       .addSelect([
         'center.id',
         'center.name',
+        // Audit fields
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
+        'deleter.id',
+        'deleterUser.id',
+        'deleterUser.name',
       ])
-      .where('branch.id = :branchId', { branchId })
-      .getOne();
+      .where('branch.id = :branchId', { branchId });
+
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
   }
 
   /**
    * Find a branch with optimized relations loaded or throw if not found
    *
    * @param branchId - Branch ID
+   * @param includeDeleted - Whether to include soft-deleted branches
    * @returns Branch with center.id and center.name only
    * @throws Branch not found error
    */
-  async findBranchWithRelationsOrThrow(branchId: string): Promise<Branch> {
-    const branch = await this.findBranchWithRelations(branchId);
+  async findBranchWithRelationsOrThrow(branchId: string, includeDeleted: boolean = false): Promise<Branch> {
+    const branch = await this.findBranchWithRelations(branchId, includeDeleted);
     if (!branch) {
       throw new Error(`Branch with id ${branchId} not found`);
     }

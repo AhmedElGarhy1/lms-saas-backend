@@ -29,9 +29,7 @@ export class SubjectsService extends BaseService {
     actor: ActorUser,
     includeDeleted = false,
   ) {
-    const subject = includeDeleted
-      ? await this.subjectsRepository.findOneSoftDeletedById(subjectId)
-      : await this.subjectsRepository.findOne(subjectId);
+    const subject = await this.subjectsRepository.findSubjectWithRelations(subjectId, includeDeleted);
 
     if (!subject) {
       throw SubjectsErrors.subjectNotFound();

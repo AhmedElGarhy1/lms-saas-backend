@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { AllErrorCodes, CommonErrorCode } from '../enums/error-codes';
+import { AllErrorCodes } from '../enums/error-codes';
 export { SystemException, SystemErrors } from './system.exception';
 
 /**
@@ -45,34 +45,3 @@ export abstract class BaseErrorHelpers {
   }
 }
 
-// Common domain errors - use for cross-cutting concerns
-export class DomainErrors {
-  static resourceNotFound(
-    entity: string,
-    entityId?: string | number,
-  ): DomainException {
-    return new DomainException(CommonErrorCode.RESOURCE_NOT_FOUND, [
-      {
-        field: entity,
-        value: entityId,
-      },
-    ]);
-  }
-
-  static validationFailed(field: string, value: unknown): DomainException {
-    return new DomainException(CommonErrorCode.VALIDATION_FAILED, [
-      {
-        field,
-        value,
-      },
-    ]);
-  }
-
-  static cannotTargetSelf(operation?: string): DomainException {
-    return new DomainException(CommonErrorCode.CANNOT_TARGET_SELF, [
-      {
-        operation: operation || 'unknown',
-      },
-    ]);
-  }
-}

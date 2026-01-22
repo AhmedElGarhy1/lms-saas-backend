@@ -4,7 +4,7 @@ import * as Handlebars from 'handlebars';
 import { z } from 'zod';
 import { InMemoryTemplateCacheService } from './in-memory-template-cache.service';
 import { BaseService } from '@/shared/common/services/base.service';
-import { TemplateRenderingException } from '../exceptions/notification.exceptions';
+import { NotificationErrors } from '../exceptions/notification-errors';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationType } from '../enums/notification-type.enum';
 import { getChannelExtension } from '../config/template-format.config';
@@ -58,10 +58,7 @@ export class NotificationTemplateService extends BaseService {
     );
 
     if (!templatePath) {
-      throw new TemplateRenderingException(
-        templateName,
-        `Template not found: ${templateName} for channel ${channel} and locale ${locale}`,
-      );
+      throw NotificationErrors.templateRenderingFailed();
     }
 
     try {
@@ -84,10 +81,7 @@ export class NotificationTemplateService extends BaseService {
           error: errorMessage,
         },
       );
-      throw new TemplateRenderingException(
-        templateName,
-        `Template not found: ${templateName} for channel ${channel} and locale ${locale}. ${errorMessage}`,
-      );
+      throw NotificationErrors.templateRenderingFailed();
     }
   }
 
@@ -257,16 +251,10 @@ export class NotificationTemplateService extends BaseService {
       );
 
       if (error instanceof z.ZodError) {
-        throw new TemplateRenderingException(
-          'json-template',
-          `JSON template validation failed: ${error.errors.map((e: z.ZodIssue) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
-        );
+        throw NotificationErrors.templateRenderingFailed();
       }
 
-      throw new TemplateRenderingException(
-        'json-template',
-        `Failed to parse JSON template: ${errorMessage}`,
-      );
+      throw NotificationErrors.templateRenderingFailed();
     }
   }
 
@@ -291,10 +279,7 @@ export class NotificationTemplateService extends BaseService {
     // For IN_APP JSON templates, skip file loading - use i18n directly
     if (channel === NotificationChannel.IN_APP && extension === '.json') {
       if (!notificationType) {
-        throw new TemplateRenderingException(
-          templateName,
-          `NotificationType is required for JSON template rendering (IN_APP channel)`,
-        );
+        throw NotificationErrors.templateRenderingFailed();
       }
       // Use minimal default JSON structure - translations come from i18n
       const defaultJsonContent = JSON.stringify({
@@ -339,10 +324,7 @@ export class NotificationTemplateService extends BaseService {
             error: errorMessage,
           },
         );
-        throw new TemplateRenderingException(
-          templateName,
-          `Failed to render template ${templateName}: ${errorMessage}`,
-        );
+        throw NotificationErrors.templateRenderingFailed();
       }
     } else if (extension === '.txt') {
       // Simple text interpolation
@@ -350,10 +332,7 @@ export class NotificationTemplateService extends BaseService {
     } else if (extension === '.json') {
       // JSON parsing and validation with i18n translation
       if (!notificationType) {
-        throw new TemplateRenderingException(
-          templateName,
-          `NotificationType is required for JSON template rendering (IN_APP channel)`,
-        );
+        throw NotificationErrors.templateRenderingFailed();
       }
       return await this.renderJsonTemplate(
         templateContent,
@@ -362,10 +341,7 @@ export class NotificationTemplateService extends BaseService {
         notificationType,
       );
     } else {
-      throw new TemplateRenderingException(
-        templateName,
-        `Unsupported template extension: ${extension} for channel ${channel}`,
-      );
+      throw NotificationErrors.templateRenderingFailed();
     }
   }
 }

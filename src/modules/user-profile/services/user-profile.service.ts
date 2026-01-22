@@ -213,9 +213,10 @@ export class UserProfileService extends BaseService {
     actor?: ActorUser,
     includeDeleted = false,
   ) {
-    const profile = includeDeleted
-      ? await this.userProfileRepository.findOneSoftDeletedById(userProfileId)
-      : await this.userProfileRepository.findOne(userProfileId);
+    const profile = await this.userProfileRepository.findUserProfileWithRelations(
+      userProfileId,
+      includeDeleted,
+    );
 
     if (!profile) {
       throw UserProfileErrors.userProfileNotFound();

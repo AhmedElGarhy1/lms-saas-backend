@@ -38,9 +38,7 @@ export class BranchesService extends BaseService {
   }
 
   async getBranch(branchId: string, actor: ActorUser, includeDeleted = false) {
-    const branch = includeDeleted
-      ? await this.branchesRepository.findOneSoftDeletedById(branchId)
-      : await this.branchesRepository.findBranchWithRelations(branchId);
+    const branch = await this.branchesRepository.findBranchWithRelations(branchId, includeDeleted);
 
     if (!branch) {
       throw CentersErrors.branchNotFound();

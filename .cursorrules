@@ -1,0 +1,10 @@
+- there is diffrence between user profile and role, user profile can be admin, staff, student, ect..... but role is diffrent user can generate roles for his needs
+- the center acces is centerAccess relation, branch access is branchAccess relation, everything related to access control is based on relations
+- user profile types that can have rules is only staff and admin
+- there is deep acces control all must have center access to access the center, admin can have user access for other admins, staff can has user access for other staff and for teachers to manage them and no user access for teacher or student
+- there is branch access for staff only not applyed for admin, student, teacher. teacher and student needs only center access no branch access or anything else
+- class accessable users is staff with class staff access, teacher with class.teacherId, student with class.group.studentGroup
+- there is too many types of teacher payment strategeis like per session, class, hour, student, month. they create payout record based on the type and each handled and created diffrently. the payout is making full chain to make full payment payout->payment->transaction->walletUpdate/cashboxUpdate
+- there is too many types of teacher payment strategeis like per session, class, hour, student, month. they create payout record based on the type and each handled and created diffrently. the payout is making full chain to make full payment payout->payment->transaction->walletUpdate/cashboxUpdate
+- there is students it can be per session, class, month. same as techer there is payment you must pay the money to be able to attend the session.
+- payments is financ payments with cashbox, wallets, transaction (for wallet), cashTransactions (for cashbox)

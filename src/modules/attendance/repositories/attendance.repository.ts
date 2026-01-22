@@ -345,10 +345,11 @@ export class AttendanceRepository extends BaseRepository<Attendance> {
    * Only loads id and name fields for related entities
    *
    * @param attendanceId - Attendance ID
+   * @param includeDeleted - Whether to include soft-deleted attendance records
    * @returns Attendance with optimized relations
    */
-  async findAttendanceWithRelations(attendanceId: string): Promise<Attendance | null> {
-    return this.getRepository()
+  async findAttendanceWithRelations(attendanceId: string, includeDeleted: boolean = false): Promise<Attendance | null> {
+    const queryBuilder = this.getRepository()
       .createQueryBuilder('attendance')
       // Join relations for name fields only (not full entities)
       .leftJoin('attendance.student', 'student')
@@ -356,6 +357,11 @@ export class AttendanceRepository extends BaseRepository<Attendance> {
       .leftJoin('attendance.session', 'session')
       .leftJoin('attendance.group', 'group')
       .leftJoin('attendance.branch', 'branch')
+      // Audit relations
+      .leftJoin('attendance.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('attendance.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
       // Add name and id fields as selections
       .addSelect([
         'student.id',
@@ -367,20 +373,33 @@ export class AttendanceRepository extends BaseRepository<Attendance> {
         'group.name',
         'branch.id',
         'branch.city',
+        // Audit fields
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
       ])
-      .where('attendance.id = :attendanceId', { attendanceId })
-      .getOne();
+      .where('attendance.id = :attendanceId', { attendanceId });
+
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
   }
 
   /**
    * Find an attendance record with optimized relations loaded or throw if not found
    *
    * @param attendanceId - Attendance ID
+   * @param includeDeleted - Whether to include soft-deleted attendance records
    * @returns Attendance with optimized relations
    * @throws Attendance not found error
    */
-  async findAttendanceWithRelationsOrThrow(attendanceId: string): Promise<Attendance> {
-    const attendance = await this.findAttendanceWithRelations(attendanceId);
+  async findAttendanceWithRelationsOrThrow(attendanceId: string, includeDeleted: boolean = false): Promise<Attendance> {
+    const attendance = await this.findAttendanceWithRelations(attendanceId, includeDeleted);
     if (!attendance) {
       throw new Error(`Attendance record with id ${attendanceId} not found`);
     }

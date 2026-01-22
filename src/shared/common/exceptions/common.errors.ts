@@ -38,4 +38,22 @@ export class CommonErrors extends BaseErrorHelpers {
       validationErrors,
     });
   }
+
+  // Generic resource not found (for cross-cutting concerns)
+  static resourceNotFound(
+    entity: string,
+    entityId?: string | number,
+  ): DomainException {
+    return this.createWithDetails(CommonErrorCode.RESOURCE_NOT_FOUND, {
+      field: entity,
+      value: entityId,
+    });
+  }
+
+  // Cannot target self error (for cross-cutting concerns)
+  static cannotTargetSelf(operation?: string): DomainException {
+    return this.createWithDetails(CommonErrorCode.CANNOT_TARGET_SELF, {
+      operation: operation || 'unknown',
+    });
+  }
 }

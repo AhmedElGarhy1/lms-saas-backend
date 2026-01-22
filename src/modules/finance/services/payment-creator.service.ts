@@ -73,7 +73,7 @@ export class PaymentCreatorService {
   ): Promise<void> {
     // Basic validations
     if (request.amount.isNegative() || request.amount.isZero()) {
-      throw FinanceErrors.invalidAmount();
+      throw FinanceErrors.invalidPaymentAmount();
     }
 
     // Wallet-specific validations

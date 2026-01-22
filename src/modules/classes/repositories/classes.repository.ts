@@ -45,6 +45,13 @@ export class ClassesRepository extends BaseRepository<Class> {
         'class.teacherPaymentStrategy',
         'teacherPaymentStrategy',
       )
+      // Audit relations (creator, updater, deleter)
+      .leftJoin('class.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('class.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
+      .leftJoin('class.deleter', 'deleter')
+      .leftJoin('deleter.user', 'deleterUser')
       // Add name and id fields as selections
       .addSelect([
         'level.id',
@@ -55,6 +62,16 @@ export class ClassesRepository extends BaseRepository<Class> {
         'teacherUser.name',
         'branch.id',
         'branch.city',
+        // Audit fields
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
+        'deleter.id',
+        'deleterUser.id',
+        'deleterUser.name',
       ])
       // Add count subqueries
       .addSelect(
@@ -208,6 +225,13 @@ export class ClassesRepository extends BaseRepository<Class> {
         'class.teacherPaymentStrategy',
         'teacherPaymentStrategy',
       )
+      // Audit relations (creator, updater, deleter)
+      .leftJoin('class.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('class.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
+      .leftJoin('class.deleter', 'deleter')
+      .leftJoin('deleter.user', 'deleterUser')
       // Groups will be fetched separately to avoid relying on relations
       // Add name and id fields as selections
       .addSelect([
@@ -221,6 +245,16 @@ export class ClassesRepository extends BaseRepository<Class> {
         'branch.city',
         'center.id',
         'center.name',
+        // Audit fields
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
+        'deleter.id',
+        'deleterUser.id',
+        'deleterUser.name',
       ])
       .where('class.id = :id', { id });
 

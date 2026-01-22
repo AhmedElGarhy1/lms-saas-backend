@@ -17,7 +17,6 @@ This guide helps frontend developers handle API errors from the LMS system. Each
 | `AUTH_010` | Invalid authentication code.                                | 2FA code incorrect                    |
 | `AUTH_011` | Authentication code has expired. Please request a new one.  | 2FA code expired                      |
 | `AUTH_017` | Password reset required. Please reset your password.        | Password expired, reset needed        |
-| `AUTH_018` | Password reset link has expired. Please request a new one.  | Reset token expired                   |
 | `AUTH_019` | Your session has expired. Please login again.               | JWT/session expired                   |
 | `AUTH_020` | Invalid session. Please login again.                        | Invalid JWT token                     |
 | `AUTH_022` | Session expired. Please login again.                        | Refresh token expired                 |
@@ -45,7 +44,6 @@ This guide helps frontend developers handle API errors from the LMS system. Each
 | `USR_006`  | Account is suspended.            |
 | `USR_010`  | Current password is incorrect.   |
 | `USR_008`  | Password reset link has expired. |
-| `USR_009`  | Invalid password reset link.     |
 | `USR_011`  | Profile update not allowed.      |
 | `USR_012`  | Profile is incomplete.           |
 | `USR_013`  | Role assignment not allowed.     |
@@ -55,7 +53,6 @@ This guide helps frontend developers handle API errors from the LMS system. Each
 | `USR_022`  | Invalid settings.                |
 | `USR_023`  | Failed to update preferences.    |
 | `USR_024`  | User deletion not allowed.       |
-| `USR_026`  | Cannot delete your own account.  |
 | `USR_027`  | Invalid user data.               |
 | `USR_028`  | Phone number already in use.     |
 | `USR_029`  | User information not found.      |
@@ -97,6 +94,7 @@ This guide helps frontend developers handle API errors from the LMS system. Each
 | `FIN_PAY_031` | Invalid cash payment configuration.      | None                                                |
 | `FIN_PAY_032` | Payment not found.                       | None                                                |
 | `FIN_PAY_033` | Invalid payment operation.               | None                                                |
+| `FIN_PAY_034` | Payment not pending.                     | None                                                |
 
 ### 🔄 Unified Transaction Types
 
@@ -747,8 +745,8 @@ if (error.code === 'ATD_012') {
 
 | Code    | Enum               | Description                | Parameters                                    | Example                                                   |
 | ------- | ------------------ | -------------------------- | --------------------------------------------- | --------------------------------------------------------- |
-| GEN_001 | RESOURCE_NOT_FOUND | Generic resource not found | `entity: string, entityId?: string \| number` | `DomainErrors.resourceNotFound('User', 123)`              |
-| GEN_002 | VALIDATION_FAILED  | Generic validation failure | `field: string, value: any`                   | `DomainErrors.validationFailed('email', 'invalid-email')` |
+| GEN_001 | RESOURCE_NOT_FOUND | Generic resource not found | `entity: string, entityId?: string \| number` | `CommonErrors.resourceNotFound('User', 123)`              |
+| GEN_002 | VALIDATION_FAILED  | Generic validation failure | `field: string, value: any`                   | `CommonErrors.validationFailed('email', 'invalid-email')` |
 
 ---
 
@@ -1151,7 +1149,7 @@ enum FinanceErrorCode {
   PAYMENT_REFERENCE_INVALID = 'FIN_PAY_006',
   PAYMENT_NOT_COMPLETED = 'FIN_PAY_007',
   PAYMENT_ALREADY_REFUNDED = 'FIN_PAY_008',
-  PAYMENT_NOT_PENDING = 'FIN_PAY_009',
+  PAYMENT_NOT_PENDING = 'FIN_PAY_034',
   PAYMENT_CURRENCY_NOT_SUPPORTED = 'FIN_PAY_010',
   PAYMENT_SERVICE_UNAVAILABLE = 'FIN_PAY_011',
   PAYMENT_SETUP_FAILED = 'FIN_PAY_012',

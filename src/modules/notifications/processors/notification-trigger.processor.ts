@@ -5,8 +5,6 @@ import { NotificationTriggerJobData } from '../types/notification-trigger-job-da
 import { NotificationService } from '../services/notification.service';
 import { NotificationIntentResolverRegistryService } from '../intents/notification-intent-resolver-registry.service';
 import { NotificationRegistry } from '../manifests/registry/notification-registry';
-import { MissingTemplateVariablesException } from '../exceptions/notification.exceptions';
-import { InvalidRecipientException } from '../exceptions/invalid-recipient.exception';
 
 /**
  * Processor concurrency for trigger jobs
@@ -34,10 +32,13 @@ export class NotificationTriggerProcessor extends WorkerHost {
    * Check if an error is non-retriable (validation errors that shouldn't be retried)
    */
   private isNonRetriableError(error: unknown): boolean {
-    return (
-      error instanceof MissingTemplateVariablesException ||
-      error instanceof InvalidRecipientException
-    );
+    // Check if it's a DomainException with validation-related error codes
+    if (error && typeof error === 'object' && 'errorCode' in error) {
+      const errorCode = (error as any).errorCode;
+      // Validation errors and template errors are non-retriable
+      return errorCode === 'GEN_002' || errorCode === 'NTN_003' || errorCode === 'NTN_004' || errorCode === 'NTN_010';
+    }
+    return false;
   }
 
   async process(job: Job<NotificationTriggerJobData>): Promise<void> {

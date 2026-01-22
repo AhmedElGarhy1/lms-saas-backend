@@ -13,8 +13,8 @@ export enum AuthErrorCode {
 
   // User management
   // USER_NOT_FOUND removed - use UserErrors.userNotFound() instead
+  // PASSWORD_RESET_EXPIRED removed - use UserErrors.passwordResetExpired() instead (USR_008)
   PASSWORD_RESET_REQUIRED = 'AUTH_017',
-  PASSWORD_RESET_EXPIRED = 'AUTH_018',
 
   // Sessions
   SESSION_EXPIRED = 'AUTH_019',

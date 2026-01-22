@@ -222,9 +222,10 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
    * Only loads id and name/code fields for related entities
    *
    * @param chargeId - Student charge ID
+   * @param includeDeleted - Reserved for future use (StudentCharge doesn't have soft delete)
    * @returns StudentCharge with optimized relations
    */
-  async findStudentChargeWithRelations(chargeId: string): Promise<StudentCharge | null> {
+  async findStudentChargeWithRelations(chargeId: string, includeDeleted: boolean = false): Promise<StudentCharge | null> {
     return this.getRepository()
       .createQueryBuilder('charge')
       // Join relations for name/code fields only (not full entities)
@@ -235,6 +236,11 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
       .leftJoin('charge.branch', 'branch')
       .leftJoin('charge.center', 'center')
       .leftJoinAndSelect('charge.payments', 'payments') // Include full payments for detailed view
+      // Audit relations
+      .leftJoin('charge.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('charge.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
       // Add name and id fields as selections
       .addSelect([
         'student.id',
@@ -248,6 +254,13 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
         'branch.city',
         'center.id',
         'center.name',
+        // Audit fields
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
       ])
       .where('charge.id = :chargeId', { chargeId })
       .getOne();
@@ -257,11 +270,12 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
    * Find a student charge with optimized relations loaded or throw if not found
    *
    * @param chargeId - Student charge ID
+   * @param includeDeleted - Reserved for future use (StudentCharge doesn't have soft delete)
    * @returns StudentCharge with optimized relations
    * @throws Student charge not found error
    */
-  async findStudentChargeWithRelationsOrThrow(chargeId: string): Promise<StudentCharge> {
-    const charge = await this.findStudentChargeWithRelations(chargeId);
+  async findStudentChargeWithRelationsOrThrow(chargeId: string, includeDeleted: boolean = false): Promise<StudentCharge> {
+    const charge = await this.findStudentChargeWithRelations(chargeId, includeDeleted);
     if (!charge) {
       throw new Error(`Student charge with id ${chargeId} not found`);
     }

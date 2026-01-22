@@ -180,6 +180,13 @@ export class SessionsRepository extends BaseRepository<Session> {
       .leftJoin('session.center', 'center')
       .leftJoin('session.teacher', 'teacher')
       .leftJoin('teacher.user', 'teacherUser')
+      // Audit relations
+      .leftJoin('session.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('session.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
+      .leftJoin('session.deleter', 'deleter')
+      .leftJoin('deleter.user', 'deleterUser')
       // Add name and id fields as selections
       .addSelect([
         'group.id',
@@ -193,6 +200,16 @@ export class SessionsRepository extends BaseRepository<Session> {
         'teacher.id',
         'teacherUser.id',
         'teacherUser.name',
+        // Audit fields
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
+        'deleter.id',
+        'deleterUser.id',
+        'deleterUser.name',
       ])
       .where('session.id = :sessionId', { sessionId })
       .getOne();
@@ -331,6 +348,13 @@ export class SessionsRepository extends BaseRepository<Session> {
       .leftJoin('session.center', 'center')
       .leftJoin('session.teacher', 'teacher')
       .leftJoin('teacher.user', 'teacherUser')
+      // Audit relations
+      .leftJoin('session.creator', 'creator')
+      .leftJoin('creator.user', 'creatorUser')
+      .leftJoin('session.updater', 'updater')
+      .leftJoin('updater.user', 'updaterUser')
+      .leftJoin('session.deleter', 'deleter')
+      .leftJoin('deleter.user', 'deleterUser')
       // Add name and id fields as selections
       .addSelect([
         'group.id',
@@ -344,6 +368,16 @@ export class SessionsRepository extends BaseRepository<Session> {
         'teacher.id',
         'teacherUser.id',
         'teacherUser.name',
+        // Audit fields
+        'creator.id',
+        'creatorUser.id',
+        'creatorUser.name',
+        'updater.id',
+        'updaterUser.id',
+        'updaterUser.name',
+        'deleter.id',
+        'deleterUser.id',
+        'deleterUser.name',
       ])
       // Filter by center using denormalized field (no join needed)
       .where('session.centerId = :centerId', { centerId });
