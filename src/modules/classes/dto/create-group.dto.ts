@@ -1,11 +1,9 @@
 import {
   IsString,
   IsUUID,
-  IsOptional,
   IsArray,
   MaxLength,
   ValidateNested,
-  ArrayMinSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
@@ -23,15 +21,13 @@ export class CreateGroupDto {
   classId: string;
 
   @ApiProperty({
-    description: 'Group name (optional)',
+    description: 'Group name',
     example: 'Sat 5PM Batch',
     maxLength: 255,
-    required: false,
   })
-  @IsOptional()
   @IsString()
   @MaxLength(255)
-  name?: string;
+  name: string;
 
   @ApiProperty({
     description: 'Schedule items',

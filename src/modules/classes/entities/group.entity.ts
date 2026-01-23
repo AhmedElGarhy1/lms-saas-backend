@@ -20,6 +20,7 @@ import { Session } from '@/modules/sessions/entities/session.entity';
 @Index(['centerId'])
 @Index(['classId', 'centerId'])
 @Index(['name', 'createdAt']) // For alphabetical + chronological sorting
+@Index(['name', 'classId'], { unique: true })
 export class Group extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   classId: string;
@@ -30,8 +31,8 @@ export class Group extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   centerId: string; // Denormalized from class
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  name?: string;
+  @Column({ type: 'varchar', length: 255 })
+  name: string;
 
   // Relations
   @ManyToOne(() => Class, (classEntity) => classEntity.groups, {

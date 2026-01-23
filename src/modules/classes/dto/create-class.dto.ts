@@ -3,7 +3,6 @@ import {
   IsUUID,
   IsOptional,
   IsInt,
-  IsNumber,
   Min,
   Max,
   MaxLength,
@@ -23,15 +22,13 @@ import { Branch } from '@/modules/centers/entities/branch.entity';
 
 export class CreateClassDto {
   @ApiProperty({
-    description: 'Class name (optional)',
+    description: 'Class name',
     example: 'Math Primary 3',
     maxLength: 255,
-    required: false,
   })
-  @IsOptional()
   @IsString()
   @MaxLength(255)
-  name?: string;
+  name: string;
 
   @ApiProperty({
     description: 'Level ID',
@@ -58,7 +55,7 @@ export class CreateClassDto {
   teacherUserProfileId: string;
 
   @ApiProperty({
-    description: 'Branch ID (optional, defaults to actor\'s branch)',
+    description: "Branch ID (optional, defaults to actor's branch)",
     example: 'uuid',
     required: false,
   })
