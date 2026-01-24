@@ -15,7 +15,6 @@ import { FinanceErrors } from '../exceptions/finance.errors';
 import { Transactional } from '@nestjs-cls/transactional';
 import { RequestContext } from '@/shared/common/context/request.context';
 import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
-import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { WalletService } from './wallet.service';
 import { CashboxService } from './cashbox.service';
 import { TransactionService } from './transaction.service';
@@ -26,22 +25,16 @@ import {
 } from '../enums/cash-transaction-direction.enum';
 import { TransactionType } from '../enums/transaction-type.enum';
 import { randomUUID } from 'crypto';
+import { mapPaymentReasonToTransactionType } from '../utils/payment-reason-mapper.util';
 import { PaginatePaymentDto } from '../dto/paginate-payment.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { UserPaymentStatementItemDto } from '../dto/payment-statement.dto';
-import { PaymentGatewayService } from '../adapters/payment-gateway.service';
 import {
   PaymentGatewayType,
   PaymentGatewayMethod,
 } from '../adapters/interfaces/payment-gateway.interface';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
-
-// Import the new specialized services
-import { PaymentCreatorService } from './payment-creator.service';
-import { PaymentExecutorService } from './payment-executor.service';
-import { PaymentRefundService } from './payment-refund.service';
 import { ExternalPaymentService } from './external-payment.service';
-import { PaymentQueryService } from './payment-query.service';
 import { PaymentOrchestratorService } from './payment-orchestrator.service';
 
 // DTOs for the unified payment execution API
@@ -81,7 +74,6 @@ export class PaymentService extends BaseService {
 
   constructor(
     private readonly paymentRepository: PaymentRepository,
-    private readonly accessControlHelperService: AccessControlHelperService,
     private readonly walletService: WalletService,
     private readonly cashboxService: CashboxService,
     private readonly transactionService: TransactionService,
@@ -215,10 +207,6 @@ export class PaymentService extends BaseService {
     return await this.paymentRepository.findOneOrThrow(paymentId);
   }
 
-  async getPaymentById(paymentId: string): Promise<Payment> {
-    return this.getPayment(paymentId);
-  }
-
   async createAndExecutePayment(
     request: ExecutePaymentRequest,
     actor: ActorUser,
@@ -234,7 +222,10 @@ export class PaymentService extends BaseService {
     paymentId: string,
     refundAmount: Money,
     reason?: string,
-  ): Promise<{ payment: Payment; refund: any }> {
+  ): Promise<{
+    payment: Payment;
+    refund: { success: boolean; transactionId: string };
+  }> {
     // Delegate to the orchestrator service
     return await this.paymentOrchestrator.refundPayment(
       paymentId,
@@ -265,34 +256,22 @@ export class PaymentService extends BaseService {
     wallet: { revenue: Money; expenses: Money };
     cash: { revenue: Money; expenses: Money };
   }> {
-    return this.paymentRepository.getCenterFinancialMetricsForMonth(centerId, year, month);
+    return this.paymentRepository.getCenterFinancialMetricsForMonth(
+      centerId,
+      year,
+      month,
+    );
   }
 
   /**
    * Get a payment with relations
    * Payment details are relatively public since they're already filtered at the list level
    */
-  async getPaymentWithRelations(
-    paymentId: string,
-    actor: ActorUser,
-  ): Promise<Payment> {
+  async getPaymentWithRelations(paymentId: string): Promise<Payment> {
     // Get the payment with relations - access control is handled at the list level
     return await this.paymentRepository.findPaymentWithRelationsOrThrow(
       paymentId,
     );
-  }
-
-  /**
-   * Validate polymorphic reference (service-level foreign key)
-   */
-  @Transactional()
-  async validateReference(
-    referenceType: PaymentReferenceType,
-    referenceId: string,
-  ): Promise<boolean> {
-    // Note: Reference validation is now only needed for business entities
-    // Direct relationships (paymentId) handle Transaction/CashTransaction linking
-    return true;
   }
 
   /**
@@ -307,11 +286,6 @@ export class PaymentService extends BaseService {
 
     if (payment.status !== PaymentStatus.PENDING) {
       throw FinanceErrors.paymentNotPending();
-    }
-
-    // Validate reference if exists
-    if (payment.referenceType && payment.referenceId) {
-      await this.validateReference(payment.referenceType, payment.referenceId);
     }
 
     // If source is WALLET, deduct from lockedBalance (already locked)
@@ -330,7 +304,7 @@ export class PaymentService extends BaseService {
       // Get or create receiver wallet (handles USER_PROFILE, BRANCH, etc.)
       const receiverWallet = await this.walletService.getWallet(
         payment.receiverId,
-        payment.receiverType as WalletOwnerType,
+        payment.receiverType,
       );
 
       // Add to receiver wallet and get updated receiver wallet
@@ -377,9 +351,7 @@ export class PaymentService extends BaseService {
     const correlationId = payment.correlationId || randomUUID();
 
     // Determine transaction type based on payment reason
-    const transactionType = this.mapPaymentReasonToTransactionType(
-      payment.reason,
-    );
+    const transactionType = mapPaymentReasonToTransactionType(payment.reason);
 
     // Create debit transaction (sender)
     await this.transactionService.createTransaction(
@@ -423,17 +395,16 @@ export class PaymentService extends BaseService {
     const cashTransactionType = CashTransactionType.BRANCH_DEPOSIT;
 
     // Create cash transaction (money coming into cashbox)
-    const cashTransaction =
-      await this.cashTransactionService.createCashTransaction(
-        branchId,
-        cashbox.id,
-        payment.amount,
-        CashTransactionDirection.IN,
-        payment.createdByProfileId, // Who processed the payment (receivedBy)
-        cashTransactionType,
-        paidByProfileId, // Who paid the cash (payer)
-        paymentId, // paymentId
-      );
+    await this.cashTransactionService.createCashTransaction(
+      branchId,
+      cashbox.id,
+      payment.amount,
+      CashTransactionDirection.IN,
+      payment.createdByProfileId, // Who processed the payment (receivedBy)
+      cashTransactionType,
+      paidByProfileId, // Who paid the cash (payer)
+      paymentId, // paymentId
+    );
 
     // Update cashbox balance
     await this.cashboxService.updateBalance(cashbox.id, payment.amount);
@@ -467,7 +438,7 @@ export class PaymentService extends BaseService {
       // Get receiver wallet and reverse the amount
       const receiverWallet = await this.walletService.getWallet(
         payment.receiverId,
-        payment.receiverType as WalletOwnerType,
+        payment.receiverType,
       );
       const updatedReceiverWallet = await this.walletService.updateBalance(
         receiverWallet.id,
@@ -498,7 +469,9 @@ export class PaymentService extends BaseService {
       );
     } else if (payment.paymentMethod === PaymentMethod.CASH) {
       // For cash payments, find and reverse the associated cash transaction
-      const cashTransaction = await this.cashTransactionService.findByPaymentId(payment.id);
+      const cashTransaction = await this.cashTransactionService.findByPaymentId(
+        payment.id,
+      );
       if (cashTransaction) {
         await this.cashTransactionService.reverseCashTransaction(
           cashTransaction.id,
@@ -543,7 +516,8 @@ export class PaymentService extends BaseService {
         );
       } else if (payment.paymentMethod === PaymentMethod.CASH) {
         // Reverse cash transaction if exists
-        const cashTransaction = await this.cashTransactionService.findByPaymentId(payment.id);
+        const cashTransaction =
+          await this.cashTransactionService.findByPaymentId(payment.id);
         if (cashTransaction) {
           await this.cashTransactionService.reverseCashTransaction(
             cashTransaction.id,
@@ -672,7 +646,7 @@ export class PaymentService extends BaseService {
 
   async processExternalPaymentCompletion(
     gatewayReference: string,
-    gatewayType: any,
+    gatewayType: PaymentGatewayType,
     status: 'completed' | 'failed' | 'cancelled',
     amount?: Money,
     failureReason?: string,
@@ -689,64 +663,6 @@ export class PaymentService extends BaseService {
       gatewayReference,
       gatewayData,
     );
-  }
-
-  /**
-   * Complete an executed payment
-   */
-  private async completeExecutedPayment(
-    payment: Payment,
-    executionResult: any,
-  ): Promise<Payment> {
-    // Only complete sync payments immediately
-    // Async payments remain PENDING until confirmed by provider
-    if (!PaymentService.isAsyncPayment(payment)) {
-      payment.status = PaymentStatus.COMPLETED;
-      payment.paidAt = new Date();
-    }
-
-    // Save updated payment
-    return await this.paymentRepository.savePayment(payment);
-  }
-
-  /**
-   * Log payment execution for monitoring
-   */
-  private async logPaymentExecution(
-    payment: Payment,
-    result: any,
-  ): Promise<void> {
-    this.logger.log(`Payment executed successfully`, {
-      paymentId: payment.id,
-      amount: payment.amount.toNumber(),
-      senderId: payment.senderId,
-      receiverId: payment.receiverId,
-    });
-  }
-
-  /**
-   * Map payment reason to transaction type
-   */
-  private mapPaymentReasonToTransactionType(
-    reason: PaymentReason,
-  ): TransactionType {
-    switch (reason) {
-      case PaymentReason.TOPUP:
-        return TransactionType.TOPUP;
-      case PaymentReason.SESSION_FEE:
-      case PaymentReason.MONTHLY_FEE:
-      case PaymentReason.CLASS_FEE:
-        return TransactionType.STUDENT_BILL;
-      case PaymentReason.TEACHER_STUDENT_PAYOUT:
-      case PaymentReason.TEACHER_HOUR_PAYOUT:
-      case PaymentReason.TEACHER_SESSION_PAYOUT:
-      case PaymentReason.TEACHER_MONTHLY_PAYOUT:
-      case PaymentReason.TEACHER_CLASS_PAYOUT:
-        return TransactionType.TEACHER_PAYOUT;
-      case PaymentReason.INTERNAL_TRANSFER:
-      default:
-        return TransactionType.INTERNAL_TRANSFER;
-    }
   }
 
   /**

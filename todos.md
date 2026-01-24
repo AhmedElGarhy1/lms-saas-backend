@@ -202,3 +202,7 @@
 [ ] automatic start class and automatic end class
 [ ] create class for hidden fields validation
 [ ] teacher payout per student doesn't work
+
+[ ] expenses module
+[ ] system fees module and implementation with invoices
+[ ] in zyad center there is 2 groups one throw belongsToCenterError

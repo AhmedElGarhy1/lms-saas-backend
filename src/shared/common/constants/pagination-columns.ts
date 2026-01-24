@@ -15,6 +15,7 @@ import {
   BRANCH_SORTABLE_COLUMNS,
   ATTENDANCE_SORTABLE_COLUMNS,
   NOTIFICATION_SORTABLE_COLUMNS,
+  EXPENSE_SORTABLE_COLUMNS,
 } from './sortable-columns';
 
 interface PaginationColumns {
@@ -158,6 +159,14 @@ export const ATTENDANCE_PAGINATION_COLUMNS: PaginationColumns = {
 export const NOTIFICATION_PAGINATION_COLUMNS: PaginationColumns = {
   searchableColumns: ['recipient'],
   sortableColumns: [...NOTIFICATION_SORTABLE_COLUMNS],
+  defaultSortBy: ['createdAt', 'DESC'] as [string, 'ASC' | 'DESC'],
+  dateRangeFields: ['createdAt', 'updatedAt'],
+};
+
+// Expenses module pagination columns
+export const EXPENSE_PAGINATION_COLUMNS: PaginationColumns = {
+  searchableColumns: ['title', 'description'],
+  sortableColumns: [...EXPENSE_SORTABLE_COLUMNS],
   defaultSortBy: ['createdAt', 'DESC'] as [string, 'ASC' | 'DESC'],
   dateRangeFields: ['createdAt', 'updatedAt'],
 };

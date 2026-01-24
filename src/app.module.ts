@@ -30,7 +30,6 @@ import { ContextMiddleware } from './shared/common/middleware/context.middleware
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RolesService } from './modules/access-control/services/roles.service';
 import { CentersRepository } from './modules/centers/repositories/centers.repository';
-import { join } from 'path';
 import { HealthModule } from './modules/health';
 import { UserProfileModule } from './modules/user-profile/user-profile.module';
 import { StaffModule } from './modules/staff/staff.module';
@@ -57,6 +56,7 @@ import { TeacherPayoutModule } from './modules/teacher-payouts/teacher-payouts.m
 import { R2Module } from './modules/r2/r2.module';
 import { FileModule } from './modules/file/file.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { ExpensesModule } from './modules/expenses/expenses.module';
 
 @Module({
   imports: [
@@ -104,6 +104,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     FinanceModule,
     StudentBillingModule,
     TeacherPayoutModule,
+    ExpensesModule,
     R2Module,
     FileModule,
     DashboardModule,

@@ -5,6 +5,7 @@ export enum TransactionType {
   INTERNAL_TRANSFER = 'INTERNAL_TRANSFER', // All system transfers
   TOPUP = 'TOPUP', // Balance additions
   REFUND = 'REFUND', // Payment reversals
+  EXPENSE = 'EXPENSE', // Center/branch expenses (cash payments to external vendors)
 
   // Branch wallet operations
   BRANCH_WITHDRAWAL = 'BRANCH_WITHDRAWAL', // Branch wallet withdrawals (branch → staff)

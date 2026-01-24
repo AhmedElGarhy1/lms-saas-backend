@@ -18,6 +18,11 @@ import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { PaymentReason } from '../enums/payment-reason.enum';
 import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentStatus } from '../enums/payment-status.enum';
+import { Money } from '@/shared/common/utils/money.util';
+import {
+  PaymentGatewayType,
+  PaymentGatewayMethod,
+} from '../adapters/interfaces/payment-gateway.interface';
 
 @Injectable()
 export class PaymentOrchestratorService {
@@ -42,7 +47,7 @@ export class PaymentOrchestratorService {
     actor: ActorUser,
   ): Promise<ExecutePaymentResponse> {
     this.logger.log(
-      `Orchestrating payment: ${request.amount} from ${request.senderId} to ${request.receiverId}`,
+      `Orchestrating payment: ${request.amount.toString()} from ${request.senderId} to ${request.receiverId}`,
     );
 
     // Step 1: Create payment record (includes validation and locking)
@@ -52,13 +57,12 @@ export class PaymentOrchestratorService {
     const executionResult = await this.paymentExecutor.executePayment(payment);
 
     // Step 3: Complete payment (for sync payments that complete immediately)
-    const completedPayment =
-      !PaymentService.isAsyncPayment(payment)
-        ? await this.completeExecutedPayment(payment, executionResult)
-        : payment;
+    const completedPayment = !PaymentService.isAsyncPayment(payment)
+      ? await this.completeExecutedPayment(payment)
+      : payment;
 
     // Step 4: Log success
-    await this.logPaymentExecution(completedPayment, executionResult);
+    this.logPaymentExecution(completedPayment);
 
     // Step 6: Return comprehensive response
     return {
@@ -90,18 +94,19 @@ export class PaymentOrchestratorService {
   @Transactional()
   async refundPayment(
     paymentId: string,
-    refundAmount?: any,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    refundAmount?: Money,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     reason?: string,
-    actor?: ActorUser,
-  ): Promise<{ payment: Payment; refund: any }> {
+  ): Promise<{
+    payment: Payment;
+    refund: { success: boolean; transactionId: string };
+  }> {
     // For external payments, delegate to refund service
     const payment = await this.paymentQuery.getPayment(paymentId);
     if (PaymentService.isAsyncPayment(payment)) {
-      const refundedPayment = await this.paymentRefunder.refundExternalPayment(
-        paymentId,
-        refundAmount,
-        reason,
-      );
+      const refundedPayment =
+        await this.paymentRefunder.refundExternalPayment(paymentId);
       return {
         payment: refundedPayment,
         refund: { success: true, transactionId: payment.id },
@@ -121,14 +126,14 @@ export class PaymentOrchestratorService {
    * Orchestrate external payment initiation
    */
   async initiateExternalPayment(
-    amount: any,
+    amount: Money,
     senderId: string,
     actor: ActorUser,
     currency: string = 'EGP',
     description?: string,
-    gatewayType?: any,
+    gatewayType?: PaymentGatewayType,
     idempotencyKey?: string,
-    methodType?: any,
+    methodType?: PaymentGatewayMethod,
   ): Promise<{
     payment: Payment;
     checkoutUrl: string;
@@ -190,10 +195,7 @@ export class PaymentOrchestratorService {
   /**
    * Complete an executed payment (internal payments only)
    */
-  private async completeExecutedPayment(
-    payment: Payment,
-    executionResult: any,
-  ): Promise<Payment> {
+  private async completeExecutedPayment(payment: Payment): Promise<Payment> {
     // Only complete sync payments immediately
     // Async payments remain PENDING until confirmed by provider
     if (!PaymentService.isAsyncPayment(payment)) {
@@ -208,10 +210,7 @@ export class PaymentOrchestratorService {
   /**
    * Log payment execution for monitoring
    */
-  private async logPaymentExecution(
-    payment: Payment,
-    result: any,
-  ): Promise<void> {
+  private logPaymentExecution(payment: Payment): void {
     this.logger.log(`Payment executed successfully`, {
       paymentId: payment.id,
       amount: payment.amount.toNumber(),

@@ -600,6 +600,26 @@ export const PERMISSIONS = {
     },
   },
 
+  // ===== EXPENSES PERMISSIONS =====
+  EXPENSES: {
+    CREATE: {
+      action: 'expenses:create',
+      scope: PermissionScope.CENTER,
+    },
+    VIEW: {
+      action: 'expenses:view',
+      scope: PermissionScope.CENTER,
+    },
+    UPDATE: {
+      action: 'expenses:update',
+      scope: PermissionScope.CENTER,
+    },
+    REFUND: {
+      action: 'expenses:refund',
+      scope: PermissionScope.CENTER,
+    },
+  },
+
   // ===== DASHBOARD & ANALYTICS PERMISSIONS =====
   DASHBOARD: {
     VIEW: {

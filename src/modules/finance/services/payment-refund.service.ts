@@ -3,19 +3,14 @@ import { Transactional } from '@nestjs-cls/transactional';
 import { Payment } from '../entities/payment.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentMethod } from '../enums/payment-method.enum';
-import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { TransactionType } from '../enums/transaction-type.enum';
-import { Money } from '@/shared/common/utils/money.util';
 import { FinanceErrors } from '../exceptions/finance.errors';
 import { WalletService } from './wallet.service';
 import { TransactionService } from './transaction.service';
 import { PaymentRepository } from '../repositories/payment.repository';
 import { PaymentGatewayService } from '../adapters/payment-gateway.service';
 import { PaymentService } from './payment.service';
-import {
-  RefundPaymentRequest,
-  RefundPaymentResponse,
-} from '../adapters/interfaces/payment-gateway.interface';
+import { CashTransactionService } from './cash-transaction.service';
 import { randomUUID } from 'crypto';
 
 @Injectable()
@@ -27,6 +22,7 @@ export class PaymentRefundService {
     private readonly walletService: WalletService,
     private readonly transactionService: TransactionService,
     private readonly paymentGatewayService: PaymentGatewayService,
+    private readonly cashTransactionService: CashTransactionService,
   ) {}
 
   /**
@@ -43,6 +39,16 @@ export class PaymentRefundService {
     // Reverse balances for internal payments
     if (payment.paymentMethod === PaymentMethod.WALLET) {
       await this.reverseWalletBalances(payment);
+    } else if (payment.paymentMethod === PaymentMethod.CASH) {
+      // For cash payments, find and reverse the associated cash transaction
+      const cashTransaction = await this.cashTransactionService.findByPaymentId(
+        payment.id,
+      );
+      if (cashTransaction) {
+        await this.cashTransactionService.reverseCashTransaction(
+          cashTransaction.id,
+        );
+      }
     }
 
     // Mark payment as refunded
@@ -52,13 +58,10 @@ export class PaymentRefundService {
 
   /**
    * Refund an external payment through gateway
+   * Note: amount and reason parameters reserved for future gateway integration
    */
   @Transactional()
-  async refundExternalPayment(
-    paymentId: string,
-    amount: Money,
-    reason?: string,
-  ): Promise<Payment> {
+  async refundExternalPayment(paymentId: string): Promise<Payment> {
     const payment = await this.paymentRepository.findOneOrThrow(paymentId);
 
     if (payment.status !== PaymentStatus.COMPLETED) {
@@ -66,7 +69,9 @@ export class PaymentRefundService {
     }
 
     if (!PaymentService.isAsyncPayment(payment)) {
-      throw FinanceErrors.invalidPaymentOperation('Can only refund external payments through gateway');
+      throw FinanceErrors.invalidPaymentOperation(
+        'Can only refund external payments through gateway',
+      );
     }
 
     // For now, just mark as refunded since gateway integration is pending
@@ -91,7 +96,7 @@ export class PaymentRefundService {
     // Get receiver wallet and reverse the amount
     const receiverWallet = await this.walletService.getWallet(
       payment.receiverId,
-      payment.receiverType as WalletOwnerType,
+      payment.receiverType,
     );
     const updatedReceiverWallet = await this.walletService.updateBalance(
       receiverWallet.id,

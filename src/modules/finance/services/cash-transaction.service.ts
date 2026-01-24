@@ -8,12 +8,14 @@ import { BaseService } from '@/shared/common/services/base.service';
 import { Transactional } from '@nestjs-cls/transactional';
 import { FinanceErrors } from '../exceptions/finance.errors';
 import { CashboxRepository } from '../repositories/cashbox.repository';
+import { CashboxService } from './cashbox.service';
 
 @Injectable()
 export class CashTransactionService extends BaseService {
   constructor(
     private readonly cashTransactionRepository: CashTransactionRepository,
     private readonly cashboxRepository: CashboxRepository,
+    private readonly cashboxService: CashboxService,
   ) {
     super();
   }
@@ -62,7 +64,8 @@ export class CashTransactionService extends BaseService {
   }
 
   /**
-   * Reverse a cash transaction (for cancellation)
+   * Reverse a cash transaction (for cancellation/refund)
+   * This will reverse the direction and update the cashbox balance accordingly
    */
   @Transactional()
   async reverseCashTransaction(
@@ -81,6 +84,20 @@ export class CashTransactionService extends BaseService {
         ? CashTransactionDirection.OUT
         : CashTransactionDirection.IN;
 
+    // Update cashbox balance based on reverse direction
+    // If original was OUT (money went out), reverse is IN (money comes back)
+    // If original was IN (money came in), reverse is OUT (money goes out)
+    const balanceChange =
+      reverseDirection === CashTransactionDirection.IN
+        ? cashTransaction.amount // Add money back to cashbox
+        : cashTransaction.amount.multiply(-1); // Remove money from cashbox
+
+    const updatedCashbox = await this.cashboxService.updateBalance(
+      cashTransaction.cashboxId,
+      balanceChange,
+    );
+
+    // Create reverse transaction with updated balance
     return this.createCashTransaction(
       cashTransaction.branchId,
       cashTransaction.cashboxId,
@@ -89,6 +106,8 @@ export class CashTransactionService extends BaseService {
       cashTransaction.receivedByProfileId,
       cashTransaction.type,
       cashTransaction.paidByProfileId,
+      cashTransaction.paymentId, // Pass the original paymentId for the reverse transaction
+      updatedCashbox.balance, // Pass the updated balance after reversal
     );
   }
 

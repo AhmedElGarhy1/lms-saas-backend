@@ -133,3 +133,13 @@ export const USER_EXTENDED_SEARCH_COLUMNS = [
   'phone',
   'userProfiles.code',
 ] as const;
+
+// Expenses module pagination columns
+export const EXPENSE_SORTABLE_COLUMNS = [
+  'createdAt',
+  'title',
+  'description',
+  'category',
+  'updatedAt',
+  'amount',
+] as const;

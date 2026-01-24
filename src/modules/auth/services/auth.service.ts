@@ -1,6 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DomainException } from '@/shared/common/exceptions/domain.exception';
-import { CommonErrorCode } from '@/shared/common/enums/error-codes';
 import { AuthErrors } from '../exceptions/auth.errors';
 import { JwtService } from '@nestjs/jwt';
 import { Config } from '@/shared/config/config';

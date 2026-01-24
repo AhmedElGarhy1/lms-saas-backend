@@ -9,8 +9,6 @@ import {
 import { PaymentService } from '../services/payment.service';
 import { Payment } from '../entities/payment.entity';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
-import { GetUser } from '@/shared/common/decorators';
-import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @ApiTags('Payments')
 @ApiBearerAuth()
@@ -39,12 +37,9 @@ export class PaymentsController {
   })
   async getPayment(
     @Param('paymentId') paymentId: string,
-    @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<Payment>> {
-    const payment = await this.paymentService.getPaymentWithRelations(
-      paymentId,
-      actor,
-    );
+    const payment =
+      await this.paymentService.getPaymentWithRelations(paymentId);
 
     return ControllerResponse.success(payment);
   }

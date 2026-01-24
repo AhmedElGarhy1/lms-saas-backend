@@ -18,4 +18,7 @@ export enum PaymentReason {
   // Branch operations
   BRANCH_WITHDRAWAL = 'BRANCH_WITHDRAWAL',
   BRANCH_DEPOSIT = 'BRANCH_DEPOSIT',
+
+  // Expenses
+  EXPENSE = 'EXPENSE',
 }
