@@ -12,7 +12,7 @@ import { RolePermission } from './role-permission.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('roles')
-@Index(['name', 'centerId'], { unique: true })
+@Index(['name', 'centerId'], { where: '"deletedAt" IS NULL', unique: true })
 @Index(['name', 'createdAt']) // For alphabetical + chronological sorting
 export class Role extends SoftBaseEntity {
   @Column({ type: 'varchar', length: 100 })

@@ -59,6 +59,7 @@ export class ClassesRepository extends BaseRepository<Class> {
       .leftJoinAndSelect('class.teacher', 'teacher')
       .leftJoin('teacher.user', 'teacherUser')
       .leftJoin('class.branch', 'branch')
+      .leftJoin('class.center', 'center')
       .leftJoinAndSelect(
         'class.studentPaymentStrategy',
         'studentPaymentStrategy',
@@ -100,7 +101,13 @@ export class ClassesRepository extends BaseRepository<Class> {
             ),
         'studentsCount',
       )
-      .where('class.centerId = :centerId', { centerId });
+      .where('class.centerId = :centerId', { centerId })
+      // Filter out classes where related entities are deleted (check if entity exists)
+      .andWhere('branch.id IS NOT NULL')
+      .andWhere('level.id IS NOT NULL')
+      .andWhere('subject.id IS NOT NULL')
+      .andWhere('teacher.id IS NOT NULL')
+      .andWhere('center.id IS NOT NULL');
 
     // access control
     const canBypassCenterInternalAccess =

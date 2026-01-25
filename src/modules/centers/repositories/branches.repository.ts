@@ -34,7 +34,9 @@ export class BranchesRepository extends BaseRepository<Branch> {
       .leftJoin('branch.branchAccess', 'branchAccess')
       // Add name and id fields as selections
       .addSelect(['center.id', 'center.name'])
-      .where('branch.centerId = :centerId', { centerId });
+      .where('branch.centerId = :centerId', { centerId })
+      // Filter out branches where related entities are deleted (check if entity exists)
+      .andWhere('center.id IS NOT NULL');
 
     const canBypassCenterInternalAccess =
       await this.accessControlHelperService.bypassCenterInternalAccess(

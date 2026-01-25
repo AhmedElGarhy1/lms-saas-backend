@@ -29,7 +29,9 @@ export class LevelsRepository extends BaseRepository<Level> {
       .leftJoin('level.center', 'center')
       // Add name and id fields as selections
       .addSelect(['center.id', 'center.name'])
-      .where('level.centerId = :centerId', { centerId });
+      .where('level.centerId = :centerId', { centerId })
+      // Filter out levels where related entities are deleted (check if entity exists)
+      .andWhere('center.id IS NOT NULL');
 
     return this.paginate(
       paginateDto,

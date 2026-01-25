@@ -76,7 +76,11 @@ export class GroupsRepository extends BaseRepository<Group> {
             .andWhere('groupStudentsForCount.leftAt IS NULL'),
         'studentsCount',
       )
-      .where('group.centerId = :centerId', { centerId });
+      .where('group.centerId = :centerId', { centerId })
+      // Filter out groups where related entities are deleted (check if entity exists)
+      .andWhere('class.id IS NOT NULL')
+      .andWhere('branch.id IS NOT NULL')
+      .andWhere('center.id IS NOT NULL');
 
     // access control
     const canBypassCenterInternalAccess =

@@ -17,12 +17,12 @@ import { File } from '@/modules/file/entities/file.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('users')
-@Index(['phone'], { unique: true })
+@Index(['phone'], { where: '"deletedAt" IS NULL', unique: true })
 @Index(['isActive'])
 @Index(['name', 'createdAt']) // For alphabetical + chronological sorting
 @Index(['isActive', 'createdAt']) // For status + chronological sorting
 export class User extends SoftBaseEntity {
-  @Column({ type: 'varchar', length: 12, unique: true })
+  @Column({ type: 'varchar', length: 12 })
   phone: string;
 
   @Column({ type: 'varchar', length: 255, select: false })

@@ -225,7 +225,19 @@ export class SessionsRepository extends BaseRepository<Session> {
     const centerId = actor.centerId!;
     const queryBuilder = this.getRepository()
       .createQueryBuilder('session')
-      .where('session.centerId = :centerId', { centerId });
+      // Join relations to check if they're deleted
+      .leftJoin('session.group', 'group')
+      .leftJoin('session.class', 'class')
+      .leftJoin('session.branch', 'branch')
+      .leftJoin('session.center', 'center')
+      .leftJoin('session.teacher', 'teacher')
+      .where('session.centerId = :centerId', { centerId })
+      // Filter out sessions where related entities are deleted (check if entity exists)
+      .andWhere('group.id IS NOT NULL')
+      .andWhere('class.id IS NOT NULL')
+      .andWhere('branch.id IS NOT NULL')
+      .andWhere('center.id IS NOT NULL')
+      .andWhere('teacher.id IS NOT NULL');
 
     // Access control: Filter by class staff for non-bypass users (same as pagination)
     const canBypassCenterInternalAccess =
@@ -236,7 +248,6 @@ export class SessionsRepository extends BaseRepository<Session> {
 
     if (!canBypassCenterInternalAccess) {
       queryBuilder
-        .leftJoin('session.class', 'class')
         .leftJoin('class.classStaff', 'classStaff')
         .andWhere('classStaff.userProfileId = :userProfileId', {
           userProfileId: actor.userProfileId,
@@ -293,7 +304,6 @@ export class SessionsRepository extends BaseRepository<Session> {
       // Filter by student user profile ID via group_students join
       // Only include active students (leftAt IS NULL)
       queryBuilder
-        .leftJoin('session.group', 'group')
         .leftJoin('group.groupStudents', 'groupStudents')
         .andWhere(
           'groupStudents.studentUserProfileId = :studentUserProfileId',
@@ -352,7 +362,13 @@ export class SessionsRepository extends BaseRepository<Session> {
         'teacherUser.name',
       ])
       // Filter by center using denormalized field (no join needed)
-      .where('session.centerId = :centerId', { centerId });
+      .where('session.centerId = :centerId', { centerId })
+      // Filter out sessions where related entities are deleted (check if entity exists)
+      .andWhere('group.id IS NOT NULL')
+      .andWhere('class.id IS NOT NULL')
+      .andWhere('branch.id IS NOT NULL')
+      .andWhere('center.id IS NOT NULL')
+      .andWhere('teacher.id IS NOT NULL');
 
     // Access control: Filter by class staff for non-bypass users
     const canBypassCenterInternalAccess =

@@ -33,7 +33,10 @@ import { TeacherPayoutRecord } from '@/modules/teacher-payouts/entities/teacher-
 @Index(['centerId', 'branchId'])
 @Index(['status'])
 @Index(['centerId', 'status'])
-@Index(['name', 'centerId', 'branchId'], { unique: true })
+@Index(['name', 'centerId', 'branchId'], {
+  where: '"deletedAt" IS NULL',
+  unique: true,
+})
 export class Class extends SoftBaseEntity {
   @Column({ type: 'varchar', length: 255 })
   name: string;

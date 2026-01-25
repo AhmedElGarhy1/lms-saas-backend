@@ -29,7 +29,9 @@ export class SubjectsRepository extends BaseRepository<Subject> {
       .leftJoin('subject.center', 'center')
       // Add name and id fields as selections
       .addSelect(['center.id', 'center.name'])
-      .where('subject.centerId = :centerId', { centerId });
+      .where('subject.centerId = :centerId', { centerId })
+      // Filter out subjects where related entities are deleted (check if entity exists)
+      .andWhere('center.id IS NOT NULL');
 
     return this.paginate(
       paginateDto,

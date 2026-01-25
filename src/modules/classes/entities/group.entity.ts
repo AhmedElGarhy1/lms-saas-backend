@@ -20,7 +20,7 @@ import { Session } from '@/modules/sessions/entities/session.entity';
 @Index(['centerId'])
 @Index(['classId', 'centerId'])
 @Index(['name', 'createdAt']) // For alphabetical + chronological sorting
-@Index(['name', 'classId'], { unique: true })
+@Index(['name', 'classId'], { where: '"deletedAt" IS NULL', unique: true })
 export class Group extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   classId: string;

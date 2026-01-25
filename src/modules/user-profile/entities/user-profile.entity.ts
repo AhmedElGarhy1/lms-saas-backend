@@ -24,7 +24,7 @@ import { TeacherPayoutRecord } from '@/modules/teacher-payouts/entities/teacher-
 @Index(['userId'])
 @Index(['profileType'])
 @Index(['userId', 'profileType'])
-@Index(['code'], { unique: true })
+@Index(['code'], { where: '"deletedAt" IS NULL', unique: true })
 export class UserProfile extends SoftBaseEntity {
   @Column({ type: 'uuid' })
   userId: string;

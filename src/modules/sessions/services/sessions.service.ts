@@ -797,8 +797,6 @@ export class SessionsService extends BaseService {
       actor,
     );
 
-    console.log(realSessions);
-
     // Get schedule items with group relations
     const scheduleItems = await this.scheduleItemsRepository.getMany(
       {

@@ -4,7 +4,10 @@ import { Center } from '@/modules/centers/entities/center.entity';
 import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('center_access')
-@Index(['userProfileId', 'centerId'], { unique: true })
+@Index(['userProfileId', 'centerId'], {
+  where: '"deletedAt" IS NULL',
+  unique: true,
+})
 @Index(['centerId'])
 @Index(['userProfileId'])
 export class CenterAccess extends SoftBaseEntity {

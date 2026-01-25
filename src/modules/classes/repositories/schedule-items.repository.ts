@@ -95,8 +95,14 @@ export class ScheduleItemsRepository extends BaseRepository<ScheduleItem> {
     },
     actor: ActorUser,
   ): Promise<ScheduleItem[]> {
-    const queryBuilder =
-      this.getRepository().createQueryBuilder('scheduleItem');
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('scheduleItem')
+      // Join relations to check if they're deleted
+      .leftJoin('scheduleItem.group', 'group')
+      .leftJoin('scheduleItem.class', 'class')
+      .leftJoin('scheduleItem.branch', 'branch')
+      .leftJoin('scheduleItem.center', 'center');
+
     if (teacherProfileId) {
       queryBuilder.where('scheduleItem.teacherProfileId = :teacherProfileId', {
         teacherProfileId,
@@ -128,6 +134,14 @@ export class ScheduleItemsRepository extends BaseRepository<ScheduleItem> {
       } as ClassStaffAccessDto);
       queryBuilder.where('scheduleItem.classId = :classId', { classId });
     }
+
+    // Filter out schedule items where related entities are deleted (check if entity exists)
+    queryBuilder
+      .andWhere('group.id IS NOT NULL')
+      .andWhere('class.id IS NOT NULL')
+      .andWhere('branch.id IS NOT NULL')
+      .andWhere('center.id IS NOT NULL');
+
     return queryBuilder.getMany();
   }
 }

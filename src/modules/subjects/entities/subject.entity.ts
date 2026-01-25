@@ -12,7 +12,7 @@ import { SoftBaseEntity } from '@/shared/common/entities/soft-base.entity';
 
 @Entity('subjects')
 @Index(['centerId'])
-@Index(['name', 'centerId'], { unique: true })
+@Index(['name', 'centerId'], { where: '"deletedAt" IS NULL', unique: true })
 @Index(['name', 'createdAt']) // For alphabetical + chronological sorting
 export class Subject extends SoftBaseEntity {
   @Column({ type: 'uuid' })
