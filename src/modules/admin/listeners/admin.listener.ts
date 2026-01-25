@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import {
-  CreateAdminEvent,
-} from '../events/admin.events';
+import { CreateAdminEvent } from '../events/admin.events';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
 import { AdminActivityType } from '../enums/admin-activity-type.enum';
 import { UserEvents } from '@/shared/events/user.events.enum';
@@ -50,7 +48,6 @@ export class AdminListener {
       new UserCreatedEvent(user, userProfile, actor),
     );
 
-
     // Send phone verification OTP via event (notification service will fetch phone)
     if (user.phone && user.id) {
       try {
@@ -64,5 +61,4 @@ export class AdminListener {
       }
     }
   }
-
 }

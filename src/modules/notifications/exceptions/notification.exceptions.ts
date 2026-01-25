@@ -3,7 +3,7 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 /**
  * @deprecated These custom exceptions are being phased out in favor of NotificationErrors helpers
  * that use the standard DomainException pattern. Use NotificationErrors instead.
- * 
+ *
  * Base class for notification system exceptions
  * Provides consistent error formatting for background job errors
  */

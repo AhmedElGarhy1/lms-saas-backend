@@ -33,7 +33,7 @@ export class UserInfoRepository extends BaseRepository<UserInfo> {
     if (!userInfo) {
       throw UserErrors.userInfoNotFound();
     }
-await this.update(userInfo.id, userInfoData);
+    await this.update(userInfo.id, userInfoData);
   }
 
   async createUserInfo(

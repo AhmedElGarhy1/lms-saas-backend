@@ -1,6 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsUUID, ArrayMinSize, ArrayMaxSize } from 'class-validator';
-import { BelongsToCenter, IsUserProfile, CannotTargetSelf } from '@/shared/common/decorators';
+import {
+  BelongsToCenter,
+  IsUserProfile,
+  CannotTargetSelf,
+} from '@/shared/common/decorators';
 import { Branch } from '@/modules/centers/entities/branch.entity';
 
 export class BulkRevokeBranchAccessDto {

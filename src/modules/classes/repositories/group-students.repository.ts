@@ -50,7 +50,7 @@ export class GroupStudentsRepository extends BaseRepository<GroupStudent> {
       .select('DISTINCT gs.studentUserProfileId', 'studentUserProfileId')
       .getRawMany<{ studentUserProfileId: string }>();
 
-    return results.map(r => r.studentUserProfileId);
+    return results.map((r) => r.studentUserProfileId);
   }
 
   /**

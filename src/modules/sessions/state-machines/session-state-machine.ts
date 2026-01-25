@@ -11,7 +11,10 @@ export interface SessionTransition extends BaseTransition<SessionStatus> {
  * Defines all valid session status transitions
  */
 @Injectable()
-export class SessionStateMachine extends BaseStateMachine<SessionStatus, SessionTransition> {
+export class SessionStateMachine extends BaseStateMachine<
+  SessionStatus,
+  SessionTransition
+> {
   private static readonly TRANSITIONS: SessionTransition[] = [
     // CHECK-IN TRANSITIONS
     {
@@ -78,7 +81,10 @@ export class SessionStateMachine extends BaseStateMachine<SessionStatus, Session
   /**
    * Execute business logic for transitions (required by base class)
    */
-  protected async executeBusinessLogic(logic: string, context: any): Promise<any> {
+  protected async executeBusinessLogic(
+    logic: string,
+    context: any,
+  ): Promise<any> {
     switch (logic) {
       case 'checkInSession':
         return this.checkInSession(context);

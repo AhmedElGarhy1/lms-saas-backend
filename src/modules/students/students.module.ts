@@ -22,11 +22,7 @@ import { UserProfileModule } from '../user-profile/user-profile.module';
     SharedModule,
   ],
   controllers: [StudentController, StudentActionsController],
-  providers: [
-    StudentService,
-    StudentRepository,
-    StudentListener,
-  ],
+  providers: [StudentService, StudentRepository, StudentListener],
   exports: [StudentService, StudentRepository],
 })
 export class StudentsModule {}

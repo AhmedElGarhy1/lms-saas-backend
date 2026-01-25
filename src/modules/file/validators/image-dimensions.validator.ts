@@ -14,7 +14,10 @@ export class ImageDimensionsValidator extends FileValidator<ImageDimensionsValid
   private readonly maxWidth: number;
   private readonly maxHeight: number;
 
-  constructor(options: ImageDimensionsValidatorOptions = {}, validationOptions?: any) {
+  constructor(
+    options: ImageDimensionsValidatorOptions = {},
+    validationOptions?: any,
+  ) {
     super(validationOptions);
     this.minWidth = options.minWidth || 50; // Minimum 50px
     this.minHeight = options.minHeight || 50; // Minimum 50px

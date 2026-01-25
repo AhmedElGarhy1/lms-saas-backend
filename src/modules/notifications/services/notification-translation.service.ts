@@ -33,7 +33,8 @@ export class NotificationTranslationService {
       // Return translated string or fallback to key
       return typeof value === 'string' ? value : key;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       this.logger.warn(
         `Translation failed for key: ${key}, locale: ${locale}`,
         {
@@ -56,15 +57,24 @@ export class NotificationTranslationService {
     }
 
     try {
-      const filePath = join(process.cwd(), 'src', 'i18n', locale, 'notifications.json');
+      const filePath = join(
+        process.cwd(),
+        'src',
+        'i18n',
+        locale,
+        'notifications.json',
+      );
       const content = await readFile(filePath, 'utf-8');
       const translations = JSON.parse(content);
 
       this.translations.set(locale, translations);
-      this.logger.debug(`Loaded notification translations for locale: ${locale}`);
+      this.logger.debug(
+        `Loaded notification translations for locale: ${locale}`,
+      );
       return translations;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       this.logger.error(
         `Failed to load notification translations for locale: ${locale}`,
         errorMessage,

@@ -54,6 +54,7 @@ export class PaymentOrchestratorService {
     const payment = await this.paymentCreator.createPayment(request, actor);
 
     // Step 2: Execute financial operations
+    // Fees are now handled directly in the payment execution strategy as transactions
     const executionResult = await this.paymentExecutor.executePayment(payment);
 
     // Step 3: Complete payment (for sync payments that complete immediately)
@@ -61,7 +62,7 @@ export class PaymentOrchestratorService {
       ? await this.completeExecutedPayment(payment)
       : payment;
 
-    // Step 4: Log success
+    // Step 5: Log success
     this.logPaymentExecution(completedPayment);
 
     // Step 6: Return comprehensive response
@@ -92,13 +93,7 @@ export class PaymentOrchestratorService {
    * Orchestrate payment refund operations
    */
   @Transactional()
-  async refundPayment(
-    paymentId: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    refundAmount?: Money,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    reason?: string,
-  ): Promise<{
+  async refundPayment(paymentId: string): Promise<{
     payment: Payment;
     refund: { success: boolean; transactionId: string };
   }> {

@@ -108,8 +108,7 @@ export class ClassValidationService extends BaseService {
       newDuration,
       {
         teacherUserProfileId,
-        studentIds:
-          studentIds.length > 0 ? (studentIds as string[]) : undefined,
+        studentIds: studentIds.length > 0 ? studentIds : undefined,
         excludeGroupIds: groupIds,
         skipWarning,
       },

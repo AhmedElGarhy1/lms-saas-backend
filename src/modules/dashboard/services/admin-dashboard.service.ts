@@ -4,9 +4,7 @@ import { AdminOverviewDto } from '../dto/admin-overview.dto';
 
 @Injectable()
 export class AdminDashboardService {
-  constructor(
-    // Inject services for admin-wide metrics
-  ) {}
+  constructor() {} // Inject services for admin-wide metrics
 
   async getAdminOverview(actor: ActorUser): Promise<AdminOverviewDto> {
     // TODO: Implement admin dashboard logic

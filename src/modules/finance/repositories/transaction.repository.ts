@@ -8,6 +8,7 @@ import { Pagination } from '@/shared/common/types/pagination.types';
 import { Money } from '@/shared/common/utils/money.util';
 import { UserWalletStatementItemDto } from '../dto/wallet-statement.dto';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
+import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
 
 /**
  * Transaction with signed amount for statement calculations
@@ -92,6 +93,16 @@ export class TransactionRepository extends BaseRepository<Transaction> {
   }
 
   /**
+   * Find all transactions for a payment (including fee transactions)
+   */
+  async findByPaymentId(paymentId: string): Promise<Transaction[]> {
+    return this.getRepository().find({
+      where: { paymentId },
+      order: { createdAt: 'ASC' },
+    });
+  }
+
+  /**
    * Get paginated wallet statement with signed amounts for easier balance calculations
    * Transactions where wallet is fromWalletId are negative
    * Transactions where wallet is toWalletId are positive
@@ -115,8 +126,6 @@ export class TransactionRepository extends BaseRepository<Transaction> {
       queryBuilder.andWhere('transaction.type = :type', { type: dto.type });
     }
 
- 
-
     // Apply date range filters
     if (dto.dateFrom) {
       queryBuilder.andWhere('transaction.createdAt >= :dateFrom', {
@@ -133,10 +142,7 @@ export class TransactionRepository extends BaseRepository<Transaction> {
     // Apply sorting (default: createdAt DESC)
     const sortField = dto.sortBy?.[0]?.[0] || 'createdAt';
     const sortOrder = dto.sortBy?.[0]?.[1] || 'DESC';
-    queryBuilder.orderBy(
-      `transaction.${sortField}`,
-      sortOrder as 'ASC' | 'DESC',
-    );
+    queryBuilder.orderBy(`transaction.${sortField}`, sortOrder);
 
     // Get total count for pagination
     const total = await queryBuilder.getCount();
@@ -201,7 +207,7 @@ export class TransactionRepository extends BaseRepository<Transaction> {
       .manager.createQueryBuilder(Transaction, 't')
       .leftJoin('wallets', 'fw', 't.fromWalletId = fw.id')
       .leftJoin('wallets', 'tw', 't.toWalletId = tw.id')
-      // Join for from wallet owner names (users)
+      // From side: user profiles
       .leftJoin(
         'user_profiles',
         'fromProfile',
@@ -209,7 +215,14 @@ export class TransactionRepository extends BaseRepository<Transaction> {
         { userProfileType: 'USER_PROFILE' },
       )
       .leftJoin('users', 'fromUser', 'fromProfile.userId = fromUser.id')
-      // Join for to wallet owner names (users)
+      // From side: branches
+      .leftJoin(
+        'branches',
+        'fromBranch',
+        'fw.ownerId = fromBranch.id AND fw.ownerType = :branchType',
+      )
+      .leftJoin('centers', 'fromCenter', 'fromBranch.centerId = fromCenter.id')
+      // To side: user profiles
       .leftJoin(
         'user_profiles',
         'toProfile',
@@ -217,24 +230,40 @@ export class TransactionRepository extends BaseRepository<Transaction> {
         { userProfileType: 'USER_PROFILE' },
       )
       .leftJoin('users', 'toUser', 'toProfile.userId = toUser.id')
+      // To side: branches
+      .leftJoin(
+        'branches',
+        'toBranch',
+        'tw.ownerId = toBranch.id AND tw.ownerType = :branchType',
+      )
+      .leftJoin('centers', 'toCenter', 'toBranch.centerId = toCenter.id')
       .where('(t.fromWalletId = :walletId OR t.toWalletId = :walletId)', {
         walletId,
       })
-      // Select human-readable names and user IDs
-      .addSelect('fromUser.name', 'fromName')
+      // Select human-readable names with SYSTEM type handling
+      // Check both ownerType and ownerId to handle system wallet
+      // Handle NULL wallet case by checking if wallet exists first
+      .addSelect(
+        "COALESCE(CASE WHEN fw.ownerType = 'SYSTEM' OR fw.ownerId = :systemUserId THEN 'System' WHEN fw.ownerType = 'USER_PROFILE' THEN fromUser.name WHEN fw.ownerType = 'BRANCH' THEN CONCAT(fromCenter.name, CONCAT(' - ', fromBranch.city)) WHEN fw.id IS NULL THEN 'N/A' ELSE 'N/A' END, 'N/A')",
+        'fromName',
+      )
       .addSelect('fromUser.id', 'fromUserId')
-      .addSelect('toUser.name', 'toName')
+      .addSelect(
+        "COALESCE(CASE WHEN tw.ownerType = 'SYSTEM' OR tw.ownerId = :systemUserId THEN 'System' WHEN tw.ownerType = 'USER_PROFILE' THEN toUser.name WHEN tw.ownerType = 'BRANCH' THEN CONCAT(toCenter.name, CONCAT(' - ', toBranch.city)) WHEN tw.id IS NULL THEN 'N/A' ELSE 'N/A' END, 'N/A')",
+        'toName',
+      )
       .addSelect('toUser.id', 'toUserId')
       .setParameters({
         walletId,
         userProfileType: 'USER_PROFILE',
+        branchType: 'BRANCH',
+        systemUserId: SYSTEM_USER_ID,
       });
 
     // Apply filters from dto
     if (dto.type) {
       queryBuilder.andWhere('t.type = :type', { type: dto.type });
     }
-   
 
     // Apply date filters
     if (dto.dateFrom) {
@@ -370,17 +399,20 @@ export class TransactionRepository extends BaseRepository<Transaction> {
         { walletId },
       )
 
-      // Use COALESCE to get names from either users or branches
+      // Use COALESCE to get names from either users or branches, with SYSTEM type handling
+      // Check both ownerType and ownerId to handle system wallet
+      // Handle NULL wallet case by checking if wallet exists first
       .addSelect(
-        "COALESCE(fromUser.name, CONCAT(fromCenter.name, CONCAT(' - ', fromBranch.city)))",
+        "COALESCE(CASE WHEN fw.ownerType = 'SYSTEM' OR fw.ownerId = :systemUserId THEN 'System' WHEN fw.ownerType = 'USER_PROFILE' THEN fromUser.name WHEN fw.ownerType = 'BRANCH' THEN CONCAT(fromCenter.name, CONCAT(' - ', fromBranch.city)) WHEN fw.id IS NULL THEN 'N/A' ELSE 'N/A' END, 'N/A')",
         'fromName',
       )
       .addSelect(
-        "COALESCE(toUser.name, CONCAT(toCenter.name, CONCAT(' - ', toBranch.city)))",
+        "COALESCE(CASE WHEN tw.ownerType = 'SYSTEM' OR tw.ownerId = :systemUserId THEN 'System' WHEN tw.ownerType = 'USER_PROFILE' THEN toUser.name WHEN tw.ownerType = 'BRANCH' THEN CONCAT(toCenter.name, CONCAT(' - ', toBranch.city)) WHEN tw.id IS NULL THEN 'N/A' ELSE 'N/A' END, 'N/A')",
         'toName',
       )
 
       .setParameters({
+        systemUserId: SYSTEM_USER_ID,
         walletId,
         userProfileType: WalletOwnerType.USER_PROFILE,
         branchType: WalletOwnerType.BRANCH,
@@ -390,7 +422,6 @@ export class TransactionRepository extends BaseRepository<Transaction> {
     if (dto.type) {
       queryBuilder.andWhere('t.type = :type', { type: dto.type });
     }
-
 
     // Apply date filters
     if (dto.dateFrom) {
@@ -420,6 +451,7 @@ export class TransactionRepository extends BaseRepository<Transaction> {
           entity: Transaction,
           raw: any,
         ): TransactionWithNames => {
+          // Explicitly handle null/undefined/empty string to ensure we never return null
           return Object.assign(entity, {
             fromName: raw.fromName,
             toName: raw.toName,
@@ -452,8 +484,14 @@ export class TransactionRepository extends BaseRepository<Transaction> {
           balanceAfter: transaction.balanceAfter.toNumber(),
           type: transaction.type,
           correlationId: transaction.correlationId,
-          fromName: transaction.fromName,
-          toName: transaction.toName,
+          fromName:
+            transaction.fromName && transaction.fromName.trim()
+              ? transaction.fromName
+              : 'N/A',
+          toName:
+            transaction.toName && transaction.toName.trim()
+              ? transaction.toName
+              : 'N/A',
           userRole,
         };
       },

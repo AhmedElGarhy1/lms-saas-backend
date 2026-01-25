@@ -21,12 +21,14 @@ export class SessionResponseDto {
   endTime: Date;
 
   @ApiPropertyOptional({
-    description: 'Actual start time - captured when session is started (status → CONDUCTING)',
+    description:
+      'Actual start time - captured when session is started (status → CONDUCTING)',
   })
   actualStartTime?: Date;
 
   @ApiPropertyOptional({
-    description: 'Actual finish time - captured when session is finished (status → FINISHED)',
+    description:
+      'Actual finish time - captured when session is finished (status → FINISHED)',
   })
   actualFinishTime?: Date;
 

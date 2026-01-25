@@ -18,7 +18,7 @@ export class WalletTransferDto {
 
   @ApiProperty({
     description: 'Transfer amount',
-    example: 50.00,
+    example: 50.0,
     minimum: 0.01,
   })
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -26,7 +26,8 @@ export class WalletTransferDto {
   amount: number;
 
   @ApiProperty({
-    description: 'Idempotency key (UUID or string) to prevent duplicate transfers',
+    description:
+      'Idempotency key (UUID or string) to prevent duplicate transfers',
     example: '550e8400-e29b-41d4-a716-446655440000',
     required: false,
   })

@@ -37,4 +37,3 @@ export class Cashbox extends BaseEntity {
   @JoinColumn({ name: 'branchId' })
   branch: Branch;
 }
-

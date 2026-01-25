@@ -68,10 +68,10 @@ export class UserProfileService extends BaseService {
 
     // Populate avatar URL
     await this.fileService.attachUrls(
-      [user],           // Array with single user
-      'avatarFileId',   // Field containing file ID
-      'avatarUrl',      // Field to add URL to
-      true,             // Avatars are public
+      [user], // Array with single user
+      'avatarFileId', // Field containing file ID
+      'avatarUrl', // Field to add URL to
+      true, // Avatars are public
     );
 
     // Determine context based on centerId
@@ -198,8 +198,11 @@ export class UserProfileService extends BaseService {
    * Optimized lookup by userProfileId or studentCode
    * Returns minimal data for performance
    */
-  async lookupProfile(identifier: string): Promise<{ userProfileId: string; code: string }> {
-    const result = await this.userProfileRepository.findProfileLookupData(identifier);
+  async lookupProfile(
+    identifier: string,
+  ): Promise<{ userProfileId: string; code: string }> {
+    const result =
+      await this.userProfileRepository.findProfileLookupData(identifier);
 
     if (!result) {
       throw UserProfileErrors.userProfileNotFound();
@@ -213,10 +216,11 @@ export class UserProfileService extends BaseService {
     actor?: ActorUser,
     includeDeleted = false,
   ) {
-    const profile = await this.userProfileRepository.findUserProfileWithRelations(
-      userProfileId,
-      includeDeleted,
-    );
+    const profile =
+      await this.userProfileRepository.findUserProfileWithRelations(
+        userProfileId,
+        includeDeleted,
+      );
 
     if (!profile) {
       throw UserProfileErrors.userProfileNotFound();
@@ -336,22 +340,21 @@ export class UserProfileService extends BaseService {
   ): Promise<UserProfile> {
     // 1. Validate that actor has permission to create this profile type
     await this.userProfilePermissionService.canCreate(actor, dto.profileType);
-    
 
-    const {isActive, ...userData} = dto;
+    const { isActive, ...userData } = dto;
 
     let isCenterAccessActive = true;
     let isUserProfileActive = true;
     if (dto.centerId) {
-      if(isActive !== undefined) {
+      if (isActive !== undefined) {
         isCenterAccessActive = isActive;
       }
     } else {
-      if(isActive !== undefined) {
+      if (isActive !== undefined) {
         isUserProfileActive = isActive;
       }
     }
-   
+
     // 2. Create User entity (includes UserInfo creation)
     const createdUser = await this.userService.createUser(userData);
 
@@ -365,7 +368,7 @@ export class UserProfileService extends BaseService {
       createdUser.id,
       dto.profileType,
       profileRefId,
-      isUserProfileActive
+      isUserProfileActive,
     );
 
     const centerId = actor.centerId ?? dto.centerId;
@@ -388,7 +391,7 @@ export class UserProfileService extends BaseService {
           staff,
           centerId,
           dto.roleId,
-          isCenterAccessActive
+          isCenterAccessActive,
         ),
       );
     } else if (dto.profileType === ProfileType.STUDENT) {
@@ -406,7 +409,7 @@ export class UserProfileService extends BaseService {
           actor,
           student,
           centerId,
-          isCenterAccessActive
+          isCenterAccessActive,
         ),
       );
     } else if (dto.profileType === ProfileType.TEACHER) {
@@ -424,7 +427,7 @@ export class UserProfileService extends BaseService {
           actor,
           teacher,
           centerId,
-          isCenterAccessActive
+          isCenterAccessActive,
         ),
       );
     } else if (dto.profileType === ProfileType.ADMIN) {
@@ -442,7 +445,7 @@ export class UserProfileService extends BaseService {
           actor,
           admin,
           dto.roleId,
-          isCenterAccessActive
+          isCenterAccessActive,
         ),
       );
     }

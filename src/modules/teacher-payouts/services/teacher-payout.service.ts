@@ -44,7 +44,9 @@ export class TeacherPayoutService extends BaseService {
     return this.payoutRepository.paginateTeacherPayouts(dto, actor);
   }
 
-  async getPendingPayoutsForCenter(centerId: string): Promise<{ count: number; totalAmount: Money }> {
+  async getPendingPayoutsForCenter(
+    centerId: string,
+  ): Promise<{ count: number; totalAmount: Money }> {
     return this.payoutRepository.getPendingPayoutsForCenter(centerId);
   }
 
@@ -52,7 +54,8 @@ export class TeacherPayoutService extends BaseService {
     id: string,
     actor: ActorUser,
   ): Promise<TeacherPayoutRecord> {
-    const payout = await this.payoutRepository.findTeacherPayoutWithRelations(id);
+    const payout =
+      await this.payoutRepository.findTeacherPayoutWithRelations(id);
     if (!payout) {
       throw TeacherPayoutErrors.payoutNotFound();
     }

@@ -120,7 +120,6 @@ export class UserRepository extends BaseRepository<User> {
       centerId ? 'centerAccess.isActive' : 'userProfiles.isActive',
     );
 
-
     if (includeBranch) {
       queryBuilder.andWhere(
         'EXISTS (SELECT 1 FROM branch_access ba WHERE ba."userProfileId" = userProfiles.id AND ba."branchId" = :branchId AND ba."centerId" = :centerId) OR EXISTS (SELECT 1 FROM profile_roles pr JOIN roles r ON r.id = pr."roleId" WHERE pr."userProfileId" = userProfiles.id AND pr."centerId" = :centerId AND r.name = :roleName)',
@@ -202,7 +201,9 @@ export class UserRepository extends BaseRepository<User> {
     }
 
     if (userProfileId) {
-      queryBuilder.andWhere('userProfiles.id != :val1', { val1: userProfileId });
+      queryBuilder.andWhere('userProfiles.id != :val1', {
+        val1: userProfileId,
+      });
       if (userAccess === AccessibleUsersEnum.INCLUDE) {
         queryBuilder.andWhere(
           `EXISTS (
@@ -694,7 +695,12 @@ export class UserRepository extends BaseRepository<User> {
     actor: ActorUser,
     includeDeleted = false,
   ): Promise<UserResponseDto | null> {
-    return await this.generateFindOneQueryBuilder(userProfileId, actor, includeDeleted, ProfileType.STAFF);
+    return await this.generateFindOneQueryBuilder(
+      userProfileId,
+      actor,
+      includeDeleted,
+      ProfileType.STAFF,
+    );
   }
 
   /**
@@ -709,7 +715,12 @@ export class UserRepository extends BaseRepository<User> {
     actor: ActorUser,
     includeDeleted = false,
   ): Promise<UserResponseDto | null> {
-    return this.generateFindOneQueryBuilder(userProfileId, actor, includeDeleted, ProfileType.STUDENT);
+    return this.generateFindOneQueryBuilder(
+      userProfileId,
+      actor,
+      includeDeleted,
+      ProfileType.STUDENT,
+    );
   }
 
   /**
@@ -724,7 +735,12 @@ export class UserRepository extends BaseRepository<User> {
     actor: ActorUser,
     includeDeleted = false,
   ): Promise<UserResponseDto | null> {
-   return this.generateFindOneQueryBuilder(userProfileId, actor, includeDeleted, ProfileType.TEACHER);
+    return this.generateFindOneQueryBuilder(
+      userProfileId,
+      actor,
+      includeDeleted,
+      ProfileType.TEACHER,
+    );
   }
 
   /**
@@ -739,7 +755,12 @@ export class UserRepository extends BaseRepository<User> {
     actor: ActorUser,
     includeDeleted = false,
   ): Promise<UserResponseDto | null> {
-    return this.generateFindOneQueryBuilder(userProfileId, actor, includeDeleted, ProfileType.ADMIN);
+    return this.generateFindOneQueryBuilder(
+      userProfileId,
+      actor,
+      includeDeleted,
+      ProfileType.ADMIN,
+    );
   }
 
   async generateFindOneQueryBuilder(
@@ -769,42 +790,47 @@ export class UserRepository extends BaseRepository<User> {
     // Add center access if centerId is provided
     if (centerId && profileType !== ProfileType.ADMIN) {
       if (profileType === ProfileType.STAFF) {
-        queryBuilder.leftJoinAndSelect(
-          'userProfiles.profileRoles',
-          'profileRoles',
-          'profileRoles.centerId = :centerId',
-          { centerId },
-        )
-        .leftJoinAndSelect('profileRoles.role', 'role')
+        queryBuilder
+          .leftJoinAndSelect(
+            'userProfiles.profileRoles',
+            'profileRoles',
+            'profileRoles.centerId = :centerId',
+            { centerId },
+          )
+          .leftJoinAndSelect('profileRoles.role', 'role');
       }
       queryBuilder
-        .leftJoinAndSelect(
-          'userProfiles.centerAccess',
-          'centerAccess',
-        ).andWhere('centerAccess.centerId = :centerId', { centerId });
+        .leftJoinAndSelect('userProfiles.centerAccess', 'centerAccess')
+        .andWhere('centerAccess.centerId = :centerId', { centerId });
 
-        if (!includeDeleted) {
-          queryBuilder.andWhere('centerAccess.deletedAt IS NULL');
-        }
+      if (!includeDeleted) {
+        queryBuilder.andWhere('centerAccess.deletedAt IS NULL');
+      }
     }
     if (profileType === ProfileType.ADMIN) {
-      queryBuilder.leftJoinAndSelect('userProfiles.profileRoles', 'profileRoles', 'profileRoles.centerId IS NULL')
-      .leftJoinAndSelect('profileRoles.role', 'role');
+      queryBuilder
+        .leftJoinAndSelect(
+          'userProfiles.profileRoles',
+          'profileRoles',
+          'profileRoles.centerId IS NULL',
+        )
+        .leftJoinAndSelect('profileRoles.role', 'role');
     }
 
- if (profileType !== ProfileType.ADMIN) {
-  const canBypassCenterAccess = await this.accessControlHelperService.bypassCenterInternalAccess(
-    actor.userProfileId,
-    centerId,
-   );
+    if (profileType !== ProfileType.ADMIN) {
+      const canBypassCenterAccess =
+        await this.accessControlHelperService.bypassCenterInternalAccess(
+          actor.userProfileId,
+          centerId,
+        );
 
-   if (!canBypassCenterAccess && profileType !== ProfileType.STUDENT) {
-    queryBuilder.andWhere(
-      `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
-      { userProfileId: actor.userProfileId, centerId },
-    );
-   }
-  }
+      if (!canBypassCenterAccess && profileType !== ProfileType.STUDENT) {
+        queryBuilder.andWhere(
+          `EXISTS (SELECT 1 FROM user_access ua WHERE ua."targetUserProfileId" = "userProfiles".id AND ua."granterUserProfileId" = :userProfileId AND ua."centerId" = :centerId)`,
+          { userProfileId: actor.userProfileId, centerId },
+        );
+      }
+    }
     const user = await queryBuilder.getOne();
 
     if (!user) {
@@ -818,7 +844,6 @@ export class UserRepository extends BaseRepository<User> {
 
     return formatted[0] || null;
   }
-
 
   async clearAllUsers(): Promise<void> {
     await this.getRepository().createQueryBuilder().delete().execute();
@@ -1106,9 +1131,14 @@ export class UserRepository extends BaseRepository<User> {
     // Count students enrolled in groups that belong to classes in this center
     const result = await this.getRepository()
       .createQueryBuilder('user')
-      .leftJoin('user.userProfiles', 'userProfile', 'userProfile.profileType = :type', { type: ProfileType.STUDENT })
-      .leftJoin("userProfile.centerAccess", "centerAccess")
-      .where("centerAccess.centerId = :centerId", { centerId })
+      .leftJoin(
+        'user.userProfiles',
+        'userProfile',
+        'userProfile.profileType = :type',
+        { type: ProfileType.STUDENT },
+      )
+      .leftJoin('userProfile.centerAccess', 'centerAccess')
+      .where('centerAccess.centerId = :centerId', { centerId })
       .select('COUNT(DISTINCT user.id)', 'count')
       .getRawOne();
 
@@ -1119,8 +1149,13 @@ export class UserRepository extends BaseRepository<User> {
     // Count teachers assigned to classes in this center
     const result = await this.getRepository()
       .createQueryBuilder('user')
-      .leftJoin('user.userProfiles', 'userProfile', 'userProfile.profileType = :type', { type: ProfileType.TEACHER })
-      .leftJoin("userProfile.centerAccess", "centerAccess")
+      .leftJoin(
+        'user.userProfiles',
+        'userProfile',
+        'userProfile.profileType = :type',
+        { type: ProfileType.TEACHER },
+      )
+      .leftJoin('userProfile.centerAccess', 'centerAccess')
       .where('centerAccess.centerId = :centerId', { centerId })
       .select('COUNT(DISTINCT user.id)', 'count')
       .getRawOne();
@@ -1132,8 +1167,13 @@ export class UserRepository extends BaseRepository<User> {
     // Count staff assigned to classes in this center
     const result = await this.getRepository()
       .createQueryBuilder('user')
-      .leftJoin('user.userProfiles', 'userProfile', 'userProfile.profileType = :type', { type: ProfileType.STAFF })
-      .leftJoin("userProfile.centerAccess", "centerAccess")
+      .leftJoin(
+        'user.userProfiles',
+        'userProfile',
+        'userProfile.profileType = :type',
+        { type: ProfileType.STAFF },
+      )
+      .leftJoin('userProfile.centerAccess', 'centerAccess')
       .where('centerAccess.centerId = :centerId', { centerId })
       .select('COUNT(DISTINCT user.id)', 'count')
       .getRawOne();

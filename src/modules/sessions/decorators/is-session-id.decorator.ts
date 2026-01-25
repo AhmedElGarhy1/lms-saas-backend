@@ -32,12 +32,12 @@ export class IsSessionIdConstraint implements ValidatorConstraintInterface {
 
 /**
  * Decorator to validate session ID (UUID or virtual ID format)
- * 
+ *
  * @param validationOptions - Optional validation options
  * @returns Property decorator
  */
 export function IsSessionId(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isSessionId',
       target: object.constructor,
@@ -47,4 +47,3 @@ export function IsSessionId(validationOptions?: ValidationOptions) {
     });
   };
 }
-

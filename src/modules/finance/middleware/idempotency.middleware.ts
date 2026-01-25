@@ -25,15 +25,18 @@ export class IdempotencyMiddleware implements NestMiddleware {
       }
 
       // Fast idempotency check - before expensive signature verification
-      const existingAttempt = await this.webhookAttemptRepository.findByProviderAndExternalId(
-        provider,
-        externalId,
-      );
+      const existingAttempt =
+        await this.webhookAttemptRepository.findByProviderAndExternalId(
+          provider,
+          externalId,
+        );
 
       if (existingAttempt) {
         if (existingAttempt.status === WebhookStatus.PROCESSED) {
           // Idempotent response - webhook already processed
-          this.logger.log(`Idempotent webhook detected: ${provider}:${externalId}`);
+          this.logger.log(
+            `Idempotent webhook detected: ${provider}:${externalId}`,
+          );
 
           res.status(200).json({
             success: true,
@@ -44,8 +47,10 @@ export class IdempotencyMiddleware implements NestMiddleware {
         }
 
         // If it's failed or retrying, we'll reprocess it
-        if (existingAttempt.status === WebhookStatus.FAILED ||
-            existingAttempt.status === WebhookStatus.RETRY_SCHEDULED) {
+        if (
+          existingAttempt.status === WebhookStatus.FAILED ||
+          existingAttempt.status === WebhookStatus.RETRY_SCHEDULED
+        ) {
           this.logger.log(`Retrying failed webhook: ${provider}:${externalId}`);
           // Continue to processing
         }
@@ -73,7 +78,10 @@ export class IdempotencyMiddleware implements NestMiddleware {
     throw new Error('Unknown webhook provider');
   }
 
-  private extractExternalId(provider: WebhookProvider, payload: any): string | null {
+  private extractExternalId(
+    provider: WebhookProvider,
+    payload: any,
+  ): string | null {
     if (!payload || typeof payload !== 'object') {
       return null;
     }
@@ -88,7 +96,10 @@ export class IdempotencyMiddleware implements NestMiddleware {
           return null;
       }
     } catch (error) {
-      this.logger.warn('Failed to extract external ID from webhook payload', error);
+      this.logger.warn(
+        'Failed to extract external ID from webhook payload',
+        error,
+      );
       return null;
     }
   }

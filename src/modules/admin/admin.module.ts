@@ -20,11 +20,7 @@ import { AdminListener } from './listeners/admin.listener';
     SharedModule,
   ],
   controllers: [AdminController, AdminActionsController],
-  providers: [
-    AdminService,
-    AdminRepository,
-    AdminListener,
-  ],
+  providers: [AdminService, AdminRepository, AdminListener],
   exports: [AdminService, AdminRepository],
 })
 export class AdminModule {}

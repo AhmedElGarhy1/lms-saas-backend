@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import {
-  CreateStudentEvent,
-} from '../events/student.events';
+import { CreateStudentEvent } from '../events/student.events';
 import { StudentEvents } from '@/shared/events/student.events.enum';
 import { UserEvents } from '@/shared/events/user.events.enum';
 import {
@@ -17,19 +15,30 @@ import { RequestPhoneVerificationEvent } from '@/modules/auth/events/auth.events
 
 @Injectable()
 export class StudentListener {
-  constructor(
-    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
-  ) {}
+  constructor(private readonly typeSafeEventEmitter: TypeSafeEventEmitter) {}
 
   @OnEvent(StudentEvents.CREATE)
   async handleCreateStudent(event: CreateStudentEvent) {
-    const { user, userProfile, actor, student, centerId, isCenterAccessActive } = event;
+    const {
+      user,
+      userProfile,
+      actor,
+      student,
+      centerId,
+      isCenterAccessActive,
+    } = event;
 
     // Grant center access
     if (centerId) {
       await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.GRANT_CENTER_ACCESS,
-        new GrantCenterAccessEvent(userProfile.id, centerId, actor, user.id, isCenterAccessActive),
+        new GrantCenterAccessEvent(
+          userProfile.id,
+          centerId,
+          actor,
+          user.id,
+          isCenterAccessActive,
+        ),
       );
       await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.GRANT_USER_ACCESS,
@@ -62,5 +71,4 @@ export class StudentListener {
       }
     }
   }
-
 }

@@ -1,9 +1,8 @@
-import { Controller, Get, Query, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Query, Post, Body } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { Transactional } from '@nestjs-cls/transactional';
@@ -116,7 +115,6 @@ export class MeController {
 
     return ControllerResponse.success(result);
   }
-
 
   @Post('wallet-topup')
   @Transactional()

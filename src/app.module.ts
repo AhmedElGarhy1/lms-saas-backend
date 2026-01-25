@@ -57,6 +57,7 @@ import { R2Module } from './modules/r2/r2.module';
 import { FileModule } from './modules/file/file.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { ExpensesModule } from './modules/expenses/expenses.module';
+import { SettingsModule } from './modules/settings/settings.module';
 
 @Module({
   imports: [
@@ -105,6 +106,7 @@ import { ExpensesModule } from './modules/expenses/expenses.module';
     StudentBillingModule,
     TeacherPayoutModule,
     ExpensesModule,
+    SettingsModule,
     R2Module,
     FileModule,
     DashboardModule,

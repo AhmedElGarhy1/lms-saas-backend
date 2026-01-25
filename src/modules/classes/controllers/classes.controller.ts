@@ -281,5 +281,4 @@ export class ClassesController {
     );
     return ControllerResponse.success(result);
   }
-
 }

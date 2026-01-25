@@ -6,6 +6,7 @@ export enum TransactionType {
   TOPUP = 'TOPUP', // Balance additions
   REFUND = 'REFUND', // Payment reversals
   EXPENSE = 'EXPENSE', // Center/branch expenses (cash payments to external vendors)
+  SYSTEM_FEE = 'SYSTEM_FEE', // System fees deducted from student payments
 
   // Branch wallet operations
   BRANCH_WITHDRAWAL = 'BRANCH_WITHDRAWAL', // Branch wallet withdrawals (branch → staff)

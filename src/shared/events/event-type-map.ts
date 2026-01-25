@@ -53,18 +53,10 @@ import {
   ActivateCenterAccessEvent,
   DeactivateCenterAccessEvent,
 } from '@/modules/access-control/events/access-control.events';
-import {
-  CreateAdminEvent,
-} from '@/modules/admin/events/admin.events';
-import {
-  CreateStaffEvent,
-} from '@/modules/staff/events/staff.events';
-import {
-  CreateStudentEvent,
-} from '@/modules/students/events/student.events';
-import {
-  CreateTeacherEvent,
-} from '@/modules/teachers/events/teacher.events';
+import { CreateAdminEvent } from '@/modules/admin/events/admin.events';
+import { CreateStaffEvent } from '@/modules/staff/events/staff.events';
+import { CreateStudentEvent } from '@/modules/students/events/student.events';
+import { CreateTeacherEvent } from '@/modules/teachers/events/teacher.events';
 import {
   ClassCreatedEvent,
   ClassUpdatedEvent,

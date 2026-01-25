@@ -13,11 +13,8 @@ export class ExistsConstraint implements ValidatorConstraintInterface {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
   async validate(value: any, args: ValidationArguments): Promise<boolean> {
-    const [entityClass, column = 'id', includeDeleted = false] = args.constraints as [
-      EntityTarget<ObjectLiteral>,
-      string,
-      boolean,
-    ];
+    const [entityClass, column = 'id', includeDeleted = false] =
+      args.constraints as [EntityTarget<ObjectLiteral>, string, boolean];
     if (!value) return true;
 
     if (!this.dataSource) {
@@ -39,11 +36,8 @@ export class ExistsConstraint implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments): string {
-    const [entityClass, column = 'id', includeDeleted = false] = args.constraints as [
-      EntityTarget<ObjectLiteral>,
-      string,
-      boolean,
-    ];
+    const [entityClass, column = 'id', includeDeleted = false] =
+      args.constraints as [EntityTarget<ObjectLiteral>, string, boolean];
     const entityType = includeDeleted ? 'deleted ' : '';
     return `${entityType}${entityClass.constructor.name} with ${column} "${args.value}" does not exist`;
   }

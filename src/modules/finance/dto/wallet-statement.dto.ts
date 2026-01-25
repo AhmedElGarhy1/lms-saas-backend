@@ -33,7 +33,8 @@ export class UserWalletStatementItemDto {
   amount: number;
 
   @ApiProperty({
-    description: 'Signed transaction amount (negative for outgoing, positive for incoming)',
+    description:
+      'Signed transaction amount (negative for outgoing, positive for incoming)',
   })
   signedAmount: number;
 
@@ -55,4 +56,3 @@ export class UserWalletStatementItemDto {
   @ApiProperty({ description: 'User role in transaction (sender/receiver)' })
   userRole: 'sender' | 'receiver';
 }
-

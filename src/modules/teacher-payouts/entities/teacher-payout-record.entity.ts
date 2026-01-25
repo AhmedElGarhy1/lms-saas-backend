@@ -1,4 +1,11 @@
-import { Entity, Column, Index, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  Index,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { Session } from '@/modules/sessions/entities/session.entity';
@@ -51,7 +58,6 @@ export class TeacherPayoutRecord extends BaseEntity {
 
   @Column('uuid')
   centerId: string; // Denormalized: Center owning the branch
-
 
   @Column({
     type: 'decimal',

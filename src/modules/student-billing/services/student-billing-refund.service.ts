@@ -107,7 +107,7 @@ export class StudentBillingRefundService {
       const attendanceCount =
         await this.attendanceRepo.countAttendanceByStudentAndClass(
           studentUserProfileId,
-          classId!,
+          classId,
           thirtyDaysAgo,
         );
 
@@ -123,7 +123,7 @@ export class StudentBillingRefundService {
     const attendanceCount =
       await this.attendanceRepo.countAttendanceByStudentAndClass(
         studentUserProfileId,
-        classId!,
+        classId,
         startOfMonth, // Count attendance from start of subscription month
       );
 
@@ -153,7 +153,7 @@ export class StudentBillingRefundService {
     const attendanceCount =
       await this.attendanceRepo.countAttendanceByStudentAndClass(
         studentUserProfileId,
-        classId!,
+        classId,
       );
 
     if (attendanceCount > 0) {

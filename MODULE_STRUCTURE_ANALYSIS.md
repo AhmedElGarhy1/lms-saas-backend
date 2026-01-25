@@ -22,7 +22,6 @@ Based on analysis of modules across the codebase, the standard structure is:
 │   └── {resource}.events.ts
 ├── listeners/
 │   ├── {resource}.listener.ts
-│   └── {resource}-activity.listener.ts
 ├── repositories/
 │   └── {resource}.repository.ts
 ├── services/
@@ -220,5 +219,3 @@ The classes module structure is **mostly consistent** with other modules, but ha
 - ❌ **Mappers should be moved to `shared/common/mappers/`** to follow the established pattern
 
 All other folders (utils, interfaces) are acceptable as they exist in other modules too.
-
-

@@ -60,15 +60,21 @@ export class PaymentRepository extends BaseRepository<Payment> {
     });
   }
 
-  async findByGatewayReference(gatewayReference: string): Promise<Payment | null> {
+  async findByGatewayReference(
+    gatewayReference: string,
+  ): Promise<Payment | null> {
     // Find gateway payments and check metadata
     const payments = await this.getRepository().find({
       where: { referenceType: PaymentReferenceType.GATEWAY_PAYMENT },
     });
 
-    return payments.find(payment =>
-      payment.metadata?.gatewayResponse?.gatewayPaymentId === gatewayReference
-    ) || null;
+    return (
+      payments.find(
+        (payment) =>
+          payment.metadata?.gatewayResponse?.gatewayPaymentId ===
+          gatewayReference,
+      ) || null
+    );
   }
 
   /**
@@ -113,6 +119,7 @@ export class PaymentRepository extends BaseRepository<Payment> {
   async savePayment(payment: Payment): Promise<Payment> {
     return this.getRepository().save(payment);
   }
+
 
   /**
    * Create query builder for pagination
@@ -226,13 +233,13 @@ export class PaymentRepository extends BaseRepository<Payment> {
     // Select human-readable names and user IDs
     queryBuilder
       .addSelect(
-        "COALESCE(senderUser.name, CONCAT(senderCenter.name, CONCAT(' - ', senderBranch.city)))",
+        "CASE WHEN p.senderType = 'SYSTEM' THEN 'System' ELSE COALESCE(senderUser.name, CONCAT(senderCenter.name, CONCAT(' - ', senderBranch.city))) END",
         'senderName',
       )
       .addSelect('senderProfile.id', 'senderProfileId')
       .addSelect('senderUser.id', 'senderUserId')
       .addSelect(
-        "COALESCE(receiverUser.name, CONCAT(receiverCenter.name, CONCAT(' - ', receiverBranch.city)))",
+        "CASE WHEN p.receiverType = 'SYSTEM' THEN 'System' ELSE COALESCE(receiverUser.name, CONCAT(receiverCenter.name, CONCAT(' - ', receiverBranch.city))) END",
         'receiverName',
       )
       .addSelect('receiverProfile.id', 'receiverProfileId')
@@ -321,6 +328,7 @@ export class PaymentRepository extends BaseRepository<Payment> {
           receiverId: payment.receiverId,
           correlationId: payment.correlationId,
           paidAt: payment.paidAt,
+          // 'N/A' fallback is a safety net (should rarely be needed now that SYSTEM type is handled)
           senderName: payment.senderName || 'N/A',
           receiverName: payment.receiverName || 'N/A',
           userRole,
@@ -342,7 +350,10 @@ export class PaymentRepository extends BaseRepository<Payment> {
    * @param includeDeleted - Reserved for future use (Payment doesn't have soft delete)
    * @returns Payment with optimized relations
    */
-  async findPaymentWithRelations(paymentId: string, includeDeleted: boolean = false): Promise<Payment | null> {
+  async findPaymentWithRelations(
+    paymentId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Payment | null> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('payment')
       // Join for sender/receiver names (same as pagination)
@@ -357,19 +368,31 @@ export class PaymentRepository extends BaseRepository<Payment> {
         'senderBranch',
         'payment.senderId = senderBranch.id AND payment.senderType = :branchType',
       )
-      .leftJoin('centers', 'senderCenter', 'senderBranch.centerId = senderCenter.id')
+      .leftJoin(
+        'centers',
+        'senderCenter',
+        'senderBranch.centerId = senderCenter.id',
+      )
       .leftJoin(
         'user_profiles',
         'receiverProfile',
         'payment.receiverId = receiverProfile.id AND payment.receiverType = :userProfileType',
       )
-      .leftJoin('users', 'receiverUser', 'receiverProfile.userId = receiverUser.id')
+      .leftJoin(
+        'users',
+        'receiverUser',
+        'receiverProfile.userId = receiverUser.id',
+      )
       .leftJoin(
         'branches',
         'receiverBranch',
         'payment.receiverId = receiverBranch.id AND payment.receiverType = :branchType',
       )
-      .leftJoin('centers', 'receiverCenter', 'receiverBranch.centerId = receiverCenter.id')
+      .leftJoin(
+        'centers',
+        'receiverCenter',
+        'receiverBranch.centerId = receiverCenter.id',
+      )
       // Join relations for essential fields only (not full entities)
       .leftJoin('payment.teacherPayout', 'teacherPayout')
       .leftJoin('payment.studentCharge', 'studentCharge')
@@ -386,11 +409,11 @@ export class PaymentRepository extends BaseRepository<Payment> {
       .leftJoin('updater.user', 'updaterUser')
       // Add sender/receiver names (same as pagination)
       .addSelect(
-        "COALESCE(senderUser.name, CONCAT(senderCenter.name, CONCAT(' - ', senderBranch.city)))",
+        "CASE WHEN payment.senderType = 'SYSTEM' THEN 'System' ELSE COALESCE(senderUser.name, CONCAT(senderCenter.name, CONCAT(' - ', senderBranch.city))) END",
         'senderName',
       )
       .addSelect(
-        "COALESCE(receiverUser.name, CONCAT(receiverCenter.name, CONCAT(' - ', receiverBranch.city)))",
+        "CASE WHEN payment.receiverType = 'SYSTEM' THEN 'System' ELSE COALESCE(receiverUser.name, CONCAT(receiverCenter.name, CONCAT(' - ', receiverBranch.city))) END",
         'receiverName',
       )
       // Add essential fields as selections (avoid Money fields to prevent transformer issues)
@@ -450,8 +473,14 @@ export class PaymentRepository extends BaseRepository<Payment> {
    * @returns Payment with optimized relations
    * @throws Payment not found error
    */
-  async findPaymentWithRelationsOrThrow(paymentId: string, includeDeleted: boolean = false): Promise<Payment> {
-    const payment = await this.findPaymentWithRelations(paymentId, includeDeleted);
+  async findPaymentWithRelationsOrThrow(
+    paymentId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Payment> {
+    const payment = await this.findPaymentWithRelations(
+      paymentId,
+      includeDeleted,
+    );
     if (!payment) {
       throw new Error(`Payment with id ${paymentId} not found`);
     }
@@ -490,7 +519,10 @@ export class PaymentRepository extends BaseRepository<Payment> {
         'SUM(CASE WHEN payment.reason IN (:...revenueReasons) THEN payment.amount ELSE 0 END) as revenue',
         'SUM(CASE WHEN payment.reason IN (:...expenseReasons) THEN payment.amount ELSE 0 END) as expenses',
       ])
-      .where('(teacherPayout.centerId = :centerId OR studentCharge.centerId = :centerId)', { centerId })
+      .where(
+        '(teacherPayout.centerId = :centerId OR studentCharge.centerId = :centerId)',
+        { centerId },
+      )
       .andWhere('payment.status = :status', { status: PaymentStatus.COMPLETED })
       .andWhere('EXTRACT(YEAR FROM payment.createdAt) = :year', { year })
       .andWhere('EXTRACT(MONTH FROM payment.createdAt) = :month', { month })

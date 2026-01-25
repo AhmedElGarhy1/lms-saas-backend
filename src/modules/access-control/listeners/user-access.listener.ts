@@ -17,7 +17,7 @@ export class UserAccessListener {
   async handleGrantUserAccess(event: GrantUserAccessEvent) {
     const { granterUserProfileId, targetUserProfileId, centerId, actor } =
       event;
-console.log('granterUserProfileId', granterUserProfileId);
+    console.log('granterUserProfileId', granterUserProfileId);
     try {
       // Call service to grant access
       await this.accessControlService.grantUserAccess(

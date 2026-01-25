@@ -64,7 +64,6 @@ export class UserErrors extends BaseErrorHelpers {
     return this.createNoDetails(UserErrorCode.PASSWORD_RESET_EXPIRED);
   }
 
-
   // Profile operations
   static profileUpdateForbidden(): DomainException {
     return this.createNoDetails(UserErrorCode.PROFILE_UPDATE_FORBIDDEN);

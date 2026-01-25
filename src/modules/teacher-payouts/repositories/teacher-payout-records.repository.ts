@@ -147,7 +147,9 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
     });
   }
 
-  async getPendingPayoutsForCenter(centerId: string): Promise<{ count: number; totalAmount: Money }> {
+  async getPendingPayoutsForCenter(
+    centerId: string,
+  ): Promise<{ count: number; totalAmount: Money }> {
     // Calculate pending amounts based on payout status:
     // - PENDING: amount due = unitPrice
     // - INSTALLMENT: amount due = unitPrice - totalPaid
@@ -155,16 +157,21 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
     const result = await this.getRepository()
       .createQueryBuilder('payout')
       .select('COUNT(payout.id)', 'count')
-      .addSelect(`
+      .addSelect(
+        `
         SUM(
           CASE
             WHEN payout.status = 'PENDING' THEN payout."unitPrice"
             WHEN payout.status = 'INSTALLMENT' THEN GREATEST(payout."unitPrice" - payout."totalPaid", 0)
             ELSE 100
           END
-        )`, 'totalAmount')
+        )`,
+        'totalAmount',
+      )
       .where('payout.centerId = :centerId', { centerId })
-      .andWhere('payout.status IN (:...statuses)', { statuses: [PayoutStatus.PENDING, PayoutStatus.INSTALLMENT] })
+      .andWhere('payout.status IN (:...statuses)', {
+        statuses: [PayoutStatus.PENDING, PayoutStatus.INSTALLMENT],
+      })
       .getRawOne();
 
     return {
@@ -172,7 +179,6 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
       totalAmount: new Money(parseFloat(result.totalAmount) || 0),
     };
   }
-
 
   async updateStatus(
     id: string,
@@ -242,44 +248,49 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
    * @param includeDeleted - Reserved for future use (TeacherPayoutRecord doesn't have soft delete)
    * @returns TeacherPayoutRecord with optimized relations
    */
-  async findTeacherPayoutWithRelations(payoutId: string, includeDeleted: boolean = false): Promise<TeacherPayoutRecord | null> {
-    return this.getRepository()
-      .createQueryBuilder('payout')
-      // Join relations for name fields only (not full entities)
-      .leftJoin('payout.teacher', 'teacher')
-      .leftJoin('teacher.user', 'teacherUser')
-      .leftJoin('payout.class', 'class')
-      .leftJoin('payout.session', 'session')
-      .leftJoin('payout.branch', 'branch')
-      .leftJoin('payout.center', 'center')
-      .leftJoinAndSelect('payout.payments', 'payments') // Include full payments for detailed view
-      // Audit relations
-      .leftJoin('payout.creator', 'creator')
-      .leftJoin('creator.user', 'creatorUser')
-      .leftJoin('payout.updater', 'updater')
-      .leftJoin('updater.user', 'updaterUser')
-      // Add name and id fields as selections
-      .addSelect([
-        'teacher.id',
-        'teacherUser.id',
-        'teacherUser.name',
-        'class.id',
-        'class.name',
-        'session.id',
-        'branch.id',
-        'branch.city',
-        'center.id',
-        'center.name',
-        // Audit fields
-        'creator.id',
-        'creatorUser.id',
-        'creatorUser.name',
-        'updater.id',
-        'updaterUser.id',
-        'updaterUser.name',
-      ])
-      .where('payout.id = :payoutId', { payoutId })
-      .getOne();
+  async findTeacherPayoutWithRelations(
+    payoutId: string,
+    includeDeleted: boolean = false,
+  ): Promise<TeacherPayoutRecord | null> {
+    return (
+      this.getRepository()
+        .createQueryBuilder('payout')
+        // Join relations for name fields only (not full entities)
+        .leftJoin('payout.teacher', 'teacher')
+        .leftJoin('teacher.user', 'teacherUser')
+        .leftJoin('payout.class', 'class')
+        .leftJoin('payout.session', 'session')
+        .leftJoin('payout.branch', 'branch')
+        .leftJoin('payout.center', 'center')
+        .leftJoinAndSelect('payout.payments', 'payments') // Include full payments for detailed view
+        // Audit relations
+        .leftJoin('payout.creator', 'creator')
+        .leftJoin('creator.user', 'creatorUser')
+        .leftJoin('payout.updater', 'updater')
+        .leftJoin('updater.user', 'updaterUser')
+        // Add name and id fields as selections
+        .addSelect([
+          'teacher.id',
+          'teacherUser.id',
+          'teacherUser.name',
+          'class.id',
+          'class.name',
+          'session.id',
+          'branch.id',
+          'branch.city',
+          'center.id',
+          'center.name',
+          // Audit fields
+          'creator.id',
+          'creatorUser.id',
+          'creatorUser.name',
+          'updater.id',
+          'updaterUser.id',
+          'updaterUser.name',
+        ])
+        .where('payout.id = :payoutId', { payoutId })
+        .getOne()
+    );
   }
 
   /**
@@ -290,8 +301,14 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
    * @returns TeacherPayoutRecord with optimized relations
    * @throws Teacher payout not found error
    */
-  async findTeacherPayoutWithRelationsOrThrow(payoutId: string, includeDeleted: boolean = false): Promise<TeacherPayoutRecord> {
-    const payout = await this.findTeacherPayoutWithRelations(payoutId, includeDeleted);
+  async findTeacherPayoutWithRelationsOrThrow(
+    payoutId: string,
+    includeDeleted: boolean = false,
+  ): Promise<TeacherPayoutRecord> {
+    const payout = await this.findTeacherPayoutWithRelations(
+      payoutId,
+      includeDeleted,
+    );
     if (!payout) {
       throw new Error(`Teacher payout record with id ${payoutId} not found`);
     }

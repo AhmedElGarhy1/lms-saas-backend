@@ -27,6 +27,8 @@ export function mapPaymentReasonToTransactionType(
       return TransactionType.TEACHER_PAYOUT;
     case PaymentReason.EXPENSE:
       return TransactionType.EXPENSE;
+    case PaymentReason.SYSTEM_FEE:
+      return TransactionType.SYSTEM_FEE;
     case PaymentReason.INTERNAL_TRANSFER:
     default:
       return TransactionType.INTERNAL_TRANSFER;

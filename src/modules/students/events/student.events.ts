@@ -14,4 +14,3 @@ export class CreateStudentEvent {
     public readonly isCenterAccessActive?: boolean,
   ) {}
 }
-

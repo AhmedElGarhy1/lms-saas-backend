@@ -177,12 +177,12 @@ export class AccessControlService extends BaseService {
     });
     // i have access to the target user
     if (!skipUserAccessValidation) {
-    await this.accessControlHelperService.validateUserAccess({
-      granterUserProfileId: actor.userProfileId,
-      targetUserProfileId: dto.userProfileId,
-      centerId: dto.centerId ?? actor.centerId,
-    });
-  }
+      await this.accessControlHelperService.validateUserAccess({
+        granterUserProfileId: actor.userProfileId,
+        targetUserProfileId: dto.userProfileId,
+        centerId: dto.centerId ?? actor.centerId,
+      });
+    }
     // Check if access exists
     const canCenterAccess =
       await this.accessControlHelperService.canCenterAccess({

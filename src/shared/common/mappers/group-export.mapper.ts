@@ -64,7 +64,9 @@ export class GroupExportMapper implements ExportMapper<Group, GroupExportData> {
     type GroupWithStudentCount = Group & { studentsCount?: number };
 
     const studentsCount =
-      (group as GroupWithStudentCount).studentsCount ?? group.groupStudents?.length ?? 0;
+      (group as GroupWithStudentCount).studentsCount ??
+      group.groupStudents?.length ??
+      0;
 
     return {
       id: group.id,

@@ -1,10 +1,14 @@
 import { BaseEntity } from '@/shared/common/entities/base.entity';
-import { Entity, Column, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
-import { Payment } from '@/modules/finance/entities/payment.entity';
 import {
-  StudentChargeType,
-  StudentChargeStatus,
-} from '../enums';
+  Entity,
+  Column,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
+import { Payment } from '@/modules/finance/entities/payment.entity';
+import { StudentChargeType, StudentChargeStatus } from '../enums';
 import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';

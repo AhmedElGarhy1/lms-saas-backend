@@ -38,6 +38,7 @@ import { AccessControlModule } from '../access-control/access-control.module';
 import { UserProfileListener } from './listeners/user-profile.listener';
 import { BranchListener } from './listeners/branch.listener';
 import { FinanceMonitorService } from './monitoring/finance-monitor.service';
+import { SettingsModule } from '../settings/settings.module';
 
 // Import metrics registry
 import { FinanceMetrics } from './monitoring/metrics.registry';
@@ -46,7 +47,6 @@ export * from './monitoring/metrics.registry';
 // Import payment gateway adapters
 import { PaymentGatewayFactory } from './adapters/payment-gateway.factory';
 import { PaymentGatewayService } from './adapters/payment-gateway.service';
-import { PaymobAdapter } from './adapters/paymob.adapter';
 import { PaymentGatewayCircuitBreaker } from './circuit-breaker/payment-gateway-circuit-breaker';
 import { UserModule } from '../user/user.module';
 
@@ -59,6 +59,11 @@ import { PaymentQueryService } from './services/payment-query.service';
 import { PaymentOrchestratorService } from './services/payment-orchestrator.service';
 import { BranchWithdrawalService } from './services/branch-withdrawal.service';
 import { BranchDepositService } from './services/branch-deposit.service';
+import { PaymentFeeService } from './services/payment-fee.service';
+import { NegativeBalanceHelperService } from './services/negative-balance-helper.service';
+import { WalletPaymentStrategy } from './strategies/wallet-payment-strategy';
+import { CashPaymentStrategy } from './strategies/cash-payment-strategy';
+import { PaymentStrategyFactory } from './strategies/payment-strategy-factory';
 
 @Module({
   imports: [
@@ -89,6 +94,7 @@ import { BranchDepositService } from './services/branch-deposit.service';
     SharedModule,
     AccessControlModule,
     forwardRef(() => UserModule),
+    forwardRef(() => SettingsModule), // For PaymentFeeService to access SettingsService
   ],
   controllers: [
     WalletsController,
@@ -162,6 +168,11 @@ import { BranchDepositService } from './services/branch-deposit.service';
     PaymentOrchestratorService,
     BranchWithdrawalService,
     BranchDepositService,
+    PaymentFeeService,
+    NegativeBalanceHelperService,
+    WalletPaymentStrategy,
+    CashPaymentStrategy,
+    PaymentStrategyFactory,
   ],
   exports: [
     // Payment Gateway Adapters

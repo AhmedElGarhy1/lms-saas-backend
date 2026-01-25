@@ -1,10 +1,18 @@
-import { IsString, IsOptional, IsNumber, IsEmail, IsEnum, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsEmail,
+  IsEnum,
+  Min,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaymentGatewayType } from '../adapters/interfaces/payment-gateway.interface';
 
 export class InitiatePaymentDto {
   @ApiProperty({
-    description: 'Payment amount in the smallest currency unit (e.g., cents for USD/EGP)',
+    description:
+      'Payment amount in the smallest currency unit (e.g., cents for USD/EGP)',
     example: 10000,
     minimum: 1,
   })

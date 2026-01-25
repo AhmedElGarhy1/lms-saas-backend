@@ -1,5 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { GetUser, Permissions } from '@/shared/common/decorators';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { AdminDashboardService } from '../services/admin-dashboard.service';
@@ -16,7 +21,8 @@ export class AdminDashboardController {
   @Get('overview')
   @ApiOperation({
     summary: 'Get admin dashboard overview',
-    description: 'Get comprehensive overview metrics for system administration including all centers, financials, and system-wide statistics.',
+    description:
+      'Get comprehensive overview metrics for system administration including all centers, financials, and system-wide statistics.',
   })
   @ApiResponse({
     status: 200,
@@ -24,7 +30,9 @@ export class AdminDashboardController {
     type: AdminOverviewDto,
   })
   @Permissions(PERMISSIONS.DASHBOARD.VIEW_ALL_CENTERS)
-  async getOverview(@GetUser() actor: ActorUser): Promise<ControllerResponse<AdminOverviewDto>> {
+  async getOverview(
+    @GetUser() actor: ActorUser,
+  ): Promise<ControllerResponse<AdminOverviewDto>> {
     const result = await this.dashboardService.getAdminOverview(actor);
     return ControllerResponse.success(result);
   }

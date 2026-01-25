@@ -49,5 +49,4 @@ export class PaginateTeacherPayoutsDto extends BasePaginationDto {
   @IsOptional()
   @IsEnum(TeacherPaymentUnit)
   unitType?: TeacherPaymentUnit;
-
 }

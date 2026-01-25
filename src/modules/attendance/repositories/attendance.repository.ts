@@ -92,12 +92,7 @@ export class AttendanceRepository extends BaseRepository<Attendance> {
       .leftJoin('a.student', 'up')
       .leftJoin('up.user', 'u')
       // Add name and code fields as selections
-      .addSelect([
-        'up.id',
-        'up.code',
-        'u.id',
-        'u.name',
-      ])
+      .addSelect(['up.id', 'up.code', 'u.id', 'u.name'])
       .where('a.sessionId = :sessionId', { sessionId })
       .andWhere('a.groupId = :groupId', { groupId });
 
@@ -348,7 +343,10 @@ export class AttendanceRepository extends BaseRepository<Attendance> {
    * @param includeDeleted - Whether to include soft-deleted attendance records
    * @returns Attendance with optimized relations
    */
-  async findAttendanceWithRelations(attendanceId: string, includeDeleted: boolean = false): Promise<Attendance | null> {
+  async findAttendanceWithRelations(
+    attendanceId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Attendance | null> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('attendance')
       // Join relations for name fields only (not full entities)
@@ -398,8 +396,14 @@ export class AttendanceRepository extends BaseRepository<Attendance> {
    * @returns Attendance with optimized relations
    * @throws Attendance not found error
    */
-  async findAttendanceWithRelationsOrThrow(attendanceId: string, includeDeleted: boolean = false): Promise<Attendance> {
-    const attendance = await this.findAttendanceWithRelations(attendanceId, includeDeleted);
+  async findAttendanceWithRelationsOrThrow(
+    attendanceId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Attendance> {
+    const attendance = await this.findAttendanceWithRelations(
+      attendanceId,
+      includeDeleted,
+    );
     if (!attendance) {
       throw new Error(`Attendance record with id ${attendanceId} not found`);
     }

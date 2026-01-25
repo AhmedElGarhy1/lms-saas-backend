@@ -25,14 +25,12 @@ export class GroupStudent extends BaseEntity {
   @Column({ type: 'uuid' })
   branchId: string; // Denormalized from Group for performance and snapshot
 
-  
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
   })
   joinedAt: Date;
 
-  
   @Column({ type: 'timestamptz', nullable: true })
   leftAt?: Date;
 

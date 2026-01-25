@@ -31,14 +31,14 @@ export class BranchesService extends BaseService {
     paginateDto: PaginateBranchesDto,
     actor: ActorUser,
   ): Promise<Pagination<any>> {
-    return this.branchesRepository.paginateBranches(
-      paginateDto,
-      actor,
-    );
+    return this.branchesRepository.paginateBranches(paginateDto, actor);
   }
 
   async getBranch(branchId: string, actor: ActorUser, includeDeleted = false) {
-    const branch = await this.branchesRepository.findBranchWithRelations(branchId, includeDeleted);
+    const branch = await this.branchesRepository.findBranchWithRelations(
+      branchId,
+      includeDeleted,
+    );
 
     if (!branch) {
       throw CentersErrors.branchNotFound();

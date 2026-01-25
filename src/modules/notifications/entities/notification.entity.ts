@@ -21,7 +21,6 @@ export class Notification extends BaseEntity {
   @Column({ type: 'text' })
   message: string;
 
-  
   @Column({ type: 'timestamptz', nullable: true })
   readAt?: Date;
 
@@ -37,7 +36,6 @@ export class Notification extends BaseEntity {
   @Column({ type: 'boolean', default: false })
   isArchived: boolean;
 
-  
   @Column({ type: 'timestamptz', nullable: true })
   expiresAt?: Date;
 

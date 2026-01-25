@@ -33,7 +33,6 @@ export class SessionAttendanceListener {
           groupId: session.groupId,
         });
 
-
       const { present, late, excused, absent } = attendanceStats;
 
       // Update the session with attendance statistics

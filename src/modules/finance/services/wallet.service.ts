@@ -5,10 +5,8 @@ import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
 import { FinanceErrors } from '../exceptions/finance.errors';
-import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { Transactional } from '@nestjs-cls/transactional';
 import { QueryFailedError } from 'typeorm';
-import { Transaction } from '../entities/transaction.entity';
 import {
   TransactionRepository,
   TransactionStatement,
@@ -23,6 +21,7 @@ import { randomUUID } from 'crypto';
 import { TransactionService } from './transaction.service';
 import { FinanceMonitorService } from '../monitoring/finance-monitor.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
+import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
 
 const MAX_RETRIES = 3;
 
@@ -63,13 +62,30 @@ export class WalletService extends BaseService {
   }
 
   /**
+   * Get or create system wallet
+   */
+  @Transactional()
+  async getSystemWallet(): Promise<Wallet> {
+    return this.getWallet(SYSTEM_USER_ID, WalletOwnerType.SYSTEM);
+  }
+
+  /**
+   * Get wallet by ID (for refund operations)
+   */
+  @Transactional()
+  async getWalletById(walletId: string): Promise<Wallet> {
+    return this.walletRepository.findOneOrThrow(walletId);
+  }
+
+  /**
    * Update wallet balance with pessimistic locking and retry mechanism
    *
    * @param walletId - The wallet ID to update
    * @param amount - Positive for credit, negative for debit
    * @param retryCount - Internal retry counter (max 3 retries)
+   * @param allowNegativeUpTo - Optional maximum allowed negative balance (for SYSTEM_FEE transactions from cash payments)
    *
-   * @throws InsufficientFundsException - If resulting balance would be negative
+   * @throws InsufficientFundsException - If resulting balance would be negative (or exceed allowNegativeUpTo limit)
    * @throws QueryFailedError - If lock timeout occurs after all retries
    *
    * @example
@@ -78,12 +94,16 @@ export class WalletService extends BaseService {
    *
    * // Debit $25.00 from wallet
    * await walletService.updateBalance(walletId, Money.from(-25.00));
+   *
+   * // Allow negative balance up to $1000 for system fee
+   * await walletService.updateBalance(walletId, Money.from(-3.00), 0, Money.from(1000.00));
    */
   @Transactional()
   async updateBalance(
     walletId: string,
     amount: Money,
     retryCount = 0,
+    allowNegativeUpTo?: Money,
   ): Promise<Wallet> {
     try {
       // Acquire pessimistic write lock on wallet row
@@ -92,8 +112,19 @@ export class WalletService extends BaseService {
 
       // Pre-check: Prevent negative balance (before save to avoid DB constraint violation)
       const newBalance = lockedWallet.balance.add(amount);
+
       if (newBalance.isNegative()) {
-        throw FinanceErrors.insufficientWalletBalance();
+        // If allowNegativeUpTo is provided (for SYSTEM_FEE from cash payments), check limit
+        if (allowNegativeUpTo) {
+          const negativeAmount = newBalance.abs();
+          if (negativeAmount.greaterThan(allowNegativeUpTo)) {
+            throw FinanceErrors.maxNegativeBalanceExceeded();
+          }
+          // Allow negative balance within limit
+        } else {
+          // Default behavior: prevent any negative balance
+          throw FinanceErrors.insufficientWalletBalance();
+        }
       }
 
       // Perform balance update using Money utility with currency precision
@@ -210,17 +241,9 @@ export class WalletService extends BaseService {
       balance: Money;
     }>;
   }> {
-    // Define the shape of raw query results
-    interface RawWalletData {
-      userprofileid: string;
-      userprofiletype: string;
-      wallettype: string;
-      wallet_balance: string;
-    }
-
     // Find all wallets by joining with user_profiles to get all profiles for this user
 
-    const walletData = (await this.walletRepository
+    const walletData = await this.walletRepository
       .createQueryBuilder('wallet')
       .innerJoin(
         'user_profiles',
@@ -237,7 +260,7 @@ export class WalletService extends BaseService {
         'wallet.ownerType as walletType',
         'wallet.balance',
       ])
-      .getRawMany()) as RawWalletData[];
+      .getRawMany();
 
     if (walletData.length === 0) {
       return {
@@ -340,11 +363,7 @@ export class WalletService extends BaseService {
 
     // Record internal transfer metrics for multi-profile behavior analysis
     // Note: centerId is determined from actor context since UserProfile doesn't have direct centerId
-    const transferType = this.determineTransferType(
-      fromProfile,
-      toProfile,
-      amount,
-    );
+    const transferType = this.determineTransferType();
     this.financeMonitorService.recordInternalTransfer(
       userId,
       amount,
@@ -366,11 +385,7 @@ export class WalletService extends BaseService {
    * Determine the type of internal transfer for analytics
    * This helps understand user behavior patterns in multi-profile systems
    */
-  private determineTransferType(
-    fromProfile: any,
-    toProfile: any,
-    amount: Money,
-  ): 'consolidation' | 'distribution' | 'rebalancing' {
+  private determineTransferType(): 'consolidation' | 'distribution' | 'rebalancing' {
     // For now, classify all internal transfers as rebalancing
     // In future, could analyze patterns based on:
     // - Profile types (student vs teacher vs staff)

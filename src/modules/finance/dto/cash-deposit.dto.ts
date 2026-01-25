@@ -1,14 +1,12 @@
-import { IsUUID, IsEnum, IsNumber, Min, IsOptional, IsString } from 'class-validator';
+import { IsUUID, IsNumber, Min, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
 import { BelongsToBranch } from '@/shared/common/decorators/belongs-to-branch.decorator';
 import { Branch } from '@/modules/centers/entities/branch.entity';
-import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
 
 export class CashDepositDto {
   @ApiProperty({
-    description: 'Branch ID (where the cash deposit is recorded, optional, defaults to actor\'s branch)',
+    description:
+      "Branch ID (where the cash deposit is recorded, optional, defaults to actor's branch)",
     example: 'uuid',
     required: false,
   })
@@ -19,7 +17,7 @@ export class CashDepositDto {
 
   @ApiProperty({
     description: 'Deposit amount',
-    example: 100.50,
+    example: 100.5,
     minimum: 0.01,
   })
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -34,7 +32,8 @@ export class CashDepositDto {
   senderId: string;
 
   @ApiProperty({
-    description: 'Idempotency key (UUID or string) to prevent duplicate deposits',
+    description:
+      'Idempotency key (UUID or string) to prevent duplicate deposits',
     example: '550e8400-e29b-41d4-a716-446655440000',
     required: false,
   })
@@ -42,4 +41,3 @@ export class CashDepositDto {
   @IsString()
   idempotencyKey?: string;
 }
-

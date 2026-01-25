@@ -44,4 +44,3 @@ export abstract class BaseErrorHelpers {
     return new DomainException(errorCode, [details], statusCode);
   }
 }
-

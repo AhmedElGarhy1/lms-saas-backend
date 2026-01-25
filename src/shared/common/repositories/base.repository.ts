@@ -354,7 +354,6 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
         });
       }
     });
-    /* eslint-enable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
   }
 
   /**
@@ -575,11 +574,7 @@ export abstract class BaseRepository<T extends ObjectLiteral> {
     if (hasDeleter) {
       qb.leftJoin(`${alias}.deleter`, 'deleter')
         .leftJoin('deleter.user', 'deleterUser')
-        .addSelect([
-          'deleter.id',
-          'deleterUser.id',
-          'deleterUser.name',
-        ]);
+        .addSelect(['deleter.id', 'deleterUser.id', 'deleterUser.name']);
     }
 
     if (withDeleted) {

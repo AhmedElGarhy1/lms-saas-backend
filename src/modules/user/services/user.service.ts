@@ -477,7 +477,7 @@ export class UserService extends BaseService {
     updateData: UpdateUserDto,
     actor: ActorUser,
   ): Promise<User> {
-    const {userInfo, ...userData} = updateData;
+    const { userInfo, ...userData } = updateData;
     await this.accessControlHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,
       targetUserProfileId: actor.userProfileId,
@@ -487,7 +487,7 @@ export class UserService extends BaseService {
       await this.userInfoService.updateUserInfo(userId, userInfo);
     }
 
-    console.log('updating user', userId)
+    console.log('updating user', userId);
     const updatedUser = (await this.userRepository.update(userId, userData))!;
     // Determine which fields were updated
     const updatedFields = Object.keys(userData);

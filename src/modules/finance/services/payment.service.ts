@@ -218,20 +218,12 @@ export class PaymentService extends BaseService {
     );
   }
 
-  async refundPayment(
-    paymentId: string,
-    refundAmount: Money,
-    reason?: string,
-  ): Promise<{
+  async refundPayment(paymentId: string): Promise<{
     payment: Payment;
     refund: { success: boolean; transactionId: string };
   }> {
     // Delegate to the orchestrator service
-    return await this.paymentOrchestrator.refundPayment(
-      paymentId,
-      refundAmount,
-      reason,
-    );
+    return await this.paymentOrchestrator.refundPayment(paymentId);
   }
 
   async getUserPaymentsPaginated(

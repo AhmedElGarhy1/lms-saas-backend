@@ -273,7 +273,8 @@ export class ExternalPaymentService {
     gatewayData: any,
   ): Promise<Payment | null> {
     // Find payment by gateway reference
-    const payment = await this.paymentRepository.findByGatewayReference(gatewayReference);
+    const payment =
+      await this.paymentRepository.findByGatewayReference(gatewayReference);
 
     if (!payment) {
       this.logger.warn(

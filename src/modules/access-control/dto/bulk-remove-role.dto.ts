@@ -6,7 +6,11 @@ import {
   ArrayMinSize,
   ArrayMaxSize,
 } from 'class-validator';
-import { Exists, IsUserProfile, CannotTargetSelf } from '@/shared/common/decorators';
+import {
+  Exists,
+  IsUserProfile,
+  CannotTargetSelf,
+} from '@/shared/common/decorators';
 import { Role } from '../entities/role.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
 

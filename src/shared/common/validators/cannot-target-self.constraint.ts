@@ -8,12 +8,15 @@ import { CommonErrors } from '../exceptions/common.errors';
 
 @Injectable()
 @ValidatorConstraint({ name: 'cannotTargetSelf', async: false })
-export class CannotTargetSelfConstraint implements ValidatorConstraintInterface {
+export class CannotTargetSelfConstraint
+  implements ValidatorConstraintInterface
+{
   validate(targetUserId: string, args: ValidationArguments): boolean {
     // Get current user from request context
-    const request = (args.object as any).request ||
-                   (args.object as any).__request ||
-                   this.getRequestFromExecutionContext();
+    const request =
+      (args.object as any).request ||
+      (args.object as any).__request ||
+      this.getRequestFromExecutionContext();
 
     const currentUserId = request?.user?.userProfileId;
 

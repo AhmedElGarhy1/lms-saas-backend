@@ -139,6 +139,13 @@ export class TransactionService extends BaseService {
   }
 
   /**
+   * Find all transactions for a payment (including fee transactions)
+   */
+  async findByPaymentId(paymentId: string): Promise<Transaction[]> {
+    return this.transactionRepository.findByPaymentId(paymentId);
+  }
+
+  /**
    * Check if transaction exists (for reference validation)
    */
   async transactionExists(transactionId: string): Promise<boolean> {

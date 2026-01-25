@@ -220,6 +220,10 @@ export class FinanceErrors extends BaseErrorHelpers {
     return this.createNoDetails(FinanceErrorCode.INSUFFICIENT_WALLET_BALANCE);
   }
 
+  static maxNegativeBalanceExceeded(): DomainException {
+    return this.createNoDetails(FinanceErrorCode.MAX_NEGATIVE_BALANCE_EXCEEDED);
+  }
+
   static insufficientCashBalance(
     currentBalance?: number,
     requiredAmount?: number,

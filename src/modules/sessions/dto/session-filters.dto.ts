@@ -1,7 +1,11 @@
 import { IsOptional, IsEnum, IsDateString, IsUUID } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { SessionStatus } from '../enums/session-status.enum';
-import { BelongsToBranch, BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
+import {
+  BelongsToBranch,
+  BelongsToCenter,
+  IsUserProfile,
+} from '@/shared/common/decorators';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Group } from '@/modules/classes/entities/group.entity';
 import { Class } from '@/modules/classes/entities/class.entity';

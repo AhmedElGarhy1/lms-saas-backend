@@ -14,7 +14,7 @@ import {
   PaymentMethodMetricsDto,
   TotalMetricsDto,
   CurrentMonthMetricsDto,
-  AllTimeMetricsDto
+  AllTimeMetricsDto,
 } from '../dto/center-overview.dto';
 
 @Injectable()
@@ -40,7 +40,10 @@ export class CenterDashboardService {
     this.logger.debug(`Getting dashboard overview for center ${centerId}`);
 
     // Get treasury stats first to get both cash and wallet balances
-    const treasuryStats = await this.cashboxService.getCenterTreasuryStats(centerId, actor);
+    const treasuryStats = await this.cashboxService.getCenterTreasuryStats(
+      centerId,
+      actor,
+    );
 
     // Get all other metrics in parallel for better performance
     const [
@@ -91,12 +94,21 @@ export class CenterDashboardService {
     };
   }
 
-  private async getCashBoxBalance(centerId: string, actor: ActorUser): Promise<Money> {
+  private async getCashBoxBalance(
+    centerId: string,
+    actor: ActorUser,
+  ): Promise<Money> {
     try {
-      const treasuryStats = await this.cashboxService.getCenterTreasuryStats(centerId, actor);
+      const treasuryStats = await this.cashboxService.getCenterTreasuryStats(
+        centerId,
+        actor,
+      );
       return treasuryStats.cashbox;
     } catch (error) {
-      this.logger.error(`Failed to get cash box balance for center ${centerId}`, error);
+      this.logger.error(
+        `Failed to get cash box balance for center ${centerId}`,
+        error,
+      );
       return new Money(0); // Return zero on error
     }
   }
@@ -113,17 +125,20 @@ export class CenterDashboardService {
       const currentMonth = now.getMonth() + 1; // JavaScript months are 0-based
 
       // Get payment metrics for the month
-      const paymentMetrics = await this.paymentService.getCenterFinancialMetricsForMonth(
-        centerId,
-        currentYear,
-        currentMonth,
-      );
+      const paymentMetrics =
+        await this.paymentService.getCenterFinancialMetricsForMonth(
+          centerId,
+          currentYear,
+          currentMonth,
+        );
 
       // Calculate net for each payment method
       const wallet: PaymentMethodMetricsDto = {
         revenue: paymentMetrics.wallet.revenue,
         expenses: paymentMetrics.wallet.expenses,
-        net: paymentMetrics.wallet.revenue.subtract(paymentMetrics.wallet.expenses),
+        net: paymentMetrics.wallet.revenue.subtract(
+          paymentMetrics.wallet.expenses,
+        ),
       };
 
       const cash: PaymentMethodMetricsDto = {
@@ -144,7 +159,10 @@ export class CenterDashboardService {
 
       return { wallet, cash, total };
     } catch (error) {
-      this.logger.error(`Failed to get financial metrics for center ${centerId}`, error);
+      this.logger.error(
+        `Failed to get financial metrics for center ${centerId}`,
+        error,
+      );
       // Return zero values on error
       const zeroMetrics: PaymentMethodMetricsDto = {
         revenue: new Money(0),
@@ -163,15 +181,22 @@ export class CenterDashboardService {
     }
   }
 
-  private async getPendingTeacherPayables(centerId: string, actor: ActorUser): Promise<PendingTeacherPayablesDto> {
+  private async getPendingTeacherPayables(
+    centerId: string,
+    actor: ActorUser,
+  ): Promise<PendingTeacherPayablesDto> {
     try {
-      const result = await this.teacherPayoutsService.getPendingPayoutsForCenter(centerId);
+      const result =
+        await this.teacherPayoutsService.getPendingPayoutsForCenter(centerId);
       return {
         count: result.count,
         totalAmount: result.totalAmount,
       };
     } catch (error) {
-      this.logger.error(`Failed to get pending teacher payables for center ${centerId}`, error);
+      this.logger.error(
+        `Failed to get pending teacher payables for center ${centerId}`,
+        error,
+      );
       return {
         count: 0,
         totalAmount: new Money(0),
@@ -183,7 +208,10 @@ export class CenterDashboardService {
     try {
       return await this.userService.countStudentsForCenter(centerId);
     } catch (error) {
-      this.logger.error(`Failed to get total students for center ${centerId}`, error);
+      this.logger.error(
+        `Failed to get total students for center ${centerId}`,
+        error,
+      );
       return 0;
     }
   }
@@ -192,7 +220,10 @@ export class CenterDashboardService {
     try {
       return await this.userService.countTeachersForCenter(centerId);
     } catch (error) {
-      this.logger.error(`Failed to get total teachers for center ${centerId}`, error);
+      this.logger.error(
+        `Failed to get total teachers for center ${centerId}`,
+        error,
+      );
       return 0;
     }
   }
@@ -201,7 +232,10 @@ export class CenterDashboardService {
     try {
       return await this.userService.countStaffForCenter(centerId);
     } catch (error) {
-      this.logger.error(`Failed to get total staff for center ${centerId}`, error);
+      this.logger.error(
+        `Failed to get total staff for center ${centerId}`,
+        error,
+      );
       return 0;
     }
   }
@@ -210,7 +244,10 @@ export class CenterDashboardService {
     try {
       return await this.sessionsService.countActiveTeachersForCenter(centerId);
     } catch (error) {
-      this.logger.error(`Failed to get active teachers for center ${centerId}`, error);
+      this.logger.error(
+        `Failed to get active teachers for center ${centerId}`,
+        error,
+      );
       return 0;
     }
   }
@@ -219,16 +256,24 @@ export class CenterDashboardService {
     try {
       return await this.sessionsService.countActiveStudentsForCenter(centerId);
     } catch (error) {
-      this.logger.error(`Failed to get active students for center ${centerId}`, error);
+      this.logger.error(
+        `Failed to get active students for center ${centerId}`,
+        error,
+      );
       return 0;
     }
   }
 
   private async getAllTimeActiveTeachers(centerId: string): Promise<number> {
     try {
-      return await this.classesRepository.countActiveTeachersForCenter(centerId);
+      return await this.classesRepository.countActiveTeachersForCenter(
+        centerId,
+      );
     } catch (error) {
-      this.logger.error(`Failed to get all-time active teachers for center ${centerId}`, error);
+      this.logger.error(
+        `Failed to get all-time active teachers for center ${centerId}`,
+        error,
+      );
       return 0;
     }
   }
@@ -237,7 +282,10 @@ export class CenterDashboardService {
     try {
       return await this.groupsRepository.countActiveStudentsForCenter(centerId);
     } catch (error) {
-      this.logger.error(`Failed to get all-time active students for center ${centerId}`, error);
+      this.logger.error(
+        `Failed to get all-time active students for center ${centerId}`,
+        error,
+      );
       return 0;
     }
   }

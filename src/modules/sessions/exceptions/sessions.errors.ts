@@ -9,7 +9,6 @@ import { SessionErrorCode } from '../enums/sessions.codes';
  * Clean, simple, and maintainable error creation
  */
 export class SessionsErrors extends BaseErrorHelpers {
-
   // Basic session errors
   static sessionNotFound(): DomainException {
     return this.createNoDetails(SessionErrorCode.SESSION_NOT_FOUND);
@@ -29,15 +28,21 @@ export class SessionsErrors extends BaseErrorHelpers {
 
   // Status transition errors
   static sessionStatusTransitionInvalid(): DomainException {
-    return this.createNoDetails(SessionErrorCode.SESSION_STATUS_TRANSITION_INVALID);
+    return this.createNoDetails(
+      SessionErrorCode.SESSION_STATUS_TRANSITION_INVALID,
+    );
   }
 
   static sessionCannotModifyCompleted(): DomainException {
-    return this.createNoDetails(SessionErrorCode.SESSION_CANNOT_MODIFY_COMPLETED);
+    return this.createNoDetails(
+      SessionErrorCode.SESSION_CANNOT_MODIFY_COMPLETED,
+    );
   }
 
   static sessionCannotModifyCancelled(): DomainException {
-    return this.createNoDetails(SessionErrorCode.SESSION_CANNOT_MODIFY_CANCELLED);
+    return this.createNoDetails(
+      SessionErrorCode.SESSION_CANNOT_MODIFY_CANCELLED,
+    );
   }
 
   // Time validation errors
@@ -59,11 +64,15 @@ export class SessionsErrors extends BaseErrorHelpers {
   }
 
   static sessionCheckInInvalidStatus(): DomainException {
-    return this.createNoDetails(SessionErrorCode.SESSION_CHECK_IN_INVALID_STATUS);
+    return this.createNoDetails(
+      SessionErrorCode.SESSION_CHECK_IN_INVALID_STATUS,
+    );
   }
 
   static sessionScheduleItemNotFound(): DomainException {
-    return this.createNoDetails(SessionErrorCode.SESSION_SCHEDULE_ITEM_NOT_FOUND);
+    return this.createNoDetails(
+      SessionErrorCode.SESSION_SCHEDULE_ITEM_NOT_FOUND,
+    );
   }
 
   static sessionNotCheckedIn(): DomainException {
@@ -79,7 +88,9 @@ export class SessionsErrors extends BaseErrorHelpers {
   }
 
   static sessionStatusInvalidForOperation(): DomainException {
-    return this.createNoDetails(SessionErrorCode.SESSION_STATUS_INVALID_FOR_OPERATION);
+    return this.createNoDetails(
+      SessionErrorCode.SESSION_STATUS_INVALID_FOR_OPERATION,
+    );
   }
 
   static sessionAccessDenied(): DomainException {

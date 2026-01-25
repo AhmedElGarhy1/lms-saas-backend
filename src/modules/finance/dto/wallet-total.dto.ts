@@ -31,7 +31,6 @@ export class WalletDetailDto {
     example: { value: '50.75' },
   })
   balance: Money;
-
 }
 
 export class WalletTotalDto {
@@ -40,7 +39,6 @@ export class WalletTotalDto {
     example: { value: '150.75' },
   })
   totalBalance: Money;
-
 
   @ApiProperty({
     description: 'Number of wallets included in the total',

@@ -14,7 +14,6 @@ export class CentersErrors extends BaseErrorHelpers {
     return this.createNoDetails(CentersErrorCode.BRANCH_NOT_FOUND);
   }
 
-
   // Center errors
   static centerNotFound(): DomainException {
     return this.createNoDetails(CentersErrorCode.CENTER_NOT_FOUND);

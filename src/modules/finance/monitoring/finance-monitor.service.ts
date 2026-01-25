@@ -139,10 +139,7 @@ export class FinanceMonitorService {
   /**
    * Update wallet balance gauge (fail-safe)
    */
-  updateWalletBalance(
-    walletId: string,
-    balance: Money,
-  ): void {
+  updateWalletBalance(walletId: string, balance: Money): void {
     try {
       this.walletBalanceGauge.set(
         { wallet_id: walletId, type: 'balance' },

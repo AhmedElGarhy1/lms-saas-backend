@@ -21,7 +21,7 @@ export class AdminOverviewDto {
 
   @ApiProperty({
     description: 'Total revenue across all centers',
-    example: 150000.50,
+    example: 150000.5,
   })
   totalRevenue: number;
 

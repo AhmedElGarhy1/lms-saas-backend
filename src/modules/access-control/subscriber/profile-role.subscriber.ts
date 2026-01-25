@@ -42,14 +42,12 @@ export class ProfileRoleSubscriber
   private async validateProfileRole(profileRole: ProfileRole) {
     if (profileRole.roleId) {
       const role = await this.rolesRepository.findOne(profileRole.roleId);
-      if (!role)
-        throw AccessControlErrors.roleNotFound();
+      if (!role) throw AccessControlErrors.roleNotFound();
 
       const profile = await this.accessControlHelperService.findUserProfile(
         profileRole.userProfileId,
       );
-      if (!profile)
-        throw UserProfileErrors.userProfileNotFound();
+      if (!profile) throw UserProfileErrors.userProfileNotFound();
 
       if (profileRole.centerId) {
         if (profile?.profileType === ProfileType.ADMIN) {

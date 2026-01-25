@@ -9,7 +9,6 @@ import { R2ErrorCode } from '../enums/r2.codes';
  * Clean, simple, and maintainable error creation following established patterns
  */
 export class R2Errors extends BaseErrorHelpers {
-
   static uploadFailed(reason?: string): DomainException {
     return this.createWithDetails(R2ErrorCode.UPLOAD_FAILED, { reason });
   }

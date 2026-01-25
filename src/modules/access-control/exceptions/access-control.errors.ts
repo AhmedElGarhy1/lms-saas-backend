@@ -10,7 +10,6 @@ import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profil
  * Clean, simple, and maintainable error creation for roles, permissions, and access control
  */
 export class AccessControlErrors extends BaseErrorHelpers {
-
   static userAccessNotFound(): DomainException {
     return this.createNoDetails(AccessControlErrorCode.USER_ACCESS_NOT_FOUND);
   }
@@ -83,7 +82,6 @@ export class AccessControlErrors extends BaseErrorHelpers {
     );
   }
 
-  
   static invalidProfileTypeForRoleAssignment(): DomainException {
     return this.createNoDetails(
       AccessControlErrorCode.INVALID_PROFILE_TYPE_FOR_ROLE_ASSIGNMENT,

@@ -4,7 +4,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class RefundPaymentDto {
   @ApiProperty({
     description: 'Refund amount',
-    example: 50.00,
+    example: 50.0,
     minimum: 0.01,
   })
   @IsNumber({ maxDecimalPlaces: 2 })

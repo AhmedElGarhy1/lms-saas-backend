@@ -155,14 +155,14 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
     if (!canBypassCenterInternalAccess) {
       // check staff access with target class
       queryBuilder
-      .leftJoin('class.classStaff', 'classStaff')
-      .andWhere('classStaff.userProfileId = :userProfileId', {
-        userProfileId: actor.userProfileId,
-      })
-      .leftJoin('branch.branchAccess', 'branchAccess')
-      .andWhere('branchAccess.userProfileId = :userProfileId', {
-        userProfileId: actor.userProfileId,
-      });
+        .leftJoin('class.classStaff', 'classStaff')
+        .andWhere('classStaff.userProfileId = :userProfileId', {
+          userProfileId: actor.userProfileId,
+        })
+        .leftJoin('branch.branchAccess', 'branchAccess')
+        .andWhere('branchAccess.userProfileId = :userProfileId', {
+          userProfileId: actor.userProfileId,
+        });
     }
 
     // Apply filters
@@ -225,45 +225,50 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
    * @param includeDeleted - Reserved for future use (StudentCharge doesn't have soft delete)
    * @returns StudentCharge with optimized relations
    */
-  async findStudentChargeWithRelations(chargeId: string, includeDeleted: boolean = false): Promise<StudentCharge | null> {
-    return this.getRepository()
-      .createQueryBuilder('charge')
-      // Join relations for name/code fields only (not full entities)
-      .leftJoin('charge.student', 'student')
-      .leftJoin('student.user', 'studentUser')
-      .leftJoin('charge.class', 'class')
-      .leftJoin('charge.session', 'session')
-      .leftJoin('charge.branch', 'branch')
-      .leftJoin('charge.center', 'center')
-      .leftJoinAndSelect('charge.payments', 'payments') // Include full payments for detailed view
-      // Audit relations
-      .leftJoin('charge.creator', 'creator')
-      .leftJoin('creator.user', 'creatorUser')
-      .leftJoin('charge.updater', 'updater')
-      .leftJoin('updater.user', 'updaterUser')
-      // Add name and id fields as selections
-      .addSelect([
-        'student.id',
-        'student.code',
-        'studentUser.id',
-        'studentUser.name',
-        'class.id',
-        'class.name',
-        'session.id',
-        'branch.id',
-        'branch.city',
-        'center.id',
-        'center.name',
-        // Audit fields
-        'creator.id',
-        'creatorUser.id',
-        'creatorUser.name',
-        'updater.id',
-        'updaterUser.id',
-        'updaterUser.name',
-      ])
-      .where('charge.id = :chargeId', { chargeId })
-      .getOne();
+  async findStudentChargeWithRelations(
+    chargeId: string,
+    includeDeleted: boolean = false,
+  ): Promise<StudentCharge | null> {
+    return (
+      this.getRepository()
+        .createQueryBuilder('charge')
+        // Join relations for name/code fields only (not full entities)
+        .leftJoin('charge.student', 'student')
+        .leftJoin('student.user', 'studentUser')
+        .leftJoin('charge.class', 'class')
+        .leftJoin('charge.session', 'session')
+        .leftJoin('charge.branch', 'branch')
+        .leftJoin('charge.center', 'center')
+        .leftJoinAndSelect('charge.payments', 'payments') // Include full payments for detailed view
+        // Audit relations
+        .leftJoin('charge.creator', 'creator')
+        .leftJoin('creator.user', 'creatorUser')
+        .leftJoin('charge.updater', 'updater')
+        .leftJoin('updater.user', 'updaterUser')
+        // Add name and id fields as selections
+        .addSelect([
+          'student.id',
+          'student.code',
+          'studentUser.id',
+          'studentUser.name',
+          'class.id',
+          'class.name',
+          'session.id',
+          'branch.id',
+          'branch.city',
+          'center.id',
+          'center.name',
+          // Audit fields
+          'creator.id',
+          'creatorUser.id',
+          'creatorUser.name',
+          'updater.id',
+          'updaterUser.id',
+          'updaterUser.name',
+        ])
+        .where('charge.id = :chargeId', { chargeId })
+        .getOne()
+    );
   }
 
   /**
@@ -274,8 +279,14 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
    * @returns StudentCharge with optimized relations
    * @throws Student charge not found error
    */
-  async findStudentChargeWithRelationsOrThrow(chargeId: string, includeDeleted: boolean = false): Promise<StudentCharge> {
-    const charge = await this.findStudentChargeWithRelations(chargeId, includeDeleted);
+  async findStudentChargeWithRelationsOrThrow(
+    chargeId: string,
+    includeDeleted: boolean = false,
+  ): Promise<StudentCharge> {
+    const charge = await this.findStudentChargeWithRelations(
+      chargeId,
+      includeDeleted,
+    );
     if (!charge) {
       throw new Error(`Student charge with id ${chargeId} not found`);
     }

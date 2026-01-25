@@ -12,6 +12,4 @@ export class PaginateTransactionDto extends BasePaginationDto {
   @IsOptional()
   @IsEnum(TransactionType)
   type?: TransactionType;
-
- 
 }

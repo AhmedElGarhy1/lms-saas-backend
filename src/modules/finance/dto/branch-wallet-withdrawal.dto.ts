@@ -1,13 +1,20 @@
-import { IsNumber, IsPositive, IsOptional, IsString, Min, MaxLength } from 'class-validator';
+import {
+  IsNumber,
+  IsPositive,
+  IsOptional,
+  IsString,
+  Min,
+  MaxLength,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class BranchWalletWithdrawalDto {
   @ApiProperty({
     description: 'Amount to withdraw from branch wallet (in EGP)',
-    example: 500.00,
+    example: 500.0,
     minimum: 0.01,
-    maximum: 100000.00,
+    maximum: 100000.0,
   })
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsPositive()

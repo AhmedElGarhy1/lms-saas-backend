@@ -22,7 +22,10 @@ export class LevelsService extends BaseService {
   }
 
   async getLevel(levelId: string, actor: ActorUser, includeDeleted = false) {
-    const level = await this.levelsRepository.findLevelWithRelations(levelId, includeDeleted);
+    const level = await this.levelsRepository.findLevelWithRelations(
+      levelId,
+      includeDeleted,
+    );
 
     if (!level) {
       throw LevelsErrors.levelNotFound();

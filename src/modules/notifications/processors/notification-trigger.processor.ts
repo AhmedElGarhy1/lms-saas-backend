@@ -36,7 +36,12 @@ export class NotificationTriggerProcessor extends WorkerHost {
     if (error && typeof error === 'object' && 'errorCode' in error) {
       const errorCode = (error as any).errorCode;
       // Validation errors and template errors are non-retriable
-      return errorCode === 'GEN_002' || errorCode === 'NTN_003' || errorCode === 'NTN_004' || errorCode === 'NTN_010';
+      return (
+        errorCode === 'GEN_002' ||
+        errorCode === 'NTN_003' ||
+        errorCode === 'NTN_004' ||
+        errorCode === 'NTN_010'
+      );
     }
     return false;
   }

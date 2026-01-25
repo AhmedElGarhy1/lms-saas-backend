@@ -62,7 +62,6 @@ export class AdminActionsController {
       res,
     );
 
-
     return data;
   }
 }

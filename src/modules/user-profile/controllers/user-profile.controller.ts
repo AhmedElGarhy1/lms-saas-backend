@@ -8,7 +8,13 @@ import {
   Delete,
   Req,
 } from '@nestjs/common';
-import { ApiTags, ApiParam, ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiParam,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import {
   CreateApiResponses,
   ReadApiResponses,
@@ -48,7 +54,8 @@ export class UserProfileController {
   @Get('lookup/:id')
   @ApiOperation({
     summary: 'Lookup user profile by ID or student code',
-    description: 'Returns userProfileId and code. Accepts UUID (userProfileId) or student code. No authentication required.',
+    description:
+      'Returns userProfileId and code. Accepts UUID (userProfileId) or student code. No authentication required.',
   })
   @ApiParam({
     name: 'id',

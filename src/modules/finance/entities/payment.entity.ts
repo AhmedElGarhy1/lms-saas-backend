@@ -17,6 +17,7 @@ import { StudentCharge } from '@/modules/student-billing/entities/student-charge
 @Index(['referenceType', 'referenceId'])
 @Index(['createdAt'])
 @Index(['amount']) // For amount-based sorting and filtering
+@Index(['feeAmount']) // For fee reporting queries
 @Index(['correlationId'])
 @Index(['idempotencyKey'], { unique: true })
 export class Payment extends BaseEntity {
@@ -79,6 +80,46 @@ export class Payment extends BaseEntity {
 
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, any>;
+
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    transformer: {
+      from: (value: string | null): Money | null => {
+        return value === null ? null : Money.from(value);
+      },
+      to: (
+        value: Money | number | string | null | undefined,
+      ): string | null => {
+        if (value === null || value === undefined) return null;
+        if (value instanceof Money) return value.toString();
+        return Money.from(value).toString();
+      },
+    },
+  })
+  feeAmount?: Money;
+
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    transformer: {
+      from: (value: string | null): Money | null => {
+        return value === null ? null : Money.from(value);
+      },
+      to: (
+        value: Money | number | string | null | undefined,
+      ): string | null => {
+        if (value === null || value === undefined) return null;
+        if (value instanceof Money) return value.toString();
+        return Money.from(value).toString();
+      },
+    },
+  })
+  netAmount?: Money;
 
   // Relationship to teacher payout (for TEACHER_PAYOUT reference type)
   @ManyToOne(() => TeacherPayoutRecord, (payout) => payout.payments, {

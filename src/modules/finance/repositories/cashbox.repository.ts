@@ -15,8 +15,8 @@ import {
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { Pagination } from '@/shared/common/types/pagination.types';
-import { PaginateTransactionDto } from '../dto/paginate-transaction.dto';
 import { CenterStatementQueryDto } from '../dto/center-statement-query.dto';
+import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
 
 import { Transaction } from '../entities/transaction.entity';
 import { CashTransaction } from '../entities/cash-transaction.entity';
@@ -204,6 +204,7 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
         'fromBranch',
         'fromWallet.ownerId = fromBranch.id AND fromWallet.ownerType = :branchType',
       )
+      .leftJoin('centers', 'fromCenter', 'fromBranch.centerId = fromCenter.id')
 
       // Joins for "To" side
       .leftJoin(
@@ -217,6 +218,7 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
         'toBranch',
         'toWallet.ownerId = toBranch.id AND toWallet.ownerType = :branchType',
       )
+      .leftJoin('centers', 'toCenter', 'toBranch.centerId = toCenter.id')
 
       // Find transactions where branch wallets are involved
 
@@ -229,14 +231,21 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
             (fromWallet.ownerId = fromBranch.id AND fromWallet.ownerType = :branchType AND tx.amount < 0))`,
       )
 
-      // Select human-readable names using COALESCE
-      .addSelect('COALESCE(fromUser.name, fromBranch.city)', 'from_name')
-      .addSelect('COALESCE(toUser.name, toBranch.city)', 'to_name')
+      // Select human-readable names with SYSTEM type handling
+      .addSelect(
+        "COALESCE(CASE WHEN fromWallet.ownerType = 'SYSTEM' OR fromWallet.ownerId = :systemUserId THEN 'System' WHEN fromWallet.ownerType = 'USER_PROFILE' THEN fromUser.name WHEN fromWallet.ownerType = 'BRANCH' THEN CONCAT(fromCenter.name, CONCAT(' - ', fromBranch.city)) ELSE NULL END, 'N/A')",
+        'from_name',
+      )
+      .addSelect(
+        "COALESCE(CASE WHEN toWallet.ownerType = 'SYSTEM' OR toWallet.ownerId = :systemUserId THEN 'System' WHEN toWallet.ownerType = 'USER_PROFILE' THEN toUser.name WHEN toWallet.ownerType = 'BRANCH' THEN CONCAT(toCenter.name, CONCAT(' - ', toBranch.city)) ELSE NULL END, 'N/A')",
+        'to_name',
+      )
 
       .setParameters({
         ...(centerId && { centerId }),
         branchType: WalletOwnerType.BRANCH,
         userProfileType: WalletOwnerType.USER_PROFILE,
+        systemUserId: SYSTEM_USER_ID,
         ...(query.branchId && { branchId: query.branchId }),
       });
 
@@ -277,8 +286,6 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
       });
     }
 
- 
-
     // Get paginated results with computed fields (names) using TransactionRepository
     const transactionRepo = new TransactionRepository(this.txHost);
     const result = (await transactionRepo.paginate(
@@ -297,10 +304,11 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
           raw: any,
         ): TransactionWithNames => {
           // Add computed name fields from COALESCE results
+          // Explicitly handle null/undefined to ensure we never return null
           return {
             ...entity,
-            fromName: raw.from_name,
-            toName: raw.to_name,
+            fromName: raw.from_name ?? 'N/A',
+            toName: raw.to_name ?? 'N/A',
           } as TransactionWithNames;
         },
       },
@@ -320,8 +328,8 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
         type: transaction.type,
         correlationId: transaction.correlationId,
         balanceAfter: transaction.balanceAfter.toNumber(),
-        fromName: transaction.fromName,
-        toName: transaction.toName,
+        fromName: transaction.fromName ?? 'N/A',
+        toName: transaction.toName ?? 'N/A',
       }),
     );
 

@@ -27,7 +27,7 @@ export class CreateTransactionDto {
 
   @ApiProperty({
     description: 'Transaction amount',
-    example: 100.50,
+    example: 100.5,
     minimum: 0.01,
   })
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -42,4 +42,3 @@ export class CreateTransactionDto {
   @IsEnum(TransactionType)
   type: TransactionType;
 }
-

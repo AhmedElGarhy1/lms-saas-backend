@@ -14,7 +14,10 @@ export class BelongsToCenterConstraint implements ValidatorConstraintInterface {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
   async validate(value: any, args: ValidationArguments): Promise<boolean> {
-    const [entityClass, includeDeleted = false] = args.constraints as [EntityTarget<ObjectLiteral>, boolean];
+    const [entityClass, includeDeleted = false] = args.constraints as [
+      EntityTarget<ObjectLiteral>,
+      boolean,
+    ];
     const centerId = RequestContext.get()?.centerId;
 
     if (!value) return true;
@@ -42,7 +45,10 @@ export class BelongsToCenterConstraint implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments): string {
-    const [entityClass, includeDeleted = false] = args.constraints as [EntityTarget<ObjectLiteral>, boolean];
+    const [entityClass, includeDeleted = false] = args.constraints as [
+      EntityTarget<ObjectLiteral>,
+      boolean,
+    ];
     const entityType = includeDeleted ? 'deleted ' : '';
     return `${entityType}${entityClass.constructor.name} with id "${args.value}" does not belong to the current center`;
   }

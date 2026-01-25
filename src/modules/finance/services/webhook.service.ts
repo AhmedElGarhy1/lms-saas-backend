@@ -31,10 +31,11 @@ export class WebhookService {
     ipAddress: string,
   ): Promise<WebhookAttempt> {
     // Check if we've already processed this webhook
-    let attempt = await this.webhookAttemptRepository.findByProviderAndExternalId(
-      provider,
-      externalId,
-    );
+    let attempt =
+      await this.webhookAttemptRepository.findByProviderAndExternalId(
+        provider,
+        externalId,
+      );
 
     if (attempt) {
       // Idempotency: Return existing processed attempt
@@ -65,11 +66,12 @@ export class WebhookService {
       // Validate webhook signature if signature is provided (fail-fast validation)
       if (signature) {
         const gatewayType = this.mapProviderToGatewayType(provider);
-        const isValidSignature = this.paymentGatewayService.validateWebhookSignature(
-          gatewayType,
-          payload,
-          signature
-        );
+        const isValidSignature =
+          this.paymentGatewayService.validateWebhookSignature(
+            gatewayType,
+            payload,
+            signature,
+          );
 
         if (!isValidSignature) {
           // Record invalid webhook metric
@@ -81,7 +83,11 @@ export class WebhookService {
           await this.webhookAttemptRepository.create(attempt);
 
           // Record processing duration
-          this.financeMonitor.recordWebhookProcessingDuration(provider, 'error', Date.now() - startTime);
+          this.financeMonitor.recordWebhookProcessingDuration(
+            provider,
+            'error',
+            Date.now() - startTime,
+          );
 
           throw new Error('Webhook signature validation failed');
         }
@@ -97,12 +103,15 @@ export class WebhookService {
       // Process asynchronously (fail-fast pattern)
       this.processWebhookAsync(attempt.id, provider, payload);
 
-      this.logger.log(`Webhook validated and queued for processing: ${provider}:${externalId}`);
+      this.logger.log(
+        `Webhook validated and queued for processing: ${provider}:${externalId}`,
+      );
       return attempt;
     } catch (error) {
       // Schedule retry with exponential backoff
       const nextRetryAt = this.calculateNextRetry(attempt.attemptCount);
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
 
       // Schedule retry - the scheduleRetry method handles the update
       await this.webhookAttemptRepository.scheduleRetry(
@@ -136,14 +145,14 @@ export class WebhookService {
     }
   }
 
-
   /**
    * Calculate next retry time with exponential backoff
    */
   private calculateNextRetry(attemptCount: number): Date {
     // Exponential backoff: 1min, 5min, 30min, 2hr, 6hr, 24hr
     const delays = [60, 300, 1800, 7200, 21600, 86400]; // seconds
-    const delaySeconds = delays[Math.min(attemptCount - 1, delays.length - 1)] || 86400;
+    const delaySeconds =
+      delays[Math.min(attemptCount - 1, delays.length - 1)] || 86400;
 
     return new Date(Date.now() + delaySeconds * 1000);
   }
@@ -154,7 +163,8 @@ export class WebhookService {
   private async processPaymobWebhook(payload: any): Promise<any> {
     try {
       // Paymob webhooks typically contain transaction data
-      const transactionId = payload?.id || payload?.transaction_id || payload?.obj?.id;
+      const transactionId =
+        payload?.id || payload?.transaction_id || payload?.obj?.id;
       const transactionData = payload?.obj || payload;
 
       if (!transactionId) {
@@ -171,22 +181,28 @@ export class WebhookService {
       };
 
       // Process webhook through payment gateway service
-      const paymentStatus = await this.paymentGatewayService.processWebhookEvent(
-        PaymentGatewayType.PAYMOB,
-        webhookEvent
-      );
+      const paymentStatus =
+        await this.paymentGatewayService.processWebhookEvent(
+          PaymentGatewayType.PAYMOB,
+          webhookEvent,
+        );
 
       // Update our payment record
-      const status = paymentStatus.status === 'completed' ? 'completed' :
-                    paymentStatus.status === 'failed' ? 'failed' :
-                    paymentStatus.status === 'cancelled' ? 'cancelled' : 'pending';
+      const status =
+        paymentStatus.status === 'completed'
+          ? 'completed'
+          : paymentStatus.status === 'failed'
+            ? 'failed'
+            : paymentStatus.status === 'cancelled'
+              ? 'cancelled'
+              : 'pending';
 
       await this.paymentService.processExternalPaymentCompletion(
         transactionId,
         PaymentGatewayType.PAYMOB,
         status as 'completed' | 'failed' | 'cancelled',
         paymentStatus.amount,
-        paymentStatus.failureReason
+        paymentStatus.failureReason,
       );
 
       return {
@@ -240,7 +256,9 @@ export class WebhookService {
       // Get the attempt (it should exist since we just created it)
       const attempt = await this.webhookAttemptRepository.findOne(attemptId);
       if (!attempt) {
-        this.logger.error(`Webhook attempt not found for async processing: ${attemptId}`);
+        this.logger.error(
+          `Webhook attempt not found for async processing: ${attemptId}`,
+        );
         return;
       }
 
@@ -248,8 +266,15 @@ export class WebhookService {
       const result = await this.processWebhookByProvider(provider, payload);
 
       // Record successful processing metrics
-      this.financeMonitor.recordWebhookProcessed(providerName, result?.eventType || 'unknown');
-      this.financeMonitor.recordWebhookProcessingDuration(providerName, 'success', Date.now() - startTime);
+      this.financeMonitor.recordWebhookProcessed(
+        providerName,
+        result?.eventType || 'unknown',
+      );
+      this.financeMonitor.recordWebhookProcessingDuration(
+        providerName,
+        'success',
+        Date.now() - startTime,
+      );
 
       // Mark as processed successfully
       attempt.status = WebhookStatus.PROCESSED;
@@ -257,18 +282,25 @@ export class WebhookService {
       attempt.processingResult = result;
       await this.webhookAttemptRepository.create(attempt);
 
-      this.logger.log(`Webhook processed successfully (async): ${provider}:${attempt.externalId}`);
+      this.logger.log(
+        `Webhook processed successfully (async): ${provider}:${attempt.externalId}`,
+      );
     } catch (error) {
       this.logger.error(`Webhook async processing failed: ${attemptId}`, error);
 
       // Record error metrics
-      this.financeMonitor.recordWebhookProcessingDuration(providerName, 'error', Date.now() - startTime);
+      this.financeMonitor.recordWebhookProcessingDuration(
+        providerName,
+        'error',
+        Date.now() - startTime,
+      );
 
       // Mark as failed
       const attempt = await this.webhookAttemptRepository.findOne(attemptId);
       if (attempt) {
         attempt.status = WebhookStatus.FAILED;
-        attempt.errorMessage = error instanceof Error ? error.message : String(error);
+        attempt.errorMessage =
+          error instanceof Error ? error.message : String(error);
         await this.webhookAttemptRepository.create(attempt);
       }
     }
@@ -277,7 +309,9 @@ export class WebhookService {
   /**
    * Map webhook provider to payment gateway type
    */
-  private mapProviderToGatewayType(provider: WebhookProvider): PaymentGatewayType {
+  private mapProviderToGatewayType(
+    provider: WebhookProvider,
+  ): PaymentGatewayType {
     switch (provider) {
       case WebhookProvider.PAYMOB:
         return PaymentGatewayType.PAYMOB;
@@ -290,7 +324,8 @@ export class WebhookService {
    * Process pending retry attempts
    */
   async processPendingRetries(): Promise<number> {
-    const pendingRetries = await this.webhookAttemptRepository.findPendingRetries();
+    const pendingRetries =
+      await this.webhookAttemptRepository.findPendingRetries();
     let processed = 0;
 
     for (const attempt of pendingRetries) {
@@ -304,7 +339,10 @@ export class WebhookService {
         );
         processed++;
       } catch (error) {
-        this.logger.error(`Retry processing failed for attempt ${attempt.id}`, error);
+        this.logger.error(
+          `Retry processing failed for attempt ${attempt.id}`,
+          error,
+        );
       }
     }
 

@@ -12,16 +12,11 @@ import { PaymentReason } from '../enums/payment-reason.enum';
 import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentReferenceType } from '../enums/payment-reference-type.enum';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
-import { Exists } from '@/shared/common/decorators/exists.decorator';
-import { UserProfile } from '@/modules/user-profile/entities/user-profile.entity';
-import { Wallet } from '../entities/wallet.entity';
-import { Transaction } from '../entities/transaction.entity';
-import { CashTransaction } from '../entities/cash-transaction.entity';
 
 export class CreatePaymentDto {
   @ApiProperty({
     description: 'Payment amount',
-    example: 100.50,
+    example: 100.5,
     minimum: 0.01,
   })
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -109,7 +104,8 @@ export class CreatePaymentDto {
   correlationId?: string;
 
   @ApiProperty({
-    description: 'Idempotency key (UUID or string) to prevent duplicate payments',
+    description:
+      'Idempotency key (UUID or string) to prevent duplicate payments',
     example: '550e8400-e29b-41d4-a716-446655440000',
     required: false,
   })
@@ -117,4 +113,3 @@ export class CreatePaymentDto {
   @IsString()
   idempotencyKey?: string;
 }
-

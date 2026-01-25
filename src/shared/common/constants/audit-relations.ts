@@ -4,18 +4,8 @@
  */
 export const AUDIT_RELATION_SELECT = {
   creator: ['creator.id', 'creator.user', 'creatorUser.id', 'creatorUser.name'],
-  updater: [
-    'updater.id',
-    'updater.user',
-    'updaterUser.id',
-    'updaterUser.name',
-  ],
-  deleter: [
-    'deleter.id',
-    'deleter.user',
-    'deleterUser.id',
-    'deleterUser.name',
-  ],
+  updater: ['updater.id', 'updater.user', 'updaterUser.id', 'updaterUser.name'],
+  deleter: ['deleter.id', 'deleter.user', 'deleterUser.id', 'deleterUser.name'],
 };
 
 /**

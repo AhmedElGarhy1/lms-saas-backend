@@ -52,7 +52,6 @@ export class ContextGuard implements CanActivate {
       throw CommonErrors.validationFailed('center_id', centerId);
     }
 
- 
     // Check if the endpoint is public
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),

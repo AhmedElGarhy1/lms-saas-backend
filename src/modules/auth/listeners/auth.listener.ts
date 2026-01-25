@@ -16,9 +16,7 @@ import {
 export class AuthListener {
   private readonly logger: Logger = new Logger(AuthListener.name);
 
-  constructor(
-    private readonly moduleRef: ModuleRef,
-  ) {}
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   @OnEvent(AuthEvents.USER_LOGGED_IN)
   async handleUserLoggedIn(event: UserLoggedInEvent) {

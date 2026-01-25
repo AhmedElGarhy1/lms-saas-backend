@@ -25,7 +25,6 @@ export enum UserErrorCode {
   USER_CREATION_FORBIDDEN = 'USR_016',
   USER_IMPORT_FAILED = 'USR_017',
 
-
   // Settings and preferences
   USER_SETTINGS_INVALID = 'USR_022',
   PREFERENCE_UPDATE_FAILED = 'USR_023',

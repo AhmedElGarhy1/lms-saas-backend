@@ -21,4 +21,7 @@ export enum PaymentReason {
 
   // Expenses
   EXPENSE = 'EXPENSE',
+
+  // System fees
+  SYSTEM_FEE = 'SYSTEM_FEE',
 }

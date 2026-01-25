@@ -10,7 +10,11 @@ import {
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
-import { BelongsToBranch, BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
+import {
+  BelongsToBranch,
+  BelongsToCenter,
+  IsUserProfile,
+} from '@/shared/common/decorators';
 import { IsoUtcDate } from '@/shared/common/decorators/is-iso-datetime.decorator';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { Group } from '@/modules/classes/entities/group.entity';

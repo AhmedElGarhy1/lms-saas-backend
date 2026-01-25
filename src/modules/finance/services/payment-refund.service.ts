@@ -27,6 +27,7 @@ export class PaymentRefundService {
 
   /**
    * Refund an internal payment
+   * Reverses all transactions (main payment + fees) for the payment
    */
   @Transactional()
   async refundInternalPayment(paymentId: string): Promise<Payment> {
@@ -40,7 +41,7 @@ export class PaymentRefundService {
     if (payment.paymentMethod === PaymentMethod.WALLET) {
       await this.reverseWalletBalances(payment);
     } else if (payment.paymentMethod === PaymentMethod.CASH) {
-      // For cash payments, find and reverse the associated cash transaction
+      // For cash payments, reverse cash transaction and any fee wallet transactions
       const cashTransaction = await this.cashTransactionService.findByPaymentId(
         payment.id,
       );
@@ -49,6 +50,8 @@ export class PaymentRefundService {
           cashTransaction.id,
         );
       }
+      // Also reverse any fee wallet transactions (fees are wallet transactions even for cash payments)
+      await this.reverseWalletBalances(payment);
     }
 
     // Mark payment as refunded
@@ -82,48 +85,73 @@ export class PaymentRefundService {
 
   /**
    * Reverse wallet balances for internal payment refund
+   * Reverses all transactions (main payment + fees) by finding all transactions for the payment
    */
   private async reverseWalletBalances(payment: Payment): Promise<void> {
-    const senderWallet = await this.walletService.getWallet(
-      payment.senderId,
-      payment.senderType,
-    );
-    const updatedSenderWallet = await this.walletService.updateBalance(
-      senderWallet.id,
-      payment.amount, // Credit back to sender
+    // Find all transactions for this payment (including fee transactions)
+    const transactions = await this.transactionService.findByPaymentId(
+      payment.id,
     );
 
-    // Get receiver wallet and reverse the amount
-    const receiverWallet = await this.walletService.getWallet(
-      payment.receiverId,
-      payment.receiverType,
-    );
-    const updatedReceiverWallet = await this.walletService.updateBalance(
-      receiverWallet.id,
-      payment.amount.multiply(-1), // Debit from receiver
-    );
+    if (transactions.length === 0) {
+      this.logger.warn(
+        `No transactions found for payment ${payment.id} - skipping reversal`,
+      );
+      return;
+    }
 
-    // Create reversal transactions for audit trail
-    const correlationId = payment.correlationId || randomUUID();
+    // Reverse transactions in reverse order to maintain proper balance tracking
+    // This ensures we reverse the most recent transactions first
+    const reversedTransactions = [...transactions].reverse();
+    const correlationId = randomUUID(); // New correlation ID for refund
 
-    // Transaction for original receiver (now giving back money)
-    await this.transactionService.createTransaction(
-      payment.receiverId, // fromWalletId (receiver giving back)
-      payment.senderId, // toWalletId (payer getting back)
-      payment.amount.multiply(-1), // Negative amount (debit from receiver)
-      TransactionType.INTERNAL_TRANSFER,
-      correlationId,
-      updatedReceiverWallet.balance, // Balance after for receiver
-    );
+    for (const transaction of reversedTransactions) {
+      if (!transaction.fromWalletId || !transaction.toWalletId) {
+        // Skip transactions without both wallets (shouldn't happen, but safety check)
+        continue;
+      }
 
-    // Transaction for original payer (getting money back)
-    await this.transactionService.createTransaction(
-      payment.receiverId, // fromWalletId (receiver giving back)
-      payment.senderId, // toWalletId (payer getting back)
-      payment.amount, // Positive amount (credit to payer)
-      TransactionType.INTERNAL_TRANSFER,
-      correlationId,
-      updatedSenderWallet.balance, // Balance after for sender
+      // Reverse: swap wallets and reverse amount
+      // Original: fromWallet -> toWallet with amount
+      // Reverse: toWallet -> fromWallet with -amount
+      const reversedAmount = transaction.amount.multiply(-1);
+
+      // Update wallet balances (reverse the transaction)
+      const updatedFromWallet = await this.walletService.updateBalance(
+        transaction.fromWalletId,
+        transaction.amount, // Credit back (was debited, now credit)
+      );
+
+      const updatedToWallet = await this.walletService.updateBalance(
+        transaction.toWalletId,
+        reversedAmount, // Debit back (was credited, now debit)
+      );
+
+      // Create single reversal transaction (swapped wallets, reversed amount)
+      await this.transactionService.createTransaction(
+        transaction.toWalletId, // fromWalletId (original receiver giving back)
+        transaction.fromWalletId, // toWalletId (original sender getting back)
+        reversedAmount, // Negative amount (debit from original receiver)
+        TransactionType.REFUND,
+        correlationId,
+        updatedToWallet.balance,
+        payment.id,
+      );
+
+      // Create credit transaction for the reversal
+      await this.transactionService.createTransaction(
+        transaction.toWalletId, // fromWalletId (original receiver giving back)
+        transaction.fromWalletId, // toWalletId (original sender getting back)
+        transaction.amount, // Positive amount (credit to original sender)
+        TransactionType.REFUND,
+        correlationId,
+        updatedFromWallet.balance,
+        payment.id,
+      );
+    }
+
+    this.logger.log(
+      `Reversed ${transactions.length} transactions for payment ${payment.id}`,
     );
   }
 }

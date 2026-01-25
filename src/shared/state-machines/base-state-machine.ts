@@ -4,8 +4,10 @@ import { BaseTransition } from './base-transition.interface';
  * Base state machine class providing common functionality for all domain state machines
  * Uses Template Method pattern to allow domain-specific customization
  */
-export abstract class BaseStateMachine<TStatus, TTransition extends BaseTransition<TStatus>> {
-
+export abstract class BaseStateMachine<
+  TStatus,
+  TTransition extends BaseTransition<TStatus>,
+> {
   /**
    * Abstract method - each domain must provide its transition definitions
    */
@@ -15,9 +17,11 @@ export abstract class BaseStateMachine<TStatus, TTransition extends BaseTransiti
    * Get a specific transition between two statuses
    */
   getTransition(from: TStatus, to: TStatus): TTransition | null {
-    return this.getTransitions().find(
-      (transition) => transition.from === from && transition.to === to,
-    ) || null;
+    return (
+      this.getTransitions().find(
+        (transition) => transition.from === from && transition.to === to,
+      ) || null
+    );
   }
 
   /**
@@ -31,7 +35,9 @@ export abstract class BaseStateMachine<TStatus, TTransition extends BaseTransiti
    * Get all valid transitions from a specific status
    */
   getValidTransitionsFrom(from: TStatus): TTransition[] {
-    return this.getTransitions().filter((transition) => transition.from === from);
+    return this.getTransitions().filter(
+      (transition) => transition.from === from,
+    );
   }
 
   /**
@@ -45,7 +51,9 @@ export abstract class BaseStateMachine<TStatus, TTransition extends BaseTransiti
    * Get all possible target statuses from a specific status
    */
   getValidStatusesFrom(from: TStatus): TStatus[] {
-    return this.getValidTransitionsFrom(from).map((transition) => transition.to);
+    return this.getValidTransitionsFrom(from).map(
+      (transition) => transition.to,
+    );
   }
 
   /**
@@ -81,7 +89,11 @@ export abstract class BaseStateMachine<TStatus, TTransition extends BaseTransiti
    * Template method for executing transitions with business logic
    * Calls domain-specific executeBusinessLogic method
    */
-  async executeTransition(from: TStatus, to: TStatus, context: any): Promise<any> {
+  async executeTransition(
+    from: TStatus,
+    to: TStatus,
+    context: any,
+  ): Promise<any> {
     const transition = this.getTransition(from, to);
     if (!transition) {
       throw new Error(`Invalid transition: ${String(from)} → ${String(to)}`);
@@ -94,5 +106,8 @@ export abstract class BaseStateMachine<TStatus, TTransition extends BaseTransiti
    * Abstract method - domain-specific business logic execution
    * Each domain implements this to handle their specific business logic
    */
-  protected abstract executeBusinessLogic(logic: string, context: any): Promise<any>;
+  protected abstract executeBusinessLogic(
+    logic: string,
+    context: any,
+  ): Promise<any>;
 }

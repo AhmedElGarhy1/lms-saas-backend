@@ -82,13 +82,18 @@ export class DenormalizationSyncService {
    * Sync all denormalized fields (expensive - use for initial migration or maintenance)
    */
   @Transactional()
-  async syncAllDenormalizedFields(): Promise<{ packages: number; enrollments: number }> {
+  async syncAllDenormalizedFields(): Promise<{
+    packages: number;
+    enrollments: number;
+  }> {
     this.logger.log('Starting full denormalization sync...');
 
     const packages = await this.syncClassPackageDenormalizedFields();
     const enrollments = await this.syncEnrollmentDenormalizedFields();
 
-    this.logger.log(`Full sync completed: ${packages} packages, ${enrollments} enrollments`);
+    this.logger.log(
+      `Full sync completed: ${packages} packages, ${enrollments} enrollments`,
+    );
 
     return { packages, enrollments };
   }
@@ -118,8 +123,12 @@ export class DenormalizationSyncService {
          OR e."centerId" != s."centerId"
     `);
 
-    const [totalPackagesResult] = await this.dataSource.query('SELECT COUNT(*) as count FROM class_packages');
-    const [totalEnrollmentsResult] = await this.dataSource.query('SELECT COUNT(*) as count FROM enrollments');
+    const [totalPackagesResult] = await this.dataSource.query(
+      'SELECT COUNT(*) as count FROM class_packages',
+    );
+    const [totalEnrollmentsResult] = await this.dataSource.query(
+      'SELECT COUNT(*) as count FROM enrollments',
+    );
 
     const result = {
       invalidPackages: parseInt(invalidPackagesResult.count) || 0,

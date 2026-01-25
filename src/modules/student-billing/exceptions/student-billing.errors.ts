@@ -132,9 +132,7 @@ export class StudentBillingErrors extends BaseErrorHelpers {
 
   // Installment payment errors
   static classChargeNotFound(): DomainException {
-    return this.createNoDetails(
-      StudentBillingErrorCode.CLASS_CHARGE_NOT_FOUND,
-    );
+    return this.createNoDetails(StudentBillingErrorCode.CLASS_CHARGE_NOT_FOUND);
   }
 
   static classAlreadyFullyPaid(): DomainException {
@@ -144,9 +142,7 @@ export class StudentBillingErrors extends BaseErrorHelpers {
   }
 
   static invalidChargeStatus(): DomainException {
-    return this.createNoDetails(
-      StudentBillingErrorCode.INVALID_CHARGE_STATUS,
-    );
+    return this.createNoDetails(StudentBillingErrorCode.INVALID_CHARGE_STATUS);
   }
 
   static paymentExceedsTotalAmount(): DomainException {

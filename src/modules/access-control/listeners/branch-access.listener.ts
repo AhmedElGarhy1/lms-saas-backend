@@ -11,9 +11,7 @@ import { AccessControlEvents } from '@/shared/events/access-control.events.enum'
 export class BranchAccessListener {
   private readonly logger: Logger = new Logger(BranchAccessListener.name);
 
-  constructor(
-    private readonly accessControlService: AccessControlService,
-  ) {}
+  constructor(private readonly accessControlService: AccessControlService) {}
 
   @OnEvent(AccessControlEvents.GRANT_BRANCH_ACCESS)
   async handleGrantBranchAccess(event: GrantBranchAccessEvent) {

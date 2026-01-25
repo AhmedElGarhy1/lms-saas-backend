@@ -4,19 +4,19 @@ import { Money } from '@/shared/common/utils/money.util';
 export class PaymentMethodMetricsDto {
   @ApiProperty({
     description: 'Revenue from this payment method',
-    example: 12500.00,
+    example: 12500.0,
   })
   revenue: Money;
 
   @ApiProperty({
     description: 'Expenses from this payment method',
-    example: 8750.00,
+    example: 8750.0,
   })
   expenses: Money;
 
   @ApiProperty({
     description: 'Net profit/loss for this payment method',
-    example: 3750.00,
+    example: 3750.0,
   })
   net: Money;
 }
@@ -24,19 +24,19 @@ export class PaymentMethodMetricsDto {
 export class TotalMetricsDto {
   @ApiProperty({
     description: 'Total revenue across all payment methods',
-    example: 18750.00,
+    example: 18750.0,
   })
   revenue: Money;
 
   @ApiProperty({
     description: 'Total expenses across all payment methods',
-    example: 11250.00,
+    example: 11250.0,
   })
   expenses: Money;
 
   @ApiProperty({
     description: 'Total profit/loss across all payment methods',
-    example: 7500.00,
+    example: 7500.0,
   })
   profit: Money;
 }
@@ -50,7 +50,7 @@ export class PendingTeacherPayablesDto {
 
   @ApiProperty({
     description: 'Total amount of pending teacher payouts',
-    example: 2500.00,
+    example: 2500.0,
   })
   totalAmount: Money;
 }
@@ -69,7 +69,8 @@ export class CurrentMonthMetricsDto {
   cash: PaymentMethodMetricsDto;
 
   @ApiProperty({
-    description: 'Total financial metrics across all payment methods this month',
+    description:
+      'Total financial metrics across all payment methods this month',
     type: TotalMetricsDto,
   })
   total: TotalMetricsDto;
@@ -107,13 +108,15 @@ export class AllTimeMetricsDto {
   staff: number;
 
   @ApiProperty({
-    description: 'Number of currently active teachers (assigned to active classes)',
+    description:
+      'Number of currently active teachers (assigned to active classes)',
     example: 10,
   })
   activeTeachers: number;
 
   @ApiProperty({
-    description: 'Number of currently active students (enrolled in active groups)',
+    description:
+      'Number of currently active students (enrolled in active groups)',
     example: 135,
   })
   activeStudents: number;
@@ -121,13 +124,15 @@ export class AllTimeMetricsDto {
 
 export class CenterOverviewDto {
   @ApiProperty({
-    description: 'Total cash balance across all center cashboxes (current snapshot)',
-    example: 15750.50,
+    description:
+      'Total cash balance across all center cashboxes (current snapshot)',
+    example: 15750.5,
   })
   cashBoxBalance: Money;
 
   @ApiProperty({
-    description: 'Total wallet balance across all center wallets (current snapshot)',
+    description:
+      'Total wallet balance across all center wallets (current snapshot)',
     example: 22450.75,
   })
   walletBalance: Money;

@@ -634,6 +634,14 @@ export const PERMISSIONS = {
 
   // ===== SYSTEM PERMISSIONS =====
   SYSTEM: {
+    VIEW: {
+      action: 'system:view',
+      scope: PermissionScope.ADMIN,
+    },
+    UPDATE: {
+      action: 'system:update',
+      scope: PermissionScope.ADMIN,
+    },
     HEALTH_CHECK: {
       action: 'system:health-check',
       scope: PermissionScope.ADMIN,

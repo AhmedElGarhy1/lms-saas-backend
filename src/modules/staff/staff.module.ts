@@ -23,12 +23,7 @@ import { UserProfileModule } from '../user-profile/user-profile.module';
     SharedModule,
   ],
   controllers: [StaffController, StaffActionsController],
-  providers: [
-    StaffService,
-    StaffRepository,
-    StaffListener,
-    CenterListener,
-  ],
+  providers: [StaffService, StaffRepository, StaffListener, CenterListener],
   exports: [StaffService, StaffRepository],
 })
 export class StaffModule {}

@@ -22,11 +22,10 @@ export class TransferWalletDto {
 
   @ApiProperty({
     description: 'Transfer amount',
-    example: 100.50,
+    example: 100.5,
     minimum: 0.01,
   })
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
   amount: number;
 }
-

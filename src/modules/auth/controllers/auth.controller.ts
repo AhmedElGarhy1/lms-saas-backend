@@ -222,7 +222,6 @@ export class AuthController {
     return ControllerResponse.success(result);
   }
 
-
   // test api for verification token
   @Get('test-verification-tokens')
   @Public()
