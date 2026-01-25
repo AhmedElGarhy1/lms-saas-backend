@@ -4,12 +4,9 @@ import { StudentChargesRepository } from '../repositories/student-charges.reposi
 import { StudentCharge } from '../entities/student-charge.entity';
 import { StudentChargeType, StudentChargeStatus } from '../enums';
 import { AttendanceRepository } from '@/modules/attendance/repositories/attendance.repository';
-import { SessionsRepository } from '@/modules/sessions/repositories/sessions.repository';
 import { PaymentService } from '@/modules/finance/services/payment.service';
-import { StudentPaymentStrategyRepository } from '@/modules/classes/repositories/student-payment-strategy.repository';
 import { Payment } from '@/modules/finance/entities/payment.entity';
 import { PaymentStatus } from '@/modules/finance/enums/payment-status.enum';
-import { Money } from '@/shared/common/utils/money.util';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { StudentBillingErrors } from '../exceptions/student-billing.errors';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
@@ -79,11 +76,7 @@ export class StudentBillingRefundService {
     await this.validateRefundEligibility(charge);
 
     // 7. Execute appropriate refund based on payment type
-    await this.executeRefund(
-      payment,
-      charge,
-      reason || 'Administrative refund',
-    );
+    await this.executeRefund(payment);
 
     // 8. Update charge and finalize
     return await this.finalizeRefund(charge, reason || 'Administrative refund');
@@ -161,42 +154,27 @@ export class StudentBillingRefundService {
     }
   }
 
-  private async executeRefund(
-    payment: Payment,
-    charge: StudentCharge,
-    reason: string,
-  ): Promise<void> {
+  private async executeRefund(payment: Payment): Promise<void> {
     // Check if payment is async (external) or sync (internal)
     if (PaymentService.isAsyncPayment(payment)) {
-      await this.executeExternalRefund(payment, charge, reason);
+      await this.executeExternalRefund(payment);
     } else {
-      await this.executeInternalRefund(payment, charge);
+      await this.executeInternalRefund(payment);
     }
   }
 
-  private async executeInternalRefund(
-    payment: Payment,
-    charge: StudentCharge,
-  ): Promise<void> {
+  private async executeInternalRefund(payment: Payment): Promise<void> {
     try {
       await this.paymentService.refundInternalPayment(payment.id);
-    } catch (error) {
+    } catch {
       throw StudentBillingErrors.refundFailed('Refund processing failed');
     }
   }
 
-  private async executeExternalRefund(
-    payment: Payment,
-    charge: StudentCharge,
-    reason: string,
-  ): Promise<void> {
+  private async executeExternalRefund(payment: Payment): Promise<void> {
     try {
-      await this.paymentService.refundPayment(
-        payment.id,
-        Money.from(charge.amount),
-        reason,
-      );
-    } catch (error) {
+      await this.paymentService.refundPayment(payment.id);
+    } catch {
       throw StudentBillingErrors.refundFailed('Refund processing failed');
     }
   }

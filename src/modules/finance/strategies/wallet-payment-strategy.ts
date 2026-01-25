@@ -122,6 +122,7 @@ export class WalletPaymentStrategy implements PaymentExecutionStrategy {
    * 2. Credit center (netAmount)
    * 3. Debit center (feeAmount)
    * 4. Credit system (feeAmount)
+   * @throws Error if payment doesn't have fee amounts (should not happen if hasFeeAmount check passed)
    */
   private async executePaymentWithFees(
     payment: Payment,
@@ -130,6 +131,13 @@ export class WalletPaymentStrategy implements PaymentExecutionStrategy {
     correlationId: string,
     mainTransactionType: TransactionType,
   ): Promise<ExecutionResult> {
+    // Type guard ensures feeAmount and netAmount are defined
+    if (!hasFeeAmount(payment)) {
+      throw new Error(
+        'Payment must have fee amounts to execute payment with fees',
+      );
+    }
+
     // Get system wallet for fee transactions
     const systemWallet = await this.walletService.getSystemWallet();
 

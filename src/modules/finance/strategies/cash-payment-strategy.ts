@@ -146,10 +146,18 @@ export class CashPaymentStrategy implements PaymentExecutionStrategy {
   /**
    * Create fee wallet transactions for cash payments
    * Fees are wallet transactions (center wallet → system wallet) even for cash payments
+   * @throws Error if payment doesn't have fee amounts (should not happen if hasFeeAmount check passed)
    */
   private async createFeeTransactions(
     payment: Payment,
   ): Promise<Transaction[]> {
+    // Type guard ensures feeAmount and netAmount are defined
+    if (!hasFeeAmount(payment)) {
+      throw new Error(
+        'Payment must have fee amounts to create fee transactions',
+      );
+    }
+
     // Get center wallet (receiver) and system wallet
     const [centerWallet, systemWallet] = await Promise.all([
       this.walletService.getWallet(payment.receiverId, payment.receiverType),
