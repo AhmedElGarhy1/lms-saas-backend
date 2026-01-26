@@ -1,9 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ClassStaffRepository } from '../repositories/class-staff.repository';
 import { ClassAccessService } from './class-access.service';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ClassesErrors } from '../exceptions/classes.errors';
-import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ClassStaff } from '../entities/class-staff.entity';
 import { ClassStaffAccessDto } from '../dto/class-staff-access.dto';
@@ -14,6 +13,11 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { ClassesRepository } from '../repositories/classes.repository';
 import { ClassStatus } from '../enums/class-status.enum';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
+import { CentersService } from '@/modules/centers/services/centers.service';
+import { BranchesService } from '@/modules/centers/services/branches.service';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
+import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
 
 @Injectable()
 export class ClassStaffService extends BaseService {
@@ -24,6 +28,9 @@ export class ClassStaffService extends BaseService {
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly branchAccessService: BranchAccessService,
     private readonly classesRepository: ClassesRepository,
+    private readonly userProfileService: UserProfileService,
+    private readonly centersService: CentersService,
+    private readonly branchesService: BranchesService,
   ) {
     super();
   }
@@ -82,11 +89,40 @@ export class ClassStaffService extends BaseService {
       centerId: centerId,
     });
 
+    // Validate user profile is active
+    const userProfile = await this.userProfileService.findOne(
+      data.userProfileId,
+    );
+    if (!userProfile) {
+      throw UserProfileErrors.userProfileNotFound();
+    }
+    if (!userProfile.isActive) {
+      throw UserProfileErrors.userProfileInactive();
+    }
+
     // DTO validation (@BelongsToBranch decorator) already ensures class belongs to actor's branch
     // Fetch class to get branchId for snapshot and status check
     const classEntity = await this.classesRepository.findOneOrThrow(
       data.classId,
     );
+
+    // Validate center is active
+    const center = await this.centersService.findCenterById(
+      classEntity.centerId,
+      actor,
+    );
+    if (!center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+
+    // Validate branch is active
+    const branch = await this.branchesService.getBranch(
+      classEntity.branchId,
+      actor,
+    );
+    if (!branch.isActive) {
+      throw CentersErrors.branchInactive();
+    }
 
     // Block staff assignment if class status is CANCELED or FINISHED
     if (

@@ -14,13 +14,14 @@ import { SessionPaymentListener } from './listeners/session-payment-listener';
 import { SessionVirtualizationService } from './services/session-virtualization.service';
 import { SessionsCleanupJob } from './jobs/sessions-cleanup.job';
 import { SessionStateMachine } from './state-machines/session-state-machine';
-import { AttendanceModule } from '../attendance/attendance.module';
+import { UserProfileModule } from '../user-profile/user-profile.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Session, Group, ScheduleItem, Class]),
     forwardRef(() => ClassesModule),
     CentersModule,
+    UserProfileModule,
   ],
   controllers: [SessionsController],
   providers: [

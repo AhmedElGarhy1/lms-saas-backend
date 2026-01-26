@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { GroupsRepository } from '../repositories/groups.repository';
 import { GroupStudentsRepository } from '../repositories/group-students.repository';
 import { ScheduleItemsRepository } from '../repositories/schedule-items.repository';
@@ -17,6 +17,11 @@ import { GroupStudent } from '../entities/group-student.entity';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
 import { GroupStudentAccessDto } from '../dto/group-student-access.dto';
 import { ClassStatus } from '../enums/class-status.enum';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
+import { CentersService } from '@/modules/centers/services/centers.service';
+import { BranchesService } from '@/modules/centers/services/branches.service';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
+import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
 
 @Injectable()
 export class GroupStudentService extends BaseService {
@@ -29,6 +34,9 @@ export class GroupStudentService extends BaseService {
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly branchAccessService: BranchAccessService,
     private readonly classAccessService: ClassAccessService,
+    private readonly userProfileService: UserProfileService,
+    private readonly centersService: CentersService,
+    private readonly branchesService: BranchesService,
   ) {
     super();
   }
@@ -68,11 +76,37 @@ export class GroupStudentService extends BaseService {
       centerId: centerId,
     });
 
+    // Validate user profile is active
+    const userProfile = await this.userProfileService.findOne(
+      data.userProfileId,
+    );
+    if (!userProfile) {
+      throw UserProfileErrors.userProfileNotFound();
+    }
+    if (!userProfile.isActive) {
+      throw UserProfileErrors.userProfileInactive();
+    }
+
     // DTO validation (@BelongsToBranch decorator) already ensures group belongs to actor's branch
     // Fetch group to get class info and denormalized fields for snapshot
     const group = await this.groupsRepository.findByIdOrThrow(data.groupId, [
       'class',
     ]);
+
+    // Validate center is active
+    const center = await this.centersService.findCenterById(
+      group.centerId,
+      actor,
+    );
+    if (!center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+
+    // Validate branch is active
+    const branch = await this.branchesService.getBranch(group.branchId, actor);
+    if (!branch.isActive) {
+      throw CentersErrors.branchInactive();
+    }
 
     // Block enrollment if class status is CANCELED or FINISHED
     if (

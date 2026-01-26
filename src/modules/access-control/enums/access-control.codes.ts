@@ -37,4 +37,7 @@ export enum AccessControlErrorCode {
   CANNOT_REVOKE_USER_ACCESS = 'ACL_028',
   CANNOT_ACCESS_USER_RECORDS = 'ACL_029',
   MISSING_PERMISSION = 'ACL_030',
+
+  // Inactive entity errors
+  CENTER_ACCESS_INACTIVE = 'ACL_031',
 }

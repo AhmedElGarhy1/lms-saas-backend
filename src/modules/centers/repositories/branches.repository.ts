@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Branch } from '../entities/branch.entity';
 import { BaseRepository } from '@/shared/common/repositories/base.repository';
 import { PaginateBranchesDto } from '../dto/paginate-branches.dto';
@@ -13,6 +13,7 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 export class BranchesRepository extends BaseRepository<Branch> {
   constructor(
     protected readonly txHost: TransactionHost<TransactionalAdapterTypeOrm>,
+    @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
   ) {
     super(txHost);

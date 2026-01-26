@@ -14,7 +14,6 @@ import { AccessControlHelperService } from '@/modules/access-control/services/ac
 import { RequestContext } from '../context/request.context';
 import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 import { CentersRepository } from '@/modules/centers/repositories/centers.repository';
-import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { DEFAULT_TIMEZONE } from '../constants/timezone.constants';
 import { ProfileType } from '../enums/profile-type.enum';
 import { STUDENT_ONLY_KEY } from '../decorators/student-only.decorator';
@@ -39,8 +38,6 @@ export class ContextGuard implements CanActivate {
     private readonly accessControlHelperService: AccessControlHelperService,
     @Inject(forwardRef(() => CentersRepository))
     private readonly centersRepository: CentersRepository,
-    @Inject(forwardRef(() => BranchAccessService))
-    private readonly branchAccessService: BranchAccessService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

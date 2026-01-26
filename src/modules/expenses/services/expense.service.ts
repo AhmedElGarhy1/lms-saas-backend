@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { ExpenseRepository } from '../repositories/expense.repository';
 import { Expense } from '../entities/expense.entity';
@@ -29,6 +29,8 @@ import {
   ExpenseUpdatedEvent,
   ExpenseRefundedEvent,
 } from '../events/expense.events';
+import { CentersService } from '@/modules/centers/services/centers.service';
+import { BranchesService } from '@/modules/centers/services/branches.service';
 
 @Injectable()
 export class ExpenseService extends BaseService {
@@ -40,6 +42,8 @@ export class ExpenseService extends BaseService {
     private readonly paymentService: PaymentService,
     private readonly branchAccessService: BranchAccessService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly centersService: CentersService,
+    private readonly branchesService: BranchesService,
   ) {
     super();
   }
@@ -81,6 +85,12 @@ export class ExpenseService extends BaseService {
       centerId,
     });
 
+    // Validate center is active
+    const center = await this.centersService.findCenterById(centerId, actor);
+    if (!center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+
     // Validate branch access if branchId is provided
     if (dto.branchId) {
       await this.branchAccessService.validateBranchAccess({
@@ -88,6 +98,12 @@ export class ExpenseService extends BaseService {
         centerId,
         branchId: dto.branchId,
       });
+
+      // Validate branch is active
+      const branch = await this.branchesService.getBranch(dto.branchId, actor);
+      if (!branch.isActive) {
+        throw CentersErrors.branchInactive();
+      }
     }
 
     // Verify center exists (access control already validated above)
@@ -162,6 +178,26 @@ export class ExpenseService extends BaseService {
       userProfileId: actor.userProfileId,
       centerId: expense.centerId,
     });
+
+    // Validate center is active
+    const center = await this.centersService.findCenterById(
+      expense.centerId,
+      actor,
+    );
+    if (!center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+
+    // Validate branch is active if branchId exists
+    if (expense.branchId) {
+      const branch = await this.branchesService.getBranch(
+        expense.branchId,
+        actor,
+      );
+      if (!branch.isActive) {
+        throw CentersErrors.branchInactive();
+      }
+    }
 
     // Cannot update if refunded
     if (expense.status === ExpenseStatus.REFUNDED) {

@@ -66,6 +66,11 @@ export class UserService extends BaseService {
       throw UserErrors.userNotFound();
     }
 
+    // Validate user is active
+    if (!user.isActive) {
+      throw UserErrors.userInactive();
+    }
+
     // Verify current password
     const isCurrentPasswordValid = await bcrypt.compare(
       dto.currentPassword,
@@ -477,6 +482,15 @@ export class UserService extends BaseService {
     updateData: UpdateUserDto,
     actor: ActorUser,
   ): Promise<User> {
+    // Fetch user to validate it's active
+    const user = await this.userRepository.findOne(userId);
+    if (!user) {
+      throw UserErrors.userNotFound();
+    }
+    if (!user.isActive) {
+      throw UserErrors.userInactive();
+    }
+
     const { userInfo, ...userData } = updateData;
     await this.accessControlHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,
@@ -508,6 +522,11 @@ export class UserService extends BaseService {
     const currentUser = await this.userRepository.findOne(userId);
     if (!currentUser) {
       throw UserErrors.userNotFound();
+    }
+
+    // Validate user is active
+    if (!currentUser.isActive) {
+      throw UserErrors.userInactive();
     }
 
     // If user has existing avatar, clean it up

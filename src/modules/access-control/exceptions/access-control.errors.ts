@@ -150,4 +150,8 @@ export class AccessControlErrors extends BaseErrorHelpers {
       permission,
     });
   }
+
+  static centerAccessInactive(): DomainException {
+    return this.createNoDetails(AccessControlErrorCode.CENTER_ACCESS_INACTIVE);
+  }
 }

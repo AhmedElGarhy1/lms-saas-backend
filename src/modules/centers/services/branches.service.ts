@@ -1,11 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateBranchDto } from '../dto/create-branch.dto';
 import { PaginateBranchesDto } from '../dto/paginate-branches.dto';
 import { BranchesRepository } from '../repositories/branches.repository';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { CentersErrors } from '../exceptions/centers.errors';
-import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import {
   BranchCreatedEvent,
   BranchUpdatedEvent,
@@ -16,13 +15,16 @@ import { BranchEvents } from '@/shared/events/branch.events.enum';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { BaseService } from '@/shared/common/services/base.service';
 import { BranchAccessService } from './branch-access.service';
+import { CentersService } from './centers.service';
 
 @Injectable()
 export class BranchesService extends BaseService {
   constructor(
     private readonly branchesRepository: BranchesRepository,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    @Inject(forwardRef(() => BranchAccessService))
     private readonly branchAccessService: BranchAccessService,
+    private readonly centersService: CentersService,
   ) {
     super();
   }
@@ -55,6 +57,15 @@ export class BranchesService extends BaseService {
   }
 
   async createBranch(createBranchDto: CreateBranchDto, actor: ActorUser) {
+    // Validate center is active before creating branch
+    const center = await this.centersService.findCenterById(
+      actor.centerId!,
+      actor,
+    );
+    if (!center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+
     const branch = await this.branchesRepository.create({
       ...createBranchDto,
       centerId: actor.centerId!,
@@ -75,6 +86,11 @@ export class BranchesService extends BaseService {
     actor: ActorUser,
   ) {
     const branch = await this.getBranch(branchId, actor);
+
+    // Validate branch is active
+    if (!branch.isActive) {
+      throw CentersErrors.branchInactive();
+    }
 
     Object.assign(branch, data);
     const updatedBranch = await this.branchesRepository.update(branchId, data);

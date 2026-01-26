@@ -1,6 +1,5 @@
 import { Inject, Injectable, forwardRef, Logger } from '@nestjs/common';
 import { AccessControlErrors } from '../exceptions/access-control.errors';
-import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { UserAccess } from '@/modules/access-control/entities/user-access.entity';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { UserAccessRepository } from '../repositories/user-access.repository';
@@ -21,6 +20,8 @@ import { PERMISSIONS, PermissionScope } from '../constants/permissions';
 import { UserProfilePermissionService } from './user-profile-permission.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
+import { CentersService } from '@/modules/centers/services/centers.service';
+import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
 
 @Injectable()
 export class AccessControlService extends BaseService {
@@ -36,6 +37,8 @@ export class AccessControlService extends BaseService {
     private readonly userProfileService: UserProfileService,
     private readonly rolesService: RolesService,
     private readonly userProfilePermissionService: UserProfilePermissionService,
+    @Inject(forwardRef(() => CentersService))
+    private readonly centersService: CentersService,
   ) {
     super();
   }
@@ -47,6 +50,27 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
     body.centerId = centerId;
+
+    // Validate granter and target user profiles are active
+    const granterProfile = await this.userProfileService.findOne(
+      body.granterUserProfileId,
+    );
+    if (!granterProfile) {
+      throw UserProfileErrors.userProfileNotFound();
+    }
+    if (!granterProfile.isActive) {
+      throw UserProfileErrors.userProfileInactive();
+    }
+
+    const targetProfile = await this.userProfileService.findOne(
+      body.targetUserProfileId,
+    );
+    if (!targetProfile) {
+      throw UserProfileErrors.userProfileNotFound();
+    }
+    if (!targetProfile.isActive) {
+      throw UserProfileErrors.userProfileInactive();
+    }
 
     await this.userProfilePermissionService.canGrantUserAccess(
       actor,
@@ -104,6 +128,17 @@ export class AccessControlService extends BaseService {
   ): Promise<void> {
     const centerId = body.centerId ?? actor.centerId ?? '';
     body.centerId = centerId;
+
+    // Validate target user profile is active
+    const targetProfile = await this.userProfileService.findOne(
+      body.targetUserProfileId,
+    );
+    if (!targetProfile) {
+      throw UserProfileErrors.userProfileNotFound();
+    }
+    if (!targetProfile.isActive) {
+      throw UserProfileErrors.userProfileInactive();
+    }
 
     await this.userProfilePermissionService.canGrantUserAccess(
       actor,
@@ -170,17 +205,34 @@ export class AccessControlService extends BaseService {
     skipExsitance: boolean = false,
     skipUserAccessValidation: boolean = false,
   ) {
+    const centerId = dto.centerId ?? actor.centerId;
+
+    // Validate center is active
+    const center = await this.centersService.findCenterById(centerId, actor);
+    if (!center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+
+    // Validate user profile is active
+    const userProfile = await this.userProfileService.findOne(dto.userProfileId);
+    if (!userProfile) {
+      throw UserProfileErrors.userProfileNotFound();
+    }
+    if (!userProfile.isActive) {
+      throw UserProfileErrors.userProfileInactive();
+    }
+
     // i have access to the center
     await this.accessControlHelperService.validateCenterAccess({
       userProfileId: actor.userProfileId,
-      centerId: dto.centerId ?? actor.centerId,
+      centerId,
     });
     // i have access to the target user
     if (!skipUserAccessValidation) {
       await this.accessControlHelperService.validateUserAccess({
         granterUserProfileId: actor.userProfileId,
         targetUserProfileId: dto.userProfileId,
-        centerId: dto.centerId ?? actor.centerId,
+        centerId,
       });
     }
     // Check if access exists

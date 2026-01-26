@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { CreateClassDto } from '../dto/create-class.dto';
 import { UpdateClassDto } from '../dto/update-class.dto';
 import { PaginateClassesDto } from '../dto/paginate-classes.dto';
@@ -8,7 +8,6 @@ import { PaymentStrategyService } from './payment-strategy.service';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ClassesErrors } from '../exceptions/classes.errors';
-import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
@@ -33,6 +32,11 @@ import { StudentPaymentStrategyDto } from '../dto/student-payment-strategy.dto';
 import { TeacherPaymentStrategyDto } from '../dto/teacher-payment-strategy.dto';
 import { TeacherPaymentUnit } from '../enums/teacher-payment-unit.enum';
 import { TeacherPayoutService } from '@/modules/teacher-payouts/services/teacher-payout.service';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
+import { CentersService } from '@/modules/centers/services/centers.service';
+import { BranchesService } from '@/modules/centers/services/branches.service';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
+import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
 
 @Injectable()
 export class ClassesService extends BaseService {
@@ -49,6 +53,9 @@ export class ClassesService extends BaseService {
     private readonly branchAccessService: BranchAccessService,
     private readonly classStateMachine: ClassStateMachine,
     private readonly teacherPayoutService: TeacherPayoutService,
+    private readonly userProfileService: UserProfileService,
+    private readonly centersService: CentersService,
+    private readonly branchesService: BranchesService,
   ) {
     super();
   }
@@ -125,6 +132,23 @@ export class ClassesService extends BaseService {
       centerId: centerId,
     });
 
+    // Validate teacher user profile is active
+    const teacher = await this.userProfileService.findOne(
+      createClassDto.teacherUserProfileId,
+    );
+    if (!teacher) {
+      throw UserProfileErrors.userProfileNotFound();
+    }
+    if (!teacher.isActive) {
+      throw UserProfileErrors.userProfileInactive();
+    }
+
+    // Validate center is active
+    const center = await this.centersService.findCenterById(centerId, actor);
+    if (!center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+
     // Determine target branch: use provided branchId or fallback to actor's branch
     const targetBranchId = createClassDto.branchId || actor.branchId;
     if (!targetBranchId) {
@@ -137,6 +161,12 @@ export class ClassesService extends BaseService {
       centerId: centerId,
       branchId: targetBranchId,
     });
+
+    // Validate branch is active
+    const branch = await this.branchesService.getBranch(targetBranchId, actor);
+    if (!branch.isActive) {
+      throw CentersErrors.branchInactive();
+    }
 
     // Check if a class with the same combination already exists
     const existingClass =
@@ -218,6 +248,19 @@ export class ClassesService extends BaseService {
       actor,
       false,
     );
+
+    // Validate related entities are active
+    const classWithRelations =
+      await this.classesRepository.findClassWithRelationsOrThrow(classId);
+    if (classWithRelations.teacher && !classWithRelations.teacher.isActive) {
+      throw UserProfileErrors.userProfileInactive();
+    }
+    if (classWithRelations.center && !classWithRelations.center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+    if (classWithRelations.branch && !classWithRelations.branch.isActive) {
+      throw CentersErrors.branchInactive();
+    }
 
     await this.classValidationService.validateClassUpdate(
       classId,
@@ -509,6 +552,19 @@ export class ClassesService extends BaseService {
     const oldStatus = classEntity.status;
     const newStatus = changeStatusDto.status;
     const reason = changeStatusDto.reason;
+
+    // Validate related entities are active
+    const classWithRelations =
+      await this.classesRepository.findClassWithRelationsOrThrow(classId);
+    if (classWithRelations.teacher && !classWithRelations.teacher.isActive) {
+      throw UserProfileErrors.userProfileInactive();
+    }
+    if (classWithRelations.center && !classWithRelations.center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+    if (classWithRelations.branch && !classWithRelations.branch.isActive) {
+      throw CentersErrors.branchInactive();
+    }
 
     // Validate transition is allowed
     if (!this.classStateMachine.isValidTransition(oldStatus, newStatus)) {

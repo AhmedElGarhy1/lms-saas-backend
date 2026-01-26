@@ -1,6 +1,5 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { AccessControlErrors } from '../exceptions/access-control.errors';
-import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { RolesRepository } from '../repositories/roles.repository';
 import { AccessControlHelperService } from './access-control-helper.service';
 import { CreateRoleRequestDto } from '../dto/create-role.dto';
@@ -20,6 +19,8 @@ import {
 import { BaseService } from '@/shared/common/services/base.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
+import { CentersService } from '@/modules/centers/services/centers.service';
+import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
 
 @Injectable()
 export class RolesService extends BaseService {
@@ -31,6 +32,7 @@ export class RolesService extends BaseService {
     private readonly accessControlerHelperService: AccessControlHelperService,
     private readonly profileRoleRepository: ProfileRoleRepository,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly centersService: CentersService,
   ) {
     super();
   }
@@ -150,6 +152,28 @@ export class RolesService extends BaseService {
   }
 
   async assignRole(data: AssignRoleDto) {
+    // Validate user profile is active
+    const userProfile = await this.accessControlerHelperService.findUserProfile(
+      data.userProfileId,
+    );
+    if (!userProfile) {
+      throw UserProfileErrors.userProfileNotFound();
+    }
+    if (!userProfile.isActive) {
+      throw UserProfileErrors.userProfileInactive();
+    }
+
+    // Validate center is active if centerId is provided
+    if (data.centerId) {
+      const center = await this.centersService.findCenterById(
+        data.centerId,
+        undefined,
+      );
+      if (!center.isActive) {
+        throw CentersErrors.centerInactive();
+      }
+    }
+
     const result = await this.profileRoleRepository.assignProfileRole(data);
 
     return result;

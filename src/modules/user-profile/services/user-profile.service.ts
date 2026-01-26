@@ -29,6 +29,7 @@ import { Student } from '@/modules/students/entities/student.entity';
 import { Teacher } from '@/modules/teachers/entities/teacher.entity';
 import { Admin } from '@/modules/admin/entities/admin.entity';
 import { UserProfileCodeService } from './user-profile-code.service';
+import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
 
 @Injectable()
 export class UserProfileService extends BaseService {
@@ -41,7 +42,6 @@ export class UserProfileService extends BaseService {
     private readonly fileService: FileService,
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
-    private readonly rolesService: RolesService,
     private readonly centerService: CentersService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly userProfilePermissionService: UserProfilePermissionService,
@@ -163,6 +163,11 @@ export class UserProfileService extends BaseService {
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
       throw UserProfileErrors.userProfileNotFound();
+    }
+
+    // Validate user profile is active
+    if (!userProfile.isActive) {
+      throw UserProfileErrors.userProfileInactive();
     }
 
     // Check permission based on profileType
@@ -341,6 +346,15 @@ export class UserProfileService extends BaseService {
     // 1. Validate that actor has permission to create this profile type
     await this.userProfilePermissionService.canCreate(actor, dto.profileType);
 
+    // Validate center is active if centerId is provided
+    const centerId = actor.centerId ?? dto.centerId;
+    if (centerId) {
+      const center = await this.centerService.findCenterById(centerId, actor);
+      if (!center.isActive) {
+        throw CentersErrors.centerInactive();
+      }
+    }
+
     const { isActive, ...userData } = dto;
 
     let isCenterAccessActive = true;
@@ -370,8 +384,6 @@ export class UserProfileService extends BaseService {
       profileRefId,
       isUserProfileActive,
     );
-
-    const centerId = actor.centerId ?? dto.centerId;
 
     // 5. Emit domain events for STAFF, STUDENT, TEACHER and ADMIN profiles
     // Access control, UserCreatedEvent, and phone verification are handled by listeners

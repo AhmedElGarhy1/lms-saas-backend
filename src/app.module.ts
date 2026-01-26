@@ -209,20 +209,13 @@ import { SettingsModule } from './modules/settings/settings.module';
         reflector: Reflector,
         accessControlHelperService: AccessControlHelperService,
         centersRepository: CentersRepository,
-        branchAccessService: BranchAccessService,
       ) =>
         new ContextGuard(
           reflector,
           accessControlHelperService,
           centersRepository,
-          branchAccessService,
         ),
-      inject: [
-        Reflector,
-        AccessControlHelperService,
-        CentersRepository,
-        BranchAccessService,
-      ],
+      inject: [Reflector, AccessControlHelperService, CentersRepository],
     },
     {
       provide: APP_GUARD,

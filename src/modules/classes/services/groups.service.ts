@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateGroupDto } from '../dto/create-group.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
 import { PaginateGroupsDto } from '../dto/paginate-groups.dto';
@@ -8,7 +8,6 @@ import { GroupScheduleService } from './group-schedule.service';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ClassesErrors } from '../exceptions/classes.errors';
-import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Group } from '../entities/group.entity';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
@@ -29,6 +28,9 @@ import { ScheduleItemsRepository } from '../repositories/schedule-items.reposito
 import { ScheduleItem } from '../entities/schedule-item.entity';
 import { ScheduleItemDto } from '../dto/schedule-item.dto';
 import { SessionsService } from '@/modules/sessions/services/sessions.service';
+import { CentersService } from '@/modules/centers/services/centers.service';
+import { BranchesService } from '@/modules/centers/services/branches.service';
+import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
 
 @Injectable()
 export class GroupsService extends BaseService {
@@ -42,6 +44,8 @@ export class GroupsService extends BaseService {
     private readonly branchAccessService: BranchAccessService,
     private readonly scheduleItemsRepository: ScheduleItemsRepository,
     private readonly sessionsService: SessionsService,
+    private readonly centersService: CentersService,
+    private readonly branchesService: BranchesService,
   ) {
     super();
   }
@@ -130,6 +134,24 @@ export class GroupsService extends BaseService {
       throw ClassesErrors.groupCreationNotAllowedForClassStatus();
     }
 
+    // Validate center is active
+    const center = await this.centersService.findCenterById(
+      classEntity.centerId,
+      actor,
+    );
+    if (!center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+
+    // Validate branch is active
+    const branch = await this.branchesService.getBranch(
+      classEntity.branchId,
+      actor,
+    );
+    if (!branch.isActive) {
+      throw CentersErrors.branchInactive();
+    }
+
     // Validate actor has branch access to the class's branch
     await this.branchAccessService.validateBranchAccess({
       userProfileId: actor.userProfileId,
@@ -175,6 +197,21 @@ export class GroupsService extends BaseService {
       groupId,
       false,
     );
+
+    // Validate center is active
+    const center = await this.centersService.findCenterById(
+      group.centerId,
+      actor,
+    );
+    if (!center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+
+    // Validate branch is active
+    const branch = await this.branchesService.getBranch(group.branchId, actor);
+    if (!branch.isActive) {
+      throw CentersErrors.branchInactive();
+    }
 
     // Validate actor has branch access to the group's branch
     await this.branchAccessService.validateBranchAccess({

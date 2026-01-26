@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { TeacherPayoutRecordsRepository } from '../repositories/teacher-payout-records.repository';
 import { TeacherPayoutRecord } from '../entities/teacher-payout-record.entity';
 import { PaginateTeacherPayoutsDto } from '../dto/paginate-teacher-payouts.dto';
@@ -37,6 +37,12 @@ import {
   TeacherPayoutInstallmentPaidEvent,
   TeacherPayoutStatusUpdatedEvent,
 } from '../events/teacher-payout.events';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
+import { CentersService } from '@/modules/centers/services/centers.service';
+import { BranchesService } from '@/modules/centers/services/branches.service';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
+import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
+import { ClassesRepository } from '@/modules/classes/repositories/classes.repository';
 
 @Injectable()
 export class TeacherPayoutService extends BaseService {
@@ -48,6 +54,10 @@ export class TeacherPayoutService extends BaseService {
     private readonly branchAccessService: BranchAccessService,
     private readonly classAccessService: ClassAccessService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly centersService: CentersService,
+    private readonly branchesService: BranchesService,
+    private readonly classesRepository: ClassesRepository,
+    private readonly userProfileService: UserProfileService,
   ) {
     super();
   }
@@ -154,6 +164,37 @@ export class TeacherPayoutService extends BaseService {
     paymentMethod?: PaymentMethod,
     idempotencyKey?: string,
   ): Promise<TeacherPayoutRecord> {
+    // Validate teacher is active
+    if (classEntity.teacherUserProfileId) {
+      const teacher = await this.userProfileService.findOne(
+        classEntity.teacherUserProfileId,
+      );
+      if (!teacher) {
+        throw UserProfileErrors.userProfileNotFound();
+      }
+      if (!teacher.isActive) {
+        throw UserProfileErrors.userProfileInactive();
+      }
+    }
+
+    // Validate center is active
+    const center = await this.centersService.findCenterById(
+      classEntity.centerId,
+      actor,
+    );
+    if (!center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+
+    // Validate branch is active
+    const branch = await this.branchesService.getBranch(
+      classEntity.branchId,
+      actor,
+    );
+    if (!branch.isActive) {
+      throw CentersErrors.branchInactive();
+    }
+
     const payout = await this.createPayout(
       {
         teacherUserProfileId: classEntity.teacherUserProfileId,
@@ -313,6 +354,23 @@ export class TeacherPayoutService extends BaseService {
     const payout = await this.getPayoutById(id, actor);
     const oldStatus = payout.status;
 
+    // Validate related entities are active
+    if (payout.classId) {
+      const classWithRelations =
+        await this.classesRepository.findClassWithRelationsOrThrow(
+          payout.classId,
+        );
+      if (classWithRelations.center && !classWithRelations.center.isActive) {
+        throw CentersErrors.centerInactive();
+      }
+      if (classWithRelations.branch && !classWithRelations.branch.isActive) {
+        throw CentersErrors.branchInactive();
+      }
+      if (classWithRelations.teacher && !classWithRelations.teacher.isActive) {
+        throw UserProfileErrors.userProfileInactive();
+      }
+    }
+
     // Validate status transition
     this.validateStatusTransition(payout.status, dto.status);
 
@@ -350,7 +408,12 @@ export class TeacherPayoutService extends BaseService {
     if (oldStatus !== dto.status) {
       await this.typeSafeEventEmitter.emitAsync(
         TeacherPayoutEvents.PAYOUT_STATUS_UPDATED,
-        new TeacherPayoutStatusUpdatedEvent(actor, updatedPayout, oldStatus, dto.status),
+        new TeacherPayoutStatusUpdatedEvent(
+          actor,
+          updatedPayout,
+          oldStatus,
+          dto.status,
+        ),
       );
     }
 
@@ -466,13 +529,16 @@ export class TeacherPayoutService extends BaseService {
       totalPaid: Money.zero(),
       totalRemaining: Money.zero(),
       overallProgress: 0,
-      byType: {} as Record<string, {
-        count: number;
-        totalAmount: Money;
-        totalPaid: Money;
-        totalRemaining: Money;
-        progress: number;
-      }>,
+      byType: {} as Record<
+        string,
+        {
+          count: number;
+          totalAmount: Money;
+          totalPaid: Money;
+          totalRemaining: Money;
+          progress: number;
+        }
+      >,
     };
 
     for (const payout of payouts) {

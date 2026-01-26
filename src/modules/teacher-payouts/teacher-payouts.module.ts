@@ -10,14 +10,16 @@ import { MonthlyTeacherPayoutJob } from './jobs/monthly-teacher-payout.job';
 import { FinanceModule } from '@/modules/finance/finance.module';
 import { CentersModule } from '@/modules/centers/centers.module';
 import { AccessControlModule } from '@/modules/access-control/access-control.module';
+import { UserProfileModule } from '../user-profile/user-profile.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([TeacherPayoutRecord]),
-    forwardRef(() => ClassesModule), // For ClassAccessService
-    FinanceModule, // For PaymentService, WalletService
-    CentersModule, // For BranchAccessService
-    AccessControlModule, // For AccessControlHelperService
+    forwardRef(() => ClassesModule),
+    FinanceModule,
+    CentersModule,
+    AccessControlModule,
+    UserProfileModule,
   ],
   controllers: [TeacherPayoutController],
   providers: [

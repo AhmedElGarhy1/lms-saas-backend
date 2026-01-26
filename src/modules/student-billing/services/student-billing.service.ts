@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
 import { StudentCharge } from '../entities/student-charge.entity';
 import { StudentChargeType, StudentChargeStatus } from '../enums';
@@ -21,6 +21,7 @@ import { PaymentReferenceType } from '@/modules/finance/enums/payment-reference-
 import { WalletOwnerType } from '@/modules/finance/enums/wallet-owner-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { ClassesService } from '@/modules/classes/services/classes.service';
+import { ClassesRepository } from '@/modules/classes/repositories/classes.repository';
 import { PaymentStrategyService } from '@/modules/classes/services/payment-strategy.service';
 import { SessionsRepository } from '@/modules/sessions/repositories/sessions.repository';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
@@ -32,8 +33,6 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { ClassesErrors } from '@/modules/classes/exceptions/classes.errors';
 import { SessionsErrors } from '@/modules/sessions/exceptions/sessions.errors';
-import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
-import { DateHelpers } from '../utils/date-helpers.util';
 import { Class } from '@/modules/classes/entities/class.entity';
 import { StudentBillingValidationService } from './student-billing-validation.service';
 import {
@@ -42,17 +41,20 @@ import {
 } from './student-billing-query.service';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { StudentBillingEvents } from '@/shared/events/student-billing.events.enum';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
+import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
 import {
   StudentChargeCreatedEvent,
   StudentChargeCompletedEvent,
   StudentChargeInstallmentPaidEvent,
-  StudentChargeRefundedEvent,
 } from '../events/student-billing.events';
 
 @Injectable()
 export class StudentBillingService extends BaseService {
   constructor(
     private chargesRepository: StudentChargesRepository,
+    private classesRepository: ClassesRepository,
     private paymentService: PaymentService,
     private classesService: ClassesService,
     private paymentStrategyService: PaymentStrategyService,
@@ -63,6 +65,7 @@ export class StudentBillingService extends BaseService {
     private validationService: StudentBillingValidationService,
     private queryService: StudentBillingQueryService,
     private typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly userProfileService: UserProfileService,
   ) {
     super();
   }
@@ -172,11 +175,32 @@ export class StudentBillingService extends BaseService {
       }
     }
 
+    // Validate student is active
+    const student = await this.userProfileService.findOne(
+      dto.studentUserProfileId,
+    );
+    if (!student) {
+      throw UserProfileErrors.userProfileNotFound();
+    }
+    if (!student.isActive) {
+      throw UserProfileErrors.userProfileInactive();
+    }
+
     // ✅ VALIDATE: Access control for staff users
     const classEntity = await this.validateClassAccessForActor(
       dto.classId,
       actor,
     );
+
+    // Validate related entities are active
+    const classWithRelations =
+      await this.classesRepository.findClassWithRelationsOrThrow(dto.classId);
+    if (classWithRelations.center && !classWithRelations.center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+    if (classWithRelations.branch && !classWithRelations.branch.isActive) {
+      throw CentersErrors.branchInactive();
+    }
 
     // ✅ VALIDATE: Check if monthly subscriptions are allowed
     await this.validateMonthlySubscriptionAllowed(dto.classId);
@@ -350,11 +374,7 @@ export class StudentBillingService extends BaseService {
     if (wasCompleted) {
       await this.typeSafeEventEmitter.emitAsync(
         StudentBillingEvents.CHARGE_COMPLETED,
-        new StudentChargeCompletedEvent(
-          actor,
-          savedCharge,
-          newTotalPaid,
-        ),
+        new StudentChargeCompletedEvent(actor, savedCharge, newTotalPaid),
       );
     }
 
@@ -411,6 +431,32 @@ export class StudentBillingService extends BaseService {
     // Get session information
     const session = await this.sessionsRepository.findOneOrThrow(dto.sessionId);
     const classId = session.classId;
+
+    // Validate student is active
+    const student = await this.userProfileService.findOne(
+      dto.studentUserProfileId,
+    );
+    if (!student) {
+      throw UserProfileErrors.userProfileNotFound();
+    }
+    if (!student.isActive) {
+      throw UserProfileErrors.userProfileInactive();
+    }
+
+    // Get class with relations to validate related entities
+    const classEntity = await this.classesService.findOneOrThrow(classId);
+    const classWithRelations =
+      await this.classesRepository.findClassWithRelationsOrThrow(classId);
+
+    // Validate center is active
+    if (classWithRelations.center && !classWithRelations.center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+
+    // Validate branch is active
+    if (classWithRelations.branch && !classWithRelations.branch.isActive) {
+      throw CentersErrors.branchInactive();
+    }
 
     // ✅ VALIDATE: Access control for staff users
     await this.validateClassAccessForActor(classId, actor);
@@ -507,11 +553,32 @@ export class StudentBillingService extends BaseService {
     dto: CreateClassChargeDto,
     actor: ActorUser,
   ): Promise<StudentCharge> {
+    // Validate student is active
+    const student = await this.userProfileService.findOne(
+      dto.studentUserProfileId,
+    );
+    if (!student) {
+      throw UserProfileErrors.userProfileNotFound();
+    }
+    if (!student.isActive) {
+      throw UserProfileErrors.userProfileInactive();
+    }
+
     // ✅ VALIDATE: Access control for staff users
     const classEntity = await this.validateClassAccessForActor(
       dto.classId,
       actor,
     );
+
+    // Validate related entities are active
+    const classWithRelations =
+      await this.classesRepository.findClassWithRelationsOrThrow(dto.classId);
+    if (classWithRelations.center && !classWithRelations.center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+    if (classWithRelations.branch && !classWithRelations.branch.isActive) {
+      throw CentersErrors.branchInactive();
+    }
 
     // Idempotency check
     if (dto.idempotencyKey) {

@@ -106,6 +106,11 @@ export class CentersService extends BaseService {
       throw CentersErrors.centerNotFound();
     }
 
+    // Validate center is active
+    if (!center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+
     if (dto.name && dto.name !== center.name) {
       const existingCenter = await this.centersRepository.findByName(dto.name);
       if (existingCenter) {

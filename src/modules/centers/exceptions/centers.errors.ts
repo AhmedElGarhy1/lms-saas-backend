@@ -69,4 +69,12 @@ export class CentersErrors extends BaseErrorHelpers {
   static centerIdRequired(): DomainException {
     return this.createNoDetails(CentersErrorCode.CENTER_ID_REQUIRED);
   }
+
+  static centerInactive(): DomainException {
+    return this.createNoDetails(CentersErrorCode.CENTER_INACTIVE);
+  }
+
+  static branchInactive(): DomainException {
+    return this.createNoDetails(CentersErrorCode.BRANCH_INACTIVE);
+  }
 }

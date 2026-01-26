@@ -12,6 +12,7 @@ import { SessionsModule } from '@/modules/sessions/sessions.module';
 import { ClassesModule } from '@/modules/classes/classes.module';
 import { CentersModule } from '../centers/centers.module';
 import { AttendanceModule } from '@/modules/attendance/attendance.module';
+import { UserProfileModule } from '../user-profile/user-profile.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AttendanceModule } from '@/modules/attendance/attendance.module';
     forwardRef(() => ClassesModule),
     CentersModule,
     forwardRef(() => AttendanceModule),
+    UserProfileModule,
   ],
   controllers: [StudentBillingController],
   providers: [

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { SessionsRepository } from '../repositories/sessions.repository';
 import { SessionValidationService } from './session-validation.service';
 import { BaseService } from '@/shared/common/services/base.service';
@@ -39,6 +39,11 @@ import {
   parseVirtualSessionId,
   isVirtualSessionId,
 } from '../utils/virtual-session-id.util';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
+import { CentersService } from '@/modules/centers/services/centers.service';
+import { BranchesService } from '@/modules/centers/services/branches.service';
+import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
+import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
 
 @Injectable()
 export class SessionsService extends BaseService {
@@ -53,6 +58,9 @@ export class SessionsService extends BaseService {
     private readonly classAccessService: ClassAccessService,
     private readonly scheduleItemsRepository: ScheduleItemsRepository,
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly userProfileService: UserProfileService,
+    private readonly centersService: CentersService,
+    private readonly branchesService: BranchesService,
   ) {
     super();
   }
@@ -98,6 +106,34 @@ export class SessionsService extends BaseService {
     // Sessions can only be created/materialized when the parent class is ACTIVE
     if (group.class.status !== ClassStatus.ACTIVE) {
       throw SessionsErrors.sessionClassNotActive();
+    }
+
+    // Validate teacher is active
+    if (group.class.teacherUserProfileId) {
+      const teacher = await this.userProfileService.findOne(
+        group.class.teacherUserProfileId,
+      );
+      if (!teacher) {
+        throw UserProfileErrors.userProfileNotFound();
+      }
+      if (!teacher.isActive) {
+        throw UserProfileErrors.userProfileInactive();
+      }
+    }
+
+    // Validate center is active
+    const center = await this.centersService.findCenterById(
+      group.centerId,
+      actor,
+    );
+    if (!center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+
+    // Validate branch is active
+    const branch = await this.branchesService.getBranch(group.branchId, actor);
+    if (!branch.isActive) {
+      throw CentersErrors.branchInactive();
     }
 
     // Check if user can bypass center internal access

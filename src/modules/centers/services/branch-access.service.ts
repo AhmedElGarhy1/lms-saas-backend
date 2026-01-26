@@ -1,6 +1,5 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { CentersErrors } from '../exceptions/centers.errors';
-import { CommonErrors } from '@/shared/common/exceptions/common.errors';
 import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 import { BaseService } from '@/shared/common/services/base.service';
 import { BranchAccessRepository } from '../repositories/branch-access.repository';
@@ -11,6 +10,8 @@ import { UserProfileService } from '@/modules/user-profile/services/user-profile
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { AccessControlCacheService } from '@/shared/common/services/access-control-cache.service';
+import { CentersService } from './centers.service';
+import { BranchesService } from './branches.service';
 
 @Injectable()
 export class BranchAccessService extends BaseService {
@@ -21,6 +22,8 @@ export class BranchAccessService extends BaseService {
     @Inject(forwardRef(() => AccessControlHelperService))
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly userProfileService: UserProfileService,
+    private readonly centersService: CentersService,
+    private readonly branchesService: BranchesService,
   ) {
     super();
   }
@@ -211,11 +214,31 @@ export class BranchAccessService extends BaseService {
       throw UserProfileErrors.userProfileNotFound();
     }
 
+    // Validate user profile is active
+    if (!profile.isActive) {
+      throw UserProfileErrors.userProfileInactive();
+    }
+
     if (
       profile.profileType !== ProfileType.STAFF &&
       profile.profileType !== ProfileType.ADMIN
     ) {
       throw CentersErrors.profileInvalidTypeForBranchAccess();
+    }
+
+    // Validate center is active
+    const center = await this.centersService.findCenterById(
+      data.centerId,
+      actor,
+    );
+    if (!center.isActive) {
+      throw CentersErrors.centerInactive();
+    }
+
+    // Validate branch is active
+    const branch = await this.branchesService.getBranch(data.branchId, actor);
+    if (!branch.isActive) {
+      throw CentersErrors.branchInactive();
     }
 
     const canAccess = await this.canBranchAccess(data);
