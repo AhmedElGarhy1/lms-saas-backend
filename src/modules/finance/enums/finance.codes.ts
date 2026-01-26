@@ -49,6 +49,11 @@ export enum FinanceErrorCode {
   INVALID_PAYMENT_OPERATION = 'FIN_PAY_033',
   MAX_NEGATIVE_BALANCE_EXCEEDED = 'FIN_PAY_035',
 
+  // Webhook errors
+  WEBHOOK_SIGNATURE_VALIDATION_FAILED = 'FIN_WEB_001',
+  UNSUPPORTED_WEBHOOK_PROVIDER = 'FIN_WEB_002',
+  WEBHOOK_TRANSACTION_ID_MISSING = 'FIN_WEB_003',
+
   // General finance errors
   // (No generic errors - use specific codes)
 }

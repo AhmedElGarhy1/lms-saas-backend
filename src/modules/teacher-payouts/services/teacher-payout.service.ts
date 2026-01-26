@@ -13,6 +13,12 @@ import {
   PaymentService,
   ExecutePaymentRequest,
 } from '@/modules/finance/services/payment.service';
+import { Payment } from '@/modules/finance/entities/payment.entity';
+import {
+  PayoutProgress,
+  TeacherPayoutSummary,
+  PayoutTypeSummary,
+} from '../interfaces/payout-progress.interface';
 import { PaymentReason } from '@/modules/finance/enums/payment-reason.enum';
 import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { PaymentReferenceType } from '@/modules/finance/enums/payment-reference-type.enum';
@@ -23,6 +29,14 @@ import { Class } from '@/modules/classes/entities/class.entity';
 import { TeacherPaymentStrategyDto } from '@/modules/classes/dto/teacher-payment-strategy.dto';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { ClassAccessService } from '@/modules/classes/services/class-access.service';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { TeacherPayoutEvents } from '@/shared/events/teacher-payouts.events.enum';
+import {
+  TeacherPayoutCreatedEvent,
+  TeacherPayoutPaidEvent,
+  TeacherPayoutInstallmentPaidEvent,
+  TeacherPayoutStatusUpdatedEvent,
+} from '../events/teacher-payout.events';
 
 @Injectable()
 export class TeacherPayoutService extends BaseService {
@@ -33,6 +47,7 @@ export class TeacherPayoutService extends BaseService {
     private readonly paymentService: PaymentService,
     private readonly branchAccessService: BranchAccessService,
     private readonly classAccessService: ClassAccessService,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
   }
@@ -50,6 +65,26 @@ export class TeacherPayoutService extends BaseService {
     return this.payoutRepository.getPendingPayoutsForCenter(centerId);
   }
 
+  /**
+   * Validate payout access for actor (branch and class access)
+   * Extracted to eliminate duplication
+   */
+  private async validatePayoutAccessForActor(
+    payout: TeacherPayoutRecord,
+    actor: ActorUser,
+  ): Promise<void> {
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: payout.branchId,
+    });
+
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: payout.classId,
+    });
+  }
+
   async getPayoutById(
     id: string,
     actor: ActorUser,
@@ -61,23 +96,27 @@ export class TeacherPayoutService extends BaseService {
     }
 
     // Validate access to the payout's branch and class
-    await this.branchAccessService.validateBranchAccess({
-      userProfileId: actor.userProfileId,
-      centerId: actor.centerId!,
-      branchId: payout.branchId,
-    });
-
-    await this.classAccessService.validateClassAccess({
-      userProfileId: actor.userProfileId,
-      classId: payout.classId,
-    });
+    await this.validatePayoutAccessForActor(payout, actor);
 
     return payout;
   }
 
-  async createPayout(dto: CreatePayoutDto): Promise<TeacherPayoutRecord> {
+  async createPayout(
+    dto: CreatePayoutDto,
+    actor: ActorUser,
+  ): Promise<TeacherPayoutRecord> {
+    // Idempotency check
+    if (dto.idempotencyKey) {
+      const existing = await this.payoutRepository.findByIdempotencyKey(
+        dto.idempotencyKey,
+      );
+      if (existing) {
+        return existing;
+      }
+    }
+
     // Create payout record
-    return this.payoutRepository.createPayout({
+    const payout = await this.payoutRepository.createPayout({
       teacherUserProfileId: dto.teacherUserProfileId,
       unitType: dto.unitType,
       unitPrice: dto.unitPrice,
@@ -94,7 +133,16 @@ export class TeacherPayoutService extends BaseService {
           : PayoutStatus.PENDING,
       totalPaid: dto.totalPaid || Money.zero(), // Start with nothing paid
       lastPaymentAmount: dto.lastPaymentAmount, // Last payment amount
+      idempotencyKey: dto.idempotencyKey,
     });
+
+    // Emit payout created event
+    await this.typeSafeEventEmitter.emitAsync(
+      TeacherPayoutEvents.PAYOUT_CREATED,
+      new TeacherPayoutCreatedEvent(actor, payout),
+    );
+
+    return payout;
   }
 
   // CLASS payout specific methods
@@ -104,18 +152,23 @@ export class TeacherPayoutService extends BaseService {
     actor: ActorUser,
     initialPaymentAmount?: number,
     paymentMethod?: PaymentMethod,
+    idempotencyKey?: string,
   ): Promise<TeacherPayoutRecord> {
-    const payout = await this.createPayout({
-      teacherUserProfileId: classEntity.teacherUserProfileId,
-      unitType: TeacherPaymentUnit.CLASS,
-      unitPrice: strategy.amount, // Total class amount
-      unitCount: 1,
-      classId: classEntity.id,
-      branchId: classEntity.branchId,
-      centerId: classEntity.centerId,
-      totalPaid: Money.zero(), // Start with zero paid
-      lastPaymentAmount: undefined, // No payments yet
-    });
+    const payout = await this.createPayout(
+      {
+        teacherUserProfileId: classEntity.teacherUserProfileId,
+        unitType: TeacherPaymentUnit.CLASS,
+        unitPrice: strategy.amount, // Total class amount
+        unitCount: 1,
+        classId: classEntity.id,
+        branchId: classEntity.branchId,
+        centerId: classEntity.centerId,
+        totalPaid: Money.zero(), // Start with zero paid
+        lastPaymentAmount: undefined, // No payments yet
+        idempotencyKey,
+      },
+      actor,
+    );
 
     // If initial payment amount is specified, pay the first installment
     this.logger.log(
@@ -136,6 +189,7 @@ export class TeacherPayoutService extends BaseService {
       );
     }
 
+    // Event already emitted by createPayout() method
     return payout;
   }
 
@@ -225,7 +279,29 @@ export class TeacherPayoutService extends BaseService {
       `Updated payout record: totalPaid=${payout.totalPaid}, lastPaymentAmount=${payout.lastPaymentAmount}, status=${payout.status}`,
     );
 
-    return this.payoutRepository.savePayout(payout);
+    const savedPayout = await this.payoutRepository.savePayout(payout);
+
+    // Emit installment paid event
+    const remainingAmount = totalAmount.subtract(savedPayout.totalPaid);
+    await this.typeSafeEventEmitter.emitAsync(
+      TeacherPayoutEvents.INSTALLMENT_PAID,
+      new TeacherPayoutInstallmentPaidEvent(
+        actor,
+        savedPayout,
+        Money.from(paymentAmount),
+        remainingAmount,
+      ),
+    );
+
+    // Emit paid event if fully paid
+    if (savedPayout.status === PayoutStatus.PAID) {
+      await this.typeSafeEventEmitter.emitAsync(
+        TeacherPayoutEvents.PAYOUT_PAID,
+        new TeacherPayoutPaidEvent(actor, savedPayout, savedPayout.totalPaid),
+      );
+    }
+
+    return savedPayout;
   }
 
   async updatePayoutStatus(
@@ -235,6 +311,7 @@ export class TeacherPayoutService extends BaseService {
   ): Promise<TeacherPayoutRecord> {
     // Validate the payout exists
     const payout = await this.getPayoutById(id, actor);
+    const oldStatus = payout.status;
 
     // Validate status transition
     this.validateStatusTransition(payout.status, dto.status);
@@ -246,13 +323,38 @@ export class TeacherPayoutService extends BaseService {
       }
 
       // Execute the actual payment transaction
-      await this.executePaymentTransaction(payout, dto.paymentMethod, actor);
+      const payment = await this.executePaymentTransaction(
+        payout,
+        dto.paymentMethod,
+        actor,
+      );
 
-      // Payment is now linked via referenceType/referenceId - no need to store locally
+      // Emit payout paid event
+      await this.typeSafeEventEmitter.emitAsync(
+        TeacherPayoutEvents.PAYOUT_PAID,
+        new TeacherPayoutPaidEvent(
+          actor,
+          payout,
+          Money.from((payout.unitPrice || 0) * payout.unitCount),
+        ),
+      );
     }
 
     // Update status only
-    return this.payoutRepository.updateStatus(id, dto.status);
+    const updatedPayout = await this.payoutRepository.updateStatus(
+      id,
+      dto.status,
+    );
+
+    // Emit status updated event if status changed
+    if (oldStatus !== dto.status) {
+      await this.typeSafeEventEmitter.emitAsync(
+        TeacherPayoutEvents.PAYOUT_STATUS_UPDATED,
+        new TeacherPayoutStatusUpdatedEvent(actor, updatedPayout, oldStatus, dto.status),
+      );
+    }
+
+    return updatedPayout;
   }
 
   private validateStatusTransition(
@@ -296,7 +398,7 @@ export class TeacherPayoutService extends BaseService {
     payout: TeacherPayoutRecord,
     paymentMethod: PaymentMethod,
     actor: ActorUser,
-  ) {
+  ): Promise<Payment> {
     const request: ExecutePaymentRequest = {
       amount: new Money((payout.unitPrice || 0) * payout.unitCount),
       senderId: payout.branchId,
@@ -316,9 +418,136 @@ export class TeacherPayoutService extends BaseService {
     return result.payment;
   }
 
-  // Helper methods for future use
-  async getPendingPayouts(): Promise<TeacherPayoutRecord[]> {
-    return this.payoutRepository.findPendingPayouts();
+  /**
+   * Get class payout progress
+   * Extracted from controller for proper separation of concerns
+   */
+  async getClassPayoutProgress(
+    classId: string,
+  ): Promise<PayoutProgress | null> {
+    const payout = await this.getClassPayout(classId);
+
+    if (!payout) {
+      return null;
+    }
+
+    const totalAmount = payout.unitPrice
+      ? Money.from(payout.unitPrice)
+      : Money.zero();
+    const totalPaid = payout.totalPaid;
+    const remaining = totalAmount.subtract(totalPaid);
+    const progress = totalAmount.greaterThan(Money.zero())
+      ? (totalPaid.toNumber() / totalAmount.toNumber()) * 100
+      : 0;
+
+    return {
+      totalAmount: totalAmount.toNumber(),
+      totalPaid: totalPaid.toNumber(),
+      remaining: remaining.toNumber(),
+      progress,
+      lastPayment: payout.lastPaymentAmount?.toNumber(),
+      payoutType: payout.unitType,
+      payoutStatus: payout.status,
+    };
+  }
+
+  /**
+   * Get teacher progress summary
+   * Extracted from controller for proper separation of concerns
+   */
+  async getTeacherProgressSummary(
+    teacherId: string,
+  ): Promise<TeacherPayoutSummary> {
+    const payouts = await this.getTeacherPayoutsByTeacher(teacherId);
+
+    const summary = {
+      totalPayouts: payouts.length,
+      totalAmount: Money.zero(),
+      totalPaid: Money.zero(),
+      totalRemaining: Money.zero(),
+      overallProgress: 0,
+      byType: {} as Record<string, {
+        count: number;
+        totalAmount: Money;
+        totalPaid: Money;
+        totalRemaining: Money;
+        progress: number;
+      }>,
+    };
+
+    for (const payout of payouts) {
+      const totalAmount = payout.unitPrice
+        ? Money.from(payout.unitPrice)
+        : Money.zero();
+      const totalPaid = payout.totalPaid;
+
+      summary.totalAmount = summary.totalAmount.add(totalAmount);
+      summary.totalPaid = summary.totalPaid.add(totalPaid);
+      summary.totalRemaining = summary.totalRemaining.add(
+        totalAmount.subtract(totalPaid).isNegative()
+          ? Money.zero()
+          : totalAmount.subtract(totalPaid),
+      );
+
+      // Group by payout type
+      const type = payout.unitType;
+      if (!summary.byType[type]) {
+        summary.byType[type] = {
+          count: 0,
+          totalAmount: Money.zero(),
+          totalPaid: Money.zero(),
+          totalRemaining: Money.zero(),
+          progress: 0,
+        };
+      }
+
+      summary.byType[type].count += 1;
+      summary.byType[type].totalAmount =
+        summary.byType[type].totalAmount.add(totalAmount);
+      summary.byType[type].totalPaid =
+        summary.byType[type].totalPaid.add(totalPaid);
+      summary.byType[type].totalRemaining = summary.byType[
+        type
+      ].totalRemaining.add(
+        totalAmount.subtract(totalPaid).isNegative()
+          ? Money.zero()
+          : totalAmount.subtract(totalPaid),
+      );
+    }
+
+    // Calculate overall progress
+    summary.overallProgress = summary.totalAmount.greaterThan(Money.zero())
+      ? (summary.totalPaid.toNumber() / summary.totalAmount.toNumber()) * 100
+      : 0;
+
+    // Convert Money objects to numbers for response
+    const response: TeacherPayoutSummary = {
+      totalPayouts: summary.totalPayouts,
+      totalAmount: summary.totalAmount.toNumber(),
+      totalPaid: summary.totalPaid.toNumber(),
+      totalRemaining: summary.totalRemaining.toNumber(),
+      overallProgress: summary.overallProgress,
+      byType: {} as Record<TeacherPaymentUnit, PayoutTypeSummary>,
+    };
+
+    // Calculate progress by type
+    for (const type of Object.keys(summary.byType)) {
+      const typeData = summary.byType[type];
+      response.byType[type as TeacherPaymentUnit] = {
+        count: typeData.count,
+        totalAmount: typeData.totalAmount.toNumber(),
+        totalPaid: typeData.totalPaid.toNumber(),
+        totalRemaining: typeData.totalRemaining.toNumber(),
+        progress:
+          typeData.totalAmount.toNumber() > 0
+            ? (typeData.totalPaid.toNumber() /
+                typeData.totalAmount.toNumber()) *
+              100
+            : 0,
+      };
+    }
+
+    return response;
   }
 
   async getTeacherPayoutsByTeacher(

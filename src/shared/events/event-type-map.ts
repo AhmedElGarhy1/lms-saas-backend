@@ -87,6 +87,23 @@ import {
   SessionsBulkDeletedEvent,
   SessionConflictDetectedEvent,
 } from '@/modules/sessions/events/session.events';
+import {
+  StudentChargeCreatedEvent,
+  StudentChargeCompletedEvent,
+  StudentChargeInstallmentPaidEvent,
+  StudentChargeRefundedEvent,
+} from '@/modules/student-billing/events/student-billing.events';
+import {
+  ExpenseCreatedEvent,
+  ExpenseUpdatedEvent,
+  ExpenseRefundedEvent,
+} from '@/modules/expenses/events/expense.events';
+import {
+  TeacherPayoutCreatedEvent,
+  TeacherPayoutPaidEvent,
+  TeacherPayoutInstallmentPaidEvent,
+  TeacherPayoutStatusUpdatedEvent,
+} from '@/modules/teacher-payouts/events/teacher-payout.events';
 
 // Import event enums for type safety
 import { UserEvents } from '@/shared/events/user.events.enum';
@@ -102,6 +119,9 @@ import { TeacherEvents } from '@/shared/events/teacher.events.enum';
 import { ClassEvents } from '@/shared/events/classes.events.enum';
 import { GroupEvents } from '@/shared/events/groups.events.enum';
 import { SessionEvents } from '@/shared/events/sessions.events.enum';
+import { StudentBillingEvents } from '@/shared/events/student-billing.events.enum';
+import { ExpenseEvents } from '@/shared/events/expenses.events.enum';
+import { TeacherPayoutEvents } from '@/shared/events/teacher-payouts.events.enum';
 
 /**
  * Event Type Map
@@ -200,6 +220,23 @@ export type EventTypeMap = {
   [SessionEvents.FINISHED]: SessionFinishedEvent;
   [SessionEvents.BULK_DELETED]: SessionsBulkDeletedEvent;
   [SessionEvents.CONFLICT_DETECTED]: SessionConflictDetectedEvent;
+
+  // Student Billing Events
+  [StudentBillingEvents.CHARGE_CREATED]: StudentChargeCreatedEvent;
+  [StudentBillingEvents.CHARGE_COMPLETED]: StudentChargeCompletedEvent;
+  [StudentBillingEvents.INSTALLMENT_PAID]: StudentChargeInstallmentPaidEvent;
+  [StudentBillingEvents.CHARGE_REFUNDED]: StudentChargeRefundedEvent;
+
+  // Expense Events
+  [ExpenseEvents.CREATED]: ExpenseCreatedEvent;
+  [ExpenseEvents.UPDATED]: ExpenseUpdatedEvent;
+  [ExpenseEvents.REFUNDED]: ExpenseRefundedEvent;
+
+  // Teacher Payout Events
+  [TeacherPayoutEvents.PAYOUT_CREATED]: TeacherPayoutCreatedEvent;
+  [TeacherPayoutEvents.PAYOUT_PAID]: TeacherPayoutPaidEvent;
+  [TeacherPayoutEvents.INSTALLMENT_PAID]: TeacherPayoutInstallmentPaidEvent;
+  [TeacherPayoutEvents.PAYOUT_STATUS_UPDATED]: TeacherPayoutStatusUpdatedEvent;
 };
 
 /**

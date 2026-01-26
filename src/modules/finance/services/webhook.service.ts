@@ -8,6 +8,7 @@ import { PaymentGatewayService } from '../adapters/payment-gateway.service';
 import { PaymentGatewayType } from '../adapters/interfaces/payment-gateway.interface';
 import { WebhookEvent } from '../adapters/interfaces/payment-gateway.interface';
 import { FinanceMonitorService } from '../monitoring/finance-monitor.service';
+import { FinanceErrors } from '../exceptions/finance.errors';
 
 @Injectable()
 export class WebhookService {
@@ -89,7 +90,7 @@ export class WebhookService {
             Date.now() - startTime,
           );
 
-          throw new Error('Webhook signature validation failed');
+          throw FinanceErrors.webhookSignatureValidationFailed();
         }
       }
 
@@ -141,7 +142,7 @@ export class WebhookService {
       case WebhookProvider.PAYMOB:
         return this.processPaymobWebhook(payload);
       default:
-        throw new Error(`Unsupported webhook provider: ${provider}`);
+        throw FinanceErrors.unsupportedWebhookProvider(provider);
     }
   }
 
@@ -168,7 +169,7 @@ export class WebhookService {
       const transactionData = payload?.obj || payload;
 
       if (!transactionId) {
-        throw new Error('No transaction ID found in Paymob webhook payload');
+        throw FinanceErrors.webhookTransactionIdMissing();
       }
 
       // Map Paymob webhook event to our WebhookEvent interface

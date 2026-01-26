@@ -3,6 +3,8 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { RequestContext } from '@/shared/common/context/request.context';
 import { Locale } from '@/shared/common/enums/locale.enum';
 import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
+import { SYSTEM_ACTOR } from '@/shared/common/constants/system-actor.constant';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { TeacherPayoutService } from '../services/teacher-payout.service';
 import { TeacherPaymentStrategyRepository } from '@/modules/classes/repositories/teacher-payment-strategy.repository';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
@@ -115,17 +117,20 @@ export class MonthlyTeacherPayoutJob {
         }
 
         // Create the monthly payout
-        await this.teacherPayoutService.createPayout({
-          teacherUserProfileId: strategy.class.teacherUserProfileId,
-          unitType: TeacherPaymentUnit.MONTH,
-          unitPrice: strategy.amount,
-          unitCount: 1, // Fixed: 1 month
-          classId: strategy.classId,
-          month,
-          year,
-          branchId: strategy.branchId,
-          centerId: strategy.centerId,
-        });
+        await this.teacherPayoutService.createPayout(
+          {
+            teacherUserProfileId: strategy.class.teacherUserProfileId,
+            unitType: TeacherPaymentUnit.MONTH,
+            unitPrice: strategy.amount,
+            unitCount: 1, // Fixed: 1 month
+            classId: strategy.classId,
+            month,
+            year,
+            branchId: strategy.branchId,
+            centerId: strategy.centerId,
+          },
+          { ...SYSTEM_ACTOR, centerId: strategy.centerId } as ActorUser,
+        );
 
         totalPayoutsCreated++;
         this.logger.debug(

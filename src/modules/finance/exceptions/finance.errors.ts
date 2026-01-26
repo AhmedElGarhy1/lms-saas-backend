@@ -251,4 +251,24 @@ export class FinanceErrors extends BaseErrorHelpers {
       message,
     );
   }
+
+  // Webhook errors
+  static webhookSignatureValidationFailed(): DomainException {
+    return this.createNoDetails(
+      FinanceErrorCode.WEBHOOK_SIGNATURE_VALIDATION_FAILED,
+    );
+  }
+
+  static unsupportedWebhookProvider(provider: string): DomainException {
+    return this.createWithDetails(
+      FinanceErrorCode.UNSUPPORTED_WEBHOOK_PROVIDER,
+      { provider },
+    );
+  }
+
+  static webhookTransactionIdMissing(): DomainException {
+    return this.createNoDetails(
+      FinanceErrorCode.WEBHOOK_TRANSACTION_ID_MISSING,
+    );
+  }
 }

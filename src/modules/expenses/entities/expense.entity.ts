@@ -65,6 +65,11 @@ export class Expense extends BaseEntity {
   @Column({ type: 'timestamptz' })
   paidAt: Date;
 
+  // Idempotency
+  @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
+  @Index()
+  idempotencyKey?: string;
+
   // Relations
   @ManyToOne(() => Center, {
     onDelete: 'CASCADE',

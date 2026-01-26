@@ -177,4 +177,8 @@ export class ClassesErrors extends BaseErrorHelpers {
       ClassErrorCode.GROUP_CREATION_NOT_ALLOWED_FOR_CLASS_STATUS,
     );
   }
+
+  static classIdRequired(): DomainException {
+    return this.createNoDetails(ClassErrorCode.CLASS_ID_REQUIRED);
+  }
 }

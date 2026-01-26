@@ -150,4 +150,23 @@ export class StudentBillingErrors extends BaseErrorHelpers {
       StudentBillingErrorCode.PAYMENT_EXCEEDS_TOTAL_AMOUNT,
     );
   }
+
+  // Billing-specific validation errors
+  static invalidChargeType(): DomainException {
+    return this.createNoDetails(StudentBillingErrorCode.INVALID_CHARGE_TYPE);
+  }
+
+  static subscriptionNotFound(): DomainException {
+    return this.createNoDetails(StudentBillingErrorCode.SUBSCRIPTION_NOT_FOUND);
+  }
+
+  static sessionChargeNotFound(): DomainException {
+    return this.createNoDetails(
+      StudentBillingErrorCode.SESSION_CHARGE_NOT_FOUND,
+    );
+  }
+
+  static invalidPaymentType(): DomainException {
+    return this.createNoDetails(StudentBillingErrorCode.INVALID_PAYMENT_TYPE);
+  }
 }

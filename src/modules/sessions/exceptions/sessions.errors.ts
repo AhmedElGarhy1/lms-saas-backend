@@ -114,4 +114,8 @@ export class SessionsErrors extends BaseErrorHelpers {
       details,
     );
   }
+
+  static sessionIdRequired(): DomainException {
+    return this.createNoDetails(SessionErrorCode.SESSION_ID_REQUIRED);
+  }
 }

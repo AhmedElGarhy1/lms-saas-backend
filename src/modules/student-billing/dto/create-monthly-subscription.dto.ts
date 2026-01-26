@@ -1,4 +1,4 @@
-import { IsUUID, IsEnum, IsInt, Min, Max } from 'class-validator';
+import { IsUUID, IsEnum, IsInt, Min, Max, IsOptional } from 'class-validator';
 import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
 import { BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
@@ -51,4 +51,13 @@ export class CreateMonthlySubscriptionDto {
   @Min(1)
   @Max(12)
   month: number;
+
+  @ApiProperty({
+    description: 'Idempotency key to prevent duplicate charges',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    required: false,
+  })
+  @IsOptional()
+  @IsUUID()
+  idempotencyKey?: string;
 }

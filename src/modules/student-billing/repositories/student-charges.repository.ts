@@ -8,6 +8,7 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateStudentBillingRecordsDto } from '../dto/paginate-student-billing-records.dto';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { STUDENT_BILLING_PAGINATION_COLUMNS } from '@/shared/common/constants/pagination-columns';
+import { StudentBillingErrors } from '../exceptions/student-billing.errors';
 
 @Injectable()
 export class StudentChargesRepository extends BaseRepository<StudentCharge> {
@@ -109,12 +110,29 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
     return this.getRepository().save(charge);
   }
 
+  /**
+   * Find charge by idempotency key and student profile ID
+   * Used to prevent duplicate charge creation on retries
+   */
+  async findByIdempotencyKey(
+    idempotencyKey: string,
+    studentUserProfileId: string,
+  ): Promise<StudentCharge | null> {
+    return this.getRepository().findOne({
+      where: {
+        idempotencyKey,
+        studentUserProfileId,
+      },
+    });
+  }
+
   async findByIdWithPayments(id: string): Promise<StudentCharge | null> {
     return this.getRepository().findOne({
       where: { id },
       relations: ['payments'],
     });
   }
+
 
   /**
    * Get paginated charges with filtering for a specific center
@@ -288,7 +306,7 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
       includeDeleted,
     );
     if (!charge) {
-      throw new Error(`Student charge with id ${chargeId} not found`);
+      throw StudentBillingErrors.billingRecordNotFound();
     }
     return charge;
   }

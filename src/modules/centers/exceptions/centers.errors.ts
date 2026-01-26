@@ -65,4 +65,8 @@ export class CentersErrors extends BaseErrorHelpers {
   static centerValidationFailed(): DomainException {
     return this.createNoDetails(CentersErrorCode.CENTER_VALIDATION_FAILED);
   }
+
+  static centerIdRequired(): DomainException {
+    return this.createNoDetails(CentersErrorCode.CENTER_ID_REQUIRED);
+  }
 }

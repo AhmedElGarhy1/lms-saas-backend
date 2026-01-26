@@ -19,6 +19,7 @@ export { AdminErrorCode } from '@/modules/admin/enums/admin.codes';
 export { UserProfileErrorCode } from '@/modules/user-profile/enums/user-profile.codes';
 export { StudentBillingErrorCode } from '@/modules/student-billing/enums/student-billing.codes';
 export { TeacherPayoutErrorCode } from '@/modules/teacher-payouts/enums/teacher-payouts.codes';
+export { ExpenseErrorCode } from '@/modules/expenses/enums/expenses.codes';
 export { NotificationErrorCode } from '@/modules/notifications/enums/notification.codes';
 export { R2ErrorCode } from '@/modules/r2/enums/r2.codes';
 export { FileErrorCode } from '@/modules/file/enums/file.codes';
@@ -42,6 +43,7 @@ import { AdminErrorCode as AdminCode } from '@/modules/admin/enums/admin.codes';
 import { UserProfileErrorCode as UserProfileCode } from '@/modules/user-profile/enums/user-profile.codes';
 import { StudentBillingErrorCode as StudentBillingCode } from '@/modules/student-billing/enums/student-billing.codes';
 import { TeacherPayoutErrorCode as TeacherPayoutCode } from '@/modules/teacher-payouts/enums/teacher-payouts.codes';
+import { ExpenseErrorCode as ExpenseCode } from '@/modules/expenses/enums/expenses.codes';
 import { NotificationErrorCode as NotificationCode } from '@/modules/notifications/enums/notification.codes';
 import { R2ErrorCode as R2Code } from '@/modules/r2/enums/r2.codes';
 import { FileErrorCode as FileCode } from '@/modules/file/enums/file.codes';
@@ -66,6 +68,7 @@ export type AllErrorCodes =
   | UserProfileCode
   | StudentBillingCode
   | TeacherPayoutCode
+  | ExpenseCode
   | NotificationCode
   | R2Code
   | FileCode;

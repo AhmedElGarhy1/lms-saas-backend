@@ -20,6 +20,15 @@ import { RequestContext } from '@/shared/common/context/request.context';
 import { SYSTEM_USER_ID } from '@/shared/common/constants/system-actor.constant';
 import { BranchAccessService } from '@/modules/centers/services/branch-access.service';
 import { PaymentMethod } from '@/modules/finance/enums/payment-method.enum';
+import { ExpensesErrors } from '../exceptions/expenses.errors';
+import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { ExpenseEvents } from '@/shared/events/expenses.events.enum';
+import {
+  ExpenseCreatedEvent,
+  ExpenseUpdatedEvent,
+  ExpenseRefundedEvent,
+} from '../events/expense.events';
 
 @Injectable()
 export class ExpenseService extends BaseService {
@@ -30,6 +39,7 @@ export class ExpenseService extends BaseService {
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly paymentService: PaymentService,
     private readonly branchAccessService: BranchAccessService,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
   }
@@ -50,9 +60,19 @@ export class ExpenseService extends BaseService {
     dto: CreateExpenseDto,
     actor: ActorUser,
   ): Promise<Expense> {
+    // Idempotency check
+    if (dto.idempotencyKey) {
+      const existing = await this.expenseRepository.findByIdempotencyKey(
+        dto.idempotencyKey,
+      );
+      if (existing) {
+        return existing;
+      }
+    }
+
     const centerId = dto.centerId || actor.centerId;
     if (!centerId) {
-      throw new Error('Center ID is required');
+      throw CentersErrors.centerIdRequired();
     }
 
     // Validate center access
@@ -112,9 +132,16 @@ export class ExpenseService extends BaseService {
       paymentId: paymentResult.payment.id,
       paidAt: new Date(),
       createdByProfileId: this.getCreatedByProfileId(),
+      idempotencyKey: dto.idempotencyKey,
     });
 
     this.logger.log(`Expense created and paid: ${expense.id}`);
+
+    // Emit expense created event
+    await this.typeSafeEventEmitter.emitAsync(
+      ExpenseEvents.CREATED,
+      new ExpenseCreatedEvent(expense, actor, dto),
+    );
 
     return expense;
   }
@@ -138,7 +165,7 @@ export class ExpenseService extends BaseService {
 
     // Cannot update if refunded
     if (expense.status === ExpenseStatus.REFUNDED) {
-      throw new Error('Cannot update refunded expense');
+      throw ExpensesErrors.cannotUpdateRefundedExpense();
     }
 
     // Only allow updating title, description, and category
@@ -152,7 +179,18 @@ export class ExpenseService extends BaseService {
       expense.description = dto.description;
     }
 
-    return (await this.expenseRepository.update(expense.id, expense))!;
+    const updatedExpense = (await this.expenseRepository.update(
+      expense.id,
+      expense,
+    ))!;
+
+    // Emit expense updated event
+    await this.typeSafeEventEmitter.emitAsync(
+      ExpenseEvents.UPDATED,
+      new ExpenseUpdatedEvent(expense.id, dto, actor),
+    );
+
+    return updatedExpense;
   }
 
   /**
@@ -170,12 +208,12 @@ export class ExpenseService extends BaseService {
 
     // Check if expense is already refunded
     if (expense.status === ExpenseStatus.REFUNDED) {
-      throw new Error('Expense is already refunded');
+      throw ExpensesErrors.expenseAlreadyRefunded();
     }
 
     // Check if expense is paid
     if (expense.status !== ExpenseStatus.PAID) {
-      throw new Error('Only paid expenses can be refunded');
+      throw ExpensesErrors.onlyPaidExpensesCanBeRefunded();
     }
 
     // Refund the payment (PaymentService handles both wallet and cash)
@@ -190,6 +228,12 @@ export class ExpenseService extends BaseService {
     );
 
     this.logger.log(`Expense refunded: ${expense.id}`);
+
+    // Emit expense refunded event
+    await this.typeSafeEventEmitter.emitAsync(
+      ExpenseEvents.REFUNDED,
+      new ExpenseRefundedEvent(updatedExpense!, actor),
+    );
 
     return updatedExpense!;
   }

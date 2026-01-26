@@ -19,4 +19,8 @@ export class CreateClassChargeDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   initialPaymentAmount: number; // Required: Initial payment amount for installment payments
+
+  @IsOptional()
+  @IsUUID()
+  idempotencyKey?: string;
 }

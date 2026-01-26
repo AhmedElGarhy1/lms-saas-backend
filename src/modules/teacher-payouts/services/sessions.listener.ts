@@ -9,6 +9,8 @@ import { SessionStatus } from '@/modules/sessions/enums/session-status.enum';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
 import { PaymentStrategyService } from '@/modules/classes/services/payment-strategy.service';
 import { Session } from '@/modules/sessions/entities/session.entity';
+import { SYSTEM_ACTOR } from '@/shared/common/constants/system-actor.constant';
+import { ActorUser } from '@/shared/common/types/actor-user.type';
 
 @Injectable()
 export class SessionsListener {
@@ -84,16 +86,19 @@ export class SessionsListener {
     }
 
     // Create the payout
-    await this.teacherPayoutService.createPayout({
-      teacherUserProfileId: session.teacherUserProfileId,
-      unitType: strategy.per,
-      unitPrice: strategy.amount,
-      unitCount: unitCount,
-      classId: session.classId,
-      sessionId: session.id,
-      branchId: session.branchId, // Use session's denormalized branch
-      centerId: session.centerId, // Use session's denormalized center
-    });
+    await this.teacherPayoutService.createPayout(
+      {
+        teacherUserProfileId: session.teacherUserProfileId,
+        unitType: strategy.per,
+        unitPrice: strategy.amount,
+        unitCount: unitCount,
+        classId: session.classId,
+        sessionId: session.id,
+        branchId: session.branchId, // Use session's denormalized branch
+        centerId: session.centerId, // Use session's denormalized center
+      },
+      { ...SYSTEM_ACTOR, centerId: session.centerId } as ActorUser,
+    );
 
     this.logger.log(
       `Created payout for teacher ${session.teacherUserProfileId}: ` +

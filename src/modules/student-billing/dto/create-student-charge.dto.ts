@@ -6,6 +6,7 @@ import {
   Min,
   Max,
   ValidateIf,
+  IsOptional,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { BelongsToCenter, IsUserProfile } from '@/shared/common/decorators';
@@ -96,4 +97,13 @@ export class CreateStudentChargeDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   initialPaymentAmount?: number;
+
+  @ApiProperty({
+    description: 'Idempotency key to prevent duplicate charges',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    required: false,
+  })
+  @IsOptional()
+  @IsUUID()
+  idempotencyKey?: string;
 }

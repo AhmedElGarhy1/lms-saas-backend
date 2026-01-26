@@ -7,5 +7,4 @@ export enum StudentChargeStatus {
   INSTALLMENT = 'INSTALLMENT', // Partial payment/installment plan
   COMPLETED = 'COMPLETED', // Fully paid and completed
   REFUNDED = 'REFUNDED', // Charge has been refunded
-  CANCELLED = 'CANCELLED', // Charge cancelled before completion
 }

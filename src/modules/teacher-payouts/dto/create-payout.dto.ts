@@ -1,6 +1,6 @@
 import { IsUUID, IsEnum, IsNumber, Min, IsOptional } from 'class-validator';
 import { Money } from '@/shared/common/utils/money.util';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
 
 export class CreatePayoutDto {
@@ -110,4 +110,12 @@ export class CreatePayoutDto {
   })
   @IsOptional()
   lastPaymentAmount?: Money;
+
+  @ApiPropertyOptional({
+    description: 'Idempotency key to prevent duplicate payouts',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @IsOptional()
+  @IsUUID()
+  idempotencyKey?: string;
 }

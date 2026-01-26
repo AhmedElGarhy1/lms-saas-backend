@@ -10,6 +10,9 @@ import { PaymentStatus } from '@/modules/finance/enums/payment-status.enum';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { StudentBillingErrors } from '../exceptions/student-billing.errors';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { StudentBillingEvents } from '@/shared/events/student-billing.events.enum';
+import { StudentChargeRefundedEvent } from '../events/student-billing.events';
 
 @Injectable()
 export class StudentBillingRefundService {
@@ -20,6 +23,7 @@ export class StudentBillingRefundService {
     private readonly attendanceRepo: AttendanceRepository,
     private readonly paymentService: PaymentService,
     private readonly accessControlHelperService: AccessControlHelperService,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   @Transactional()
@@ -29,10 +33,7 @@ export class StudentBillingRefundService {
     actor: ActorUser,
   ): Promise<StudentCharge> {
     // 1. Get and validate charge
-    const charge = await this.chargesRepo.findById(chargeId);
-    if (!charge) {
-      throw StudentBillingErrors.billingRecordNotFound();
-    }
+    const charge = await this.chargesRepo.findOneOrThrow(chargeId);
 
     // 2. Validate center access
     await this.accessControlHelperService.validateCenterAccess({
@@ -79,7 +80,7 @@ export class StudentBillingRefundService {
     await this.executeRefund(payment);
 
     // 8. Update charge and finalize
-    return await this.finalizeRefund(charge, reason || 'Administrative refund');
+    return await this.finalizeRefund(charge, reason || 'Administrative refund', actor);
   }
 
   private async validateMonthlyRefund(charge: StudentCharge): Promise<void> {
@@ -197,12 +198,19 @@ export class StudentBillingRefundService {
   private async finalizeRefund(
     charge: StudentCharge,
     reason: string,
+    actor: ActorUser,
   ): Promise<StudentCharge> {
     charge.status = StudentChargeStatus.REFUNDED;
     charge.refundedAt = new Date();
     charge.refundReason = reason;
 
     const updatedCharge = await this.chargesRepo.saveCharge(charge);
+
+    // Emit refund event
+    await this.typeSafeEventEmitter.emitAsync(
+      StudentBillingEvents.CHARGE_REFUNDED,
+      new StudentChargeRefundedEvent(actor, updatedCharge, reason),
+    );
 
     // Log successful refund
     this.logger.log(`Student charge refund completed`, {

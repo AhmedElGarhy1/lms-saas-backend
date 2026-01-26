@@ -94,6 +94,11 @@ export class TeacherPayoutRecord extends BaseEntity {
   })
   lastPaymentAmount?: Money; // Most recent payment amount
 
+  // Idempotency
+  @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
+  @Index()
+  idempotencyKey?: string;
+
   // Relations
   @ManyToOne(() => UserProfile)
   @JoinColumn({ name: 'teacherUserProfileId' })

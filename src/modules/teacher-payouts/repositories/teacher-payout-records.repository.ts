@@ -207,6 +207,18 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
     return this.savePayout(payout);
   }
 
+  /**
+   * Find payout by idempotency key
+   * Used to prevent duplicate payout creation on retries
+   */
+  async findByIdempotencyKey(
+    idempotencyKey: string,
+  ): Promise<TeacherPayoutRecord | null> {
+    return this.getRepository().findOne({
+      where: { idempotencyKey },
+    });
+  }
+
   // CLASS payout specific methods
   async getClassPayout(
     classId: string,
@@ -310,7 +322,7 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
       includeDeleted,
     );
     if (!payout) {
-      throw new Error(`Teacher payout record with id ${payoutId} not found`);
+      throw TeacherPayoutErrors.payoutNotFound();
     }
     return payout;
   }

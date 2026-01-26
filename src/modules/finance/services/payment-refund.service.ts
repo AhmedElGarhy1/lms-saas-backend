@@ -55,7 +55,7 @@ export class PaymentRefundService {
     }
 
     // Mark payment as refunded
-    payment.status = PaymentStatus.CANCELLED; // Using CANCELLED as refunded status
+    payment.status = PaymentStatus.REFUNDED;
     return await this.paymentRepository.savePayment(payment);
   }
 
@@ -79,7 +79,7 @@ export class PaymentRefundService {
 
     // For now, just mark as refunded since gateway integration is pending
     // Gateway refunds not needed - users can withdraw from wallets instead
-    payment.status = PaymentStatus.CANCELLED; // Mark as refunded
+    payment.status = PaymentStatus.REFUNDED;
     return await this.paymentRepository.savePayment(payment);
   }
 

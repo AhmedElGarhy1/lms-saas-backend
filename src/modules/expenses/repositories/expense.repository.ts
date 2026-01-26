@@ -8,6 +8,7 @@ import { Pagination } from '@/shared/common/types/pagination.types';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { PaginateExpenseDto } from '../dto/paginate-expense.dto';
 import { EXPENSE_PAGINATION_COLUMNS } from '@/shared/common/constants';
+import { ExpensesErrors } from '../exceptions/expenses.errors';
 
 @Injectable()
 export class ExpenseRepository extends BaseRepository<Expense> {
@@ -63,7 +64,7 @@ export class ExpenseRepository extends BaseRepository<Expense> {
     const expense = await this.findExpenseWithRelations(id);
 
     if (!expense) {
-      throw new Error(`Expense with id ${id} not found`);
+      throw ExpensesErrors.expenseNotFound();
     }
 
     return expense;
@@ -173,5 +174,17 @@ export class ExpenseRepository extends BaseRepository<Expense> {
       '/expenses',
       queryBuilder,
     );
+  }
+
+  /**
+   * Find expense by idempotency key
+   * Used to prevent duplicate expense creation on retries
+   */
+  async findByIdempotencyKey(
+    idempotencyKey: string,
+  ): Promise<Expense | null> {
+    return this.getRepository().findOne({
+      where: { idempotencyKey },
+    });
   }
 }

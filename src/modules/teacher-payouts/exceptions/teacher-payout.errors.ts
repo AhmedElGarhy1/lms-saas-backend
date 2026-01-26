@@ -39,4 +39,11 @@ export class TeacherPayoutErrors extends BaseErrorHelpers {
   static invalidPayoutAmount(): DomainException {
     return this.createNoDetails(TeacherPayoutErrorCode.PAYOUT_INVALID_AMOUNT);
   }
+
+  static payoutNotFoundForClass(classId: string): DomainException {
+    return this.createWithDetails(
+      TeacherPayoutErrorCode.PAYOUT_NOT_FOUND_FOR_CLASS,
+      { classId },
+    );
+  }
 }

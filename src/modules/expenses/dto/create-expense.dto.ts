@@ -65,4 +65,12 @@ export class CreateExpenseDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
   amount: number;
+
+  @ApiPropertyOptional({
+    description: 'Idempotency key to prevent duplicate expenses',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @IsOptional()
+  @IsUUID()
+  idempotencyKey?: string;
 }

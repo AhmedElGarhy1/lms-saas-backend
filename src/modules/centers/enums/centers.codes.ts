@@ -20,4 +20,5 @@ export enum CentersErrorCode {
   // Validation errors
   BRANCH_VALIDATION_FAILED = 'CTR_VAL_001',
   CENTER_VALIDATION_FAILED = 'CTR_VAL_002',
+  CENTER_ID_REQUIRED = 'CTR_VAL_003',
 }

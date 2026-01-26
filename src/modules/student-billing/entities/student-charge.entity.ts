@@ -71,6 +71,11 @@ export class StudentCharge extends BaseEntity {
   @Column('int', { nullable: true })
   year?: number; // Only for MONTHLY charges
 
+  // Idempotency
+  @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
+  @Index()
+  idempotencyKey?: string;
+
   // Audit fields
   @Column('timestamptz', { nullable: true })
   refundedAt?: Date;

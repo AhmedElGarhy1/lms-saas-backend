@@ -11,6 +11,9 @@ import { AccessControlEvents } from './access-control.events.enum';
 import { NotificationEvents } from './notification.events.enum';
 import { ClassEvents } from './classes.events.enum';
 import { GroupEvents } from './groups.events.enum';
+import { StudentBillingEvents } from './student-billing.events.enum';
+import { ExpenseEvents } from './expenses.events.enum';
+import { TeacherPayoutEvents } from './teacher-payouts.events.enum';
 
 export type EventType =
   | AuthEvents
@@ -25,4 +28,7 @@ export type EventType =
   | AccessControlEvents
   | NotificationEvents
   | ClassEvents
-  | GroupEvents;
+  | GroupEvents
+  | StudentBillingEvents
+  | ExpenseEvents
+  | TeacherPayoutEvents;
