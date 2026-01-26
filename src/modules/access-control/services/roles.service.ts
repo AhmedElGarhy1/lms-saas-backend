@@ -21,6 +21,8 @@ import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 import { CentersService } from '@/modules/centers/services/centers.service';
 import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
+import { SelfProtectionService } from '@/shared/common/services/self-protection.service';
+import { RoleHierarchyService } from '@/shared/common/services/role-hierarchy.service';
 
 @Injectable()
 export class RolesService extends BaseService {
@@ -33,6 +35,8 @@ export class RolesService extends BaseService {
     private readonly profileRoleRepository: ProfileRoleRepository,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly centersService: CentersService,
+    private readonly selfProtectionService: SelfProtectionService,
+    private readonly roleHierarchyService: RoleHierarchyService,
   ) {
     super();
   }
@@ -127,6 +131,19 @@ export class RolesService extends BaseService {
   async assignRoleValidate(data: AssignRoleDto, actor: ActorUser) {
     data.centerId = data.centerId ?? actor.centerId;
 
+    // Self-protection check - applies to ALL operations
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      data.userProfileId,
+    );
+
+    // Role hierarchy check (use data.centerId or actor.centerId, can be undefined)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      data.userProfileId,
+      data.centerId, // Optional - use from data or actor, can be undefined for global operations
+    );
+
     // Validate actor has user access to target user (centerId is optional)
     await this.accessControlerHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,
@@ -187,6 +204,19 @@ export class RolesService extends BaseService {
 
   async removeUserRoleValidate(data: AssignRoleDto, actor: ActorUser) {
     data.centerId = data.centerId ?? actor.centerId;
+
+    // Self-protection check - applies to ALL operations
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      data.userProfileId,
+    );
+
+    // Role hierarchy check (use data.centerId or actor.centerId, can be undefined)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      data.userProfileId,
+      data.centerId, // Optional - use from data or actor, can be undefined for global operations
+    );
 
     // Validate actor has user access to target user (centerId is optional)
     await this.accessControlerHelperService.validateUserAccess({

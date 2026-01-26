@@ -18,6 +18,8 @@ import { CentersService } from '@/modules/centers/services/centers.service';
 import { BranchesService } from '@/modules/centers/services/branches.service';
 import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
+import { SelfProtectionService } from '@/shared/common/services/self-protection.service';
+import { RoleHierarchyService } from '@/shared/common/services/role-hierarchy.service';
 
 @Injectable()
 export class ClassStaffService extends BaseService {
@@ -31,6 +33,8 @@ export class ClassStaffService extends BaseService {
     private readonly userProfileService: UserProfileService,
     private readonly centersService: CentersService,
     private readonly branchesService: BranchesService,
+    private readonly selfProtectionService: SelfProtectionService,
+    private readonly roleHierarchyService: RoleHierarchyService,
   ) {
     super();
   }
@@ -74,7 +78,20 @@ export class ClassStaffService extends BaseService {
     data: ClassStaffAccessDto,
     actor: ActorUser,
   ): Promise<ClassStaff> {
+    // Self-protection check - applies to ALL operations
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      data.userProfileId,
+    );
+
     const centerId = actor.centerId!;
+
+    // Role hierarchy check (use actor.centerId, should always be available for class operations)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      data.userProfileId,
+      centerId, // Should always be available for class operations
+    );
 
     // Validate actor has user access to target user (optional centerId)
     await this.accessControlHelperService.validateUserAccess({
@@ -166,7 +183,20 @@ export class ClassStaffService extends BaseService {
     data: ClassStaffAccessDto,
     actor: ActorUser,
   ): Promise<ClassStaff> {
+    // Self-protection check - applies to ALL operations
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      data.userProfileId,
+    );
+
     const centerId = actor.centerId!;
+
+    // Role hierarchy check (use actor.centerId, should always be available for class operations)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      data.userProfileId,
+      centerId, // Should always be available for class operations
+    );
 
     // Validate actor has user access to target user (optional centerId)
     await this.accessControlHelperService.validateUserAccess({

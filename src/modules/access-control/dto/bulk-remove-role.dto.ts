@@ -9,7 +9,6 @@ import {
 import {
   Exists,
   IsUserProfile,
-  CannotTargetSelf,
 } from '@/shared/common/decorators';
 import { Role } from '../entities/role.entity';
 import { Center } from '@/modules/centers/entities/center.entity';
@@ -38,7 +37,6 @@ export class BulkRemoveRoleDto {
     message: 'Each user profile ID must be a valid UUID',
   })
   @IsUserProfile(undefined, { each: true })
-  @CannotTargetSelf({ each: true })
   userProfileIds: string[];
 
   @ApiProperty({

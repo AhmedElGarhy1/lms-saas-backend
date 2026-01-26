@@ -3,7 +3,6 @@ import { IsArray, IsUUID, ArrayMinSize, ArrayMaxSize } from 'class-validator';
 import {
   Exists,
   IsUserProfile,
-  CannotTargetSelf,
 } from '@/shared/common/decorators';
 import { Center } from '@/modules/centers/entities/center.entity';
 
@@ -31,6 +30,5 @@ export class BulkRevokeCenterAccessDto {
     message: 'Each user profile ID must be a valid UUID',
   })
   @IsUserProfile(undefined, { each: true })
-  @CannotTargetSelf({ each: true })
   userProfileIds: string[];
 }

@@ -3,7 +3,6 @@ import { IsUUID } from 'class-validator';
 import {
   Exists,
   IsUserProfile,
-  CannotTargetSelf,
 } from '@/shared/common/decorators';
 import { Center } from '@/modules/centers/entities/center.entity';
 
@@ -14,7 +13,6 @@ export class CenterAccessDto {
   })
   @IsUUID()
   @IsUserProfile()
-  @CannotTargetSelf()
   userProfileId: string;
 
   @ApiProperty({

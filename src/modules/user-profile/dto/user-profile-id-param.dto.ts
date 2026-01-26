@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
-import { Exists, CannotTargetSelf } from '@/shared/common/decorators';
+import { Exists } from '@/shared/common/decorators';
 import { UserProfile } from '../entities/user-profile.entity';
 
 export class UserProfileIdParamDto {
@@ -11,6 +11,5 @@ export class UserProfileIdParamDto {
   })
   @IsUUID()
   @Exists(UserProfile)
-  @CannotTargetSelf()
   id: string;
 }

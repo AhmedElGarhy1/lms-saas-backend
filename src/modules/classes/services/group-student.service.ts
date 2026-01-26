@@ -22,6 +22,7 @@ import { CentersService } from '@/modules/centers/services/centers.service';
 import { BranchesService } from '@/modules/centers/services/branches.service';
 import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
+import { SelfProtectionService } from '@/shared/common/services/self-protection.service';
 
 @Injectable()
 export class GroupStudentService extends BaseService {
@@ -37,6 +38,7 @@ export class GroupStudentService extends BaseService {
     private readonly userProfileService: UserProfileService,
     private readonly centersService: CentersService,
     private readonly branchesService: BranchesService,
+    private readonly selfProtectionService: SelfProtectionService,
   ) {
     super();
   }
@@ -61,6 +63,12 @@ export class GroupStudentService extends BaseService {
     data: GroupStudentAccessDto,
     actor: ActorUser,
   ): Promise<void> {
+    // Self-protection check - applies to ALL operations
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      data.userProfileId,
+    );
+
     const centerId = actor.centerId!;
 
     // Validate actor has user access to target user (optional centerId)
@@ -292,6 +300,12 @@ export class GroupStudentService extends BaseService {
     return await this.bulkOperationService.executeBulk(
       studentUserProfileIds,
       async (studentUserProfileId: string) => {
+        // Self-protection check - applies to ALL operations
+        this.selfProtectionService.validateNotSelf(
+          actor.userProfileId,
+          studentUserProfileId,
+        );
+
         // Validate actor has user access to target user (optional centerId)
         await this.accessControlHelperService.validateUserAccess({
           granterUserProfileId: actor.userProfileId,

@@ -154,4 +154,10 @@ export class AccessControlErrors extends BaseErrorHelpers {
   static centerAccessInactive(): DomainException {
     return this.createNoDetails(AccessControlErrorCode.CENTER_ACCESS_INACTIVE);
   }
+
+  static cannotOperateOnHigherRole(): DomainException {
+    return this.createNoDetails(
+      AccessControlErrorCode.CANNOT_OPERATE_ON_HIGHER_ROLE,
+    );
+  }
 }

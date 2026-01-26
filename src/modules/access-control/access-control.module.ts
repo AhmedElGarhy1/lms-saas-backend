@@ -1,4 +1,4 @@
-import { forwardRef, Global, Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Permission } from './entities/permission.entity';
 import { Role } from './entities/role.entity';
@@ -30,7 +30,6 @@ import { BranchAccessListener } from './listeners/branch-access.listener';
 import { RoleListener } from './listeners/role.listener';
 import { UserProfileModule } from '../user-profile/user-profile.module';
 
-@Global()
 @Module({
   imports: [
     TypeOrmModule.forFeature([

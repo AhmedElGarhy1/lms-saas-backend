@@ -28,7 +28,7 @@ export class CannotTargetSelfConstraint
 
     // Check if user is targeting themselves
     if (targetUserId === currentUserId) {
-      throw CommonErrors.cannotTargetSelf(args.property);
+      throw CommonErrors.cannotTargetSelf();
     }
 
     return true;

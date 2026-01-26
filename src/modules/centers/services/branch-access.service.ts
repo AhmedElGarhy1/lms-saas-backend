@@ -12,6 +12,8 @@ import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { AccessControlCacheService } from '@/shared/common/services/access-control-cache.service';
 import { CentersService } from './centers.service';
 import { BranchesService } from './branches.service';
+import { SelfProtectionService } from '@/shared/common/services/self-protection.service';
+import { RoleHierarchyService } from '@/shared/common/services/role-hierarchy.service';
 
 @Injectable()
 export class BranchAccessService extends BaseService {
@@ -24,6 +26,8 @@ export class BranchAccessService extends BaseService {
     private readonly userProfileService: UserProfileService,
     private readonly centersService: CentersService,
     private readonly branchesService: BranchesService,
+    private readonly selfProtectionService: SelfProtectionService,
+    private readonly roleHierarchyService: RoleHierarchyService,
   ) {
     super();
   }
@@ -200,7 +204,20 @@ export class BranchAccessService extends BaseService {
     data: BranchAccessDto,
     actor: ActorUser,
   ): Promise<BranchAccess> {
+    // Self-protection check - applies to ALL operations
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      data.userProfileId,
+    );
+
     data.centerId = data.centerId ?? actor.centerId ?? '';
+
+    // Role hierarchy check (use data.centerId or actor.centerId, should always be available for branch operations)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      data.userProfileId,
+      data.centerId, // Should always be available for branch operations
+    );
 
     // Validate actor has access to the branch (to grant access to others)
     await this.validateBranchAccess({
@@ -261,7 +278,20 @@ export class BranchAccessService extends BaseService {
     data: BranchAccessDto,
     actor: ActorUser,
   ): Promise<BranchAccess> {
+    // Self-protection check - applies to ALL operations
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      data.userProfileId,
+    );
+
     data.centerId = data.centerId ?? actor.centerId ?? '';
+
+    // Role hierarchy check (use data.centerId or actor.centerId, should always be available for branch operations)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      data.userProfileId,
+      data.centerId, // Should always be available for branch operations
+    );
 
     // Validate actor has access to the branch (to revoke access from others)
     await this.validateBranchAccess({

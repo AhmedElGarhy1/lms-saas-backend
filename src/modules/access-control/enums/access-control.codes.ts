@@ -40,4 +40,7 @@ export enum AccessControlErrorCode {
 
   // Inactive entity errors
   CENTER_ACCESS_INACTIVE = 'ACL_031',
+
+  // Role hierarchy errors
+  CANNOT_OPERATE_ON_HIGHER_ROLE = 'ACL_032',
 }

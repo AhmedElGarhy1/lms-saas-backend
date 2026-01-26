@@ -8,7 +8,10 @@ import { ActivityLogModule } from './modules/activity-log/activity-log.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { TypeSafeEventEmitter } from './services/type-safe-event-emitter.service';
 import { CacheKeyBuilderService } from './common/services/cache-key-builder.service';
+import { SelfProtectionService } from './common/services/self-protection.service';
+import { RoleHierarchyService } from './common/services/role-hierarchy.service';
 import { FileModule } from '@/modules/file/file.module';
+import { AccessControlModule } from '@/modules/access-control/access-control.module';
 
 @Global()
 @Module({
@@ -18,6 +21,7 @@ import { FileModule } from '@/modules/file/file.module';
     RedisModule,
     EventEmitterModule,
     FileModule,
+    AccessControlModule,
   ],
   controllers: [],
   providers: [
@@ -27,6 +31,8 @@ import { FileModule } from '@/modules/file/file.module';
     TypeSafeEventEmitter,
     CacheKeyBuilderService,
     EventEmitterModule,
+    SelfProtectionService,
+    RoleHierarchyService,
   ],
   exports: [
     DatabaseService,
@@ -37,8 +43,11 @@ import { FileModule } from '@/modules/file/file.module';
     RedisModule,
     TypeSafeEventEmitter,
     CacheKeyBuilderService,
+    SelfProtectionService,
+    RoleHierarchyService,
     EventEmitterModule,
     FileModule,
+    AccessControlModule,
   ],
 })
 export class SharedModule {}

@@ -30,6 +30,8 @@ import { Teacher } from '@/modules/teachers/entities/teacher.entity';
 import { Admin } from '@/modules/admin/entities/admin.entity';
 import { UserProfileCodeService } from './user-profile-code.service';
 import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
+import { SelfProtectionService } from '@/shared/common/services/self-protection.service';
+import { RoleHierarchyService } from '@/shared/common/services/role-hierarchy.service';
 
 @Injectable()
 export class UserProfileService extends BaseService {
@@ -46,6 +48,8 @@ export class UserProfileService extends BaseService {
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
     private readonly userProfilePermissionService: UserProfilePermissionService,
     private readonly userProfileCodeService: UserProfileCodeService,
+    private readonly selfProtectionService: SelfProtectionService,
+    private readonly roleHierarchyService: RoleHierarchyService,
   ) {
     super();
   }
@@ -133,6 +137,19 @@ export class UserProfileService extends BaseService {
     isActive: boolean,
     actor: ActorUser,
   ) {
+    // Self-protection check - applies to ALL operations (activate AND deactivate)
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      userProfileId,
+    );
+
+    // Role hierarchy check (centerId is optional - owner check only happens if provided)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      userProfileId,
+      actor.centerId, // Optional - use actor's centerId if available, undefined for global operations
+    );
+
     // Get userProfile to determine profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
@@ -159,6 +176,13 @@ export class UserProfileService extends BaseService {
     dto: UpdateUserProfileDto,
     actor: ActorUser,
   ) {
+    // Role hierarchy check (centerId is optional - owner check only happens if provided)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      userProfileId,
+      actor.centerId, // Optional - use actor's centerId if available, undefined for global operations
+    );
+
     // Get the user profile to find the profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
@@ -290,6 +314,19 @@ export class UserProfileService extends BaseService {
     userProfileId: string,
     actor: ActorUser,
   ): Promise<void> {
+    // Self-protection check - applies to ALL operations
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      userProfileId,
+    );
+
+    // Role hierarchy check (centerId is optional - owner check only happens if provided)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      userProfileId,
+      actor.centerId, // Optional - use actor's centerId if available, undefined for global operations
+    );
+
     // Get userProfile to determine profileType
     const userProfile = await this.findOne(userProfileId);
     if (!userProfile) {
@@ -306,6 +343,19 @@ export class UserProfileService extends BaseService {
     userProfileId: string,
     actor: ActorUser,
   ): Promise<void> {
+    // Self-protection check - applies to ALL operations
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      userProfileId,
+    );
+
+    // Role hierarchy check (centerId is optional - owner check only happens if provided)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      userProfileId,
+      actor.centerId, // Optional - use actor's centerId if available, undefined for global operations
+    );
+
     // First, fetch the soft-deleted profile to get its profileType
     const deletedProfile =
       await this.userProfileRepository.findOneSoftDeletedById(userProfileId);

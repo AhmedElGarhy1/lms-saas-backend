@@ -3,7 +3,6 @@ import { IsArray, IsUUID, ArrayMinSize, ArrayMaxSize } from 'class-validator';
 import {
   BelongsToCenter,
   IsUserProfile,
-  CannotTargetSelf,
 } from '@/shared/common/decorators';
 import { Branch } from '@/modules/centers/entities/branch.entity';
 
@@ -31,6 +30,5 @@ export class BulkRevokeBranchAccessDto {
     message: 'Each user profile ID must be a valid UUID',
   })
   @IsUserProfile(undefined, { each: true })
-  @CannotTargetSelf({ each: true })
   userProfileIds: string[];
 }

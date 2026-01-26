@@ -22,6 +22,8 @@ import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 import { CentersService } from '@/modules/centers/services/centers.service';
 import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
+import { SelfProtectionService } from '@/shared/common/services/self-protection.service';
+import { RoleHierarchyService } from '@/shared/common/services/role-hierarchy.service';
 
 @Injectable()
 export class AccessControlService extends BaseService {
@@ -39,6 +41,8 @@ export class AccessControlService extends BaseService {
     private readonly userProfilePermissionService: UserProfilePermissionService,
     @Inject(forwardRef(() => CentersService))
     private readonly centersService: CentersService,
+    private readonly selfProtectionService: SelfProtectionService,
+    private readonly roleHierarchyService: RoleHierarchyService,
   ) {
     super();
   }
@@ -48,8 +52,32 @@ export class AccessControlService extends BaseService {
     actor: ActorUser,
     skipExsitance: boolean = false,
   ): Promise<void> {
+    // Self-protection check - check both granter and target
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      body.granterUserProfileId,
+    );
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      body.targetUserProfileId,
+    );
+
     const centerId = body.centerId ?? actor.centerId ?? '';
     body.centerId = centerId;
+
+    // Role hierarchy check for granter (centerId optional)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      body.granterUserProfileId,
+      centerId || undefined, // Use from body or actor, can be undefined for global operations
+    );
+
+    // Role hierarchy check for target (centerId optional)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      body.targetUserProfileId,
+      centerId || undefined, // Use from body or actor, can be undefined for global operations
+    );
 
     // Validate granter and target user profiles are active
     const granterProfile = await this.userProfileService.findOne(
@@ -126,8 +154,21 @@ export class AccessControlService extends BaseService {
     actor: ActorUser,
     skipExsitance: boolean = false,
   ): Promise<void> {
+    // Self-protection check - applies to ALL operations
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      body.targetUserProfileId,
+    );
+
     const centerId = body.centerId ?? actor.centerId ?? '';
     body.centerId = centerId;
+
+    // Role hierarchy check for target (centerId optional)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      body.targetUserProfileId,
+      centerId || undefined, // Use from body or actor, can be undefined for global operations
+    );
 
     // Validate target user profile is active
     const targetProfile = await this.userProfileService.findOne(
@@ -205,7 +246,20 @@ export class AccessControlService extends BaseService {
     skipExsitance: boolean = false,
     skipUserAccessValidation: boolean = false,
   ) {
+    // Self-protection check - applies to ALL operations
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      dto.userProfileId,
+    );
+
     const centerId = dto.centerId ?? actor.centerId;
+
+    // Role hierarchy check (use dto.centerId or actor.centerId, should always be available for center access operations)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      dto.userProfileId,
+      centerId,
+    );
 
     // Validate center is active
     const center = await this.centersService.findCenterById(centerId, actor);
@@ -214,7 +268,9 @@ export class AccessControlService extends BaseService {
     }
 
     // Validate user profile is active
-    const userProfile = await this.userProfileService.findOne(dto.userProfileId);
+    const userProfile = await this.userProfileService.findOne(
+      dto.userProfileId,
+    );
     if (!userProfile) {
       throw UserProfileErrors.userProfileNotFound();
     }
@@ -254,10 +310,25 @@ export class AccessControlService extends BaseService {
     actor: ActorUser,
     skipExsitance: boolean = false,
   ) {
+    // Self-protection check - applies to ALL operations
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      dto.userProfileId,
+    );
+
+    const centerId = dto.centerId ?? actor.centerId;
+
+    // Role hierarchy check (use dto.centerId or actor.centerId, should always be available for center access operations)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      dto.userProfileId,
+      centerId,
+    );
+
     // i have access to the center
     await this.accessControlHelperService.validateCenterAccess({
       userProfileId: actor.userProfileId,
-      centerId: dto.centerId ?? actor.centerId,
+      centerId,
     });
 
     // Validate that actor has permission to grant center access for the target profile type
@@ -300,7 +371,20 @@ export class AccessControlService extends BaseService {
     body: CenterAccessDto,
     actor: ActorUser,
   ): Promise<void> {
+    // Self-protection check - applies to ALL operations
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      body.userProfileId,
+    );
+
     const centerId = body.centerId ?? actor.centerId ?? '';
+
+    // Role hierarchy check (use body.centerId or actor.centerId, should always be available for center access operations)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      body.userProfileId,
+      centerId || undefined,
+    );
 
     // Validate actor has center access
     await this.accessControlHelperService.validateCenterAccess({
@@ -359,7 +443,20 @@ export class AccessControlService extends BaseService {
     body: CenterAccessDto,
     actor: ActorUser,
   ): Promise<void> {
+    // Self-protection check - applies to ALL operations
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      body.userProfileId,
+    );
+
     const centerId = body.centerId ?? actor.centerId ?? '';
+
+    // Role hierarchy check (use body.centerId or actor.centerId, should always be available for center access operations)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      body.userProfileId,
+      centerId || undefined,
+    );
 
     // Validate actor has center access
     await this.accessControlHelperService.validateCenterAccess({
@@ -412,7 +509,20 @@ export class AccessControlService extends BaseService {
     isActive: boolean,
     actor: ActorUser,
   ): Promise<void> {
+    // Self-protection check - applies to ALL operations (activate AND deactivate)
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      body.userProfileId,
+    );
+
     const centerId = body.centerId ?? actor.centerId ?? '';
+
+    // Role hierarchy check (use body.centerId or actor.centerId, should always be available for center access operations)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      body.userProfileId,
+      centerId || undefined,
+    );
 
     // Validate actor has center access
     await this.accessControlHelperService.validateCenterAccess({

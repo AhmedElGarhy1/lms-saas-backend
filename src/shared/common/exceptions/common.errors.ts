@@ -51,9 +51,7 @@ export class CommonErrors extends BaseErrorHelpers {
   }
 
   // Cannot target self error (for cross-cutting concerns)
-  static cannotTargetSelf(operation?: string): DomainException {
-    return this.createWithDetails(CommonErrorCode.CANNOT_TARGET_SELF, {
-      operation: operation || 'unknown',
-    });
+  static cannotTargetSelf(): DomainException {
+    return this.createNoDetails(CommonErrorCode.CANNOT_TARGET_SELF);
   }
 }

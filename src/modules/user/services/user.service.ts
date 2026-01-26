@@ -1,11 +1,9 @@
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { UserErrors } from '../exceptions/user.errors';
-import { CommonErrors } from '../../../shared/common/exceptions/common.errors';
 import { AuthErrors } from '@/modules/auth/exceptions/auth.errors';
 import * as bcrypt from 'bcrypt';
 import { UserRepository } from '../repositories/user.repository';
 import { AccessControlService } from '@/modules/access-control/services/access-control.service';
-import { RolesService } from '@/modules/access-control/services/roles.service';
 import { AccessControlHelperService } from '@/modules/access-control/services/access-control-helper.service';
 import { UserInfoService } from './user-info.service';
 import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
@@ -17,7 +15,6 @@ import {
   UserServiceResponse,
 } from '../interfaces/user-service.interface';
 import { User } from '../entities/user.entity';
-import { CentersService } from '@/modules/centers/services/centers.service';
 import { PaginateUsersDto } from '../dto/paginate-users.dto';
 import { PaginateTeacherDto } from '@/modules/teachers/dto/paginate-teacher.dto';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
@@ -37,6 +34,8 @@ import {
 } from '../events/user.events';
 import { VerificationService } from '@/modules/auth/services/verification.service';
 import { VerificationType } from '@/modules/auth/enums/verification-type.enum';
+import { SelfProtectionService } from '@/shared/common/services/self-protection.service';
+import { RoleHierarchyService } from '@/shared/common/services/role-hierarchy.service';
 
 @Injectable()
 export class UserService extends BaseService {
@@ -45,14 +44,14 @@ export class UserService extends BaseService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly accessControlService: AccessControlService,
-    private readonly rolesService: RolesService,
     private readonly accessControlHelperService: AccessControlHelperService,
     private readonly userInfoService: UserInfoService,
     private readonly userProfileService: UserProfileService,
-    private readonly centersService: CentersService,
     private readonly eventEmitter: TypeSafeEventEmitter,
     private readonly verificationService: VerificationService,
     private readonly fileService: FileService,
+    private readonly selfProtectionService: SelfProtectionService,
+    private readonly roleHierarchyService: RoleHierarchyService,
   ) {
     super();
   }
@@ -218,6 +217,29 @@ export class UserService extends BaseService {
   }
 
   async deleteUser(userId: string, actor: ActorUser): Promise<void> {
+    // Get user profile ID from userId for self-protection check
+    const userProfiles =
+      await this.userProfileService.findUserProfilesByUserId(userId);
+    if (userProfiles.length > 0) {
+      // Check against all user profiles - if actor matches any, prevent deletion
+      for (const profile of userProfiles) {
+        this.selfProtectionService.validateNotSelf(
+          actor.userProfileId,
+          profile.id,
+        );
+      }
+
+      // Role hierarchy check - check all user profiles for the user
+      // Use actor.centerId if available, can be undefined for global operations
+      for (const profile of userProfiles) {
+        await this.roleHierarchyService.validateCanOperateOnUser(
+          actor.userProfileId,
+          profile.id,
+          actor.centerId, // Optional - use actor's centerId if available, undefined for global operations
+        );
+      }
+    }
+
     // First check if the user exists
     const user = await this.userRepository.findOne(userId);
     if (!user) {
@@ -244,6 +266,21 @@ export class UserService extends BaseService {
     const user = await this.userRepository.findOneSoftDeletedById(userId);
     if (!user) {
       throw UserErrors.userNotFound();
+    }
+
+    // Get user profiles for hierarchy check
+    const userProfiles =
+      await this.userProfileService.findUserProfilesByUserId(userId);
+    if (userProfiles.length > 0) {
+      // Role hierarchy check - check all user profiles for the user
+      // Use actor.centerId if available, can be undefined for global operations
+      for (const profile of userProfiles) {
+        await this.roleHierarchyService.validateCanOperateOnUser(
+          actor.userProfileId,
+          profile.id,
+          actor.centerId, // Optional - use actor's centerId if available, undefined for global operations
+        );
+      }
     }
 
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
@@ -282,6 +319,29 @@ export class UserService extends BaseService {
     isActive: boolean,
     actor: ActorUser,
   ): Promise<void> {
+    // Get user profile ID from userId for self-protection check
+    const userProfiles =
+      await this.userProfileService.findUserProfilesByUserId(userId);
+    if (userProfiles.length > 0) {
+      // Check against all user profiles - if actor matches any, prevent activation/deactivation
+      for (const profile of userProfiles) {
+        this.selfProtectionService.validateNotSelf(
+          actor.userProfileId,
+          profile.id,
+        );
+      }
+
+      // Role hierarchy check - check all user profiles for the user
+      // Use actor.centerId if available, can be undefined for global operations
+      for (const profile of userProfiles) {
+        await this.roleHierarchyService.validateCanOperateOnUser(
+          actor.userProfileId,
+          profile.id,
+          actor.centerId, // Optional - use actor's centerId if available, undefined for global operations
+        );
+      }
+    }
+
     // First check if the user exists
     const user = await this.userRepository.findOne(userId);
     if (!user) {
@@ -482,6 +542,29 @@ export class UserService extends BaseService {
     updateData: UpdateUserDto,
     actor: ActorUser,
   ): Promise<User> {
+    // Get user profile ID from userId for self-protection check
+    const userProfiles =
+      await this.userProfileService.findUserProfilesByUserId(userId);
+    if (userProfiles.length > 0) {
+      // Check against all user profiles - if actor matches any, prevent update
+      for (const profile of userProfiles) {
+        this.selfProtectionService.validateNotSelf(
+          actor.userProfileId,
+          profile.id,
+        );
+      }
+
+      // Role hierarchy check - check all user profiles for the user
+      // Use actor.centerId if available, can be undefined for global operations
+      for (const profile of userProfiles) {
+        await this.roleHierarchyService.validateCanOperateOnUser(
+          actor.userProfileId,
+          profile.id,
+          actor.centerId, // Optional - use actor's centerId if available, undefined for global operations
+        );
+      }
+    }
+
     // Fetch user to validate it's active
     const user = await this.userRepository.findOne(userId);
     if (!user) {
@@ -557,6 +640,19 @@ export class UserService extends BaseService {
     updateData: UpdateUserDto,
     actor: ActorUser,
   ): Promise<User> {
+    // Self-protection check - applies to ALL updates
+    this.selfProtectionService.validateNotSelf(
+      actor.userProfileId,
+      userProfileId,
+    );
+
+    // Role hierarchy check (centerId is optional - owner check only happens if provided)
+    await this.roleHierarchyService.validateCanOperateOnUser(
+      actor.userProfileId,
+      userProfileId,
+      actor.centerId, // Optional - use actor's centerId if available, undefined for global operations
+    );
+
     await this.accessControlHelperService.validateUserAccess({
       granterUserProfileId: actor.userProfileId,
       targetUserProfileId: userProfileId,
