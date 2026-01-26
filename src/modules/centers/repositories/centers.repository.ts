@@ -46,7 +46,7 @@ export class CentersRepository extends BaseRepository<Center> {
       // no access control
     } else {
       queryBuilder.andWhere(
-        'center.id IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :actorUserProfileId AND "isActive" = true)',
+        'center.id IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :actorUserProfileId AND "isActive" = true AND "deletedAt" IS NULL)',
         {
           actorUserProfileId: actor.userProfileId,
         },
@@ -64,7 +64,7 @@ export class CentersRepository extends BaseRepository<Center> {
         // nothing
       } else {
         queryBuilder.andWhere(
-          'center.id IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :userProfileId)',
+          'center.id IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :userProfileId AND "deletedAt" IS NULL)',
           {
             userProfileId: userProfileId,
           },

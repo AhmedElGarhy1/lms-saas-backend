@@ -32,7 +32,7 @@ export class StudentBillingController {
     private readonly billingRefundService: StudentBillingRefundService,
   ) {}
 
-  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_CHARGE)
+  @Permissions(PERMISSIONS.STUDENT_BILLING.READ_STUDENT_CHARGE)
   @Post('charge/cash')
   @Transactional()
   @HttpCode(HttpStatus.CREATED)
@@ -48,7 +48,7 @@ export class StudentBillingController {
     return ControllerResponse.success(result);
   }
 
-  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_CHARGE)
+  @Permissions(PERMISSIONS.STUDENT_BILLING.READ_STUDENT_CHARGE)
   @Post('charge/wallet')
   @Transactional()
   @HttpCode(HttpStatus.CREATED)
@@ -64,7 +64,7 @@ export class StudentBillingController {
     return ControllerResponse.success(result);
   }
 
-  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_RECORDS)
+  @Permissions(PERMISSIONS.STUDENT_BILLING.READ_STUDENT_RECORDS)
   @Get('records')
   async getStudentBillingRecords(
     @Query() paginateDto: PaginateStudentBillingRecordsDto,
@@ -77,7 +77,7 @@ export class StudentBillingController {
     return ControllerResponse.success(records);
   }
 
-  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_RECORDS)
+  @Permissions(PERMISSIONS.STUDENT_BILLING.READ_STUDENT_RECORDS)
   @Get('records/:id')
   async getStudentBillingRecordById(
     @Param('id') id: string,
@@ -107,7 +107,7 @@ export class StudentBillingController {
     return ControllerResponse.success(result);
   }
 
-  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_CHARGE)
+  @Permissions(PERMISSIONS.STUDENT_BILLING.READ_STUDENT_CHARGE)
   @Post('classes/pay-installment/cash')
   @Transactional()
   @HttpCode(HttpStatus.OK)
@@ -125,7 +125,7 @@ export class StudentBillingController {
     return ControllerResponse.success(result);
   }
 
-  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_CHARGE)
+  @Permissions(PERMISSIONS.STUDENT_BILLING.READ_STUDENT_CHARGE)
   @Post('classes/pay-installment/wallet')
   @Transactional()
   @HttpCode(HttpStatus.OK)
@@ -143,7 +143,7 @@ export class StudentBillingController {
     return ControllerResponse.success(result);
   }
 
-  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_RECORDS)
+  @Permissions(PERMISSIONS.STUDENT_BILLING.READ_STUDENT_RECORDS)
   @Get('classes/:classId/students/:studentUserProfileId/progress')
   async getClassChargeProgress(
     @Param('classId') classId: string,
@@ -158,7 +158,7 @@ export class StudentBillingController {
     return ControllerResponse.success(result);
   }
 
-  @Permissions(PERMISSIONS.STUDENT_BILLING.VIEW_STUDENT_RECORDS)
+  @Permissions(PERMISSIONS.STUDENT_BILLING.READ_STUDENT_RECORDS)
   @Get('students/:studentUserProfileId/progress/summary')
   async getStudentBillingSummary(
     @Param('studentUserProfileId') studentUserProfileId: string,

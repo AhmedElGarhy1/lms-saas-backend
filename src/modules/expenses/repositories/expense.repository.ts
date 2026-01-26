@@ -83,7 +83,10 @@ export class ExpenseRepository extends BaseRepository<Expense> {
       .leftJoin('expense.center', 'center')
       .leftJoin('expense.branch', 'branch')
       // Add id and name fields as selections
-      .addSelect(['center.id', 'center.name', 'branch.id', 'branch.city']);
+      .addSelect(['center.id', 'center.name', 'branch.id', 'branch.city'])
+      // Filter out expenses where related entities are deleted (check if entity exists)
+      .andWhere('center.id IS NOT NULL')
+      .andWhere('branch.id IS NOT NULL');
 
     // Apply access control
     const isSuperAdmin = await this.accessControlHelperService.isSuperAdmin(
@@ -93,7 +96,7 @@ export class ExpenseRepository extends BaseRepository<Expense> {
     if (!isSuperAdmin) {
       // Filter by center access
       queryBuilder.andWhere(
-        'expense.centerId IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :actorUserProfileId AND "isActive" = true)',
+        'expense.centerId IN (SELECT "centerId" FROM center_access WHERE "userProfileId" = :actorUserProfileId AND "isActive" = true AND "deletedAt" IS NULL)',
         {
           actorUserProfileId: actor.userProfileId,
         },

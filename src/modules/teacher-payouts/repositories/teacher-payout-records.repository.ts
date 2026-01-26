@@ -51,7 +51,12 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
         'center.id',
         'center.name',
       ])
-      .where('payout.centerId = :centerId', { centerId: actor.centerId });
+      .where('payout.centerId = :centerId', { centerId: actor.centerId })
+      // Filter out payouts where related entities are deleted (check if entity exists)
+      .andWhere('teacher.id IS NOT NULL')
+      .andWhere('class.id IS NOT NULL')
+      .andWhere('branch.id IS NOT NULL')
+      .andWhere('center.id IS NOT NULL');
 
     // Access control: Filter by class staff and branch access for non-bypass users
     const canBypassCenterInternalAccess =

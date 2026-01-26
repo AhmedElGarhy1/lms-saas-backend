@@ -36,7 +36,7 @@ export class CashboxesController {
     private readonly paymentService: PaymentService,
   ) {}
 
-  @Permissions(PERMISSIONS.FINANCE.VIEW_TREASURY)
+  @Permissions(PERMISSIONS.FINANCE.READ_TREASURY)
   @Get(':centerId/treasury')
   @ApiOperation({
     summary: 'Get center treasury statistics',
@@ -73,7 +73,7 @@ export class CashboxesController {
     return ControllerResponse.success(stats);
   }
 
-  @Permissions(PERMISSIONS.FINANCE.VIEW_WALLET_STATEMENT)
+  @Permissions(PERMISSIONS.FINANCE.READ_WALLET_STATEMENT)
   @Get('statements')
   @ApiOperation({
     summary: 'Get center wallet statements',
@@ -98,7 +98,7 @@ export class CashboxesController {
     return ControllerResponse.success(statement);
   }
 
-  @Permissions(PERMISSIONS.FINANCE.VIEW_PAYMENTS)
+  @Permissions(PERMISSIONS.FINANCE.READ_PAYMENTS)
   @Get('payments')
   @ApiOperation({
     summary: 'Get center payment records',
@@ -121,7 +121,7 @@ export class CashboxesController {
     return ControllerResponse.success(payments);
   }
 
-  @Permissions(PERMISSIONS.FINANCE.VIEW_CASH_STATEMENT)
+  @Permissions(PERMISSIONS.FINANCE.READ_CASH_STATEMENT)
   @Get('cash-statement')
   @ApiOperation({
     summary: 'Get center cash statements',

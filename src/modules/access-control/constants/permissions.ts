@@ -531,12 +531,12 @@ export const PERMISSIONS = {
 
   // ===== STUDENT BILLING PERMISSIONS =====
   STUDENT_BILLING: {
-    VIEW_STUDENT_CHARGE: {
-      action: 'student-billing:view-student-charge',
+    READ_STUDENT_CHARGE: {
+      action: 'student-billing:read-student-charge',
       scope: PermissionScope.CENTER,
     },
-    VIEW_STUDENT_RECORDS: {
-      action: 'student-billing:view-student-records',
+    READ_STUDENT_RECORDS: {
+      action: 'student-billing:read-student-records',
       scope: PermissionScope.CENTER,
     },
     REFUND_BILLING: {
@@ -547,8 +547,8 @@ export const PERMISSIONS = {
 
   // ===== TEACHER PAYOUTS PERMISSIONS =====
   TEACHER_PAYOUTS: {
-    VIEW_PAYOUTS: {
-      action: 'teacher-payouts:view-payouts',
+    READ_PAYOUTS: {
+      action: 'teacher-payouts:read-payouts',
       scope: PermissionScope.CENTER,
     },
     UPDATE_PAYOUT_STATUS: {
@@ -560,22 +560,22 @@ export const PERMISSIONS = {
   // ===== FINANCE PERMISSIONS =====
   FINANCE: {
     // Payment management
-    VIEW_PAYMENTS: {
-      action: 'finance:view-payments',
+    READ_PAYMENTS: {
+      action: 'finance:read-payments',
       scope: PermissionScope.CENTER,
     },
 
     // Treasury and statements
-    VIEW_TREASURY: {
-      action: 'finance:view-treasury',
+    READ_TREASURY: {
+      action: 'finance:read-treasury',
       scope: PermissionScope.CENTER,
     },
-    VIEW_WALLET_STATEMENT: {
-      action: 'finance:view-wallet-statement',
+    READ_WALLET_STATEMENT: {
+      action: 'finance:read-wallet-statement',
       scope: PermissionScope.CENTER,
     },
-    VIEW_CASH_STATEMENT: {
-      action: 'finance:view-cash-statement',
+    READ_CASH_STATEMENT: {
+      action: 'finance:read-cash-statement',
       scope: PermissionScope.CENTER,
     },
 
@@ -606,8 +606,8 @@ export const PERMISSIONS = {
       action: 'expenses:create',
       scope: PermissionScope.CENTER,
     },
-    VIEW: {
-      action: 'expenses:view',
+    READ: {
+      action: 'expenses:read',
       scope: PermissionScope.CENTER,
     },
     UPDATE: {
@@ -622,26 +622,30 @@ export const PERMISSIONS = {
 
   // ===== DASHBOARD & ANALYTICS PERMISSIONS =====
   DASHBOARD: {
-    VIEW: {
-      action: 'dashboard:view',
+    READ: {
+      action: 'dashboard:read',
       scope: PermissionScope.CENTER,
     },
-    VIEW_ALL_CENTERS: {
-      action: 'dashboard:view-all-centers',
+    READ_ALL_CENTERS: {
+      action: 'dashboard:read-all-centers',
+      scope: PermissionScope.ADMIN,
+    },
+  },
+
+  // ===== SETTINGS PERMISSIONS =====
+  SETTINGS: {
+    READ: {
+      action: 'settings:read',
+      scope: PermissionScope.ADMIN,
+    },
+    UPDATE: {
+      action: 'settings:update',
       scope: PermissionScope.ADMIN,
     },
   },
 
   // ===== SYSTEM PERMISSIONS =====
   SYSTEM: {
-    VIEW: {
-      action: 'system:view',
-      scope: PermissionScope.ADMIN,
-    },
-    UPDATE: {
-      action: 'system:update',
-      scope: PermissionScope.ADMIN,
-    },
     HEALTH_CHECK: {
       action: 'system:health-check',
       scope: PermissionScope.ADMIN,

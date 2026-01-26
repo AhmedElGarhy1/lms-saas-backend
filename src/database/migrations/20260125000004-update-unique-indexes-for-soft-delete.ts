@@ -29,7 +29,7 @@ export class UpdateUniqueIndexesForSoftDelete20260125000004
         AND c.contype = 'u'
         AND array_length(c.conkey, 1) = $2
         AND (
-          SELECT array_agg(a.attname ORDER BY a.attnum)
+          SELECT array_agg(a.attname::text ORDER BY a.attnum)
           FROM pg_attribute a
           WHERE a.attrelid = c.conrelid
           AND a.attnum = ANY(c.conkey)

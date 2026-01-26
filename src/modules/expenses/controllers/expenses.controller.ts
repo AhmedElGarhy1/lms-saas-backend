@@ -76,7 +76,7 @@ export class ExpensesController {
     status: 200,
     description: 'Expenses retrieved successfully',
   })
-  @Permissions(PERMISSIONS.EXPENSES.VIEW)
+  @Permissions(PERMISSIONS.EXPENSES.READ)
   @SerializeOptions({ type: ExpenseResponseDto })
   async listExpenses(
     @Query() query: PaginateExpenseDto,
@@ -105,7 +105,7 @@ export class ExpensesController {
     status: 404,
     description: 'Expense not found or not accessible',
   })
-  @Permissions(PERMISSIONS.EXPENSES.VIEW)
+  @Permissions(PERMISSIONS.EXPENSES.READ)
   @SerializeOptions({ type: ExpenseResponseDto })
   async getExpense(
     @Param('id', ParseUUIDPipe) id: string,

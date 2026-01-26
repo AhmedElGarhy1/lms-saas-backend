@@ -29,7 +29,7 @@ export class AdminDashboardController {
     description: 'Dashboard overview retrieved successfully',
     type: AdminOverviewDto,
   })
-  @Permissions(PERMISSIONS.DASHBOARD.VIEW_ALL_CENTERS)
+  @Permissions(PERMISSIONS.DASHBOARD.READ_ALL_CENTERS)
   async getOverview(
     @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<AdminOverviewDto>> {

@@ -178,7 +178,7 @@ export class UserRepository extends BaseRepository<User> {
           queryBuilder.andWhere('role.id = :roleId', { roleId });
         } else {
           queryBuilder.andWhere(
-            `EXISTS (SELECT 1 FROM profile_roles pr WHERE pr."userProfileId" = "userProfiles".id AND pr."roleId" = :roleId AND pr."deletedAt" IS NULL)`,
+            `EXISTS (SELECT 1 FROM profile_roles pr WHERE pr."userProfileId" = "userProfiles".id AND pr."roleId" = :roleId)`,
             { roleId },
           );
         }
@@ -563,9 +563,7 @@ export class UserRepository extends BaseRepository<User> {
       })
       .leftJoinAndSelect('userProfiles.profileRoles', 'profileRoles')
       .leftJoinAndSelect('profileRoles.role', 'role')
-      .andWhere(
-        '("user"."deletedAt" IS NULL AND "profileRoles"."deletedAt" IS NULL AND "role"."deletedAt" IS NULL)',
-      );
+      .andWhere('("user"."deletedAt" IS NULL AND "role"."deletedAt" IS NULL)');
 
     if (isDeleted) {
       queryBuilder.andWhere('userProfiles.deletedAt IS NOT NULL');

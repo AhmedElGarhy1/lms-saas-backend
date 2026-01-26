@@ -32,7 +32,7 @@ export class SettingsController {
     status: 200,
     description: 'Settings retrieved successfully',
   })
-  @Permissions(PERMISSIONS.SYSTEM.VIEW)
+  @Permissions(PERMISSIONS.SETTINGS.READ)
   async getSettings(): Promise<ControllerResponse<Record<string, string>>> {
     const settings = await this.settingsService.getAllSettings();
     return ControllerResponse.success(settings);
@@ -48,7 +48,7 @@ export class SettingsController {
     status: 200,
     description: 'Settings updated successfully',
   })
-  @Permissions(PERMISSIONS.SYSTEM.UPDATE)
+  @Permissions(PERMISSIONS.SETTINGS.UPDATE)
   @Transactional()
   async updateSettings(
     @Body() dto: UpdateSettingsDto,

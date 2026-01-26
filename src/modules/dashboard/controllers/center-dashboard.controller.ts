@@ -29,7 +29,7 @@ export class CenterDashboardController {
     description: 'Dashboard overview retrieved successfully',
     type: CenterOverviewDto,
   })
-  @Permissions(PERMISSIONS.DASHBOARD.VIEW)
+  @Permissions(PERMISSIONS.DASHBOARD.READ)
   async getOverview(
     @GetUser() actor: ActorUser,
   ): Promise<ControllerResponse<CenterOverviewDto>> {

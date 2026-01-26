@@ -27,7 +27,7 @@ import { PayoutProgress, TeacherPayoutSummary } from '../interfaces/payout-progr
 export class TeacherPayoutController {
   constructor(private readonly payoutService: TeacherPayoutService) {}
 
-  @Permissions(PERMISSIONS.TEACHER_PAYOUTS.VIEW_PAYOUTS)
+  @Permissions(PERMISSIONS.TEACHER_PAYOUTS.READ_PAYOUTS)
   @Get()
   async getTeacherPayouts(
     @Query() dto: PaginateTeacherPayoutsDto,
@@ -37,7 +37,7 @@ export class TeacherPayoutController {
     return ControllerResponse.success(payouts);
   }
 
-  @Permissions(PERMISSIONS.TEACHER_PAYOUTS.VIEW_PAYOUTS)
+  @Permissions(PERMISSIONS.TEACHER_PAYOUTS.READ_PAYOUTS)
   @Get(':id')
   async getPayoutById(
     @Param('id') id: string,
@@ -60,7 +60,7 @@ export class TeacherPayoutController {
   }
 
   // Get progress for CLASS payouts by class ID
-  @Permissions(PERMISSIONS.TEACHER_PAYOUTS.VIEW_PAYOUTS)
+  @Permissions(PERMISSIONS.TEACHER_PAYOUTS.READ_PAYOUTS)
   @Get('classes/:classId/progress')
   async getClassPayoutProgress(
     @Param('classId') classId: string,
@@ -95,7 +95,7 @@ export class TeacherPayoutController {
   }
 
   // Get overall progress for all teacher's payouts
-  @Permissions(PERMISSIONS.TEACHER_PAYOUTS.VIEW_PAYOUTS)
+  @Permissions(PERMISSIONS.TEACHER_PAYOUTS.READ_PAYOUTS)
   @Get(':teacherId/progress/summary')
   async getTeacherProgressSummary(
     @Param('teacherId') teacherId: string,

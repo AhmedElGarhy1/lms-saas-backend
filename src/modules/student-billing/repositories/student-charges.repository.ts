@@ -162,7 +162,12 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
         'center.id',
         'center.name',
       ])
-      .where('charge.centerId = :centerId', { centerId: actor.centerId });
+      .where('charge.centerId = :centerId', { centerId: actor.centerId })
+      // Filter out charges where related entities are deleted (check if entity exists)
+      .andWhere('student.id IS NOT NULL')
+      .andWhere('class.id IS NOT NULL')
+      .andWhere('branch.id IS NOT NULL')
+      .andWhere('center.id IS NOT NULL');
 
     const canBypassCenterInternalAccess =
       await this.accessControlHelperService.bypassCenterInternalAccess(
