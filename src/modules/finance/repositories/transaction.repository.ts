@@ -197,14 +197,20 @@ export class TransactionRepository extends BaseRepository<Transaction> {
 
   /**
    * Get user wallet statement with enhanced data including names - query-based pagination
+   *
+   * IMPORTANT: This method intentionally includes deleted related entities (branches, centers, user profiles)
+   * for auditability purposes. Financial records must remain visible even when related entities are soft-deleted
+   * to maintain a complete audit trail. Raw table joins are used which don't automatically filter soft-deleted entities.
    */
   async getUserWalletStatementPaginated(
     walletId: string,
     dto: PaginateTransactionDto,
   ): Promise<Pagination<UserWalletStatementItemDto>> {
     // Build query with joins to get transaction and user name information
+    // Include deleted entities for auditability - financial records must remain visible
     const queryBuilder = this.getRepository()
       .manager.createQueryBuilder(Transaction, 't')
+      .withDeleted()
       .leftJoin('wallets', 'fw', 't.fromWalletId = fw.id')
       .leftJoin('wallets', 'tw', 't.toWalletId = tw.id')
       // From side: user profiles
@@ -345,13 +351,19 @@ export class TransactionRepository extends BaseRepository<Transaction> {
   /**
    * Unified wallet statement implementation - single source of truth
    * Handles both USER_PROFILE and BRANCH wallet owners, avoids transaction duplicates
+   *
+   * IMPORTANT: This method intentionally includes deleted related entities (branches, centers, user profiles)
+   * for auditability purposes. Financial records must remain visible even when related entities are soft-deleted
+   * to maintain a complete audit trail. Raw table joins are used which don't automatically filter soft-deleted entities.
    */
   async getUnifiedWalletStatementPaginated(
     walletId: string,
     dto: PaginateTransactionDto,
   ): Promise<Pagination<UserWalletStatementItemDto>> {
+    // Include deleted entities for auditability - financial records must remain visible
     const queryBuilder = this.getRepository()
       .manager.createQueryBuilder(Transaction, 't')
+      .withDeleted()
       .leftJoin('wallets', 'fw', 't.fromWalletId = fw.id')
       .leftJoin('wallets', 'tw', 't.toWalletId = tw.id')
 

@@ -141,6 +141,10 @@ export class PaymentRepository extends BaseRepository<Payment> {
   /**
    * Unified payments pagination method - single source of truth
    * Handles both user-specific and admin views
+   *
+   * IMPORTANT: This method intentionally includes deleted related entities (branches, centers, user profiles)
+   * for auditability purposes. Financial records must remain visible even when related entities are soft-deleted
+   * to maintain a complete audit trail. Raw table joins are used which don't automatically filter soft-deleted entities.
    */
   async getPaymentsPaginated(
     dto: PaginatePaymentDto,
@@ -148,8 +152,10 @@ export class PaymentRepository extends BaseRepository<Payment> {
     includeAll: boolean,
   ): Promise<Pagination<UserPaymentStatementItemDto>> {
     // Build query with joins to get payment and user name information
+    // Include deleted entities for auditability - financial records must remain visible
     const queryBuilder = this.getRepository()
       .manager.createQueryBuilder(Payment, 'p')
+      .withDeleted()
       // Join for sender names (users)
       .leftJoin(
         'user_profiles',
@@ -346,6 +352,10 @@ export class PaymentRepository extends BaseRepository<Payment> {
    * Find a payment with optimized relations loaded
    * Only loads essential fields for related entities
    *
+   * IMPORTANT: This method intentionally includes deleted related entities (branches, centers, user profiles)
+   * for auditability purposes. Financial records must remain visible even when related entities are soft-deleted
+   * to maintain a complete audit trail. Raw table joins are used which don't automatically filter soft-deleted entities.
+   *
    * @param paymentId - Payment ID
    * @param includeDeleted - Reserved for future use (Payment doesn't have soft delete)
    * @returns Payment with optimized relations
@@ -354,8 +364,10 @@ export class PaymentRepository extends BaseRepository<Payment> {
     paymentId: string,
     includeDeleted: boolean = false,
   ): Promise<Payment | null> {
+    // Include deleted entities for auditability - financial records must remain visible
     const queryBuilder = this.getRepository()
       .createQueryBuilder('payment')
+      .withDeleted()
       // Join for sender/receiver names (same as pagination)
       .leftJoin(
         'user_profiles',

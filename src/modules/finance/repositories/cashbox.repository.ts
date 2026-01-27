@@ -178,19 +178,24 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
 
   /**
    * Get center wallet statement - all wallet transactions across branches in center
+   *
+   * IMPORTANT: This method intentionally includes deleted related entities (branches, centers, user profiles)
+   * for auditability purposes. Financial records must remain visible even when related entities are soft-deleted
+   * to maintain a complete audit trail. Raw table joins are used which don't automatically filter soft-deleted entities.
    */
-
   async getCenterStatement(
     centerId: string | undefined,
     query: CenterStatementQueryDto,
     actor: ActorUser,
   ): Promise<Pagination<CenterStatementItemDto>> {
     // Clean query using COALESCE for readable names
+    // Include deleted entities for auditability - financial records must remain visible
     let queryBuilder = this.getRepository()
       .manager.createQueryBuilder(Transaction, 'tx')
+      .withDeleted()
       .select('tx') // Explicitly select the transaction data
-      .leftJoin('tx.fromWallet', 'fromWallet')
-      .leftJoin('tx.toWallet', 'toWallet')
+      .leftJoin('wallets', 'fromWallet', 'tx.fromWalletId = fromWallet.id')
+      .leftJoin('wallets', 'toWallet', 'tx.toWalletId = toWallet.id')
 
       // Joins for "From" side
       .leftJoin(
@@ -341,16 +346,21 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
 
   /**
    * Get center cash statement - all cash transactions across branches in center
+   *
+   * IMPORTANT: This method intentionally includes deleted related entities (branches, centers, user profiles)
+   * for auditability purposes. Financial records must remain visible even when related entities are soft-deleted
+   * to maintain a complete audit trail. Raw table joins are used which don't automatically filter soft-deleted entities.
    */
-
   async getCenterCashStatement(
     centerId: string | undefined,
     query: CenterStatementQueryDto,
     actor: ActorUser,
   ): Promise<Pagination<CenterCashStatementItemDto>> {
     // Build query with joins to get cash transaction and name information
+    // Include deleted entities for auditability - financial records must remain visible
     let queryBuilder = this.getRepository()
       .manager.createQueryBuilder(CashTransaction, 'ct')
+      .withDeleted()
       .leftJoin('branches', 'b', 'ct.branchId = b.id')
       // Join for paidByProfileId names (users)
       .leftJoin(
