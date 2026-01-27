@@ -9,6 +9,10 @@ import { TeacherPayoutService } from '../services/teacher-payout.service';
 import { TeacherPaymentStrategyRepository } from '@/modules/classes/repositories/teacher-payment-strategy.repository';
 import { TeacherPaymentUnit } from '@/modules/classes/enums/teacher-payment-unit.enum';
 import { ClassStatus } from '@/modules/classes/enums/class-status.enum';
+import {
+  calculateProratedMonthlyPayout,
+  wasClassActiveInMonth,
+} from '../utils/proration-calculator.util';
 
 @Injectable()
 export class MonthlyTeacherPayoutJob {
@@ -101,6 +105,34 @@ export class MonthlyTeacherPayoutJob {
           continue;
         }
 
+        // Check if class was active during the target month
+        const classStartDate = strategy.class.startDate;
+        const classEndDate = strategy.class.endDate || null;
+
+        if (!wasClassActiveInMonth(classStartDate, classEndDate, month, year)) {
+          this.logger.debug(
+            `Skipping class ${strategy.classId} - not active during ${month}/${year}`,
+          );
+          continue;
+        }
+
+        // Calculate prorated amount based on active days
+        const proration = calculateProratedMonthlyPayout(
+          strategy.amount,
+          classStartDate,
+          classEndDate,
+          month,
+          year,
+        );
+
+        // Skip if no active days (shouldn't happen, but safety check)
+        if (proration.daysActive <= 0) {
+          this.logger.debug(
+            `Skipping class ${strategy.classId} - no active days in ${month}/${year}`,
+          );
+          continue;
+        }
+
         // Check if payout already exists for this teacher/class/month/year
         const existingPayout = await this.checkExistingPayout(
           strategy.class.teacherUserProfileId,
@@ -116,13 +148,13 @@ export class MonthlyTeacherPayoutJob {
           continue;
         }
 
-        // Create the monthly payout
+        // Create the monthly payout with prorated amount
         await this.teacherPayoutService.createPayout(
           {
             teacherUserProfileId: strategy.class.teacherUserProfileId,
             unitType: TeacherPaymentUnit.MONTH,
-            unitPrice: strategy.amount,
-            unitCount: 1, // Fixed: 1 month
+            unitPrice: proration.proratedAmount, // Use prorated amount
+            unitCount: 1, // Fixed: 1 month (but amount is prorated)
             classId: strategy.classId,
             month,
             year,
@@ -134,7 +166,7 @@ export class MonthlyTeacherPayoutJob {
 
         totalPayoutsCreated++;
         this.logger.debug(
-          `Created MONTH payout for teacher ${strategy.class.teacherUserProfileId}: ${strategy.amount} for ${month}/${year}`,
+          `Created MONTH payout for teacher ${strategy.class.teacherUserProfileId}: ${proration.proratedAmount} (${proration.daysActive}/${proration.daysInMonth} days, ${proration.isFullMonth ? 'full' : 'prorated'}) for ${month}/${year}`,
         );
       } catch (error) {
         this.logger.error(

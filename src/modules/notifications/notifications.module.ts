@@ -27,6 +27,7 @@ import { RedisService } from '@/shared/modules/redis/redis.service';
 import { RedisModule } from '@/shared/modules/redis/redis.module';
 import { NotificationHistoryController } from './controllers/notification-history.controller';
 import { InAppNotificationController } from './controllers/in-app-notification.controller';
+import { NotificationMonitoringController } from './controllers/notification-monitoring.controller';
 import { NotificationRepository } from './repositories/notification.repository';
 import { InAppNotificationService } from './services/in-app-notification.service';
 import { NotificationGateway } from './gateways/notification.gateway';
@@ -196,6 +197,7 @@ import { NotificationIntentService } from './services/notification-intent.servic
     NotificationHistoryController,
     InAppNotificationController,
     WhatsAppWebhookController,
+    NotificationMonitoringController,
   ],
   exports: [
     NotificationService,

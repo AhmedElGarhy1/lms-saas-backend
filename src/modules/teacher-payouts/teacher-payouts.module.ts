@@ -6,6 +6,7 @@ import { TeacherPayoutRecordsRepository } from './repositories/teacher-payout-re
 import { TeacherPayoutService } from './services/teacher-payout.service';
 import { TeacherPayoutController } from './controllers/teacher-payout.controller';
 import { SessionsListener } from './services/sessions.listener';
+import { ClassPayoutListener } from './services/class-payout.listener';
 import { MonthlyTeacherPayoutJob } from './jobs/monthly-teacher-payout.job';
 import { FinanceModule } from '@/modules/finance/finance.module';
 import { CentersModule } from '@/modules/centers/centers.module';
@@ -26,6 +27,7 @@ import { UserProfileModule } from '../user-profile/user-profile.module';
     TeacherPayoutService,
     TeacherPayoutRecordsRepository,
     SessionsListener,
+    ClassPayoutListener,
     MonthlyTeacherPayoutJob,
   ],
   exports: [TeacherPayoutService],
