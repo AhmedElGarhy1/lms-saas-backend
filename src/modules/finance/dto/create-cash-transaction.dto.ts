@@ -1,9 +1,7 @@
 import { IsUUID, IsEnum, IsNumber, Min, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  CashTransactionDirection,
-  CashTransactionType,
-} from '../enums/cash-transaction-direction.enum';
+import { CashTransactionDirection } from '../enums/cash-transaction-direction.enum';
+import { TransactionType } from '../enums/transaction-type.enum';
 import { Exists, IsUserProfile } from '@/shared/common/decorators';
 import { Cashbox } from '../entities/cashbox.entity';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
@@ -45,11 +43,11 @@ export class CreateCashTransactionDto {
 
   @ApiProperty({
     description: 'Transaction type',
-    enum: CashTransactionType,
-    example: CashTransactionType.BRANCH_DEPOSIT,
+    enum: TransactionType,
+    example: TransactionType.BRANCH_DEPOSIT,
   })
-  @IsEnum(CashTransactionType)
-  type: CashTransactionType;
+  @IsEnum(TransactionType)
+  type: TransactionType;
 
   @ApiProperty({
     description: 'Profile ID of the person who received/processed the cash',

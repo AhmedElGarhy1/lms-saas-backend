@@ -31,6 +31,7 @@ type TransactionWithNames = Transaction & {
 
 // Define type for cash transaction with computed name fields
 type CashTransactionWithNames = CashTransaction & {
+  branchName?: string;
   paidByName?: string;
   receivedByName: string;
   paidByUserId?: string;
@@ -381,6 +382,10 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
         'receivedByProfile.userId = receivedByUser.id',
       )
       // Select human-readable names
+      .addSelect(
+        "COALESCE(b.city || CASE WHEN b.address IS NOT NULL AND b.address != '' THEN ' - ' || b.address ELSE '' END, b.city)",
+        'branchName',
+      )
       .addSelect('paidByUser.name', 'paidByName')
       .addSelect('paidByUser.id', 'paidByUserId')
       .addSelect('receivedByUser.name', 'receivedByName')
@@ -441,6 +446,7 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
           // Add computed name fields from joined data
           return {
             ...entity,
+            branchName: raw.branchName,
             paidByName: raw.paidByName,
             receivedByName: raw.receivedByName,
             paidByUserId: raw.paidByUserId,
@@ -457,6 +463,7 @@ export class CashboxRepository extends BaseRepository<Cashbox> {
         createdAt: transaction.createdAt,
         updatedAt: transaction.updatedAt,
         branchId: transaction.branchId,
+        branchName: transaction.branchName || 'N/A',
         cashboxId: transaction.cashboxId,
         amount: transaction.amount.toNumber(),
         direction: transaction.direction,

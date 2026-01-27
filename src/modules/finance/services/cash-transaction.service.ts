@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CashTransactionRepository } from '../repositories/cash-transaction.repository';
 import { CashTransaction } from '../entities/cash-transaction.entity';
 import { CashTransactionDirection } from '../enums/cash-transaction-direction.enum';
-import { CashTransactionType } from '../enums/cash-transaction-direction.enum';
+import { TransactionType } from '../enums/transaction-type.enum';
 import { Money } from '@/shared/common/utils/money.util';
 import { BaseService } from '@/shared/common/services/base.service';
 import { Transactional } from '@nestjs-cls/transactional';
@@ -30,7 +30,7 @@ export class CashTransactionService extends BaseService {
     amount: Money,
     direction: CashTransactionDirection,
     receivedByProfileId: string,
-    type: CashTransactionType,
+    type: TransactionType,
     paidByProfileId: string | undefined,
     paymentId?: string,
     balanceAfter?: Money,

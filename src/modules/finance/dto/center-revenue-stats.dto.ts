@@ -109,6 +109,9 @@ export class CenterCashStatementItemDto {
   @ApiProperty({ description: 'Branch ID where transaction occurred' })
   branchId: string;
 
+  @ApiProperty({ description: 'Branch name where transaction occurred' })
+  branchName: string;
+
   @ApiProperty({ description: 'Cashbox ID' })
   cashboxId: string;
 

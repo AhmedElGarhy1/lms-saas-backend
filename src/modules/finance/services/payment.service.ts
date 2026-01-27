@@ -19,10 +19,7 @@ import { WalletService } from './wallet.service';
 import { CashboxService } from './cashbox.service';
 import { TransactionService } from './transaction.service';
 import { CashTransactionService } from './cash-transaction.service';
-import {
-  CashTransactionDirection,
-  CashTransactionType,
-} from '../enums/cash-transaction-direction.enum';
+import { CashTransactionDirection } from '../enums/cash-transaction-direction.enum';
 import { TransactionType } from '../enums/transaction-type.enum';
 import { randomUUID } from 'crypto';
 import { mapPaymentReasonToTransactionType } from '../utils/payment-reason-mapper.util';
@@ -376,30 +373,61 @@ export class PaymentService extends BaseService {
     paidByProfileId: string,
     paymentId?: string,
   ): Promise<void> {
-    // For cash payments, we need to determine which branch and cashbox to use
-    // Since cash payments in billing go to branches, we'll use the receiverId as branchId
-    const branchId = payment.receiverId; // Branch that receives the payment
+    // Determine branch and direction based on whether branch is sender or receiver
+    let branchId: string;
+    let direction: CashTransactionDirection;
+    let receivedByProfileId: string;
+    let finalPaidByProfileId: string;
+
+    if (payment.senderType === WalletOwnerType.BRANCH) {
+      // Branch is sending money (withdrawal) - e.g., expenses, teacher payouts
+      branchId = payment.senderId;
+      direction = CashTransactionDirection.OUT;
+      receivedByProfileId = payment.receiverId; // Teacher/user receiving the cash
+      finalPaidByProfileId = payment.createdByProfileId; // Staff who processed/gave the cash
+    } else if (payment.receiverType === WalletOwnerType.BRANCH) {
+      // Branch is receiving money (deposit) - e.g., student fees
+      branchId = payment.receiverId;
+      direction = CashTransactionDirection.IN;
+      receivedByProfileId = payment.createdByProfileId; // Staff who received/processed the cash
+      finalPaidByProfileId = payment.senderId; // Student/user who paid the cash
+    } else {
+      // No branch involved in this cash payment - shouldn't happen for cash payments
+      throw FinanceErrors.invalidCashPaymentConfiguration();
+    }
 
     // Get or create cashbox for the branch
     const cashbox = await this.cashboxService.getCashbox(branchId);
 
-    // Determine transaction type for cash transaction
-    const cashTransactionType = CashTransactionType.BRANCH_DEPOSIT;
+    // Determine transaction type for cash transaction based on payment reason
+    const cashTransactionType = mapPaymentReasonToTransactionType(payment.reason);
 
-    // Create cash transaction (money coming into cashbox)
+    // Calculate balance after transaction
+    const currentBalance = cashbox.balance;
+    const balanceAfter =
+      direction === CashTransactionDirection.IN
+        ? currentBalance.add(payment.amount)
+        : currentBalance.subtract(payment.amount);
+
+    // Create cash transaction
     await this.cashTransactionService.createCashTransaction(
       branchId,
       cashbox.id,
       payment.amount,
-      CashTransactionDirection.IN,
-      payment.createdByProfileId, // Who processed the payment (receivedBy)
+      direction,
+      receivedByProfileId,
       cashTransactionType,
-      paidByProfileId, // Who paid the cash (payer)
+      finalPaidByProfileId, // Who paid/provided the cash
       paymentId, // paymentId
+      balanceAfter, // Pass calculated balance
     );
 
     // Update cashbox balance
-    await this.cashboxService.updateBalance(cashbox.id, payment.amount);
+    const balanceChange =
+      direction === CashTransactionDirection.IN
+        ? payment.amount
+        : payment.amount.multiply(-1);
+    await this.cashboxService.updateBalance(cashbox.id, balanceChange);
 
     // Note: Payment is already linked to CashTransaction via paymentId field
     // No need for redundant referenceType/referenceId

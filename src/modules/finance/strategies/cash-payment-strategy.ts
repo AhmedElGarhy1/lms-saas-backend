@@ -6,10 +6,7 @@ import { ExecutionResult } from '../services/payment-executor.service';
 import { CashboxService } from '../services/cashbox.service';
 import { CashTransactionService } from '../services/cash-transaction.service';
 import { FinanceErrors } from '../exceptions/finance.errors';
-import {
-  CashTransactionDirection,
-  CashTransactionType,
-} from '../enums/cash-transaction-direction.enum';
+import { CashTransactionDirection } from '../enums/cash-transaction-direction.enum';
 import { WalletOwnerType } from '../enums/wallet-owner-type.enum';
 import { hasFeeAmount } from '../utils/payment-type-helpers.util';
 import { WalletService } from '../services/wallet.service';
@@ -17,6 +14,7 @@ import { TransactionService } from '../services/transaction.service';
 import { TransactionType } from '../enums/transaction-type.enum';
 import { SettingsService } from '@/modules/settings/services/settings.service';
 import { randomUUID } from 'crypto';
+import { mapPaymentReasonToTransactionType } from '../utils/payment-reason-mapper.util';
 
 @Injectable()
 export class CashPaymentStrategy implements PaymentExecutionStrategy {
@@ -73,6 +71,11 @@ export class CashPaymentStrategy implements PaymentExecutionStrategy {
       payment.amount.multiply(-1), // Debit cashbox
     );
 
+    // Determine transaction type based on payment reason
+    const cashTransactionType = mapPaymentReasonToTransactionType(
+      payment.reason,
+    );
+
     // Create cash transaction (OUT from cashbox)
     const cashTransaction =
       await this.cashTransactionService.createCashTransaction(
@@ -80,9 +83,9 @@ export class CashPaymentStrategy implements PaymentExecutionStrategy {
         cashbox.id,
         payment.amount,
         CashTransactionDirection.OUT,
-        payment.receiverId, // receivedBy (staff)
-        CashTransactionType.BRANCH_WITHDRAWAL,
-        payment.receiverId, // paidBy (staff taking cash)
+        payment.receiverId, // receivedBy (teacher/user receiving cash)
+        cashTransactionType,
+        payment.createdByProfileId, // paidBy (staff who processed/gave the cash)
         payment.id,
         updatedCashbox.balance, // Pass the updated balance
       );
@@ -113,6 +116,11 @@ export class CashPaymentStrategy implements PaymentExecutionStrategy {
       payment.amount, // Credit cashbox
     );
 
+    // Determine transaction type based on payment reason
+    const cashTransactionType = mapPaymentReasonToTransactionType(
+      payment.reason,
+    );
+
     // Create cash transaction (IN to cashbox)
     const cashTransaction =
       await this.cashTransactionService.createCashTransaction(
@@ -120,9 +128,9 @@ export class CashPaymentStrategy implements PaymentExecutionStrategy {
         cashbox.id,
         payment.amount,
         CashTransactionDirection.IN,
-        payment.senderId, // receivedBy (staff depositing)
-        CashTransactionType.BRANCH_DEPOSIT,
-        payment.senderId, // paidBy (staff depositing)
+        payment.createdByProfileId, // receivedBy (staff who received/processed the cash)
+        cashTransactionType,
+        payment.senderId, // paidBy (student/user who paid the cash)
         payment.id,
         updatedCashbox.balance, // Pass the updated balance
       );
