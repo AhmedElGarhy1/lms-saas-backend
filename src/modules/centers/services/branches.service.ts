@@ -37,14 +37,10 @@ export class BranchesService extends BaseService {
   }
 
   async getBranch(branchId: string, actor: ActorUser, includeDeleted = false) {
-    const branch = await this.branchesRepository.findBranchWithRelations(
+    const branch = await this.branchesRepository.findBranchForResponseOrThrow(
       branchId,
       includeDeleted,
     );
-
-    if (!branch) {
-      throw CentersErrors.branchNotFound();
-    }
 
     // Validate actor has branch access
     await this.branchAccessService.validateBranchAccess({

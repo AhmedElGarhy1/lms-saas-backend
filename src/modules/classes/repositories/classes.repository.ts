@@ -215,7 +215,16 @@ export class ClassesRepository extends BaseRepository<Class> {
     );
   }
 
-  async findClassWithRelations(
+  /**
+   * Find a class by ID optimized for API responses.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
+   *
+   * @param id - The class ID
+   * @param includeDeleted - Whether to include soft-deleted classes
+   * @returns Class with selective relation fields, or null if not found
+   */
+  async findClassForResponse(
     id: string,
     includeDeleted = false,
   ): Promise<ClassWithGroups | null> {
@@ -416,19 +425,121 @@ export class ClassesRepository extends BaseRepository<Class> {
   }
 
   /**
-   * Find a class by ID with all relations loaded, throws if not found.
-   * Pure data access method - no business logic.
+   * Find a class by ID optimized for API responses, throws if not found.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param id - The class ID
    * @param includeDeleted - Whether to include soft-deleted classes
-   * @returns Class with all relations
+   * @returns Class with selective relation fields
    * @throws ClassesErrors.classNotFound() if class not found
    */
-  async findClassWithRelationsOrThrow(
+  async findClassForResponseOrThrow(
     id: string,
     includeDeleted = false,
   ): Promise<Class> {
-    const classEntity = await this.findClassWithRelations(id, includeDeleted);
+    const classEntity = await this.findClassForResponse(id, includeDeleted);
+    if (!classEntity) {
+      throw ClassesErrors.classNotFound();
+    }
+    return classEntity;
+  }
+
+  /**
+   * Find a class by ID with full relations loaded for internal use.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   * All relations are fully loaded using leftJoinAndSelect, ensuring all entity properties are available.
+   *
+   * @param id - The class ID
+   * @param includeDeleted - Whether to include soft-deleted classes
+   * @returns Class with full relations loaded, or null if not found
+   */
+  async findClassWithFullRelations(
+    id: string,
+    includeDeleted = false,
+  ): Promise<ClassWithGroups | null> {
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('class')
+      // Load FULL entities using leftJoinAndSelect for all relations
+      .leftJoinAndSelect('class.level', 'level')
+      .leftJoinAndSelect('class.subject', 'subject')
+      .leftJoinAndSelect('class.teacher', 'teacher')
+      .leftJoinAndSelect('teacher.user', 'teacherUser')
+      .leftJoinAndSelect('class.branch', 'branch')
+      .leftJoinAndSelect('class.center', 'center')
+      // Load full payment strategies
+      .leftJoinAndSelect(
+        'class.studentPaymentStrategy',
+        'studentPaymentStrategy',
+      )
+      .leftJoinAndSelect(
+        'class.teacherPaymentStrategy',
+        'teacherPaymentStrategy',
+      )
+      .where('class.id = :id', { id });
+
+    if (!includeDeleted) {
+      queryBuilder.andWhere('class.deletedAt IS NULL');
+    } else {
+      queryBuilder.withDeleted();
+    }
+
+    const result = await queryBuilder.getOne();
+
+    const entity = result;
+
+    // Fetch groups separately instead of relying on relation
+    const groups = await this.getEntityManager()
+      .createQueryBuilder(Group, 'group')
+      .leftJoinAndSelect('group.scheduleItems', 'scheduleItems')
+      .where('group.classId = :classId', { classId: id })
+      .andWhere('group.deletedAt IS NULL')
+      .addSelect(
+        (subQuery) =>
+          subQuery
+            .select('COUNT(groupStudents.id)', 'studentsCount')
+            .from(GroupStudent, 'groupStudents')
+            .where('groupStudents.groupId = group.id')
+            .andWhere('groupStudents.leftAt IS NULL'),
+        'studentsCount',
+      )
+      .getRawAndEntities()
+      .then((result) =>
+        result.entities.map((group, i) => {
+          const raw = result.raw[i] as RawGroupWithCount;
+          return {
+            ...group,
+            studentsCount: parseInt(raw.studentsCount ?? '0', 10),
+          };
+        }),
+      );
+
+    // Return entity with computed fields and groups attached
+    return {
+      ...entity,
+      groups,
+    } as ClassWithGroups;
+  }
+
+  /**
+   * Find a class by ID with full relations loaded for internal use, throws if not found.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param id - The class ID
+   * @param includeDeleted - Whether to include soft-deleted classes
+   * @returns Class with full relations loaded
+   * @throws ClassesErrors.classNotFound() if class not found
+   */
+  async findClassWithFullRelationsOrThrow(
+    id: string,
+    includeDeleted = false,
+  ): Promise<ClassWithGroups> {
+    const classEntity = await this.findClassWithFullRelations(
+      id,
+      includeDeleted,
+    );
     if (!classEntity) {
       throw ClassesErrors.classNotFound();
     }

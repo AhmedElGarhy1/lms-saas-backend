@@ -336,14 +336,15 @@ export class AttendanceRepository extends BaseRepository<Attendance> {
   }
 
   /**
-   * Find an attendance record with optimized relations loaded
-   * Only loads id and name fields for related entities
+   * Find an attendance record by ID optimized for API responses.
+   * Selects only necessary fields (id, name, code, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param attendanceId - Attendance ID
    * @param includeDeleted - Whether to include soft-deleted attendance records
-   * @returns Attendance with optimized relations
+   * @returns Attendance with selective relation fields, or null if not found
    */
-  async findAttendanceWithRelations(
+  async findAttendanceForResponse(
     attendanceId: string,
     includeDeleted: boolean = false,
   ): Promise<Attendance | null> {
@@ -389,18 +390,73 @@ export class AttendanceRepository extends BaseRepository<Attendance> {
   }
 
   /**
-   * Find an attendance record with optimized relations loaded or throw if not found
+   * Find an attendance record by ID optimized for API responses, throws if not found.
+   * Selects only necessary fields (id, name, code, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param attendanceId - Attendance ID
    * @param includeDeleted - Whether to include soft-deleted attendance records
-   * @returns Attendance with optimized relations
-   * @throws Attendance not found error
+   * @returns Attendance with selective relation fields
+   * @throws Error if attendance record not found
    */
-  async findAttendanceWithRelationsOrThrow(
+  async findAttendanceForResponseOrThrow(
     attendanceId: string,
     includeDeleted: boolean = false,
   ): Promise<Attendance> {
-    const attendance = await this.findAttendanceWithRelations(
+    const attendance = await this.findAttendanceForResponse(
+      attendanceId,
+      includeDeleted,
+    );
+    if (!attendance) {
+      throw new Error(`Attendance record with id ${attendanceId} not found`);
+    }
+    return attendance;
+  }
+
+  /**
+   * Find an attendance record by ID with full relations loaded for internal use.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param attendanceId - Attendance ID
+   * @param includeDeleted - Whether to include soft-deleted attendance records
+   * @returns Attendance with full relations loaded, or null if not found
+   */
+  async findAttendanceWithFullRelations(
+    attendanceId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Attendance | null> {
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('attendance')
+      // Load FULL entities using leftJoinAndSelect for all relations
+      .leftJoinAndSelect('attendance.student', 'student')
+      .leftJoinAndSelect('student.user', 'studentUser')
+      .leftJoinAndSelect('attendance.session', 'session')
+      .leftJoinAndSelect('attendance.group', 'group')
+      .leftJoinAndSelect('attendance.branch', 'branch');
+
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
+  }
+
+  /**
+   * Find an attendance record by ID with full relations loaded for internal use, throws if not found.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param attendanceId - Attendance ID
+   * @param includeDeleted - Whether to include soft-deleted attendance records
+   * @returns Attendance with full relations loaded
+   * @throws Error if attendance record not found
+   */
+  async findAttendanceWithFullRelationsOrThrow(
+    attendanceId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Attendance> {
+    const attendance = await this.findAttendanceWithFullRelations(
       attendanceId,
       includeDeleted,
     );

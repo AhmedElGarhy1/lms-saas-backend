@@ -120,7 +120,6 @@ export class PaymentRepository extends BaseRepository<Payment> {
     return this.getRepository().save(payment);
   }
 
-
   /**
    * Create query builder for pagination
    */
@@ -360,7 +359,7 @@ export class PaymentRepository extends BaseRepository<Payment> {
    * @param includeDeleted - Reserved for future use (Payment doesn't have soft delete)
    * @returns Payment with optimized relations
    */
-  async findPaymentWithRelations(
+  async findPaymentForResponse(
     paymentId: string,
     includeDeleted: boolean = false,
   ): Promise<Payment | null> {
@@ -478,18 +477,80 @@ export class PaymentRepository extends BaseRepository<Payment> {
   }
 
   /**
-   * Find a payment with optimized relations loaded or throw if not found
+   * Find a payment by ID optimized for API responses, throws if not found.
+   * Selects only necessary fields from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param paymentId - Payment ID
    * @param includeDeleted - Reserved for future use (Payment doesn't have soft delete)
-   * @returns Payment with optimized relations
-   * @throws Payment not found error
+   * @returns Payment with selective relation fields
+   * @throws Error if payment not found
    */
-  async findPaymentWithRelationsOrThrow(
+  async findPaymentForResponseOrThrow(
     paymentId: string,
     includeDeleted: boolean = false,
   ): Promise<Payment> {
-    const payment = await this.findPaymentWithRelations(
+    const payment = await this.findPaymentForResponse(
+      paymentId,
+      includeDeleted,
+    );
+    if (!payment) {
+      throw new Error(`Payment with id ${paymentId} not found`);
+    }
+    return payment;
+  }
+
+  /**
+   * Find a payment by ID with full relations loaded for internal use.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   * IMPORTANT: This method intentionally includes deleted related entities for auditability purposes.
+   *
+   * @param paymentId - Payment ID
+   * @param includeDeleted - Reserved for future use (Payment doesn't have soft delete)
+   * @returns Payment with full relations loaded, or null if not found
+   */
+  async findPaymentWithFullRelations(
+    paymentId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Payment | null> {
+    // Include deleted entities for auditability - financial records must remain visible
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('payment')
+      .withDeleted()
+      // Load FULL entities using leftJoinAndSelect for all relations
+      .leftJoinAndSelect('payment.teacherPayout', 'teacherPayout')
+      .leftJoinAndSelect('payment.studentCharge', 'studentCharge')
+      .leftJoinAndSelect('teacherPayout.teacher', 'teacherProfile')
+      .leftJoinAndSelect('teacherProfile.user', 'teacherUser')
+      .leftJoinAndSelect('studentCharge.student', 'studentProfile')
+      .leftJoinAndSelect('studentProfile.user', 'studentUser')
+      .leftJoinAndSelect('studentCharge.class', 'class')
+      .leftJoinAndSelect('teacherPayout.class', 'teacherClass')
+      .where('payment.id = :paymentId', { paymentId });
+
+    // Note: Sender/receiver relations are complex (polymorphic) and handled via raw joins
+    // For full relations, we'd need to handle them separately if needed
+
+    const result = await queryBuilder.getOne();
+    return result;
+  }
+
+  /**
+   * Find a payment by ID with full relations loaded for internal use, throws if not found.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param paymentId - Payment ID
+   * @param includeDeleted - Reserved for future use (Payment doesn't have soft delete)
+   * @returns Payment with full relations loaded
+   * @throws Error if payment not found
+   */
+  async findPaymentWithFullRelationsOrThrow(
+    paymentId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Payment> {
+    const payment = await this.findPaymentWithFullRelations(
       paymentId,
       includeDeleted,
     );

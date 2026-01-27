@@ -194,7 +194,7 @@ export class StudentBillingService extends BaseService {
 
     // Validate related entities are active
     const classWithRelations =
-      await this.classesRepository.findClassWithRelationsOrThrow(dto.classId);
+      await this.classesRepository.findClassWithFullRelationsOrThrow(dto.classId);
     if (classWithRelations.center && !classWithRelations.center.isActive) {
       throw CentersErrors.centerInactive();
     }
@@ -446,7 +446,7 @@ export class StudentBillingService extends BaseService {
     // Get class with relations to validate related entities
     const classEntity = await this.classesService.findOneOrThrow(classId);
     const classWithRelations =
-      await this.classesRepository.findClassWithRelationsOrThrow(classId);
+      await this.classesRepository.findClassWithFullRelationsOrThrow(classId);
 
     // Validate center is active
     if (classWithRelations.center && !classWithRelations.center.isActive) {
@@ -572,7 +572,7 @@ export class StudentBillingService extends BaseService {
 
     // Validate related entities are active
     const classWithRelations =
-      await this.classesRepository.findClassWithRelationsOrThrow(dto.classId);
+      await this.classesRepository.findClassWithFullRelationsOrThrow(dto.classId);
     if (classWithRelations.center && !classWithRelations.center.isActive) {
       throw CentersErrors.centerInactive();
     }
@@ -837,11 +837,7 @@ export class StudentBillingService extends BaseService {
     actor: ActorUser,
   ): Promise<StudentCharge> {
     const charge =
-      await this.chargesRepository.findStudentChargeWithRelations(id);
-
-    if (!charge) {
-      throw StudentBillingErrors.billingRecordNotFound();
-    }
+      await this.chargesRepository.findStudentChargeForResponseOrThrow(id);
 
     this.accessControlHelperService.validateCenterAccess({
       userProfileId: actor.userProfileId,

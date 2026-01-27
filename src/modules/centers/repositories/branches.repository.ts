@@ -65,14 +65,15 @@ export class BranchesRepository extends BaseRepository<Branch> {
   }
 
   /**
-   * Find a branch with optimized relations loaded
-   * Only loads id and name fields for center relation
+   * Find a branch by ID optimized for API responses.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param branchId - Branch ID
    * @param includeDeleted - Whether to include soft-deleted branches
-   * @returns Branch with center.id and center.name only
+   * @returns Branch with selective relation fields, or null if not found
    */
-  async findBranchWithRelations(
+  async findBranchForResponse(
     branchId: string,
     includeDeleted: boolean = false,
   ): Promise<Branch | null> {
@@ -112,18 +113,70 @@ export class BranchesRepository extends BaseRepository<Branch> {
   }
 
   /**
-   * Find a branch with optimized relations loaded or throw if not found
+   * Find a branch by ID optimized for API responses, throws if not found.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param branchId - Branch ID
    * @param includeDeleted - Whether to include soft-deleted branches
-   * @returns Branch with center.id and center.name only
-   * @throws Branch not found error
+   * @returns Branch with selective relation fields
+   * @throws Error if branch not found
    */
-  async findBranchWithRelationsOrThrow(
+  async findBranchForResponseOrThrow(
     branchId: string,
     includeDeleted: boolean = false,
   ): Promise<Branch> {
-    const branch = await this.findBranchWithRelations(branchId, includeDeleted);
+    const branch = await this.findBranchForResponse(branchId, includeDeleted);
+    if (!branch) {
+      throw new Error(`Branch with id ${branchId} not found`);
+    }
+    return branch;
+  }
+
+  /**
+   * Find a branch by ID with full relations loaded for internal use.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param branchId - Branch ID
+   * @param includeDeleted - Whether to include soft-deleted branches
+   * @returns Branch with full relations loaded, or null if not found
+   */
+  async findBranchWithFullRelations(
+    branchId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Branch | null> {
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('branch')
+      // Load FULL entities using leftJoinAndSelect for all relations
+      .leftJoinAndSelect('branch.center', 'center')
+      .where('branch.id = :branchId', { branchId });
+
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
+  }
+
+  /**
+   * Find a branch by ID with full relations loaded for internal use, throws if not found.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param branchId - Branch ID
+   * @param includeDeleted - Whether to include soft-deleted branches
+   * @returns Branch with full relations loaded
+   * @throws Error if branch not found
+   */
+  async findBranchWithFullRelationsOrThrow(
+    branchId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Branch> {
+    const branch = await this.findBranchWithFullRelations(
+      branchId,
+      includeDeleted,
+    );
     if (!branch) {
       throw new Error(`Branch with id ${branchId} not found`);
     }

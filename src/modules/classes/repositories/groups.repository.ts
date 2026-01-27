@@ -139,7 +139,16 @@ export class GroupsRepository extends BaseRepository<Group> {
     ) as Promise<Pagination<GroupWithStudentCount>>;
   }
 
-  async findGroupWithRelations(
+  /**
+   * Find a group by ID optimized for API responses.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
+   *
+   * @param id - The group ID
+   * @param includeDeleted - Whether to include soft-deleted groups
+   * @returns Group with selective relation fields, or null if not found
+   */
+  async findGroupForResponse(
     id: string,
     includeDeleted = false,
   ): Promise<GroupWithStudentCount | null> {
@@ -241,19 +250,99 @@ export class GroupsRepository extends BaseRepository<Group> {
   }
 
   /**
-   * Find a group by ID with all relations loaded, throws if not found.
-   * Pure data access method - no business logic.
+   * Find a group by ID optimized for API responses, throws if not found.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param id - The group ID
    * @param includeDeleted - Whether to include soft-deleted groups
-   * @returns Group with all relations
+   * @returns Group with selective relation fields
    * @throws ClassesErrors.groupNotFound() if group not found
    */
-  async findGroupWithRelationsOrThrow(
+  async findGroupForResponseOrThrow(
     id: string,
     includeDeleted = false,
   ): Promise<GroupWithStudentCount> {
-    const group = await this.findGroupWithRelations(id, includeDeleted);
+    const group = await this.findGroupForResponse(id, includeDeleted);
+    if (!group) {
+      throw ClassesErrors.groupNotFound();
+    }
+    return group;
+  }
+
+  /**
+   * Find a group by ID with full relations loaded for internal use.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param id - The group ID
+   * @param includeDeleted - Whether to include soft-deleted groups
+   * @returns Group with full relations loaded, or null if not found
+   */
+  async findGroupWithFullRelations(
+    id: string,
+    includeDeleted = false,
+  ): Promise<GroupWithStudentCount | null> {
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('group')
+      // Load FULL entities using leftJoinAndSelect for all relations
+      .leftJoinAndSelect('group.class', 'class')
+      .leftJoinAndSelect('group.branch', 'branch')
+      .leftJoinAndSelect('group.center', 'center')
+      // Load full scheduleItems
+      .leftJoinAndSelect('group.scheduleItems', 'scheduleItems')
+      // Add student count subquery
+      .addSelect(
+        (subQuery) =>
+          subQuery
+            .select('COUNT(groupStudentsForCount.id)', 'studentsCount')
+            .from(GroupStudent, 'groupStudentsForCount')
+            .where('groupStudentsForCount.groupId = group.id')
+            .andWhere('groupStudentsForCount.leftAt IS NULL'),
+        'studentsCount',
+      )
+      .where('group.id = :id', { id });
+
+    if (!includeDeleted) {
+      queryBuilder.andWhere('group.deletedAt IS NULL');
+    } else {
+      queryBuilder.withDeleted();
+    }
+
+    const { entities, raw } = await queryBuilder.getRawAndEntities();
+
+    if (!entities || entities.length === 0) {
+      return null;
+    }
+
+    const entity = entities[0];
+    const rawData = raw[0] as RawWithStudentCount;
+
+    // Map computed student count from raw data
+    const studentsCount = parseInt(rawData.studentsCount ?? '0', 10);
+
+    // Return entity with computed field added
+    return {
+      ...entity,
+      studentsCount,
+    } as GroupWithStudentCount;
+  }
+
+  /**
+   * Find a group by ID with full relations loaded for internal use, throws if not found.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param id - The group ID
+   * @param includeDeleted - Whether to include soft-deleted groups
+   * @returns Group with full relations loaded
+   * @throws ClassesErrors.groupNotFound() if group not found
+   */
+  async findGroupWithFullRelationsOrThrow(
+    id: string,
+    includeDeleted = false,
+  ): Promise<GroupWithStudentCount> {
+    const group = await this.findGroupWithFullRelations(id, includeDeleted);
     if (!group) {
       throw ClassesErrors.groupNotFound();
     }

@@ -258,14 +258,15 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
   }
 
   /**
-   * Find a teacher payout record with optimized relations loaded
-   * Only loads id and name fields for related entities
+   * Find a teacher payout record by ID optimized for API responses.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param payoutId - Teacher payout record ID
    * @param includeDeleted - Reserved for future use (TeacherPayoutRecord doesn't have soft delete)
-   * @returns TeacherPayoutRecord with optimized relations
+   * @returns TeacherPayoutRecord with selective relation fields, or null if not found
    */
-  async findTeacherPayoutWithRelations(
+  async findTeacherPayoutForResponse(
     payoutId: string,
     includeDeleted: boolean = false,
   ): Promise<TeacherPayoutRecord | null> {
@@ -311,18 +312,73 @@ export class TeacherPayoutRecordsRepository extends BaseRepository<TeacherPayout
   }
 
   /**
-   * Find a teacher payout record with optimized relations loaded or throw if not found
+   * Find a teacher payout record by ID optimized for API responses, throws if not found.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param payoutId - Teacher payout record ID
    * @param includeDeleted - Reserved for future use (TeacherPayoutRecord doesn't have soft delete)
-   * @returns TeacherPayoutRecord with optimized relations
-   * @throws Teacher payout not found error
+   * @returns TeacherPayoutRecord with selective relation fields
+   * @throws Error if teacher payout not found
    */
-  async findTeacherPayoutWithRelationsOrThrow(
+  async findTeacherPayoutForResponseOrThrow(
     payoutId: string,
     includeDeleted: boolean = false,
   ): Promise<TeacherPayoutRecord> {
-    const payout = await this.findTeacherPayoutWithRelations(
+    const payout = await this.findTeacherPayoutForResponse(
+      payoutId,
+      includeDeleted,
+    );
+    if (!payout) {
+      throw TeacherPayoutErrors.payoutNotFound();
+    }
+    return payout;
+  }
+
+  /**
+   * Find a teacher payout record by ID with full relations loaded for internal use.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param payoutId - Teacher payout record ID
+   * @param includeDeleted - Reserved for future use (TeacherPayoutRecord doesn't have soft delete)
+   * @returns TeacherPayoutRecord with full relations loaded, or null if not found
+   */
+  async findTeacherPayoutWithFullRelations(
+    payoutId: string,
+    includeDeleted: boolean = false,
+  ): Promise<TeacherPayoutRecord | null> {
+    return (
+      this.getRepository()
+        .createQueryBuilder('payout')
+        // Load FULL entities using leftJoinAndSelect for all relations
+        .leftJoinAndSelect('payout.teacher', 'teacher')
+        .leftJoinAndSelect('teacher.user', 'teacherUser')
+        .leftJoinAndSelect('payout.class', 'class')
+        .leftJoinAndSelect('payout.session', 'session')
+        .leftJoinAndSelect('payout.branch', 'branch')
+        .leftJoinAndSelect('payout.center', 'center')
+        .leftJoinAndSelect('payout.payments', 'payments')
+        .where('payout.id = :payoutId', { payoutId })
+        .getOne()
+    );
+  }
+
+  /**
+   * Find a teacher payout record by ID with full relations loaded for internal use, throws if not found.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param payoutId - Teacher payout record ID
+   * @param includeDeleted - Reserved for future use (TeacherPayoutRecord doesn't have soft delete)
+   * @returns TeacherPayoutRecord with full relations loaded
+   * @throws Error if teacher payout not found
+   */
+  async findTeacherPayoutWithFullRelationsOrThrow(
+    payoutId: string,
+    includeDeleted: boolean = false,
+  ): Promise<TeacherPayoutRecord> {
+    const payout = await this.findTeacherPayoutWithFullRelations(
       payoutId,
       includeDeleted,
     );

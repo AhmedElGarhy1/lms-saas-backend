@@ -246,14 +246,10 @@ export class UserProfileService extends BaseService {
     includeDeleted = false,
   ) {
     const profile =
-      await this.userProfileRepository.findUserProfileWithRelations(
+      await this.userProfileRepository.findUserProfileForResponseOrThrow(
         userProfileId,
         includeDeleted,
       );
-
-    if (!profile) {
-      throw UserProfileErrors.userProfileNotFound();
-    }
 
     // If actor is provided, validate user access (centerId is optional)
     if (actor) {

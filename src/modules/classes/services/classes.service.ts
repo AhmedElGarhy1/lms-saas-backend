@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateClassDto } from '../dto/create-class.dto';
 import { UpdateClassDto } from '../dto/update-class.dto';
 import { PaginateClassesDto } from '../dto/paginate-classes.dto';
@@ -85,13 +85,14 @@ export class ClassesService extends BaseService {
   }
 
   /**
-   * Get a single class with all relations loaded.
+   * Get a single class optimized for API responses.
    * Validates access based on actor profile type (staff vs non-staff).
+   * Uses findClassForResponseOrThrow() for better performance - only loads necessary fields for serialization.
    *
    * @param classId - The class ID
    * @param actor - The user performing the action
    * @param includeDeleted - Whether to include soft-deleted classes
-   * @returns Class entity with all relations (groups, level, subject, teacher, etc.)
+   * @returns Class entity optimized for API response (selective relation fields)
    * @throws ClassesErrors.classNotFound() if class doesn't exist
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
@@ -100,7 +101,26 @@ export class ClassesService extends BaseService {
     actor: ActorUser,
     includeDeleted = false,
   ): Promise<Class> {
-    return this.findClassAndValidateAccess(classId, actor, includeDeleted);
+    // Use optimized response method for API endpoints
+    const classEntity =
+      await this.classesRepository.findClassForResponseOrThrow(
+        classId,
+        includeDeleted,
+      );
+
+    // Validate access (branchId and classId are on the class entity itself, not relations)
+    await this.branchAccessService.validateBranchAccess({
+      userProfileId: actor.userProfileId,
+      centerId: actor.centerId!,
+      branchId: classEntity.branchId,
+    });
+
+    await this.classAccessService.validateClassAccess({
+      userProfileId: actor.userProfileId,
+      classId: classEntity.id,
+    });
+
+    return classEntity;
   }
 
   /**
@@ -206,9 +226,7 @@ export class ClassesService extends BaseService {
     );
 
     const classWithRelations =
-      await this.classesRepository.findClassWithRelationsOrThrow(
-        classEntity.id,
-      );
+      await this.classesRepository.findClassForResponseOrThrow(classEntity.id);
 
     // Create CLASS payout record if teacher payment strategy is CLASS
     if (teacherPaymentStrategy.per === TeacherPaymentUnit.CLASS) {
@@ -251,7 +269,7 @@ export class ClassesService extends BaseService {
 
     // Validate related entities are active
     const classWithRelations =
-      await this.classesRepository.findClassWithRelationsOrThrow(classId);
+      await this.classesRepository.findClassWithFullRelationsOrThrow(classId);
     if (classWithRelations.teacher && !classWithRelations.teacher.isActive) {
       throw UserProfileErrors.userProfileInactive();
     }
@@ -322,7 +340,7 @@ export class ClassesService extends BaseService {
     actor: ActorUser,
   ): Promise<Class> {
     const classEntity =
-      await this.classesRepository.findClassWithRelationsOrThrow(
+      await this.classesRepository.findClassWithFullRelationsOrThrow(
         classId,
         false,
       );
@@ -355,10 +373,7 @@ export class ClassesService extends BaseService {
 
     // Return updated class with relations
     const updatedClass =
-      await this.classesRepository.findClassWithRelationsOrThrow(
-        classId,
-        false,
-      );
+      await this.classesRepository.findClassForResponseOrThrow(classId, false);
 
     return updatedClass;
   }
@@ -404,10 +419,7 @@ export class ClassesService extends BaseService {
 
     // Return updated class with relations
     const updatedClass =
-      await this.classesRepository.findClassWithRelationsOrThrow(
-        classId,
-        false,
-      );
+      await this.classesRepository.findClassForResponseOrThrow(classId, false);
 
     return updatedClass;
   }
@@ -555,7 +567,7 @@ export class ClassesService extends BaseService {
 
     // Validate related entities are active
     const classWithRelations =
-      await this.classesRepository.findClassWithRelationsOrThrow(classId);
+      await this.classesRepository.findClassWithFullRelationsOrThrow(classId);
     if (classWithRelations.teacher && !classWithRelations.teacher.isActive) {
       throw UserProfileErrors.userProfileInactive();
     }
@@ -688,7 +700,7 @@ export class ClassesService extends BaseService {
     includeDeleted = false,
   ): Promise<Class> {
     const classEntity =
-      await this.classesRepository.findClassWithRelationsOrThrow(
+      await this.classesRepository.findClassWithFullRelationsOrThrow(
         classId,
         includeDeleted,
       );

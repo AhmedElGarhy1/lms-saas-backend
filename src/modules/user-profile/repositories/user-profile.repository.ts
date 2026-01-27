@@ -164,14 +164,15 @@ export class UserProfileRepository extends BaseRepository<UserProfile> {
   }
 
   /**
-   * Find a user profile with optimized relations loaded
-   * Includes user data and audit relations (creator, updater, deleter)
+   * Find a user profile by ID optimized for API responses.
+   * Loads user relation fully (needed for profile display) and selective audit fields.
+   * Use this method when returning data to API clients.
    *
    * @param userProfileId - User profile ID
    * @param includeDeleted - Whether to include soft-deleted profiles
-   * @returns UserProfile with user and audit relations
+   * @returns UserProfile with user relation fully loaded and selective audit fields, or null if not found
    */
-  async findUserProfileWithRelations(
+  async findUserProfileForResponse(
     userProfileId: string,
     includeDeleted: boolean = false,
   ): Promise<UserProfile | null> {
@@ -208,18 +209,70 @@ export class UserProfileRepository extends BaseRepository<UserProfile> {
   }
 
   /**
-   * Find a user profile with optimized relations loaded or throw if not found
+   * Find a user profile by ID optimized for API responses, throws if not found.
+   * Loads user relation fully (needed for profile display) and selective audit fields.
+   * Use this method when returning data to API clients.
    *
    * @param userProfileId - User profile ID
    * @param includeDeleted - Whether to include soft-deleted profiles
-   * @returns UserProfile with user and audit relations
-   * @throws User profile not found error
+   * @returns UserProfile with user relation fully loaded and selective audit fields
+   * @throws Error if user profile not found
    */
-  async findUserProfileWithRelationsOrThrow(
+  async findUserProfileForResponseOrThrow(
     userProfileId: string,
     includeDeleted: boolean = false,
   ): Promise<UserProfile> {
-    const userProfile = await this.findUserProfileWithRelations(
+    const userProfile = await this.findUserProfileForResponse(
+      userProfileId,
+      includeDeleted,
+    );
+    if (!userProfile) {
+      throw new Error(`User profile with id ${userProfileId} not found`);
+    }
+    return userProfile;
+  }
+
+  /**
+   * Find a user profile by ID with full relations loaded for internal use.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param userProfileId - User profile ID
+   * @param includeDeleted - Whether to include soft-deleted profiles
+   * @returns UserProfile with full relations loaded, or null if not found
+   */
+  async findUserProfileWithFullRelations(
+    userProfileId: string,
+    includeDeleted: boolean = false,
+  ): Promise<UserProfile | null> {
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('userProfile')
+      // Load FULL entities using leftJoinAndSelect for all relations
+      .leftJoinAndSelect('userProfile.user', 'user')
+      .where('userProfile.id = :userProfileId', { userProfileId });
+
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
+  }
+
+  /**
+   * Find a user profile by ID with full relations loaded for internal use, throws if not found.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param userProfileId - User profile ID
+   * @param includeDeleted - Whether to include soft-deleted profiles
+   * @returns UserProfile with full relations loaded
+   * @throws Error if user profile not found
+   */
+  async findUserProfileWithFullRelationsOrThrow(
+    userProfileId: string,
+    includeDeleted: boolean = false,
+  ): Promise<UserProfile> {
+    const userProfile = await this.findUserProfileWithFullRelations(
       userProfileId,
       includeDeleted,
     );

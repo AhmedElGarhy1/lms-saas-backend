@@ -29,14 +29,10 @@ export class SubjectsService extends BaseService {
     actor: ActorUser,
     includeDeleted = false,
   ) {
-    const subject = await this.subjectsRepository.findSubjectWithRelations(
+    const subject = await this.subjectsRepository.findSubjectForResponseOrThrow(
       subjectId,
       includeDeleted,
     );
-
-    if (!subject) {
-      throw SubjectsErrors.subjectNotFound();
-    }
 
     return subject;
   }

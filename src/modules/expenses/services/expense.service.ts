@@ -171,7 +171,7 @@ export class ExpenseService extends BaseService {
     dto: UpdateExpenseDto,
     actor: ActorUser,
   ): Promise<Expense> {
-    const expense = await this.expenseRepository.findOneOrThrow(id);
+    const expense = await this.expenseRepository.findExpenseForResponseOrThrow(id);
 
     // Validate center access
     await this.accessControlHelperService.validateCenterAccess({
@@ -234,7 +234,7 @@ export class ExpenseService extends BaseService {
    */
   @Transactional()
   async refundExpense(id: string, actor: ActorUser): Promise<Expense> {
-    const expense = await this.expenseRepository.findOneOrThrow(id);
+    const expense = await this.expenseRepository.findExpenseForResponseOrThrow(id);
 
     // Validate center access
     await this.accessControlHelperService.validateCenterAccess({
@@ -278,7 +278,7 @@ export class ExpenseService extends BaseService {
    * Get single expense with access control
    */
   async getExpense(id: string, actor: ActorUser): Promise<Expense> {
-    const expense = await this.expenseRepository.findOneOrThrow(id);
+    const expense = await this.expenseRepository.findExpenseForResponseOrThrow(id);
 
     // Validate center access
     await this.accessControlHelperService.validateCenterAccess({

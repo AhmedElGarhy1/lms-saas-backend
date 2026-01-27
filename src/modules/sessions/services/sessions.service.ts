@@ -1089,7 +1089,7 @@ export class SessionsService extends BaseService {
 
     // 2. If real session exists, load it with all required relations
     if (resolved.isReal && resolved.realSession) {
-      return await this.sessionsRepository.findSessionWithRelationsOrThrow(
+      return await this.sessionsRepository.findSessionForResponseOrThrow(
         resolved.realSession.id,
       );
     }

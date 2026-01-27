@@ -24,9 +24,18 @@ export class ExpenseRepository extends BaseRepository<Expense> {
   }
 
   /**
-   * Find expense by ID with relations
+   * Find an expense by ID optimized for API responses.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
+   *
+   * @param id - Expense ID
+   * @param includeDeleted - Whether to include soft-deleted expenses
+   * @returns Expense with selective relation fields, or null if not found
    */
-  async findExpenseWithRelations(id: string): Promise<Expense | null> {
+  async findExpenseForResponse(
+    id: string,
+    includeDeleted: boolean = false,
+  ): Promise<Expense | null> {
     const queryBuilder = this.getRepository()
       .createQueryBuilder('expense')
       // Join relations for id and name fields only (not full entities)
@@ -54,20 +63,89 @@ export class ExpenseRepository extends BaseRepository<Expense> {
       ])
       .where('expense.id = :id', { id });
 
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
     return queryBuilder.getOne();
   }
 
   /**
-   * Find expense by ID or throw
+   * Find an expense by ID optimized for API responses, throws if not found.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
+   *
+   * @param id - Expense ID
+   * @param includeDeleted - Whether to include soft-deleted expenses
+   * @returns Expense with selective relation fields
+   * @throws Error if expense not found
    */
-  async findOneOrThrow(id: string): Promise<Expense> {
-    const expense = await this.findExpenseWithRelations(id);
-
+  async findExpenseForResponseOrThrow(
+    id: string,
+    includeDeleted: boolean = false,
+  ): Promise<Expense> {
+    const expense = await this.findExpenseForResponse(id, includeDeleted);
     if (!expense) {
       throw ExpensesErrors.expenseNotFound();
     }
-
     return expense;
+  }
+
+  /**
+   * Find an expense by ID with full relations loaded for internal use.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param id - Expense ID
+   * @param includeDeleted - Whether to include soft-deleted expenses
+   * @returns Expense with full relations loaded, or null if not found
+   */
+  async findExpenseWithFullRelations(
+    id: string,
+    includeDeleted: boolean = false,
+  ): Promise<Expense | null> {
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('expense')
+      // Load FULL entities using leftJoinAndSelect for all relations
+      .leftJoinAndSelect('expense.center', 'center')
+      .leftJoinAndSelect('expense.branch', 'branch')
+      .leftJoinAndSelect('expense.payment', 'payment')
+      .where('expense.id = :id', { id });
+
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
+  }
+
+  /**
+   * Find an expense by ID with full relations loaded for internal use, throws if not found.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param id - Expense ID
+   * @param includeDeleted - Whether to include soft-deleted expenses
+   * @returns Expense with full relations loaded
+   * @throws Error if expense not found
+   */
+  async findExpenseWithFullRelationsOrThrow(
+    id: string,
+    includeDeleted: boolean = false,
+  ): Promise<Expense> {
+    const expense = await this.findExpenseWithFullRelations(id, includeDeleted);
+    if (!expense) {
+      throw ExpensesErrors.expenseNotFound();
+    }
+    return expense;
+  }
+
+  /**
+   * Find expense by ID or throw
+   * @deprecated Use findExpenseForResponseOrThrow instead
+   */
+  async findOneOrThrow(id: string): Promise<Expense> {
+    return this.findExpenseForResponseOrThrow(id);
   }
 
   /**
@@ -183,9 +261,7 @@ export class ExpenseRepository extends BaseRepository<Expense> {
    * Find expense by idempotency key
    * Used to prevent duplicate expense creation on retries
    */
-  async findByIdempotencyKey(
-    idempotencyKey: string,
-  ): Promise<Expense | null> {
+  async findByIdempotencyKey(idempotencyKey: string): Promise<Expense | null> {
     return this.getRepository().findOne({
       where: { idempotencyKey },
     });

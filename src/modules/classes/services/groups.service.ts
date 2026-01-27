@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateGroupDto } from '../dto/create-group.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
 import { PaginateGroupsDto } from '../dto/paginate-groups.dto';
@@ -85,7 +85,7 @@ export class GroupsService extends BaseService {
     actor: ActorUser,
     includeDeleted = false,
   ): Promise<Group> {
-    const group = await this.groupsRepository.findGroupWithRelationsOrThrow(
+    const group = await this.groupsRepository.findGroupForResponseOrThrow(
       groupId,
       includeDeleted,
     );
@@ -193,7 +193,7 @@ export class GroupsService extends BaseService {
     data: UpdateGroupDto,
     actor: ActorUser,
   ): Promise<Group> {
-    const group = await this.groupsRepository.findGroupWithRelationsOrThrow(
+    const group = await this.groupsRepository.findGroupForResponseOrThrow(
       groupId,
       false,
     );
@@ -273,7 +273,7 @@ export class GroupsService extends BaseService {
         // Real sessions for removed schedule items are already deleted in Step 1
 
         const updatedGroup =
-          await this.groupsRepository.findGroupWithRelationsOrThrow(
+          await this.groupsRepository.findGroupForResponseOrThrow(
             groupId,
             false,
           );
@@ -340,7 +340,7 @@ export class GroupsService extends BaseService {
    * @throws InsufficientPermissionsException if actor doesn't have access
    */
   async deleteGroup(groupId: string, actor: ActorUser): Promise<void> {
-    const group = await this.groupsRepository.findGroupWithRelationsOrThrow(
+    const group = await this.groupsRepository.findGroupForResponseOrThrow(
       groupId,
       false,
     );

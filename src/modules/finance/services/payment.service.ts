@@ -258,7 +258,7 @@ export class PaymentService extends BaseService {
    */
   async getPaymentWithRelations(paymentId: string): Promise<Payment> {
     // Get the payment with relations - access control is handled at the list level
-    return await this.paymentRepository.findPaymentWithRelationsOrThrow(
+    return await this.paymentRepository.findPaymentForResponseOrThrow(
       paymentId,
     );
   }

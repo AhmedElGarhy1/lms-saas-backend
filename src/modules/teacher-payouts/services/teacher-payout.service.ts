@@ -100,10 +100,7 @@ export class TeacherPayoutService extends BaseService {
     actor: ActorUser,
   ): Promise<TeacherPayoutRecord> {
     const payout =
-      await this.payoutRepository.findTeacherPayoutWithRelations(id);
-    if (!payout) {
-      throw TeacherPayoutErrors.payoutNotFound();
-    }
+      await this.payoutRepository.findTeacherPayoutForResponseOrThrow(id);
 
     // Validate access to the payout's branch and class
     await this.validatePayoutAccessForActor(payout, actor);
@@ -357,7 +354,7 @@ export class TeacherPayoutService extends BaseService {
     // Validate related entities are active
     if (payout.classId) {
       const classWithRelations =
-        await this.classesRepository.findClassWithRelationsOrThrow(
+        await this.classesRepository.findClassWithFullRelationsOrThrow(
           payout.classId,
         );
       if (classWithRelations.center && !classWithRelations.center.isActive) {

@@ -42,14 +42,15 @@ export class LevelsRepository extends BaseRepository<Level> {
   }
 
   /**
-   * Find a level with optimized relations loaded
-   * Only loads id and name fields for center relation
+   * Find a level by ID optimized for API responses.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param levelId - Level ID
    * @param includeDeleted - Whether to include soft-deleted levels
-   * @returns Level with center.id and center.name only
+   * @returns Level with selective relation fields, or null if not found
    */
-  async findLevelWithRelations(
+  async findLevelForResponse(
     levelId: string,
     includeDeleted: boolean = false,
   ): Promise<Level | null> {
@@ -89,18 +90,70 @@ export class LevelsRepository extends BaseRepository<Level> {
   }
 
   /**
-   * Find a level with optimized relations loaded or throw if not found
+   * Find a level by ID optimized for API responses, throws if not found.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param levelId - Level ID
    * @param includeDeleted - Whether to include soft-deleted levels
-   * @returns Level with center.id and center.name only
-   * @throws Level not found error
+   * @returns Level with selective relation fields
+   * @throws Error if level not found
    */
-  async findLevelWithRelationsOrThrow(
+  async findLevelForResponseOrThrow(
     levelId: string,
     includeDeleted: boolean = false,
   ): Promise<Level> {
-    const level = await this.findLevelWithRelations(levelId, includeDeleted);
+    const level = await this.findLevelForResponse(levelId, includeDeleted);
+    if (!level) {
+      throw new Error(`Level with id ${levelId} not found`);
+    }
+    return level;
+  }
+
+  /**
+   * Find a level by ID with full relations loaded for internal use.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param levelId - Level ID
+   * @param includeDeleted - Whether to include soft-deleted levels
+   * @returns Level with full relations loaded, or null if not found
+   */
+  async findLevelWithFullRelations(
+    levelId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Level | null> {
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('level')
+      // Load FULL entities using leftJoinAndSelect for all relations
+      .leftJoinAndSelect('level.center', 'center')
+      .where('level.id = :levelId', { levelId });
+
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
+  }
+
+  /**
+   * Find a level by ID with full relations loaded for internal use, throws if not found.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param levelId - Level ID
+   * @param includeDeleted - Whether to include soft-deleted levels
+   * @returns Level with full relations loaded
+   * @throws Error if level not found
+   */
+  async findLevelWithFullRelationsOrThrow(
+    levelId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Level> {
+    const level = await this.findLevelWithFullRelations(
+      levelId,
+      includeDeleted,
+    );
     if (!level) {
       throw new Error(`Level with id ${levelId} not found`);
     }

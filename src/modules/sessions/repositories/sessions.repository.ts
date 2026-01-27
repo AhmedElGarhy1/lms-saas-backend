@@ -157,15 +157,19 @@ export class SessionsRepository extends BaseRepository<Session> {
   }
 
   /**
-   * Find a session by ID with all required relations loaded
-   * Used for single session retrieval to ensure consistent response structure
+   * Find a session by ID optimized for API responses.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param sessionId - Session ID
-   * @returns Session with relations (group, branch, class, teacher, teacher.user)
-   * @throws SessionsErrors.sessionNotFound() if session doesn't exist
+   * @param includeDeleted - Whether to include soft-deleted sessions
+   * @returns Session with selective relation fields, or null if not found
    */
-  async findSessionWithRelationsOrThrow(sessionId: string): Promise<Session> {
-    const session = await this.getRepository()
+  async findSessionForResponse(
+    sessionId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Session | null> {
+    const queryBuilder = this.getRepository()
       .createQueryBuilder('session')
       // Join relations for name fields only (not full entities)
       .leftJoin('session.group', 'group')
@@ -200,13 +204,90 @@ export class SessionsRepository extends BaseRepository<Session> {
         'updaterUser.id',
         'updaterUser.name',
       ])
-      .where('session.id = :sessionId', { sessionId })
-      .getOne();
+      .where('session.id = :sessionId', { sessionId });
 
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
+  }
+
+  /**
+   * Find a session by ID optimized for API responses, throws if not found.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
+   *
+   * @param sessionId - Session ID
+   * @param includeDeleted - Whether to include soft-deleted sessions
+   * @returns Session with selective relation fields
+   * @throws Error if session not found
+   */
+  async findSessionForResponseOrThrow(
+    sessionId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Session> {
+    const session = await this.findSessionForResponse(
+      sessionId,
+      includeDeleted,
+    );
     if (!session) {
       throw SessionsErrors.sessionNotFound();
     }
+    return session;
+  }
 
+  /**
+   * Find a session by ID with full relations loaded for internal use.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param sessionId - Session ID
+   * @param includeDeleted - Whether to include soft-deleted sessions
+   * @returns Session with full relations loaded, or null if not found
+   */
+  async findSessionWithFullRelations(
+    sessionId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Session | null> {
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('session')
+      // Load FULL entities using leftJoinAndSelect for all relations
+      .leftJoinAndSelect('session.group', 'group')
+      .leftJoinAndSelect('session.class', 'class')
+      .leftJoinAndSelect('session.branch', 'branch')
+      .leftJoinAndSelect('session.center', 'center')
+      .leftJoinAndSelect('session.teacher', 'teacher')
+      .leftJoinAndSelect('teacher.user', 'teacherUser');
+
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
+  }
+
+  /**
+   * Find a session by ID with full relations loaded for internal use, throws if not found.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param sessionId - Session ID
+   * @param includeDeleted - Whether to include soft-deleted sessions
+   * @returns Session with full relations loaded
+   * @throws Error if session not found
+   */
+  async findSessionWithFullRelationsOrThrow(
+    sessionId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Session> {
+    const session = await this.findSessionWithFullRelations(
+      sessionId,
+      includeDeleted,
+    );
+    if (!session) {
+      throw SessionsErrors.sessionNotFound();
+    }
     return session;
   }
 

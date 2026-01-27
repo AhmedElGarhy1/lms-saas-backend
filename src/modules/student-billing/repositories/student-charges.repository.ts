@@ -241,14 +241,15 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
   }
 
   /**
-   * Find a student charge with optimized relations loaded
-   * Only loads id and name/code fields for related entities
+   * Find a student charge by ID optimized for API responses.
+   * Selects only necessary fields (id, name, code, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param chargeId - Student charge ID
    * @param includeDeleted - Reserved for future use (StudentCharge doesn't have soft delete)
-   * @returns StudentCharge with optimized relations
+   * @returns StudentCharge with selective relation fields, or null if not found
    */
-  async findStudentChargeWithRelations(
+  async findStudentChargeForResponse(
     chargeId: string,
     includeDeleted: boolean = false,
   ): Promise<StudentCharge | null> {
@@ -295,18 +296,78 @@ export class StudentChargesRepository extends BaseRepository<StudentCharge> {
   }
 
   /**
-   * Find a student charge with optimized relations loaded or throw if not found
+   * Find a student charge by ID optimized for API responses, throws if not found.
+   * Selects only necessary fields (id, name, code, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param chargeId - Student charge ID
    * @param includeDeleted - Reserved for future use (StudentCharge doesn't have soft delete)
-   * @returns StudentCharge with optimized relations
-   * @throws Student charge not found error
+   * @returns StudentCharge with selective relation fields
+   * @throws Error if student charge not found
    */
-  async findStudentChargeWithRelationsOrThrow(
+  async findStudentChargeForResponseOrThrow(
     chargeId: string,
     includeDeleted: boolean = false,
   ): Promise<StudentCharge> {
-    const charge = await this.findStudentChargeWithRelations(
+    const charge = await this.findStudentChargeForResponse(
+      chargeId,
+      includeDeleted,
+    );
+    if (!charge) {
+      throw StudentBillingErrors.billingRecordNotFound();
+    }
+    return charge;
+  }
+
+  /**
+   * Find a student charge by ID with full relations loaded for internal use.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param chargeId - Student charge ID
+   * @param includeDeleted - Reserved for future use (StudentCharge doesn't have soft delete)
+   * @returns StudentCharge with full relations loaded, or null if not found
+   */
+  async findStudentChargeWithFullRelations(
+    chargeId: string,
+    includeDeleted: boolean = false,
+  ): Promise<StudentCharge | null> {
+    return (
+      this.getRepository()
+        .createQueryBuilder('charge')
+        // Load FULL entities using leftJoinAndSelect for all relations
+        .leftJoinAndSelect('charge.student', 'student')
+        .leftJoinAndSelect('student.user', 'studentUser')
+        .leftJoinAndSelect('charge.class', 'class')
+        .leftJoinAndSelect('charge.session', 'session')
+        .leftJoinAndSelect('charge.branch', 'branch')
+        .leftJoinAndSelect('charge.center', 'center')
+        .leftJoinAndSelect('charge.payments', 'payments')
+        // Load full audit relations
+        .leftJoinAndSelect('charge.creator', 'creator')
+        .leftJoinAndSelect('creator.user', 'creatorUser')
+        .leftJoinAndSelect('charge.updater', 'updater')
+        .leftJoinAndSelect('updater.user', 'updaterUser')
+        .where('charge.id = :chargeId', { chargeId })
+        .getOne()
+    );
+  }
+
+  /**
+   * Find a student charge by ID with full relations loaded for internal use, throws if not found.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param chargeId - Student charge ID
+   * @param includeDeleted - Reserved for future use (StudentCharge doesn't have soft delete)
+   * @returns StudentCharge with full relations loaded
+   * @throws Error if student charge not found
+   */
+  async findStudentChargeWithFullRelationsOrThrow(
+    chargeId: string,
+    includeDeleted: boolean = false,
+  ): Promise<StudentCharge> {
+    const charge = await this.findStudentChargeWithFullRelations(
       chargeId,
       includeDeleted,
     );

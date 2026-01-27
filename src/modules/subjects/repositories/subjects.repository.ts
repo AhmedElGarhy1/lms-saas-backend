@@ -42,14 +42,15 @@ export class SubjectsRepository extends BaseRepository<Subject> {
   }
 
   /**
-   * Find a subject with optimized relations loaded
-   * Only loads id and name fields for center relation
+   * Find a subject by ID optimized for API responses.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param subjectId - Subject ID
    * @param includeDeleted - Whether to include soft-deleted subjects
-   * @returns Subject with center.id and center.name only
+   * @returns Subject with selective relation fields, or null if not found
    */
-  async findSubjectWithRelations(
+  async findSubjectForResponse(
     subjectId: string,
     includeDeleted: boolean = false,
   ): Promise<Subject | null> {
@@ -89,18 +90,70 @@ export class SubjectsRepository extends BaseRepository<Subject> {
   }
 
   /**
-   * Find a subject with optimized relations loaded or throw if not found
+   * Find a subject by ID optimized for API responses, throws if not found.
+   * Selects only necessary fields (id, name, etc.) from relations for serialization.
+   * Use this method when returning data to API clients to minimize response size.
    *
    * @param subjectId - Subject ID
    * @param includeDeleted - Whether to include soft-deleted subjects
-   * @returns Subject with center.id and center.name only
-   * @throws Subject not found error
+   * @returns Subject with selective relation fields
+   * @throws Error if subject not found
    */
-  async findSubjectWithRelationsOrThrow(
+  async findSubjectForResponseOrThrow(
     subjectId: string,
     includeDeleted: boolean = false,
   ): Promise<Subject> {
-    const subject = await this.findSubjectWithRelations(
+    const subject = await this.findSubjectForResponse(
+      subjectId,
+      includeDeleted,
+    );
+    if (!subject) {
+      throw new Error(`Subject with id ${subjectId} not found`);
+    }
+    return subject;
+  }
+
+  /**
+   * Find a subject by ID with full relations loaded for internal use.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param subjectId - Subject ID
+   * @param includeDeleted - Whether to include soft-deleted subjects
+   * @returns Subject with full relations loaded, or null if not found
+   */
+  async findSubjectWithFullRelations(
+    subjectId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Subject | null> {
+    const queryBuilder = this.getRepository()
+      .createQueryBuilder('subject')
+      // Load FULL entities using leftJoinAndSelect for all relations
+      .leftJoinAndSelect('subject.center', 'center')
+      .where('subject.id = :subjectId', { subjectId });
+
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
+  }
+
+  /**
+   * Find a subject by ID with full relations loaded for internal use, throws if not found.
+   * Loads complete entity objects with all properties accessible (e.g., isActive, etc.).
+   * Use this method for business logic that needs to access any property of related entities.
+   *
+   * @param subjectId - Subject ID
+   * @param includeDeleted - Whether to include soft-deleted subjects
+   * @returns Subject with full relations loaded
+   * @throws Error if subject not found
+   */
+  async findSubjectWithFullRelationsOrThrow(
+    subjectId: string,
+    includeDeleted: boolean = false,
+  ): Promise<Subject> {
+    const subject = await this.findSubjectWithFullRelations(
       subjectId,
       includeDeleted,
     );
