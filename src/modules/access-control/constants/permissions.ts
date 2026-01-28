@@ -651,6 +651,14 @@ export const PERMISSIONS = {
       scope: PermissionScope.ADMIN,
     },
   },
+
+  // ===== NOTIFICATIONS PERMISSIONS =====
+  NOTIFICATIONS: {
+    READ_HISTORY: {
+      action: 'notifications:read-history',
+      scope: PermissionScope.ADMIN,
+    },
+  },
 } as const;
 
 export type PermissionsObject = typeof PERMISSIONS;

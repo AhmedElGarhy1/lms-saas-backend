@@ -11,12 +11,12 @@ import { Payment } from '../entities/payment.entity';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 
 @ApiTags('Payments')
-@ApiBearerAuth()
 @Controller('finance/payments')
 export class PaymentsController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Get(':paymentId')
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get payment details',
     description:

@@ -19,10 +19,7 @@ import { PaymentReason } from '../enums/payment-reason.enum';
 import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { Money } from '@/shared/common/utils/money.util';
-import {
-  PaymentGatewayType,
-  PaymentGatewayMethod,
-} from '../adapters/interfaces/payment-gateway.interface';
+import { PaymentGatewayType } from '../adapters/interfaces/payment-gateway.interface';
 
 @Injectable()
 export class PaymentOrchestratorService {
@@ -128,7 +125,6 @@ export class PaymentOrchestratorService {
     description?: string,
     gatewayType?: PaymentGatewayType,
     idempotencyKey?: string,
-    methodType?: PaymentGatewayMethod,
   ): Promise<{
     payment: Payment;
     checkoutUrl: string;
@@ -149,7 +145,6 @@ export class PaymentOrchestratorService {
           gatewayType,
           currency,
           description,
-          methodType,
         },
       },
       actor,

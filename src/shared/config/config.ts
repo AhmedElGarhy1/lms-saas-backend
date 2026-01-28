@@ -75,15 +75,11 @@ export const Config = {
       hmacSecret: env.PAYMOB_HMAC_SECRET,
 
       // Integration IDs for different payment methods
+      // Users select payment method on Paymob's unified checkout page
       cardIntegrationId: env.PAYMOB_CARD_INTEGRATION_ID,
       walletIntegrationId: env.PAYMOB_WALLET_INTEGRATION_ID,
       paypalIntegrationId: env.PAYMOB_PAYPAL_INTEGRATION_ID,
-
-      // Iframe ID for hosted checkout
-      iframeId: env.PAYMOB_IFRAME_ID,
-
-      // Legacy field for backward compatibility
-      integrationId: env.PAYMOB_INTEGRATION_ID,
+      kioskIntegrationId: env.PAYMOB_KIOSK_INTEGRATION_ID,
 
       notificationUrl: env.PAYMOB_NOTIFICATION_URL,
       redirectionUrl: env.PAYMOB_REDIRECTION_URL,

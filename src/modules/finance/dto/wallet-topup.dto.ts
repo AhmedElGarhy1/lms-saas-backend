@@ -1,6 +1,5 @@
-import { IsNumber, Min, IsOptional, IsString, IsEnum } from 'class-validator';
+import { IsNumber, Min, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { PaymentGatewayMethod } from '../adapters/interfaces/payment-gateway.interface';
 
 export class WalletTopupDto {
   @ApiProperty({
@@ -21,15 +20,4 @@ export class WalletTopupDto {
   @IsOptional()
   @IsString()
   idempotencyKey?: string;
-
-  @ApiProperty({
-    description: 'Payment gateway method',
-    example: 'CARD',
-    enum: PaymentGatewayMethod,
-    required: false,
-    default: PaymentGatewayMethod.CARD,
-  })
-  @IsOptional()
-  @IsEnum(PaymentGatewayMethod)
-  methodType?: PaymentGatewayMethod;
 }

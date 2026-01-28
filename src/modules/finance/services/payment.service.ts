@@ -26,10 +26,7 @@ import { mapPaymentReasonToTransactionType } from '../utils/payment-reason-mappe
 import { PaginatePaymentDto } from '../dto/paginate-payment.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { UserPaymentStatementItemDto } from '../dto/payment-statement.dto';
-import {
-  PaymentGatewayType,
-  PaymentGatewayMethod,
-} from '../adapters/interfaces/payment-gateway.interface';
+import { PaymentGatewayType } from '../adapters/interfaces/payment-gateway.interface';
 import { ActorUser } from '@/shared/common/types/actor-user.type';
 import { ExternalPaymentService } from './external-payment.service';
 import { PaymentOrchestratorService } from './payment-orchestrator.service';
@@ -400,7 +397,9 @@ export class PaymentService extends BaseService {
     const cashbox = await this.cashboxService.getCashbox(branchId);
 
     // Determine transaction type for cash transaction based on payment reason
-    const cashTransactionType = mapPaymentReasonToTransactionType(payment.reason);
+    const cashTransactionType = mapPaymentReasonToTransactionType(
+      payment.reason,
+    );
 
     // Calculate balance after transaction
     const currentBalance = cashbox.balance;
@@ -625,7 +624,6 @@ export class PaymentService extends BaseService {
     description?: string,
     gatewayType: PaymentGatewayType = PaymentGatewayType.PAYMOB,
     idempotencyKey?: string,
-    methodType?: PaymentGatewayMethod,
   ): Promise<{
     payment: Payment;
     checkoutUrl: string;
@@ -640,7 +638,6 @@ export class PaymentService extends BaseService {
       description,
       gatewayType,
       idempotencyKey,
-      methodType,
     );
   }
 

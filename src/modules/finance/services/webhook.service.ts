@@ -41,24 +41,92 @@ export class WebhookService {
     if (attempt) {
       // Idempotency: Return existing processed attempt
       if (attempt.status === WebhookStatus.PROCESSED) {
-        this.logger.log(`Webhook already processed: ${provider}:${externalId}`);
+        this.logger.log(
+          `Webhook already processed (idempotent): ${provider}:${externalId}, attemptCount: ${attempt.attemptCount}`,
+        );
         return attempt;
       }
 
-      // Update attempt count for retry
-      attempt.attemptCount += 1;
-      await this.webhookAttemptRepository.create(attempt); // This will update existing entity
+      // If currently processing, return existing attempt (idempotent)
+      // This prevents duplicate processing when Paymob retries
+      if (attempt.status === WebhookStatus.PROCESSING) {
+        this.logger.log(
+          `Webhook already processing (idempotent): ${provider}:${externalId}, attemptCount: ${attempt.attemptCount}`,
+        );
+        return attempt;
+      }
+
+      // Only allow retry for failed or scheduled retry attempts
+      if (
+        attempt.status === WebhookStatus.FAILED ||
+        attempt.status === WebhookStatus.RETRY_SCHEDULED
+      ) {
+        // Update attempt count for retry
+        attempt.attemptCount += 1;
+        this.logger.log(
+          `Webhook retry attempt #${attempt.attemptCount}: ${provider}:${externalId}`,
+        );
+        await this.webhookAttemptRepository.create(attempt); // This will update existing entity
+      } else {
+        // For other statuses (RECEIVED), return existing attempt (idempotent)
+        this.logger.log(
+          `Webhook already received (idempotent): ${provider}:${externalId}, status: ${attempt.status}`,
+        );
+        return attempt;
+      }
     } else {
-      // Create new attempt
-      attempt = await this.webhookAttemptRepository.create({
-        provider,
-        externalId,
-        payload,
-        signature,
-        ipAddress,
-        status: WebhookStatus.RECEIVED,
-        attemptCount: 1,
-      });
+      // Try to create new attempt
+      // Handle unique constraint violation (race condition: duplicate webhook)
+      try {
+        attempt = await this.webhookAttemptRepository.create({
+          provider,
+          externalId,
+          payload,
+          signature,
+          ipAddress,
+          status: WebhookStatus.RECEIVED,
+          attemptCount: 1,
+        });
+      } catch (error: any) {
+        // Handle unique constraint violation (PostgreSQL error code 23505)
+        // This happens when Paymob sends duplicate webhooks simultaneously
+        if (
+          error.code === '23505' ||
+          error.message?.includes('unique constraint') ||
+          error.message?.includes('duplicate key')
+        ) {
+          // Fetch existing attempt (another request created it)
+          attempt =
+            await this.webhookAttemptRepository.findByProviderAndExternalId(
+              provider,
+              externalId,
+            );
+
+          if (!attempt) {
+            // Should not happen, but re-throw if we can't find it
+            this.logger.error(
+              `Unique constraint violation but attempt not found: ${provider}:${externalId}`,
+            );
+            throw error;
+          }
+
+          this.logger.log(
+            `Duplicate webhook detected (race condition handled): ${provider}:${externalId}, status: ${attempt.status}`,
+          );
+
+          // Return existing attempt (idempotent)
+          // If already processed/processing, return immediately
+          if (
+            attempt.status === WebhookStatus.PROCESSED ||
+            attempt.status === WebhookStatus.PROCESSING
+          ) {
+            return attempt;
+          }
+        } else {
+          // Re-throw other errors
+          throw error;
+        }
+      }
     }
 
     try {
@@ -163,14 +231,19 @@ export class WebhookService {
    */
   private async processPaymobWebhook(payload: any): Promise<any> {
     try {
-      // Paymob webhooks typically contain transaction data
-      const transactionId =
-        payload?.id || payload?.transaction_id || payload?.obj?.id;
-      const transactionData = payload?.obj || payload;
+      // Paymob webhooks contain transaction data in 'obj' field
+      // Extract obj field (transaction data) - this is the primary source
+      const obj = payload?.obj || payload;
+
+      // Prioritize extracting transaction ID from obj field
+      const transactionId = obj?.id || payload?.id || payload?.transaction_id;
 
       if (!transactionId) {
         throw FinanceErrors.webhookTransactionIdMissing();
       }
+
+      // Use obj as the transaction data (this is what Paymob sends)
+      const transactionData = obj;
 
       // Map Paymob webhook event to our WebhookEvent interface
       const webhookEvent: WebhookEvent = {
@@ -224,7 +297,24 @@ export class WebhookService {
    * Map Paymob webhook event types to our internal event types
    */
   private mapPaymobEventType(payload: any): string {
-    const type = payload?.type || payload?.event_type || payload?.obj?.type;
+    // Paymob webhooks contain transaction data in 'obj' field
+    const obj = payload?.obj || payload;
+
+    // Check for explicit event type
+    const type = payload?.type || payload?.event_type || obj?.type;
+
+    // If no explicit type, determine from success flag in obj
+    if (!type && obj?.success !== undefined) {
+      if (obj.success === true) {
+        return 'TRANSACTION_COMPLETED';
+      } else if (obj.success === false) {
+        // Check if there's an error to determine if it's failed or cancelled
+        if (obj.error_occured === true || obj.pending === false) {
+          return 'TRANSACTION_FAILED';
+        }
+        return 'TRANSACTION_CANCELLED';
+      }
+    }
 
     // Map common Paymob event types
     switch (type) {

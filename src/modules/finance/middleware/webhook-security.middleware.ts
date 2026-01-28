@@ -12,11 +12,9 @@ export class WebhookSecurityMiddleware implements NestMiddleware {
   private readonly logger = new Logger(WebhookSecurityMiddleware.name);
 
   // Known IP ranges for webhook providers (add to config)
+  // Note: Paymob does not provide IP ranges - they use HMAC signature validation instead
   private readonly ALLOWED_IPS = {
-    [WebhookProvider.PAYMOB]: [
-      '41.33.160.0/19', // Paymob IP range - should be verified and updated
-      '156.200.0.0/16', // Additional Paymob IP range
-    ],
+    [WebhookProvider.PAYMOB]: [], // Paymob uses HMAC signature validation, not IP whitelisting
   };
 
   private requestCounts = new Map<
@@ -31,8 +29,14 @@ export class WebhookSecurityMiddleware implements NestMiddleware {
       const clientIP = this.getClientIP(req);
       const provider = this.getProviderFromPath(req.path);
 
-      // 1. IP Whitelisting
-      if (!this.isAllowedIP(clientIP, provider)) {
+      // 1. IP Whitelisting (skip for Paymob - they use HMAC signature validation)
+      // Paymob does not provide IP ranges, security is handled via HMAC signature
+      if (provider === WebhookProvider.PAYMOB) {
+        // Skip IP whitelisting for Paymob - rely on HMAC signature validation
+        this.logger.debug(
+          `Skipping IP whitelist for Paymob (uses HMAC): ${clientIP}`,
+        );
+      } else if (!this.isAllowedIP(clientIP, provider)) {
         this.logger.warn(
           `Blocked webhook from unauthorized IP: ${clientIP} for ${provider}`,
         );
@@ -94,7 +98,7 @@ export class WebhookSecurityMiddleware implements NestMiddleware {
     // TODO: Move ALLOWED_IPS to configuration service
     const allowedIPs = this.ALLOWED_IPS[provider] || [];
 
-    return allowedIPs.some((allowedIP) => {
+    return allowedIPs.some((allowedIP: string) => {
       if (allowedIP.includes('/')) {
         // Handle CIDR notation properly
         return this.isIPInCIDR(ip, allowedIP);

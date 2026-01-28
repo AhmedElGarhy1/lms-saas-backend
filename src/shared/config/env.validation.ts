@@ -112,26 +112,21 @@ export const env = cleanEnv(process.env, {
   }),
 
   // Paymob Integration IDs for different payment methods
+  // At least one integration ID must be configured for unified checkout
   PAYMOB_CARD_INTEGRATION_ID: str({
-    desc: 'Paymob Integration ID for Credit Cards',
+    desc: 'Paymob Integration ID for Credit/Debit Cards (from Developers → Payment Integrations)',
+    default: '',
   }),
   PAYMOB_WALLET_INTEGRATION_ID: str({
     desc: 'Paymob Integration ID for Mobile Wallets (Vodafone Cash, etc.)',
+    default: '',
   }),
   PAYMOB_PAYPAL_INTEGRATION_ID: str({
-    desc: 'Paymob Integration ID for PayPal (optional)',
+    desc: 'Paymob Integration ID for PayPal',
     default: '',
   }),
-
-  // Iframe ID for hosted checkout
-  PAYMOB_IFRAME_ID: str({
-    desc: 'Paymob Iframe ID for hosted credit card checkout',
-    default: '',
-  }),
-
-  // Legacy field for backward compatibility
-  PAYMOB_INTEGRATION_ID: str({
-    desc: 'Legacy Paymob Integration ID (use specific IDs above)',
+  PAYMOB_KIOSK_INTEGRATION_ID: str({
+    desc: 'Paymob Integration ID for Kiosk Payments',
     default: '',
   }),
   PAYMOB_NOTIFICATION_URL: str({

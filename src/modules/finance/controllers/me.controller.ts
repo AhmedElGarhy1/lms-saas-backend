@@ -148,7 +148,6 @@ export class MeController {
       'Wallet Top-up', // Description
       undefined, // gatewayType - defaults to Paymob
       dto.idempotencyKey,
-      dto.methodType, // Payment method type
     );
 
     return ControllerResponse.success(result);

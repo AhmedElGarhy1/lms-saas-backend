@@ -7,29 +7,18 @@ export enum PaymentGatewayType {
   // PAYPAL = 'paypal',
 }
 
-export enum PaymentGatewayMethod {
-  CARD = 'CARD',
-  MOBILE_WALLET = 'MOBILE_WALLET',
-  PAYPAL = 'PAYPAL',
-  TEST = 'TEST', // For testing purposes - simulates payment without calling gateway
-}
-
 export interface PaymentGatewayConfig {
   apiKey: string;
   publicKey: string;
   secretKey: string; // API Secret Key
   hmacSecret: string; // HMAC Secret for webhook validation
 
-  // Paymob integration IDs for different payment methods
-  cardIntegrationId: string; // For credit cards
-  walletIntegrationId: string; // For mobile wallets (Vodafone Cash, etc.)
-  paypalIntegrationId?: string; // For PayPal (optional)
-
-  // Iframe ID for hosted checkout
-  iframeId?: string; // For credit card iframe
-
-  // Legacy field for backward compatibility
-  integrationId?: string;
+  // Integration IDs for different payment methods
+  // Users can select payment method on Paymob's unified checkout page
+  // At least one integration ID must be provided
+  cardIntegrationId?: string; // Integration ID for credit/debit cards
+  walletIntegrationId?: string; // Integration ID for mobile wallets (Vodafone Cash, etc.)
+  paypalIntegrationId?: string; // Integration ID for PayPal
 
   notificationUrl: string;
   redirectionUrl: string;
@@ -44,7 +33,6 @@ export interface CreatePaymentRequest {
   customerPhone?: string;
   customerName?: string;
   description?: string;
-  methodType?: PaymentGatewayMethod; // Payment gateway method
   metadata?: Record<string, any>;
   successUrl?: string;
   cancelUrl?: string;

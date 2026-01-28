@@ -385,7 +385,10 @@ export class WalletService extends BaseService {
    * Determine the type of internal transfer for analytics
    * This helps understand user behavior patterns in multi-profile systems
    */
-  private determineTransferType(): 'consolidation' | 'distribution' | 'rebalancing' {
+  private determineTransferType():
+    | 'consolidation'
+    | 'distribution'
+    | 'rebalancing' {
     // For now, classify all internal transfers as rebalancing
     // In future, could analyze patterns based on:
     // - Profile types (student vs teacher vs staff)

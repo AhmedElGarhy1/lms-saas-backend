@@ -1,9 +1,4 @@
-import {
-  Module,
-  NestModule,
-  MiddlewareConsumer,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 import { NotificationLog } from './entities/notification-log.entity';
@@ -44,7 +39,6 @@ import { ChannelRetryStrategyService } from './services/channel-retry-strategy.s
 import { ChannelSelectionService } from './services/channel-selection.service';
 import { NotificationManifestResolver } from './manifests/registry/notification-manifest-resolver.service';
 import { NotificationRenderer } from './renderer/notification-renderer.service';
-import { NotificationValidator } from './validator/notification-validator.service';
 import { NotificationIdempotencyCacheService } from './services/notification-idempotency-cache.service';
 import { NotificationCircuitBreakerService } from './services/notification-circuit-breaker.service';
 import { TimeoutConfigService } from './config/timeout.config';
@@ -176,7 +170,6 @@ import { NotificationIntentService } from './services/notification-intent.servic
     ChannelSelectionService,
     NotificationManifestResolver, // Resolves manifests for renderer
     NotificationRenderer, // Renders notifications using manifests
-    NotificationValidator, // Validates manifests on module init
     NotificationIdempotencyCacheService, // Idempotency cache for preventing duplicate sends
     NotificationCircuitBreakerService, // Circuit breaker with sliding window for preventing false positives
     TimeoutConfigService, // Provider-specific timeout configuration

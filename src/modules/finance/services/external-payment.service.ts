@@ -7,7 +7,6 @@ import { PaymentRepository } from '../repositories/payment.repository';
 import { PaymentGatewayService } from '../adapters/payment-gateway.service';
 import {
   PaymentGatewayType,
-  PaymentGatewayMethod,
   CreatePaymentRequest,
 } from '../adapters/interfaces/payment-gateway.interface';
 import { WalletService } from './wallet.service';
@@ -81,8 +80,6 @@ export class ExternalPaymentService {
       const gatewayType =
         request.metadata?.gatewayType || PaymentGatewayType.PAYMOB;
       const currency = request.metadata?.currency || 'EGP';
-      const methodType =
-        request.metadata?.methodType || PaymentGatewayMethod.CARD;
 
       const user = await this.userService.findUserByProfileId(
         request.senderId,
@@ -97,7 +94,6 @@ export class ExternalPaymentService {
         customerName: user?.name, // Send actual user name
         customerPhone: user?.phone, // Send actual phone number
         description: `${request.reason} - ${request.amount.toString()} ${currency}`,
-        methodType: methodType,
         metadata: {
           ...request.metadata,
           correlationId: request.correlationId,
@@ -111,11 +107,6 @@ export class ExternalPaymentService {
         gatewayRequest,
         gatewayType,
       );
-
-      // For TEST payments, immediately complete the payment and update balances
-      if (methodType === PaymentGatewayMethod.TEST) {
-        return await this.completeTestPayment(payment, gatewayResponse);
-      }
 
       // Update payment record with gateway information
       payment.referenceType = PaymentReferenceType.GATEWAY_PAYMENT;

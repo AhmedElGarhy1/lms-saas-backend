@@ -10,7 +10,6 @@ import {
   RefundPaymentRequest,
   RefundPaymentResponse,
   WebhookEvent,
-  PaymentGatewayMethod,
 } from './interfaces/payment-gateway.interface';
 import { Money } from '@/shared/common/utils/money.util';
 
@@ -19,18 +18,34 @@ export class PaymobAdapter implements IPaymentGatewayAdapter {
   private readonly logger = new Logger(PaymobAdapter.name);
   private readonly httpClient: AxiosInstance;
   private readonly supportedCurrencies = ['EGP', 'USD'];
-  private authToken: string | null = null;
-  private tokenExpiry: Date | null = null;
 
   constructor(private config: PaymentGatewayConfig) {
-    // Validate configuration
-    if (!config.cardIntegrationId || !config.walletIntegrationId) {
+    // Validate configuration - require at least one integration ID
+    const integrationIds = [
+      config.cardIntegrationId,
+      config.walletIntegrationId,
+      config.paypalIntegrationId,
+    ].filter((id) => id && id.trim() !== '');
+
+    if (integrationIds.length === 0) {
       throw new Error(
-        'Paymob adapter requires cardIntegrationId and walletIntegrationId',
+        'Paymob adapter requires at least one integration ID (card, wallet, PayPal, or kiosk) for unified intention API',
       );
     }
 
-    // Initialize axios client for Paymob Legacy API
+    if (!config.publicKey) {
+      throw new Error(
+        'Paymob adapter requires publicKey for unified checkout URL',
+      );
+    }
+
+    if (!config.secretKey) {
+      throw new Error(
+        'Paymob adapter requires secretKey for API authentication',
+      );
+    }
+
+    // Initialize axios client for Paymob Unified Intention API
     this.httpClient = axios.create({
       baseURL: 'https://accept.paymob.com',
       timeout: 30000,
@@ -38,185 +53,6 @@ export class PaymobAdapter implements IPaymentGatewayAdapter {
         'Content-Type': 'application/json',
       },
     });
-  }
-
-  /**
-   * Format phone number for Paymob wallet payments
-   * Paymob expects Egyptian numbers in format: 01xxxxxxxxx (without +20)
-   */
-  private formatPhoneForWallet(phone: string): string {
-    if (!phone) return '';
-
-    // Remove +20 prefix if present
-    let formattedPhone = phone.replace(/^\+20/, '');
-
-    // Ensure it starts with 01 (Egyptian mobile prefix)
-    if (!formattedPhone.startsWith('01')) {
-      // If it starts with just 1 (missing leading 0), add it
-      if (formattedPhone.startsWith('1') && formattedPhone.length === 10) {
-        formattedPhone = '0' + formattedPhone;
-      }
-    }
-
-    // Validate format: should be 01xxxxxxxxx (11 digits total)
-    if (!/^01\d{9}$/.test(formattedPhone)) {
-      this.logger.warn(`Invalid phone format for wallet: ${formattedPhone}`);
-    }
-
-    return formattedPhone;
-  }
-
-  /**
-   * Get the appropriate integration ID for the payment method
-   */
-  private getIntegrationId(methodType?: PaymentGatewayMethod): string {
-    switch (methodType) {
-      case PaymentGatewayMethod.CARD:
-        return this.config.cardIntegrationId;
-      case PaymentGatewayMethod.MOBILE_WALLET:
-        return this.config.walletIntegrationId;
-      case PaymentGatewayMethod.PAYPAL:
-        return this.config.paypalIntegrationId || this.config.cardIntegrationId;
-      default:
-        // Fallback to legacy integrationId or card integration
-        return this.config.integrationId || this.config.cardIntegrationId;
-    }
-  }
-
-  /**
-   * Create order with Paymob
-   */
-  private async createOrder(
-    authToken: string,
-    request: CreatePaymentRequest,
-  ): Promise<string> {
-    try {
-      const amountInCents = Math.round(request.amount.toNumber() * 100);
-      const amountCentsString = amountInCents.toString();
-
-      // Paymob Legacy API requires very specific structure
-      const orderPayload = {
-        auth_token: authToken,
-        delivery_needed: 'false',
-        amount_cents: amountCentsString, // MUST BE A STRING
-        currency: request.currency,
-        merchant_order_id: request.orderId, // REQUIRED: Use our UUID to avoid duplicates
-        items: [
-          {
-            name: request.description || 'Wallet Topup',
-            amount_cents: amountCentsString, // MUST BE A STRING
-            description: request.description || 'Wallet Topup',
-            quantity: '1', // MUST BE A STRING
-          },
-        ],
-      };
-
-      const orderResponse = await this.httpClient.post(
-        '/api/ecommerce/orders', // No trailing slash
-        orderPayload,
-      );
-
-      return orderResponse.data.id;
-    } catch (error) {
-      this.logger.error('Paymob order creation failed', {
-        fullResponse: error.response?.data,
-        statusCode: error.response?.status,
-        requestAmount: request.amount.toString(),
-        merchantOrderId: request.orderId,
-      });
-      throw error;
-    }
-  }
-
-  /**
-   * Generate payment key for the order
-   */
-  private async generatePaymentKey(
-    authToken: string,
-    orderId: string,
-    request: CreatePaymentRequest,
-  ): Promise<string> {
-    try {
-      const amountInCents = Math.round(request.amount.toNumber() * 100);
-      const amountCentsString = amountInCents.toString();
-      const integrationId = this.getIntegrationId(request.methodType);
-
-      const paymentKeyPayload = {
-        auth_token: authToken,
-        amount_cents: amountCentsString, // MUST BE A STRING
-        expiration: 3600, // 1 hour
-        order_id: orderId,
-        billing_data: {
-          ...(request.customerName && {
-            first_name: request.customerName.split(' ')[0],
-            last_name: request.customerName.split(' ').slice(1).join(' ') || '',
-          }),
-          ...(request.customerPhone && {
-            phone_number: request.customerPhone,
-          }),
-          email: 'NA',
-          apartment: 'NA',
-          floor: 'NA',
-          street: 'NA',
-          building: 'NA',
-          shipping_method: 'NA',
-          postal_code: 'NA',
-          city: 'Cairo',
-          country: 'EG',
-          state: 'NA',
-        },
-        currency: request.currency,
-        integration_id: parseInt(integrationId),
-      };
-
-      const paymentKeyResponse = await this.httpClient.post(
-        '/api/acceptance/payment_keys',
-        paymentKeyPayload,
-      );
-
-      return paymentKeyResponse.data.token;
-    } catch (error) {
-      this.logger.error('Paymob payment key creation failed', {
-        fullResponse: error.response?.data,
-        statusCode: error.response?.status,
-        orderId,
-        integrationId: this.getIntegrationId(request.methodType),
-      });
-      throw error;
-    }
-  }
-
-  /**
-   * Authenticate with Paymob and get temporary token
-   */
-  private async authenticate(): Promise<string | null> {
-    // Check if we have a valid token
-    if (this.authToken && this.tokenExpiry && this.tokenExpiry > new Date()) {
-      return this.authToken;
-    }
-
-    try {
-      const response = await this.httpClient.post('/api/auth/tokens', {
-        api_key: this.config.apiKey, // Use API Key for authentication (not Secret Key)
-      });
-
-      const token = response.data.token;
-      if (!token) {
-        throw new Error('No token received from Paymob authentication');
-      }
-
-      this.authToken = token;
-      // Paymob tokens are valid for 1 hour (3600 seconds)
-      this.tokenExpiry = new Date(Date.now() + 3600 * 1000);
-
-      return this.authToken;
-    } catch (error) {
-      this.logger.error(
-        'Paymob authentication failed',
-        error.response?.data || error.message,
-      );
-      throw new Error('Failed to authenticate with Paymob');
-    }
   }
 
   getName(): string {
@@ -228,103 +64,119 @@ export class PaymobAdapter implements IPaymentGatewayAdapter {
   ): Promise<CreatePaymentResponse> {
     try {
       this.logger.log(
-        `Creating Paymob payment for amount: ${request.amount.toString()} ${request.currency}, method: ${request.methodType || 'CARD'}`,
+        `Creating Paymob unified intention payment for amount: ${request.amount.toString()} ${request.currency}`,
       );
 
-      // Step 1: Get authentication token
-      const authToken = await this.authenticate();
-      if (!authToken) {
-        throw new Error('Failed to authenticate with Paymob');
-      }
+      const amountInCents = Math.round(request.amount.toNumber() * 100);
 
-      // Step 2: Register order
-      const orderId = await this.createOrder(authToken, request);
+      // Build billing data
+      const billingData: any = {
+        apartment: 'NA',
+        floor: 'NA',
+        street: 'NA',
+        building: 'NA',
+        shipping_method: 'NA',
+        postal_code: 'NA',
+        city: 'Cairo',
+        country: 'EG',
+        state: 'NA',
+        email: request.customerEmail || 'gemater.g@gmail.com',
+        phone_number: request.customerPhone || '+201000000000',
+      };
 
-      // Step 3: Generate payment key
-      const paymentToken = await this.generatePaymentKey(
-        authToken,
-        orderId,
-        request,
-      );
-
-      // Step 4: Handle different payment methods
-      let checkoutUrl: string;
-
-      if (request.methodType === PaymentGatewayMethod.MOBILE_WALLET) {
-        // Mobile Wallet: Make additional API call to get wallet redirection URL
-
-        // Format phone number for Paymob wallet requirements
-        const formattedPhone = this.formatPhoneForWallet(
-          request.customerPhone || '',
-        );
-
-        const walletResponse = await this.httpClient.post(
-          '/api/acceptance/payments/pay',
-          {
-            source: {
-              identifier: formattedPhone, // Properly formatted phone number
-              subtype: 'WALLET',
-            },
-            payment_token: paymentToken,
-          },
-        );
-
-        // Check if wallet response contains redirection URL
-        if (!walletResponse.data?.redirection_url) {
-          const errorMsg =
-            walletResponse.data?.error ||
-            'No redirection URL provided by wallet service';
-          this.logger.error('Wallet payment failed: no redirection URL', {
-            response: walletResponse.data,
-            phone: formattedPhone,
-          });
-          throw new Error(`Wallet payment failed: ${errorMsg}`);
-        }
-
-        checkoutUrl = walletResponse.data.redirection_url;
-      } else if (request.methodType === PaymentGatewayMethod.PAYPAL) {
-        // PayPal: Make additional API call to get PayPal redirection URL
-        const paypalResponse = await this.httpClient.post(
-          '/api/acceptance/payments/pay',
-          {
-            source: {
-              identifier: 'paypal',
-              subtype: 'PAYPAL',
-            },
-            payment_token: paymentToken,
-          },
-        );
-
-        // Check if PayPal response contains redirection URL
-        if (!paypalResponse.data?.redirection_url) {
-          const errorMsg =
-            paypalResponse.data?.error ||
-            'No redirection URL provided by PayPal service';
-          this.logger.error('PayPal payment failed: no redirection URL', {
-            response: paypalResponse.data,
-          });
-          throw new Error(`PayPal payment failed: ${errorMsg}`);
-        }
-
-        checkoutUrl = paypalResponse.data.redirection_url;
+      if (request.customerName) {
+        const nameParts = request.customerName.split(' ');
+        billingData.first_name = nameParts[0];
+        billingData.last_name = nameParts.slice(1).join(' ') || 'Customer';
       } else {
-        // Credit Card: Use iframe URL
-        if (!this.config.iframeId) {
-          throw new Error(
-            'Paymob iframe ID is required for credit card payments. Please set PAYMOB_IFRAME_ID environment variable.',
-          );
-        }
-        checkoutUrl = `https://accept.paymob.com/api/acceptance/iframes/${this.config.iframeId}?payment_token=${paymentToken}`;
+        billingData.first_name =
+          request.customerEmail?.split('@')[0] || 'Customer';
+        billingData.last_name = 'Customer';
       }
 
-      this.logger.log(
-        `Paymob payment created: ${orderId}, method: ${request.methodType || 'CARD'}`,
+      // Build customer object (separate from billing_data)
+      const customer = {
+        first_name: billingData.first_name,
+        last_name: billingData.last_name,
+        email: billingData.email,
+        extras: request.metadata || {},
+      };
+
+      // Generate special reference (custom reference format)
+      const specialReference = `payment-${request.orderId}-${Date.now()}`;
+
+      // Build extras object for metadata
+      const extras = {
+        ...request.metadata,
+        orderId: request.orderId,
+      };
+
+      // Collect all configured integration IDs
+      const integrationIds: number[] = [];
+      if (this.config.cardIntegrationId) {
+        integrationIds.push(parseInt(this.config.cardIntegrationId));
+      }
+      if (this.config.walletIntegrationId) {
+        integrationIds.push(parseInt(this.config.walletIntegrationId));
+      }
+      if (this.config.paypalIntegrationId) {
+        integrationIds.push(parseInt(this.config.paypalIntegrationId));
+      }
+      console.log('integrationIds', integrationIds);
+
+      // Single API call to unified intention endpoint
+      // Uses Authorization header with Token prefix and secretKey
+      const intentionResponse = await this.httpClient.post(
+        '/v1/intention/',
+        {
+          amount: amountInCents, // Integer, not string
+          currency: request.currency,
+          payment_methods: integrationIds, // Array of all enabled integration IDs
+          billing_data: billingData,
+          items: [
+            {
+              name: request.description || 'Wallet Topup',
+              amount: amountInCents, // Integer, not string
+              description: request.description || 'Wallet Topup',
+              quantity: 1, // Integer, not string
+            },
+          ],
+          customer: customer,
+          extras: extras,
+          special_reference: specialReference,
+          expiration: 3600, // 1 hour expiration
+          notification_url: this.config.notificationUrl,
+          redirection_url: this.config.redirectionUrl,
+        },
+        {
+          headers: {
+            Authorization: `Token ${this.config.secretKey}`, // Use Token prefix with secretKey
+          },
+        },
       );
+
+      const clientSecret = intentionResponse.data.client_secret;
+      const orderId =
+        intentionResponse.data.order_id ||
+        intentionResponse.data.id ||
+        specialReference;
+
+      if (!clientSecret) {
+        throw new Error(
+          'No client_secret received from Paymob unified intention API',
+        );
+      }
+
+      // Return unified checkout URL
+      // Users will select payment method (card, wallet, PayPal) on Paymob's page
+      const checkoutUrl = `https://accept.paymob.com/unifiedcheckout/?publicKey=${this.config.publicKey}&clientSecret=${clientSecret}`;
+
+      this.logger.log(`Paymob unified intention payment created: ${orderId}`);
 
       return {
         gatewayPaymentId: orderId.toString(),
         checkoutUrl,
-        clientSecret: paymentToken,
+        clientSecret: clientSecret,
         status: 'pending',
       };
     } catch (error) {
@@ -335,31 +187,38 @@ export class PaymobAdapter implements IPaymentGatewayAdapter {
       const statusCode = error.response?.status;
 
       // Log the full Paymob response for debugging
-      this.logger.error('Paymob Order Error Detail', {
+      this.logger.error('Paymob Payment Error Detail', {
         fullResponse: error.response?.data,
         statusCode,
         headers: error.response?.headers,
       });
 
-      this.logger.error('Paymob payment creation failed', {
+      const integrationIds = [
+        this.config.cardIntegrationId,
+        this.config.walletIntegrationId,
+        this.config.paypalIntegrationId,
+      ]
+        .filter((id) => id)
+        .join(', ');
+
+      this.logger.error('Paymob unified intention payment creation failed', {
         orderId: request.orderId,
         amount: request.amount.toString(),
-        methodType: request.methodType || 'CARD',
         statusCode,
         error: errorDetail,
-        integrationId: this.getIntegrationId(request.methodType),
+        integrationIds,
       });
 
       // Categorize and provide specific error messages
       if (statusCode === 404 && errorDetail?.includes('Integration ID')) {
         throw new Error(
-          `Paymob configuration error: Invalid Integration ID (${this.config.integrationId}). Please check your Paymob dashboard under Developers → Payment Integrations.`,
+          `Paymob configuration error: Invalid Integration ID(s) (${integrationIds}). Please check your Paymob dashboard under Developers → Payment Integrations.`,
         );
       }
 
       if (statusCode === 401 || statusCode === 403) {
         throw new Error(
-          `Paymob authentication failed: Invalid API key. Please check your API key in Paymob Settings → Account Info.`,
+          `Paymob authentication failed: Invalid secret key. Please check your secret key in Paymob Settings → Account Info.`,
         );
       }
 
@@ -406,15 +265,22 @@ export class PaymobAdapter implements IPaymentGatewayAdapter {
 
       const amountInCents = Math.round(request.amount.toNumber() * 100);
 
-      // Get authentication token for refund
-      const authToken = await this.authenticate();
+      // Authenticate for refund
+      const authResponse = await this.httpClient.post('/api/auth/tokens', {
+        api_key: this.config.apiKey,
+      });
 
-      // Use legacy API for refunds
+      const authToken = authResponse.data.token;
+      if (!authToken) {
+        throw new Error('No token received from Paymob authentication');
+      }
+
+      // Use refund API
       const refundResponse = await this.httpClient.post(
         `/api/acceptance/transactions/${request.gatewayPaymentId}/refund`,
         {
           auth_token: authToken,
-          amount_cents: amountInCents.toString(), // MUST BE A STRING
+          amount_cents: amountInCents.toString(),
           reason: request.reason || 'Customer refund request',
         },
       );
@@ -467,7 +333,11 @@ export class PaymobAdapter implements IPaymentGatewayAdapter {
         return false;
       }
 
-      // Paymob Legacy API (v2 webhooks) calculates HMAC by concatenating specific fields in alphabetical order
+      // Paymob webhooks contain transaction data in 'obj' field
+      // Extract obj field (transaction data) for HMAC validation
+      const obj = payload?.obj || payload;
+
+      // Paymob calculates HMAC by concatenating specific fields in alphabetical order
       // Not just JSON.stringify of the entire payload
       const hmacFields = [
         'amount_cents',
@@ -496,21 +366,30 @@ export class PaymobAdapter implements IPaymentGatewayAdapter {
       // Build HMAC string by concatenating field values in alphabetical order
       let hmacString = '';
       for (const field of hmacFields) {
-        const value = this.getNestedValue(payload, field);
+        const value = this.getNestedValue(obj, field);
         if (value !== undefined && value !== null) {
-          hmacString += value.toString();
+          // Convert boolean values to lowercase strings ("true"/"false")
+          let stringValue = value.toString();
+          if (typeof value === 'boolean') {
+            stringValue = value ? 'true' : 'false';
+          }
+          hmacString += stringValue;
         }
       }
 
-      // Calculate expected signature using HMAC-SHA256
+      // Calculate expected signature using HMAC-SHA512 (not SHA256)
       const expectedSignature = crypto
-        .createHmac('sha256', this.config.hmacSecret)
+        .createHmac('sha512', this.config.hmacSecret)
         .update(hmacString, 'utf8')
-        .digest('hex');
+        .digest('hex')
+        .toLowerCase(); // Ensure lowercase hex output
+
+      // Normalize received signature to lowercase for comparison
+      const normalizedSignature = signature.toLowerCase();
 
       // Use constant-time comparison to prevent timing attacks
       const isValid = crypto.timingSafeEqual(
-        Buffer.from(signature, 'hex'),
+        Buffer.from(normalizedSignature, 'hex'),
         Buffer.from(expectedSignature, 'hex'),
       );
 
