@@ -22,6 +22,9 @@ import { BasePaginationDto } from '@/shared/common/dto/base-pagination.dto';
 import { Pagination } from '@/shared/common/types/pagination.types';
 import { SessionAttendanceStatsDto } from '../dto/session-attendance-stats.dto';
 import { StudentBillingService } from '@/modules/student-billing/services/student-billing.service';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { AttendanceEvents } from '@/shared/events/attendance.events.enum';
+import { StudentsMarkedAbsentEvent } from '../events/attendance.events';
 
 @Injectable()
 export class AttendanceService {
@@ -36,6 +39,7 @@ export class AttendanceService {
     private readonly userService: UserService,
     private readonly userProfileRepository: UserProfileRepository,
     private readonly studentBillingService: StudentBillingService,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {}
 
   private async validateSessionAndAccess(sessionId: string, actor: ActorUser) {
@@ -344,6 +348,17 @@ export class AttendanceService {
     this.logger.log(
       `Marked ${attendanceRecords.length} students as absent for session ${sessionId}`,
       { actorId: actor.userProfileId },
+    );
+
+    await this.typeSafeEventEmitter.emitAsync(
+      AttendanceEvents.MARKED_ABSENT,
+      new StudentsMarkedAbsentEvent(
+        sessionId,
+        session.groupId,
+        session.centerId,
+        unmarkedStudents.map((s) => s.studentUserProfileId),
+        actor,
+      ),
     );
 
     return { markedCount: attendanceRecords.length, sessionId };

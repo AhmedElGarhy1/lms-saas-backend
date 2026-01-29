@@ -10,12 +10,17 @@ import { PaginateRolesDto } from '../dto/paginate-roles.dto';
 import { PermissionScope } from '../constants/permissions';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { RoleEvents } from '@/shared/events/role.events.enum';
+import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 import {
   CreateRoleEvent,
   UpdateRoleEvent,
   DeleteRoleEvent,
   RestoreRoleEvent,
 } from '../events/role.events';
+import {
+  AssignRoleEvent,
+  RevokeRoleEvent,
+} from '../events/access-control.events';
 import { BaseService } from '@/shared/common/services/base.service';
 import { ProfileType } from '@/shared/common/enums/profile-type.enum';
 import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
@@ -165,10 +170,10 @@ export class RolesService extends BaseService {
       throw AccessControlErrors.invalidProfileTypeForRoleAssignment();
     }
 
-    return this.assignRole(data);
+    return this.assignRole(data, actor);
   }
 
-  async assignRole(data: AssignRoleDto) {
+  async assignRole(data: AssignRoleDto, actor?: ActorUser) {
     // Validate user profile is active
     const userProfile = await this.accessControlerHelperService.findUserProfile(
       data.userProfileId,
@@ -193,11 +198,36 @@ export class RolesService extends BaseService {
 
     const result = await this.profileRoleRepository.assignProfileRole(data);
 
+    if (actor) {
+      await this.typeSafeEventEmitter.emitAsync(
+        AccessControlEvents.ASSIGN_ROLE,
+        new AssignRoleEvent(
+          data.userProfileId,
+          data.roleId,
+          actor,
+          data.centerId,
+          userProfile.userId,
+        ),
+      );
+    }
+
     return result;
   }
 
-  async removeUserRole(data: AssignRoleDto) {
+  async removeUserRole(data: AssignRoleDto, actor?: ActorUser) {
     const result = await this.profileRoleRepository.removeProfileRole(data);
+
+    if (actor) {
+      await this.typeSafeEventEmitter.emitAsync(
+        AccessControlEvents.REVOKE_ROLE,
+        new RevokeRoleEvent(
+          data.userProfileId,
+          data.roleId,
+          actor,
+          data.centerId,
+        ),
+      );
+    }
 
     return result;
   }
@@ -225,7 +255,7 @@ export class RolesService extends BaseService {
       centerId: data.centerId, // Optional - can be undefined
     });
 
-    return this.removeUserRole(data);
+    return this.removeUserRole(data, actor);
   }
 
   async findById(roleId: string, actor?: ActorUser, includeDeleted = false) {

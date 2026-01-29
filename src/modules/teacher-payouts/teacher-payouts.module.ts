@@ -30,6 +30,6 @@ import { UserProfileModule } from '../user-profile/user-profile.module';
     ClassPayoutListener,
     MonthlyTeacherPayoutJob,
   ],
-  exports: [TeacherPayoutService],
+  exports: [TeacherPayoutService, TeacherPayoutRecordsRepository],
 })
 export class TeacherPayoutModule {}

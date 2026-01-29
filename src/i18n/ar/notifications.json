@@ -14,5 +14,485 @@
   "CENTER_UPDATED": {
     "title": "تم تحديث معلومات المركز",
     "message": "تم تحديث معلومات مركزك {centerName} بنجاح."
+  },
+  "CENTER_DELETED": {
+    "OWNERS": {
+      "title": "حذف المركز",
+      "message": "تم حذف مركز {centerName} بواسطة {actorName}."
+    }
+  },
+  "CENTER_RESTORED": {
+    "OWNERS": {
+      "title": "استعادة المركز",
+      "message": "تم استعادة مركز {centerName} بواسطة {actorName}."
+    }
+  },
+  "BRANCH_CREATED": {
+    "OWNERS": {
+      "title": "فرع جديد",
+      "message": "تم إنشاء فرع {branchName} في مركز {centerName} بواسطة {actorName}."
+    },
+    "STAFF": {
+      "title": "فرع جديد",
+      "message": "تم إنشاء فرع {branchName} في مركز {centerName}."
+    }
+  },
+  "BRANCH_UPDATED": {
+    "OWNERS": {
+      "title": "تحديث الفرع",
+      "message": "تم تحديث فرع {branchName} في مركز {centerName} بواسطة {actorName}."
+    },
+    "STAFF": {
+      "title": "تحديث الفرع",
+      "message": "تم تحديث فرع {branchName} في مركز {centerName}."
+    }
+  },
+  "BRANCH_DELETED": {
+    "OWNERS": {
+      "title": "حذف الفرع",
+      "message": "تم حذف فرع {branchName} في مركز {centerName} بواسطة {actorName}."
+    },
+    "STAFF": {
+      "title": "حذف الفرع",
+      "message": "تم حذف فرع {branchName} في مركز {centerName}."
+    }
+  },
+  "BRANCH_RESTORED": {
+    "OWNERS": {
+      "title": "استعادة الفرع",
+      "message": "تم استعادة فرع {branchName} في مركز {centerName} بواسطة {actorName}."
+    },
+    "STAFF": {
+      "title": "استعادة الفرع",
+      "message": "تم استعادة فرع {branchName} في مركز {centerName}."
+    }
+  },
+  "STUDENT_ABSENT": {
+    "TARGET": {
+      "title": "غيابك عن الحصة",
+      "message": "تم تسجيل غيابك عن حصة {className} - {groupName} في مركز {centerName}."
+    },
+    "PARENTS": {
+      "title": "غياب ابنك عن الحصة",
+      "message": "تنبيه: تم تسجيل غياب {studentName} عن حصة {className} - {groupName} في مركز {centerName}."
+    }
+  },
+  "NEW_DEVICE_LOGIN": {
+    "title": "تسجيل دخول من جهاز جديد",
+    "message": "تم تسجيل الدخول من {deviceName}"
+  },
+  "PASSWORD_CHANGED": {
+    "title": "تم تغيير كلمة المرور",
+    "message": "تم تغيير كلمة المرور بنجاح"
+  },
+  "LOGIN_FAILED": {
+    "title": "محاولة دخول فاشلة",
+    "message": "تم اكتشاف محاولة دخول فاشلة لحسابك"
+  },
+  "TWO_FA_DISABLED": {
+    "title": "تم إيقاف التحقق بخطوتين",
+    "message": "تحذير: تم إيقاف التحقق بخطوتين لحسابك"
+  },
+  "CENTER_ACCESS_ACTIVATED": {
+    "TARGET": {
+      "title": "تم تفعيل وصولك للمركز",
+      "message": "أهلاً بك! تم تفعيل وصولك لمركز {centerName} الآن، يمكنك البدء بالعمل."
+    },
+    "OWNERS": {
+      "title": "تنبيه: تفعيل وصول مستخدم",
+      "message": "تم تفعيل وصول المستخدم {name} لمركز {centerName} بواسطة {actorName}."
+    }
+  },
+  "CENTER_ACCESS_DEACTIVATED": {
+    "TARGET": {
+      "title": "تم إيقاف وصولك للمركز",
+      "message": "تنبيه: تم إيقاف وصولك لمركز {centerName}. لمزيد من التفاصيل يرجى مراجعة الإدارة."
+    },
+    "OWNERS": {
+      "title": "تنبيه أمني: إيقاف وصول مستخدم",
+      "message": "تم إيقاف وصول المستخدم {name} لمركز {centerName} بواسطة {actorName}."
+    }
+  },
+  "CENTER_ACCESS_GRANTED": {
+    "TARGET": {
+      "title": "تم منحك الوصول إلى مركز",
+      "message": "أهلاً بك في فريق عمل مركز {centerName}! تم تفعيل صلاحياتك الآن، يمكنك البدء بالعمل."
+    },
+    "OWNERS": {
+      "title": "تنبيه أمني: منح صلاحية جديدة",
+      "message": "تم منح صلاحية {profileType} للمستخدم {name} بواسطة {actorName} في مركز {centerName}."
+    }
+  },
+  "CENTER_ACCESS_REVOKED": {
+    "TARGET": {
+      "title": "تم إلغاء وصولك إلى مركز",
+      "message": "تنبيه: تم تعديل صلاحيات وصولك لمركز {centerName}. لمزيد من التفاصيل يرجى مراجعة الإدارة."
+    },
+    "OWNERS": {
+      "title": "تنبيه أمني: إلغاء صلاحية",
+      "message": "تم إلغاء صلاحية {profileType} للمستخدم {name} بواسطة {actorName} في مركز {centerName}."
+    }
+  },
+  "ROLE_ASSIGNED": {
+    "TARGET": {
+      "title": "تم تعيينك في دور",
+      "message": "تم تعيينك في دور {roleName} في مركز {centerName}"
+    },
+    "OWNERS": {
+      "title": "تعيين دور جديد",
+      "message": "تم تعيين دور {roleName} للمستخدم {name} بواسطة {actorName} في مركز {centerName}."
+    }
+  },
+  "ROLE_REVOKED": {
+    "TARGET": {
+      "title": "تم إلغاء دورك",
+      "message": "تم إلغاء دور {roleName} من حسابك في مركز {centerName}"
+    },
+    "OWNERS": {
+      "title": "إلغاء دور",
+      "message": "تم إلغاء دور {roleName} من المستخدم {name} بواسطة {actorName} في مركز {centerName}."
+    }
+  },
+  "SESSION_CREATED": {
+    "STUDENTS": {
+      "title": "حصة جديدة",
+      "message": "تم جدولة حصة {sessionTitle} - {className} ({groupName}) يوم {startTime}"
+    },
+    "PARENTS": {
+      "title": "حصة جديدة لابنك",
+      "message": "تم جدولة حصة {sessionTitle} - {className} ({groupName}) يوم {startTime}"
+    },
+    "TEACHER": {
+      "title": "حصة جديدة",
+      "message": "تم جدولة حصة {sessionTitle} - {className} ({groupName}) يوم {startTime}"
+    },
+    "STAFF": {
+      "title": "إضافة حصة",
+      "message": "تم إضافة حصة جديدة لـ {className} ({groupName})"
+    }
+  },
+  "SESSION_UPDATED": {
+    "STUDENTS": {
+      "title": "تعديل في الحصة",
+      "message": "تم تعديل حصة {sessionTitle} - {className}. الموعد الجديد: {startTime}"
+    },
+    "PARENTS": {
+      "title": "تعديل في حصة ابنك",
+      "message": "تم تعديل حصة {sessionTitle} - {className}. الموعد الجديد: {startTime}"
+    },
+    "TEACHER": {
+      "title": "تعديل في الحصة",
+      "message": "تم تعديل حصة {sessionTitle} - {className}. الموعد الجديد: {startTime}"
+    },
+    "STAFF": {
+      "title": "تعديل حصة",
+      "message": "تم تعديل حصة {className} ({groupName}) بواسطة {actorName}"
+    }
+  },
+  "SESSION_CANCELED": {
+    "STUDENTS": {
+      "title": "إلغاء الحصة",
+      "message": "تم إلغاء حصة {sessionTitle} - {className} التي كانت مقررة يوم {startTime}"
+    },
+    "PARENTS": {
+      "title": "إلغاء حصة ابنك",
+      "message": "تنبيه هام: تم إلغاء حصة {sessionTitle} - {className} التي كانت مقررة يوم {startTime}"
+    },
+    "TEACHER": {
+      "title": "إلغاء الحصة",
+      "message": "تم إلغاء حصة {sessionTitle} - {className} التي كانت مقررة يوم {startTime}"
+    },
+    "STAFF": {
+      "title": "إلغاء حصة",
+      "message": "تم إلغاء حصة {className} ({groupName}) بواسطة {actorName}"
+    }
+  },
+  "SESSION_FINISHED": {
+    "STUDENTS": {
+      "title": "انتهت الحصة",
+      "message": "انتهت حصة {sessionTitle} - {className} الساعة {endTime}"
+    },
+    "PARENTS": {
+      "title": "انتهت حصة ابنك",
+      "message": "انتهت حصة {sessionTitle} - {className} الساعة {endTime}. يمكنك استلام ابنك الآن."
+    },
+    "TEACHER": {
+      "title": "انتهت الحصة",
+      "message": "تم تسجيل انتهاء حصة {sessionTitle} - {className}"
+    },
+    "STAFF": {
+      "title": "انتهاء حصة",
+      "message": "انتهت حصة {className} ({groupName})"
+    }
+  },
+  "SESSION_DELETED": {
+    "STUDENTS": {
+      "title": "حذف الحصة",
+      "message": "تم حذف حصة {sessionTitle} - {className}"
+    },
+    "PARENTS": {
+      "title": "حذف حصة ابنك",
+      "message": "تنبيه هام: تم حذف حصة {sessionTitle} - {className}"
+    },
+    "TEACHER": {
+      "title": "حذف الحصة",
+      "message": "تم حذف حصة {sessionTitle} - {className}"
+    },
+    "STAFF": {
+      "title": "حذف حصة",
+      "message": "تم حذف حصة {className} ({groupName}) بواسطة {actorName}"
+    }
+  },
+  "SESSION_CHECKED_IN": {
+    "STUDENTS": {
+      "title": "بدأت الحصة",
+      "message": "بدأت حصة {sessionTitle} - {className} الآن مع {teacherName}"
+    },
+    "PARENTS": {
+      "title": "بدأت حصة ابنك",
+      "message": "بدأت حصة {sessionTitle} - {className} الآن مع {teacherName}"
+    },
+    "STAFF": {
+      "title": "بدء حصة",
+      "message": "بدأ {teacherName} حصة {className} ({groupName})"
+    }
+  },
+  "SESSION_CONFLICT_DETECTED": {
+    "TEACHER": {
+      "title": "تعارض في الجدول",
+      "message": "تم اكتشاف تعارض في {conflictType} للمجموعة {groupName} في الفترة {proposedStartTime} - {proposedEndTime}"
+    },
+    "STAFF": {
+      "title": "تعارض في الجدول",
+      "message": "تم اكتشاف تعارض في {conflictType} للمجموعة {groupName} في الفترة {proposedStartTime} - {proposedEndTime}"
+    }
+  },
+  "CLASS_CREATED": {
+    "TEACHER": {
+      "title": "كلاس جديد",
+      "message": "تم إنشاء كلاس {className} في مركز {centerName}"
+    },
+    "STAFF": {
+      "title": "كلاس جديد",
+      "message": "تم إنشاء كلاس {className} للمدرس {teacherName}"
+    }
+  },
+  "CLASS_UPDATED": {
+    "TEACHER": {
+      "title": "تحديث الكلاس",
+      "message": "تم تحديث بيانات كلاس {className}"
+    },
+    "STAFF": {
+      "title": "تحديث كلاس",
+      "message": "تم تحديث بيانات كلاس {className} بواسطة {actorName}"
+    },
+    "STUDENTS": {
+      "title": "تحديث الكلاس",
+      "message": "تم تحديث بيانات كلاس {className}"
+    },
+    "PARENTS": {
+      "title": "تحديث كلاس ابنك",
+      "message": "تم تحديث بيانات كلاس {className}"
+    }
+  },
+  "CLASS_DELETED": {
+    "TEACHER": {
+      "title": "حذف الكلاس",
+      "message": "تم حذف كلاس {className}"
+    },
+    "STAFF": {
+      "title": "حذف كلاس",
+      "message": "تم حذف كلاس {className} بواسطة {actorName}"
+    },
+    "STUDENTS": {
+      "title": "حذف الكلاس",
+      "message": "تنبيه: تم حذف كلاس {className}"
+    },
+    "PARENTS": {
+      "title": "حذف كلاس ابنك",
+      "message": "تنبيه هام: تم حذف كلاس {className}"
+    }
+  },
+  "CLASS_STATUS_CHANGED": {
+    "TEACHER": {
+      "title": "تغيير حالة الكلاس",
+      "message": "تم تغيير حالة كلاس {className} من {oldStatus} إلى {newStatus}"
+    },
+    "STAFF": {
+      "title": "تغيير حالة كلاس",
+      "message": "تم تغيير حالة كلاس {className} إلى {newStatus} بواسطة {actorName}"
+    },
+    "STUDENTS": {
+      "title": "تغيير حالة الكلاس",
+      "message": "تنبيه: تم {newStatus} كلاس {className}"
+    },
+    "PARENTS": {
+      "title": "تغيير حالة كلاس ابنك",
+      "message": "تنبيه هام: تم {newStatus} كلاس {className}"
+    }
+  },
+  "STAFF_ASSIGNED_TO_CLASS": {
+    "TARGET": {
+      "title": "تعيينك في كلاس",
+      "message": "تم تعيينك للعمل على كلاس {className} في مركز {centerName}"
+    }
+  },
+  "STAFF_REMOVED_FROM_CLASS": {
+    "TARGET": {
+      "title": "إزالتك من كلاس",
+      "message": "تم إزالتك من العمل على كلاس {className} في مركز {centerName}"
+    }
+  },
+  "GROUP_CREATED": {
+    "TEACHER": {
+      "title": "مجموعة جديدة",
+      "message": "تم إنشاء مجموعة {groupName} في كلاس {className}"
+    },
+    "STAFF": {
+      "title": "مجموعة جديدة",
+      "message": "تم إنشاء مجموعة {groupName} في كلاس {className}"
+    }
+  },
+  "GROUP_UPDATED": {
+    "TEACHER": {
+      "title": "تحديث المجموعة",
+      "message": "تم تحديث بيانات مجموعة {groupName} في كلاس {className}"
+    },
+    "STAFF": {
+      "title": "تحديث مجموعة",
+      "message": "تم تحديث بيانات مجموعة {groupName} بواسطة {actorName}"
+    },
+    "STUDENTS": {
+      "title": "تحديث المجموعة",
+      "message": "تم تحديث بيانات مجموعتك {groupName} في كلاس {className}"
+    },
+    "PARENTS": {
+      "title": "تحديث مجموعة ابنك",
+      "message": "تم تحديث بيانات مجموعة {groupName} في كلاس {className}"
+    }
+  },
+  "GROUP_DELETED": {
+    "TEACHER": {
+      "title": "حذف المجموعة",
+      "message": "تم حذف مجموعة {groupName} من كلاس {className}"
+    },
+    "STAFF": {
+      "title": "حذف مجموعة",
+      "message": "تم حذف مجموعة {groupName} بواسطة {actorName}"
+    },
+    "STUDENTS": {
+      "title": "حذف المجموعة",
+      "message": "تنبيه: تم حذف مجموعتك {groupName} من كلاس {className}"
+    },
+    "PARENTS": {
+      "title": "حذف مجموعة ابنك",
+      "message": "تنبيه هام: تم حذف مجموعة {groupName} من كلاس {className}"
+    }
+  },
+  "STUDENT_ADDED_TO_GROUP": {
+    "TARGET": {
+      "title": "تسجيلك في مجموعة",
+      "message": "تم تسجيلك في مجموعة {groupName} - كلاس {className} في مركز {centerName}"
+    },
+    "PARENTS": {
+      "title": "تسجيل ابنك في مجموعة",
+      "message": "تم تسجيل {studentName} في مجموعة {groupName} - كلاس {className}"
+    }
+  },
+  "STUDENT_REMOVED_FROM_GROUP": {
+    "TARGET": {
+      "title": "إزالتك من المجموعة",
+      "message": "تم إزالتك من مجموعة {groupName} - كلاس {className} في مركز {centerName}"
+    },
+    "PARENTS": {
+      "title": "إزالة ابنك من المجموعة",
+      "message": "تم إزالة {studentName} من مجموعة {groupName} - كلاس {className}"
+    }
+  },
+  "CHARGE_COMPLETED": {
+    "TARGET": {
+      "title": "تم دفع الرسوم بالكامل",
+      "message": "تم استلام دفعة كاملة عن رسوم {chargeType} - كلاس {className} في مركز {centerName} بمبلغ {amount} بواسطة {actorName}."
+    }
+  },
+  "CHARGE_INSTALLMENT_PAID": {
+    "TARGET": {
+      "title": "تم استلام دفعة من أقساط الرسوم",
+      "message": "تم استلام دفعة {installmentAmount} عن رسوم {chargeType} - كلاس {className}. المتبقي: {remainingAmount}."
+    }
+  },
+  "CHARGE_REFUNDED": {
+    "TARGET": {
+      "title": "تم استرداد رسوم",
+      "message": "تم استرداد مبلغ {amount} عن رسوم {chargeType} - كلاس {className} في مركز {centerName}. السبب: {refundReason}."
+    }
+  },
+  "PAYOUT_CREATED": {
+    "TARGET": {
+      "title": "تم إنشاء سجل استحقاق",
+      "message": "تم إنشاء استحقاق {unitType} - كلاس {className} في مركز {centerName} بمبلغ {amount} بواسطة {actorName}."
+    }
+  },
+  "PAYOUT_PAID": {
+    "TARGET": {
+      "title": "تم صرف استحقاقك",
+      "message": "تم صرف مبلغ {amount} عن استحقاق {unitType} - كلاس {className} في مركز {centerName} بواسطة {actorName}."
+    }
+  },
+  "PAYOUT_INSTALLMENT_PAID": {
+    "TARGET": {
+      "title": "تم استلام دفعة من أقساط الاستحقاق",
+      "message": "تم استلام دفعة {installmentAmount} عن استحقاق {unitType} - كلاس {className}. المتبقي: {remainingAmount}."
+    }
+  },
+  "EXPENSE_CREATED": {
+    "OWNERS": {
+      "title": "مصروف جديد",
+      "message": "تم إنشاء مصروف {expenseTitle} ({category}) بمبلغ {amount} في فرع {branchName} - مركز {centerName} بواسطة {actorName}."
+    },
+    "STAFF": {
+      "title": "مصروف جديد",
+      "message": "تم إنشاء مصروف {expenseTitle} ({category}) بمبلغ {amount} في فرع {branchName} - مركز {centerName}."
+    }
+  },
+  "EXPENSE_REFUNDED": {
+    "OWNERS": {
+      "title": "استرداد مصروف",
+      "message": "تم استرداد مصروف {expenseTitle} ({category}) بمبلغ {amount} في فرع {branchName} - مركز {centerName} بواسطة {actorName}."
+    },
+    "STAFF": {
+      "title": "استرداد مصروف",
+      "message": "تم استرداد مصروف {expenseTitle} ({category}) بمبلغ {amount} في فرع {branchName} - مركز {centerName}."
+    }
+  },
+  "USER_PROFILE_ACTIVATED": {
+    "TARGET": {
+      "title": "تفعيل الملف الشخصي",
+      "message": "تم تفعيل ملفك الشخصي بواسطة {actorName}."
+    }
+  },
+  "USER_PROFILE_DEACTIVATED": {
+    "TARGET": {
+      "title": "إيقاف الملف الشخصي",
+      "message": "تم إيقاف ملفك الشخصي بواسطة {actorName}."
+    }
+  },
+  "USER_PROFILE_DELETED": {
+    "TARGET": {
+      "title": "حذف الملف الشخصي",
+      "message": "تم حذف ملفك الشخصي بواسطة {actorName}."
+    }
+  },
+  "USER_PROFILE_RESTORED": {
+    "TARGET": {
+      "title": "استعادة الملف الشخصي",
+      "message": "تم استعادة ملفك الشخصي بواسطة {actorName}."
+    }
+  },
+  "USER_PROFILE_CREATED": {
+    "TARGET": {
+      "title": "إنشاء ملف شخصي",
+      "message": "تم إنشاء ملفك الشخصي ({profileType}){centerName, select, '' {} other { في مركز {centerName}}} بواسطة {actorName}."
+    }
   }
 }

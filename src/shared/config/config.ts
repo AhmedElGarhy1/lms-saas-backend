@@ -107,4 +107,8 @@ export const Config = {
     presignedUrlExpires: env.R2_PRESIGNED_URL_EXPIRES,
     publicUrlDomain: env.R2_PUBLIC_URL_DOMAIN,
   },
+
+  fcm: {
+    serviceAccountKey: env.FCM_SERVICE_ACCOUNT_KEY,
+  },
 } as const;

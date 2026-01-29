@@ -37,6 +37,7 @@ import { UserProfileModule } from '../user-profile/user-profile.module';
     StudentBillingRefundService,
     StudentBillingValidationService,
     StudentBillingQueryService,
+    StudentChargesRepository,
   ],
 })
 export class StudentBillingModule {}

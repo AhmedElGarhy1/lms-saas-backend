@@ -35,8 +35,6 @@ import { BulkAssignRoleDto } from '../dto/bulk-assign-role.dto';
 import { BulkRemoveRoleDto } from '../dto/bulk-remove-role.dto';
 import { AssignRoleDto } from '../dto/assign-role.dto';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
-import { RoleEvents } from '@/shared/events/role.events.enum';
-import { RoleExportedEvent } from '../events/role.events';
 import { ControllerResponse } from '@/shared/common/dto/controller-response.dto';
 
 @ApiTags('Roles')
@@ -86,12 +84,6 @@ export class RolesActionsController {
       format,
       baseFilename,
       res,
-    );
-
-    // Emit event for activity logging
-    await this.typeSafeEventEmitter.emitAsync(
-      RoleEvents.EXPORTED,
-      new RoleExportedEvent(format, baseFilename, roles.length, query, actor),
     );
 
     return data;

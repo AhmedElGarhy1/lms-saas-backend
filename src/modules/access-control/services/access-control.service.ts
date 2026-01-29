@@ -11,6 +11,10 @@ import { AccessControlEvents } from '@/shared/events/access-control.events.enum'
 import {
   ActivateCenterAccessEvent,
   DeactivateCenterAccessEvent,
+  CenterAccessRestoredEvent,
+  CenterAccessSoftRemovedEvent,
+  GrantCenterAccessEvent,
+  RevokeCenterAccessEvent,
 } from '../events/access-control.events';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { BaseService } from '@/shared/common/services/base.service';
@@ -52,11 +56,7 @@ export class AccessControlService extends BaseService {
     actor: ActorUser,
     skipExsitance: boolean = false,
   ): Promise<void> {
-    // Self-protection check - check both granter and target
-    this.selfProtectionService.validateNotSelf(
-      actor.userProfileId,
-      body.granterUserProfileId,
-    );
+    // Self-protection check - check both target
     this.selfProtectionService.validateNotSelf(
       actor.userProfileId,
       body.targetUserProfileId,
@@ -302,7 +302,19 @@ export class AccessControlService extends BaseService {
       throw AccessControlErrors.centerAccessAlreadyExists();
     }
 
-    return await this.centerAccessRepository.grantCenterAccess(dto);
+    const created = await this.centerAccessRepository.grantCenterAccess(dto);
+    const isCenterAccessActive = created.isActive ?? dto.isActive ?? true;
+    await this.typeSafeEventEmitter.emitAsync(
+      AccessControlEvents.GRANT_CENTER_ACCESS,
+      new GrantCenterAccessEvent(
+        dto.userProfileId,
+        centerId,
+        actor,
+        undefined,
+        isCenterAccessActive,
+      ),
+    );
+    return created;
   }
 
   async revokeCenterAccess(
@@ -356,7 +368,13 @@ export class AccessControlService extends BaseService {
       throw AccessControlErrors.centerAccessNotFound();
     }
 
-    return await this.centerAccessRepository.revokeCenterAccess(dto);
+    const effectiveCenterId = dto.centerId ?? centerId;
+    const removed = await this.centerAccessRepository.revokeCenterAccess(dto);
+    await this.typeSafeEventEmitter.emitAsync(
+      AccessControlEvents.REVOKE_CENTER_ACCESS,
+      new RevokeCenterAccessEvent(dto.userProfileId, effectiveCenterId, actor),
+    );
+    return removed;
   }
 
   // Additional methods needed by other services
@@ -437,6 +455,10 @@ export class AccessControlService extends BaseService {
     }
 
     await this.centerAccessRepository.softRemove(centerAccess.id);
+    await this.typeSafeEventEmitter.emitAsync(
+      AccessControlEvents.CENTER_ACCESS_SOFT_REMOVED,
+      new CenterAccessSoftRemovedEvent(body.userProfileId, centerId, actor),
+    );
   }
 
   async restoreCenterAccess(
@@ -502,6 +524,10 @@ export class AccessControlService extends BaseService {
       throw AccessControlErrors.cannotRestoreActiveCenterAccess();
     }
     await this.centerAccessRepository.restore(centerAccess.id);
+    await this.typeSafeEventEmitter.emitAsync(
+      AccessControlEvents.CENTER_ACCESS_RESTORED,
+      new CenterAccessRestoredEvent(body.userProfileId, centerId, actor),
+    );
   }
 
   async activateCenterAccess(

@@ -54,3 +54,14 @@ export class NotificationReadEvent {
     public readonly readTime: number | null,
   ) {}
 }
+
+/**
+ * Event emitted when a push notification token is invalid or expired
+ * Used to trigger cleanup of invalid tokens from database
+ */
+export class PushTokenInvalidEvent {
+  constructor(
+    public readonly token: string,
+    public readonly userId: string,
+  ) {}
+}

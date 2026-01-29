@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Put,
   Patch,
   Get,
   Body,
@@ -9,7 +10,9 @@ import {
 } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '@/modules/user/services/user.service';
+import { DeviceService } from '@/modules/user/services/device.service';
 import { LoginRequestDto } from '../dto/login.dto';
+import { RegisterFcmTokenDto } from '../dto/register-fcm-token.dto';
 import { ForgotPasswordRequestDto } from '../dto/forgot-password.dto';
 import { ResetPasswordRequestDto } from '../dto/reset-password.dto';
 import { VerifyPhoneRequestDto } from '../dto/verify-phone.dto';
@@ -49,6 +52,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UserService,
+    private readonly deviceService: DeviceService,
     private readonly verificationTokenRepository: VerificationTokenRepository,
   ) {}
 
@@ -58,8 +62,11 @@ export class AuthController {
   @ReadApiResponses('User login')
   @ApiBody({ type: LoginRequestDto })
   @Transactional()
-  async login(@Body() loginDto: LoginRequestDto) {
-    const result = await this.authService.login(loginDto);
+  async login(@Body() loginDto: LoginRequestDto, @Req() req: Request) {
+    const result = await this.authService.login(
+      loginDto,
+      req.headers as unknown as Record<string, string | string[] | undefined>,
+    );
 
     return ControllerResponse.success(result);
   }
@@ -96,6 +103,30 @@ export class AuthController {
 
     const result = await this.authService.refresh(userId);
     return ControllerResponse.success(result);
+  }
+
+  @Put('devices/me/fcm-token')
+  @NoProfile()
+  @UpdateApiResponses('Register or update FCM device token')
+  @ApiOperation({
+    summary: 'Register FCM token for push (app start / token refresh)',
+  })
+  @ApiBody({ type: RegisterFcmTokenDto })
+  @Transactional()
+  async registerFcmToken(
+    @Body() dto: RegisterFcmTokenDto,
+    @GetUser() user: ActorUser,
+    @Req() req: Request,
+  ) {
+    const reqWithHeaders = req as Request & {
+      headers?: Record<string, string | string[] | undefined>;
+    };
+    const headers = reqWithHeaders.headers ?? {};
+    await this.deviceService.registerFcmToken(user.id, headers, {
+      fcmToken: dto.fcmToken,
+      deviceName: dto.deviceName,
+    });
+    return ControllerResponse.success(null);
   }
 
   @Post('request-phone-verification')

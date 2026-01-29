@@ -84,6 +84,17 @@ export class UserProfileRepository extends BaseRepository<UserProfile> {
   }
 
   /**
+   * Returns the first profile for a user (e.g. for notification RecipientInfo).
+   */
+  async findFirstByUserId(userId: string): Promise<UserProfile | null> {
+    const profiles = await this.findMany({
+      where: { userId },
+      take: 1,
+    });
+    return profiles[0] ?? null;
+  }
+
+  /**
    * Optimized lookup that returns only userProfileId and code
    * Uses QueryBuilder for better performance
    */

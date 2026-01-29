@@ -14,19 +14,21 @@ export type NotificationField =
 /**
  * Build i18n key for notification translation
  * Uses enum value directly (e.g., NotificationType.OTP → "OTP")
+ * For multi-audience types, pass audience (e.g. TARGET, OWNERS) to get notifications.X.AUDIENCE.title
  *
  * @param type - Notification type enum value
  * @param field - Field name ('title' or 'message')
- * @returns i18n key like "notifications.OTP.title"
- *
- * @example
- * getNotificationI18nKey(NotificationType.OTP, 'title')
- * // Returns: "notifications.OTP.title"
+ * @param audience - Optional audience (TARGET, OWNERS, etc.) for multi-audience i18n
+ * @returns i18n key like "notifications.OTP.title" or "notifications.CENTER_ACCESS_DEACTIVATED.TARGET.title"
  */
 export function getNotificationI18nKey(
   type: NotificationType,
   field: NotificationField,
+  audience?: string,
 ): string {
+  if (audience) {
+    return `notifications.${type}.${audience}.${field}`;
+  }
   return `notifications.${type}.${field}`;
 }
 

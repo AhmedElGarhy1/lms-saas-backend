@@ -14,5 +14,485 @@
   "CENTER_UPDATED": {
     "title": "Center Information Updated",
     "message": "Your center {centerName} information has been successfully updated."
+  },
+  "CENTER_DELETED": {
+    "OWNERS": {
+      "title": "Center Deleted",
+      "message": "Center {centerName} has been deleted by {actorName}."
+    }
+  },
+  "CENTER_RESTORED": {
+    "OWNERS": {
+      "title": "Center Restored",
+      "message": "Center {centerName} has been restored by {actorName}."
+    }
+  },
+  "BRANCH_CREATED": {
+    "OWNERS": {
+      "title": "New Branch",
+      "message": "Branch {branchName} at center {centerName} has been created by {actorName}."
+    },
+    "STAFF": {
+      "title": "New Branch",
+      "message": "Branch {branchName} at center {centerName} has been created."
+    }
+  },
+  "BRANCH_UPDATED": {
+    "OWNERS": {
+      "title": "Branch Updated",
+      "message": "Branch {branchName} at center {centerName} has been updated by {actorName}."
+    },
+    "STAFF": {
+      "title": "Branch Updated",
+      "message": "Branch {branchName} at center {centerName} has been updated."
+    }
+  },
+  "BRANCH_DELETED": {
+    "OWNERS": {
+      "title": "Branch Deleted",
+      "message": "Branch {branchName} at center {centerName} has been deleted by {actorName}."
+    },
+    "STAFF": {
+      "title": "Branch Deleted",
+      "message": "Branch {branchName} at center {centerName} has been deleted."
+    }
+  },
+  "BRANCH_RESTORED": {
+    "OWNERS": {
+      "title": "Branch Restored",
+      "message": "Branch {branchName} at center {centerName} has been restored by {actorName}."
+    },
+    "STAFF": {
+      "title": "Branch Restored",
+      "message": "Branch {branchName} at center {centerName} has been restored."
+    }
+  },
+  "STUDENT_ABSENT": {
+    "TARGET": {
+      "title": "Absence Recorded",
+      "message": "Your absence from session {className} - {groupName} at {centerName} has been recorded."
+    },
+    "PARENTS": {
+      "title": "Your Child Absent",
+      "message": "Alert: {studentName} was marked absent from session {className} - {groupName} at {centerName}."
+    }
+  },
+  "NEW_DEVICE_LOGIN": {
+    "title": "New Device Login",
+    "message": "Login detected from {deviceName}"
+  },
+  "PASSWORD_CHANGED": {
+    "title": "Password Changed",
+    "message": "Your password has been changed successfully"
+  },
+  "LOGIN_FAILED": {
+    "title": "Failed Login Attempt",
+    "message": "A failed login attempt was detected on your account"
+  },
+  "TWO_FA_DISABLED": {
+    "title": "Two-Factor Authentication Disabled",
+    "message": "Warning: Two-factor authentication has been disabled on your account"
+  },
+  "CENTER_ACCESS_ACTIVATED": {
+    "TARGET": {
+      "title": "Center Access Activated",
+      "message": "Welcome! Your access to {centerName} has been activated. You can now start working."
+    },
+    "OWNERS": {
+      "title": "Alert: User Access Activated",
+      "message": "User {name} access to {centerName} has been activated by {actorName}."
+    }
+  },
+  "CENTER_ACCESS_DEACTIVATED": {
+    "TARGET": {
+      "title": "Center Access Deactivated",
+      "message": "Alert: Your access to {centerName} has been deactivated. Please contact administration for more details."
+    },
+    "OWNERS": {
+      "title": "Security Alert: User Access Deactivated",
+      "message": "User {name} access to {centerName} has been deactivated by {actorName}."
+    }
+  },
+  "CENTER_ACCESS_GRANTED": {
+    "TARGET": {
+      "title": "Center Access Granted",
+      "message": "Welcome to the {centerName} team! Your access has been activated. You can now start working."
+    },
+    "OWNERS": {
+      "title": "Security Alert: New Access Granted",
+      "message": "{profileType} access has been granted to user {name} by {actorName} in {centerName}."
+    }
+  },
+  "CENTER_ACCESS_REVOKED": {
+    "TARGET": {
+      "title": "Center Access Revoked",
+      "message": "Alert: Your access to {centerName} has been modified. Please contact administration for more details."
+    },
+    "OWNERS": {
+      "title": "Security Alert: Access Revoked",
+      "message": "{profileType} access has been revoked from user {name} by {actorName} in {centerName}."
+    }
+  },
+  "ROLE_ASSIGNED": {
+    "TARGET": {
+      "title": "Role Assigned",
+      "message": "You have been assigned the {roleName} role in {centerName}"
+    },
+    "OWNERS": {
+      "title": "New Role Assigned",
+      "message": "The {roleName} role has been assigned to user {name} by {actorName} in {centerName}."
+    }
+  },
+  "ROLE_REVOKED": {
+    "TARGET": {
+      "title": "Role Revoked",
+      "message": "The {roleName} role has been revoked from your account in {centerName}"
+    },
+    "OWNERS": {
+      "title": "Role Revoked",
+      "message": "The {roleName} role has been revoked from user {name} by {actorName} in {centerName}."
+    }
+  },
+  "SESSION_CREATED": {
+    "STUDENTS": {
+      "title": "New Session",
+      "message": "Session {sessionTitle} - {className} ({groupName}) scheduled for {startTime}"
+    },
+    "PARENTS": {
+      "title": "New Session for Your Child",
+      "message": "Session {sessionTitle} - {className} ({groupName}) scheduled for {startTime}"
+    },
+    "TEACHER": {
+      "title": "New Session",
+      "message": "Session {sessionTitle} - {className} ({groupName}) scheduled for {startTime}"
+    },
+    "STAFF": {
+      "title": "Session Added",
+      "message": "New session added for {className} ({groupName})"
+    }
+  },
+  "SESSION_UPDATED": {
+    "STUDENTS": {
+      "title": "Session Updated",
+      "message": "Session {sessionTitle} - {className} has been updated. New time: {startTime}"
+    },
+    "PARENTS": {
+      "title": "Your Child's Session Updated",
+      "message": "Session {sessionTitle} - {className} has been updated. New time: {startTime}"
+    },
+    "TEACHER": {
+      "title": "Session Updated",
+      "message": "Session {sessionTitle} - {className} has been updated. New time: {startTime}"
+    },
+    "STAFF": {
+      "title": "Session Modified",
+      "message": "Session {className} ({groupName}) modified by {actorName}"
+    }
+  },
+  "SESSION_CANCELED": {
+    "STUDENTS": {
+      "title": "Session Canceled",
+      "message": "Session {sessionTitle} - {className} scheduled for {startTime} has been canceled"
+    },
+    "PARENTS": {
+      "title": "Your Child's Session Canceled",
+      "message": "Important: Session {sessionTitle} - {className} scheduled for {startTime} has been canceled"
+    },
+    "TEACHER": {
+      "title": "Session Canceled",
+      "message": "Session {sessionTitle} - {className} scheduled for {startTime} has been canceled"
+    },
+    "STAFF": {
+      "title": "Session Canceled",
+      "message": "Session {className} ({groupName}) canceled by {actorName}"
+    }
+  },
+  "SESSION_FINISHED": {
+    "STUDENTS": {
+      "title": "Session Ended",
+      "message": "Session {sessionTitle} - {className} ended at {endTime}"
+    },
+    "PARENTS": {
+      "title": "Your Child's Session Ended",
+      "message": "Session {sessionTitle} - {className} ended at {endTime}. You can pick up your child now."
+    },
+    "TEACHER": {
+      "title": "Session Ended",
+      "message": "Session {sessionTitle} - {className} completion recorded"
+    },
+    "STAFF": {
+      "title": "Session Completed",
+      "message": "Session {className} ({groupName}) completed"
+    }
+  },
+  "SESSION_DELETED": {
+    "STUDENTS": {
+      "title": "Session Deleted",
+      "message": "Session {sessionTitle} - {className} has been deleted"
+    },
+    "PARENTS": {
+      "title": "Your Child's Session Deleted",
+      "message": "Important: Session {sessionTitle} - {className} has been deleted"
+    },
+    "TEACHER": {
+      "title": "Session Deleted",
+      "message": "Session {sessionTitle} - {className} has been deleted"
+    },
+    "STAFF": {
+      "title": "Session Deleted",
+      "message": "Session {className} ({groupName}) deleted by {actorName}"
+    }
+  },
+  "SESSION_CHECKED_IN": {
+    "STUDENTS": {
+      "title": "Session Started",
+      "message": "Session {sessionTitle} - {className} has started with {teacherName}"
+    },
+    "PARENTS": {
+      "title": "Your Child's Session Started",
+      "message": "Session {sessionTitle} - {className} has started with {teacherName}"
+    },
+    "STAFF": {
+      "title": "Session Started",
+      "message": "{teacherName} started session {className} ({groupName})"
+    }
+  },
+  "SESSION_CONFLICT_DETECTED": {
+    "TEACHER": {
+      "title": "Schedule Conflict",
+      "message": "A {conflictType} conflict was detected for group {groupName} at {proposedStartTime} - {proposedEndTime}"
+    },
+    "STAFF": {
+      "title": "Schedule Conflict",
+      "message": "A {conflictType} conflict was detected for group {groupName} at {proposedStartTime} - {proposedEndTime}"
+    }
+  },
+  "CLASS_CREATED": {
+    "TEACHER": {
+      "title": "New Class",
+      "message": "Class {className} has been created at {centerName}"
+    },
+    "STAFF": {
+      "title": "New Class",
+      "message": "Class {className} has been created for teacher {teacherName}"
+    }
+  },
+  "CLASS_UPDATED": {
+    "TEACHER": {
+      "title": "Class Updated",
+      "message": "Class {className} information has been updated"
+    },
+    "STAFF": {
+      "title": "Class Updated",
+      "message": "Class {className} has been updated by {actorName}"
+    },
+    "STUDENTS": {
+      "title": "Class Updated",
+      "message": "Class {className} information has been updated"
+    },
+    "PARENTS": {
+      "title": "Your Child's Class Updated",
+      "message": "Class {className} information has been updated"
+    }
+  },
+  "CLASS_DELETED": {
+    "TEACHER": {
+      "title": "Class Deleted",
+      "message": "Class {className} has been deleted"
+    },
+    "STAFF": {
+      "title": "Class Deleted",
+      "message": "Class {className} has been deleted by {actorName}"
+    },
+    "STUDENTS": {
+      "title": "Class Deleted",
+      "message": "Alert: Class {className} has been deleted"
+    },
+    "PARENTS": {
+      "title": "Your Child's Class Deleted",
+      "message": "Important: Class {className} has been deleted"
+    }
+  },
+  "CLASS_STATUS_CHANGED": {
+    "TEACHER": {
+      "title": "Class Status Changed",
+      "message": "Class {className} status changed from {oldStatus} to {newStatus}"
+    },
+    "STAFF": {
+      "title": "Class Status Changed",
+      "message": "Class {className} status changed to {newStatus} by {actorName}"
+    },
+    "STUDENTS": {
+      "title": "Class Status Changed",
+      "message": "Alert: Class {className} is now {newStatus}"
+    },
+    "PARENTS": {
+      "title": "Your Child's Class Status Changed",
+      "message": "Important: Class {className} is now {newStatus}"
+    }
+  },
+  "STAFF_ASSIGNED_TO_CLASS": {
+    "TARGET": {
+      "title": "Assigned to Class",
+      "message": "You have been assigned to work on class {className} at {centerName}"
+    }
+  },
+  "STAFF_REMOVED_FROM_CLASS": {
+    "TARGET": {
+      "title": "Removed from Class",
+      "message": "You have been removed from class {className} at {centerName}"
+    }
+  },
+  "GROUP_CREATED": {
+    "TEACHER": {
+      "title": "New Group",
+      "message": "Group {groupName} has been created in class {className}"
+    },
+    "STAFF": {
+      "title": "New Group",
+      "message": "Group {groupName} has been created in class {className}"
+    }
+  },
+  "GROUP_UPDATED": {
+    "TEACHER": {
+      "title": "Group Updated",
+      "message": "Group {groupName} in class {className} has been updated"
+    },
+    "STAFF": {
+      "title": "Group Updated",
+      "message": "Group {groupName} has been updated by {actorName}"
+    },
+    "STUDENTS": {
+      "title": "Group Updated",
+      "message": "Your group {groupName} in class {className} has been updated"
+    },
+    "PARENTS": {
+      "title": "Your Child's Group Updated",
+      "message": "Group {groupName} in class {className} has been updated"
+    }
+  },
+  "GROUP_DELETED": {
+    "TEACHER": {
+      "title": "Group Deleted",
+      "message": "Group {groupName} has been deleted from class {className}"
+    },
+    "STAFF": {
+      "title": "Group Deleted",
+      "message": "Group {groupName} has been deleted by {actorName}"
+    },
+    "STUDENTS": {
+      "title": "Group Deleted",
+      "message": "Alert: Your group {groupName} has been deleted from class {className}"
+    },
+    "PARENTS": {
+      "title": "Your Child's Group Deleted",
+      "message": "Important: Group {groupName} has been deleted from class {className}"
+    }
+  },
+  "STUDENT_ADDED_TO_GROUP": {
+    "TARGET": {
+      "title": "Enrolled in Group",
+      "message": "You have been enrolled in group {groupName} - class {className} at {centerName}"
+    },
+    "PARENTS": {
+      "title": "Your Child Enrolled in Group",
+      "message": "{studentName} has been enrolled in group {groupName} - class {className}"
+    }
+  },
+  "STUDENT_REMOVED_FROM_GROUP": {
+    "TARGET": {
+      "title": "Removed from Group",
+      "message": "You have been removed from group {groupName} - class {className} at {centerName}"
+    },
+    "PARENTS": {
+      "title": "Your Child Removed from Group",
+      "message": "{studentName} has been removed from group {groupName} - class {className}"
+    }
+  },
+  "CHARGE_COMPLETED": {
+    "TARGET": {
+      "title": "Charge Fully Paid",
+      "message": "Full payment received for {chargeType} charge – class {className} at {centerName}, amount {amount}, by {actorName}."
+    }
+  },
+  "CHARGE_INSTALLMENT_PAID": {
+    "TARGET": {
+      "title": "Charge Installment Received",
+      "message": "Installment {installmentAmount} received for {chargeType} charge – class {className}. Remaining: {remainingAmount}."
+    }
+  },
+  "CHARGE_REFUNDED": {
+    "TARGET": {
+      "title": "Charge Refunded",
+      "message": "Amount {amount} refunded for {chargeType} charge – class {className} at {centerName}. Reason: {refundReason}."
+    }
+  },
+  "PAYOUT_CREATED": {
+    "TARGET": {
+      "title": "Payout Record Created",
+      "message": "Payout record created for {unitType} – class {className} at {centerName}, amount {amount}, by {actorName}."
+    }
+  },
+  "PAYOUT_PAID": {
+    "TARGET": {
+      "title": "Payout Received",
+      "message": "Amount {amount} paid for {unitType} payout – class {className} at {centerName}, by {actorName}."
+    }
+  },
+  "PAYOUT_INSTALLMENT_PAID": {
+    "TARGET": {
+      "title": "Payout Installment Received",
+      "message": "Installment {installmentAmount} received for {unitType} payout – class {className}. Remaining: {remainingAmount}."
+    }
+  },
+  "EXPENSE_CREATED": {
+    "OWNERS": {
+      "title": "New Expense",
+      "message": "Expense {expenseTitle} ({category}) for {amount} at branch {branchName} – center {centerName} created by {actorName}."
+    },
+    "STAFF": {
+      "title": "New Expense",
+      "message": "Expense {expenseTitle} ({category}) for {amount} at branch {branchName} – center {centerName}."
+    }
+  },
+  "EXPENSE_REFUNDED": {
+    "OWNERS": {
+      "title": "Expense Refunded",
+      "message": "Expense {expenseTitle} ({category}) for {amount} at branch {branchName} – center {centerName} refunded by {actorName}."
+    },
+    "STAFF": {
+      "title": "Expense Refunded",
+      "message": "Expense {expenseTitle} ({category}) for {amount} at branch {branchName} – center {centerName} refunded."
+    }
+  },
+  "USER_PROFILE_ACTIVATED": {
+    "TARGET": {
+      "title": "Profile activated",
+      "message": "Your profile was activated by {actorName}."
+    }
+  },
+  "USER_PROFILE_DEACTIVATED": {
+    "TARGET": {
+      "title": "Profile deactivated",
+      "message": "Your profile was deactivated by {actorName}."
+    }
+  },
+  "USER_PROFILE_DELETED": {
+    "TARGET": {
+      "title": "Profile deleted",
+      "message": "Your profile was deleted by {actorName}."
+    }
+  },
+  "USER_PROFILE_RESTORED": {
+    "TARGET": {
+      "title": "Profile restored",
+      "message": "Your profile was restored by {actorName}."
+    }
+  },
+  "USER_PROFILE_CREATED": {
+    "TARGET": {
+      "title": "Profile created",
+      "message": "Your profile ({profileType}){centerName, select, '' {} other { at center {centerName}}} was created by {actorName}."
+    }
   }
 }

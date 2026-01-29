@@ -40,22 +40,6 @@ export class ClassRestoredEvent {
 }
 
 /**
- * Event (result-focused, output-oriented)
- * Represents the fact that class data was exported.
- */
-export class ClassExportedEvent extends BaseEvent {
-  constructor(
-    public readonly format: string,
-    public readonly filename: string,
-    public readonly recordCount: number,
-    public readonly filters: Record<string, any>,
-    actor: ActorUser,
-  ) {
-    super(actor);
-  }
-}
-
-/**
  * Event representing a class status change
  */
 export class ClassStatusChangedEvent {

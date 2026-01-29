@@ -6,5 +6,4 @@ export enum CenterEvents {
   CREATE_OWNER = 'center.create.owner',
   ASSIGN_OWNER = 'center.assigned.owner',
   CREATE_BRANCH = 'center.created.branch',
-  EXPORTED = 'center.exported',
 }

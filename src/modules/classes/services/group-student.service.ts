@@ -23,6 +23,12 @@ import { BranchesService } from '@/modules/centers/services/branches.service';
 import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profile.errors';
 import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
 import { SelfProtectionService } from '@/shared/common/services/self-protection.service';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { GroupEvents } from '@/shared/events/groups.events.enum';
+import {
+  StudentAddedToGroupEvent,
+  StudentRemovedFromGroupEvent,
+} from '../events/group-student.events';
 
 @Injectable()
 export class GroupStudentService extends BaseService {
@@ -39,6 +45,7 @@ export class GroupStudentService extends BaseService {
     private readonly centersService: CentersService,
     private readonly branchesService: BranchesService,
     private readonly selfProtectionService: SelfProtectionService,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
   }
@@ -185,6 +192,17 @@ export class GroupStudentService extends BaseService {
       branchId: group.branchId,
       joinedAt: new Date(),
     });
+
+    // Emit event for notification
+    await this.typeSafeEventEmitter.emitAsync(
+      GroupEvents.STUDENT_ADDED,
+      new StudentAddedToGroupEvent(
+        data.userProfileId,
+        group,
+        actor,
+        group.centerId,
+      ),
+    );
   }
 
   /**
@@ -331,6 +349,20 @@ export class GroupStudentService extends BaseService {
         await this.groupStudentsRepository.update(groupStudent.id, {
           leftAt: new Date(),
         });
+
+        // Emit event for notification
+        await this.typeSafeEventEmitter.emitAsync(
+          GroupEvents.STUDENT_REMOVED,
+          new StudentRemovedFromGroupEvent(
+            studentUserProfileId,
+            groupId,
+            group.name,
+            group.class?.name || '',
+            actor,
+            centerId,
+          ),
+        );
+
         return { id: studentUserProfileId };
       },
     );

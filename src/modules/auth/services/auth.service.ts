@@ -3,6 +3,7 @@ import { AuthErrors } from '../exceptions/auth.errors';
 import { JwtService } from '@nestjs/jwt';
 import { Config } from '@/shared/config/config';
 import { UserService } from '../../user/services/user.service';
+import { DeviceService } from '../../user/services/device.service';
 import { VerificationService } from './verification.service';
 import * as bcrypt from 'bcrypt';
 import { LoginRequestDto } from '../dto/login.dto';
@@ -32,6 +33,7 @@ export class AuthService extends BaseService {
 
   constructor(
     private readonly userService: UserService,
+    private readonly deviceService: DeviceService,
     private readonly verificationService: VerificationService,
     private readonly jwtService: JwtService,
     private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
@@ -54,7 +56,10 @@ export class AuthService extends BaseService {
     return user;
   }
 
-  async login(dto: LoginRequestDto) {
+  async login(
+    dto: LoginRequestDto,
+    headers?: Record<string, string | string[] | undefined>,
+  ) {
     const user = await this.userService.findUserByPhone(dto.phone, true);
 
     // If user exists, validate account status
@@ -110,7 +115,9 @@ export class AuthService extends BaseService {
       }
 
       // Complete login (generate tokens, store refresh token, emit event)
-      return this.completeLogin(user);
+      return this.completeLogin(user, headers, {
+        fcmToken: dto.fcmToken,
+      });
     } else {
       // User doesn't exist - return same error message to prevent enumeration
       throw UserErrors.userNotFound();
@@ -345,7 +352,11 @@ export class AuthService extends BaseService {
   /**
    * Complete login flow: generate tokens, store refresh token, emit login event
    */
-  private async completeLogin(user: User) {
+  private async completeLogin(
+    user: User,
+    headers?: Record<string, string | string[] | undefined>,
+    options?: { fcmToken?: string },
+  ) {
     // Generate tokens
     const tokens = this.generateTokens(user);
 
@@ -353,10 +364,29 @@ export class AuthService extends BaseService {
     const hashedRt = await bcrypt.hash(tokens.refreshToken, 10);
     await this.userService.update(user.id, { hashedRt });
 
+    // Check device and get isNew flag (for new device login notification)
+    let isNewDevice = false;
+    let deviceName = 'Unknown Device';
+    if (headers) {
+      const deviceResult = await this.deviceService.checkDevice(
+        user.id,
+        headers,
+        options?.fcmToken ? { fcmToken: options.fcmToken } : undefined,
+      );
+      isNewDevice = deviceResult.isNew;
+      deviceName = deviceResult.deviceName;
+    }
+
     // Emit login event for activity logging
     await this.typeSafeEventEmitter.emitAsync(
       AuthEvents.USER_LOGGED_IN,
-      new UserLoggedInEvent(user.id || '', user.phone || '', user as ActorUser),
+      new UserLoggedInEvent(
+        user.id || '',
+        user.phone || '',
+        isNewDevice,
+        deviceName,
+        user as ActorUser,
+      ),
     );
 
     return {

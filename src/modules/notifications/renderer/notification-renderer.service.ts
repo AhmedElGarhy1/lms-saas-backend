@@ -78,7 +78,7 @@ export class NotificationRenderer extends BaseService {
     const templatePath = config.template || 'default';
 
     // 6. Render template with channel support (supports .hbs, .txt, .json)
-    // For IN_APP, we skip file loading and use i18n directly
+    // IN_APP and PUSH use i18n (notifications.json) only; no file loading
     let renderedContent: string | object;
     let usedFallback = false;
     try {
@@ -87,7 +87,8 @@ export class NotificationRenderer extends BaseService {
         eventData,
         finalLocale,
         channel,
-        notificationType, // Pass notificationType for i18n-based JSON rendering
+        notificationType,
+        resolvedAudience,
       );
     } catch (error) {
       const errorMessage =
@@ -103,7 +104,7 @@ export class NotificationRenderer extends BaseService {
         },
       );
 
-      // Try fallback to default template
+      // Try fallback to default template (only for file-based channels)
       try {
         const fallbackTemplate = 'default';
         renderedContent = await this.templateService.renderTemplateWithChannel(
@@ -111,7 +112,8 @@ export class NotificationRenderer extends BaseService {
           eventData,
           finalLocale,
           channel,
-          notificationType, // Pass notificationType for i18n-based JSON rendering
+          notificationType,
+          resolvedAudience,
         );
         usedFallback = true;
         this.logger.warn(
@@ -124,9 +126,6 @@ export class NotificationRenderer extends BaseService {
             locale: finalLocale,
           },
         );
-        // Track fallback usage in metrics (if metrics service is available)
-        // Note: Metrics service would need to be injected if we want to track this
-        // For now, we log it and can add metrics later if needed
       } catch (fallbackError) {
         const fallbackErrorMessage =
           fallbackError instanceof Error

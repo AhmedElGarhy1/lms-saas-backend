@@ -16,6 +16,14 @@ import { UserProfilePermissionService } from '@/modules/access-control/services/
 import { UserProfileRepository } from '../repositories/user-profile.repository';
 import { CentersService } from '@/modules/centers/services/centers.service';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { UserProfileEvents } from '@/shared/events/user-profile.events.enum';
+import {
+  UserProfileActivatedEvent,
+  UserProfileDeactivatedEvent,
+  UserProfileDeletedEvent,
+  UserProfileRestoredEvent,
+  UserProfileCreatedEvent,
+} from '../events/user-profile.events';
 import { StaffEvents } from '@/shared/events/staff.events.enum';
 import { StudentEvents } from '@/shared/events/student.events.enum';
 import { TeacherEvents } from '@/shared/events/teacher.events.enum';
@@ -160,6 +168,18 @@ export class UserProfileService extends BaseService {
     await this.userProfilePermissionService.canActivate(actor, userProfileId);
 
     await this.userProfileRepository.update(userProfileId, { isActive });
+
+    if (isActive) {
+      await this.typeSafeEventEmitter.emitAsync(
+        UserProfileEvents.ACTIVATED,
+        new UserProfileActivatedEvent(userProfileId, actor),
+      );
+    } else {
+      await this.typeSafeEventEmitter.emitAsync(
+        UserProfileEvents.DEACTIVATED,
+        new UserProfileDeactivatedEvent(userProfileId, actor),
+      );
+    }
 
     return userProfile;
   }
@@ -333,6 +353,11 @@ export class UserProfileService extends BaseService {
     await this.userProfilePermissionService.canDelete(actor, userProfileId);
 
     await this.userProfileRepository.softRemove(userProfileId);
+
+    await this.typeSafeEventEmitter.emitAsync(
+      UserProfileEvents.DELETED,
+      new UserProfileDeletedEvent(userProfileId, actor),
+    );
   }
 
   async restoreUserProfile(
@@ -368,6 +393,11 @@ export class UserProfileService extends BaseService {
     await this.userProfilePermissionService.canRestore(actor, userProfileId);
 
     await this.userProfileRepository.restore(userProfileId);
+
+    await this.typeSafeEventEmitter.emitAsync(
+      UserProfileEvents.RESTORED,
+      new UserProfileRestoredEvent(userProfileId, actor),
+    );
   }
 
   async isAdmin(userProfileId: string) {
@@ -429,6 +459,16 @@ export class UserProfileService extends BaseService {
       dto.profileType,
       profileRefId,
       isUserProfileActive,
+    );
+
+    await this.typeSafeEventEmitter.emitAsync(
+      UserProfileEvents.CREATED,
+      new UserProfileCreatedEvent(
+        userProfile.id,
+        dto.profileType,
+        centerId ?? undefined,
+        actor,
+      ),
     );
 
     // 5. Emit domain events for STAFF, STUDENT, TEACHER and ADMIN profiles

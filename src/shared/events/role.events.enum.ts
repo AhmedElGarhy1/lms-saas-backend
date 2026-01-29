@@ -3,5 +3,4 @@ export enum RoleEvents {
   UPDATED = 'role.updated',
   DELETED = 'role.deleted',
   RESTORED = 'role.restored',
-  EXPORTED = 'role.exported',
 }

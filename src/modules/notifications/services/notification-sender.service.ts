@@ -6,6 +6,7 @@ import {
   SmsAdapter,
   WhatsAppAdapter,
   InAppAdapter,
+  PushAdapter,
 } from '../adapters';
 import { NotificationAdapter } from '../adapters/interfaces/notification-adapter.interface';
 import {
@@ -80,6 +81,7 @@ export class NotificationSenderService extends BaseService {
     private readonly smsAdapter: SmsAdapter,
     private readonly whatsappAdapter: WhatsAppAdapter,
     private readonly inAppAdapter: InAppAdapter,
+    private readonly pushAdapter: PushAdapter,
     private readonly templateService: NotificationTemplateService,
     private readonly logRepository: NotificationLogRepository,
     private readonly metricsService: NotificationMetricsService,
@@ -95,6 +97,7 @@ export class NotificationSenderService extends BaseService {
       [NotificationChannel.SMS, smsAdapter],
       [NotificationChannel.WHATSAPP, whatsappAdapter],
       [NotificationChannel.IN_APP, inAppAdapter],
+      [NotificationChannel.PUSH, pushAdapter],
     ]);
 
     // Get concurrency limit from config

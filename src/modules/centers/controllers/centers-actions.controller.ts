@@ -20,8 +20,6 @@ import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { Permissions } from '@/shared/common/decorators/permissions.decorator';
 import { PERMISSIONS } from '@/modules/access-control/constants/permissions';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
-import { CenterEvents } from '@/shared/events/center.events.enum';
-import { CenterExportedEvent } from '../events/center.events';
 import { BulkOperationService } from '@/shared/common/services/bulk-operation.service';
 import { BulkOperationResultDto } from '@/shared/common/dto/bulk-operation-result.dto';
 import { BulkOperationResult } from '@/shared/common/services/bulk-operation.service';
@@ -78,18 +76,6 @@ export class CentersActionsController {
       format,
       baseFilename,
       res,
-    );
-
-    // Emit event for activity logging
-    await this.typeSafeEventEmitter.emitAsync(
-      CenterEvents.EXPORTED,
-      new CenterExportedEvent(
-        format,
-        baseFilename,
-        centers.length,
-        query,
-        actor,
-      ),
     );
 
     return data;

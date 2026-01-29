@@ -1,0 +1,135 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { NotificationType } from '../../../enums/notification-type.enum';
+import { NotificationIntentResolver } from '../../interfaces/notification-intent-resolver.interface';
+import { BaseIntentResolver } from '../../base/base-intent-resolver.abstract';
+import { IntentForNotification } from '../../../types/notification-intent.map';
+import { AudienceIdForNotification } from '../../../types/audience-id.types';
+import { RecipientInfo } from '../../../types/recipient-info.interface';
+import { UserService } from '@/modules/user/services/user.service';
+import { UserProfileService } from '@/modules/user-profile/services/user-profile.service';
+import { CentersRepository } from '@/modules/centers/repositories/centers.repository';
+import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
+import { DefaultRoles } from '@/modules/access-control/constants/roles';
+
+/**
+ * Resolver for CENTER_ACCESS_GRANTED notification intent
+ * Handles TARGET and OWNERS audiences
+ */
+@Injectable()
+export class CenterAccessGrantedResolver
+  extends BaseIntentResolver
+  implements NotificationIntentResolver<NotificationType.CENTER_ACCESS_GRANTED>
+{
+  private readonly logger: Logger = new Logger(CenterAccessGrantedResolver.name);
+
+  constructor(
+    private readonly userService: UserService,
+    private readonly userProfileService: UserProfileService,
+    private readonly centersRepository: CentersRepository,
+    @InjectRepository(ProfileRole)
+    private readonly profileRoleRepository: Repository<ProfileRole>,
+  ) {
+    super();
+  }
+
+  async resolveIntent(
+    intent: IntentForNotification<NotificationType.CENTER_ACCESS_GRANTED>,
+    audience: AudienceIdForNotification<NotificationType.CENTER_ACCESS_GRANTED>,
+  ) {
+    const userProfile = await this.userProfileService.findOne(
+      intent.userProfileId,
+    );
+    if (!userProfile) {
+      throw new Error(
+        `CENTER_ACCESS_GRANTED: UserProfile not found: ${intent.userProfileId}`,
+      );
+    }
+
+    const center = await this.centersRepository.findOne(intent.centerId);
+    if (!center) {
+      throw new Error(
+        `CENTER_ACCESS_GRANTED: Center not found: ${intent.centerId}`,
+      );
+    }
+
+    const user = await this.userService.findOne(userProfile.userId);
+    if (!user) {
+      throw new Error(
+        `CENTER_ACCESS_GRANTED: User not found: ${userProfile.userId}`,
+      );
+    }
+
+    const actor = await this.userProfileService.findOne(intent.actorId);
+    if (!actor) {
+      throw new Error(
+        `CENTER_ACCESS_GRANTED: Actor profile not found: ${intent.actorId}`,
+      );
+    }
+
+    const actorUser = await this.userService.findOne(actor.userId);
+    if (!actorUser) {
+      throw new Error(
+        `CENTER_ACCESS_GRANTED: Actor user not found: ${actor.userId}`,
+      );
+    }
+
+    // Get profile type in Arabic
+    const profileTypeMap: Record<string, string> = {
+      STAFF: 'موظف',
+      TEACHER: 'معلم',
+      STUDENT: 'طالب',
+      ADMIN: 'مدير',
+    };
+    const profileType = profileTypeMap[userProfile.profileType] || 'مستخدم';
+
+    const templateVariables = {
+      name: user.name,
+      centerName: center.name,
+      actorName: actorUser.name,
+      profileType,
+    };
+
+    const recipients: RecipientInfo[] = [];
+
+    if (audience === 'TARGET') {
+      recipients.push({
+        userId: user.id,
+        profileId: userProfile.id,
+        profileType: userProfile.profileType,
+        phone: user.getPhone(),
+        email: null,
+        locale: this.extractLocale(user),
+      });
+    } else if (audience === 'OWNERS') {
+      const centerOwners = await this.getCenterOwners(intent.centerId);
+      for (const owner of centerOwners) {
+        const ownerUser = await this.userService.findOne(owner.userId);
+        if (ownerUser) {
+          recipients.push({
+            userId: ownerUser.id,
+            profileId: owner.id,
+            profileType: owner.profileType,
+            phone: ownerUser.getPhone(),
+            email: null,
+            locale: this.extractLocale(ownerUser),
+          });
+        }
+      }
+    }
+
+    return { templateVariables, recipients };
+  }
+
+  private async getCenterOwners(centerId: string) {
+    const profileRoles = await this.profileRoleRepository
+      .createQueryBuilder('pr')
+      .innerJoin('pr.role', 'role')
+      .leftJoinAndSelect('pr.userProfile', 'userProfile')
+      .where('pr.centerId = :centerId', { centerId })
+      .andWhere('role.name = :roleName', { roleName: DefaultRoles.OWNER })
+      .getMany();
+    return profileRoles.map((pr) => pr.userProfile).filter((p) => p !== null);
+  }
+}

@@ -379,18 +379,6 @@ export class UserService extends BaseService {
       isActive,
       actor,
     );
-
-    // Get userId from profile for command emission
-    const profile = await this.userProfileService.findOne(userProfileId);
-    if (!profile) {
-      throw UserErrors.userNotFound();
-    }
-
-    // Emit event after work is done
-    await this.eventEmitter.emitAsync(
-      UserEvents.ACTIVATED,
-      new UserActivatedEvent(profile.userId, isActive, actor),
-    );
   }
 
   async activateCenterAccess(

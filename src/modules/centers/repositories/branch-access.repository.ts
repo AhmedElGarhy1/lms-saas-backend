@@ -23,6 +23,15 @@ export class BranchAccessRepository extends BaseRepository<BranchAccess> {
     return this.getRepository().findOneBy(data);
   }
 
+  findByBranchAndCenter(
+    branchId: string,
+    centerId: string,
+  ): Promise<BranchAccess[]> {
+    return this.getRepository().find({
+      where: { branchId, centerId },
+    });
+  }
+
   async grantBranchAccess(data: BranchAccessDto) {
     // Database unique constraint will handle uniqueness
     return this.create(data);

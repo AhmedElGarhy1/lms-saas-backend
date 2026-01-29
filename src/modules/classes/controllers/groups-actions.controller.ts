@@ -25,8 +25,6 @@ import { GroupExportMapper } from '@/shared/common/mappers/group-export.mapper';
 import { ExportGroupsDto } from '../dto/export-groups.dto';
 import { ExportResponseDto } from '@/shared/common/dto/export-response.dto';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
-import { GroupEvents } from '@/shared/events/groups.events.enum';
-import { GroupExportedEvent } from '../events/group.events';
 import { ClassesRepository } from '../repositories/classes.repository';
 import { BranchesRepository } from '@/modules/centers/repositories/branches.repository';
 import { Class } from '../entities/class.entity';
@@ -121,12 +119,6 @@ export class GroupsActionsController {
       format,
       baseFilename,
       res,
-    );
-
-    // Emit event for activity logging
-    await this.typeSafeEventEmitter.emitAsync(
-      GroupEvents.EXPORTED,
-      new GroupExportedEvent(format, baseFilename, groups.length, query, actor),
     );
 
     return data;

@@ -16,8 +16,10 @@ import {
   SmsAdapter,
   WhatsAppAdapter,
   InAppAdapter,
+  PushAdapter,
 } from './adapters';
 import { MetaWhatsAppProvider } from './adapters/providers/meta-whatsapp.provider';
+import { FcmProviderImpl } from './adapters/providers/fcm.provider';
 import { RedisService } from '@/shared/modules/redis/redis.service';
 import { RedisModule } from '@/shared/modules/redis/redis.module';
 import { NotificationHistoryController } from './controllers/notification-history.controller';
@@ -50,6 +52,8 @@ import { NotificationRouterService } from './services/routing/notification-route
 import { MultiRecipientProcessor } from './services/multi-recipient-processor.service';
 import { RecipientValidationService } from './services/recipient-validation.service';
 import { PayloadBuilderService } from './services/payload-builder.service';
+import { PushTokenResolverService } from './services/push-token-resolver.service';
+import { PushTokenInvalidListener } from './listeners/push-token-invalid.listener';
 import { WhatsAppWebhookController } from './controllers/whatsapp-webhook.controller';
 import { WhatsAppWebhookService } from './services/webhooks/whatsapp-webhook.service';
 import { WhatsAppWebhookSignatureService } from './services/webhooks/whatsapp-webhook-signature.service';
@@ -62,14 +66,97 @@ import { CenterUpdatedResolver } from './intents/resolvers/center-updated.resolv
 import { OtpResolver } from './intents/resolvers/otp.resolver';
 import { PhoneVerifiedResolver } from './intents/resolvers/phone-verified.resolver';
 import { CenterCreatedResolver } from './intents/resolvers/center-created.resolver';
+import { CenterDeletedResolver } from './intents/resolvers/center-deleted.resolver';
+import { CenterRestoredResolver } from './intents/resolvers/center-restored.resolver';
+import { BranchCreatedResolver } from './intents/resolvers/branches/branch-created.resolver';
+import { BranchUpdatedResolver } from './intents/resolvers/branches/branch-updated.resolver';
+import { BranchDeletedResolver } from './intents/resolvers/branches/branch-deleted.resolver';
+import { BranchRestoredResolver } from './intents/resolvers/branches/branch-restored.resolver';
+import { StudentAbsentResolver } from './intents/resolvers/attendance/student-absent.resolver';
+import { NewDeviceLoginResolver } from './intents/resolvers/new-device-login.resolver';
+import { PasswordChangedResolver } from './intents/resolvers/password-changed.resolver';
+import { LoginFailedResolver } from './intents/resolvers/login-failed.resolver';
+import { TwoFaDisabledResolver } from './intents/resolvers/two-fa-disabled.resolver';
+import { CenterAccessActivatedResolver } from './intents/resolvers/access-control/center-access-activated.resolver';
+import { CenterAccessDeactivatedResolver } from './intents/resolvers/access-control/center-access-deactivated.resolver';
+import { CenterAccessGrantedResolver } from './intents/resolvers/access-control/center-access-granted.resolver';
+import { CenterAccessRevokedResolver } from './intents/resolvers/access-control/center-access-revoked.resolver';
+import { RoleAssignedResolver } from './intents/resolvers/access-control/role-assigned.resolver';
+import { RoleRevokedResolver } from './intents/resolvers/access-control/role-revoked.resolver';
 import { NotificationIntentResolverRegistryService } from './intents/notification-intent-resolver-registry.service';
 import { NotificationIntentService } from './services/notification-intent.service';
+import { ProfileRole } from '@/modules/access-control/entities/profile-role.entity';
+import { Role } from '@/modules/access-control/entities/role.entity';
+import { UserProfileModule } from '@/modules/user-profile/user-profile.module';
+
+// Session resolvers
+import { SessionCreatedResolver } from './intents/resolvers/sessions/session-created.resolver';
+import { SessionUpdatedResolver } from './intents/resolvers/sessions/session-updated.resolver';
+import { SessionCanceledResolver } from './intents/resolvers/sessions/session-canceled.resolver';
+import { SessionFinishedResolver } from './intents/resolvers/sessions/session-finished.resolver';
+import { SessionDeletedResolver } from './intents/resolvers/sessions/session-deleted.resolver';
+import { SessionCheckedInResolver } from './intents/resolvers/sessions/session-checked-in.resolver';
+import { SessionConflictDetectedResolver } from './intents/resolvers/sessions/session-conflict-detected.resolver';
+
+// Class resolvers
+import { ClassCreatedResolver } from './intents/resolvers/classes/class-created.resolver';
+import { ClassUpdatedResolver } from './intents/resolvers/classes/class-updated.resolver';
+import { ClassDeletedResolver } from './intents/resolvers/classes/class-deleted.resolver';
+import { ClassStatusChangedResolver } from './intents/resolvers/classes/class-status-changed.resolver';
+import { StaffAssignedToClassResolver } from './intents/resolvers/classes/staff-assigned-to-class.resolver';
+import { StaffRemovedFromClassResolver } from './intents/resolvers/classes/staff-removed-from-class.resolver';
+
+// Group resolvers
+import { GroupCreatedResolver } from './intents/resolvers/groups/group-created.resolver';
+import { GroupUpdatedResolver } from './intents/resolvers/groups/group-updated.resolver';
+import { GroupDeletedResolver } from './intents/resolvers/groups/group-deleted.resolver';
+import { StudentAddedToGroupResolver } from './intents/resolvers/groups/student-added-to-group.resolver';
+import { StudentRemovedFromGroupResolver } from './intents/resolvers/groups/student-removed-from-group.resolver';
+
+// Student billing resolvers
+import { ChargeCompletedResolver } from './intents/resolvers/student-billing/charge-completed.resolver';
+import { ChargeInstallmentPaidResolver } from './intents/resolvers/student-billing/charge-installment-paid.resolver';
+import { ChargeRefundedResolver } from './intents/resolvers/student-billing/charge-refunded.resolver';
+
+// Teacher payout resolvers
+import { PayoutCreatedResolver } from './intents/resolvers/teacher-payout/payout-created.resolver';
+import { PayoutPaidResolver } from './intents/resolvers/teacher-payout/payout-paid.resolver';
+import { PayoutInstallmentPaidResolver } from './intents/resolvers/teacher-payout/payout-installment-paid.resolver';
+
+// Expense resolvers
+import { ExpenseCreatedResolver } from './intents/resolvers/expenses/expense-created.resolver';
+import { ExpenseRefundedResolver } from './intents/resolvers/expenses/expense-refunded.resolver';
+
+// User profile resolvers
+import { UserProfileActivatedResolver } from './intents/resolvers/user-profile/user-profile-activated.resolver';
+import { UserProfileDeactivatedResolver } from './intents/resolvers/user-profile/user-profile-deactivated.resolver';
+import { UserProfileDeletedResolver } from './intents/resolvers/user-profile/user-profile-deleted.resolver';
+import { UserProfileRestoredResolver } from './intents/resolvers/user-profile/user-profile-restored.resolver';
+import { UserProfileCreatedResolver } from './intents/resolvers/user-profile/user-profile-created.resolver';
+
+// Session and Classes modules for repositories
+import { SessionsModule } from '@/modules/sessions/sessions.module';
+import { ClassesModule } from '@/modules/classes/classes.module';
+import { StudentBillingModule } from '@/modules/student-billing/student-billing.module';
+import { TeacherPayoutModule } from '@/modules/teacher-payouts/teacher-payouts.module';
+import { ExpensesModule } from '@/modules/expenses/expenses.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([NotificationLog, Notification]),
+    TypeOrmModule.forFeature([
+      NotificationLog,
+      Notification,
+      ProfileRole,
+      Role,
+    ]),
     UserModule, // Needed for intent resolvers (UserService)
     CentersModule, // Needed for intent resolvers (CentersRepository)
+    UserProfileModule, // Needed for intent resolvers (UserProfileService)
+    SessionsModule, // Needed for session resolvers (SessionsRepository)
+    ClassesModule, // Needed for session resolvers (GroupsRepository, GroupStudentsRepository, ClassStaffRepository, ClassesRepository)
+    StudentBillingModule, // Needed for charge resolvers (StudentChargesRepository)
+    TeacherPayoutModule, // Needed for payout resolvers (TeacherPayoutRecordsRepository)
+    ExpensesModule, // Needed for expense resolvers (ExpenseRepository)
     JwtModule,
     AuthModule,
     BullModule.registerQueueAsync({
@@ -146,18 +233,77 @@ import { NotificationIntentService } from './services/notification-intent.servic
     NotificationLogRepository,
     NotificationRepository,
     NotificationListener,
+    PushTokenInvalidListener,
     // Intent system
     NotificationIntentService,
     NotificationIntentResolverRegistryService,
     CenterCreatedResolver,
     CenterUpdatedResolver,
+    CenterDeletedResolver,
+    CenterRestoredResolver,
+    BranchCreatedResolver,
+    BranchUpdatedResolver,
+    BranchDeletedResolver,
+    BranchRestoredResolver,
+    StudentAbsentResolver,
     OtpResolver,
     PhoneVerifiedResolver,
+    NewDeviceLoginResolver,
+    PasswordChangedResolver,
+    LoginFailedResolver,
+    TwoFaDisabledResolver,
+    CenterAccessActivatedResolver,
+    CenterAccessDeactivatedResolver,
+    CenterAccessGrantedResolver,
+    CenterAccessRevokedResolver,
+    RoleAssignedResolver,
+    RoleRevokedResolver,
+    // Session resolvers
+    SessionCreatedResolver,
+    SessionUpdatedResolver,
+    SessionCanceledResolver,
+    SessionFinishedResolver,
+    SessionDeletedResolver,
+    SessionCheckedInResolver,
+    SessionConflictDetectedResolver,
+    // Class resolvers
+    ClassCreatedResolver,
+    ClassUpdatedResolver,
+    ClassDeletedResolver,
+    ClassStatusChangedResolver,
+    StaffAssignedToClassResolver,
+    StaffRemovedFromClassResolver,
+    // Group resolvers
+    GroupCreatedResolver,
+    GroupUpdatedResolver,
+    GroupDeletedResolver,
+    StudentAddedToGroupResolver,
+    StudentRemovedFromGroupResolver,
+    // Student billing resolvers
+    ChargeCompletedResolver,
+    ChargeInstallmentPaidResolver,
+    ChargeRefundedResolver,
+    // Teacher payout resolvers
+    PayoutCreatedResolver,
+    PayoutPaidResolver,
+    PayoutInstallmentPaidResolver,
+    // Expense resolvers
+    ExpenseCreatedResolver,
+    ExpenseRefundedResolver,
+    // User profile resolvers
+    UserProfileActivatedResolver,
+    UserProfileDeactivatedResolver,
+    UserProfileDeletedResolver,
+    UserProfileRestoredResolver,
+    UserProfileCreatedResolver,
+    //
     EmailAdapter,
     SmsAdapter,
     WhatsAppAdapter,
     InAppAdapter,
+    PushAdapter,
     MetaWhatsAppProvider,
+    FcmProviderImpl, // FCM provider for push notifications
     InAppNotificationService,
     NotificationGateway,
     RedisCleanupJob,
@@ -179,6 +325,7 @@ import { NotificationIntentService } from './services/notification-intent.servic
     MultiRecipientProcessor, // Multi-recipient processing with concurrency control
     RecipientValidationService, // Pure service for recipient validation
     PayloadBuilderService, // Pure service for payload building
+    PushTokenResolverService, // Resolves FCM tokens for PUSH routing
     // WhatsApp Webhook Services
     WhatsAppWebhookService, // Service for processing webhook events
     WhatsAppWebhookSignatureService, // Service for signature verification

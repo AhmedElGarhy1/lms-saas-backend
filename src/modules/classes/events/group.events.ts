@@ -25,6 +25,7 @@ export class GroupUpdatedEvent {
 export class GroupDeletedEvent {
   constructor(
     public readonly groupId: string,
+    public readonly classId: string,
     public readonly actor: ActorUser,
     public readonly centerId: string,
   ) {}
@@ -36,20 +37,4 @@ export class GroupRestoredEvent {
     public readonly actor: ActorUser,
     public readonly centerId: string,
   ) {}
-}
-
-/**
- * Event (result-focused, output-oriented)
- * Represents the fact that group data was exported.
- */
-export class GroupExportedEvent extends BaseEvent {
-  constructor(
-    public readonly format: string,
-    public readonly filename: string,
-    public readonly recordCount: number,
-    public readonly filters: Record<string, any>,
-    actor: ActorUser,
-  ) {
-    super(actor);
-  }
 }

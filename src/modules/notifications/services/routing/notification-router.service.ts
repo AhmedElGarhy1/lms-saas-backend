@@ -15,6 +15,7 @@ import { NotificationMetricsService } from '../notification-metrics.service';
 import { ChannelRetryStrategyService } from '../channel-retry-strategy.service';
 import { RecipientValidationService } from '../recipient-validation.service';
 import { PayloadBuilderService } from '../payload-builder.service';
+import { PushTokenResolverService } from '../push-token-resolver.service';
 import { BaseService } from '@/shared/common/services/base.service';
 import {
   QUEUE_CONSTANTS,
@@ -39,6 +40,7 @@ export class NotificationRouterService extends BaseService {
     private readonly retryStrategyService: ChannelRetryStrategyService,
     private readonly recipientValidator: RecipientValidationService,
     private readonly payloadBuilder: PayloadBuilderService,
+    private readonly pushTokenResolver: PushTokenResolverService,
     private readonly idempotencyCache?: NotificationIdempotencyCacheService,
     private readonly metricsService?: NotificationMetricsService,
   ) {
@@ -129,6 +131,98 @@ export class NotificationRouterService extends BaseService {
           );
           continue;
         }
+      }
+
+      // PUSH: resolve FCM tokens per user, send one payload per token
+      if (channel === NotificationChannel.PUSH) {
+        const tokens = await this.pushTokenResolver.getTokensForUser(userId);
+        if (tokens.length === 0) {
+          this.logger.warn(
+            `Skipping PUSH channel: no FCM tokens for user ${userId}`,
+            { userId, eventName },
+          );
+          if (this.metricsService) {
+            await this.metricsService.incrementFailed(
+              NotificationChannel.PUSH,
+              mapping.type,
+            );
+          }
+          continue;
+        }
+        const deduped = [...new Set(tokens)];
+
+        const channelConfig = audience
+          ? this.manifestResolver.getChannelConfig(manifest, audience, channel)
+          : Object.values(manifest.audiences)[0]?.channels[channel];
+
+        const cacheKey = this.getTemplateCacheKey(
+          mapping.type,
+          channel,
+          locale,
+          templateData as Record<string, unknown>,
+          audience,
+        );
+        let rendered: RenderedNotification;
+        if (preRenderedCache?.has(cacheKey)) {
+          rendered = preRenderedCache.get(cacheKey)!;
+        } else {
+          rendered = await this.renderer.render(
+            mapping.type,
+            channel,
+            templateData as Record<string, unknown>,
+            locale,
+            audience,
+          );
+          if (preRenderedCache) preRenderedCache.set(cacheKey, rendered);
+        }
+
+        for (const token of deduped) {
+          const idempotencyResult = await this.checkIdempotency(
+            correlationId,
+            mapping.type,
+            channel,
+            token,
+          );
+          if (!idempotencyResult.shouldProceed) continue;
+
+          const basePayload = this.payloadBuilder.buildBasePayload(
+            token,
+            channel,
+            mapping.type,
+            manifest,
+            locale,
+            centerId,
+            userId,
+            profileType ?? undefined,
+            profileId ?? undefined,
+            correlationId,
+            context.actorId,
+          );
+          const payload = this.payloadBuilder.buildPayload(
+            channel,
+            basePayload,
+            rendered,
+            templateData,
+            manifest,
+            channelConfig,
+          );
+          if (!payload) continue;
+
+          payloadsToEnqueue.push(payload);
+          if (
+            idempotencyResult.lockAcquired &&
+            this.idempotencyCache &&
+            correlationId
+          ) {
+            locksToRelease.push({
+              correlationId,
+              type: mapping.type,
+              channel,
+              recipient: token,
+            });
+          }
+        }
+        continue;
       }
 
       // Determine and validate recipient for this channel (pure service)

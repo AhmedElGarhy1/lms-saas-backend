@@ -161,6 +161,12 @@ export const env = cleanEnv(process.env, {
     desc: 'R2 Public URL Domain (e.g., https://assets.hessity.com)',
     default: '',
   }),
+
+  // Firebase Cloud Messaging (FCM) Configuration
+  FCM_SERVICE_ACCOUNT_KEY: str({
+    desc: 'Firebase service account key as JSON string',
+    default: '',
+  }),
 });
 
 /**

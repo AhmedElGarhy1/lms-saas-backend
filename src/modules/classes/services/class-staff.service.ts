@@ -20,6 +20,12 @@ import { UserProfileErrors } from '@/modules/user-profile/exceptions/user-profil
 import { CentersErrors } from '@/modules/centers/exceptions/centers.errors';
 import { SelfProtectionService } from '@/shared/common/services/self-protection.service';
 import { RoleHierarchyService } from '@/shared/common/services/role-hierarchy.service';
+import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
+import { ClassEvents } from '@/shared/events/classes.events.enum';
+import {
+  StaffAssignedToClassEvent,
+  StaffRemovedFromClassEvent,
+} from '../events/class-staff.events';
 
 @Injectable()
 export class ClassStaffService extends BaseService {
@@ -35,6 +41,7 @@ export class ClassStaffService extends BaseService {
     private readonly branchesService: BranchesService,
     private readonly selfProtectionService: SelfProtectionService,
     private readonly roleHierarchyService: RoleHierarchyService,
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
   ) {
     super();
   }
@@ -168,6 +175,17 @@ export class ClassStaffService extends BaseService {
       classEntity.branchId,
     );
 
+    // Emit event for notification
+    await this.typeSafeEventEmitter.emitAsync(
+      ClassEvents.STAFF_ASSIGNED,
+      new StaffAssignedToClassEvent(
+        data.userProfileId,
+        classEntity,
+        actor,
+        centerId,
+      ),
+    );
+
     return classStaff;
   }
 
@@ -215,7 +233,22 @@ export class ClassStaffService extends BaseService {
     // and implicitly validates branch access via the class
     await this.classAccessService.validateClassAccess(data);
 
+    // Get class details for event before removal
+    const classEntity = await this.classesRepository.findOneOrThrow(data.classId);
+
     const result = await this.classStaffRepository.revokeClassStaffAccess(data);
+
+    // Emit event for notification
+    await this.typeSafeEventEmitter.emitAsync(
+      ClassEvents.STAFF_REMOVED,
+      new StaffRemovedFromClassEvent(
+        data.userProfileId,
+        data.classId,
+        classEntity.name,
+        actor,
+        centerId,
+      ),
+    );
 
     return result;
   }

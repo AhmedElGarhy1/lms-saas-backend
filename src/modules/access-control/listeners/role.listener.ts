@@ -2,17 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { OnEvent } from '@nestjs/event-emitter';
 import { RolesService } from '../services/roles.service';
-import {
-  AssignRoleEvent,
-  RevokeRoleEvent,
-} from '../events/access-control.events';
+import { RevokeRoleEvent } from '../events/access-control.events';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 import {
   CreateRoleEvent,
   UpdateRoleEvent,
   DeleteRoleEvent,
   RestoreRoleEvent,
-  RoleExportedEvent,
 } from '../events/role.events';
 import { RoleEvents } from '@/shared/events/role.events.enum';
 import { AssignCenterOwnerEvent } from '@/modules/centers/events/center.events';
@@ -20,6 +16,7 @@ import { CenterEvents } from '@/shared/events/center.events.enum';
 import { createOwnerRoleData } from '../constants/roles';
 import { ProfileRoleRepository } from '../repositories/profile-role.repository';
 import { RolesRepository } from '../repositories/roles.repository';
+
 @Injectable()
 export class RoleListener {
   private readonly logger: Logger = new Logger(RoleListener.name);
@@ -30,35 +27,6 @@ export class RoleListener {
     private readonly profileRoleRepository: ProfileRoleRepository,
     private readonly rolesRepository: RolesRepository,
   ) {}
-
-  @OnEvent(AccessControlEvents.ASSIGN_ROLE)
-  async handleAssignRole(event: AssignRoleEvent) {
-    const { userProfileId, roleId, centerId, actor } = event;
-
-    try {
-      // Call service to assign role
-      await this.rolesService.assignRole({
-        userProfileId,
-        roleId,
-        centerId,
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to handle ${AccessControlEvents.ASSIGN_ROLE} event - userProfileId: ${userProfileId}, roleId: ${roleId}, centerId: ${centerId}, actorId: ${actor?.userProfileId || 'unknown'}`,
-        error instanceof Error ? error.stack : String(error),
-        {
-          eventType: AccessControlEvents.ASSIGN_ROLE,
-          userProfileId,
-          roleId,
-          centerId,
-          actorId: actor?.userProfileId,
-        },
-      );
-      return;
-    }
-
-    // Activity logging removed
-  }
 
   @OnEvent(AccessControlEvents.REVOKE_ROLE)
   async handleRevokeRole(event: RevokeRoleEvent) {
@@ -111,16 +79,14 @@ export class RoleListener {
         actor,
       );
 
-      // Only assign role to userProfile if userProfile is provided
       if (userProfile) {
-        await this.handleAssignRole(
-          new AssignRoleEvent(
-            userProfile.id,
-            role.id,
-            actor,
-            center.id,
-            userProfile.userId,
-          ),
+        await this.rolesService.assignRole(
+          {
+            userProfileId: userProfile.id,
+            roleId: role.id,
+            centerId: center.id,
+          },
+          actor,
         );
       }
     } catch (error) {
@@ -177,11 +143,6 @@ export class RoleListener {
 
   @OnEvent(RoleEvents.RESTORED)
   async handleRoleRestored(event: RestoreRoleEvent) {
-    // Activity logging removed
-  }
-
-  @OnEvent(RoleEvents.EXPORTED)
-  async handleRoleExported(event: RoleExportedEvent) {
     // Activity logging removed
   }
 }

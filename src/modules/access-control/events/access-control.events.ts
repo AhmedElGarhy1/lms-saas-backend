@@ -20,6 +20,22 @@ export class RevokeCenterAccessEvent {
   ) {}
 }
 
+export class CenterAccessSoftRemovedEvent {
+  constructor(
+    public readonly userProfileId: string,
+    public readonly centerId: string,
+    public readonly actor: ActorUser,
+  ) {}
+}
+
+export class CenterAccessRestoredEvent {
+  constructor(
+    public readonly userProfileId: string,
+    public readonly centerId: string,
+    public readonly actor: ActorUser,
+  ) {}
+}
+
 export class ActivateCenterAccessEvent {
   constructor(
     public readonly userProfileId: string,

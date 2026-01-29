@@ -358,11 +358,14 @@ export class GroupsService extends BaseService {
       classId: group.classId,
     });
 
+    // Store classId before deletion for event
+    const classId = group.classId;
+
     await this.groupsRepository.softRemove(groupId);
 
     await this.typeSafeEventEmitter.emitAsync(
       GroupEvents.DELETED,
-      new GroupDeletedEvent(groupId, actor, actor.centerId!),
+      new GroupDeletedEvent(groupId, classId, actor, actor.centerId!),
     );
   }
 

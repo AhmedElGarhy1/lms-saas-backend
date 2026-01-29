@@ -41,7 +41,6 @@ export abstract class BaseEntity extends BaseEntityTypeORM {
   protected setCreatedBy() {
     const ctx = RequestContext.get();
     const userProfileId = ctx.userProfileId;
-    console.log('setCreatedBy userProfileId', userProfileId);
     if (userProfileId) {
       this.createdByProfileId = userProfileId;
       this.createdAt = new Date();
@@ -52,7 +51,6 @@ export abstract class BaseEntity extends BaseEntityTypeORM {
   protected setUpdatedBy() {
     const ctx = RequestContext.get();
     const userProfileId = ctx.userProfileId;
-    console.log('setUpdatedBy userProfileId', userProfileId);
 
     if (userProfileId) {
       this.updatedByProfileId = userProfileId;

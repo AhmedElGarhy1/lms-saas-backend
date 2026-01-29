@@ -1,6 +1,8 @@
 export enum AccessControlEvents {
   GRANT_CENTER_ACCESS = 'access.control.granted.center.access',
   REVOKE_CENTER_ACCESS = 'access.control.revoked.center.access',
+  CENTER_ACCESS_SOFT_REMOVED = 'access.control.center.access.soft.removed',
+  CENTER_ACCESS_RESTORED = 'access.control.center.access.restored',
   ACTIVATE_CENTER_ACCESS = 'access.control.activated.center.access',
   DEACTIVATE_CENTER_ACCESS = 'access.control.deactivated.center.access',
   GRANT_USER_ACCESS = 'access.control.granted.user.access',

@@ -3,19 +3,20 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { CreateTeacherEvent } from '../events/teacher.events';
 import { TeacherEvents } from '@/shared/events/teacher.events.enum';
 import { UserEvents } from '@/shared/events/user.events.enum';
-import {
-  GrantCenterAccessEvent,
-  GrantUserAccessEvent,
-} from '@/modules/access-control/events/access-control.events';
+import { GrantUserAccessEvent } from '@/modules/access-control/events/access-control.events';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { UserCreatedEvent } from '@/modules/user/events/user.events';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { RequestPhoneVerificationEvent } from '@/modules/auth/events/auth.events';
+import { AccessControlService } from '@/modules/access-control/services/access-control.service';
 
 @Injectable()
 export class TeacherListener {
-  constructor(private readonly typeSafeEventEmitter: TypeSafeEventEmitter) {}
+  constructor(
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly accessControlService: AccessControlService,
+  ) {}
 
   @OnEvent(TeacherEvents.CREATE)
   async handleCreateTeacher(event: CreateTeacherEvent) {
@@ -28,17 +29,16 @@ export class TeacherListener {
       isCenterAccessActive,
     } = event;
 
-    // Grant center access
     if (centerId) {
-      await this.typeSafeEventEmitter.emitAsync(
-        AccessControlEvents.GRANT_CENTER_ACCESS,
-        new GrantCenterAccessEvent(
-          userProfile.id,
+      await this.accessControlService.grantCenterAccess(
+        {
+          userProfileId: userProfile.id,
           centerId,
-          actor,
-          user.id,
-          isCenterAccessActive,
-        ),
+          isActive: isCenterAccessActive ?? true,
+        },
+        actor,
+        true,
+        true,
       );
       await this.typeSafeEventEmitter.emitAsync(
         AccessControlEvents.GRANT_USER_ACCESS,

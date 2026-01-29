@@ -28,7 +28,6 @@ import {
   UpdateRoleEvent,
   DeleteRoleEvent,
   RestoreRoleEvent,
-  RoleExportedEvent,
 } from '@/modules/access-control/events/role.events';
 import {
   CreateCenterEvent,
@@ -38,7 +37,6 @@ import {
   CreateCenterOwnerEvent,
   AssignCenterOwnerEvent,
   CreateCenterBranchEvent,
-  CenterExportedEvent,
 } from '@/modules/centers/events/center.events';
 import {
   BranchCreatedEvent,
@@ -48,8 +46,12 @@ import {
 } from '@/modules/centers/events/branch.events';
 import {
   GrantCenterAccessEvent,
+  RevokeCenterAccessEvent,
+  CenterAccessSoftRemovedEvent,
+  CenterAccessRestoredEvent,
   GrantUserAccessEvent,
   AssignRoleEvent,
+  RevokeRoleEvent,
   ActivateCenterAccessEvent,
   DeactivateCenterAccessEvent,
 } from '@/modules/access-control/events/access-control.events';
@@ -62,7 +64,6 @@ import {
   ClassUpdatedEvent,
   ClassDeletedEvent,
   ClassRestoredEvent,
-  ClassExportedEvent,
   ClassStatusChangedEvent,
 } from '@/modules/classes/events/class.events';
 import {
@@ -70,8 +71,15 @@ import {
   GroupUpdatedEvent,
   GroupDeletedEvent,
   GroupRestoredEvent,
-  GroupExportedEvent,
 } from '@/modules/classes/events/group.events';
+import {
+  StaffAssignedToClassEvent,
+  StaffRemovedFromClassEvent,
+} from '@/modules/classes/events/class-staff.events';
+import {
+  StudentAddedToGroupEvent,
+  StudentRemovedFromGroupEvent,
+} from '@/modules/classes/events/group-student.events';
 import {
   PasswordResetRequestedEvent,
   RequestPhoneVerificationEvent,
@@ -84,6 +92,7 @@ import {
   SessionDeletedEvent,
   SessionCanceledEvent,
   SessionFinishedEvent,
+  SessionCheckedInEvent,
   SessionsBulkDeletedEvent,
   SessionConflictDetectedEvent,
 } from '@/modules/sessions/events/session.events';
@@ -104,6 +113,14 @@ import {
   TeacherPayoutInstallmentPaidEvent,
   TeacherPayoutStatusUpdatedEvent,
 } from '@/modules/teacher-payouts/events/teacher-payout.events';
+import { StudentsMarkedAbsentEvent } from '@/modules/attendance/events/attendance.events';
+import {
+  UserProfileActivatedEvent,
+  UserProfileDeactivatedEvent,
+  UserProfileDeletedEvent,
+  UserProfileRestoredEvent,
+  UserProfileCreatedEvent,
+} from '@/modules/user-profile/events/user-profile.events';
 
 // Import event enums for type safety
 import { UserEvents } from '@/shared/events/user.events.enum';
@@ -122,6 +139,8 @@ import { SessionEvents } from '@/shared/events/sessions.events.enum';
 import { StudentBillingEvents } from '@/shared/events/student-billing.events.enum';
 import { ExpenseEvents } from '@/shared/events/expenses.events.enum';
 import { TeacherPayoutEvents } from '@/shared/events/teacher-payouts.events.enum';
+import { AttendanceEvents } from '@/shared/events/attendance.events.enum';
+import { UserProfileEvents } from '@/shared/events/user-profile.events.enum';
 
 /**
  * Event Type Map
@@ -154,7 +173,6 @@ export type EventTypeMap = {
   [RoleEvents.UPDATED]: UpdateRoleEvent;
   [RoleEvents.DELETED]: DeleteRoleEvent;
   [RoleEvents.RESTORED]: RestoreRoleEvent;
-  [RoleEvents.EXPORTED]: RoleExportedEvent;
 
   // Center Events
   [CenterEvents.CREATED]: CreateCenterEvent;
@@ -164,7 +182,6 @@ export type EventTypeMap = {
   [CenterEvents.CREATE_OWNER]: CreateCenterOwnerEvent;
   [CenterEvents.ASSIGN_OWNER]: AssignCenterOwnerEvent;
   [CenterEvents.CREATE_BRANCH]: CreateCenterBranchEvent;
-  [CenterEvents.EXPORTED]: CenterExportedEvent;
 
   // Branch Events
   [BranchEvents.CREATED]: BranchCreatedEvent;
@@ -174,8 +191,12 @@ export type EventTypeMap = {
 
   // AccessControl Events
   [AccessControlEvents.GRANT_CENTER_ACCESS]: GrantCenterAccessEvent;
+  [AccessControlEvents.REVOKE_CENTER_ACCESS]: RevokeCenterAccessEvent;
+  [AccessControlEvents.CENTER_ACCESS_SOFT_REMOVED]: CenterAccessSoftRemovedEvent;
+  [AccessControlEvents.CENTER_ACCESS_RESTORED]: CenterAccessRestoredEvent;
   [AccessControlEvents.GRANT_USER_ACCESS]: GrantUserAccessEvent;
   [AccessControlEvents.ASSIGN_ROLE]: AssignRoleEvent;
+  [AccessControlEvents.REVOKE_ROLE]: RevokeRoleEvent;
   [AccessControlEvents.ACTIVATE_CENTER_ACCESS]: ActivateCenterAccessEvent;
   [AccessControlEvents.DEACTIVATE_CENTER_ACCESS]: DeactivateCenterAccessEvent;
 
@@ -196,15 +217,17 @@ export type EventTypeMap = {
   [ClassEvents.UPDATED]: ClassUpdatedEvent;
   [ClassEvents.DELETED]: ClassDeletedEvent;
   [ClassEvents.RESTORED]: ClassRestoredEvent;
-  [ClassEvents.EXPORTED]: ClassExportedEvent;
   [ClassEvents.STATUS_CHANGED]: ClassStatusChangedEvent;
+  [ClassEvents.STAFF_ASSIGNED]: StaffAssignedToClassEvent;
+  [ClassEvents.STAFF_REMOVED]: StaffRemovedFromClassEvent;
 
   // Group Events
   [GroupEvents.CREATED]: GroupCreatedEvent;
   [GroupEvents.UPDATED]: GroupUpdatedEvent;
   [GroupEvents.DELETED]: GroupDeletedEvent;
   [GroupEvents.RESTORED]: GroupRestoredEvent;
-  [GroupEvents.EXPORTED]: GroupExportedEvent;
+  [GroupEvents.STUDENT_ADDED]: StudentAddedToGroupEvent;
+  [GroupEvents.STUDENT_REMOVED]: StudentRemovedFromGroupEvent;
 
   // Additional Auth Events
   [AuthEvents.PASSWORD_RESET_REQUESTED]: PasswordResetRequestedEvent;
@@ -217,6 +240,7 @@ export type EventTypeMap = {
   [SessionEvents.UPDATED]: SessionUpdatedEvent;
   [SessionEvents.DELETED]: SessionDeletedEvent;
   [SessionEvents.CANCELED]: SessionCanceledEvent;
+  [SessionEvents.CHECKED_IN]: SessionCheckedInEvent;
   [SessionEvents.FINISHED]: SessionFinishedEvent;
   [SessionEvents.BULK_DELETED]: SessionsBulkDeletedEvent;
   [SessionEvents.CONFLICT_DETECTED]: SessionConflictDetectedEvent;
@@ -237,6 +261,16 @@ export type EventTypeMap = {
   [TeacherPayoutEvents.PAYOUT_PAID]: TeacherPayoutPaidEvent;
   [TeacherPayoutEvents.INSTALLMENT_PAID]: TeacherPayoutInstallmentPaidEvent;
   [TeacherPayoutEvents.PAYOUT_STATUS_UPDATED]: TeacherPayoutStatusUpdatedEvent;
+
+  // Attendance Events
+  [AttendanceEvents.MARKED_ABSENT]: StudentsMarkedAbsentEvent;
+
+  // User Profile Events
+  [UserProfileEvents.ACTIVATED]: UserProfileActivatedEvent;
+  [UserProfileEvents.DEACTIVATED]: UserProfileDeactivatedEvent;
+  [UserProfileEvents.DELETED]: UserProfileDeletedEvent;
+  [UserProfileEvents.RESTORED]: UserProfileRestoredEvent;
+  [UserProfileEvents.CREATED]: UserProfileCreatedEvent;
 };
 
 /**

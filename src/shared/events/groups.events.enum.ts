@@ -4,5 +4,6 @@ export enum GroupEvents {
   UPDATED = 'group.updated',
   DELETED = 'group.deleted',
   RESTORED = 'group.restored',
-  EXPORTED = 'group.exported',
+  STUDENT_ADDED = 'group.student.added',
+  STUDENT_REMOVED = 'group.student.removed',
 }

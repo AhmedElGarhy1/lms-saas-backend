@@ -14,6 +14,8 @@ import { GroupEvents } from './groups.events.enum';
 import { StudentBillingEvents } from './student-billing.events.enum';
 import { ExpenseEvents } from './expenses.events.enum';
 import { TeacherPayoutEvents } from './teacher-payouts.events.enum';
+import { AttendanceEvents } from './attendance.events.enum';
+import { UserProfileEvents } from './user-profile.events.enum';
 
 export type EventType =
   | AuthEvents
@@ -31,4 +33,6 @@ export type EventType =
   | GroupEvents
   | StudentBillingEvents
   | ExpenseEvents
-  | TeacherPayoutEvents;
+  | TeacherPayoutEvents
+  | AttendanceEvents
+  | UserProfileEvents;

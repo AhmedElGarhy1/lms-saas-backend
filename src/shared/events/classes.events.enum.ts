@@ -4,6 +4,7 @@ export enum ClassEvents {
   UPDATED = 'class.updated',
   DELETED = 'class.deleted',
   RESTORED = 'class.restored',
-  EXPORTED = 'class.exported',
   STATUS_CHANGED = 'classes.statusChanged',
+  STAFF_ASSIGNED = 'class.staff.assigned',
+  STAFF_REMOVED = 'class.staff.removed',
 }

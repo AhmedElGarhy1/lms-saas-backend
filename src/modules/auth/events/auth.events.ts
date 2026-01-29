@@ -6,6 +6,8 @@ export class UserLoggedInEvent extends BaseEvent {
   constructor(
     public readonly userId: string,
     public readonly phone: string,
+    public readonly isNewDevice: boolean,
+    public readonly deviceName: string,
     actor: ActorUser,
   ) {
     super(actor);

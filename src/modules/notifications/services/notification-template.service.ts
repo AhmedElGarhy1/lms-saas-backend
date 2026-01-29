@@ -146,85 +146,111 @@ export class NotificationTemplateService extends BaseService {
   }
 
   /**
+   * Interpolate {variable} placeholders in i18n strings (e.g. from notifications.json).
+   * Skips ICU-style {var, type, ...} so we only replace plain {var}.
+   */
+  private interpolateI18nVars(
+    str: string,
+    data: Record<string, unknown>,
+  ): string {
+    return str.replace(/\{(\w+)\}(?!\s*,)/g, (_, key: string) => {
+      const value = data[key];
+      if (value === undefined || value === null) return '';
+      if (typeof value === 'object') {
+        try {
+          return JSON.stringify(value);
+        } catch {
+          return '[object]';
+        }
+      }
+      if (
+        typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'boolean'
+      ) {
+        return String(value);
+      }
+      return '[unknown]';
+    });
+  }
+
+  /**
    * Render JSON template using i18n engine for translations
-   * For IN_APP channel, translations are loaded from notifications.json
+   * For IN_APP and PUSH, translations are loaded from notifications.json
    * @param content - JSON template content (minimal structure, translations come from i18n)
-   * @param data - Data to inject into translations
+   * @param data - Data to inject into translations (also used for {var} interpolation)
    * @param locale - Locale code for translation
    * @param notificationType - Notification type enum value (used to build i18n key)
-   * @returns Parsed and validated JSON object with translated content
+   * @param audience - Optional audience (TARGET, OWNERS, etc.) for multi-audience i18n; fallback to type-only key if missing
+   * @returns Parsed and validated JSON object with translated, interpolated content
    */
   private async renderJsonTemplate(
     content: string,
     data: Record<string, unknown>,
     locale: string = 'en',
     notificationType: NotificationType,
+    audience?: string,
   ): Promise<object> {
     try {
-      // Parse the JSON structure (should be minimal now, just structure)
       const template = JSON.parse(content) as {
         title?: string;
         message?: string;
         [key: string]: unknown;
       };
 
-      // Build i18n keys using notification type enum value directly
-      const titleKey = getNotificationI18nKey(
+      const titleKeyWithAudience = getNotificationI18nKey(
+        notificationType,
+        NOTIFICATION_FIELDS.TITLE,
+        audience,
+      );
+      const messageKeyWithAudience = getNotificationI18nKey(
+        notificationType,
+        NOTIFICATION_FIELDS.MESSAGE,
+        audience,
+      );
+      const titleKeyNoAudience = getNotificationI18nKey(
         notificationType,
         NOTIFICATION_FIELDS.TITLE,
       );
-      const messageKey = getNotificationI18nKey(
+      const messageKeyNoAudience = getNotificationI18nKey(
         notificationType,
         NOTIFICATION_FIELDS.MESSAGE,
       );
 
-      // Use type-safe i18n service to translate (works everywhere, no context needed)
       let translatedTitle: string;
       let translatedMessage: string;
 
-      try {
+      translatedTitle = await this.translationService.translate(
+        titleKeyWithAudience,
+        locale,
+      );
+      if (audience && translatedTitle === titleKeyWithAudience) {
         translatedTitle = await this.translationService.translate(
-          titleKey,
+          titleKeyNoAudience,
           locale,
         );
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        this.logger.warn(
-          `Failed to translate title for ${notificationType}: ${errorMessage}`,
-          {
-            notificationType,
-            locale,
-            i18nKey: titleKey,
-            error: errorMessage,
-          },
-        );
-        // Fallback to empty string if translation fails (prevent crashes)
-        translatedTitle = template.title || '';
+      }
+      if (translatedTitle === titleKeyNoAudience) {
+        translatedTitle = template.title ?? '';
       }
 
-      try {
+      translatedMessage = await this.translationService.translate(
+        messageKeyWithAudience,
+        locale,
+      );
+      if (audience && translatedMessage === messageKeyWithAudience) {
         translatedMessage = await this.translationService.translate(
-          messageKey,
+          messageKeyNoAudience,
           locale,
         );
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        this.logger.warn(
-          `Failed to translate message for ${notificationType}: ${errorMessage}`,
-          {
-            notificationType,
-            locale,
-            i18nKey: messageKey,
-            error: errorMessage,
-          },
-        );
-        // Fallback to empty string if translation fails (prevent crashes)
-        translatedMessage = template.message || '';
+      }
+      if (translatedMessage === messageKeyNoAudience) {
+        translatedMessage = template.message ?? '';
       }
 
-      // Build result object with translated content
+      translatedTitle = this.interpolateI18nVars(translatedTitle, data);
+      translatedMessage = this.interpolateI18nVars(translatedMessage, data);
+
       const result: { title: string; message: string; [key: string]: unknown } =
         {
           ...template,
@@ -232,9 +258,7 @@ export class NotificationTemplateService extends BaseService {
           message: translatedMessage,
         };
 
-      // Validate schema
       const validated = this.inAppTemplateSchema.parse(result);
-
       return validated;
     } catch (error) {
       const errorMessage =
@@ -246,25 +270,25 @@ export class NotificationTemplateService extends BaseService {
           error: errorMessage,
           notificationType,
           locale,
-          content: content.substring(0, 200), // Log first 200 chars
+          content: content.substring(0, 200),
         },
       );
-
       if (error instanceof z.ZodError) {
         throw NotificationErrors.templateRenderingFailed();
       }
-
       throw NotificationErrors.templateRenderingFailed();
     }
   }
 
   /**
    * Render template with channel support (supports .hbs, .txt, .json)
-   * @param templateName - Template path (optional for IN_APP - uses i18n instead)
+   * IN_APP and PUSH use i18n (notifications.json) only; no file loading.
+   * @param templateName - Template path (ignored for IN_APP/PUSH)
    * @param data - Template data
    * @param locale - Locale code
    * @param channel - Notification channel
-   * @param notificationType - Notification type (required for IN_APP/JSON templates)
+   * @param notificationType - Notification type (required for IN_APP/PUSH i18n)
+   * @param audience - Optional audience for multi-audience i18n keys
    * @returns Rendered content (string for HTML/text, object for JSON)
    */
   async renderTemplateWithChannel(
@@ -273,15 +297,18 @@ export class NotificationTemplateService extends BaseService {
     locale: string = 'en',
     channel: NotificationChannel,
     notificationType?: NotificationType,
+    audience?: string,
   ): Promise<string | object> {
     const extension = getChannelExtension(channel);
 
-    // For IN_APP JSON templates, skip file loading - use i18n directly
-    if (channel === NotificationChannel.IN_APP && extension === '.json') {
+    // IN_APP and PUSH: use i18n (notifications.json) only – no file loading
+    if (
+      channel === NotificationChannel.IN_APP ||
+      channel === NotificationChannel.PUSH
+    ) {
       if (!notificationType) {
         throw NotificationErrors.templateRenderingFailed();
       }
-      // Use minimal default JSON structure - translations come from i18n
       const defaultJsonContent = JSON.stringify({
         title: '',
         message: '',
@@ -291,6 +318,7 @@ export class NotificationTemplateService extends BaseService {
         data,
         locale,
         notificationType,
+        audience,
       );
     }
 
@@ -339,6 +367,7 @@ export class NotificationTemplateService extends BaseService {
         data,
         locale,
         notificationType,
+        audience,
       );
     } else {
       throw NotificationErrors.templateRenderingFailed();

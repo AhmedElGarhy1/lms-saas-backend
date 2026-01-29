@@ -11,6 +11,8 @@ import {
   SessionDeletedEvent,
   SessionCanceledEvent,
   SessionFinishedEvent,
+  SessionCheckedInEvent,
+  SessionConflictDetectedEvent,
 } from '../events/session.events';
 import { Session } from '../entities/session.entity';
 import { CreateSessionDto } from '../dto/create-session.dto';
@@ -182,6 +184,21 @@ export class SessionsService extends BaseService {
       );
 
     if (teacherConflict) {
+      await this.typeSafeEventEmitter.emitAsync(
+        SessionEvents.CONFLICT_DETECTED,
+        new SessionConflictDetectedEvent(
+          groupId,
+          '',
+          startTime,
+          endTime,
+          'TEACHER',
+          teacherConflict.sessionId,
+          teacherConflict.startTime,
+          teacherConflict.endTime,
+          actor,
+          group.centerId,
+        ),
+      );
       throw SessionsErrors.sessionScheduleConflict();
     }
 
@@ -194,6 +211,21 @@ export class SessionsService extends BaseService {
       );
 
     if (groupConflict) {
+      await this.typeSafeEventEmitter.emitAsync(
+        SessionEvents.CONFLICT_DETECTED,
+        new SessionConflictDetectedEvent(
+          groupId,
+          '',
+          startTime,
+          endTime,
+          'GROUP',
+          groupConflict.sessionId,
+          groupConflict.startTime,
+          groupConflict.endTime,
+          actor,
+          group.centerId,
+        ),
+      );
       throw SessionsErrors.sessionScheduleConflict();
     }
 
@@ -262,6 +294,10 @@ export class SessionsService extends BaseService {
           await this.typeSafeEventEmitter.emitAsync(
             SessionEvents.UPDATED,
             new SessionUpdatedEvent(updatedSession, actor, actor.centerId!),
+          );
+          await this.typeSafeEventEmitter.emitAsync(
+            SessionEvents.CHECKED_IN,
+            new SessionCheckedInEvent(updatedSession, actor, actor.centerId!),
           );
 
           return updatedSession;
@@ -346,6 +382,10 @@ export class SessionsService extends BaseService {
     await this.typeSafeEventEmitter.emitAsync(
       SessionEvents.CREATED,
       new SessionCreatedEvent(session, actor, actor.centerId!),
+    );
+    await this.typeSafeEventEmitter.emitAsync(
+      SessionEvents.CHECKED_IN,
+      new SessionCheckedInEvent(session, actor, actor.centerId!),
     );
 
     return session;
@@ -598,20 +638,49 @@ export class SessionsService extends BaseService {
           );
 
         if (teacherConflict) {
+          await this.typeSafeEventEmitter.emitAsync(
+            SessionEvents.CONFLICT_DETECTED,
+            new SessionConflictDetectedEvent(
+              session.groupId,
+              session.scheduleItemId ?? '',
+              newStartTime,
+              newEndTime,
+              'TEACHER',
+              teacherConflict.sessionId,
+              teacherConflict.startTime,
+              teacherConflict.endTime,
+              actor,
+              group.centerId,
+            ),
+          );
           throw SessionsErrors.sessionScheduleConflict();
         }
       }
 
-      // Validate group conflict (overlapping sessions in same group)
       const groupConflict =
         await this.sessionValidationService.validateGroupConflict(
           session.groupId,
           newStartTime,
           newEndTime,
-          sessionId, // Exclude current session
+          sessionId,
         );
 
       if (groupConflict) {
+        await this.typeSafeEventEmitter.emitAsync(
+          SessionEvents.CONFLICT_DETECTED,
+          new SessionConflictDetectedEvent(
+            session.groupId,
+            session.scheduleItemId ?? '',
+            newStartTime,
+            newEndTime,
+            'GROUP',
+            groupConflict.sessionId,
+            groupConflict.startTime,
+            groupConflict.endTime,
+            actor,
+            group.centerId,
+          ),
+        );
         throw SessionsErrors.sessionScheduleConflict();
       }
     }
@@ -801,11 +870,14 @@ export class SessionsService extends BaseService {
 
     await this.sessionValidationService.validateSessionDeletion(sessionId);
 
+    // Save groupId before deletion for event emission
+    const groupId = session.groupId;
+
     await this.sessionsRepository.remove(sessionId);
 
     await this.typeSafeEventEmitter.emitAsync(
       SessionEvents.DELETED,
-      new SessionDeletedEvent(sessionId, actor, actor.centerId!),
+      new SessionDeletedEvent(sessionId, groupId, actor, actor.centerId!),
     );
   }
 

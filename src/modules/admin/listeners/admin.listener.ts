@@ -2,27 +2,26 @@ import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { CreateAdminEvent } from '../events/admin.events';
 import { AdminEvents } from '@/shared/events/admin.events.enum';
-import { AdminActivityType } from '../enums/admin-activity-type.enum';
 import { UserEvents } from '@/shared/events/user.events.enum';
-import {
-  AssignRoleEvent,
-  GrantUserAccessEvent,
-} from '@/modules/access-control/events/access-control.events';
+import { GrantUserAccessEvent } from '@/modules/access-control/events/access-control.events';
 import { AccessControlEvents } from '@/shared/events/access-control.events.enum';
 import { TypeSafeEventEmitter } from '@/shared/services/type-safe-event-emitter.service';
 import { UserCreatedEvent } from '@/modules/user/events/user.events';
 import { AuthEvents } from '@/shared/events/auth.events.enum';
 import { RequestPhoneVerificationEvent } from '@/modules/auth/events/auth.events';
+import { RolesService } from '@/modules/access-control/services/roles.service';
 
 @Injectable()
 export class AdminListener {
-  constructor(private readonly typeSafeEventEmitter: TypeSafeEventEmitter) {}
+  constructor(
+    private readonly typeSafeEventEmitter: TypeSafeEventEmitter,
+    private readonly rolesService: RolesService,
+  ) {}
 
   @OnEvent(AdminEvents.CREATE)
   async handleCreateAdmin(event: CreateAdminEvent) {
     const { user, userProfile, actor, admin, roleId } = event;
 
-    // Grant user access
     await this.typeSafeEventEmitter.emitAsync(
       AccessControlEvents.GRANT_USER_ACCESS,
       new GrantUserAccessEvent(
@@ -34,11 +33,10 @@ export class AdminListener {
       ),
     );
 
-    // Assign role if specified (admin roles are global, no center required)
     if (roleId) {
-      await this.typeSafeEventEmitter.emitAsync(
-        AccessControlEvents.ASSIGN_ROLE,
-        new AssignRoleEvent(userProfile.id, roleId, actor, undefined, user.id),
+      await this.rolesService.assignRole(
+        { userProfileId: userProfile.id, roleId, centerId: undefined },
+        actor,
       );
     }
 
